@@ -1,0 +1,17 @@
+{
+  "scripts": {
+    "dev": "wrangler dev src/index.ts",
+    "deploy": "wrangler deploy --minify src/index.ts",
+    "pretty": "prettier --write \"./**/*.{js,jsx,ts,tsx,json}\""
+  },
+  "dependencies": {
+    "async-retry": "^1.3.3",
+    "hono": "^3.2.2",
+    "prettier": "^2.8.8"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20230518.0",
+    "@types/async-retry": "^1.4.5",
+    "wrangler": "^3.0.1"
+  }
+}
