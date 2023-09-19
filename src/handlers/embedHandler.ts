@@ -1,32 +1,24 @@
 import { Context } from "hono";
-import { EmbedRequestBody } from "../types/embedRequestBody";
-import { Options } from "../types/requestBody";
-import { tryPost } from "./handlerUtils";
+import { RequestBody } from "../types/requestBody";
+import { fetchProviderOptionsFromConfig, tryProvidersInSequence } from "./handlerUtils";
 
-export async function embedHandler(c: Context, env: any, request: EmbedRequestBody, requestHeaders: Record<string, string>): Promise<Response> {
-  let providerOption:Options|null;
-  
+export async function embedHandler(c: Context, env: any, request: RequestBody, requestHeaders: Record<string, string>): Promise<Response> {
   try {
 
-    if ('provider' in request.config) {
-      providerOption = {
-        provider: request.config.provider, 
-        apiKeyName: request.config.apiKeyName, 
-        apiKey: request.config.apiKey
+    let providerOptions = fetchProviderOptionsFromConfig(request.config)
+    if (!providerOptions) {
+      const errorResponse = {
+        error: { message: `Could not find a provider option.`,}
       };
-    } else if ('options' in request.config && !!request.config.options) {
-      // We always pick the first option for now
-      providerOption = request.config.options[0];
-    } else {
-      throw "Could not find a provider";
+      throw errorResponse;
     }
-
-    const response = await tryPost(c, providerOption, request, requestHeaders,  "embed");
+    const response = await tryProvidersInSequence(c, providerOptions, request, requestHeaders,  "embed");
 
     return response;
   } catch (error:any) {
     // If an error occurs, log it and rethrow it
     console.error(`Error in embedHandler: ${error.message}`);
-    throw error;
+    const errorArray = JSON.parse(error.message);
+    throw errorArray[errorArray.length - 1];
   }
 }

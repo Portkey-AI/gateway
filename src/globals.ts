@@ -2,11 +2,12 @@ export const POWERED_BY: string = "rubeus";
 
 export const HEADER_KEYS: Record<string, string> = {
   MODE: `x-${POWERED_BY}-mode`,
-  RETRIES: `x-${POWERED_BY}-retry-count`,
+  RETRIES: `x-${POWERED_BY}-retry-count`
 }
 
 export const RESPONSE_HEADER_KEYS: Record<string, string> = {
-  RETRY_ATTEMPT_COUNT: `x-${POWERED_BY}-retry-attempt-count`
+  RETRY_ATTEMPT_COUNT: `x-${POWERED_BY}-retry-attempt-count`,
+  LAST_USED_OPTION_INDEX: `x-${POWERED_BY}-last-used-option-index`
 }
 
 export const RETRY_STATUS_CODES = [429, 500, 502, 503, 504];

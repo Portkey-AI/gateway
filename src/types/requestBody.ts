@@ -17,7 +17,7 @@ export interface Options {
   /** The name of the provider. */
   provider: string|undefined;
   /** The name of the API key for the provider. */
-  apiKeyName?: string;
+  virtualKey?: string;
   /** The API key for the provider. */
   apiKey?: string;
   /** The weight of the provider, used for load balancing. */
@@ -25,7 +25,7 @@ export interface Options {
   /** The retry settings for the provider. */
   retry?: RetrySettings;
   /** The parameters to override in the request. */
-  override_params?: Params;
+  overrideParams?: Params;
   /** The actual url used to make llm calls */
   urlToFetch?: string;
   /** Azure specific */
@@ -33,6 +33,8 @@ export interface Options {
   deploymentId?: string;
   apiVersion?: string;
   adAuth?:string;
+  /** provider option index picked based on weight in loadbalance mode */
+  index?: number;
 }
 
 /**
@@ -123,11 +125,11 @@ interface FullRequestBody {
  * A shortened structure of the request body, with a simpler configuration.
  * @interface
  */
-interface ShortConfig {
+export interface ShortConfig {
   /** The name of the provider. */
   provider: string;
   /** The name of the API key for the provider. */
-  apiKeyName?: string;
+  virtualKey?: string;
   /** The API key for the provider. */
   apiKey?: string;
 }
