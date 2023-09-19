@@ -42,7 +42,7 @@ app.onError((err, c) => {
       return err.getResponse()
   }
   c.status(500);
-  return c.json(c.error);
+  return c.json({ok: false, message: err.message});
 });
 
 /**
@@ -100,7 +100,14 @@ app.post("/v1/embed", async (c) => {
     let cheaders = Object.fromEntries(c.req.headers)
     return await embedHandler(c, c.env, cjson, cheaders);
   } catch(err:any) {
-    throw new HTTPException(500, { message: err.message })
+    throw new HTTPException(err.status, { 
+      res: new Response(err.errorObj, {
+        status: err.status,
+        headers: {
+          "content-type": "application/json"
+        }
+      }) 
+    })
   }
 });
 

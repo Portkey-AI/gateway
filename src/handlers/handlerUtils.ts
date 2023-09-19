@@ -1,26 +1,23 @@
 import { Context } from "hono";
 import Providers from "../providers";
-import { BaseResponse, ProviderAPIConfig, endpointStrings } from "../providers/types";
+import { ProviderAPIConfig, endpointStrings } from "../providers/types";
 import transformToProviderRequest from "../services/transformToProviderRequest";
-import { EmbedRequestBody } from "../types/embedRequestBody";
-import { Options, Params, RequestBody } from "../types/requestBody";
+import { Config, Options, Params, RequestBody, ShortConfig } from "../types/requestBody";
 import { retryRequest } from "./retryHandler";
 import { handleNonStreamingMode, handleStreamingMode } from "./streamHandler";
+import { convertKeysToCamelCase } from "../utils";
+import { RESPONSE_HEADER_KEYS } from "../globals";
 
 /**
  * Constructs the request options for the API call.
  *
  * @param {any} headers - The headers to add in the request.
- * @param {string} apiKey - The API key for the request.
  * @param {string} provider - The provider for the request.
  * @returns {RequestInit} - The fetch options for the request.
  */
 export function constructRequest(headers: any, provider: string = "") {
   let baseHeaders: any = {
-    "content-type": "application/json",
-    // "x-portkey-api-key": "x2trk", // TODO: this needs to be replaced.
-    // "x-portkey-mode": `proxy ${provider}`,
-    // "x-portkey-cache": "semantic"
+    "content-type": "application/json"
   };
 
   // Add any headers that the model might need
@@ -54,10 +51,10 @@ export function selectProviderByWeight(providers:Options[]): Options {
   let randomWeight = Math.random() * totalWeight;
 
   // Find the provider that corresponds to the selected weight
-  for (let provider of providers) {
+  for (let [index, provider] of providers.entries()) {
     // @ts-ignore since weight is being default set above
     if (randomWeight < provider.weight) {
-      return provider;
+      return {...provider, index};
     }
     // @ts-ignore since weight is being default set above
     randomWeight -= provider.weight;
@@ -88,6 +85,25 @@ export function getProviderOptionsByMode(mode: string, config: any): Options[]|n
   }    
 }
 
+export const fetchProviderOptionsFromConfig = (config: Config | ShortConfig): Options[] | null => {
+  let providerOptions: Options[] | null = null;
+  let mode: string;
+  const camelCaseConfig  = convertKeysToCamelCase(config, ["override_params", "params"]) as Config | ShortConfig;
+
+  if ('provider' in camelCaseConfig) {
+      providerOptions = [{
+      provider: camelCaseConfig.provider, 
+      virtualKey: camelCaseConfig.virtualKey, 
+      apiKey: camelCaseConfig.apiKey,
+      }];
+      mode = "single";
+  } else {
+      mode = camelCaseConfig.mode;
+      providerOptions = getProviderOptionsByMode(mode, camelCaseConfig);
+  }
+  return providerOptions;
+}
+
 /**
  * Makes a POST request to a provider and returns the response.
  * The POST request is constructed using the provider, apiKey, and requestBody parameters.
@@ -99,8 +115,8 @@ export function getProviderOptionsByMode(mode: string, config: any): Options[]|n
  * @returns {Promise<CompletionResponse>} - The response from the POST request.
  * @throws Will throw an error if the response is not ok or if all retry attempts fail.
  */
-export async function tryPostProxy(c: Context, providerOption:Options, requestBody: RequestBody|EmbedRequestBody, requestHeaders: Record<string, string>, fn: endpointStrings): Promise<Response> {
-  const overrideParams = providerOption?.override_params || {};
+export async function tryPostProxy(c: Context, providerOption:Options, requestBody: RequestBody, requestHeaders: Record<string, string>, fn: endpointStrings, currentIndex: number): Promise<Response> {
+  const overrideParams = providerOption?.overrideParams || {};
   const params: Params = {...requestBody.params, ...overrideParams};
   const isStreamingMode = params.stream ? true : false;
 
@@ -120,7 +136,7 @@ export async function tryPostProxy(c: Context, providerOption:Options, requestBo
     // Construct the base object for the POST request
     fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider);
   }
-  
+  fetchOptions.body = JSON.stringify(params)
   // Construct the full URL
   const url = providerOption.urlToFetch as string;
 
@@ -145,7 +161,8 @@ export async function tryPostProxy(c: Context, providerOption:Options, requestBo
         providerOptions: {...providerOption, requestURL: url, rubeusURL: fn},
         requestParams: params,
         response: response.clone(),
-        cacheStatus: cacheStatus
+        cacheStatus: cacheStatus,
+        lastUsedOptionIndex: currentIndex
       }])
       return response;
     }
@@ -153,12 +170,14 @@ export async function tryPostProxy(c: Context, providerOption:Options, requestBo
 
   [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes);
   const mappedResponse = await responseHandler(response, isStreamingMode, provider, undefined);
+  if (retryCount) mappedResponse.headers.append(RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT, retryCount.toString());
 
   c.set("requestOptions", [...requestOptions, {
     providerOptions: {...providerOption, requestURL: url, rubeusURL: fn},
     requestParams: params,
     response: mappedResponse.clone(),
-    cacheStatus: cacheStatus
+    cacheStatus: cacheStatus,
+    lastUsedOptionIndex: currentIndex
   }])
   // If the response was not ok, throw an error
   if (!response.ok) {
@@ -182,8 +201,8 @@ export async function tryPostProxy(c: Context, providerOption:Options, requestBo
  * @returns {Promise<CompletionResponse>} - The response from the POST request.
  * @throws Will throw an error if the response is not ok or if all retry attempts fail.
  */
-export async function tryPost(c: Context, providerOption:Options, requestBody: RequestBody|EmbedRequestBody, requestHeaders: Record<string, string>, fn: endpointStrings): Promise<Response> {
-  const overrideParams = providerOption?.override_params || {};
+export async function tryPost(c: Context, providerOption:Options, requestBody: RequestBody, requestHeaders: Record<string, string>, fn: endpointStrings, currentIndex: number): Promise<Response> {
+  const overrideParams = providerOption?.overrideParams || {};
   const params: Params = {...requestBody.params, ...overrideParams};
   const isStreamingMode = params.stream ? true : false;
 
@@ -239,20 +258,25 @@ export async function tryPost(c: Context, providerOption:Options, requestBody: R
         providerOptions: {...providerOption, requestURL: url, rubeusURL: fn},
         requestParams: transformedRequestBody,
         response: response.clone(),
-        cacheStatus: cacheStatus
+        cacheStatus: cacheStatus,
+        lastUsedOptionIndex: currentIndex
       }])
+      response.headers.append(RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX, currentIndex.toString());
       return response;
     }
   }
 
   [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes);
   const mappedResponse = await responseHandler(response, isStreamingMode, provider, fn);
+  if (retryCount) mappedResponse.headers.append(RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT, retryCount.toString());
+  mappedResponse.headers.append(RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX, currentIndex.toString());
 
   c.set("requestOptions", [...requestOptions, {
     providerOptions: {...providerOption, requestURL: url, rubeusURL: fn},
     requestParams: transformedRequestBody,
     response: mappedResponse.clone(),
-    cacheStatus: cacheStatus
+    cacheStatus: cacheStatus,
+    lastUsedOptionIndex: currentIndex
   }])
   // If the response was not ok, throw an error
   if (!response.ok) {
@@ -278,12 +302,13 @@ export async function tryPost(c: Context, providerOption:Options, requestBody: R
  */
 export async function tryProvidersInSequence(c: Context, providers:Options[], request: RequestBody, requestHeaders: Record<string, string>, fn: endpointStrings): Promise<Response> {
   let errors: any[] = [];
-  for (let providerOption of providers) {
+  for (let [index, providerOption] of providers.entries()) {
     try {
+      const loadbalanceIndex = !isNaN(Number(providerOption.index)) ? Number(providerOption.index) : null
       if (fn === "proxy") {
-        return await tryPostProxy(c, providerOption, request, requestHeaders, fn);
+        return await tryPostProxy(c, providerOption, request, requestHeaders, fn, loadbalanceIndex ?? index);
       }
-      return await tryPost(c, providerOption, request, requestHeaders, fn);
+      return await tryPost(c, providerOption, request, requestHeaders, fn, loadbalanceIndex ?? index);
     } catch (error:any) {
       // Log and store the error
       errors.push({

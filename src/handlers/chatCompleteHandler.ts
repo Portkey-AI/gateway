@@ -1,5 +1,5 @@
-import { Options, RequestBody } from "../types/requestBody";
-import { getProviderOptionsByMode, tryProvidersInSequence } from "./handlerUtils";
+import { RequestBody } from "../types/requestBody";
+import { fetchProviderOptionsFromConfig, tryProvidersInSequence } from "./handlerUtils";
 import { Context } from "hono";
 
 // const OPENAI_CHAT_MODELS = ["gpt-4-0613","gpt-3.5-turbo-16k-0613","gpt-3.5-turbo-0301","gpt-3.5-turbo","gpt-3.5-turbo-0613","gpt-4","gpt-4-0314","gpt-3.5-turbo-16k","gpt-4-32k-0314","gpt-4-32k-0613","gpt-4-32k"]
@@ -25,20 +25,7 @@ import { Context } from "hono";
  * @throws Will throw an error if no provider options can be determined or if the request to the provider(s) fails.
  */
 export async function chatCompleteHandler(c: Context, env: any, request: RequestBody, requestHeaders: Record<string, string>): Promise<Response> {
-  let providerOptions:Options[]|null;
-  let mode:string;
-  
-  if ('provider' in request.config) {
-    providerOptions = [{
-      provider: request.config.provider, 
-      apiKeyName: request.config.apiKeyName, 
-      apiKey: request.config.apiKey
-    }];
-    mode = "single";
-  } else {
-    mode = request.config.mode;
-    providerOptions = getProviderOptionsByMode(mode, request.config);
-  }
+  const providerOptions = fetchProviderOptionsFromConfig(request.config);
 
   if (!providerOptions) {
     const errorResponse = {
