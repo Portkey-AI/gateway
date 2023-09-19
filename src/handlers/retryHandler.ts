@@ -31,15 +31,15 @@ export const retryRequest = async (
           if (statusCodesToRetry.includes(response.status)) {
             const errorObj: any = new Error(await response.text());
             errorObj.status = response.status;
+            errorObj.headers = Object.fromEntries(response.headers);
             throw errorObj;
           } else if (response.status>=200 && response.status<=204) {
-            lastAttempt = attempt;
             console.log(`Returned in Retry Attempt ${attempt}. Status:`, response.ok, response.status);
           } else {
             // All error codes that aren't retried need to be propogated up
-            lastAttempt = attempt;
             const errorObj:any = new Error(await response.clone().text());
             errorObj.status = response.status;
+            errorObj.headers = Object.fromEntries(response.headers);
             bail(errorObj);
             return;
           }
@@ -55,6 +55,7 @@ export const retryRequest = async (
       }, {
       retries: retryCount,
       onRetry: (error: Error, attempt: number) => {
+        lastAttempt = attempt;
         console.warn(`Failed in Retry attempt ${attempt}. Error: ${error}`);
       },
     }
@@ -62,9 +63,7 @@ export const retryRequest = async (
   } catch (error: any) {
     lastResponse = new Response(error.message, {
       status: error.status,
-      headers: {
-        "Content-Type": "application/json"
-      }
+      headers: error.headers
     });
     console.warn(`Tried ${lastAttempt} time(s) but failed. Error: ${JSON.stringify(error)}`);
   }
