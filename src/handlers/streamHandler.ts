@@ -31,6 +31,8 @@ export async function* readStream(reader: ReadableStreamDefaultReader, splitPatt
                     if (isFirstChunk) {
                         isFirstChunk = false;
                         await new Promise(resolve => setTimeout(resolve, 25));
+                    } else {
+                        await new Promise(resolve => setTimeout(resolve, 1));
                     }
 
                     if (transformFunction) {
