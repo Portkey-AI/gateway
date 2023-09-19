@@ -1,9 +1,10 @@
 import { Context, HonoRequest } from "hono";
 import { retryRequest } from "./retryHandler";
 import Providers from "../providers";
-import { ANTHROPIC, MAX_RETRIES, HEADER_KEYS, PROXY_REQUEST_PATH_PREFIX, RETRY_STATUS_CODES, POWERED_BY } from "../globals";
-import { responseHandler } from "./handlerUtils";
-import { getStreamingMode } from "../utils";
+import { ANTHROPIC, MAX_RETRIES, HEADER_KEYS, PROXY_REQUEST_PATH_PREFIX, RETRY_STATUS_CODES, POWERED_BY, RESPONSE_HEADER_KEYS } from "../globals";
+import { fetchProviderOptionsFromConfig, getProviderOptionsByMode, responseHandler, tryProvidersInSequence } from "./handlerUtils";
+import { convertKeysToCamelCase, getStreamingMode } from "../utils";
+import { Config } from "../types/requestBody";
 
 // Find the proxy provider
 function proxyProvider(proxyModeHeader:string) {
@@ -52,6 +53,31 @@ export async function proxyHandler(c: Context, env: any, request: HonoRequest<"/
     store.isStreamingMode = getStreamingMode(store.reqBody)
     let urlToFetch = getProxyPath(request.url, store.proxyProvider);
 
+    if (requestHeaders['x-rubeus-config']) {
+      const config = JSON.parse(requestHeaders['x-rubeus-config']);
+      const camelCaseConfig: Config  = convertKeysToCamelCase(config, ["override_params"]);
+      let  providerOptions = fetchProviderOptionsFromConfig(camelCaseConfig);
+      
+      if (!providerOptions) {
+        const errorResponse = {
+          error: { message: `Could not find a provider option.`,}
+        };
+        throw errorResponse;
+      }
+      providerOptions = providerOptions.map(po => ({
+        ...po, urlToFetch
+      }))
+
+      try {
+          return await tryProvidersInSequence(c, providerOptions, {
+            params: store.reqBody, config: camelCaseConfig
+          }, requestHeaders, "proxy");
+      } catch (error:any) {
+        const errorArray = JSON.parse(error.message);
+        throw errorArray[errorArray.length - 1];
+      }
+    }
+
     let fetchOptions = {
         headers: headersToSend(requestHeaders, store.customHeadersToAvoid),
         method: request.method,
@@ -82,7 +108,7 @@ export async function proxyHandler(c: Context, env: any, request: HonoRequest<"/
     let [lastResponse, lastAttempt] = await retryRequest(urlToFetch, fetchOptions, retryCount, RETRY_STATUS_CODES);
 
     const mappedResponse = await responseHandler(lastResponse, store.isStreamingMode, store.proxyProvider, undefined);
-    if (lastAttempt) mappedResponse.headers.append("x-portkey-retries", lastAttempt.toString());
+    if (lastAttempt) mappedResponse.headers.append(RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT, lastAttempt.toString());
 
     c.set("requestOptions", [...requestOptions, {
       providerOptions: {...store.reqBody, provider: store.proxyProvider, requestURL: urlToFetch, rubeusURL: 'proxy'},
