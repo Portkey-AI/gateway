@@ -70,7 +70,7 @@ curl --location 'http://127.0.0.1:8787/v1/complete' \
 --data-raw '{
     "config": {
         "provider": "openai",
-        "apiKey: "<open-ai-api-key-here>"
+        "api_key: "<open-ai-api-key-here>"
     },
     "params": {
         "prompt": "What are the top 10 happiest countries in the world?",
@@ -94,11 +94,11 @@ curl --location 'http://127.0.0.1:8787/v1/complete' \
         "options": [
           {
             "provider": "openai",
-            "apiKey": "<open-ai-api-key-here>"
+            "api_key": "<open-ai-api-key-here>"
           }, 
           {
             "provider": "anthropic",
-            "apiKey": "<anthropic-api-key-here>"
+            "api_key": "<anthropic-api-key-here>"
           }
         ]
     },
@@ -119,12 +119,12 @@ curl --location 'http://127.0.0.1:8787/v1/chatComplete' \
           {
             "provider": "openai", 
             "override_params": {"model": "gpt-4"},
-            "apiKey": "<open-ai-api-key-here>" 
+            "api_key": "<open-ai-api-key-here>" 
           }, 
           {
             "provider": "openai", 
             "override_params": {"model": "gpt-3.5-turbo"},
-            "apiKey": "<open-ai-api-key-here>"
+            "api_key": "<open-ai-api-key-here>"
           }
         ]
     },
@@ -149,9 +149,9 @@ curl --location 'http://127.0.0.1:8787/v1/complete' \
             "provider": "openai",
             "retry": {
                 "attempts": 3,
-                "onStatusCodes": [429,500,504,524]
+                "on_status_codes": [429,500,504,524]
             },
-            "apiKey": "<open-ai-api-key-here>"
+            "api_key": "<open-ai-api-key-here>"
         }]
     },
     "params": {
@@ -176,12 +176,12 @@ curl --location 'http://127.0.0.1:8787/v1/chatComplete' \
             "provider": "openai",
             "weight": 0.5,
             "override_params": { "model": "gpt-3.5-turbo" },
-            "apiKey": "<open-ai-api-key-here>"
+            "api_key": "<open-ai-api-key-here>"
         }, {
             "provider": "anthropic",
             "weight": 0.5,
             "override_params": { "model": "claude-v1" },
-            "apiKey": "<anthropic-api-key-here>"
+            "api_key": "<anthropic-api-key-here>"
         }]
     },
     "params": {
@@ -201,7 +201,7 @@ curl --location 'http://127.0.0.1:8787/v1/complete' \
 --data-raw '{
     "config": {
         "provider": "openai",
-        "apiKey": "<open-ai-api-key-here>"
+        "api_key": "<open-ai-api-key-here>"
     },
     "params": {
         "prompt": "What are the top 10 happiest countries in the world?",
@@ -216,7 +216,7 @@ curl --location 'http://127.0.0.1:8787/v1/complete' \
 --data-raw '{
     "config": {
         "provider": "anthropic",
-        "apiKey": "<anthropic-api-key-here>"
+        "api_key": "<anthropic-api-key-here>"
     },
     "params": {
         "prompt": "What are the top 10 happiest countries in the world?",
