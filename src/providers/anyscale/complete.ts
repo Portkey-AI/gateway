@@ -1,5 +1,5 @@
 import { CompletionResponse, ErrorResponse, ProviderConfig } from "../types";
-import { AnyscaleChatCompleteResponse } from "./chatComplete";
+import { AnyscaleChatCompleteResponse, AnyscaleStreamChunk } from "./chatComplete";
 
 export const AnyscaleCompleteConfig: ProviderConfig = {
   model: {
@@ -121,7 +121,7 @@ export const AnyscaleCompleteStreamChunkTransform: (response: string) => string 
     if (chunk === '[DONE]') {
       return chunk;
     }
-    const parsedChunk = JSON.parse(chunk);
+    const parsedChunk: AnyscaleStreamChunk= JSON.parse(chunk);
     return `data: ${JSON.stringify({
       id: parsedChunk.id,
       object: parsedChunk.object,

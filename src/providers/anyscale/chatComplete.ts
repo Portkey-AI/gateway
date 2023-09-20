@@ -66,6 +66,20 @@ export const AnyscaleChatCompleteConfig: ProviderConfig = {
 
 export interface AnyscaleChatCompleteResponse extends ChatCompletionResponse, ErrorResponse {}
 
+export interface AnyscaleStreamChunk {
+    id: string;
+    object: string;
+    created: number;
+    model: string;
+    choices: {
+        delta: {
+            content?: string;
+        };
+        index: number;
+        finish_reason: string | null;
+    }[]
+}
+
 export const AnyscaleChatCompleteResponseTransform: (response: AnyscaleChatCompleteResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
     if (responseStatus !== 200) {
       return {
@@ -97,7 +111,7 @@ export const AnyscaleChatCompleteResponseTransform: (response: AnyscaleChatCompl
     if (chunk === '[DONE]') {
       return chunk;
     }
-    const parsedChunk = JSON.parse(chunk);
+    const parsedChunk: AnyscaleStreamChunk = JSON.parse(chunk);
     return `data: ${JSON.stringify({
       id: parsedChunk.id,
       object: parsedChunk.object,
