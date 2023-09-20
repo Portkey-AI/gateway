@@ -1,4 +1,5 @@
 import AnthropicConfig from "./anthropic";
+import AnyscaleConfig from "./anyscale";
 import AzureOpenAIConfig from "./azure-openai";
 import CohereConfig from "./cohere";
 import OpenAIConfig from "./openai";
@@ -8,7 +9,8 @@ const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
   cohere: CohereConfig,
   anthropic: AnthropicConfig,
-  'azure-openai': AzureOpenAIConfig
+  'azure-openai': AzureOpenAIConfig,
+  anyscale: AnyscaleConfig
 };
 
 export default Providers;
