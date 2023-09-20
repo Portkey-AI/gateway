@@ -5,8 +5,8 @@ const AnyscaleAPIConfig: ProviderAPIConfig = {
   headers: (API_KEY:string) => {
     return {"Authorization": `Bearer ${API_KEY}`}
   },
-  complete: "/completions",
   chatComplete: "/chat/completions",
+  complete: "/chat/completions"
 };
 
 export default AnyscaleAPIConfig;

@@ -9,7 +9,7 @@ const AnyscaleConfig: ProviderConfigs = {
   api: AnyscaleAPIConfig,
   responseTransforms: {
     'stream-complete': AnyscaleCompleteStreamChunkTransform,
-    complete: AnyscaleCompleteResponseTransform,
+    'complete': AnyscaleCompleteResponseTransform,
     'chatComplete': AnyscaleChatCompleteResponseTransform,
     'stream-chatComplete': AnyscaleChatCompleteStreamChunkTransform
   }

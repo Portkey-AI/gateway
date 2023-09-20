@@ -1,4 +1,5 @@
 import { CompletionResponse, ErrorResponse, ProviderConfig } from "../types";
+import { AnyscaleChatCompleteResponse } from "./chatComplete";
 
 export const AnyscaleCompleteConfig: ProviderConfig = {
   model: {
@@ -7,8 +8,26 @@ export const AnyscaleCompleteConfig: ProviderConfig = {
     default: "text-davinci-003",
   },
   prompt: {
-    param: "prompt",
+    param: "messages",
     default: "",
+    transform: (params:Params) => {
+      if (typeof params.prompt === 'string') {
+        return [
+            {
+                role: "user",
+                content: params.prompt
+            }
+          ];
+      } else if (Array.isArray(params.prompt)) {
+        return params.prompt.map((promptText) => ([
+            {
+                role: "user",
+                content: promptText
+            }
+          ]));
+      }
+      return "";
+    }
   },
   max_tokens: {
     param: "max_tokens",
@@ -67,9 +86,7 @@ export const AnyscaleCompleteConfig: ProviderConfig = {
   },
 };
 
-interface AnyscaleCompleteResponse extends CompletionResponse, ErrorResponse {}
-
-export const AnyscaleCompleteResponseTransform: (response: AnyscaleCompleteResponse, responseStatus: number) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
+export const AnyscaleCompleteResponseTransform: (response: AnyscaleChatCompleteResponse, responseStatus: number) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
     if (responseStatus !== 200) {
       return {
           error: {
@@ -88,7 +105,12 @@ export const AnyscaleCompleteResponseTransform: (response: AnyscaleCompleteRespo
       created: response.created,
       model: response.model,
       provider: "anyscale",
-      choices: response.choices
+      choices: response.choices.map(c => ({
+        text: c.message.content ?? "",
+        index: c.index,
+        logprobs: null,
+        finish_reason: c.finish_reason,
+      }))
     };
   }
   
@@ -99,13 +121,20 @@ export const AnyscaleCompleteStreamChunkTransform: (response: string) => string 
     if (chunk === '[DONE]') {
       return chunk;
     }
-    const parsedChunk: AnyscaleCompleteResponse = JSON.parse(chunk);
+    const parsedChunk = JSON.parse(chunk);
     return `data: ${JSON.stringify({
       id: parsedChunk.id,
       object: parsedChunk.object,
       created: parsedChunk.created,
       model: parsedChunk.model,
       provider: "anyscale",
-      choices: parsedChunk.choices
+      choices: [
+        {
+            text: parsedChunk.choices[0]?.delta?.content ?? "",
+            index: parsedChunk.choices[0]?.index,
+            logprobs: null,
+            finish_reason: parsedChunk.choices[0]?.finish_reason,
+          },
+      ]
     })}` + '\n\n'
   };

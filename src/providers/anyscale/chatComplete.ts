@@ -64,7 +64,7 @@ export const AnyscaleChatCompleteConfig: ProviderConfig = {
   },
 };
 
-interface AnyscaleChatCompleteResponse extends ChatCompletionResponse, ErrorResponse {}
+export interface AnyscaleChatCompleteResponse extends ChatCompletionResponse, ErrorResponse {}
 
 export const AnyscaleChatCompleteResponseTransform: (response: AnyscaleChatCompleteResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
     if (responseStatus !== 200) {
@@ -97,7 +97,7 @@ export const AnyscaleChatCompleteResponseTransform: (response: AnyscaleChatCompl
     if (chunk === '[DONE]') {
       return chunk;
     }
-    const parsedChunk: AnyscaleChatCompleteResponse = JSON.parse(chunk);
+    const parsedChunk = JSON.parse(chunk);
     return `data: ${JSON.stringify({
       id: parsedChunk.id,
       object: parsedChunk.object,
