@@ -28,9 +28,10 @@ During the [Hacktoberfest month](https://hacktoberfest.com/), running from Octob
 make format; make lint
 ```
 2. While raising your PRs, please prepend any of the following to your title:
-*  `provider:` for adding new LLM providers.
-*  `integration:` for new integrations.
-*  `improvement:` for improvements or enhancements.
+*   `provider:` for adding new LLM providers.
+*   `integration:` for new integrations.
+*   `docs`: for new cookbooks, doc additions, etc.
+*   `improvement:` for improvements or enhancements.
 *   `bug:` for bug fixes.
 *   `hacktoberfest:` for Hacktoberfest contributions
 
