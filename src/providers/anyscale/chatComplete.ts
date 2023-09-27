@@ -99,7 +99,8 @@ export const AnyscaleChatCompleteResponseTransform: (response: AnyscaleChatCompl
       created: response.created,
       model: response.model,
       provider: "anyscale",
-      choices: response.choices
+      choices: response.choices,
+      usage: response.usage
     }
   }
     

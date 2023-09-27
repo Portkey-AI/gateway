@@ -110,7 +110,8 @@ export const AnyscaleCompleteResponseTransform: (response: AnyscaleChatCompleteR
         index: c.index,
         logprobs: null,
         finish_reason: c.finish_reason,
-      }))
+      })),
+      usage: response.usage
     };
   }
   
