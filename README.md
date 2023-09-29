@@ -1,4 +1,4 @@
-<img src="docs/images/header.png" width=2000>
+<img src="docs/images/header_new.png" width=2000>
 
 <div align="center">
 
@@ -244,9 +244,9 @@ curl --location 'http://127.0.0.1:8787/v1/complete' \
 
 ## Contributing
 
-* Bug Report? [File here](https://github.com/Portkey-AI/Rubeus/issues).
-* Feature Request? [File here](https://github.com/Portkey-AI/Rubeus/issues).
-* Reach out to the developers directly: [Rohit](https://twitter.com/jumbld) | [Ayush](https://twitter.com/ayushgarg_xyz)
+The easiest way to contribute is to pick any issue with the `good first issue` tag 💪. Read the Contributing guidelines [here](/CONTRIBUTING.md).
+
+Bug Report? [File here](https://github.com/Portkey-AI/Rubeus/issues) | Feature Request? [File here](https://github.com/Portkey-AI/Rubeus/issues)
 
 ## License
 
