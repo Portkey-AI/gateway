@@ -1,6 +1,7 @@
+import { AZURE_OPEN_AI } from "../globals";
 import { getStreamModeSplitPattern } from "../utils";
 
-export async function* readStream(reader: ReadableStreamDefaultReader, splitPattern: string, transformFunction: Function | undefined) {
+export async function* readStream(reader: ReadableStreamDefaultReader, splitPattern: string, transformFunction: Function | undefined, isSleepTimeRequired: boolean) {
     let buffer = '';
     let decoder = new TextDecoder();
     let isFirstChunk = true;
@@ -31,7 +32,7 @@ export async function* readStream(reader: ReadableStreamDefaultReader, splitPatt
                     if (isFirstChunk) {
                         isFirstChunk = false;
                         await new Promise(resolve => setTimeout(resolve, 25));
-                    } else {
+                    } else if (isSleepTimeRequired) {
                         await new Promise(resolve => setTimeout(resolve, 1));
                     }
 
@@ -66,11 +67,11 @@ export async function handleStreamingMode(response: Response, proxyProvider: str
     const { readable, writable } = new TransformStream();
     const writer = writable.getWriter();
     const reader = response.body.getReader();
-
+    const isSleepTimeRequired = proxyProvider === AZURE_OPEN_AI ? true : false;
     const encoder = new TextEncoder();
 
     (async () => {
-        for await (const chunk of readStream(reader, splitPattern, responseTransformer)) {
+        for await (const chunk of readStream(reader, splitPattern, responseTransformer, isSleepTimeRequired)) {
             await writer.write(encoder.encode(chunk));
         }
         writer.close();
