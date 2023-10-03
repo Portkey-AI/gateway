@@ -93,11 +93,11 @@ export async function proxyHandler(c: Context, env: any, request: HonoRequest<"/
     const requestOptions = c.get('requestOptions') ?? [];
     let cacheResponse, cacheStatus;
     if (getFromCacheFunction) {
-      [cacheResponse, cacheStatus] = await getFromCacheFunction(c.env, {...requestHeaders, ...fetchOptions.headers}, store.reqBody, 'proxy', cacheIdentifier);
+      [cacheResponse, cacheStatus] = await getFromCacheFunction(c.env, {...requestHeaders, ...fetchOptions.headers}, store.reqBody, urlToFetch, cacheIdentifier);
       if (cacheResponse) {
         const cacheMappedResponse = await responseHandler(new Response(cacheResponse, {headers: {
           "content-type": "application/json"
-        }}), store.isStreamingMode, store.proxyProvider, undefined);
+        }}), false, store.proxyProvider, undefined);
         c.set("requestOptions", [...requestOptions, {
           providerOptions: {...store.reqBody, provider: store.proxyProvider, requestURL: urlToFetch, rubeusURL: 'proxy'},
           requestParams: store.reqBody,

@@ -159,7 +159,7 @@ export async function tryPostProxy(c: Context, providerOption:Options, requestBo
     if (cacheResponse) {
       response = await responseHandler(new Response(cacheResponse, {headers: {
         "content-type": "application/json"
-      }}), isStreamingMode, provider, undefined);
+      }}), false, provider, undefined);
       c.set("requestOptions", [...requestOptions, {
         providerOptions: {...providerOption, requestURL: url, rubeusURL: fn},
         requestParams: params,
@@ -256,7 +256,7 @@ export async function tryPost(c: Context, providerOption:Options, requestBody: R
     if (cacheResponse) {
       response = await responseHandler(new Response(cacheResponse, {headers: {
         "content-type": "application/json"
-      }}), isStreamingMode, provider, undefined);
+      }}), false, provider, undefined);
       c.set("requestOptions", [...requestOptions, {
         providerOptions: {...providerOption, requestURL: url, rubeusURL: fn},
         requestParams: transformedRequestBody,
