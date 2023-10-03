@@ -1,7 +1,7 @@
 import { Context, HonoRequest } from "hono";
 import { retryRequest } from "./retryHandler";
 import Providers from "../providers";
-import { ANTHROPIC, MAX_RETRIES, HEADER_KEYS, PROXY_REQUEST_PATH_PREFIX, RETRY_STATUS_CODES, POWERED_BY, RESPONSE_HEADER_KEYS } from "../globals";
+import { ANTHROPIC, MAX_RETRIES, HEADER_KEYS, PROXY_REQUEST_PATH_PREFIX, RETRY_STATUS_CODES, POWERED_BY, RESPONSE_HEADER_KEYS, AZURE_OPEN_AI } from "../globals";
 import { fetchProviderOptionsFromConfig, getProviderOptionsByMode, responseHandler, tryProvidersInSequence } from "./handlerUtils";
 import { convertKeysToCamelCase, getStreamingMode } from "../utils";
 import { Config } from "../types/requestBody";
@@ -18,6 +18,9 @@ function getProxyPath(requestURL:string, proxyProvider:string) {
   const reqQuery = reqURL.search;
   reqPath = reqPath.replace(PROXY_REQUEST_PATH_PREFIX, "");
   const providerBasePath = Providers[proxyProvider].api.baseURL;
+  if (proxyProvider === AZURE_OPEN_AI) {
+    return `https:/${reqPath}${reqQuery}`;
+  }
   let proxyPath = `${providerBasePath}${reqPath}${reqQuery}`;
   
   // Fix specific for Anthropic SDK calls. Is this needed? - Yes

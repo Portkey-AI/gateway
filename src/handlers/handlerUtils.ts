@@ -125,20 +125,23 @@ export async function tryPostProxy(c: Context, providerOption:Options, requestBo
   // Mapping providers to corresponding URLs
   const apiConfig: ProviderAPIConfig = Providers[provider].api;
   let fetchOptions;
-  if (provider=="azure-openai") {
+  let url = providerOption.urlToFetch as string;
+
+  if (provider=="azure-openai" && apiConfig.getBaseURL && apiConfig.getEndpoint) {
     // Construct the base object for the POST request
     if(!!providerOption.apiKey) {
       fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, "apiKey"), provider);
     } else {
       fetchOptions = constructRequest(apiConfig.headers(providerOption.adAuth, "adAuth"), provider);
     }
+    const baseUrl = apiConfig.getBaseURL(providerOption.resourceName, providerOption.deploymentId);
+    const endpoint = apiConfig.getEndpoint(fn, providerOption.apiVersion);
+    url = `${baseUrl}${endpoint}`;
   } else {
     // Construct the base object for the POST request
     fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider);
   }
   fetchOptions.body = JSON.stringify(params)
-  // Construct the full URL
-  const url = providerOption.urlToFetch as string;
 
   let response:Response;
   let retryCount:number|undefined;
