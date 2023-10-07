@@ -226,7 +226,7 @@ export async function tryPost(c: Context, providerOption:Options, requestBody: R
     fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider);
 
     baseUrl = apiConfig.baseURL || "";
-    if (provider=="azure-openai" && apiConfig.getBaseURL && apiConfig.getEndpoint) {
+    if (provider=="ai21" && apiConfig.getBaseURL && apiConfig.getEndpoint) {
       endpoint = apiConfig.getEndpoint(fn, params?.model);
     } else {
       endpoint = apiConfig[fn] || "";
