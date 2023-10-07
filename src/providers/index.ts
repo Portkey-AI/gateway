@@ -3,6 +3,7 @@ import AnyscaleConfig from "./anyscale";
 import AzureOpenAIConfig from "./azure-openai";
 import CohereConfig from "./cohere";
 import OpenAIConfig from "./openai";
+import AI21Config from "./ai21";
 import { ProviderConfigs } from "./types";
 
 const Providers: { [key: string]: ProviderConfigs } = {
@@ -10,7 +11,8 @@ const Providers: { [key: string]: ProviderConfigs } = {
   cohere: CohereConfig,
   anthropic: AnthropicConfig,
   'azure-openai': AzureOpenAIConfig,
-  anyscale: AnyscaleConfig
+  anyscale: AnyscaleConfig,
+  ai21: AI21Config
 };
 
 export default Providers;

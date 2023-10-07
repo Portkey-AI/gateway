@@ -105,6 +105,7 @@ export interface Params {
   stop?: string | string[];
   presence_penalty?: number;
   frequency_penalty?: number;
+  count_penalty?: number;
   best_of?: number;
   logit_bias?: { [key: string]: number };
   user?: string;

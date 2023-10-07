@@ -17,6 +17,7 @@ export const OPEN_AI:string = "openai";
 export const COHERE:string = "cohere";
 export const AZURE_OPEN_AI:string = "azure-openai";
 export const ANTHROPIC:string = "anthropic";
+export const AI_21:string = "ai21";
 
 export const providersWithStreamingSupport = [OPEN_AI, AZURE_OPEN_AI, ANTHROPIC, COHERE];
 export const allowedProxyProviders = [OPEN_AI, COHERE, AZURE_OPEN_AI, ANTHROPIC];
