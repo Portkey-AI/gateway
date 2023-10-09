@@ -174,6 +174,7 @@ export async function tryPostProxy(c: Context, providerOption:Options, requestBo
   [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes);
   const mappedResponse = await responseHandler(response, isStreamingMode, provider, undefined);
   if (retryCount) mappedResponse.headers.append(RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT, retryCount.toString());
+  mappedResponse.headers.append(RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX, currentIndex.toString());
 
   c.set("requestOptions", [...requestOptions, {
     providerOptions: {...providerOption, requestURL: url, rubeusURL: fn},
