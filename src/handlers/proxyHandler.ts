@@ -91,9 +91,9 @@ export async function proxyHandler(c: Context, env: any, request: HonoRequest<"/
     const getFromCacheFunction = c.get('getFromCache');
     const cacheIdentifier = c.get('cacheIdentifier');
     const requestOptions = c.get('requestOptions') ?? [];
-    let cacheResponse, cacheStatus;
+    let cacheResponse, cacheStatus, cacheKey;
     if (getFromCacheFunction) {
-      [cacheResponse, cacheStatus] = await getFromCacheFunction(c.env, {...requestHeaders, ...fetchOptions.headers}, store.reqBody, urlToFetch, cacheIdentifier);
+      [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(c.env, {...requestHeaders, ...fetchOptions.headers}, store.reqBody, urlToFetch, cacheIdentifier);
       if (cacheResponse) {
         const cacheMappedResponse = await responseHandler(new Response(cacheResponse, {headers: {
           "content-type": "application/json"
@@ -102,7 +102,8 @@ export async function proxyHandler(c: Context, env: any, request: HonoRequest<"/
           providerOptions: {...store.reqBody, provider: store.proxyProvider, requestURL: urlToFetch, rubeusURL: 'proxy'},
           requestParams: store.reqBody,
           response: cacheMappedResponse.clone(),
-          cacheStatus: cacheStatus
+          cacheStatus: cacheStatus,
+          cacheKey: cacheKey
         }])
         return cacheMappedResponse;
       }
@@ -117,7 +118,8 @@ export async function proxyHandler(c: Context, env: any, request: HonoRequest<"/
       providerOptions: {...store.reqBody, provider: store.proxyProvider, requestURL: urlToFetch, rubeusURL: 'proxy'},
       requestParams: store.reqBody,
       response: mappedResponse.clone(),
-      cacheStatus: cacheStatus
+      cacheStatus: cacheStatus,
+      cacheKey: cacheKey
     }])
 
     return mappedResponse
