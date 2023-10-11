@@ -1,12 +1,12 @@
 import { Context } from "hono";
+import { RESPONSE_HEADER_KEYS } from "../globals";
 import Providers from "../providers";
 import { ProviderAPIConfig, endpointStrings } from "../providers/types";
 import transformToProviderRequest from "../services/transformToProviderRequest";
 import { Config, Options, Params, RequestBody, ShortConfig } from "../types/requestBody";
+import { convertKeysToCamelCase } from "../utils";
 import { retryRequest } from "./retryHandler";
 import { handleNonStreamingMode, handleStreamingMode } from "./streamHandler";
-import { convertKeysToCamelCase } from "../utils";
-import { RESPONSE_HEADER_KEYS } from "../globals";
 
 /**
  * Constructs the request options for the API call.
@@ -153,9 +153,9 @@ export async function tryPostProxy(c: Context, providerOption:Options, requestBo
   const getFromCacheFunction = c.get('getFromCache');
   const cacheIdentifier = c.get('cacheIdentifier');
   const requestOptions = c.get('requestOptions') ?? [];
-  let cacheResponse, cacheStatus;
+  let cacheResponse, cacheStatus, cacheKey;
   if (getFromCacheFunction) {
-    [cacheResponse, cacheStatus] = await getFromCacheFunction(c.env, {...requestHeaders, ...fetchOptions.headers}, requestBody, fn, cacheIdentifier);
+    [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(c.env, {...requestHeaders, ...fetchOptions.headers}, requestBody, fn, cacheIdentifier);
     if (cacheResponse) {
       response = await responseHandler(new Response(cacheResponse, {headers: {
         "content-type": "application/json"
@@ -165,7 +165,9 @@ export async function tryPostProxy(c: Context, providerOption:Options, requestBo
         requestParams: params,
         response: response.clone(),
         cacheStatus: cacheStatus,
-        lastUsedOptionIndex: currentIndex
+        lastUsedOptionIndex: currentIndex,
+        cacheKey: cacheKey
+        
       }])
       return response;
     }
@@ -181,7 +183,8 @@ export async function tryPostProxy(c: Context, providerOption:Options, requestBo
     requestParams: params,
     response: mappedResponse.clone(),
     cacheStatus: cacheStatus,
-    lastUsedOptionIndex: currentIndex
+    lastUsedOptionIndex: currentIndex,
+    cacheKey: cacheKey
   }])
   // If the response was not ok, throw an error
   if (!response.ok) {
@@ -251,9 +254,9 @@ export async function tryPost(c: Context, providerOption:Options, requestBody: R
   const getFromCacheFunction = c.get('getFromCache');
   const cacheIdentifier = c.get('cacheIdentifier');
   const requestOptions = c.get('requestOptions') ?? [];
-  let cacheResponse, cacheStatus;
+  let cacheResponse, cacheStatus, cacheKey;
   if (getFromCacheFunction) {
-    [cacheResponse, cacheStatus] = await getFromCacheFunction(c.env, {...requestHeaders, ...fetchOptions.headers}, transformedRequestBody, fn, cacheIdentifier);
+    [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(c.env, {...requestHeaders, ...fetchOptions.headers}, transformedRequestBody, fn, cacheIdentifier);
     if (cacheResponse) {
       response = await responseHandler(new Response(cacheResponse, {headers: {
         "content-type": "application/json"
@@ -263,7 +266,8 @@ export async function tryPost(c: Context, providerOption:Options, requestBody: R
         requestParams: transformedRequestBody,
         response: response.clone(),
         cacheStatus: cacheStatus,
-        lastUsedOptionIndex: currentIndex
+        lastUsedOptionIndex: currentIndex,
+        cacheKey: cacheKey
       }])
       response.headers.append(RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX, currentIndex.toString());
       return response;
@@ -280,7 +284,8 @@ export async function tryPost(c: Context, providerOption:Options, requestBody: R
     requestParams: transformedRequestBody,
     response: mappedResponse.clone(),
     cacheStatus: cacheStatus,
-    lastUsedOptionIndex: currentIndex
+    lastUsedOptionIndex: currentIndex,
+    cacheKey: cacheKey
   }])
   // If the response was not ok, throw an error
   if (!response.ok) {
