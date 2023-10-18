@@ -56,3 +56,52 @@ interface AnthropicStreamResponse {
     log_id: string;
     exception: any | null;
 }
+
+interface Examples {
+    input?: Message;
+    output?: Message
+}
+
+interface CitationSource {
+    startIndex?: number;
+    endIndex?: number;
+    uri?: string;
+    license?: string;
+}
+
+
+interface CitationMetadata {
+    citationSources?: CitationSource[]
+}
+
+
+interface PalmMessage {
+    content?: string;
+    author?: string;
+    citationMetadata?: CitationMetadata
+}
+
+interface ContentFilter {
+    "reason": "BLOCKED_REASON_UNSPECIFIED" | "SAFETY" | "OTHER",
+    "message": string
+}
+
+export interface PalmChatCompleteResponse {
+    candidates: PalmMessage[],
+    messages: PalmMessage[],
+    filters: ContentFilter[]
+}
+
+interface PalmTextOutput {
+    output: string,
+    safetyRatings: safetyRatings[]
+}
+
+interface safetyRatings {
+    category: "HARM_CATEGORY_DEROGATORY" | "HARM_CATEGORY_TOXICITY" | "HARM_CATEGORY_VIOLENCE" | "HARM_CATEGORY_SEXUAL" | "HARM_CATEGORY_MEDICAL" | "HARM_CATEGORY_DANGEROUS",
+    probability: "NEGLIGIBLE" | "LOW" | "HIGH"
+}
+
+export interface PalmCompleteResponse {
+    candidates: PalmTextOutput[]
+}

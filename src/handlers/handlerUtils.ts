@@ -228,6 +228,10 @@ export async function tryPost(c: Context, providerOption:Options, requestBody: R
     }
     baseUrl = apiConfig.getBaseURL(providerOption.resourceName, providerOption.deploymentId);
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiVersion);
+  } else if (provider === "palm" && apiConfig.baseURL && apiConfig.getEndpoint) {
+    fetchOptions = constructRequest(apiConfig.headers(), provider);
+    baseUrl = apiConfig.baseURL;
+    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, providerOption.overrideParams?.model || params?.model);
   } else {
     // Construct the base object for the POST request
     fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider);
@@ -241,6 +245,7 @@ export async function tryPost(c: Context, providerOption:Options, requestBody: R
 
   // Attach the body of the request
   const transformedRequestBody = transformToProviderRequest(provider, params, fn)
+
 
   fetchOptions.body = JSON.stringify(transformedRequestBody);
 
@@ -282,7 +287,7 @@ export async function tryPost(c: Context, providerOption:Options, requestBody: R
   c.set("requestOptions", [...requestOptions, {
     providerOptions: {...providerOption, requestURL: url, rubeusURL: fn},
     requestParams: transformedRequestBody,
-    response: mappedResponse.clone(),
+    response: await mappedResponse.clone().json(),
     cacheStatus: cacheStatus,
     lastUsedOptionIndex: currentIndex,
     cacheKey: cacheKey
