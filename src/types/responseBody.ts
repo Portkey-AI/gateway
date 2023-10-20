@@ -102,6 +102,11 @@ interface safetyRatings {
     probability: "NEGLIGIBLE" | "LOW" | "HIGH"
 }
 
+interface PalmFilter {
+    reason: "OTHER"
+}
+
 export interface PalmCompleteResponse {
     candidates: PalmTextOutput[]
+    filters: PalmFilter[]
 }

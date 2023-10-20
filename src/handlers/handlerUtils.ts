@@ -287,7 +287,7 @@ export async function tryPost(c: Context, providerOption:Options, requestBody: R
   c.set("requestOptions", [...requestOptions, {
     providerOptions: {...providerOption, requestURL: url, rubeusURL: fn},
     requestParams: transformedRequestBody,
-    response: await mappedResponse.clone().json(),
+    response: mappedResponse.clone(),
     cacheStatus: cacheStatus,
     lastUsedOptionIndex: currentIndex,
     cacheKey: cacheKey

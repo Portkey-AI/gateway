@@ -48,6 +48,7 @@ export const PalmCompleteConfig: ProviderConfig = {
 };
 
 export const PalmCompleteResponseTransform: (response: PalmCompleteResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+    console.log("responseStatus: ", responseStatus)
     if (responseStatus !== 200) {
         return {
             error: {
@@ -66,10 +67,10 @@ export const PalmCompleteResponseTransform: (response: PalmCompleteResponse, res
         created: Math.floor(Date.now() / 1000),
         model: "Unknown",
         provider: "palm",
-        choices: response.candidates.map((generation, index) => ({
+        choices: response.candidates?.map((generation, index) => ({
             message: { role: "assistant", content: generation.output },
             index: index,
             finish_reason: "length",
-        }))
+        })) || response.filters
     };
 }
