@@ -89,7 +89,9 @@ interface ContentFilter {
 export interface PalmChatCompleteResponse {
     candidates: PalmMessage[],
     messages: PalmMessage[],
-    filters: ContentFilter[]
+    filters: ContentFilter[],
+    error?: PalmError
+
 }
 
 interface PalmTextOutput {
@@ -106,7 +108,14 @@ interface PalmFilter {
     reason: "OTHER"
 }
 
+interface PalmError {
+    code: number
+    message: string
+    status: string
+}
+
 export interface PalmCompleteResponse {
     candidates: PalmTextOutput[]
     filters: PalmFilter[]
+    error?: PalmError
 }

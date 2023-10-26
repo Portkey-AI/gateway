@@ -52,10 +52,10 @@ export const PalmCompleteResponseTransform: (response: PalmCompleteResponse, res
     if (responseStatus !== 200) {
         return {
             error: {
-                // message: null,
+                message: response.error?.message ?? null,
                 type: null,
                 param: null,
-                code: null
+                code: response.error?.code ?? null
             },
             provider: "anthropic"
         } as ErrorResponse;
