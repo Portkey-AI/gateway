@@ -1,6 +1,10 @@
-import { RequestBody } from "../types/requestBody";
-import { fetchProviderOptionsFromConfig, getProviderOptionsByMode, tryProvidersInSequence } from "./handlerUtils";
-import { Context } from "hono";
+import { RequestBody } from '../types/requestBody';
+import {
+    fetchProviderOptionsFromConfig,
+    getProviderOptionsByMode,
+    tryProvidersInSequence,
+} from './handlerUtils';
+import { Context } from 'hono';
 
 // const OPENAI_CHAT_MODELS = ["gpt-4-0613","gpt-3.5-turbo-16k-0613","gpt-3.5-turbo-0301","gpt-3.5-turbo","gpt-3.5-turbo-0613","gpt-4","gpt-4-0314","gpt-3.5-turbo-16k","gpt-4-32k-0314","gpt-4-32k-0613","gpt-4-32k"]
 
@@ -14,21 +18,32 @@ import { Context } from "hono";
  * @returns {Promise<CResponse>} - The response from the provider.
  * @throws Will throw an error if no provider options can be determined or if the request to the provider(s) fails.
  */
-export async function completeHandler(c: Context, env: any, request: RequestBody, requestHeaders: Record<string, string>): Promise<Response> {
-  const providerOptions = fetchProviderOptionsFromConfig(request.config)
+export async function completeHandler(
+    c: Context,
+    env: any,
+    request: RequestBody,
+    requestHeaders: Record<string, string>
+): Promise<Response> {
+    const providerOptions = fetchProviderOptionsFromConfig(request.config);
 
-  if (!providerOptions) {
-    const errorResponse = {
-      error: { message: `Could not find a provider option.`,}
-    };
-    throw errorResponse;
-  }
+    if (!providerOptions) {
+        const errorResponse = {
+            error: { message: `Could not find a provider option.` },
+        };
+        throw errorResponse;
+    }
 
-  try {
-      return await tryProvidersInSequence(c, providerOptions, request, requestHeaders, "complete");
-  } catch (error:any) {
-    const errorArray = JSON.parse(error.message);
-    throw errorArray[errorArray.length - 1];
-  }
+    try {
+        return await tryProvidersInSequence(
+            c,
+            providerOptions,
+            request,
+            requestHeaders,
+            'complete'
+        );
+    } catch (error: any) {
+        const errorArray = JSON.parse(error.message);
+        throw errorArray[errorArray.length - 1];
+    }
 }
 
