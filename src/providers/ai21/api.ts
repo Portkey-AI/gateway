@@ -1,18 +1,17 @@
-import { ProviderAPIConfig } from '../types';
+import { ProviderAPIConfig } from "../types";
 
 const AI21APIConfig: ProviderAPIConfig = {
-    baseURL: 'https://api.ai21.com/studio/v1',
-    headers: (API_KEY: string) => {
-        return { Authorization: `Bearer ${API_KEY}` };
-    },
-    getEndpoint: (fn: string, modelType: string) => {
-        switch (fn) {
-            case 'complete': {
-                return `/j2-${modelType}/complete`;
-            }
-        }
-    },
+  baseURL: "https://api.ai21.com/studio/v1",
+  headers: (API_KEY: string) => {
+    return { Authorization: `Bearer ${API_KEY}` };
+  },
+  getEndpoint: (fn: string, modelType: string) => {
+    switch (fn) {
+      case "complete": {
+        return `/j2-${modelType}/complete`;
+      }
+    }
+  },
 };
 
 export default AI21APIConfig;
-

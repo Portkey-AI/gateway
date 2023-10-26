@@ -1,8 +1,14 @@
 import { ProviderConfigs } from "../types";
-import { OpenAICompleteConfig, OpenAICompleteResponseTransform } from "./complete";
+import {
+  OpenAICompleteConfig,
+  OpenAICompleteResponseTransform,
+} from "./complete";
 import { OpenAIEmbedConfig, OpenAIEmbedResponseTransform } from "./embed";
 import OpenAIAPIConfig from "./api";
-import { OpenAIChatCompleteConfig, OpenAIChatCompleteResponseTransform } from "./chatComplete";
+import {
+  OpenAIChatCompleteConfig,
+  OpenAIChatCompleteResponseTransform,
+} from "./chatComplete";
 
 const OpenAIConfig: ProviderConfigs = {
   complete: OpenAICompleteConfig,
@@ -14,8 +20,8 @@ const OpenAIConfig: ProviderConfigs = {
     // 'stream-complete': OpenAICompleteResponseTransform,
     chatComplete: OpenAIChatCompleteResponseTransform,
     // 'stream-chatComplete': OpenAIChatCompleteResponseTransform,
-    embed: OpenAIEmbedResponseTransform
-  }
+    embed: OpenAIEmbedResponseTransform,
+  },
 };
 
 export default OpenAIConfig;

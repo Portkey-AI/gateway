@@ -38,11 +38,11 @@ export interface ProviderAPIConfig {
   /** The endpoint for the 'complete' function. */
   complete?: string;
   /** The endpoint for the 'stream-complete' function. */
-  'stream-complete'?: string;
+  "stream-complete"?: string;
   /** The endpoint for the 'chatComplete' function. */
   chatComplete?: string;
   /** The endpoint for the 'stream-chatComplete' function. */
-  'stream-chatComplete'?: string;
+  "stream-chatComplete"?: string;
   /** The endpoint for the 'embed' function. */
   embed?: string;
   /** The endpoint for the 'rerank' function. */
@@ -59,7 +59,15 @@ export interface ProviderAPIConfig {
   proxy?: string;
 }
 
-export type endpointStrings = 'complete' | 'chatComplete' | 'embed' | 'rerank' | 'moderate' | 'stream-complete' | 'stream-chatComplete' | 'proxy'
+export type endpointStrings =
+  | "complete"
+  | "chatComplete"
+  | "embed"
+  | "rerank"
+  | "moderate"
+  | "stream-complete"
+  | "stream-chatComplete"
+  | "proxy";
 
 /**
  * A collection of API configurations for multiple AI providers.
@@ -134,12 +142,11 @@ export interface ChatCompletionResponse extends CResponse {
  * @interface
  */
 export interface ErrorResponse {
-    error: {
-        message: string;
-        type: string | null;
-        param: string | null;
-        code: string | null;
-    },
-    provider: string
+  error: {
+    message: string;
+    type: string | null;
+    param: string | null;
+    code: string | null;
+  };
+  provider: string;
 }
-

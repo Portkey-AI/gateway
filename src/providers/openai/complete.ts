@@ -71,4 +71,6 @@ export const OpenAICompleteConfig: ProviderConfig = {
 
 interface OpenAICompleteResponse extends CompletionResponse {}
 
-export const OpenAICompleteResponseTransform: (response: OpenAICompleteResponse) => CompletionResponse = (response) => response;
+export const OpenAICompleteResponseTransform: (
+  response: OpenAICompleteResponse
+) => CompletionResponse = (response) => response;

@@ -77,17 +77,17 @@ interface CohereCompleteResponse {
     };
   };
   message?: string;
-  status?: number
+  status?: number;
 }
 
 export interface CohereStreamChunk {
   id?: string;
   response: {
-      generations?: {
-        id: string;
-        text: string;
-        finish_reason: boolean
-      }[]
+    generations?: {
+      id: string;
+      text: string;
+      finish_reason: boolean;
+    }[];
   };
   prompt?: string;
   meta?: {
@@ -99,18 +99,21 @@ export interface CohereStreamChunk {
   is_finished: boolean;
 }
 
-export const CohereCompleteResponseTransform: (response: CohereCompleteResponse, responseStatus: number) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
+export const CohereCompleteResponseTransform: (
+  response: CohereCompleteResponse,
+  responseStatus: number
+) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
     return {
-        error: {
-            message: response.message,
-            type: null,
-            param: null,
-            code: null
-        },
-        provider: "anthropic"
+      error: {
+        message: response.message,
+        type: null,
+        param: null,
+        code: null,
+      },
+      provider: "anthropic",
     } as ErrorResponse;
-  } 
+  }
 
   return {
     id: response.id,
@@ -123,11 +126,13 @@ export const CohereCompleteResponseTransform: (response: CohereCompleteResponse,
       index: index,
       logprobs: null,
       finish_reason: "length",
-    }))
+    })),
   };
-}
+};
 
-export const CohereCompleteStreamChunkTransform: (response: string) => string = (responseChunk) => {
+export const CohereCompleteStreamChunkTransform: (
+  response: string
+) => string = (responseChunk) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, "");
   chunk = chunk.trim();
@@ -135,22 +140,26 @@ export const CohereCompleteStreamChunkTransform: (response: string) => string = 
 
   // discard the last cohere chunk as it sends the whole response combined.
   if (parsedChunk.is_finished) {
-    return '';
+    return "";
   }
 
-  return `${JSON.stringify({
-    id: parsedChunk.id ?? "",
-    object: "text_completion",
-    created: Math.floor(Date.now() / 1000),
-    model: "",
-    provider: "cohere",
-    choices: [
-      {
-        text: parsedChunk.response?.generations?.[0]?.text ?? parsedChunk.text,
-        index: 0,
-        logprobs: null,
-        finish_reason: parsedChunk.response?.generations?.[0]?.finish_reason ?? null,
-      },
-    ]
-  })}` + '\n\n';
+  return (
+    `${JSON.stringify({
+      id: parsedChunk.id ?? "",
+      object: "text_completion",
+      created: Math.floor(Date.now() / 1000),
+      model: "",
+      provider: "cohere",
+      choices: [
+        {
+          text:
+            parsedChunk.response?.generations?.[0]?.text ?? parsedChunk.text,
+          index: 0,
+          logprobs: null,
+          finish_reason:
+            parsedChunk.response?.generations?.[0]?.finish_reason ?? null,
+        },
+      ],
+    })}` + "\n\n"
+  );
 };

@@ -1,5 +1,8 @@
 import { CompletionResponse, ErrorResponse, ProviderConfig } from "../types";
-import { AnyscaleChatCompleteResponse, AnyscaleStreamChunk } from "./chatComplete";
+import {
+  AnyscaleChatCompleteResponse,
+  AnyscaleStreamChunk,
+} from "./chatComplete";
 
 export const AnyscaleCompleteConfig: ProviderConfig = {
   model: {
@@ -10,24 +13,24 @@ export const AnyscaleCompleteConfig: ProviderConfig = {
   prompt: {
     param: "messages",
     default: "",
-    transform: (params:Params) => {
-      if (typeof params.prompt === 'string') {
+    transform: (params: Params) => {
+      if (typeof params.prompt === "string") {
         return [
-            {
-                role: "user",
-                content: params.prompt
-            }
-          ];
+          {
+            role: "user",
+            content: params.prompt,
+          },
+        ];
       } else if (Array.isArray(params.prompt)) {
-        return params.prompt.map((promptText) => ([
-            {
-                role: "user",
-                content: promptText
-            }
-          ]));
+        return params.prompt.map((promptText) => [
+          {
+            role: "user",
+            content: promptText,
+          },
+        ]);
       }
       return "";
-    }
+    },
   },
   max_tokens: {
     param: "max_tokens",
@@ -86,44 +89,50 @@ export const AnyscaleCompleteConfig: ProviderConfig = {
   },
 };
 
-export const AnyscaleCompleteResponseTransform: (response: AnyscaleChatCompleteResponse, responseStatus: number) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
-    if (responseStatus !== 200) {
-      return {
-          error: {
-              message: response.error?.message,
-              type: response.error?.type,
-              param: null,
-              code: null
-          },
-          provider: "anyscale"
-      } as ErrorResponse;
-    } 
-  
+export const AnyscaleCompleteResponseTransform: (
+  response: AnyscaleChatCompleteResponse,
+  responseStatus: number
+) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
+  if (responseStatus !== 200) {
     return {
-      id: response.id,
-      object: response.object,
-      created: response.created,
-      model: response.model,
+      error: {
+        message: response.error?.message,
+        type: response.error?.type,
+        param: null,
+        code: null,
+      },
       provider: "anyscale",
-      choices: response.choices.map(c => ({
-        text: c.message.content ?? "",
-        index: c.index,
-        logprobs: null,
-        finish_reason: c.finish_reason,
-      })),
-      usage: response.usage
-    };
+    } as ErrorResponse;
   }
-  
-export const AnyscaleCompleteStreamChunkTransform: (response: string) => string = (responseChunk) => {
-    let chunk = responseChunk.trim();
-    chunk = chunk.replace(/^data: /, "");
-    chunk = chunk.trim();
-    if (chunk === '[DONE]') {
-      return chunk;
-    }
-    const parsedChunk: AnyscaleStreamChunk= JSON.parse(chunk);
-    return `data: ${JSON.stringify({
+
+  return {
+    id: response.id,
+    object: response.object,
+    created: response.created,
+    model: response.model,
+    provider: "anyscale",
+    choices: response.choices.map((c) => ({
+      text: c.message.content ?? "",
+      index: c.index,
+      logprobs: null,
+      finish_reason: c.finish_reason,
+    })),
+    usage: response.usage,
+  };
+};
+
+export const AnyscaleCompleteStreamChunkTransform: (
+  response: string
+) => string = (responseChunk) => {
+  let chunk = responseChunk.trim();
+  chunk = chunk.replace(/^data: /, "");
+  chunk = chunk.trim();
+  if (chunk === "[DONE]") {
+    return chunk;
+  }
+  const parsedChunk: AnyscaleStreamChunk = JSON.parse(chunk);
+  return (
+    `data: ${JSON.stringify({
       id: parsedChunk.id,
       object: parsedChunk.object,
       created: parsedChunk.created,
@@ -131,11 +140,12 @@ export const AnyscaleCompleteStreamChunkTransform: (response: string) => string 
       provider: "anyscale",
       choices: [
         {
-            text: parsedChunk.choices[0]?.delta?.content ?? "",
-            index: parsedChunk.choices[0]?.index,
-            logprobs: null,
-            finish_reason: parsedChunk.choices[0]?.finish_reason,
-          },
-      ]
-    })}` + '\n\n'
-  };
+          text: parsedChunk.choices[0]?.delta?.content ?? "",
+          index: parsedChunk.choices[0]?.index,
+          logprobs: null,
+          finish_reason: parsedChunk.choices[0]?.finish_reason,
+        },
+      ],
+    })}` + "\n\n"
+  );
+};

@@ -1,7 +1,15 @@
 import { ProviderConfigs } from "../types";
 import CohereAPIConfig from "./api";
-import { CohereChatCompleteConfig, CohereChatCompleteResponseTransform, CohereChatCompleteStreamChunkTransform } from "./chatComplete";
-import {CohereCompleteConfig, CohereCompleteResponseTransform, CohereCompleteStreamChunkTransform} from "./complete";
+import {
+  CohereChatCompleteConfig,
+  CohereChatCompleteResponseTransform,
+  CohereChatCompleteStreamChunkTransform,
+} from "./chatComplete";
+import {
+  CohereCompleteConfig,
+  CohereCompleteResponseTransform,
+  CohereCompleteStreamChunkTransform,
+} from "./complete";
 import { CohereEmbedConfig, CohereEmbedResponseTransform } from "./embed";
 
 const CohereConfig: ProviderConfigs = {
@@ -11,11 +19,11 @@ const CohereConfig: ProviderConfigs = {
   api: CohereAPIConfig,
   responseTransforms: {
     complete: CohereCompleteResponseTransform,
-    'stream-complete': CohereCompleteStreamChunkTransform,
+    "stream-complete": CohereCompleteStreamChunkTransform,
     chatComplete: CohereChatCompleteResponseTransform,
-    'stream-chatComplete': CohereChatCompleteStreamChunkTransform,
-    embed: CohereEmbedResponseTransform
-  }
+    "stream-chatComplete": CohereChatCompleteStreamChunkTransform,
+    embed: CohereEmbedResponseTransform,
+  },
 };
 
 export default CohereConfig;

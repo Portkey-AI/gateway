@@ -7,11 +7,11 @@ export const CohereEmbedConfig: ProviderConfig = {
     required: true,
     transform: (params: EmbedParams): string[] => {
       if (Array.isArray(params.input)) {
-          return params.input;
+        return params.input;
       } else {
-          return [params.input];
+        return [params.input];
       }
-    }
+    },
   },
   model: {
     param: "model",
@@ -44,18 +44,20 @@ export interface EmbedMeta {
 export interface CohereEmbedResponse {
   /** A string that represents the ID of the embedding request. */
   id: string;
-  
+
   /** An array of strings which were the input texts to be embedded. */
   texts: string[];
-  
+
   /** A 2D array of floating point numbers representing the embeddings. */
   embeddings: number[][];
-  
+
   /** An `EmbedMeta` object which contains metadata about the response. */
   meta: EmbedMeta;
 }
 
-export const CohereEmbedResponseTransform: (response: CohereEmbedResponse) => EmbedResponse = (response) => ({
+export const CohereEmbedResponseTransform: (
+  response: CohereEmbedResponse
+) => EmbedResponse = (response) => ({
   object: "list",
   data: response.embeddings.map((embedding, index) => ({
     object: "embedding",
@@ -65,6 +67,6 @@ export const CohereEmbedResponseTransform: (response: CohereEmbedResponse) => Em
   model: "", // Todo: find a way to send the cohere embedding model name back
   usage: {
     prompt_tokens: -1,
-    total_tokens: -1
+    total_tokens: -1,
   },
 });

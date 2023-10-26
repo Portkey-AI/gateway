@@ -6,7 +6,7 @@
 
 import { Hono } from "hono";
 import { prettyJSON } from "hono/pretty-json";
-import { HTTPException } from 'hono/http-exception'
+import { HTTPException } from "hono/http-exception";
 // import { env } from 'hono/adapter' // Have to set this up for multi-environment deployment
 
 import { completeHandler } from "./handlers/completeHandler";
@@ -39,10 +39,10 @@ app.notFound((c) => c.json({ message: "Not Found", ok: false }, 404));
  */
 app.onError((err, c) => {
   if (err instanceof HTTPException) {
-      return err.getResponse()
+    return err.getResponse();
   }
   c.status(500);
-  return c.json({ok: false, message: err.message});
+  return c.json({ ok: false, message: err.message });
 });
 
 /**
@@ -55,15 +55,15 @@ app.post("/v1/complete", async (c) => {
     let cjson = await c.req.json();
     let cheaders = Object.fromEntries(c.req.headers);
     return await completeHandler(c, c.env, cjson, cheaders);
-  } catch(err:any) {
-    throw new HTTPException(err.status, { 
+  } catch (err: any) {
+    throw new HTTPException(err.status, {
       res: new Response(err.errorObj, {
         status: err.status,
         headers: {
-          "content-type": "application/json"
-        }
-      }) 
-    })
+          "content-type": "application/json",
+        },
+      }),
+    });
   }
 });
 
@@ -75,17 +75,17 @@ app.post("/v1/complete", async (c) => {
 app.post("/v1/chatComplete", async (c) => {
   try {
     let cjson = await c.req.json();
-    let cheaders = Object.fromEntries(c.req.headers)
+    let cheaders = Object.fromEntries(c.req.headers);
     return await chatCompleteHandler(c, c.env, cjson, cheaders);
-  } catch(err:any) {
-    throw new HTTPException(err.status, { 
+  } catch (err: any) {
+    throw new HTTPException(err.status, {
       res: new Response(err.errorObj, {
         status: err.status,
         headers: {
-          "content-type": "application/json"
-        }
-      }) 
-    })
+          "content-type": "application/json",
+        },
+      }),
+    });
   }
 });
 
@@ -97,35 +97,36 @@ app.post("/v1/chatComplete", async (c) => {
 app.post("/v1/embed", async (c) => {
   try {
     let cjson = await c.req.json();
-    let cheaders = Object.fromEntries(c.req.headers)
+    let cheaders = Object.fromEntries(c.req.headers);
     return await embedHandler(c, c.env, cjson, cheaders);
-  } catch(err:any) {
-    throw new HTTPException(err.status, { 
+  } catch (err: any) {
+    throw new HTTPException(err.status, {
       res: new Response(err.errorObj, {
         status: err.status,
         headers: {
-          "content-type": "application/json"
-        }
-      }) 
-    })
+          "content-type": "application/json",
+        },
+      }),
+    });
   }
 });
 
 app.post("/v1/proxy/*", async (c) => {
   try {
     const resp = await proxyHandler(c, c.env, c.req);
+
     return resp;
-  } catch(err:any) {
-    throw new HTTPException(err.status, { 
+  } catch (err: any) {
+    throw new HTTPException(err.status, {
       res: new Response(err.errorObj, {
         status: err.status,
         headers: {
-          "content-type": "application/json"
-        }
-      }) 
-    })
+          "content-type": "application/json",
+        },
+      }),
+    });
   }
-})
+});
 
 // Export the app
 export default app;

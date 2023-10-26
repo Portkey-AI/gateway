@@ -4,7 +4,7 @@ import { CompletionResponse, ProviderConfig } from "../types";
 
 export const AzureOpenAICompleteConfig: ProviderConfig = {
   model: {
-    param: "model"
+    param: "model",
   },
   prompt: {
     param: "prompt",
@@ -69,4 +69,6 @@ export const AzureOpenAICompleteConfig: ProviderConfig = {
 
 interface AzureOpenAICompleteResponse extends CompletionResponse {}
 
-export const AzureOpenAICompleteResponseTransform: (response: AzureOpenAICompleteResponse) => CompletionResponse = (response) => response;
+export const AzureOpenAICompleteResponseTransform: (
+  response: AzureOpenAICompleteResponse
+) => CompletionResponse = (response) => response;

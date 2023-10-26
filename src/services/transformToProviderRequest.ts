@@ -34,7 +34,11 @@ function setNestedProperty(obj: any, path: string, value: any) {
  *
  * @throws {Error} If the provider is not supported.
  */
-const transformToProviderRequest = (provider: string, params: Params, fn: string): { [key: string]: any } => {
+const transformToProviderRequest = (
+  provider: string,
+  params: Params,
+  fn: string
+): { [key: string]: any } => {
   // Get the configuration for the specified provider
   const providerConfig = ProviderConfigs[provider][fn];
 
