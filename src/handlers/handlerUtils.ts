@@ -116,6 +116,7 @@ export const fetchProviderOptionsFromConfig = (
                 provider: camelCaseConfig.provider,
                 virtualKey: camelCaseConfig.virtualKey,
                 apiKey: camelCaseConfig.apiKey,
+                localBaseUrl: camelCaseConfig.localBaseUrl,
             },
         ];
         mode = 'single';
@@ -336,6 +337,13 @@ export async function tryPost(
             providerOption.deploymentId
         );
         endpoint = apiConfig.getEndpoint(fn, providerOption.apiVersion);
+    } else if (provider === 'ollama' && apiConfig.getBaseURL) {
+        fetchOptions = constructRequest(
+            apiConfig.headers(providerOption.apiKey),
+            provider
+        );
+        baseUrl = apiConfig.getBaseURL(providerOption.localBaseUrl);
+        endpoint = apiConfig[fn] || '';
     } else {
         // Construct the base object for the POST request
         fetchOptions = constructRequest(

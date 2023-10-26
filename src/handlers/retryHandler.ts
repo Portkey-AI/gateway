@@ -9,63 +9,80 @@ import retry from 'async-retry';
  * @param {RequestInit} options - The options for the request, such as method, headers, and body.
  * @param {number} retryCount - The maximum number of times to retry the request.
  * @param {number[]} statusCodesToRetry - The HTTP status codes that should trigger a retry.
- * @returns {Promise<[Response, number | undefined]>} - The response from the request and the number of attempts it took to get a successful response. 
+ * @returns {Promise<[Response, number | undefined]>} - The response from the request and the number of attempts it took to get a successful response.
  *                                                     If all attempts fail, the error message and status code are returned as a Response object, and the number of attempts is undefined.
  * @throws Will throw an error if the request fails after all retry attempts, with the error message and status code in the thrown error.
  */
 export const retryRequest = async (
-  url: string,
-  options: RequestInit,
-  retryCount: number,
-  statusCodesToRetry: number[]
+    url: string,
+    options: RequestInit,
+    retryCount: number,
+    statusCodesToRetry: number[]
 ): Promise<[Response, number | undefined]> => {
+    let lastError: any | undefined;
+    let lastResponse: Response | undefined;
+    let lastAttempt: number | undefined;
+    try {
+        await retry(
+            async (bail: any, attempt: number) => {
+                try {
+                    const response: Response = await fetch(url, options);
 
-  let lastError: any | undefined;
-  let lastResponse: Response | undefined;
-  let lastAttempt: number | undefined;
-  try {
-    await retry(
-      async (bail: any, attempt: number) => {
-        try {
-          const response: Response = await fetch(url, options);
-          if (statusCodesToRetry.includes(response.status)) {
-            const errorObj: any = new Error(await response.text());
-            errorObj.status = response.status;
-            errorObj.headers = Object.fromEntries(response.headers);
-            throw errorObj;
-          } else if (response.status>=200 && response.status<=204) {
-            console.log(`Returned in Retry Attempt ${attempt}. Status:`, response.ok, response.status);
-          } else {
-            // All error codes that aren't retried need to be propogated up
-            const errorObj:any = new Error(await response.clone().text());
-            errorObj.status = response.status;
-            errorObj.headers = Object.fromEntries(response.headers);
-            bail(errorObj);
-            return;
-          }
-          lastResponse = response;
-        } catch (error: any) {
-          lastError = error;
-          if (attempt >= retryCount + 1) {
-            bail(error);
-            return;
-          }
-          throw error;
-        }
-      }, {
-      retries: retryCount,
-      onRetry: (error: Error, attempt: number) => {
-        lastAttempt = attempt;
-        console.warn(`Failed in Retry attempt ${attempt}. Error: ${error}`);
-      },
+                    if (statusCodesToRetry.includes(response.status)) {
+                        const errorObj: any = new Error(await response.text());
+                        errorObj.status = response.status;
+                        errorObj.headers = Object.fromEntries(response.headers);
+                        throw errorObj;
+                    } else if (
+                        response.status >= 200 &&
+                        response.status <= 204
+                    ) {
+                        console.log(
+                            `Returned in Retry Attempt ${attempt}. Status:`,
+                            response.ok,
+                            response.status
+                        );
+                    } else {
+                        // All error codes that aren't retried need to be propogated up
+                        const errorObj: any = new Error(
+                            await response.clone().text()
+                        );
+                        errorObj.status = response.status;
+                        errorObj.headers = Object.fromEntries(response.headers);
+                        bail(errorObj);
+                        return;
+                    }
+                    lastResponse = response;
+                } catch (error: any) {
+                    lastError = error;
+                    if (attempt >= retryCount + 1) {
+                        bail(error);
+                        return;
+                    }
+                    throw error;
+                }
+            },
+            {
+                retries: retryCount,
+                onRetry: (error: Error, attempt: number) => {
+                    lastAttempt = attempt;
+                    console.warn(
+                        `Failed in Retry attempt ${attempt}. Error: ${error}`
+                    );
+                },
+            }
+        );
+    } catch (error: any) {
+        lastResponse = new Response(error.message, {
+            status: error.status,
+            headers: error.headers,
+        });
+        console.warn(
+            `Tried ${lastAttempt} time(s) but failed. Error: ${JSON.stringify(
+                error
+            )}`
+        );
     }
-    );
-  } catch (error: any) {
-    lastResponse = new Response(error.message, {
-      status: error.status,
-      headers: error.headers
-    });
-    console.warn(`Tried ${lastAttempt} time(s) but failed. Error: ${JSON.stringify(error)}`);
-  }
-  return [lastResponse as Response, lastAttempt];
-}
+    return [lastResponse as Response, lastAttempt];
+};
+
