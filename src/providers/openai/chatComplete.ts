@@ -66,6 +66,4 @@ export const OpenAIChatCompleteConfig: ProviderConfig = {
 
 interface OpenAIChatCompleteResponse extends ChatCompletionResponse {}
 
-export const OpenAIChatCompleteResponseTransform: (
-  response: OpenAIChatCompleteResponse
-) => ChatCompletionResponse = (response) => response;
+export const OpenAIChatCompleteResponseTransform: (response: OpenAIChatCompleteResponse) => ChatCompletionResponse = (response) => response;

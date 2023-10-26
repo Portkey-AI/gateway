@@ -18,6 +18,5 @@ export const AzureOpenAIEmbedConfig: ProviderConfig = {
 
 interface AzureOpenAIEmbedResponse extends EmbedResponse {}
 
-export const AzureOpenAIEmbedResponseTransform: (
-  response: AzureOpenAIEmbedResponse
-) => EmbedResponse = (response) => response;
+export const AzureOpenAIEmbedResponseTransform: (response: AzureOpenAIEmbedResponse) => EmbedResponse = (response) => response;
+

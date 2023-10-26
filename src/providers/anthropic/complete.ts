@@ -63,21 +63,18 @@ interface AnthropicCompleteResponse {
 }
 
 // TODO: The token calculation is wrong atm
-export const AnthropicCompleteResponseTransform: (
-  response: AnthropicCompleteResponse,
-  responseStatus: number
-) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
+export const AnthropicCompleteResponseTransform: (response: AnthropicCompleteResponse, responseStatus: number) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
     return {
-      error: {
-        message: response.error?.message,
-        type: response.error?.type,
-        param: null,
-        code: null,
-      },
-      provider: "anthropic",
+        error: {
+            message: response.error?.message,
+            type: response.error?.type,
+            param: null,
+            code: null
+        },
+        provider: "anthropic"
     } as ErrorResponse;
-  }
+  } 
 
   return {
     id: response.log_id,
@@ -92,38 +89,33 @@ export const AnthropicCompleteResponseTransform: (
         logprobs: null,
         finish_reason: response.stop_reason,
       },
-    ],
+    ]
   };
-};
+}
 
-export const AnthropicCompleteStreamChunkTransform: (
-  response: string,
-  state: { lastIndex: number }
-) => string = (responseChunk, state) => {
+export const AnthropicCompleteStreamChunkTransform: (response: string, state: { lastIndex: number }) => string = (responseChunk, state) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, "");
   chunk = chunk.trim();
-  if (chunk === "[DONE]") {
+  if (chunk === '[DONE]') {
     return chunk;
   }
   const parsedChunk: AnthropicCompleteResponse = JSON.parse(chunk);
   const parsedCompletion = parsedChunk.completion.slice(state.lastIndex);
   state.lastIndex = parsedChunk.completion.length;
-  return (
-    `data: ${JSON.stringify({
-      id: parsedChunk.log_id,
-      object: "text_completion",
-      created: Math.floor(Date.now() / 1000),
-      model: parsedChunk.model,
-      provider: "anthropic",
-      choices: [
-        {
-          text: parsedCompletion,
-          index: 0,
-          logprobs: null,
-          finish_reason: parsedChunk.stop_reason,
-        },
-      ],
-    })}` + "\n\n"
-  );
+  return `data: ${JSON.stringify({
+    id: parsedChunk.log_id,
+    object: "text_completion",
+    created: Math.floor(Date.now() / 1000),
+    model: parsedChunk.model,
+    provider: "anthropic",
+    choices: [
+      {
+        text: parsedCompletion,
+        index: 0,
+        logprobs: null,
+        finish_reason: parsedChunk.stop_reason,
+      },
+    ]
+  })}` + '\n\n'
 };

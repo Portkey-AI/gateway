@@ -1,17 +1,8 @@
 import { ProviderConfigs } from "../types";
-import {
-  AzureOpenAICompleteConfig,
-  AzureOpenAICompleteResponseTransform,
-} from "./complete";
-import {
-  AzureOpenAIEmbedConfig,
-  AzureOpenAIEmbedResponseTransform,
-} from "./embed";
+import { AzureOpenAICompleteConfig, AzureOpenAICompleteResponseTransform } from "./complete";
+import { AzureOpenAIEmbedConfig, AzureOpenAIEmbedResponseTransform } from "./embed";
 import AzureOpenAIAPIConfig from "./api";
-import {
-  AzureOpenAIChatCompleteConfig,
-  AzureOpenAIChatCompleteResponseTransform,
-} from "./chatComplete";
+import { AzureOpenAIChatCompleteConfig, AzureOpenAIChatCompleteResponseTransform } from "./chatComplete";
 
 const AzureOpenAIConfig: ProviderConfigs = {
   complete: AzureOpenAICompleteConfig,
@@ -21,8 +12,8 @@ const AzureOpenAIConfig: ProviderConfigs = {
   responseTransforms: {
     complete: AzureOpenAICompleteResponseTransform,
     chatComplete: AzureOpenAIChatCompleteResponseTransform,
-    embed: AzureOpenAIEmbedResponseTransform,
-  },
+    embed: AzureOpenAIEmbedResponseTransform
+  }
 };
 
 export default AzureOpenAIConfig;

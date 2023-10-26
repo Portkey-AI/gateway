@@ -3,13 +3,7 @@ import { RESPONSE_HEADER_KEYS } from "../globals";
 import Providers from "../providers";
 import { ProviderAPIConfig, endpointStrings } from "../providers/types";
 import transformToProviderRequest from "../services/transformToProviderRequest";
-import {
-  Config,
-  Options,
-  Params,
-  RequestBody,
-  ShortConfig,
-} from "../types/requestBody";
+import { Config, Options, Params, RequestBody, ShortConfig } from "../types/requestBody";
 import { convertKeysToCamelCase } from "../utils";
 import { retryRequest } from "./retryHandler";
 import { handleNonStreamingMode, handleStreamingMode } from "./streamHandler";
@@ -23,12 +17,12 @@ import { handleNonStreamingMode, handleStreamingMode } from "./streamHandler";
  */
 export function constructRequest(headers: any, provider: string = "") {
   let baseHeaders: any = {
-    "content-type": "application/json",
+    "content-type": "application/json"
   };
 
   // Add any headers that the model might need
-  headers = { ...baseHeaders, ...headers };
-
+  headers = {...baseHeaders, ...headers}
+  
   let fetchOptions: RequestInit = {
     method: "POST",
     headers,
@@ -46,18 +40,12 @@ export function constructRequest(headers: any, provider: string = "") {
  * @returns {Options} - The selected provider.
  * @throws Will throw an error if no provider is selected, or if all weights are 0.
  */
-export function selectProviderByWeight(providers: Options[]): Options {
+export function selectProviderByWeight(providers:Options[]): Options {
   // Assign a default weight of 1 to providers with undefined weight
-  providers = providers.map((provider) => ({
-    ...provider,
-    weight: provider.weight ?? 1,
-  }));
+  providers = providers.map(provider => ({...provider, weight: provider.weight ?? 1}));
 
   // Compute the total weight
-  let totalWeight = providers.reduce(
-    (sum: number, provider: any) => sum + provider.weight,
-    0
-  );
+  let totalWeight = providers.reduce((sum:number, provider:any) => sum + provider.weight, 0);
 
   // Select a random weight between 0 and totalWeight
   let randomWeight = Math.random() * totalWeight;
@@ -66,7 +54,7 @@ export function selectProviderByWeight(providers: Options[]): Options {
   for (let [index, provider] of providers.entries()) {
     // @ts-ignore since weight is being default set above
     if (randomWeight < provider.weight) {
-      return { ...provider, index };
+      return {...provider, index};
     }
     // @ts-ignore since weight is being default set above
     randomWeight -= provider.weight;
@@ -84,10 +72,7 @@ export function selectProviderByWeight(providers: Options[]): Options {
  * @param {any} config - The configuration for the providers.
  * @returns {(Options[]|null)} - The selected provider options.
  */
-export function getProviderOptionsByMode(
-  mode: string,
-  config: any
-): Options[] | null {
+export function getProviderOptionsByMode(mode: string, config: any): Options[]|null {
   switch (mode) {
     case "single":
       return [config.options[0]];
@@ -97,34 +82,27 @@ export function getProviderOptionsByMode(
       return config.options;
     default:
       return null;
-  }
+  }    
 }
 
-export const fetchProviderOptionsFromConfig = (
-  config: Config | ShortConfig
-): Options[] | null => {
+export const fetchProviderOptionsFromConfig = (config: Config | ShortConfig): Options[] | null => {
   let providerOptions: Options[] | null = null;
   let mode: string;
-  const camelCaseConfig = convertKeysToCamelCase(config, [
-    "override_params",
-    "params",
-  ]) as Config | ShortConfig;
+  const camelCaseConfig  = convertKeysToCamelCase(config, ["override_params", "params"]) as Config | ShortConfig;
 
-  if ("provider" in camelCaseConfig) {
-    providerOptions = [
-      {
-        provider: camelCaseConfig.provider,
-        virtualKey: camelCaseConfig.virtualKey,
-        apiKey: camelCaseConfig.apiKey,
-      },
-    ];
-    mode = "single";
+  if ('provider' in camelCaseConfig) {
+      providerOptions = [{
+      provider: camelCaseConfig.provider, 
+      virtualKey: camelCaseConfig.virtualKey, 
+      apiKey: camelCaseConfig.apiKey,
+      }];
+      mode = "single";
   } else {
-    mode = camelCaseConfig.mode;
-    providerOptions = getProviderOptionsByMode(mode, camelCaseConfig);
+      mode = camelCaseConfig.mode;
+      providerOptions = getProviderOptionsByMode(mode, camelCaseConfig);
   }
   return providerOptions;
-};
+}
 
 /**
  * Makes a POST request to a provider and returns the response.
@@ -137,143 +115,77 @@ export const fetchProviderOptionsFromConfig = (
  * @returns {Promise<CompletionResponse>} - The response from the POST request.
  * @throws Will throw an error if the response is not ok or if all retry attempts fail.
  */
-export async function tryPostProxy(
-  c: Context,
-  providerOption: Options,
-  requestBody: RequestBody,
-  requestHeaders: Record<string, string>,
-  fn: endpointStrings,
-  currentIndex: number
-): Promise<Response> {
+export async function tryPostProxy(c: Context, providerOption:Options, requestBody: RequestBody, requestHeaders: Record<string, string>, fn: endpointStrings, currentIndex: number): Promise<Response> {
   const overrideParams = providerOption?.overrideParams || {};
-  const params: Params = { ...requestBody.params, ...overrideParams };
+  const params: Params = {...requestBody.params, ...overrideParams};
   const isStreamingMode = params.stream ? true : false;
 
-  const provider: string = providerOption.provider ?? "";
-
+  const provider:string = providerOption.provider ?? "";
+  
   // Mapping providers to corresponding URLs
   const apiConfig: ProviderAPIConfig = Providers[provider].api;
   let fetchOptions;
   let url = providerOption.urlToFetch as string;
 
-  if (
-    provider == "azure-openai" &&
-    apiConfig.getBaseURL &&
-    apiConfig.getEndpoint
-  ) {
+  if (provider=="azure-openai" && apiConfig.getBaseURL && apiConfig.getEndpoint) {
     // Construct the base object for the POST request
-    if (!!providerOption.apiKey) {
-      fetchOptions = constructRequest(
-        apiConfig.headers(providerOption.apiKey, "apiKey"),
-        provider
-      );
+    if(!!providerOption.apiKey) {
+      fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, "apiKey"), provider);
     } else {
-      fetchOptions = constructRequest(
-        apiConfig.headers(providerOption.adAuth, "adAuth"),
-        provider
-      );
+      fetchOptions = constructRequest(apiConfig.headers(providerOption.adAuth, "adAuth"), provider);
     }
-    const baseUrl = apiConfig.getBaseURL(
-      providerOption.resourceName,
-      providerOption.deploymentId
-    );
+    const baseUrl = apiConfig.getBaseURL(providerOption.resourceName, providerOption.deploymentId);
     const endpoint = apiConfig.getEndpoint(fn, providerOption.apiVersion);
     url = `${baseUrl}${endpoint}`;
   } else {
     // Construct the base object for the POST request
-    fetchOptions = constructRequest(
-      apiConfig.headers(providerOption.apiKey),
-      provider
-    );
+    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider);
   }
-  fetchOptions.body = JSON.stringify(params);
+  fetchOptions.body = JSON.stringify(params)
 
-  let response: Response;
-  let retryCount: number | undefined;
+  let response:Response;
+  let retryCount:number|undefined;
 
   if (!providerOption.retry) {
-    providerOption.retry = { attempts: 1, onStatusCodes: [] };
+    providerOption.retry = {attempts: 1, onStatusCodes:[]}
   }
 
-  const getFromCacheFunction = c.get("getFromCache");
-  const cacheIdentifier = c.get("cacheIdentifier");
-  const requestOptions = c.get("requestOptions") ?? [];
+  const getFromCacheFunction = c.get('getFromCache');
+  const cacheIdentifier = c.get('cacheIdentifier');
+  const requestOptions = c.get('requestOptions') ?? [];
   let cacheResponse, cacheStatus, cacheKey;
   if (getFromCacheFunction) {
-    [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(
-      c.env,
-      { ...requestHeaders, ...fetchOptions.headers },
-      requestBody,
-      fn,
-      cacheIdentifier
-    );
+    [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(c.env, {...requestHeaders, ...fetchOptions.headers}, requestBody, fn, cacheIdentifier);
     if (cacheResponse) {
-      response = await responseHandler(
-        new Response(cacheResponse, {
-          headers: {
-            "content-type": "application/json",
-          },
-        }),
-        false,
-        provider,
-        undefined
-      );
-      c.set("requestOptions", [
-        ...requestOptions,
-        {
-          providerOptions: {
-            ...providerOption,
-            requestURL: url,
-            rubeusURL: fn,
-          },
-          requestParams: params,
-          response: response.clone(),
-          cacheStatus: cacheStatus,
-          lastUsedOptionIndex: currentIndex,
-          cacheKey: cacheKey,
-        },
-      ]);
+      response = await responseHandler(new Response(cacheResponse, {headers: {
+        "content-type": "application/json"
+      }}), false, provider, undefined);
+      c.set("requestOptions", [...requestOptions, {
+        providerOptions: {...providerOption, requestURL: url, rubeusURL: fn},
+        requestParams: params,
+        response: response.clone(),
+        cacheStatus: cacheStatus,
+        lastUsedOptionIndex: currentIndex,
+        cacheKey: cacheKey
+        
+      }])
       return response;
     }
   }
 
-  [response, retryCount] = await retryRequest(
-    url,
-    fetchOptions,
-    providerOption.retry.attempts,
-    providerOption.retry.onStatusCodes
-  );
-  const mappedResponse = await responseHandler(
-    response,
-    isStreamingMode,
-    provider,
-    undefined
-  );
-  if (retryCount)
-    mappedResponse.headers.append(
-      RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT,
-      retryCount.toString()
-    );
-  mappedResponse.headers.append(
-    RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX,
-    currentIndex.toString()
-  );
+  [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes);
+  const mappedResponse = await responseHandler(response, isStreamingMode, provider, undefined);
+  if (retryCount) mappedResponse.headers.append(RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT, retryCount.toString());
+  mappedResponse.headers.append(RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX, currentIndex.toString());
 
-  c.set("requestOptions", [
-    ...requestOptions,
-    {
-      providerOptions: {
-        ...providerOption,
-        requestURL: url,
-        rubeusURL: fn,
-      },
-      requestParams: params,
-      response: mappedResponse.clone(),
-      cacheStatus: cacheStatus,
-      lastUsedOptionIndex: currentIndex,
-      cacheKey: cacheKey,
-    },
-  ]);
+  c.set("requestOptions", [...requestOptions, {
+    providerOptions: {...providerOption, requestURL: url, rubeusURL: fn},
+    requestParams: params,
+    response: mappedResponse.clone(),
+    cacheStatus: cacheStatus,
+    lastUsedOptionIndex: currentIndex,
+    cacheKey: cacheKey
+  }])
   // If the response was not ok, throw an error
   if (!response.ok) {
     // Check if this request needs to be retried
@@ -296,163 +208,85 @@ export async function tryPostProxy(
  * @returns {Promise<CompletionResponse>} - The response from the POST request.
  * @throws Will throw an error if the response is not ok or if all retry attempts fail.
  */
-export async function tryPost(
-  c: Context,
-  providerOption: Options,
-  requestBody: RequestBody,
-  requestHeaders: Record<string, string>,
-  fn: endpointStrings,
-  currentIndex: number
-): Promise<Response> {
+export async function tryPost(c: Context, providerOption:Options, requestBody: RequestBody, requestHeaders: Record<string, string>, fn: endpointStrings, currentIndex: number): Promise<Response> {
   const overrideParams = providerOption?.overrideParams || {};
-  const params: Params = { ...requestBody.params, ...overrideParams };
+  const params: Params = {...requestBody.params, ...overrideParams};
   const isStreamingMode = params.stream ? true : false;
 
-  const provider: string = providerOption.provider ?? "";
-
+  const provider:string = providerOption.provider ?? "";
+  
   // Mapping providers to corresponding URLs
   const apiConfig: ProviderAPIConfig = Providers[provider].api;
 
-  let baseUrl: string, endpoint: string, fetchOptions;
-  if (
-    provider == "azure-openai" &&
-    apiConfig.getBaseURL &&
-    apiConfig.getEndpoint
-  ) {
+  let baseUrl:string, endpoint:string, fetchOptions;
+  if (provider=="azure-openai" && apiConfig.getBaseURL && apiConfig.getEndpoint) {
     // Construct the base object for the POST request
-    if (!!providerOption.apiKey) {
-      fetchOptions = constructRequest(
-        apiConfig.headers(providerOption.apiKey, "apiKey"),
-        provider
-      );
+    if(!!providerOption.apiKey) {
+      fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, "apiKey"), provider);
     } else {
-      fetchOptions = constructRequest(
-        apiConfig.headers(providerOption.adAuth, "adAuth"),
-        provider
-      );
+      fetchOptions = constructRequest(apiConfig.headers(providerOption.adAuth, "adAuth"), provider);
     }
-    baseUrl = apiConfig.getBaseURL(
-      providerOption.resourceName,
-      providerOption.deploymentId
-    );
+    baseUrl = apiConfig.getBaseURL(providerOption.resourceName, providerOption.deploymentId);
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiVersion);
   } else {
     // Construct the base object for the POST request
-    fetchOptions = constructRequest(
-      apiConfig.headers(providerOption.apiKey),
-      provider
-    );
+    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider);
 
     baseUrl = apiConfig.baseURL || "";
-    if (provider === "ai21") {
-      endpoint = apiConfig.getEndpoint!(fn, params?.model);
-    } else {
-      endpoint = apiConfig[fn] || "";
-    }
+    endpoint = apiConfig[fn] || "";
   }
 
   // Construct the full URL
   const url = `${baseUrl}${endpoint}`;
 
   // Attach the body of the request
-  const transformedRequestBody = transformToProviderRequest(
-    provider,
-    params,
-    fn
-  );
+  const transformedRequestBody = transformToProviderRequest(provider, params, fn)
 
   fetchOptions.body = JSON.stringify(transformedRequestBody);
 
-  let response: Response;
-  let retryCount: number | undefined;
+  let response:Response;
+  let retryCount:number|undefined;
 
   if (!providerOption.retry) {
-    providerOption.retry = { attempts: 1, onStatusCodes: [] };
+    providerOption.retry = {attempts: 1, onStatusCodes:[]}
   }
 
-  const getFromCacheFunction = c.get("getFromCache");
-  const cacheIdentifier = c.get("cacheIdentifier");
-  const requestOptions = c.get("requestOptions") ?? [];
+  const getFromCacheFunction = c.get('getFromCache');
+  const cacheIdentifier = c.get('cacheIdentifier');
+  const requestOptions = c.get('requestOptions') ?? [];
   let cacheResponse, cacheStatus, cacheKey;
   if (getFromCacheFunction) {
-    [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(
-      c.env,
-      { ...requestHeaders, ...fetchOptions.headers },
-      transformedRequestBody,
-      fn,
-      cacheIdentifier
-    );
+    [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(c.env, {...requestHeaders, ...fetchOptions.headers}, transformedRequestBody, fn, cacheIdentifier);
     if (cacheResponse) {
-      response = await responseHandler(
-        new Response(cacheResponse, {
-          headers: {
-            "content-type": "application/json",
-          },
-        }),
-        false,
-        provider,
-        undefined
-      );
-      c.set("requestOptions", [
-        ...requestOptions,
-        {
-          providerOptions: {
-            ...providerOption,
-            requestURL: url,
-            rubeusURL: fn,
-          },
-          requestParams: transformedRequestBody,
-          response: response.clone(),
-          cacheStatus: cacheStatus,
-          lastUsedOptionIndex: currentIndex,
-          cacheKey: cacheKey,
-        },
-      ]);
-      response.headers.append(
-        RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX,
-        currentIndex.toString()
-      );
+      response = await responseHandler(new Response(cacheResponse, {headers: {
+        "content-type": "application/json"
+      }}), false, provider, undefined);
+      c.set("requestOptions", [...requestOptions, {
+        providerOptions: {...providerOption, requestURL: url, rubeusURL: fn},
+        requestParams: transformedRequestBody,
+        response: response.clone(),
+        cacheStatus: cacheStatus,
+        lastUsedOptionIndex: currentIndex,
+        cacheKey: cacheKey
+      }])
+      response.headers.append(RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX, currentIndex.toString());
       return response;
     }
   }
 
-  [response, retryCount] = await retryRequest(
-    url,
-    fetchOptions,
-    providerOption.retry.attempts,
-    providerOption.retry.onStatusCodes
-  );
-  const mappedResponse = await responseHandler(
-    response,
-    isStreamingMode,
-    provider,
-    fn
-  );
-  if (retryCount)
-    mappedResponse.headers.append(
-      RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT,
-      retryCount.toString()
-    );
-  mappedResponse.headers.append(
-    RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX,
-    currentIndex.toString()
-  );
+  [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes);
+  const mappedResponse = await responseHandler(response, isStreamingMode, provider, fn);
+  if (retryCount) mappedResponse.headers.append(RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT, retryCount.toString());
+  mappedResponse.headers.append(RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX, currentIndex.toString());
 
-  c.set("requestOptions", [
-    ...requestOptions,
-    {
-      providerOptions: {
-        ...providerOption,
-        requestURL: url,
-        rubeusURL: fn,
-      },
-      requestParams: transformedRequestBody,
-      response: mappedResponse.clone(),
-      cacheStatus: cacheStatus,
-      lastUsedOptionIndex: currentIndex,
-      cacheKey: cacheKey,
-    },
-  ]);
+  c.set("requestOptions", [...requestOptions, {
+    providerOptions: {...providerOption, requestURL: url, rubeusURL: fn},
+    requestParams: transformedRequestBody,
+    response: mappedResponse.clone(),
+    cacheStatus: cacheStatus,
+    lastUsedOptionIndex: currentIndex,
+    cacheKey: cacheKey
+  }])
   // If the response was not ok, throw an error
   if (!response.ok) {
     // Check if this request needs to be retried
@@ -475,43 +309,21 @@ export async function tryPost(
  * @returns {Promise<CompletionResponse>} - The response from the first successful provider.
  * @throws Will throw an error if all providers fail.
  */
-export async function tryProvidersInSequence(
-  c: Context,
-  providers: Options[],
-  request: RequestBody,
-  requestHeaders: Record<string, string>,
-  fn: endpointStrings
-): Promise<Response> {
+export async function tryProvidersInSequence(c: Context, providers:Options[], request: RequestBody, requestHeaders: Record<string, string>, fn: endpointStrings): Promise<Response> {
   let errors: any[] = [];
   for (let [index, providerOption] of providers.entries()) {
     try {
-      const loadbalanceIndex = !isNaN(Number(providerOption.index))
-        ? Number(providerOption.index)
-        : null;
+      const loadbalanceIndex = !isNaN(Number(providerOption.index)) ? Number(providerOption.index) : null
       if (fn === "proxy") {
-        return await tryPostProxy(
-          c,
-          providerOption,
-          request,
-          requestHeaders,
-          fn,
-          loadbalanceIndex ?? index
-        );
+        return await tryPostProxy(c, providerOption, request, requestHeaders, fn, loadbalanceIndex ?? index);
       }
-      return await tryPost(
-        c,
-        providerOption,
-        request,
-        requestHeaders,
-        fn,
-        loadbalanceIndex ?? index
-      );
-    } catch (error: any) {
+      return await tryPost(c, providerOption, request, requestHeaders, fn, loadbalanceIndex ?? index);
+    } catch (error:any) {
       // Log and store the error
       errors.push({
         provider: providerOption.provider,
         errorObj: error.message,
-        status: error.status,
+        status: error.status
       });
     }
   }
@@ -520,31 +332,18 @@ export async function tryProvidersInSequence(
 }
 
 // Response Handlers for streaming & non-streaming
-export function responseHandler(
-  response: Response,
-  streamingMode: boolean,
-  proxyProvider: string,
-  responseTransformer: string | undefined
-): Promise<Response> {
+export function responseHandler(response: Response, streamingMode: boolean, proxyProvider: string, responseTransformer: string | undefined): Promise<Response> {
   // Checking status 200 so that errors are not considered as stream mode.
   let responseTransformerFunction: Function | undefined;
   if (responseTransformer && streamingMode && response.status === 200) {
-    responseTransformerFunction =
-      Providers[proxyProvider]?.responseTransforms?.[
-        `stream-${responseTransformer}`
-      ];
+    responseTransformerFunction = Providers[proxyProvider]?.responseTransforms?.[`stream-${responseTransformer}`];
   } else if (responseTransformer) {
-    responseTransformerFunction =
-      Providers[proxyProvider]?.responseTransforms?.[responseTransformer];
+    responseTransformerFunction = Providers[proxyProvider]?.responseTransforms?.[responseTransformer];
   }
 
   if (streamingMode && response.status === 200) {
-    return handleStreamingMode(
-      response,
-      proxyProvider,
-      responseTransformerFunction
-    );
+      return handleStreamingMode(response, proxyProvider, responseTransformerFunction)
   } else {
-    return handleNonStreamingMode(response, responseTransformerFunction);
+      return handleNonStreamingMode(response, responseTransformerFunction)
   }
 }

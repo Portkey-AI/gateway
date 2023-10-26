@@ -1,9 +1,5 @@
 import { Message, Params } from "../../types/requestBody";
-import {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from "../types";
+import { ChatCompletionResponse, ErrorResponse, ProviderConfig } from "../types";
 import { CohereStreamChunk } from "./complete";
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
@@ -17,19 +13,19 @@ export const CohereChatCompleteConfig: ProviderConfig = {
   messages: {
     param: "prompt",
     required: true,
-    transform: (params: Params) => {
-      let prompt: string = "";
+    transform: (params:Params) => {
+      let prompt:string = "";
       // Transform the chat messages into a simple prompt
       if (!!params.messages) {
-        let messages: Message[] = params.messages;
-        messages.forEach((msg) => {
-          prompt += `${msg.role}:${msg.content}\n`;
-        });
+        let messages:Message[] = params.messages;
+        messages.forEach(msg => {
+          prompt+=`${msg.role}:${msg.content}\n`
+        })
         prompt = prompt.trim();
       }
 
       return prompt;
-    },
+    }
   },
   max_tokens: {
     param: "max_tokens",
@@ -96,24 +92,21 @@ interface CohereCompleteResponse {
     };
   };
   message?: string;
-  status?: number;
+  status?: number
 }
 
-export const CohereChatCompleteResponseTransform: (
-  response: CohereCompleteResponse,
-  responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+export const CohereChatCompleteResponseTransform: (response: CohereCompleteResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
     return {
-      error: {
-        message: response.message,
-        type: null,
-        param: null,
-        code: null,
-      },
-      provider: "anthropic",
+        error: {
+            message: response.message,
+            type: null,
+            param: null,
+            code: null
+        },
+        provider: "anthropic"
     } as ErrorResponse;
-  }
+  } 
 
   return {
     id: response.id,
@@ -122,16 +115,14 @@ export const CohereChatCompleteResponseTransform: (
     model: "Unknown",
     provider: "cohere",
     choices: response.generations.map((generation, index) => ({
-      message: { role: "assistant", content: generation.text },
+      message: {role: "assistant", content: generation.text},
       index: index,
       finish_reason: "length",
-    })),
+    }))
   };
-};
+}
 
-export const CohereChatCompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+export const CohereChatCompleteStreamChunkTransform: (response: string) => string = (responseChunk) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, "");
   chunk = chunk.trim();
@@ -139,28 +130,24 @@ export const CohereChatCompleteStreamChunkTransform: (
 
   // discard the last cohere chunk as it sends the whole response combined.
   if (parsedChunk.is_finished) {
-    return "";
+    return '';
   }
 
-  return (
-    `${JSON.stringify({
-      id: parsedChunk.id ?? "",
-      object: "text_completion",
-      created: Math.floor(Date.now() / 1000),
-      model: "",
-      provider: "cohere",
-      choices: [
-        {
-          delta: {
-            content:
-              parsedChunk.response?.generations?.[0]?.text ?? parsedChunk.text,
-          },
-          index: 0,
-          logprobs: null,
-          finish_reason:
-            parsedChunk.response?.generations?.[0]?.finish_reason ?? null,
+  return `${JSON.stringify({
+    id: parsedChunk.id ?? "",
+    object: "text_completion",
+    created: Math.floor(Date.now() / 1000),
+    model: "",
+    provider: "cohere",
+    choices: [
+      {
+        delta: {
+          content: parsedChunk.response?.generations?.[0]?.text ?? parsedChunk.text
         },
-      ],
-    })}` + "\n\n"
-  );
+        index: 0,
+        logprobs: null,
+        finish_reason: parsedChunk.response?.generations?.[0]?.finish_reason ?? null,
+      },
+    ]
+  })}` + '\n\n'
 };

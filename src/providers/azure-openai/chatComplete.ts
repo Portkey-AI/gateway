@@ -4,7 +4,7 @@ import { ChatCompletionResponse, ProviderConfig } from "../types";
 
 export const AzureOpenAIChatCompleteConfig: ProviderConfig = {
   model: {
-    param: "model",
+    param: "model"
   },
   messages: {
     param: "messages",
@@ -64,6 +64,4 @@ export const AzureOpenAIChatCompleteConfig: ProviderConfig = {
 
 interface AzureOpenAIChatCompleteResponse extends ChatCompletionResponse {}
 
-export const AzureOpenAIChatCompleteResponseTransform: (
-  response: AzureOpenAIChatCompleteResponse
-) => ChatCompletionResponse = (response) => response;
+export const AzureOpenAIChatCompleteResponseTransform: (response: AzureOpenAIChatCompleteResponse) => ChatCompletionResponse = (response) => response;

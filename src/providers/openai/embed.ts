@@ -20,6 +20,5 @@ export const OpenAIEmbedConfig: ProviderConfig = {
 
 interface OpenAIEmbedResponse extends EmbedResponse {}
 
-export const OpenAIEmbedResponseTransform: (
-  response: OpenAIEmbedResponse
-) => EmbedResponse = (response) => response;
+export const OpenAIEmbedResponseTransform: (response: OpenAIEmbedResponse) => EmbedResponse = (response) => response;
+
