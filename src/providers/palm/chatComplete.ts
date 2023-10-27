@@ -15,12 +15,12 @@ export const PalmChatCompleteConfig: ProviderConfig = {
         default: "",
         transform: (params: Params) => {
             const { examples, context, messages } = params
-            const palm_messages = messages?.map(message => ({
+            const palmMessages = messages?.map(message => ({
                 "author": message.role,
                 "content": message.content
             }))
             const prompt = {
-                messages: palm_messages,
+                messages: palmMessages,
                 examples,
                 context
             }
