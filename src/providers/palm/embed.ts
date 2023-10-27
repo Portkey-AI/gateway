@@ -35,7 +35,7 @@ export const PalmEmbedResponseTransform: (response: PalmEmbedResponse) => EmbedR
         embedding: response.embedding.value,
         index: 0,
     }],
-    model: "", // Todo: find a way to send the cohere embedding model name back
+    model: "",
     usage: {
         prompt_tokens: -1,
         total_tokens: -1
