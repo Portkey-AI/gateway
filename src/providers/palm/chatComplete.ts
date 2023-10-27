@@ -8,7 +8,7 @@ export const PalmChatCompleteConfig: ProviderConfig = {
     model: {
         param: "model",
         required: true,
-        default: "gpt-3.5-turbo",
+        default: "model/chat-bison-001",
     },
     messages: {
         param: "prompt",
@@ -45,7 +45,7 @@ export const PalmChatCompleteConfig: ProviderConfig = {
         min: 0,
         max: 1,
     },
-    candidate_count: {
+    n: {
         param: "candidateCount",
         default: 1,
         min: 1,

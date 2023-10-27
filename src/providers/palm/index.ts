@@ -11,9 +11,7 @@ const PalmAIConfig: ProviderConfigs = {
   chatComplete: PalmChatCompleteConfig,
   responseTransforms: {
     complete: PalmCompleteResponseTransform,
-    // 'stream-complete': PalmCompleteResponseTransform,
     chatComplete: PalmChatCompleteResponseTransform,
-    // 'stream-chatComplete': PalmChatCompleteResponseTransform,
     embed: PalmEmbedResponseTransform
   }
 };

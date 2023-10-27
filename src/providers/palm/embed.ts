@@ -15,7 +15,7 @@ export const PalmEmbedConfig: ProviderConfig = {
     },
     model: {
         param: "model",
-        default: "embed-english-light-v2.0",
+        default: "models/embedding-gecko-001",
     },
 };
 

@@ -8,7 +8,7 @@ export const PalmCompleteConfig: ProviderConfig = {
     model: {
         param: "model",
         required: true,
-        default: "gpt-3.5-turbo",
+        default: "model/text-bison-001",
     },
     prompt: {
         param: "prompt",
@@ -39,7 +39,7 @@ export const PalmCompleteConfig: ProviderConfig = {
         min: 0,
         max: 1,
     },
-    candidate_count: {
+    n: {
         param: "candidateCount",
         default: 1,
         min: 1,
@@ -48,7 +48,6 @@ export const PalmCompleteConfig: ProviderConfig = {
 };
 
 export const PalmCompleteResponseTransform: (response: PalmCompleteResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-    console.log("responseStatus: ", responseStatus)
     if (responseStatus !== 200) {
         return {
             error: {
@@ -57,7 +56,7 @@ export const PalmCompleteResponseTransform: (response: PalmCompleteResponse, res
                 param: null,
                 code: response.error?.code ?? null
             },
-            provider: "anthropic"
+            provider: "palm"
         } as ErrorResponse;
     }
 
