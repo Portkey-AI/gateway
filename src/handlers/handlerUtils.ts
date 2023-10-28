@@ -127,6 +127,7 @@ export async function tryPostProxy(c: Context, providerOption:Options, requestBo
   let fetchOptions;
   let url = providerOption.urlToFetch as string;
 
+  let baseUrl:string, endpoint:string;
   if (provider=="azure-openai" && apiConfig.getBaseURL && apiConfig.getEndpoint) {
     // Construct the base object for the POST request
     if(!!providerOption.apiKey) {
@@ -134,8 +135,13 @@ export async function tryPostProxy(c: Context, providerOption:Options, requestBo
     } else {
       fetchOptions = constructRequest(apiConfig.headers(providerOption.adAuth, "adAuth"), provider);
     }
-    const baseUrl = apiConfig.getBaseURL(providerOption.resourceName, providerOption.deploymentId);
-    const endpoint = apiConfig.getEndpoint(fn, providerOption.apiVersion);
+    baseUrl = apiConfig.getBaseURL(providerOption.resourceName, providerOption.deploymentId);
+    endpoint = apiConfig.getEndpoint(fn, providerOption.apiVersion);
+    url = `${baseUrl}${endpoint}`;
+  } else if (provider === "palm" && apiConfig.baseURL && apiConfig.getEndpoint) {
+    fetchOptions = constructRequest(apiConfig.headers(), provider);
+    baseUrl = apiConfig.baseURL;
+    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, providerOption.overrideParams?.model || params?.model);
     url = `${baseUrl}${endpoint}`;
   } else {
     // Construct the base object for the POST request
