@@ -3,7 +3,10 @@ import { ProviderAPIConfig } from "../types";
 const AnthropicAPIConfig: ProviderAPIConfig = {
   baseURL: "https://api.anthropic.com/v1",
   headers: (API_KEY:string) => {
-    return {"X-API-Key": `${API_KEY}`}
+    return {
+      "X-API-Key": `${API_KEY}`,
+      "Anthropic-Version": "2023-06-01"
+    }
   },
   complete: "/complete",
   chatComplete: "/complete",
