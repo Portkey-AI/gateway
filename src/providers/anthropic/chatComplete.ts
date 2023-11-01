@@ -110,16 +110,15 @@ export const AnthropicChatCompleteResponseTransform: (response: AnthropicComplet
 }
   
 
-export const AnthropicChatCompleteStreamChunkTransform: (response: string, state: {lastIndex: number}) => string = (responseChunk, state) => {
+export const AnthropicChatCompleteStreamChunkTransform: (response: string) => string = (responseChunk) => {
   let chunk = responseChunk.trim();
+  chunk = chunk.replace(/^event: completion[\r\n]*/, "");
   chunk = chunk.replace(/^data: /, "");
   chunk = chunk.trim();
   if (chunk === '[DONE]') {
     return chunk;
   }
   const parsedChunk: AnthropicCompleteResponse = JSON.parse(chunk);
-  const parsedCompletion = parsedChunk.completion.slice(state.lastIndex);
-  state.lastIndex = parsedChunk.completion.length;
   return `data: ${JSON.stringify({
     id: parsedChunk.log_id,
     object: "text_completion",
@@ -129,7 +128,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (response: string, state
     choices: [
       {
         delta: {
-          content: parsedCompletion
+          content: parsedChunk.completion
         },
         index: 0,
         logprobs: null,
