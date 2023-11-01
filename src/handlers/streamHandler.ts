@@ -5,15 +5,13 @@ export async function* readStream(reader: ReadableStreamDefaultReader, splitPatt
     let buffer = '';
     let decoder = new TextDecoder();
     let isFirstChunk = true;
-    const state = {
-        lastIndex: 0
-    };
+
     while (true) {
         const { done, value } = await reader.read();
         if (done) {
             if (buffer.length > 0) {
                 if (transformFunction) {
-                    yield transformFunction(buffer, state);
+                    yield transformFunction(buffer);
                 } else {
                     yield buffer
                 }
@@ -23,11 +21,15 @@ export async function* readStream(reader: ReadableStreamDefaultReader, splitPatt
 
         buffer += decoder.decode(value, { stream: true });
         // keep buffering until we have a complete chunk
-       
+
         while (buffer.split(splitPattern).length > 1) {
             let parts = buffer.split(splitPattern);
             let lastPart = parts.pop() ?? "";  // remove the last part from the array and keep it in buffer
             for (let part of parts) {
+                // Some providers send ping event which can be ignored during parsing
+                if (part.startsWith("event: ping")) {
+                    continue;
+                }
                 if (part.length > 0) {
                     if (isFirstChunk) {
                         isFirstChunk = false;
@@ -37,7 +39,7 @@ export async function* readStream(reader: ReadableStreamDefaultReader, splitPatt
                     }
 
                     if (transformFunction) {
-                        yield transformFunction(part, state);
+                        yield transformFunction(part);
                     } else {
                         yield part + splitPattern;
                     }
