@@ -161,7 +161,7 @@ export async function tryPostProxy(c: Context, providerOption:Options, requestBo
   const requestOptions = c.get('requestOptions') ?? [];
   let cacheResponse, cacheStatus, cacheKey;
   if (getFromCacheFunction) {
-    [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(c.env, {...requestHeaders, ...fetchOptions.headers}, requestBody, fn, cacheIdentifier);
+    [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(c.env, {...requestHeaders, ...fetchOptions.headers}, params, url, cacheIdentifier);
     if (cacheResponse) {
       response = await responseHandler(new Response(cacheResponse, {headers: {
         "content-type": "application/json"

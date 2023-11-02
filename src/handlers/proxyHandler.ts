@@ -2,9 +2,8 @@ import { Context, HonoRequest } from "hono";
 import { retryRequest } from "./retryHandler";
 import Providers from "../providers";
 import { ANTHROPIC, MAX_RETRIES, HEADER_KEYS, PROXY_REQUEST_PATH_PREFIX, RETRY_STATUS_CODES, POWERED_BY, RESPONSE_HEADER_KEYS, AZURE_OPEN_AI } from "../globals";
-import { fetchProviderOptionsFromConfig, getProviderOptionsByMode, responseHandler, tryProvidersInSequence } from "./handlerUtils";
-import { convertKeysToCamelCase, getStreamingMode } from "../utils";
-import { Config } from "../types/requestBody";
+import { fetchProviderOptionsFromConfig, responseHandler, tryProvidersInSequence } from "./handlerUtils";
+import { getStreamingMode } from "../utils";
 
 // Find the proxy provider
 function proxyProvider(proxyModeHeader:string) {
@@ -58,9 +57,8 @@ export async function proxyHandler(c: Context, env: any, request: HonoRequest<"/
 
     if (requestHeaders['x-rubeus-config']) {
       const config = JSON.parse(requestHeaders['x-rubeus-config']);
-      const camelCaseConfig: Config  = convertKeysToCamelCase(config, ["override_params"]);
-      let  providerOptions = fetchProviderOptionsFromConfig(camelCaseConfig);
-      
+      let  providerOptions = fetchProviderOptionsFromConfig(config);
+
       if (!providerOptions) {
         const errorResponse = {
           error: { message: `Could not find a provider option.`,}
@@ -73,7 +71,7 @@ export async function proxyHandler(c: Context, env: any, request: HonoRequest<"/
 
       try {
           return await tryProvidersInSequence(c, providerOptions, {
-            params: store.reqBody, config: camelCaseConfig
+            params: store.reqBody, config: config
           }, requestHeaders, "proxy");
       } catch (error:any) {
         const errorArray = JSON.parse(error.message);
