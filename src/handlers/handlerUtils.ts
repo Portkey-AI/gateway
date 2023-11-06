@@ -136,7 +136,7 @@ export async function tryPostProxy(c: Context, providerOption:Options, requestBo
       fetchOptions = constructRequest(apiConfig.headers(providerOption.adAuth, "adAuth"), provider);
     }
     baseUrl = apiConfig.getBaseURL(providerOption.resourceName, providerOption.deploymentId);
-    endpoint = apiConfig.getEndpoint(fn, providerOption.apiVersion);
+    endpoint = apiConfig.getEndpoint(fn, providerOption.apiVersion, url);
     url = `${baseUrl}${endpoint}`;
   } else if (provider === "palm" && apiConfig.baseURL && apiConfig.getEndpoint) {
     fetchOptions = constructRequest(apiConfig.headers(), provider);

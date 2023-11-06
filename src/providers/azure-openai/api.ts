@@ -12,8 +12,17 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       }
     }
   },
-  getEndpoint: (fn:string, API_VERSION:string) => {
-    switch(fn) {
+  getEndpoint: (fn:string, API_VERSION:string, url?: string) => {
+    let mappedFn = fn;
+    if (fn === "proxy" && url && url?.indexOf("/chat/completions") > -1) {
+      mappedFn = "chatComplete"
+    } else if (fn === "proxy" && url && url?.indexOf("/completions") > -1) {
+      mappedFn = "complete"
+    } else if (fn === "proxy" && url && url?.indexOf("/embeddings") > -1) {
+      mappedFn = "embed"
+    } 
+
+    switch(mappedFn) {
       case 'complete': {
         return `/completions?api-version=${API_VERSION}`
       }
