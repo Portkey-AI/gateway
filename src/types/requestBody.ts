@@ -61,6 +61,18 @@ export interface Message {
   name?: string;
   /** The function call to make, if any. */
   function_call?: any;
+  citationMetadata?: CitationMetadata
+}
+
+export interface CitationMetadata {
+  citationSources?: CitationSource[]
+}
+
+export interface CitationSource {
+  startIndex?: number;
+  endIndex?: number;
+  uri?: string;
+  license?: string;
 }
 
 /**
@@ -108,6 +120,13 @@ export interface Params {
   best_of?: number;
   logit_bias?: { [key: string]: number };
   user?: string;
+  context?: string;
+  examples?: Examples[]
+}
+
+interface Examples {
+  input?: Message;
+  output?: Message
 }
 
 /**
