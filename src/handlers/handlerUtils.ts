@@ -135,7 +135,7 @@ export async function tryPostProxy(c: Context, providerOption:Options, requestBo
       fetchOptions = constructRequest(apiConfig.headers(providerOption.adAuth, "adAuth"), provider);
     }
     const baseUrl = apiConfig.getBaseURL(providerOption.resourceName, providerOption.deploymentId);
-    const endpoint = apiConfig.getEndpoint(fn, providerOption.apiVersion);
+    const endpoint = apiConfig.getEndpoint(fn, providerOption.apiVersion, url);
     url = `${baseUrl}${endpoint}`;
   } else {
     // Construct the base object for the POST request

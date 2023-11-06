@@ -12,8 +12,15 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       }
     }
   },
-  getEndpoint: (fn:string, API_VERSION:string) => {
-    switch(fn) {
+  getEndpoint: (fn:string, API_VERSION:string, url?: string) => {
+    let mappedFn = fn;
+    if (fn === "proxy" && url && url?.indexOf("/chat/completions") > -1) {
+      mappedFn = "proxyChatCompletions"
+    } else if (fn === "proxy" && url && url?.indexOf("/completions") > -1) {
+      mappedFn = "proxyCompletions"
+    }
+
+    switch(mappedFn) {
       case 'complete': {
         return `/completions?api-version=${API_VERSION}`
       }
@@ -22,6 +29,15 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       }
       case 'embed': {
         return `/embeddings?api-version=${API_VERSION}`
+      }
+      case 'embed': {
+        return `/embeddings?api-version=${API_VERSION}`
+      }
+      case 'proxyChatCompletions': {
+        return `/chat/completions?api-version=${API_VERSION}`
+      }
+      case 'proxyCompletions': {
+        return `/completions?api-version=${API_VERSION}`
       }
     }
   }
