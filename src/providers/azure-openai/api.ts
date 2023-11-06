@@ -18,7 +18,9 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       mappedFn = "chatComplete"
     } else if (fn === "proxy" && url && url?.indexOf("/completions") > -1) {
       mappedFn = "complete"
-    }
+    } else if (fn === "proxy" && url && url?.indexOf("/embeddings") > -1) {
+      mappedFn = "embed"
+    } 
 
     switch(mappedFn) {
       case 'complete': {
@@ -26,9 +28,6 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       }
       case 'chatComplete': {
         return `/chat/completions?api-version=${API_VERSION}`
-      }
-      case 'embed': {
-        return `/embeddings?api-version=${API_VERSION}`
       }
       case 'embed': {
         return `/embeddings?api-version=${API_VERSION}`
