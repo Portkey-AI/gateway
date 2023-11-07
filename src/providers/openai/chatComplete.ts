@@ -70,6 +70,9 @@ export const OpenAIChatCompleteConfig: ProviderConfig = {
   },
   tool_choice: {
     param: "tool_choice"
+  },
+  response_format: {
+    param: "response_format"
   }
 };
 
