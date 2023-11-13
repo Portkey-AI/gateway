@@ -41,18 +41,19 @@ function headersToSend(headersObj: Record<string, string>, customHeadersToIgnore
       final[key] = headersObj[key];
     }
   });
+  final['accept-encoding'] = "gzip, deflate"
   return final;
 }
 
-export async function proxyHandler(c: Context, env: any, request: HonoRequest<any, any>, proxyPath: string): Promise<Response> {
+export async function proxyGetHandler(c: Context, env: any, request: HonoRequest<any, any>, proxyPath: string): Promise<Response> {
     let requestHeaders = Object.fromEntries(request.headers);
-    
+
     const store: Record<string, any> = {
       proxyProvider: proxyProvider(requestHeaders[HEADER_KEYS.MODE]),
-      reqBody: await request.json(),
       customHeadersToAvoid: env.CUSTOM_HEADERS_TO_IGNORE ?? [],
+      reqBody: {}
     }
-      store.isStreamingMode = getStreamingMode(store.reqBody)
+    // store.isStreamingMode = getStreamingMode(store.reqBody)
     let urlToFetch = getProxyPath(request.url, store.proxyProvider, proxyPath);
 
     if (requestHeaders['x-rubeus-config']) {
@@ -72,7 +73,7 @@ export async function proxyHandler(c: Context, env: any, request: HonoRequest<an
       try {
           return await tryProvidersInSequence(c, providerOptions, {
             params: store.reqBody, config: config
-          }, requestHeaders, "proxy");
+          }, requestHeaders, "proxy", "GET");
       } catch (error:any) {
         const errorArray = JSON.parse(error.message);
         throw errorArray[errorArray.length - 1];
@@ -81,11 +82,10 @@ export async function proxyHandler(c: Context, env: any, request: HonoRequest<an
 
     let fetchOptions = {
         headers: headersToSend(requestHeaders, store.customHeadersToAvoid),
-        method: request.method,
-        body: JSON.stringify(store.reqBody)
+        method: request.method
     };
 
-    let retryCount = Math.min(parseInt(requestHeaders[HEADER_KEYS.RETRIES]), MAX_RETRIES);
+    let retryCount = Math.min(parseInt(requestHeaders[HEADER_KEYS.RETRIES])||1, MAX_RETRIES);
     const getFromCacheFunction = c.get('getFromCache');
     const cacheIdentifier = c.get('cacheIdentifier');
     const requestOptions = c.get('requestOptions') ?? [];
@@ -107,6 +107,7 @@ export async function proxyHandler(c: Context, env: any, request: HonoRequest<an
       }
     }
     // Make the API call to the provider
+    console.log(urlToFetch, JSON.stringify(fetchOptions), retryCount, RETRY_STATUS_CODES);
     let [lastResponse, lastAttempt] = await retryRequest(urlToFetch, fetchOptions, retryCount, RETRY_STATUS_CODES);
 
     const mappedResponse = await responseHandler(lastResponse, store.isStreamingMode, store.proxyProvider, undefined);
