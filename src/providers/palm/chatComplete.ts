@@ -50,6 +50,15 @@ export const PalmChatCompleteConfig: ProviderConfig = {
         default: 1,
         min: 1,
         max: 8
+    },
+    max_tokens: {
+        param: "maxOutputTokens",
+        default: 100,
+        min: 1,
+    },
+    stop: {
+        param: "stopSequences"
+
     }
 };
 
