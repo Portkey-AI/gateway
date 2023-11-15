@@ -67,8 +67,16 @@ export const OpenAICompleteConfig: ProviderConfig = {
   user: {
     param: "user",
   },
+  seed: {
+    param: "seed"
+  },
+  suffix: {
+    param: "suffix"
+  }
 };
 
-interface OpenAICompleteResponse extends CompletionResponse {}
+interface OpenAICompleteResponse extends CompletionResponse {
+  system_fingerprint: string;
+}
 
 export const OpenAICompleteResponseTransform: (response: OpenAICompleteResponse) => CompletionResponse = (response) => response;
