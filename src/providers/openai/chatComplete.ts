@@ -62,8 +62,22 @@ export const OpenAIChatCompleteConfig: ProviderConfig = {
   user: {
     param: "user",
   },
+  seed: {
+    param: "seed"
+  },
+  tools: {
+    param: "tools"
+  },
+  tool_choice: {
+    param: "tool_choice"
+  },
+  response_format: {
+    param: "response_format"
+  }
 };
 
-interface OpenAIChatCompleteResponse extends ChatCompletionResponse {}
+interface OpenAIChatCompleteResponse extends ChatCompletionResponse {
+  system_fingerprint: string;
+}
 
 export const OpenAIChatCompleteResponseTransform: (response: OpenAIChatCompleteResponse) => ChatCompletionResponse = (response) => response;
