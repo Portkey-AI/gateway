@@ -13,9 +13,10 @@ import { handleNonStreamingMode, handleStreamingMode } from "./streamHandler";
  *
  * @param {any} headers - The headers to add in the request.
  * @param {string} provider - The provider for the request.
+ * @param {string} method - The HTTP method for the request.
  * @returns {RequestInit} - The fetch options for the request.
  */
-export function constructRequest(headers: any, provider: string = "") {
+export function constructRequest(headers: any, provider: string = "", method: string = "POST") {
   let baseHeaders: any = {
     "content-type": "application/json"
   };
@@ -24,9 +25,15 @@ export function constructRequest(headers: any, provider: string = "") {
   headers = {...baseHeaders, ...headers}
   
   let fetchOptions: RequestInit = {
-    method: "POST",
+    method,
     headers,
   };
+
+  // If the method is GET, delete the content-type header
+  if (method === "GET" && fetchOptions.headers) {
+    let headers = fetchOptions.headers as Record<string, unknown>;
+    delete headers["content-type"];
+  }
 
   return fetchOptions;
 }
@@ -105,17 +112,18 @@ export const fetchProviderOptionsFromConfig = (config: Config | ShortConfig): Op
 }
 
 /**
- * Makes a POST request to a provider and returns the response.
- * The POST request is constructed using the provider, apiKey, and requestBody parameters.
+ * Makes a request (GET or POST) to a provider and returns the response.
+ * The request is constructed using the provider, apiKey, and requestBody parameters.
  * The fn parameter is the type of request being made (e.g., "complete", "chatComplete").
  *
  * @param {Options} providerOption - The provider options. This object follows the Options interface and may contain a RetrySettings object for retry configuration.
  * @param {RequestBody} requestBody - The request body.
  * @param {string} fn - The function for the request.
- * @returns {Promise<CompletionResponse>} - The response from the POST request.
+ * @param {string} method - The method for the request (GET, POST).
+ * @returns {Promise<CompletionResponse>} - The response from the request.
  * @throws Will throw an error if the response is not ok or if all retry attempts fail.
  */
-export async function tryPostProxy(c: Context, providerOption:Options, requestBody: RequestBody, requestHeaders: Record<string, string>, fn: endpointStrings, currentIndex: number): Promise<Response> {
+export async function tryPostProxy(c: Context, providerOption:Options, requestBody: RequestBody, requestHeaders: Record<string, string>, fn: endpointStrings, currentIndex: number, method:string="POST"): Promise<Response> {
   const overrideParams = providerOption?.overrideParams || {};
   const params: Params = {...requestBody.params, ...overrideParams};
   const isStreamingMode = params.stream ? true : false;
@@ -129,25 +137,27 @@ export async function tryPostProxy(c: Context, providerOption:Options, requestBo
 
   let baseUrl:string, endpoint:string;
   if (provider=="azure-openai" && apiConfig.getBaseURL && apiConfig.getEndpoint) {
-    // Construct the base object for the POST request
+    // Construct the base object for the request
     if(!!providerOption.apiKey) {
-      fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, "apiKey"), provider);
+      fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, "apiKey"), provider, method);
     } else {
-      fetchOptions = constructRequest(apiConfig.headers(providerOption.adAuth, "adAuth"), provider);
+      fetchOptions = constructRequest(apiConfig.headers(providerOption.adAuth, "adAuth"), provider, method);
     }
     baseUrl = apiConfig.getBaseURL(providerOption.resourceName, providerOption.deploymentId);
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiVersion, url);
     url = `${baseUrl}${endpoint}`;
   } else if (provider === "palm" && apiConfig.baseURL && apiConfig.getEndpoint) {
-    fetchOptions = constructRequest(apiConfig.headers(), provider);
+    fetchOptions = constructRequest(apiConfig.headers(), provider, method);
     baseUrl = apiConfig.baseURL;
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, providerOption.overrideParams?.model || params?.model);
     url = `${baseUrl}${endpoint}`;
   } else {
-    // Construct the base object for the POST request
-    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider);
+    // Construct the base object for the request
+    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, method);
   }
-  fetchOptions.body = JSON.stringify(params)
+  if (method === "POST") {
+    fetchOptions.body = JSON.stringify(params)
+  }
 
   let response:Response;
   let retryCount:number|undefined;
@@ -179,7 +189,7 @@ export async function tryPostProxy(c: Context, providerOption:Options, requestBo
     }
   }
 
-  [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes);
+    [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes);
   const mappedResponse = await responseHandler(response, isStreamingMode, provider, undefined);
   if (retryCount) mappedResponse.headers.append(RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT, retryCount.toString());
   mappedResponse.headers.append(RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX, currentIndex.toString());
@@ -317,16 +327,17 @@ export async function tryPost(c: Context, providerOption:Options, requestBody: R
  * @param {Options[]} providers - The providers to try. Each object in the array follows the Options interface and may contain a RetrySettings object for retry configuration.
  * @param {RequestBody} request - The request body.
  * @param {endpointStrings} fn - The function for the request.
+ * @param {String} method - The method to be used (GET, POST) for the request.
  * @returns {Promise<CompletionResponse>} - The response from the first successful provider.
  * @throws Will throw an error if all providers fail.
  */
-export async function tryProvidersInSequence(c: Context, providers:Options[], request: RequestBody, requestHeaders: Record<string, string>, fn: endpointStrings): Promise<Response> {
+export async function tryProvidersInSequence(c: Context, providers:Options[], request: RequestBody, requestHeaders: Record<string, string>, fn: endpointStrings, method:string="POST"): Promise<Response> {
   let errors: any[] = [];
   for (let [index, providerOption] of providers.entries()) {
     try {
       const loadbalanceIndex = !isNaN(Number(providerOption.index)) ? Number(providerOption.index) : null
       if (fn === "proxy") {
-        return await tryPostProxy(c, providerOption, request, requestHeaders, fn, loadbalanceIndex ?? index);
+        return await tryPostProxy(c, providerOption, request, requestHeaders, fn, loadbalanceIndex ?? index, method);
       }
       return await tryPost(c, providerOption, request, requestHeaders, fn, loadbalanceIndex ?? index);
     } catch (error:any) {

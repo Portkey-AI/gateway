@@ -13,6 +13,7 @@ import { completeHandler } from "./handlers/completeHandler";
 import { chatCompleteHandler } from "./handlers/chatCompleteHandler";
 import { embedHandler } from "./handlers/embedHandler";
 import { proxyHandler } from "./handlers/proxyHandler";
+import { proxyGetHandler } from "./handlers/proxyGetHandler";
 
 // Create a new Hono server instance
 const app = new Hono();
@@ -113,9 +114,42 @@ app.post("/v1/embed", async (c) => {
 
 app.post("/v1/proxy/*", async (c) => {
   try {
-    const resp = await proxyHandler(c, c.env, c.req);
+    const resp = await proxyHandler(c, c.env, c.req, "/v1/proxy");
     return resp;
   } catch(err:any) {
+    throw new HTTPException(err.status, { 
+      res: new Response(err.errorObj, {
+        status: err.status,
+        headers: {
+          "content-type": "application/json"
+        }
+      }) 
+    })
+  }
+})
+
+app.post("/v1/*", async (c) => {
+  try {
+    const resp = await proxyHandler(c, c.env, c.req, "/v1");
+    return resp;
+  } catch(err:any) {
+    throw new HTTPException(err.status, { 
+      res: new Response(err.errorObj, {
+        status: err.status,
+        headers: {
+          "content-type": "application/json"
+        }
+      }) 
+    })
+  }
+})
+
+// Support the /v1 proxy endpoint after all defined endpoints so this does not interfere.
+app.get('/v1/*', async (c) => {
+  try {
+    const resp = await proxyGetHandler(c, c.env, c.req, "/v1");
+    return resp;
+  } catch(err: any) {
     throw new HTTPException(err.status, { 
       res: new Response(err.errorObj, {
         status: err.status,
