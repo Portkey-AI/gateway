@@ -2,12 +2,11 @@ import { Context, HonoRequest } from "hono";
 import { retryRequest } from "./retryHandler";
 import Providers from "../providers";
 import { ANTHROPIC, MAX_RETRIES, HEADER_KEYS, RETRY_STATUS_CODES, POWERED_BY, RESPONSE_HEADER_KEYS, AZURE_OPEN_AI } from "../globals";
-import { fetchProviderOptionsFromConfig, responseHandler, tryProvidersInSequence } from "./handlerUtils";
-import { getStreamingMode } from "../utils";
+import { responseHandler, updateResponseHeaders } from "./handlerUtils";
 
 // Find the proxy provider
-function proxyProvider(proxyModeHeader:string) {
-  const [proxyMode, proxyProvider] = proxyModeHeader.split(" ");
+function proxyProvider(proxyModeHeader:string, providerHeader: string) {
+  const proxyProvider = proxyModeHeader?.split(" ")[1] ?? providerHeader;
   return proxyProvider;
 }
 
@@ -45,81 +44,52 @@ function headersToSend(headersObj: Record<string, string>, customHeadersToIgnore
   return final;
 }
 
-export async function proxyGetHandler(c: Context, env: any, request: HonoRequest<any, any>, proxyPath: string): Promise<Response> {
-    let requestHeaders = Object.fromEntries(request.headers);
-
+export async function proxyGetHandler(c: Context): Promise<Response> {
+  try {
+    const requestHeaders = Object.fromEntries(c.req.headers);
+    delete requestHeaders["content-type"];
     const store: Record<string, any> = {
-      proxyProvider: proxyProvider(requestHeaders[HEADER_KEYS.MODE]),
-      customHeadersToAvoid: env.CUSTOM_HEADERS_TO_IGNORE ?? [],
-      reqBody: {}
+      proxyProvider: proxyProvider(requestHeaders[HEADER_KEYS.MODE], requestHeaders[HEADER_KEYS.PROVIDER]),
+      customHeadersToAvoid: c.env.CUSTOM_HEADERS_TO_IGNORE ?? [],
+      reqBody: {},
+      proxyPath: c.req.url.indexOf("/v1/proxy") > -1 ? "/v1/proxy" : "/v1"
     }
-    // store.isStreamingMode = getStreamingMode(store.reqBody)
-    let urlToFetch = getProxyPath(request.url, store.proxyProvider, proxyPath);
 
-    if (requestHeaders['x-rubeus-config']) {
-      const config = JSON.parse(requestHeaders['x-rubeus-config']);
-      let  providerOptions = fetchProviderOptionsFromConfig(config);
-
-      if (!providerOptions) {
-        const errorResponse = {
-          error: { message: `Could not find a provider option.`,}
-        };
-        throw errorResponse;
-      }
-      providerOptions = providerOptions.map(po => ({
-        ...po, urlToFetch
-      }))
-
-      try {
-          return await tryProvidersInSequence(c, providerOptions, {
-            params: store.reqBody, config: config
-          }, requestHeaders, "proxy", "GET");
-      } catch (error:any) {
-        const errorArray = JSON.parse(error.message);
-        throw errorArray[errorArray.length - 1];
-      }
-    }
+    let urlToFetch = getProxyPath(c.req.url, store.proxyProvider, store.proxyPath);
 
     let fetchOptions = {
         headers: headersToSend(requestHeaders, store.customHeadersToAvoid),
-        method: request.method
+        method: c.req.method
     };
 
     let retryCount = Math.min(parseInt(requestHeaders[HEADER_KEYS.RETRIES])||1, MAX_RETRIES);
-    const getFromCacheFunction = c.get('getFromCache');
-    const cacheIdentifier = c.get('cacheIdentifier');
-    const requestOptions = c.get('requestOptions') ?? [];
-    let cacheResponse, cacheStatus, cacheKey;
-    if (getFromCacheFunction) {
-      [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(c.env, {...requestHeaders, ...fetchOptions.headers}, store.reqBody, urlToFetch, cacheIdentifier);
-      if (cacheResponse) {
-        const cacheMappedResponse = await responseHandler(new Response(cacheResponse, {headers: {
-          "content-type": "application/json"
-        }}), false, store.proxyProvider, undefined);
-        c.set("requestOptions", [...requestOptions, {
-          providerOptions: {...store.reqBody, provider: store.proxyProvider, requestURL: urlToFetch, rubeusURL: 'proxy'},
-          requestParams: store.reqBody,
-          response: cacheMappedResponse.clone(),
-          cacheStatus: cacheStatus,
-          cacheKey: cacheKey
-        }])
-        return cacheMappedResponse;
-      }
-    }
-    // Make the API call to the provider
-    console.log(urlToFetch, JSON.stringify(fetchOptions), retryCount, RETRY_STATUS_CODES);
+
     let [lastResponse, lastAttempt] = await retryRequest(urlToFetch, fetchOptions, retryCount, RETRY_STATUS_CODES);
 
     const mappedResponse = await responseHandler(lastResponse, store.isStreamingMode, store.proxyProvider, undefined);
-    if (lastAttempt) mappedResponse.headers.append(RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT, lastAttempt.toString());
+    updateResponseHeaders(mappedResponse, 0, store.reqBody, "DISABLED", lastAttempt ?? 0, requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");
 
-    c.set("requestOptions", [...requestOptions, {
+    c.set("requestOptions", [{
       providerOptions: {...store.reqBody, provider: store.proxyProvider, requestURL: urlToFetch, rubeusURL: 'proxy'},
       requestParams: store.reqBody,
       response: mappedResponse.clone(),
-      cacheStatus: cacheStatus,
-      cacheKey: cacheKey
+      cacheStatus: "DISABLED",
+      cacheKey: undefined
     }])
 
-    return mappedResponse
+    return mappedResponse;
+  } catch (err: any) {
+    console.log("proxyGet error", err.message);
+    return new Response(
+        JSON.stringify({
+            status: "failure",
+            message: "Something went wrong",
+        }), {
+          status: 500,
+          headers: {
+              "content-type": "application/json"
+          }
+      }
+    );
+  } 
 }
