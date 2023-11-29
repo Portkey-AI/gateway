@@ -1,6 +1,7 @@
 name = "rubeus"
 compatibility_date = "2023-01-01"
 main = "src/index.ts"
+node_compat = true
 
 [vars]
 ENVIRONMENT = 'dev'
@@ -22,6 +23,7 @@ CUSTOM_HEADERS_TO_IGNORE = []
 #
 [env.production]
 name = "rubeus"
+logpush=true
 
 [env.production.vars]
 ENVIRONMENT = 'production'
