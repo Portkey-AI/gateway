@@ -555,7 +555,6 @@ export async function tryTargetsRecursively(
           );
         }
     } catch (error: any) {
-        console.log("outside err", error)
         errors.push({
             provider: targetGroup.provider,
             errorObj: error.message,
