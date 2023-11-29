@@ -581,7 +581,7 @@ export function updateResponseHeaders(
     );
     response.headers.append(
         RESPONSE_HEADER_KEYS.LAST_USED_OPTION_PARAMS,
-        JSON.stringify(params)
+        JSON.stringify(params).slice(0, 2000)
     );
     response.headers.append(RESPONSE_HEADER_KEYS.CACHE_STATUS, cacheStatus);
     response.headers.append(RESPONSE_HEADER_KEYS.TRACE_ID, traceId);
