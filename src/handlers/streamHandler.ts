@@ -60,6 +60,14 @@ export async function handleNonStreamingMode(response: Response, responseTransfo
     return new Response(JSON.stringify(responseBodyJson), response);
 }
 
+export async function handleAudioResponse(response: Response) {
+    return new Response(JSON.stringify(response.body), response);
+}
+
+export async function handleOctetStreamResponse(response: Response) {
+    return new Response(JSON.stringify(response.body), response);
+}
+
 
 export async function handleStreamingMode(response: Response, proxyProvider: string, responseTransformer: Function | undefined): Promise<Response> {
     const splitPattern = getStreamModeSplitPattern(proxyProvider);
