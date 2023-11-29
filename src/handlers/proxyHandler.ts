@@ -126,10 +126,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
     }
 
     let fetchOptions = {
-        headers: {
-          ...headersToSend(requestHeaders, store.customHeadersToAvoid),
-          ...(requestContentType === CONTENT_TYPES.MULTIPART_FORM_DATA && {"content-type": `multipart/form-data; boundary`}) 
-        },
+        headers: headersToSend(requestHeaders, store.customHeadersToAvoid),
         method: c.req.method,
         body: requestContentType === CONTENT_TYPES.MULTIPART_FORM_DATA ? store.requestFormData : JSON.stringify(store.reqBody)
     };
