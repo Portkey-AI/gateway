@@ -9,6 +9,16 @@ interface RetrySettings {
   onStatusCodes: number[];
 }
 
+interface CacheSettings {
+  mode: string;
+  maxAge?: number;
+}
+
+interface Strategy {
+  mode: string;
+  onStatusCodes?: Array<number>;
+}
+
 /**
  * Configuration for an AI provider.
  * @interface
@@ -35,6 +45,38 @@ export interface Options {
   adAuth?:string;
   /** provider option index picked based on weight in loadbalance mode */
   index?: number;
+  cache?: CacheSettings | string;
+}
+
+/**
+ * Configuration for an AI provider.
+ * @interface
+ */
+export interface Targets {
+  strategy?: Strategy;
+  /** The name of the provider. */
+  provider?: string|undefined;
+  /** The name of the API key for the provider. */
+  virtualKey?: string;
+  /** The API key for the provider. */
+  apiKey?: string;
+  /** The weight of the provider, used for load balancing. */
+  weight?: number;
+  /** The retry settings for the provider. */
+  retry?: RetrySettings;
+  /** The parameters to override in the request. */
+  overrideParams?: Params;
+  /** The actual url used to make llm calls */
+  urlToFetch?: string;
+  /** Azure specific */
+  resourceName?: string;
+  deploymentId?: string;
+  apiVersion?: string;
+  adAuth?:string;
+  /** provider option index picked based on weight in loadbalance mode */
+  index?: number;
+  cache?: CacheSettings | string,
+  targets?: Targets[]
 }
 
 /**
@@ -102,7 +144,7 @@ export interface Function {
  * @interface
  */
 export interface Params {
-  model: string;
+  model?: string;
   prompt?: string | string[];
   messages?: Message[];
   functions?: Function[];

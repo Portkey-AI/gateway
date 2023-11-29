@@ -140,7 +140,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
 
     let cacheResponse, cacheKey;
     let cacheStatus = "DISABLED";
-    let cacheMode = requestHeaders[HEADER_KEYS.CACHE] ?? requestConfig?.cache ?? null;
+    let cacheMode = requestHeaders[HEADER_KEYS.CACHE];
 
     if (getFromCacheFunction && cacheMode) {
       [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(c.env, {...requestHeaders, ...fetchOptions.headers}, store.reqBody, urlToFetch, cacheIdentifier, cacheMode);
