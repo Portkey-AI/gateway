@@ -77,10 +77,15 @@ export const configSchema: any = z
                 value.provider !== undefined && value.api_key !== undefined;
             const hasModeTargets =
                 value.strategy !== undefined && value.targets !== undefined;
-            return hasProviderApiKey || hasModeTargets;
+            return (
+                hasProviderApiKey ||
+                hasModeTargets ||
+                value.cache ||
+                value.retry
+            );
         },
         {
             message:
-                "Invalid configuration. It must have either 'provider' and 'api_key', or 'strategy' and 'targets'.",
+                "Invalid configuration. It must have either 'provider' and 'api_key', or 'strategy' and 'targets', or 'cache', or 'target'",
         }
     );
