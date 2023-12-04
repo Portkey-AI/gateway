@@ -92,6 +92,7 @@ export interface Config {
   targets?: Targets[];
   cache?: CacheSettings;
   retry?: RetrySettings;
+  strategy?: Strategy;
 }
 
 /**
