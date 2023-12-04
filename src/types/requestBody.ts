@@ -46,6 +46,7 @@ export interface Options {
   /** provider option index picked based on weight in loadbalance mode */
   index?: number;
   cache?: CacheSettings | string;
+  metadata?: Record<string, string>;
 }
 
 /**
@@ -88,6 +89,7 @@ export interface Config {
   mode: "single" | "fallback" | "loadbalance" | "scientist";
   /** The configuration for the provider(s). */
   options: Options[];
+  targets?: Targets[];
 }
 
 /**
@@ -193,6 +195,8 @@ export interface ShortConfig {
   virtualKey?: string;
   /** The API key for the provider. */
   apiKey?: string;
+  cache?: CacheSettings;
+  retry?: RetrySettings;
 }
 
 /**
