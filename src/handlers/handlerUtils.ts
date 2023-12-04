@@ -83,6 +83,18 @@ export function getProviderOptionsByMode(mode: string, config: any): Options[]|n
   if (config.targets) {
     config.options = config.targets;
   }
+  
+  if (config.options) {
+    // Inherit cache and retry from top level if not present on option level
+    config.options.forEach((configOption: any) => {
+      if (config.cache && !configOption.cache) {
+        configOption.cache = config.cache;
+      }
+      if (config.retry && !configOption.retry) {
+        configOption.retry = config.retry;
+      }
+    })
+  }
 
   switch (mode) {
     case "single":
