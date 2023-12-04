@@ -90,6 +90,8 @@ export interface Config {
   /** The configuration for the provider(s). */
   options: Options[];
   targets?: Targets[];
+  cache?: CacheSettings;
+  retry?: RetrySettings;
 }
 
 /**
