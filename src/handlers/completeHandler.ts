@@ -1,3 +1,4 @@
+import { Targets } from "../types/requestBody";
 import { fetchProviderOptionsFromConfig, getProviderOptionsByMode, tryProvidersInSequence } from "./handlerUtils";
 import { Context } from "hono";
 
@@ -14,6 +15,18 @@ export async function completeHandler(c: Context): Promise<Response> {
   try {
     const request = await c.req.json();
     const requestHeaders = Object.fromEntries(c.req.headers);
+    if (request.config?.targets && request.config?.targets?.filter((t: Targets) => t.targets).length > 0) {
+      return new Response(JSON.stringify({
+        status: "failure",
+        message: "Please use the latest routes or SDK to use this version of config."
+      }), {
+        status: 400,
+        headers: {
+            "content-type": "application/json"
+        }
+      });
+    }
+
     const providerOptions = fetchProviderOptionsFromConfig(request.config)
 
     if (!providerOptions) {
