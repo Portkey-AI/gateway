@@ -1,5 +1,5 @@
 import { Context } from "hono";
-import { HEADER_KEYS, POWERED_BY, RESPONSE_HEADER_KEYS } from "../globals";
+import { AZURE_OPEN_AI, HEADER_KEYS, POWERED_BY, RESPONSE_HEADER_KEYS } from "../globals";
 import Providers from "../providers";
 import { ProviderAPIConfig, endpointStrings } from "../providers/types";
 import transformToProviderRequest from "../services/transformToProviderRequest";
@@ -123,7 +123,11 @@ export const fetchProviderOptionsFromConfig = (config: Config | ShortConfig): Op
       }];
       mode = "single";
   } else {
-      mode = camelCaseConfig.mode;
+      if (camelCaseConfig.strategy && camelCaseConfig.strategy.mode) {
+        mode = camelCaseConfig.strategy.mode;
+      } else {
+        mode = camelCaseConfig.mode;
+      }
       providerOptions = getProviderOptionsByMode(mode, camelCaseConfig);
   }
   return providerOptions;
@@ -612,14 +616,26 @@ export function updateResponseHeaders(
 export function constructConfigFromRequestHeaders(
     requestHeaders: Record<string, any>
 ): Options | Targets {
+    const azureConfig = {
+      resourceName: requestHeaders[`x-${POWERED_BY}-azure-resource-name`],
+      deploymentId: requestHeaders[`x-${POWERED_BY}-azure-deployment-id`],
+      apiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`]
+    }
+
     if (
       requestHeaders[`x-${POWERED_BY}-config`]
     ) {
-        const parsedConfigJson = JSON.parse(requestHeaders[`x-${POWERED_BY}-config`]);
+        let parsedConfigJson = JSON.parse(requestHeaders[`x-${POWERED_BY}-config`]);
 
         if (!parsedConfigJson.provider && !parsedConfigJson.targets) {
           parsedConfigJson.provider = requestHeaders[`x-${POWERED_BY}-provider`];
-          parsedConfigJson.api_key = requestHeaders["authorization"]?.replace("Bearer ", "")
+          parsedConfigJson.api_key = requestHeaders["authorization"]?.replace("Bearer ", "");
+          if (parsedConfigJson.provider === AZURE_OPEN_AI) {
+            parsedConfigJson = {
+              ...parsedConfigJson,
+              ...azureConfig
+            }
+          }
         }
         return convertKeysToCamelCase(
             parsedConfigJson,
@@ -628,8 +644,9 @@ export function constructConfigFromRequestHeaders(
     }
 
     return {
-        provider: requestHeaders[`x-${POWERED_BY}-provider`],
-        apiKey: requestHeaders["authorization"]?.replace("Bearer ", ""),
+      provider: requestHeaders[`x-${POWERED_BY}-provider`],
+      apiKey: requestHeaders["authorization"]?.replace("Bearer ", ""),
+      ...(requestHeaders[`x-${POWERED_BY}-provider`] === AZURE_OPEN_AI && azureConfig)
     };
 }
     
