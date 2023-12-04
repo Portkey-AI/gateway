@@ -80,6 +80,10 @@ export function selectProviderByWeight(providers:Options[]): Options {
  * @returns {(Options[]|null)} - The selected provider options.
  */
 export function getProviderOptionsByMode(mode: string, config: any): Options[]|null {
+  if (config.targets) {
+    config.options = config.targets;
+  }
+
   switch (mode) {
     case "single":
       return [config.options[0]];
@@ -95,13 +99,15 @@ export function getProviderOptionsByMode(mode: string, config: any): Options[]|n
 export const fetchProviderOptionsFromConfig = (config: Config | ShortConfig): Options[] | null => {
   let providerOptions: Options[] | null = null;
   let mode: string;
-  const camelCaseConfig  = convertKeysToCamelCase(config, ["override_params", "params"]) as Config | ShortConfig;
+  const camelCaseConfig  = convertKeysToCamelCase(config, ["override_params", "params", "metadata"]) as Config | ShortConfig;
 
   if ('provider' in camelCaseConfig) {
       providerOptions = [{
       provider: camelCaseConfig.provider, 
       virtualKey: camelCaseConfig.virtualKey, 
       apiKey: camelCaseConfig.apiKey,
+      cache: camelCaseConfig.cache,
+      retry: camelCaseConfig.retry
       }];
       mode = "single";
   } else {
@@ -275,8 +281,9 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
   let response:Response;
   let retryCount:number|undefined;
 
-  if (!providerOption.retry) {
-    providerOption.retry = {attempts: 1, onStatusCodes:[]}
+  providerOption.retry = {
+    attempts: providerOption.retry?.attempts ?? 1,
+    onStatusCodes: providerOption.retry?.onStatusCodes ?? []
   }
 
   const [getFromCacheFunction, cacheIdentifier, requestOptions] = [
@@ -578,10 +585,10 @@ export function updateResponseHeaders(
         RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX,
         currentIndex.toString()
     );
-    response.headers.append(
-        RESPONSE_HEADER_KEYS.LAST_USED_OPTION_PARAMS,
-        JSON.stringify(params).slice(0, 2000)
-    );
+    // response.headers.append(
+    //     RESPONSE_HEADER_KEYS.LAST_USED_OPTION_PARAMS,
+    //     JSON.stringify(params).slice(0, 2000)
+    // );
     response.headers.append(RESPONSE_HEADER_KEYS.CACHE_STATUS, cacheStatus);
     response.headers.append(RESPONSE_HEADER_KEYS.TRACE_ID, traceId);
     response.headers.append(
@@ -593,9 +600,17 @@ export function updateResponseHeaders(
 export function constructConfigFromRequestHeaders(
     requestHeaders: Record<string, any>
 ): Options | Targets {
-    if (requestHeaders[`x-${POWERED_BY}-config`]) {
+    if (
+      requestHeaders[`x-${POWERED_BY}-config`]
+    ) {
+        const parsedConfigJson = JSON.parse(requestHeaders[`x-${POWERED_BY}-config`]);
+
+        if (!parsedConfigJson.provider && !parsedConfigJson.targets) {
+          parsedConfigJson.provider = requestHeaders[`x-${POWERED_BY}-provider`];
+          parsedConfigJson.api_key = requestHeaders["authorization"]?.replace("Bearer ", "")
+        }
         return convertKeysToCamelCase(
-            JSON.parse(requestHeaders[`x-${POWERED_BY}-config`]),
+            parsedConfigJson,
             ["override_params", "params"]
         ) as any;
     }
