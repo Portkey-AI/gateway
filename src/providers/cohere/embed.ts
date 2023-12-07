@@ -1,4 +1,4 @@
-import { ProviderConfig } from "../types";
+import { ErrorResponse, ProviderConfig } from "../types";
 import { EmbedParams, EmbedResponse } from "../../types/embedRequestBody";
 
 export const CohereEmbedConfig: ProviderConfig = {
@@ -53,18 +53,34 @@ export interface CohereEmbedResponse {
   
   /** An `EmbedMeta` object which contains metadata about the response. */
   meta: EmbedMeta;
+
+  message?: string;
 }
 
-export const CohereEmbedResponseTransform: (response: CohereEmbedResponse) => EmbedResponse = (response) => ({
-  object: "list",
-  data: response.embeddings.map((embedding, index) => ({
-    object: "embedding",
-    embedding: embedding,
-    index: index,
-  })),
-  model: "", // Todo: find a way to send the cohere embedding model name back
-  usage: {
-    prompt_tokens: -1,
-    total_tokens: -1
-  },
-});
+export const CohereEmbedResponseTransform: (response: CohereEmbedResponse, responseStatus: number) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
+  if (responseStatus !== 200) {
+    return {
+        error: {
+            message: response.message,
+            type: null,
+            param: null,
+            code: null
+        },
+        provider: "cohere"
+    } as ErrorResponse;
+  }
+
+  return {
+    object: "list",
+    data: response.embeddings.map((embedding, index) => ({
+      object: "embedding",
+      embedding: embedding,
+      index: index,
+    })),
+    model: "", // Todo: find a way to send the cohere embedding model name back
+    usage: {
+      prompt_tokens: -1,
+      total_tokens: -1
+    },
+  }
+};
