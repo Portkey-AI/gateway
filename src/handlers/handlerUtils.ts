@@ -1,5 +1,5 @@
 import { Context } from "hono";
-import { AZURE_OPEN_AI, HEADER_KEYS, POWERED_BY, RESPONSE_HEADER_KEYS } from "../globals";
+import { AZURE_OPEN_AI, HEADER_KEYS, POWERED_BY, RESPONSE_HEADER_KEYS, RETRY_STATUS_CODES } from "../globals";
 import Providers from "../providers";
 import { ProviderAPIConfig, endpointStrings } from "../providers/types";
 import transformToProviderRequest from "../services/transformToProviderRequest";
@@ -184,8 +184,21 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
   let response:Response;
   let retryCount:number|undefined;
 
-  if (!providerOption.retry) {
-    providerOption.retry = {attempts: 1, onStatusCodes:[]}
+  if (providerOption.retry && typeof providerOption.retry === "object") {
+    providerOption.retry = { 
+      attempts: providerOption.retry?.attempts ?? 1, 
+      onStatusCodes: providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES
+    };
+  } else if (providerOption.retry && !isNaN(providerOption.retry)) {
+    providerOption.retry = { 
+      attempts: providerOption.retry, 
+      onStatusCodes: RETRY_STATUS_CODES
+    };
+  } else {
+    providerOption.retry = { 
+      attempts: 1, 
+      onStatusCodes: []
+    };
   }
 
   const getFromCacheFunction = c.get('getFromCache');
