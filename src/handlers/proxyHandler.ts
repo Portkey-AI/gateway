@@ -84,14 +84,20 @@ export async function proxyHandler(c: Context): Promise<Response> {
 
     store.isStreamingMode = getStreamingMode(store.reqBody)
     let urlToFetch = getProxyPath(c.req.url, store.proxyProvider, store.proxyPath);
-    let requestConfig: Config | null = null; 
+    let requestConfig: Config | ShortConfig | null = null; 
     if (requestHeaders[`x-rubeus-config`]) {
       requestConfig = JSON.parse(requestHeaders[`x-rubeus-config`]);
     } else if (requestHeaders[`x-${POWERED_BY}-config`]) {
       requestConfig = JSON.parse(requestHeaders[`x-${POWERED_BY}-config`]);
     };
 
-    if (requestConfig && requestConfig.options) {
+    if (requestConfig &&
+      (
+        ("options" in requestConfig && requestConfig.options) ||
+        ("targets" in requestConfig && requestConfig.targets) ||
+        ("provider" in requestConfig && requestConfig.provider)
+      )
+    ) {
       let  providerOptions = fetchProviderOptionsFromConfig(requestConfig);
       
       if (!providerOptions) {
@@ -131,7 +137,17 @@ export async function proxyHandler(c: Context): Promise<Response> {
         body: requestContentType === CONTENT_TYPES.MULTIPART_FORM_DATA ? store.requestFormData : JSON.stringify(store.reqBody)
     };
 
-    let retryCount = Math.min(parseInt(requestHeaders[HEADER_KEYS.RETRIES]), MAX_RETRIES);
+    let retryCount = 0;
+    let retryStatusCodes = RETRY_STATUS_CODES;
+    if (requestHeaders[HEADER_KEYS.RETRIES]) {
+      retryCount = parseInt(requestHeaders[HEADER_KEYS.RETRIES]);
+    } else if (requestConfig?.retry && typeof requestConfig.retry === "object") {
+        retryCount = requestConfig.retry?.attempts ?? 1, 
+        retryStatusCodes = requestConfig.retry?.onStatusCodes ?? RETRY_STATUS_CODES
+    }
+
+    retryCount = Math.min(retryCount, MAX_RETRIES);
+
     const getFromCacheFunction = c.get('getFromCache');
     const cacheIdentifier = c.get('cacheIdentifier');
 
