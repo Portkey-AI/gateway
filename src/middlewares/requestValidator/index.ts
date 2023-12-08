@@ -44,7 +44,7 @@ export const requestValidator = (c: Context, next: any) => {
         return new Response(
             JSON.stringify({
                 status: "failure",
-                message: `Either (x-${POWERED_BY}-config) or x-${POWERED_BY}-provider) header is required`,
+                message: `Either x-${POWERED_BY}-config or x-${POWERED_BY}-provider header is required`,
             }),
             {
                 status: 400,
@@ -80,6 +80,20 @@ export const requestValidator = (c: Context, next: any) => {
             const parsedConfig = JSON.parse(
                 requestHeaders[`x-${POWERED_BY}-config`]
             );
+            if (!requestHeaders[`x-${POWERED_BY}-provider`] && !(parsedConfig.provider || parsedConfig.targets)) {
+                return new Response(
+                    JSON.stringify({
+                        status: "failure",
+                        message: `Either x-${POWERED_BY}-provider needs to be passed. Or the x-${POWERED_BY}-config header should have a valid config with provider details in it.`,
+                    }),
+                    {
+                        status: 400,
+                        headers: {
+                            "content-type": "application/json",
+                        },
+                    }
+                );
+            }
 
             const validatedConfig = configSchema.safeParse(parsedConfig);
 
