@@ -204,8 +204,19 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
   const getFromCacheFunction = c.get('getFromCache');
   const cacheIdentifier = c.get('cacheIdentifier');
   const requestOptions = c.get('requestOptions') ?? [];
-  let cacheResponse, cacheStatus, cacheKey, cacheMode;
-  if (getFromCacheFunction) {
+
+  let cacheResponse, cacheKey, cacheMode;
+  let cacheStatus = "DISABLED";
+
+  if (requestHeaders[HEADER_KEYS.CACHE]) {
+    cacheMode = requestHeaders[HEADER_KEYS.CACHE]
+  } else if (providerOption?.cache && typeof providerOption.cache === "object" && providerOption.cache.mode) {
+    cacheMode = providerOption.cache.mode;
+  } else if (providerOption?.cache && typeof providerOption.cache === "string") {
+    cacheMode = providerOption.cache
+  }
+
+  if (getFromCacheFunction && cacheMode) {
     [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(
         c.env,
         { ...requestHeaders, ...fetchOptions.headers },
@@ -242,7 +253,8 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
     response: mappedResponse.clone(),
     cacheStatus: cacheStatus,
     lastUsedOptionIndex: currentIndex,
-    cacheKey: cacheKey
+    cacheKey: cacheKey,
+    cacheMode: cacheMode
   }])
   // If the response was not ok, throw an error
   if (!response.ok) {
