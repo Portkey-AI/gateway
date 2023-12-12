@@ -592,6 +592,15 @@ export async function tryTargetsRecursively(
                 }
                 randomWeight -= provider.weight;
             }
+        } else if (currentTarget.strategy?.mode === "single" && currentTarget?.targets) {
+          return await tryPost(
+            c,
+            currentTarget.targets[0],
+            request,
+            requestHeaders,
+            fn,
+            `${currentJsonPath}.targets[0]`
+          );
         } else {
           return await tryPost(
               c,
