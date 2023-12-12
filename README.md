@@ -42,10 +42,12 @@
 
 || Provider  | Support Status  | Supported Endpoints |
 |---|---|---|---|
-| <img src="docs/images/openai.png" width=18 />| OpenAI | ✅ Supported  | `/completion`, `/embed` |
-| <img src="docs/images/azure.png" width=18>| Azure OpenAI | ✅ Supported  | `/completion`, `/embed` |
+| <img src="docs/images/openai.png" width=18 />| OpenAI | ✅ Supported  | `/completion`, `/chat/completions`,`/embed` |
+| <img src="docs/images/azure.png" width=18>| Azure OpenAI | ✅ Supported  | `/completion`, `/chat/completions`,`/embed` |
+| <img src="docs/images/anyscale.png" width=18>| Anyscale | ✅ Supported  | `/chat/completions` |
 | <img src="docs/images/anthropic.png" width=18>| Anthropic  | ✅ Supported  | `/complete` |
 | <img src="docs/images/cohere.png" width=18>| Cohere  | ✅ Supported  | `generate`, `embed` |
+| <img src="docs/images/palm.png" width=18>| Google Palm | ✅ Supported  | `/generateMessage`, `/generateText`, `/embedText` |
 | <img src="docs/images/bard.png" width=18>| Google Bard  | 🚧 Coming Soon  |  |
 | <img src="docs/images/localai.png" width=18>| LocalAI  | 🚧 Coming Soon  |  |
 
@@ -64,20 +66,30 @@ npm run deploy # To deploy to cloudflare
 ### 🌐 Interoperability
 Rubeus allows you to switch between different language learning models from various providers, making it a highly flexible tool. The following example shows a request to `openai`, but you could change the provider name to `cohere`, `anthropic` or others and Rubeus will automatically handle everything else.
 
+### Simple request
+Either pass x-rubeus-config header with provider and key details or send x-rubeus-provider and authorization header
 ```bash
-curl --location 'http://127.0.0.1:8787/v1/complete' \
+curl --location 'http://127.0.0.1:8787/v1/completions' \
 --header 'Content-Type: application/json' \
+--header 'x-rubeus-config: {"provider":"openai","api_key":"open_ai_key"}' \
 --data-raw '{
-    "config": {
-        "provider": "openai",
-        "api_key: "<open-ai-api-key-here>"
-    },
-    "params": {
-        "prompt": "What are the top 10 happiest countries in the world?",
-        "max_tokens": 50,
-        "model": "text-davinci-003",
-        "user": "jbu3470"
-    }
+    "prompt": "What are the top 10 happiest countries in the world?",
+    "max_tokens": 50,
+    "model": "text-davinci-003",
+    "user": "jbu3470"
+}'
+```
+OR
+```bash
+curl --location 'http://127.0.0.1:8787/v1/completions' \
+--header 'Content-Type: application/json' \
+--header 'x-rubeus-provider: openai' \
+--header 'Authorization: $OPENAI_KEY' \
+--data-raw '{
+    "prompt": "What are the top 10 happiest countries in the world?",
+    "max_tokens": 50,
+    "model": "text-davinci-003",
+    "user": "jbu3470"
 }'
 ```
 
@@ -86,53 +98,23 @@ In case one provider fails, Rubeus is designed to automatically switch to anothe
 
 ```bash
 # Fallback to anthropic, if openai fails (This API will use the default text-davinci-003 and claude-v1 models)
-curl --location 'http://127.0.0.1:8787/v1/complete' \
+curl --location 'http://127.0.0.1:8787/v1/completions' \
 --header 'Content-Type: application/json' \
+--header 'x-rubeus-config: {"strategy":{"mode":"fallback"},"targets":[{"provider":"openai","api_key":"sk-***", "override_params": {"model": "gpt-3.5-turbo"}},{"provider":"anthropic","api_key":"sk-***", "override_params": {"model": "claude-v2"}}]}' \
 --data-raw '{
-    "config": {
-        "mode": "fallback",
-        "options": [
-          {
-            "provider": "openai",
-            "api_key": "<open-ai-api-key-here>"
-          }, 
-          {
-            "provider": "anthropic",
-            "api_key": "<anthropic-api-key-here>"
-          }
-        ]
-    },
-    "params": {
-        "prompt": "What are the top 10 happiest countries in the world?",
-        "max_tokens": 50,
-        "user": "jbu3470"
-    }
+    "prompt": "What are the top 10 happiest countries in the world?",
+    "max_tokens": 50,
+    "user": "jbu3470"
 }'
 
 # Fallback to gpt-3.5-turbo when gpt-4 fails
-curl --location 'http://127.0.0.1:8787/v1/chatComplete' \
+curl --location 'http://127.0.0.1:8787/v1/chat/completions' \
 --header 'Content-Type: application/json' \
+--header 'x-rubeus-config: {"strategy":{"mode":"fallback"},"targets":[{"provider":"openai","api_key":"sk-***","override_params":{"model":"gpt-4"}},{"provider":"anthropic","api_key":"sk-***","override_params":{"model":"gpt-3.5-turbo"}}]}' \
 --data-raw '{
-    "config": {
-        "mode": "fallback",
-        "options": [
-          {
-            "provider": "openai", 
-            "override_params": {"model": "gpt-4"},
-            "api_key": "<open-ai-api-key-here>" 
-          }, 
-          {
-            "provider": "openai", 
-            "override_params": {"model": "gpt-3.5-turbo"},
-            "api_key": "<open-ai-api-key-here>"
-          }
-        ]
-    },
-    "params": {
-        "messages": [{"role": "user", "content": "What are the top 10 happiest countries in the world?"}],
-        "max_tokens": 50,
-        "user": "jbu3470"
-    }
+    "messages": [{"role": "user", "content": "What are the top 10 happiest countries in the world?"}],
+    "max_tokens": 50,
+    "user": "jbu3470"
 }'
 ```
 
@@ -140,55 +122,33 @@ curl --location 'http://127.0.0.1:8787/v1/chatComplete' \
 Rubeus has a built-in mechanism to retry failed requests, eliminating the need for manual re-runs.
 ```bash
 # Add the retry configuration to enable exponential back-off retries
-curl --location 'http://127.0.0.1:8787/v1/complete' \
+curl --location 'http://127.0.0.1:8787/v1/completions' \
 --header 'Content-Type: application/json' \
+--header 'x-rubeus-config: {"provider":"openai","api_key":"sk-***", "retry": {"attempts": 3, "on_status_codes": [429, 500, 502]}}' \
 --data-raw '{
-    "config": {
-        "mode": "single",
-        "options": [{
-            "provider": "openai",
-            "retry": {
-                "attempts": 3,
-                "on_status_codes": [429,500,504,524]
-            },
-            "api_key": "<open-ai-api-key-here>"
-        }]
-    },
-    "params": {
-        "prompt": "What are the top 10 happiest countries in the world?",
-        "max_tokens": 50,
-        "model": "text-davinci-003",
-        "user": "jbu3470"
-    }
+    "prompt": "What are the top 10 happiest countries in the world?",
+    "max_tokens": 50,
+    "model": "text-davinci-003",
+    "user": "jbu3470"
 }'
 ```
 
 ### ⚖️ Load Balancing
 Manage your workload effectively with Rubeus's custom weight-based distribution across multiple API keys or providers.
 ```bash
-# Load balance 50-50 between gpt-3.5-turbo and claude-v1
-curl --location 'http://127.0.0.1:8787/v1/chatComplete' \
+# Load balance 50-50 between gpt-3.5-turbo and claude-v2
+curl --location 'http://127.0.0.1:8787/v1/chat/completions' \
 --header 'Content-Type: application/json' \
+--header 'x-rubeus-config: {"strategy":{"mode":"loadbalance"},"targets":[{"provider":"openai","api_key":"sk-***", "weight": 0.5, "override_params":{"model":"gpt-3.5-turbo"}},{"provider":"anthropic","api_key":"sk-***", "weight": 0.5, "override_params":{"model":"claude-v2"}}]}' \
 --data '{
-    "config": {
-        "mode": "loadbalance",
-        "options": [{
-            "provider": "openai",
-            "weight": 0.5,
-            "override_params": { "model": "gpt-3.5-turbo" },
-            "api_key": "<open-ai-api-key-here>"
-        }, {
-            "provider": "anthropic",
-            "weight": 0.5,
-            "override_params": { "model": "claude-v1" },
-            "api_key": "<anthropic-api-key-here>"
-        }]
-    },
-    "params": {
-        "messages": [{"role": "user","content":"What are the top 10 happiest countries in the world?"}],
-        "max_tokens": 50,
-        "user": "jbu3470"
-    }
+    "messages": [
+        {
+            "role": "user",
+            "content":"What are the top 10 happiest countries in the world?"
+        }
+    ],
+    "max_tokens": 50,
+    "user": "jbu3470"
 }'
 ```
 
@@ -196,33 +156,25 @@ curl --location 'http://127.0.0.1:8787/v1/chatComplete' \
 If you're familiar with OpenAI's API, you'll find Rubeus's API easy to use due to its unified signature.
 ```bash
 # OpenAI query
-curl --location 'http://127.0.0.1:8787/v1/complete' \
+curl --location 'http://127.0.0.1:8787/v1/completions' \
 --header 'Content-Type: application/json' \
+--header 'x-rubeus-provider: openai' \
+--header 'Authorization: $OPEN_AI_KEY' \
 --data-raw '{
-    "config": {
-        "provider": "openai",
-        "api_key": "<open-ai-api-key-here>"
-    },
-    "params": {
-        "prompt": "What are the top 10 happiest countries in the world?",
-        "max_tokens": 50,
-        "user": "jbu3470"
-    }
+    "prompt": "What are the top 10 happiest countries in the world?",
+    "max_tokens": 50,
+    "user": "jbu3470"
 }'
 
 # Anthropic Query
-curl --location 'http://127.0.0.1:8787/v1/complete' \
+curl --location 'http://127.0.0.1:8787/v1/completions' \
 --header 'Content-Type: application/json' \
+--header 'x-rubeus-provider: anthropic' \
+--header 'Authorization: $ANTHROPIC_KEY' \
 --data-raw '{
-    "config": {
-        "provider": "anthropic",
-        "api_key": "<anthropic-api-key-here>"
-    },
-    "params": {
-        "prompt": "What are the top 10 happiest countries in the world?",
-        "max_tokens": 50,
-        "user": "jbu3470"
-    }
+    "prompt": "What are the top 10 happiest countries in the world?",
+    "max_tokens": 50,
+    "user": "jbu3470"
 }'
 ```
 
