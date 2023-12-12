@@ -69,6 +69,18 @@ export const AnyscaleCompleteConfig: ProviderConfig = {
 };
 
 interface AnyscaleCompleteResponse extends CompletionResponse, ErrorResponse {}
+interface AnyscaleCompleteStreamChunk {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: {
+      text: string;
+      index: number;
+      logprobs: Record<string, any>;
+      finish_reason: string | null;
+  }[]
+}
 
 export const AnyscaleCompleteResponseTransform: (response: AnyscaleCompleteResponse, responseStatus: number) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
     if (responseStatus !== 200) {
@@ -93,7 +105,7 @@ export const AnyscaleCompleteResponseTransform: (response: AnyscaleCompleteRespo
       usage: response.usage
     };
   }
-  
+
 export const AnyscaleCompleteStreamChunkTransform: (response: string) => string = (responseChunk) => {
     let chunk = responseChunk.trim();
     chunk = chunk.replace(/^data: /, "");
@@ -101,20 +113,13 @@ export const AnyscaleCompleteStreamChunkTransform: (response: string) => string 
     if (chunk === '[DONE]') {
       return chunk;
     }
-    const parsedChunk: AnyscaleStreamChunk= JSON.parse(chunk);
+    const parsedChunk: AnyscaleCompleteStreamChunk= JSON.parse(chunk);
     return `data: ${JSON.stringify({
       id: parsedChunk.id,
       object: parsedChunk.object,
       created: parsedChunk.created,
       model: parsedChunk.model,
       provider: "anyscale",
-      choices: [
-        {
-            text: parsedChunk.choices[0]?.delta?.content ?? "",
-            index: parsedChunk.choices[0]?.index,
-            logprobs: null,
-            finish_reason: parsedChunk.choices[0]?.finish_reason,
-          },
-      ]
+      choices: parsedChunk.choices
     })}` + '\n\n'
   };
