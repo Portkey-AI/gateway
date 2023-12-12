@@ -1,10 +1,9 @@
-import { RequestBody } from "../types/requestBody";
+import { Targets } from "../types/requestBody";
 import { fetchProviderOptionsFromConfig, tryProvidersInSequence } from "./handlerUtils";
 import { Context } from "hono";
 
-// const OPENAI_CHAT_MODELS = ["gpt-4-0613","gpt-3.5-turbo-16k-0613","gpt-3.5-turbo-0301","gpt-3.5-turbo","gpt-3.5-turbo-0613","gpt-4","gpt-4-0314","gpt-3.5-turbo-16k","gpt-4-32k-0314","gpt-4-32k-0613","gpt-4-32k"]
-
 /**
+ * DEPRECATED
  * Handles the 'chatComplete' API request by selecting the appropriate provider(s) and making the request to them.
  * 
  * The environment variables (`env`) should be the cloudflare environment variables.
@@ -24,21 +23,60 @@ import { Context } from "hono";
  * @returns {Promise<CResponse>} - The response from the provider.
  * @throws Will throw an error if no provider options can be determined or if the request to the provider(s) fails.
  */
-export async function chatCompleteHandler(c: Context, env: any, request: RequestBody, requestHeaders: Record<string, string>): Promise<Response> {
-  const providerOptions = fetchProviderOptionsFromConfig(request.config);
-
-  if (!providerOptions) {
-    const errorResponse = {
-      error: { message: `Could not find a provider option.`,}
-    };
-    throw errorResponse;
-  }
-  
+export async function chatCompleteHandler(c: Context): Promise<Response> {
   try {
-      return await tryProvidersInSequence(c, providerOptions, request, requestHeaders, "chatComplete");
-  } catch (error:any) {
-    const errorArray = JSON.parse(error.message);
-    throw errorArray[errorArray.length - 1];
+    const request = await c.req.json();
+    const requestHeaders = Object.fromEntries(c.req.headers);
+    if (request.config?.targets && request.config?.targets?.filter((t: Targets) => t.targets).length > 0) {
+      return new Response(JSON.stringify({
+        status: "failure",
+        message: "Please use the latest routes or SDK to use this version of config."
+      }), {
+        status: 400,
+        headers: {
+            "content-type": "application/json"
+        }
+      });
+    }
+
+    const providerOptions = fetchProviderOptionsFromConfig(request.config);
+
+    if (!providerOptions) {
+      return new Response(JSON.stringify({
+        status: "failure",
+        message: "Could not find a provider option."
+      }), {
+        status: 400,
+        headers: {
+            "content-type": "application/json"
+        }
+      });
+    }
+    
+    try {
+        return await tryProvidersInSequence(c, providerOptions, request.params, requestHeaders, "chatComplete");
+    } catch (error:any) {
+      const errorArray = JSON.parse(error.message);
+      return new Response(errorArray[errorArray.length - 1].errorObj, {
+        status: errorArray[errorArray.length - 1].status,
+        headers: {
+            "content-type": "application/json"
+        }
+      });
+    }
+  } catch (err: any) {
+    console.log("chatComplete error", err.message);
+    return new Response(
+        JSON.stringify({
+            status: "failure",
+            message: "Something went wrong",
+        }), {
+            status: 500,
+            headers: {
+                "content-type": "application/json"
+            }
+        }
+    );
   }
 }
 

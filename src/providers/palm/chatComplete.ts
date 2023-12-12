@@ -81,10 +81,10 @@ export const PalmChatCompleteResponseTransform: (response: PalmChatCompleteRespo
         created: Math.floor(Date.now() / 1000),
         model: "Unknown",
         provider: "palm",
-        choices: response.candidates.map((generation, index) => ({
+        choices: response.candidates?.map((generation, index) => ({
             message: { role: "assistant", content: generation.content },
             index: index,
             finish_reason: "length",
-        }))
+        })) ?? []
     };
 }

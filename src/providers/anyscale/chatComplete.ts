@@ -6,7 +6,7 @@ export const AnyscaleChatCompleteConfig: ProviderConfig = {
   model: {
     param: "model",
     required: true,
-    default: "gpt-3.5-turbo",
+    default: "meta-llama/Llama-2-7b-chat-hf"
   },
   messages: {
     param: "messages",

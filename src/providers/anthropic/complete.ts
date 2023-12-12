@@ -35,6 +35,12 @@ export const AnthropicCompleteConfig: ProviderConfig = {
   },
   stop: {
     param: "stop_sequences",
+    transform: (params: Params) => {
+      if (params.stop === null) {
+        return [];
+      }
+      return params.stop
+    },
   },
   stream: {
     param: "stream",

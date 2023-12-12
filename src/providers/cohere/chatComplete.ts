@@ -104,7 +104,7 @@ export const CohereChatCompleteResponseTransform: (response: CohereCompleteRespo
             param: null,
             code: null
         },
-        provider: "anthropic"
+        provider: "cohere"
     } as ErrorResponse;
   } 
 

@@ -72,7 +72,7 @@ export const PalmCompleteResponseTransform: (response: PalmCompleteResponse, res
 
     return {
         id: "response.id",
-        object: "chat_completion",
+        object: "completion",
         created: Math.floor(Date.now() / 1000),
         model: "Unknown",
         provider: "palm",
@@ -81,6 +81,6 @@ export const PalmCompleteResponseTransform: (response: PalmCompleteResponse, res
             index: index,
             logprobs: null,
             finish_reason: "length",
-        })) || response.filters
+        })) ?? []
     };
 }

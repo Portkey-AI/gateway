@@ -8,13 +8,13 @@ export const PalmApiConfig: ProviderAPIConfig = {
     getEndpoint: (fn: string, API_KEY: string, model: string) => {
         switch (fn) {
             case 'complete': {
-                return `/${model}:generateText?key=${API_KEY}`
+                return `/models/${model}:generateText?key=${API_KEY}`
             }
             case 'chatComplete': {
-                return `/${model}:generateMessage?key=${API_KEY}`
+                return `/models/${model}:generateMessage?key=${API_KEY}`
             }
             case 'embed': {
-                return `/${model}:embedText?key=${API_KEY}`
+                return `/models/${model}:embedText?key=${API_KEY}`
             }
         }
     }

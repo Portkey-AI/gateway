@@ -14,6 +14,10 @@ import { chatCompleteHandler } from "./handlers/chatCompleteHandler";
 import { embedHandler } from "./handlers/embedHandler";
 import { proxyHandler } from "./handlers/proxyHandler";
 import { proxyGetHandler } from "./handlers/proxyGetHandler";
+import { chatCompletionsHandler } from "./handlers/chatCompletionsHandler";
+import { completionsHandler } from "./handlers/completionsHandler";
+import { embeddingsHandler } from "./handlers/embeddingsHandler";
+import { requestValidator } from "./middlewares/requestValidator";
 
 // Create a new Hono server instance
 const app = new Hono();
@@ -43,123 +47,55 @@ app.onError((err, c) => {
       return err.getResponse()
   }
   c.status(500);
-  return c.json({ok: false, message: err.message});
+  return c.json({status: "failure", message: err.message});
 });
 
 /**
  * POST route for '/v1/complete'.
  * Handles requests by passing them to the completeHandler.
- * If an error occurs, it throws an HTTPException with status code 500.
  */
-app.post("/v1/complete", async (c) => {
-  try {
-    let cjson = await c.req.json();
-    let cheaders = Object.fromEntries(c.req.headers);
-    return await completeHandler(c, c.env, cjson, cheaders);
-  } catch(err:any) {
-    throw new HTTPException(err.status, { 
-      res: new Response(err.errorObj, {
-        status: err.status,
-        headers: {
-          "content-type": "application/json"
-        }
-      }) 
-    })
-  }
-});
+app.post("/v1/complete", completeHandler);
 
 /**
  * POST route for '/v1/chatComplete'.
  * Handles requests by passing them to the chatCompleteHandler.
- * If an error occurs, it throws an HTTPException with status code 500.
  */
-app.post("/v1/chatComplete", async (c) => {
-  try {
-    let cjson = await c.req.json();
-    let cheaders = Object.fromEntries(c.req.headers)
-    return await chatCompleteHandler(c, c.env, cjson, cheaders);
-  } catch(err:any) {
-    throw new HTTPException(err.status, { 
-      res: new Response(err.errorObj, {
-        status: err.status,
-        headers: {
-          "content-type": "application/json"
-        }
-      }) 
-    })
-  }
-});
+app.post("/v1/chatComplete", chatCompleteHandler);
 
 /**
  * POST route for '/v1/embed'.
  * Handles requests by passing them to the embedHandler.
- * If an error occurs, it throws an HTTPException with status code 500.
  */
-app.post("/v1/embed", async (c) => {
-  try {
-    let cjson = await c.req.json();
-    let cheaders = Object.fromEntries(c.req.headers)
-    return await embedHandler(c, c.env, cjson, cheaders);
-  } catch(err:any) {
-    throw new HTTPException(err.status, { 
-      res: new Response(err.errorObj, {
-        status: err.status,
-        headers: {
-          "content-type": "application/json"
-        }
-      }) 
-    })
-  }
-});
+app.post("/v1/embed", embedHandler);
 
-app.post("/v1/proxy/*", async (c) => {
-  try {
-    const resp = await proxyHandler(c, c.env, c.req, "/v1/proxy");
-    return resp;
-  } catch(err:any) {
-    throw new HTTPException(err.status, { 
-      res: new Response(err.errorObj, {
-        status: err.status,
-        headers: {
-          "content-type": "application/json"
-        }
-      }) 
-    })
-  }
-})
+/**
+ * POST route for '/v1/chat/completions'.
+ * Handles requests by passing them to the chatCompletionsHandler.
+ */
+app.post("/v1/chat/completions",requestValidator, chatCompletionsHandler);
 
-app.post("/v1/*", async (c) => {
-  try {
-    const resp = await proxyHandler(c, c.env, c.req, "/v1");
-    return resp;
-  } catch(err:any) {
-    throw new HTTPException(err.status, { 
-      res: new Response(err.errorObj, {
-        status: err.status,
-        headers: {
-          "content-type": "application/json"
-        }
-      }) 
-    })
-  }
-})
+/**
+ * POST route for '/v1/completions'.
+ * Handles requests by passing them to the completionsHandler.
+ */
+app.post("/v1/completions", requestValidator, completionsHandler);
+
+/**
+ * POST route for '/v1/embeddings'.
+ * Handles requests by passing them to the embeddingsHandler.
+ */
+app.post("/v1/embeddings", requestValidator, embeddingsHandler);
+
+// Support the /v1 proxy endpoint
+app.post("/v1/proxy/*", proxyHandler);
 
 // Support the /v1 proxy endpoint after all defined endpoints so this does not interfere.
-app.get('/v1/*', async (c) => {
-  try {
-    const resp = await proxyGetHandler(c, c.env, c.req, "/v1");
-    return resp;
-  } catch(err: any) {
-    throw new HTTPException(err.status, { 
-      res: new Response(err.errorObj, {
-        status: err.status,
-        headers: {
-          "content-type": "application/json"
-        }
-      }) 
-    })
-  }
-})
+app.post("/v1/*", requestValidator, proxyHandler)
+
+// Support the /v1 proxy endpoint after all defined endpoints so this does not interfere.
+app.get('/v1/*', requestValidator, proxyGetHandler)
+
+app.delete('/v1/*', requestValidator, proxyGetHandler)
 
 // Export the app
 export default app;
