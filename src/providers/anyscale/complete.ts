@@ -1,33 +1,15 @@
 import { CompletionResponse, ErrorResponse, ProviderConfig } from "../types";
-import { AnyscaleChatCompleteResponse, AnyscaleStreamChunk } from "./chatComplete";
+import { AnyscaleStreamChunk } from "./chatComplete";
 
 export const AnyscaleCompleteConfig: ProviderConfig = {
   model: {
     param: "model",
     required: true,
-    default: "text-davinci-003",
+    default: "Meta-Llama/Llama-Guard-7b",
   },
   prompt: {
-    param: "messages",
-    default: "",
-    transform: (params:Params) => {
-      if (typeof params.prompt === 'string') {
-        return [
-            {
-                role: "user",
-                content: params.prompt
-            }
-          ];
-      } else if (Array.isArray(params.prompt)) {
-        return params.prompt.map((promptText) => ([
-            {
-                role: "user",
-                content: promptText
-            }
-          ]));
-      }
-      return "";
-    }
+    param: "prompt",
+    default: ""
   },
   max_tokens: {
     param: "max_tokens",
@@ -86,7 +68,9 @@ export const AnyscaleCompleteConfig: ProviderConfig = {
   },
 };
 
-export const AnyscaleCompleteResponseTransform: (response: AnyscaleChatCompleteResponse, responseStatus: number) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
+interface AnyscaleCompleteResponse extends CompletionResponse, ErrorResponse {}
+
+export const AnyscaleCompleteResponseTransform: (response: AnyscaleCompleteResponse, responseStatus: number) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
     if (responseStatus !== 200) {
       return {
           error: {
@@ -105,12 +89,7 @@ export const AnyscaleCompleteResponseTransform: (response: AnyscaleChatCompleteR
       created: response.created,
       model: response.model,
       provider: "anyscale",
-      choices: response.choices.map(c => ({
-        text: c.message.content ?? "",
-        index: c.index,
-        logprobs: null,
-        finish_reason: c.finish_reason,
-      })),
+      choices: response.choices,
       usage: response.usage
     };
   }

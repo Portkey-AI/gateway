@@ -6,7 +6,8 @@ const AnyscaleAPIConfig: ProviderAPIConfig = {
     return {"Authorization": `Bearer ${API_KEY}`}
   },
   chatComplete: "/chat/completions",
-  complete: "/chat/completions"
+  complete: "/completions",
+  embed: "/embeddings"
 };
 
 export default AnyscaleAPIConfig;
