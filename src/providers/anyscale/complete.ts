@@ -5,7 +5,7 @@ export const AnyscaleCompleteConfig: ProviderConfig = {
   model: {
     param: "model",
     required: true,
-    default: "text-davinci-003",
+    default: "Meta-Llama/Llama-Guard-7b",
   },
   prompt: {
     param: "prompt",
