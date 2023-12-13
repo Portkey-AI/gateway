@@ -476,89 +476,71 @@ export async function tryTargetsRecursively(
     request: Params,
     requestHeaders: Record<string, string>,
     fn: endpointStrings,
-    method: string = "POST",
+    method: string,
     errors: any,
-    jsonPath: string = "config",
+    jsonPath: string,
     inheritedConfig: Record<string, any> = {}
 ): Promise<Response | undefined> {
     let currentTarget: any = {...targetGroup};
     let currentJsonPath = jsonPath;
+    const strategyMode = currentTarget.strategy?.mode;
+
+    // start: merge inherited config with current target config (preference given to current)
     const currentInheritedConfig = {
       overrideParams : {
         ...inheritedConfig.overrideParams,
         ...currentTarget.overrideParams
       },
-      retry: null,
-      cache: null
+      retry: currentTarget.retry ? {...currentTarget.retry} : {...inheritedConfig.retry},
+      cache: currentTarget.cache ? {...currentTarget.cache} : {...inheritedConfig.cache}
     }
     currentTarget.overrideParams = {
         ...currentInheritedConfig.overrideParams
     }
 
-    if (!currentTarget.targets && inheritedConfig.retry && !currentTarget.retry) {
-      currentTarget.retry = {
-        ...inheritedConfig.retry
-      }
-    } else if (currentTarget.targets && currentTarget.retry) {
-      currentInheritedConfig.retry = {
-        ...currentTarget.retry
-      }
-    }
-    if (!currentTarget.targets && inheritedConfig.cache && !currentTarget.cache) {
-      currentTarget.cache = {
-        ...inheritedConfig.cache
-      }
-    } else if (currentTarget.targets && currentTarget.cache) {
-      currentInheritedConfig.cache = {
-        ...currentTarget.cache,
-        
-      }
+    currentTarget.retry = {
+      ...currentInheritedConfig.retry
     }
 
-    try {
-        if (currentTarget.strategy?.mode === "fallback") {
+    currentTarget.cache = {
+      ...currentInheritedConfig.cache
+    }
+    // end: merge inherited config with current target config (preference given to current)
+
+    let response;
+
+    switch (strategyMode) {
+        case "fallback":
             for (let [index, target] of currentTarget.targets.entries()) {
-                if (target.targets) {
-                    return await tryTargetsRecursively(
-                        c,
-                        target,
-                        request,
-                        requestHeaders,
-                        fn,
-                        method,
-                        errors,
-                        `${currentJsonPath}.targets[${index}]`,
-                        currentInheritedConfig
-                    );
-                }
-                try {
-                    return await tryPost(
-                        c,
-                        target,
-                        request,
-                        requestHeaders,
-                        fn,
-                        `${currentJsonPath}.targets[${index}]`
-                    );
-                } catch (e: any) {
-                  errors.push({
-                      provider: target.provider,
-                      errorObj: e.message,
-                      status: e.status,
-                  });
-                  if (currentTarget.strategy.onStatusCodes && !currentTarget.strategy.onStatusCodes.includes(e.status)) {
+                response = await tryTargetsRecursively(
+                    c,
+                    target,
+                    request,
+                    requestHeaders,
+                    fn,
+                    method,
+                    errors,
+                    `${currentJsonPath}.targets[${index}]`,
+                    currentInheritedConfig
+                );
+                if (
+                    response?.ok ||
+                    (currentTarget.strategy.onStatusCodes &&
+                        !currentTarget.strategy.onStatusCodes.includes(
+                            response?.status
+                        ))
+                ) {
                     break;
-                  }
                 }
             }
-        } else if (currentTarget.strategy?.mode === "loadbalance") {
-          currentTarget.targets.forEach(
-            (t: Options) => {
-              if (!t.weight) {
-                t.weight = 1;
-              }
-            }
-          );
+            break;
+
+        case "loadbalance":
+            currentTarget.targets.forEach((t: Options) => {
+                if (!t.weight) {
+                    t.weight = 1;
+                }
+            });
             let totalWeight = currentTarget.targets.reduce(
                 (sum: number, provider: any) => sum + provider.weight,
                 0
@@ -568,58 +550,58 @@ export async function tryTargetsRecursively(
             for (let [index, provider] of currentTarget.targets.entries()) {
                 if (randomWeight < provider.weight) {
                     currentJsonPath = currentJsonPath + `.targets[${index}]`;
-                    if (provider.targets) {
-                      return await tryTargetsRecursively(
-                          c,
-                          provider,
-                          request,
-                          requestHeaders,
-                          fn,
-                          method,
-                          errors,
-                          currentJsonPath,
-                          currentInheritedConfig
-                      );
-                    }
-                    return await tryPost(
+                    response = await tryTargetsRecursively(
                         c,
                         provider,
                         request,
                         requestHeaders,
                         fn,
-                        currentJsonPath
+                        method,
+                        errors,
+                        currentJsonPath,
+                        currentInheritedConfig
                     );
+                    break;
                 }
                 randomWeight -= provider.weight;
             }
-        } else if (currentTarget.strategy?.mode === "single" && currentTarget?.targets) {
-          return await tryPost(
-            c,
-            currentTarget.targets[0],
-            request,
-            requestHeaders,
-            fn,
-            `${currentJsonPath}.targets[0]`
-          );
-        } else {
-          return await tryPost(
-              c,
-              currentTarget,
-              request,
-              requestHeaders,
-              fn,
-              currentJsonPath
-          );
-        }
-    } catch (error: any) {
-        errors.push({
-            provider: targetGroup.provider,
-            errorObj: error.message,
-            status: error.status,
-        });
+            break;
+
+        case "single":
+            response = await tryTargetsRecursively(
+                c,
+                currentTarget.target[0],
+                request,
+                requestHeaders,
+                fn,
+                method,
+                errors,
+                `${currentJsonPath}.targets[0]`,
+                currentInheritedConfig
+            );
+            break;
+
+        default:
+          try {
+            response = await tryPost(
+                c,
+                currentTarget,
+                request,
+                requestHeaders,
+                fn,
+                currentJsonPath
+            );
+          } catch (error: any) {
+            errors.push({
+                provider: targetGroup.provider,
+                errorObj: error.message,
+                status: error.status,
+            });
+          }
+          break;
     }
 
-    return;
+    return response;
 }
 
 

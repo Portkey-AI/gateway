@@ -23,7 +23,8 @@ export async function completionsHandler(c: Context): Promise<Response> {
             requestHeaders,
             "complete",
             "POST",
-            errors
+            errors,
+            "config"
         );
 
         if (!tryTargetsResponse) {

@@ -24,7 +24,8 @@ export async function embeddingsHandler(c: Context): Promise<Response> {
             requestHeaders,
             "embed",
             "POST",
-            errors
+            errors,
+            "config"
         );
 
         if (!tryTargetsResponse) {

@@ -22,7 +22,8 @@ export async function chatCompletionsHandler(c: Context): Promise<Response> {
             requestHeaders,
             "chatComplete",
             "POST",
-            errors
+            errors,
+            "config"
         );
 
         if (!tryTargetsResponse) {
