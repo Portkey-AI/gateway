@@ -570,7 +570,7 @@ export async function tryTargetsRecursively(
         case "single":
             response = await tryTargetsRecursively(
                 c,
-                currentTarget.target[0],
+                currentTarget.targets[0],
                 request,
                 requestHeaders,
                 fn,
