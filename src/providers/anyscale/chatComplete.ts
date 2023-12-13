@@ -62,6 +62,15 @@ export const AnyscaleChatCompleteConfig: ProviderConfig = {
   user: {
     param: "user",
   },
+  tools: {
+    param: "tools"
+  },
+  tool_choice: {
+    param: "tool_choice"
+  },
+  response_format: {
+    param: "response_format"
+  }
 };
 
 export interface AnyscaleChatCompleteResponse extends ChatCompletionResponse, ErrorResponse {}
@@ -110,7 +119,7 @@ export const AnyscaleChatCompleteResponseTransform: (response: AnyscaleChatCompl
     chunk = chunk.replace(/^data: /, "");
     chunk = chunk.trim();
     if (chunk === '[DONE]') {
-      return chunk;
+      return `data: ${chunk}\n\n`;
     }
     const parsedChunk: AnyscaleStreamChunk = JSON.parse(chunk);
     return `data: ${JSON.stringify({
