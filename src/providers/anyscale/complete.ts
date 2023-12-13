@@ -111,7 +111,7 @@ export const AnyscaleCompleteStreamChunkTransform: (response: string) => string 
     chunk = chunk.replace(/^data: /, "");
     chunk = chunk.trim();
     if (chunk === '[DONE]') {
-      return chunk;
+      return `data: ${chunk}\n\n`;
     }
     const parsedChunk: AnyscaleCompleteStreamChunk= JSON.parse(chunk);
     return `data: ${JSON.stringify({
