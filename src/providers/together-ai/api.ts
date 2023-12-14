@@ -5,7 +5,7 @@ const TogetherAIApiConfig: ProviderAPIConfig = {
   headers: (API_KEY:string) => {
     return {"Authorization": `Bearer ${API_KEY}`}
   },
-  chatComplete: "/completions",
+  chatComplete: "/chat/completions",
   complete: "/completions"
 };
 
