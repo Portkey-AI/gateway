@@ -8,7 +8,7 @@ export const TogetherAIChatCompleteConfig: ProviderConfig = {
   model: {
     param: "model",
     required: true,
-    default: "togethercomputer/RedPajama-INCITE-7B-Instruct"
+    default: "togethercomputer/RedPajama-INCITE-Chat-3B-v1"
   },
   messages: {
     param: "prompt",
