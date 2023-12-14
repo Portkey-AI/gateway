@@ -1,6 +1,4 @@
-import { Message, Params } from "../../types/requestBody";
 import { ChatCompletionResponse, ErrorResponse, ProviderConfig } from "../types";
-import {TogetherAICompleteErrorResponse, TogetherAICompleteResponse, TogetherAICompletionStreamChunk } from "./complete";
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -11,29 +9,9 @@ export const TogetherAIChatCompleteConfig: ProviderConfig = {
     default: "togethercomputer/RedPajama-INCITE-Chat-3B-v1"
   },
   messages: {
-    param: "prompt",
+    param: "messages",
     required: true,
-    default: "",
-    transform: (params: Params) => {
-      let prompt: string = "";
-      // Transform the chat messages into a simple prompt
-      if (!!params.messages) {
-        let messages: Message[] = params.messages;
-        messages.forEach(msg => {
-          if (msg.role === "system") {
-            prompt+=`Background: ${msg.content}.\n`
-          } else if (msg.role === "assistant") {
-            prompt+=`<bot>: ${msg.content}.\n`
-          } else {
-            prompt+=`<human>: ${msg.content}.\n`
-          }
-        })
-        prompt += "<bot>: "
-        prompt = prompt.trim();
-      }
-
-      return prompt;
-    }
+    default: ""
   },
   max_tokens: {
     param: "max_tokens",
@@ -65,7 +43,39 @@ export const TogetherAIChatCompleteConfig: ProviderConfig = {
   }
 };
 
-export const TogetherAIChatCompleteResponseTransform: (response: TogetherAICompleteResponse | TogetherAICompleteErrorResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+export interface TogetherAIChatCompleteResponse {
+  id: string;
+  choices: {
+    message: {
+      role: string;
+      content: string;
+    };
+  }[];
+  created: number;
+  model: string;
+  object: string;
+}
+
+export interface TogetherAIChatCompleteErrorResponse {
+  model: string;
+  job_id: string;
+  request_id: string;
+  error: string;
+}
+
+export interface TogetherAIChatCompletionStreamChunk {
+  id: string;
+  request_id: string;
+  object: string;
+  choices: {
+    index: number;
+    delta: {
+      content: string;
+    };
+  }[];
+}
+
+export const TogetherAIChatCompleteResponseTransform: (response: TogetherAIChatCompleteResponse | TogetherAIChatCompleteErrorResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
     if (responseStatus !== 200) {
       return {
           error: {
@@ -87,7 +97,7 @@ export const TogetherAIChatCompleteResponseTransform: (response: TogetherAICompl
         provider: "together-ai",
         choices: [
           {
-            message: {"role": "assistant", content: response.choices[0].text},
+            message: {"role": "assistant", content: response.choices[0]?.message.content},
             index: 0,
             logprobs: null,
             finish_reason: "",
@@ -119,20 +129,19 @@ export const TogetherAIChatCompleteResponseTransform: (response: TogetherAICompl
     if (chunk === '[DONE]') {
       return `data: ${chunk}\n\n`;
     }
-    const parsedChunk: TogetherAICompletionStreamChunk = JSON.parse(chunk);
+    const parsedChunk: TogetherAIChatCompletionStreamChunk = JSON.parse(chunk);
     return `data: ${JSON.stringify({
       id: parsedChunk.id,
-      object: "text_completion",
+      object: parsedChunk.object,
       created: Math.floor(Date.now() / 1000),
       model: "",
       provider: "together-ai",
       choices: [
         {
           delta: {
-            content: parsedChunk.choices[0]?.text
+            content: parsedChunk.choices[0]?.delta.content
           },
           index: 0,
-          logprobs: null,
           finish_reason: "",
         }
       ]

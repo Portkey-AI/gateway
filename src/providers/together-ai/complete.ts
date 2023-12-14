@@ -42,7 +42,7 @@ export const TogetherAICompleteConfig: ProviderConfig = {
 };
 
 
-export interface TogetherAICompleteResponse {
+interface TogetherAICompleteResponse {
   id: string;
   choices: {
     text: string;
@@ -52,14 +52,14 @@ export interface TogetherAICompleteResponse {
   object: string;
 }
 
-export interface TogetherAICompleteErrorResponse {
+interface TogetherAICompleteErrorResponse {
   model: string;
   job_id: string;
   request_id: string;
   error: string;
 }
 
-export interface TogetherAICompletionStreamChunk {
+interface TogetherAICompletionStreamChunk {
   id: string;
   request_id: string;
   choices: {
@@ -127,7 +127,6 @@ export const TogetherAICompleteStreamChunkTransform: (response: string) => strin
         {
           text: parsedChunk.choices[0]?.text,
           index: 0,
-          logprobs: null,
           finish_reason: "",
         },
       ]
