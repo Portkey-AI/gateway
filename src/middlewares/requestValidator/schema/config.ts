@@ -5,6 +5,7 @@ import {
     AZURE_OPEN_AI,
     COHERE,
     OPEN_AI,
+    TOGETHER_AI,
 } from "../../../globals";
 
 export const configSchema: any = z
@@ -36,6 +37,7 @@ export const configSchema: any = z
                         AZURE_OPEN_AI,
                         ANYSCALE,
                         COHERE,
+                        TOGETHER_AI
                     ].includes(value),
                 {
                     message:
