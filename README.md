@@ -10,25 +10,44 @@
 [![Build Status](https://travis-ci.com/yourusername/rubeus.svg?branch=master)](https://travis-ci.com/yourusername/rubeus)
 [![Coverage Status](https://coveralls.io/repos/github/yourusername/rubeus/badge.svg?branch=master)](https://coveralls.io/github/yourusername/rubeus?branch=master)
  -->
+<!-- Need Social channels like Twitter, Linkedin, Dev.to, Hashnode -->
+
 
 </div>
 
-### **Rubeus** streamlines API requests to 20+ LLMs. It provides a unified API signature for interacting with all LLMs alongwith powerful LLM Gateway features like load balancing, fallbacks, retries and more. 
+## What is Rubeus? 
 
-- [Features](#features)
-- [Supported Providers](#supported-providers)
-- [Getting Started](#getting-started)
-- [Usage](#usage)
-  - [Interoperability](#-interoperability)
-  - [Fallback Strategies](#🔀-fallback-strategies)
-  - [Retry Strategies](#🔄-retry-strategies)
-  - [Load Balancing](#⚖️-load-balancing)
-  - [Unified API Signature](#📝-unified-api-signature)
-- [Built with Rubeus](#built-with-rubeus)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [License](#license)
+Rubeus is the interface between you and the LLM applications. It streamlines API requests to 20+ LLMs and provides a unified API signature for interacting with all LLMs acting as a **AI Gateway**. 
 
+Rubeus comes with powerful features like load balancing, fallbacks, retries, security, and more. 
+
+Take it for a spin  🚀
+
+<!-- Docker Container command -->
+
+### Docker
+
+```bash
+docker pull portkey-ai/rubeus
+```
+
+### Mac
+
+```bash
+brew install rubeus
+```
+
+### Windows
+
+```bash
+choco install rubeus
+```
+
+## Why Rubeus?
+
+Rubeus offers a unified, resilient, and efficient gateway for interacting with multiple LLMs, making it an ideal choice for developers and businesses looking to leverage AI in their applications.
+
+<!-- Illustration or Image with Rubeus -->
 
 ## Features
 
@@ -38,6 +57,31 @@
 * ⚖️ **Load Balancing:** Distribute load effectively across multiple API keys or providers based on custom weights.
 * 📝 **Unified API Signature:** If you've used OpenAI, you already know how to use Rubeus with any other provider.
 <br><br>
+
+## Contents
+
+- [Getting Started](#getting-started)
+- [Supported Providers](#supported-providers)
+- [Usage](#usage)
+  - [Interoperability](#🌐-interoperability)
+  - [Fallback Strategies](#🔀-fallback-strategies)
+  - [Retry Strategies](#🔄-retry-strategies)
+  - [Load Balancing](#⚖️-load-balancing)
+  - [Unified API Signature](#📝-unified-api-signature)
+- [Deploying Rubeus](#installation)
+- [Built with Rubeus](#built-with-rubeus)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Getting Started
+
+```bash
+npm install
+npm run dev # To run locally
+npm run deploy # To deploy to cloudflare
+```
+
 ## Supported Providers
 
 || Provider  | Support Status  | Supported Endpoints |
@@ -52,14 +96,6 @@
 | <img src="docs/images/localai.png" width=18>| LocalAI  | 🚧 Coming Soon  |  |
 
 <br />
-
-## Getting Started
-
-```bash
-npm install
-npm run dev # To run locally
-npm run deploy # To deploy to cloudflare
-```
 
 ## Usage
 
@@ -178,27 +214,64 @@ curl --location 'http://127.0.0.1:8787/v1/completions' \
 }'
 ```
 
-## Built with Rubeus
+<!--## Built with Rubeus
 
 | Name | Description |
 | -- | -- |
-| Portkey.ai | Full Stack LLMOps |
+| Portkey.ai | Full Stack LLMOps |-->
 
+
+## Deploying Rubeus
+
+* Deploy on Kubernetes
+* Deploy on Vercel
+* Deploy on Cloudflare Workers
+* Deploy on AWS Lambda
+* Deploy on Google Cloud Functions
+* Deploy on Azure Cloud Functions
+
+## SDKs
+
+**NodeJS**
+
+```bash
+npm install --save portkey-ai
+```
+
+**Python**
+
+```bash
+pip install portkey-ai
+```
+
+> **Note:** Rubeus is compatible with OpenAI's SDKs for [.NET](https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/openai/Azure.AI.OpenAI), [Java](https://github.com/Azure/azure-sdk-for-java/tree/main/sdk/openai/azure-ai-openai), [Go](https://github.com/Azure/azure-sdk-for-go/tree/main/sdk/ai/azopenai)
 
 ## Roadmap
 
-1. Support for more providers, including Google Bard and LocalAI.
+1. Support for more providers. Missing a provider or LLM Platform, [raise a feature request](https://github.com/Portkey-AI/Rubeus/issues).
 2. Enhanced load balancing features to optimize resource use across different models and providers.
 3. More robust fallback and retry strategies to further improve the reliability of requests.
 4. Increased customizability of the unified API signature to cater to more diverse use cases.
 
-[💬 Participate in Roadmap discussions here.](https://github.com/Portkey-AI/Rubeus/issues)
+[💬 Participate in Roadmap discussions here.](https://github.com/Portkey-AI/Rubeus/projects/)
 
 ## Contributing
 
 The easiest way to contribute is to pick any issue with the `good first issue` tag 💪. Read the Contributing guidelines [here](/CONTRIBUTING.md).
 
 Bug Report? [File here](https://github.com/Portkey-AI/Rubeus/issues) | Feature Request? [File here](https://github.com/Portkey-AI/Rubeus/issues)
+
+## Community
+
+Join our growing community around the world, for help, ideas, and discussions on AI.
+
+- View our official [Blog](https://portkey.ai/blog)
+- Chat live with us on [Discord](https://discord.gg/NXepgUYp) <!-- Ideally it should be this https://portkey.ai/discord-->
+- Follow us on [Twitter](https://twitter.com/PortkeyAI)
+- Connect with us on [LinkedIn](https://www.linkedin.com/company/portkey-ai/)
+- Visit us on [YouTube]()
+- Join our [Dev community](https://dev.to/portkeyai)
+- Questions tagged #surrealdb on [Stack Overflow](https://stackoverflow.com/questions/tagged/rubeus) <!-- stackoverflow tags? -->
 
 ## License
 
