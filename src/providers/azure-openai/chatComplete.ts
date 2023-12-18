@@ -60,6 +60,15 @@ export const AzureOpenAIChatCompleteConfig: ProviderConfig = {
   user: {
     param: "user",
   },
+  tools: {
+    param: "tools"
+  },
+  tool_choice: {
+    param: "tool_choice"
+  },
+  response_format: {
+    param: "response_format"
+  }
 };
 
 interface AzureOpenAIChatCompleteResponse extends ChatCompletionResponse {}
