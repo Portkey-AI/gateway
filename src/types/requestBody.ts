@@ -96,6 +96,18 @@ export interface Config {
 }
 
 /**
+ * A message content type.
+ * @interface
+ */
+export interface ContentType {
+  type: string;
+  text?: string;
+  image_url?: {
+    url: string;
+  }
+}
+
+/**
  * A message in the conversation.
  * @interface
  */
@@ -103,11 +115,12 @@ export interface Message {
   /** The role of the message sender. It can be 'system', 'user', 'assistant', or 'function'. */
   role: 'system' | 'user' | 'assistant' | 'function';
   /** The content of the message. */
-  content?: string;
+  content?: string | ContentType[];
   /** The name of the function to call, if any. */
   name?: string;
   /** The function call to make, if any. */
   function_call?: any;
+  tool_calls?: any;
   citationMetadata?: CitationMetadata
 }
 
@@ -145,6 +158,17 @@ export interface Function {
 }
 
 /**
+ * A tool in the conversation.
+ * @interface
+ */
+export interface Tool {
+  /** The name of the function. */
+  type: string;
+  /** A description of the function. */
+  function?: Function;
+}
+
+/**
  * The parameters for the request.
  * @interface
  */
@@ -168,7 +192,9 @@ export interface Params {
   logit_bias?: { [key: string]: number };
   user?: string;
   context?: string;
-  examples?: Examples[]
+  examples?: Examples[];
+  top_k?: number;
+  tools?: Tool[];
 }
 
 interface Examples {
