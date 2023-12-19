@@ -4,6 +4,7 @@ import {
     ANYSCALE,
     AZURE_OPEN_AI,
     COHERE,
+    GOOGLE,
     OPEN_AI,
     TOGETHER_AI,
 } from "../../../globals";
@@ -37,7 +38,8 @@ export const configSchema: any = z
                         AZURE_OPEN_AI,
                         ANYSCALE,
                         COHERE,
-                        TOGETHER_AI
+                        TOGETHER_AI,
+                        GOOGLE
                     ].includes(value),
                 {
                     message:
