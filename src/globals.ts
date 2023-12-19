@@ -26,6 +26,7 @@ export const ANTHROPIC:string = "anthropic";
 export const ANYSCALE: string = "anyscale";
 export const PALM: string = "palm";
 export const TOGETHER_AI: string = "together-ai";
+export const GOOGLE: string = "google";
 
 export const providersWithStreamingSupport = [OPEN_AI, AZURE_OPEN_AI, ANTHROPIC, COHERE];
 export const allowedProxyProviders = [OPEN_AI, COHERE, AZURE_OPEN_AI, ANTHROPIC];
