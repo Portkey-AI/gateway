@@ -1,5 +1,6 @@
 import { Params } from "../../types/requestBody";
 import { CompletionResponse, ErrorResponse, ProviderConfig } from "../types";
+import { AnthropicErrorObject } from "./chatComplete";
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -51,11 +52,6 @@ export const AnthropicCompleteConfig: ProviderConfig = {
   },
 };
 
-interface AnthropicErrorResponse {
-  type: string;
-  message: string;
-}
-
 interface AnthropicCompleteResponse {
   completion: string;
   stop_reason: string;
@@ -65,7 +61,7 @@ interface AnthropicCompleteResponse {
   log_id: string;
   exception: null | string;
   status?: number;
-  error?: AnthropicErrorResponse;
+  error?: AnthropicErrorObject;
 }
 
 // TODO: The token calculation is wrong atm
@@ -99,8 +95,14 @@ export const AnthropicCompleteResponseTransform: (response: AnthropicCompleteRes
   };
 }
 
-export const AnthropicCompleteStreamChunkTransform: (response: string) => string = (responseChunk) => {
+export const AnthropicCompleteStreamChunkTransform: (response: string) => string | undefined = (responseChunk) => {
   let chunk = responseChunk.trim();
+  if (
+    chunk.startsWith("event: ping")
+  ) {
+      return;
+  }
+
   chunk = chunk.replace(/^event: completion[\r\n]*/, "");
   chunk = chunk.replace(/^data: /, "");
   chunk = chunk.trim();

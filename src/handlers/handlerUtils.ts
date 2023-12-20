@@ -173,6 +173,11 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
     baseUrl = apiConfig.baseURL;
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, providerOption.overrideParams?.model || params?.model);
     url = `${baseUrl}${endpoint}`;
+  } else if (provider === "anthropic" && apiConfig.baseURL) {
+    // Construct the base object for the POST request
+    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, fn), provider);
+    baseUrl = apiConfig.baseURL;
+    endpoint = apiConfig[fn] || "";
   } else {
     // Construct the base object for the request
     fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, method);
@@ -302,6 +307,11 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
     fetchOptions = constructRequest(apiConfig.headers(), provider);
     baseUrl = apiConfig.baseURL;
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, providerOption.overrideParams?.model || params?.model);
+  } else if (provider === "anthropic" && apiConfig.baseURL) {
+    // Construct the base object for the POST request
+    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, fn), provider);
+    baseUrl = apiConfig.baseURL;
+    endpoint = apiConfig[fn] || "";
   } else {
     // Construct the base object for the POST request
     fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider);

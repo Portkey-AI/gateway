@@ -6,32 +6,46 @@ import { ChatCompletionResponse, ErrorResponse, ProviderConfig } from "../types"
 export const AnthropicChatCompleteConfig: ProviderConfig = {
   model: {
     param: "model",
-    default: "claude-instant-1",
+    default: "claude-2.1",
     required: true,
   },
-  messages: {
-    param: "prompt",
-    required: true,
-    transform: (params:Params) => {
-      let prompt:string = "";
-      // Transform the chat messages into a simple prompt
-      if (!!params.messages) {
-        let messages:Message[] = params.messages;
-        messages.forEach(msg => {
-          if (msg.role == "user") {
-            prompt+=`Human: ${msg.content}\n`
-          } else if (msg.role == "assistant") {
-            prompt+=`Assistant: ${msg.content}\n`
-          }
-        })
-        prompt += "Assistant:";
-      }
+  messages: [
+    {
+      param: "messages",
+      required: true,
+      transform: (params:Params) => {
+        let messages:Message[] = [];
+        // Transform the chat messages into a simple prompt
+        if (!!params.messages) {
+          params.messages.forEach(msg => {
+            if (msg.role !== "system") {
+              messages.push(msg);
+            }
+          })
+        }
 
-      return prompt;
+        return messages;
+      }
+    },
+    {
+      param: "system",
+      required: false,
+      transform: (params:Params) => {
+        let systemMessage: string = "";
+        // Transform the chat messages into a simple prompt
+        if (!!params.messages) {
+          params.messages.forEach(msg => {
+            if (msg.role === "system") {
+              systemMessage = msg.content as string;
+            }
+          })
+        }
+        return systemMessage;
+      }
     }
-  },
+  ],
   max_tokens: {
-    param: "max_tokens_to_sample",
+    param: "max_tokens",
     required: true,
   },
   temperature: {
@@ -61,26 +75,42 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
   },
 };
 
-interface AnthropicErrorResponse {
+export interface AnthropicErrorObject {
   type: string;
   message: string;
 }
 
-interface AnthropicCompleteResponse {
-  completion: string;
+interface AnthropicErrorResponse {
+  type: string;
+  error: AnthropicErrorObject;
+}
+
+interface AnthropicChatCompleteResponse {
+  id: string;
+  type: string;
+  role: string;
+  content: {
+    type: string;
+    text: string;
+  }[];
   stop_reason: string;
   model: string;
-  truncated: boolean;
-  stop: null | string;
-  log_id: string;
-  exception: null | string;
-  status?: number;
-  error?: AnthropicErrorResponse;
+  stop_sequence: null | string;
+}
+
+interface AnthropicChatCompleteStreamResponse {
+  type: string;
+  index: number;
+  delta: {
+    type: string;
+    text: string;
+    stop_reason?: string;
+  }
 }
 
 // TODO: The token calculation is wrong atm
-export const AnthropicChatCompleteResponseTransform: (response: AnthropicCompleteResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if (responseStatus !== 200) {
+export const AnthropicChatCompleteResponseTransform: (response: AnthropicChatCompleteResponse | AnthropicErrorResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+  if (responseStatus !== 200 && 'error' in response) {
     return {
         error: {
             message: response.error?.message,
@@ -92,47 +122,71 @@ export const AnthropicChatCompleteResponseTransform: (response: AnthropicComplet
     } as ErrorResponse;
   } 
 
-  return {
-    id: response.log_id,
-    object: "chat_completion",
-    created: Math.floor(Date.now() / 1000),
-    model: response.model,
-    provider: "anthropic",
-    choices: [
-      {
-        message: {"role": "assistant", content: response.completion},
-        index: 0,
-        logprobs: null,
-        finish_reason: response.stop_reason,
-      },
-    ]
+  if ('content' in response) {
+    return {
+      id: response.id,
+      object: "chat_completion",
+      created: Math.floor(Date.now() / 1000),
+      model: response.model,
+      provider: "anthropic",
+      choices: [
+        {
+          message: {"role": "assistant", content: response.content[0].text},
+          index: 0,
+          logprobs: null,
+          finish_reason: response.stop_reason,
+        },
+      ]
+    }
   }
+
+  return {
+    error: {
+        message: `Invalid response recieved from anthropic: ${JSON.stringify(response)}`,
+        type: null,
+        param: null,
+        code: null
+    },
+    provider: "anthropic"
+  } as ErrorResponse;
 }
   
 
-export const AnthropicChatCompleteStreamChunkTransform: (response: string) => string = (responseChunk) => {
+export const AnthropicChatCompleteStreamChunkTransform: (response: string) => string | undefined = (responseChunk) => {
   let chunk = responseChunk.trim();
+  if (
+    chunk.startsWith("event: ping") ||
+    chunk.startsWith("event: message_start") ||
+    chunk.startsWith("event: content_block_start") ||
+    chunk.startsWith("event: content_block_stop")
+  ) {
+      return;
+  }
+
+  if (chunk.startsWith("event: message_stop")) {
+    return "data: [DONE]\n\n"
+  }
+
   chunk = chunk.replace(/^event: completion[\r\n]*/, "");
   chunk = chunk.replace(/^data: /, "");
   chunk = chunk.trim();
-  if (chunk === '[DONE]') {
-    return chunk;
-  }
-  const parsedChunk: AnthropicCompleteResponse = JSON.parse(chunk);
+  
+
+  const parsedChunk: AnthropicChatCompleteStreamResponse = JSON.parse(chunk);
   return `data: ${JSON.stringify({
-    id: parsedChunk.log_id,
-    object: "text_completion",
+    id: "id",
+    object: "chat.completion.chunk",
     created: Math.floor(Date.now() / 1000),
-    model: parsedChunk.model,
+    model: "",
     provider: "anthropic",
     choices: [
       {
         delta: {
-          content: parsedChunk.completion
+          content: parsedChunk.delta?.text
         },
         index: 0,
         logprobs: null,
-        finish_reason: parsedChunk.stop_reason,
+        finish_reason: parsedChunk.delta?.stop_reason ?? null,
       },
     ]
   })}` + '\n\n'
