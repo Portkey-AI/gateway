@@ -15,7 +15,10 @@ export const getStreamModeSplitPattern = (proxyProvider: string) => {
     return splitPattern;
 }
 
-export const getStreamingMode = (reqBody: Params) => {
+export const getStreamingMode = (reqBody: Params, provider: string, requestUrl: string) => {
+    if (provider === GOOGLE && requestUrl.indexOf("stream") > -1) {
+      return true;
+    } 
     return reqBody.stream 
 }
 
