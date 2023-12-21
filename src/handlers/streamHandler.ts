@@ -87,8 +87,8 @@ export async function handleStreamingMode(response: Response, proxyProvider: str
         writer.close();
     })();
 
-    // Convert GEMINI json stream to text/event-stream
-    if (proxyProvider === GOOGLE) {
+    // Convert GEMINI json stream to text/event-stream for non-proxy calls
+    if (proxyProvider === GOOGLE && responseTransformer) {
         return new Response(readable, {
             ...response,
             headers: new Headers({
