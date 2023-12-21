@@ -291,6 +291,9 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
 
   // Mapping providers to corresponding URLs
   const apiConfig: ProviderAPIConfig = Providers[provider].api;
+  // Attach the body of the request
+  const transformedRequestBody = transformToProviderRequest(provider, params, fn);
+
 
   let baseUrl:string, endpoint:string, fetchOptions;
   if (provider === AZURE_OPEN_AI && apiConfig.getBaseURL && apiConfig.getEndpoint) {
@@ -305,11 +308,11 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
   } else if (provider === PALM && apiConfig.baseURL && apiConfig.getEndpoint) {
     fetchOptions = constructRequest(apiConfig.headers(), provider);
     baseUrl = apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, params.model);
+    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, transformedRequestBody.model);
   } else if (provider === GOOGLE && apiConfig.baseURL && apiConfig.getEndpoint) {
     fetchOptions = constructRequest(apiConfig.headers(), provider);
     baseUrl = apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, params.model, params.stream);
+    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, transformedRequestBody.model, transformedRequestBody.stream);
   } else {
     // Construct the base object for the POST request
     fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider);
@@ -320,10 +323,6 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
 
   // Construct the full URL
   const url = `${baseUrl}${endpoint}`;
-
-  // Attach the body of the request
-  const transformedRequestBody = transformToProviderRequest(provider, params, fn)
-
 
   fetchOptions.body = JSON.stringify(transformedRequestBody);
 
