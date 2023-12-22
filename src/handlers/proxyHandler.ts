@@ -82,15 +82,16 @@ export async function proxyHandler(c: Context): Promise<Response> {
       proxyPath: c.req.url.indexOf("/v1/proxy") > -1 ? "/v1/proxy" : "/v1"
     }
 
+    let requestConfig: Config | ShortConfig | null = null; 
+    if (requestHeaders[`x-${POWERED_BY}-config`]) {
+      requestConfig = JSON.parse(requestHeaders[`x-${POWERED_BY}-config`]);
+      if (requestConfig && 'provider' in requestConfig){
+        store.proxyProvider = requestConfig.provider;
+      }
+    };
+
     let urlToFetch = getProxyPath(c.req.url, store.proxyProvider, store.proxyPath);
     store.isStreamingMode = getStreamingMode(store.reqBody, store.proxyProvider, urlToFetch)
-
-    let requestConfig: Config | ShortConfig | null = null; 
-    if (requestHeaders[`x-rubeus-config`]) {
-      requestConfig = JSON.parse(requestHeaders[`x-rubeus-config`]);
-    } else if (requestHeaders[`x-${POWERED_BY}-config`]) {
-      requestConfig = JSON.parse(requestHeaders[`x-${POWERED_BY}-config`]);
-    };
 
     if (requestConfig &&
       (
