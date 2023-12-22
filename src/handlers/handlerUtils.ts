@@ -313,20 +313,16 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
   } else if (provider === PALM && apiConfig.baseURL && apiConfig.getEndpoint) {
     fetchOptions = constructRequest(apiConfig.headers(), provider);
     baseUrl = apiConfig.baseURL;
-<<<<<<< HEAD
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, providerOption.overrideParams?.model || params?.model);
   } else if (provider === "anthropic" && apiConfig.baseURL) {
     // Construct the base object for the POST request
     fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, fn), provider);
     baseUrl = apiConfig.baseURL;
     endpoint = apiConfig[fn] || "";
-=======
-    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, transformedRequestBody.model);
   } else if (provider === GOOGLE && apiConfig.baseURL && apiConfig.getEndpoint) {
     fetchOptions = constructRequest(apiConfig.headers(), provider);
     baseUrl = apiConfig.baseURL;
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, transformedRequestBody.model, transformedRequestBody.stream);
->>>>>>> main
   } else {
     // Construct the base object for the POST request
     fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider);
