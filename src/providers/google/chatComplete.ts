@@ -217,8 +217,9 @@ export const GoogleChatCompleteResponseTransform: (
 };
 
 export const GoogleChatCompleteStreamChunkTransform: (
-    response: string
-) => string = (responseChunk) => {
+    response: string,
+    fallbackId: string
+) => string = (responseChunk, fallbackId) => {
     let chunk = responseChunk.trim();
     if (chunk.startsWith("[")) {
         chunk = chunk.slice(1);
@@ -240,7 +241,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
 
     return (
         `data: ${JSON.stringify({
-            id: "parsedChunk.id",
+            id: fallbackId,
             object: "chat.completion.chunk",
             created: Math.floor(Date.now() / 1000),
             model: "",
