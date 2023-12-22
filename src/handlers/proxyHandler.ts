@@ -27,7 +27,7 @@ function getProxyPath(requestURL:string, proxyProvider:string, proxyEndpointPath
   if (proxyProvider === ANTHROPIC) {
       proxyPath = proxyPath.replace("/v1/v1/", "/v1/");
   }
-  
+
   return proxyPath;
 }
 
@@ -82,8 +82,9 @@ export async function proxyHandler(c: Context): Promise<Response> {
       proxyPath: c.req.url.indexOf("/v1/proxy") > -1 ? "/v1/proxy" : "/v1"
     }
 
-    store.isStreamingMode = getStreamingMode(store.reqBody)
     let urlToFetch = getProxyPath(c.req.url, store.proxyProvider, store.proxyPath);
+    store.isStreamingMode = getStreamingMode(store.reqBody, store.proxyProvider, urlToFetch)
+
     let requestConfig: Config | ShortConfig | null = null; 
     if (requestHeaders[`x-rubeus-config`]) {
       requestConfig = JSON.parse(requestHeaders[`x-rubeus-config`]);

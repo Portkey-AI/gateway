@@ -2,6 +2,7 @@ import AnthropicConfig from "./anthropic";
 import AnyscaleConfig from "./anyscale";
 import AzureOpenAIConfig from "./azure-openai";
 import CohereConfig from "./cohere";
+import GoogleConfig from "./google";
 import OpenAIConfig from "./openai";
 import PalmAIConfig from "./palm";
 import TogetherAIConfig from "./together-ai";
@@ -14,7 +15,8 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'azure-openai': AzureOpenAIConfig,
   anyscale: AnyscaleConfig,
   palm: PalmAIConfig,
-  'together-ai': TogetherAIConfig
+  'together-ai': TogetherAIConfig,
+  google: GoogleConfig
 };
 
 export default Providers;

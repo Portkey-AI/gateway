@@ -1,4 +1,4 @@
-import { ANTHROPIC, COHERE } from "./globals";
+import { ANTHROPIC, COHERE, GOOGLE } from "./globals";
 import { Params } from "./types/requestBody";
 
 export const getStreamModeSplitPattern = (proxyProvider: string) => {
@@ -9,10 +9,16 @@ export const getStreamModeSplitPattern = (proxyProvider: string) => {
     if (proxyProvider === COHERE) {
         splitPattern = '\n';
     }
+    if (proxyProvider === GOOGLE) {
+      splitPattern = '\r\n';
+    }
     return splitPattern;
 }
 
-export const getStreamingMode = (reqBody: Params) => {
+export const getStreamingMode = (reqBody: Params, provider: string, requestUrl: string) => {
+    if (provider === GOOGLE && requestUrl.indexOf("stream") > -1) {
+      return true;
+    } 
     return reqBody.stream 
 }
 

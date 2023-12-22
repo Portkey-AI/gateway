@@ -1,5 +1,5 @@
 import { Context } from "hono";
-import { AZURE_OPEN_AI, HEADER_KEYS, POWERED_BY, RESPONSE_HEADER_KEYS, RETRY_STATUS_CODES } from "../globals";
+import { AZURE_OPEN_AI, GOOGLE, HEADER_KEYS, PALM, POWERED_BY, RESPONSE_HEADER_KEYS, RETRY_STATUS_CODES } from "../globals";
 import Providers from "../providers";
 import { ProviderAPIConfig, endpointStrings } from "../providers/types";
 import transformToProviderRequest from "../services/transformToProviderRequest";
@@ -158,7 +158,7 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
   let url = providerOption.urlToFetch as string;
 
   let baseUrl:string, endpoint:string;
-  if (provider=="azure-openai" && apiConfig.getBaseURL && apiConfig.getEndpoint) {
+  if (provider === AZURE_OPEN_AI && apiConfig.getBaseURL && apiConfig.getEndpoint) {
     // Construct the base object for the request
     if(!!providerOption.apiKey) {
       fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, "apiKey"), provider, method);
@@ -168,11 +168,15 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
     baseUrl = apiConfig.getBaseURL(providerOption.resourceName, providerOption.deploymentId);
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiVersion, url);
     url = `${baseUrl}${endpoint}`;
-  } else if (provider === "palm" && apiConfig.baseURL && apiConfig.getEndpoint) {
+  } else if (provider === PALM && apiConfig.baseURL && apiConfig.getEndpoint) {
     fetchOptions = constructRequest(apiConfig.headers(), provider, method);
     baseUrl = apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, providerOption.overrideParams?.model || params?.model);
+    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, params?.model);
     url = `${baseUrl}${endpoint}`;
+  } else if (provider === GOOGLE && apiConfig.baseURL && apiConfig.getEndpoint) {
+    fetchOptions = constructRequest(apiConfig.headers(), provider);
+    baseUrl = apiConfig.baseURL;
+    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, params.model, params.stream);
   } else {
     // Construct the base object for the request
     fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, method);
@@ -287,9 +291,12 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
 
   // Mapping providers to corresponding URLs
   const apiConfig: ProviderAPIConfig = Providers[provider].api;
+  // Attach the body of the request
+  const transformedRequestBody = transformToProviderRequest(provider, params, fn);
+
 
   let baseUrl:string, endpoint:string, fetchOptions;
-  if (provider=="azure-openai" && apiConfig.getBaseURL && apiConfig.getEndpoint) {
+  if (provider === AZURE_OPEN_AI && apiConfig.getBaseURL && apiConfig.getEndpoint) {
     // Construct the base object for the POST request
     if(!!providerOption.apiKey) {
       fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, "apiKey"), provider);
@@ -298,10 +305,14 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
     }
     baseUrl = apiConfig.getBaseURL(providerOption.resourceName, providerOption.deploymentId);
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiVersion);
-  } else if (provider === "palm" && apiConfig.baseURL && apiConfig.getEndpoint) {
+  } else if (provider === PALM && apiConfig.baseURL && apiConfig.getEndpoint) {
     fetchOptions = constructRequest(apiConfig.headers(), provider);
     baseUrl = apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, providerOption.overrideParams?.model || params?.model);
+    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, transformedRequestBody.model);
+  } else if (provider === GOOGLE && apiConfig.baseURL && apiConfig.getEndpoint) {
+    fetchOptions = constructRequest(apiConfig.headers(), provider);
+    baseUrl = apiConfig.baseURL;
+    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, transformedRequestBody.model, transformedRequestBody.stream);
   } else {
     // Construct the base object for the POST request
     fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider);
@@ -312,10 +323,6 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
 
   // Construct the full URL
   const url = `${baseUrl}${endpoint}`;
-
-  // Attach the body of the request
-  const transformedRequestBody = transformToProviderRequest(provider, params, fn)
-
 
   fetchOptions.body = JSON.stringify(transformedRequestBody);
 
