@@ -25,7 +25,7 @@ export interface ParameterConfig {
  */
 export interface ProviderConfig {
   /** The configuration for each parameter, indexed by parameter name. */
-  [key: string]: ParameterConfig;
+  [key: string]: ParameterConfig | ParameterConfig[];
 }
 
 /**

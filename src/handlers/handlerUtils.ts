@@ -173,6 +173,11 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
     baseUrl = apiConfig.baseURL;
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, params?.model);
     url = `${baseUrl}${endpoint}`;
+  } else if (provider === "anthropic" && apiConfig.baseURL) {
+    // Construct the base object for the POST request
+    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, fn), provider);
+    baseUrl = apiConfig.baseURL;
+    endpoint = apiConfig[fn] || "";
   } else if (provider === GOOGLE && apiConfig.baseURL && apiConfig.getEndpoint) {
     fetchOptions = constructRequest(apiConfig.headers(), provider);
     baseUrl = apiConfig.baseURL;
@@ -232,7 +237,7 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
     if (cacheResponse) {
       response = await responseHandler(new Response(cacheResponse, {headers: {
         "content-type": "application/json"
-      }}), false, provider, undefined);
+      }}), false, provider, undefined, url);
       c.set("requestOptions", [...requestOptions, {
         providerOptions: {...providerOption, requestURL: url, rubeusURL: fn},
         requestParams: params,
@@ -248,7 +253,7 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
   }
 
     [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes);
-  const mappedResponse = await responseHandler(response, isStreamingMode, provider, undefined);
+  const mappedResponse = await responseHandler(response, isStreamingMode, provider, undefined, url);
   updateResponseHeaders(mappedResponse, currentIndex, params, cacheStatus, retryCount ?? 0, requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");
 
   c.set("requestOptions", [...requestOptions, {
@@ -308,11 +313,20 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
   } else if (provider === PALM && apiConfig.baseURL && apiConfig.getEndpoint) {
     fetchOptions = constructRequest(apiConfig.headers(), provider);
     baseUrl = apiConfig.baseURL;
+<<<<<<< HEAD
+    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, providerOption.overrideParams?.model || params?.model);
+  } else if (provider === "anthropic" && apiConfig.baseURL) {
+    // Construct the base object for the POST request
+    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, fn), provider);
+    baseUrl = apiConfig.baseURL;
+    endpoint = apiConfig[fn] || "";
+=======
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, transformedRequestBody.model);
   } else if (provider === GOOGLE && apiConfig.baseURL && apiConfig.getEndpoint) {
     fetchOptions = constructRequest(apiConfig.headers(), provider);
     baseUrl = apiConfig.baseURL;
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, transformedRequestBody.model, transformedRequestBody.stream);
+>>>>>>> main
   } else {
     // Construct the base object for the POST request
     fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider);
@@ -367,7 +381,8 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
               }),
               false,
               provider,
-              undefined
+              undefined,
+              url
           );
           c.set("requestOptions", [
               ...requestOptions,
@@ -400,7 +415,7 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
 
   [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes);
 
-  const mappedResponse = await responseHandler(response, isStreamingMode, provider, fn);
+  const mappedResponse = await responseHandler(response, isStreamingMode, provider, fn, url);
   updateResponseHeaders(mappedResponse, currentIndex, params, cacheStatus, retryCount ?? 0, requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");
   c.set("requestOptions", [...requestOptions, {
     providerOptions: {...providerOption, requestURL: url, rubeusURL: fn},
@@ -457,7 +472,7 @@ export async function tryProvidersInSequence(c: Context, providers:Options[], pa
 }
 
 // Response Handlers for streaming & non-streaming
-export function responseHandler(response: Response, streamingMode: boolean, proxyProvider: string, responseTransformer: string | undefined): Promise<Response> {
+export function responseHandler(response: Response, streamingMode: boolean, proxyProvider: string, responseTransformer: string | undefined, requestURL: string): Promise<Response> {
   // Checking status 200 so that errors are not considered as stream mode.
   let responseTransformerFunction: Function | undefined;
   if (responseTransformer && streamingMode && response.status === 200) {
@@ -467,7 +482,7 @@ export function responseHandler(response: Response, streamingMode: boolean, prox
   }
 
   if (streamingMode && response.status === 200) {
-      return handleStreamingMode(response, proxyProvider, responseTransformerFunction)
+      return handleStreamingMode(response, proxyProvider, responseTransformerFunction, requestURL)
   } else if (response.headers?.get("content-type") === "audio/mpeg") {
       return handleAudioResponse(response)
   } else if (response.headers?.get("content-type") === "application/octet-stream") {

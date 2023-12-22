@@ -27,9 +27,7 @@ export async function* readStream(reader: ReadableStreamDefaultReader, splitPatt
             let lastPart = parts.pop() ?? "";  // remove the last part from the array and keep it in buffer
             for (let part of parts) {
                 // Some providers send ping event which can be ignored during parsing
-                if (part.startsWith("event: ping")) {
-                    continue;
-                }
+
                 if (part.length > 0) {
                     if (isFirstChunk) {
                         isFirstChunk = false;
@@ -39,7 +37,10 @@ export async function* readStream(reader: ReadableStreamDefaultReader, splitPatt
                     }
 
                     if (transformFunction) {
-                        yield transformFunction(part);
+                        const transformedChunk = transformFunction(part);
+                        if (transformedChunk !== undefined) {
+                            yield transformFunction(part);
+                        }
                     } else {
                         yield part + splitPattern;
                     }
@@ -69,8 +70,8 @@ export async function handleOctetStreamResponse(response: Response) {
 }
 
 
-export async function handleStreamingMode(response: Response, proxyProvider: string, responseTransformer: Function | undefined): Promise<Response> {
-    const splitPattern = getStreamModeSplitPattern(proxyProvider);
+export async function handleStreamingMode(response: Response, proxyProvider: string, responseTransformer: Function | undefined, requestURL: string): Promise<Response> {
+    const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);
     if (!response.body) {
         throw new Error("Response format is invalid. Body not found");
     }

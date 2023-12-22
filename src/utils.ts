@@ -1,9 +1,9 @@
 import { ANTHROPIC, COHERE, GOOGLE } from "./globals";
 import { Params } from "./types/requestBody";
 
-export const getStreamModeSplitPattern = (proxyProvider: string) => {
+export const getStreamModeSplitPattern = (proxyProvider: string, requestURL: string) => {
     let splitPattern = '\n\n';
-    if (proxyProvider === ANTHROPIC) {
+    if (proxyProvider === ANTHROPIC && requestURL.endsWith("/complete")) {
         splitPattern = '\r\n\r\n'; 
     }
     if (proxyProvider === COHERE) {
