@@ -226,6 +226,9 @@ export interface ShortConfig {
   apiKey?: string;
   cache?: CacheSettings;
   retry?: RetrySettings;
+  resourceName?: string;
+  deploymentId?: string;
+  apiVersion?: string;
 }
 
 /**
