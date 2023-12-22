@@ -70,8 +70,8 @@ export async function handleOctetStreamResponse(response: Response) {
 }
 
 
-export async function handleStreamingMode(response: Response, proxyProvider: string, responseTransformer: Function | undefined): Promise<Response> {
-    const splitPattern = getStreamModeSplitPattern(proxyProvider);
+export async function handleStreamingMode(response: Response, proxyProvider: string, responseTransformer: Function | undefined, requestURL: string): Promise<Response> {
+    const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);
     if (!response.body) {
         throw new Error("Response format is invalid. Body not found");
     }

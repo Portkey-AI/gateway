@@ -166,7 +166,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
       if (cacheResponse) {
         const cacheMappedResponse = await responseHandler(new Response(cacheResponse, {headers: {
           "content-type": "application/json"
-        }}), false, store.proxyProvider, undefined);
+        }}), false, store.proxyProvider, undefined, urlToFetch);
         c.set("requestOptions", [{
           providerOptions: {...store.reqBody, provider: store.proxyProvider, requestURL: urlToFetch, rubeusURL: 'proxy'},
           requestParams: store.reqBody,
@@ -182,7 +182,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
 
     // Make the API call to the provider
     let [lastResponse, lastAttempt] = await retryRequest(urlToFetch, fetchOptions, retryCount, retryStatusCodes);
-    const mappedResponse = await responseHandler(lastResponse, store.isStreamingMode, store.proxyProvider, undefined);
+    const mappedResponse = await responseHandler(lastResponse, store.isStreamingMode, store.proxyProvider, undefined, urlToFetch);
     updateResponseHeaders(mappedResponse, 0, store.reqBody, cacheStatus, (lastAttempt ?? 0), requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");
 
     c.set("requestOptions", [{
