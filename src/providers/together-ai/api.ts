@@ -1,12 +1,12 @@
 import { ProviderAPIConfig } from "../types";
 
 const TogetherAIApiConfig: ProviderAPIConfig = {
-  baseURL: "https://api.together.xyz/v1",
+  baseURL: "https://api.together.xyz",
   headers: (API_KEY:string) => {
     return {"Authorization": `Bearer ${API_KEY}`}
   },
-  chatComplete: "/chat/completions",
-  complete: "/completions"
+  chatComplete: "/v1/chat/completions",
+  complete: "/v1/completions"
 };
 
 export default TogetherAIApiConfig;
