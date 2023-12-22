@@ -121,6 +121,9 @@ export const fetchProviderOptionsFromConfig = (config: Config | ShortConfig): Op
       cache: camelCaseConfig.cache,
       retry: camelCaseConfig.retry
       }];
+      if (camelCaseConfig.resourceName) providerOptions[0].resourceName = camelCaseConfig.resourceName;
+      if (camelCaseConfig.deploymentId) providerOptions[0].deploymentId = camelCaseConfig.deploymentId;
+      if (camelCaseConfig.apiVersion) providerOptions[0].apiVersion = camelCaseConfig.apiVersion;
       mode = "single";
   } else {
       if (camelCaseConfig.strategy && camelCaseConfig.strategy.mode) {
