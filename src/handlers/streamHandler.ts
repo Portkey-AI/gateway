@@ -1,7 +1,7 @@
 import { AZURE_OPEN_AI, GOOGLE } from "../globals";
 import { getStreamModeSplitPattern } from "../utils";
 
-export async function* readStream(reader: ReadableStreamDefaultReader, splitPattern: string, transformFunction: Function | undefined, isSleepTimeRequired: boolean) {
+export async function* readStream(reader: ReadableStreamDefaultReader, splitPattern: string, transformFunction: Function | undefined, isSleepTimeRequired: boolean, fallbackChunkId: string) {
     let buffer = '';
     let decoder = new TextDecoder();
     let isFirstChunk = true;
@@ -11,7 +11,7 @@ export async function* readStream(reader: ReadableStreamDefaultReader, splitPatt
         if (done) {
             if (buffer.length > 0) {
                 if (transformFunction) {
-                    yield transformFunction(buffer);
+                    yield transformFunction(buffer, fallbackChunkId);
                 } else {
                     yield buffer
                 }
@@ -37,9 +37,9 @@ export async function* readStream(reader: ReadableStreamDefaultReader, splitPatt
                     }
 
                     if (transformFunction) {
-                        const transformedChunk = transformFunction(part);
+                        const transformedChunk = transformFunction(part, fallbackChunkId);
                         if (transformedChunk !== undefined) {
-                            yield transformFunction(part);
+                            yield transformedChunk;
                         }
                     } else {
                         yield part + splitPattern;
@@ -72,6 +72,8 @@ export async function handleOctetStreamResponse(response: Response) {
 
 export async function handleStreamingMode(response: Response, proxyProvider: string, responseTransformer: Function | undefined, requestURL: string): Promise<Response> {
     const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);
+    const fallbackChunkId = Date.now().toString();
+
     if (!response.body) {
         throw new Error("Response format is invalid. Body not found");
     }
@@ -82,7 +84,7 @@ export async function handleStreamingMode(response: Response, proxyProvider: str
     const encoder = new TextEncoder();
 
     (async () => {
-        for await (const chunk of readStream(reader, splitPattern, responseTransformer, isSleepTimeRequired)) {
+        for await (const chunk of readStream(reader, splitPattern, responseTransformer, isSleepTimeRequired, fallbackChunkId)) {
             await writer.write(encoder.encode(chunk));
         }
         writer.close();
