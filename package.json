@@ -1,6 +1,25 @@
 {
   "name": "rubeus",
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "description": "A fast AI gateway by Portkey",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Portkey-AI/gateway.git"
+  },
+  "keywords": [
+    "AI gateway",
+    "Rubeus",
+    "Portkey",
+    "Portkey AI"
+  ],
+  "author": "portkey-ai <support@portkey.ai>",
+  "license": "MIT",
+  "files": [
+    "build",
+    "README.md",
+    "SECURITY.md",
+    "LICENSE"
+  ],
   "scripts": {
     "dev": "wrangler dev src/index.ts",
     "deploy": "wrangler deploy --minify src/index.ts",
