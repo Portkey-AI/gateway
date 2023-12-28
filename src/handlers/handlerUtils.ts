@@ -648,8 +648,12 @@ export function updateResponseHeaders(
         RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT,
         retryAttempt.toString()
     );
-    // This causes random errors at time, removing the header for now
-    response.headers.delete('content-encoding')
+
+    const contentEncodingHeader = response.headers.get('content-encoding')
+    if (contentEncodingHeader && contentEncodingHeader.indexOf('br') > -1) {
+      // Brotli compression causes errors at runtime, removing the header in that case
+      response.headers.delete('content-encoding')
+    }
 }
 
 export function constructConfigFromRequestHeaders(
