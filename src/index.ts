@@ -1,5 +1,5 @@
 /**
- * Rubeus (Hard)worker
+ * Portkey AI Gateway
  *
  * @module index
  */
@@ -26,7 +26,7 @@ const app = new Hono();
  * GET route for the root path.
  * Returns a greeting message.
  */
-app.get("/", (c) => c.text("Rubeus says hey!"));
+app.get("/", (c) => c.text("AI Gateway says hey!"));
 
 // Use prettyJSON middleware for all routes
 app.use("*", prettyJSON());
