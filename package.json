@@ -1,5 +1,5 @@
 {
-  "name": "gateway",
+  "name": "@portkey-ai/gateway",
   "version": "1.0.1",
   "description": "A fast AI gateway by Portkey",
   "repository": {
@@ -9,7 +9,9 @@
   "keywords": [
     "AI gateway",
     "Portkey",
-    "Portkey AI"
+    "Portkey AI",
+    "LLM",
+    "OpenAI"
   ],
   "author": "portkey-ai <support@portkey.ai>",
   "license": "MIT",

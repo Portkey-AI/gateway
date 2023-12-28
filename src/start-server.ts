@@ -9,4 +9,4 @@ serve({
   port: 8787,
 })
 
-console.log("Your AI Gateway is now running on http://localhost:8787")
+console.log("Your AI Gateway is now running on http://localhost:8787 🚀")
