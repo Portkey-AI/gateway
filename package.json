@@ -1,5 +1,5 @@
 {
-  "name": "rubeus",
+  "name": "gateway",
   "version": "1.0.1",
   "description": "A fast AI gateway by Portkey",
   "repository": {
@@ -8,7 +8,6 @@
   },
   "keywords": [
     "AI gateway",
-    "Rubeus",
     "Portkey",
     "Portkey AI"
   ],
@@ -36,6 +35,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20230518.0",
+    "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^11.1.5",
     "@types/async-retry": "^1.4.5",
     "rollup": "^4.9.1",

@@ -648,6 +648,8 @@ export function updateResponseHeaders(
         RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT,
         retryAttempt.toString()
     );
+    // This causes random errors at time, removing the header for now
+    response.headers.delete('content-encoding')
 }
 
 export function constructConfigFromRequestHeaders(

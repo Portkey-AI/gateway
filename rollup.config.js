@@ -1,4 +1,5 @@
 import typescript from '@rollup/plugin-typescript';
+import terser from '@rollup/plugin-terser';
 
 export default {
   input: 'src/start-server.ts',
@@ -6,5 +7,5 @@ export default {
     dir: 'build',
     format: 'es'
   },
-  plugins: [typescript()]
+  plugins: [typescript(), terser()]
 };
