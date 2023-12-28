@@ -129,3 +129,6 @@ dist
 .yarn/install-state.gz
 .pnp.*
 .dev.vars
+
+# Rollup build dir
+build
