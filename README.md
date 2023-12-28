@@ -168,12 +168,7 @@ The AI Gateway was built internally at [Portkey](https://portkey.ai) and has bee
 <br>
 
 ## Deploying Rubeus
-* Deploy on Kubernetes
-* Deploy on Vercel
-* Deploy on Cloudflare Workers
-* Deploy on AWS Lambda
-* Deploy on Google Cloud Functions
-* Deploy on Azure Cloud Functions
+[See docs](docs/installation-deployments.md) on installing Rubeus locally or deploying it on popular locations.
 <br>
 
 ## Roadmap
