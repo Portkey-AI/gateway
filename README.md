@@ -36,7 +36,7 @@
 
 ## Getting Started
 ### Installation
-If you're familiar with Node.js and `npx`, you can run your private AI gateway locally. ([Other installation options](https://needtoaddalinkhere.com))
+If you're familiar with Node.js and `npx`, you can run your private AI gateway locally. ([Other deployment options](#deploying-rubeus))
 ```bash
 npx @portkey-ai/gateway
 ```
@@ -84,19 +84,22 @@ chat_completion = client.chat.completions.create(
 
 print(chat_completion.choices)
 ```
-[Full list of supported SDKs](https://linkneeded.com)
+[Full list of supported SDKs](#sdks-supported)
 
-### Supported Providers
+<br>
+
+
+## Supported Providers
 
 || Provider  | Support Status  | Supported Endpoints |
 |---|---|---|---|
 | <img src="docs/images/openai.png" width=18 />| OpenAI | ✅ Supported  | `/completion`, `/chat/completions`,`/embed`, `/assistants`, `/threads`, `/runs`, `streaming` |
 | <img src="docs/images/azure.png" width=18>| Azure OpenAI | ✅ Supported  | `/completion`, `/chat/completions`,`/embed`, `streaming` |
 | <img src="docs/images/anyscale.png" width=18>| Anyscale | ✅ Supported  | `/chat/completions`, `streaming` |
-| <img src="docs/images/google.png" width=18>| Google Gemini & Palm | ✅ Supported  | `/generateMessage`, `/generateText`, `/embedText`, `streaming` |
+| <img src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Google-favicon-2015.png" width=18>| Google Gemini & Palm | ✅ Supported  | `/generateMessage`, `/generateText`, `/embedText`, `streaming` |
 | <img src="docs/images/anthropic.png" width=18>| Anthropic  | ✅ Supported  | `/messages`, `/complete`, `streaming` |
 | <img src="docs/images/cohere.png" width=18>| Cohere  | ✅ Supported  | `/generate`, `/embed`, `/rerank`, `streaming` |
-| <img src="docs/images/together.png" width=18>| Together AI  | ✅ Supported  | `/chat/completions`, `/completions`, `/inference`, `streaming` |
+| <img src="https://assets-global.website-files.com/64f6f2c0e3f4c5a91c1e823a/654693d569494912cfc0c0d4_favicon.svg" width=18>| Together AI  | ✅ Supported  | `/chat/completions`, `/completions`, `/inference`, `streaming` |
 
 > [View the complete list of 100+ supported models here](https://portkey.ai/docs/welcome/what-is-portkey#ai-providers-supported)
 <br />
@@ -168,7 +171,7 @@ The AI Gateway was built internally at [Portkey](https://portkey.ai) and has bee
 <br>
 
 ## Deploying Rubeus
-* Deploy on Kubernetes
+* Deploy using Docker
 * Deploy on Vercel
 * Deploy on Cloudflare Workers
 * Deploy on AWS Lambda
