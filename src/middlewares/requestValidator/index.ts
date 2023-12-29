@@ -6,6 +6,7 @@ import {
     COHERE,
     CONTENT_TYPES,
     GOOGLE,
+    MISTRAL_AI,
     OPEN_AI,
     PALM,
     POWERED_BY,
@@ -58,7 +59,7 @@ export const requestValidator = (c: Context, next: any) => {
     }
     if (
         requestHeaders[`x-${POWERED_BY}-provider`] &&
-        ![OPEN_AI, AZURE_OPEN_AI, COHERE, ANTHROPIC, ANYSCALE, PALM, TOGETHER_AI, GOOGLE].includes(
+        ![OPEN_AI, AZURE_OPEN_AI, COHERE, ANTHROPIC, ANYSCALE, PALM, TOGETHER_AI, GOOGLE, MISTRAL_AI].includes(
             requestHeaders[`x-${POWERED_BY}-provider`]
         )
     ) {
