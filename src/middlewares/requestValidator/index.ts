@@ -8,6 +8,7 @@ import {
     GOOGLE,
     OPEN_AI,
     PALM,
+    PERPLEXITY_AI,
     POWERED_BY,
     TOGETHER_AI,
 } from "../../globals";
@@ -58,7 +59,7 @@ export const requestValidator = (c: Context, next: any) => {
     }
     if (
         requestHeaders[`x-${POWERED_BY}-provider`] &&
-        ![OPEN_AI, AZURE_OPEN_AI, COHERE, ANTHROPIC, ANYSCALE, PALM, TOGETHER_AI, GOOGLE].includes(
+        ![OPEN_AI, AZURE_OPEN_AI, COHERE, ANTHROPIC, ANYSCALE, PALM, TOGETHER_AI, GOOGLE, PERPLEXITY_AI].includes(
             requestHeaders[`x-${POWERED_BY}-provider`]
         )
     ) {

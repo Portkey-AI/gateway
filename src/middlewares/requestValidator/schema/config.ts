@@ -6,6 +6,7 @@ import {
     COHERE,
     GOOGLE,
     OPEN_AI,
+    PERPLEXITY_AI,
     TOGETHER_AI,
 } from "../../../globals";
 
@@ -39,7 +40,8 @@ export const configSchema: any = z
                         ANYSCALE,
                         COHERE,
                         TOGETHER_AI,
-                        GOOGLE
+                        GOOGLE,
+                        PERPLEXITY_AI
                     ].includes(value),
                 {
                     message:
