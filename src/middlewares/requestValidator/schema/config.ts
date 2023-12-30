@@ -5,6 +5,7 @@ import {
     AZURE_OPEN_AI,
     COHERE,
     GOOGLE,
+    MISTRAL_AI,
     OPEN_AI,
     PERPLEXITY_AI,
     TOGETHER_AI,
@@ -41,7 +42,8 @@ export const configSchema: any = z
                         COHERE,
                         TOGETHER_AI,
                         GOOGLE,
-                        PERPLEXITY_AI
+                        PERPLEXITY_AI,
+                        MISTRAL_AI
                     ].includes(value),
                 {
                     message:

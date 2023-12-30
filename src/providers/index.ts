@@ -3,6 +3,7 @@ import AnyscaleConfig from "./anyscale";
 import AzureOpenAIConfig from "./azure-openai";
 import CohereConfig from "./cohere";
 import GoogleConfig from "./google";
+import MistralAIConfig from "./mistral-ai";
 import OpenAIConfig from "./openai";
 import PalmAIConfig from "./palm";
 import PerplexityAIConfig from "./perplexity-ai";
@@ -18,7 +19,8 @@ const Providers: { [key: string]: ProviderConfigs } = {
   palm: PalmAIConfig,
   'together-ai': TogetherAIConfig,
   google: GoogleConfig,
-  'perplexity-ai': PerplexityAIConfig
+  'perplexity-ai': PerplexityAIConfig,
+  'mistral-ai': MistralAIConfig
 };
 
 export default Providers;
