@@ -7,6 +7,7 @@ import {
     GOOGLE,
     MISTRAL_AI,
     OPEN_AI,
+    PERPLEXITY_AI,
     TOGETHER_AI,
 } from "../../../globals";
 
@@ -41,6 +42,7 @@ export const configSchema: any = z
                         COHERE,
                         TOGETHER_AI,
                         GOOGLE,
+                        PERPLEXITY_AI,
                         MISTRAL_AI
                     ].includes(value),
                 {

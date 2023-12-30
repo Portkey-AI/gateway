@@ -27,6 +27,7 @@ export const ANYSCALE: string = "anyscale";
 export const PALM: string = "palm";
 export const TOGETHER_AI: string = "together-ai";
 export const GOOGLE: string = "google";
+export const PERPLEXITY_AI: string = "perplexity-ai";
 export const MISTRAL_AI: string = "mistral-ai";
 
 export const providersWithStreamingSupport = [OPEN_AI, AZURE_OPEN_AI, ANTHROPIC, COHERE];
