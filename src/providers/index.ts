@@ -5,6 +5,7 @@ import CohereConfig from "./cohere";
 import GoogleConfig from "./google";
 import OpenAIConfig from "./openai";
 import PalmAIConfig from "./palm";
+import PerplexityAIConfig from "./perplexity-ai";
 import TogetherAIConfig from "./together-ai";
 import { ProviderConfigs } from "./types";
 
@@ -16,7 +17,8 @@ const Providers: { [key: string]: ProviderConfigs } = {
   anyscale: AnyscaleConfig,
   palm: PalmAIConfig,
   'together-ai': TogetherAIConfig,
-  google: GoogleConfig
+  google: GoogleConfig,
+  'perplexity-ai': PerplexityAIConfig
 };
 
 export default Providers;
