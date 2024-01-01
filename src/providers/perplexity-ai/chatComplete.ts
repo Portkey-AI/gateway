@@ -30,7 +30,7 @@ export const PerplexityAIChatCompleteConfig: ProviderConfig = {
     max: 1
   },
   top_k: {
-    param: "top_p",
+    param: "top_k",
     min: 0,
     max: 2048
   },
