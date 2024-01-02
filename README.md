@@ -1,12 +1,8 @@
 <!-- <img src="docs/images/header_new.png" width=2000> -->
 <div align="center">
 <img src="https://github.com/roh26it/Rubeus/assets/971978/50b9f1df-ff5b-43d4-91be-b817943a16f7" width=500>
-</div>
-<!-- ![image](https://github.com/roh26it/Rubeus/assets/971978/50b9f1df-ff5b-43d4-91be-b817943a16f7) -->
 
 # AI Gateway
-
-<div align="centerc">
 
 <!-- ![Cloudflare](https://img.shields.io/badge/Cloudflare-F38020?style=for-the-badge&logo=Cloudflare&logoColor=white) -->
 <!-- ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white) -->
@@ -14,6 +10,11 @@
 ![Discord](https://img.shields.io/discord/1143393887742861333?style=for-the-badge)
 ![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/portkeyai?style=for-the-badge&logo=Twitter)
 <!-- ![Static Badge](https://img.shields.io/badge/dev_to-Follow?style=for-the-badge&logo=devdotto) -->
+
+</div>
+<!-- ![image](https://github.com/roh26it/Rubeus/assets/971978/50b9f1df-ff5b-43d4-91be-b817943a16f7) -->
+
+<div align="centerc">
 
 
 
@@ -50,6 +51,7 @@ curl '127.0.0.1:8787/v1/chat/completions' \
   -H 'Content-Type: application/json' \
   -d '{"messages": [{"role": "user","content": "Say this is test."}], "max_tokens": 20, "model": "gpt-4"}'
 ```
+<!--
 **Using the OpenAI Node.js SDK**
 ```js
 import OpenAI from 'openai';
@@ -84,6 +86,7 @@ chat_completion = client.chat.completions.create(
 
 print(chat_completion.choices)
 ```
+-->
 [Full list of supported SDKs](#sdks-supported)
 
 <br>
@@ -93,20 +96,35 @@ print(chat_completion.choices)
 
 || Provider  | Support Status  | Supported Endpoints |
 |---|---|---|---|
-| <img src="docs/images/openai.png" width=18 />| OpenAI | ✅ Supported  | `/completion`, `/chat/completions`,`/embed`, `/assistants`, `/threads`, `/runs`, `streaming` |
-| <img src="docs/images/azure.png" width=18>| Azure OpenAI | ✅ Supported  | `/completion`, `/chat/completions`,`/embed`, `streaming` |
+| <img src="docs/images/openai.png" width=18 />| OpenAI | ✅ Supported  | `/completions`, `/chat/completions`,`/embeddings`, `/assistants`, `/threads`, `/runs`, `streaming` |
+| <img src="docs/images/azure.png" width=18>| Azure OpenAI | ✅ Supported  | `/completions`, `/chat/completions`,`/embeddings`, `streaming` |
 | <img src="docs/images/anyscale.png" width=18>| Anyscale | ✅ Supported  | `/chat/completions`, `streaming` |
 | <img src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Google-favicon-2015.png" width=18>| Google Gemini & Palm | ✅ Supported  | `/generateMessage`, `/generateText`, `/embedText`, `streaming` |
 | <img src="docs/images/anthropic.png" width=18>| Anthropic  | ✅ Supported  | `/messages`, `/complete`, `streaming` |
 | <img src="docs/images/cohere.png" width=18>| Cohere  | ✅ Supported  | `/generate`, `/embed`, `/rerank`, `streaming` |
 | <img src="https://assets-global.website-files.com/64f6f2c0e3f4c5a91c1e823a/654693d569494912cfc0c0d4_favicon.svg" width=18>| Together AI  | ✅ Supported  | `/chat/completions`, `/completions`, `/inference`, `streaming` |
+| <img src="https://www.perplexity.ai/favicon.svg" width=18>| Perplexity  | ✅ Supported  | `/chat/completions`, `streaming` |
+| <img src="https://docs.mistral.ai/img/favicon.ico" width=18>| Mistral  | ✅ Supported  | `/chat/completions`, `/embeddings`, `streaming` |
 
 > [View the complete list of 100+ supported models here](https://portkey.ai/docs/welcome/what-is-portkey#ai-providers-supported)
 <br />
 
-## Configs
-The AI gateway supports [configs](https://portkey.ai/docs/api-reference/config-object) to enable **fallbacks**, **load balancing**, **retries** and more.
-<br><br>Here's an example config that **retries** an OpenAI request 5 times before **falling back** to Gemini Pro
+## Configuring the AI Gateway
+The AI gateway supports [configs](https://portkey.ai/docs/api-reference/config-object) to enable versatile routing strategies like **fallbacks**, **load balancing**, **retries** and more.
+<br><br>
+You can use these configs while making the OpenAI call through the `x-portkey-config` header
+```js
+// Using the OpenAI JS SDK
+const client = new OpenAI({
+  baseURL: "http://127.0.0.1:8787", // The rubeus server URL
+  defaultHeaders: {
+    'x-portkey-config': {.. your config here ..}, 
+  }
+});
+```
+<br>
+<details><summary>Here's an example config that retries an OpenAI request 5 times before falling back to Gemini Pro</summary>
+
 ```js
 {
   "retry": { "count": 5 },
@@ -121,7 +139,10 @@ The AI gateway supports [configs](https://portkey.ai/docs/api-reference/config-o
   }]
 }
 ```
-This config would enabled **load balancing** equally between 2 OpenAI keys
+</details>
+<details>
+<summary>This config would enable load balancing equally between 2 OpenAI keys</summary>
+
 ```js
 {
   "strategy": { "mode": "loadbalance" },
@@ -137,20 +158,12 @@ This config would enabled **load balancing** equally between 2 OpenAI keys
   ]
 }
 ```
+</details>
 
-You can then use these configs while making the OpenAI call through the `x-portkey-config` header
-```js
-const client = new OpenAI({
-  baseURL: "http://127.0.0.1:8787", // The rubeus server URL
-  defaultHeaders: {
-    'x-portkey-config': {.. your config here ..}, 
-  }
-});
-```
 > Read more about the [config object](https://portkey.ai/docs/api-reference/config-object).
 <br>
 
-## SDKs Supported
+## Supported SDKs
 
 | Language | Supported SDKs |
 |---|---|
@@ -163,13 +176,14 @@ const client = new OpenAI({
 
 <br>
 
+<!-- move to the top
 ## Performance
 The AI Gateway was built internally at [Portkey](https://portkey.ai) and has been live in production since September 2023. It is actively maintained by Portkey with participation from open source contributors.
 - It has been battle **tested over 100B tokens** processed till December '23
 - It processes over **10M requests every day** and has been load tested for 1M rps
 - It is built on top of the very fast [Hono](https://hono.dev) router which is **9.9x faster** than the standard express router.
 <br>
-
+-->
 ## Deploying Rubeus
 [See docs](docs/installation-deployments.md) on installing Rubeus locally or deploying it on popular locations.
 
