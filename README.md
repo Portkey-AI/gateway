@@ -177,12 +177,12 @@ The AI Gateway was built internally at [Portkey](https://portkey.ai) and has bee
 
 ## Roadmap
 
-1. Support for more providers. Missing a provider or LLM Platform, [raise a feature request](https://github.com/Portkey-AI/Rubeus/issues).
+1. Support for more providers. Missing a provider or LLM Platform, [raise a feature request](https://github.com/Portkey-AI/gateway/issues).
 2. Enhanced load balancing features to optimize resource use across different models and providers.
 3. More robust fallback and retry strategies to further improve the reliability of requests.
 4. Increased customizability of the unified API signature to cater to more diverse use cases.
 
-[💬 Participate in Roadmap discussions here.](https://github.com/Portkey-AI/Rubeus/projects/)
+[💬 Participate in Roadmap discussions here.](https://github.com/Portkey-AI/gateway/projects/)
 
 <br>
 
@@ -190,7 +190,7 @@ The AI Gateway was built internally at [Portkey](https://portkey.ai) and has bee
 
 The easiest way to contribute is to pick any issue with the `good first issue` tag 💪. Read the Contributing guidelines [here](/CONTRIBUTING.md).
 
-Bug Report? [File here](https://github.com/Portkey-AI/Rubeus/issues) | Feature Request? [File here](https://github.com/Portkey-AI/Rubeus/issues)
+Bug Report? [File here](https://github.com/Portkey-AI/gateway/issues) | Feature Request? [File here](https://github.com/Portkey-AI/gateway/issues)
 
 <br>
 
@@ -199,9 +199,9 @@ Bug Report? [File here](https://github.com/Portkey-AI/Rubeus/issues) | Feature R
 Join our growing community around the world, for help, ideas, and discussions on AI.
 
 - View our official [Blog](https://portkey.ai/blog)
-- Chat live with us on [Discord](https://discord.gg/NXepgUYp) <!-- Ideally it should be this https://portkey.ai/discord-->
+- Chat live with us on [Discord](https://portkey.ai/community) <!-- Ideally it should be this https://portkey.ai/discord-->
 - Follow us on [Twitter](https://twitter.com/PortkeyAI)
 - Connect with us on [LinkedIn](https://www.linkedin.com/company/portkey-ai/)
-- Visit us on [YouTube]()
+- Visit us on [YouTube](https://www.youtube.com/channel/UCZph50gLNXAh1DpmeX8sBdw)
 - Join our [Dev community](https://dev.to/portkeyai)
-- Questions tagged #surrealdb on [Stack Overflow](https://stackoverflow.com/questions/tagged/rubeus) <!-- stackoverflow tags? -->
+- Questions tagged #portkey on [Stack Overflow](https://stackoverflow.com/questions/tagged/portkey) <!-- stackoverflow tags? -->
