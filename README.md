@@ -109,6 +109,90 @@ print(chat_completion.choices)
 > [View the complete list of 100+ supported models here](https://portkey.ai/docs/welcome/what-is-portkey#ai-providers-supported)
 <br />
 
+<!-- 
+## Features
+#### [Unified API Signature](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/universal-api)
+Connect with 100+ LLM using OpenAI's API signature. The AI gateway handles the request, response and error transformations so you don't have to make any changes to your code. You can use the OpenAI SDK itself to connect to any of the supported LLMs.
+<br>
+
+<img src="docs/images/openai.png" height=25 />&nbsp;&nbsp;&nbsp;<img src="docs/images/azure.png" height=25 />&nbsp;&nbsp;&nbsp;
+<img src="docs/images/anyscale.png" height=25 />&nbsp;&nbsp;&nbsp;
+<img src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Google-favicon-2015.png" height=25 />&nbsp;&nbsp;&nbsp;
+<img src="docs/images/anthropic.png" height=25 />&nbsp;&nbsp;&nbsp;
+<img src="docs/images/cohere.png" height=25 /> &nbsp;&nbsp;&nbsp;
+<img src="https://assets-global.website-files.com/64f6f2c0e3f4c5a91c1e823a/654693d569494912cfc0c0d4_favicon.svg" height=25 />&nbsp;&nbsp;&nbsp;
+<img src="https://www.perplexity.ai/favicon.svg" height=25 /> &nbsp;&nbsp;&nbsp;
+<img src="https://docs.mistral.ai/img/favicon.ico" height=25 />&nbsp;&nbsp;&nbsp;
+<img src="https://1000logos.net/wp-content/uploads/2021/10/logo-Meta.png" height=25 />&nbsp;&nbsp;&nbsp;
+<br>
+
+#### [Fallback](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/fallbacks)
+Don't let failures stop you. The Fallback feature allows you to specify a list of Language Model APIs (LLMs) in a prioritized order. If the primary LLM fails to respond or encounters an error, Portkey will automatically fallback to the next LLM in the list, ensuring your application's robustness and reliability.
+<br>
+
+<img src="https://framerusercontent.com/images/gmlOW8yeKP2pGuIsObM6gKLzeMI.png" height=200 />
+<br>
+
+#### [Automatic Retries](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/automatic-retries)
+Temporary issues shouldn't mean manual re-runs. AI Gateway can automatically retry failed requests upto 5 times. We apply an exponential backoff strategy, which spaces out retry attempts to prevent network overload.
+<br>
+
+<img src="https://github.com/roh26it/Rubeus/assets/971978/8a6e653c-94b2-4ba7-95c7-93544ee476b1" height=200 />
+<br>
+
+#### [Load Balancing](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/load-balancing)
+Distribute load effectively across multiple API keys or providers based on custom weights. This ensures high availability and optimal performance of your generative AI apps, preventing any single LLM from becoming a performance bottleneck.
+<br>
+
+<img src="https://framerusercontent.com/images/6EWuq3FWhqrPe3kKLqVspevi4.png" height=200 />
+<br>
+-->
+
+## Features
+
+<table>
+  <tr>
+    <td>
+      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/universal-api">Unified API Signature</a></h4>
+      Connect with 100+ LLM using OpenAI's API signature. The AI gateway handles the request, response and error transformations so you don't have to make any changes to your code. You can use the OpenAI SDK itself to connect to any of the supported LLMs.
+      <br><br>
+      <img src="docs/images/openai.png" height=40 />&nbsp;&nbsp;&nbsp;<img src="docs/images/azure.png" height=40 />&nbsp;&nbsp;&nbsp;
+      <img src="docs/images/anyscale.png" height=40 />&nbsp;&nbsp;&nbsp;
+      <img src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Google-favicon-2015.png" height=40 />&nbsp;&nbsp;&nbsp;<br><br>
+      <img src="docs/images/anthropic.png" height=40 />&nbsp;&nbsp;&nbsp;
+      <img src="docs/images/cohere.png" height=40 />&nbsp;&nbsp;&nbsp;
+      <img src="https://assets-global.website-files.com/64f6f2c0e3f4c5a91c1e823a/654693d569494912cfc0c0d4_favicon.svg" height=40 />&nbsp;&nbsp;&nbsp;<br><br>
+      <img src="https://www.perplexity.ai/favicon.svg" height=40 />&nbsp;&nbsp;&nbsp;
+      <img src="https://docs.mistral.ai/img/favicon.ico" height=40 />&nbsp;&nbsp;&nbsp;
+      <img src="https://1000logos.net/wp-content/uploads/2021/10/logo-Meta.png" height=40 />
+     <br><br>
+    </td>
+    <td>
+      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/fallbacks">Fallback</a></h4>
+      Don't let failures stop you. The Fallback feature allows you to specify a list of Language Model APIs (LLMs) in a prioritized order. If the primary LLM fails to respond or encounters an error, Portkey will automatically fallback to the next LLM in the list, ensuring your application's robustness and reliability.
+      <br><br>
+      <img src="https://framerusercontent.com/images/gmlOW8yeKP2pGuIsObM6gKLzeMI.png" height=200 />
+    </td>
+  </tr>
+</table>
+<table>
+  <tr>
+    <td>
+      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/automatic-retries">Automatic Retries</a></h4>
+      Temporary issues shouldn't mean manual re-runs. AI Gateway can automatically retry failed requests upto 5 times. We apply an exponential backoff strategy, which spaces out retry attempts to prevent network overload.
+      <br><br>
+      <img src="https://github.com/roh26it/Rubeus/assets/971978/8a6e653c-94b2-4ba7-95c7-93544ee476b1" height=200 />
+    </td>
+    <td>
+      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/load-balancing">Load Balancing</a></h4>
+      Distribute load effectively across multiple API keys or providers based on custom weights. This ensures high availability and optimal performance of your generative AI apps, preventing any single LLM from becoming a performance bottleneck.
+      <br><br>
+      <img src="https://framerusercontent.com/images/6EWuq3FWhqrPe3kKLqVspevi4.png" height=200 />
+    </td>
+  </tr>
+</table>
+<br>
+
 ## Configuring the AI Gateway
 The AI gateway supports [configs](https://portkey.ai/docs/api-reference/config-object) to enable versatile routing strategies like **fallbacks**, **load balancing**, **retries** and more.
 <br><br>
