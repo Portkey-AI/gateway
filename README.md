@@ -3,12 +3,15 @@
 <img src="https://github.com/roh26it/Rubeus/assets/971978/50b9f1df-ff5b-43d4-91be-b817943a16f7" width=500>
 
 # AI Gateway
+### Route to 100+ LLMs with 1 fast & friendly API.
 
 <!-- ![Cloudflare](https://img.shields.io/badge/Cloudflare-F38020?style=for-the-badge&logo=Cloudflare&logoColor=white) -->
 <!-- ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white) -->
-[![License](https://img.shields.io/github/license/Ileriayo/markdown-badges?style=for-the-badge)](./LICENSE)
-![Discord](https://img.shields.io/discord/1143393887742861333?style=for-the-badge)
-![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/portkeyai?style=for-the-badge&logo=Twitter)
+[![License](https://img.shields.io/github/license/Ileriayo/markdown-badges)](./LICENSE)
+[![Discord](https://img.shields.io/discord/1143393887742861333)](https://portkey.ai/community)
+[![Twitter](https://img.shields.io/twitter/url/https/twitter/follow/portkeyai?style=social&label=Follow%20%40PortkeyAI)](https://twitter.com/portkeyai)
+![example workflow](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)
+[![npm version](https://badge.fury.io/js/%40portkey-ai%2Fgateway.svg)](https://www.npmjs.com/package/@portkey-ai/gateway)
 <!-- ![Static Badge](https://img.shields.io/badge/dev_to-Follow?style=for-the-badge&logo=devdotto) -->
 
 </div>
@@ -24,8 +27,6 @@
  -->
 
 </div>
-
-### Route to 100+ LLMs with 1 fast & friendly API.
 
 [Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and hosted LLMs. It streamlines API requests to OpenAI, Anthropic, Mistral, LLama2, Anyscale, Google Gemini and more with a unified API. 
 
