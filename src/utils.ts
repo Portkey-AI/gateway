@@ -1,4 +1,4 @@
-import { ANTHROPIC, COHERE, GOOGLE } from "./globals";
+import { ANTHROPIC, COHERE, GOOGLE, PERPLEXITY_AI } from "./globals";
 import { Params } from "./types/requestBody";
 
 export const getStreamModeSplitPattern = (proxyProvider: string, requestURL: string) => {
@@ -11,6 +11,10 @@ export const getStreamModeSplitPattern = (proxyProvider: string, requestURL: str
     }
     if (proxyProvider === GOOGLE) {
       splitPattern = '\r\n';
+    }
+
+    if (proxyProvider === PERPLEXITY_AI) {
+      splitPattern = '\r\n\r\n';
     }
     return splitPattern;
 }
