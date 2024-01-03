@@ -28,6 +28,8 @@
 
 </div>
 
+<br><br>
+
 [Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and hosted LLMs. It streamlines API requests to OpenAI, Anthropic, Mistral, LLama2, Anyscale, Google Gemini and more with a unified API. 
 
 - [x] Blazing **fast** (9.9x faster) with a **tiny footprint** (~45kb installed)
@@ -35,14 +37,17 @@
 - [x] **Fallbacks** make sure your app stays resilient
 - [x] **Automatic Retries** with exponential fallbacks come by default
 - [x] Plug-in middleware as needed
+<br>
 
 ## Getting Started
 ### Installation
-If you're familiar with Node.js and `npx`, you can run your private AI gateway locally. ([Other deployment options](#deploying-rubeus))
+If you're familiar with Node.js and `npx`, you can run your private AI gateway locally. ([Other deployment options](#deploying-ai-gateway))
 ```bash
 npx @portkey-ai/gateway
 ```
 > Your AI Gateway is now running on http://localhost:8787 🚀
+<br>
+
 ### Usage
 Lets try making a **chat completions** call to OpenAI through the AI gateway:
 ```bash
@@ -201,7 +206,7 @@ You can use these configs while making the OpenAI call through the `x-portkey-co
 ```js
 // Using the OpenAI JS SDK
 const client = new OpenAI({
-  baseURL: "http://127.0.0.1:8787", // The rubeus server URL
+  baseURL: "http://127.0.0.1:8787", // The gateway URL
   defaultHeaders: {
     'x-portkey-config': {.. your config here ..}, 
   }
@@ -269,8 +274,8 @@ The AI Gateway was built internally at [Portkey](https://portkey.ai) and has bee
 - It is built on top of the very fast [Hono](https://hono.dev) router which is **9.9x faster** than the standard express router.
 <br>
 -->
-## Deploying Rubeus
-[See docs](docs/installation-deployments.md) on installing Rubeus locally or deploying it on popular locations.
+## Deploying AI Gateway
+[See docs](docs/installation-deployments.md) on installing the AI Gateway locally or deploying it on popular locations.
 
 <br>
 
