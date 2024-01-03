@@ -28,6 +28,7 @@ git clone https://github.com/portkey-ai/gateway
 ```
 cd gateway
 npm i
+npm run build
 ```
 3. Run the node server
 ```
