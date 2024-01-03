@@ -16,12 +16,12 @@
 
 [Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and hosted LLMs. It streamlines API requests to OpenAI, Anthropic, Mistral, LLama2, Anyscale, Google Gemini and more with a unified API. 
 
-> ✅ Blazing **fast** (9.9x faster) with a **tiny footprint** (~45kb installed) <br>
-✅ **Load balance** across multiple models, providers, and keys <br> 
-✅ **Fallbacks** make sure your app stays resilient  <br>
-✅ **Automatic Retries** with exponential fallbacks come by default  <br>
-✅ Plug-in middleware as needed <br>
-✅ Battle tested over **100B tokens** <br>
+✅&nbsp; Blazing **fast** (9.9x faster) with a **tiny footprint** (~45kb installed) <br>
+✅&nbsp; **Load balance** across multiple models, providers, and keys <br> 
+✅&nbsp; **Fallbacks** make sure your app stays resilient  <br>
+✅&nbsp; **Automatic Retries** with exponential fallbacks come by default  <br>
+✅&nbsp; Plug-in middleware as needed <br>
+✅&nbsp; Battle tested over **100B tokens** <br>
 <br>
 
 ## Getting Started
