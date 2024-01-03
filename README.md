@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/github/license/Ileriayo/markdown-badges)](./LICENSE)
 [![Discord](https://img.shields.io/discord/1143393887742861333)](https://portkey.ai/community)
 [![Twitter](https://img.shields.io/twitter/url/https/twitter/follow/portkeyai?style=social&label=Follow%20%40PortkeyAI)](https://twitter.com/portkeyai)
-![example workflow](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)
+<!-- ![example workflow](https://github.com/github/docs/actions/workflows/main.yml/badge.svg) -->
 [![npm version](https://badge.fury.io/js/%40portkey-ai%2Fgateway.svg)](https://www.npmjs.com/package/@portkey-ai/gateway)
 
 </div>
@@ -21,7 +21,7 @@
 - [x] **Fallbacks** make sure your app stays resilient
 - [x] **Automatic Retries** with exponential fallbacks come by default
 - [x] Plug-in middleware as needed
-- [ ] Battle tested over 100B tokens
+- [x] Battle tested over **100B tokens**
 <br>
 
 ## Getting Started
@@ -49,17 +49,17 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 
 ## Supported Providers
 
-|| Provider  | Support | Streaming | Supported Endpoints |
+|| Provider  | Support | Stream | Supported Endpoints |
 |---|---|---|---|--|
-| <img src="docs/images/openai.png" width=18 />| OpenAI | ✅  |✅  | `/completions`, `/chat/completions`,`/embeddings`, `/assistants`, `/threads`, `/runs`, `streaming` |
-| <img src="docs/images/azure.png" width=18>| Azure OpenAI | ✅  |✅  | `/completions`, `/chat/completions`,`/embeddings`, `streaming` |
-| <img src="docs/images/anyscale.png" width=18>| Anyscale | ✅   | ✅  | `/chat/completions`, `streaming` |
-| <img src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Google-favicon-2015.png" width=18>| Google Gemini & Palm | ✅  |✅  | `/generateMessage`, `/generateText`, `/embedText`, `streaming` |
-| <img src="docs/images/anthropic.png" width=18>| Anthropic  | ✅  |✅  | `/messages`, `/complete`, `streaming` |
-| <img src="docs/images/cohere.png" width=18>| Cohere  | ✅  |✅  | `/generate`, `/embed`, `/rerank`, `streaming` |
-| <img src="https://assets-global.website-files.com/64f6f2c0e3f4c5a91c1e823a/654693d569494912cfc0c0d4_favicon.svg" width=18>| Together AI  | ✅  |✅  | `/chat/completions`, `/completions`, `/inference`, `streaming` |
-| <img src="https://www.perplexity.ai/favicon.svg" width=18>| Perplexity  | ✅  |✅  | `/chat/completions`, `streaming` |
-| <img src="https://docs.mistral.ai/img/favicon.ico" width=18>| Mistral  | ✅  |✅  | `/chat/completions`, `/embeddings`, `streaming` |
+| <img src="docs/images/openai.png" width=25 />| OpenAI | ✅  |✅  | `/completions`, `/chat/completions`,`/embeddings`, `/assistants`, `/threads`, `/runs` |
+| <img src="docs/images/azure.png" width=25>| Azure OpenAI | ✅  |✅  | `/completions`, `/chat/completions`,`/embeddings` |
+| <img src="docs/images/anyscale.png" width=25>| Anyscale | ✅   | ✅  | `/chat/completions` |
+| <img src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Google-favicon-2015.png" width=25>| Google Gemini & Palm | ✅  |✅  | `/generateMessage`, `/generateText`, `/embedText` |
+| <img src="docs/images/anthropic.png" width=25>| Anthropic  | ✅  |✅  | `/messages`, `/complete` |
+| <img src="docs/images/cohere.png" width=25>| Cohere  | ✅  |✅  | `/generate`, `/embed`, `/rerank` |
+| <img src="https://assets-global.website-files.com/64f6f2c0e3f4c5a91c1e823a/654693d569494912cfc0c0d4_favicon.svg" width=25>| Together AI  | ✅  |✅  | `/chat/completions`, `/completions`, `/inference` |
+| <img src="https://www.perplexity.ai/favicon.svg" width=25>| Perplexity  | ✅  |✅  | `/chat/completions` |
+| <img src="https://docs.mistral.ai/img/favicon.ico" width=25>| Mistral  | ✅  |✅  | `/chat/completions`, `/embeddings` |
 
 > [View the complete list of 100+ supported models here](https://portkey.ai/docs/welcome/what-is-portkey#ai-providers-supported)
 <br />
