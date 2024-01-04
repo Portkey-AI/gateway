@@ -86,6 +86,20 @@ app.post("/v1/completions", requestValidator, completionsHandler);
  */
 app.post("/v1/embeddings", requestValidator, embeddingsHandler);
 
+/**
+ * POST route for '/v1/prompts/:id/completions'.
+ * Handles porktey prompt completions route
+ */
+app.post("/v1/prompts/*", requestValidator, (c) => {
+  if (c.req.url.endsWith("/v1/chat/completions")) {
+    return chatCompletionsHandler(c);
+  } else if (c.req.url.endsWith("/v1/completions")) {
+    return completionsHandler(c);
+  }
+  c.status(500);
+  return c.json({status: "failure", message: "prompt completions error: Something went wrong"})
+});
+
 // Support the /v1 proxy endpoint
 app.post("/v1/proxy/*", proxyHandler);
 
