@@ -1,4 +1,4 @@
-export const POWERED_BY: string = "rubeus";
+export const POWERED_BY: string = "portkey";
 
 export const HEADER_KEYS: Record<string, string> = {
   MODE: `x-${POWERED_BY}-mode`,

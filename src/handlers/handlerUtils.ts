@@ -7,6 +7,7 @@ import { Config, Options, Params, RequestBody, ShortConfig, Targets } from "../t
 import { convertKeysToCamelCase } from "../utils";
 import { retryRequest } from "./retryHandler";
 import { handleAudioResponse, handleNonStreamingMode, handleOctetStreamResponse, handleStreamingMode } from "./streamHandler";
+import { env } from "hono/adapter";
 
 /**
  * Constructs the request options for the API call.
@@ -230,7 +231,7 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
 
   if (getFromCacheFunction && cacheMode) {
     [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(
-        c.env,
+        env(c),
         { ...requestHeaders, ...fetchOptions.headers },
         params,
         url,
@@ -364,7 +365,7 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
 
   if (getFromCacheFunction && cacheMode) {
       [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(
-          c.env,
+          env(c),
           { ...requestHeaders, ...fetchOptions.headers },
           transformedRequestBody,
           fn,
@@ -638,16 +639,25 @@ export function updateResponseHeaders(
         RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX,
         currentIndex.toString()
     );
-    // response.headers.append(
-    //     RESPONSE_HEADER_KEYS.LAST_USED_OPTION_PARAMS,
-    //     JSON.stringify(params).slice(0, 2000)
-    // );
+
     response.headers.append(RESPONSE_HEADER_KEYS.CACHE_STATUS, cacheStatus);
     response.headers.append(RESPONSE_HEADER_KEYS.TRACE_ID, traceId);
     response.headers.append(
         RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT,
         retryAttempt.toString()
     );
+
+    const contentEncodingHeader = response.headers.get('content-encoding')
+    if (contentEncodingHeader && contentEncodingHeader.indexOf('br') > -1) {
+      // Brotli compression causes errors at runtime, removing the header in that case
+      response.headers.delete('content-encoding')
+    }
+
+    // In case content-encoding is present, delete the content-length header to avoid conflicts with hono compress middleware
+    // This is done automatically for workerd runtime but not for others.
+    if (response.headers.get('content-encoding')) {
+      response.headers.delete('content-length')
+    }
 }
 
 export function constructConfigFromRequestHeaders(

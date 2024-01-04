@@ -1,5 +1,5 @@
 /**
- * Rubeus (Hard)worker
+ * Portkey AI Gateway
  *
  * @module index
  */
@@ -18,15 +18,29 @@ import { chatCompletionsHandler } from "./handlers/chatCompletionsHandler";
 import { completionsHandler } from "./handlers/completionsHandler";
 import { embeddingsHandler } from "./handlers/embeddingsHandler";
 import { requestValidator } from "./middlewares/requestValidator";
+import { compress } from "hono/compress";
 
 // Create a new Hono server instance
 const app = new Hono();
 
 /**
+ * Middleware that conditionally applies compression middleware based on the runtime.
+ * Compression is automatically handled for lagon and workerd runtimes
+ * This check if its not any of the 2 and then applies the compress middleware to avoid double compression.
+ */
+
+app.use("*", (c, next) => {
+  if (c.runtime !== "lagon" && c.runtime !== "workerd") {
+    return compress()(c, next)
+  }
+  return next();
+});
+
+/**
  * GET route for the root path.
  * Returns a greeting message.
  */
-app.get("/", (c) => c.text("Rubeus says hey!"));
+app.get("/", (c) => c.text("AI Gateway says hey!"));
 
 // Use prettyJSON middleware for all routes
 app.use("*", prettyJSON());
