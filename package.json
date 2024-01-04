@@ -24,6 +24,8 @@
   ],
   "scripts": {
     "dev": "wrangler dev src/index.ts",
+    "dev:node": "tsx src/start-server.ts",
+    "dev:workerd": "wrangler dev src/index.ts",
     "deploy": "wrangler deploy --minify src/index.ts",
     "pretty": "prettier --write \"./**/*.{js,jsx,ts,tsx,json}\"",
     "build": "rollup -c",
@@ -43,6 +45,7 @@
     "@types/async-retry": "^1.4.5",
     "@types/node": "^20.10.5",
     "rollup": "^4.9.1",
+    "tsx": "^4.7.0",
     "wrangler": "^3.0.1"
   },
   "bin": "build/start-server.js",
