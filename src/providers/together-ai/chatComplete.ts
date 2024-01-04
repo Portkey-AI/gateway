@@ -29,7 +29,7 @@ export const TogetherAIChatCompleteConfig: ProviderConfig = {
     param: "top_p"
   },
   top_k: {
-    param: "top_p"
+    param: "top_k"
   },
   frequency_penalty: {
     param: "repetition_penalty"
