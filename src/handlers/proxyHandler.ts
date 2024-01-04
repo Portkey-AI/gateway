@@ -5,7 +5,7 @@ import { ANTHROPIC, MAX_RETRIES, HEADER_KEYS, RETRY_STATUS_CODES, POWERED_BY, RE
 import { fetchProviderOptionsFromConfig, responseHandler, tryProvidersInSequence, updateResponseHeaders } from "./handlerUtils";
 import { getStreamingMode } from "../utils";
 import { Config, ShortConfig } from "../types/requestBody";
-
+import { env } from "hono/adapter"
 // Find the proxy provider
 function proxyProvider(proxyModeHeader:string, providerHeader: string) {
   const proxyProvider = proxyModeHeader?.split(" ")[1] ?? providerHeader;
@@ -78,7 +78,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
       proxyProvider: proxyProvider(requestHeaders[HEADER_KEYS.MODE], requestHeaders[`x-${POWERED_BY}-provider`]),
       reqBody: requestJSON,
       requestFormData: requestFormData,
-      customHeadersToAvoid: c.env.CUSTOM_HEADERS_TO_IGNORE ?? [],
+      customHeadersToAvoid: env(c).CUSTOM_HEADERS_TO_IGNORE ?? [],
       proxyPath: c.req.url.indexOf("/v1/proxy") > -1 ? "/v1/proxy" : "/v1"
     }
 
@@ -164,7 +164,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
     }
 
     if (getFromCacheFunction && cacheMode) {
-      [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(c.env, {...requestHeaders, ...fetchOptions.headers}, store.reqBody, urlToFetch, cacheIdentifier, cacheMode);
+      [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(env(c), {...requestHeaders, ...fetchOptions.headers}, store.reqBody, urlToFetch, cacheIdentifier, cacheMode);
       if (cacheResponse) {
         const cacheMappedResponse = await responseHandler(new Response(cacheResponse, {headers: {
           "content-type": "application/json"

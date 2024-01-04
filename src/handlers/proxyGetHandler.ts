@@ -3,7 +3,7 @@ import { retryRequest } from "./retryHandler";
 import Providers from "../providers";
 import { ANTHROPIC, MAX_RETRIES, HEADER_KEYS, RETRY_STATUS_CODES, POWERED_BY, RESPONSE_HEADER_KEYS, AZURE_OPEN_AI } from "../globals";
 import { responseHandler, updateResponseHeaders } from "./handlerUtils";
-
+import { env } from "hono/adapter";
 // Find the proxy provider
 function proxyProvider(proxyModeHeader:string, providerHeader: string) {
   const proxyProvider = proxyModeHeader?.split(" ")[1] ?? providerHeader;
@@ -50,7 +50,7 @@ export async function proxyGetHandler(c: Context): Promise<Response> {
     delete requestHeaders["content-type"];
     const store: Record<string, any> = {
       proxyProvider: proxyProvider(requestHeaders[HEADER_KEYS.MODE], requestHeaders[HEADER_KEYS.PROVIDER]),
-      customHeadersToAvoid: c.env.CUSTOM_HEADERS_TO_IGNORE ?? [],
+      customHeadersToAvoid: env(c).CUSTOM_HEADERS_TO_IGNORE ?? [],
       reqBody: {},
       proxyPath: c.req.url.indexOf("/v1/proxy") > -1 ? "/v1/proxy" : "/v1"
     }

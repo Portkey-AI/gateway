@@ -7,6 +7,7 @@ import { Config, Options, Params, RequestBody, ShortConfig, Targets } from "../t
 import { convertKeysToCamelCase } from "../utils";
 import { retryRequest } from "./retryHandler";
 import { handleAudioResponse, handleNonStreamingMode, handleOctetStreamResponse, handleStreamingMode } from "./streamHandler";
+import { env } from "hono/adapter";
 
 /**
  * Constructs the request options for the API call.
@@ -230,7 +231,7 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
 
   if (getFromCacheFunction && cacheMode) {
     [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(
-        c.env,
+        env(c),
         { ...requestHeaders, ...fetchOptions.headers },
         params,
         url,
@@ -364,7 +365,7 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
 
   if (getFromCacheFunction && cacheMode) {
       [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(
-          c.env,
+          env(c),
           { ...requestHeaders, ...fetchOptions.headers },
           transformedRequestBody,
           fn,
