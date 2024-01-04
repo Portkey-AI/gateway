@@ -638,10 +638,7 @@ export function updateResponseHeaders(
         RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX,
         currentIndex.toString()
     );
-    // response.headers.append(
-    //     RESPONSE_HEADER_KEYS.LAST_USED_OPTION_PARAMS,
-    //     JSON.stringify(params).slice(0, 2000)
-    // );
+
     response.headers.append(RESPONSE_HEADER_KEYS.CACHE_STATUS, cacheStatus);
     response.headers.append(RESPONSE_HEADER_KEYS.TRACE_ID, traceId);
     response.headers.append(
@@ -653,6 +650,12 @@ export function updateResponseHeaders(
     if (contentEncodingHeader && contentEncodingHeader.indexOf('br') > -1) {
       // Brotli compression causes errors at runtime, removing the header in that case
       response.headers.delete('content-encoding')
+    }
+
+    // In case content-encoding is present, delete the content-length header to avoid conflicts with hono compress middleware
+    // This is done automatically for workerd runtime but not for others.
+    if (response.headers.get('content-encoding')) {
+      response.headers.delete('content-length')
     }
 }
 
