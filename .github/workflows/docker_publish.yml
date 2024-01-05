@@ -4,6 +4,9 @@ on:
   workflow_dispatch:
   release:
     types: [published]
+  push:
+    branches:
+      - feat/docker-publish-action
 
 jobs:
   push_to_registry:
