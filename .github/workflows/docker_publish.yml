@@ -27,6 +27,9 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: portkeyai/gateway
+          tags: |
+            type=raw,value=latest
+            type=pep440,pattern={{version}}
       
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
