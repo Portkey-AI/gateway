@@ -1,6 +1,9 @@
 name: Publish Docker image
 
 on:
+  push:
+    branches:
+      - feat/docker-publish-action
   release:
     types: [published]
   workflow_dispatch:
