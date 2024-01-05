@@ -29,7 +29,8 @@
     "deploy": "wrangler deploy --minify src/index.ts",
     "pretty": "prettier --write \"./**/*.{js,jsx,ts,tsx,json}\"",
     "build": "rollup -c",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "start:node": "node build/start-server.js"
   },
   "dependencies": {
     "@hono/node-server": "^1.3.3",
