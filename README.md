@@ -1,5 +1,5 @@
 <div align="center">
-<img src="https://github.com/vrushankportkey/gateway/assets/134934501/3a0c766a-0388-4fa4-bd7d-dba3a289d81c" width=350>
+<img src="./docs/images/gateway-border.png" width=350>
 
 # AI Gateway
 ### Route to 100+ LLMs with 1 fast & friendly API.
