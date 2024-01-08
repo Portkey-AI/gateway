@@ -1,6 +1,5 @@
-<!-- <img src="docs/images/header_new.png" width=2000> -->
 <div align="center">
-<img src="https://github.com/roh26it/Rubeus/assets/971978/50b9f1df-ff5b-43d4-91be-b817943a16f7" width=500>
+<img src="/docs/images/gateway-border.png" width=350>
 
 # AI Gateway
 ### Route to 100+ LLMs with 1 fast & friendly API.
