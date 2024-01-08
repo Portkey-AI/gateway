@@ -3,6 +3,9 @@
 npx @portkey-ai/gateway
 ```
 
+# Managed Deployment
+[Portkey.ai](https://portkey.ai) hosts the AI gateway for easy usage. You can [create an account](https://app.portkey.ai) on Portkey and try the gateway. Here are the [docs to get started](https://portkey.ai/docs/welcome/make-your-first-request).
+
 # Deploy to Cloudflare Workers
 
 1. Clone the repo
