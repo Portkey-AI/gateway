@@ -653,11 +653,9 @@ export function updateResponseHeaders(
       response.headers.delete('content-encoding')
     }
 
-    // In case content-encoding is present, delete the content-length header to avoid conflicts with hono compress middleware
-    // This is done automatically for workerd runtime but not for others.
-    if (response.headers.get('content-encoding')) {
-      response.headers.delete('content-length')
-    }
+    // Delete content-length header to avoid conflicts with hono compress middleware
+    // workerd environment handles this authomatically
+    response.headers.delete('content-length')
 }
 
 export function constructConfigFromRequestHeaders(
