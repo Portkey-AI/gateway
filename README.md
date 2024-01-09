@@ -210,3 +210,6 @@ Join our growing community around the world, for help, ideas, and discussions on
 <!-- - Visit us on [YouTube](https://www.youtube.com/channel/UCZph50gLNXAh1DpmeX8sBdw) -->
 <!-- - Join our [Dev community](https://dev.to/portkeyai) -->
 <!-- - Questions tagged #portkey on [Stack Overflow](https://stackoverflow.com/questions/tagged/portkey) -->
+
+![Rubeus Social Share (4)](https://github.com/Portkey-AI/gateway/assets/971978/89d6f0af-a95d-4402-b451-14764c40d03f)
+
