@@ -1,11 +1,11 @@
 ## 🎉 Welcome
-Hello and thank you for considering contributing to Rubeus - Portkey's AI Gateway! Whether you're reporting a bug, suggesting a feature, improving documentation, or writing code, your contributions are invaluable to us.
+Hello and thank you for considering contributing to Portkey's AI Gateway! Whether you're reporting a bug, suggesting a feature, improving documentation, or writing code, your contributions are invaluable to us.
 
 ## 🚀 Quick Start
 1. Fork the repository on Github.
 2. Clone your forked repository to your machine. 
 ```sh
-$ git clone https://github.com/YOUR_USERNAME/rubeus.git
+$ git clone https://github.com/YOUR_USERNAME/gateway.git
 ```
 
 ## 🖋 Types of Contributions

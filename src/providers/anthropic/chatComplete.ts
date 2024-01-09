@@ -1,3 +1,4 @@
+import { ANTHROPIC } from "../../globals";
 import { Params, Message } from "../../types/requestBody";
 import { ChatCompletionResponse, ErrorResponse, ProviderConfig } from "../types";
 
@@ -118,7 +119,7 @@ export const AnthropicChatCompleteResponseTransform: (response: AnthropicChatCom
             param: null,
             code: null
         },
-        provider: "anthropic"
+        provider: ANTHROPIC
     } as ErrorResponse;
   } 
 
@@ -128,7 +129,7 @@ export const AnthropicChatCompleteResponseTransform: (response: AnthropicChatCom
       object: "chat_completion",
       created: Math.floor(Date.now() / 1000),
       model: response.model,
-      provider: "anthropic",
+      provider: ANTHROPIC,
       choices: [
         {
           message: {"role": "assistant", content: response.content[0].text},
@@ -147,12 +148,12 @@ export const AnthropicChatCompleteResponseTransform: (response: AnthropicChatCom
         param: null,
         code: null
     },
-    provider: "anthropic"
+    provider: ANTHROPIC
   } as ErrorResponse;
 }
   
 
-export const AnthropicChatCompleteStreamChunkTransform: (response: string) => string | undefined = (responseChunk) => {
+export const AnthropicChatCompleteStreamChunkTransform: (response: string, fallbackId: string) => string | undefined = (responseChunk, fallbackId) => {
   let chunk = responseChunk.trim();
   if (
     chunk.startsWith("event: ping") ||
@@ -167,18 +168,19 @@ export const AnthropicChatCompleteStreamChunkTransform: (response: string) => st
     return "data: [DONE]\n\n"
   }
 
-  chunk = chunk.replace(/^event: completion[\r\n]*/, "");
+  chunk = chunk.replace(/^event: content_block_delta[\r\n]*/, "");
+  chunk = chunk.replace(/^event: message_delta[\r\n]*/, "");
   chunk = chunk.replace(/^data: /, "");
   chunk = chunk.trim();
   
 
   const parsedChunk: AnthropicChatCompleteStreamResponse = JSON.parse(chunk);
   return `data: ${JSON.stringify({
-    id: "id",
+    id: fallbackId,
     object: "chat.completion.chunk",
     created: Math.floor(Date.now() / 1000),
     model: "",
-    provider: "anthropic",
+    provider: ANTHROPIC,
     choices: [
       {
         delta: {

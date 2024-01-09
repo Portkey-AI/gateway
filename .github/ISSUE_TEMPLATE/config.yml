@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Portkey Community Support
+    url: https://discord.com/invite/DD7vgKK299
+    about: Please ask and answer questions here.
+  - name: Portkey Bounty
+    url: https://discord.com/invite/DD7vgKK299 
+    about: Please report security vulnerabilities here.
