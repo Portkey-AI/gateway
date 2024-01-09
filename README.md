@@ -1,6 +1,5 @@
-<!-- <img src="docs/images/header_new.png" width=2000> -->
 <div align="center">
-<img src="https://github.com/roh26it/Rubeus/assets/971978/50b9f1df-ff5b-43d4-91be-b817943a16f7" width=500>
+<img src="/docs/images/gateway-border.png" width=350>
 
 # AI Gateway
 ### Route to 100+ LLMs with 1 fast & friendly API.
@@ -211,3 +210,6 @@ Join our growing community around the world, for help, ideas, and discussions on
 <!-- - Visit us on [YouTube](https://www.youtube.com/channel/UCZph50gLNXAh1DpmeX8sBdw) -->
 <!-- - Join our [Dev community](https://dev.to/portkeyai) -->
 <!-- - Questions tagged #portkey on [Stack Overflow](https://stackoverflow.com/questions/tagged/portkey) -->
+
+![Rubeus Social Share (4)](https://github.com/Portkey-AI/gateway/assets/971978/89d6f0af-a95d-4402-b451-14764c40d03f)
+
