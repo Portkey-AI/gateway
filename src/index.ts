@@ -102,7 +102,7 @@ app.post("/v1/embeddings", requestValidator, embeddingsHandler);
 
 /**
  * POST route for '/v1/prompts/:id/completions'.
- * Handles porktey prompt completions route
+ * Handles portkey prompt completions route
  */
 app.post("/v1/prompts/*", requestValidator, (c) => {
   if (c.req.url.endsWith("/v1/chat/completions")) {
