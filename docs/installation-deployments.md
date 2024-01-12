@@ -41,7 +41,7 @@ node build/start-server.js
 # Deploy using Docker
 Run using Docker directly:
 ```
-sudo docker run -p 8787:8787 portkeyai/gateway
+sudo docker run -d -p 8787:8787 portkeyai/gateway
 ```
 
 # Deploy using Docker Compose
@@ -51,7 +51,7 @@ wget "https://raw.githubusercontent.com/Portkey-AI/gateway/main/docker-compose.y
 ```
 2. Run:
 ```
-sudo docker compose up
+sudo docker compose up -d
 ```
 
 # Deploy to Vercel
