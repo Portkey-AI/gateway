@@ -41,8 +41,9 @@ node build/start-server.js
 # Deploy using Docker
 Run using Docker directly:
 ```
-sudo docker run -d -p 8787:8787 portkeyai/gateway
+docker run -d -p 8787:8787 portkeyai/gateway:latest
 ```
+For more information on the Docker image, check [here](https://hub.docker.com/r/portkeyai/gateway)
 
 # Deploy using Docker Compose
 1. Download compose file from the repo:
@@ -51,8 +52,9 @@ wget "https://raw.githubusercontent.com/Portkey-AI/gateway/main/docker-compose.y
 ```
 2. Run:
 ```
-sudo docker compose up -d
+docker compose up -d
 ```
+3. The service is now running and listening on port 8787
 
 # Deploy to Vercel
 Docs to be written, please help!
