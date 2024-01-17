@@ -51,11 +51,7 @@ interface DeepInfraChatCompleteResponse extends ChatCompletionResponse {
 }
 
 export interface DeepInfraErrorResponse {
-    object: string;
-    message: string;
-    type: string;
-    param: string | null;
-    code: string;
+    message:string 
 }
 
 interface DeepInfraStreamChunk {
@@ -81,9 +77,9 @@ export const DeepInfraChatCompleteResponseTransform: (
         return {
             error: {
                 message: response.message,
-                type: response.type,
-                param: response.param,
-                code: response.code,
+                type: null,
+                param: null,
+                code: null,
             },
             provider: DEEPINFRA,
         } as ErrorResponse;
@@ -126,7 +122,7 @@ export const DeepInfraChatCompleteResponseTransform: (
 };
 
 
-export const MistralAIChatCompleteStreamChunkTransform: (
+export const DeepInfraChatCompleteStreamChunkTransform: (
     response: string
 ) => string = (responseChunk) => {
     let chunk = responseChunk.trim();
