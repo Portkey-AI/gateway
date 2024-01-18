@@ -8,6 +8,41 @@ npx @portkey-ai/gateway
 
 # Deploy to Cloudflare Workers
 
+Method 1
+
+1. Create an API token in Cloudflare
+Select "My Profile" from the dropdown menu of your user icon on the top right of your dashboard. Select "API Tokens" > "Create Token". Under "Custom Token", select "Get started". Name your API token in the "Token name" field. Under "Permissions", select "Account", "Cloudflare Pages" and "Edit". Then "Continue". Now your Cloudflare API token is created. 
+
+2. Clone the repo
+```
+git clone https://github.com/portkey-ai/gateway
+```
+3. Create a repo secret at the repo setting
+Under your repo's name (the one you just cloned), select "Settings". Then select "Secrets" > "Actions" > "New repository secret". Create a secret and put CLOUDFLARE_API_TOKEN as the name with the value being your Cloudflare API token. 
+
+Example of GitHub workflow .yml file for cloudflare worker deployment
+```
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy
+    steps:
+      - uses: actions/checkout@v3
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+```   
+
+
+Method 2
 1. Clone the repo
 ```
 git clone https://github.com/portkey-ai/gateway
@@ -21,6 +56,7 @@ npm i
 ```
 npm run deploy
 ```
+
 
 # Run a Node.js server
 1. Clone the repo
