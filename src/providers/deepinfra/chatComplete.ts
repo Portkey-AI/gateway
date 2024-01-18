@@ -9,7 +9,7 @@ export const DeepInfraChatCompleteConfig: ProviderConfig = {
   model: {
     param: "model",
     required: true,
-    default: "meta-llama/Llama-2-70b-chat-hf",
+    default: "deepinfra/airoboros-70b",
   },
   messages: {
     param: "messages",
@@ -17,9 +17,9 @@ export const DeepInfraChatCompleteConfig: ProviderConfig = {
   },
   temperature: {
     param: "temperature",
-    default: 0.7,
+    default: 1,
     min: 0,
-    max: 1,
+    max: 2,
   },
   top_p: {
     param: "top_p",
