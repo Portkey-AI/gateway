@@ -5,7 +5,6 @@ const DeepInfraApiConfig: ProviderAPIConfig = {
   headers: (API_KEY: string) => {
     return {
       Authorization: `Bearer ${API_KEY}`,
-      "Content-Type": "application/json",
     };
   },
   chatComplete: "/chat/completions",
