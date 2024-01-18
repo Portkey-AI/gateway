@@ -108,14 +108,23 @@ export const DeepInfraChatCompleteResponseTransform: (
     responseStatus !== 200 &&
     response.detail.length
   ) {
-    const firstError = response.detail[0];
-    const errorField = firstError.loc.join(".");
-    const errorMessage = firstError.msg;
-    const errorType = firstError.type;
+    let firstError: Record<string, any> | undefined;
+    let errorField: string | null = null;
+    let errorMessage: string | undefined;
+    let errorType: string | null = null;
+
+    if (Array.isArray(response.detail)) {
+      [firstError] = response.detail;
+      errorField = firstError?.loc?.join(".") ?? "";
+      errorMessage = firstError.msg;
+      errorType = firstError.type;
+    } else {
+      errorMessage = response.detail;
+    }
 
     return {
       error: {
-        message: `${errorField}: ${errorMessage}`,
+        message: `${errorField ? `${errorField}: ` : ""}${errorMessage}`,
         type: errorType,
         param: null,
         code: null,
