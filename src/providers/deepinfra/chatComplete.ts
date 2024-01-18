@@ -5,6 +5,9 @@ import {
   ProviderConfig,
 } from "../types";
 
+// TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
+// TODOS: this configuration might have to check on the max value of n
+
 export const DeepInfraChatCompleteConfig: ProviderConfig = {
   model: {
     param: "model",
@@ -13,7 +16,31 @@ export const DeepInfraChatCompleteConfig: ProviderConfig = {
   },
   messages: {
     param: "messages",
+    required: true,
     default: [],
+  },
+  frequency_penalty: {
+    param: "frequency_penalty",
+    default: 0,
+    min: -2,
+    max: 2,
+  },
+  max_tokens: {
+    param: "max_tokens",
+    default: 100,
+    min: 1,
+  },
+  n: {
+    param: "n",
+    default: 1,
+    min: 1,
+    max: 1,
+  },
+  presence_penalty: {
+    param: "presence_penalty",
+    min: -2,
+    max: 2,
+    default: 0,
   },
   temperature: {
     param: "temperature",
@@ -27,10 +54,9 @@ export const DeepInfraChatCompleteConfig: ProviderConfig = {
     min: 0,
     max: 1,
   },
-  max_tokens: {
-    param: "max_tokens",
+  stop: {
+    param: "stop",
     default: null,
-    min: 1,
   },
   stream: {
     param: "stream",
@@ -51,101 +77,100 @@ interface DeepInfraChatCompleteResponse extends ChatCompletionResponse {
 }
 
 export interface DeepInfraErrorResponse {
-    message:string 
+  message: string;
 }
 
 interface DeepInfraStreamChunk {
-    id: string;
-    object: string;
-    created: number;
-    model: string;
-    choices: {
-        delta: {
-            role?: string | null;
-            content?: string;
-        };
-        index: number;
-        finish_reason: string | null;
-    }[];
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: {
+    delta: {
+      role?: string | null;
+      content?: string;
+    };
+    index: number;
+    finish_reason: string | null;
+  }[];
 }
 
 export const DeepInfraChatCompleteResponseTransform: (
   response: DeepInfraChatCompleteResponse | DeepInfraErrorResponse,
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-    if ("message" in response && responseStatus !== 200) {
-        return {
-            error: {
-                message: response.message,
-                type: null,
-                param: null,
-                code: null,
-            },
-            provider: DEEPINFRA,
-        } as ErrorResponse;
-    }
-
-    if ("choices" in response) {
-        return {
-            id: response.id,
-            object: response.object,
-            created: response.created,
-            model: response.model,
-            provider: DEEPINFRA,
-            choices: response.choices.map((c) => ({
-                index: c.index,
-                message: {
-                    role: c.message.role,
-                    content: c.message.content,
-                },
-                finish_reason: c.finish_reason,
-            })),
-            usage: {
-                prompt_tokens: response.usage?.prompt_tokens,
-                completion_tokens: response.usage?.completion_tokens,
-                total_tokens: response.usage?.total_tokens,
-            },
-        };
-    }
-
+  if ("message" in response && responseStatus !== 200) {
     return {
-        error: {
-            message: `Invalid response recieved from ${DEEPINFRA}: ${JSON.stringify(
-                response
-            )}`,
-            type: null,
-            param: null,
-            code: null,
-        },
-        provider: DEEPINFRA,
+      error: {
+        message: response.message,
+        type: null,
+        param: null,
+        code: null,
+      },
+      provider: DEEPINFRA,
     } as ErrorResponse;
+  }
+
+  if ("choices" in response) {
+    return {
+      id: response.id,
+      object: response.object,
+      created: response.created,
+      model: response.model,
+      provider: DEEPINFRA,
+      choices: response.choices.map((c) => ({
+        index: c.index,
+        message: {
+          role: c.message.role,
+          content: c.message.content,
+        },
+        finish_reason: c.finish_reason,
+      })),
+      usage: {
+        prompt_tokens: response.usage?.prompt_tokens,
+        completion_tokens: response.usage?.completion_tokens,
+        total_tokens: response.usage?.total_tokens,
+      },
+    };
+  }
+
+  return {
+    error: {
+      message: `Invalid response recieved from ${DEEPINFRA}: ${JSON.stringify(
+        response
+      )}`,
+      type: null,
+      param: null,
+      code: null,
+    },
+    provider: DEEPINFRA,
+  } as ErrorResponse;
 };
 
-
 export const DeepInfraChatCompleteStreamChunkTransform: (
-    response: string
+  response: string
 ) => string = (responseChunk) => {
-    let chunk = responseChunk.trim();
-    chunk = chunk.replace(/^data: /, "");
-    chunk = chunk.trim();
-    if (chunk === "[DONE]") {
-        return `data: ${chunk}\n\n`;
-    }
-    const parsedChunk: DeepInfraStreamChunk = JSON.parse(chunk);
-    return (
-        `data: ${JSON.stringify({
-            id: parsedChunk.id,
-            object: parsedChunk.object,
-            created: parsedChunk.created,
-            model: parsedChunk.model,
-            provider: DEEPINFRA,
-            choices: [
-                {
-                    index: parsedChunk.choices[0].index,
-                    delta: parsedChunk.choices[0].delta,
-                    finish_reason: parsedChunk.choices[0].finish_reason,
-                },
-            ],
-        })}` + "\n\n"
-    );
+  let chunk = responseChunk.trim();
+  chunk = chunk.replace(/^data: /, "");
+  chunk = chunk.trim();
+  if (chunk === "[DONE]") {
+    return `data: ${chunk}\n\n`;
+  }
+  const parsedChunk: DeepInfraStreamChunk = JSON.parse(chunk);
+  return (
+    `data: ${JSON.stringify({
+      id: parsedChunk.id,
+      object: parsedChunk.object,
+      created: parsedChunk.created,
+      model: parsedChunk.model,
+      provider: DEEPINFRA,
+      choices: [
+        {
+          index: parsedChunk.choices[0].index,
+          delta: parsedChunk.choices[0].delta,
+          finish_reason: parsedChunk.choices[0].finish_reason,
+        },
+      ],
+    })}` + "\n\n"
+  );
 };
