@@ -1,12 +1,12 @@
 import { ProviderConfigs } from "../types";
 import DeepInfraApiConfig from "./api";
-import {DeepInfraChatCompleteConfig, DeepInfraChatCompleteStreamChunkTransform} from "./chatComplete";
+import {DeepInfraChatCompleteConfig, DeepInfraChatCompleteResponseTransform, DeepInfraChatCompleteStreamChunkTransform} from "./chatComplete";
 
 const DeepInfraConfig: ProviderConfigs = {
     chatComplete: DeepInfraChatCompleteConfig,
     api: DeepInfraApiConfig,
     responseTransforms: {
-        chatComplete: DeepInfraChatCompleteConfig,
+        chatComplete: DeepInfraChatCompleteResponseTransform,
         "stream-chatComplete": DeepInfraChatCompleteStreamChunkTransform,
     },
 };
