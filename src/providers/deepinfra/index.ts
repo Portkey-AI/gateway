@@ -6,8 +6,8 @@ const DeepInfraConfig: ProviderConfigs = {
     chatComplete: DeepInfraChatCompleteConfig,
     api: DeepInfraApiConfig,
     responseTransforms: {
-        chatComplete: DeepInfraChatCompleteResponseTransform,
-        "stream-chatComplete": DeepInfraChatCompleteStreamChunkTransform,
+        'chatComplete': DeepInfraChatCompleteResponseTransform,
+        'stream-chatComplete': DeepInfraChatCompleteStreamChunkTransform,
     },
 };
 

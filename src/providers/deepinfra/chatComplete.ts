@@ -77,7 +77,11 @@ interface DeepInfraChatCompleteResponse extends ChatCompletionResponse {
 }
 
 export interface DeepInfraErrorResponse {
-  message: string;
+  detail: {
+    loc: string[];
+    msg: string;
+    type: string;
+  }[];
 }
 
 interface DeepInfraStreamChunk {
@@ -99,11 +103,20 @@ export const DeepInfraChatCompleteResponseTransform: (
   response: DeepInfraChatCompleteResponse | DeepInfraErrorResponse,
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if ("message" in response && responseStatus !== 200) {
+  if (
+    "detail" in response &&
+    responseStatus !== 200 &&
+    response.detail.length
+  ) {
+    const firstError = response.detail[0];
+    const errorField = firstError.loc.join(".");
+    const errorMessage = firstError.msg;
+    const errorType = firstError.type;
+
     return {
       error: {
-        message: response.message,
-        type: null,
+        message: `${errorField}: ${errorMessage}`,
+        type: errorType,
         param: null,
         code: null,
       },
