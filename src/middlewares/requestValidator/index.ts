@@ -12,6 +12,7 @@ import {
     PERPLEXITY_AI,
     POWERED_BY,
     TOGETHER_AI,
+    DEEPINFRA,
 } from "../../globals";
 import { configSchema } from "./schema/config";
 
@@ -60,7 +61,7 @@ export const requestValidator = (c: Context, next: any) => {
     }
     if (
         requestHeaders[`x-${POWERED_BY}-provider`] &&
-        ![OPEN_AI, AZURE_OPEN_AI, COHERE, ANTHROPIC, ANYSCALE, PALM, TOGETHER_AI, GOOGLE, MISTRAL_AI, PERPLEXITY_AI].includes(
+        ![OPEN_AI, AZURE_OPEN_AI, COHERE, ANTHROPIC, ANYSCALE, PALM, TOGETHER_AI, GOOGLE, MISTRAL_AI, PERPLEXITY_AI, DEEPINFRA].includes(
             requestHeaders[`x-${POWERED_BY}-provider`]
         )
     ) {

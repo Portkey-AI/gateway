@@ -1,4 +1,4 @@
-import { ANTHROPIC, COHERE, GOOGLE, PERPLEXITY_AI } from "./globals";
+import { ANTHROPIC, COHERE, GOOGLE, PERPLEXITY_AI, DEEPINFRA } from "./globals";
 import { Params } from "./types/requestBody";
 
 export const getStreamModeSplitPattern = (proxyProvider: string, requestURL: string) => {
@@ -16,6 +16,12 @@ export const getStreamModeSplitPattern = (proxyProvider: string, requestURL: str
     if (proxyProvider === PERPLEXITY_AI) {
       splitPattern = '\r\n\r\n';
     }
+
+    if(proxyProvider === DEEPINFRA)
+    {
+      splitPattern = '\r\n\r\n';
+    }
+    
     return splitPattern;
 }
 

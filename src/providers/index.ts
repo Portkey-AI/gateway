@@ -2,6 +2,7 @@ import AnthropicConfig from "./anthropic";
 import AnyscaleConfig from "./anyscale";
 import AzureOpenAIConfig from "./azure-openai";
 import CohereConfig from "./cohere";
+import DeepInfraConfig from "./deepinfra";
 import GoogleConfig from "./google";
 import MistralAIConfig from "./mistral-ai";
 import OpenAIConfig from "./openai";
@@ -20,7 +21,8 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'together-ai': TogetherAIConfig,
   google: GoogleConfig,
   'perplexity-ai': PerplexityAIConfig,
-  'mistral-ai': MistralAIConfig
+  'mistral-ai': MistralAIConfig,
+  'deepinfra': DeepInfraConfig
 };
 
 export default Providers;
