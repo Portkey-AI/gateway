@@ -46,14 +46,14 @@ bashCopy codecurl '127.0.0.1:8787/v1/chat/completions' \
   -d '{"messages": [{"role": "user","content": "Say this is test."}], "max_tokens": 20, "model": "gpt-4"}'
 ```
 
-[支持的SDK完整列表](https://next.speedy.works/c/ab31d929-e50c-4117-af18-db154092394e#supported-sdks)
+[支持的SDK完整列表](#supported-sdks)
 
 <br>
 
 
 ## 支持的AI厂商
 
-|| AI厂商 | 支持 | 流式 | 支持的断点 |
+|| AI厂商 | 支持 | 流式 | 支持的端点 |
 |---|---|---|---|--|
 | <img src="docs/images/openai.png" width=25 />| OpenAI | ✅  |✅  | `/completions`, `/chat/completions`,`/embeddings`, `/assistants`, `/threads`, `/runs` |
 | <img src="docs/images/azure.png" width=25>| Azure OpenAI | ✅  |✅  | `/completions`, `/chat/completions`,`/embeddings` |
