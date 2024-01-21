@@ -1,6 +1,7 @@
 <p align="right">
   <strong>English</strong>|<a href="https://github.com/Portkey-AI/gateway/blob/main/CODE_OF_CONDUCT.cn.md">中文</a>
 </p>
+# Contributor Covenant Code of Conduct
 
 ## Our Pledge
 
@@ -14,7 +15,7 @@ and orientation.
 We pledge to act and interact in ways that contribute to an open, welcoming,
 diverse, inclusive, and healthy community.
 
-## Our Standard
+## Our Standards
 
 Examples of behavior that contributes to a positive environment for our
 community include:
