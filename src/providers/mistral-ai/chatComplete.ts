@@ -44,6 +44,11 @@ export const MistralAIChatCompleteConfig: ProviderConfig = {
         param: "safe_prompt",
         default: false
     },
+    // TODO: deprecate this and move to safe_prompt in next release
+    safe_mode: {
+        param: "safe_prompt",
+        default: false
+    },
 };
 
 interface MistralAIChatCompleteResponse extends ChatCompletionResponse {
