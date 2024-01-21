@@ -1,5 +1,5 @@
 <p align="right">
-   <strong>English</strong> | <a href="./CODE_OF_CONDUCT.cn.md">中文</a> 
+   <strong>English</strong> | <a href="../CODE_OF_CONDUCT.cn.md">中文</a> 
 </p>
 # Contributor Covenant Code of Conduct  
 

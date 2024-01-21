@@ -1,5 +1,5 @@
 <p align="right">
-<a href="./CODE_OF_CONDUCT.md">English</a>|<strong>中文</strong> 
+<a href=".github\CODE_OF_CONDUCT.md">English</a>|<strong>中文</strong> 
 </p>
 # 贡献者公约行为准则
 
