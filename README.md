@@ -1,5 +1,11 @@
 <div align="center">
 <img src="/docs/images/gateway-border.png" width=350>
+</div>
+
+<p align="right">
+   <strong>English</strong> | <a href="./README.cn.md">中文</a> 
+</p>
+
 
 # AI Gateway
 ### Route to 100+ LLMs with 1 fast & friendly API.
@@ -16,7 +22,7 @@
 [Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and hosted LLMs. It streamlines API requests to OpenAI, Anthropic, Mistral, LLama2, Anyscale, Google Gemini and more with a unified API. 
 
 ✅&nbsp; Blazing **fast** (9.9x faster) with a **tiny footprint** (~45kb installed) <br>
-✅&nbsp; **Load balance** across multiple models, providers, and keys <br> 
+✅&nbsp; **Load balance** across multiple models, providers, and keys <br>
 ✅&nbsp; **Fallbacks** make sure your app stays resilient  <br>
 ✅&nbsp; **Automatic Retries** with exponential fallbacks come by default  <br>
 ✅&nbsp; Plug-in middleware as needed <br>
@@ -212,4 +218,3 @@ Join our growing community around the world, for help, ideas, and discussions on
 <!-- - Questions tagged #portkey on [Stack Overflow](https://stackoverflow.com/questions/tagged/portkey) -->
 
 ![Rubeus Social Share (4)](https://github.com/Portkey-AI/gateway/assets/971978/89d6f0af-a95d-4402-b451-14764c40d03f)
-
