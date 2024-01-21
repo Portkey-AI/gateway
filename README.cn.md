@@ -1,6 +1,5 @@
 <div align="center">
 <img src="/docs/images/gateway-border.png" width=350>
-</div>
 
 <p align="right">
 <a href="./README.md">English</a>|<strong>中文</strong> 
