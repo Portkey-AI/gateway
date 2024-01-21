@@ -1,6 +1,7 @@
 <p align="right">
 <a href=".github\CODE_OF_CONDUCT.md">English</a>|<strong>中文</strong> 
 </p>
+
 # 贡献者公约行为准则
 
 ## 我们的承诺
