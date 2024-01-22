@@ -1,3 +1,4 @@
+import { COHERE } from "../../globals";
 import { CompletionResponse, ErrorResponse, ProviderConfig } from "../types";
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
@@ -108,7 +109,7 @@ export const CohereCompleteResponseTransform: (response: CohereCompleteResponse,
             param: null,
             code: null
         },
-        provider: "cohere"
+        provider: COHERE
     } as ErrorResponse;
   } 
 
@@ -117,7 +118,7 @@ export const CohereCompleteResponseTransform: (response: CohereCompleteResponse,
     object: "text_completion",
     created: Math.floor(Date.now() / 1000),
     model: "Unknown",
-    provider: "cohere",
+    provider: COHERE,
     choices: response.generations.map((generation, index) => ({
       text: generation.text,
       index: index,
@@ -127,7 +128,7 @@ export const CohereCompleteResponseTransform: (response: CohereCompleteResponse,
   };
 }
 
-export const CohereCompleteStreamChunkTransform: (response: string) => string = (responseChunk) => {
+export const CohereCompleteStreamChunkTransform: (response: string, fallbackId: string) => string = (responseChunk, fallbackId) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, "");
   chunk = chunk.trim();
@@ -138,12 +139,12 @@ export const CohereCompleteStreamChunkTransform: (response: string) => string = 
     return '';
   }
 
-  return `${JSON.stringify({
-    id: parsedChunk.id ?? "",
+  return `data: ${JSON.stringify({
+    id: parsedChunk.id ?? fallbackId,
     object: "text_completion",
     created: Math.floor(Date.now() / 1000),
     model: "",
-    provider: "cohere",
+    provider: COHERE,
     choices: [
       {
         text: parsedChunk.response?.generations?.[0]?.text ?? parsedChunk.text,

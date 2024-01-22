@@ -1,3 +1,4 @@
+import { COHERE } from "../../globals";
 import { Message, Params } from "../../types/requestBody";
 import { ChatCompletionResponse, ErrorResponse, ProviderConfig } from "../types";
 import { CohereStreamChunk } from "./complete";
@@ -104,7 +105,7 @@ export const CohereChatCompleteResponseTransform: (response: CohereCompleteRespo
             param: null,
             code: null
         },
-        provider: "cohere"
+        provider: COHERE
     } as ErrorResponse;
   } 
 
@@ -113,7 +114,7 @@ export const CohereChatCompleteResponseTransform: (response: CohereCompleteRespo
     object: "chat_completion",
     created: Math.floor(Date.now() / 1000),
     model: "Unknown",
-    provider: "cohere",
+    provider: COHERE,
     choices: response.generations.map((generation, index) => ({
       message: {role: "assistant", content: generation.text},
       index: index,
@@ -122,7 +123,7 @@ export const CohereChatCompleteResponseTransform: (response: CohereCompleteRespo
   };
 }
 
-export const CohereChatCompleteStreamChunkTransform: (response: string) => string = (responseChunk) => {
+export const CohereChatCompleteStreamChunkTransform: (response: string, fallbackId: string) => string = (responseChunk, fallbackId) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, "");
   chunk = chunk.trim();
@@ -133,12 +134,12 @@ export const CohereChatCompleteStreamChunkTransform: (response: string) => strin
     return '';
   }
 
-  return `${JSON.stringify({
-    id: parsedChunk.id ?? "",
+  return `data: ${JSON.stringify({
+    id: parsedChunk.id ?? fallbackId,
     object: "text_completion",
     created: Math.floor(Date.now() / 1000),
     model: "",
-    provider: "cohere",
+    provider: COHERE,
     choices: [
       {
         delta: {

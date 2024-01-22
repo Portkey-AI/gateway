@@ -1,4 +1,4 @@
-import { AZURE_OPEN_AI, GOOGLE } from "../globals";
+import { AZURE_OPEN_AI, COHERE, GOOGLE } from "../globals";
 import { getStreamModeSplitPattern } from "../utils";
 
 export async function* readStream(reader: ReadableStreamDefaultReader, splitPattern: string, transformFunction: Function | undefined, isSleepTimeRequired: boolean, fallbackChunkId: string) {
@@ -90,8 +90,8 @@ export async function handleStreamingMode(response: Response, proxyProvider: str
         writer.close();
     })();
 
-    // Convert GEMINI json stream to text/event-stream for non-proxy calls
-    if (proxyProvider === GOOGLE && responseTransformer) {
+    // Convert GEMINI/COHERE json stream to text/event-stream for non-proxy calls
+    if ([GOOGLE, COHERE].includes(proxyProvider) && responseTransformer) {
         return new Response(readable, {
             ...response,
             headers: new Headers({
