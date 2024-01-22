@@ -96,7 +96,14 @@ export const OpenAICompleteJSONToStreamResponseTransform: (response: OpenAICompl
     object: "text_completion",
     created: Date.now(),
     model: model ?? "",
-    provider
+    provider,
+    usage: {}
+  }
+
+  if (response.usage?.completion_tokens) {
+    streamChunkTemplate.usage = {
+      completion_tokens: response.usage?.completion_tokens
+    }
   }
 
   for (const [index, choice] of choices.entries()) {

@@ -105,7 +105,14 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (response: OpenAIC
     created: Date.now(),
     model: model || "",
     system_fingerprint: system_fingerprint || null,
-    provider
+    provider,
+    usage: {}
+  }
+
+  if (response.usage?.completion_tokens) {
+    streamChunkTemplate.usage = {
+      completion_tokens: response.usage?.completion_tokens
+    }
   }
 
   for (const [index, choice] of choices.entries()) {
