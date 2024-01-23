@@ -500,7 +500,7 @@ export function responseHandler(response: Response, streamingMode: boolean, prox
     responseTransformerFunction = undefined;
   }
 
-  if (streamingMode && response.status === 200 && isCacheHit && responseTransformer && responseTransformerFunction) {
+  if (streamingMode && response.status === 200 && isCacheHit && responseTransformerFunction) {
       return handleJSONToStreamResponse(response, proxyProvider, responseTransformerFunction)
   } else if (streamingMode && response.status === 200) {
     return handleStreamingMode(response, proxyProvider, responseTransformerFunction, requestURL)
