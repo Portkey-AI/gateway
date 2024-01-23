@@ -117,10 +117,13 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (response: OpenAIC
 
   for (const [index, choice] of choices.entries()) {
     if (choice.message && choice.message.tool_calls) {
+      const currentToolCall = choice.message.tool_calls[0];
       const toolCallNameChunk = {
         index: 0,
+        id: currentToolCall.id,
+        type: "function",
         function: {
-          name: choice.message.tool_calls[0].name,
+          name: currentToolCall.function.name,
           arguments: ""
         }
       }
@@ -128,7 +131,7 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (response: OpenAIC
       const toolCallArgumentChunk = {
         index: 0,
         function: {
-          arguments: choice.message.tool_calls[0].arguments
+          arguments: currentToolCall.function.arguments
         }
       }
 

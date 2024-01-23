@@ -376,7 +376,7 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
       );
       if (cacheResponse) {
           response = await responseHandler(
-              new Response(cacheResponse),
+              new Response(cacheResponse, { headers: {"content-type": "application/json"}}),
               isStreamingMode,
               provider,
               fn,
