@@ -8,7 +8,7 @@ import { Targets } from "../types/requestBody";
 export async function embedHandler(c: Context): Promise<Response> {
   try {
     const request = await c.req.json();
-    const requestHeaders = Object.fromEntries(c.req.headers);
+    const requestHeaders = Object.fromEntries(c.req.raw.headers);
     if (request.config?.targets && request.config?.targets?.filter((t: Targets) => t.targets).length > 0) {
       return new Response(JSON.stringify({
         status: "failure",

@@ -17,7 +17,7 @@ import {
 import { configSchema } from "./schema/config";
 
 export const requestValidator = (c: Context, next: any) => {
-    const requestHeaders = Object.fromEntries(c.req.headers);
+    const requestHeaders = Object.fromEntries(c.req.raw.headers);
 
     if (
         requestHeaders["content-type"] &&
