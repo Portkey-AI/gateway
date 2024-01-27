@@ -1,3 +1,4 @@
+import { PALM } from "../../globals";
 import { Params } from "../../types/requestBody";
 import { PalmChatCompleteResponse } from "../../types/responseBody";
 import { ChatCompletionResponse, ErrorResponse, ProviderConfig } from "../types";
@@ -69,9 +70,9 @@ export const PalmChatCompleteResponseTransform: (response: PalmChatCompleteRespo
                 message: response.error?.message ?? null,
                 type: null,
                 param: null,
-                code: response.error?.code ?? null
+                code: response.error?.code?.toString() ?? null
             },
-            provider: "palm"
+            provider: PALM
         } as ErrorResponse;
     }
 
@@ -80,7 +81,7 @@ export const PalmChatCompleteResponseTransform: (response: PalmChatCompleteRespo
         object: "chat_completion",
         created: Math.floor(Date.now() / 1000),
         model: "Unknown",
-        provider: "palm",
+        provider: PALM,
         choices: response.candidates?.map((generation, index) => ({
             message: { role: "assistant", content: generation.content },
             index: index,

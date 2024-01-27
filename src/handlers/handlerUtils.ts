@@ -204,7 +204,7 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
       attempts: providerOption.retry?.attempts ?? 1, 
       onStatusCodes: providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES
     };
-  } else if (providerOption.retry && !isNaN(providerOption.retry)) {
+  } else if (typeof providerOption.retry === "number") {
     providerOption.retry = { 
       attempts: providerOption.retry, 
       onStatusCodes: RETRY_STATUS_CODES
