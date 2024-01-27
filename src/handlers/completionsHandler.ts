@@ -27,14 +27,6 @@ export async function completionsHandler(c: Context): Promise<Response> {
             "config"
         );
 
-        if (!tryTargetsResponse) {
-            return new Response(errors[errors.length - 1].errorObj, {
-                status: errors[errors.length - 1].status,
-                headers: {
-                    "content-type": "application/json"
-                }
-            });
-        }
         return tryTargetsResponse;
     } catch (err: any) {
         console.log("completion error", err.message);
