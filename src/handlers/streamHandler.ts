@@ -1,4 +1,4 @@
-import { AZURE_OPEN_AI, CONTENT_TYPES, GOOGLE } from "../globals";
+import { AZURE_OPEN_AI, CONTENT_TYPES, COHERE, GOOGLE } from "../globals";
 import { OpenAIChatCompleteResponse } from "../providers/openai/chatComplete";
 import { OpenAICompleteResponse } from "../providers/openai/complete";
 import { getStreamModeSplitPattern } from "../utils";
@@ -92,8 +92,8 @@ export async function handleStreamingMode(response: Response, proxyProvider: str
         writer.close();
     })();
 
-    // Convert GEMINI json stream to text/event-stream for non-proxy calls
-    if (proxyProvider === GOOGLE && responseTransformer) {
+    // Convert GEMINI/COHERE json stream to text/event-stream for non-proxy calls
+    if ([GOOGLE, COHERE].includes(proxyProvider) && responseTransformer) {
         return new Response(readable, {
             ...response,
             headers: new Headers({
