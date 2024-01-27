@@ -12,7 +12,7 @@ import { Context } from "hono";
 export async function embeddingsHandler(c: Context): Promise<Response> {
     try {
         let request = await c.req.json();
-        let requestHeaders = Object.fromEntries(c.req.headers);
+        let requestHeaders = Object.fromEntries(c.req.raw.headers);
         const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders)
 
         const errors: any = [];

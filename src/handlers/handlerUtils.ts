@@ -1,13 +1,15 @@
 import { Context } from "hono";
-import { AZURE_OPEN_AI, GOOGLE, HEADER_KEYS, PALM, POWERED_BY, RESPONSE_HEADER_KEYS, RETRY_STATUS_CODES } from "../globals";
+import { AZURE_OPEN_AI, CONTENT_TYPES, GOOGLE, HEADER_KEYS, PALM, POWERED_BY, RESPONSE_HEADER_KEYS, RETRY_STATUS_CODES } from "../globals";
 import Providers from "../providers";
 import { ProviderAPIConfig, endpointStrings } from "../providers/types";
 import transformToProviderRequest from "../services/transformToProviderRequest";
 import { Config, Options, Params, RequestBody, ShortConfig, Targets } from "../types/requestBody";
 import { convertKeysToCamelCase } from "../utils";
 import { retryRequest } from "./retryHandler";
-import { handleAudioResponse, handleNonStreamingMode, handleOctetStreamResponse, handleStreamingMode } from "./streamHandler";
+import { handleAudioResponse, handleJSONToStreamResponse, handleNonStreamingMode, handleOctetStreamResponse, handleStreamingMode } from "./streamHandler";
 import { env } from "hono/adapter";
+import { OpenAIChatCompleteJSONToStreamResponseTransform } from "../providers/openai/chatComplete";
+import { OpenAICompleteJSONToStreamResponseTransform } from "../providers/openai/complete";
 
 /**
  * Constructs the request options for the API call.
@@ -202,7 +204,7 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
       attempts: providerOption.retry?.attempts ?? 1, 
       onStatusCodes: providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES
     };
-  } else if (providerOption.retry && !isNaN(providerOption.retry)) {
+  } else if (typeof providerOption.retry === "number") {
     providerOption.retry = { 
       attempts: providerOption.retry, 
       onStatusCodes: RETRY_STATUS_CODES
@@ -374,15 +376,12 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
       );
       if (cacheResponse) {
           response = await responseHandler(
-              new Response(cacheResponse, {
-                  headers: {
-                      "content-type": "application/json",
-                  },
-              }),
-              false,
+              new Response(cacheResponse, { headers: {"content-type": "application/json"}}),
+              isStreamingMode,
               provider,
-              undefined,
-              url
+              fn,
+              url,
+              true
           );
           c.set("requestOptions", [
               ...requestOptions,
@@ -471,21 +470,43 @@ export async function tryProvidersInSequence(c: Context, providers:Options[], pa
   throw new Error(JSON.stringify(errors));
 }
 
-// Response Handlers for streaming & non-streaming
-export function responseHandler(response: Response, streamingMode: boolean, proxyProvider: string, responseTransformer: string | undefined, requestURL: string): Promise<Response> {
-  // Checking status 200 so that errors are not considered as stream mode.
+/**
+ * Handles various types of responses based on the specified parameters
+ * and returns a mapped response
+ * @param {Response} response - The HTTP response recieved from LLM.
+ * @param {boolean} streamingMode - Indicates whether streaming mode is enabled.
+ * @param {string} proxyProvider - The provider string.
+ * @param {string | undefined} responseTransformer - The response transformer to determine type of call.
+ * @param {string} requestURL - The URL of the original LLM request.
+ * @param {boolean} [isCacheHit=false] - Indicates whether the response is a cache hit.
+ * @returns {Promise<Response>} - A promise that resolves to the processed response.
+ */
+export function responseHandler(response: Response, streamingMode: boolean, proxyProvider: string, responseTransformer: string | undefined, requestURL: string, isCacheHit: boolean = false): Promise<Response> {
   let responseTransformerFunction: Function | undefined;
+  const responseContentType = response.headers?.get("content-type");
+
+  // Checking status 200 so that errors are not considered as stream mode.
   if (responseTransformer && streamingMode && response.status === 200) {
     responseTransformerFunction = Providers[proxyProvider]?.responseTransforms?.[`stream-${responseTransformer}`];
   } else if (responseTransformer) {
     responseTransformerFunction = Providers[proxyProvider]?.responseTransforms?.[responseTransformer];
   }
 
-  if (streamingMode && response.status === 200) {
-      return handleStreamingMode(response, proxyProvider, responseTransformerFunction, requestURL)
-  } else if (response.headers?.get("content-type") === "audio/mpeg") {
+  // JSON to text/event-stream conversion is only allowed for unified routes: chat completions and completions.
+  // Set the transformer to OpenAI json to stream convertor function in that case.
+  if (responseTransformer && streamingMode && isCacheHit) {
+    responseTransformerFunction = responseTransformer === "chatComplete" ? OpenAIChatCompleteJSONToStreamResponseTransform : OpenAICompleteJSONToStreamResponseTransform;
+  } else if (responseTransformer && !streamingMode && isCacheHit) {
+    responseTransformerFunction = undefined;
+  }
+
+  if (streamingMode && response.status === 200 && isCacheHit && responseTransformerFunction) {
+      return handleJSONToStreamResponse(response, proxyProvider, responseTransformerFunction)
+  } else if (streamingMode && response.status === 200) {
+    return handleStreamingMode(response, proxyProvider, responseTransformerFunction, requestURL)
+  } else if (responseContentType === CONTENT_TYPES.AUDIO_MPEG) {
       return handleAudioResponse(response)
-  } else if (response.headers?.get("content-type") === "application/octet-stream") {
+  } else if (responseContentType === CONTENT_TYPES.APPLICATION_OCTET_STREAM) {
       return handleOctetStreamResponse(response)
   } else {
       return handleNonStreamingMode(response, responseTransformerFunction)
