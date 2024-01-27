@@ -19,6 +19,7 @@ import { completionsHandler } from "./handlers/completionsHandler";
 import { embeddingsHandler } from "./handlers/embeddingsHandler";
 import { requestValidator } from "./middlewares/requestValidator";
 import { compress } from "hono/compress";
+import { getRuntimeKey } from "hono/adapter";
 
 // Create a new Hono server instance
 const app = new Hono();
@@ -30,7 +31,8 @@ const app = new Hono();
  */
 
 app.use("*", (c, next) => {
-  if (c.runtime !== "lagon" && c.runtime !== "workerd") {
+  const runtime = getRuntimeKey();
+  if (runtime !== "lagon" && runtime !== "workerd") {
     return compress()(c, next)
   }
   return next();

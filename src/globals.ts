@@ -39,5 +39,7 @@ export const PROXY_REQUEST_PATH_PREFIX:string = "/v1/proxy";
 export const CONTENT_TYPES = {
   APPLICATION_JSON: "application/json",
   MULTIPART_FORM_DATA: "multipart/form-data",
-  EVENT_STREAM: "text/event-stream"
+  EVENT_STREAM: "text/event-stream",
+  AUDIO_MPEG: "audio/mpeg",
+  APPLICATION_OCTET_STREAM: "application/octet-stream"
 }
