@@ -145,7 +145,7 @@ export const CohereChatCompleteStreamChunkTransform: (response: string, fallback
         delta: {
           content: parsedChunk.response?.generations?.[0]?.text ?? parsedChunk.text
         },
-        index: 0,
+        index: parsedChunk.index ?? 0,
         logprobs: null,
         finish_reason: parsedChunk.response?.generations?.[0]?.finish_reason ?? null,
       },

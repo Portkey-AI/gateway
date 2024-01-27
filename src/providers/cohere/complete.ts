@@ -98,6 +98,7 @@ export interface CohereStreamChunk {
   };
   text: string;
   is_finished: boolean;
+  index?: number;
 }
 
 export const CohereCompleteResponseTransform: (response: CohereCompleteResponse, responseStatus: number) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
@@ -148,7 +149,7 @@ export const CohereCompleteStreamChunkTransform: (response: string, fallbackId: 
     choices: [
       {
         text: parsedChunk.response?.generations?.[0]?.text ?? parsedChunk.text,
-        index: 0,
+        index: parsedChunk.index ?? 0,
         logprobs: null,
         finish_reason: parsedChunk.response?.generations?.[0]?.finish_reason ?? null,
       },
