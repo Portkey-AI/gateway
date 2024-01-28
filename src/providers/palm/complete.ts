@@ -1,3 +1,4 @@
+import { PALM } from "../../globals";
 import { Params } from "../../types/requestBody";
 import { PalmCompleteResponse } from "../../types/responseBody";
 import { CompletionResponse, ErrorResponse, ProviderConfig } from "../types";
@@ -64,9 +65,9 @@ export const PalmCompleteResponseTransform: (response: PalmCompleteResponse, res
                 message: response.error?.message ?? null,
                 type: null,
                 param: null,
-                code: response.error?.code ?? null
+                code: response.error?.code?.toString() ?? null
             },
-            provider: "palm"
+            provider: PALM
         } as ErrorResponse;
     }
 
@@ -75,7 +76,7 @@ export const PalmCompleteResponseTransform: (response: PalmCompleteResponse, res
         object: "completion",
         created: Math.floor(Date.now() / 1000),
         model: "Unknown",
-        provider: "palm",
+        provider: PALM,
         choices: response.candidates?.map((generation, index) => ({
             text: generation.output,
             index: index,

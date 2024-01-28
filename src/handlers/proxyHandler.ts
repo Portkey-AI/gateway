@@ -71,7 +71,7 @@ function headersToSend(headersObj: Record<string, string>, customHeadersToIgnore
 
 export async function proxyHandler(c: Context): Promise<Response> {
   try {
-    const requestHeaders = Object.fromEntries(c.req.headers);
+    const requestHeaders = Object.fromEntries(c.req.raw.headers);
     const requestContentType = requestHeaders["content-type"]?.split(";")[0];
     const [requestJSON, requestFormData] = await getRequestData(c.req.raw, requestContentType);
     const store: Record<string, any> = {

@@ -1,4 +1,6 @@
-import { AZURE_OPEN_AI, GOOGLE } from "../globals";
+import { AZURE_OPEN_AI, CONTENT_TYPES, COHERE, GOOGLE } from "../globals";
+import { OpenAIChatCompleteResponse } from "../providers/openai/chatComplete";
+import { OpenAICompleteResponse } from "../providers/openai/complete";
 import { getStreamModeSplitPattern } from "../utils";
 
 export async function* readStream(reader: ReadableStreamDefaultReader, splitPattern: string, transformFunction: Function | undefined, isSleepTimeRequired: boolean, fallbackChunkId: string) {
@@ -90,8 +92,8 @@ export async function handleStreamingMode(response: Response, proxyProvider: str
         writer.close();
     })();
 
-    // Convert GEMINI json stream to text/event-stream for non-proxy calls
-    if (proxyProvider === GOOGLE && responseTransformer) {
+    // Convert GEMINI/COHERE json stream to text/event-stream for non-proxy calls
+    if ([GOOGLE, COHERE].includes(proxyProvider) && responseTransformer) {
         return new Response(readable, {
             ...response,
             headers: new Headers({
@@ -102,5 +104,27 @@ export async function handleStreamingMode(response: Response, proxyProvider: str
     }
 
     return new Response(readable, response);
+}
+
+export async function handleJSONToStreamResponse(response: Response, provider: string, responseTransformerFunction: Function): Promise<Response> {
+    const { readable, writable } = new TransformStream();
+    const writer = writable.getWriter();
+    const encoder = new TextEncoder();
+    const responseJSON: OpenAIChatCompleteResponse | OpenAICompleteResponse = await response.clone().json();
+    const streamChunkArray = responseTransformerFunction(responseJSON, provider);
+
+    (async () => {
+        for (const chunk of streamChunkArray) {
+            await writer.write(encoder.encode(chunk));
+        }
+        writer.close();
+    })();
+
+    return new Response(readable, {
+        headers: new Headers({
+            ...Object.fromEntries(response.headers),
+            'content-type': CONTENT_TYPES.EVENT_STREAM
+        })
+    });
 }
 
