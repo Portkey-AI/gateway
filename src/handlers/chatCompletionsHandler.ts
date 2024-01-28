@@ -14,7 +14,6 @@ export async function chatCompletionsHandler(c: Context): Promise<Response> {
         let request = await c.req.json();
         let requestHeaders = Object.fromEntries(c.req.raw.headers);
         const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders)
-        const errors: any = [];
         const tryTargetsResponse = await tryTargetsRecursively(
             c,
             camelCaseConfig ?? {},
@@ -22,7 +21,6 @@ export async function chatCompletionsHandler(c: Context): Promise<Response> {
             requestHeaders,
             "chatComplete",
             "POST",
-            errors,
             "config"
         );
 

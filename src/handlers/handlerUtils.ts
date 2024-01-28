@@ -521,7 +521,6 @@ export async function tryTargetsRecursively(
     requestHeaders: Record<string, string>,
     fn: endpointStrings,
     method: string,
-    errors: any,
     jsonPath: string,
     inheritedConfig: Record<string, any> = {}
 ): Promise<Response> {
@@ -563,7 +562,6 @@ export async function tryTargetsRecursively(
                     requestHeaders,
                     fn,
                     method,
-                    errors,
                     `${currentJsonPath}.targets[${index}]`,
                     currentInheritedConfig
                 );
@@ -601,7 +599,6 @@ export async function tryTargetsRecursively(
                         requestHeaders,
                         fn,
                         method,
-                        errors,
                         currentJsonPath,
                         currentInheritedConfig
                     );
@@ -619,7 +616,6 @@ export async function tryTargetsRecursively(
                 requestHeaders,
                 fn,
                 method,
-                errors,
                 `${currentJsonPath}.targets[0]`,
                 currentInheritedConfig
             );
@@ -637,11 +633,6 @@ export async function tryTargetsRecursively(
             );
           } catch (error: any) {
             response = error.response;
-            errors.push({
-                provider: targetGroup.provider,
-                errorObj: error.message,
-                status: error.status,
-            });
           }
           break;
     }

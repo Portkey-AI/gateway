@@ -15,8 +15,6 @@ export async function embeddingsHandler(c: Context): Promise<Response> {
         let requestHeaders = Object.fromEntries(c.req.raw.headers);
         const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders)
 
-        const errors: any = [];
-
         const tryTargetsResponse = await tryTargetsRecursively(
             c,
             camelCaseConfig,
@@ -24,7 +22,6 @@ export async function embeddingsHandler(c: Context): Promise<Response> {
             requestHeaders,
             "embed",
             "POST",
-            errors,
             "config"
         );
 
