@@ -40,8 +40,14 @@ export const MistralAIChatCompleteConfig: ProviderConfig = {
         param: "random_seed",
         default: null,
     },
+    safe_prompt: {
+        param: "safe_prompt",
+        default: false
+    },
+    // TODO: deprecate this and move to safe_prompt in next release
     safe_mode: {
-        param: "safe_mode",
+        param: "safe_prompt",
+        default: false
     },
 };
 
