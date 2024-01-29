@@ -428,8 +428,9 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
   // If the response was not ok, throw an error
   if (!response.ok) {
     // Check if this request needs to be retried
-    const errorObj: any = new Error(await mappedResponse.text());
+    const errorObj: any = new Error(await mappedResponse.clone().text());
     errorObj.status = mappedResponse.status;
+    errorObj.response = mappedResponse
     throw errorObj;
   }
 
@@ -520,10 +521,9 @@ export async function tryTargetsRecursively(
     requestHeaders: Record<string, string>,
     fn: endpointStrings,
     method: string,
-    errors: any,
     jsonPath: string,
     inheritedConfig: Record<string, any> = {}
-): Promise<Response | undefined> {
+): Promise<Response> {
     let currentTarget: any = {...targetGroup};
     let currentJsonPath = jsonPath;
     const strategyMode = currentTarget.strategy?.mode;
@@ -562,7 +562,6 @@ export async function tryTargetsRecursively(
                     requestHeaders,
                     fn,
                     method,
-                    errors,
                     `${currentJsonPath}.targets[${index}]`,
                     currentInheritedConfig
                 );
@@ -600,7 +599,6 @@ export async function tryTargetsRecursively(
                         requestHeaders,
                         fn,
                         method,
-                        errors,
                         currentJsonPath,
                         currentInheritedConfig
                     );
@@ -618,7 +616,6 @@ export async function tryTargetsRecursively(
                 requestHeaders,
                 fn,
                 method,
-                errors,
                 `${currentJsonPath}.targets[0]`,
                 currentInheritedConfig
             );
@@ -635,11 +632,7 @@ export async function tryTargetsRecursively(
                 currentJsonPath
             );
           } catch (error: any) {
-            errors.push({
-                provider: targetGroup.provider,
-                errorObj: error.message,
-                status: error.status,
-            });
+            response = error.response;
           }
           break;
     }
