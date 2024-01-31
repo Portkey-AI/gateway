@@ -1,3 +1,4 @@
+import { TOGETHER_AI } from "../../globals";
 import { ChatCompletionResponse, ErrorResponse, ProviderConfig } from "../types";
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
@@ -40,7 +41,16 @@ export const TogetherAIChatCompleteConfig: ProviderConfig = {
   },
   logprobs: {
     param: "logprobs"
-  }
+  },
+  tools: {
+    param: "tools"
+  },
+  tool_choice: {
+    param: "tool_choice"
+  },
+  response_format: {
+    param: "response_format"
+  },
 };
 
 export interface TogetherAIChatCompleteResponse {
@@ -56,11 +66,13 @@ export interface TogetherAIChatCompleteResponse {
   object: string;
 }
 
-export interface TogetherAIChatCompleteErrorResponse {
+export interface TogetherAIErrorResponse {
   model: string;
   job_id: string;
   request_id: string;
   error: string;
+  message?: string;
+  type?: string;
 }
 
 export interface TogetherAIChatCompletionStreamChunk {
@@ -75,16 +87,28 @@ export interface TogetherAIChatCompletionStreamChunk {
   }[];
 }
 
-export const TogetherAIChatCompleteResponseTransform: (response: TogetherAIChatCompleteResponse | TogetherAIChatCompleteErrorResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-    if (responseStatus !== 200) {
+export const TogetherAIChatCompleteResponseTransform: (response: TogetherAIChatCompleteResponse | TogetherAIErrorResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+    if ('error' in response && responseStatus !== 200) {
       return {
           error: {
-              message: 'error' in response ? response.error : null,
+              message: response.error,
               type: null,
               param: null,
               code: null
           },
-          provider: "together-ai"
+          provider: TOGETHER_AI
+      } as ErrorResponse;
+    } 
+
+    if ('message' in response && responseStatus !== 200) {
+      return {
+          error: {
+              message: response.message,
+              type: response.type,
+              param: null,
+              code: null
+          },
+          provider: TOGETHER_AI
       } as ErrorResponse;
     } 
     
@@ -94,7 +118,7 @@ export const TogetherAIChatCompleteResponseTransform: (response: TogetherAIChatC
         object: response.object,
         created: response.created,
         model: response.model,
-        provider: "together-ai",
+        provider: TOGETHER_AI,
         choices: [
           {
             message: {"role": "assistant", content: response.choices[0]?.message.content},
@@ -117,7 +141,7 @@ export const TogetherAIChatCompleteResponseTransform: (response: TogetherAIChatC
           param: null,
           code: null
       },
-      provider: "together-ai"
+      provider: TOGETHER_AI
     } as ErrorResponse;
   }
     
@@ -135,7 +159,7 @@ export const TogetherAIChatCompleteResponseTransform: (response: TogetherAIChatC
       object: parsedChunk.object,
       created: Math.floor(Date.now() / 1000),
       model: "",
-      provider: "together-ai",
+      provider: TOGETHER_AI,
       choices: [
         {
           delta: {
