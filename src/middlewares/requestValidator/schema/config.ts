@@ -80,6 +80,7 @@ export const configSchema: any = z
         weight: z.number().optional(),
         on_status_codes: z.array(z.number()).optional(),
         targets: z.array(z.lazy(() => configSchema)).optional(),
+        request_timeout: z.number().optional(),
     })
     .refine(
         (value) => {
