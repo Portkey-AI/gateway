@@ -1,5 +1,6 @@
+import { ANYSCALE } from "../../globals";
 import { CompletionResponse, ErrorResponse, ProviderConfig } from "../types";
-import { AnyscaleStreamChunk } from "./chatComplete";
+import { AnyscaleErrorResponse, AnyscaleStreamChunk, AnyscaleValidationErrorResponse, AnyscaleValidationErrorResponseTransform } from "./chatComplete";
 
 export const AnyscaleCompleteConfig: ProviderConfig = {
   model: {
@@ -68,7 +69,7 @@ export const AnyscaleCompleteConfig: ProviderConfig = {
   },
 };
 
-interface AnyscaleCompleteResponse extends CompletionResponse, ErrorResponse {}
+interface AnyscaleCompleteResponse extends CompletionResponse {}
 interface AnyscaleCompleteStreamChunk {
   id: string;
   object: string;
@@ -82,8 +83,16 @@ interface AnyscaleCompleteStreamChunk {
   }[]
 }
 
-export const AnyscaleCompleteResponseTransform: (response: AnyscaleCompleteResponse, responseStatus: number) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
-    if (responseStatus !== 200) {
+export const AnyscaleCompleteResponseTransform: (response: AnyscaleCompleteResponse | AnyscaleErrorResponse | AnyscaleValidationErrorResponse, responseStatus: number) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
+    if (
+      "detail" in response &&
+      responseStatus !== 200 &&
+      response.detail.length
+    ) {
+      return AnyscaleValidationErrorResponseTransform(response);
+    }
+
+    if ('error' in response && responseStatus !== 200) {
       return {
           error: {
               message: response.error?.message,
@@ -91,19 +100,33 @@ export const AnyscaleCompleteResponseTransform: (response: AnyscaleCompleteRespo
               param: null,
               code: null
           },
-          provider: "anyscale"
+          provider: ANYSCALE
       } as ErrorResponse;
-    } 
-  
+    }  
+    
+    if ('choices' in response) {
+      return {
+        id: response.id,
+        object: response.object,
+        created: response.created,
+        model: response.model,
+        provider: ANYSCALE,
+        choices: response.choices,
+        usage: response.usage
+      };
+    }
+    
     return {
-      id: response.id,
-      object: response.object,
-      created: response.created,
-      model: response.model,
-      provider: "anyscale",
-      choices: response.choices,
-      usage: response.usage
-    };
+      error: {
+        message: `Invalid response recieved from ${ANYSCALE}: ${JSON.stringify(
+          response
+        )}`,
+        type: null,
+        param: null,
+        code: null,
+      },
+      provider: ANYSCALE,
+    } as ErrorResponse;
   }
 
 export const AnyscaleCompleteStreamChunkTransform: (response: string) => string = (responseChunk) => {
