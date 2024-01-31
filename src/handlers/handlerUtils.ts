@@ -201,11 +201,11 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
 
   if (providerOption.retry && typeof providerOption.retry === "object") {
     providerOption.retry = { 
-      attempts: providerOption.retry?.attempts ?? 1, 
+      attempts: providerOption.retry?.attempts ?? 0, 
       onStatusCodes: providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES
     };
   } else if (typeof providerOption.retry === "number") {
-    providerOption.retry = { 
+    providerOption.retry = {
       attempts: providerOption.retry, 
       onStatusCodes: RETRY_STATUS_CODES
     };
