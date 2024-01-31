@@ -53,7 +53,13 @@ export const TogetherAIChatCompleteConfig: ProviderConfig = {
   },
 };
 
-export interface TogetherAIChatCompleteResponse extends ChatCompletionResponse {}
+export interface TogetherAIChatCompleteResponse extends ChatCompletionResponse {
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  }
+}
 
 export interface TogetherAIErrorResponse {
   model: string;
@@ -125,9 +131,9 @@ export const TogetherAIChatCompleteResponseTransform: (response: TogetherAIChatC
           }
         }),
         usage: {
-          prompt_tokens: response.usage?.prompt_tokens || -1,
-          completion_tokens: response.usage?.completion_tokens || -1,
-          total_tokens: response.usage?.total_tokens || -1
+          prompt_tokens: response.usage?.prompt_tokens,
+          completion_tokens: response.usage?.completion_tokens,
+          total_tokens: response.usage?.total_tokens
         }
       }
     }

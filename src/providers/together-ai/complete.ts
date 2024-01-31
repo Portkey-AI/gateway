@@ -44,14 +44,12 @@ export const TogetherAICompleteConfig: ProviderConfig = {
 };
 
 
-interface TogetherAICompleteResponse {
-  id: string;
-  choices: {
-    text: string;
-  }[];
-  created: number;
-  model: string;
-  object: string;
+interface TogetherAICompleteResponse extends CompletionResponse {
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  }
 }
 
 interface TogetherAICompletionStreamChunk {
@@ -63,10 +61,10 @@ interface TogetherAICompletionStreamChunk {
 }
 
 export const TogetherAICompleteResponseTransform: (response: TogetherAICompleteResponse | TogetherAIErrorResponse, responseStatus: number) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
-    if (responseStatus !== 200) {
+    if ('error' in response && responseStatus !== 200) {
       return {
           error: {
-              message: 'error' in response ? response.error : "",
+              message: response.error,
               type: null,
               param: null,
               code: null
@@ -75,6 +73,18 @@ export const TogetherAICompleteResponseTransform: (response: TogetherAICompleteR
       } as ErrorResponse;
     } 
 
+    if ('message' in response && responseStatus !== 200) {
+      return {
+          error: {
+              message: response.message,
+              type: response.type,
+              param: null,
+              code: null
+          },
+          provider: TOGETHER_AI
+      } as ErrorResponse;
+    }  
+
     if ('choices' in response) {
       return {
         id: response.id,
@@ -82,14 +92,19 @@ export const TogetherAICompleteResponseTransform: (response: TogetherAICompleteR
         created: response.created,
         model: response.model,
         provider: TOGETHER_AI,
-        choices: [
+        choices: response.choices.map(choice => (
           {
-            text: response.choices[0]?.text,
-            index: 0,
+            text: choice.text,
+            index: choice.index || 0,
             logprobs: null,
-            finish_reason: "",
-          },
-        ]
+            finish_reason: choice.finish_reason,
+          }
+        )),
+        usage: {
+          prompt_tokens: response.usage?.prompt_tokens,
+          completion_tokens: response.usage?.completion_tokens,
+          total_tokens: response.usage?.total_tokens
+        }
       };
     }
 
