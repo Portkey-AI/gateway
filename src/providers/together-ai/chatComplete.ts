@@ -53,18 +53,7 @@ export const TogetherAIChatCompleteConfig: ProviderConfig = {
   },
 };
 
-export interface TogetherAIChatCompleteResponse {
-  id: string;
-  choices: {
-    message: {
-      role: string;
-      content: string;
-    };
-  }[];
-  created: number;
-  model: string;
-  object: string;
-}
+export interface TogetherAIChatCompleteResponse extends ChatCompletionResponse {}
 
 export interface TogetherAIErrorResponse {
   model: string;
@@ -119,18 +108,26 @@ export const TogetherAIChatCompleteResponseTransform: (response: TogetherAIChatC
         created: response.created,
         model: response.model,
         provider: TOGETHER_AI,
-        choices: [
-          {
-            message: {"role": "assistant", content: response.choices[0]?.message.content},
+        choices: response.choices.map(choice => {
+          return {
+            message: {
+              role: "assistant",
+              content: choice.message.content,
+              tool_calls: choice.message.tool_calls ? choice.message.tool_calls.map((toolCall: any) => ({
+                id: toolCall.id,
+                type: toolCall.type,
+                function: toolCall.function
+              })) : null
+            },
             index: 0,
             logprobs: null,
-            finish_reason: "",
+            finish_reason: choice.finish_reason,
           }
-        ],
+        }),
         usage: {
-          prompt_tokens: -1,
-          completion_tokens: -1,
-          total_tokens: -1
+          prompt_tokens: response.usage?.prompt_tokens || -1,
+          completion_tokens: response.usage?.completion_tokens || -1,
+          total_tokens: response.usage?.total_tokens || -1
         }
       }
     }
