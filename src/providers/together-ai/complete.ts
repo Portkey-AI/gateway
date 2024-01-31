@@ -1,4 +1,6 @@
+import { TOGETHER_AI } from "../../globals";
 import { CompletionResponse, ErrorResponse, ProviderConfig } from "../types";
+import { TogetherAIErrorResponse } from "./chatComplete";
 
 export const TogetherAICompleteConfig: ProviderConfig = {
   model: {
@@ -52,13 +54,6 @@ interface TogetherAICompleteResponse {
   object: string;
 }
 
-interface TogetherAICompleteErrorResponse {
-  model: string;
-  job_id: string;
-  request_id: string;
-  error: string;
-}
-
 interface TogetherAICompletionStreamChunk {
   id: string;
   request_id: string;
@@ -67,7 +62,7 @@ interface TogetherAICompletionStreamChunk {
   }[];
 }
 
-export const TogetherAICompleteResponseTransform: (response: TogetherAICompleteResponse | TogetherAICompleteErrorResponse, responseStatus: number) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
+export const TogetherAICompleteResponseTransform: (response: TogetherAICompleteResponse | TogetherAIErrorResponse, responseStatus: number) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
     if (responseStatus !== 200) {
       return {
           error: {
@@ -76,7 +71,7 @@ export const TogetherAICompleteResponseTransform: (response: TogetherAICompleteR
               param: null,
               code: null
           },
-          provider: "together-ai"
+          provider: TOGETHER_AI
       } as ErrorResponse;
     } 
 
@@ -86,7 +81,7 @@ export const TogetherAICompleteResponseTransform: (response: TogetherAICompleteR
         object: response.object,
         created: response.created,
         model: response.model,
-        provider: "together-ai",
+        provider: TOGETHER_AI,
         choices: [
           {
             text: response.choices[0]?.text,
@@ -105,7 +100,7 @@ export const TogetherAICompleteResponseTransform: (response: TogetherAICompleteR
           param: null,
           code: null
       },
-      provider: "together-ai"
+      provider: TOGETHER_AI
     } as ErrorResponse;
   }
 
@@ -122,7 +117,7 @@ export const TogetherAICompleteStreamChunkTransform: (response: string) => strin
       object: "text_completion",
       created: Math.floor(Date.now() / 1000),
       model: "",
-      provider: "together-ai",
+      provider: TOGETHER_AI,
       choices: [
         {
           text: parsedChunk.choices[0]?.text,
