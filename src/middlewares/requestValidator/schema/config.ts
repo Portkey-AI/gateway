@@ -92,7 +92,8 @@ export const configSchema: any = z
                 hasProviderApiKey ||
                 hasModeTargets ||
                 value.cache ||
-                value.retry
+                value.retry ||
+                value.request_timeout
             );
         },
         {
