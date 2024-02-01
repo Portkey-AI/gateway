@@ -98,6 +98,6 @@ export const configSchema: any = z
         },
         {
             message:
-                "Invalid configuration. It must have either 'provider' and 'api_key', or 'strategy' and 'targets', or 'cache', or 'target'",
+                "Invalid configuration. It must have either 'provider' and 'api_key', or 'strategy' and 'targets', or 'cache', or 'retry', or 'request_timeout'",
         }
     );
