@@ -71,6 +71,13 @@ export const AnyscaleChatCompleteConfig: ProviderConfig = {
   },
   response_format: {
     param: "response_format"
+  },
+  logprobs: {
+    param: "logprobs",
+    default: false
+  },
+  top_logprobs: {
+    param: "top_logprobs"
   }
 };
 
