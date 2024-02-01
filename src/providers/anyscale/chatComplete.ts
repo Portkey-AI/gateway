@@ -194,7 +194,7 @@ export const AnyscaleChatCompleteResponseTransform: (response: AnyscaleChatCompl
       object: parsedChunk.object,
       created: parsedChunk.created,
       model: parsedChunk.model,
-      provider: "anyscale",
+      provider: ANYSCALE,
       choices: parsedChunk.choices
     })}` + '\n\n'
   };

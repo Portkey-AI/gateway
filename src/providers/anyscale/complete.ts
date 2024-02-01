@@ -142,7 +142,7 @@ export const AnyscaleCompleteStreamChunkTransform: (response: string) => string 
       object: parsedChunk.object,
       created: parsedChunk.created,
       model: parsedChunk.model,
-      provider: "anyscale",
+      provider: ANYSCALE,
       choices: parsedChunk.choices
     })}` + '\n\n'
   };
