@@ -183,7 +183,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
     }
 
     // Make the API call to the provider
-    let [lastResponse, lastAttempt] = await retryRequest(urlToFetch, fetchOptions, retryCount, retryStatusCodes);
+    let [lastResponse, lastAttempt] = await retryRequest(urlToFetch, fetchOptions, retryCount, retryStatusCodes, null);
     const mappedResponse = await responseHandler(lastResponse, store.isStreamingMode, store.proxyProvider, undefined, urlToFetch);
     updateResponseHeaders(mappedResponse, 0, store.reqBody, cacheStatus, (lastAttempt ?? 0), requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");
 
