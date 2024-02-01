@@ -170,7 +170,7 @@ export const OllamaCompleteStreamChunkResponseTransform: (
   if (chunk.includes("context")) {
     return `data: [DONE]` + `\n\n`;
   }
-  const parsedChunk: OllamaCompleteResponse = JSON.parse(chunk);
+  const parsedChunk: OllamaCompleteStreamChunk = JSON.parse(chunk);
   return (
     `data: ${JSON.stringify({
       id: Date.now(),
