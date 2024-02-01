@@ -26,8 +26,6 @@ const transformOptions = (params: Params) => {
   if (params["max_tokens"]) {
     options["num_predict"] = params["max_tokens"];
   }
-  console.log(options);
-
   return options;
 };
 
@@ -100,10 +98,17 @@ interface OllamaCompleteResponse {
   prompt_eval_duration: number;
   eval_count: number;
   eval_duration: number;
-  error?: string
 }
 interface OllamaErrorResponse {
   error: string;
+}
+
+interface OllamaCompleteStreamChunk {
+  model: string;
+  create_at: number;
+  response: string;
+  done: boolean;
+  context: number[];
 }
 
 export const OllamaCompleteResponseTransform: (
@@ -122,7 +127,7 @@ export const OllamaCompleteResponseTransform: (
     } as ErrorResponse;
   }
 
-  if ('response' in response) {
+  if ("response" in response) {
     return {
       id: Date.now().toString(),
       object: "text_completion",
@@ -142,7 +147,7 @@ export const OllamaCompleteResponseTransform: (
         completion_tokens: response.eval_count,
         total_tokens: response.prompt_eval_count + response.eval_count,
       },
-    }
+    };
   }
 
   return {
@@ -156,4 +161,31 @@ export const OllamaCompleteResponseTransform: (
     },
     provider: OLLAMA,
   } as ErrorResponse;
+};
+
+export const OllamaCompleteStreamChunkResponseTransform: (
+  response: string
+) => string = (responseChunk) => {
+  let chunk = responseChunk.trim();
+  if (chunk.includes("context")) {
+    return `data: [DONE]` + `\n\n`;
+  }
+  const parsedChunk: OllamaCompleteResponse = JSON.parse(chunk);
+  return (
+    `data: ${JSON.stringify({
+      id: Date.now(),
+      object: "text_completion",
+      created: Date.now(),
+      model: parsedChunk.model,
+      provider: OLLAMA,
+      choices: [
+        {
+          text: parsedChunk.response,
+          index: 0,
+          logprobs: null,
+          finish_reason: null,
+        },
+      ],
+    })}` + "\n\n"
+  );
 };
