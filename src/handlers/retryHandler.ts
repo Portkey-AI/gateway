@@ -53,7 +53,7 @@ export const retryRequest = async (
   options: RequestInit,
   retryCount: number,
   statusCodesToRetry: number[],
-  timeout: number | null = null
+  timeout: number | null
 ): Promise<[Response, number | undefined]> => {
   let lastError: any | undefined;
   let lastResponse: Response | undefined;

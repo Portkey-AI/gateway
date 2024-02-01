@@ -258,7 +258,7 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
     }
   }
 
-    [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes);
+    [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes, null);
   const mappedResponse = await responseHandler(response, isStreamingMode, provider, undefined, url);
   updateResponseHeaders(mappedResponse, currentIndex, params, cacheStatus, retryCount ?? 0, requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");
 
