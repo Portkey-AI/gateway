@@ -47,6 +47,7 @@ export interface Options {
   index?: number;
   cache?: CacheSettings | string;
   metadata?: Record<string, string>;
+  requestTimeout?: number;
 }
 
 /**

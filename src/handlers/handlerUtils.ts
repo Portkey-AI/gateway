@@ -201,11 +201,11 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
 
   if (providerOption.retry && typeof providerOption.retry === "object") {
     providerOption.retry = { 
-      attempts: providerOption.retry?.attempts ?? 1, 
+      attempts: providerOption.retry?.attempts ?? 0, 
       onStatusCodes: providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES
     };
   } else if (typeof providerOption.retry === "number") {
-    providerOption.retry = { 
+    providerOption.retry = {
       attempts: providerOption.retry, 
       onStatusCodes: RETRY_STATUS_CODES
     };
@@ -258,7 +258,7 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
     }
   }
 
-    [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes);
+    [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes, null);
   const mappedResponse = await responseHandler(response, isStreamingMode, provider, undefined, url);
   updateResponseHeaders(mappedResponse, currentIndex, params, cacheStatus, retryCount ?? 0, requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");
 
@@ -346,7 +346,7 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
   let retryCount:number|undefined;
 
   providerOption.retry = {
-    attempts: providerOption.retry?.attempts ?? 1,
+    attempts: providerOption.retry?.attempts ?? 0,
     onStatusCodes: providerOption.retry?.onStatusCodes ?? []
   }
 
@@ -412,7 +412,7 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
       }
   }
 
-  [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes);
+  [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes, providerOption.requestTimeout || null);
 
   const mappedResponse = await responseHandler(response, isStreamingMode, provider, fn, url);
   updateResponseHeaders(mappedResponse, currentIndex, params, cacheStatus, retryCount ?? 0, requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");
@@ -535,7 +535,14 @@ export async function tryTargetsRecursively(
         ...currentTarget.overrideParams
       },
       retry: currentTarget.retry ? {...currentTarget.retry} : {...inheritedConfig.retry},
-      cache: currentTarget.cache ? {...currentTarget.cache} : {...inheritedConfig.cache}
+      cache: currentTarget.cache ? {...currentTarget.cache} : {...inheritedConfig.cache},
+      requestTimeout: null
+    }
+
+    if (currentTarget.requestTimeout) {
+      currentInheritedConfig.requestTimeout = currentTarget.requestTimeout
+    } else if (inheritedConfig.requestTimeout) {
+      currentInheritedConfig.requestTimeout = inheritedConfig.requestTimeout;
     }
     currentTarget.overrideParams = {
         ...currentInheritedConfig.overrideParams
