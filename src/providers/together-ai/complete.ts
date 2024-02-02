@@ -1,6 +1,6 @@
 import { TOGETHER_AI } from "../../globals";
 import { CompletionResponse, ErrorResponse, ProviderConfig } from "../types";
-import { TogetherAIErrorResponse } from "./chatComplete";
+import { TogetherAIErrorResponse, TogetherAIErrorResponseTransform, TogetherAIOpenAICompatibleErrorResponse } from "./chatComplete";
 
 export const TogetherAICompleteConfig: ProviderConfig = {
   model: {
@@ -60,30 +60,11 @@ interface TogetherAICompletionStreamChunk {
   }[];
 }
 
-export const TogetherAICompleteResponseTransform: (response: TogetherAICompleteResponse | TogetherAIErrorResponse, responseStatus: number) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
-    if ('error' in response && responseStatus !== 200) {
-      return {
-          error: {
-              message: response.error,
-              type: null,
-              param: null,
-              code: null
-          },
-          provider: TOGETHER_AI
-      } as ErrorResponse;
-    } 
-
-    if ('message' in response && responseStatus !== 200) {
-      return {
-          error: {
-              message: response.message,
-              type: response.type,
-              param: null,
-              code: null
-          },
-          provider: TOGETHER_AI
-      } as ErrorResponse;
-    }  
+export const TogetherAICompleteResponseTransform: (response: TogetherAICompleteResponse | TogetherAIErrorResponse | TogetherAIOpenAICompatibleErrorResponse, responseStatus: number) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
+    if (responseStatus !== 200 && !('choices' in response) ) {
+      const errorResponse = TogetherAIErrorResponseTransform(response);
+      if (errorResponse) return errorResponse;
+    }
 
     if ('choices' in response) {
       return {

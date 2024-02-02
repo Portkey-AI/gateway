@@ -70,6 +70,8 @@ export interface TogetherAIErrorResponse {
   type?: string;
 }
 
+export interface TogetherAIOpenAICompatibleErrorResponse extends ErrorResponse {}
+
 export interface TogetherAIChatCompletionStreamChunk {
   id: string;
   request_id: string;
@@ -82,30 +84,52 @@ export interface TogetherAIChatCompletionStreamChunk {
   }[];
 }
 
-export const TogetherAIChatCompleteResponseTransform: (response: TogetherAIChatCompleteResponse | TogetherAIErrorResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-    if ('error' in response && responseStatus !== 200) {
-      return {
-          error: {
-              message: response.error,
-              type: null,
-              param: null,
-              code: null
-          },
-          provider: TOGETHER_AI
-      } as ErrorResponse;
-    } 
+export const TogetherAIErrorResponseTransform: (response: TogetherAIErrorResponse | TogetherAIOpenAICompatibleErrorResponse) => ErrorResponse | false = (response) => {
+  if ('error' in response && typeof response.error === "string") {
+    return {
+        error: {
+            message: response.error,
+            type: null,
+            param: null,
+            code: null
+        },
+        provider: TOGETHER_AI
+    } as ErrorResponse;
+  } 
 
-    if ('message' in response && responseStatus !== 200) {
-      return {
-          error: {
-              message: response.message,
-              type: response.type,
-              param: null,
-              code: null
-          },
-          provider: TOGETHER_AI
-      } as ErrorResponse;
-    } 
+  if ('error' in response && typeof response.error === "object") {
+    return {
+        error: {
+            message: response.error?.message || "",
+            type: response.error?.type || null,
+            param: response.error?.param || null,
+            code: response.error?.code || null
+        },
+        provider: TOGETHER_AI
+    } as ErrorResponse;
+  } 
+
+  if ('message' in response) {
+    return {
+        error: {
+            message: response.message,
+            type: response.type,
+            param: null,
+            code: null
+        },
+        provider: TOGETHER_AI
+    } as ErrorResponse;
+  }
+
+  return false;
+}
+
+
+export const TogetherAIChatCompleteResponseTransform: (response: TogetherAIChatCompleteResponse | TogetherAIErrorResponse | TogetherAIOpenAICompatibleErrorResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+    if (responseStatus !== 200 && !('choices' in response) ) {
+      const errorResponse = TogetherAIErrorResponseTransform(response);
+      if (errorResponse) return errorResponse;
+    }
     
     if ('choices' in response) {
       return {

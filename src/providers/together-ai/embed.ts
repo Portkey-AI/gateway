@@ -1,7 +1,7 @@
 import { TOGETHER_AI } from "../../globals";
 import { EmbedParams, EmbedResponse } from "../../types/embedRequestBody";
 import { ErrorResponse, ProviderConfig } from "../types";
-import { TogetherAIErrorResponse } from "./chatComplete";
+import { TogetherAIErrorResponse, TogetherAIErrorResponseTransform } from "./chatComplete";
 
 export const TogetherAIEmbedConfig: ProviderConfig = {
     model: {
@@ -28,17 +28,10 @@ export const TogetherAIEmbedResponseTransform: (
     response: TogetherAIEmbedResponse | TogetherAIErrorResponse,
     responseStatus: number
 ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
-    if ("error" in response && responseStatus !== 200) {
-        return {
-            error: {
-                message: response.error,
-                type: null,
-                param: null,
-                code: null,
-            },
-            provider: TOGETHER_AI,
-        } as ErrorResponse;
-    }
+    if (responseStatus !== 200 && !("data" in response) ) {
+        const errorResponse = TogetherAIErrorResponseTransform(response);
+        if (errorResponse) return errorResponse;
+      }
 
     if ("data" in response) {
         return {
