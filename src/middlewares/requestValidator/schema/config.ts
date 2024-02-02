@@ -10,6 +10,7 @@ import {
     PERPLEXITY_AI,
     TOGETHER_AI,
     DEEPINFRA,
+    OLLAMA
 } from "../../../globals";
 
 export const configSchema: any = z
@@ -45,7 +46,8 @@ export const configSchema: any = z
                         GOOGLE,
                         PERPLEXITY_AI,
                         MISTRAL_AI,
-                        DEEPINFRA
+                        DEEPINFRA,
+                        OLLAMA
                     ].includes(value),
                 {
                     message:

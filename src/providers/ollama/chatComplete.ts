@@ -182,7 +182,6 @@ interface OllamaCompleteStreamChunk {
 
 export const OllamaChatCompleteStreamChunkTransform: (response: string, fallbackId: string) => string = (resposeChunk, fallbackId) =>{
   let chunk = resposeChunk.trim()
-  console.log(chunk);
   
   if(chunk.includes('total_duration')){
     return `data: [DONE]` + `\n\n`;

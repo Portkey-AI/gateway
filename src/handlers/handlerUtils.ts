@@ -1,5 +1,5 @@
 import { Context } from "hono";
-import { AZURE_OPEN_AI, CONTENT_TYPES, GOOGLE, HEADER_KEYS, PALM, POWERED_BY, RESPONSE_HEADER_KEYS, RETRY_STATUS_CODES } from "../globals";
+import { AZURE_OPEN_AI, CONTENT_TYPES, GOOGLE, HEADER_KEYS, OLLAMA, PALM, POWERED_BY, RESPONSE_HEADER_KEYS, RETRY_STATUS_CODES } from "../globals";
 import Providers from "../providers";
 import { ProviderAPIConfig, endpointStrings } from "../providers/types";
 import transformToProviderRequest from "../services/transformToProviderRequest";
@@ -329,7 +329,12 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
     fetchOptions = constructRequest(apiConfig.headers(), provider);
     baseUrl = apiConfig.baseURL;
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, transformedRequestBody.model, params.stream);
-  } else {
+  } else if (provider === OLLAMA && apiConfig.getEndpoint) {    
+    fetchOptions = constructRequest(apiConfig.headers(), provider);
+    baseUrl = providerOption.baseUrl || ""
+    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, transformedRequestBody.model, params.stream);
+  } 
+  else {
     // Construct the base object for the POST request
     fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider);
 

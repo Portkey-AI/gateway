@@ -43,6 +43,8 @@ export interface Options {
   deploymentId?: string;
   apiVersion?: string;
   adAuth?:string;
+  /** Ollama specific */
+  baseUrl?: string;
   /** provider option index picked based on weight in loadbalance mode */
   index?: number;
   cache?: CacheSettings | string;

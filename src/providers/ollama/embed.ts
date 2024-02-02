@@ -1,5 +1,6 @@
+import { OLLAMA } from "../../globals";
 import { EmbedResponse } from "../../types/embedRequestBody";
-import { ProviderConfig } from "../types";
+import { ErrorResponse, ProviderConfig } from "../types";
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -13,7 +14,55 @@ export const OllamaEmbedConfig: ProviderConfig = {
   }
 };
 
-interface OllamaEmbedResponse extends EmbedResponse {}
+interface OllamaEmbedResponse extends EmbedResponse {
+  embedding: number[];
+}
 
-export const OllamaEmbedResponseTransform: (response: OllamaEmbedResponse) => EmbedResponse = (response) => response;
-
+interface OllamaErrorResponse {
+  error: string;
+}
+export const OllamaEmbedResponseTransform: (
+  response: OllamaEmbedResponse | OllamaErrorResponse,
+  responseStatus: number
+) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
+  
+  if ("error" in response) {
+    return {
+      error: {
+        message: response.error,
+        type: null,
+        param: null,
+        code: null,
+      },
+      provider: "cohere",
+    } as ErrorResponse;
+  }
+  if ("embedding" in response) {    
+    return {
+      object: "list",
+      data: [
+        {
+          object: "embedding",
+          embedding: response.embedding,
+          index: 0,
+        },
+      ],
+      model: "", // Todo: find a way to send the ollama embedding model name back
+      usage: {
+        prompt_tokens: -1,
+        total_tokens: -1,
+      },
+    };
+  }
+  return {
+    error: {
+      message: `Invalid response recieved from ${OLLAMA}: ${JSON.stringify(
+        response
+      )}`,
+      type: null,
+      param: null,
+      code: null,
+    },
+    provider: OLLAMA,
+  } as ErrorResponse;
+};
