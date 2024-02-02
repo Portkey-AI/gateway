@@ -1,3 +1,4 @@
+import { TOGETHER_AI } from "../../globals";
 import { ChatCompletionResponse, ErrorResponse, ProviderConfig } from "../types";
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
@@ -40,28 +41,36 @@ export const TogetherAIChatCompleteConfig: ProviderConfig = {
   },
   logprobs: {
     param: "logprobs"
-  }
+  },
+  tools: {
+    param: "tools"
+  },
+  tool_choice: {
+    param: "tool_choice"
+  },
+  response_format: {
+    param: "response_format"
+  },
 };
 
-export interface TogetherAIChatCompleteResponse {
-  id: string;
-  choices: {
-    message: {
-      role: string;
-      content: string;
-    };
-  }[];
-  created: number;
-  model: string;
-  object: string;
+export interface TogetherAIChatCompleteResponse extends ChatCompletionResponse {
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  }
 }
 
-export interface TogetherAIChatCompleteErrorResponse {
+export interface TogetherAIErrorResponse {
   model: string;
   job_id: string;
   request_id: string;
   error: string;
+  message?: string;
+  type?: string;
 }
+
+export interface TogetherAIOpenAICompatibleErrorResponse extends ErrorResponse {}
 
 export interface TogetherAIChatCompletionStreamChunk {
   id: string;
@@ -75,18 +84,52 @@ export interface TogetherAIChatCompletionStreamChunk {
   }[];
 }
 
-export const TogetherAIChatCompleteResponseTransform: (response: TogetherAIChatCompleteResponse | TogetherAIChatCompleteErrorResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-    if (responseStatus !== 200) {
-      return {
-          error: {
-              message: 'error' in response ? response.error : null,
-              type: null,
-              param: null,
-              code: null
-          },
-          provider: "together-ai"
-      } as ErrorResponse;
-    } 
+export const TogetherAIErrorResponseTransform: (response: TogetherAIErrorResponse | TogetherAIOpenAICompatibleErrorResponse) => ErrorResponse | false = (response) => {
+  if ('error' in response && typeof response.error === "string") {
+    return {
+        error: {
+            message: response.error,
+            type: null,
+            param: null,
+            code: null
+        },
+        provider: TOGETHER_AI
+    } as ErrorResponse;
+  } 
+
+  if ('error' in response && typeof response.error === "object") {
+    return {
+        error: {
+            message: response.error?.message || "",
+            type: response.error?.type || null,
+            param: response.error?.param || null,
+            code: response.error?.code || null
+        },
+        provider: TOGETHER_AI
+    } as ErrorResponse;
+  } 
+
+  if ('message' in response) {
+    return {
+        error: {
+            message: response.message,
+            type: response.type,
+            param: null,
+            code: null
+        },
+        provider: TOGETHER_AI
+    } as ErrorResponse;
+  }
+
+  return false;
+}
+
+
+export const TogetherAIChatCompleteResponseTransform: (response: TogetherAIChatCompleteResponse | TogetherAIErrorResponse | TogetherAIOpenAICompatibleErrorResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+    if (responseStatus !== 200 && !('choices' in response) ) {
+      const errorResponse = TogetherAIErrorResponseTransform(response);
+      if (errorResponse) return errorResponse;
+    }
     
     if ('choices' in response) {
       return {
@@ -94,19 +137,27 @@ export const TogetherAIChatCompleteResponseTransform: (response: TogetherAIChatC
         object: response.object,
         created: response.created,
         model: response.model,
-        provider: "together-ai",
-        choices: [
-          {
-            message: {"role": "assistant", content: response.choices[0]?.message.content},
+        provider: TOGETHER_AI,
+        choices: response.choices.map(choice => {
+          return {
+            message: {
+              role: "assistant",
+              content: choice.message.content,
+              tool_calls: choice.message.tool_calls ? choice.message.tool_calls.map((toolCall: any) => ({
+                id: toolCall.id,
+                type: toolCall.type,
+                function: toolCall.function
+              })) : null
+            },
             index: 0,
             logprobs: null,
-            finish_reason: "",
+            finish_reason: choice.finish_reason,
           }
-        ],
+        }),
         usage: {
-          prompt_tokens: -1,
-          completion_tokens: -1,
-          total_tokens: -1
+          prompt_tokens: response.usage?.prompt_tokens,
+          completion_tokens: response.usage?.completion_tokens,
+          total_tokens: response.usage?.total_tokens
         }
       }
     }
@@ -117,7 +168,7 @@ export const TogetherAIChatCompleteResponseTransform: (response: TogetherAIChatC
           param: null,
           code: null
       },
-      provider: "together-ai"
+      provider: TOGETHER_AI
     } as ErrorResponse;
   }
     
@@ -135,7 +186,7 @@ export const TogetherAIChatCompleteResponseTransform: (response: TogetherAIChatC
       object: parsedChunk.object,
       created: Math.floor(Date.now() / 1000),
       model: "",
-      provider: "together-ai",
+      provider: TOGETHER_AI,
       choices: [
         {
           delta: {
