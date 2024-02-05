@@ -1,7 +1,7 @@
 import { Context } from "hono";
 import { retryRequest } from "./retryHandler";
 import Providers from "../providers";
-import { ANTHROPIC, MAX_RETRIES, HEADER_KEYS, RETRY_STATUS_CODES, POWERED_BY, RESPONSE_HEADER_KEYS, AZURE_OPEN_AI, CONTENT_TYPES } from "../globals";
+import { ANTHROPIC, MAX_RETRIES, HEADER_KEYS, RETRY_STATUS_CODES, POWERED_BY, RESPONSE_HEADER_KEYS, AZURE_OPEN_AI, CONTENT_TYPES, OLLAMA } from "../globals";
 import { fetchProviderOptionsFromConfig, responseHandler, tryProvidersInSequence, updateResponseHeaders } from "./handlerUtils";
 import { getStreamingMode } from "../utils";
 import { Config, ShortConfig } from "../types/requestBody";
@@ -20,6 +20,10 @@ function getProxyPath(requestURL:string, proxyProvider:string, proxyEndpointPath
   const providerBasePath = Providers[proxyProvider].api.baseURL;
   if (proxyProvider === AZURE_OPEN_AI) {
     return `https:/${reqPath}${reqQuery}`;
+  }
+
+  if (proxyProvider === OLLAMA) {
+    return `https:/${reqPath}`;
   }
   let proxyPath = `${providerBasePath}${reqPath}${reqQuery}`;
   
