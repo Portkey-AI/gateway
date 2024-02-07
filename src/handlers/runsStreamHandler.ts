@@ -72,14 +72,14 @@ function headersToSend(headersObj: Record<string, string>, customHeadersToIgnore
 export async function runsStreamHandler(c: Context): Promise < Response > {
   try {
     const requestHeaders = Object.fromEntries(c.req.raw.headers);
-    const requestContentType = requestHeaders["content-type"] ? .split(";")[0];
+    const requestContentType = requestHeaders["content-type"]?.split(";")[0];
     const [requestJSON, requestFormData] = await getRequestData(c.req.raw, requestContentType);
 
     const store: Record < string, any > = {
       proxyProvider: proxyProvider(requestHeaders[HEADER_KEYS.MODE], requestHeaders[`x-${POWERED_BY}-provider`]),
       reqBody: requestJSON,
       requestFormData: requestFormData,
-      customHeadersToAvoid: env(c).CUSTOM_HEADERS_TO_IGNORE ? ? [],
+      customHeadersToAvoid: env(c).CUSTOM_HEADERS_TO_IGNORE??[],
       proxyPath: c.req.url.indexOf("/v1/proxy") > -1 ? "/v1/proxy" : "/v1"
     }
 
@@ -139,9 +139,9 @@ export async function runsStreamHandler(c: Context): Promise < Response > {
     let retryStatusCodes = RETRY_STATUS_CODES;
     if (requestHeaders[HEADER_KEYS.RETRIES]) {
       retryCount = parseInt(requestHeaders[HEADER_KEYS.RETRIES]);
-    } else if (requestConfig ? .retry && typeof requestConfig.retry === "object") {
-      retryCount = requestConfig.retry ? .attempts ? ? 1,
-        retryStatusCodes = requestConfig.retry ? .onStatusCodes ? ? RETRY_STATUS_CODES
+    } else if (requestConfig?.retry && typeof requestConfig.retry === "object") {
+      retryCount = requestConfig.retry?.attempts??1,
+        retryStatusCodes = requestConfig.retry?.onStatusCodes??RETRY_STATUS_CODES
     }
 
     retryCount = Math.min(retryCount, MAX_RETRIES);
@@ -250,7 +250,7 @@ export async function runsStreamHandler(c: Context): Promise < Response > {
 
           if (url === `${runBasePath}/${thread_id}/messages?before=${lastMessageRecd}`) {
             let messages = data.data;
-            console.log(JSON.stringify(messages.map(d => d.content[0] ? .text ? .value).filter(d => !!d)));
+            console.log(JSON.stringify(messages.map(d => d.content[0]?.text?.value).filter(d => !!d)));
             if (messages.length && !!messages[messages.length - 1].id) {
               let msgsToPush = messages.filter(m => !!m.content)
               runMessages.push(...msgsToPush);
