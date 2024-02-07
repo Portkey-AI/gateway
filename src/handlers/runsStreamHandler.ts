@@ -242,26 +242,28 @@ export async function runsStreamHandler(c: Context): Promise < Response > {
             headers: fetchOptions.headers
           });
           const data: any = await response.json();
-          sendEvent(data);
+          sendEvent({"object": "ping"})
 
           if (url === `${runBasePath}/${thread_id}/messages?before=${lastMessageRecd}`) {
             let messages = data.data;
             // console.log(JSON.stringify(messages.map(d => d.content[0]?.text?.value).filter(d => !!d)));
             if (messages.length && !!messages[messages.length - 1].id) {
+              sendEvent(data);
               let msgsToPush = messages.filter(m => !!m.content)
               runMessages.push(...msgsToPush);
               lastMessageRecd = messages[messages.length - 1].id
             }
-          }
-
-          if (url === `${runBasePath}/${thread_id}/runs/${run_id}/steps?before=${lastStepRecd}`) {
+          } else if (url === `${runBasePath}/${thread_id}/runs/${run_id}/steps?before=${lastStepRecd}`) {
             let steps = data.data;
             // console.log(JSON.stringify(steps.map(d => d.step_details).filter(d => !!d)));
             let completedSteps = steps.filter(s => ['completed', 'cancelled', 'failed', 'expired'].includes(s.status))
             if (completedSteps.length) {
+              sendEvent(data);
               lastStepRecd = completedSteps[0].id
               runSteps.push(...completedSteps)
             }
+          } else {
+            sendEvent(data);
           }
 
           // Check if the run is completed, cancelled, failed, or expired
