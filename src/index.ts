@@ -20,6 +20,7 @@ import { embeddingsHandler } from "./handlers/embeddingsHandler";
 import { requestValidator } from "./middlewares/requestValidator";
 import { compress } from "hono/compress";
 import { getRuntimeKey } from "hono/adapter";
+import { runsStreamHandler } from "./handlers/runsStreamHandler";
 
 // Create a new Hono server instance
 const app = new Hono();
@@ -115,6 +116,12 @@ app.post("/v1/prompts/*", requestValidator, (c) => {
   c.status(500);
   return c.json({status: "failure", message: "prompt completions error: Something went wrong"})
 });
+
+/**
+ * POST route for '/v1/threads/runs/stream'.
+ * Handles OpenAI run create API in a SSE format
+ */
+app.post("/v1/threads/runs/stream", requestValidator, runsStreamHandler);
 
 // Support the /v1 proxy endpoint
 app.post("/v1/proxy/*", proxyHandler);
