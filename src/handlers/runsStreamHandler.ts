@@ -211,11 +211,7 @@ export async function runsStreamHandler(c: Context): Promise < Response > {
         const data: any = await response.json();
         const run_id = data.id;
         const thread_id = data.thread_id;
-        return {
-          data,
-          run_id,
-          thread_id
-        };
+        return {data,run_id,thread_id};
       } catch (error) {
         console.error('Error initiating run:', error);
         return null;
@@ -250,7 +246,7 @@ export async function runsStreamHandler(c: Context): Promise < Response > {
 
           if (url === `${runBasePath}/${thread_id}/messages?before=${lastMessageRecd}`) {
             let messages = data.data;
-            console.log(JSON.stringify(messages.map(d => d.content[0]?.text?.value).filter(d => !!d)));
+            // console.log(JSON.stringify(messages.map(d => d.content[0]?.text?.value).filter(d => !!d)));
             if (messages.length && !!messages[messages.length - 1].id) {
               let msgsToPush = messages.filter(m => !!m.content)
               runMessages.push(...msgsToPush);
@@ -260,7 +256,7 @@ export async function runsStreamHandler(c: Context): Promise < Response > {
 
           if (url === `${runBasePath}/${thread_id}/runs/${run_id}/steps?before=${lastStepRecd}`) {
             let steps = data.data;
-            console.log(JSON.stringify(steps.map(d => d.step_details).filter(d => !!d)));
+            // console.log(JSON.stringify(steps.map(d => d.step_details).filter(d => !!d)));
             let completedSteps = steps.filter(s => ['completed', 'cancelled', 'failed', 'expired'].includes(s.status))
             if (completedSteps.length) {
               lastStepRecd = completedSteps[0].id
@@ -277,7 +273,6 @@ export async function runsStreamHandler(c: Context): Promise < Response > {
             console.log(JSON.stringify(finalRunObj))
 
             writer.close(); // Close the stream
-            console.log(runMessages);
             break; // Exit the loop
           }
         } catch (error) {
@@ -328,7 +323,7 @@ export async function runsStreamHandler(c: Context): Promise < Response > {
       'Connection': 'keep-alive',
     });
   } catch (err: any) {
-    console.log("proxy error", err.message);
+    // console.error("proxy error", err.message);
     return new Response(
       JSON.stringify({
         status: "failure",
