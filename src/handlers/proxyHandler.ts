@@ -159,7 +159,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
 
     if (requestConfig?.cache && typeof requestConfig.cache === "object" && requestConfig.cache.mode) {
       cacheMode = requestConfig.cache.mode;
-      cacheMaxAge = requestConfig.cache.maxAge;
+      cacheMaxAge = requestConfig.cache.max_age;
     } else if (requestConfig?.cache && typeof requestConfig.cache === "string") {
       cacheMode = requestConfig.cache
     }
