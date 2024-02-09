@@ -3,7 +3,7 @@ import { retryRequest } from "./retryHandler";
 import Providers from "../providers";
 import { ANTHROPIC, MAX_RETRIES, HEADER_KEYS, RETRY_STATUS_CODES, POWERED_BY, RESPONSE_HEADER_KEYS, AZURE_OPEN_AI, CONTENT_TYPES } from "../globals";
 import { fetchProviderOptionsFromConfig, responseHandler, tryProvidersInSequence, updateResponseHeaders } from "./handlerUtils";
-import { getStreamingMode } from "../utils";
+import { convertKeysToCamelCase, getStreamingMode } from "../utils";
 import { Config, ShortConfig } from "../types/requestBody";
 import { env } from "hono/adapter"
 // Find the proxy provider
@@ -133,6 +133,10 @@ export async function proxyHandler(c: Context): Promise<Response> {
       }
     }
 
+    if (requestConfig) {
+      requestConfig  = convertKeysToCamelCase(requestConfig as Record<string, any>, ["override_params", "params", "metadata"]) as Config | ShortConfig;
+    }
+
     let fetchOptions = {
         headers: headersToSend(requestHeaders, store.customHeadersToAvoid),
         method: c.req.method,
@@ -159,7 +163,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
 
     if (requestConfig?.cache && typeof requestConfig.cache === "object" && requestConfig.cache.mode) {
       cacheMode = requestConfig.cache.mode;
-      cacheMaxAge = requestConfig.cache.max_age;
+      cacheMaxAge = requestConfig.cache.maxAge;
     } else if (requestConfig?.cache && typeof requestConfig.cache === "string") {
       cacheMode = requestConfig.cache
     }

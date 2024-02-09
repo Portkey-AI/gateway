@@ -12,7 +12,6 @@ interface RetrySettings {
 interface CacheSettings {
   mode: string;
   maxAge?: number;
-  max_age?: number;
 }
 
 interface Strategy {
