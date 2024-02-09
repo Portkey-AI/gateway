@@ -180,7 +180,8 @@ export async function proxyHandler(c: Context): Promise<Response> {
           response: cacheMappedResponse.clone(),
           cacheStatus: cacheStatus,
           cacheKey: cacheKey,
-          cacheMode: cacheMode
+          cacheMode: cacheMode,
+          cacheMaxAge: cacheMaxAge
         }])
         updateResponseHeaders(cacheMappedResponse, 0, store.reqBody, cacheStatus, 0, requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");
         return cacheMappedResponse;
