@@ -153,12 +153,13 @@ export async function proxyHandler(c: Context): Promise<Response> {
     const getFromCacheFunction = c.get('getFromCache');
     const cacheIdentifier = c.get('cacheIdentifier');
 
-    let cacheResponse, cacheKey;
+    let cacheResponse, cacheKey, cacheMaxAge;
     let cacheStatus = "DISABLED";
     let cacheMode = requestHeaders[HEADER_KEYS.CACHE];
 
     if (requestConfig?.cache && typeof requestConfig.cache === "object" && requestConfig.cache.mode) {
       cacheMode = requestConfig.cache.mode;
+      cacheMaxAge = requestConfig.cache.maxAge;
     } else if (requestConfig?.cache && typeof requestConfig.cache === "string") {
       cacheMode = requestConfig.cache
     }
@@ -193,7 +194,8 @@ export async function proxyHandler(c: Context): Promise<Response> {
       response: mappedResponse.clone(),
       cacheStatus: cacheStatus,
       cacheKey: cacheKey,
-      cacheMode: cacheMode
+      cacheMode: cacheMode,
+      cacheMaxAge: cacheMaxAge
     }])
 
     return mappedResponse;
