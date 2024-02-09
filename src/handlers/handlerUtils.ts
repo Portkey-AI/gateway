@@ -239,7 +239,8 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
         params,
         url,
         cacheIdentifier,
-        cacheMode
+        cacheMode,
+        cacheMaxAge
     );
     if (cacheResponse) {
       response = await responseHandler(new Response(cacheResponse, {headers: {
@@ -375,7 +376,8 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
           transformedRequestBody,
           fn,
           cacheIdentifier,
-          cacheMode
+          cacheMode,
+          cacheMaxAge
       );
       if (cacheResponse) {
           response = await responseHandler(
