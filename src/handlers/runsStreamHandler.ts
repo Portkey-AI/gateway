@@ -287,7 +287,6 @@ export async function runsStreamHandler(c: Context): Promise < Response > {
           finalRunObj.messages = runMessages;
           finalRunObj.steps = runSteps;
 
-          console.log(JSON.stringify(finalRunObj))
           clearInterval(intervalId)
           writer.close(); // Close the stream
         }
