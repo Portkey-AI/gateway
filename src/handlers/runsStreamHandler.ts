@@ -102,9 +102,9 @@ const sendEvent = (data: any, eventName:string|null = null, writer:WritableStrea
   writer.write(encoder.encode(message));
 };
 
-const initiateRun = async (basePath:string, fetchOptions:any) => {
+const initiateRun = async (urlToFetch:string, fetchOptions:any) => {
   try {
-    const response = await fetch(`${basePath}/runs`, fetchOptions);
+    const response = await fetch(urlToFetch, fetchOptions);
     const data: any = await response.json();
     const run_id = data.id;
     const thread_id = data.thread_id;
@@ -246,7 +246,7 @@ export async function runsStreamHandler(c: Context): Promise < Response > {
       body: JSON.stringify(store.reqBody)
     };
 
-    let runBasePath = urlToFetch.split('/runs/stream')[0];
+    let runBasePath = urlToFetch.split(`${c.req.param('thread_id') ?? ""}/runs/stream`)[0];
     let lastMessageRecd: string = "";
     let lastStepRecd: string = "";
     let runMessages: any = [];
@@ -282,7 +282,7 @@ export async function runsStreamHandler(c: Context): Promise < Response > {
         }
 
         let run = await getRun(runBasePath, run_id, thread_id, fetchOptions.headers);
-        if (['completed', 'cancelled', 'failed', 'expired'].includes(run.status)) {
+        if (['completed', 'cancelled', 'failed', 'expired', 'requires_action'].includes(run.status)) {
           finalRunObj = run;
           finalRunObj.messages = runMessages;
           finalRunObj.steps = runSteps;
@@ -298,7 +298,7 @@ export async function runsStreamHandler(c: Context): Promise < Response > {
 
     // Main logic to start the process and periodically poll for updates
     (async () => {
-      const initiationResult = await initiateRun(runBasePath, fetchOptions);
+      const initiationResult = await initiateRun(urlToFetch.split("/stream")[0], fetchOptions);
       if (initiationResult) {
         sendEvent(initiationResult.data, null, writer, encoder); // Send the initiation data as the first SSE event
         // Setup periodic polling for updates

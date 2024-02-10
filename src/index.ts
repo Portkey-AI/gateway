@@ -117,11 +117,17 @@ app.post("/v1/prompts/*", requestValidator, (c) => {
   return c.json({status: "failure", message: "prompt completions error: Something went wrong"})
 });
 
+// /**
+//  * POST route for '/v1/threads/runs/stream'.
+//  * Handles OpenAI run create API in a SSE format
+//  */
+app.post("/v1/threads/runs/stream", requestValidator, runsStreamHandler);
+
 /**
- * POST route for '/v1/threads/runs/stream'.
+ * POST route for '/v1/threads/:thread_id/runs/stream'.
  * Handles OpenAI run create API in a SSE format
  */
-app.post("/v1/threads/runs/stream", requestValidator, runsStreamHandler);
+app.post("/v1/threads/:thread_id/runs/stream", requestValidator, runsStreamHandler);
 
 // Support the /v1 proxy endpoint
 app.post("/v1/proxy/*", proxyHandler);
