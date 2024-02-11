@@ -300,14 +300,22 @@ export async function runsStreamHandler(c: Context): Promise < Response > {
     (async () => {
       const initiationResult = await initiateRun(urlToFetch.split("/stream")[0], fetchOptions);
       if (initiationResult) {
+
+        if(initiationResult.data.error || !initiationResult.run_id || !initiationResult.thread_id) {
+          sendEvent(initiationResult.data, 'error', writer, encoder); // Send the initiation error and close the stream.
+          clearInterval(intervalId)
+          writer.close(); // Close the stream
+          return
+        }
+
         sendEvent(initiationResult.data, null, writer, encoder); // Send the initiation data as the first SSE event
+        
         // Setup periodic polling for updates
         pollAndUpdate(initiationResult.run_id, initiationResult.thread_id)
         intervalId = setInterval(() => pollAndUpdate(initiationResult.run_id, initiationResult.thread_id), 5000);
-
-        // Additional logic to handle cleanup or stream closing can be added here if needed
       } else {
         sendEvent({error: 'Failed to initiate run'}, 'error', writer, encoder);
+        clearInterval(intervalId)
         writer.close(); // Close the stream if initiation fails
       }
     })();
