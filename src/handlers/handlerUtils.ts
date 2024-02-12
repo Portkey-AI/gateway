@@ -1,5 +1,5 @@
 import { Context } from "hono";
-import { AZURE_OPEN_AI, CONTENT_TYPES, GOOGLE, HEADER_KEYS, PALM, POWERED_BY, RESPONSE_HEADER_KEYS, RETRY_STATUS_CODES } from "../globals";
+import { AZURE_OPEN_AI, CONTENT_TYPES, GOOGLE, HEADER_KEYS, PALM, POWERED_BY, RESPONSE_HEADER_KEYS, RETRY_STATUS_CODES, STABILITY_AI } from "../globals";
 import Providers from "../providers";
 import { ProviderAPIConfig, endpointStrings } from "../providers/types";
 import transformToProviderRequest from "../services/transformToProviderRequest";
@@ -188,6 +188,10 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
     fetchOptions = constructRequest(apiConfig.headers(), provider);
     baseUrl = apiConfig.baseURL;
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, params.model, params.stream);
+  } else if (provider === STABILITY_AI && apiConfig.baseURL && apiConfig.getEndpoint) {
+    fetchOptions = constructRequest(apiConfig.headers(), provider);
+    baseUrl = apiConfig.baseURL;
+    endpoint = apiConfig.getEndpoint(fn, params.model, url);
   } else {
     // Construct the base object for the request
     fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, method);
@@ -332,6 +336,10 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
     fetchOptions = constructRequest(apiConfig.headers(), provider);
     baseUrl = apiConfig.baseURL;
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, transformedRequestBody.model, params.stream);
+  } else if (provider === STABILITY_AI && apiConfig.baseURL && apiConfig.getEndpoint) {
+    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider);
+    baseUrl = apiConfig.baseURL;
+    endpoint = apiConfig.getEndpoint(fn, params.model);
   } else {
     // Construct the base object for the POST request
     fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider);

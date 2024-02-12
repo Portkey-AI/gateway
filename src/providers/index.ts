@@ -9,6 +9,7 @@ import OpenAIConfig from "./openai";
 import PalmAIConfig from "./palm";
 import PerplexityAIConfig from "./perplexity-ai";
 import TogetherAIConfig from "./together-ai";
+import StabilityAIConfig from "./stability-ai";
 import { ProviderConfigs } from "./types";
 
 const Providers: { [key: string]: ProviderConfigs } = {
@@ -22,7 +23,8 @@ const Providers: { [key: string]: ProviderConfigs } = {
   google: GoogleConfig,
   'perplexity-ai': PerplexityAIConfig,
   'mistral-ai': MistralAIConfig,
-  'deepinfra': DeepInfraConfig
+  'deepinfra': DeepInfraConfig,
+  'stability-ai': StabilityAIConfig
 };
 
 export default Providers;
