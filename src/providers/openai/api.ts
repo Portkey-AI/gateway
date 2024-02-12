@@ -7,7 +7,8 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
   },
   complete: "/completions",
   chatComplete: "/chat/completions",
-  embed: "/embeddings"
+  embed: "/embeddings",
+  imageGenerate: "/images/generations"
 };
 
 export default OpenAIAPIConfig;
