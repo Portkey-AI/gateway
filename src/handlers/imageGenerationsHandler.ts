@@ -27,7 +27,7 @@ export async function imageGenerationsHandler(c: Context): Promise<Response> {
 
         return tryTargetsResponse;
     } catch (err: any) {
-        console.log("completion error", err.message);
+        console.log("imageGenerate error", err.message);
         return new Response(
             JSON.stringify({
                 status: "failure",
