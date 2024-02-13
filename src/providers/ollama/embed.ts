@@ -34,7 +34,7 @@ export const OllamaEmbedResponseTransform: (
         param: null,
         code: null,
       },
-      provider: "cohere",
+      provider: OLLAMA,
     } as ErrorResponse;
   }
   if ("embedding" in response) {    
@@ -47,7 +47,7 @@ export const OllamaEmbedResponseTransform: (
           index: 0,
         },
       ],
-      model: "", // Todo: find a way to send the ollama embedding model name back
+      model: "",
       usage: {
         prompt_tokens: -1,
         total_tokens: -1,
