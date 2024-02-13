@@ -93,6 +93,7 @@ export const retryRequest = async (
         lastAttempt = attempt;
         console.warn(`Failed in Retry attempt ${attempt}. Error: ${error}`);
       },
+      randomize: false
     }
     );
   } catch (error: any) {
