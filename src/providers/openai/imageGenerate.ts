@@ -7,6 +7,7 @@ export const OpenAIImageGenerateConfig: ProviderConfig = {
   },
   model: {
     param: "model",
+    required: true,
     default: "dall-e-2"
   },
   n: {
@@ -38,7 +39,6 @@ interface OpenAIImageObject {
 }
 
 interface OpenAIImageGenerateResponse extends ImageGenerateResponse {
-  created: string,
   data: OpenAIImageObject[]
 }
 
