@@ -151,5 +151,6 @@ export interface ErrorResponse {
  */
 export interface ImageGenerateResponse {
   created: string,
-  data: object[]
+  data: object[],
+  provider: string;
 }
