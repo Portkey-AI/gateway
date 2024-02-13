@@ -11,6 +11,7 @@ import {
     TOGETHER_AI,
     DEEPINFRA,
     NOMIC,
+    STABILITY_AI,
 } from "../../../globals";
 
 export const configSchema: any = z
@@ -47,7 +48,8 @@ export const configSchema: any = z
                         PERPLEXITY_AI,
                         MISTRAL_AI,
                         DEEPINFRA,
-                        NOMIC
+                        NOMIC,
+                        STABILITY_AI
                     ].includes(value),
                 {
                     message:
