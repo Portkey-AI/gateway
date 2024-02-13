@@ -1,4 +1,5 @@
-import { ImageGenerateResponse, ProviderConfig } from "../types";
+import { STABILITY_AI } from "../../globals";
+import { ErrorResponse, ImageGenerateResponse, ProviderConfig } from "../types";
 
 export const StabilityAIImageGenerateConfig: ProviderConfig = {
   prompt: {
@@ -6,8 +7,8 @@ export const StabilityAIImageGenerateConfig: ProviderConfig = {
     required: true,
     transform: (params: any) => {
       return [{
-        "text": params.prompt,
-        "weight": 1
+        text: params.prompt,
+        weight: 1
       }]
     }
   },
@@ -34,6 +35,16 @@ interface StabilityAIImageGenerateResponse extends ImageGenerateResponse {
   artifacts: ImageArtifact[];
 }
 
+interface StabilityAIImageGenerateResponse extends ImageGenerateResponse {
+  artifacts: ImageArtifact[];
+}
+
+interface StabilityAIImageGenerateErrorResponse {
+  id: string;
+  name: string;
+  message: string;
+}
+
 interface ImageArtifact {
   base64: string; // Image encoded in base64
   finishReason: 'CONTENT_FILTERED' | 'ERROR' | 'SUCCESS'; // Enum for finish reason
@@ -41,11 +52,34 @@ interface ImageArtifact {
 }
 
 
-export const StabilityAIImageGenerateResponseTransform: (response: StabilityAIImageGenerateResponse) => ImageGenerateResponse = (response) => {
-  let resp: ImageGenerateResponse = {
-    created: `${new Date().getTime()}`, // Corrected method call
-    data: response.artifacts.map(art => ({b64_json: art.base64})) // Corrected object creation within map
-  };
+export const StabilityAIImageGenerateResponseTransform: (response: StabilityAIImageGenerateResponse | StabilityAIImageGenerateErrorResponse, responseStatus: number) => ImageGenerateResponse | ErrorResponse = (response, responseStatus) => {
+  if (responseStatus !== 200 && 'message' in response) {
+    return {
+      error: {
+        message: response.message,
+        type: response.name,
+        param: null,
+        code: null,
+      },
+      provider: STABILITY_AI
+    }
+  }
 
-  return resp;
+  if ('artifacts' in response) {
+    return {
+      created: `${new Date().getTime()}`, // Corrected method call
+      data: response.artifacts.map(art => ({b64_json: art.base64})), // Corrected object creation within map
+      provider: STABILITY_AI
+    };
+  }
+
+  return {
+    error: {
+        message: `Invalid response recieved from ${STABILITY_AI}: ${JSON.stringify(response)}`,
+        type: null,
+        param: null,
+        code: null
+    },
+    provider: STABILITY_AI
+  } as ErrorResponse;
 };
