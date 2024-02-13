@@ -5,6 +5,7 @@ import CohereConfig from "./cohere";
 import DeepInfraConfig from "./deepinfra";
 import GoogleConfig from "./google";
 import MistralAIConfig from "./mistral-ai";
+import NomicConfig from "./nomic";
 import OpenAIConfig from "./openai";
 import PalmAIConfig from "./palm";
 import PerplexityAIConfig from "./perplexity-ai";
@@ -24,7 +25,8 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'perplexity-ai': PerplexityAIConfig,
   'mistral-ai': MistralAIConfig,
   'deepinfra': DeepInfraConfig,
-  'stability-ai': StabilityAIConfig
+  'stability-ai': StabilityAIConfig,
+  nomic: NomicConfig
 };
 
 export default Providers;
