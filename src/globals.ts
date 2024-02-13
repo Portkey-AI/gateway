@@ -31,6 +31,7 @@ export const GOOGLE: string = "google";
 export const PERPLEXITY_AI: string = "perplexity-ai";
 export const MISTRAL_AI: string = "mistral-ai";
 export const DEEPINFRA: string = "deepinfra";
+export const NOMIC: string = "nomic";
 
 export const providersWithStreamingSupport = [OPEN_AI, AZURE_OPEN_AI, ANTHROPIC, COHERE];
 export const allowedProxyProviders = [OPEN_AI, COHERE, AZURE_OPEN_AI, ANTHROPIC];
