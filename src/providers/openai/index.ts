@@ -3,18 +3,21 @@ import { OpenAICompleteConfig, OpenAICompleteResponseTransform } from "./complet
 import { OpenAIEmbedConfig, OpenAIEmbedResponseTransform } from "./embed";
 import OpenAIAPIConfig from "./api";
 import { OpenAIChatCompleteConfig, OpenAIChatCompleteResponseTransform } from "./chatComplete";
+import { OpenAIImageGenerateConfig, OpenAIImageGenerateResponseTransform } from "./imageGenerate";
 
 const OpenAIConfig: ProviderConfigs = {
   complete: OpenAICompleteConfig,
   embed: OpenAIEmbedConfig,
   api: OpenAIAPIConfig,
   chatComplete: OpenAIChatCompleteConfig,
+  imageGenerate: OpenAIImageGenerateConfig,
   responseTransforms: {
     complete: OpenAICompleteResponseTransform,
     // 'stream-complete': OpenAICompleteResponseTransform,
     chatComplete: OpenAIChatCompleteResponseTransform,
     // 'stream-chatComplete': OpenAIChatCompleteResponseTransform,
-    embed: OpenAIEmbedResponseTransform
+    embed: OpenAIEmbedResponseTransform,
+    imageGenerate: OpenAIImageGenerateResponseTransform
   }
 };
 
