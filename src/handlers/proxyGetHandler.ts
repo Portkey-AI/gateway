@@ -64,7 +64,7 @@ export async function proxyGetHandler(c: Context): Promise<Response> {
 
     let retryCount = Math.min(parseInt(requestHeaders[HEADER_KEYS.RETRIES])||1, MAX_RETRIES);
 
-    let [lastResponse, lastAttempt] = await retryRequest(urlToFetch, fetchOptions, retryCount, RETRY_STATUS_CODES);
+    let [lastResponse, lastAttempt] = await retryRequest(urlToFetch, fetchOptions, retryCount, RETRY_STATUS_CODES, null);
 
     const mappedResponse = await responseHandler(lastResponse, store.isStreamingMode, store.proxyProvider, undefined, urlToFetch);
     updateResponseHeaders(mappedResponse, 0, store.reqBody, "DISABLED", lastAttempt ?? 0, requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");

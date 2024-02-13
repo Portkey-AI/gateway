@@ -1,4 +1,4 @@
-import { AZURE_OPEN_AI, CONTENT_TYPES, COHERE, GOOGLE, OLLAMA } from "../globals";
+import { AZURE_OPEN_AI, CONTENT_TYPES, COHERE, GOOGLE, REQUEST_TIMEOUT_STATUS_CODE, OLLAMA } from "../globals";
 import { OpenAIChatCompleteResponse } from "../providers/openai/chatComplete";
 import { OpenAICompleteResponse } from "../providers/openai/complete";
 import { getStreamModeSplitPattern } from "../utils";
@@ -55,6 +55,13 @@ export async function* readStream(reader: ReadableStreamDefaultReader, splitPatt
 }
 
 export async function handleNonStreamingMode(response: Response, responseTransformer: Function | undefined) {
+    // 408 is thrown whenever a request takes more than request_timeout to respond.
+    // In that case, response thrown by gateway is already in OpenAI format.
+    // So no need to transform it again.
+    if (response.status === REQUEST_TIMEOUT_STATUS_CODE) {
+        return response;
+    }
+
     let responseBodyJson = await response.json();
     if (responseTransformer) {
         responseBodyJson = responseTransformer(responseBodyJson, response.status);

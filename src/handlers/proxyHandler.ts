@@ -3,7 +3,7 @@ import { retryRequest } from "./retryHandler";
 import Providers from "../providers";
 import { ANTHROPIC, MAX_RETRIES, HEADER_KEYS, RETRY_STATUS_CODES, POWERED_BY, RESPONSE_HEADER_KEYS, AZURE_OPEN_AI, CONTENT_TYPES, OLLAMA } from "../globals";
 import { fetchProviderOptionsFromConfig, responseHandler, tryProvidersInSequence, updateResponseHeaders } from "./handlerUtils";
-import { getStreamingMode } from "../utils";
+import { convertKeysToCamelCase, getStreamingMode } from "../utils";
 import { Config, ShortConfig } from "../types/requestBody";
 import { env } from "hono/adapter"
 // Find the proxy provider
@@ -137,6 +137,10 @@ export async function proxyHandler(c: Context): Promise<Response> {
       }
     }
 
+    if (requestConfig) {
+      requestConfig  = convertKeysToCamelCase(requestConfig as Record<string, any>, ["override_params", "params", "metadata"]) as Config | ShortConfig;
+    }
+
     let fetchOptions = {
         headers: headersToSend(requestHeaders, store.customHeadersToAvoid),
         method: c.req.method,
@@ -157,12 +161,13 @@ export async function proxyHandler(c: Context): Promise<Response> {
     const getFromCacheFunction = c.get('getFromCache');
     const cacheIdentifier = c.get('cacheIdentifier');
 
-    let cacheResponse, cacheKey;
+    let cacheResponse, cacheKey, cacheMaxAge;
     let cacheStatus = "DISABLED";
     let cacheMode = requestHeaders[HEADER_KEYS.CACHE];
 
     if (requestConfig?.cache && typeof requestConfig.cache === "object" && requestConfig.cache.mode) {
       cacheMode = requestConfig.cache.mode;
+      cacheMaxAge = requestConfig.cache.maxAge;
     } else if (requestConfig?.cache && typeof requestConfig.cache === "string") {
       cacheMode = requestConfig.cache
     }
@@ -179,7 +184,8 @@ export async function proxyHandler(c: Context): Promise<Response> {
           response: cacheMappedResponse.clone(),
           cacheStatus: cacheStatus,
           cacheKey: cacheKey,
-          cacheMode: cacheMode
+          cacheMode: cacheMode,
+          cacheMaxAge: cacheMaxAge
         }])
         updateResponseHeaders(cacheMappedResponse, 0, store.reqBody, cacheStatus, 0, requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");
         return cacheMappedResponse;
@@ -187,7 +193,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
     }
 
     // Make the API call to the provider
-    let [lastResponse, lastAttempt] = await retryRequest(urlToFetch, fetchOptions, retryCount, retryStatusCodes);
+    let [lastResponse, lastAttempt] = await retryRequest(urlToFetch, fetchOptions, retryCount, retryStatusCodes, null);
     const mappedResponse = await responseHandler(lastResponse, store.isStreamingMode, store.proxyProvider, undefined, urlToFetch);
     updateResponseHeaders(mappedResponse, 0, store.reqBody, cacheStatus, (lastAttempt ?? 0), requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");
 
@@ -197,7 +203,8 @@ export async function proxyHandler(c: Context): Promise<Response> {
       response: mappedResponse.clone(),
       cacheStatus: cacheStatus,
       cacheKey: cacheKey,
-      cacheMode: cacheMode
+      cacheMode: cacheMode,
+      cacheMaxAge: cacheMaxAge
     }])
 
     return mappedResponse;

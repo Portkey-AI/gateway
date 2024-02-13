@@ -201,11 +201,11 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
 
   if (providerOption.retry && typeof providerOption.retry === "object") {
     providerOption.retry = { 
-      attempts: providerOption.retry?.attempts ?? 1, 
+      attempts: providerOption.retry?.attempts ?? 0, 
       onStatusCodes: providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES
     };
   } else if (typeof providerOption.retry === "number") {
-    providerOption.retry = { 
+    providerOption.retry = {
       attempts: providerOption.retry, 
       onStatusCodes: RETRY_STATUS_CODES
     };
@@ -220,13 +220,14 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
   const cacheIdentifier = c.get('cacheIdentifier');
   const requestOptions = c.get('requestOptions') ?? [];
 
-  let cacheResponse, cacheKey, cacheMode;
+  let cacheResponse, cacheKey, cacheMode, cacheMaxAge;
   let cacheStatus = "DISABLED";
 
   if (requestHeaders[HEADER_KEYS.CACHE]) {
-    cacheMode = requestHeaders[HEADER_KEYS.CACHE]
+    cacheMode = requestHeaders[HEADER_KEYS.CACHE];
   } else if (providerOption?.cache && typeof providerOption.cache === "object" && providerOption.cache.mode) {
     cacheMode = providerOption.cache.mode;
+    cacheMaxAge = providerOption.cache.maxAge;
   } else if (providerOption?.cache && typeof providerOption.cache === "string") {
     cacheMode = providerOption.cache
   }
@@ -238,7 +239,8 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
         params,
         url,
         cacheIdentifier,
-        cacheMode
+        cacheMode,
+        cacheMaxAge
     );
     if (cacheResponse) {
       response = await responseHandler(new Response(cacheResponse, {headers: {
@@ -251,14 +253,15 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
         cacheStatus: cacheStatus,
         lastUsedOptionIndex: currentIndex,
         cacheKey: cacheKey,
-        cacheMode: cacheMode
+        cacheMode: cacheMode,
+        cacheMaxAge: cacheMaxAge
       }])
       updateResponseHeaders(response, currentIndex, params, cacheStatus, 0, requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");
       return response;
     }
   }
 
-    [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes);
+    [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes, null);
   const mappedResponse = await responseHandler(response, isStreamingMode, provider, undefined, url);
   updateResponseHeaders(mappedResponse, currentIndex, params, cacheStatus, retryCount ?? 0, requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");
 
@@ -351,7 +354,7 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
   let retryCount:number|undefined;
 
   providerOption.retry = {
-    attempts: providerOption.retry?.attempts ?? 1,
+    attempts: providerOption.retry?.attempts ?? 0,
     onStatusCodes: providerOption.retry?.onStatusCodes ?? []
   }
 
@@ -361,11 +364,12 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
       c.get("requestOptions") ?? [],
   ];
 
-  let cacheResponse, cacheKey, cacheMode;
+  let cacheResponse, cacheKey, cacheMode, cacheMaxAge;
   let cacheStatus = "DISABLED";
 
   if (typeof providerOption.cache === "object" && providerOption.cache?.mode) {
     cacheMode = providerOption.cache.mode;
+    cacheMaxAge = providerOption.cache.maxAge;
   } else if (typeof providerOption.cache === "string") {
     cacheMode = providerOption.cache
   }
@@ -377,7 +381,8 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
           transformedRequestBody,
           fn,
           cacheIdentifier,
-          cacheMode
+          cacheMode,
+          cacheMaxAge
       );
       if (cacheResponse) {
           response = await responseHandler(
@@ -417,7 +422,7 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
       }
   }
 
-  [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes);
+  [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes, providerOption.requestTimeout || null);
 
   const mappedResponse = await responseHandler(response, isStreamingMode, provider, fn, url);
   updateResponseHeaders(mappedResponse, currentIndex, params, cacheStatus, retryCount ?? 0, requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");
@@ -428,7 +433,8 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
     cacheStatus: cacheStatus,
     lastUsedOptionIndex: currentIndex,
     cacheKey: cacheKey,
-    cacheMode: cacheMode
+    cacheMode: cacheMode,
+    cacheMaxAge: cacheMaxAge
   }])
   // If the response was not ok, throw an error
   if (!response.ok) {
@@ -540,7 +546,14 @@ export async function tryTargetsRecursively(
         ...currentTarget.overrideParams
       },
       retry: currentTarget.retry ? {...currentTarget.retry} : {...inheritedConfig.retry},
-      cache: currentTarget.cache ? {...currentTarget.cache} : {...inheritedConfig.cache}
+      cache: currentTarget.cache ? {...currentTarget.cache} : {...inheritedConfig.cache},
+      requestTimeout: null
+    }
+
+    if (currentTarget.requestTimeout) {
+      currentInheritedConfig.requestTimeout = currentTarget.requestTimeout
+    } else if (inheritedConfig.requestTimeout) {
+      currentInheritedConfig.requestTimeout = inheritedConfig.requestTimeout;
     }
     currentTarget.overrideParams = {
         ...currentInheritedConfig.overrideParams

@@ -10,6 +10,7 @@ import {
     PERPLEXITY_AI,
     TOGETHER_AI,
     DEEPINFRA,
+    NOMIC,
     OLLAMA
 } from "../../../globals";
 
@@ -47,6 +48,7 @@ export const configSchema: any = z
                         PERPLEXITY_AI,
                         MISTRAL_AI,
                         DEEPINFRA,
+                        NOMIC,
                         OLLAMA
                     ].includes(value),
                 {
@@ -82,6 +84,7 @@ export const configSchema: any = z
         weight: z.number().optional(),
         on_status_codes: z.array(z.number()).optional(),
         targets: z.array(z.lazy(() => configSchema)).optional(),
+        request_timeout: z.number().optional(),
     })
     .refine(
         (value) => {
@@ -93,11 +96,12 @@ export const configSchema: any = z
                 hasProviderApiKey ||
                 hasModeTargets ||
                 value.cache ||
-                value.retry
+                value.retry ||
+                value.request_timeout
             );
         },
         {
             message:
-                "Invalid configuration. It must have either 'provider' and 'api_key', or 'strategy' and 'targets', or 'cache', or 'target'",
+                "Invalid configuration. It must have either 'provider' and 'api_key', or 'strategy' and 'targets', or 'cache', or 'retry', or 'request_timeout'",
         }
     );

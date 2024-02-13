@@ -18,6 +18,7 @@ export const RESPONSE_HEADER_KEYS: Record<string, string> = {
 
 export const RETRY_STATUS_CODES = [429, 500, 502, 503, 504];
 export const MAX_RETRIES = 5;
+export const REQUEST_TIMEOUT_STATUS_CODE = 408;
 
 export const OPEN_AI:string = "openai";
 export const COHERE:string = "cohere";
@@ -30,6 +31,7 @@ export const GOOGLE: string = "google";
 export const PERPLEXITY_AI: string = "perplexity-ai";
 export const MISTRAL_AI: string = "mistral-ai";
 export const DEEPINFRA: string = "deepinfra";
+export const NOMIC: string = "nomic";
 export const OLLAMA: string = "ollama";
 
 export const providersWithStreamingSupport = [OPEN_AI, AZURE_OPEN_AI, ANTHROPIC, COHERE];
