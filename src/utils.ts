@@ -21,9 +21,6 @@ export const getStreamModeSplitPattern = (proxyProvider: string, requestURL: str
     {
       splitPattern = '\r\n\r\n';
     }
-    if(proxyProvider === OLLAMA){
-      splitPattern ='\n\n';
-    }
     
     return splitPattern;
 }

@@ -99,8 +99,8 @@ export async function handleStreamingMode(response: Response, proxyProvider: str
         writer.close();
     })();
 
-    // Convert GEMINI/COHERE/OLLAMA json stream to text/event-stream for non-proxy calls
-    if ([GOOGLE, COHERE, OLLAMA].includes(proxyProvider) && responseTransformer) {
+    // Convert GEMINI/COHERE json stream to text/event-stream for non-proxy calls
+    if ([GOOGLE, COHERE].includes(proxyProvider) && responseTransformer) {
         return new Response(readable, {
             ...response,
             headers: new Headers({

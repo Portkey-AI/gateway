@@ -1,6 +1,5 @@
 import {
   ChatCompletionResponse,
-  CompletionResponse,
   ErrorResponse,
   ProviderConfig,
 } from "../types";
