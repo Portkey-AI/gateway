@@ -57,9 +57,11 @@ export interface ProviderAPIConfig {
   getEndpoint?: Function;
   /** The endpoint for the 'stream-chatComplete' function. */
   proxy?: string;
+  /** The endpoint for 'imageGenerate' function */
+  imageGenerate?: string
 }
 
-export type endpointStrings = 'complete' | 'chatComplete' | 'embed' | 'rerank' | 'moderate' | 'stream-complete' | 'stream-chatComplete' | 'proxy'
+export type endpointStrings = 'complete' | 'chatComplete' | 'embed' | 'rerank' | 'moderate' | 'stream-complete' | 'stream-chatComplete' | 'proxy' | 'imageGenerate'
 
 /**
  * A collection of API configurations for multiple AI providers.
@@ -143,3 +145,12 @@ export interface ErrorResponse {
     provider: string
 }
 
+/**
+ * The structure of a image generation response
+ * @interface
+ */
+export interface ImageGenerateResponse {
+  created: string,
+  data: object[],
+  provider: string;
+}

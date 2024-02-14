@@ -10,6 +10,7 @@ import OpenAIConfig from "./openai";
 import PalmAIConfig from "./palm";
 import PerplexityAIConfig from "./perplexity-ai";
 import TogetherAIConfig from "./together-ai";
+import StabilityAIConfig from "./stability-ai";
 import OllamaAPIConfig from "./ollama";
 import { ProviderConfigs } from "./types";
 
@@ -25,6 +26,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'perplexity-ai': PerplexityAIConfig,
   'mistral-ai': MistralAIConfig,
   'deepinfra': DeepInfraConfig,
+  'stability-ai': StabilityAIConfig,
   nomic: NomicConfig,
   'ollama': OllamaAPIConfig
 };
