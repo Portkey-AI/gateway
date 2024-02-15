@@ -17,4 +17,14 @@
 ✅&nbsp; Battle tested over **100B tokens** <br>
 <br>
 
+### Deploy on Replit
 
+1. Fork the AI gateway published by Portkey with a preferred name into your Replit account.
+2. Click [Run] to run the gateway for your apps.
+3. Open a new tab to grab the gateway URL. It typically looks like `https://unique-random-numbers.xxx.repl.co/`
+4. Click [Deploy] in the top right for a production-ready app gateway (Requires Replit Core).
+
+### Portkey
+
+- Read the [AI gateway documentation](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations).
+- Explore Oberservability Suite to build reliable gen-AI apps for production. [Try Portkey](https://portkey.ai/).
