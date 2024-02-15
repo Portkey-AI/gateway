@@ -43,8 +43,10 @@ export interface Options {
   deploymentId?: string;
   apiVersion?: string;
   adAuth?:string;
-  /** Ollama specific */
-  baseUrl?: string;
+  /** The parameter to set custom base url */
+  customHost?: string;
+  /** The parameter to set list of headers to be forwarded as-is to the provider */
+  forwardHeaders?: string[];
   /** provider option index picked based on weight in loadbalance mode */
   index?: number;
   cache?: CacheSettings | string;
@@ -96,6 +98,7 @@ export interface Config {
   cache?: CacheSettings;
   retry?: RetrySettings;
   strategy?: Strategy;
+  customHost?: string;
 }
 
 /**
@@ -232,6 +235,7 @@ export interface ShortConfig {
   resourceName?: string;
   deploymentId?: string;
   apiVersion?: string;
+  customHost?: string;
 }
 
 /**
