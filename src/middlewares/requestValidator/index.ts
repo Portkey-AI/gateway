@@ -82,6 +82,22 @@ export const requestValidator = (c: Context, next: any) => {
         );
     }
 
+    const customHostHeader = requestHeaders[`x-${POWERED_BY}-custom-host`];
+    if (customHostHeader && customHostHeader.indexOf("api.portkey") > -1) {
+        return new Response(
+            JSON.stringify({
+                status: "failure",
+                message: `Invalid custom host`,
+            }),
+            {
+                status: 400,
+                headers: {
+                    "content-type": "application/json",
+                },
+            }
+        );;
+    }
+
 
     if (requestHeaders[`x-${POWERED_BY}-config`]) {
         try {
