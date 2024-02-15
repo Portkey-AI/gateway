@@ -13,10 +13,10 @@
 </div>
 <br><br>
 
-[Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and hosted LLMs. It streamlines API requests to OpenAI, Anthropic, Mistral, LLama2, Anyscale, Google Gemini and more with a unified API. 
+[Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and hosted LLMs. It streamlines API requests to OpenAI, Anthropic, Mistral, LLama2, Anyscale, Google Gemini and more with a unified API.
 
 ✅&nbsp; Blazing **fast** (9.9x faster) with a **tiny footprint** (~45kb installed) <br>
-✅&nbsp; **Load balance** across multiple models, providers, and keys <br> 
+✅&nbsp; **Load balance** across multiple models, providers, and keys <br>
 ✅&nbsp; **Fallbacks** make sure your app stays resilient  <br>
 ✅&nbsp; **Automatic Retries** with exponential fallbacks come by default  <br>
 ✅&nbsp; Plug-in middleware as needed <br>
@@ -117,7 +117,7 @@ You can use these configs while making the OpenAI call through the `x-portkey-co
 const client = new OpenAI({
   baseURL: "http://127.0.0.1:8787", // The gateway URL
   defaultHeaders: {
-    'x-portkey-config': {.. your config here ..}, 
+    'x-portkey-config': {.. your config here ..},
   }
 });
 ```
@@ -175,7 +175,21 @@ const client = new OpenAI({
 
 <br>
 
-## Deploying AI Gateway
+## Install, Run & Deploy AI Gateway
+
+1. Cloudflare Workers
+2. NodeJS Server
+3. Docker & Docker Compose
+4. Replit
+5. Netlify
+6. Vercel
+7. Codesandbox
+8. Fastly
+9. AWS Lambda
+10. Lambda@edge
+11. Supabase Functions
+
+
 [See docs](docs/installation-deployments.md) on installing the AI Gateway locally or deploying it on popular locations.
 
 <br>
@@ -212,4 +226,3 @@ Join our growing community around the world, for help, ideas, and discussions on
 <!-- - Questions tagged #portkey on [Stack Overflow](https://stackoverflow.com/questions/tagged/portkey) -->
 
 ![Rubeus Social Share (4)](https://github.com/Portkey-AI/gateway/assets/971978/89d6f0af-a95d-4402-b451-14764c40d03f)
-
