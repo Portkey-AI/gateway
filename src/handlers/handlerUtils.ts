@@ -175,8 +175,9 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
   let url = providerOption.urlToFetch as string;
   
   let baseUrl:string, endpoint:string;
+
   const forwardHeaders: string[] = [];
-  baseUrl = (providerOption.customHost || "") ||  (requestHeaders[HEADER_KEYS.CUSTOM_HOST] || "") || "";
+  baseUrl = requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || "";
 
   if (provider === AZURE_OPEN_AI && apiConfig.getBaseURL && apiConfig.getEndpoint) {
     // Construct the base object for the request
@@ -332,8 +333,8 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
 
 
   let baseUrl:string, endpoint:string, fetchOptions;
-  const forwardHeaders = providerOption.forwardHeaders || requestHeaders[HEADER_KEYS.FORWARD_HEADERS]?.split(",").map(h => h.trim()) || [];
-  baseUrl = (providerOption.customHost || "") ||  (requestHeaders[HEADER_KEYS.CUSTOM_HOST] || "") || "";
+  const forwardHeaders = requestHeaders[HEADER_KEYS.FORWARD_HEADERS]?.split(",").map(h => h.trim()) || providerOption.forwardHeaders || [];
+  baseUrl = requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || "";
 
   if (provider === AZURE_OPEN_AI && apiConfig.getBaseURL && apiConfig.getEndpoint) {
     // Construct the base object for the POST request
@@ -583,7 +584,7 @@ export async function tryTargetsRecursively(
       currentInheritedConfig.forwardHeaders = [...currentTarget.forwardHeaders];
     } else if (inheritedConfig.forwardHeaders) {
       currentInheritedConfig.forwardHeaders = [...inheritedConfig.forwardHeaders];
-      currentTarget.forwardHeaders
+      currentTarget.forwardHeaders = [...inheritedConfig.forwardHeaders];
     }
 
     if (currentTarget.customHost) {
