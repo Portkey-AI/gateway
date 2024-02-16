@@ -71,11 +71,11 @@ export async function handleNonStreamingMode(response: Response, responseTransfo
 }
 
 export async function handleAudioResponse(response: Response) {
-    return new Response(JSON.stringify(response.body), response);
+    return new Response(response.body, response);
 }
 
 export async function handleOctetStreamResponse(response: Response) {
-    return new Response(JSON.stringify(response.body), response);
+    return new Response(response.body, response);
 }
 
 

@@ -545,7 +545,7 @@ export function responseHandler(response: Response, streamingMode: boolean, prox
       return handleJSONToStreamResponse(response, proxyProvider, responseTransformerFunction)
   } else if (streamingMode && response.status === 200) {
     return handleStreamingMode(response, proxyProvider, responseTransformerFunction, requestURL)
-  } else if (responseContentType === CONTENT_TYPES.AUDIO_MPEG) {
+  } else if (responseContentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)) {
       return handleAudioResponse(response)
   } else if (responseContentType === CONTENT_TYPES.APPLICATION_OCTET_STREAM) {
       return handleOctetStreamResponse(response)
