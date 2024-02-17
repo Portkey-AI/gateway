@@ -19,7 +19,7 @@ function getProxyPath(requestURL:string, proxyProvider:string, proxyEndpointPath
   reqPath = reqPath.replace(proxyEndpointPath, "");
 
   if (customHost) {
-    return `${customHost}/${reqPath}${reqQuery}`
+    return `${customHost}${reqPath}${reqQuery}`
   }
 
   const providerBasePath = Providers[proxyProvider].api.baseURL;
