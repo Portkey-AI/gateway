@@ -99,7 +99,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
       }
     };
 
-    const customHost = requestConfig?.customHost || requestHeaders[HEADER_KEYS.CUSTOM_HOST] || "";
+    const customHost = requestHeaders[HEADER_KEYS.CUSTOM_HOST] || requestConfig?.customHost || "";
     let urlToFetch = getProxyPath(c.req.url, store.proxyProvider, store.proxyPath, customHost);
     store.isStreamingMode = getStreamingMode(store.reqBody, store.proxyProvider, urlToFetch)
 
