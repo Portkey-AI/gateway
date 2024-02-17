@@ -1,4 +1,4 @@
-import { AZURE_OPEN_AI, CONTENT_TYPES, COHERE, GOOGLE, REQUEST_TIMEOUT_STATUS_CODE } from "../globals";
+import { AZURE_OPEN_AI, CONTENT_TYPES, COHERE, GOOGLE, REQUEST_TIMEOUT_STATUS_CODE, OLLAMA } from "../globals";
 import { OpenAIChatCompleteResponse } from "../providers/openai/chatComplete";
 import { OpenAICompleteResponse } from "../providers/openai/complete";
 import { getStreamModeSplitPattern } from "../utils";

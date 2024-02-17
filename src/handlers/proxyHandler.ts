@@ -1,7 +1,7 @@
 import { Context } from "hono";
 import { retryRequest } from "./retryHandler";
 import Providers from "../providers";
-import { ANTHROPIC, MAX_RETRIES, HEADER_KEYS, RETRY_STATUS_CODES, POWERED_BY, RESPONSE_HEADER_KEYS, AZURE_OPEN_AI, CONTENT_TYPES } from "../globals";
+import { ANTHROPIC, MAX_RETRIES, HEADER_KEYS, RETRY_STATUS_CODES, POWERED_BY, RESPONSE_HEADER_KEYS, AZURE_OPEN_AI, CONTENT_TYPES, OLLAMA } from "../globals";
 import { fetchProviderOptionsFromConfig, responseHandler, tryProvidersInSequence, updateResponseHeaders } from "./handlerUtils";
 import { convertKeysToCamelCase, getStreamingMode } from "../utils";
 import { Config, ShortConfig } from "../types/requestBody";
@@ -12,14 +12,23 @@ function proxyProvider(proxyModeHeader:string, providerHeader: string) {
   return proxyProvider;
 }
 
-function getProxyPath(requestURL:string, proxyProvider:string, proxyEndpointPath:string) {
+function getProxyPath(requestURL:string, proxyProvider:string, proxyEndpointPath:string, customHost: string) {
   let reqURL = new URL(requestURL);
   let reqPath = reqURL.pathname;
   const reqQuery = reqURL.search;
   reqPath = reqPath.replace(proxyEndpointPath, "");
+
+  if (customHost) {
+    return `${customHost}${reqPath}${reqQuery}`
+  }
+
   const providerBasePath = Providers[proxyProvider].api.baseURL;
   if (proxyProvider === AZURE_OPEN_AI) {
     return `https:/${reqPath}${reqQuery}`;
+  }
+
+  if (proxyProvider === OLLAMA) {
+    return `https:/${reqPath}`;
   }
   let proxyPath = `${providerBasePath}${reqPath}${reqQuery}`;
   
@@ -90,7 +99,8 @@ export async function proxyHandler(c: Context): Promise<Response> {
       }
     };
 
-    let urlToFetch = getProxyPath(c.req.url, store.proxyProvider, store.proxyPath);
+    const customHost = requestHeaders[HEADER_KEYS.CUSTOM_HOST] || requestConfig?.customHost || "";
+    let urlToFetch = getProxyPath(c.req.url, store.proxyProvider, store.proxyPath, customHost);
     store.isStreamingMode = getStreamingMode(store.reqBody, store.proxyProvider, urlToFetch)
 
     if (requestConfig &&

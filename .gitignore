@@ -133,3 +133,6 @@ dist
 # Rollup build dir
 build
 .DS_Store
+
+# Wrangler temp directory
+.wrangler 
