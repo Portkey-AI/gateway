@@ -12,11 +12,16 @@ function proxyProvider(proxyModeHeader:string, providerHeader: string) {
   return proxyProvider;
 }
 
-function getProxyPath(requestURL:string, proxyProvider:string, proxyEndpointPath:string) {
+function getProxyPath(requestURL:string, proxyProvider:string, proxyEndpointPath:string, customHost: string) {
   let reqURL = new URL(requestURL);
   let reqPath = reqURL.pathname;
   const reqQuery = reqURL.search;
   reqPath = reqPath.replace(proxyEndpointPath, "");
+
+  if (customHost) {
+    return `${customHost}${reqPath}${reqQuery}`
+  }
+
   const providerBasePath = Providers[proxyProvider].api.baseURL;
   if (proxyProvider === AZURE_OPEN_AI) {
     return `https:/${reqPath}${reqQuery}`;
@@ -94,7 +99,8 @@ export async function proxyHandler(c: Context): Promise<Response> {
       }
     };
 
-    let urlToFetch = getProxyPath(c.req.url, store.proxyProvider, store.proxyPath);
+    const customHost = requestHeaders[HEADER_KEYS.CUSTOM_HOST] || requestConfig?.customHost || "";
+    let urlToFetch = getProxyPath(c.req.url, store.proxyProvider, store.proxyPath, customHost);
     store.isStreamingMode = getStreamingMode(store.reqBody, store.proxyProvider, urlToFetch)
 
     if (requestConfig &&

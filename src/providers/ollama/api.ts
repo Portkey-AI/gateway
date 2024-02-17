@@ -2,7 +2,7 @@ import { ProviderAPIConfig } from "../types";
 
 const OllamaAPIConfig: ProviderAPIConfig = {
   headers: () => {
-    return null;
+    return {};
   },
   chatComplete: "/v1/chat/completions",
   embed:"/api/embeddings",

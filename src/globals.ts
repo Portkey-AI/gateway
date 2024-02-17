@@ -5,7 +5,9 @@ export const HEADER_KEYS: Record<string, string> = {
   RETRIES: `x-${POWERED_BY}-retry-count`,
   PROVIDER: `x-${POWERED_BY}-provider`,
   TRACE_ID: `x-${POWERED_BY}-trace-id`,
-  CACHE: `x-${POWERED_BY}-cache`
+  CACHE: `x-${POWERED_BY}-cache`,
+  FORWARD_HEADERS: `x-${POWERED_BY}-forward-headers`,
+  CUSTOM_HOST: `x-${POWERED_BY}-custom-host`
 }
 
 export const RESPONSE_HEADER_KEYS: Record<string, string> = {
