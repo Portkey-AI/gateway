@@ -8,8 +8,7 @@
 [![Discord](https://img.shields.io/discord/1143393887742861333)](https://portkey.ai/community)
 [![Twitter](https://img.shields.io/twitter/url/https/twitter/follow/portkeyai?style=social&label=Follow%20%40PortkeyAI)](https://twitter.com/portkeyai)
 [![npm version](https://badge.fury.io/js/%40portkey-ai%2Fgateway.svg)](https://www.npmjs.com/package/@portkey-ai/gateway)
-<!-- ![example workflow](https://github.com/github/docs/actions/workflows/main.yml/badge.svg) -->
-[![Deploy on Replit](https://replit.com/badge?caption=Deploy%20on%20Replit)](https://replit.com/@portkey/AI-Gateway?v=1)
+<a href="https://replit.com/@portkey/AI-Gateway?v=1"><img src="https://replit.com/badge?caption=Deploy%20on%20Replit" width=99 style="display:block;"/></a>
 
 </div>
 <br><br>
