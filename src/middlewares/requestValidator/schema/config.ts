@@ -12,6 +12,7 @@ import {
     DEEPINFRA,
     NOMIC,
     STABILITY_AI,
+    OLLAMA
 } from "../../../globals";
 
 export const configSchema: any = z
@@ -49,7 +50,8 @@ export const configSchema: any = z
                         MISTRAL_AI,
                         DEEPINFRA,
                         NOMIC,
-                        STABILITY_AI
+                        STABILITY_AI,
+                        OLLAMA
                     ].includes(value),
                 {
                     message:
@@ -85,6 +87,8 @@ export const configSchema: any = z
         on_status_codes: z.array(z.number()).optional(),
         targets: z.array(z.lazy(() => configSchema)).optional(),
         request_timeout: z.number().optional(),
+        custom_host: z.string().optional(),
+        forward_headers: z.array(z.string()).optional()
     })
     .refine(
         (value) => {
@@ -92,16 +96,32 @@ export const configSchema: any = z
                 value.provider !== undefined && value.api_key !== undefined;
             const hasModeTargets =
                 value.strategy !== undefined && value.targets !== undefined;
+            const isOllamaProvider = value.provider === OLLAMA;
+            
             return (
                 hasProviderApiKey ||
                 hasModeTargets ||
                 value.cache ||
                 value.retry ||
-                value.request_timeout
+                value.request_timeout ||
+                isOllamaProvider
             );
         },
         {
             message:
                 "Invalid configuration. It must have either 'provider' and 'api_key', or 'strategy' and 'targets', or 'cache', or 'retry', or 'request_timeout'",
+        }
+    )
+    .refine(
+        (value) => {
+            const customHost = value.custom_host;
+            if (customHost && (customHost.indexOf("api.portkey") > -1)) {
+                return false;
+            }
+            return true;
+        },
+        {
+            message:
+                "Invalid custom host",
         }
     );
