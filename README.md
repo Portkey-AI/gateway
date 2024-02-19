@@ -8,15 +8,15 @@
 [![Discord](https://img.shields.io/discord/1143393887742861333)](https://portkey.ai/community)
 [![Twitter](https://img.shields.io/twitter/url/https/twitter/follow/portkeyai?style=social&label=Follow%20%40PortkeyAI)](https://twitter.com/portkeyai)
 [![npm version](https://badge.fury.io/js/%40portkey-ai%2Fgateway.svg)](https://www.npmjs.com/package/@portkey-ai/gateway)
-<!-- ![example workflow](https://github.com/github/docs/actions/workflows/main.yml/badge.svg) -->
+<a href="https://replit.com/@portkey/AI-Gateway?v=1"><img src="https://replit.com/badge?caption=Deploy%20on%20Replit" width=99 style="display:block;"/></a>
 
 </div>
 <br><br>
 
-[Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and hosted LLMs. It streamlines API requests to OpenAI, Anthropic, Mistral, LLama2, Anyscale, Google Gemini and more with a unified API. 
+[Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and hosted LLMs. It streamlines API requests to OpenAI, Anthropic, Mistral, LLama2, Anyscale, Google Gemini and more with a unified API.
 
 ✅&nbsp; Blazing **fast** (9.9x faster) with a **tiny footprint** (~45kb installed) <br>
-✅&nbsp; **Load balance** across multiple models, providers, and keys <br> 
+✅&nbsp; **Load balance** across multiple models, providers, and keys <br>
 ✅&nbsp; **Fallbacks** make sure your app stays resilient  <br>
 ✅&nbsp; **Automatic Retries** with exponential fallbacks come by default  <br>
 ✅&nbsp; Plug-in middleware as needed <br>
@@ -117,7 +117,7 @@ You can use these configs while making the OpenAI call through the `x-portkey-co
 const client = new OpenAI({
   baseURL: "http://127.0.0.1:8787", // The gateway URL
   defaultHeaders: {
-    'x-portkey-config': {.. your config here ..}, 
+    'x-portkey-config': {.. your config here ..},
   }
 });
 ```
@@ -212,4 +212,3 @@ Join our growing community around the world, for help, ideas, and discussions on
 <!-- - Questions tagged #portkey on [Stack Overflow](https://stackoverflow.com/questions/tagged/portkey) -->
 
 ![Rubeus Social Share (4)](https://github.com/Portkey-AI/gateway/assets/971978/89d6f0af-a95d-4402-b451-14764c40d03f)
-
