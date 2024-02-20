@@ -16,6 +16,7 @@ import {
     STABILITY_AI,
     NOMIC,
     OLLAMA,
+    AI21,
 } from "../../globals";
 import { configSchema } from "./schema/config";
 
@@ -64,7 +65,7 @@ export const requestValidator = (c: Context, next: any) => {
     }
     if (
         requestHeaders[`x-${POWERED_BY}-provider`] &&
-        ![OPEN_AI, AZURE_OPEN_AI, COHERE, ANTHROPIC, ANYSCALE, PALM, TOGETHER_AI, GOOGLE, MISTRAL_AI, PERPLEXITY_AI, DEEPINFRA, NOMIC, STABILITY_AI, OLLAMA].includes(
+        ![OPEN_AI, AZURE_OPEN_AI, COHERE, ANTHROPIC, ANYSCALE, PALM, TOGETHER_AI, GOOGLE, MISTRAL_AI, PERPLEXITY_AI, DEEPINFRA, NOMIC, STABILITY_AI, OLLAMA, AI21].includes(
             requestHeaders[`x-${POWERED_BY}-provider`]
         )
     ) {
