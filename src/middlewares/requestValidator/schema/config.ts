@@ -13,6 +13,7 @@ import {
     NOMIC,
     STABILITY_AI,
     OLLAMA,
+    BEDROCK,
     AI21,
 } from "../../../globals";
 
@@ -53,7 +54,8 @@ export const configSchema: any = z
                         NOMIC,
                         STABILITY_AI,
                         OLLAMA,
-                        AI21
+                        AI21,
+                        BEDROCK,
                     ].includes(value),
                 {
                     message:
@@ -62,6 +64,10 @@ export const configSchema: any = z
             )
             .optional(),
         api_key: z.string().optional(),
+        aws_secret_access_key: z.string().optional(),
+        aws_access_key_id: z.string().optional(),
+        aws_session_token: z.string().optional(),
+        aws_region: z.string().optional(),
         cache: z
             .object({
                 mode: z
@@ -99,6 +105,7 @@ export const configSchema: any = z
             const hasModeTargets =
                 value.strategy !== undefined && value.targets !== undefined;
             const isOllamaProvider = value.provider === OLLAMA;
+            const hasAWSDetails = value.aws_access_key_id && value.aws_secret_access_key;
 
             return (
                 hasProviderApiKey ||
@@ -106,7 +113,8 @@ export const configSchema: any = z
                 value.cache ||
                 value.retry ||
                 value.request_timeout ||
-                isOllamaProvider
+                isOllamaProvider ||
+                hasAWSDetails
             );
         },
         {
