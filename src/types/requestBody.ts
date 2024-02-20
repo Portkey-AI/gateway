@@ -52,6 +52,11 @@ export interface Options {
   cache?: CacheSettings | string;
   metadata?: Record<string, string>;
   requestTimeout?: number;
+  /** AWS Bedrock specific */
+  awsSecretAccessKey?: string;
+  awsAccessKeyId?: string;
+  awsSessionToken?: string;
+  awsRegion?: string;
 }
 
 /**
