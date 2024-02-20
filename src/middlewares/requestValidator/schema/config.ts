@@ -12,7 +12,8 @@ import {
     DEEPINFRA,
     NOMIC,
     STABILITY_AI,
-    OLLAMA
+    OLLAMA,
+    AI21,
 } from "../../../globals";
 
 export const configSchema: any = z
@@ -51,7 +52,8 @@ export const configSchema: any = z
                         DEEPINFRA,
                         NOMIC,
                         STABILITY_AI,
-                        OLLAMA
+                        OLLAMA,
+                        AI21
                     ].includes(value),
                 {
                     message:
@@ -97,7 +99,7 @@ export const configSchema: any = z
             const hasModeTargets =
                 value.strategy !== undefined && value.targets !== undefined;
             const isOllamaProvider = value.provider === OLLAMA;
-            
+
             return (
                 hasProviderApiKey ||
                 hasModeTargets ||
