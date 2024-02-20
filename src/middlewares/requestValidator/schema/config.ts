@@ -12,7 +12,8 @@ import {
     DEEPINFRA,
     NOMIC,
     STABILITY_AI,
-    OLLAMA
+    OLLAMA,
+    ZHI_PU_AI
 } from "../../../globals";
 
 export const configSchema: any = z
@@ -51,7 +52,8 @@ export const configSchema: any = z
                         DEEPINFRA,
                         NOMIC,
                         STABILITY_AI,
-                        OLLAMA
+                        OLLAMA,
+                        ZHI_PU_AI
                     ].includes(value),
                 {
                     message:

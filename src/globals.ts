@@ -36,8 +36,9 @@ export const DEEPINFRA: string = "deepinfra";
 export const STABILITY_AI: string = "stability-ai";
 export const NOMIC: string = "nomic";
 export const OLLAMA: string = "ollama";
+export const ZHI_PU_AI: string = "zhipu-ai";
 
-export const providersWithStreamingSupport = [OPEN_AI, AZURE_OPEN_AI, ANTHROPIC, COHERE];
+export const providersWithStreamingSupport = [OPEN_AI, AZURE_OPEN_AI, ANTHROPIC, COHERE, ZHI_PU_AI];
 export const allowedProxyProviders = [OPEN_AI, COHERE, AZURE_OPEN_AI, ANTHROPIC];
 
 export const PROXY_REQUEST_PATH_PREFIX:string = "/v1/proxy";

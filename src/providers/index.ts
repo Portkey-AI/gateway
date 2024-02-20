@@ -12,6 +12,7 @@ import PerplexityAIConfig from "./perplexity-ai";
 import TogetherAIConfig from "./together-ai";
 import StabilityAIConfig from "./stability-ai";
 import OllamaAPIConfig from "./ollama";
+import ZhiPuAIAPIConfig from "./zhipu-ai";
 import { ProviderConfigs } from "./types";
 
 const Providers: { [key: string]: ProviderConfigs } = {
@@ -28,7 +29,8 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'deepinfra': DeepInfraConfig,
   'stability-ai': StabilityAIConfig,
   nomic: NomicConfig,
-  'ollama': OllamaAPIConfig
+  'ollama': OllamaAPIConfig,
+  'zhipu-ai': ZhiPuAIAPIConfig
 };
 
 export default Providers;
