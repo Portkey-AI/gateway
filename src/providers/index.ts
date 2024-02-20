@@ -1,3 +1,4 @@
+import AI21Config from "./ai21";
 import AnthropicConfig from "./anthropic";
 import AnyscaleConfig from "./anyscale";
 import AzureOpenAIConfig from "./azure-openai";
@@ -28,7 +29,8 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'deepinfra': DeepInfraConfig,
   'stability-ai': StabilityAIConfig,
   nomic: NomicConfig,
-  'ollama': OllamaAPIConfig
+  'ollama': OllamaAPIConfig,
+  ai21: AI21Config
 };
 
 export default Providers;
