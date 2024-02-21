@@ -29,9 +29,9 @@ export const BedrockAnthropicChatCompleteConfig: ProviderConfig = {
                 let messages: Message[] = params.messages;
                 messages.forEach((msg, index) => {
                     if (index === 0 && msg.role === "system") {
-                        prompt += `System: ${messages}\n`;
+                        prompt += `System: ${msg.content}\n`;
                     } else if (msg.role == "user") {
-                        prompt += `Human: ${msg.content}\n`;
+                        prompt += `\n\nHuman: ${msg.content}\n`;
                     } else if (msg.role == "assistant") {
                         prompt += `Assistant: ${msg.content}\n`;
                     } else {
