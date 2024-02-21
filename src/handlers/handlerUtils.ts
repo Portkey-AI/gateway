@@ -645,7 +645,7 @@ export async function tryTargetsRecursively(
 
         case "loadbalance":
             currentTarget.targets.forEach((t: Options) => {
-                if (!t.weight) {
+                if (t.weight === undefined) {
                     t.weight = 1;
                 }
             });
