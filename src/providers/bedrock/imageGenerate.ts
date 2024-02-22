@@ -1,4 +1,4 @@
-import { BEDROCK, STABILITY_AI } from "../../globals";
+import { BEDROCK } from "../../globals";
 import { ErrorResponse, ImageGenerateResponse, ProviderConfig } from "../types";
 import { BedrockErrorResponse } from "./embed";
 
