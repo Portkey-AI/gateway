@@ -389,7 +389,7 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
     baseUrl = baseUrl;
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, transformedRequestBody.model, params.stream);
   } else if (provider === BEDROCK && apiConfig.getBaseURL && apiConfig.getEndpoint) {
-    baseUrl = baseUrl || apiConfig.getBaseURL();
+    baseUrl = baseUrl || apiConfig.getBaseURL(providerOption.awsRegion);
     endpoint = apiConfig.getEndpoint(fn, params.model, params.stream);
     fetchOptions = constructRequest(await apiConfig.headers(providerOption, transformedRequestBody, `${baseUrl}${endpoint}`), provider, "POST", forwardHeaders, requestHeaders);
   } else if (provider === AI21 && apiConfig.getEndpoint && apiConfig.baseURL) {
