@@ -1,5 +1,5 @@
 import { Context } from "hono";
-import { ANTHROPIC, AZURE_OPEN_AI, CONTENT_TYPES, GOOGLE, HEADER_KEYS, OLLAMA, PALM, POWERED_BY, RESPONSE_HEADER_KEYS, RETRY_STATUS_CODES, STABILITY_AI } from "../globals";
+import { AI21, ANTHROPIC, AZURE_OPEN_AI, CONTENT_TYPES, GOOGLE, HEADER_KEYS, OLLAMA, PALM, POWERED_BY, RESPONSE_HEADER_KEYS, RETRY_STATUS_CODES, STABILITY_AI } from "../globals";
 import Providers from "../providers";
 import { ProviderAPIConfig, endpointStrings } from "../providers/types";
 import transformToProviderRequest from "../services/transformToProviderRequest";
@@ -210,6 +210,10 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
     baseUrl = baseUrl || apiConfig.baseURL;
     endpoint = apiConfig.getEndpoint(fn, params.model, url);
     url = `${baseUrl}${endpoint}`;
+  } else if (provider === AI21 && apiConfig.getEndpoint && apiConfig.baseURL) {
+    baseUrl = baseUrl || apiConfig.baseURL;
+    endpoint = apiConfig.getEndpoint(fn, params.model);
+    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, "POST", forwardHeaders, requestHeaders);
   } else {
     // Construct the base object for the request
     fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, method, forwardHeaders, requestHeaders);
@@ -366,8 +370,11 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
     fetchOptions = constructRequest(apiConfig.headers(), provider, "POST", forwardHeaders, requestHeaders);
     baseUrl = baseUrl;
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, transformedRequestBody.model, params.stream);
-  } 
-  else {
+  } else if (provider === AI21 && apiConfig.getEndpoint && apiConfig.baseURL) {
+    baseUrl = baseUrl || apiConfig.baseURL;
+    endpoint = apiConfig.getEndpoint(fn, params.model);
+    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, "POST", forwardHeaders, requestHeaders);
+  } else {
     // Construct the base object for the POST request
     fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, "POST", forwardHeaders, requestHeaders);
 

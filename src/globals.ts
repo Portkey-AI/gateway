@@ -36,6 +36,7 @@ export const DEEPINFRA: string = "deepinfra";
 export const STABILITY_AI: string = "stability-ai";
 export const NOMIC: string = "nomic";
 export const OLLAMA: string = "ollama";
+export const AI21: string = "ai21";
 
 export const providersWithStreamingSupport = [OPEN_AI, AZURE_OPEN_AI, ANTHROPIC, COHERE];
 export const allowedProxyProviders = [OPEN_AI, COHERE, AZURE_OPEN_AI, ANTHROPIC];
