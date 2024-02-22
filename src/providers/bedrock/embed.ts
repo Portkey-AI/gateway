@@ -16,6 +16,7 @@ export const BedrockCohereEmbedConfig: ProviderConfig = {
     },
     input_type: {
         param: "input_type",
+        required: true
     },
     truncate: {
         param: "truncate",
