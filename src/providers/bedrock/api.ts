@@ -49,6 +49,9 @@ const BedrockAPIConfig: ProviderAPIConfig = {
             case "embed": {
                 return endpoint;
             }
+            case "imageGenerate": {
+                return endpoint;
+            }
         }
     },
 };
