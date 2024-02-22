@@ -252,7 +252,7 @@ export const BedrockTitanChatompleteConfig: ProviderConfig = {
 
 export const BedrockAI21ChatCompleteConfig: ProviderConfig = {
     messages: {
-        param: "inputText",
+        param: "prompt",
         required: true,
         transform: (params: Params) => {
             let prompt: string = "";
