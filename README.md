@@ -50,7 +50,7 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 
 || Provider  | Support | Stream | Supported Endpoints |
 |---|---|---|---|--|
-| <img src="docs/images/openai.png" width=25 />| OpenAI | ✅  |✅  | `/completions`, `/chat/completions`,`/embeddings`, `/assistants`, `/threads`, `/runs` |
+| <img src="docs/images/openai.png" width=25 />| OpenAI | ✅  |✅  | `/completions`, `/chat/completions`,`/embeddings`, `/assistants`, `/threads`, `/runs`, `/images/generations`, `/audio/*`|
 | <img src="docs/images/azure.png" width=25>| Azure OpenAI | ✅  |✅  | `/completions`, `/chat/completions`,`/embeddings` |
 | <img src="docs/images/anyscale.png" width=25>| Anyscale | ✅   | ✅  | `/chat/completions` |
 | <img src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Google-favicon-2015.png" width=25>| Google Gemini & Palm | ✅  |✅  | `/generateMessage`, `/generateText`, `/embedText` |
@@ -59,6 +59,9 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 | <img src="https://assets-global.website-files.com/64f6f2c0e3f4c5a91c1e823a/654693d569494912cfc0c0d4_favicon.svg" width=25>| Together AI  | ✅  |✅  | `/chat/completions`, `/completions`, `/inference` |
 | <img src="https://www.perplexity.ai/favicon.svg" width=25>| Perplexity  | ✅  |✅  | `/chat/completions` |
 | <img src="https://docs.mistral.ai/img/favicon.ico" width=25>| Mistral  | ✅  |✅  | `/chat/completions`, `/embeddings` |
+| <img src="https://docs.nomic.ai/img/nomic-logo.png" width=25>| Nomic  | ✅  |✅  | `/embeddings` |
+| <img src="https://files.readme.io/d38a23e-small-studio-favicon.png" width=25>| AI21  | ✅  |✅  | `/complete`, `/chat`, `/embed` |
+| <img src="https://platform.stability.ai/small-logo-purple.svg" width=25>| Stability AI  | ✅  |✅  | `/generation/{engine_id}/text-to-image` |
 
 > [View the complete list of 100+ supported models here](https://portkey.ai/docs/welcome/what-is-portkey#ai-providers-supported)
 <br />
