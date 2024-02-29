@@ -46,7 +46,12 @@ function setArrayNestedProperties(obj: any, path: Array<string>, value: Array<an
  */
 const transformToProviderRequest = (provider: string, params: Params, fn: string): { [key: string]: any } => {
   // Get the configuration for the specified provider
-  const providerConfig = ProviderConfigs[provider][fn];
+  let providerConfig = ProviderConfigs[provider];
+  if (providerConfig.getConfig) {
+    providerConfig = providerConfig.getConfig(params)[fn];
+  } else {
+    providerConfig = providerConfig[fn]
+  }
 
   // If the provider is not supported, throw an error
   if (!providerConfig) {

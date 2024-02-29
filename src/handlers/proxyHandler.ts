@@ -181,9 +181,19 @@ export async function proxyHandler(c: Context): Promise<Response> {
     if (getFromCacheFunction && cacheMode) {
       [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(env(c), {...requestHeaders, ...fetchOptions.headers}, store.reqBody, urlToFetch, cacheIdentifier, cacheMode);
       if (cacheResponse) {
-        const cacheMappedResponse = await responseHandler(new Response(cacheResponse, {headers: {
-          "content-type": "application/json"
-        }}), false, store.proxyProvider, undefined, urlToFetch);
+        const cacheMappedResponse = await responseHandler(
+            new Response(cacheResponse, {
+                headers: {
+                    "content-type": "application/json",
+                },
+            }),
+            false,
+            store.proxyProvider,
+            undefined,
+            urlToFetch,
+            false,
+            store.reqBody
+        );
         c.set("requestOptions", [{
           providerOptions: {...store.reqBody, provider: store.proxyProvider, requestURL: urlToFetch, rubeusURL: 'proxy'},
           requestParams: store.reqBody,
@@ -200,7 +210,15 @@ export async function proxyHandler(c: Context): Promise<Response> {
 
     // Make the API call to the provider
     let [lastResponse, lastAttempt] = await retryRequest(urlToFetch, fetchOptions, retryCount, retryStatusCodes, null);
-    const mappedResponse = await responseHandler(lastResponse, store.isStreamingMode, store.proxyProvider, undefined, urlToFetch);
+    const mappedResponse = await responseHandler(
+        lastResponse,
+        store.isStreamingMode,
+        store.proxyProvider,
+        undefined,
+        urlToFetch,
+        false,
+        store.reqBody
+    );
     updateResponseHeaders(mappedResponse, 0, store.reqBody, cacheStatus, (lastAttempt ?? 0), requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");
 
     c.set("requestOptions", [{
