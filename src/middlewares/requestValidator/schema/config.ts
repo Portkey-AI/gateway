@@ -15,6 +15,7 @@ import {
     OLLAMA,
     BEDROCK,
     AI21,
+    GROQ,
 } from "../../../globals";
 
 export const configSchema: any = z
@@ -56,6 +57,7 @@ export const configSchema: any = z
                         OLLAMA,
                         AI21,
                         BEDROCK,
+                        GROQ
                     ].includes(value),
                 {
                     message:
