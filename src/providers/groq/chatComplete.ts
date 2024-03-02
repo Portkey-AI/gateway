@@ -39,6 +39,12 @@ export const GroqChatCompleteConfig: ProviderConfig = {
     stop: {
         param: "stop",
     },
+    n: {
+        param: "n",
+        default: 1,
+        max: 1,
+        min: 1
+    },
 };
 
 export interface GroqChatCompleteResponse extends ChatCompletionResponse {}
