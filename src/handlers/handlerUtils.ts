@@ -1,5 +1,5 @@
 import { Context } from "hono";
-import { ANTHROPIC, AZURE_OPEN_AI, CONTENT_TYPES, GOOGLE, HEADER_KEYS, OLLAMA, PALM, POWERED_BY, RESPONSE_HEADER_KEYS, RETRY_STATUS_CODES, STABILITY_AI } from "../globals";
+import { AI21, ANTHROPIC, AZURE_OPEN_AI, BEDROCK, CONTENT_TYPES, GOOGLE, HEADER_KEYS, OLLAMA, PALM, POWERED_BY, RESPONSE_HEADER_KEYS, RETRY_STATUS_CODES, STABILITY_AI } from "../globals";
 import Providers from "../providers";
 import { ProviderAPIConfig, endpointStrings } from "../providers/types";
 import transformToProviderRequest from "../services/transformToProviderRequest";
@@ -210,6 +210,10 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
     baseUrl = baseUrl || apiConfig.baseURL;
     endpoint = apiConfig.getEndpoint(fn, params.model, url);
     url = `${baseUrl}${endpoint}`;
+  } else if (provider === AI21 && apiConfig.getEndpoint && apiConfig.baseURL) {
+    baseUrl = baseUrl || apiConfig.baseURL;
+    endpoint = apiConfig.getEndpoint(fn, params.model);
+    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, "POST", forwardHeaders, requestHeaders);
   } else {
     // Construct the base object for the request
     fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, method, forwardHeaders, requestHeaders);
@@ -266,9 +270,19 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
         cacheMaxAge
     );
     if (cacheResponse) {
-      response = await responseHandler(new Response(cacheResponse, {headers: {
-        "content-type": "application/json"
-      }}), false, provider, undefined, url);
+      response = await responseHandler(
+          new Response(cacheResponse, {
+              headers: {
+                  "content-type": "application/json",
+              },
+          }),
+          false,
+          provider,
+          undefined,
+          url,
+          false,
+          params
+      );
       c.set("requestOptions", [...requestOptions, {
         providerOptions: {...providerOption, requestURL: url, rubeusURL: fn},
         requestParams: params,
@@ -285,7 +299,15 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
   }
 
     [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes, null);
-  const mappedResponse = await responseHandler(response, isStreamingMode, provider, undefined, url);
+  const mappedResponse = await responseHandler(
+      response,
+      isStreamingMode,
+      provider,
+      undefined,
+      url,
+      false,
+      params
+  );
   updateResponseHeaders(mappedResponse, currentIndex, params, cacheStatus, retryCount ?? 0, requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");
 
   c.set("requestOptions", [...requestOptions, {
@@ -366,8 +388,15 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
     fetchOptions = constructRequest(apiConfig.headers(), provider, "POST", forwardHeaders, requestHeaders);
     baseUrl = baseUrl;
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, transformedRequestBody.model, params.stream);
-  } 
-  else {
+  } else if (provider === BEDROCK && apiConfig.getBaseURL && apiConfig.getEndpoint) {
+    baseUrl = baseUrl || apiConfig.getBaseURL(providerOption.awsRegion);
+    endpoint = apiConfig.getEndpoint(fn, params.model, params.stream);
+    fetchOptions = constructRequest(await apiConfig.headers(providerOption, transformedRequestBody, `${baseUrl}${endpoint}`), provider, "POST", forwardHeaders, requestHeaders);
+  } else if (provider === AI21 && apiConfig.getEndpoint && apiConfig.baseURL) {
+    baseUrl = baseUrl || apiConfig.baseURL;
+    endpoint = apiConfig.getEndpoint(fn, params.model);
+    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, "POST", forwardHeaders, requestHeaders);
+  } else {
     // Construct the base object for the POST request
     fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, "POST", forwardHeaders, requestHeaders);
 
@@ -421,7 +450,8 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
               provider,
               fn,
               url,
-              true
+              true,
+              params
           );
           c.set("requestOptions", [
               ...requestOptions,
@@ -454,7 +484,15 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
 
   [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes, providerOption.requestTimeout || null);
 
-  const mappedResponse = await responseHandler(response, isStreamingMode, provider, fn, url);
+  const mappedResponse = await responseHandler(
+      response,
+      isStreamingMode,
+      provider,
+      fn,
+      url,
+      false,
+      params
+  );
   updateResponseHeaders(mappedResponse, currentIndex, params, cacheStatus, retryCount ?? 0, requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");
   c.set("requestOptions", [...requestOptions, {
     providerOptions: {...providerOption, requestURL: url, rubeusURL: fn},
@@ -523,15 +561,22 @@ export async function tryProvidersInSequence(c: Context, providers:Options[], pa
  * @param {boolean} [isCacheHit=false] - Indicates whether the response is a cache hit.
  * @returns {Promise<Response>} - A promise that resolves to the processed response.
  */
-export function responseHandler(response: Response, streamingMode: boolean, proxyProvider: string, responseTransformer: string | undefined, requestURL: string, isCacheHit: boolean = false): Promise<Response> {
+export function responseHandler(response: Response, streamingMode: boolean, proxyProvider: string, responseTransformer: string | undefined, requestURL: string, isCacheHit: boolean = false, gatewayRequest: Params): Promise<Response> {
   let responseTransformerFunction: Function | undefined;
   const responseContentType = response.headers?.get("content-type");
 
+  const providerConfig = Providers[proxyProvider];
+  let providerTransformers = Providers[proxyProvider]?.responseTransforms;
+
+  if (providerConfig.getConfig) {
+    providerTransformers = providerConfig.getConfig(gatewayRequest).responseTransforms;
+  }
+
   // Checking status 200 so that errors are not considered as stream mode.
   if (responseTransformer && streamingMode && response.status === 200) {
-    responseTransformerFunction = Providers[proxyProvider]?.responseTransforms?.[`stream-${responseTransformer}`];
+    responseTransformerFunction = providerTransformers?.[`stream-${responseTransformer}`];
   } else if (responseTransformer) {
-    responseTransformerFunction = Providers[proxyProvider]?.responseTransforms?.[responseTransformer];
+    responseTransformerFunction = providerTransformers?.[responseTransformer];
   }
 
   // JSON to text/event-stream conversion is only allowed for unified routes: chat completions and completions.
@@ -645,7 +690,7 @@ export async function tryTargetsRecursively(
 
         case "loadbalance":
             currentTarget.targets.forEach((t: Options) => {
-                if (!t.weight) {
+                if (t.weight === undefined) {
                     t.weight = 1;
                 }
             });
@@ -747,6 +792,13 @@ export function constructConfigFromRequestHeaders(
       apiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`]
     }
 
+    const bedrockConfig = {
+      awsAccessKeyId: requestHeaders[`x-${POWERED_BY}-aws-access-key-id`],
+      awsSecretAccessKey: requestHeaders[`x-${POWERED_BY}-aws-secret-access-key`],
+      awsSessionToken: requestHeaders[`x-${POWERED_BY}-aws-session-token`],
+      awsRegion: requestHeaders[`x-${POWERED_BY}-aws-region`]
+    }
+
     if (
       requestHeaders[`x-${POWERED_BY}-config`]
     ) {
@@ -755,12 +807,21 @@ export function constructConfigFromRequestHeaders(
         if (!parsedConfigJson.provider && !parsedConfigJson.targets) {
           parsedConfigJson.provider = requestHeaders[`x-${POWERED_BY}-provider`];
           parsedConfigJson.api_key = requestHeaders["authorization"]?.replace("Bearer ", "");
+
           if (parsedConfigJson.provider === AZURE_OPEN_AI) {
             parsedConfigJson = {
               ...parsedConfigJson,
               ...azureConfig
             }
           }
+
+          if (parsedConfigJson.provider === BEDROCK) {
+            parsedConfigJson = {
+              ...parsedConfigJson,
+              ...bedrockConfig
+            }
+          }
+
         }
         return convertKeysToCamelCase(
             parsedConfigJson,
@@ -771,7 +832,8 @@ export function constructConfigFromRequestHeaders(
     return {
       provider: requestHeaders[`x-${POWERED_BY}-provider`],
       apiKey: requestHeaders["authorization"]?.replace("Bearer ", ""),
-      ...(requestHeaders[`x-${POWERED_BY}-provider`] === AZURE_OPEN_AI && azureConfig)
+      ...(requestHeaders[`x-${POWERED_BY}-provider`] === AZURE_OPEN_AI && azureConfig),
+      ...(requestHeaders[`x-${POWERED_BY}-provider`] === BEDROCK && bedrockConfig)
     };
 }
     

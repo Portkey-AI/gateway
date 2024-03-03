@@ -1,6 +1,8 @@
+import AI21Config from "./ai21";
 import AnthropicConfig from "./anthropic";
 import AnyscaleConfig from "./anyscale";
 import AzureOpenAIConfig from "./azure-openai";
+import BedrockConfig from "./bedrock";
 import CohereConfig from "./cohere";
 import DeepInfraConfig from "./deepinfra";
 import GoogleConfig from "./google";
@@ -13,6 +15,7 @@ import TogetherAIConfig from "./together-ai";
 import StabilityAIConfig from "./stability-ai";
 import OllamaAPIConfig from "./ollama";
 import { ProviderConfigs } from "./types";
+import GroqConfig from "./groq";
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -28,7 +31,10 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'deepinfra': DeepInfraConfig,
   'stability-ai': StabilityAIConfig,
   nomic: NomicConfig,
-  'ollama': OllamaAPIConfig
+  'ollama': OllamaAPIConfig,
+  ai21: AI21Config,
+  bedrock: BedrockConfig,
+  groq: GroqConfig
 };
 
 export default Providers;
