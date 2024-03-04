@@ -142,6 +142,24 @@ export async function* readStream(reader: ReadableStreamDefaultReader, splitPatt
     }
 }
 
+export async function handleTextResponse(response: Response, responseTransformer: Function | undefined) {
+  const text = await response.text();
+
+  if (responseTransformer) {
+    const transformedText = responseTransformer({"html-message": text}, response.status);
+    return new Response(JSON.stringify(transformedText), {
+      ...response,
+      status: response.status,
+      headers: new Headers({
+          ...Object.fromEntries(response.headers),
+          'content-type': "application/json"
+      })
+    });
+  }
+
+  return new Response(text, response);
+}
+
 export async function handleNonStreamingMode(response: Response, responseTransformer: Function | undefined) {
     // 408 is thrown whenever a request takes more than request_timeout to respond.
     // In that case, response thrown by gateway is already in OpenAI format.
@@ -166,6 +184,9 @@ export async function handleOctetStreamResponse(response: Response) {
     return new Response(response.body, response);
 }
 
+export async function handleImageResponse(response: Response) {
+    return new Response(response.body, response);
+}
 
 export async function handleStreamingMode(response: Response, proxyProvider: string, responseTransformer: Function | undefined, requestURL: string): Promise<Response> {
     const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);
