@@ -1,4 +1,5 @@
 import { AZURE_OPEN_AI, BEDROCK, CONTENT_TYPES, COHERE, GOOGLE, REQUEST_TIMEOUT_STATUS_CODE } from "../globals";
+import { GroqChatCompleteResponseTransform } from "../providers/groq/chatComplete";
 import { OpenAIChatCompleteResponse } from "../providers/openai/chatComplete";
 import { OpenAICompleteResponse } from "../providers/openai/complete";
 import { getStreamModeSplitPattern } from "../utils";
@@ -142,6 +143,23 @@ export async function* readStream(reader: ReadableStreamDefaultReader, splitPatt
     }
 }
 
+export async function handleTextResponse(response: Response, responseTransformer: Function | undefined) {
+  const text = await response.text();
+
+  if (responseTransformer) {
+    const transformedText = responseTransformer({error: {message: text}}, response.status);
+    return new Response(JSON.stringify(transformedText), {
+      ...response,
+      headers: new Headers({
+          ...Object.fromEntries(response.headers),
+          'content-type': "application/json"
+      })
+    });
+  }
+
+  return new Response(text, response);
+}
+
 export async function handleNonStreamingMode(response: Response, responseTransformer: Function | undefined) {
     // 408 is thrown whenever a request takes more than request_timeout to respond.
     // In that case, response thrown by gateway is already in OpenAI format.
@@ -150,7 +168,7 @@ export async function handleNonStreamingMode(response: Response, responseTransfo
         return response;
     }
 
-    let responseBodyJson = await response.json();
+    let responseBodyJson = await response.text();
     if (responseTransformer) {
         responseBodyJson = responseTransformer(responseBodyJson, response.status, response.headers);
     }

@@ -18,7 +18,8 @@ import {
     OLLAMA,
     AI21,
     BEDROCK,
-    GROQ
+    GROQ,
+    SEGMIND
 } from "../../globals";
 import { configSchema } from "./schema/config";
 
@@ -84,7 +85,8 @@ export const requestValidator = (c: Context, next: any) => {
             OLLAMA,
             AI21,
             BEDROCK,
-            GROQ
+            GROQ,
+            SEGMIND
         ].includes(requestHeaders[`x-${POWERED_BY}-provider`])
     ) {
         return new Response(
