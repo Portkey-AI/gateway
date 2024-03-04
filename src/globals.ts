@@ -55,4 +55,5 @@ export const CONTENT_TYPES = {
   GENERIC_AUDIO_PATTERN: "audio",
   PLAIN_TEXT: "text/plain",
   HTML: "text/html",
+  GENERIC_IMAGE_PATTERN: "image/",
 }

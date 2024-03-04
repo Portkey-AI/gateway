@@ -185,6 +185,9 @@ export async function handleOctetStreamResponse(response: Response) {
     return new Response(response.body, response);
 }
 
+export async function handleImageResponse(response: Response) {
+    return new Response(response.body, response);
+}
 
 export async function handleStreamingMode(response: Response, proxyProvider: string, responseTransformer: Function | undefined, requestURL: string): Promise<Response> {
     const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);

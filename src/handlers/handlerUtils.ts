@@ -6,7 +6,7 @@ import transformToProviderRequest from "../services/transformToProviderRequest";
 import { Config, Options, Params, RequestBody, ShortConfig, Targets } from "../types/requestBody";
 import { convertKeysToCamelCase } from "../utils";
 import { retryRequest } from "./retryHandler";
-import { handleAudioResponse, handleJSONToStreamResponse, handleNonStreamingMode, handleOctetStreamResponse, handleStreamingMode, handleTextResponse } from "./streamHandler";
+import { handleAudioResponse, handleImageResponse, handleJSONToStreamResponse, handleNonStreamingMode, handleOctetStreamResponse, handleStreamingMode, handleTextResponse } from "./streamHandler";
 import { env } from "hono/adapter";
 import { OpenAIChatCompleteJSONToStreamResponseTransform } from "../providers/openai/chatComplete";
 import { OpenAICompleteJSONToStreamResponseTransform } from "../providers/openai/complete";
@@ -603,6 +603,8 @@ export function responseHandler(response: Response, streamingMode: boolean, prox
       return handleAudioResponse(response)
   } else if (responseContentType === CONTENT_TYPES.APPLICATION_OCTET_STREAM) {
       return handleOctetStreamResponse(response)
+  } else if (responseContentType?.startsWith(CONTENT_TYPES.GENERIC_IMAGE_PATTERN)) {
+    return handleImageResponse(response)
   } else if (responseContentType?.startsWith(CONTENT_TYPES.PLAIN_TEXT) || responseContentType?.startsWith(CONTENT_TYPES.HTML)) {
     return handleTextResponse(response, responseTransformerFunction)
   } else {
