@@ -168,7 +168,7 @@ export async function handleNonStreamingMode(response: Response, responseTransfo
         return response;
     }
 
-    let responseBodyJson = await response.text();
+    let responseBodyJson = await response.json();
     if (responseTransformer) {
         responseBodyJson = responseTransformer(responseBodyJson, response.status, response.headers);
     }
