@@ -39,6 +39,7 @@ export const OLLAMA: string = "ollama";
 export const AI21: string = "ai21";
 export const BEDROCK: string = "bedrock";
 export const GROQ: string = "groq";
+export const SEGMIND: string = "segmind";
 
 export const providersWithStreamingSupport = [OPEN_AI, AZURE_OPEN_AI, ANTHROPIC, COHERE];
 export const allowedProxyProviders = [OPEN_AI, COHERE, AZURE_OPEN_AI, ANTHROPIC];
@@ -51,5 +52,8 @@ export const CONTENT_TYPES = {
   EVENT_STREAM: "text/event-stream",
   AUDIO_MPEG: "audio/mpeg",
   APPLICATION_OCTET_STREAM: "application/octet-stream",
-  GENERIC_AUDIO_PATTERN: "audio"
+  GENERIC_AUDIO_PATTERN: "audio",
+  PLAIN_TEXT: "text/plain",
+  HTML: "text/html",
+  GENERIC_IMAGE_PATTERN: "image/",
 }

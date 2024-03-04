@@ -16,6 +16,7 @@ import StabilityAIConfig from "./stability-ai";
 import OllamaAPIConfig from "./ollama";
 import { ProviderConfigs } from "./types";
 import GroqConfig from "./groq";
+import SegmindConfig from "./segmind";
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -34,7 +35,8 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'ollama': OllamaAPIConfig,
   ai21: AI21Config,
   bedrock: BedrockConfig,
-  groq: GroqConfig
+  groq: GroqConfig,
+  segmind: SegmindConfig
 };
 
 export default Providers;
