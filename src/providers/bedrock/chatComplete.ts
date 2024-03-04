@@ -20,31 +20,100 @@ import {
 import { BedrockErrorResponse } from "./embed";
 
 export const BedrockAnthropicChatCompleteConfig: ProviderConfig = {
-    messages: {
-        param: "prompt",
-        required: true,
-        transform: (params: Params) => {
-            let prompt: string = "";
-            if (!!params.messages) {
-                let messages: Message[] = params.messages;
-                messages.forEach((msg, index) => {
-                    if (index === 0 && msg.role === "system") {
-                        prompt += `System: ${msg.content}\n`;
-                    } else if (msg.role == "user") {
-                        prompt += `\n\nHuman: ${msg.content}\n`;
-                    } else if (msg.role == "assistant") {
-                        prompt += `Assistant: ${msg.content}\n`;
-                    } else {
-                        prompt += `${msg.role}: ${msg.content}\n`;
-                    }
-                });
-                prompt += "Assistant:";
-            }
-            return prompt;
+    messages: [
+        {
+            param: "messages",
+            required: true,
+            transform: (params: Params) => {
+                let messages: Message[] = [];
+                // Transform the chat messages into a simple prompt
+                if (!!params.messages) {
+                    params.messages.forEach((msg) => {
+                        if (msg.role !== "system") {
+                            if (
+                                msg.content &&
+                                typeof msg.content === "object" &&
+                                msg.content.length
+                            ) {
+                                const transformedMessage: Record<string, any> =
+                                    {
+                                        role: msg.role,
+                                        content: [],
+                                    };
+                                msg.content.forEach((item) => {
+                                    if (item.type === "text") {
+                                        transformedMessage.content.push({
+                                            type: item.type,
+                                            text: item.text,
+                                        });
+                                    } else if (
+                                        item.type === "image_url" &&
+                                        item.image_url &&
+                                        item.image_url.url
+                                    ) {
+                                        const parts =
+                                            item.image_url.url.split(";");
+                                        if (parts.length === 2) {
+                                            const base64ImageParts =
+                                                parts[1].split(",");
+                                            const base64Image =
+                                                base64ImageParts[1];
+                                            const mediaTypeParts =
+                                                parts[0].split(":");
+                                            if (
+                                                mediaTypeParts.length === 2 &&
+                                                base64Image
+                                            ) {
+                                                const mediaType =
+                                                    mediaTypeParts[1];
+                                                transformedMessage.content.push(
+                                                    {
+                                                        type: "image",
+                                                        source: {
+                                                            type: "base64",
+                                                            media_type:
+                                                                mediaType,
+                                                            data: base64Image,
+                                                        },
+                                                    }
+                                                );
+                                            }
+                                        }
+                                    }
+                                });
+                                messages.push(transformedMessage as Message);
+                            } else {
+                                messages.push({
+                                    role: msg.role,
+                                    content: msg.content,
+                                });
+                            }
+                        }
+                    });
+                }
+
+                return messages;
+            },
         },
-    },
+        {
+            param: "system",
+            required: false,
+            transform: (params: Params) => {
+                let systemMessage: string = "";
+                // Transform the chat messages into a simple prompt
+                if (!!params.messages) {
+                    params.messages.forEach((msg) => {
+                        if (msg.role === "system") {
+                            systemMessage = msg.content as string;
+                        }
+                    });
+                }
+                return systemMessage;
+            },
+        },
+    ],
     max_tokens: {
-        param: "max_tokens_to_sample",
+        param: "max_tokens",
         required: true,
     },
     temperature: {
@@ -73,6 +142,11 @@ export const BedrockAnthropicChatCompleteConfig: ProviderConfig = {
     },
     user: {
         param: "metadata.user_id",
+    },
+    anthropic_version: {
+        param: "anthropic_version",
+        required: true,
+        default: "bedrock-2023-05-31",
     },
 };
 
@@ -610,8 +684,21 @@ export const BedrockAI21ChatCompleteResponseTransform: (
     } as ErrorResponse;
 };
 
+interface BedrockAnthropicChatCompleteResponse {
+    id: string;
+    type: string;
+    role: string;
+    content: {
+        type: string;
+        text: string;
+    }[];
+    stop_reason: string;
+    model: string;
+    stop_sequence: null | string;
+}
+
 export const BedrockAnthropicChatCompleteResponseTransform: (
-    response: BedrockAnthropicCompleteResponse | BedrockErrorResponse,
+    response: BedrockAnthropicChatCompleteResponse | BedrockErrorResponse,
     responseStatus: number,
     responseHeaders: Headers
 ) => ChatCompletionResponse | ErrorResponse = (
@@ -631,7 +718,7 @@ export const BedrockAnthropicChatCompleteResponseTransform: (
         } as ErrorResponse;
     }
 
-    if ("completion" in response) {
+    if ("content" in response) {
         const prompt_tokens =
             Number(responseHeaders.get("X-Amzn-Bedrock-Input-Token-Count")) ||
             0;
@@ -639,18 +726,19 @@ export const BedrockAnthropicChatCompleteResponseTransform: (
             Number(responseHeaders.get("X-Amzn-Bedrock-Output-Token-Count")) ||
             0;
         return {
-            id: Date.now().toString(),
-            object: "chat.completion",
+            id: response.id,
+            object: "chat_completion",
             created: Math.floor(Date.now() / 1000),
-            model: "",
+            model: response.model,
             provider: BEDROCK,
             choices: [
                 {
-                    index: 0,
                     message: {
                         role: "assistant",
-                        content: response.completion,
+                        content: response.content[0].text,
                     },
+                    index: 0,
+                    logprobs: null,
                     finish_reason: response.stop_reason,
                 },
             ],
@@ -675,14 +763,31 @@ export const BedrockAnthropicChatCompleteResponseTransform: (
     } as ErrorResponse;
 };
 
+interface BedrockAnthropicChatCompleteStreamResponse {
+    type: string;
+    index: number;
+    delta: {
+        type: string;
+        text: string;
+        stop_reason?: string;
+    };
+    "amazon-bedrock-invocationMetrics": {
+        inputTokenCount: number;
+        outputTokenCount: number;
+        invocationLatency: number;
+        firstByteLatency: number;
+    };
+}
+
 export const BedrockAnthropicChatCompleteStreamChunkTransform: (
     response: string,
     fallbackId: string
 ) => string | string[] = (responseChunk, fallbackId) => {
     let chunk = responseChunk.trim();
 
-    const parsedChunk: BedrockAnthropicStreamChunk = JSON.parse(chunk);
-    if (parsedChunk.stop_reason) {
+    const parsedChunk: BedrockAnthropicChatCompleteStreamResponse =
+        JSON.parse(chunk);
+    if (parsedChunk.delta?.stop_reason) {
         return [
             `data: ${JSON.stringify({
                 id: fallbackId,
@@ -692,15 +797,15 @@ export const BedrockAnthropicChatCompleteStreamChunkTransform: (
                 provider: BEDROCK,
                 choices: [
                     {
-                        index: 0,
                         delta: {
-                            role: "assistant",
-                            content: parsedChunk.completion,
+                            content: parsedChunk.delta?.text,
                         },
-                        finish_reason: null,
+                        index: 0,
+                        logprobs: null,
+                        finish_reason: parsedChunk.delta?.stop_reason ?? null,
                     },
                 ],
-            })}\n\n`,
+            })}` + "\n\n",
             `data: ${JSON.stringify({
                 id: fallbackId,
                 object: "chat.completion.chunk",
@@ -711,7 +816,7 @@ export const BedrockAnthropicChatCompleteStreamChunkTransform: (
                     {
                         index: 0,
                         delta: {},
-                        finish_reason: parsedChunk.stop_reason,
+                        finish_reason: parsedChunk.delta?.stop_reason,
                     },
                 ],
                 usage: {
@@ -732,23 +837,25 @@ export const BedrockAnthropicChatCompleteStreamChunkTransform: (
         ];
     }
 
-    return `data: ${JSON.stringify({
-        id: fallbackId,
-        object: "chat.completion.chunk",
-        created: Math.floor(Date.now() / 1000),
-        model: "",
-        provider: BEDROCK,
-        choices: [
-            {
-                index: 0,
-                delta: {
-                    role: "assistant",
-                    content: parsedChunk.completion,
+    return (
+        `data: ${JSON.stringify({
+            id: fallbackId,
+            object: "chat.completion.chunk",
+            created: Math.floor(Date.now() / 1000),
+            model: "",
+            provider: BEDROCK,
+            choices: [
+                {
+                    delta: {
+                        content: parsedChunk.delta?.text,
+                    },
+                    index: 0,
+                    logprobs: null,
+                    finish_reason: parsedChunk.delta?.stop_reason ?? null,
                 },
-                finish_reason: null,
-            },
-        ],
-    })}\n\n`;
+            ],
+        })}` + "\n\n"
+    );
 };
 
 export const BedrockCohereChatCompleteResponseTransform: (
