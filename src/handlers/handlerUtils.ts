@@ -595,7 +595,6 @@ export function responseHandler(response: Response, streamingMode: boolean, prox
   } else if (responseTransformer && !streamingMode && isCacheHit) {
     responseTransformerFunction = undefined;
   }
-  console.log("response", Object.fromEntries(response.headers))
   if (streamingMode && response.status === 200 && isCacheHit && responseTransformerFunction) {
       return handleJSONToStreamResponse(response, proxyProvider, responseTransformerFunction)
   } else if (streamingMode && response.status === 200) {
