@@ -787,25 +787,17 @@ export const BedrockAnthropicChatCompleteStreamChunkTransform: (
 
     const parsedChunk: BedrockAnthropicChatCompleteStreamResponse =
         JSON.parse(chunk);
-    if (parsedChunk.delta?.stop_reason) {
+    if (
+        parsedChunk.type === "ping" ||
+        parsedChunk.type === "message_start" ||
+        parsedChunk.type === "content_block_start" ||
+        parsedChunk.type === "content_block_stop"
+    ) {
+        return [];
+    }
+
+    if (parsedChunk.type === "message_stop") {
         return [
-            `data: ${JSON.stringify({
-                id: fallbackId,
-                object: "chat.completion.chunk",
-                created: Math.floor(Date.now() / 1000),
-                model: "",
-                provider: BEDROCK,
-                choices: [
-                    {
-                        delta: {
-                            content: parsedChunk.delta?.text,
-                        },
-                        index: 0,
-                        logprobs: null,
-                        finish_reason: parsedChunk.delta?.stop_reason ?? null,
-                    },
-                ],
-            })}` + "\n\n",
             `data: ${JSON.stringify({
                 id: fallbackId,
                 object: "chat.completion.chunk",
@@ -833,7 +825,29 @@ export const BedrockAnthropicChatCompleteStreamChunkTransform: (
                             .outputTokenCount,
                 },
             })}\n\n`,
-            `data: [DONE]\n\n`,
+            "data: [DONE]\n\n",
+        ];
+    }
+
+    if (parsedChunk.delta?.stop_reason) {
+        return [
+            `data: ${JSON.stringify({
+                id: fallbackId,
+                object: "chat.completion.chunk",
+                created: Math.floor(Date.now() / 1000),
+                model: "",
+                provider: BEDROCK,
+                choices: [
+                    {
+                        delta: {
+                            content: parsedChunk.delta?.text,
+                        },
+                        index: 0,
+                        logprobs: null,
+                        finish_reason: parsedChunk.delta?.stop_reason ?? null,
+                    },
+                ],
+            })}\n\n`,
         ];
     }
 
