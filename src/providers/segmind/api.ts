@@ -5,7 +5,7 @@ const StabilityAIAPIConfig: ProviderAPIConfig = {
   headers: (API_KEY:string) => {
     return {"x-api-key": `${API_KEY}`}
   },
-  getEndpoint: (fn:string, ENGINE_ID:string, url?: string) => {
+  getEndpoint: (ENGINE_ID:string) => {
     return `/${ENGINE_ID}`
   }
 };

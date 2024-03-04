@@ -213,7 +213,7 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
   } else if (provider === SEGMIND && apiConfig.baseURL && apiConfig.getEndpoint) {
     fetchOptions = constructRequest(apiConfig.headers(), provider, "POST", forwardHeaders, requestHeaders);
     baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(fn, params.model, url);
+    endpoint = apiConfig.getEndpoint(params.model);
     url = `${baseUrl}${endpoint}`;
   } else if (provider === AI21 && apiConfig.getEndpoint && apiConfig.baseURL) {
     baseUrl = baseUrl || apiConfig.baseURL;
@@ -392,7 +392,7 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
   } else if (provider === SEGMIND && apiConfig.baseURL && apiConfig.getEndpoint) {
     fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, "POST", forwardHeaders, requestHeaders);
     baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(fn, params.model);
+    endpoint = apiConfig.getEndpoint(params.model);
   } else if (provider === OLLAMA && apiConfig.getEndpoint) {    
     fetchOptions = constructRequest(apiConfig.headers(), provider, "POST", forwardHeaders, requestHeaders);
     baseUrl = baseUrl;
