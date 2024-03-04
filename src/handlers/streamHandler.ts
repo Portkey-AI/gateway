@@ -147,9 +147,10 @@ export async function handleTextResponse(response: Response, responseTransformer
   const text = await response.text();
 
   if (responseTransformer) {
-    const transformedText = responseTransformer({error: {message: text}}, response.status);
+    const transformedText = responseTransformer({"html-message": text}, response.status);
     return new Response(JSON.stringify(transformedText), {
       ...response,
+      status: response.status,
       headers: new Headers({
           ...Object.fromEntries(response.headers),
           'content-type': "application/json"

@@ -96,34 +96,33 @@ interface SegmindImageGenerateResponse {
 
 
 interface SegmindImageGenerateErrorResponse {
-  id: string;
-  name: string;
-  message: string;
+  "html-message"?: string;
+  error?: string;
 }
 
-export const SegmindImageGenerateResponseTransform: (response: SegmindImageGenerateResponse | SegmindImageGenerateErrorResponse | string, responseStatus: number) => ImageGenerateResponse | ErrorResponse = (response, responseStatus) => {
-  if (typeof response === 'string') {
+export const SegmindImageGenerateResponseTransform: (response: SegmindImageGenerateResponse | SegmindImageGenerateErrorResponse, responseStatus: number) => ImageGenerateResponse | ErrorResponse = (response, responseStatus) => {
+  if (responseStatus !== 200 && 'error' in response) {
     return {
       error: {
-        message: response,
+        message: response.error,
         type: null,
-        param: null,
-        code: null
-      },
-      provider: SEGMIND
-    }
-  }
-
-  if (responseStatus !== 200 && 'message' in response) {
-    return {
-      error: {
-        message: response.message,
-        type: response.name,
         param: null,
         code: null,
       },
       provider: SEGMIND
-    }
+    } as ErrorResponse
+  }
+
+  if (responseStatus !== 200 && 'html-message' in response) {
+    return {
+      error: {
+        message: response['html-message'],
+        type: null,
+        param: null,
+        code: null,
+      },
+      provider: SEGMIND
+    } as ErrorResponse
   }
 
   if ('image' in response) {
