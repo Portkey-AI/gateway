@@ -868,7 +868,7 @@ export const BedrockAnthropicChatCompleteStreamChunkTransform: (
                     finish_reason: parsedChunk.delta?.stop_reason ?? null,
                 },
             ],
-        })}` + "\n\n"
+        })}\n\n`
     );
 };
 
