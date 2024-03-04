@@ -1,5 +1,4 @@
 import { AZURE_OPEN_AI, BEDROCK, CONTENT_TYPES, COHERE, GOOGLE, REQUEST_TIMEOUT_STATUS_CODE } from "../globals";
-import { GroqChatCompleteResponseTransform } from "../providers/groq/chatComplete";
 import { OpenAIChatCompleteResponse } from "../providers/openai/chatComplete";
 import { OpenAICompleteResponse } from "../providers/openai/complete";
 import { getStreamModeSplitPattern } from "../utils";
