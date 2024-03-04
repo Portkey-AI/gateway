@@ -59,7 +59,8 @@ export const SegmindImageGenerateConfig: ProviderConfig = {
   base64: {
     param: "base64",
     transform: (params:any) => true, // Always true to handle uniform responses
-    default: true
+    default: true,
+    required: true
   },
   control_scale: {
     param: "control_scale",
