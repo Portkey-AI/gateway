@@ -70,8 +70,18 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
         // Transform the chat messages into a simple prompt
         if (!!params.messages) {
           params.messages.forEach(msg => {
-            if (msg.role === "system") {
-              systemMessage = msg.content as string;
+            if (
+                msg.role === "system" &&
+                msg.content &&
+                typeof msg.content === "object" &&
+                msg.content[0].text
+            ) {
+                systemMessage = msg.content[0].text;
+            } else if (
+                msg.role === "system" &&
+                typeof msg.content === "string"
+            ) {
+                systemMessage = msg.content;
             }
           })
         }
