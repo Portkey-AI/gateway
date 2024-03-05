@@ -100,8 +100,18 @@ export const BedrockAnthropicChatCompleteConfig: ProviderConfig = {
                 // Transform the chat messages into a simple prompt
                 if (!!params.messages) {
                     params.messages.forEach((msg) => {
-                        if (msg.role === "system") {
-                            systemMessage = msg.content as string;
+                        if (
+                            msg.role === "system" &&
+                            msg.content &&
+                            typeof msg.content === "object" &&
+                            msg.content[0].text
+                        ) {
+                            systemMessage = msg.content[0].text;
+                        } else if (
+                            msg.role === "system" &&
+                            typeof msg.content === "string"
+                        ) {
+                            systemMessage = msg.content;
                         }
                     });
                 }
@@ -848,25 +858,23 @@ export const BedrockAnthropicChatCompleteStreamChunkTransform: (
         ];
     }
 
-    return (
-        `data: ${JSON.stringify({
-            id: fallbackId,
-            object: "chat.completion.chunk",
-            created: Math.floor(Date.now() / 1000),
-            model: "",
-            provider: BEDROCK,
-            choices: [
-                {
-                    delta: {
-                        content: parsedChunk.delta?.text,
-                    },
-                    index: 0,
-                    logprobs: null,
-                    finish_reason: parsedChunk.delta?.stop_reason ?? null,
+    return `data: ${JSON.stringify({
+        id: fallbackId,
+        object: "chat.completion.chunk",
+        created: Math.floor(Date.now() / 1000),
+        model: "",
+        provider: BEDROCK,
+        choices: [
+            {
+                delta: {
+                    content: parsedChunk.delta?.text,
                 },
-            ],
-        })}\n\n`
-    );
+                index: 0,
+                logprobs: null,
+                finish_reason: parsedChunk.delta?.stop_reason ?? null,
+            },
+        ],
+    })}\n\n`;
 };
 
 export const BedrockCohereChatCompleteResponseTransform: (
