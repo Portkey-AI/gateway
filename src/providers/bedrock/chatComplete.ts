@@ -2,14 +2,11 @@ import { BEDROCK } from "../../globals";
 import { Message, Params } from "../../types/requestBody";
 import {
     ChatCompletionResponse,
-    CompletionResponse,
     ErrorResponse,
     ProviderConfig,
 } from "../types";
 import {
     BedrockAI21CompleteResponse,
-    BedrockAnthropicCompleteResponse,
-    BedrockAnthropicStreamChunk,
     BedrockCohereCompleteResponse,
     BedrockCohereStreamChunk,
     BedrockLlamaCompleteResponse,
