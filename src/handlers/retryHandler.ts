@@ -1,5 +1,40 @@
 import retry from 'async-retry';
 
+async function fetchWithTimeout(url: string, options: RequestInit, timeout: number) {
+  const timeoutRequestOptions = {
+    ...options,
+    signal: AbortSignal.timeout(timeout)
+  }
+
+  let response;
+
+  try {
+    response = await fetch(url, timeoutRequestOptions);
+  } catch (err: any) {
+    if (err.name === "TimeoutError") {
+      response = new Response(JSON.stringify(
+        {
+          error: {
+            "message": `Request exceeded the timeout sent in the request: ${timeout}ms`,
+            "type": "timeout_error",
+            "param": null,
+            "code": null
+          }
+        }
+      ), {
+        headers: {
+          "content-type": "application/json"
+        },
+        status: 408
+      })
+    } else {
+      throw err;
+    }
+  }
+
+  return response;
+}
+
 /**
  * Tries making a fetch request a specified number of times until it succeeds.
  * If the response's status code is included in the statusCodesToRetry array,
@@ -17,9 +52,9 @@ export const retryRequest = async (
   url: string,
   options: RequestInit,
   retryCount: number,
-  statusCodesToRetry: number[]
+  statusCodesToRetry: number[],
+  timeout: number | null
 ): Promise<[Response, number | undefined]> => {
-
   let lastError: any | undefined;
   let lastResponse: Response | undefined;
   let lastAttempt: number | undefined;
@@ -27,7 +62,7 @@ export const retryRequest = async (
     await retry(
       async (bail: any, attempt: number) => {
         try {
-          const response: Response = await fetch(url, options);
+          const response: Response = timeout ? await fetchWithTimeout(url, options, timeout) : await fetch(url, options);
           if (statusCodesToRetry.includes(response.status)) {
             const errorObj: any = new Error(await response.text());
             errorObj.status = response.status;
@@ -58,6 +93,7 @@ export const retryRequest = async (
         lastAttempt = attempt;
         console.warn(`Failed in Retry attempt ${attempt}. Error: ${error}`);
       },
+      randomize: false
     }
     );
   } catch (error: any) {

@@ -1,3 +1,4 @@
+import { ANYSCALE } from "../../globals";
 import { ChatCompletionResponse, ErrorResponse, ProviderConfig } from "../types";
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
@@ -70,10 +71,27 @@ export const AnyscaleChatCompleteConfig: ProviderConfig = {
   },
   response_format: {
     param: "response_format"
+  },
+  logprobs: {
+    param: "logprobs",
+    default: false
+  },
+  top_logprobs: {
+    param: "top_logprobs"
   }
 };
 
-export interface AnyscaleChatCompleteResponse extends ChatCompletionResponse, ErrorResponse {}
+export interface AnyscaleChatCompleteResponse extends ChatCompletionResponse {}
+
+export interface AnyscaleValidationErrorResponse {
+    detail: {
+        loc: Array<any>;
+        msg: string;
+        type: string;
+    }[];
+}
+
+export interface AnyscaleErrorResponse extends ErrorResponse {}
 
 export interface AnyscaleStreamChunk {
     id: string;
@@ -89,8 +107,43 @@ export interface AnyscaleStreamChunk {
     }[]
 }
 
-export const AnyscaleChatCompleteResponseTransform: (response: AnyscaleChatCompleteResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-    if (responseStatus !== 200) {
+export const AnyscaleValidationErrorResponseTransform: (response: AnyscaleValidationErrorResponse) => ErrorResponse = (response) => {
+  let firstError: Record<string, any> | undefined;
+  let errorField: string | null = null;
+  let errorMessage: string | undefined;
+  let errorType: string | null = null;
+
+  if (Array.isArray(response.detail)) {
+    [firstError] = response.detail;
+    errorField = firstError?.loc?.join(".") ?? "";
+    errorMessage = firstError.msg;
+    errorType = firstError.type;
+  } else {
+    errorMessage = response.detail;
+  }
+
+  return {
+    error: {
+      message: `${errorField ? `${errorField}: ` : ""}${errorMessage}`,
+      type: errorType,
+      param: null,
+      code: null,
+    },
+    provider: ANYSCALE,
+  } as ErrorResponse;
+}
+
+export const AnyscaleChatCompleteResponseTransform: (response: AnyscaleChatCompleteResponse | AnyscaleErrorResponse | AnyscaleValidationErrorResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+    if (
+      "detail" in response &&
+      responseStatus !== 200 &&
+      response.detail.length
+    ) {
+      return AnyscaleValidationErrorResponseTransform(response);
+    }
+      
+
+    if ('error' in response && responseStatus !== 200) {
       return {
           error: {
               message: response.error?.message,
@@ -98,19 +151,33 @@ export const AnyscaleChatCompleteResponseTransform: (response: AnyscaleChatCompl
               param: null,
               code: null
           },
-          provider: "anyscale"
+          provider: ANYSCALE
       } as ErrorResponse;
     } 
-  
-    return {
-      id: response.id,
-      object: response.object,
-      created: response.created,
-      model: response.model,
-      provider: "anyscale",
-      choices: response.choices,
-      usage: response.usage
+    
+    if ('choices' in response) {
+      return {
+        id: response.id,
+        object: response.object,
+        created: response.created,
+        model: response.model,
+        provider: ANYSCALE,
+        choices: response.choices,
+        usage: response.usage
+      }
     }
+
+    return {
+      error: {
+        message: `Invalid response recieved from ${ANYSCALE}: ${JSON.stringify(
+          response
+        )}`,
+        type: null,
+        param: null,
+        code: null,
+      },
+      provider: ANYSCALE,
+    } as ErrorResponse;
   }
     
   
@@ -127,7 +194,7 @@ export const AnyscaleChatCompleteResponseTransform: (response: AnyscaleChatCompl
       object: parsedChunk.object,
       created: parsedChunk.created,
       model: parsedChunk.model,
-      provider: "anyscale",
+      provider: ANYSCALE,
       choices: parsedChunk.choices
     })}` + '\n\n'
   };

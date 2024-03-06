@@ -19,6 +19,8 @@ import { completionsHandler } from "./handlers/completionsHandler";
 import { embeddingsHandler } from "./handlers/embeddingsHandler";
 import { requestValidator } from "./middlewares/requestValidator";
 import { compress } from "hono/compress";
+import { getRuntimeKey } from "hono/adapter";
+import { imageGenerationsHandler } from "./handlers/imageGenerationsHandler";
 
 // Create a new Hono server instance
 const app = new Hono();
@@ -30,7 +32,8 @@ const app = new Hono();
  */
 
 app.use("*", (c, next) => {
-  if (c.runtime !== "lagon" && c.runtime !== "workerd") {
+  const runtime = getRuntimeKey();
+  if (runtime !== "lagon" && runtime !== "workerd") {
     return compress()(c, next)
   }
   return next();
@@ -99,6 +102,12 @@ app.post("/v1/completions", requestValidator, completionsHandler);
  * Handles requests by passing them to the embeddingsHandler.
  */
 app.post("/v1/embeddings", requestValidator, embeddingsHandler);
+
+/**
+ * POST route for '/v1/images/generations'.
+ * Handles requests by passing them to the imageGenerations handler.
+ */
+app.post("/v1/images/generations", requestValidator, imageGenerationsHandler);
 
 /**
  * POST route for '/v1/prompts/:id/completions'.

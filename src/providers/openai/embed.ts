@@ -13,6 +13,12 @@ export const OpenAIEmbedConfig: ProviderConfig = {
     param: "input",
     required: true,
   },
+  encoding_format: {
+    param: "encoding_format"
+  },
+  dimensions: {
+    param: "dimensions"
+  },
   user: {
     param: "user",
   },

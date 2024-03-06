@@ -5,7 +5,9 @@ export const HEADER_KEYS: Record<string, string> = {
   RETRIES: `x-${POWERED_BY}-retry-count`,
   PROVIDER: `x-${POWERED_BY}-provider`,
   TRACE_ID: `x-${POWERED_BY}-trace-id`,
-  CACHE: `x-${POWERED_BY}-cache`
+  CACHE: `x-${POWERED_BY}-cache`,
+  FORWARD_HEADERS: `x-${POWERED_BY}-forward-headers`,
+  CUSTOM_HOST: `x-${POWERED_BY}-custom-host`
 }
 
 export const RESPONSE_HEADER_KEYS: Record<string, string> = {
@@ -18,6 +20,7 @@ export const RESPONSE_HEADER_KEYS: Record<string, string> = {
 
 export const RETRY_STATUS_CODES = [429, 500, 502, 503, 504];
 export const MAX_RETRIES = 5;
+export const REQUEST_TIMEOUT_STATUS_CODE = 408;
 
 export const OPEN_AI:string = "openai";
 export const COHERE:string = "cohere";
@@ -30,6 +33,13 @@ export const GOOGLE: string = "google";
 export const PERPLEXITY_AI: string = "perplexity-ai";
 export const MISTRAL_AI: string = "mistral-ai";
 export const DEEPINFRA: string = "deepinfra";
+export const STABILITY_AI: string = "stability-ai";
+export const NOMIC: string = "nomic";
+export const OLLAMA: string = "ollama";
+export const AI21: string = "ai21";
+export const BEDROCK: string = "bedrock";
+export const GROQ: string = "groq";
+export const SEGMIND: string = "segmind";
 
 export const providersWithStreamingSupport = [OPEN_AI, AZURE_OPEN_AI, ANTHROPIC, COHERE];
 export const allowedProxyProviders = [OPEN_AI, COHERE, AZURE_OPEN_AI, ANTHROPIC];
@@ -39,5 +49,11 @@ export const PROXY_REQUEST_PATH_PREFIX:string = "/v1/proxy";
 export const CONTENT_TYPES = {
   APPLICATION_JSON: "application/json",
   MULTIPART_FORM_DATA: "multipart/form-data",
-  EVENT_STREAM: "text/event-stream"
+  EVENT_STREAM: "text/event-stream",
+  AUDIO_MPEG: "audio/mpeg",
+  APPLICATION_OCTET_STREAM: "application/octet-stream",
+  GENERIC_AUDIO_PATTERN: "audio",
+  PLAIN_TEXT: "text/plain",
+  HTML: "text/html",
+  GENERIC_IMAGE_PATTERN: "image/",
 }

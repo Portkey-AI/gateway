@@ -10,11 +10,16 @@ function proxyProvider(proxyModeHeader:string, providerHeader: string) {
   return proxyProvider;
 }
 
-function getProxyPath(requestURL:string, proxyProvider:string, proxyEndpointPath:string) {
+function getProxyPath(requestURL:string, proxyProvider:string, proxyEndpointPath:string, customHost: string) {
   let reqURL = new URL(requestURL);
   let reqPath = reqURL.pathname;
   const reqQuery = reqURL.search;
   reqPath = reqPath.replace(proxyEndpointPath, "");
+
+  if (customHost) {
+    return `${customHost}${reqPath}${reqQuery}`
+  }
+
   const providerBasePath = Providers[proxyProvider].api.baseURL;
   if (proxyProvider === AZURE_OPEN_AI) {
     return `https:/${reqPath}${reqQuery}`;
@@ -46,7 +51,7 @@ function headersToSend(headersObj: Record<string, string>, customHeadersToIgnore
 
 export async function proxyGetHandler(c: Context): Promise<Response> {
   try {
-    const requestHeaders = Object.fromEntries(c.req.headers);
+    const requestHeaders = Object.fromEntries(c.req.raw.headers);
     delete requestHeaders["content-type"];
     const store: Record<string, any> = {
       proxyProvider: proxyProvider(requestHeaders[HEADER_KEYS.MODE], requestHeaders[HEADER_KEYS.PROVIDER]),
@@ -55,7 +60,9 @@ export async function proxyGetHandler(c: Context): Promise<Response> {
       proxyPath: c.req.url.indexOf("/v1/proxy") > -1 ? "/v1/proxy" : "/v1"
     }
 
-    let urlToFetch = getProxyPath(c.req.url, store.proxyProvider, store.proxyPath);
+    const customHost = requestHeaders[HEADER_KEYS.CUSTOM_HOST] || "";
+
+    let urlToFetch = getProxyPath(c.req.url, store.proxyProvider, store.proxyPath, customHost);
 
     let fetchOptions = {
         headers: headersToSend(requestHeaders, store.customHeadersToAvoid),
@@ -64,9 +71,17 @@ export async function proxyGetHandler(c: Context): Promise<Response> {
 
     let retryCount = Math.min(parseInt(requestHeaders[HEADER_KEYS.RETRIES])||1, MAX_RETRIES);
 
-    let [lastResponse, lastAttempt] = await retryRequest(urlToFetch, fetchOptions, retryCount, RETRY_STATUS_CODES);
+    let [lastResponse, lastAttempt] = await retryRequest(urlToFetch, fetchOptions, retryCount, RETRY_STATUS_CODES, null);
 
-    const mappedResponse = await responseHandler(lastResponse, store.isStreamingMode, store.proxyProvider, undefined, urlToFetch);
+    const mappedResponse = await responseHandler(
+        lastResponse,
+        store.isStreamingMode,
+        store.proxyProvider,
+        undefined,
+        urlToFetch,
+        false,
+        store.reqBody
+    );
     updateResponseHeaders(mappedResponse, 0, store.reqBody, "DISABLED", lastAttempt ?? 0, requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");
 
     c.set("requestOptions", [{

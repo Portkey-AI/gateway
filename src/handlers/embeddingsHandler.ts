@@ -12,10 +12,8 @@ import { Context } from "hono";
 export async function embeddingsHandler(c: Context): Promise<Response> {
     try {
         let request = await c.req.json();
-        let requestHeaders = Object.fromEntries(c.req.headers);
+        let requestHeaders = Object.fromEntries(c.req.raw.headers);
         const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders)
-
-        const errors: any = [];
 
         const tryTargetsResponse = await tryTargetsRecursively(
             c,
@@ -24,18 +22,9 @@ export async function embeddingsHandler(c: Context): Promise<Response> {
             requestHeaders,
             "embed",
             "POST",
-            errors,
             "config"
         );
 
-        if (!tryTargetsResponse) {
-            return new Response(errors[errors.length - 1].errorObj, {
-                status: errors[errors.length - 1].status,
-                headers: {
-                    "content-type": "application/json"
-                }
-            });
-        }
         return tryTargetsResponse;
     } catch (err: any) {
         console.log("completion error", err.message);

@@ -10,6 +10,13 @@ import {
     PERPLEXITY_AI,
     TOGETHER_AI,
     DEEPINFRA,
+    NOMIC,
+    STABILITY_AI,
+    OLLAMA,
+    BEDROCK,
+    AI21,
+    GROQ,
+    SEGMIND
 } from "../../../globals";
 
 export const configSchema: any = z
@@ -45,7 +52,14 @@ export const configSchema: any = z
                         GOOGLE,
                         PERPLEXITY_AI,
                         MISTRAL_AI,
-                        DEEPINFRA
+                        DEEPINFRA,
+                        NOMIC,
+                        STABILITY_AI,
+                        OLLAMA,
+                        AI21,
+                        BEDROCK,
+                        GROQ,
+                        SEGMIND
                     ].includes(value),
                 {
                     message:
@@ -54,6 +68,10 @@ export const configSchema: any = z
             )
             .optional(),
         api_key: z.string().optional(),
+        aws_secret_access_key: z.string().optional(),
+        aws_access_key_id: z.string().optional(),
+        aws_session_token: z.string().optional(),
+        aws_region: z.string().optional(),
         cache: z
             .object({
                 mode: z
@@ -80,6 +98,9 @@ export const configSchema: any = z
         weight: z.number().optional(),
         on_status_codes: z.array(z.number()).optional(),
         targets: z.array(z.lazy(() => configSchema)).optional(),
+        request_timeout: z.number().optional(),
+        custom_host: z.string().optional(),
+        forward_headers: z.array(z.string()).optional()
     })
     .refine(
         (value) => {
@@ -87,15 +108,34 @@ export const configSchema: any = z
                 value.provider !== undefined && value.api_key !== undefined;
             const hasModeTargets =
                 value.strategy !== undefined && value.targets !== undefined;
+            const isOllamaProvider = value.provider === OLLAMA;
+            const hasAWSDetails = value.aws_access_key_id && value.aws_secret_access_key;
+
             return (
                 hasProviderApiKey ||
                 hasModeTargets ||
                 value.cache ||
-                value.retry
+                value.retry ||
+                value.request_timeout ||
+                isOllamaProvider ||
+                hasAWSDetails
             );
         },
         {
             message:
-                "Invalid configuration. It must have either 'provider' and 'api_key', or 'strategy' and 'targets', or 'cache', or 'target'",
+                "Invalid configuration. It must have either 'provider' and 'api_key', or 'strategy' and 'targets', or 'cache', or 'retry', or 'request_timeout'",
+        }
+    )
+    .refine(
+        (value) => {
+            const customHost = value.custom_host;
+            if (customHost && (customHost.indexOf("api.portkey") > -1)) {
+                return false;
+            }
+            return true;
+        },
+        {
+            message:
+                "Invalid custom host",
         }
     );

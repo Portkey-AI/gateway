@@ -17,9 +17,6 @@ const transformGenerationConfig = (params: Params) => {
     if (params["top_k"]) {
         generationConfig["topK"] = params["top_k"];
     }
-    if (params["top_k"]) {
-        generationConfig["topK"] = params["top_k"];
-    }
     if (params["max_tokens"]) {
         generationConfig["maxOutputTokens"] = params["max_tokens"];
     }

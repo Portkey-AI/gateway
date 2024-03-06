@@ -83,8 +83,123 @@ export const OpenAIChatCompleteConfig: ProviderConfig = {
   }
 };
 
-interface OpenAIChatCompleteResponse extends ChatCompletionResponse {
+export interface OpenAIChatCompleteResponse extends ChatCompletionResponse {
   system_fingerprint: string;
 }
 
 export const OpenAIChatCompleteResponseTransform: (response: OpenAIChatCompleteResponse) => ChatCompletionResponse = (response) => response;
+
+/**
+ * Transforms an OpenAI-format chat completions JSON response into an array of formatted OpenAI compatible text/event-stream chunks.
+ *
+ * @param {Object} response - The OpenAIChatCompleteResponse object.
+ * @param {string} provider - The provider string.
+ * @returns {Array<string>} - An array of formatted stream chunks.
+ */
+export const OpenAIChatCompleteJSONToStreamResponseTransform: (response: OpenAIChatCompleteResponse, provider: string) => Array<string> = (response, provider) => {
+  const streamChunkArray: Array<string> = [];
+  const { id, model, system_fingerprint, choices } = response;
+
+  const { prompt_tokens, completion_tokens } = response.usage || {};
+
+  let total_tokens;
+  if (prompt_tokens && completion_tokens) total_tokens = prompt_tokens + completion_tokens;
+
+  const streamChunkTemplate: Record<string, any> = {
+    id,
+    object: "chat.completion.chunk",
+    created: Date.now(),
+    model: model || "",
+    system_fingerprint: system_fingerprint || null,
+    provider,
+    usage: {
+      ...(completion_tokens && {completion_tokens}),
+      ...(prompt_tokens && {prompt_tokens}),
+      ...(total_tokens && {total_tokens})
+    }
+  }
+
+  for (const [index, choice] of choices.entries()) {
+    if (choice.message && choice.message.tool_calls) {
+      const currentToolCall = choice.message.tool_calls[0];
+      const toolCallNameChunk = {
+        index: 0,
+        id: currentToolCall.id,
+        type: "function",
+        function: {
+          name: currentToolCall.function.name,
+          arguments: ""
+        }
+      }
+
+      const toolCallArgumentChunk = {
+        index: 0,
+        function: {
+          arguments: currentToolCall.function.arguments
+        }
+      }
+
+      streamChunkArray.push(`data: ${JSON.stringify({
+        ...streamChunkTemplate,
+        choices: [
+          {
+            index: index,
+            delta: {
+              role: "assistant",
+              content: null,
+              tool_calls: [toolCallNameChunk]
+            }
+          }
+        ]
+      })}\n\n`)
+
+      streamChunkArray.push(`data: ${JSON.stringify({
+        ...streamChunkTemplate,
+        choices: [
+          {
+            index: index,
+            delta: {
+              role: "assistant",
+              tool_calls: [toolCallArgumentChunk]
+            }
+          }
+        ]
+      })}\n\n`)
+    }
+
+    if (choice.message && choice.message.content && typeof choice.message.content === "string") {
+      const inidividualWords: Array<string> = [];
+      for (let i = 0; i < choice.message.content.length; i += 4) {
+        inidividualWords.push(choice.message.content.slice(i, i+4));
+      }
+      inidividualWords.forEach((word: string) => {
+        streamChunkArray.push(`data: ${JSON.stringify({
+          ...streamChunkTemplate,
+          choices: [
+            {
+              index: index,
+              delta: {
+                role: "assistant",
+                content: word
+              }
+            }
+          ]
+        })
+      }\n\n`)}) 
+    }
+
+    streamChunkArray.push(`data: ${JSON.stringify({
+      ...streamChunkTemplate,
+      choices: [
+        {
+          index: index,
+          delta: {},
+          finish_reason: choice.finish_reason
+        }
+      ]
+    })}\n\n`)
+  }
+
+  streamChunkArray.push(`data: [DONE]\n\n`)
+  return streamChunkArray;
+}
