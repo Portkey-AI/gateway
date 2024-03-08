@@ -23,7 +23,7 @@ import { getRuntimeKey } from "hono/adapter";
 import { imageGenerationsHandler } from "./handlers/imageGenerationsHandler";
 
 // Create a new Hono server instance
-const app = new Hono().basePath("/api");
+const app = new Hono();
 
 /**
  * Middleware that conditionally applies compression middleware based on the runtime.
