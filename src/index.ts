@@ -6,7 +6,7 @@
 
 import { Hono } from "hono";
 import { prettyJSON } from "hono/pretty-json";
-import { HTTPException } from 'hono/http-exception'
+import { HTTPException } from "hono/http-exception";
 // import { env } from 'hono/adapter' // Have to set this up for multi-environment deployment
 
 import { completeHandler } from "./handlers/completeHandler";
@@ -23,7 +23,7 @@ import { getRuntimeKey } from "hono/adapter";
 import { imageGenerationsHandler } from "./handlers/imageGenerationsHandler";
 
 // Create a new Hono server instance
-const app = new Hono();
+const app = new Hono().basePath("/api");
 
 /**
  * Middleware that conditionally applies compression middleware based on the runtime.
@@ -34,7 +34,7 @@ const app = new Hono();
 app.use("*", (c, next) => {
   const runtime = getRuntimeKey();
   if (runtime !== "lagon" && runtime !== "workerd") {
-    return compress()(c, next)
+    return compress()(c, next);
   }
   return next();
 });
@@ -61,10 +61,10 @@ app.notFound((c) => c.json({ message: "Not Found", ok: false }, 404));
  */
 app.onError((err, c) => {
   if (err instanceof HTTPException) {
-      return err.getResponse()
+    return err.getResponse();
   }
   c.status(500);
-  return c.json({status: "failure", message: err.message});
+  return c.json({ status: "failure", message: err.message });
 });
 
 /**
@@ -89,7 +89,7 @@ app.post("/v1/embed", embedHandler);
  * POST route for '/v1/chat/completions'.
  * Handles requests by passing them to the chatCompletionsHandler.
  */
-app.post("/v1/chat/completions",requestValidator, chatCompletionsHandler);
+app.post("/v1/chat/completions", requestValidator, chatCompletionsHandler);
 
 /**
  * POST route for '/v1/completions'.
@@ -120,19 +120,22 @@ app.post("/v1/prompts/*", requestValidator, (c) => {
     return completionsHandler(c);
   }
   c.status(500);
-  return c.json({status: "failure", message: "prompt completions error: Something went wrong"})
+  return c.json({
+    status: "failure",
+    message: "prompt completions error: Something went wrong",
+  });
 });
 
 // Support the /v1 proxy endpoint
 app.post("/v1/proxy/*", proxyHandler);
 
 // Support the /v1 proxy endpoint after all defined endpoints so this does not interfere.
-app.post("/v1/*", requestValidator, proxyHandler)
+app.post("/v1/*", requestValidator, proxyHandler);
 
 // Support the /v1 proxy endpoint after all defined endpoints so this does not interfere.
-app.get('/v1/*', requestValidator, proxyGetHandler)
+app.get("/v1/*", requestValidator, proxyGetHandler);
 
-app.delete('/v1/*', requestValidator, proxyGetHandler)
+app.delete("/v1/*", requestValidator, proxyGetHandler);
 
 // Export the app
 export default app;
