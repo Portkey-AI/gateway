@@ -6,4 +6,4 @@ export const config = {
 };
 
 export const POST = handle(app);
-export default handle(app);
+export const GET = handle(app);
