@@ -99,72 +99,69 @@ export const OpenAIChatCompleteResponseTransform: (response: OpenAIChatCompleteR
 export const OpenAIChatCompleteJSONToStreamResponseTransform: (response: OpenAIChatCompleteResponse, provider: string) => Array<string> = (response, provider) => {
   const streamChunkArray: Array<string> = [];
   const { id, model, system_fingerprint, choices } = response;
-
-  const { prompt_tokens, completion_tokens } = response.usage || {};
-
-  let total_tokens;
-  if (prompt_tokens && completion_tokens) total_tokens = prompt_tokens + completion_tokens;
-
-  const streamChunkTemplate: Record<string, any> = {
+  const streamChunkTemplate = {
     id,
     object: "chat.completion.chunk",
     created: Date.now(),
     model: model || "",
     system_fingerprint: system_fingerprint || null,
     provider,
-    usage: {
-      ...(completion_tokens && {completion_tokens}),
-      ...(prompt_tokens && {prompt_tokens}),
-      ...(total_tokens && {total_tokens})
+    usage: {}
+  }
+
+  if (response.usage?.completion_tokens) {
+    streamChunkTemplate.usage = {
+      completion_tokens: response.usage?.completion_tokens
     }
   }
 
   for (const [index, choice] of choices.entries()) {
-    if (choice.message && choice.message.tool_calls) {
-      const currentToolCall = choice.message.tool_calls[0];
-      const toolCallNameChunk = {
-        index: 0,
-        id: currentToolCall.id,
-        type: "function",
-        function: {
-          name: currentToolCall.function.name,
-          arguments: ""
-        }
-      }
-
-      const toolCallArgumentChunk = {
-        index: 0,
-        function: {
-          arguments: currentToolCall.function.arguments
-        }
-      }
-
-      streamChunkArray.push(`data: ${JSON.stringify({
-        ...streamChunkTemplate,
-        choices: [
-          {
-            index: index,
-            delta: {
-              role: "assistant",
-              content: null,
-              tool_calls: [toolCallNameChunk]
-            }
+    if (choice.message && choice.message.tool_calls && choice.message.tool_calls.length) {
+      for (const [toolCallIndex, toolCall] of choice.message.tool_calls.entries()) {
+        const toolCallNameChunk = {
+          index: toolCallIndex,
+          id: toolCall.id,
+          type: "function",
+          function: {
+            name: toolCall.function.name,
+            arguments: ""
           }
-        ]
-      })}\n\n`)
-
-      streamChunkArray.push(`data: ${JSON.stringify({
-        ...streamChunkTemplate,
-        choices: [
-          {
-            index: index,
-            delta: {
-              role: "assistant",
-              tool_calls: [toolCallArgumentChunk]
-            }
+        }
+  
+        const toolCallArgumentChunk = {
+          index: toolCallIndex,
+          function: {
+            arguments: toolCall.function.arguments
           }
-        ]
-      })}\n\n`)
+        }
+  
+        streamChunkArray.push(`data: ${JSON.stringify({
+          ...streamChunkTemplate,
+          choices: [
+            {
+              index: index,
+              delta: {
+                role: "assistant",
+                content: null,
+                tool_calls: [toolCallNameChunk]
+              }
+            }
+          ]
+        })}\n\n`)
+  
+        streamChunkArray.push(`data: ${JSON.stringify({
+          ...streamChunkTemplate,
+          choices: [
+            {
+              index: index,
+              delta: {
+                role: "assistant",
+                tool_calls: [toolCallArgumentChunk]
+              }
+            }
+          ]
+        })}\n\n`)
+      }
     }
 
     if (choice.message && choice.message.content && typeof choice.message.content === "string") {
