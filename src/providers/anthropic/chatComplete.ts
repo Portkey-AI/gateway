@@ -76,12 +76,12 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                 typeof msg.content === "object" &&
                 msg.content[0].text
             ) {
-                systemMessage = msg.content[0].text;
+                systemMessage = `${systemMessage}${msg.content[0].text}`;
             } else if (
                 msg.role === "system" &&
                 typeof msg.content === "string"
             ) {
-                systemMessage = msg.content;
+                systemMessage = `${systemMessage}${msg.content}`;
             }
           })
         }
@@ -165,7 +165,7 @@ export const AnthropicChatCompleteResponseTransform: (response: AnthropicChatCom
         },
         provider: ANTHROPIC
     } as ErrorResponse;
-  } 
+  }
 
   if ('content' in response) {
     return {
@@ -195,7 +195,7 @@ export const AnthropicChatCompleteResponseTransform: (response: AnthropicChatCom
     provider: ANTHROPIC
   } as ErrorResponse;
 }
-  
+
 
 export const AnthropicChatCompleteStreamChunkTransform: (response: string, fallbackId: string) => string | undefined = (responseChunk, fallbackId) => {
   let chunk = responseChunk.trim();
@@ -216,7 +216,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (response: string, fallb
   chunk = chunk.replace(/^event: message_delta[\r\n]*/, "");
   chunk = chunk.replace(/^data: /, "");
   chunk = chunk.trim();
-  
+
 
   const parsedChunk: AnthropicChatCompleteStreamResponse = JSON.parse(chunk);
   return `data: ${JSON.stringify({
