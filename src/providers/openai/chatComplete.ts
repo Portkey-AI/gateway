@@ -99,19 +99,23 @@ export const OpenAIChatCompleteResponseTransform: (response: OpenAIChatCompleteR
 export const OpenAIChatCompleteJSONToStreamResponseTransform: (response: OpenAIChatCompleteResponse, provider: string) => Array<string> = (response, provider) => {
   const streamChunkArray: Array<string> = [];
   const { id, model, system_fingerprint, choices } = response;
-  const streamChunkTemplate = {
+
+  const { prompt_tokens, completion_tokens } = response.usage || {};
+
+  let total_tokens;
+  if (prompt_tokens && completion_tokens) total_tokens = prompt_tokens + completion_tokens;
+
+  const streamChunkTemplate: Record<string, any> = {
     id,
     object: "chat.completion.chunk",
     created: Date.now(),
     model: model || "",
     system_fingerprint: system_fingerprint || null,
     provider,
-    usage: {}
-  }
-
-  if (response.usage?.completion_tokens) {
-    streamChunkTemplate.usage = {
-      completion_tokens: response.usage?.completion_tokens
+    usage: {
+      ...(completion_tokens && {completion_tokens}),
+      ...(prompt_tokens && {prompt_tokens}),
+      ...(total_tokens && {total_tokens})
     }
   }
 
