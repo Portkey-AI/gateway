@@ -1,6 +1,11 @@
 <div align="center">
 <img src="/docs/images/gateway-border.png" width=350>
 
+<p align="right">
+   <strong>English</strong> | <a href="./README.cn.md">中文</a> 
+</p>
+
+
 # AI Gateway
 ### Route to 100+ LLMs with 1 fast & friendly API.
 

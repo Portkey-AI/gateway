@@ -1,9 +1,13 @@
+<p align="right">
+  <strong>English</strong>|<a href="https://github.com/Portkey-AI/gateway/blob/main/CODE_OF_CONDUCT.cn.md">中文</a>
+</p>
+
 # Contributor Covenant Code of Conduct
 
 ## Our Pledge
 
 We as members, contributors, and leaders pledge to make participation in our
-community a harassment-free experience for everyone, regardless of age, body
+community a harassment-free experience for everyone, regardless of age, bodys
 size, visible or invisible disability, ethnicity, sex characteristics, gender
 identity and expression, level of experience, education, socio-economic status,
 nationality, personal appearance, race, religion, or sexual identity
