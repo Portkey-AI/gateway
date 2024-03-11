@@ -1,7 +1,7 @@
 import { GROQ } from "../../globals";
 import { Params, Message } from "../../types/requestBody";
 import {
-    ChatCompletionResponse,
+   ChatCompletionResponse,
     ErrorResponse,
     ProviderConfig,
 } from "../types";
@@ -27,29 +27,14 @@ export const GroqChatCompleteConfig: ProviderConfig = {
                   content: [],
                 };
                 msg.content.forEach(item => {
+                  // FOR NOW, we only support text messages
                   if (item.type === "text") {
-                    transformedMessage.content.push({ type: item.type, text: item.text });
-                  } else if (item.type === "image_url" && item.image_url && item.image_url.url) {
-                    const parts = item.image_url.url.split(";");
-                    if (parts.length === 2) {
-                      const base64ImageParts = parts[1].split(",");
-                      const base64Image = base64ImageParts[1];
-                      const mediaTypeParts = parts[0].split(":");
-                      if (mediaTypeParts.length === 2 && base64Image) {
-                        const mediaType = mediaTypeParts[1];
-                        transformedMessage.content.push({
-                          type: "image",
-                          source: {
-                            type: "base64",
-                            media_type: mediaType,
-                            data: base64Image,
-                          },
-                        });
-                      }
-                    }
+                    messages.push({
+                      role: msg.role,
+                      content: item.text,
+                    });
                   }
                 });
-                messages.push(transformedMessage as Message);
               } else {
                 messages.push({
                   role: msg.role,
