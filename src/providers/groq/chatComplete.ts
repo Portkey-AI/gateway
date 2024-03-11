@@ -1,4 +1,5 @@
 import { GROQ } from "../../globals";
+import { Params, Message } from "../../types/requestBody";
 import {
     ChatCompletionResponse,
     ErrorResponse,
@@ -11,10 +12,57 @@ export const GroqChatCompleteConfig: ProviderConfig = {
         required: true,
         default: "mixtral-8x7b-32768",
     },
-    messages: {
+    messages: [
+      {
         param: "messages",
         default: "",
-    },
+        transform: (params:Params) => {
+          let messages:Message[] = [];
+          // Transform the chat messages into a simple prompt
+          if (!!params.messages) {
+            params.messages.forEach(msg => {
+              if (msg.content && typeof msg.content === "object" && msg.content.length) {
+                const transformedMessage: Record<string, any> = {
+                  role: msg.role,
+                  content: [],
+                };
+                msg.content.forEach(item => {
+                  if (item.type === "text") {
+                    transformedMessage.content.push({ type: item.type, text: item.text });
+                  } else if (item.type === "image_url" && item.image_url && item.image_url.url) {
+                    const parts = item.image_url.url.split(";");
+                    if (parts.length === 2) {
+                      const base64ImageParts = parts[1].split(",");
+                      const base64Image = base64ImageParts[1];
+                      const mediaTypeParts = parts[0].split(":");
+                      if (mediaTypeParts.length === 2 && base64Image) {
+                        const mediaType = mediaTypeParts[1];
+                        transformedMessage.content.push({
+                          type: "image",
+                          source: {
+                            type: "base64",
+                            media_type: mediaType,
+                            data: base64Image,
+                          },
+                        });
+                      }
+                    }
+                  }
+                });
+                messages.push(transformedMessage as Message);
+              } else {
+                messages.push({
+                  role: msg.role,
+                  content: msg.content
+                });
+              }
+            })
+          }
+
+          return messages;
+        }
+      },
+    ],
     max_tokens: {
         param: "max_tokens",
         default: 100,
