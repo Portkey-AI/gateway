@@ -18,10 +18,9 @@ body:
     id: code-snippet
     attributes:
       label: Relevant Code Snippet
-      placeholder: Paste the relevant code snippet here. It generally helps a lot in debugging.
     validations:
       required: false
-  - type: input
+  - type: textarea
     id: contact
     attributes:
       label: Your Twitter/LinkedIn
