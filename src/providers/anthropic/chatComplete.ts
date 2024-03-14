@@ -168,6 +168,8 @@ export const AnthropicChatCompleteResponseTransform: (response: AnthropicChatCom
   } 
 
   if ('content' in response) {
+    const { input_tokens = 0, output_tokens = 0 } = response?.usage;
+
     return {
       id: response.id,
       object: "chat_completion",
@@ -181,7 +183,12 @@ export const AnthropicChatCompleteResponseTransform: (response: AnthropicChatCom
           logprobs: null,
           finish_reason: response.stop_reason,
         },
-      ]
+      ],
+      usage: {
+        prompt_tokens: input_tokens,
+        completion_tokens: output_tokens,
+        total_tokens: input_tokens + output_tokens,
+      },
     }
   }
 
