@@ -1,8 +1,8 @@
 blank_issues_enabled: true
 contact_links:
-  - name: Portkey Community Support
+  - name: Discord for Support & Discussions
     url: https://discord.com/invite/DD7vgKK299
-    about: Please ask and answer questions here.
-  - name: Portkey Bounty
-    url: https://discord.com/invite/DD7vgKK299 
-    about: Please report security vulnerabilities here.
+    about: Hang out with the community of LLM practitioners and resolve your issues fast
+  - name: Get on a Call
+    url: https://calendly.com/rohit-portkey/noam
+    about: Get a tailored demo for your use cases
