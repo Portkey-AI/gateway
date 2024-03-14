@@ -1,7 +1,95 @@
-import { AZURE_OPEN_AI, CONTENT_TYPES, COHERE, GOOGLE, REQUEST_TIMEOUT_STATUS_CODE } from "../globals";
+import { AZURE_OPEN_AI, BEDROCK, CONTENT_TYPES, COHERE, GOOGLE, REQUEST_TIMEOUT_STATUS_CODE } from "../globals";
 import { OpenAIChatCompleteResponse } from "../providers/openai/chatComplete";
 import { OpenAICompleteResponse } from "../providers/openai/complete";
 import { getStreamModeSplitPattern } from "../utils";
+
+function readUInt32BE(buffer: Uint8Array, offset: number) {
+    return (
+        (buffer[offset] << 24) |
+        (buffer[offset + 1] << 16) |
+        (buffer[offset + 2] << 8) |
+        buffer[offset + 3]
+    ) >>> 0; // Ensure the result is an unsigned integer
+}
+
+function getPayloadFromAWSChunk (chunk: Uint8Array): string {
+    const decoder = new TextDecoder();
+    const chunkLength = readUInt32BE(chunk, 0);
+    const headersLength = readUInt32BE(chunk, 4);
+
+    // prelude 8 + Prelude crc 4 = 12
+    const headersEnd = 12 + headersLength;
+
+    const payloadLength = chunkLength - headersEnd - 4; // Subtracting 4 for the message crc
+    const payload = chunk.slice(headersEnd, headersEnd + payloadLength);
+    return decoder.decode(payload);
+} 
+
+function concatenateUint8Arrays(a: Uint8Array, b: Uint8Array): Uint8Array {
+    const result = new Uint8Array(a.length + b.length);
+    result.set(a, 0); // Copy contents of array 'a' into 'result' starting at index 0
+    result.set(b, a.length); // Copy contents of array 'b' into 'result' starting at index 'a.length'
+    return result;
+}
+
+export async function* readAWSStream(reader: ReadableStreamDefaultReader, transformFunction: Function | undefined, fallbackChunkId: string) {
+    let buffer = new Uint8Array();
+    let expectedLength = 0;
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+            if (buffer.length) {
+                expectedLength = readUInt32BE(buffer, 0);
+                while(buffer.length >= expectedLength && buffer.length !== 0) {
+                    const data = buffer.subarray(0, expectedLength);
+                    buffer = buffer.subarray(expectedLength);
+                    expectedLength = readUInt32BE(buffer, 0);
+                    const payload = Buffer.from(JSON.parse(getPayloadFromAWSChunk(data)).bytes, 'base64').toString();
+                    if (transformFunction) {
+                        const transformedChunk = transformFunction(payload, fallbackChunkId);
+                        if (Array.isArray(transformedChunk)) {
+                            for (var item of transformedChunk) {
+                                yield item;
+                            }
+                        } else {
+                            yield transformedChunk;
+                        }
+                    } else {
+                        yield data;
+                    }
+                }
+            }
+            break;
+        }
+
+        if (expectedLength === 0) {
+            expectedLength = readUInt32BE(value, 0);
+        }
+
+        buffer = concatenateUint8Arrays(buffer, value);
+
+        while(buffer.length >= expectedLength && buffer.length !== 0) {
+            const data = buffer.subarray(0, expectedLength);
+            buffer = buffer.subarray(expectedLength);
+
+            expectedLength = readUInt32BE(buffer, 0);
+            const payload = Buffer.from(JSON.parse(getPayloadFromAWSChunk(data)).bytes, 'base64').toString();
+
+            if (transformFunction) {
+                const transformedChunk = transformFunction(payload, fallbackChunkId);
+                if (Array.isArray(transformedChunk)) {
+                    for (var item of transformedChunk) {
+                        yield item;
+                    }
+                } else {
+                    yield transformedChunk;
+                }
+            } else {
+                yield data;
+            }
+        }
+    }
+}
 
 export async function* readStream(reader: ReadableStreamDefaultReader, splitPattern: string, transformFunction: Function | undefined, isSleepTimeRequired: boolean, fallbackChunkId: string) {
     let buffer = '';
@@ -54,6 +142,24 @@ export async function* readStream(reader: ReadableStreamDefaultReader, splitPatt
     }
 }
 
+export async function handleTextResponse(response: Response, responseTransformer: Function | undefined) {
+  const text = await response.text();
+
+  if (responseTransformer) {
+    const transformedText = responseTransformer({"html-message": text}, response.status);
+    return new Response(JSON.stringify(transformedText), {
+      ...response,
+      status: response.status,
+      headers: new Headers({
+          ...Object.fromEntries(response.headers),
+          'content-type': "application/json"
+      })
+    });
+  }
+
+  return new Response(text, response);
+}
+
 export async function handleNonStreamingMode(response: Response, responseTransformer: Function | undefined) {
     // 408 is thrown whenever a request takes more than request_timeout to respond.
     // In that case, response thrown by gateway is already in OpenAI format.
@@ -64,20 +170,23 @@ export async function handleNonStreamingMode(response: Response, responseTransfo
 
     let responseBodyJson = await response.json();
     if (responseTransformer) {
-        responseBodyJson = responseTransformer(responseBodyJson, response.status);
+        responseBodyJson = responseTransformer(responseBodyJson, response.status, response.headers);
     }
 
     return new Response(JSON.stringify(responseBodyJson), response);
 }
 
 export async function handleAudioResponse(response: Response) {
-    return new Response(JSON.stringify(response.body), response);
+    return new Response(response.body, response);
 }
 
 export async function handleOctetStreamResponse(response: Response) {
-    return new Response(JSON.stringify(response.body), response);
+    return new Response(response.body, response);
 }
 
+export async function handleImageResponse(response: Response) {
+    return new Response(response.body, response);
+}
 
 export async function handleStreamingMode(response: Response, proxyProvider: string, responseTransformer: Function | undefined, requestURL: string): Promise<Response> {
     const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);
@@ -92,15 +201,25 @@ export async function handleStreamingMode(response: Response, proxyProvider: str
     const isSleepTimeRequired = proxyProvider === AZURE_OPEN_AI ? true : false;
     const encoder = new TextEncoder();
 
-    (async () => {
-        for await (const chunk of readStream(reader, splitPattern, responseTransformer, isSleepTimeRequired, fallbackChunkId)) {
-            await writer.write(encoder.encode(chunk));
-        }
-        writer.close();
-    })();
+    if (proxyProvider === BEDROCK) {
+        (async () => {
+            for await (const chunk of readAWSStream(reader, responseTransformer, fallbackChunkId)) {
+                await writer.write(encoder.encode(chunk));
+            }
+            writer.close();
+        })();
+    } else {
+        (async () => {
+            for await (const chunk of readStream(reader, splitPattern, responseTransformer, isSleepTimeRequired, fallbackChunkId)) {
+                await writer.write(encoder.encode(chunk));
+            }
+            writer.close();
+        })();
+    }
+    
 
     // Convert GEMINI/COHERE json stream to text/event-stream for non-proxy calls
-    if ([GOOGLE, COHERE].includes(proxyProvider) && responseTransformer) {
+    if ([GOOGLE, COHERE, BEDROCK].includes(proxyProvider) && responseTransformer) {
         return new Response(readable, {
             ...response,
             headers: new Headers({

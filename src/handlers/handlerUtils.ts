@@ -1,12 +1,12 @@
 import { Context } from "hono";
-import { AZURE_OPEN_AI, CONTENT_TYPES, GOOGLE, HEADER_KEYS, PALM, POWERED_BY, RESPONSE_HEADER_KEYS, RETRY_STATUS_CODES } from "../globals";
+import { AI21, ANTHROPIC, AZURE_OPEN_AI, BEDROCK, CONTENT_TYPES, GOOGLE, HEADER_KEYS, OLLAMA, PALM, POWERED_BY, RESPONSE_HEADER_KEYS, RETRY_STATUS_CODES, SEGMIND, STABILITY_AI } from "../globals";
 import Providers from "../providers";
 import { ProviderAPIConfig, endpointStrings } from "../providers/types";
 import transformToProviderRequest from "../services/transformToProviderRequest";
 import { Config, Options, Params, RequestBody, ShortConfig, Targets } from "../types/requestBody";
 import { convertKeysToCamelCase } from "../utils";
 import { retryRequest } from "./retryHandler";
-import { handleAudioResponse, handleJSONToStreamResponse, handleNonStreamingMode, handleOctetStreamResponse, handleStreamingMode } from "./streamHandler";
+import { handleAudioResponse, handleImageResponse, handleJSONToStreamResponse, handleNonStreamingMode, handleOctetStreamResponse, handleStreamingMode, handleTextResponse } from "./streamHandler";
 import { env } from "hono/adapter";
 import { OpenAIChatCompleteJSONToStreamResponseTransform } from "../providers/openai/chatComplete";
 import { OpenAICompleteJSONToStreamResponseTransform } from "../providers/openai/complete";
@@ -19,13 +19,23 @@ import { OpenAICompleteJSONToStreamResponseTransform } from "../providers/openai
  * @param {string} method - The HTTP method for the request.
  * @returns {RequestInit} - The fetch options for the request.
  */
-export function constructRequest(headers: any, provider: string = "", method: string = "POST") {
+export function constructRequest(providerConfigMappedHeaders: any, provider: string, method: string, forwardHeaders: string[], requestHeaders: Record<string, string>) {
   let baseHeaders: any = {
     "content-type": "application/json"
   };
 
+  let headers: Record<string, string> = {
+    ...providerConfigMappedHeaders
+  };
+
+  const forwardHeadersMap: Record<string, string> = {};
+
+  forwardHeaders.forEach((h: string) => {
+    if (requestHeaders[h]) forwardHeadersMap[h] = requestHeaders[h];
+  })
+
   // Add any headers that the model might need
-  headers = {...baseHeaders, ...headers}
+  headers = {...baseHeaders, ...headers, ...forwardHeadersMap}
   
   let fetchOptions: RequestInit = {
     method,
@@ -122,7 +132,8 @@ export const fetchProviderOptionsFromConfig = (config: Config | ShortConfig): Op
       virtualKey: camelCaseConfig.virtualKey, 
       apiKey: camelCaseConfig.apiKey,
       cache: camelCaseConfig.cache,
-      retry: camelCaseConfig.retry
+      retry: camelCaseConfig.retry,
+      customHost: camelCaseConfig.customHost
       }];
       if (camelCaseConfig.resourceName) providerOptions[0].resourceName = camelCaseConfig.resourceName;
       if (camelCaseConfig.deploymentId) providerOptions[0].deploymentId = camelCaseConfig.deploymentId;
@@ -162,36 +173,57 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
   const apiConfig: ProviderAPIConfig = Providers[provider].api;
   let fetchOptions;
   let url = providerOption.urlToFetch as string;
-
+  
   let baseUrl:string, endpoint:string;
+
+  const forwardHeaders: string[] = [];
+  baseUrl = requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || "";
+
   if (provider === AZURE_OPEN_AI && apiConfig.getBaseURL && apiConfig.getEndpoint) {
     // Construct the base object for the request
     if(!!providerOption.apiKey) {
-      fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, "apiKey"), provider, method);
+      fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, "apiKey"), provider, method, forwardHeaders, requestHeaders);
     } else {
-      fetchOptions = constructRequest(apiConfig.headers(providerOption.adAuth, "adAuth"), provider, method);
+      fetchOptions = constructRequest(apiConfig.headers(providerOption.adAuth, "adAuth"), provider, method, forwardHeaders, requestHeaders);
     }
-    baseUrl = apiConfig.getBaseURL(providerOption.resourceName, providerOption.deploymentId);
+    baseUrl = baseUrl || apiConfig.getBaseURL(providerOption.resourceName, providerOption.deploymentId);
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiVersion, url);
     url = `${baseUrl}${endpoint}`;
   } else if (provider === PALM && apiConfig.baseURL && apiConfig.getEndpoint) {
-    fetchOptions = constructRequest(apiConfig.headers(), provider, method);
-    baseUrl = apiConfig.baseURL;
+    fetchOptions = constructRequest(apiConfig.headers(), provider, method, forwardHeaders, requestHeaders);
+    baseUrl = baseUrl || apiConfig.baseURL;
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, params?.model);
     url = `${baseUrl}${endpoint}`;
-  } else if (provider === "anthropic" && apiConfig.baseURL) {
+  } else if (provider === ANTHROPIC && apiConfig.baseURL) {
     // Construct the base object for the POST request
-    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, fn), provider);
-    baseUrl = apiConfig.baseURL;
+    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, fn), provider, "POST", forwardHeaders, requestHeaders);
+    baseUrl = baseUrl || apiConfig.baseURL;
     endpoint = apiConfig[fn] || "";
+    url = `${baseUrl}${endpoint}`;
   } else if (provider === GOOGLE && apiConfig.baseURL && apiConfig.getEndpoint) {
-    fetchOptions = constructRequest(apiConfig.headers(), provider);
-    baseUrl = apiConfig.baseURL;
+    fetchOptions = constructRequest(apiConfig.headers(), provider, "POST", forwardHeaders, requestHeaders);
+    baseUrl = baseUrl || apiConfig.baseURL;
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, params.model, params.stream);
+    url = `${baseUrl}${endpoint}`;
+  } else if (provider === STABILITY_AI && apiConfig.baseURL && apiConfig.getEndpoint) {
+    fetchOptions = constructRequest(apiConfig.headers(), provider, "POST", forwardHeaders, requestHeaders);
+    baseUrl = baseUrl || apiConfig.baseURL;
+    endpoint = apiConfig.getEndpoint(fn, params.model, url);
+    url = `${baseUrl}${endpoint}`;
+  } else if (provider === SEGMIND && apiConfig.baseURL && apiConfig.getEndpoint) {
+    fetchOptions = constructRequest(apiConfig.headers(), provider, "POST", forwardHeaders, requestHeaders);
+    baseUrl = baseUrl || apiConfig.baseURL;
+    endpoint = apiConfig.getEndpoint(params.model);
+    url = `${baseUrl}${endpoint}`;
+  } else if (provider === AI21 && apiConfig.getEndpoint && apiConfig.baseURL) {
+    baseUrl = baseUrl || apiConfig.baseURL;
+    endpoint = apiConfig.getEndpoint(fn, params.model);
+    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, "POST", forwardHeaders, requestHeaders);
   } else {
     // Construct the base object for the request
-    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, method);
+    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, method, forwardHeaders, requestHeaders);
   }
+
   if (method === "POST") {
     fetchOptions.body = JSON.stringify(params)
   }
@@ -220,13 +252,14 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
   const cacheIdentifier = c.get('cacheIdentifier');
   const requestOptions = c.get('requestOptions') ?? [];
 
-  let cacheResponse, cacheKey, cacheMode;
+  let cacheResponse, cacheKey, cacheMode, cacheMaxAge;
   let cacheStatus = "DISABLED";
 
   if (requestHeaders[HEADER_KEYS.CACHE]) {
-    cacheMode = requestHeaders[HEADER_KEYS.CACHE]
+    cacheMode = requestHeaders[HEADER_KEYS.CACHE];
   } else if (providerOption?.cache && typeof providerOption.cache === "object" && providerOption.cache.mode) {
     cacheMode = providerOption.cache.mode;
+    cacheMaxAge = providerOption.cache.maxAge;
   } else if (providerOption?.cache && typeof providerOption.cache === "string") {
     cacheMode = providerOption.cache
   }
@@ -238,12 +271,23 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
         params,
         url,
         cacheIdentifier,
-        cacheMode
+        cacheMode,
+        cacheMaxAge
     );
     if (cacheResponse) {
-      response = await responseHandler(new Response(cacheResponse, {headers: {
-        "content-type": "application/json"
-      }}), false, provider, undefined, url);
+      response = await responseHandler(
+          new Response(cacheResponse, {
+              headers: {
+                  "content-type": "application/json",
+              },
+          }),
+          false,
+          provider,
+          undefined,
+          url,
+          false,
+          params
+      );
       c.set("requestOptions", [...requestOptions, {
         providerOptions: {...providerOption, requestURL: url, rubeusURL: fn},
         requestParams: params,
@@ -251,7 +295,8 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
         cacheStatus: cacheStatus,
         lastUsedOptionIndex: currentIndex,
         cacheKey: cacheKey,
-        cacheMode: cacheMode
+        cacheMode: cacheMode,
+        cacheMaxAge: cacheMaxAge
       }])
       updateResponseHeaders(response, currentIndex, params, cacheStatus, 0, requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");
       return response;
@@ -259,7 +304,15 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
   }
 
     [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes, null);
-  const mappedResponse = await responseHandler(response, isStreamingMode, provider, undefined, url);
+  const mappedResponse = await responseHandler(
+      response,
+      isStreamingMode,
+      provider,
+      undefined,
+      url,
+      false,
+      params
+  );
   updateResponseHeaders(mappedResponse, currentIndex, params, cacheStatus, retryCount ?? 0, requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");
 
   c.set("requestOptions", [...requestOptions, {
@@ -307,33 +360,56 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
 
 
   let baseUrl:string, endpoint:string, fetchOptions;
+  const forwardHeaders = requestHeaders[HEADER_KEYS.FORWARD_HEADERS]?.split(",").map(h => h.trim()) || providerOption.forwardHeaders || [];
+  baseUrl = requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || "";
+
   if (provider === AZURE_OPEN_AI && apiConfig.getBaseURL && apiConfig.getEndpoint) {
     // Construct the base object for the POST request
     if(!!providerOption.apiKey) {
-      fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, "apiKey"), provider);
+      fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, "apiKey"), provider, "POST", forwardHeaders, requestHeaders);
     } else {
-      fetchOptions = constructRequest(apiConfig.headers(providerOption.adAuth, "adAuth"), provider);
+      fetchOptions = constructRequest(apiConfig.headers(providerOption.adAuth, "adAuth"), provider, "POST", forwardHeaders, requestHeaders);
     }
-    baseUrl = apiConfig.getBaseURL(providerOption.resourceName, providerOption.deploymentId);
+    baseUrl = baseUrl || apiConfig.getBaseURL(providerOption.resourceName, providerOption.deploymentId);
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiVersion);
   } else if (provider === PALM && apiConfig.baseURL && apiConfig.getEndpoint) {
-    fetchOptions = constructRequest(apiConfig.headers(), provider);
-    baseUrl = apiConfig.baseURL;
+    fetchOptions = constructRequest(apiConfig.headers(), provider, "POST", forwardHeaders, requestHeaders);
+    baseUrl = baseUrl || apiConfig.baseURL;
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, providerOption.overrideParams?.model || params?.model);
-  } else if (provider === "anthropic" && apiConfig.baseURL) {
+  } else if (provider === ANTHROPIC && apiConfig.baseURL) {
     // Construct the base object for the POST request
-    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, fn), provider);
-    baseUrl = apiConfig.baseURL;
+    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, fn), provider, "POST", forwardHeaders, requestHeaders);
+    baseUrl = baseUrl || apiConfig.baseURL;
     endpoint = apiConfig[fn] || "";
   } else if (provider === GOOGLE && apiConfig.baseURL && apiConfig.getEndpoint) {
-    fetchOptions = constructRequest(apiConfig.headers(), provider);
-    baseUrl = apiConfig.baseURL;
+    fetchOptions = constructRequest(apiConfig.headers(), provider, "POST", forwardHeaders, requestHeaders);
+    baseUrl = baseUrl || apiConfig.baseURL;
     endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, transformedRequestBody.model, params.stream);
+  } else if (provider === STABILITY_AI && apiConfig.baseURL && apiConfig.getEndpoint) {
+    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, "POST", forwardHeaders, requestHeaders);
+    baseUrl = baseUrl || apiConfig.baseURL;
+    endpoint = apiConfig.getEndpoint(fn, params.model);
+  } else if (provider === SEGMIND && apiConfig.baseURL && apiConfig.getEndpoint) {
+    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, "POST", forwardHeaders, requestHeaders);
+    baseUrl = baseUrl || apiConfig.baseURL;
+    endpoint = apiConfig.getEndpoint(params.model);
+  } else if (provider === OLLAMA && apiConfig.getEndpoint) {    
+    fetchOptions = constructRequest(apiConfig.headers(), provider, "POST", forwardHeaders, requestHeaders);
+    baseUrl = baseUrl;
+    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, transformedRequestBody.model, params.stream);
+  } else if (provider === BEDROCK && apiConfig.getBaseURL && apiConfig.getEndpoint) {
+    baseUrl = baseUrl || apiConfig.getBaseURL(providerOption.awsRegion);
+    endpoint = apiConfig.getEndpoint(fn, params.model, params.stream);
+    fetchOptions = constructRequest(await apiConfig.headers(providerOption, transformedRequestBody, `${baseUrl}${endpoint}`), provider, "POST", forwardHeaders, requestHeaders);
+  } else if (provider === AI21 && apiConfig.getEndpoint && apiConfig.baseURL) {
+    baseUrl = baseUrl || apiConfig.baseURL;
+    endpoint = apiConfig.getEndpoint(fn, params.model);
+    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, "POST", forwardHeaders, requestHeaders);
   } else {
     // Construct the base object for the POST request
-    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider);
+    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, "POST", forwardHeaders, requestHeaders);
 
-    baseUrl = apiConfig.baseURL || "";
+    baseUrl = baseUrl || apiConfig.baseURL || "";
     endpoint = apiConfig[fn] || "";
   }
 
@@ -347,7 +423,7 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
 
   providerOption.retry = {
     attempts: providerOption.retry?.attempts ?? 0,
-    onStatusCodes: providerOption.retry?.onStatusCodes ?? []
+    onStatusCodes: providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES
   }
 
   const [getFromCacheFunction, cacheIdentifier, requestOptions] = [
@@ -356,11 +432,12 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
       c.get("requestOptions") ?? [],
   ];
 
-  let cacheResponse, cacheKey, cacheMode;
+  let cacheResponse, cacheKey, cacheMode, cacheMaxAge;
   let cacheStatus = "DISABLED";
 
   if (typeof providerOption.cache === "object" && providerOption.cache?.mode) {
     cacheMode = providerOption.cache.mode;
+    cacheMaxAge = providerOption.cache.maxAge;
   } else if (typeof providerOption.cache === "string") {
     cacheMode = providerOption.cache
   }
@@ -372,7 +449,8 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
           transformedRequestBody,
           fn,
           cacheIdentifier,
-          cacheMode
+          cacheMode,
+          cacheMaxAge
       );
       if (cacheResponse) {
           response = await responseHandler(
@@ -381,7 +459,8 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
               provider,
               fn,
               url,
-              true
+              true,
+              params
           );
           c.set("requestOptions", [
               ...requestOptions,
@@ -414,7 +493,15 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
 
   [response, retryCount] = await retryRequest(url, fetchOptions, providerOption.retry.attempts, providerOption.retry.onStatusCodes, providerOption.requestTimeout || null);
 
-  const mappedResponse = await responseHandler(response, isStreamingMode, provider, fn, url);
+  const mappedResponse = await responseHandler(
+      response,
+      isStreamingMode,
+      provider,
+      fn,
+      url,
+      false,
+      params
+  );
   updateResponseHeaders(mappedResponse, currentIndex, params, cacheStatus, retryCount ?? 0, requestHeaders[HEADER_KEYS.TRACE_ID] ?? "");
   c.set("requestOptions", [...requestOptions, {
     providerOptions: {...providerOption, requestURL: url, rubeusURL: fn},
@@ -423,7 +510,8 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
     cacheStatus: cacheStatus,
     lastUsedOptionIndex: currentIndex,
     cacheKey: cacheKey,
-    cacheMode: cacheMode
+    cacheMode: cacheMode,
+    cacheMaxAge: cacheMaxAge
   }])
   // If the response was not ok, throw an error
   if (!response.ok) {
@@ -482,15 +570,22 @@ export async function tryProvidersInSequence(c: Context, providers:Options[], pa
  * @param {boolean} [isCacheHit=false] - Indicates whether the response is a cache hit.
  * @returns {Promise<Response>} - A promise that resolves to the processed response.
  */
-export function responseHandler(response: Response, streamingMode: boolean, proxyProvider: string, responseTransformer: string | undefined, requestURL: string, isCacheHit: boolean = false): Promise<Response> {
+export function responseHandler(response: Response, streamingMode: boolean, proxyProvider: string, responseTransformer: string | undefined, requestURL: string, isCacheHit: boolean = false, gatewayRequest: Params): Promise<Response> {
   let responseTransformerFunction: Function | undefined;
   const responseContentType = response.headers?.get("content-type");
 
+  const providerConfig = Providers[proxyProvider];
+  let providerTransformers = Providers[proxyProvider]?.responseTransforms;
+
+  if (providerConfig.getConfig) {
+    providerTransformers = providerConfig.getConfig(gatewayRequest).responseTransforms;
+  }
+
   // Checking status 200 so that errors are not considered as stream mode.
   if (responseTransformer && streamingMode && response.status === 200) {
-    responseTransformerFunction = Providers[proxyProvider]?.responseTransforms?.[`stream-${responseTransformer}`];
+    responseTransformerFunction = providerTransformers?.[`stream-${responseTransformer}`];
   } else if (responseTransformer) {
-    responseTransformerFunction = Providers[proxyProvider]?.responseTransforms?.[responseTransformer];
+    responseTransformerFunction = providerTransformers?.[responseTransformer];
   }
 
   // JSON to text/event-stream conversion is only allowed for unified routes: chat completions and completions.
@@ -500,15 +595,18 @@ export function responseHandler(response: Response, streamingMode: boolean, prox
   } else if (responseTransformer && !streamingMode && isCacheHit) {
     responseTransformerFunction = undefined;
   }
-
   if (streamingMode && response.status === 200 && isCacheHit && responseTransformerFunction) {
       return handleJSONToStreamResponse(response, proxyProvider, responseTransformerFunction)
   } else if (streamingMode && response.status === 200) {
     return handleStreamingMode(response, proxyProvider, responseTransformerFunction, requestURL)
-  } else if (responseContentType === CONTENT_TYPES.AUDIO_MPEG) {
+  } else if (responseContentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)) {
       return handleAudioResponse(response)
   } else if (responseContentType === CONTENT_TYPES.APPLICATION_OCTET_STREAM) {
       return handleOctetStreamResponse(response)
+  } else if (responseContentType?.startsWith(CONTENT_TYPES.GENERIC_IMAGE_PATTERN)) {
+    return handleImageResponse(response)
+  } else if (responseContentType?.startsWith(CONTENT_TYPES.PLAIN_TEXT) || responseContentType?.startsWith(CONTENT_TYPES.HTML)) {
+    return handleTextResponse(response, responseTransformerFunction)
   } else {
       return handleNonStreamingMode(response, responseTransformerFunction)
   } 
@@ -529,7 +627,7 @@ export async function tryTargetsRecursively(
     const strategyMode = currentTarget.strategy?.mode;
 
     // start: merge inherited config with current target config (preference given to current)
-    const currentInheritedConfig = {
+    const currentInheritedConfig: Record<string, any> = {
       overrideParams : {
         ...inheritedConfig.overrideParams,
         ...currentTarget.overrideParams
@@ -539,11 +637,29 @@ export async function tryTargetsRecursively(
       requestTimeout: null
     }
 
+    if (currentTarget.forwardHeaders) {
+      currentInheritedConfig.forwardHeaders = [...currentTarget.forwardHeaders];
+    } else if (inheritedConfig.forwardHeaders) {
+      currentInheritedConfig.forwardHeaders = [...inheritedConfig.forwardHeaders];
+      currentTarget.forwardHeaders = [...inheritedConfig.forwardHeaders];
+    }
+
+    if (currentTarget.customHost) {
+      currentInheritedConfig.customHost = currentTarget.customHost
+    } else if (inheritedConfig.customHost) {
+      currentInheritedConfig.customHost = inheritedConfig.customHost;
+      currentTarget.customHost = inheritedConfig.customHost;
+    }
+
     if (currentTarget.requestTimeout) {
       currentInheritedConfig.requestTimeout = currentTarget.requestTimeout
     } else if (inheritedConfig.requestTimeout) {
       currentInheritedConfig.requestTimeout = inheritedConfig.requestTimeout;
+      currentTarget.requestTimeout = inheritedConfig.requestTimeout;
     }
+
+
+
     currentTarget.overrideParams = {
         ...currentInheritedConfig.overrideParams
     }
@@ -586,7 +702,7 @@ export async function tryTargetsRecursively(
 
         case "loadbalance":
             currentTarget.targets.forEach((t: Options) => {
-                if (!t.weight) {
+                if (t.weight === undefined) {
                     t.weight = 1;
                 }
             });
@@ -688,6 +804,13 @@ export function constructConfigFromRequestHeaders(
       apiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`]
     }
 
+    const bedrockConfig = {
+      awsAccessKeyId: requestHeaders[`x-${POWERED_BY}-aws-access-key-id`],
+      awsSecretAccessKey: requestHeaders[`x-${POWERED_BY}-aws-secret-access-key`],
+      awsSessionToken: requestHeaders[`x-${POWERED_BY}-aws-session-token`],
+      awsRegion: requestHeaders[`x-${POWERED_BY}-aws-region`]
+    }
+
     if (
       requestHeaders[`x-${POWERED_BY}-config`]
     ) {
@@ -696,12 +819,21 @@ export function constructConfigFromRequestHeaders(
         if (!parsedConfigJson.provider && !parsedConfigJson.targets) {
           parsedConfigJson.provider = requestHeaders[`x-${POWERED_BY}-provider`];
           parsedConfigJson.api_key = requestHeaders["authorization"]?.replace("Bearer ", "");
+
           if (parsedConfigJson.provider === AZURE_OPEN_AI) {
             parsedConfigJson = {
               ...parsedConfigJson,
               ...azureConfig
             }
           }
+
+          if (parsedConfigJson.provider === BEDROCK) {
+            parsedConfigJson = {
+              ...parsedConfigJson,
+              ...bedrockConfig
+            }
+          }
+
         }
         return convertKeysToCamelCase(
             parsedConfigJson,
@@ -712,7 +844,8 @@ export function constructConfigFromRequestHeaders(
     return {
       provider: requestHeaders[`x-${POWERED_BY}-provider`],
       apiKey: requestHeaders["authorization"]?.replace("Bearer ", ""),
-      ...(requestHeaders[`x-${POWERED_BY}-provider`] === AZURE_OPEN_AI && azureConfig)
+      ...(requestHeaders[`x-${POWERED_BY}-provider`] === AZURE_OPEN_AI && azureConfig),
+      ...(requestHeaders[`x-${POWERED_BY}-provider`] === BEDROCK && bedrockConfig)
     };
 }
     

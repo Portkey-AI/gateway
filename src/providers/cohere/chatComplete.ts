@@ -136,7 +136,7 @@ export const CohereChatCompleteStreamChunkTransform: (response: string, fallback
 
   return `data: ${JSON.stringify({
     id: parsedChunk.id ?? fallbackId,
-    object: "text_completion",
+    object: "chat.completion.chunk",
     created: Math.floor(Date.now() / 1000),
     model: "",
     provider: COHERE,
