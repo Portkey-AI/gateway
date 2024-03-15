@@ -20,7 +20,7 @@ body:
       label: Relevant Code Snippet
     validations:
       required: false
-  - type: textarea
+  - type: input
     id: contact
     attributes:
       label: Your Twitter/LinkedIn
