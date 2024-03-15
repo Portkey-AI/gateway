@@ -27,6 +27,9 @@ npx @portkey-ai/gateway
 ✅&nbsp; **Configurable Request Timeouts** to easily handle unresponsive LLM requests<br>
 ✅&nbsp; Plug-in middleware as needed <br>
 ✅&nbsp; Battle tested over **100B tokens** <br>
+✅&nbsp; **Enterprise-ready** for enhanced security, scale, and custom deployments <br>
+
+Enterprise Version: [Read more here](#gateway-enterprise-version)<br>
 <br>
 
 ## Getting Started
@@ -36,7 +39,6 @@ If you're familiar with Node.js and `npx`, you can run your private AI gateway l
 npx @portkey-ai/gateway
 ```
 > Your AI Gateway is now running on http://localhost:8787 🚀
-<br>
 
 ### Usage
 Let's try making a **chat completions** call to OpenAI through the AI gateway:
@@ -48,9 +50,7 @@ curl '127.0.0.1:8787/v1/chat/completions' \
   -d '{"messages": [{"role": "user","content": "Say this is test."}], "max_tokens": 20, "model": "gpt-4"}'
 ```
 [Full list of supported SDKs](#supported-sdks)
-
-<br>
-
+<br><br>
 
 ## Supported Providers
 
@@ -72,7 +72,7 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 | <img src="https://ollama.com/public/ollama.png" width=35>| Ollama  | ✅  |✅  | `/chat/completions` |
 
 > [View the complete list of 100+ supported models here](https://portkey.ai/docs/welcome/what-is-portkey#ai-providers-supported)
-<br />
+<br>
 
 ## Features
 
@@ -193,11 +193,28 @@ const client = new OpenAI({
 | Java | [openai-java](https://github.com/TheoKanning/openai-java) |
 | Rust | [async-openai](https://docs.rs/async-openai/latest/async_openai/) |
 | Ruby | [ruby-openai](https://github.com/alexrudall/ruby-openai) |
-
 <br>
 
 ## Deploying AI Gateway
 [See docs](docs/installation-deployments.md) on installing the AI Gateway locally or deploying it on popular locations.
+- Deploy to [Cloudflare Workers](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-to-cloudflare-workers)
+- Deploy using [Docker](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-using-docker)
+- Deploy using [Docker Compose](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-using-docker-compose)
+- Deploy to [Zeabur](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-to-zeabur)
+- Run a [Node.js server](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#run-a-nodejs-server)
+<br>
+
+## Gateway Enterprise Version
+Make your AI app more <ins>reliable</ins> and <ins>forward compatible</ins>, while ensuring complete <ins>data security</ins> and <ins>privacy</ins>.
+
+✅&nbsp; Secure Key Management - for role-based access control and tracking <br>
+✅&nbsp; Simple & Semantic Caching - to serve repeat queries faster & save costs <br>
+✅&nbsp; Access Control & Inbound Rules - to control which IPs and Geos can connect to your deployments <br>
+✅&nbsp; PII Redaction - to automatically remove sensitive data from your requests to prevent indavertent exposure <br>
+✅&nbsp; SOC2, ISO, HIPAA, GDPR Compliances - for best security practices <br>
+✅&nbsp; Professional Support - along with feature prioritization <br>
+
+[Schedule a call to discuss enterprise deployments](https://calendly.com/rohit-portkey/noam)
 
 <br>
 
@@ -208,7 +225,7 @@ const client = new OpenAI({
 3. More robust fallback and retry strategies to further improve the reliability of requests.
 4. Increased customizability of the unified API signature to cater to more diverse use cases.
 
-[💬 Participate in Roadmap discussions here.](https://github.com/Portkey-AI/gateway/projects/)
+[Participate in Roadmap discussions here.](https://github.com/Portkey-AI/gateway/projects/)
 
 <br>
 
