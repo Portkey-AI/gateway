@@ -133,7 +133,7 @@ interface GoogleGenerateFunctionCall {
 
 interface GoogleGenerateContentResponse {
     candidates: {
-        content: {
+        content?: {
             parts: {
                 text?: string;
                 functionCall?: GoogleGenerateFunctionCall;
@@ -154,6 +154,42 @@ interface GoogleGenerateContentResponse {
     };
 }
 
+
+const transformCandidates = (
+  candidates: GoogleGenerateContentResponse['candidates']
+) => candidates?.map((candidate, index) => {
+    let message: Message = { role: "assistant", content: "" };
+    if (candidate.content?.parts[0]?.text) {
+        message = {
+            role: "assistant",
+            content: candidate.content.parts[0]?.text,
+        };
+    } else if (candidate.content?.parts[0]?.functionCall) {
+        message = {
+            role: "assistant",
+            tool_calls: [
+                {
+                    id: crypto.randomUUID(),
+                    type: "function",
+                    function: {
+                        name: candidate.content?.parts[0]
+                            ?.functionCall.name,
+                        arguments: JSON.stringify(
+                            candidate.content?.parts[0]
+                                ?.functionCall.args
+                        ),
+                    },
+                },
+            ],
+        };
+    }
+    return {
+        message: message,
+        index: candidate.index,
+        finish_reason: candidate.finishReason,
+    };
+});
+
 export const GoogleChatCompleteResponseTransform: (
     response: GoogleGenerateContentResponse | GoogleErrorResponse,
     responseStatus: number
@@ -171,45 +207,14 @@ export const GoogleChatCompleteResponseTransform: (
     }
 
     if ("candidates" in response) {
+      response.candidates
         return {
             id: crypto.randomUUID(),
             object: "chat_completion",
             created: Math.floor(Date.now() / 1000),
             model: "Unknown",
             provider: "google",
-            choices:
-                response.candidates?.map((generation, index) => {
-                    let message: Message = { role: "assistant", content: "" };
-                    if (generation.content.parts[0]?.text) {
-                        message = {
-                            role: "assistant",
-                            content: generation.content.parts[0]?.text,
-                        };
-                    } else if (generation.content.parts[0]?.functionCall) {
-                        message = {
-                            role: "assistant",
-                            tool_calls: [
-                                {
-                                    id: crypto.randomUUID(),
-                                    type: "function",
-                                    function: {
-                                        name: generation.content.parts[0]
-                                            ?.functionCall.name,
-                                        arguments: JSON.stringify(
-                                            generation.content.parts[0]
-                                                ?.functionCall.args
-                                        ),
-                                    },
-                                },
-                            ],
-                        };
-                    }
-                    return {
-                        message: message,
-                        index: generation.index,
-                        finish_reason: generation.finishReason,
-                    };
-                }) ?? [],
+            choices: transformCandidates(response.candidates),
         };
     }
 
@@ -256,40 +261,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
             created: Math.floor(Date.now() / 1000),
             model: "",
             provider: "google",
-            choices:
-                parsedChunk.candidates?.map((generation, index) => {
-                    let message: Message = { role: "assistant", content: "" };
-                    if (generation.content.parts[0]?.text) {
-                        message = {
-                            role: "assistant",
-                            content: generation.content.parts[0]?.text,
-                        };
-                    } else if (generation.content.parts[0]?.functionCall) {
-                        message = {
-                            role: "assistant",
-                            tool_calls: [
-                                {
-                                    id: crypto.randomUUID(),
-                                    type: "function",
-                                    index: 0,
-                                    function: {
-                                        name: generation.content.parts[0]
-                                            ?.functionCall.name,
-                                        arguments: JSON.stringify(
-                                            generation.content.parts[0]
-                                                ?.functionCall.args
-                                        ),
-                                    },
-                                },
-                            ],
-                        };
-                    }
-                    return {
-                        delta: message,
-                        index: generation.index,
-                        finish_reason: generation.finishReason,
-                    };
-                }) ?? [],
+            choices: transformCandidates(parsedChunk.candidates)
         })}` + "\n\n"
     );
 };
