@@ -24,6 +24,6 @@ body:
     id: contact
     attributes:
       label: Your Twitter/LinkedIn
-      placeholder: When the bug get fixed, we'd like to thank you publicly for reporting it.
+      description: When the bug get fixed, we'd like to thank you publicly for reporting it.
     validations:
       required: false
