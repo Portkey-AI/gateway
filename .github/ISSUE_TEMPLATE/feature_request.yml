@@ -16,10 +16,10 @@ body:
       description: Why you want this feature and how it beneits you.
     validations:
       required: false
-  - type: textarea
+  - type: input
     id: contact
     attributes:
       label: Your Twitter/LinkedIn
-      placeholder: If we work on this request, we'd like to thank you publicly for suggesting it.
+      description: If we work on this request, we'd like to thank you publicly for suggesting it.
     validations:
       required: false
