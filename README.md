@@ -1,8 +1,12 @@
 <div align="center">
 <img src="/docs/images/gateway-border.png" width=350>
 
-# AI Gateway
+# Gateway
+```sh
+npx @portkey-ai/gateway
+```
 ### Route to 100+ LLMs with 1 fast & friendly API.
+
 
 [![License](https://img.shields.io/github/license/Ileriayo/markdown-badges)](./LICENSE)
 [![Discord](https://img.shields.io/discord/1143393887742861333)](https://portkey.ai/community)
@@ -15,12 +19,17 @@
 
 [Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and hosted LLMs. It streamlines API requests to OpenAI, Anthropic, Mistral, LLama2, Anyscale, Google Gemini and more with a unified API.
 
+
 ✅&nbsp; Blazing **fast** (9.9x faster) with a **tiny footprint** (~45kb installed) <br>
 ✅&nbsp; **Load balance** across multiple models, providers, and keys <br>
 ✅&nbsp; **Fallbacks** make sure your app stays resilient  <br>
 ✅&nbsp; **Automatic Retries** with exponential fallbacks come by default  <br>
+✅&nbsp; **Configurable Request Timeouts** to easily handle unresponsive LLM requests<br>
 ✅&nbsp; Plug-in middleware as needed <br>
 ✅&nbsp; Battle tested over **100B tokens** <br>
+✅&nbsp; **Enterprise-ready** for enhanced security, scale, and custom deployments <br>
+
+Enterprise Version: [Read more here](#gateway-enterprise-version)<br>
 <br>
 
 ## Getting Started
@@ -30,7 +39,6 @@ If you're familiar with Node.js and `npx`, you can run your private AI gateway l
 npx @portkey-ai/gateway
 ```
 > Your AI Gateway is now running on http://localhost:8787 🚀
-<br>
 
 ### Usage
 Let's try making a **chat completions** call to OpenAI through the AI gateway:
@@ -42,9 +50,7 @@ curl '127.0.0.1:8787/v1/chat/completions' \
   -d '{"messages": [{"role": "user","content": "Say this is test."}], "max_tokens": 20, "model": "gpt-4"}'
 ```
 [Full list of supported SDKs](#supported-sdks)
-
-<br>
-
+<br><br>
 
 ## Supported Providers
 
@@ -66,11 +72,11 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 | <img src="https://ollama.com/public/ollama.png" width=35>| Ollama  | ✅  |✅  | `/chat/completions` |
 
 > [View the complete list of 100+ supported models here](https://portkey.ai/docs/welcome/what-is-portkey#ai-providers-supported)
-<br />
+<br>
 
 ## Features
 
-<table>
+<table width=100%>
   <tr>
     <td>
       <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/universal-api">Unified API Signature</a></h4>
@@ -78,36 +84,46 @@ curl '127.0.0.1:8787/v1/chat/completions' \
       <br><br>
       <img src="docs/images/openai.png" height=40 />&nbsp;&nbsp;&nbsp;<img src="docs/images/azure.png" height=40 />&nbsp;&nbsp;&nbsp;
       <img src="docs/images/anyscale.png" height=40 />&nbsp;&nbsp;&nbsp;
-      <img src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Google-favicon-2015.png" height=40 />&nbsp;&nbsp;&nbsp;<br><br>
+      <img src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Google-favicon-2015.png" height=40 />&nbsp;&nbsp;&nbsp;
       <img src="docs/images/anthropic.png" height=40 />&nbsp;&nbsp;&nbsp;
       <img src="docs/images/cohere.png" height=40 />&nbsp;&nbsp;&nbsp;
-      <img src="https://assets-global.website-files.com/64f6f2c0e3f4c5a91c1e823a/654693d569494912cfc0c0d4_favicon.svg" height=40 />&nbsp;&nbsp;&nbsp;<br><br>
+      <img src="https://assets-global.website-files.com/64f6f2c0e3f4c5a91c1e823a/654693d569494912cfc0c0d4_favicon.svg" height=40 />&nbsp;&nbsp;&nbsp;
       <img src="https://www.perplexity.ai/favicon.svg" height=40 />&nbsp;&nbsp;&nbsp;
       <img src="https://docs.mistral.ai/img/favicon.ico" height=40 />&nbsp;&nbsp;&nbsp;
       <img src="https://1000logos.net/wp-content/uploads/2021/10/logo-Meta.png" height=40 />
      <br><br>
     </td>
-    <td>
+  </tr>
+</table>
+<table width=100%>
+  <tr>
+    <td width="50%">
       <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/fallbacks">Fallback</a></h4>
       Don't let failures stop you. The Fallback feature allows you to specify a list of Language Model APIs (LLMs) in a prioritized order. If the primary LLM fails to respond or encounters an error, Portkey will automatically fallback to the next LLM in the list, ensuring your application's robustness and reliability.
       <br><br>
       <img src="https://framerusercontent.com/images/gmlOW8yeKP2pGuIsObM6gKLzeMI.png" height=200 />
     </td>
-  </tr>
-</table>
-<table>
-  <tr>
-    <td>
+    <td width="50%">
       <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/automatic-retries">Automatic Retries</a></h4>
       Temporary issues shouldn't mean manual re-runs. AI Gateway can automatically retry failed requests upto 5 times. We apply an exponential backoff strategy, which spaces out retry attempts to prevent network overload.
       <br><br>
       <img src="https://github.com/roh26it/Rubeus/assets/971978/8a6e653c-94b2-4ba7-95c7-93544ee476b1" height=200 />
     </td>
-    <td>
+  </tr>
+</table>
+<table width="100%">
+  <tr>
+    <td width="50%"> 
       <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/load-balancing">Load Balancing</a></h4>
       Distribute load effectively across multiple API keys or providers based on custom weights. This ensures high availability and optimal performance of your generative AI apps, preventing any single LLM from becoming a performance bottleneck.
       <br><br>
       <img src="https://framerusercontent.com/images/6EWuq3FWhqrPe3kKLqVspevi4.png" height=200 />
+    </td>
+    <td width="50%">
+      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/request-timeouts">Request Timeouts</a></h4>
+      Unpredictable response times shouldn't hinder your app's experience. Manage unruly LLMs & latencies by setting up granular request timeouts. This feature allows automatic termination of requests that exceed a specified duration, letting you gracefully handle errors or make another, faster request.
+      <br><br>
+      <img src="https://github.com/vrushankportkey/gateway/assets/134934501/b23b98b2-6451-4747-8898-6847ad8baed4" height=200 />
     </td>
   </tr>
 </table>
@@ -177,11 +193,28 @@ const client = new OpenAI({
 | Java | [openai-java](https://github.com/TheoKanning/openai-java) |
 | Rust | [async-openai](https://docs.rs/async-openai/latest/async_openai/) |
 | Ruby | [ruby-openai](https://github.com/alexrudall/ruby-openai) |
-
 <br>
 
 ## Deploying AI Gateway
 [See docs](docs/installation-deployments.md) on installing the AI Gateway locally or deploying it on popular locations.
+- Deploy to [Cloudflare Workers](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-to-cloudflare-workers)
+- Deploy using [Docker](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-using-docker)
+- Deploy using [Docker Compose](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-using-docker-compose)
+- Deploy to [Zeabur](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-to-zeabur)
+- Run a [Node.js server](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#run-a-nodejs-server)
+<br>
+
+## Gateway Enterprise Version
+Make your AI app more <ins>reliable</ins> and <ins>forward compatible</ins>, while ensuring complete <ins>data security</ins> and <ins>privacy</ins>.
+
+✅&nbsp; Secure Key Management - for role-based access control and tracking <br>
+✅&nbsp; Simple & Semantic Caching - to serve repeat queries faster & save costs <br>
+✅&nbsp; Access Control & Inbound Rules - to control which IPs and Geos can connect to your deployments <br>
+✅&nbsp; PII Redaction - to automatically remove sensitive data from your requests to prevent indavertent exposure <br>
+✅&nbsp; SOC2, ISO, HIPAA, GDPR Compliances - for best security practices <br>
+✅&nbsp; Professional Support - along with feature prioritization <br>
+
+[Schedule a call to discuss enterprise deployments](https://calendly.com/rohit-portkey/noam)
 
 <br>
 
@@ -192,7 +225,7 @@ const client = new OpenAI({
 3. More robust fallback and retry strategies to further improve the reliability of requests.
 4. Increased customizability of the unified API signature to cater to more diverse use cases.
 
-[💬 Participate in Roadmap discussions here.](https://github.com/Portkey-AI/gateway/projects/)
+[Participate in Roadmap discussions here.](https://github.com/Portkey-AI/gateway/projects/)
 
 <br>
 
