@@ -120,51 +120,52 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (response: OpenAIC
   }
 
   for (const [index, choice] of choices.entries()) {
-    if (choice.message && choice.message.tool_calls) {
-      const currentToolCall = choice.message.tool_calls[0];
-      const toolCallNameChunk = {
-        index: 0,
-        id: currentToolCall.id,
-        type: "function",
-        function: {
-          name: currentToolCall.function.name,
-          arguments: ""
-        }
-      }
-
-      const toolCallArgumentChunk = {
-        index: 0,
-        function: {
-          arguments: currentToolCall.function.arguments
-        }
-      }
-
-      streamChunkArray.push(`data: ${JSON.stringify({
-        ...streamChunkTemplate,
-        choices: [
-          {
-            index: index,
-            delta: {
-              role: "assistant",
-              content: null,
-              tool_calls: [toolCallNameChunk]
-            }
+    if (choice.message && choice.message.tool_calls && choice.message.tool_calls.length) {
+      for (const [toolCallIndex, toolCall] of choice.message.tool_calls.entries()) {
+        const toolCallNameChunk = {
+          index: toolCallIndex,
+          id: toolCall.id,
+          type: "function",
+          function: {
+            name: toolCall.function.name,
+            arguments: ""
           }
-        ]
-      })}\n\n`)
-
-      streamChunkArray.push(`data: ${JSON.stringify({
-        ...streamChunkTemplate,
-        choices: [
-          {
-            index: index,
-            delta: {
-              role: "assistant",
-              tool_calls: [toolCallArgumentChunk]
-            }
+        }
+  
+        const toolCallArgumentChunk = {
+          index: toolCallIndex,
+          function: {
+            arguments: toolCall.function.arguments
           }
-        ]
-      })}\n\n`)
+        }
+  
+        streamChunkArray.push(`data: ${JSON.stringify({
+          ...streamChunkTemplate,
+          choices: [
+            {
+              index: index,
+              delta: {
+                role: "assistant",
+                content: null,
+                tool_calls: [toolCallNameChunk]
+              }
+            }
+          ]
+        })}\n\n`)
+  
+        streamChunkArray.push(`data: ${JSON.stringify({
+          ...streamChunkTemplate,
+          choices: [
+            {
+              index: index,
+              delta: {
+                role: "assistant",
+                tool_calls: [toolCallArgumentChunk]
+              }
+            }
+          ]
+        })}\n\n`)
+      }
     }
 
     if (choice.message && choice.message.content && typeof choice.message.content === "string") {
