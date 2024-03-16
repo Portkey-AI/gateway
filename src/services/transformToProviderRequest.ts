@@ -79,6 +79,19 @@ const transformToProviderRequest = (provider: string, params: Params, fn: string
           value = paramConfig.transform(params);
         }
 
+        if (
+          value === "portkey-default" &&
+          paramConfig &&
+          paramConfig.default !== undefined
+        ) {
+          // Set the transformed parameter to the default value
+          setNestedProperty(
+            transformedRequest,
+            paramConfig.param,
+            paramConfig.default
+          );
+        }
+
         // If a minimum is defined for this parameter and the value is less than this, set the value to the minimum
         // Also, we should only do this comparison if value is of type 'number'
         if (
