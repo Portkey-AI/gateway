@@ -247,7 +247,6 @@ export const GoogleChatCompleteStreamChunkTransform: (
         return `data: ${chunk}\n\n`;
     }
 
-    console.log('chunk', chunk)
     const parsedChunk: GoogleGenerateContentResponse = JSON.parse(chunk);
 
     return (
