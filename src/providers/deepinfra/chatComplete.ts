@@ -4,6 +4,7 @@ import {
   ErrorResponse,
   ProviderConfig,
 } from "../types";
+import { generateInvalidProviderResponseError } from "../utils";
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 // TODOS: this configuration might have to check on the max value of n
@@ -156,17 +157,7 @@ export const DeepInfraChatCompleteResponseTransform: (
     };
   }
 
-  return {
-    error: {
-      message: `Invalid response recieved from ${DEEPINFRA}: ${JSON.stringify(
-        response
-      )}`,
-      type: null,
-      param: null,
-      code: null,
-    },
-    provider: DEEPINFRA,
-  } as ErrorResponse;
+  return generateInvalidProviderResponseError(response, DEEPINFRA);
 };
 
 export const DeepInfraChatCompleteStreamChunkTransform: (

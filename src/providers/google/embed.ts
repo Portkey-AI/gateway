@@ -2,6 +2,7 @@ import { ErrorResponse, ProviderConfig } from "../types";
 import { EmbedParams, EmbedResponse } from "../../types/embedRequestBody";
 import { GOOGLE } from "../../globals";
 import { GoogleErrorResponse } from "./chatComplete";
+import { generateInvalidProviderResponseError } from "../utils";
 
 export const GoogleEmbedConfig: ProviderConfig = {
     input: {
@@ -73,15 +74,5 @@ export const GoogleEmbedResponseTransform: (
         };
     }
 
-    return {
-        error: {
-            message: `Invalid response recieved from google: ${JSON.stringify(
-                response
-            )}`,
-            type: null,
-            param: null,
-            code: null,
-        },
-        provider: GOOGLE,
-    } as ErrorResponse;
+    return generateInvalidProviderResponseError(response, GOOGLE);
 };

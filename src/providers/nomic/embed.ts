@@ -1,6 +1,7 @@
 import { NOMIC } from "../../globals";
 import { EmbedParams, EmbedResponse } from "../../types/embedRequestBody";
 import { ErrorResponse, ProviderConfig } from "../types";
+import { generateInvalidProviderResponseError } from "../utils";
 
 export const NomicEmbedConfig: ProviderConfig = {
     model: {
@@ -102,15 +103,5 @@ export const NomicEmbedResponseTransform: (
         };
     }
 
-    return {
-        error: {
-            message: `Invalid response recieved from ${NOMIC}: ${JSON.stringify(
-                response
-            )}`,
-            type: null,
-            param: null,
-            code: null,
-        },
-        provider: NOMIC,
-    } as ErrorResponse;
+    return generateInvalidProviderResponseError(response, NOMIC);
 };

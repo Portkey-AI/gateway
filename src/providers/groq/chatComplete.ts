@@ -4,6 +4,7 @@ import {
     ErrorResponse,
     ProviderConfig,
 } from "../types";
+import { generateInvalidProviderResponseError } from "../utils";
 
 export const GroqChatCompleteConfig: ProviderConfig = {
     model: {
@@ -114,17 +115,7 @@ export const GroqChatCompleteResponseTransform: (
         };
     }
 
-    return {
-        error: {
-            message: `Invalid response recieved from ${GROQ}: ${JSON.stringify(
-                response
-            )}`,
-            type: null,
-            param: null,
-            code: null,
-        },
-        provider: GROQ,
-    } as ErrorResponse;
+    return generateInvalidProviderResponseError(response, GROQ);
 };
 
 export const GroqChatCompleteStreamChunkTransform: (

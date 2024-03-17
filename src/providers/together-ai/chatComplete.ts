@@ -1,5 +1,6 @@
 import { TOGETHER_AI } from "../../globals";
 import { ChatCompletionResponse, ErrorResponse, ProviderConfig } from "../types";
+import { generateInvalidProviderResponseError } from "../utils";
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -124,10 +125,9 @@ export const TogetherAIErrorResponseTransform: (response: TogetherAIErrorRespons
   return false;
 }
 
-
 export const TogetherAIChatCompleteResponseTransform: (response: TogetherAIChatCompleteResponse | TogetherAIErrorResponse | TogetherAIOpenAICompatibleErrorResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-    if (responseStatus !== 200 && !('choices' in response) ) {
-      const errorResponse = TogetherAIErrorResponseTransform(response);
+    if (responseStatus !== 200) {
+      const errorResponse = TogetherAIErrorResponseTransform(response as TogetherAIErrorResponse);
       if (errorResponse) return errorResponse;
     }
     
@@ -161,15 +161,8 @@ export const TogetherAIChatCompleteResponseTransform: (response: TogetherAIChatC
         }
       }
     }
-    return {
-      error: {
-          message: `Invalid response recieved from together-ai: ${JSON.stringify(response)}`,
-          type: null,
-          param: null,
-          code: null
-      },
-      provider: TOGETHER_AI
-    } as ErrorResponse;
+
+    return generateInvalidProviderResponseError(response, TOGETHER_AI);
   }
     
   

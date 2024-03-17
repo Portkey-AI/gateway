@@ -1,5 +1,6 @@
 import { STABILITY_AI } from "../../globals";
 import { ErrorResponse, ImageGenerateResponse, ProviderConfig } from "../types";
+import { generateInvalidProviderResponseError } from "../utils";
 
 export const StabilityAIImageGenerateConfig: ProviderConfig = {
   prompt: {
@@ -91,13 +92,5 @@ export const StabilityAIImageGenerateResponseTransform: (response: StabilityAIIm
     };
   }
 
-  return {
-    error: {
-        message: `Invalid response recieved from ${STABILITY_AI}: ${JSON.stringify(response)}`,
-        type: null,
-        param: null,
-        code: null
-    },
-    provider: STABILITY_AI
-  } as ErrorResponse;
+  return generateInvalidProviderResponseError(response, STABILITY_AI);
 };

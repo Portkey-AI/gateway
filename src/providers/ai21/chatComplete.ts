@@ -5,6 +5,7 @@ import {
     ErrorResponse,
     ProviderConfig,
 } from "../types";
+import { generateInvalidProviderResponseError } from "../utils";
 import { AI21ErrorResponse } from "./complete";
 
 export const AI21ChatCompleteConfig: ProviderConfig = {
@@ -107,11 +108,10 @@ interface AI21ChatCompleteResponse {
     }[]
 }
 
-export const AI21ChatCompleteResponseTransform: (
-    response: AI21ChatCompleteResponse | AI21ErrorResponse,
-    responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-    if (responseStatus !== 200 && "detail" in response) {
+export const AI21ErrorResponseTransform: (
+    response: AI21ErrorResponse
+) => ErrorResponse | undefined = (response) => {
+    if ("detail" in response) {
         return {
             error: {
                 message: response.detail,
@@ -122,6 +122,18 @@ export const AI21ChatCompleteResponseTransform: (
             provider: AI21,
         } as ErrorResponse;
     }
+
+    return undefined;
+};
+
+export const AI21ChatCompleteResponseTransform: (
+    response: AI21ChatCompleteResponse | AI21ErrorResponse,
+    responseStatus: number
+) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+    if (responseStatus !== 200) {
+        const errorResposne = AI21ErrorResponseTransform(response as AI21ErrorResponse);
+        if (errorResposne) return errorResposne;
+    } 
 
     if ("outputs" in response) {
         return {
@@ -142,15 +154,5 @@ export const AI21ChatCompleteResponseTransform: (
         };
     }
 
-    return {
-        error: {
-            message: `Invalid response recieved from ${AI21}: ${JSON.stringify(
-                response
-            )}`,
-            type: null,
-            param: null,
-            code: null,
-        },
-        provider: AI21,
-    } as ErrorResponse;
+    return generateInvalidProviderResponseError(response, AI21)
 };

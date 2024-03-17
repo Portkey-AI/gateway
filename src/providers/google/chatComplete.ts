@@ -5,6 +5,7 @@ import {
     ErrorResponse,
     ProviderConfig,
 } from "../types";
+import { generateInvalidProviderResponseError } from "../utils";
 
 const transformGenerationConfig = (params: Params) => {
     const generationConfig: Record<string, any> = {};
@@ -213,17 +214,7 @@ export const GoogleChatCompleteResponseTransform: (
         };
     }
 
-    return {
-        error: {
-            message: `Invalid response recieved from google: ${JSON.stringify(
-                response
-            )}`,
-            type: null,
-            param: null,
-            code: null,
-        },
-        provider: GOOGLE,
-    } as ErrorResponse;
+    return generateInvalidProviderResponseError(response, GOOGLE);
 };
 
 export const GoogleChatCompleteStreamChunkTransform: (

@@ -1,6 +1,7 @@
 import { MISTRAL_AI } from "../../globals";
 import { EmbedParams, EmbedResponse } from "../../types/embedRequestBody";
 import { ErrorResponse, ProviderConfig } from "../types";
+import { generateInvalidProviderResponseError } from "../utils";
 import { MistralAIErrorResponse } from "./chatComplete";
 
 export const MistralAIEmbedConfig: ProviderConfig = {
@@ -57,15 +58,5 @@ export const MistralAIEmbedResponseTransform: (
         };
     }
 
-    return {
-        error: {
-            message: `Invalid response recieved from ${MISTRAL_AI}: ${JSON.stringify(
-                response
-            )}`,
-            type: null,
-            param: null,
-            code: null,
-        },
-        provider: MISTRAL_AI,
-    } as ErrorResponse;
+    return generateInvalidProviderResponseError(response, MISTRAL_AI);
 };
