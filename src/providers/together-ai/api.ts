@@ -1,13 +1,18 @@
 import { ProviderAPIConfig } from "../types";
 
 const TogetherAIApiConfig: ProviderAPIConfig = {
-  baseURL: "https://api.together.xyz",
-  headers: (API_KEY:string) => {
-    return {"Authorization": `Bearer ${API_KEY}`}
+  getBaseURL: () => "https://api.together.xyz",
+  headers: ({ providerOptions }) => {
+    return {"Authorization": `Bearer ${providerOptions.apiKey}`}
   },
-  chatComplete: "/v1/chat/completions",
-  complete: "/v1/completions",
-  embed: "/v1/embeddings"
+  getEndpoint: ({ fn }) => {
+    switch (fn) {
+      case 'complete': "/v1/completions";
+      case 'chatComplete': "/v1/chat/completions";
+      case 'embed': "/v1/embeddings";
+      default: return '';
+    }
+  }
 };
 
 export default TogetherAIApiConfig;

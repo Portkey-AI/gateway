@@ -1,11 +1,16 @@
 import { ProviderAPIConfig } from "../types";
 
 const GroqAPIConfig: ProviderAPIConfig = {
-    baseURL: "https://api.groq.com/openai/v1",
-    headers: (API_KEY: string) => {
-        return { Authorization: `Bearer ${API_KEY}` };
+    getBaseURL: () => "https://api.groq.com/openai/v1",
+    headers: ({ providerOptions }) => {
+        return { Authorization: `Bearer ${providerOptions.apiKey}` };
     },
-    chatComplete: "/chat/completions"
+    getEndpoint: ({ fn }) => {
+        switch (fn) {
+            case 'chatComplete': return "/chat/completions";
+            default: return '';
+        }
+    }
 };
 
 export default GroqAPIConfig;
