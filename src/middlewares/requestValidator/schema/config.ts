@@ -1,22 +1,7 @@
 import { z } from "zod";
 import {
-    ANTHROPIC,
-    ANYSCALE,
-    AZURE_OPEN_AI,
-    COHERE,
-    GOOGLE,
-    MISTRAL_AI,
-    OPEN_AI,
-    PERPLEXITY_AI,
-    TOGETHER_AI,
-    DEEPINFRA,
-    NOMIC,
-    STABILITY_AI,
     OLLAMA,
-    BEDROCK,
-    AI21,
-    GROQ,
-    SEGMIND
+    VALID_PROVIDERS
 } from "../../../globals";
 
 export const configSchema: any = z
@@ -42,25 +27,7 @@ export const configSchema: any = z
             .string()
             .refine(
                 (value) =>
-                    [
-                        OPEN_AI,
-                        ANTHROPIC,
-                        AZURE_OPEN_AI,
-                        ANYSCALE,
-                        COHERE,
-                        TOGETHER_AI,
-                        GOOGLE,
-                        PERPLEXITY_AI,
-                        MISTRAL_AI,
-                        DEEPINFRA,
-                        NOMIC,
-                        STABILITY_AI,
-                        OLLAMA,
-                        AI21,
-                        BEDROCK,
-                        GROQ,
-                        SEGMIND
-                    ].includes(value),
+                    VALID_PROVIDERS.includes(value),
                 {
                     message:
                         "Invalid 'provider' value. Must be one of: openai, anthropic, azure-openai, anyscale, cohere",
