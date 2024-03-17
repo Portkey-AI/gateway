@@ -1,9 +1,9 @@
 import { Context } from "hono";
-import { AI21, ANTHROPIC, AZURE_OPEN_AI, BEDROCK, CONTENT_TYPES, GOOGLE, HEADER_KEYS, OLLAMA, PALM, POWERED_BY, RESPONSE_HEADER_KEYS, RETRY_STATUS_CODES, SEGMIND, STABILITY_AI } from "../globals";
+import { AZURE_OPEN_AI, BEDROCK, CONTENT_TYPES, HEADER_KEYS, POWERED_BY, RESPONSE_HEADER_KEYS, RETRY_STATUS_CODES } from "../globals";
 import Providers from "../providers";
 import { ProviderAPIConfig, endpointStrings } from "../providers/types";
 import transformToProviderRequest from "../services/transformToProviderRequest";
-import { Config, Options, Params, RequestBody, ShortConfig, Targets } from "../types/requestBody";
+import { Config, Options, Params, ShortConfig, Targets } from "../types/requestBody";
 import { convertKeysToCamelCase } from "../utils";
 import { retryRequest } from "./retryHandler";
 import { handleAudioResponse, handleImageResponse, handleJSONToStreamResponse, handleNonStreamingMode, handleOctetStreamResponse, handleStreamingMode, handleTextResponse } from "./streamHandler";
@@ -151,6 +151,7 @@ export const fetchProviderOptionsFromConfig = (config: Config | ShortConfig): Op
 }
 
 /**
+ * @deprecated
  * Makes a request (GET or POST) to a provider and returns the response.
  * The request is constructed using the provider, apiKey, and requestBody parameters.
  * The fn parameter is the type of request being made (e.g., "complete", "chatComplete").
@@ -171,58 +172,26 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
   
   // Mapping providers to corresponding URLs
   const apiConfig: ProviderAPIConfig = Providers[provider].api;
-  let fetchOptions;
-  let url = providerOption.urlToFetch as string;
-  
-  let baseUrl:string, endpoint:string;
 
   const forwardHeaders: string[] = [];
-  baseUrl = requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || "";
+  const customHost = requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || "";
+  const baseUrl =  customHost || apiConfig.getBaseURL({ providerOptions: providerOption });
+  const endpoint = apiConfig.getEndpoint({ providerOptions: providerOption, fn, gatewayRequestBody: params })
 
-  if (provider === AZURE_OPEN_AI && apiConfig.getBaseURL && apiConfig.getEndpoint) {
-    // Construct the base object for the request
-    if(!!providerOption.apiKey) {
-      fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, "apiKey"), provider, method, forwardHeaders, requestHeaders);
-    } else {
-      fetchOptions = constructRequest(apiConfig.headers(providerOption.adAuth, "adAuth"), provider, method, forwardHeaders, requestHeaders);
-    }
-    baseUrl = baseUrl || apiConfig.getBaseURL(providerOption.resourceName, providerOption.deploymentId);
-    endpoint = apiConfig.getEndpoint(fn, providerOption.apiVersion, url);
-    url = `${baseUrl}${endpoint}`;
-  } else if (provider === PALM && apiConfig.baseURL && apiConfig.getEndpoint) {
-    fetchOptions = constructRequest(apiConfig.headers(), provider, method, forwardHeaders, requestHeaders);
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, params?.model);
-    url = `${baseUrl}${endpoint}`;
-  } else if (provider === ANTHROPIC && apiConfig.baseURL) {
-    // Construct the base object for the POST request
-    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, fn), provider, "POST", forwardHeaders, requestHeaders);
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig[fn] || "";
-    url = `${baseUrl}${endpoint}`;
-  } else if (provider === GOOGLE && apiConfig.baseURL && apiConfig.getEndpoint) {
-    fetchOptions = constructRequest(apiConfig.headers(), provider, "POST", forwardHeaders, requestHeaders);
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, params.model, params.stream);
-    url = `${baseUrl}${endpoint}`;
-  } else if (provider === STABILITY_AI && apiConfig.baseURL && apiConfig.getEndpoint) {
-    fetchOptions = constructRequest(apiConfig.headers(), provider, "POST", forwardHeaders, requestHeaders);
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(fn, params.model, url);
-    url = `${baseUrl}${endpoint}`;
-  } else if (provider === SEGMIND && apiConfig.baseURL && apiConfig.getEndpoint) {
-    fetchOptions = constructRequest(apiConfig.headers(), provider, "POST", forwardHeaders, requestHeaders);
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(params.model);
-    url = `${baseUrl}${endpoint}`;
-  } else if (provider === AI21 && apiConfig.getEndpoint && apiConfig.baseURL) {
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(fn, params.model);
-    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, "POST", forwardHeaders, requestHeaders);
-  } else {
-    // Construct the base object for the request
-    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, method, forwardHeaders, requestHeaders);
-  }
+  const url = endpoint ? `${baseUrl}${endpoint}` : providerOption.urlToFetch as string;
+
+  const fetchOptions = constructRequest(
+      apiConfig.headers({
+          providerOptions: providerOption,
+          fn,
+          transformedRequestBody: params,
+          transformedRequestUrl: url,
+      }),
+      provider,
+      method,
+      forwardHeaders,
+      requestHeaders
+  );
 
   if (method === "POST") {
     fetchOptions.body = JSON.stringify(params)
@@ -358,63 +327,35 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
   // Attach the body of the request
   const transformedRequestBody = transformToProviderRequest(provider, params, fn);
 
+  const forwardHeaders =
+      requestHeaders[HEADER_KEYS.FORWARD_HEADERS]
+          ?.split(",")
+          .map((h) => h.trim()) ||
+      providerOption.forwardHeaders ||
+      [];
 
-  let baseUrl:string, endpoint:string, fetchOptions;
-  const forwardHeaders = requestHeaders[HEADER_KEYS.FORWARD_HEADERS]?.split(",").map(h => h.trim()) || providerOption.forwardHeaders || [];
-  baseUrl = requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || "";
+  const customHost =
+      requestHeaders[HEADER_KEYS.CUSTOM_HOST] ||
+      providerOption.customHost ||
+      "";
 
-  if (provider === AZURE_OPEN_AI && apiConfig.getBaseURL && apiConfig.getEndpoint) {
-    // Construct the base object for the POST request
-    if(!!providerOption.apiKey) {
-      fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, "apiKey"), provider, "POST", forwardHeaders, requestHeaders);
-    } else {
-      fetchOptions = constructRequest(apiConfig.headers(providerOption.adAuth, "adAuth"), provider, "POST", forwardHeaders, requestHeaders);
-    }
-    baseUrl = baseUrl || apiConfig.getBaseURL(providerOption.resourceName, providerOption.deploymentId);
-    endpoint = apiConfig.getEndpoint(fn, providerOption.apiVersion);
-  } else if (provider === PALM && apiConfig.baseURL && apiConfig.getEndpoint) {
-    fetchOptions = constructRequest(apiConfig.headers(), provider, "POST", forwardHeaders, requestHeaders);
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, providerOption.overrideParams?.model || params?.model);
-  } else if (provider === ANTHROPIC && apiConfig.baseURL) {
-    // Construct the base object for the POST request
-    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey, fn), provider, "POST", forwardHeaders, requestHeaders);
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig[fn] || "";
-  } else if (provider === GOOGLE && apiConfig.baseURL && apiConfig.getEndpoint) {
-    fetchOptions = constructRequest(apiConfig.headers(), provider, "POST", forwardHeaders, requestHeaders);
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, transformedRequestBody.model, params.stream);
-  } else if (provider === STABILITY_AI && apiConfig.baseURL && apiConfig.getEndpoint) {
-    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, "POST", forwardHeaders, requestHeaders);
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(fn, params.model);
-  } else if (provider === SEGMIND && apiConfig.baseURL && apiConfig.getEndpoint) {
-    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, "POST", forwardHeaders, requestHeaders);
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(params.model);
-  } else if (provider === OLLAMA && apiConfig.getEndpoint) {    
-    fetchOptions = constructRequest(apiConfig.headers(), provider, "POST", forwardHeaders, requestHeaders);
-    baseUrl = baseUrl;
-    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, transformedRequestBody.model, params.stream);
-  } else if (provider === BEDROCK && apiConfig.getBaseURL && apiConfig.getEndpoint) {
-    baseUrl = baseUrl || apiConfig.getBaseURL(providerOption.awsRegion);
-    endpoint = apiConfig.getEndpoint(fn, params.model, params.stream);
-    fetchOptions = constructRequest(await apiConfig.headers(providerOption, transformedRequestBody, `${baseUrl}${endpoint}`), provider, "POST", forwardHeaders, requestHeaders);
-  } else if (provider === AI21 && apiConfig.getEndpoint && apiConfig.baseURL) {
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(fn, params.model);
-    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, "POST", forwardHeaders, requestHeaders);
-  } else {
-    // Construct the base object for the POST request
-    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, "POST", forwardHeaders, requestHeaders);
-
-    baseUrl = baseUrl || apiConfig.baseURL || "";
-    endpoint = apiConfig[fn] || "";
-  }
-
-  // Construct the full URL
+  const baseUrl =  customHost || apiConfig.getBaseURL({ providerOptions: providerOption });
+  const endpoint = apiConfig.getEndpoint({ providerOptions: providerOption, fn, gatewayRequestBody: params })
   const url = `${baseUrl}${endpoint}`;
+
+  // Construct the base object for the POST request
+  const fetchOptions = constructRequest(
+      apiConfig.headers({
+          providerOptions: providerOption,
+          fn,
+          transformedRequestBody,
+          transformedRequestUrl: url,
+      }),
+      provider,
+      "POST",
+      forwardHeaders,
+      requestHeaders
+  );
 
   fetchOptions.body = JSON.stringify(transformedRequestBody);
 
@@ -526,6 +467,7 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
 }
 
 /**
+ * @deprecated
  * Tries providers in sequence until a successful response is received.
  * The providers are attempted in the order they are given in the providers parameter.
  * If all providers fail, an error is thrown with the details of the errors from each provider.
