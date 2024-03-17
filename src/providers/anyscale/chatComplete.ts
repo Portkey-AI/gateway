@@ -1,6 +1,6 @@
 import { ANYSCALE } from "../../globals";
 import { ChatCompletionResponse, ErrorResponse, ProviderConfig } from "../types";
-import { generateInvalidProviderResponseError } from "../utils";
+import { generateErrorResponse, generateInvalidProviderResponseError } from "../utils";
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -127,27 +127,27 @@ export const AnyscaleErrorResponseTransform: (response: AnyscaleValidationErrorR
       errorMessage = response.detail;
     }
 
-    return {
-      error: {
-        message: `${errorField ? `${errorField}: ` : ""}${errorMessage}`,
-        type: errorType,
-        param: null,
-        code: null,
-      },
-      provider: ANYSCALE,
-    } as ErrorResponse;
+    return generateErrorResponse(
+        {
+            message: `${errorField ? `${errorField}: ` : ""}${errorMessage}`,
+            type: errorType,
+            param: null,
+            code: null,
+        },
+        ANYSCALE
+    );
   }
 
   if ('error' in response) {
-    return {
-        error: {
+    return generateErrorResponse(
+        {
             message: response.error?.message,
             type: response.error?.type,
             param: null,
-            code: null
+            code: null,
         },
-        provider: ANYSCALE
-    } as ErrorResponse;
+        ANYSCALE
+    );
   } 
 }
 

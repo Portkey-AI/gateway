@@ -1,7 +1,7 @@
 import { ErrorResponse, ProviderConfig } from "../types";
 import { EmbedParams, EmbedResponse } from "../../types/embedRequestBody";
 import { GOOGLE } from "../../globals";
-import { GoogleErrorResponse } from "./chatComplete";
+import { GoogleErrorResponse, GoogleErrorResponseTransform } from "./chatComplete";
 import { generateInvalidProviderResponseError } from "../utils";
 
 export const GoogleEmbedConfig: ProviderConfig = {
@@ -44,16 +44,9 @@ export const GoogleEmbedResponseTransform: (
     response: GoogleEmbedResponse | GoogleErrorResponse,
     responseStatus: number
 ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
-    if (responseStatus !== 200 && "error" in response) {
-        return {
-            error: {
-                message: response.error.message ?? "",
-                type: response.error.status ?? null,
-                param: null,
-                code: response.error.status ?? null,
-            },
-            provider: GOOGLE,
-        } as ErrorResponse;
+    if (responseStatus !== 200) {
+        const errorResposne = GoogleErrorResponseTransform(response as GoogleErrorResponse);
+        if (errorResposne) return errorResposne;
     }
 
     if ("embedding" in response) {

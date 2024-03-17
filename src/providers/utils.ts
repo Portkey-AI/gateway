@@ -16,3 +16,23 @@ export const generateInvalidProviderResponseError: (
         provider: provider,
     } as ErrorResponse;
 };
+
+export const generateErrorResponse: (
+    errorDetails: {
+        message: string;
+        type: string | null;
+        param: string | null;
+        code: string | null;
+    },
+    provider: string
+) => ErrorResponse = ({ message, type, param, code }, provider) => {
+    return {
+        error: {
+            message: `${provider} error: ${message}`,
+            type: type ?? null,
+            param: param ?? null,
+            code: code ?? null
+        },
+        provider: provider,
+    } as ErrorResponse;
+};

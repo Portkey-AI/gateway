@@ -1,7 +1,7 @@
 import { NOMIC } from "../../globals";
 import { EmbedParams, EmbedResponse } from "../../types/embedRequestBody";
 import { ErrorResponse, ProviderConfig } from "../types";
-import { generateInvalidProviderResponseError } from "../utils";
+import { generateErrorResponse, generateInvalidProviderResponseError } from "../utils";
 
 export const NomicEmbedConfig: ProviderConfig = {
     model: {
@@ -61,15 +61,15 @@ export const NomicErrorResponseTransform: (response: NomicValidationErrorRespons
       errorMessage = response.detail;
     }
   
-    return {
-      error: {
-        message: `${errorField ? `${errorField}: ` : ""}${errorMessage}`,
-        type: errorType,
-        param: null,
-        code: null,
-      },
-      provider: NOMIC,
-    } as ErrorResponse;
+    return generateErrorResponse(
+        {
+            message: `${errorField ? `${errorField}: ` : ""}${errorMessage}`,
+            type: errorType,
+            param: null,
+            code: null,
+        },
+        NOMIC
+    );
   }
   
 

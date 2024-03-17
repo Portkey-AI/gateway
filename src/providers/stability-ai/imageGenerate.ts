@@ -1,6 +1,6 @@
 import { STABILITY_AI } from "../../globals";
 import { ErrorResponse, ImageGenerateResponse, ProviderConfig } from "../types";
-import { generateInvalidProviderResponseError } from "../utils";
+import { generateErrorResponse, generateInvalidProviderResponseError } from "../utils";
 
 export const StabilityAIImageGenerateConfig: ProviderConfig = {
   prompt: {
@@ -73,15 +73,15 @@ interface ImageArtifact {
 
 export const StabilityAIImageGenerateResponseTransform: (response: StabilityAIImageGenerateResponse | StabilityAIImageGenerateErrorResponse, responseStatus: number) => ImageGenerateResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'message' in response) {
-    return {
-      error: {
-        message: response.message,
-        type: response.name,
-        param: null,
-        code: null,
-      },
-      provider: STABILITY_AI
-    }
+    return generateErrorResponse(
+        {
+            message: response.message,
+            type: response.name,
+            param: null,
+            code: null,
+        },
+        STABILITY_AI
+    );
   }
 
   if ('artifacts' in response) {

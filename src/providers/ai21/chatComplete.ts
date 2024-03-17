@@ -5,7 +5,7 @@ import {
     ErrorResponse,
     ProviderConfig,
 } from "../types";
-import { generateInvalidProviderResponseError } from "../utils";
+import { generateErrorResponse, generateInvalidProviderResponseError } from "../utils";
 import { AI21ErrorResponse } from "./complete";
 
 export const AI21ChatCompleteConfig: ProviderConfig = {
@@ -112,15 +112,10 @@ export const AI21ErrorResponseTransform: (
     response: AI21ErrorResponse
 ) => ErrorResponse | undefined = (response) => {
     if ("detail" in response) {
-        return {
-            error: {
-                message: response.detail,
-                type: null,
-                param: null,
-                code: null,
-            },
-            provider: AI21,
-        } as ErrorResponse;
+        return generateErrorResponse(
+            { message: response.detail, type: null, param: null, code: null },
+            AI21
+        );
     }
 
     return undefined;

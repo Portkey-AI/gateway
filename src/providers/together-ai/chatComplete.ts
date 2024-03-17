@@ -1,6 +1,6 @@
 import { TOGETHER_AI } from "../../globals";
 import { ChatCompletionResponse, ErrorResponse, ProviderConfig } from "../types";
-import { generateInvalidProviderResponseError } from "../utils";
+import { generateErrorResponse, generateInvalidProviderResponseError } from "../utils";
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -87,27 +87,22 @@ export interface TogetherAIChatCompletionStreamChunk {
 
 export const TogetherAIErrorResponseTransform: (response: TogetherAIErrorResponse | TogetherAIOpenAICompatibleErrorResponse) => ErrorResponse | false = (response) => {
   if ('error' in response && typeof response.error === "string") {
-    return {
-        error: {
-            message: response.error,
-            type: null,
-            param: null,
-            code: null
-        },
-        provider: TOGETHER_AI
-    } as ErrorResponse;
+    return generateErrorResponse(
+        { message: response.error, type: null, param: null, code: null },
+        TOGETHER_AI
+    );
   } 
 
   if ('error' in response && typeof response.error === "object") {
-    return {
-        error: {
+    return generateErrorResponse(
+        {
             message: response.error?.message || "",
             type: response.error?.type || null,
             param: response.error?.param || null,
-            code: response.error?.code || null
+            code: response.error?.code || null,
         },
-        provider: TOGETHER_AI
-    } as ErrorResponse;
+        TOGETHER_AI
+    );
   } 
 
   if ('message' in response) {

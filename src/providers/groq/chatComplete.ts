@@ -4,7 +4,7 @@ import {
     ErrorResponse,
     ProviderConfig,
 } from "../types";
-import { generateInvalidProviderResponseError } from "../utils";
+import { generateErrorResponse, generateInvalidProviderResponseError } from "../utils";
 
 export const GroqChatCompleteConfig: ProviderConfig = {
     model: {
@@ -83,15 +83,15 @@ export const GroqChatCompleteResponseTransform: (
     responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
     if ("error" in response && responseStatus !== 200) {
-        return {
-            error: {
+        return generateErrorResponse(
+            {
                 message: response.error.message,
                 type: response.error.type,
                 param: null,
                 code: response.error.code?.toString() || null,
             },
-            provider: GROQ,
-        } as ErrorResponse;
+            GROQ
+        );
     }
 
     if ("choices" in response) {

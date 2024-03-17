@@ -5,7 +5,7 @@ import {
     ErrorResponse,
     ProviderConfig,
 } from "../types";
-import { generateInvalidProviderResponseError } from "../utils";
+import { generateErrorResponse, generateInvalidProviderResponseError } from "../utils";
 import {
     BedrockAI21CompleteResponse,
     BedrockCohereCompleteResponse,
@@ -404,15 +404,10 @@ export const BedrockErrorResponseTransform: (
     response: BedrockErrorResponse
 ) => ErrorResponse | undefined = (response) => {
     if ("message" in response) {
-        return {
-            error: {
-                message: response.message,
-                type: null,
-                param: null,
-                code: null,
-            },
-            provider: BEDROCK,
-        } as ErrorResponse;
+        return generateErrorResponse(
+            { message: response.message, type: null, param: null, code: null },
+            BEDROCK
+        );
     }
 
     return undefined;

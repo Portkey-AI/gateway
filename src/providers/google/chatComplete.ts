@@ -5,7 +5,7 @@ import {
     ErrorResponse,
     ProviderConfig,
 } from "../types";
-import { generateInvalidProviderResponseError } from "../utils";
+import { generateErrorResponse, generateInvalidProviderResponseError } from "../utils";
 
 const transformGenerationConfig = (params: Params) => {
     const generationConfig: Record<string, any> = {};
@@ -155,20 +155,31 @@ interface GoogleGenerateContentResponse {
     };
 }
 
-export const GoogleChatCompleteResponseTransform: (
-    response: GoogleGenerateContentResponse | GoogleErrorResponse,
-    responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-    if (responseStatus !== 200 && "error" in response) {
-        return {
-            error: {
+export const GoogleErrorResponseTransform: (
+    response: GoogleErrorResponse
+) => ErrorResponse | undefined = (response) => {
+    if ("error" in response) {
+        return generateErrorResponse(
+            {
                 message: response.error.message ?? "",
                 type: response.error.status ?? null,
                 param: null,
                 code: response.error.status ?? null,
             },
-            provider: GOOGLE,
-        } as ErrorResponse;
+            GOOGLE
+        );
+    }
+
+    return undefined;
+};
+
+export const GoogleChatCompleteResponseTransform: (
+    response: GoogleGenerateContentResponse | GoogleErrorResponse,
+    responseStatus: number
+) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+    if (responseStatus !== 200) {
+        const errorResposne = GoogleErrorResponseTransform(response as GoogleErrorResponse);
+        if (errorResposne) return errorResposne;
     }
 
     if ("candidates" in response) {
