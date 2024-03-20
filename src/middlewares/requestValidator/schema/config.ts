@@ -5,6 +5,7 @@ import {
   AZURE_OPEN_AI,
   COHERE,
   GOOGLE,
+  GOOGLE_VERTEX_AI,
   MISTRAL_AI,
   OPEN_AI,
   PERPLEXITY_AI,
@@ -47,6 +48,7 @@ export const configSchema: any = z
             COHERE,
             TOGETHER_AI,
             GOOGLE,
+            GOOGLE_VERTEX_AI,
             PERPLEXITY_AI,
             MISTRAL_AI,
             DEEPINFRA,
@@ -98,6 +100,9 @@ export const configSchema: any = z
     request_timeout: z.number().optional(),
     custom_host: z.string().optional(),
     forward_headers: z.array(z.string()).optional(),
+    // Google Vertex AI specific
+    vertex_project_id: z.string().optional(),
+    vertex_region: z.string().optional(),
   })
   .refine(
     (value) => {
@@ -134,5 +139,18 @@ export const configSchema: any = z
     },
     {
       message: 'Invalid custom host',
+    },
+  )
+  // Validate Google Vertex AI specific fields
+  .refine(
+    (value) => {
+      const isGoogleVertexAIProvider = value.provider === GOOGLE_VERTEX_AI;
+      const hasGoogleVertexAIFields =
+        value.vertex_project_id && value.vertex_region;
+      return !(isGoogleVertexAIProvider && !hasGoogleVertexAIFields);
+    },
+    {
+      message:
+        "Invalid configuration. 'vertex_project_id' and 'vertex_region' are required for 'google-vertex-ai' provider. Example: { 'provider': 'vertex-ai', 'vertex_project_id': 'my-project-id', 'vertex_region': 'us-central1', api_key: 'ya29...' }",
     },
   );

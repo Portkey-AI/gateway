@@ -6,6 +6,7 @@ import {
   BEDROCK,
   CONTENT_TYPES,
   GOOGLE,
+  GOOGLE_VERTEX_AI,
   HEADER_KEYS,
   OLLAMA,
   PALM,
@@ -194,6 +195,10 @@ export const fetchProviderOptionsFromConfig = (
       providerOptions[0].deploymentId = camelCaseConfig.deploymentId;
     if (camelCaseConfig.apiVersion)
       providerOptions[0].apiVersion = camelCaseConfig.apiVersion;
+    if (camelCaseConfig.apiVersion)
+      providerOptions[0].vertexProjectId = camelCaseConfig.vertexProjectId;
+    if (camelCaseConfig.apiVersion)
+      providerOptions[0].vertexRegion = camelCaseConfig.vertexRegion;
     mode = 'single';
   } else {
     if (camelCaseConfig.strategy && camelCaseConfig.strategy.mode) {
@@ -300,6 +305,26 @@ export async function tryPostProxy(
     url = `${baseUrl}${endpoint}`;
   } else if (
     provider === GOOGLE &&
+    apiConfig.baseURL &&
+    apiConfig.getEndpoint
+  ) {
+    fetchOptions = constructRequest(
+      apiConfig.headers(),
+      provider,
+      'POST',
+      forwardHeaders,
+      requestHeaders,
+    );
+    baseUrl = baseUrl || apiConfig.baseURL;
+    endpoint = apiConfig.getEndpoint(
+      fn,
+      providerOption.apiKey,
+      params.model,
+      params.stream,
+    );
+    url = `${baseUrl}${endpoint}`;
+  } else if (
+    provider === GOOGLE_VERTEX_AI &&
     apiConfig.baseURL &&
     apiConfig.getEndpoint
   ) {
@@ -497,7 +522,11 @@ export async function tryPostProxy(
   c.set('requestOptions', [
     ...requestOptions,
     {
-      providerOptions: { ...providerOption, requestURL: url, rubeusURL: fn },
+      providerOptions: {
+        ...providerOption,
+        requestURL: url,
+        rubeusURL: fn,
+      },
       requestParams: params,
       response: mappedResponse.clone(),
       cacheStatus: cacheStatus,
@@ -617,21 +646,25 @@ export async function tryPost(
     baseUrl = baseUrl || apiConfig.baseURL;
     endpoint = apiConfig[fn] || '';
   } else if (
-    provider === GOOGLE &&
-    apiConfig.baseURL &&
+    provider === GOOGLE_VERTEX_AI &&
+    apiConfig.getBaseURL &&
     apiConfig.getEndpoint
   ) {
     fetchOptions = constructRequest(
-      apiConfig.headers(),
+      apiConfig.headers(providerOption.apiKey),
       provider,
       'POST',
       forwardHeaders,
       requestHeaders,
     );
-    baseUrl = baseUrl || apiConfig.baseURL;
+    baseUrl =
+      baseUrl ||
+      apiConfig.getBaseURL(
+        providerOption.vertexRegion,
+        providerOption.vertexProjectId,
+      );
     endpoint = apiConfig.getEndpoint(
       fn,
-      providerOption.apiKey,
       transformedRequestBody.model,
       params.stream,
     );
@@ -828,7 +861,11 @@ export async function tryPost(
   c.set('requestOptions', [
     ...requestOptions,
     {
-      providerOptions: { ...providerOption, requestURL: url, rubeusURL: fn },
+      providerOptions: {
+        ...providerOption,
+        requestURL: url,
+        rubeusURL: fn,
+      },
       requestParams: transformedRequestBody,
       response: mappedResponse.clone(),
       cacheStatus: cacheStatus,
