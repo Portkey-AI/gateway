@@ -211,7 +211,6 @@ export const GoogleChatCompleteResponseTransform: (
       totalTokenCount = 0,
     } = response.usageMetadata;
 
-    console.log(JSON.stringify({ response }, null, 2));
     return {
       id: crypto.randomUUID(),
       object: 'chat_completion',
