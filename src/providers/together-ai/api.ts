@@ -7,9 +7,9 @@ const TogetherAIApiConfig: ProviderAPIConfig = {
   },
   getEndpoint: ({ fn }) => {
     switch (fn) {
-      case 'complete': "/v1/completions";
-      case 'chatComplete': "/v1/chat/completions";
-      case 'embed': "/v1/embeddings";
+      case 'complete': return "/v1/completions";
+      case 'chatComplete': return "/v1/chat/completions";
+      case 'embed': return "/v1/embeddings";
       default: return '';
     }
   }
