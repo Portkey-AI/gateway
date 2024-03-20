@@ -181,7 +181,7 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
   const url = endpoint ? `${baseUrl}${endpoint}` : providerOption.urlToFetch as string;
 
   const fetchOptions = constructRequest(
-      apiConfig.headers({
+      await apiConfig.headers({
           providerOptions: providerOption,
           fn,
           transformedRequestBody: params,
@@ -345,7 +345,7 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
 
   // Construct the base object for the POST request
   const fetchOptions = constructRequest(
-      apiConfig.headers({
+      await apiConfig.headers({
           providerOptions: providerOption,
           fn,
           transformedRequestBody,
