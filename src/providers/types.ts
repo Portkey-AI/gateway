@@ -34,7 +34,7 @@ export interface ProviderConfig {
  */
 export interface ProviderAPIConfig {
   /** A function to generate the headers for the API request. */
-  headers: (args: { providerOptions: Options, fn: string, transformedRequestBody: Record<string, any>, transformedRequestUrl: string}) => Record<string, any> ;
+  headers: (args: { providerOptions: Options, fn: string, transformedRequestBody: Record<string, any>, transformedRequestUrl: string}) => Promise<Record<string, any>> | Record<string, any>;
   /** A function to generate the baseURL based on parameters */
   getBaseURL: (args: { providerOptions: Options }) => string;
   /** A function to generate the endpoint based on parameters */
