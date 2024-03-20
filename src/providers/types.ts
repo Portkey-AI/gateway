@@ -1,4 +1,4 @@
-import { Message } from "../types/requestBody";
+import { Message } from '../types/requestBody';
 
 /**
  * Configuration for a parameter.
@@ -58,10 +58,19 @@ export interface ProviderAPIConfig {
   /** The endpoint for the 'stream-chatComplete' function. */
   proxy?: string;
   /** The endpoint for 'imageGenerate' function */
-  imageGenerate?: string
+  imageGenerate?: string;
 }
 
-export type endpointStrings = 'complete' | 'chatComplete' | 'embed' | 'rerank' | 'moderate' | 'stream-complete' | 'stream-chatComplete' | 'proxy' | 'imageGenerate'
+export type endpointStrings =
+  | 'complete'
+  | 'chatComplete'
+  | 'embed'
+  | 'rerank'
+  | 'moderate'
+  | 'stream-complete'
+  | 'stream-chatComplete'
+  | 'proxy'
+  | 'imageGenerate';
 
 /**
  * A collection of API configurations for multiple AI providers.
@@ -137,13 +146,13 @@ export interface ChatCompletionResponse extends CResponse {
  * @interface
  */
 export interface ErrorResponse {
-    error: {
-        message: string;
-        type: string | null;
-        param: string | null;
-        code: string | null;
-    },
-    provider: string
+  error: {
+    message: string;
+    type: string | null;
+    param: string | null;
+    code: string | null;
+  };
+  provider: string;
 }
 
 /**
@@ -151,7 +160,7 @@ export interface ErrorResponse {
  * @interface
  */
 export interface ImageGenerateResponse {
-  created: string,
-  data: object[],
+  created: string;
+  data: object[];
   provider: string;
 }

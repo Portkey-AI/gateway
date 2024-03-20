@@ -1,17 +1,17 @@
-import { OLLAMA } from "../../globals";
-import { EmbedResponse } from "../../types/embedRequestBody";
-import { ErrorResponse, ProviderConfig } from "../types";
+import { OLLAMA } from '../../globals';
+import { EmbedResponse } from '../../types/embedRequestBody';
+import { ErrorResponse, ProviderConfig } from '../types';
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
 export const OllamaEmbedConfig: ProviderConfig = {
   model: {
-    param: "model",
+    param: 'model',
   },
   input: {
-    param: "prompt",
+    param: 'prompt',
     required: true,
-  }
+  },
 };
 
 interface OllamaEmbedResponse extends EmbedResponse {
@@ -23,10 +23,9 @@ interface OllamaErrorResponse {
 }
 export const OllamaEmbedResponseTransform: (
   response: OllamaEmbedResponse | OllamaErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
-  
-  if ("error" in response) {
+  if ('error' in response) {
     return {
       error: {
         message: response.error,
@@ -37,17 +36,17 @@ export const OllamaEmbedResponseTransform: (
       provider: OLLAMA,
     } as ErrorResponse;
   }
-  if ("embedding" in response) {    
+  if ('embedding' in response) {
     return {
-      object: "list",
+      object: 'list',
       data: [
         {
-          object: "embedding",
+          object: 'embedding',
           embedding: response.embedding,
           index: 0,
         },
       ],
-      model: "",
+      model: '',
       usage: {
         prompt_tokens: -1,
         total_tokens: -1,
@@ -57,7 +56,7 @@ export const OllamaEmbedResponseTransform: (
   return {
     error: {
       message: `Invalid response recieved from ${OLLAMA}: ${JSON.stringify(
-        response
+        response,
       )}`,
       type: null,
       param: null,
