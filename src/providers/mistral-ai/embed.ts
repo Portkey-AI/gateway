@@ -1,7 +1,10 @@
 import { MISTRAL_AI } from "../../globals";
 import { EmbedParams, EmbedResponse } from "../../types/embedRequestBody";
 import { ErrorResponse, ProviderConfig } from "../types";
-import { generateInvalidProviderResponseError } from "../utils";
+import {
+    generateErrorResponse,
+    generateInvalidProviderResponseError,
+} from "../utils";
 import { MistralAIErrorResponse } from "./chatComplete";
 
 export const MistralAIEmbedConfig: ProviderConfig = {
@@ -30,15 +33,15 @@ export const MistralAIEmbedResponseTransform: (
     responseStatus: number
 ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
     if ("message" in response && responseStatus !== 200) {
-        return {
-            error: {
+        return generateErrorResponse(
+            {
                 message: response.message,
                 type: response.type,
                 param: response.param,
                 code: response.code,
             },
-            provider: MISTRAL_AI,
-        } as ErrorResponse;
+            MISTRAL_AI
+        );
     }
 
     if ("data" in response) {
