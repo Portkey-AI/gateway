@@ -105,16 +105,16 @@ export const TogetherAIErrorResponseTransform: (response: TogetherAIErrorRespons
     );
   } 
 
-  if ('message' in response) {
-    return {
-        error: {
-            message: response.message,
-            type: response.type,
-            param: null,
-            code: null
-        },
-        provider: TOGETHER_AI
-    } as ErrorResponse;
+  if ("message" in response && response.message) {
+      return generateErrorResponse(
+          {
+              message: response.message,
+              type: response.type || null,
+              param: null,
+              code: null,
+          },
+          TOGETHER_AI
+      );
   }
 
   return false;
