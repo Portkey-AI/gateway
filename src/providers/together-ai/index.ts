@@ -1,8 +1,19 @@
-import { ProviderConfigs } from "../types";
-import TogetherAIApiConfig from "./api";
-import {TogetherAIChatCompleteConfig, TogetherAIChatCompleteResponseTransform, TogetherAIChatCompleteStreamChunkTransform } from "./chatComplete";
-import { TogetherAICompleteConfig, TogetherAICompleteResponseTransform, TogetherAICompleteStreamChunkTransform } from "./complete";
-import { TogetherAIEmbedConfig, TogetherAIEmbedResponseTransform } from "./embed";
+import { ProviderConfigs } from '../types';
+import TogetherAIApiConfig from './api';
+import {
+  TogetherAIChatCompleteConfig,
+  TogetherAIChatCompleteResponseTransform,
+  TogetherAIChatCompleteStreamChunkTransform,
+} from './chatComplete';
+import {
+  TogetherAICompleteConfig,
+  TogetherAICompleteResponseTransform,
+  TogetherAICompleteStreamChunkTransform,
+} from './complete';
+import {
+  TogetherAIEmbedConfig,
+  TogetherAIEmbedResponseTransform,
+} from './embed';
 
 const TogetherAIConfig: ProviderConfigs = {
   complete: TogetherAICompleteConfig,
@@ -11,11 +22,11 @@ const TogetherAIConfig: ProviderConfigs = {
   api: TogetherAIApiConfig,
   responseTransforms: {
     'stream-complete': TogetherAICompleteStreamChunkTransform,
-    'complete': TogetherAICompleteResponseTransform,
-    'chatComplete': TogetherAIChatCompleteResponseTransform,
+    complete: TogetherAICompleteResponseTransform,
+    chatComplete: TogetherAIChatCompleteResponseTransform,
     'stream-chatComplete': TogetherAIChatCompleteStreamChunkTransform,
-    'embed': TogetherAIEmbedResponseTransform
-  }
+    embed: TogetherAIEmbedResponseTransform,
+  },
 };
 
 export default TogetherAIConfig;

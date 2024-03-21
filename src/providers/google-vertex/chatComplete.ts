@@ -1,4 +1,4 @@
-import { GOOGLE } from '../../globals';
+import { GOOGLE_VERTEX_AI } from '../../globals';
 import { ContentType, Message, Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
@@ -58,10 +58,32 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
               });
             }
             if (c.type === 'image_url') {
+              const { url } = c.image_url;
+
+              if (!url) {
+                // Shouldn't throw error?
+                return;
+              }
+
+              // Example: data:image/png;base64,abcdefg...
+              if (url.startsWith('data:')) {
+                const [mimeTypeWithPrefix, base64Image] = url.split(';base64,');
+                const mimeType = mimeTypeWithPrefix.split(':')[1];
+
+                parts.push({
+                  inlineData: {
+                    mimeType: mimeType,
+                    data: base64Image,
+                  },
+                });
+
+                return;
+              }
+
               parts.push({
                 inlineData: {
-                  mimeType: 'image/jpeg',
-                  data: c.image_url?.url,
+                  mimeType: 'image/jpeg', // unknown mimeType | maybe throw error saying URLs are not supported
+                  data: url,
                 },
               });
             }
@@ -82,6 +104,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
         messages.push({ role, parts });
         lastRole = role;
       });
+
       return messages;
     },
   },
@@ -153,7 +176,15 @@ interface GoogleGenerateContentResponse {
     safetyRatings: {
       category: string;
       probability: string;
+      probabilityScore: number;
+      severity: string;
+      severityScore: number;
     }[];
+  };
+  usageMetadata: {
+    promptTokenCount: number;
+    candidatesTokenCount: number;
+    totalTokenCount: number;
   };
 }
 
@@ -169,17 +200,23 @@ export const GoogleChatCompleteResponseTransform: (
         param: null,
         code: response.error.status ?? null,
       },
-      provider: GOOGLE,
+      provider: GOOGLE_VERTEX_AI,
     } as ErrorResponse;
   }
 
   if ('candidates' in response) {
+    const {
+      promptTokenCount = 0,
+      candidatesTokenCount = 0,
+      totalTokenCount = 0,
+    } = response.usageMetadata;
+
     return {
       id: crypto.randomUUID(),
       object: 'chat_completion',
       created: Math.floor(Date.now() / 1000),
       model: 'Unknown',
-      provider: 'google',
+      provider: GOOGLE_VERTEX_AI,
       choices:
         response.candidates?.map((generation, index) => {
           let message: Message = { role: 'assistant', content: '' };
@@ -207,10 +244,15 @@ export const GoogleChatCompleteResponseTransform: (
           }
           return {
             message: message,
-            index: generation.index,
+            index: index,
             finish_reason: generation.finishReason,
           };
         }) ?? [],
+      usage: {
+        prompt_tokens: promptTokenCount,
+        completion_tokens: candidatesTokenCount,
+        total_tokens: totalTokenCount,
+      },
     };
   }
 
@@ -223,7 +265,7 @@ export const GoogleChatCompleteResponseTransform: (
       param: null,
       code: null,
     },
-    provider: GOOGLE,
+    provider: GOOGLE_VERTEX_AI,
   } as ErrorResponse;
 };
 
@@ -256,7 +298,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
       object: 'chat.completion.chunk',
       created: Math.floor(Date.now() / 1000),
       model: '',
-      provider: 'google',
+      provider: GOOGLE_VERTEX_AI,
       choices:
         parsedChunk.candidates?.map((generation, index) => {
           let message: Message = { role: 'assistant', content: '' };
