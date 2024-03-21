@@ -1,3 +1,4 @@
+import { OPEN_AI } from "../../globals";
 import { EmbedResponse } from "../../types/embedRequestBody";
 import { ErrorResponse, ProviderConfig } from "../types";
 import { OpenAIErrorResponseTransform } from "./chatComplete";
