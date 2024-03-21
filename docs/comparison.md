@@ -30,7 +30,8 @@ While Portkey itself has a generous free tier (10k requests free / month), if yo
 | **Security & Compliance** | | | |
 | | Role Based<br>Access Control | ❌ | ❌ | ✅ | ✅ |
 | | PII Anonymizer | ❌ | ❌ | ❌ | ✅ |
-| | Compliances<br>(SOC2, ISO27001, GDPR, HIPAA) | ❌ | ❌ | ❌ | ✅ |
+| | SOC2, ISO27001,<br>GDPR, HIPAA Compliances | ❌ | ❌ | ✅ | ✅ |
+| | BAA Signing<br>for Compliances | ❌ | ❌ | ❌ | ✅ |
 | | VPC Managed Hosting | ❌ | ❌ | ❌ | ✅ |
 | | Configurable Retention<br>Periods | ❌ | ❌ | ❌ | ✅ |
 
