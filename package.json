@@ -23,6 +23,7 @@
     "docs"
   ],
   "scripts": {
+    "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,json}\"",
     "dev": "wrangler dev src/index.ts",
     "dev:node": "tsx src/start-server.ts",
     "dev:workerd": "wrangler dev src/index.ts",
