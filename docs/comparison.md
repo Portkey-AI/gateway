@@ -27,6 +27,12 @@ While Portkey itself has a generous free tier (10k requests free / month), if yo
 | | Virtual Keys & Key Management | ❌  | ❌  | ✅ | ✅ |
 | | Simple & Semantic Caching | ❌  | ❌  | ✅ | ✅ |
 | **Prompt Management** | Playground, API Deployment,<br>Versioning, Variable Management | ❌  | ✅  | ✅ | ✅ |
+| **Security & Compliance** | | | |
+| | Role Based<br>Access Control | ❌ | ❌ | ✅ | ✅ |
+| | PII Anonymizer | ❌ | ❌ | ❌ | ✅ |
+| | Compliances<br>(SOC2, ISO27001, GDPR, HIPAA) | ❌ | ❌ | ❌ | ✅ |
+| | VPC Managed Hosting | ❌ | ❌ | ❌ | ✅ |
+| | Configurable Retention<br>Periods | ❌ | ❌ | ❌ | ✅ |
 
 ### Using Open Source
 Just do `npx @portkey-ai/gateway` and Portkey Gateway will spin up on your machine, on port `8787`. You can now use the OpenAI SDK directly to call any other LLM, setup fallbacks/retries etc.
