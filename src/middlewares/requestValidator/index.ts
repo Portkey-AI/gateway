@@ -19,7 +19,8 @@ import {
     AI21,
     BEDROCK,
     GROQ,
-    SEGMIND
+    SEGMIND,
+    MOONSHOT
 } from "../../globals";
 import { configSchema } from "./schema/config";
 
@@ -86,7 +87,8 @@ export const requestValidator = (c: Context, next: any) => {
             AI21,
             BEDROCK,
             GROQ,
-            SEGMIND
+            SEGMIND,
+            MOONSHOT
         ].includes(requestHeaders[`x-${POWERED_BY}-provider`])
     ) {
         return new Response(
