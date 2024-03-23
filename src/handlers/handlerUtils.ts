@@ -84,6 +84,7 @@ export function selectProviderByWeight(providers:Options[]): Options {
 }
 
 /**
+ * @deprecated
  * Gets the provider options based on the specified mode.
  * Modes can be "single" (uses the first provider), "loadbalance" (selects one provider based on weights),
  * or "fallback" (uses all providers in the given order). If the mode does not match these options, null is returned.
@@ -121,6 +122,9 @@ export function getProviderOptionsByMode(mode: string, config: any): Options[]|n
   }    
 }
 
+/**
+ * @deprecated
+ */
 export const fetchProviderOptionsFromConfig = (config: Config | ShortConfig): Options[] | null => {
   let providerOptions: Options[] | null = null;
   let mode: string;
