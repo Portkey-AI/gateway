@@ -30,7 +30,7 @@ export const configSchema: any = z
                     VALID_PROVIDERS.includes(value),
                 {
                     message:
-                        "Invalid 'provider' value. Must be one of: openai, anthropic, azure-openai, anyscale, cohere",
+                        `Invalid 'provider' value. Must be one of: ${VALID_PROVIDERS.join(", ")}`,
                 }
             )
             .optional(),
