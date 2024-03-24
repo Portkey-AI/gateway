@@ -126,38 +126,38 @@ export const BedrockLLamaCompleteConfig: ProviderConfig = {
 };
 
 export const BedrockMistralCompleteConfig: ProviderConfig = {
-    prompt: {
-        param: "prompt",
-        required: true,
-    },
-    max_tokens: {
-        param: "max_tokens",
-        default: 20,
-        min: 1,
-    },
-    temperature: {
-        param: "temperature",
-        default: 0.75,
-        min: 0,
-        max: 5,
-    },
-    top_p: {
-        param: "p",
-        default: 0.75,
-        min: 0,
-        max: 1,
-    },
-    top_k: {
-        param: "k",
-        default: 0,
-        max: 500,
-    },
-    stop: {
-        param: "end_sequences",
-    },
-    stream: {
-        param: "stream",
-    },
+  prompt: {
+    param: 'prompt',
+    required: true,
+  },
+  max_tokens: {
+    param: 'max_tokens',
+    default: 20,
+    min: 1,
+  },
+  temperature: {
+    param: 'temperature',
+    default: 0.75,
+    min: 0,
+    max: 5,
+  },
+  top_p: {
+    param: 'p',
+    default: 0.75,
+    min: 0,
+    max: 1,
+  },
+  top_k: {
+    param: 'k',
+    default: 0,
+    max: 500,
+  },
+  stop: {
+    param: 'end_sequences',
+  },
+  stream: {
+    param: 'stream',
+  },
 };
 
 const transformTitanGenerationConfig = (params: Params) => {
@@ -790,135 +790,123 @@ export const BedrockCohereCompleteStreamChunkTransform: (
   })}\n\n`;
 };
 
+interface BedrocMistralStreamChunkOutput {
+  text: string;
+  stop_reason: string | null;
+}
+
 export interface BedrocMistralStreamChunk {
-    generation: string;
-    prompt_token_count: number;
-    generation_token_count: number;
-    stop_reason: string | null;
-    "amazon-bedrock-invocationMetrics": {
-        inputTokenCount: number;
-        outputTokenCount: number;
-        invocationLatency: number;
-        firstByteLatency: number;
-    };
+  outputs: BedrocMistralStreamChunkOutput[];
 }
 
 export const BedrockMistralCompleteStreamChunkTransform: (
-    response: string,
-    fallbackId: string
+  response: string,
+  fallbackId: string
 ) => string | string[] = (responseChunk, fallbackId) => {
-    let chunk = responseChunk.trim();
-    chunk = chunk.trim();
-    const parsedChunk: BedrocMistralStreamChunk = JSON.parse(chunk);
+  let chunk = responseChunk.trim();
+  chunk = chunk.trim();
+  const parsedChunk: BedrocMistralStreamChunk = JSON.parse(chunk);
 
-    if (parsedChunk.stop_reason) {
-        return [
-            `data: ${JSON.stringify({
-                id: fallbackId,
-                object: "text_completion",
-                created: Math.floor(Date.now() / 1000),
-                model: "",
-                provider: BEDROCK,
-                choices: [
-                    {
-                        text: "",
-                        index: 0,
-                        logprobs: null,
-                        finish_reason: parsedChunk.stop_reason,
-                    },
-                ],
-                usage: {
-                    prompt_tokens:
-                        parsedChunk["amazon-bedrock-invocationMetrics"]
-                            .inputTokenCount,
-                    completion_tokens:
-                        parsedChunk["amazon-bedrock-invocationMetrics"]
-                            .outputTokenCount,
-                    total_tokens:
-                        parsedChunk["amazon-bedrock-invocationMetrics"]
-                            .inputTokenCount +
-                        parsedChunk["amazon-bedrock-invocationMetrics"]
-                            .outputTokenCount,
-                },
-            })}\n\n`,
-            `data: [DONE]\n\n`,
-        ];
-    }
-
-    return `data: ${JSON.stringify({
+  if (parsedChunk.outputs[0].stop_reason) {
+    return [
+      `data: ${JSON.stringify({
         id: fallbackId,
-        object: "text_completion",
+        object: 'text_completion',
         created: Math.floor(Date.now() / 1000),
-        model: "",
+        model: '',
         provider: BEDROCK,
         choices: [
-            {
-                text: parsedChunk.generation,
-                index: 0,
-                logprobs: null,
-                finish_reason: null,
-            },
+          {
+            text: parsedChunk.outputs[0].text,
+            index: 0,
+            logprobs: null,
+            finish_reason: parsedChunk.outputs[0].stop_reason,
+          },
         ],
-    })}\n\n`;
+        usage: {
+          prompt_tokens: 0,
+          completion_tokens: 0,
+          total_tokens: 0,
+        },
+      })}\n\n`,
+      `data: [DONE]\n\n`,
+    ];
+  }
+
+  return `data: ${JSON.stringify({
+    id: fallbackId,
+    object: 'text_completion',
+    created: Math.floor(Date.now() / 1000),
+    model: '',
+    provider: BEDROCK,
+    choices: [
+      {
+        text: parsedChunk.outputs[0].text,
+        index: 0,
+        logprobs: null,
+        finish_reason: null,
+      },
+    ],
+  })}\n\n`;
 };
 
+interface BedrockMistralCompleteOutput {
+  text: string;
+  stop_reason: string;
+}
+
 export interface BedrockMistralCompleteResponse {
-    generation: string;
-    prompt_token_count: number;
-    generation_token_count: number;
-    stop_reason: string;
+  outputs: BedrockMistralCompleteOutput[];
 }
 
 export const BedrockMistralCompleteResponseTransform: (
-    response: BedrockMistralCompleteResponse | BedrockErrorResponse,
-    responseStatus: number
+  response: BedrockMistralCompleteResponse | BedrockErrorResponse,
+  responseStatus: number
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
-    if ("message" in response && responseStatus !== 200) {
-        return {
-            error: {
-                message: response.message,
-                type: null,
-                param: null,
-                code: null,
-            },
-            provider: BEDROCK,
-        } as ErrorResponse;
-    }
-
-    if ("generation" in response) {
-        return {
-            id: Date.now().toString(),
-            object: "text_completion",
-            created: Math.floor(Date.now() / 1000),
-            model: "",
-            provider: BEDROCK,
-            choices: [
-                {
-                    text: response.generation,
-                    index: 0,
-                    logprobs: null,
-                    finish_reason: response.stop_reason,
-                },
-            ],
-            usage: {
-                prompt_tokens: response.prompt_token_count,
-                completion_tokens: response.generation_token_count,
-                total_tokens:
-                    response.prompt_token_count +
-                    response.generation_token_count,
-            },
-        };
-    }
-
+  if ('message' in response && responseStatus !== 200) {
     return {
-        error: {
-            message: `Invalid response recieved from ${BEDROCK}: ${JSON.stringify(
-                response
-            )}`,
-            type: null,
-            param: null,
-            code: null,
-        },
-        provider: BEDROCK,
+      error: {
+        message: response.message,
+        type: null,
+        param: null,
+        code: null,
+      },
+      provider: BEDROCK,
     } as ErrorResponse;
+  }
+
+  if ('outputs' in response) {
+    return {
+      id: Date.now().toString(),
+      object: 'text_completion',
+      created: Math.floor(Date.now() / 1000),
+      model: '',
+      provider: BEDROCK,
+      choices: [
+        {
+          text: response.outputs[0].text,
+          index: 0,
+          logprobs: null,
+          finish_reason: response.outputs[0].stop_reason,
+        },
+      ],
+      usage: {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        total_tokens: 0,
+      },
+    };
+  }
+
+  return {
+    error: {
+      message: `Invalid response recieved from ${BEDROCK}: ${JSON.stringify(
+        response
+      )}`,
+      type: null,
+      param: null,
+      code: null,
+    },
+    provider: BEDROCK,
+  } as ErrorResponse;
 };
