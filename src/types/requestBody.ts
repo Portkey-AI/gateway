@@ -43,6 +43,8 @@ export interface Options {
   deploymentId?: string;
   apiVersion?: string;
   adAuth?:string;
+  /** Workers AI specific */
+  accountId?: string;
   /** The parameter to set custom base url */
   customHost?: string;
   /** The parameter to set list of headers to be forwarded as-is to the provider */

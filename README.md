@@ -70,7 +70,7 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 | <img src="https://platform.stability.ai/small-logo-purple.svg" width=35>| Stability AI  | ✅  |✅  | `/generation/{engine_id}/text-to-image` |
 | <img src="https://deepinfra.com/_next/static/media/logo.4a03fd3d.svg" width=35>| DeepInfra  | ✅  |✅  | `/inference` |
 | <img src="https://ollama.com/public/ollama.png" width=35>| Ollama  | ✅  |✅  | `/chat/completions` |
-
+| <img src="https://www.cloudflare.com/favicon.ico" width=35>| Cloudflare Workers AI | ✅  |✅  | `/completions`, `/chat/completions` |
 > [View the complete list of 100+ supported models here](https://portkey.ai/docs/welcome/what-is-portkey#ai-providers-supported)
 <br>
 

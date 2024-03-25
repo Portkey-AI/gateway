@@ -1,5 +1,5 @@
 import { Context } from "hono";
-import { AI21, ANTHROPIC, AZURE_OPEN_AI, BEDROCK, CONTENT_TYPES, GOOGLE, HEADER_KEYS, OLLAMA, PALM, POWERED_BY, RESPONSE_HEADER_KEYS, RETRY_STATUS_CODES, SEGMIND, STABILITY_AI } from "../globals";
+import { AI21, ANTHROPIC, AZURE_OPEN_AI, BEDROCK, CONTENT_TYPES, GOOGLE, HEADER_KEYS, OLLAMA, PALM, POWERED_BY, RESPONSE_HEADER_KEYS, RETRY_STATUS_CODES, SEGMIND, STABILITY_AI, WORKERS_AI } from "../globals";
 import Providers from "../providers";
 import { ProviderAPIConfig, endpointStrings } from "../providers/types";
 import transformToProviderRequest from "../services/transformToProviderRequest";
@@ -403,6 +403,10 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
     fetchOptions = constructRequest(await apiConfig.headers(providerOption, transformedRequestBody, `${baseUrl}${endpoint}`), provider, "POST", forwardHeaders, requestHeaders);
   } else if (provider === AI21 && apiConfig.getEndpoint && apiConfig.baseURL) {
     baseUrl = baseUrl || apiConfig.baseURL;
+    endpoint = apiConfig.getEndpoint(fn, params.model);
+    fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, "POST", forwardHeaders, requestHeaders);
+  } else if (provider === WORKERS_AI && apiConfig.getBaseURL && apiConfig.getEndpoint) {
+    baseUrl = baseUrl || apiConfig.getBaseURL(providerOption.accountId);
     endpoint = apiConfig.getEndpoint(fn, params.model);
     fetchOptions = constructRequest(apiConfig.headers(providerOption.apiKey), provider, "POST", forwardHeaders, requestHeaders);
   } else {
@@ -811,6 +815,10 @@ export function constructConfigFromRequestHeaders(
       awsRegion: requestHeaders[`x-${POWERED_BY}-aws-region`]
     }
 
+    const workersAiConfig = {
+      accountId: requestHeaders[`x-${POWERED_BY}-workers-ai-account-id`],
+    }
+
     if (
       requestHeaders[`x-${POWERED_BY}-config`]
     ) {
@@ -834,6 +842,13 @@ export function constructConfigFromRequestHeaders(
             }
           }
 
+          if (parsedConfigJson.provider === WORKERS_AI) {
+            parsedConfigJson = {
+              ...parsedConfigJson,
+              ...workersAiConfig
+            }
+          }
+
         }
         return convertKeysToCamelCase(
             parsedConfigJson,
@@ -845,7 +860,8 @@ export function constructConfigFromRequestHeaders(
       provider: requestHeaders[`x-${POWERED_BY}-provider`],
       apiKey: requestHeaders["authorization"]?.replace("Bearer ", ""),
       ...(requestHeaders[`x-${POWERED_BY}-provider`] === AZURE_OPEN_AI && azureConfig),
-      ...(requestHeaders[`x-${POWERED_BY}-provider`] === BEDROCK && bedrockConfig)
+      ...(requestHeaders[`x-${POWERED_BY}-provider`] === BEDROCK && bedrockConfig),
+      ...(requestHeaders[`x-${POWERED_BY}-provider`] === WORKERS_AI && workersAiConfig)
     };
 }
-    
+

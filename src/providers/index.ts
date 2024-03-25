@@ -17,6 +17,7 @@ import OllamaAPIConfig from "./ollama";
 import { ProviderConfigs } from "./types";
 import GroqConfig from "./groq";
 import SegmindConfig from "./segmind";
+import WorkersAiConfig from "./workers-ai";
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -36,7 +37,8 @@ const Providers: { [key: string]: ProviderConfigs } = {
   ai21: AI21Config,
   bedrock: BedrockConfig,
   groq: GroqConfig,
-  segmind: SegmindConfig
+  segmind: SegmindConfig,
+  'workers-ai': WorkersAiConfig
 };
 
 export default Providers;

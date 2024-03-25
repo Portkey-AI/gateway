@@ -40,8 +40,9 @@ export const AI21: string = "ai21";
 export const BEDROCK: string = "bedrock";
 export const GROQ: string = "groq";
 export const SEGMIND: string = "segmind";
+export const WORKERS_AI: string = "workers-ai";
 
-export const providersWithStreamingSupport = [OPEN_AI, AZURE_OPEN_AI, ANTHROPIC, COHERE];
+export const providersWithStreamingSupport = [OPEN_AI, AZURE_OPEN_AI, ANTHROPIC, COHERE, WORKERS_AI];
 export const allowedProxyProviders = [OPEN_AI, COHERE, AZURE_OPEN_AI, ANTHROPIC];
 
 export const PROXY_REQUEST_PATH_PREFIX:string = "/v1/proxy";
