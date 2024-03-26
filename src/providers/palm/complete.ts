@@ -1,7 +1,9 @@
 import { PALM } from "../../globals";
 import { Params } from "../../types/requestBody";
 import { PalmCompleteResponse } from "../../types/responseBody";
+import { GoogleErrorResponse, GoogleErrorResponseTransform } from "../google/chatComplete";
 import { CompletionResponse, ErrorResponse, ProviderConfig } from "../types";
+import { generateInvalidProviderResponseError } from "../utils";
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -58,30 +60,27 @@ export const PalmCompleteConfig: ProviderConfig = {
 
 };
 
-export const PalmCompleteResponseTransform: (response: PalmCompleteResponse, responseStatus: number) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
+export const PalmCompleteResponseTransform: (response: PalmCompleteResponse | GoogleErrorResponse, responseStatus: number) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
     if (responseStatus !== 200) {
-        return {
-            error: {
-                message: response.error?.message ?? null,
-                type: null,
-                param: null,
-                code: response.error?.code?.toString() ?? null
-            },
-            provider: PALM
-        } as ErrorResponse;
+        const errorResponse = GoogleErrorResponseTransform(response as GoogleErrorResponse);
+        if (errorResponse) return errorResponse;
     }
 
-    return {
-        id: "response.id",
-        object: "completion",
-        created: Math.floor(Date.now() / 1000),
-        model: "Unknown",
-        provider: PALM,
-        choices: response.candidates?.map((generation, index) => ({
-            text: generation.output,
-            index: index,
-            logprobs: null,
-            finish_reason: "length",
-        })) ?? []
-    };
+    if ("candidates" in response) {
+        return {
+            id: Date.now().toString(),
+            object: "completion",
+            created: Math.floor(Date.now() / 1000),
+            model: "Unknown",
+            provider: PALM,
+            choices: response.candidates?.map((generation, index) => ({
+                text: generation.output,
+                index: index,
+                logprobs: null,
+                finish_reason: "length",
+            })) ?? []
+        };
+    }
+
+    return generateInvalidProviderResponseError(response, PALM);
 }
