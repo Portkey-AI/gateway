@@ -156,8 +156,9 @@ interface GoogleGenerateContentResponse {
 }
 
 export const GoogleErrorResponseTransform: (
-    response: GoogleErrorResponse
-) => ErrorResponse | undefined = (response) => {
+    response: GoogleErrorResponse,
+    provider?: string
+) => ErrorResponse | undefined = (response, provider = GOOGLE) => {
     if ("error" in response) {
         return generateErrorResponse(
             {
@@ -166,7 +167,7 @@ export const GoogleErrorResponseTransform: (
                 param: null,
                 code: response.error.status ?? null,
             },
-            GOOGLE
+            provider
         );
     }
 

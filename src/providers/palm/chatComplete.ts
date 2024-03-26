@@ -67,7 +67,7 @@ export const PalmChatCompleteConfig: ProviderConfig = {
 
 export const PalmChatCompleteResponseTransform: (response: PalmChatCompleteResponse | GoogleErrorResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
     if (responseStatus !== 200) {
-        const errorResponse = GoogleErrorResponseTransform(response as GoogleErrorResponse);
+        const errorResponse = GoogleErrorResponseTransform(response as GoogleErrorResponse, PALM);
         if (errorResponse) return errorResponse;
     }
 

@@ -62,7 +62,7 @@ export const PalmCompleteConfig: ProviderConfig = {
 
 export const PalmCompleteResponseTransform: (response: PalmCompleteResponse | GoogleErrorResponse, responseStatus: number) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
     if (responseStatus !== 200) {
-        const errorResponse = GoogleErrorResponseTransform(response as GoogleErrorResponse);
+        const errorResponse = GoogleErrorResponseTransform(response as GoogleErrorResponse, PALM);
         if (errorResponse) return errorResponse;
     }
 

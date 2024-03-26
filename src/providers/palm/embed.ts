@@ -7,14 +7,7 @@ import { generateInvalidProviderResponseError } from "../utils";
 export const PalmEmbedConfig: ProviderConfig = {
     input: {
         param: "text",
-        required: true,
-        transform: (params: EmbedParams): string[] => {
-            if (Array.isArray(params.input)) {
-                return params.input;
-            } else {
-                return [params.input];
-            }
-        }
+        required: true
     },
     model: {
         param: "model",
@@ -32,7 +25,7 @@ interface PalmEmbedResponse {
 
 export const PalmEmbedResponseTransform: (response: PalmEmbedResponse | GoogleErrorResponse, responseStatus: number) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
     if (responseStatus !== 200) {
-        const errorResponse = GoogleErrorResponseTransform(response as GoogleErrorResponse);
+        const errorResponse = GoogleErrorResponseTransform(response as GoogleErrorResponse, PALM);
         if (errorResponse) return errorResponse;
     }
 
