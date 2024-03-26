@@ -51,7 +51,6 @@ export const VALID_PROVIDERS = [
     OPEN_AI,
     PALM,
     PERPLEXITY_AI,
-    POWERED_BY,
     TOGETHER_AI,
     DEEPINFRA,
     STABILITY_AI,
