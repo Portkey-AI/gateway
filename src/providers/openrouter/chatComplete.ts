@@ -1,4 +1,4 @@
-import { MOONSHOT } from "../../globals";
+import { OPENROUTER } from "../../globals";
 
 import {
   ChatCompletionResponse,
@@ -6,11 +6,11 @@ import {
   ProviderConfig,
 } from "../types";
 
-export const MoonshotChatCompleteConfig: ProviderConfig = {
+export const OpenrouterChatCompleteConfig: ProviderConfig = {
   model: {
     param: "model",
     required: true,
-    default: "moonshot-v1-8k",
+    default: "openrouter/auto",
   },
   messages: {
     param: "messages",
@@ -39,15 +39,16 @@ export const MoonshotChatCompleteConfig: ProviderConfig = {
   },
 };
 
-export interface MoonshotChatCompleteResponse extends ChatCompletionResponse {}
+export interface OpenrouterChatCompleteResponse
+  extends ChatCompletionResponse {}
 
-export interface MoonshotErrorResponse extends ErrorResponse {}
+export interface OpenrouterErrorResponse extends ErrorResponse {}
 
-export interface MoonshotStreamChunk {
+export interface OpenrouterStreamChunk {
   id: string;
   object: string;
   created: number;
-  model: "moonshot-v1-8k" | "moonshot-v1-32k" | "moonshot-v1-128k";
+  model: string;
   choices: {
     delta: {
       content?: string;
@@ -57,8 +58,8 @@ export interface MoonshotStreamChunk {
   }[];
 }
 
-export const MoonshotChatCompleteResponseTransform: (
-  response: MoonshotChatCompleteResponse | MoonshotErrorResponse,
+export const OpenrouterChatCompleteResponseTransform: (
+  response: OpenrouterChatCompleteResponse | OpenrouterErrorResponse,
   responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if ("error" in response && responseStatus !== 200) {
@@ -69,7 +70,7 @@ export const MoonshotChatCompleteResponseTransform: (
         param: null,
         code: response.error.code?.toString() || null,
       },
-      provider: MOONSHOT,
+      provider: OPENROUTER,
     } as ErrorResponse;
   }
 
@@ -79,7 +80,7 @@ export const MoonshotChatCompleteResponseTransform: (
       object: response.object,
       created: response.created,
       model: response.model,
-      provider: MOONSHOT,
+      provider: OPENROUTER,
       choices: response.choices.map((c) => ({
         index: c.index,
         message: c.message,
@@ -95,18 +96,18 @@ export const MoonshotChatCompleteResponseTransform: (
 
   return {
     error: {
-      message: `Invalid response recieved from ${MOONSHOT}: ${JSON.stringify(
+      message: `Invalid response recieved from ${OPENROUTER}: ${JSON.stringify(
         response,
       )}`,
       type: null,
       param: null,
       code: null,
     },
-    provider: MOONSHOT,
+    provider: OPENROUTER,
   } as ErrorResponse;
 };
 
-export const MoonshotChatCompleteStreamChunkTransform: (
+export const OpenrouterChatCompleteStreamChunkTransform: (
   response: string,
 ) => string = (responseChunk) => {
   let chunk = responseChunk.trim();
@@ -116,13 +117,13 @@ export const MoonshotChatCompleteStreamChunkTransform: (
     return `data: ${chunk}\n\n`;
   }
 
-  const parsedChunk: MoonshotStreamChunk = JSON.parse(chunk);
+  const parsedChunk: OpenrouterStreamChunk = JSON.parse(chunk);
   return `data: ${JSON.stringify({
     id: parsedChunk.id,
     object: parsedChunk.object,
     created: parsedChunk.created,
     model: parsedChunk.model,
-    provider: MOONSHOT,
+    provider: OPENROUTER,
     choices: [
       {
         index: parsedChunk.choices[0].index || 0,

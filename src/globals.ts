@@ -7,25 +7,25 @@ export const HEADER_KEYS: Record<string, string> = {
   TRACE_ID: `x-${POWERED_BY}-trace-id`,
   CACHE: `x-${POWERED_BY}-cache`,
   FORWARD_HEADERS: `x-${POWERED_BY}-forward-headers`,
-  CUSTOM_HOST: `x-${POWERED_BY}-custom-host`
-}
+  CUSTOM_HOST: `x-${POWERED_BY}-custom-host`,
+};
 
 export const RESPONSE_HEADER_KEYS: Record<string, string> = {
   RETRY_ATTEMPT_COUNT: `x-${POWERED_BY}-retry-attempt-count`,
   LAST_USED_OPTION_INDEX: `x-${POWERED_BY}-last-used-option-index`,
   LAST_USED_OPTION_PARAMS: `x-${POWERED_BY}-last-used-option-params`,
   CACHE_STATUS: `x-${POWERED_BY}-cache-status`,
-  TRACE_ID: `x-${POWERED_BY}-trace-id`
-}
+  TRACE_ID: `x-${POWERED_BY}-trace-id`,
+};
 
 export const RETRY_STATUS_CODES = [429, 500, 502, 503, 504];
 export const MAX_RETRIES = 5;
 export const REQUEST_TIMEOUT_STATUS_CODE = 408;
 
-export const OPEN_AI:string = "openai";
-export const COHERE:string = "cohere";
-export const AZURE_OPEN_AI:string = "azure-openai";
-export const ANTHROPIC:string = "anthropic";
+export const OPEN_AI: string = "openai";
+export const COHERE: string = "cohere";
+export const AZURE_OPEN_AI: string = "azure-openai";
+export const ANTHROPIC: string = "anthropic";
 export const ANYSCALE: string = "anyscale";
 export const PALM: string = "palm";
 export const TOGETHER_AI: string = "together-ai";
@@ -41,11 +41,22 @@ export const BEDROCK: string = "bedrock";
 export const GROQ: string = "groq";
 export const SEGMIND: string = "segmind";
 export const MOONSHOT: string = "moonshot";
+export const OPENROUTER: string = "openrouter";
 
-export const providersWithStreamingSupport = [OPEN_AI, AZURE_OPEN_AI, ANTHROPIC, COHERE];
-export const allowedProxyProviders = [OPEN_AI, COHERE, AZURE_OPEN_AI, ANTHROPIC];
+export const providersWithStreamingSupport = [
+  OPEN_AI,
+  AZURE_OPEN_AI,
+  ANTHROPIC,
+  COHERE,
+];
+export const allowedProxyProviders = [
+  OPEN_AI,
+  COHERE,
+  AZURE_OPEN_AI,
+  ANTHROPIC,
+];
 
-export const PROXY_REQUEST_PATH_PREFIX:string = "/v1/proxy";
+export const PROXY_REQUEST_PATH_PREFIX: string = "/v1/proxy";
 
 export const CONTENT_TYPES = {
   APPLICATION_JSON: "application/json",
@@ -57,4 +68,4 @@ export const CONTENT_TYPES = {
   PLAIN_TEXT: "text/plain",
   HTML: "text/html",
   GENERIC_IMAGE_PATTERN: "image/",
-}
+};

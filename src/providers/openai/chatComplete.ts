@@ -131,14 +131,14 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (response: OpenAIC
             arguments: ""
           }
         }
-  
+
         const toolCallArgumentChunk = {
           index: toolCallIndex,
           function: {
             arguments: toolCall.function.arguments
           }
         }
-  
+
         streamChunkArray.push(`data: ${JSON.stringify({
           ...streamChunkTemplate,
           choices: [
@@ -152,7 +152,7 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (response: OpenAIC
             }
           ]
         })}\n\n`)
-  
+
         streamChunkArray.push(`data: ${JSON.stringify({
           ...streamChunkTemplate,
           choices: [
@@ -186,7 +186,7 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (response: OpenAIC
             }
           ]
         })
-      }\n\n`)}) 
+      }\n\n`)})
     }
 
     streamChunkArray.push(`data: ${JSON.stringify({
