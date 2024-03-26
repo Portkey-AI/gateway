@@ -195,7 +195,21 @@ const client = new OpenAI({
 | Ruby | [ruby-openai](https://github.com/alexrudall/ruby-openai) |
 <br>
 
-## Deploying AI Gateway
+## Install, Run & Deploy AI Gateway
+
+1. Cloudflare Workers
+2. NodeJS Server
+3. Docker & Docker Compose
+4. Replit
+5. Netlify
+6. Vercel
+7. Codesandbox
+8. Fastly
+9. AWS Lambda
+10. Lambda@edge
+11. Supabase Functions
+
+
 [See docs](docs/installation-deployments.md) on installing the AI Gateway locally or deploying it on popular locations.
 - Deploy to [Cloudflare Workers](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-to-cloudflare-workers)
 - Deploy using [Docker](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-using-docker)
