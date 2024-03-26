@@ -46,7 +46,12 @@ function setArrayNestedProperties(obj: any, path: Array<string>, value: Array<an
  */
 const transformToProviderRequest = (provider: string, params: Params, fn: string): { [key: string]: any } => {
   // Get the configuration for the specified provider
-  const providerConfig = ProviderConfigs[provider][fn];
+  let providerConfig = ProviderConfigs[provider];
+  if (providerConfig.getConfig) {
+    providerConfig = providerConfig.getConfig(params)[fn];
+  } else {
+    providerConfig = providerConfig[fn]
+  }
 
   // If the provider is not supported, throw an error
   if (!providerConfig) {
@@ -72,6 +77,15 @@ const transformToProviderRequest = (provider: string, params: Params, fn: string
         // If a transformation is defined for this parameter, apply it
         if (paramConfig.transform) {
           value = paramConfig.transform(params);
+        }
+
+        if (
+          value === "portkey-default" &&
+          paramConfig &&
+          paramConfig.default !== undefined
+        ) {
+          // Set the transformed parameter to the default value
+          value = paramConfig.default;
         }
 
         // If a minimum is defined for this parameter and the value is less than this, set the value to the minimum

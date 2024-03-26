@@ -91,18 +91,21 @@ export const OpenAICompleteResponseTransform: (response: OpenAICompleteResponse)
 export const OpenAICompleteJSONToStreamResponseTransform: (response: OpenAICompleteResponse, provider: string) => Array<string> = (response, provider) => {
   const streamChunkArray: Array<string> = [];
   const { id, model, choices } = response;
+  const { prompt_tokens, completion_tokens } = response.usage || {};
+
+  let total_tokens;
+  if (prompt_tokens && completion_tokens) total_tokens = prompt_tokens + completion_tokens;
+
   const streamChunkTemplate = {
     id: id,
     object: "text_completion",
     created: Date.now(),
     model: model ?? "",
     provider,
-    usage: {}
-  }
-
-  if (response.usage?.completion_tokens) {
-    streamChunkTemplate.usage = {
-      completion_tokens: response.usage?.completion_tokens
+    usage: {
+      ...(completion_tokens && {completion_tokens}),
+      ...(prompt_tokens && {prompt_tokens}),
+      ...(total_tokens && {total_tokens})
     }
   }
 

@@ -1,4 +1,4 @@
-import { ANTHROPIC, COHERE, GOOGLE, PERPLEXITY_AI, DEEPINFRA } from "./globals";
+import { ANTHROPIC, COHERE, GOOGLE, PERPLEXITY_AI, DEEPINFRA, OLLAMA } from "./globals";
 import { Params } from "./types/requestBody";
 
 export const getStreamModeSplitPattern = (proxyProvider: string, requestURL: string) => {

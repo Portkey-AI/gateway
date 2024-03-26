@@ -121,6 +121,7 @@ export interface ChatChoice {
   index: number;
   message: Message;
   finish_reason: string;
+  logprobs?: object | null;
 }
 
 /**

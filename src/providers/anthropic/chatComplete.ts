@@ -20,7 +20,41 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
         if (!!params.messages) {
           params.messages.forEach(msg => {
             if (msg.role !== "system") {
-              messages.push(msg);
+              if (msg.content && typeof msg.content === "object" && msg.content.length) {
+                const transformedMessage: Record<string, any> = {
+                  role: msg.role,
+                  content: [],
+                };
+                msg.content.forEach(item => {
+                  if (item.type === "text") {
+                    transformedMessage.content.push({ type: item.type, text: item.text });
+                  } else if (item.type === "image_url" && item.image_url && item.image_url.url) {
+                    const parts = item.image_url.url.split(";");
+                    if (parts.length === 2) {
+                      const base64ImageParts = parts[1].split(",");
+                      const base64Image = base64ImageParts[1];
+                      const mediaTypeParts = parts[0].split(":");
+                      if (mediaTypeParts.length === 2 && base64Image) {
+                        const mediaType = mediaTypeParts[1];
+                        transformedMessage.content.push({
+                          type: "image",
+                          source: {
+                            type: "base64",
+                            media_type: mediaType,
+                            data: base64Image,
+                          },
+                        });
+                      }
+                    }
+                  }
+                });
+                messages.push(transformedMessage as Message);
+              } else {
+                messages.push({
+                  role: msg.role,
+                  content: msg.content
+                });
+              }
             }
           })
         }
@@ -36,8 +70,18 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
         // Transform the chat messages into a simple prompt
         if (!!params.messages) {
           params.messages.forEach(msg => {
-            if (msg.role === "system") {
-              systemMessage = msg.content as string;
+            if (
+                msg.role === "system" &&
+                msg.content &&
+                typeof msg.content === "object" &&
+                msg.content[0].text
+            ) {
+                systemMessage = msg.content[0].text;
+            } else if (
+                msg.role === "system" &&
+                typeof msg.content === "string"
+            ) {
+                systemMessage = msg.content;
             }
           })
         }
@@ -124,6 +168,8 @@ export const AnthropicChatCompleteResponseTransform: (response: AnthropicChatCom
   } 
 
   if ('content' in response) {
+    const { input_tokens = 0, output_tokens = 0 } = response?.usage;
+
     return {
       id: response.id,
       object: "chat_completion",
@@ -137,7 +183,12 @@ export const AnthropicChatCompleteResponseTransform: (response: AnthropicChatCom
           logprobs: null,
           finish_reason: response.stop_reason,
         },
-      ]
+      ],
+      usage: {
+        prompt_tokens: input_tokens,
+        completion_tokens: output_tokens,
+        total_tokens: input_tokens + output_tokens,
+      },
     }
   }
 

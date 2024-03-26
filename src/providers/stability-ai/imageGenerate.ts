@@ -28,6 +28,24 @@ export const StabilityAIImageGenerateConfig: ProviderConfig = {
   }],
   style: {
     param: "style_preset"
+  },
+  cfg_scale: {
+    param: "cfg_scale"
+  },
+  clip_guidance_preset: {
+    param: "clip_guidance_preset"
+  },
+  sampler: {
+    param: "sampler"
+  },
+  seed: {
+    param: "seed"
+  },
+  steps: {
+    param: "steps"
+  },
+  extras: {
+    param: "extras"
   }
 }
 

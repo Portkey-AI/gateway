@@ -15,6 +15,11 @@ import {
     DEEPINFRA,
     STABILITY_AI,
     NOMIC,
+    OLLAMA,
+    AI21,
+    BEDROCK,
+    GROQ,
+    SEGMIND
 } from "../../globals";
 import { configSchema } from "./schema/config";
 
@@ -63,9 +68,26 @@ export const requestValidator = (c: Context, next: any) => {
     }
     if (
         requestHeaders[`x-${POWERED_BY}-provider`] &&
-        ![OPEN_AI, AZURE_OPEN_AI, COHERE, ANTHROPIC, ANYSCALE, PALM, TOGETHER_AI, GOOGLE, MISTRAL_AI, PERPLEXITY_AI, DEEPINFRA, NOMIC, STABILITY_AI].includes(
-            requestHeaders[`x-${POWERED_BY}-provider`]
-        )
+        ![
+            OPEN_AI,
+            AZURE_OPEN_AI,
+            COHERE,
+            ANTHROPIC,
+            ANYSCALE,
+            PALM,
+            TOGETHER_AI,
+            GOOGLE,
+            MISTRAL_AI,
+            PERPLEXITY_AI,
+            DEEPINFRA,
+            NOMIC,
+            STABILITY_AI,
+            OLLAMA,
+            AI21,
+            BEDROCK,
+            GROQ,
+            SEGMIND
+        ].includes(requestHeaders[`x-${POWERED_BY}-provider`])
     ) {
         return new Response(
             JSON.stringify({
@@ -79,6 +101,22 @@ export const requestValidator = (c: Context, next: any) => {
                 },
             }
         );
+    }
+
+    const customHostHeader = requestHeaders[`x-${POWERED_BY}-custom-host`];
+    if (customHostHeader && customHostHeader.indexOf("api.portkey") > -1) {
+        return new Response(
+            JSON.stringify({
+                status: "failure",
+                message: `Invalid custom host`,
+            }),
+            {
+                status: 400,
+                headers: {
+                    "content-type": "application/json",
+                },
+            }
+        );;
     }
 
 
