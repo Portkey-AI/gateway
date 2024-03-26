@@ -1,6 +1,10 @@
 import { ANTHROPIC } from "../../globals";
 import { Params, Message } from "../../types/requestBody";
-import { ChatCompletionResponse, ErrorResponse, ProviderConfig } from "../types";
+import {
+  ChatCompletionResponse,
+  ErrorResponse,
+  ProviderConfig,
+} from "../types";
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -14,21 +18,32 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
     {
       param: "messages",
       required: true,
-      transform: (params:Params) => {
-        let messages:Message[] = [];
+      transform: (params: Params) => {
+        let messages: Message[] = [];
         // Transform the chat messages into a simple prompt
         if (!!params.messages) {
-          params.messages.forEach(msg => {
+          params.messages.forEach((msg) => {
             if (msg.role !== "system") {
-              if (msg.content && typeof msg.content === "object" && msg.content.length) {
+              if (
+                msg.content &&
+                typeof msg.content === "object" &&
+                msg.content.length
+              ) {
                 const transformedMessage: Record<string, any> = {
                   role: msg.role,
                   content: [],
                 };
-                msg.content.forEach(item => {
+                msg.content.forEach((item) => {
                   if (item.type === "text") {
-                    transformedMessage.content.push({ type: item.type, text: item.text });
-                  } else if (item.type === "image_url" && item.image_url && item.image_url.url) {
+                    transformedMessage.content.push({
+                      type: item.type,
+                      text: item.text,
+                    });
+                  } else if (
+                    item.type === "image_url" &&
+                    item.image_url &&
+                    item.image_url.url
+                  ) {
                     const parts = item.image_url.url.split(";");
                     if (parts.length === 2) {
                       const base64ImageParts = parts[1].split(",");
@@ -52,42 +67,42 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
               } else {
                 messages.push({
                   role: msg.role,
-                  content: msg.content
+                  content: msg.content,
                 });
               }
             }
-          })
+          });
         }
 
         return messages;
-      }
+      },
     },
     {
       param: "system",
       required: false,
-      transform: (params:Params) => {
+      transform: (params: Params) => {
         let systemMessage: string = "";
         // Transform the chat messages into a simple prompt
         if (!!params.messages) {
-          params.messages.forEach(msg => {
+          params.messages.forEach((msg) => {
             if (
-                msg.role === "system" &&
-                msg.content &&
-                typeof msg.content === "object" &&
-                msg.content[0].text
+              msg.role === "system" &&
+              msg.content &&
+              typeof msg.content === "object" &&
+              msg.content[0].text
             ) {
-                systemMessage = msg.content[0].text;
+              systemMessage = msg.content[0].text;
             } else if (
-                msg.role === "system" &&
-                typeof msg.content === "string"
+              msg.role === "system" &&
+              typeof msg.content === "string"
             ) {
-                systemMessage = msg.content;
+              systemMessage = msg.content;
             }
-          })
+          });
         }
         return systemMessage;
-      }
-    }
+      },
+    },
   ],
   max_tokens: {
     param: "max_tokens",
@@ -141,6 +156,10 @@ interface AnthropicChatCompleteResponse {
   stop_reason: string;
   model: string;
   stop_sequence: null | string;
+  usage: {
+    input_tokens: number;
+    output_tokens: number;
+  };
 }
 
 interface AnthropicChatCompleteStreamResponse {
@@ -150,24 +169,27 @@ interface AnthropicChatCompleteStreamResponse {
     type: string;
     text: string;
     stop_reason?: string;
-  }
+  };
 }
 
 // TODO: The token calculation is wrong atm
-export const AnthropicChatCompleteResponseTransform: (response: AnthropicChatCompleteResponse | AnthropicErrorResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if (responseStatus !== 200 && 'error' in response) {
+export const AnthropicChatCompleteResponseTransform: (
+  response: AnthropicChatCompleteResponse | AnthropicErrorResponse,
+  responseStatus: number
+) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+  if (responseStatus !== 200 && "error" in response) {
     return {
-        error: {
-            message: response.error?.message,
-            type: response.error?.type,
-            param: null,
-            code: null
-        },
-        provider: ANTHROPIC
+      error: {
+        message: response.error?.message,
+        type: response.error?.type,
+        param: null,
+        code: null,
+      },
+      provider: ANTHROPIC,
     } as ErrorResponse;
-  } 
+  }
 
-  if ('content' in response) {
+  if ("content" in response) {
     const { input_tokens = 0, output_tokens = 0 } = response?.usage;
 
     return {
@@ -178,7 +200,7 @@ export const AnthropicChatCompleteResponseTransform: (response: AnthropicChatCom
       provider: ANTHROPIC,
       choices: [
         {
-          message: {"role": "assistant", content: response.content[0].text},
+          message: { role: "assistant", content: response.content[0].text },
           index: 0,
           logprobs: null,
           finish_reason: response.stop_reason,
@@ -189,22 +211,26 @@ export const AnthropicChatCompleteResponseTransform: (response: AnthropicChatCom
         completion_tokens: output_tokens,
         total_tokens: input_tokens + output_tokens,
       },
-    }
+    };
   }
 
   return {
     error: {
-        message: `Invalid response recieved from anthropic: ${JSON.stringify(response)}`,
-        type: null,
-        param: null,
-        code: null
+      message: `Invalid response recieved from anthropic: ${JSON.stringify(
+        response
+      )}`,
+      type: null,
+      param: null,
+      code: null,
     },
-    provider: ANTHROPIC
+    provider: ANTHROPIC,
   } as ErrorResponse;
-}
-  
+};
 
-export const AnthropicChatCompleteStreamChunkTransform: (response: string, fallbackId: string) => string | undefined = (responseChunk, fallbackId) => {
+export const AnthropicChatCompleteStreamChunkTransform: (
+  response: string,
+  fallbackId: string
+) => string | undefined = (responseChunk, fallbackId) => {
   let chunk = responseChunk.trim();
   if (
     chunk.startsWith("event: ping") ||
@@ -212,35 +238,36 @@ export const AnthropicChatCompleteStreamChunkTransform: (response: string, fallb
     chunk.startsWith("event: content_block_start") ||
     chunk.startsWith("event: content_block_stop")
   ) {
-      return;
+    return;
   }
 
   if (chunk.startsWith("event: message_stop")) {
-    return "data: [DONE]\n\n"
+    return "data: [DONE]\n\n";
   }
 
   chunk = chunk.replace(/^event: content_block_delta[\r\n]*/, "");
   chunk = chunk.replace(/^event: message_delta[\r\n]*/, "");
   chunk = chunk.replace(/^data: /, "");
   chunk = chunk.trim();
-  
 
   const parsedChunk: AnthropicChatCompleteStreamResponse = JSON.parse(chunk);
-  return `data: ${JSON.stringify({
-    id: fallbackId,
-    object: "chat.completion.chunk",
-    created: Math.floor(Date.now() / 1000),
-    model: "",
-    provider: ANTHROPIC,
-    choices: [
-      {
-        delta: {
-          content: parsedChunk.delta?.text
+  return (
+    `data: ${JSON.stringify({
+      id: fallbackId,
+      object: "chat.completion.chunk",
+      created: Math.floor(Date.now() / 1000),
+      model: "",
+      provider: ANTHROPIC,
+      choices: [
+        {
+          delta: {
+            content: parsedChunk.delta?.text,
+          },
+          index: 0,
+          logprobs: null,
+          finish_reason: parsedChunk.delta?.stop_reason ?? null,
         },
-        index: 0,
-        logprobs: null,
-        finish_reason: parsedChunk.delta?.stop_reason ?? null,
-      },
-    ]
-  })}` + '\n\n'
+      ],
+    })}` + "\n\n"
+  );
 };
