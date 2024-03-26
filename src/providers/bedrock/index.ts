@@ -30,6 +30,9 @@ import {
     BedrockLLamaCompleteConfig,
     BedrockLlamaCompleteResponseTransform,
     BedrockLlamaCompleteStreamChunkTransform,
+    BedrockMistralCompleteConfig,
+    BedrockMistralCompleteResponseTransform,
+    BedrockMistralCompleteStreamChunkTransform,
     BedrockTitanCompleteConfig,
     BedrockTitanCompleteResponseTransform,
     BedrockTitanCompleteStreamChunkTransform,
@@ -97,6 +100,15 @@ const BedrockConfig: ProviderConfigs = {
                         chatComplete: BedrockLlamaChatCompleteResponseTransform,
                     },
                 };
+            case "mistral":
+                return{
+                    complete: BedrockMistralCompleteConfig,
+                    api: BedrockAPIConfig,
+                    responseTransforms: {
+                        "stream-complete": BedrockMistralCompleteStreamChunkTransform,
+                        complete: BedrockMistralCompleteResponseTransform,
+                    }
+                }
             case "amazon":
                 return {
                     complete: BedrockTitanCompleteConfig,
