@@ -1,5 +1,7 @@
 import { ErrorResponse, ProviderConfig } from "../types";
 import { EmbedParams, EmbedResponse } from "../../types/embedRequestBody";
+import { generateErrorResponse } from "../utils";
+import { COHERE } from "../../globals";
 
 export const CohereEmbedConfig: ProviderConfig = {
   input: {
@@ -59,15 +61,15 @@ export interface CohereEmbedResponse {
 
 export const CohereEmbedResponseTransform: (response: CohereEmbedResponse, responseStatus: number) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    return {
-        error: {
-            message: response.message,
-            type: null,
-            param: null,
-            code: null
-        },
-        provider: "cohere"
-    } as ErrorResponse;
+      return generateErrorResponse(
+          {
+              message: response.message || "",
+              type: null,
+              param: null,
+              code: null,
+          },
+          COHERE
+      );
   }
 
   return {
