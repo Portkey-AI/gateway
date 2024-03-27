@@ -9,11 +9,13 @@
 <img src="/docs/images/gateway-border.png" width=350>
 
 # Gateway
+### Route to 100+ LLMs with 1 fast & friendly API.
+
 [Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and hosted LLMs. It streamlines API requests to OpenAI, Anthropic, Mistral, LLama2, Anyscale, Google Gemini and more with a unified API.
 ```sh
-pip install portkey-ai
+npx @portkey-ai/gateway
 ```
-### Route to 100+ LLMs with 1 fast & friendly API.
+
 
 </div>
 <br><br>
@@ -39,9 +41,34 @@ Enterprise Version: [Read more here](#gateway-enterprise-version)<br>
 ```bash
 pip install portkey-ai
 ```
+
 #### Detailed guide to run 100+ LLMs in your Colab!
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1ZmBsDr7wpeRy6wI-FTh5O8bGjzB5GT98?usp=sharing)
+
+#### Usage
+
+You can use any LLM 
+
+```python
+
+from portkey_ai import Portkey
+
+portkey = Portkey(
+    api_key = PORTKEY_API_KEY,  # Replace with your Portkey API key
+    virtual_key= OPENAI_VIRTUAL_KEY,   # Use virtual key of provider of your choice
+)
+
+completion = portkey.chat.completions.create(
+    messages= [{ "role": 'user', "content": 'Who are you?'}],
+    model= 'gpt-3.5-turbo-0125',   # Other models by Anthropic "claude-3-opus-20240229", "claude-3-sonnet-20240229"
+    max_tokens=250
+)
+
+print(completion)
+
+```
+- Note: Portkey allows you to manage all your API keys centrally using virtual keys. [setup guide](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/virtual-keys#using-virtual-keys) 
 
 ### Node.js SDK
 ```bash
