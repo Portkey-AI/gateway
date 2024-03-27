@@ -15,10 +15,10 @@
 ```sh
 npx @portkey-ai/gateway
 ```
-[Watch the Portkey Demo video](/docs/Portkey_Demo.mp4)
+
 
 <a href="https://www.youtube.com/watch?v=PgwK5dmvwTk" target="_blank">
-  <img src="https://img.youtube.com/vi/PgwK5dmvwTk/0.jpg" alt="Introduction to Portkey AI">
+  <img src="https://img.youtube.com/vi/PgwK5dmvwTk/4s.jpg" alt="Introduction to Portkey AI">
 </a>
 
 
