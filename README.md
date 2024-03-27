@@ -16,6 +16,12 @@
 npx @portkey-ai/gateway
 ```
 
+```sh
+pip install portkey-ai
+```
+
+
+
 
 #### Insert: GIF Video showing switching between 3-4 providers
 <!-- <a href="https://www.youtube.com/watch?v=PgwK5dmvwTk" target="_blank">
