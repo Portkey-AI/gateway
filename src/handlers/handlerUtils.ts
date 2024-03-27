@@ -184,13 +184,15 @@ export async function tryPostProxy(c: Context, providerOption:Options, inputPara
 
   const url = endpoint ? `${baseUrl}${endpoint}` : providerOption.urlToFetch as string;
 
+  const headers = await apiConfig.headers({
+      providerOptions: providerOption,
+      fn,
+      transformedRequestBody: params,
+      transformedRequestUrl: url,
+  });
+
   const fetchOptions = constructRequest(
-      await apiConfig.headers({
-          providerOptions: providerOption,
-          fn,
-          transformedRequestBody: params,
-          transformedRequestUrl: url,
-      }),
+      headers,
       provider,
       method,
       forwardHeaders,
@@ -347,14 +349,16 @@ export async function tryPost(c: Context, providerOption:Options, inputParams: P
   const endpoint = apiConfig.getEndpoint({ providerOptions: providerOption, fn, gatewayRequestBody: params })
   const url = `${baseUrl}${endpoint}`;
 
+  const headers = await apiConfig.headers({
+      providerOptions: providerOption,
+      fn,
+      transformedRequestBody,
+      transformedRequestUrl: url,
+  });
+
   // Construct the base object for the POST request
   const fetchOptions = constructRequest(
-      await apiConfig.headers({
-          providerOptions: providerOption,
-          fn,
-          transformedRequestBody,
-          transformedRequestUrl: url,
-      }),
+      headers,
       provider,
       "POST",
       forwardHeaders,
