@@ -40,6 +40,7 @@ export const AI21: string = "ai21";
 export const BEDROCK: string = "bedrock";
 export const GROQ: string = "groq";
 export const SEGMIND: string = "segmind";
+export const MONSTERAPI: string = "monsterapi";
 
 export const providersWithStreamingSupport = [OPEN_AI, AZURE_OPEN_AI, ANTHROPIC, COHERE];
 export const allowedProxyProviders = [OPEN_AI, COHERE, AZURE_OPEN_AI, ANTHROPIC];

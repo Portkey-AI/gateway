@@ -16,7 +16,8 @@ import {
     BEDROCK,
     AI21,
     GROQ,
-    SEGMIND
+    SEGMIND,
+    MONSTERAPI
 } from "../../../globals";
 
 export const configSchema: any = z
@@ -59,7 +60,8 @@ export const configSchema: any = z
                         AI21,
                         BEDROCK,
                         GROQ,
-                        SEGMIND
+                        SEGMIND,
+                        MONSTERAPI
                     ].includes(value),
                 {
                     message:

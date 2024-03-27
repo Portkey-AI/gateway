@@ -1,4 +1,5 @@
 // Adapt based on MonsterAPI's functionality, replacing with actual configs
+import { MISTRAL_AI } from "../../globals";
 import { ProviderConfig } from "../types";
 
 export const MonsterAPIChatCompleteConfig: ProviderConfig = {
