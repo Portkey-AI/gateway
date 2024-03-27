@@ -1,6 +1,7 @@
 import { TOGETHER_AI } from "../../globals";
 import { EmbedParams, EmbedResponse } from "../../types/embedRequestBody";
 import { ErrorResponse, ProviderConfig } from "../types";
+import { generateInvalidProviderResponseError } from "../utils";
 import { TogetherAIErrorResponse, TogetherAIErrorResponseTransform } from "./chatComplete";
 
 export const TogetherAIEmbedConfig: ProviderConfig = {
@@ -28,8 +29,8 @@ export const TogetherAIEmbedResponseTransform: (
     response: TogetherAIEmbedResponse | TogetherAIErrorResponse,
     responseStatus: number
 ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
-    if (responseStatus !== 200 && !("data" in response) ) {
-        const errorResponse = TogetherAIErrorResponseTransform(response);
+    if (responseStatus !== 200) {
+        const errorResponse = TogetherAIErrorResponseTransform(response as TogetherAIErrorResponse);
         if (errorResponse) return errorResponse;
       }
 
@@ -50,15 +51,5 @@ export const TogetherAIEmbedResponseTransform: (
         };
     }
 
-    return {
-        error: {
-            message: `Invalid response recieved from ${TOGETHER_AI}: ${JSON.stringify(
-                response
-            )}`,
-            type: null,
-            param: null,
-            code: null,
-        },
-        provider: TOGETHER_AI,
-    } as ErrorResponse;
+    return generateInvalidProviderResponseError(response, TOGETHER_AI);
 };

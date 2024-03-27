@@ -1,9 +1,9 @@
 import { Targets } from "../types/requestBody";
-import { fetchProviderOptionsFromConfig, getProviderOptionsByMode, tryProvidersInSequence } from "./handlerUtils";
+import { fetchProviderOptionsFromConfig, tryProvidersInSequence } from "./handlerUtils";
 import { Context } from "hono";
 
 /**
- * DEPRECATED
+ * @deprecated
  * Handles the 'complete' API request by selecting the appropriate provider(s) and making the request to them.
  * If a provider is specified in the request config, that provider is used. Otherwise, the provider options are determined based on the mode in the request config.
  * If no provider options can be determined, an error is thrown. If the request to the provider(s) fails, an error is also thrown.

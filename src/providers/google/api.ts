@@ -1,30 +1,32 @@
 import { ProviderAPIConfig } from "../types";
 
 export const GoogleApiConfig: ProviderAPIConfig = {
-    baseURL: "https://generativelanguage.googleapis.com/v1beta",
+    getBaseURL: () => "https://generativelanguage.googleapis.com/v1beta",
     headers: () => {
         return { "Content-Type": "application/json" };
     },
-    getEndpoint: (
-        fn: string,
-        API_KEY: string,
-        model: string,
-        stream: boolean
-    ) => {
+    getEndpoint: ({
+        fn,
+        providerOptions,
+        gatewayRequestBody
+    }) => {
         let mappedFn = fn;
+        const { model, stream } = gatewayRequestBody;
+        const { apiKey } = providerOptions;
         if (stream) {
             mappedFn = `stream-${fn}`;
         }
         switch (mappedFn) {
             case "chatComplete": {
-                return `/models/${model}:generateContent?key=${API_KEY}`;
+                return `/models/${model}:generateContent?key=${apiKey}`;
             }
             case "stream-chatComplete": {
-                return `/models/${model}:streamGenerateContent?key=${API_KEY}`;
+                return `/models/${model}:streamGenerateContent?key=${apiKey}`;
             }
             case "embed": {
-                return `/models/${model}:embedContent?key=${API_KEY}`;
+                return `/models/${model}:embedContent?key=${apiKey}`;
             }
+            default: return '';
         }
     },
 };

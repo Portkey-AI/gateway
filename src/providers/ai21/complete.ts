@@ -1,6 +1,8 @@
 import { AI21 } from "../../globals";
 import { Params } from "../../types/requestBody";
 import { CompletionResponse, ErrorResponse, ProviderConfig } from "../types";
+import { generateInvalidProviderResponseError } from "../utils";
+import { AI21ErrorResponseTransform } from "./chatComplete";
 
 export const AI21CompleteConfig: ProviderConfig = {
     prompt: {
@@ -91,16 +93,9 @@ export const AI21CompleteResponseTransform: (
     response: AI21CompleteResponse | AI21ErrorResponse,
     responseStatus: number
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
-    if ('detail' in response && responseStatus !== 200) {
-        return {
-            error: {
-                message: response.detail,
-                type: null,
-                param: null,
-                code: null,
-            },
-            provider: AI21,
-        } as ErrorResponse;
+    if (responseStatus !== 200) {
+        const errorResposne = AI21ErrorResponseTransform(response as AI21ErrorResponse);
+        if (errorResposne) return errorResposne;
     }
 
     if ('completions' in response) {
@@ -129,15 +124,5 @@ export const AI21CompleteResponseTransform: (
       }
     }
     
-    return {
-      error: {
-          message: `Invalid response recieved from ${AI21}: ${JSON.stringify(
-              response
-          )}`,
-          type: null,
-          param: null,
-          code: null,
-      },
-      provider: AI21,
-    } as ErrorResponse;
+    return generateInvalidProviderResponseError(response, AI21)
 };

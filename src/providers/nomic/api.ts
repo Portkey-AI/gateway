@@ -1,11 +1,16 @@
 import { ProviderAPIConfig } from "../types";
 
 const NomicAPIConfig: ProviderAPIConfig = {
-    baseURL: "https://api-atlas.nomic.ai/v1",
-    headers: (API_KEY: string) => {
-        return { Authorization: `Bearer ${API_KEY}` };
+    getBaseURL: () => "https://api-atlas.nomic.ai/v1",
+    headers: ({ providerOptions }) => {
+        return { Authorization: `Bearer ${providerOptions.apiKey}` };
     },
-    embed: "/embedding/text",
+    getEndpoint: ({ fn }) => {
+        switch (fn) {
+            case 'embed': return "/embedding/text";
+            default: return '';
+        }
+    }
 };
 
 export default NomicAPIConfig;

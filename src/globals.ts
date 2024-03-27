@@ -41,10 +41,26 @@ export const BEDROCK: string = "bedrock";
 export const GROQ: string = "groq";
 export const SEGMIND: string = "segmind";
 
-export const providersWithStreamingSupport = [OPEN_AI, AZURE_OPEN_AI, ANTHROPIC, COHERE];
-export const allowedProxyProviders = [OPEN_AI, COHERE, AZURE_OPEN_AI, ANTHROPIC];
-
-export const PROXY_REQUEST_PATH_PREFIX:string = "/v1/proxy";
+export const VALID_PROVIDERS = [
+    ANTHROPIC,
+    ANYSCALE,
+    AZURE_OPEN_AI,
+    COHERE,
+    GOOGLE,
+    MISTRAL_AI,
+    OPEN_AI,
+    PALM,
+    PERPLEXITY_AI,
+    TOGETHER_AI,
+    DEEPINFRA,
+    STABILITY_AI,
+    NOMIC,
+    OLLAMA,
+    AI21,
+    BEDROCK,
+    GROQ,
+    SEGMIND,
+];
 
 export const CONTENT_TYPES = {
   APPLICATION_JSON: "application/json",

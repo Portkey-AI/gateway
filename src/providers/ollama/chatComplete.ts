@@ -4,6 +4,7 @@ import {
   ProviderConfig,
 } from "../types";
 import { OLLAMA } from "../../globals";
+import { generateErrorResponse } from "../utils";
 
 export const OllamaChatCompleteConfig: ProviderConfig = {
   model: {
@@ -83,17 +84,16 @@ export const OllamaChatCompleteResponseTransform: (
   response: OllamaChatCompleteResponse,
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  
   if (responseStatus !== 200) {
-    return {
-      error: {
-        message: response.error?.message,
-        type: response.error?.type,
-        param: null,
-        code: null,
-      },
-      provider: OLLAMA,
-    } as ErrorResponse;
+    return generateErrorResponse(
+        {
+            message: response.error?.message,
+            type: response.error?.type,
+            param: null,
+            code: null,
+        },
+        OLLAMA
+    );
   }
 
   return {

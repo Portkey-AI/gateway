@@ -1,6 +1,8 @@
 import { BEDROCK } from "../../globals";
 import { EmbedResponse } from "../../types/embedRequestBody";
 import { ErrorResponse, ProviderConfig } from "../types";
+import { generateInvalidProviderResponseError } from "../utils";
+import { BedrockErrorResponseTransform } from "./chatComplete";
 
 export const BedrockCohereEmbedConfig: ProviderConfig = {
     input: {
@@ -43,16 +45,9 @@ export const BedrockTitanEmbedResponseTransform: (
     response: BedrockTitanEmbedResponse | BedrockErrorResponse,
     responseStatus: number
 ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
-    if ("message" in response && responseStatus !== 200) {
-        return {
-            error: {
-                message: response.message,
-                type: null,
-                param: null,
-                code: null,
-            },
-            provider: BEDROCK,
-        } as ErrorResponse;
+    if (responseStatus !== 200) {
+        const errorResposne = BedrockErrorResponseTransform(response as BedrockErrorResponse);
+        if (errorResposne) return errorResposne;
     }
 
     if ("embedding" in response) {
@@ -74,17 +69,7 @@ export const BedrockTitanEmbedResponseTransform: (
         };
     }
 
-    return {
-        error: {
-            message: `Invalid response recieved from ${BEDROCK}: ${JSON.stringify(
-                response
-            )}`,
-            type: null,
-            param: null,
-            code: null,
-        },
-        provider: BEDROCK,
-    } as ErrorResponse;
+    return generateInvalidProviderResponseError(response, BEDROCK);
 };
 
 interface BedrockCohereEmbedResponse {
@@ -98,16 +83,9 @@ export const BedrockCohereEmbedResponseTransform: (
     responseStatus: number,
     responseHeaders: Headers
 ) => EmbedResponse | ErrorResponse = (response, responseStatus, responseHeaders) => {
-    if ('message' in response && responseStatus !== 200) {
-        return {
-            error: {
-                message: response.message,
-                type: null,
-                param: null,
-                code: null,
-            },
-            provider: BEDROCK,
-        } as ErrorResponse;
+    if (responseStatus !== 200) {
+        const errorResposne = BedrockErrorResponseTransform(response as BedrockErrorResponse);
+        if (errorResposne) return errorResposne;
     }
 
     if ('embeddings' in response) {
@@ -127,15 +105,5 @@ export const BedrockCohereEmbedResponseTransform: (
         };
     }
 
-    return {
-        error: {
-            message: `Invalid response recieved from ${BEDROCK}: ${JSON.stringify(
-                response
-            )}`,
-            type: null,
-            param: null,
-            code: null,
-        },
-        provider: BEDROCK,
-    } as ErrorResponse;
+    return generateInvalidProviderResponseError(response, BEDROCK);
 };

@@ -1,5 +1,7 @@
 import { BEDROCK } from "../../globals";
 import { ErrorResponse, ImageGenerateResponse, ProviderConfig } from "../types";
+import { generateInvalidProviderResponseError } from "../utils";
+import { BedrockErrorResponseTransform } from "./chatComplete";
 import { BedrockErrorResponse } from "./embed";
 
 export const BedrockStabilityAIImageGenerateConfig: ProviderConfig = {
@@ -54,16 +56,9 @@ export const BedrockStabilityAIImageGenerateResponseTransform: (
     response: BedrockStabilityAIImageGenerateResponse | BedrockErrorResponse,
     responseStatus: number
 ) => ImageGenerateResponse | ErrorResponse = (response, responseStatus) => {
-    if (responseStatus !== 200 && "message" in response) {
-        return {
-            error: {
-                message: response.message,
-                type: "",
-                param: null,
-                code: null,
-            },
-            provider: BEDROCK,
-        };
+    if (responseStatus !== 200) {
+        const errorResposne = BedrockErrorResponseTransform(response as BedrockErrorResponse);
+        if (errorResposne) return errorResposne;
     }
 
     if ("artifacts" in response) {
@@ -74,15 +69,5 @@ export const BedrockStabilityAIImageGenerateResponseTransform: (
         };
     }
 
-    return {
-        error: {
-            message: `Invalid response recieved from ${BEDROCK}: ${JSON.stringify(
-                response
-            )}`,
-            type: null,
-            param: null,
-            code: null,
-        },
-        provider: BEDROCK,
-    } as ErrorResponse;
+    return generateInvalidProviderResponseError(response, BEDROCK);
 };

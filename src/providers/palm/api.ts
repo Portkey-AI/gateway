@@ -1,21 +1,24 @@
 import { ProviderAPIConfig } from "../types";
 
 export const PalmApiConfig: ProviderAPIConfig = {
-    baseURL: "https://generativelanguage.googleapis.com/v1beta3",
+    getBaseURL: () => "https://generativelanguage.googleapis.com/v1beta3",
     headers: () => {
         return { "Content-Type": "application/json" }
     },
-    getEndpoint: (fn: string, API_KEY: string, model: string) => {
+    getEndpoint: ({ providerOptions, fn, gatewayRequestBody }) => {
+        const { apiKey } = providerOptions;
+        const { model } = gatewayRequestBody;
         switch (fn) {
             case 'complete': {
-                return `/models/${model}:generateText?key=${API_KEY}`
+                return `/models/${model}:generateText?key=${apiKey}`
             }
             case 'chatComplete': {
-                return `/models/${model}:generateMessage?key=${API_KEY}`
+                return `/models/${model}:generateMessage?key=${apiKey}`
             }
             case 'embed': {
-                return `/models/${model}:embedText?key=${API_KEY}`
+                return `/models/${model}:embedText?key=${apiKey}`
             }
+            default: return '';
         }
     }
 };

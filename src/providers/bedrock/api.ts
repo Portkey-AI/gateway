@@ -3,30 +3,31 @@ import { ProviderAPIConfig } from "../types";
 import { generateAWSHeaders } from "./utils";
 
 const BedrockAPIConfig: ProviderAPIConfig = {
-    getBaseURL: (REGION: string = "us-east-1") =>
-        `https://bedrock-runtime.${REGION}.amazonaws.com`,
-    headers: async (
-        providerOption: Options,
-        body: Record<string, any>,
-        url: string
-    ) => {
+    getBaseURL: ({ providerOptions }) =>
+        `https://bedrock-runtime.${providerOptions.awsRegion || "us-east-1"}.amazonaws.com`,
+    headers: async ({
+        providerOptions,
+        transformedRequestBody,
+        transformedRequestUrl
+    }) => {
         const headers = {
             "content-type": "application/json",
         };
 
         return generateAWSHeaders(
-            body,
+            transformedRequestBody,
             headers,
-            url,
+            transformedRequestUrl,
             "POST",
             "bedrock",
-            providerOption.awsRegion || "",
-            providerOption.awsAccessKeyId || "",
-            providerOption.awsSecretAccessKey || "",
-            providerOption.awsSessionToken || ""
+            providerOptions.awsRegion || "",
+            providerOptions.awsAccessKeyId || "",
+            providerOptions.awsSecretAccessKey || "",
+            providerOptions.awsSessionToken || ""
         );
     },
-    getEndpoint: (fn: string, model: string, stream: boolean) => {
+    getEndpoint: ({ fn, gatewayRequestBody }) => {
+        const { model, stream } = gatewayRequestBody;
         let mappedFn = fn;
         if (stream) {
             mappedFn = `stream-${fn}`;
@@ -52,6 +53,7 @@ const BedrockAPIConfig: ProviderAPIConfig = {
             case "imageGenerate": {
                 return endpoint;
             }
+            default: return '';
         }
     },
 };

@@ -20,7 +20,7 @@ function getProxyPath(requestURL:string, proxyProvider:string, proxyEndpointPath
     return `${customHost}${reqPath}${reqQuery}`
   }
 
-  const providerBasePath = Providers[proxyProvider].api.baseURL;
+  const providerBasePath = Providers[proxyProvider].api.getBaseURL({providerOptions: {}});
   if (proxyProvider === AZURE_OPEN_AI) {
     return `https:/${reqPath}${reqQuery}`;
   }

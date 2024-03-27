@@ -1,5 +1,6 @@
 import { ANYSCALE } from "../../globals";
 import { ChatCompletionResponse, ErrorResponse, ProviderConfig } from "../types";
+import { generateErrorResponse, generateInvalidProviderResponseError } from "../utils";
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -107,53 +108,54 @@ export interface AnyscaleStreamChunk {
     }[]
 }
 
-export const AnyscaleValidationErrorResponseTransform: (response: AnyscaleValidationErrorResponse) => ErrorResponse = (response) => {
-  let firstError: Record<string, any> | undefined;
-  let errorField: string | null = null;
-  let errorMessage: string | undefined;
-  let errorType: string | null = null;
+export const AnyscaleErrorResponseTransform: (response: AnyscaleValidationErrorResponse | AnyscaleErrorResponse) => ErrorResponse | undefined = (response) => {
+  if (
+    "detail" in response &&
+    response.detail.length
+  ) {
+    let firstError: Record<string, any> | undefined;
+    let errorField: string | null = null;
+    let errorMessage: string | undefined;
+    let errorType: string | null = null;
 
-  if (Array.isArray(response.detail)) {
-    [firstError] = response.detail;
-    errorField = firstError?.loc?.join(".") ?? "";
-    errorMessage = firstError.msg;
-    errorType = firstError.type;
-  } else {
-    errorMessage = response.detail;
+    if (Array.isArray(response.detail)) {
+      [firstError] = response.detail;
+      errorField = firstError?.loc?.join(".") ?? "";
+      errorMessage = firstError.msg;
+      errorType = firstError.type;
+    } else {
+      errorMessage = response.detail;
+    }
+
+    return generateErrorResponse(
+        {
+            message: `${errorField ? `${errorField}: ` : ""}${errorMessage}`,
+            type: errorType,
+            param: null,
+            code: null,
+        },
+        ANYSCALE
+    );
   }
 
-  return {
-    error: {
-      message: `${errorField ? `${errorField}: ` : ""}${errorMessage}`,
-      type: errorType,
-      param: null,
-      code: null,
-    },
-    provider: ANYSCALE,
-  } as ErrorResponse;
+  if ('error' in response) {
+    return generateErrorResponse(
+        {
+            message: response.error?.message,
+            type: response.error?.type,
+            param: null,
+            code: null,
+        },
+        ANYSCALE
+    );
+  } 
 }
 
 export const AnyscaleChatCompleteResponseTransform: (response: AnyscaleChatCompleteResponse | AnyscaleErrorResponse | AnyscaleValidationErrorResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-    if (
-      "detail" in response &&
-      responseStatus !== 200 &&
-      response.detail.length
-    ) {
-      return AnyscaleValidationErrorResponseTransform(response);
+    if (responseStatus !== 200) {
+      const errorResposne = AnyscaleErrorResponseTransform(response as AnyscaleErrorResponse | AnyscaleValidationErrorResponse);
+      if (errorResposne) return errorResposne;
     }
-      
-
-    if ('error' in response && responseStatus !== 200) {
-      return {
-          error: {
-              message: response.error?.message,
-              type: response.error?.type,
-              param: null,
-              code: null
-          },
-          provider: ANYSCALE
-      } as ErrorResponse;
-    } 
     
     if ('choices' in response) {
       return {
@@ -167,17 +169,7 @@ export const AnyscaleChatCompleteResponseTransform: (response: AnyscaleChatCompl
       }
     }
 
-    return {
-      error: {
-        message: `Invalid response recieved from ${ANYSCALE}: ${JSON.stringify(
-          response
-        )}`,
-        type: null,
-        param: null,
-        code: null,
-      },
-      provider: ANYSCALE,
-    } as ErrorResponse;
+    return generateInvalidProviderResponseError(response, ANYSCALE)
   }
     
   

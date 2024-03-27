@@ -1,10 +1,10 @@
 import { ProviderAPIConfig } from "../types";
 
 const AnthropicAPIConfig: ProviderAPIConfig = {
-  baseURL: "https://api.anthropic.com/v1",
-  headers: (API_KEY:string, fn: string) => {
+  getBaseURL: () => "https://api.anthropic.com/v1",
+  headers: ({ providerOptions, fn }) => {
     const headers: Record<string, string> = {
-      "X-API-Key": `${API_KEY}`,
+      "X-API-Key": `${providerOptions.apiKey}`,
       "anthropic-version": "2023-06-01"
     }
     if (fn === "chatComplete") {
@@ -12,8 +12,13 @@ const AnthropicAPIConfig: ProviderAPIConfig = {
     }
     return headers;
   },
-  complete: "/complete",
-  chatComplete: "/messages",
+  getEndpoint: ({ fn }) => {
+    switch (fn) {
+      case 'complete': return "/complete";
+      case 'chatComplete': return "/messages";
+      default: return '';
+    }
+  }
 };
 
 export default AnthropicAPIConfig;

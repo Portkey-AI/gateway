@@ -1,4 +1,6 @@
-import { ChatCompletionResponse, ProviderConfig } from "../types";
+import { OPEN_AI } from "../../globals";
+import { ChatCompletionResponse, ErrorResponse, ProviderConfig } from "../types";
+import { generateErrorResponse } from "../utils";
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -87,7 +89,22 @@ export interface OpenAIChatCompleteResponse extends ChatCompletionResponse {
   system_fingerprint: string;
 }
 
-export const OpenAIChatCompleteResponseTransform: (response: OpenAIChatCompleteResponse) => ChatCompletionResponse = (response) => response;
+export const OpenAIErrorResponseTransform: (response: ErrorResponse, provider: string) => ErrorResponse = (response, provider) => {
+    return generateErrorResponse(
+        {
+            ...response.error,
+        },
+        provider
+    );
+}
+
+export const OpenAIChatCompleteResponseTransform: (response: OpenAIChatCompleteResponse | ErrorResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+    if (responseStatus !== 200 && 'error' in response) {
+      return OpenAIErrorResponseTransform(response, OPEN_AI);
+    }
+
+    return response;
+};
 
 /**
  * Transforms an OpenAI-format chat completions JSON response into an array of formatted OpenAI compatible text/event-stream chunks.

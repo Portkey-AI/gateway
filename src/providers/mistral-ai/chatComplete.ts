@@ -4,6 +4,7 @@ import {
     ErrorResponse,
     ProviderConfig,
 } from "../types";
+import { generateErrorResponse, generateInvalidProviderResponseError } from "../utils";
 
 export const MistralAIChatCompleteConfig: ProviderConfig = {
     model: {
@@ -91,15 +92,15 @@ export const MistralAIChatCompleteResponseTransform: (
     responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
     if ("message" in response && responseStatus !== 200) {
-        return {
-            error: {
+        return generateErrorResponse(
+            {
                 message: response.message,
                 type: response.type,
                 param: response.param,
                 code: response.code,
             },
-            provider: MISTRAL_AI,
-        } as ErrorResponse;
+            MISTRAL_AI
+        );
     }
 
     if ("choices" in response) {
@@ -125,17 +126,7 @@ export const MistralAIChatCompleteResponseTransform: (
         };
     }
 
-    return {
-        error: {
-            message: `Invalid response recieved from ${MISTRAL_AI}: ${JSON.stringify(
-                response
-            )}`,
-            type: null,
-            param: null,
-            code: null,
-        },
-        provider: MISTRAL_AI,
-    } as ErrorResponse;
+    return generateInvalidProviderResponseError(response, MISTRAL_AI);
 };
 
 export const MistralAIChatCompleteStreamChunkTransform: (

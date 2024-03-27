@@ -1,17 +1,13 @@
+import { PALM } from "../../globals";
 import { EmbedParams, EmbedResponse } from "../../types/embedRequestBody";
-import { ProviderConfig } from "../types";
+import { GoogleErrorResponse, GoogleErrorResponseTransform } from "../google/chatComplete";
+import { ErrorResponse, ProviderConfig } from "../types";
+import { generateInvalidProviderResponseError } from "../utils";
 
 export const PalmEmbedConfig: ProviderConfig = {
     input: {
         param: "text",
-        required: true,
-        transform: (params: EmbedParams): string[] => {
-            if (Array.isArray(params.input)) {
-                return params.input;
-            } else {
-                return [params.input];
-            }
-        }
+        required: true
     },
     model: {
         param: "model",
@@ -27,17 +23,28 @@ interface PalmEmbedResponse {
     embedding: embedding
 }
 
-export const PalmEmbedResponseTransform: (response: PalmEmbedResponse) => EmbedResponse = (response) => {
-    return {
-    object: "list",
-    data: [{
-        object: "embedding",
-        embedding: response.embedding.value,
-        index: 0,
-    }],
-    model: "",
-    usage: {
-        prompt_tokens: -1,
-        total_tokens: -1
-    },
-}};
+export const PalmEmbedResponseTransform: (response: PalmEmbedResponse | GoogleErrorResponse, responseStatus: number) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
+    if (responseStatus !== 200) {
+        const errorResponse = GoogleErrorResponseTransform(response as GoogleErrorResponse, PALM);
+        if (errorResponse) return errorResponse;
+    }
+
+    if ('embedding' in response) {
+        return {
+            object: "list",
+            data: [{
+                object: "embedding",
+                embedding: response.embedding.value,
+                index: 0,
+            }],
+            model: "",
+            usage: {
+                prompt_tokens: -1,
+                total_tokens: -1
+            },
+            provider: PALM
+        }
+    }
+
+    return generateInvalidProviderResponseError(response, PALM);
+};

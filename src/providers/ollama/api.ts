@@ -4,13 +4,15 @@ const OllamaAPIConfig: ProviderAPIConfig = {
   headers: () => {
     return {};
   },
-  chatComplete: "/v1/chat/completions",
-  embed:"/api/embeddings",
-  getEndpoint: (fn: string, url?: string) => {
+  getBaseURL: ({ providerOptions }) => {
+    return providerOptions.customHost ?? "";
+  },
+  getEndpoint: ({ fn, providerOptions }) => {
     let mappedFn = fn;
-    if (fn === "proxy" && url && url?.indexOf("/api/chat") > -1) {
+    const { urlToFetch } = providerOptions;
+    if (fn === "proxy" && urlToFetch && urlToFetch?.indexOf("/api/chat") > -1) {
       mappedFn = "chatComplete";
-    } else if (fn === "proxy" && url && url?.indexOf("/embeddings") > -1) {
+    } else if (fn === "proxy" && urlToFetch && urlToFetch?.indexOf("/embeddings") > -1) {
       mappedFn = "embed";
     }
 
@@ -21,6 +23,7 @@ const OllamaAPIConfig: ProviderAPIConfig = {
       case "embed": {
         return `/api/embeddings`;
       }
+      default: return '';
     }
   },
 };
