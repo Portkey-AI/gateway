@@ -12,9 +12,6 @@
 ### Route to 100+ LLMs with 1 fast & friendly API.
 
 [Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and hosted LLMs. It streamlines API requests to OpenAI, Anthropic, Mistral, LLama2, Anyscale, Google Gemini and more with a unified API.
-```sh
-npx @portkey-ai/gateway
-```
 
 ```sh
 pip install portkey-ai
