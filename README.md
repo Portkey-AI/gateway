@@ -42,13 +42,10 @@ Enterprise Version: [Read more here](#gateway-enterprise-version)<br>
 pip install portkey-ai
 ```
 
-#### Detailed guide to run 100+ LLMs in your Colab!
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1ZmBsDr7wpeRy6wI-FTh5O8bGjzB5GT98?usp=sharing)
 
 #### Usage
 
-You can use any LLM 
+Run any LLM using Portkey Python Client
 
 ```python
 
@@ -69,6 +66,11 @@ print(completion)
 
 ```
 - Note: Portkey allows you to manage all your API keys centrally using virtual keys. [setup guide](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/virtual-keys#using-virtual-keys) 
+
+#### Detailed guide to run 100+ LLMs in your Colab!
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1ZmBsDr7wpeRy6wI-FTh5O8bGjzB5GT98?usp=sharing)
+
 
 ### Node.js SDK
 ```bash
