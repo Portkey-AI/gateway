@@ -17,9 +17,11 @@ npx @portkey-ai/gateway
 ```
 
 
-<a href="https://www.youtube.com/watch?v=PgwK5dmvwTk" target="_blank">
+#### Insert: GIF Video showing switching between 3-4 providers
+<!-- <a href="https://www.youtube.com/watch?v=PgwK5dmvwTk" target="_blank">
   <img src="docs/images/demo.png" alt="Introduction to Portkey AI">
-</a>
+</a> -->
+
 
 </div>
 <br><br>
@@ -199,21 +201,14 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 </table>
 <br>
 
-## Configuring the AI Gateway
+## Features of AI Gateway
 The AI gateway supports [configs](https://portkey.ai/docs/api-reference/config-object) to enable versatile routing strategies like **fallbacks**, **load balancing**, **retries** and more.
 <br><br>
-You can use these configs while making the OpenAI call through the `x-portkey-config` header
-```js
-// Using the OpenAI JS SDK
-const client = new OpenAI({
-  baseURL: "http://127.0.0.1:8787", // The gateway URL
-  defaultHeaders: {
-    'x-portkey-config': {.. your config here ..},
-  }
-});
-```
+
 <br>
-<details><summary>Here's an example config that retries an OpenAI request 5 times before falling back to Gemini Pro</summary>
+
+### Fallbacks
+Here's an example config that retries an OpenAI request 5 times before falling back to Gemini Pro
 
 ```js
 {
@@ -229,9 +224,11 @@ const client = new OpenAI({
   }]
 }
 ```
-</details>
-<details>
-<summary>This config would enable load balancing equally between 2 OpenAI keys</summary>
+
+
+
+### Load Balancing
+This config would enable load balancing equally between 2 OpenAI keys
 
 ```js
 {
@@ -248,7 +245,6 @@ const client = new OpenAI({
   ]
 }
 ```
-</details>
 
 > Read more about the [config object](https://portkey.ai/docs/api-reference/config-object).
 <br>
