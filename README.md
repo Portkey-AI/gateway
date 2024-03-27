@@ -15,14 +15,17 @@
 ```sh
 npx @portkey-ai/gateway
 ```
+[Watch the Portkey Demo video](/docs/Portkey_Demo.mp4)
+
+<a href="https://www.youtube.com/watch?v=PgwK5dmvwTk" target="_blank">
+  <img src="https://img.youtube.com/vi/PgwK5dmvwTk/0.jpg" alt="Introduction to Portkey AI">
+</a>
 
 
 </div>
 <br><br>
 
-<a href="https://www.youtube.com/watch?v=PgwK5dmvwTk" target="_blank">
-  <img src="https://img.youtube.com/vi/PgwK5dmvwTk/0.jpg" alt="Introduction to Portkey AI">
-</a>
+
 
 [Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and hosted LLMs. It streamlines API requests to OpenAI, Anthropic, Mistral, LLama2, Anyscale, Google Gemini and more with a unified API.
 
