@@ -21,7 +21,6 @@ npx @portkey-ai/gateway
   <img src="https://img.youtube.com/vi/PgwK5dmvwTk/4s.jpg" alt="Introduction to Portkey AI">
 </a>
 
-
 </div>
 <br><br>
 
