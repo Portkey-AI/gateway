@@ -20,6 +20,8 @@ npx @portkey-ai/gateway
 </div>
 <br><br>
 
+[![Introduction to Portkey AI Gateway](https://img.youtube.com/vi/PgwK5dmvwTk/0.jpg)](https://www.youtube.com/watch?v=PgwK5dmvwTk)
+
 [Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and hosted LLMs. It streamlines API requests to OpenAI, Anthropic, Mistral, LLama2, Anyscale, Google Gemini and more with a unified API.
 
 
