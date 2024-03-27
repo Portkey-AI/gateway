@@ -42,39 +42,59 @@ Enterprise Version: [Read more here](#gateway-enterprise-version)<br>
 pip install portkey-ai
 ```
 
+#### Detailed guide to run 100+ LLMs in your Colab!
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1ZmBsDr7wpeRy6wI-FTh5O8bGjzB5GT98?usp=sharing)
+
 
 #### Usage
 
-Run any LLM using Portkey Python Client
+Run any LLM using Portkey Client
 
 ```python
 
 from portkey_ai import Portkey
 
 portkey = Portkey(
-    api_key = PORTKEY_API_KEY,  # Replace with your Portkey API key
-    virtual_key= OPENAI_VIRTUAL_KEY,   # Use virtual key of provider of your choice
+    api_key = PORTKEY_API_KEY,  # defaults to os.environ["PORTKEY_API_KEY"]
+    virtual_key= OPENAI_VIRTUAL_KEY,   # use virtual key of any provider of your choice
 )
 
 completion = portkey.chat.completions.create(
     messages= [{ "role": 'user', "content": 'Who are you?'}],
-    model= 'gpt-3.5-turbo-0125',   # Other models by Anthropic "claude-3-opus-20240229", "claude-3-sonnet-20240229"
+    model= 'gpt-3.5-turbo-0125', 
     max_tokens=250
 )
 
 print(completion)
 
 ```
-- Note: Portkey allows you to manage all your API keys centrally using virtual keys. [setup guide](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/virtual-keys#using-virtual-keys) 
+Note: Portkey allows you to manage all your API keys centrally using virtual keys. [setup guide](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/virtual-keys#using-virtual-keys) 
 
-#### Detailed guide to run 100+ LLMs in your Colab!
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1ZmBsDr7wpeRy6wI-FTh5O8bGjzB5GT98?usp=sharing)
 
 
 ### Node.js SDK
 ```bash
 npm install portkey-ai
+```
+
+Run any LLM using Portkey Node.js 
+
+```bash
+import Portkey from 'portkey-ai'
+ 
+const portkey = new Portkey({
+    apiKey: PORTKEY_API_KEY, // defaults to process.env["PORTKEY_API_KEY"]
+    virtualKey: OPENAI_VIRTUAL_KEY // use virtual key of any provider of your choice
+})
+
+
+const chatCompletion = await portkey.chat.completions.create({
+    messages: [{ role: 'user', content: 'What's in a name?' }],
+    model: 'gpt-3.5-turbo',
+});
+
+console.log(chatCompletion)
 ```
 
 ### Run it locally 
