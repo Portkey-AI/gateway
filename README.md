@@ -1,18 +1,18 @@
 <div align="center">
-<img src="/docs/images/gateway-border.png" width=350>
-
-# Gateway
-```sh
-npx @portkey-ai/gateway
-```
-### Route to 100+ LLMs with 1 fast & friendly API.
-
-
 [![License](https://img.shields.io/github/license/Ileriayo/markdown-badges)](./LICENSE)
 [![Discord](https://img.shields.io/discord/1143393887742861333)](https://portkey.ai/community)
 [![Twitter](https://img.shields.io/twitter/url/https/twitter/follow/portkeyai?style=social&label=Follow%20%40PortkeyAI)](https://twitter.com/portkeyai)
 [![npm version](https://badge.fury.io/js/%40portkey-ai%2Fgateway.svg)](https://www.npmjs.com/package/@portkey-ai/gateway)
 <a href="https://replit.com/@portkey/AI-Gateway?v=1"><img src="https://replit.com/badge?caption=Deploy%20on%20Replit" width=99 style="display:block;"/></a>
+
+<img src="/docs/images/gateway-border.png" width=350>
+
+# Gateway
+[Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and hosted LLMs. It streamlines API requests to OpenAI, Anthropic, Mistral, LLama2, Anyscale, Google Gemini and more with a unified API.
+```sh
+pip install portkey-ai
+```
+### Route to 100+ LLMs with 1 fast & friendly API.
 
 </div>
 <br><br>
@@ -33,7 +33,21 @@ Enterprise Version: [Read more here](#gateway-enterprise-version)<br>
 <br>
 
 ## Getting Started
-### Installation
+
+### Python SDK
+```bash
+pip install portkey-ai
+```
+#### Detailed guide to run 100+ LLMs in your Colab!
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1ZmBsDr7wpeRy6wI-FTh5O8bGjzB5GT98?usp=sharing)
+
+### Node.js SDK
+```bash
+npm install portkey-ai
+```
+
+### Run it locally 
 If you're familiar with Node.js and `npx`, you can run your private AI gateway locally. ([Other deployment options](#deploying-ai-gateway))
 ```bash
 npx @portkey-ai/gateway
