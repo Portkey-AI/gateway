@@ -125,6 +125,37 @@ export const BedrockLLamaCompleteConfig: ProviderConfig = {
   },
 };
 
+export const BedrockMistralCompleteConfig: ProviderConfig = {
+  prompt: {
+    param: 'prompt',
+    required: true,
+  },
+  max_tokens: {
+    param: 'max_tokens',
+    default: 20,
+    min: 1,
+  },
+  temperature: {
+    param: 'temperature',
+    default: 0.75,
+    min: 0,
+    max: 5,
+  },
+  top_p: {
+    param: 'top_p',
+    default: 0.75,
+    min: 0,
+    max: 1,
+  },
+  top_k: {
+    param: 'top_k',
+    default: 0,
+  },
+  stop: {
+    param: 'stop',
+  },
+};
+
 const transformTitanGenerationConfig = (params: Params) => {
   const generationConfig: Record<string, any> = {};
   if (params['temperature']) {
@@ -753,4 +784,125 @@ export const BedrockCohereCompleteStreamChunkTransform: (
       },
     ],
   })}\n\n`;
+};
+
+export interface BedrocMistralStreamChunk {
+  outputs: {
+    text: string;
+    stop_reason: string | null;
+  }[];
+  'amazon-bedrock-invocationMetrics': {
+    inputTokenCount: number;
+    outputTokenCount: number;
+    invocationLatency: number;
+    firstByteLatency: number;
+  };
+}
+
+export const BedrockMistralCompleteStreamChunkTransform: (
+  response: string,
+  fallbackId: string
+) => string | string[] = (responseChunk, fallbackId) => {
+  let chunk = responseChunk.trim();
+  chunk = chunk.trim();
+  const parsedChunk: BedrocMistralStreamChunk = JSON.parse(chunk);
+
+  if (parsedChunk.outputs[0].stop_reason) {
+    return [
+      `data: ${JSON.stringify({
+        id: fallbackId,
+        object: 'text_completion',
+        created: Math.floor(Date.now() / 1000),
+        model: '',
+        provider: BEDROCK,
+        choices: [
+          {
+            text: parsedChunk.outputs[0].text,
+            index: 0,
+            logprobs: null,
+            finish_reason: parsedChunk.outputs[0].stop_reason,
+          },
+        ],
+        usage: {
+          prompt_tokens:
+            parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount,
+          completion_tokens:
+            parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
+          total_tokens:
+            parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount +
+            parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
+        },
+      })}\n\n`,
+      `data: [DONE]\n\n`,
+    ];
+  }
+
+  return `data: ${JSON.stringify({
+    id: fallbackId,
+    object: 'text_completion',
+    created: Math.floor(Date.now() / 1000),
+    model: '',
+    provider: BEDROCK,
+    choices: [
+      {
+        text: parsedChunk.outputs[0].text,
+        index: 0,
+        logprobs: null,
+        finish_reason: null,
+      },
+    ],
+  })}\n\n`;
+};
+
+export interface BedrockMistralCompleteResponse {
+  outputs: {
+    text: string;
+    stop_reason: string;
+  }[];
+}
+
+export const BedrockMistralCompleteResponseTransform: (
+  response: BedrockMistralCompleteResponse | BedrockErrorResponse,
+  responseStatus: number,
+  responseHeaders: Headers
+) => CompletionResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  responseHeaders
+) => {
+  if (responseStatus !== 200) {
+    const errorResponse = BedrockErrorResponseTransform(
+      response as BedrockErrorResponse
+    );
+    if (errorResponse) return errorResponse;
+  }
+
+  if ('outputs' in response) {
+    const prompt_tokens =
+      Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || 0;
+    const completion_tokens =
+      Number(responseHeaders.get('X-Amzn-Bedrock-Output-Token-Count')) || 0;
+    return {
+      id: Date.now().toString(),
+      object: 'text_completion',
+      created: Math.floor(Date.now() / 1000),
+      model: '',
+      provider: BEDROCK,
+      choices: [
+        {
+          text: response.outputs[0].text,
+          index: 0,
+          logprobs: null,
+          finish_reason: response.outputs[0].stop_reason,
+        },
+      ],
+      usage: {
+        prompt_tokens: prompt_tokens,
+        completion_tokens: completion_tokens,
+        total_tokens: prompt_tokens + completion_tokens,
+      },
+    };
+  }
+
+  return generateInvalidProviderResponseError(response, BEDROCK);
 };
