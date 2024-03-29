@@ -62,6 +62,7 @@ export const VALID_PROVIDERS = [
     BEDROCK,
     GROQ,
     SEGMIND,
+    FIREWORKS_AI
 ];
 
 export const CONTENT_TYPES = {

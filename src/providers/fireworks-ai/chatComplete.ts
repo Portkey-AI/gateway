@@ -13,7 +13,7 @@ export const FireworksAIChatCompleteConfig: ProviderConfig = {
   model: {
     param: "model",
     required: true,
-    default: "mistral-tiny",
+    default: "accounts/fireworks/models/llama-v2-7b-chat",
   },
   messages: {
     param: "messages",
@@ -68,11 +68,12 @@ interface FireworksAIChatCompleteResponse extends ChatCompletionResponse {
 }
 
 export interface FireworksAIErrorResponse {
-  object: string;
-  message: string;
-  type: string;
-  param: string | null;
-  code: string;
+  fault: {
+    faultstring: string;
+    detail: {
+      errorcode: string;
+    };
+  };
 }
 
 interface FireworksAIStreamChunk {
@@ -94,13 +95,13 @@ export const FireworksAIChatCompleteResponseTransform: (
   response: FireworksAIChatCompleteResponse | FireworksAIErrorResponse,
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if ("message" in response && responseStatus !== 200) {
+  if ("fault" in response && responseStatus !== 200) {
     return generateErrorResponse(
       {
-        message: response.message,
-        type: response.type,
-        param: response.param,
-        code: response.code,
+        message: response.fault.faultstring,
+        type: null,
+        param: null,
+        code: response.fault.detail.errorcode,
       },
       FIREWORKS_AI
     );
