@@ -9,7 +9,7 @@
 <img src="/docs/images/gateway-border.png" width=350>
 
 # Gateway
-### Route to 100+ LLMs with 1 fast & friendly API.
+### 🛤️ Route to 100+ LLMs with 1 fast & friendly API.
 
 [Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and hosted LLMs. It streamlines API requests to OpenAI, Anthropic, Mistral, LLama2, Anyscale, Google Gemini and more with a unified API.
 
@@ -44,7 +44,7 @@ npx @portkey-ai/gateway
 Enterprise Version: [Read more here](#gateway-enterprise-version)<br>
 <br>
 
-## Getting Started
+## 📖 Getting Started
 
 ### Python
 ```bash
@@ -56,7 +56,7 @@ pip install portkey-ai
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1ZmBsDr7wpeRy6wI-FTh5O8bGjzB5GT98?usp=sharing)
 
 
-#### Usage
+#### 🔍 Usage
 
 Run any LLM using Portkey Client
 
@@ -125,7 +125,7 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 [Full list of supported SDKs](#supported-sdks)
 <br><br>
 
-## Supported Providers
+## 🤝 Supported Providers
 
 || Provider  | Support | Stream | Supported Endpoints |
 |---|---|---|---|--|
@@ -147,7 +147,7 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 > [View the complete list of 100+ supported models here](https://portkey.ai/docs/welcome/what-is-portkey#ai-providers-supported)
 <br>
 
-## Features
+## 💥 Features
 
 <!-- <table width=100%>
   <tr>
@@ -202,9 +202,9 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 </table>
 <br>
 
-## Expand your Gateway!
+## 🛠️ Expand your Gateway!
 
-### Fallbacks 
+### ⨫ Fallbacks 
 Here's an example config that retries an OpenAI request 5 times before falling back to Gemini Pro
 
 ```js
@@ -224,7 +224,7 @@ Here's an example config that retries an OpenAI request 5 times before falling b
 
 
 
-### Load Balancing
+### ⚖️ Load Balancing
 This config would enable load balancing equally between 2 OpenAI keys
 
 ```js
