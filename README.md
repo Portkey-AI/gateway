@@ -7,7 +7,7 @@
 <a href="https://replit.com/@portkey/AI-Gateway?v=1"><img src="https://replit.com/badge?caption=Deploy%20on%20Replit" width=99 style="display:block;"/></a>
 
 
-# Gateway
+# ⛩️ Gateway
 ### 🛤️ Route to 100+ LLMs with 1 fast & friendly API.
 
 ```sh
@@ -49,10 +49,31 @@ pip install portkey-ai
 
 #### Detailed guide to run 100+ LLMs in your Colab!
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1ZmBsDr7wpeRy6wI-FTh5O8bGjzB5GT98?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1hLvoq_VdGlJ_92sPPiwTznSra5Py0FuW?usp=sharing)
 
 
 #### 🔍 Usage
+
+Run any LLM using OpenAI Client
+
+```python
+from openai import OpenAI
+from portkey_ai import PORTKEY_GATEWAY_URL, createHeaders
+
+client = OpenAI(
+    api_key="sk-xx",  # replace it with your API key
+    base_url=PORTKEY_GATEWAY_URL,
+    default_headers=createHeaders(
+        provider="openai",
+        api_key="portkey-api" # replace it with your API key
+    )
+)
+
+chat_complete = client.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "What's a fractal?"}],
+)
+```
 
 Run any LLM using Portkey Client
 
