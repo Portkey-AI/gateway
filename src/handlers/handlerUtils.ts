@@ -2,6 +2,7 @@ import { Context } from 'hono';
 import {
   AZURE_OPEN_AI,
   BEDROCK,
+  WORKERS_AI,
   CONTENT_TYPES,
   HEADER_KEYS,
   POWERED_BY,
@@ -190,6 +191,8 @@ export const fetchProviderOptionsFromConfig = (
       providerOptions[0].deploymentId = camelCaseConfig.deploymentId;
     if (camelCaseConfig.apiVersion)
       providerOptions[0].apiVersion = camelCaseConfig.apiVersion;
+    if (camelCaseConfig.accountId)
+      providerOptions[0].apiVersion = camelCaseConfig.accountId;
     mode = 'single';
   } else {
     if (camelCaseConfig.strategy && camelCaseConfig.strategy.mode) {
@@ -951,6 +954,10 @@ export function constructConfigFromRequestHeaders(
     awsRegion: requestHeaders[`x-${POWERED_BY}-aws-region`],
   };
 
+  const workersAiConfig = {
+    accountId: requestHeaders[`x-${POWERED_BY}-workers-ai-account-id`],
+  };
+
   if (requestHeaders[`x-${POWERED_BY}-config`]) {
     let parsedConfigJson = JSON.parse(requestHeaders[`x-${POWERED_BY}-config`]);
 
@@ -974,6 +981,13 @@ export function constructConfigFromRequestHeaders(
           ...bedrockConfig,
         };
       }
+
+      if (parsedConfigJson.provider === WORKERS_AI) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...workersAiConfig,
+        };
+      }
     }
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
@@ -988,5 +1002,7 @@ export function constructConfigFromRequestHeaders(
       azureConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === BEDROCK &&
       bedrockConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === WORKERS_AI &&
+      workersAiConfig),
   };
 }
