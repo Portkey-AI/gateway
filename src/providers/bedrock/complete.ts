@@ -142,15 +142,14 @@ export const BedrockMistralCompleteConfig: ProviderConfig = {
     max: 5,
   },
   top_p: {
-    param: 'p',
+    param: 'top_p',
     default: 0.75,
     min: 0,
     max: 1,
   },
   top_k: {
-    param: 'k',
+    param: 'top_k',
     default: 0,
-    max: 200,
   },
   stop: {
     param: 'end_sequences',
