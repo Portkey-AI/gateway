@@ -20,7 +20,7 @@ npx @portkey-ai/gateway
 
 <!-- Demo GIF or Image -->
 <p align="center">
-  <img src="docs/images/gateway_demo.gif" width="900px" alt="Gateway Demo">
+  <img src="docs/images/gateway_demo.gif" width="800px" alt="Gateway Demo">
 </p>
 
 
