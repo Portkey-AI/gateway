@@ -1,8 +1,16 @@
-import { ProviderConfigs } from "../types";
-import CohereAPIConfig from "./api";
-import { CohereChatCompleteConfig, CohereChatCompleteResponseTransform, CohereChatCompleteStreamChunkTransform } from "./chatComplete";
-import {CohereCompleteConfig, CohereCompleteResponseTransform, CohereCompleteStreamChunkTransform} from "./complete";
-import { CohereEmbedConfig, CohereEmbedResponseTransform } from "./embed";
+import { ProviderConfigs } from '../types';
+import CohereAPIConfig from './api';
+import {
+  CohereChatCompleteConfig,
+  CohereChatCompleteResponseTransform,
+  CohereChatCompleteStreamChunkTransform,
+} from './chatComplete';
+import {
+  CohereCompleteConfig,
+  CohereCompleteResponseTransform,
+  CohereCompleteStreamChunkTransform,
+} from './complete';
+import { CohereEmbedConfig, CohereEmbedResponseTransform } from './embed';
 
 const CohereConfig: ProviderConfigs = {
   complete: CohereCompleteConfig,
@@ -14,8 +22,8 @@ const CohereConfig: ProviderConfigs = {
     'stream-complete': CohereCompleteStreamChunkTransform,
     chatComplete: CohereChatCompleteResponseTransform,
     'stream-chatComplete': CohereChatCompleteStreamChunkTransform,
-    embed: CohereEmbedResponseTransform
-  }
+    embed: CohereEmbedResponseTransform,
+  },
 };
 
 export default CohereConfig;

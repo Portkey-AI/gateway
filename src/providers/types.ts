@@ -1,4 +1,4 @@
-import { Message, Options, Params } from "../types/requestBody";
+import { Message, Options, Params } from '../types/requestBody';
 
 /**
  * Configuration for a parameter.
@@ -34,14 +34,32 @@ export interface ProviderConfig {
  */
 export interface ProviderAPIConfig {
   /** A function to generate the headers for the API request. */
-  headers: (args: { providerOptions: Options, fn: string, transformedRequestBody: Record<string, any>, transformedRequestUrl: string}) => Promise<Record<string, any>> | Record<string, any>;
+  headers: (args: {
+    providerOptions: Options;
+    fn: string;
+    transformedRequestBody: Record<string, any>;
+    transformedRequestUrl: string;
+  }) => Promise<Record<string, any>> | Record<string, any>;
   /** A function to generate the baseURL based on parameters */
   getBaseURL: (args: { providerOptions: Options }) => string;
   /** A function to generate the endpoint based on parameters */
-  getEndpoint: (args: { providerOptions: Options, fn: string, gatewayRequestBody: Params}) => string;
+  getEndpoint: (args: {
+    providerOptions: Options;
+    fn: string;
+    gatewayRequestBody: Params;
+  }) => string;
 }
 
-export type endpointStrings = 'complete' | 'chatComplete' | 'embed' | 'rerank' | 'moderate' | 'stream-complete' | 'stream-chatComplete' | 'proxy' | 'imageGenerate'
+export type endpointStrings =
+  | 'complete'
+  | 'chatComplete'
+  | 'embed'
+  | 'rerank'
+  | 'moderate'
+  | 'stream-complete'
+  | 'stream-chatComplete'
+  | 'proxy'
+  | 'imageGenerate';
 
 /**
  * A collection of API configurations for multiple AI providers.
@@ -117,13 +135,13 @@ export interface ChatCompletionResponse extends CResponse {
  * @interface
  */
 export interface ErrorResponse {
-    error: {
-        message: string;
-        type: string | null;
-        param: string | null;
-        code: string | null;
-    },
-    provider: string
+  error: {
+    message: string;
+    type: string | null;
+    param: string | null;
+    code: string | null;
+  };
+  provider: string;
 }
 
 /**
@@ -131,7 +149,7 @@ export interface ErrorResponse {
  * @interface
  */
 export interface ImageGenerateResponse {
-  created: string,
-  data: object[],
+  created: string;
+  data: object[];
   provider: string;
 }
