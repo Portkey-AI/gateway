@@ -48,7 +48,7 @@
     "@rollup/plugin-typescript": "^11.1.5",
     "@types/async-retry": "^1.4.5",
     "@types/node": "20.8.3",
-    "prettier": "^3.1.1",
+    "prettier": "3.2.5",
     "rollup": "^4.9.1",
     "tsx": "^4.7.0",
     "wrangler": "^3.0.1"
