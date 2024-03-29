@@ -40,6 +40,7 @@ export const AI21: string = "ai21";
 export const BEDROCK: string = "bedrock";
 export const GROQ: string = "groq";
 export const SEGMIND: string = "segmind";
+export const FIREWORKS_AI: string = "fireworks-ai";
 
 export const VALID_PROVIDERS = [
     ANTHROPIC,
@@ -51,6 +52,7 @@ export const VALID_PROVIDERS = [
     OPEN_AI,
     PALM,
     PERPLEXITY_AI,
+    POWERED_BY,
     TOGETHER_AI,
     DEEPINFRA,
     STABILITY_AI,
