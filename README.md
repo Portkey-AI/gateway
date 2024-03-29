@@ -46,7 +46,7 @@ Enterprise Version: [Read more here](#gateway-enterprise-version)<br>
 
 ## Getting Started
 
-### Python SDK
+### Python
 ```bash
 pip install portkey-ai
 ```
@@ -82,7 +82,7 @@ Note: Portkey allows you to manage all your API keys centrally using virtual key
 
 
 
-### Node.js SDK
+### Node.js
 ```bash
 npm install portkey-ai
 ```
@@ -204,7 +204,7 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 
 ## Expand your Gateway!
 
-### Usage 
+### Fallbacks 
 Here's an example config that retries an OpenAI request 5 times before falling back to Gemini Pro
 
 ```js
