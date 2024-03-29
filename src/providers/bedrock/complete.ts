@@ -863,16 +863,11 @@ export const BedrockMistralCompleteResponseTransform: (
   response: BedrockMistralCompleteResponse | BedrockErrorResponse,
   responseStatus: number
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if ('message' in response && responseStatus !== 200) {
-    return {
-      error: {
-        message: response.message,
-        type: null,
-        param: null,
-        code: null,
-      },
-      provider: BEDROCK,
-    } as ErrorResponse;
+  if (responseStatus !== 200) {
+    const errorResponse = BedrockErrorResponseTransform(
+      response as BedrockErrorResponse
+    );
+    if (errorResponse) return errorResponse;
   }
 
   if ('outputs' in response) {
@@ -898,15 +893,5 @@ export const BedrockMistralCompleteResponseTransform: (
     };
   }
 
-  return {
-    error: {
-      message: `Invalid response recieved from ${BEDROCK}: ${JSON.stringify(
-        response
-      )}`,
-      type: null,
-      param: null,
-      code: null,
-    },
-    provider: BEDROCK,
-  } as ErrorResponse;
+  return generateInvalidProviderResponseError(response, BEDROCK);
 };
