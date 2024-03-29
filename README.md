@@ -18,8 +18,6 @@ npx @portkey-ai/gateway
 ```
 
 
-
-
 #### Insert: GIF Video showing switching between 3-4 providers
 <!-- <a href="https://www.youtube.com/watch?v=PgwK5dmvwTk" target="_blank">
   <img src="docs/images/demo.png" alt="Introduction to Portkey AI">
@@ -151,7 +149,7 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 
 ## Features
 
-<table width=100%>
+<!-- <table width=100%>
   <tr>
     <td>
       <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/universal-api">Unified API Signature</a></h4>
@@ -169,7 +167,7 @@ curl '127.0.0.1:8787/v1/chat/completions' \
      <br><br>
     </td>
   </tr>
-</table>
+</table> -->
 <table width=100%>
   <tr>
     <td width="50%">
@@ -287,16 +285,6 @@ Make your AI app more <ins>reliable</ins> and <ins>forward compatible</ins>, whi
 
 <br>
 
-## Roadmap
-
-1. Support for more providers. Missing a provider or LLM Platform, [raise a feature request](https://github.com/Portkey-AI/gateway/issues).
-2. Enhanced load balancing features to optimize resource use across different models and providers.
-3. More robust fallback and retry strategies to further improve the reliability of requests.
-4. Increased customizability of the unified API signature to cater to more diverse use cases.
-
-[Participate in Roadmap discussions here.](https://github.com/Portkey-AI/gateway/projects/)
-
-<br>
 
 ## Contributing
 
