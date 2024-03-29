@@ -26,8 +26,7 @@ npx @portkey-ai/gateway
 </div>
 <br><br>
 
-[Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is a hosted platform. You can sign up and start using Supabase without installing anything. You can also self-host and develop locally. 
-
+[Gateway](https://portkey.ai/features/ai-gateway) is a hosted platform. You can sign up and start using Gateway without installing anything. You can also self-host and develop locally. 
 
 ✅&nbsp; Blazing **fast** (9.9x faster) with a **tiny footprint** (~45kb installed) <br>
 ✅&nbsp; **Load balance** across multiple models, providers, and keys <br>
