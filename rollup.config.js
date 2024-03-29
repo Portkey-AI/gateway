@@ -5,7 +5,7 @@ export default {
   input: 'src/start-server.ts',
   output: {
     dir: 'build',
-    format: 'es'
+    format: 'es',
   },
-  plugins: [typescript(), terser()]
+  plugins: [typescript(), terser()],
 };
