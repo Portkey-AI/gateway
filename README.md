@@ -105,7 +105,7 @@ npm install portkey-ai
 
 Run any LLM using Portkey Node.js 
 
-```bash
+```js
 import Portkey from 'portkey-ai'
  
 const portkey = new Portkey({
