@@ -317,7 +317,7 @@ export const BedrockMistralChatCompleteConfig: ProviderConfig = {
     max: 200,
   },
   stop: {
-    param: 'end_sequences',
+    param: 'stop',
   },
 };
 

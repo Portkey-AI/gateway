@@ -152,7 +152,7 @@ export const BedrockMistralCompleteConfig: ProviderConfig = {
     default: 0,
   },
   stop: {
-    param: 'end_sequences',
+    param: 'stop',
   },
 };
 
