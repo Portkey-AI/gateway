@@ -6,7 +6,6 @@
 [![npm version](https://badge.fury.io/js/%40portkey-ai%2Fgateway.svg)](https://www.npmjs.com/package/@portkey-ai/gateway)
 <a href="https://replit.com/@portkey/AI-Gateway?v=1"><img src="https://replit.com/badge?caption=Deploy%20on%20Replit" width=99 style="display:block;"/></a>
 
-<img src="/docs/images/gateway-border.png" width=350>
 
 # Gateway
 ### 🛤️ Route to 100+ LLMs with 1 fast & friendly API.
@@ -27,9 +26,7 @@ npx @portkey-ai/gateway
 </div>
 <br><br>
 
-
-
-[Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and hosted LLMs. It streamlines API requests to OpenAI, Anthropic, Mistral, LLama2, Anyscale, Google Gemini and more with a unified API.
+[Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is a hosted platform. You can sign up and start using Supabase without installing anything. You can also self-host and develop locally. 
 
 
 ✅&nbsp; Blazing **fast** (9.9x faster) with a **tiny footprint** (~45kb installed) <br>
