@@ -863,8 +863,13 @@ export interface BedrockMistralCompleteResponse {
 
 export const BedrockMistralCompleteResponseTransform: (
   response: BedrockMistralCompleteResponse | BedrockErrorResponse,
-  responseStatus: number
-) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  responseHeaders: Headers
+) => CompletionResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  responseHeaders
+) => {
   if (responseStatus !== 200) {
     const errorResponse = BedrockErrorResponseTransform(
       response as BedrockErrorResponse
@@ -873,6 +878,10 @@ export const BedrockMistralCompleteResponseTransform: (
   }
 
   if ('outputs' in response) {
+    const prompt_tokens =
+      Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || 0;
+    const completion_tokens =
+      Number(responseHeaders.get('X-Amzn-Bedrock-Output-Token-Count')) || 0;
     return {
       id: Date.now().toString(),
       object: 'text_completion',
@@ -888,9 +897,9 @@ export const BedrockMistralCompleteResponseTransform: (
         },
       ],
       usage: {
-        prompt_tokens: 0,
-        completion_tokens: 0,
-        total_tokens: 0,
+        prompt_tokens: prompt_tokens,
+        completion_tokens: completion_tokens,
+        total_tokens: prompt_tokens + completion_tokens,
       },
     };
   }
