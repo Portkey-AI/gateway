@@ -797,6 +797,12 @@ interface BedrocMistralStreamChunkOutput {
 
 export interface BedrocMistralStreamChunk {
   outputs: BedrocMistralStreamChunkOutput[];
+  'amazon-bedrock-invocationMetrics': {
+    inputTokenCount: number;
+    outputTokenCount: number;
+    invocationLatency: number;
+    firstByteLatency: number;
+  };
 }
 
 export const BedrockMistralCompleteStreamChunkTransform: (
@@ -824,9 +830,13 @@ export const BedrockMistralCompleteStreamChunkTransform: (
           },
         ],
         usage: {
-          prompt_tokens: 0,
-          completion_tokens: 0,
-          total_tokens: 0,
+          prompt_tokens:
+            parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount,
+          completion_tokens:
+            parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
+          total_tokens:
+            parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount +
+            parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
         },
       })}\n\n`,
       `data: [DONE]\n\n`,
