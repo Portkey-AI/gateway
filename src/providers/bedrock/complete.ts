@@ -150,7 +150,7 @@ export const BedrockMistralCompleteConfig: ProviderConfig = {
   top_k: {
     param: 'k',
     default: 0,
-    max: 500,
+    max: 200,
   },
   stop: {
     param: 'end_sequences',
@@ -790,13 +790,11 @@ export const BedrockCohereCompleteStreamChunkTransform: (
   })}\n\n`;
 };
 
-interface BedrocMistralStreamChunkOutput {
-  text: string;
-  stop_reason: string | null;
-}
-
 export interface BedrocMistralStreamChunk {
-  outputs: BedrocMistralStreamChunkOutput[];
+  outputs: {
+    text: string;
+    stop_reason: string | null;
+  }[];
   'amazon-bedrock-invocationMetrics': {
     inputTokenCount: number;
     outputTokenCount: number;
@@ -860,13 +858,11 @@ export const BedrockMistralCompleteStreamChunkTransform: (
   })}\n\n`;
 };
 
-interface BedrockMistralCompleteOutput {
-  text: string;
-  stop_reason: string;
-}
-
 export interface BedrockMistralCompleteResponse {
-  outputs: BedrockMistralCompleteOutput[];
+  outputs: {
+    text: string;
+    stop_reason: string;
+  }[];
 }
 
 export const BedrockMistralCompleteResponseTransform: (

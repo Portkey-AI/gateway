@@ -17,6 +17,9 @@ import {
   BedrockTitanChatCompleteResponseTransform,
   BedrockTitanChatCompleteStreamChunkTransform,
   BedrockTitanChatompleteConfig,
+  BedrockMistralChatCompleteConfig,
+  BedrockMistralChatCompleteResponseTransform,
+  BedrockMistralChatCompleteStreamChunkTransform,
 } from './chatComplete';
 import {
   BedrockAI21CompleteConfig,
@@ -97,10 +100,14 @@ const BedrockConfig: ProviderConfigs = {
       case 'mistral':
         return {
           complete: BedrockMistralCompleteConfig,
+          chatComplete: BedrockMistralChatCompleteConfig,
           api: BedrockAPIConfig,
           responseTransforms: {
             'stream-complete': BedrockMistralCompleteStreamChunkTransform,
             complete: BedrockMistralCompleteResponseTransform,
+            'stream-chatComplete':
+              BedrockMistralChatCompleteStreamChunkTransform,
+            chatComplete: BedrockMistralChatCompleteResponseTransform,
           },
         };
       case 'amazon':

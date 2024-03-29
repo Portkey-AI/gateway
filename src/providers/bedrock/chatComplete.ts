@@ -17,6 +17,8 @@ import {
   BedrockLlamaStreamChunk,
   BedrockTitanCompleteResponse,
   BedrockTitanStreamChunk,
+  BedrockMistralCompleteResponse,
+  BedrocMistralStreamChunk,
 } from './complete';
 import { BedrockErrorResponse } from './embed';
 
@@ -265,6 +267,57 @@ export const BedrockLLamaChatCompleteConfig: ProviderConfig = {
     default: 0.9,
     min: 0,
     max: 1,
+  },
+};
+
+export const BedrockMistralChatCompleteConfig: ProviderConfig = {
+  messages: {
+    param: 'prompt',
+    required: true,
+    transform: (params: Params) => {
+      let prompt: string = '';
+      if (!!params.messages) {
+        let messages: Message[] = params.messages;
+        messages.forEach((msg, index) => {
+          if (index === 0 && msg.role === 'system') {
+            prompt += `system: ${messages}\n`;
+          } else if (msg.role == 'user') {
+            prompt += `user: ${msg.content}\n`;
+          } else if (msg.role == 'assistant') {
+            prompt += `assistant: ${msg.content}\n`;
+          } else {
+            prompt += `${msg.role}: ${msg.content}\n`;
+          }
+        });
+        prompt += 'Assistant:';
+      }
+      return prompt;
+    },
+  },
+  max_tokens: {
+    param: 'max_tokens',
+    default: 20,
+    min: 1,
+  },
+  temperature: {
+    param: 'temperature',
+    default: 0.75,
+    min: 0,
+    max: 5,
+  },
+  top_p: {
+    param: 'p',
+    default: 0.75,
+    min: 0,
+    max: 1,
+  },
+  top_k: {
+    param: 'k',
+    default: 0,
+    max: 200,
+  },
+  stop: {
+    param: 'end_sequences',
   },
 };
 
@@ -902,6 +955,112 @@ export const BedrockCohereChatCompleteStreamChunkTransform: (
         delta: {
           role: 'assistant',
           content: parsedChunk.text,
+        },
+        finish_reason: null,
+      },
+    ],
+  })}\n\n`;
+};
+
+export const BedrockMistralChatCompleteResponseTransform: (
+  response: BedrockMistralCompleteResponse | BedrockErrorResponse,
+  responseStatus: number,
+  responseHeaders: Headers
+) => ChatCompletionResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  responseHeaders
+) => {
+  if (responseStatus !== 200) {
+    const errorResposne = BedrockErrorResponseTransform(
+      response as BedrockErrorResponse
+    );
+    if (errorResposne) return errorResposne;
+  }
+
+  if ('outputs' in response) {
+    const prompt_tokens =
+      Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || 0;
+    const completion_tokens =
+      Number(responseHeaders.get('X-Amzn-Bedrock-Output-Token-Count')) || 0;
+    return {
+      id: Date.now().toString(),
+      object: 'chat.completion',
+      created: Math.floor(Date.now() / 1000),
+      model: '',
+      provider: BEDROCK,
+      choices: [
+        {
+          index: 0,
+          message: {
+            role: 'assistant',
+            content: response.outputs[0].text,
+          },
+          finish_reason: response.outputs[0].stop_reason,
+        },
+      ],
+      usage: {
+        prompt_tokens: prompt_tokens,
+        completion_tokens: completion_tokens,
+        total_tokens: prompt_tokens + completion_tokens,
+      },
+    };
+  }
+
+  return generateInvalidProviderResponseError(response, BEDROCK);
+};
+
+export const BedrockMistralChatCompleteStreamChunkTransform: (
+  response: string,
+  fallbackId: string
+) => string | string[] = (responseChunk, fallbackId) => {
+  let chunk = responseChunk.trim();
+  chunk = chunk.replace(/^data: /, '');
+  chunk = chunk.trim();
+  const parsedChunk: BedrocMistralStreamChunk = JSON.parse(chunk);
+
+  // discard the last cohere chunk as it sends the whole response combined.
+  if (parsedChunk.outputs[0].stop_reason) {
+    return [
+      `data: ${JSON.stringify({
+        id: fallbackId,
+        object: 'chat.completion.chunk',
+        created: Math.floor(Date.now() / 1000),
+        model: '',
+        provider: BEDROCK,
+        choices: [
+          {
+            index: 0,
+            delta: {},
+            finish_reason: parsedChunk.outputs[0].stop_reason,
+          },
+        ],
+        usage: {
+          prompt_tokens:
+            parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount,
+          completion_tokens:
+            parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
+          total_tokens:
+            parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount +
+            parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
+        },
+      })}\n\n`,
+      `data: [DONE]\n\n`,
+    ];
+  }
+
+  return `data: ${JSON.stringify({
+    id: fallbackId,
+    object: 'chat.completion.chunk',
+    created: Math.floor(Date.now() / 1000),
+    model: '',
+    provider: BEDROCK,
+    choices: [
+      {
+        index: 0,
+        delta: {
+          role: 'assistant',
+          content: parsedChunk.outputs[0].text,
         },
         finish_reason: null,
       },
