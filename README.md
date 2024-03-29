@@ -11,17 +11,17 @@
 # Gateway
 ### 🛤️ Route to 100+ LLMs with 1 fast & friendly API.
 
-[Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and hosted LLMs. It streamlines API requests to OpenAI, Anthropic, Mistral, LLama2, Anyscale, Google Gemini and more with a unified API.
-
 ```sh
 npx @portkey-ai/gateway
 ```
 
 
-#### Insert: GIF Video showing switching between 3-4 providers
-<!-- <a href="https://www.youtube.com/watch?v=PgwK5dmvwTk" target="_blank">
-  <img src="docs/images/demo.png" alt="Introduction to Portkey AI">
-</a> -->
+[Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and hosted LLMs. It streamlines API requests to OpenAI, Anthropic, Mistral, LLama2, Anyscale, Google Gemini and more with a unified API.
+
+<!-- Demo GIF or Image -->
+<p align="center">
+  <img src="docs/images/gateway_demo.gif" width="900px" alt="Gateway Demo">
+</p>
 
 
 </div>
