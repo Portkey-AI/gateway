@@ -19,7 +19,7 @@ npx @portkey-ai/gateway
 
 <!-- Demo GIF or Image -->
 <p align="center">
-  <img src="docs/images/gateway_demo.gif" width="800px" alt="Gateway Demo">
+  <img src="docs/images/demo_gateway.gif" width="800px" alt="Gateway Demo">
 </p>
 
 
@@ -249,12 +249,15 @@ This config would enable load balancing equally between 2 OpenAI keys
 | Language | Supported SDKs |
 |---|---|
 | Node.js / JS / TS | [Portkey SDK](https://www.npmjs.com/package/portkey-ai) <br> [OpenAI SDK](https://www.npmjs.com/package/openai) <br> [LangchainJS](https://www.npmjs.com/package/langchain) <br> [LlamaIndex.TS](https://www.npmjs.com/package/llamaindex) |
-| Python | [Portkey SDK](https://pypi.org/project/portkey-ai/) <br> [OpenAI SDK](https://pypi.org/project/openai/) <br> [Langchain](https://pypi.org/project/langchain/) <br> [LlamaIndex](https://pypi.org/project/llama-index/) |
+| Python | [Portkey SDK](https://pypi.org/project/portkey-ai/) <br> [OpenAI SDK](https://portkey.ai/docs/welcome/integration-guides/openai) <br> [Langchain](https://portkey.ai/docs/welcome/integration-guides/langchain-python) <br> [LlamaIndex](https://portkey.ai/docs/welcome/integration-guides/llama-index-python) |
 | Go | [go-openai](https://github.com/sashabaranov/go-openai) |
 | Java | [openai-java](https://github.com/TheoKanning/openai-java) |
 | Rust | [async-openai](https://docs.rs/async-openai/latest/async_openai/) |
 | Ruby | [ruby-openai](https://github.com/alexrudall/ruby-openai) |
 <br>
+
+
+
 
 ## Deploying AI Gateway
 [See docs](docs/installation-deployments.md) on installing the AI Gateway locally or deploying it on popular locations.
