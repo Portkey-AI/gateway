@@ -202,13 +202,9 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 </table>
 <br>
 
-## Features of AI Gateway
-The AI gateway supports [configs](https://portkey.ai/docs/api-reference/config-object) to enable versatile routing strategies like **fallbacks**, **load balancing**, **retries** and more.
-<br><br>
+## Expand your Gateway!
 
-<br>
-
-### Fallbacks
+### Usage 
 Here's an example config that retries an OpenAI request 5 times before falling back to Gemini Pro
 
 ```js
