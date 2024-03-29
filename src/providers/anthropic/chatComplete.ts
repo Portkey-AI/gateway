@@ -1,6 +1,7 @@
 import { ANTHROPIC } from "../../globals";
 import { Params, Message } from "../../types/requestBody";
 import { ChatCompletionResponse, ErrorResponse, ProviderConfig } from "../types";
+import { generateErrorResponse, generateInvalidProviderResponseError } from "../utils";
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -120,12 +121,12 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
   },
 };
 
-export interface AnthropicErrorObject {
+interface AnthropicErrorObject {
   type: string;
   message: string;
 }
 
-interface AnthropicErrorResponse {
+export interface AnthropicErrorResponse {
   type: string;
   error: AnthropicErrorObject;
 }
@@ -141,6 +142,10 @@ interface AnthropicChatCompleteResponse {
   stop_reason: string;
   model: string;
   stop_sequence: null | string;
+  usage: {
+    input_tokens: number;
+    output_tokens: number;
+  }
 }
 
 interface AnthropicChatCompleteStreamResponse {
@@ -153,18 +158,27 @@ interface AnthropicChatCompleteStreamResponse {
   }
 }
 
-// TODO: The token calculation is wrong atm
-export const AnthropicChatCompleteResponseTransform: (response: AnthropicChatCompleteResponse | AnthropicErrorResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if (responseStatus !== 200 && 'error' in response) {
-    return {
-        error: {
+export const AnthropicErrorResponseTransform: (response: AnthropicErrorResponse) =>  ErrorResponse | undefined = (response) => {
+  if ('error' in response) {
+    return generateErrorResponse(
+        {
             message: response.error?.message,
             type: response.error?.type,
             param: null,
-            code: null
+            code: null,
         },
-        provider: ANTHROPIC
-    } as ErrorResponse;
+        ANTHROPIC
+    );
+  }
+
+  return undefined;
+}
+
+// TODO: The token calculation is wrong atm
+export const AnthropicChatCompleteResponseTransform: (response: AnthropicChatCompleteResponse | AnthropicErrorResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+  if (responseStatus !== 200) {
+    const errorResposne = AnthropicErrorResponseTransform(response as AnthropicErrorResponse);
+    if (errorResposne) return errorResposne;
   } 
 
   if ('content' in response) {
@@ -192,15 +206,7 @@ export const AnthropicChatCompleteResponseTransform: (response: AnthropicChatCom
     }
   }
 
-  return {
-    error: {
-        message: `Invalid response recieved from anthropic: ${JSON.stringify(response)}`,
-        type: null,
-        param: null,
-        code: null
-    },
-    provider: ANTHROPIC
-  } as ErrorResponse;
+  return generateInvalidProviderResponseError(response, ANTHROPIC)
 }
   
 

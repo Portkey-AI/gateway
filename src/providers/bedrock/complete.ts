@@ -1,6 +1,8 @@
 import { BEDROCK } from "../../globals";
 import { Params } from "../../types/requestBody";
 import { CompletionResponse, ErrorResponse, ProviderConfig } from "../types";
+import { generateInvalidProviderResponseError } from "../utils";
+import { BedrockErrorResponseTransform } from "./chatComplete";
 import { BedrockErrorResponse } from "./embed";
 
 export const BedrockAnthropicCompleteConfig: ProviderConfig = {
@@ -220,16 +222,9 @@ export const BedrockLlamaCompleteResponseTransform: (
     response: BedrockLlamaCompleteResponse | BedrockErrorResponse,
     responseStatus: number
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
-    if ("message" in response && responseStatus !== 200) {
-        return {
-            error: {
-                message: response.message,
-                type: null,
-                param: null,
-                code: null,
-            },
-            provider: BEDROCK,
-        } as ErrorResponse;
+    if (responseStatus !== 200) {
+        const errorResposne = BedrockErrorResponseTransform(response as BedrockErrorResponse);
+        if (errorResposne) return errorResposne;
     }
 
     if ("generation" in response) {
@@ -257,17 +252,7 @@ export const BedrockLlamaCompleteResponseTransform: (
         };
     }
 
-    return {
-        error: {
-            message: `Invalid response recieved from ${BEDROCK}: ${JSON.stringify(
-                response
-            )}`,
-            type: null,
-            param: null,
-            code: null,
-        },
-        provider: BEDROCK,
-    } as ErrorResponse;
+    return generateInvalidProviderResponseError(response, BEDROCK);
 };
 
 export interface BedrockLlamaStreamChunk {
@@ -355,16 +340,9 @@ export const BedrockTitanCompleteResponseTransform: (
     response: BedrockTitanCompleteResponse | BedrockErrorResponse,
     responseStatus: number
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
-    if ("message" in response && responseStatus !== 200) {
-        return {
-            error: {
-                message: response.message,
-                type: null,
-                param: null,
-                code: null,
-            },
-            provider: BEDROCK,
-        } as ErrorResponse;
+    if (responseStatus !== 200) {
+        const errorResposne = BedrockErrorResponseTransform(response as BedrockErrorResponse);
+        if (errorResposne) return errorResposne;
     }
 
     if ("results" in response) {
@@ -391,17 +369,7 @@ export const BedrockTitanCompleteResponseTransform: (
         };
     }
 
-    return {
-        error: {
-            message: `Invalid response recieved from ${BEDROCK}: ${JSON.stringify(
-                response
-            )}`,
-            type: null,
-            param: null,
-            code: null,
-        },
-        provider: BEDROCK,
-    } as ErrorResponse;
+    return generateInvalidProviderResponseError(response, BEDROCK);
 };
 
 export interface BedrockTitanStreamChunk {
@@ -502,16 +470,9 @@ export const BedrockAI21CompleteResponseTransform: (
     responseStatus,
     responseHeaders
 ) => {
-    if ("message" in response && responseStatus !== 200) {
-        return {
-            error: {
-                message: response.message,
-                type: null,
-                param: null,
-                code: null,
-            },
-            provider: BEDROCK,
-        } as ErrorResponse;
+    if (responseStatus !== 200) {
+        const errorResposne = BedrockErrorResponseTransform(response as BedrockErrorResponse);
+        if (errorResposne) return errorResposne;
     }
 
     if ("completions" in response) {
@@ -541,17 +502,7 @@ export const BedrockAI21CompleteResponseTransform: (
         };
     }
 
-    return {
-        error: {
-            message: `Invalid response recieved from ${BEDROCK}: ${JSON.stringify(
-                response
-            )}`,
-            type: null,
-            param: null,
-            code: null,
-        },
-        provider: BEDROCK,
-    } as ErrorResponse;
+    return generateInvalidProviderResponseError(response, BEDROCK);
 };
 
 export interface BedrockAnthropicCompleteResponse {
@@ -569,16 +520,9 @@ export const BedrockAnthropicCompleteResponseTransform: (
     responseStatus,
     responseHeaders
 ) => {
-    if ("message" in response && responseStatus !== 200) {
-        return {
-            error: {
-                message: response.message,
-                type: "",
-                param: null,
-                code: null,
-            },
-            provider: BEDROCK,
-        } as ErrorResponse;
+    if (responseStatus !== 200) {
+        const errorResposne = BedrockErrorResponseTransform(response as BedrockErrorResponse);
+        if (errorResposne) return errorResposne;
     }
 
     if ("completion" in response) {
@@ -610,17 +554,7 @@ export const BedrockAnthropicCompleteResponseTransform: (
         };
     }
 
-    return {
-        error: {
-            message: `Invalid response recieved from ${BEDROCK}: ${JSON.stringify(
-                response
-            )}`,
-            type: null,
-            param: null,
-            code: null,
-        },
-        provider: BEDROCK,
-    } as ErrorResponse;
+    return generateInvalidProviderResponseError(response, BEDROCK);
 };
 
 export interface BedrockAnthropicStreamChunk {
@@ -726,16 +660,9 @@ export const BedrockCohereCompleteResponseTransform: (
     responseStatus,
     responseHeaders
 ) => {
-    if ("message" in response && responseStatus !== 200) {
-        return {
-            error: {
-                message: response.message,
-                type: null,
-                param: null,
-                code: null,
-            },
-            provider: BEDROCK,
-        } as ErrorResponse;
+    if (responseStatus !== 200) {
+        const errorResposne = BedrockErrorResponseTransform(response as BedrockErrorResponse);
+        if (errorResposne) return errorResposne;
     }
 
     if ("generations" in response) {
@@ -765,17 +692,7 @@ export const BedrockCohereCompleteResponseTransform: (
         };
     }
 
-    return {
-        error: {
-            message: `Invalid response recieved from ${BEDROCK}: ${JSON.stringify(
-                response
-            )}`,
-            type: null,
-            param: null,
-            code: null,
-        },
-        provider: BEDROCK,
-    } as ErrorResponse;
+    return generateInvalidProviderResponseError(response, BEDROCK);
 };
 
 export interface BedrockCohereStreamChunk {

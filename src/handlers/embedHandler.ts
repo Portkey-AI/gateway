@@ -3,7 +3,7 @@ import { fetchProviderOptionsFromConfig, tryProvidersInSequence } from "./handle
 import { Targets } from "../types/requestBody";
 
 /**
- * DEPRECATED
+ * @deprecated
  */
 export async function embedHandler(c: Context): Promise<Response> {
   try {

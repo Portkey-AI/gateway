@@ -3,7 +3,7 @@ import { fetchProviderOptionsFromConfig, tryProvidersInSequence } from "./handle
 import { Context } from "hono";
 
 /**
- * DEPRECATED
+ * @deprecated
  * Handles the 'chatComplete' API request by selecting the appropriate provider(s) and making the request to them.
  * 
  * The environment variables (`env`) should be the cloudflare environment variables.
