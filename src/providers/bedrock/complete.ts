@@ -154,9 +154,6 @@ export const BedrockMistralCompleteConfig: ProviderConfig = {
   stop: {
     param: 'end_sequences',
   },
-  stream: {
-    param: 'stream',
-  },
 };
 
 const transformTitanGenerationConfig = (params: Params) => {
