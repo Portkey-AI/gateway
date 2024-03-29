@@ -7,13 +7,8 @@
 <a href="https://replit.com/@portkey/AI-Gateway?v=1"><img src="https://replit.com/badge?caption=Deploy%20on%20Replit" width=99 style="display:block;"/></a>
 
 
-# ⛩️ Gateway
+# Gateway
 ### 🛤️ Route to 100+ LLMs with 1 fast & friendly API.
-
-```sh
-npx @portkey-ai/gateway
-```
-
 
 [Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and hosted LLMs. It streamlines API requests to OpenAI, Anthropic, Mistral, LLama2, Anyscale, Google Gemini and more with a unified API.
 
@@ -25,6 +20,10 @@ npx @portkey-ai/gateway
 
 </div>
 <br><br>
+
+```sh
+npx @portkey-ai/gateway
+```
 
 [Gateway](https://portkey.ai/features/ai-gateway) is a hosted platform. You can sign up and start using Gateway without installing anything. You can also self-host and develop locally. 
 
@@ -116,7 +115,7 @@ const portkey = new Portkey({
 
 
 const chatCompletion = await portkey.chat.completions.create({
-    messages: [{ role: 'user', content: 'What's in a name?' }],
+    messages: [{ role: 'user', content: 'Who are you?' }],
     model: 'gpt-3.5-turbo',
 });
 
