@@ -2,6 +2,8 @@ import { ErrorResponse, ProviderConfig } from "../types";
 import { EmbedParams, EmbedResponse } from "../../types/embedRequestBody";
 import { AI21ErrorResponse } from "./complete";
 import { AI21 } from "../../globals";
+import { generateInvalidProviderResponseError } from "../utils";
+import { AI21ErrorResponseTransform } from "./chatComplete";
 
 export const AI21EmbedConfig: ProviderConfig = {
     input: {
@@ -31,16 +33,9 @@ export const AI21EmbedResponseTransform: (
     response: AI21EmbedResponse | AI21ErrorResponse,
     responseStatus: number
 ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
-    if ('detail' in response && responseStatus !== 200) {
-        return {
-            error: {
-                message: response.detail,
-                type: null,
-                param: null,
-                code: null,
-            },
-            provider: AI21,
-        } as ErrorResponse;
+    if (responseStatus !== 200) {
+        const errorResposne = AI21ErrorResponseTransform(response as AI21ErrorResponse);
+        if (errorResposne) return errorResposne;
     }
 
     if ('results' in response) {
@@ -59,15 +54,6 @@ export const AI21EmbedResponseTransform: (
         },
       };
     }
-    return {
-      error: {
-          message: `Invalid response recieved from ${AI21}: ${JSON.stringify(
-              response
-          )}`,
-          type: null,
-          param: null,
-          code: null,
-      },
-      provider: AI21,
-    } as ErrorResponse;
+    
+    return generateInvalidProviderResponseError(response, AI21)
 };

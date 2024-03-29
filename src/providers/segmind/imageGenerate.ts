@@ -1,5 +1,6 @@
 import { SEGMIND } from "../../globals";
 import { ErrorResponse, ImageGenerateResponse, ProviderConfig } from "../types";
+import { generateErrorResponse, generateInvalidProviderResponseError } from "../utils";
 
 export const SegmindImageGenerateConfig: ProviderConfig = {
   prompt: {
@@ -102,27 +103,22 @@ interface SegmindImageGenerateErrorResponse {
 
 export const SegmindImageGenerateResponseTransform: (response: SegmindImageGenerateResponse | SegmindImageGenerateErrorResponse, responseStatus: number) => ImageGenerateResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'error' in response) {
-    return {
-      error: {
-        message: response.error,
-        type: null,
-        param: null,
-        code: null,
-      },
-      provider: SEGMIND
-    } as ErrorResponse
+    return generateErrorResponse(
+        { message: response.error ?? "", type: null, param: null, code: null },
+        SEGMIND
+    );
   }
 
   if (responseStatus !== 200 && 'html-message' in response) {
-    return {
-      error: {
-        message: response['html-message'],
-        type: null,
-        param: null,
-        code: null,
-      },
-      provider: SEGMIND
-    } as ErrorResponse
+    return generateErrorResponse(
+        {
+            message: response["html-message"] ?? "",
+            type: null,
+            param: null,
+            code: null,
+        },
+        SEGMIND
+    );
   }
 
   if ('image' in response) {
@@ -139,13 +135,5 @@ export const SegmindImageGenerateResponseTransform: (response: SegmindImageGener
     } as ImageGenerateResponse;
   }
 
-  return {
-    error: {
-        message: `Invalid response recieved from ${SEGMIND}: ${JSON.stringify(response)}`,
-        type: null,
-        param: null,
-        code: null
-    },
-    provider: SEGMIND
-  } as ErrorResponse;
+  return generateInvalidProviderResponseError(response, SEGMIND);
 };

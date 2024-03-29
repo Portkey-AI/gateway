@@ -5,6 +5,7 @@ import {
     ErrorResponse,
     ProviderConfig,
 } from "../types";
+import { generateErrorResponse, generateInvalidProviderResponseError } from "../utils";
 
 const transformGenerationConfig = (params: Params) => {
     const generationConfig: Record<string, any> = {};
@@ -154,20 +155,32 @@ interface GoogleGenerateContentResponse {
     };
 }
 
-export const GoogleChatCompleteResponseTransform: (
-    response: GoogleGenerateContentResponse | GoogleErrorResponse,
-    responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-    if (responseStatus !== 200 && "error" in response) {
-        return {
-            error: {
+export const GoogleErrorResponseTransform: (
+    response: GoogleErrorResponse,
+    provider?: string
+) => ErrorResponse | undefined = (response, provider = GOOGLE) => {
+    if ("error" in response) {
+        return generateErrorResponse(
+            {
                 message: response.error.message ?? "",
                 type: response.error.status ?? null,
                 param: null,
                 code: response.error.status ?? null,
             },
-            provider: GOOGLE,
-        } as ErrorResponse;
+            provider
+        );
+    }
+
+    return undefined;
+};
+
+export const GoogleChatCompleteResponseTransform: (
+    response: GoogleGenerateContentResponse | GoogleErrorResponse,
+    responseStatus: number
+) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+    if (responseStatus !== 200) {
+        const errorResposne = GoogleErrorResponseTransform(response as GoogleErrorResponse);
+        if (errorResposne) return errorResposne;
     }
 
     if ("candidates" in response) {
@@ -213,17 +226,7 @@ export const GoogleChatCompleteResponseTransform: (
         };
     }
 
-    return {
-        error: {
-            message: `Invalid response recieved from google: ${JSON.stringify(
-                response
-            )}`,
-            type: null,
-            param: null,
-            code: null,
-        },
-        provider: GOOGLE,
-    } as ErrorResponse;
+    return generateInvalidProviderResponseError(response, GOOGLE);
 };
 
 export const GoogleChatCompleteStreamChunkTransform: (

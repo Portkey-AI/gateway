@@ -68,18 +68,21 @@ app.onError((err, c) => {
 });
 
 /**
+ * @deprecated
  * POST route for '/v1/complete'.
  * Handles requests by passing them to the completeHandler.
  */
 app.post("/v1/complete", completeHandler);
 
 /**
+ * @deprecated
  * POST route for '/v1/chatComplete'.
  * Handles requests by passing them to the chatCompleteHandler.
  */
 app.post("/v1/chatComplete", chatCompleteHandler);
 
 /**
+ * @deprecated
  * POST route for '/v1/embed'.
  * Handles requests by passing them to the embedHandler.
  */
@@ -123,7 +126,10 @@ app.post("/v1/prompts/*", requestValidator, (c) => {
   return c.json({status: "failure", message: "prompt completions error: Something went wrong"})
 });
 
-// Support the /v1 proxy endpoint
+/**
+ * @deprecated
+ * Support the /v1 proxy endpoint
+ */
 app.post("/v1/proxy/*", proxyHandler);
 
 // Support the /v1 proxy endpoint after all defined endpoints so this does not interfere.

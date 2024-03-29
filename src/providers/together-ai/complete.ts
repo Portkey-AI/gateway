@@ -1,5 +1,6 @@
 import { TOGETHER_AI } from "../../globals";
 import { CompletionResponse, ErrorResponse, ProviderConfig } from "../types";
+import { generateInvalidProviderResponseError } from "../utils";
 import { TogetherAIErrorResponse, TogetherAIErrorResponseTransform, TogetherAIOpenAICompatibleErrorResponse } from "./chatComplete";
 
 export const TogetherAICompleteConfig: ProviderConfig = {
@@ -61,8 +62,8 @@ interface TogetherAICompletionStreamChunk {
 }
 
 export const TogetherAICompleteResponseTransform: (response: TogetherAICompleteResponse | TogetherAIErrorResponse | TogetherAIOpenAICompatibleErrorResponse, responseStatus: number) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
-    if (responseStatus !== 200 && !('choices' in response) ) {
-      const errorResponse = TogetherAIErrorResponseTransform(response);
+    if (responseStatus !== 200) {
+      const errorResponse = TogetherAIErrorResponseTransform(response as TogetherAIErrorResponse);
       if (errorResponse) return errorResponse;
     }
 
@@ -89,15 +90,7 @@ export const TogetherAICompleteResponseTransform: (response: TogetherAICompleteR
       };
     }
 
-    return {
-      error: {
-          message: `Invalid response recieved from together-ai: ${JSON.stringify(response)}`,
-          type: null,
-          param: null,
-          code: null
-      },
-      provider: TOGETHER_AI
-    } as ErrorResponse;
+    return generateInvalidProviderResponseError(response, TOGETHER_AI);
   }
 
 export const TogetherAICompleteStreamChunkTransform: (response: string) => string = (responseChunk) => {

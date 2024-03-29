@@ -1,25 +1,8 @@
 import { Context } from "hono";
 import {
-    ANTHROPIC,
-    ANYSCALE,
-    AZURE_OPEN_AI,
-    COHERE,
     CONTENT_TYPES,
-    GOOGLE,
-    MISTRAL_AI,
-    OPEN_AI,
-    PALM,
-    PERPLEXITY_AI,
     POWERED_BY,
-    TOGETHER_AI,
-    DEEPINFRA,
-    STABILITY_AI,
-    NOMIC,
-    OLLAMA,
-    AI21,
-    BEDROCK,
-    GROQ,
-    SEGMIND
+    VALID_PROVIDERS
 } from "../../globals";
 import { configSchema } from "./schema/config";
 
@@ -68,26 +51,7 @@ export const requestValidator = (c: Context, next: any) => {
     }
     if (
         requestHeaders[`x-${POWERED_BY}-provider`] &&
-        ![
-            OPEN_AI,
-            AZURE_OPEN_AI,
-            COHERE,
-            ANTHROPIC,
-            ANYSCALE,
-            PALM,
-            TOGETHER_AI,
-            GOOGLE,
-            MISTRAL_AI,
-            PERPLEXITY_AI,
-            DEEPINFRA,
-            NOMIC,
-            STABILITY_AI,
-            OLLAMA,
-            AI21,
-            BEDROCK,
-            GROQ,
-            SEGMIND
-        ].includes(requestHeaders[`x-${POWERED_BY}-provider`])
+        !VALID_PROVIDERS.includes(requestHeaders[`x-${POWERED_BY}-provider`])
     ) {
         return new Response(
             JSON.stringify({

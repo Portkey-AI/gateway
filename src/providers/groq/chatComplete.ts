@@ -4,6 +4,7 @@ import {
     ErrorResponse,
     ProviderConfig,
 } from "../types";
+import { generateErrorResponse, generateInvalidProviderResponseError } from "../utils";
 
 export const GroqChatCompleteConfig: ProviderConfig = {
     model: {
@@ -82,15 +83,15 @@ export const GroqChatCompleteResponseTransform: (
     responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
     if ("error" in response && responseStatus !== 200) {
-        return {
-            error: {
+        return generateErrorResponse(
+            {
                 message: response.error.message,
                 type: response.error.type,
                 param: null,
                 code: response.error.code?.toString() || null,
             },
-            provider: GROQ,
-        } as ErrorResponse;
+            GROQ
+        );
     }
 
     if ("choices" in response) {
@@ -114,17 +115,7 @@ export const GroqChatCompleteResponseTransform: (
         };
     }
 
-    return {
-        error: {
-            message: `Invalid response recieved from ${GROQ}: ${JSON.stringify(
-                response
-            )}`,
-            type: null,
-            param: null,
-            code: null,
-        },
-        provider: GROQ,
-    } as ErrorResponse;
+    return generateInvalidProviderResponseError(response, GROQ);
 };
 
 export const GroqChatCompleteStreamChunkTransform: (
