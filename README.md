@@ -39,7 +39,26 @@ npx @portkey-ai/gateway
 Enterprise Version: [Read more here](#gateway-enterprise-version)<br>
 <br>
 
-## 📖 Getting Started
+##  Getting Started
+
+### Run it locally 
+If you're familiar with Node.js and `npx`, you can run your private AI gateway locally. ([Other deployment options](#deploying-ai-gateway))
+```bash
+npx @portkey-ai/gateway
+```
+> Your AI Gateway is now running on http://localhost:8787 🚀
+
+### Usage
+Let's try making a **chat completions** call to OpenAI through the AI gateway:
+```bash
+curl '127.0.0.1:8787/v1/chat/completions' \
+  -H 'x-portkey-provider: openai' \
+  -H "Authorization: Bearer $OPENAI_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"messages": [{"role": "user","content": "Say this is test."}], "max_tokens": 20, "model": "gpt-4"}'
+```
+[Full list of supported SDKs](#supported-sdks)
+<br><br>
 
 ### Python
 ```bash
@@ -51,7 +70,31 @@ pip install portkey-ai
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1hLvoq_VdGlJ_92sPPiwTznSra5Py0FuW?usp=sharing)
 
 
-#### 🔍 Usage
+####  Usage
+
+
+### Run it locally 
+If you're familiar with Node.js and `npx`, you can run your private AI gateway locally. ([Other deployment options](#deploying-ai-gateway))
+```bash
+npx @portkey-ai/gateway
+```
+> Your AI Gateway is now running on http://localhost:8787 🚀
+
+### Usage
+Let's try making a **chat completions** call to OpenAI through the AI gateway:
+```bash
+curl '127.0.0.1:8787/v1/chat/completions' \
+  -H 'x-portkey-provider: openai' \
+  -H "Authorization: Bearer $OPENAI_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"messages": [{"role": "user","content": "Say this is test."}], "max_tokens": 20, "model": "gpt-4"}'
+```
+[Full list of supported SDKs](#supported-sdks)
+<br><br>
+
+### Run it using hosted version
+
+#### Python
 
 Run any LLM using OpenAI Client
 
@@ -98,7 +141,7 @@ Note: Portkey allows you to manage all your API keys centrally using virtual key
 
 
 
-### Node.js
+#### Node.js
 ```bash
 npm install portkey-ai
 ```
@@ -122,26 +165,8 @@ const chatCompletion = await portkey.chat.completions.create({
 console.log(chatCompletion)
 ```
 
-### Run it locally 
-If you're familiar with Node.js and `npx`, you can run your private AI gateway locally. ([Other deployment options](#deploying-ai-gateway))
-```bash
-npx @portkey-ai/gateway
-```
-> Your AI Gateway is now running on http://localhost:8787 🚀
 
-### Usage
-Let's try making a **chat completions** call to OpenAI through the AI gateway:
-```bash
-curl '127.0.0.1:8787/v1/chat/completions' \
-  -H 'x-portkey-provider: openai' \
-  -H "Authorization: Bearer $OPENAI_KEY" \
-  -H 'Content-Type: application/json' \
-  -d '{"messages": [{"role": "user","content": "Say this is test."}], "max_tokens": 20, "model": "gpt-4"}'
-```
-[Full list of supported SDKs](#supported-sdks)
-<br><br>
-
-## 🤝 Supported Providers
+## Supported Providers
 
 || Provider  | Support | Stream | Supported Endpoints |
 |---|---|---|---|--|
@@ -163,18 +188,18 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 > [View the complete list of 100+ supported models here](https://portkey.ai/docs/welcome/what-is-portkey#ai-providers-supported)
 <br>
 
-## 💥 Features
+## Features
 
 <table width=100%>
   <tr>
     <td width="50%">
-      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/fallbacks">⨫ Fallback</a></h4>
+      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/fallbacks"> Fallback</a></h4>
       This feature allows you to specify a prioritized list of LLMs. If the primary LLM fails, Portkey will automatically fallback to the next LLM in the list to ensure reliability.
       <br><br>
       <img src="https://framerusercontent.com/images/gmlOW8yeKP2pGuIsObM6gKLzeMI.png" height=200 />
     </td>
     <td width="50%">
-      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/automatic-retries">↺ Automatic Retries</a></h4>
+      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/automatic-retries"> Automatic Retries</a></h4>
       AI Gateway can automatically retry failed requests up to 5 times. A backoff strategy spaces out retry attempts to prevent network overload.
       <br><br>
       <img src="https://github.com/roh26it/Rubeus/assets/971978/8a6e653c-94b2-4ba7-95c7-93544ee476b1" height=200 />
@@ -184,13 +209,13 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 <table width="100%">
   <tr>
     <td width="50%"> 
-      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/load-balancing">⚖️ Load Balancing</a></h4>
+      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/load-balancing"> Load Balancing</a></h4>
       Distribute load effectively across multiple API keys or providers based on custom weights to ensure high availability and optimal performance.
       <br><br>
       <img src="https://framerusercontent.com/images/6EWuq3FWhqrPe3kKLqVspevi4.png" height=200 />
     </td>
     <td width="50%">
-      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/request-timeouts">⏰ Request Timeouts</a></h4>
+      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/request-timeouts"> Request Timeouts</a></h4>
       Manage unruly LLMs & latencies by setting up granular request timeouts, allowing automatic termination of requests that exceed a specified duration.
       <br><br>
       <img src="https://github.com/vrushankportkey/gateway/assets/134934501/b23b98b2-6451-4747-8898-6847ad8baed4" height=200 />
@@ -199,9 +224,9 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 </table>
 <br>
 
-## 🛠️ Expand your Gateway!
+##  Expand your Gateway!
 
-### ⨫ Fallbacks 
+### Fallbacks 
 Here's an example config that retries an OpenAI request 5 times before falling back to Gemini Pro
 
 ```js
@@ -221,7 +246,7 @@ Here's an example config that retries an OpenAI request 5 times before falling b
 
 
 
-### ⚖️ Load Balancing
+### Load Balancing
 This config would enable load balancing equally between 2 OpenAI keys
 
 ```js
