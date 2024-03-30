@@ -1,13 +1,20 @@
-import { ProviderAPIConfig } from "../types";
+import { ProviderAPIConfig } from '../types';
 
 const DeepInfraApiConfig: ProviderAPIConfig = {
-  baseURL: "https://api.deepinfra.com/v1/openai",
-  headers: (API_KEY: string) => {
+  getBaseURL: () => 'https://api.deepinfra.com/v1/openai',
+  headers: ({ providerOptions }) => {
     return {
-      Authorization: `Bearer ${API_KEY}`,
+      Authorization: `Bearer ${providerOptions.apiKey}`,
     };
   },
-  chatComplete: "/chat/completions",
+  getEndpoint: ({ fn }) => {
+    switch (fn) {
+      case 'chatComplete':
+        return '/chat/completions';
+      default:
+        return '';
+    }
+  },
 };
 
 export default DeepInfraApiConfig;

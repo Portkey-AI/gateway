@@ -1,12 +1,20 @@
-import { ProviderAPIConfig } from "../types";
+import { ProviderAPIConfig } from '../types';
 
 const MistralAIAPIConfig: ProviderAPIConfig = {
-    baseURL: "https://api.mistral.ai/v1",
-    headers: (API_KEY: string) => {
-        return { Authorization: `Bearer ${API_KEY}` };
-    },
-    chatComplete: "/chat/completions",
-    embed: "/embeddings",
+  getBaseURL: () => 'https://api.mistral.ai/v1',
+  headers: ({ providerOptions }) => {
+    return { Authorization: `Bearer ${providerOptions.apiKey}` };
+  },
+  getEndpoint: ({ fn }) => {
+    switch (fn) {
+      case 'chatComplete':
+        return '/chat/completions';
+      case 'embed':
+        return '/embeddings';
+      default:
+        return '';
+    }
+  },
 };
 
 export default MistralAIAPIConfig;

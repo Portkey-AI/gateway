@@ -1,13 +1,22 @@
-import { ProviderAPIConfig } from "../types";
+import { ProviderAPIConfig } from '../types';
 
 const CohereAPIConfig: ProviderAPIConfig = {
-  baseURL: "https://api.cohere.ai/v1",
-  headers: (API_KEY:string) => {
-    return {"Authorization": `Bearer ${API_KEY}`}
+  getBaseURL: () => 'https://api.cohere.ai/v1',
+  headers: ({ providerOptions }) => {
+    return { Authorization: `Bearer ${providerOptions.apiKey}` };
   },
-  complete: "/generate",
-  chatComplete: "/generate",
-  embed: "/embed"
+  getEndpoint: ({ fn }) => {
+    switch (fn) {
+      case 'chatComplete':
+        return '/generate';
+      case 'complete':
+        return '/generate';
+      case 'embed':
+        return '/embed';
+      default:
+        return '';
+    }
+  },
 };
 
 export default CohereAPIConfig;
