@@ -8,7 +8,7 @@
 
 
 # Gateway
-### 🛤️ Route to 100+ LLMs with 1 fast & friendly API.
+### Route to 100+ LLMs with 1 fast & friendly API.
 
 [Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and hosted LLMs. It streamlines API requests to OpenAI, Anthropic, Mistral, LLama2, Anyscale, Google Gemini and more with a unified API.
 
@@ -266,7 +266,7 @@ This config would enable load balancing equally between 2 OpenAI keys
 }
 ```
 
-> Read more about the [config object](https://portkey.ai/docs/api-reference/config-object).
+Here's a guide to [use config object in your request](https://portkey.ai/docs/api-reference/config-object).
 <br>
 
 ## Supported SDKs
