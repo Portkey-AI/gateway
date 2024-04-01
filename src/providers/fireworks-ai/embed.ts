@@ -27,6 +27,9 @@ export const FireworksAIEmbedConfig: ProviderConfig = {
       return [params.input];
     },
   },
+  dimensions: {
+    param: 'dimensions',
+  },
 };
 
 interface FireworksAIEmbedResponse extends EmbedResponse {}
