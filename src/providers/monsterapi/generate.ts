@@ -35,6 +35,7 @@ export const MonsterAPIChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
+    default: 'mistralai/Mistral-7B-Instruct-v0.2'
   },
   messages: {
     param: 'messages',
@@ -87,7 +88,7 @@ export const MonsterAPIChatCompleteResponseTransform: (
       choices: [
         {
           message: {
-            role: 'user',
+            role: 'assistant',
             content: response.response.text.join('\n'),
           },
           index: 0,
