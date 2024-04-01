@@ -17,13 +17,26 @@ export const FireworksAIChatCompleteConfig: ProviderConfig = {
   },
   messages: {
     param: 'messages',
+    required: true,
     default: [],
+  },
+  tools: {
+    param: 'tools',
+  },
+  max_tokens: {
+    param: 'max_tokens',
+    default: 200,
+    min: 1,
+  },
+  prompt_truncate_len: {
+    param: 'prompt_truncate_len',
+    default: 1500,
   },
   temperature: {
     param: 'temperature',
-    default: 0.7,
+    default: 1,
     min: 0,
-    max: 1,
+    max: 2,
   },
   top_p: {
     param: 'top_p',
@@ -31,27 +44,43 @@ export const FireworksAIChatCompleteConfig: ProviderConfig = {
     min: 0,
     max: 1,
   },
-  max_tokens: {
-    param: 'max_tokens',
-    default: null,
+  top_k: {
+    param: 'top_p',
     min: 1,
+    max: 128,
+  },
+  frequency_penalty: {
+    param: 'frequency_penalty',
+    min: -2,
+    max: 2,
+  },
+
+  presence_penalty: {
+    param: 'presence_penalty',
+    min: -2,
+    max: 2,
+  },
+  n: {
+    param: 'n',
+    default: 1,
+    min: 1,
+    max: 128,
+  },
+  stop: {
+    param: 'stop',
+  },
+  response_format: {
+    param: 'response_format',
   },
   stream: {
     param: 'stream',
     default: false,
   },
-  seed: {
-    param: 'random_seed',
-    default: null,
+  context_length_exceeded_behavior: {
+    param: 'context_length_exceeded_behavior',
   },
-  safe_prompt: {
-    param: 'safe_prompt',
-    default: false,
-  },
-  // TODO: deprecate this and move to safe_prompt in next release
-  safe_mode: {
-    param: 'safe_prompt',
-    default: false,
+  user: {
+    param: 'user',
   },
 };
 
@@ -91,20 +120,26 @@ interface FireworksAIStreamChunk {
   }[];
 }
 
+export const FireworksAIErrorResponseTransform: (
+  response: FireworksAIErrorResponse
+) => ErrorResponse = (response) => {
+  return generateErrorResponse(
+    {
+      message: response.fault.faultstring,
+      type: null,
+      param: null,
+      code: response.fault.detail.errorcode,
+    },
+    FIREWORKS_AI
+  );
+};
+
 export const FireworksAIChatCompleteResponseTransform: (
   response: FireworksAIChatCompleteResponse | FireworksAIErrorResponse,
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if ('fault' in response && responseStatus !== 200) {
-    return generateErrorResponse(
-      {
-        message: response.fault.faultstring,
-        type: null,
-        param: null,
-        code: response.fault.detail.errorcode,
-      },
-      FIREWORKS_AI
-    );
+    return FireworksAIErrorResponseTransform(response);
   }
 
   if ('choices' in response) {

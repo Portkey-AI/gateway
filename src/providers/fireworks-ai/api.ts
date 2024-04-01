@@ -5,12 +5,15 @@ const FireworksAIAPIConfig: ProviderAPIConfig = {
   headers: ({ providerOptions }) => {
     return { Authorization: `Bearer ${providerOptions.apiKey}` };
   },
-  getEndpoint: ({ fn }) => {
+  getEndpoint: ({ fn, gatewayRequestBody }) => {
+    const model = gatewayRequestBody?.model;
     switch (fn) {
       case 'chatComplete':
         return '/chat/completions';
       case 'embed':
         return '/embeddings';
+      case 'imageGenerate':
+        return `/image_generation/accounts/fireworks/models/${model}`;
       default:
         return '';
     }

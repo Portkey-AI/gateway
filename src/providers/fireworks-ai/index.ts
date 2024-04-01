@@ -9,15 +9,18 @@ import {
   FireworksAIEmbedConfig,
   FireworksAIEmbedResponseTransform,
 } from './embed';
+import { FireworksAIImageGenerateConfig, FireworksAIImageGenerateResponseTransform } from './imageGenerate';
 
 const FireworksAIConfig: ProviderConfigs = {
   chatComplete: FireworksAIChatCompleteConfig,
   embed: FireworksAIEmbedConfig,
+  imageGenerate: FireworksAIImageGenerateConfig,
   api: FireworksAIAPIConfig,
   responseTransforms: {
     chatComplete: FireworksAIChatCompleteResponseTransform,
     'stream-chatComplete': FireworksAIChatCompleteStreamChunkTransform,
     embed: FireworksAIEmbedResponseTransform,
+    imageGenerate: FireworksAIImageGenerateResponseTransform,
   },
 };
 

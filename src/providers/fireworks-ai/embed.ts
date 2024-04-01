@@ -5,7 +5,7 @@ import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
-import { FireworksAIErrorResponse } from './chatComplete';
+import { FireworksAIErrorResponse, FireworksAIErrorResponseTransform } from './chatComplete';
 
 export const FireworksAIEmbedConfig: ProviderConfig = {
   model: {
@@ -33,15 +33,7 @@ export const FireworksAIEmbedResponseTransform: (
   responseStatus: number
 ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
   if ('fault' in response && responseStatus !== 200) {
-    return generateErrorResponse(
-      {
-        message: response.fault.faultstring,
-        type: null,
-        param: null,
-        code: response.fault.detail.errorcode,
-      },
-      FIREWORKS_AI
-    );
+    return FireworksAIErrorResponseTransform(response);
   }
 
   if ('data' in response) {
