@@ -1,5 +1,5 @@
-import ProviderConfigs from "../providers";
-import { Params } from "../types/requestBody";
+import ProviderConfigs from '../providers';
+import { Params } from '../types/requestBody';
 
 /**
  * Helper function to set a nested property in an object.
@@ -9,7 +9,7 @@ import { Params } from "../types/requestBody";
  * @param value - The value to set the property to.
  */
 function setNestedProperty(obj: any, path: string, value: any) {
-  const parts = path.split(".");
+  const parts = path.split('.');
   let current = obj;
   for (let i = 0; i < parts.length - 1; i++) {
     if (!current[parts[i]]) {
@@ -20,13 +20,13 @@ function setNestedProperty(obj: any, path: string, value: any) {
   current[parts[parts.length - 1]] = value;
 }
 
-function setArrayNestedProperties(obj: any, path: Array<string>, value: Array<any>) {
+function setArrayNestedProperties(
+  obj: any,
+  path: Array<string>,
+  value: Array<any>
+) {
   for (let i = 0; i < path.length; i++) {
-    setNestedProperty(
-      obj,
-      path[i],
-      value[i]
-    );
+    setNestedProperty(obj, path[i], value[i]);
   }
 }
 
@@ -44,18 +44,22 @@ function setArrayNestedProperties(obj: any, path: Array<string>, value: Array<an
  *
  * @throws {Error} If the provider is not supported.
  */
-const transformToProviderRequest = (provider: string, params: Params, fn: string): { [key: string]: any } => {
+const transformToProviderRequest = (
+  provider: string,
+  params: Params,
+  fn: string
+): { [key: string]: any } => {
   // Get the configuration for the specified provider
   let providerConfig = ProviderConfigs[provider];
   if (providerConfig.getConfig) {
     providerConfig = providerConfig.getConfig(params)[fn];
   } else {
-    providerConfig = providerConfig[fn]
+    providerConfig = providerConfig[fn];
   }
 
   // If the provider is not supported, throw an error
   if (!providerConfig) {
-    throw new Error("Unsupported provider");
+    throw new Error('Unsupported provider');
   }
 
   const transformedRequest: { [key: string]: any } = {};
@@ -80,7 +84,7 @@ const transformToProviderRequest = (provider: string, params: Params, fn: string
         }
 
         if (
-          value === "portkey-default" &&
+          value === 'portkey-default' &&
           paramConfig &&
           paramConfig.default !== undefined
         ) {
@@ -91,7 +95,7 @@ const transformToProviderRequest = (provider: string, params: Params, fn: string
         // If a minimum is defined for this parameter and the value is less than this, set the value to the minimum
         // Also, we should only do this comparison if value is of type 'number'
         if (
-          typeof value === "number" &&
+          typeof value === 'number' &&
           paramConfig &&
           paramConfig.min !== undefined &&
           value < paramConfig.min
@@ -102,7 +106,7 @@ const transformToProviderRequest = (provider: string, params: Params, fn: string
         // If a maximum is defined for this parameter and the value is more than this, set the value to the maximum
         // Also, we should only do this comparison if value is of type 'number'
         else if (
-          typeof value === "number" &&
+          typeof value === 'number' &&
           paramConfig &&
           paramConfig.max !== undefined &&
           value > paramConfig.max
