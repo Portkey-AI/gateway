@@ -1,56 +1,64 @@
-import { PERPLEXITY_AI } from "../../globals";
-import { ChatCompletionResponse, ErrorResponse, ProviderConfig } from "../types";
+import { PERPLEXITY_AI } from '../../globals';
+import {
+  ChatCompletionResponse,
+  ErrorResponse,
+  ProviderConfig,
+} from '../types';
+import {
+  generateErrorResponse,
+  generateInvalidProviderResponseError,
+} from '../utils';
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
 export const PerplexityAIChatCompleteConfig: ProviderConfig = {
   model: {
-    param: "model",
+    param: 'model',
     required: true,
-    default: "mistral-7b-instruct"
+    default: 'mistral-7b-instruct',
   },
   messages: {
-    param: "messages",
+    param: 'messages',
     required: true,
-    default: []
+    default: [],
   },
   max_tokens: {
-    param: "max_tokens",
+    param: 'max_tokens',
     required: true,
     min: 1,
   },
   temperature: {
-    param: "temperature",
+    param: 'temperature',
     min: 0,
-    max: 2
+    max: 2,
   },
   top_p: {
-    param: "top_p",
+    param: 'top_p',
     min: 0,
-    max: 1
+    max: 1,
   },
   top_k: {
-    param: "top_k",
+    param: 'top_k',
     min: 0,
-    max: 2048
+    max: 2048,
   },
   stream: {
-    param: "stream",
+    param: 'stream',
     default: false,
   },
   presence_penalty: {
-    param: "presence_penalty",
+    param: 'presence_penalty',
     min: -2,
-    max: 2
+    max: 2,
   },
   frequency_penalty: {
-    param: "repetition_penalty"
+    param: 'repetition_penalty',
   },
   n: {
-    param: "n",
+    param: 'n',
     max: 1,
-    min: 1
-  }
+    min: 1,
+  },
 };
 
 interface PerplexityAIChatChoice {
@@ -64,7 +72,7 @@ interface PerplexityAIChatChoice {
   };
   index: number;
   finish_reason: string | null;
-};
+}
 
 export interface PerplexityAIChatCompleteResponse {
   id: string;
@@ -76,15 +84,15 @@ export interface PerplexityAIChatCompleteResponse {
     prompt_tokens: number;
     completion_tokens: number;
     total_tokens: number;
-  }
+  };
 }
 
 export interface PerplexityAIErrorResponse {
   error: {
     message: string;
     type: string;
-    code: number; 
-  }
+    code: number;
+  };
 }
 
 export interface PerplexityAIChatCompletionStreamChunk {
@@ -100,60 +108,61 @@ export interface PerplexityAIChatCompletionStreamChunk {
   choices: PerplexityAIChatChoice[];
 }
 
-export const PerplexityAIChatCompleteResponseTransform: (response: PerplexityAIChatCompleteResponse | PerplexityAIErrorResponse, responseStatus: number) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-    if ('error' in response) {
-      return {
-          error: {
-              message: response.error.message,
-              type: response.error.type,
-              param: null,
-              code: response.error.code.toString()
-          },
-          provider: PERPLEXITY_AI
-      } as ErrorResponse;
-    } 
-    
-    if ('choices' in response) {
-      return {
-        id: response.id,
-        object: response.object,
-        created: response.created,
-        model: response.model,
-        provider: PERPLEXITY_AI,
-        choices: [
-          {
-            message: {"role": "assistant", content: response.choices[0]?.message.content},
-            index: 0,
-            logprobs: null,
-            finish_reason: "",
-          }
-        ],
-        usage: {
-          prompt_tokens: response.usage.prompt_tokens,
-          completion_tokens: response.usage.completion_tokens,
-          total_tokens: response.usage.total_tokens
-        }
-      }
-    }
-    return {
-      error: {
-          message: `Invalid response recieved from ${PERPLEXITY_AI}: ${JSON.stringify(response)}`,
-          type: null,
-          param: null,
-          code: null
+export const PerplexityAIChatCompleteResponseTransform: (
+  response: PerplexityAIChatCompleteResponse | PerplexityAIErrorResponse,
+  responseStatus: number
+) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+  if ('error' in response) {
+    return generateErrorResponse(
+      {
+        message: response.error.message,
+        type: response.error.type,
+        param: null,
+        code: response.error.code.toString(),
       },
-      provider: PERPLEXITY_AI
-    } as ErrorResponse;
+      PERPLEXITY_AI
+    );
   }
-    
-  
-  export const PerplexityAIChatCompleteStreamChunkTransform: (response: string) => string = (responseChunk) => {
-    let chunk = responseChunk.trim();
-    chunk = chunk.replace(/^data: /, "");
-    chunk = chunk.trim();
-    
-    const parsedChunk: PerplexityAIChatCompletionStreamChunk = JSON.parse(chunk);
-    let returnChunk = `data: ${JSON.stringify({
+
+  if ('choices' in response) {
+    return {
+      id: response.id,
+      object: response.object,
+      created: response.created,
+      model: response.model,
+      provider: PERPLEXITY_AI,
+      choices: [
+        {
+          message: {
+            role: 'assistant',
+            content: response.choices[0]?.message.content,
+          },
+          index: 0,
+          logprobs: null,
+          finish_reason: '',
+        },
+      ],
+      usage: {
+        prompt_tokens: response.usage.prompt_tokens,
+        completion_tokens: response.usage.completion_tokens,
+        total_tokens: response.usage.total_tokens,
+      },
+    };
+  }
+
+  return generateInvalidProviderResponseError(response, PERPLEXITY_AI);
+};
+
+export const PerplexityAIChatCompleteStreamChunkTransform: (
+  response: string
+) => string = (responseChunk) => {
+  let chunk = responseChunk.trim();
+  chunk = chunk.replace(/^data: /, '');
+  chunk = chunk.trim();
+
+  const parsedChunk: PerplexityAIChatCompletionStreamChunk = JSON.parse(chunk);
+  let returnChunk =
+    `data: ${JSON.stringify({
       id: parsedChunk.id,
       object: parsedChunk.object,
       created: Math.floor(Date.now() / 1000),
@@ -163,13 +172,13 @@ export const PerplexityAIChatCompleteResponseTransform: (response: PerplexityAIC
         {
           delta: {
             role: parsedChunk.choices[0]?.delta.role,
-            content: parsedChunk.choices[0]?.delta.content
+            content: parsedChunk.choices[0]?.delta.content,
           },
           index: 0,
           finish_reason: parsedChunk.choices[0]?.finish_reason,
-        }
-      ]
-    })}` + '\n\n'
+        },
+      ],
+    })}` + '\n\n';
 
-    return returnChunk;
-  };
+  return returnChunk;
+};

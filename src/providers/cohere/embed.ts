@@ -1,21 +1,23 @@
-import { ErrorResponse, ProviderConfig } from "../types";
-import { EmbedParams, EmbedResponse } from "../../types/embedRequestBody";
+import { ErrorResponse, ProviderConfig } from '../types';
+import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
+import { generateErrorResponse } from '../utils';
+import { COHERE } from '../../globals';
 
 export const CohereEmbedConfig: ProviderConfig = {
   input: {
-    param: "texts",
+    param: 'texts',
     required: true,
     transform: (params: EmbedParams): string[] => {
       if (Array.isArray(params.input)) {
-          return params.input;
+        return params.input;
       } else {
-          return [params.input];
+        return [params.input];
       }
-    }
+    },
   },
   model: {
-    param: "model",
-    default: "embed-english-light-v2.0",
+    param: 'model',
+    default: 'embed-english-light-v2.0',
   },
 };
 
@@ -44,43 +46,46 @@ export interface EmbedMeta {
 export interface CohereEmbedResponse {
   /** A string that represents the ID of the embedding request. */
   id: string;
-  
+
   /** An array of strings which were the input texts to be embedded. */
   texts: string[];
-  
+
   /** A 2D array of floating point numbers representing the embeddings. */
   embeddings: number[][];
-  
+
   /** An `EmbedMeta` object which contains metadata about the response. */
   meta: EmbedMeta;
 
   message?: string;
 }
 
-export const CohereEmbedResponseTransform: (response: CohereEmbedResponse, responseStatus: number) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
+export const CohereEmbedResponseTransform: (
+  response: CohereEmbedResponse,
+  responseStatus: number
+) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    return {
-        error: {
-            message: response.message,
-            type: null,
-            param: null,
-            code: null
-        },
-        provider: "cohere"
-    } as ErrorResponse;
+    return generateErrorResponse(
+      {
+        message: response.message || '',
+        type: null,
+        param: null,
+        code: null,
+      },
+      COHERE
+    );
   }
 
   return {
-    object: "list",
+    object: 'list',
     data: response.embeddings.map((embedding, index) => ({
-      object: "embedding",
+      object: 'embedding',
       embedding: embedding,
       index: index,
     })),
-    model: "", // Todo: find a way to send the cohere embedding model name back
+    model: '', // Todo: find a way to send the cohere embedding model name back
     usage: {
       prompt_tokens: -1,
-      total_tokens: -1
+      total_tokens: -1,
     },
-  }
+  };
 };

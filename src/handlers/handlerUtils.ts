@@ -1,34 +1,25 @@
-import { Context } from "hono";
+import { Context } from 'hono';
 import {
-  AI21,
-  ANTHROPIC,
   AZURE_OPEN_AI,
   BEDROCK,
   CONTENT_TYPES,
-  GOOGLE,
   HEADER_KEYS,
-  MONSTERAPI,
-  OLLAMA,
-  PALM,
   POWERED_BY,
   RESPONSE_HEADER_KEYS,
   RETRY_STATUS_CODES,
-  SEGMIND,
-  STABILITY_AI,
-} from "../globals";
-import Providers from "../providers";
-import { ProviderAPIConfig, endpointStrings } from "../providers/types";
-import transformToProviderRequest from "../services/transformToProviderRequest";
+} from '../globals';
+import Providers from '../providers';
+import { ProviderAPIConfig, endpointStrings } from '../providers/types';
+import transformToProviderRequest from '../services/transformToProviderRequest';
 import {
   Config,
   Options,
   Params,
-  RequestBody,
   ShortConfig,
   Targets,
-} from "../types/requestBody";
-import { convertKeysToCamelCase } from "../utils";
-import { retryRequest } from "./retryHandler";
+} from '../types/requestBody';
+import { convertKeysToCamelCase } from '../utils';
+import { retryRequest } from './retryHandler';
 import {
   handleAudioResponse,
   handleImageResponse,
@@ -37,10 +28,10 @@ import {
   handleOctetStreamResponse,
   handleStreamingMode,
   handleTextResponse,
-} from "./streamHandler";
-import { env } from "hono/adapter";
-import { OpenAIChatCompleteJSONToStreamResponseTransform } from "../providers/openai/chatComplete";
-import { OpenAICompleteJSONToStreamResponseTransform } from "../providers/openai/complete";
+} from './streamHandler';
+import { env } from 'hono/adapter';
+import { OpenAIChatCompleteJSONToStreamResponseTransform } from '../providers/openai/chatComplete';
+import { OpenAICompleteJSONToStreamResponseTransform } from '../providers/openai/complete';
 
 /**
  * Constructs the request options for the API call.
@@ -58,7 +49,7 @@ export function constructRequest(
   requestHeaders: Record<string, string>
 ) {
   let baseHeaders: any = {
-    "content-type": "application/json",
+    'content-type': 'application/json',
   };
 
   let headers: Record<string, string> = {
@@ -80,9 +71,9 @@ export function constructRequest(
   };
 
   // If the method is GET, delete the content-type header
-  if (method === "GET" && fetchOptions.headers) {
+  if (method === 'GET' && fetchOptions.headers) {
     let headers = fetchOptions.headers as Record<string, unknown>;
-    delete headers["content-type"];
+    delete headers['content-type'];
   }
 
   return fetchOptions;
@@ -123,10 +114,11 @@ export function selectProviderByWeight(providers: Options[]): Options {
     randomWeight -= provider.weight;
   }
 
-  throw new Error("No provider selected, please check the weights");
+  throw new Error('No provider selected, please check the weights');
 }
 
 /**
+ * @deprecated
  * Gets the provider options based on the specified mode.
  * Modes can be "single" (uses the first provider), "loadbalance" (selects one provider based on weights),
  * or "fallback" (uses all providers in the given order). If the mode does not match these options, null is returned.
@@ -156,29 +148,32 @@ export function getProviderOptionsByMode(
   }
 
   switch (mode) {
-    case "single":
+    case 'single':
       return [config.options[0]];
-    case "loadbalance":
+    case 'loadbalance':
       return [selectProviderByWeight(config.options)];
-    case "fallback":
+    case 'fallback':
       return config.options;
     default:
       return null;
   }
 }
 
+/**
+ * @deprecated
+ */
 export const fetchProviderOptionsFromConfig = (
   config: Config | ShortConfig
 ): Options[] | null => {
   let providerOptions: Options[] | null = null;
   let mode: string;
   const camelCaseConfig = convertKeysToCamelCase(config, [
-    "override_params",
-    "params",
-    "metadata",
+    'override_params',
+    'params',
+    'metadata',
   ]) as Config | ShortConfig;
 
-  if ("provider" in camelCaseConfig) {
+  if ('provider' in camelCaseConfig) {
     providerOptions = [
       {
         provider: camelCaseConfig.provider,
@@ -195,7 +190,7 @@ export const fetchProviderOptionsFromConfig = (
       providerOptions[0].deploymentId = camelCaseConfig.deploymentId;
     if (camelCaseConfig.apiVersion)
       providerOptions[0].apiVersion = camelCaseConfig.apiVersion;
-    mode = "single";
+    mode = 'single';
   } else {
     if (camelCaseConfig.strategy && camelCaseConfig.strategy.mode) {
       mode = camelCaseConfig.strategy.mode;
@@ -208,6 +203,7 @@ export const fetchProviderOptionsFromConfig = (
 };
 
 /**
+ * @deprecated
  * Makes a request (GET or POST) to a provider and returns the response.
  * The request is constructed using the provider, apiKey, and requestBody parameters.
  * The fn parameter is the type of request being made (e.g., "complete", "chatComplete").
@@ -226,178 +222,60 @@ export async function tryPostProxy(
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
   currentIndex: number,
-  method: string = "POST"
+  method: string = 'POST'
 ): Promise<Response> {
   const overrideParams = providerOption?.overrideParams || {};
   const params: Params = { ...inputParams, ...overrideParams };
   const isStreamingMode = params.stream ? true : false;
 
-  const provider: string = providerOption.provider ?? "";
+  const provider: string = providerOption.provider ?? '';
 
   // Mapping providers to corresponding URLs
   const apiConfig: ProviderAPIConfig = Providers[provider].api;
-  let fetchOptions;
-  let url = providerOption.urlToFetch as string;
-
-  let baseUrl: string, endpoint: string;
 
   const forwardHeaders: string[] = [];
-  baseUrl =
-    requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || "";
+  const customHost =
+    requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || '';
+  const baseUrl =
+    customHost || apiConfig.getBaseURL({ providerOptions: providerOption });
+  const endpoint = apiConfig.getEndpoint({
+    providerOptions: providerOption,
+    fn,
+    gatewayRequestBody: params,
+  });
 
-  if (
-    provider === AZURE_OPEN_AI &&
-    apiConfig.getBaseURL &&
-    apiConfig.getEndpoint
-  ) {
-    // Construct the base object for the request
-    if (!!providerOption.apiKey) {
-      fetchOptions = constructRequest(
-        apiConfig.headers(providerOption.apiKey, "apiKey"),
-        provider,
-        method,
-        forwardHeaders,
-        requestHeaders
-      );
-    } else {
-      fetchOptions = constructRequest(
-        apiConfig.headers(providerOption.adAuth, "adAuth"),
-        provider,
-        method,
-        forwardHeaders,
-        requestHeaders
-      );
-    }
-    baseUrl =
-      baseUrl ||
-      apiConfig.getBaseURL(
-        providerOption.resourceName,
-        providerOption.deploymentId
-      );
-    endpoint = apiConfig.getEndpoint(fn, providerOption.apiVersion, url);
-    url = `${baseUrl}${endpoint}`;
-  } else if (provider === PALM && apiConfig.baseURL && apiConfig.getEndpoint) {
-    fetchOptions = constructRequest(
-      apiConfig.headers(),
-      provider,
-      method,
-      forwardHeaders,
-      requestHeaders
-    );
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(fn, providerOption.apiKey, params?.model);
-    url = `${baseUrl}${endpoint}`;
-  } else if (provider === ANTHROPIC && apiConfig.baseURL) {
-    // Construct the base object for the POST request
-    fetchOptions = constructRequest(
-      apiConfig.headers(providerOption.apiKey, fn),
-      provider,
-      "POST",
-      forwardHeaders,
-      requestHeaders
-    );
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig[fn] || "";
-    url = `${baseUrl}${endpoint}`;
-  } else if (
-    provider === GOOGLE &&
-    apiConfig.baseURL &&
-    apiConfig.getEndpoint
-  ) {
-    fetchOptions = constructRequest(
-      apiConfig.headers(),
-      provider,
-      "POST",
-      forwardHeaders,
-      requestHeaders
-    );
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(
-      fn,
-      providerOption.apiKey,
-      params.model,
-      params.stream
-    );
-    url = `${baseUrl}${endpoint}`;
-  } else if (
-    provider === STABILITY_AI &&
-    apiConfig.baseURL &&
-    apiConfig.getEndpoint
-  ) {
-    fetchOptions = constructRequest(
-      apiConfig.headers(),
-      provider,
-      "POST",
-      forwardHeaders,
-      requestHeaders
-    );
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(fn, params.model, url);
-    url = `${baseUrl}${endpoint}`;
-  } else if (
-    provider === SEGMIND &&
-    apiConfig.baseURL &&
-    apiConfig.getEndpoint
-  ) {
-    fetchOptions = constructRequest(
-      apiConfig.headers(),
-      provider,
-      "POST",
-      forwardHeaders,
-      requestHeaders
-    );
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(params.model);
-    url = `${baseUrl}${endpoint}`;
-  } else if (
-    provider === MONSTERAPI &&
-    apiConfig.baseURL &&
-    apiConfig.getEndpoint
-  ) {
-    fetchOptions = constructRequest(
-      apiConfig.headers(),
-      provider,
-      "POST",
-      forwardHeaders,
-      requestHeaders
-    );
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(params.model);
-    url = `${baseUrl}${endpoint}`;
-  } else if (provider === AI21 && apiConfig.getEndpoint && apiConfig.baseURL) {
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(fn, params.model);
-    fetchOptions = constructRequest(
-      apiConfig.headers(providerOption.apiKey),
-      provider,
-      "POST",
-      forwardHeaders,
-      requestHeaders
-    );
-  } else {
-    // Construct the base object for the request
-    fetchOptions = constructRequest(
-      apiConfig.headers(providerOption.apiKey),
-      provider,
-      method,
-      forwardHeaders,
-      requestHeaders
-    );
-  }
+  const url = endpoint
+    ? `${baseUrl}${endpoint}`
+    : (providerOption.urlToFetch as string);
 
-  if (method === "POST") {
+  const headers = await apiConfig.headers({
+    providerOptions: providerOption,
+    fn,
+    transformedRequestBody: params,
+    transformedRequestUrl: url,
+  });
+
+  const fetchOptions = constructRequest(
+    headers,
+    provider,
+    method,
+    forwardHeaders,
+    requestHeaders
+  );
+
+  if (method === 'POST') {
     fetchOptions.body = JSON.stringify(params);
   }
 
   let response: Response;
   let retryCount: number | undefined;
 
-  if (providerOption.retry && typeof providerOption.retry === "object") {
+  if (providerOption.retry && typeof providerOption.retry === 'object') {
     providerOption.retry = {
       attempts: providerOption.retry?.attempts ?? 0,
       onStatusCodes: providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES,
     };
-  } else if (typeof providerOption.retry === "number") {
+  } else if (typeof providerOption.retry === 'number') {
     providerOption.retry = {
       attempts: providerOption.retry,
       onStatusCodes: RETRY_STATUS_CODES,
@@ -414,20 +292,20 @@ export async function tryPostProxy(
   const requestOptions = c.get("requestOptions") ?? [];
 
   let cacheResponse, cacheKey, cacheMode, cacheMaxAge;
-  let cacheStatus = "DISABLED";
+  let cacheStatus = 'DISABLED';
 
   if (requestHeaders[HEADER_KEYS.CACHE]) {
     cacheMode = requestHeaders[HEADER_KEYS.CACHE];
   } else if (
     providerOption?.cache &&
-    typeof providerOption.cache === "object" &&
+    typeof providerOption.cache === 'object' &&
     providerOption.cache.mode
   ) {
     cacheMode = providerOption.cache.mode;
     cacheMaxAge = providerOption.cache.maxAge;
   } else if (
     providerOption?.cache &&
-    typeof providerOption.cache === "string"
+    typeof providerOption.cache === 'string'
   ) {
     cacheMode = providerOption.cache;
   }
@@ -446,7 +324,7 @@ export async function tryPostProxy(
       response = await responseHandler(
         new Response(cacheResponse, {
           headers: {
-            "content-type": "application/json",
+            'content-type': 'application/json',
           },
         }),
         false,
@@ -456,7 +334,7 @@ export async function tryPostProxy(
         false,
         params
       );
-      c.set("requestOptions", [
+      c.set('requestOptions', [
         ...requestOptions,
         {
           providerOptions: {
@@ -479,7 +357,7 @@ export async function tryPostProxy(
         params,
         cacheStatus,
         0,
-        requestHeaders[HEADER_KEYS.TRACE_ID] ?? ""
+        requestHeaders[HEADER_KEYS.TRACE_ID] ?? ''
       );
       return response;
     }
@@ -507,10 +385,10 @@ export async function tryPostProxy(
     params,
     cacheStatus,
     retryCount ?? 0,
-    requestHeaders[HEADER_KEYS.TRACE_ID] ?? ""
+    requestHeaders[HEADER_KEYS.TRACE_ID] ?? ''
   );
 
-  c.set("requestOptions", [
+  c.set('requestOptions', [
     ...requestOptions,
     {
       providerOptions: { ...providerOption, requestURL: url, rubeusURL: fn },
@@ -556,7 +434,7 @@ export async function tryPost(
   const params: Params = { ...inputParams, ...overrideParams };
   const isStreamingMode = params.stream ? true : false;
 
-  const provider: string = providerOption.provider ?? "";
+  const provider: string = providerOption.provider ?? '';
 
   // Mapping providers to corresponding URLs
   const apiConfig: ProviderAPIConfig = Providers[provider].api;
@@ -567,191 +445,40 @@ export async function tryPost(
     fn
   );
 
-  let baseUrl: string, endpoint: string, fetchOptions;
   const forwardHeaders =
     requestHeaders[HEADER_KEYS.FORWARD_HEADERS]
-      ?.split(",")
+      ?.split(',')
       .map((h) => h.trim()) ||
     providerOption.forwardHeaders ||
     [];
-  baseUrl =
-    requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || "";
 
-  if (
-    provider === AZURE_OPEN_AI &&
-    apiConfig.getBaseURL &&
-    apiConfig.getEndpoint
-  ) {
-    // Construct the base object for the POST request
-    if (!!providerOption.apiKey) {
-      fetchOptions = constructRequest(
-        apiConfig.headers(providerOption.apiKey, "apiKey"),
-        provider,
-        "POST",
-        forwardHeaders,
-        requestHeaders
-      );
-    } else {
-      fetchOptions = constructRequest(
-        apiConfig.headers(providerOption.adAuth, "adAuth"),
-        provider,
-        "POST",
-        forwardHeaders,
-        requestHeaders
-      );
-    }
-    baseUrl =
-      baseUrl ||
-      apiConfig.getBaseURL(
-        providerOption.resourceName,
-        providerOption.deploymentId
-      );
-    endpoint = apiConfig.getEndpoint(fn, providerOption.apiVersion);
-  } else if (provider === PALM && apiConfig.baseURL && apiConfig.getEndpoint) {
-    fetchOptions = constructRequest(
-      apiConfig.headers(),
-      provider,
-      "POST",
-      forwardHeaders,
-      requestHeaders
-    );
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(
-      fn,
-      providerOption.apiKey,
-      providerOption.overrideParams?.model || params?.model
-    );
-  } else if (provider === ANTHROPIC && apiConfig.baseURL) {
-    // Construct the base object for the POST request
-    fetchOptions = constructRequest(
-      apiConfig.headers(providerOption.apiKey, fn),
-      provider,
-      "POST",
-      forwardHeaders,
-      requestHeaders
-    );
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig[fn] || "";
-  } else if (
-    provider === GOOGLE &&
-    apiConfig.baseURL &&
-    apiConfig.getEndpoint
-  ) {
-    fetchOptions = constructRequest(
-      apiConfig.headers(),
-      provider,
-      "POST",
-      forwardHeaders,
-      requestHeaders
-    );
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(
-      fn,
-      providerOption.apiKey,
-      transformedRequestBody.model,
-      params.stream
-    );
-  } else if (
-    provider === STABILITY_AI &&
-    apiConfig.baseURL &&
-    apiConfig.getEndpoint
-  ) {
-    fetchOptions = constructRequest(
-      apiConfig.headers(providerOption.apiKey),
-      provider,
-      "POST",
-      forwardHeaders,
-      requestHeaders
-    );
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(fn, params.model);
-  } else if (
-    provider === SEGMIND &&
-    apiConfig.baseURL &&
-    apiConfig.getEndpoint
-  ) {
-    fetchOptions = constructRequest(
-      apiConfig.headers(providerOption.apiKey),
-      provider,
-      "POST",
-      forwardHeaders,
-      requestHeaders
-    );
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(params.model);
-  } else if (
-    provider === MONSTERAPI &&
-    apiConfig.baseURL &&
-    apiConfig.getEndpoint
-  ) {
-    fetchOptions = constructRequest(
-      apiConfig.headers(providerOption.apiKey),
-      provider,
-      "POST",
-      forwardHeaders,
-      requestHeaders
-    );
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(params.model);
-  } else if (provider === OLLAMA && apiConfig.getEndpoint) {
-    fetchOptions = constructRequest(
-      apiConfig.headers(),
-      provider,
-      "POST",
-      forwardHeaders,
-      requestHeaders
-    );
-    baseUrl = baseUrl;
-    endpoint = apiConfig.getEndpoint(
-      fn,
-      providerOption.apiKey,
-      transformedRequestBody.model,
-      params.stream
-    );
-  } else if (
-    provider === BEDROCK &&
-    apiConfig.getBaseURL &&
-    apiConfig.getEndpoint
-  ) {
-    baseUrl = baseUrl || apiConfig.getBaseURL(providerOption.awsRegion);
-    endpoint = apiConfig.getEndpoint(fn, params.model, params.stream);
-    fetchOptions = constructRequest(
-      await apiConfig.headers(
-        providerOption,
-        transformedRequestBody,
-        `${baseUrl}${endpoint}`
-      ),
-      provider,
-      "POST",
-      forwardHeaders,
-      requestHeaders
-    );
-  } else if (provider === AI21 && apiConfig.getEndpoint && apiConfig.baseURL) {
-    baseUrl = baseUrl || apiConfig.baseURL;
-    endpoint = apiConfig.getEndpoint(fn, params.model);
-    fetchOptions = constructRequest(
-      apiConfig.headers(providerOption.apiKey),
-      provider,
-      "POST",
-      forwardHeaders,
-      requestHeaders
-    );
-  } else {
-    // Construct the base object for the POST request
-    fetchOptions = constructRequest(
-      apiConfig.headers(providerOption.apiKey),
-      provider,
-      "POST",
-      forwardHeaders,
-      requestHeaders
-    );
+  const customHost =
+    requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || '';
 
-    baseUrl = baseUrl || apiConfig.baseURL || "";
-    endpoint = apiConfig[fn] || "";
-  }
-
-  // Construct the full URL
+  const baseUrl =
+    customHost || apiConfig.getBaseURL({ providerOptions: providerOption });
+  const endpoint = apiConfig.getEndpoint({
+    providerOptions: providerOption,
+    fn,
+    gatewayRequestBody: params,
+  });
   const url = `${baseUrl}${endpoint}`;
+
+  const headers = await apiConfig.headers({
+    providerOptions: providerOption,
+    fn,
+    transformedRequestBody,
+    transformedRequestUrl: url,
+  });
+
+  // Construct the base object for the POST request
+  const fetchOptions = constructRequest(
+    headers,
+    provider,
+    'POST',
+    forwardHeaders,
+    requestHeaders
+  );
 
   fetchOptions.body = JSON.stringify(transformedRequestBody);
 
@@ -764,18 +491,18 @@ export async function tryPost(
   };
 
   const [getFromCacheFunction, cacheIdentifier, requestOptions] = [
-    c.get("getFromCache"),
-    c.get("cacheIdentifier"),
-    c.get("requestOptions") ?? [],
+    c.get('getFromCache'),
+    c.get('cacheIdentifier'),
+    c.get('requestOptions') ?? [],
   ];
 
   let cacheResponse, cacheKey, cacheMode, cacheMaxAge;
-  let cacheStatus = "DISABLED";
+  let cacheStatus = 'DISABLED';
 
-  if (typeof providerOption.cache === "object" && providerOption.cache?.mode) {
+  if (typeof providerOption.cache === 'object' && providerOption.cache?.mode) {
     cacheMode = providerOption.cache.mode;
     cacheMaxAge = providerOption.cache.maxAge;
-  } else if (typeof providerOption.cache === "string") {
+  } else if (typeof providerOption.cache === 'string') {
     cacheMode = providerOption.cache;
   }
 
@@ -792,7 +519,7 @@ export async function tryPost(
     if (cacheResponse) {
       response = await responseHandler(
         new Response(cacheResponse, {
-          headers: { "content-type": "application/json" },
+          headers: { 'content-type': 'application/json' },
         }),
         isStreamingMode,
         provider,
@@ -801,7 +528,7 @@ export async function tryPost(
         true,
         params
       );
-      c.set("requestOptions", [
+      c.set('requestOptions', [
         ...requestOptions,
         {
           providerOptions: {
@@ -823,7 +550,7 @@ export async function tryPost(
         params,
         cacheStatus,
         0,
-        requestHeaders[HEADER_KEYS.TRACE_ID] ?? ""
+        requestHeaders[HEADER_KEYS.TRACE_ID] ?? ''
       );
 
       return response;
@@ -853,9 +580,9 @@ export async function tryPost(
     params,
     cacheStatus,
     retryCount ?? 0,
-    requestHeaders[HEADER_KEYS.TRACE_ID] ?? ""
+    requestHeaders[HEADER_KEYS.TRACE_ID] ?? ''
   );
-  c.set("requestOptions", [
+  c.set('requestOptions', [
     ...requestOptions,
     {
       providerOptions: { ...providerOption, requestURL: url, rubeusURL: fn },
@@ -881,6 +608,7 @@ export async function tryPost(
 }
 
 /**
+ * @deprecated
  * Tries providers in sequence until a successful response is received.
  * The providers are attempted in the order they are given in the providers parameter.
  * If all providers fail, an error is thrown with the details of the errors from each provider.
@@ -898,7 +626,7 @@ export async function tryProvidersInSequence(
   params: Params,
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
-  method: string = "POST"
+  method: string = 'POST'
 ): Promise<Response> {
   let errors: any[] = [];
   for (let [index, providerOption] of providers.entries()) {
@@ -906,7 +634,7 @@ export async function tryProvidersInSequence(
       const loadbalanceIndex = !isNaN(Number(providerOption.index))
         ? Number(providerOption.index)
         : null;
-      if (fn === "proxy") {
+      if (fn === 'proxy') {
         return await tryPostProxy(
           c,
           providerOption,
@@ -959,7 +687,7 @@ export function responseHandler(
   gatewayRequest: Params
 ): Promise<Response> {
   let responseTransformerFunction: Function | undefined;
-  const responseContentType = response.headers?.get("content-type");
+  const responseContentType = response.headers?.get('content-type');
 
   const providerConfig = Providers[proxyProvider];
   let providerTransformers = Providers[proxyProvider]?.responseTransforms;
@@ -981,7 +709,7 @@ export function responseHandler(
   // Set the transformer to OpenAI json to stream convertor function in that case.
   if (responseTransformer && streamingMode && isCacheHit) {
     responseTransformerFunction =
-      responseTransformer === "chatComplete"
+      responseTransformer === 'chatComplete'
         ? OpenAIChatCompleteJSONToStreamResponseTransform
         : OpenAICompleteJSONToStreamResponseTransform;
   } else if (responseTransformer && !streamingMode && isCacheHit) {
@@ -1091,7 +819,7 @@ export async function tryTargetsRecursively(
   let response;
 
   switch (strategyMode) {
-    case "fallback":
+    case 'fallback':
       for (let [index, target] of currentTarget.targets.entries()) {
         response = await tryTargetsRecursively(
           c,
@@ -1113,7 +841,7 @@ export async function tryTargetsRecursively(
       }
       break;
 
-    case "loadbalance":
+    case 'loadbalance':
       currentTarget.targets.forEach((t: Options) => {
         if (t.weight === undefined) {
           t.weight = 1;
@@ -1144,7 +872,7 @@ export async function tryTargetsRecursively(
       }
       break;
 
-    case "single":
+    case 'single':
       response = await tryTargetsRecursively(
         c,
         currentTarget.targets[0],
@@ -1196,15 +924,15 @@ export function updateResponseHeaders(
     retryAttempt.toString()
   );
 
-  const contentEncodingHeader = response.headers.get("content-encoding");
-  if (contentEncodingHeader && contentEncodingHeader.indexOf("br") > -1) {
+  const contentEncodingHeader = response.headers.get('content-encoding');
+  if (contentEncodingHeader && contentEncodingHeader.indexOf('br') > -1) {
     // Brotli compression causes errors at runtime, removing the header in that case
-    response.headers.delete("content-encoding");
+    response.headers.delete('content-encoding');
   }
 
   // Delete content-length header to avoid conflicts with hono compress middleware
   // workerd environment handles this authomatically
-  response.headers.delete("content-length");
+  response.headers.delete('content-length');
 }
 
 export function constructConfigFromRequestHeaders(
@@ -1228,9 +956,9 @@ export function constructConfigFromRequestHeaders(
 
     if (!parsedConfigJson.provider && !parsedConfigJson.targets) {
       parsedConfigJson.provider = requestHeaders[`x-${POWERED_BY}-provider`];
-      parsedConfigJson.api_key = requestHeaders["authorization"]?.replace(
-        "Bearer ",
-        ""
+      parsedConfigJson.api_key = requestHeaders['authorization']?.replace(
+        'Bearer ',
+        ''
       );
 
       if (parsedConfigJson.provider === AZURE_OPEN_AI) {
@@ -1248,14 +976,14 @@ export function constructConfigFromRequestHeaders(
       }
     }
     return convertKeysToCamelCase(parsedConfigJson, [
-      "override_params",
-      "params",
+      'override_params',
+      'params',
     ]) as any;
   }
 
   return {
     provider: requestHeaders[`x-${POWERED_BY}-provider`],
-    apiKey: requestHeaders["authorization"]?.replace("Bearer ", ""),
+    apiKey: requestHeaders['authorization']?.replace('Bearer ', ''),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === AZURE_OPEN_AI &&
       azureConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === BEDROCK &&
