@@ -63,7 +63,7 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 
 ### Run it using hosted version
 
-#### Python
+### Python
 
 ```bash
 pip install portkey-ai
@@ -120,7 +120,7 @@ Note: Portkey allows you to manage all your API keys centrally using virtual key
 
 
 
-#### Node.js
+### Node.js
 ```bash
 npm install portkey-ai
 ```
