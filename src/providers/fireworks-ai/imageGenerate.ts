@@ -1,4 +1,4 @@
-import { FIREWORKS_AI, OPEN_AI } from '../../globals';
+import { FIREWORKS_AI } from '../../globals';
 import { ErrorResponse, ImageGenerateResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import {

@@ -1,10 +1,7 @@
 import { FIREWORKS_AI } from '../../globals';
 import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
 import { ErrorResponse, ProviderConfig } from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+import { generateInvalidProviderResponseError } from '../utils';
 import {
   FireworksAIValidationErrorResponse,
   FireworksAIErrorResponseTransform,
