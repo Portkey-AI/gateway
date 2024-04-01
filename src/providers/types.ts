@@ -58,7 +58,8 @@ export interface ProviderAPIConfig {
   /** The endpoint for the 'stream-chatComplete' function. */
   proxy?: string;
   /** The endpoint for 'imageGenerate' function */
-  imageGenerate?: string
+  imageGenerate?: string,
+  generate?: string
 }
 
 export type endpointStrings = 'complete' | 'chatComplete' | 'embed' | 'rerank' | 'moderate' | 'stream-complete' | 'stream-chatComplete' | 'proxy' | 'imageGenerate'
