@@ -1,11 +1,18 @@
-import { ProviderAPIConfig } from "../types";
+import { ProviderAPIConfig } from '../types';
 
 const MonsterAPIApiConfig: ProviderAPIConfig = {
-    baseURL: "https://llm.monsterapi.ai/v1",
-    headers: (API_KEY: string) => {
-        return { "Authorization": `Bearer ${API_KEY}` };
-    },
-    generate: "/generate"
+  getBaseURL: () => 'https://llm.monsterapi.ai/v1',
+  headers: ({ providerOptions }) => {
+    return { Authorization: `Bearer ${providerOptions.apiKey}` };
+  },
+  getEndpoint: ({ fn }) => {
+    switch (fn) {
+      case 'generate':
+        return '/generate';
+      default:
+        return '/generate';
+    }
+  },
 };
 
 export default MonsterAPIApiConfig;

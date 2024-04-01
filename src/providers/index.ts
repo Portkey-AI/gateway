@@ -17,6 +17,7 @@ import OllamaAPIConfig from './ollama';
 import { ProviderConfigs } from './types';
 import GroqConfig from './groq';
 import SegmindConfig from './segmind';
+import MonsterAPIConfig from './monsterapi';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -37,6 +38,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   bedrock: BedrockConfig,
   groq: GroqConfig,
   segmind: SegmindConfig,
+  monsterapi:MonsterAPIConfig
 };
 
 export default Providers;

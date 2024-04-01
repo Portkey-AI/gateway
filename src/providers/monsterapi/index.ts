@@ -1,14 +1,16 @@
-import { ProviderConfigs } from "../types";
-import MonsterAPIConfig from "./api";
-import { MessageGenerateConfig } from "./messageGenerate";
-import { MessageGenerateResponseTransform } from "./messageGenerateResponseTransform";
+import { ProviderConfigs } from '../types';
+import MonsterAPIApiConfig from './api';
+import {
+  MonsterAPIChatCompleteConfig,
+  MonsterAPIChatCompleteResponseTransform,
+} from './generate';
 
-const MonsterConfig: ProviderConfigs = {
-  api: MonsterAPIConfig,
-  messageGenerate: MessageGenerateConfig,
+const MonsterAPIConfig: ProviderConfigs = {
+  api: MonsterAPIApiConfig,
+  generate: MonsterAPIChatCompleteConfig,
   responseTransforms: {
-    messageGenerate: MessageGenerateResponseTransform,
+    generate: MonsterAPIChatCompleteResponseTransform,
   },
 };
 
-export default MonsterConfig;
+export default MonsterAPIConfig;
