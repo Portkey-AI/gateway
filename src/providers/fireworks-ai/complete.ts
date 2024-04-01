@@ -1,35 +1,34 @@
 import { FIREWORKS_AI } from '../../globals';
+import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { generateInvalidProviderResponseError } from '../utils';
 import {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+  FireworksAIErrorResponse,
+  FireworksAIErrorResponseTransform,
+  FireworksAIStreamChunk,
+  FireworksAIValidationErrorResponse,
+} from './chatComplete';
 
-export const FireworksAIChatCompleteConfig: ProviderConfig = {
+export const FireworksAICompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
   },
-  messages: {
-    param: 'messages',
+  prompt: {
+    param: 'prompt',
     required: true,
-    default: [],
-  },
-  tools: {
-    param: 'tools',
   },
   max_tokens: {
     param: 'max_tokens',
-    default: 200,
-    min: 1,
+    default: 16,
+    min: 0,
   },
-  prompt_truncate_len: {
-    param: 'prompt_truncate_len',
-    default: 1500,
+  logprobs: {
+    param: 'logprobs',
+    min: 0,
+    max: 5,
+  },
+  echo: {
+    param: 'echo',
   },
   temperature: {
     param: 'temperature',
@@ -82,7 +81,7 @@ export const FireworksAIChatCompleteConfig: ProviderConfig = {
   },
 };
 
-interface FireworksAIChatCompleteResponse extends ChatCompletionResponse {
+interface FireworksAICompleteResponse extends CompletionResponse {
   id: string;
   object: string;
   created: number;
@@ -94,56 +93,13 @@ interface FireworksAIChatCompleteResponse extends ChatCompletionResponse {
   };
 }
 
-export interface FireworksAIValidationErrorResponse {
-  fault: {
-    faultstring: string;
-    detail: {
-      errorcode: string;
-    };
-  };
-}
-
-export interface FireworksAIErrorResponse extends ErrorResponse {}
-
-export interface FireworksAIStreamChunk {
-  id: string;
-  object: string;
-  created: number;
-  model: string;
-  choices: {
-    delta: {
-      role?: string | null;
-      content?: string;
-    };
-    index: number;
-    finish_reason: string | null;
-  }[];
-}
-
-export const FireworksAIErrorResponseTransform: (
-  response: FireworksAIValidationErrorResponse | FireworksAIErrorResponse
-) => ErrorResponse = (response) => {
-  if ('fault' in response) {
-    return generateErrorResponse(
-      {
-        message: response.fault.faultstring,
-        type: null,
-        param: null,
-        code: response.fault.detail.errorcode,
-      },
-      FIREWORKS_AI
-    );
-  }
-  return generateErrorResponse(response.error, FIREWORKS_AI);
-};
-
-export const FireworksAIChatCompleteResponseTransform: (
+export const FireworksAICompleteResponseTransform: (
   response:
-    | FireworksAIChatCompleteResponse
+    | FireworksAICompleteResponse
     | FireworksAIValidationErrorResponse
     | FireworksAIErrorResponse,
   responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
     return FireworksAIErrorResponseTransform(
       response as FireworksAIValidationErrorResponse | FireworksAIErrorResponse
@@ -159,11 +115,8 @@ export const FireworksAIChatCompleteResponseTransform: (
       provider: FIREWORKS_AI,
       choices: response.choices.map((c) => ({
         index: c.index,
-        message: {
-          role: c.message.role,
-          content: c.message.content,
-          tool_calls: c.message.tool_calls,
-        },
+        logprobs: c.logprobs,
+        text: c.text,
         finish_reason: c.finish_reason,
       })),
       usage: {
@@ -176,7 +129,7 @@ export const FireworksAIChatCompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, FIREWORKS_AI);
 };
 
-export const FireworksAIChatCompleteStreamChunkTransform: (
+export const FireworksAICompleteStreamChunkTransform: (
   response: string
 ) => string = (responseChunk) => {
   let chunk = responseChunk.trim();

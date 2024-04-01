@@ -11,6 +11,8 @@ const FireworksAIAPIConfig: ProviderAPIConfig = {
   getEndpoint: ({ fn, gatewayRequestBody }) => {
     const model = gatewayRequestBody?.model;
     switch (fn) {
+      case 'complete':
+        return '/completions';
       case 'chatComplete':
         return '/chat/completions';
       case 'embed':
