@@ -8,6 +8,7 @@ import {
 import {
   FireworksAICompleteConfig,
   FireworksAICompleteResponseTransform,
+  FireworksAICompleteStreamChunkTransform,
 } from './complete';
 import {
   FireworksAIEmbedConfig,
@@ -26,6 +27,7 @@ const FireworksAIConfig: ProviderConfigs = {
   api: FireworksAIAPIConfig,
   responseTransforms: {
     complete: FireworksAICompleteResponseTransform,
+    'stream-complete': FireworksAICompleteStreamChunkTransform,
     chatComplete: FireworksAIChatCompleteResponseTransform,
     'stream-chatComplete': FireworksAIChatCompleteStreamChunkTransform,
     embed: FireworksAIEmbedResponseTransform,
