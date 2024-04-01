@@ -14,7 +14,7 @@
 
 <!-- Demo GIF or Image -->
 <p align="center">
-  <img src="docs/images/demo_gateway.gif" width="800px" alt="Gateway Demo">
+  <img src="docs/images/gateway_demo.gif" width="800px" alt="Gateway Demo">
 </p>
 
 
@@ -60,15 +60,6 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 [Full list of supported SDKs](#supported-sdks)
 <br><br>
 
-### Python
-```bash
-pip install portkey-ai
-```
-
-#### Detailed guide to run 100+ LLMs in your Colab!
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1hLvoq_VdGlJ_92sPPiwTznSra5Py0FuW?usp=sharing)
-
 
 ####  Usage
 
@@ -95,6 +86,16 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 ### Run it using hosted version
 
 #### Python
+
+```bash
+pip install portkey-ai
+```
+
+#### Detailed guide to run 100+ LLMs in your Colab!
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1hLvoq_VdGlJ_92sPPiwTznSra5Py0FuW?usp=sharing)
+
+
 
 Run any LLM using OpenAI Client
 
