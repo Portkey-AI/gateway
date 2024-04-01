@@ -9,10 +9,7 @@ import {
   FireworksAIEmbedConfig,
   FireworksAIEmbedResponseTransform,
 } from './embed';
-import {
-  FireworksAIImageGenerateConfig,
-  FireworksAIImageGenerateResponseTransform,
-} from './imageGenerate';
+import { FireworksAIImageGenerateConfig, FireworksAIImageGenerateResponseTransform } from './imageGenerate';
 
 const FireworksAIConfig: ProviderConfigs = {
   chatComplete: FireworksAIChatCompleteConfig,

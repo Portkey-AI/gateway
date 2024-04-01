@@ -5,10 +5,7 @@ import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
-import {
-  FireworksAIErrorResponse,
-  FireworksAIErrorResponseTransform,
-} from './chatComplete';
+import { FireworksAIErrorResponse, FireworksAIErrorResponseTransform } from './chatComplete';
 
 export const FireworksAIEmbedConfig: ProviderConfig = {
   model: {

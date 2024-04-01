@@ -20,9 +20,7 @@ export const configSchema: any = z
     provider: z
       .string()
       .refine((value) => VALID_PROVIDERS.includes(value), {
-        message: `Invalid 'provider' value. Must be one of: ${VALID_PROVIDERS.join(
-          ', '
-        )}`,
+        message: `Invalid 'provider' value. Must be one of: ${VALID_PROVIDERS.join(', ')}`,
       })
       .optional(),
     api_key: z.string().optional(),
