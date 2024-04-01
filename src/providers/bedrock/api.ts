@@ -4,7 +4,9 @@ import { generateAWSHeaders } from './utils';
 
 const BedrockAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) =>
-    `https://bedrock-runtime.${providerOptions.awsRegion || 'us-east-1'}.amazonaws.com`,
+    `https://bedrock-runtime.${
+      providerOptions.awsRegion || 'us-east-1'
+    }.amazonaws.com`,
   headers: async ({
     providerOptions,
     transformedRequestBody,
