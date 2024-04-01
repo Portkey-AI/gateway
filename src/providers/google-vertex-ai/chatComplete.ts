@@ -5,6 +5,10 @@ import {
   ErrorResponse,
   ProviderConfig,
 } from '../types';
+import {
+  generateErrorResponse,
+  generateInvalidProviderResponseError,
+} from '../utils';
 
 const transformGenerationConfig = (params: Params) => {
   const generationConfig: Record<string, any> = {};
@@ -32,10 +36,11 @@ const transformGenerationConfig = (params: Params) => {
 // https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/send-multimodal-prompts#gemini-send-multimodal-samples-drest
 
 export const GoogleChatCompleteConfig: ProviderConfig = {
+  // https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning#gemini-model-versions
   model: {
     param: 'model',
     required: true,
-    default: 'gemini-pro-latest',
+    default: 'gemini-1.0-pro',
   },
   messages: {
     param: 'contents',
@@ -147,6 +152,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
   //         "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
   //         "threshold": "BLOCK_ONLY_HIGH"
   //     }
+  // ]
   safety_settings: {
     param: 'safety_settings',
   },
@@ -225,27 +231,29 @@ export const GoogleChatCompleteResponseTransform: (
     'error' in response[0]
   ) {
     const { error } = response[0];
-    return {
-      error: {
+
+    return generateErrorResponse(
+      {
         message: error.message,
         type: error.status,
         param: null,
         code: String(error.code),
       },
-      provider: GOOGLE_VERTEX_AI,
-    } as ErrorResponse;
+      GOOGLE_VERTEX_AI
+    );
   }
 
   if (responseStatus !== 200 && 'error' in response) {
-    return {
-      error: {
-        message: response.error.message ?? '',
-        type: response.error.status ?? null,
+    const { error } = response;
+    return generateErrorResponse(
+      {
+        message: error.message,
+        type: error.status,
         param: null,
-        code: String(response.error.code),
+        code: String(error.code),
       },
-      provider: GOOGLE_VERTEX_AI,
-    } as ErrorResponse;
+      GOOGLE_VERTEX_AI
+    );
   }
 
   if ('candidates' in response) {
@@ -300,17 +308,7 @@ export const GoogleChatCompleteResponseTransform: (
     };
   }
 
-  return {
-    error: {
-      message: `Invalid response recieved from google: ${JSON.stringify(
-        response
-      )}`,
-      type: null,
-      param: null,
-      code: null,
-    },
-    provider: GOOGLE_VERTEX_AI,
-  } as ErrorResponse;
+  return generateInvalidProviderResponseError(response, GOOGLE_VERTEX_AI);
 };
 
 export const GoogleChatCompleteStreamChunkTransform: (
@@ -334,47 +332,57 @@ export const GoogleChatCompleteStreamChunkTransform: (
     return `data: ${chunk}\n\n`;
   }
 
-  const parsedChunk: GoogleGenerateContentResponse = JSON.parse(chunk);
+  let parsedChunk: GoogleGenerateContentResponse = JSON.parse(chunk);
 
-  return (
-    `data: ${JSON.stringify({
-      id: fallbackId,
-      object: 'chat.completion.chunk',
-      created: Math.floor(Date.now() / 1000),
-      model: '',
-      provider: GOOGLE_VERTEX_AI,
-      choices:
-        parsedChunk.candidates?.map((generation, index) => {
-          let message: Message = { role: 'assistant', content: '' };
-          if (generation.content.parts[0]?.text) {
-            message = {
-              role: 'assistant',
-              content: generation.content.parts[0]?.text,
-            };
-          } else if (generation.content.parts[0]?.functionCall) {
-            message = {
-              role: 'assistant',
-              tool_calls: [
-                {
-                  id: crypto.randomUUID(),
-                  type: 'function',
-                  index: 0,
-                  function: {
-                    name: generation.content.parts[0]?.functionCall.name,
-                    arguments: JSON.stringify(
-                      generation.content.parts[0]?.functionCall.args
-                    ),
-                  },
-                },
-              ],
-            };
-          }
-          return {
-            delta: message,
-            index: generation.index,
-            finish_reason: generation.finishReason,
+  let usageMetadata;
+  if (parsedChunk.usageMetadata) {
+    usageMetadata = {
+      prompt_tokens: parsedChunk.usageMetadata.promptTokenCount,
+      completion_tokens: parsedChunk.usageMetadata.candidatesTokenCount,
+      total_tokens: parsedChunk.usageMetadata.totalTokenCount,
+    };
+  }
+
+  const dataChunk = {
+    id: fallbackId,
+    object: 'chat.completion.chunk',
+    created: Math.floor(Date.now() / 1000),
+    model: '',
+    provider: GOOGLE_VERTEX_AI,
+    choices:
+      parsedChunk.candidates?.map((generation, index) => {
+        let message: Message = { role: 'assistant', content: '' };
+        if (generation.content.parts[0]?.text) {
+          message = {
+            role: 'assistant',
+            content: generation.content.parts[0]?.text,
           };
-        }) ?? [],
-    })}` + '\n\n'
-  );
+        } else if (generation.content.parts[0]?.functionCall) {
+          message = {
+            role: 'assistant',
+            tool_calls: [
+              {
+                id: crypto.randomUUID(),
+                type: 'function',
+                index: 0,
+                function: {
+                  name: generation.content.parts[0]?.functionCall.name,
+                  arguments: JSON.stringify(
+                    generation.content.parts[0]?.functionCall.args
+                  ),
+                },
+              },
+            ],
+          };
+        }
+        return {
+          delta: message,
+          index: index,
+          finish_reason: generation.finishReason,
+        };
+      }) ?? [],
+    usage: usageMetadata,
+  };
+
+  return `data: ${JSON.stringify(dataChunk)}\n\n`;
 };
