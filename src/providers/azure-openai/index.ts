@@ -12,16 +12,22 @@ import {
   AzureOpenAIChatCompleteConfig,
   AzureOpenAIChatCompleteResponseTransform,
 } from './chatComplete';
+import {
+  AzureOpenAIImageGenerateConfig,
+  AzureOpenAIImageGenerateResponseTransform,
+} from './imageGenerate';
 
 const AzureOpenAIConfig: ProviderConfigs = {
   complete: AzureOpenAICompleteConfig,
   embed: AzureOpenAIEmbedConfig,
   api: AzureOpenAIAPIConfig,
+  imageGenerate: AzureOpenAIImageGenerateConfig,
   chatComplete: AzureOpenAIChatCompleteConfig,
   responseTransforms: {
     complete: AzureOpenAICompleteResponseTransform,
     chatComplete: AzureOpenAIChatCompleteResponseTransform,
     embed: AzureOpenAIEmbedResponseTransform,
+    imageGenerate: AzureOpenAIImageGenerateResponseTransform,
   },
 };
 
