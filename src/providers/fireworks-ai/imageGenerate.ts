@@ -1,8 +1,10 @@
-import { OPEN_AI } from '../../globals';
+import { FIREWORKS_AI, OPEN_AI } from '../../globals';
 import { ErrorResponse, ImageGenerateResponse, ProviderConfig } from '../types';
+import { generateInvalidProviderResponseError } from '../utils';
 import {
-  FireworksAIErrorResponse,
+  FireworksAIValidationErrorResponse,
   FireworksAIErrorResponseTransform,
+  FireworksAIErrorResponse,
 } from './chatComplete';
 
 export const FireworksAIImageGenerateConfig: ProviderConfig = {
@@ -63,9 +65,11 @@ export const FireworksAIImageGenerateConfig: ProviderConfig = {
 };
 
 interface FireworksAIImageObject {
-  b64_json?: string; // The base64-encoded JSON of the generated image, if response_format is b64_json.
-  url?: string; // The URL of the generated image, if response_format is url (default).
-  revised_prompt?: string; // The prompt that was used to generate the image, if there was any revision to the prompt.
+  base64: string; // The base64-encoded JSON of the generated image, if response_format is b64_json.
+  finishReason: string;
+  seed: number;
+  Id: string;
+  ['X-Fireworks-Billing-Idempotency-Id']: string;
 }
 
 interface FireworksAIImageGenerateResponse extends ImageGenerateResponse {
@@ -73,12 +77,28 @@ interface FireworksAIImageGenerateResponse extends ImageGenerateResponse {
 }
 
 export const FireworksAIImageGenerateResponseTransform: (
-  response: FireworksAIImageGenerateResponse | FireworksAIErrorResponse,
+  response:
+    | FireworksAIImageObject[]
+    | FireworksAIValidationErrorResponse
+    | FireworksAIErrorResponse,
   responseStatus: number
 ) => ImageGenerateResponse | ErrorResponse = (response, responseStatus) => {
-  if ('fault' in response) {
-    return FireworksAIErrorResponseTransform(response);
+  if (responseStatus != 200) {
+    return FireworksAIErrorResponseTransform(
+      response as FireworksAIValidationErrorResponse | FireworksAIErrorResponse
+    );
+  }
+  if (response instanceof Array) {
+    return {
+      created: `${new Date().getTime()}`, // Corrected method call
+      data: response?.map((r) => ({
+        b64_json: r.base64,
+        seed: r.seed,
+        finishReason: r.finishReason,
+      })), // Corrected object creation within map
+      provider: FIREWORKS_AI,
+    };
   }
 
-  return response;
+  return generateInvalidProviderResponseError(response, FIREWORKS_AI);
 };

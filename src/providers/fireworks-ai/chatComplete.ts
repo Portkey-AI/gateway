@@ -96,7 +96,7 @@ interface FireworksAIChatCompleteResponse extends ChatCompletionResponse {
   };
 }
 
-export interface FireworksAIErrorResponse {
+export interface FireworksAIValidationErrorResponse {
   fault: {
     faultstring: string;
     detail: {
@@ -104,6 +104,8 @@ export interface FireworksAIErrorResponse {
     };
   };
 }
+
+export interface FireworksAIErrorResponse extends ErrorResponse {}
 
 interface FireworksAIStreamChunk {
   id: string;
@@ -121,25 +123,33 @@ interface FireworksAIStreamChunk {
 }
 
 export const FireworksAIErrorResponseTransform: (
-  response: FireworksAIErrorResponse
+  response: FireworksAIValidationErrorResponse | FireworksAIErrorResponse
 ) => ErrorResponse = (response) => {
-  return generateErrorResponse(
-    {
-      message: response.fault.faultstring,
-      type: null,
-      param: null,
-      code: response.fault.detail.errorcode,
-    },
-    FIREWORKS_AI
-  );
+  if ('fault' in response) {
+    return generateErrorResponse(
+      {
+        message: response.fault.faultstring,
+        type: null,
+        param: null,
+        code: response.fault.detail.errorcode,
+      },
+      FIREWORKS_AI
+    );
+  }
+  return generateErrorResponse(response.error, FIREWORKS_AI);
 };
 
 export const FireworksAIChatCompleteResponseTransform: (
-  response: FireworksAIChatCompleteResponse | FireworksAIErrorResponse,
+  response:
+    | FireworksAIChatCompleteResponse
+    | FireworksAIValidationErrorResponse
+    | FireworksAIErrorResponse,
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if ('fault' in response && responseStatus !== 200) {
-    return FireworksAIErrorResponseTransform(response);
+  if (responseStatus !== 200) {
+    return FireworksAIErrorResponseTransform(
+      response as FireworksAIValidationErrorResponse | FireworksAIErrorResponse
+    );
   }
 
   if ('choices' in response) {
