@@ -1,11 +1,8 @@
-import MonsterAPIConfig from "./api";
-import { MonsterAPIChatCompleteConfig } from "./chatComplete";
-// Import other configurations as needed
+import MonsterAPIApiConfig from "./api";
 
-const MonsterAPIProviderConfig = {
-    api: MonsterAPIConfig,
-    chatComplete: MonsterAPIChatCompleteConfig,
-    // Include other functionalities as implemented
+const MonsterAPIConfig = {
+    api: MonsterAPIApiConfig,
+    // Include other configurations here if necessary
 };
 
-export default MonsterAPIProviderConfig;
+export default MonsterAPIConfig;

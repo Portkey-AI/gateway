@@ -1,13 +1,11 @@
-// monsterapi/api.ts
 import { ProviderAPIConfig } from "../types";
 
-const MonsterAPIConfig: ProviderAPIConfig = {
-    baseURL: "https://api.monsterapi.com/v1", // This should be replaced with the actual baseURL
+const MonsterAPIApiConfig: ProviderAPIConfig = {
+    baseURL: "https://llm.monsterapi.ai/v1",
     headers: (API_KEY: string) => {
-        return { Authorization: `Bearer ${API_KEY}` };
+        return { "Authorization": `Bearer ${API_KEY}` };
     },
-    chatComplete: "/chat/completions", // Update this if MonsterAPI has a chat completion endpoint
-    // Add more endpoints as needed
+    generate: "/generate"
 };
 
-export default MonsterAPIConfig;
+export default MonsterAPIApiConfig;
