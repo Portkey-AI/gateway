@@ -61,28 +61,6 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 <br><br>
 
 
-####  Usage
-
-
-### Run it locally 
-If you're familiar with Node.js and `npx`, you can run your private AI gateway locally. ([Other deployment options](#deploying-ai-gateway))
-```bash
-npx @portkey-ai/gateway
-```
-> Your AI Gateway is now running on http://localhost:8787 🚀
-
-### Usage
-Let's try making a **chat completions** call to OpenAI through the AI gateway:
-```bash
-curl '127.0.0.1:8787/v1/chat/completions' \
-  -H 'x-portkey-provider: openai' \
-  -H "Authorization: Bearer $OPENAI_KEY" \
-  -H 'Content-Type: application/json' \
-  -d '{"messages": [{"role": "user","content": "Say this is test."}], "max_tokens": 20, "model": "gpt-4"}'
-```
-[Full list of supported SDKs](#supported-sdks)
-<br><br>
-
 ### Run it using hosted version
 
 #### Python
