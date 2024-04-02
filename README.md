@@ -21,10 +21,9 @@
 
 
 </div>
-<br><br>
 
 
-With Portkey's AI Gateway you get: 
+Salient Features of Portkey's AI Gateway: 
 
 ✅&nbsp; Blazing **fast** (9.9x faster) with a **tiny footprint** (~45kb installed) <br>
 ✅&nbsp; **Load balance** across multiple models, providers, and keys <br>
@@ -42,8 +41,13 @@ Enterprise Version: [Read more here](#gateway-enterprise-version)<br>
 
 ### Run it locally 
 
-### <span style="font-family: 'Courier New', Courier, monospace;">Run it locally</span>
+### <span style="font-family: 'Space Mono', monospace;">Run it locally</span>
 
+### <span style="font-family: 'Consolas', monospace;">Run it locally</span>
+
+### <span style="font-family: 'Inconsolata', monospace;">Run it locally</span>
+
+### <span style="font-family: 'Roboto Mono', monospace;">Run it locally</span>
 
 If you're familiar with Node.js and `npx`, you can run your private AI gateway locally. ([Other deployment options](#deploying-ai-gateway))
 ```bash
@@ -64,7 +68,9 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 <br><br>
 
 
-### Run it using hosted version
+### Run the Hosted API
+
+Our hosted Gateway has become the go-to solution for many prominent organizations in production.  Having processed in excess of 300 billion tokens, our Gateway has proven its reliability and scalability. 
 
 ### Python
 
