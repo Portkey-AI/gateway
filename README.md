@@ -41,7 +41,7 @@ Salient Features of Portkey's AI Gateway:
 
 Gateway offers three options for running: 
 1. [Local Deployment](#Run-it-Locally) for complete control and customization
-2. [Hosted Version](###run-the-hosted-api) for quick setup without infrastructure concerns
+2. [Hosted Version](#Run-the-Hosted-API) for quick setup without infrastructure concerns
 3. [Enterprise Version](#gateway-enterprise-version) with advanced features and dedicated support for large-scale deployments.
 
 ### Compatibility with OpenAI API
