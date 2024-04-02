@@ -47,7 +47,7 @@ npx @portkey-ai/gateway
 ```
 > Your AI Gateway is now running on http://localhost:8787 🚀
 
-Gateway is edge-deployment ready. Explore Cloudflare, Docker, AWS etc deployment guides [here].(#deploying-ai-gateway)
+Gateway is edge-deployment ready. Explore Cloudflare, Docker, AWS etc deployment guides [here](#deploying-ai-gateway)
 
 ### Usage
 Let's try making a **chat completions** call to OpenAI through the AI gateway:
@@ -58,7 +58,6 @@ curl '127.0.0.1:8787/v1/chat/completions' \
   -H 'Content-Type: application/json' \
   -d '{"messages": [{"role": "user","content": "Say this is test."}], "max_tokens": 20, "model": "gpt-4"}'
 ```
-[Full list of supported SDKs](#supported-sdks)
 <br><br>
 
 
@@ -99,7 +98,7 @@ chat_complete = client.chat.completions.create(
 )
 ```
 
-Run any LLM using Portkey Client
+<details><summary>You can also run any LLM using Portkey Client</summary>
 
 ```python
 
@@ -120,6 +119,8 @@ print(completion)
 
 ```
 Note: Portkey allows you to manage all your API keys centrally using virtual keys. [setup guide](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/virtual-keys#using-virtual-keys) 
+
+</details>
 
 
 
