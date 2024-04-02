@@ -41,6 +41,9 @@ Enterprise Version: [Read more here](#gateway-enterprise-version)<br>
 ##  Getting Started
 
 ### Run it locally 
+
+### <span style="font-family: Arial, sans-serif;">Run it locally</span>
+
 If you're familiar with Node.js and `npx`, you can run your private AI gateway locally. ([Other deployment options](#deploying-ai-gateway))
 ```bash
 npx @portkey-ai/gateway
