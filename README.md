@@ -40,8 +40,8 @@ Salient Features of Portkey's AI Gateway:
 ## How can you run Gateway?
 
 Gateway offers three options for running: 
-1. [Local Deployment](###Run-it-Locally) for complete control and customization
-2. [Hosted Version](###Run-the-Hosted-API) for quick setup without infrastructure concerns
+1. [Local Deployment](###run-it-locally) for complete control and customization
+2. [Hosted Version](###run-the-hosted-api) for quick setup without infrastructure concerns
 3. [Enterprise Version](#gateway-enterprise-version) with advanced features and dedicated support for large-scale deployments.
 
 ### Compatibility with OpenAI API
@@ -55,7 +55,7 @@ Gateway is fully compatible with the OpenAI API, making it seamless to integrate
 
 ##  Getting Started
 
-### Run it Locally 
+### Run it Locally
 
 If you're familiar with Node.js and `npx`, you can run your private AI gateway locally.
 ```bash
@@ -185,6 +185,58 @@ console.log(chatCompletion)
 > [View the complete list of 100+ supported models here](https://portkey.ai/docs/welcome/what-is-portkey#ai-providers-supported)
 <br>
 
+## Features
+
+<table width=100%>
+  <tr>
+    <td width="50%">
+      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/fallbacks">Fallback</a></h4>
+      This feature allows you to specify a prioritized list of LLMs. If the primary LLM fails, Portkey will automatically fallback to the next LLM in the list to ensure reliability.
+
+      <details><summary>Here's an example config that retries an OpenAI request 5 times before falling back to Gemini Pro</summary>
+
+      ```js
+      {
+        "retry": { "count": 5 },
+        "strategy": { "mode": "fallback" },
+        "targets": [{
+            "provider": "openai",
+            "api_key": "sk-***"
+          },{
+            "provider": "google",
+            "api_key": "gt5***",
+            "override_params": {"model": "gemini-pro"}
+        }]
+      }
+      ```
+      </details>
+
+    </td>
+    <td width="50%">
+      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/automatic-retries">Automatic Retries</a></h4>
+      Temporary issues shouldn't mean manual re-runs. AI Gateway can automatically retry failed requests upto 5 times. We apply an exponential backoff strategy, which spaces out retry attempts to prevent network overload.
+      <br><br>
+      <img src="https://github.com/roh26it/Rubeus/assets/971978/8a6e653c-94b2-4ba7-95c7-93544ee476b1" height=200 />
+    </td>
+  </tr>
+</table>
+<table width="100%">
+  <tr>
+    <td width="50%"> 
+      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/load-balancing">Load Balancing</a></h4>
+      Distribute load effectively across multiple API keys or providers based on custom weights. This ensures high availability and optimal performance of your generative AI apps, preventing any single LLM from becoming a performance bottleneck.
+      <br><br>
+      <img src="https://framerusercontent.com/images/6EWuq3FWhqrPe3kKLqVspevi4.png" height=200 />
+    </td>
+    <td width="50%">
+      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/request-timeouts">Request Timeouts</a></h4>
+      Unpredictable response times shouldn't hinder your app's experience. Manage unruly LLMs & latencies by setting up granular request timeouts. This feature allows automatic termination of requests that exceed a specified duration, letting you gracefully handle errors or make another, faster request.
+      <br><br>
+      <img src="https://github.com/vrushankportkey/gateway/assets/134934501/b23b98b2-6451-4747-8898-6847ad8baed4" height=200 />
+    </td>
+  </tr>
+</table>
+<br>
 
 ##  Expand your Gateway!
 
