@@ -1,7 +1,14 @@
 // generate.ts
 import { MONSTERAPI } from '../../globals';
-import { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
-import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
+import {
+  ChatCompletionResponse,
+  ErrorResponse,
+  ProviderConfig,
+} from '../types';
+import {
+  generateErrorResponse,
+  generateInvalidProviderResponseError,
+} from '../utils';
 
 export const MonsterAPIChatCompleteConfig: ProviderConfig = {
   top_k: {
@@ -35,7 +42,7 @@ export const MonsterAPIChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
-    default: 'mistralai/Mistral-7B-Instruct-v0.2'
+    default: 'mistralai/Mistral-7B-Instruct-v0.2',
   },
   messages: {
     param: 'messages',
@@ -99,7 +106,9 @@ export const MonsterAPIChatCompleteResponseTransform: (
       usage: {
         prompt_tokens: response.response.token_counts.input,
         completion_tokens: response.response.token_counts.output,
-        total_tokens: response.response.token_counts.input + response.response.token_counts.output,
+        total_tokens:
+          response.response.token_counts.input +
+          response.response.token_counts.output,
       },
       provider: MONSTERAPI,
     };

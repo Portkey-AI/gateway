@@ -287,9 +287,9 @@ export async function tryPostProxy(
     };
   }
 
-  const getFromCacheFunction = c.get("getFromCache");
-  const cacheIdentifier = c.get("cacheIdentifier");
-  const requestOptions = c.get("requestOptions") ?? [];
+  const getFromCacheFunction = c.get('getFromCache');
+  const cacheIdentifier = c.get('cacheIdentifier');
+  const requestOptions = c.get('requestOptions') ?? [];
 
   let cacheResponse, cacheKey, cacheMode, cacheMaxAge;
   let cacheStatus = 'DISABLED';

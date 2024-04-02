@@ -61,7 +61,7 @@ export const VALID_PROVIDERS = [
   BEDROCK,
   GROQ,
   SEGMIND,
-  MONSTERAPI
+  MONSTERAPI,
 ];
 
 export const CONTENT_TYPES = {

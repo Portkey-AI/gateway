@@ -38,7 +38,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   bedrock: BedrockConfig,
   groq: GroqConfig,
   segmind: SegmindConfig,
-  monsterapi:MonsterAPIConfig
+  monsterapi: MonsterAPIConfig,
 };
 
 export default Providers;
