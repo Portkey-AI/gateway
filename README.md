@@ -46,7 +46,6 @@ Gateway offers three options for running:
 
 The Gateway fully OpenAI API compatible, so in order to start routing your requests through the Gateway to multiple LLMs, just change your OpenAI base URL to https://api.portkey.ai (for hosted) or localhost:8787 (for local).
 
-<br>
 
 ### Compatibility with OpenAI API
 
@@ -55,6 +54,7 @@ Gateway is fully compatible with the OpenAI API, making it seamless to integrate
 - For the hosted version, set your base URL to: `https://api.portkey.ai`
 - For local deployment, use: `http://localhost:8787`
 
+<br>
 
 ##  Getting Started
 
