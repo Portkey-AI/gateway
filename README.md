@@ -34,10 +34,28 @@ Salient Features of Portkey's AI Gateway:
 ✅&nbsp; Battle tested over **100B tokens** <br>
 ✅&nbsp; **Enterprise-ready** for enhanced security, scale, and custom deployments <br>
 
-Enterprise Version: [Read more here](#gateway-enterprise-version)<br>
 <br>
 
 ##  Getting Started
+
+### How can you run Gateway?
+
+Gateway offers three options for running: 
+1. [Local Deployment](### Run it Locally) for complete control and customization
+2. [Hosted Version](### Run the Hosted API) for quick setup without infrastructure concerns
+3. [Enterprise Version](#gateway-enterprise-version) with advanced features and dedicated support for large-scale deployments.
+
+The Gateway fully OpenAI API compatible, so in order to start routing your requests through the Gateway to multiple LLMs, just change your OpenAI base URL to https://api.portkey.ai (for hosted) or localhost:8787 (for local).
+
+<br>
+
+### Compatibility with OpenAI API
+
+Gateway is fully compatible with the OpenAI API, making it seamless to integrate with your existing applications. To start routing your requests through Gateway to multiple LLMs, you only need to update your OpenAI base URL.
+
+- For the hosted version, set your base URL to: `https://api.portkey.ai`
+- For local deployment, use: `http://localhost:8787`
+
 
 ### Run it Locally 
 
@@ -171,46 +189,13 @@ console.log(chatCompletion)
 > [View the complete list of 100+ supported models here](https://portkey.ai/docs/welcome/what-is-portkey#ai-providers-supported)
 <br>
 
-## Features
-
-<table width=100%>
-  <tr>
-    <td width="50%">
-      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/fallbacks"> Fallback</a></h4>
-      This feature allows you to specify a prioritized list of LLMs. If the primary LLM fails, Portkey will automatically fallback to the next LLM in the list to ensure reliability.
-      <br><br>
-      <img src="https://framerusercontent.com/images/gmlOW8yeKP2pGuIsObM6gKLzeMI.png" height=200 />
-    </td>
-    <td width="50%">
-      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/automatic-retries"> Automatic Retries</a></h4>
-      AI Gateway can automatically retry failed requests up to 5 times. A backoff strategy spaces out retry attempts to prevent network overload.
-      <br><br>
-      <img src="https://github.com/roh26it/Rubeus/assets/971978/8a6e653c-94b2-4ba7-95c7-93544ee476b1" height=200 />
-    </td>
-  </tr>
-</table>
-<table width="100%">
-  <tr>
-    <td width="50%"> 
-      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/load-balancing"> Load Balancing</a></h4>
-      Distribute load effectively across multiple API keys or providers based on custom weights to ensure high availability and optimal performance.
-      <br><br>
-      <img src="https://framerusercontent.com/images/6EWuq3FWhqrPe3kKLqVspevi4.png" height=200 />
-    </td>
-    <td width="50%">
-      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/request-timeouts"> Request Timeouts</a></h4>
-      Manage unruly LLMs & latencies by setting up granular request timeouts, allowing automatic termination of requests that exceed a specified duration.
-      <br><br>
-      <img src="https://github.com/vrushankportkey/gateway/assets/134934501/b23b98b2-6451-4747-8898-6847ad8baed4" height=200 />
-    </td>
-  </tr>
-</table>
-<br>
 
 ##  Expand your Gateway!
 
 ### Fallbacks 
-Here's an example config that retries an OpenAI request 5 times before falling back to Gemini Pro
+This feature allows you to specify a prioritized list of LLMs. If the primary LLM fails, Portkey will automatically fallback to the next LLM in the list to ensure reliability.
+
+<details><summary>Here's an example config that retries an OpenAI request 5 times before falling back to Gemini Pro</summary>
 
 ```js
 {
@@ -226,11 +211,14 @@ Here's an example config that retries an OpenAI request 5 times before falling b
   }]
 }
 ```
+</details>
 
 
 
 ### Load Balancing
-This config would enable load balancing equally between 2 OpenAI keys
+Distribute load effectively across multiple API keys or providers based on custom weights to ensure high availability and optimal performance.
+<details>
+<summary>This config would enable load balancing equally between 2 OpenAI keys</summary>
 
 ```js
 {
@@ -247,6 +235,43 @@ This config would enable load balancing equally between 2 OpenAI keys
   ]
 }
 ```
+</details>
+
+
+### Automatic Retries
+AI Gateway can automatically retry failed requests up to 5 times. A backoff strategy spaces out retry attempts to prevent network overload.
+
+<details>
+<summary>This config would enable to retry with 5 attempts</summary>
+
+```js
+{
+    "retry": {
+        "attempts": 5
+    },
+    "virtual_key": "virtual-key-xxx"
+}
+```
+</details>
+
+### Request Timeouts
+Manage unruly LLMs & latencies by setting up granular request timeouts, allowing automatic termination of requests that exceed a specified duration.
+
+<details>
+<summary>Here, the request timeout of 10 seconds will be applied to *all* the targets.</summary>
+
+```js
+{
+  "strategy": { "mode": "fallback" },
+  "request_timeout": 10000,
+  "targets": [
+    { "virtual_key": "open-ai-xxx" },
+    { "virtual_key": "azure-open-ai-xxx" }
+  ]
+}
+```
+</details>
+
 
 Here's a guide to [use config object in your request](https://portkey.ai/docs/api-reference/config-object).
 <br>
