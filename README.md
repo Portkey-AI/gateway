@@ -77,7 +77,7 @@ curl '127.0.0.1:8787/v1/chat/completions' \
 
 ### Run the Hosted API
 
-Our hosted Gateway is the go-to solution for many prominent organizations in production.  Having processed in excess of 300 billion tokens, our Gateway has proven its reliability and scalability. 
+Our [hosted Gateway](https://portkey.ai/features/ai-gateway) is the go-to solution for many prominent organizations in production.  Having processed in excess of 300 billion tokens, our Gateway has proven its reliability and scalability. 
 
 ### Python
 
