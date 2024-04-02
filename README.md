@@ -44,9 +44,6 @@ Gateway offers three options for running:
 2. [Hosted Version](###Run-the-Hosted-API) for quick setup without infrastructure concerns
 3. [Enterprise Version](#gateway-enterprise-version) with advanced features and dedicated support for large-scale deployments.
 
-The Gateway fully OpenAI API compatible, so in order to start routing your requests through the Gateway to multiple LLMs, just change your OpenAI base URL to https://api.portkey.ai (for hosted) or localhost:8787 (for local).
-
-
 ### Compatibility with OpenAI API
 
 Gateway is fully compatible with the OpenAI API, making it seamless to integrate with your existing applications. To start routing your requests through Gateway to multiple LLMs, you only need to update your OpenAI base URL.
@@ -77,8 +74,6 @@ curl '127.0.0.1:8787/v1/chat/completions' \
   -H 'Content-Type: application/json' \
   -d '{"messages": [{"role": "user","content": "Say this is test."}], "max_tokens": 20, "model": "gpt-4"}'
 ```
-<br><br>
-
 
 ### Run the Hosted API
 
