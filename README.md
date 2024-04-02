@@ -41,8 +41,8 @@ Salient Features of Portkey's AI Gateway:
 ### How can you run Gateway?
 
 Gateway offers three options for running: 
-1. [Local Deployment](###Run it Locally) for complete control and customization
-2. [Hosted Version](###Run the Hosted API) for quick setup without infrastructure concerns
+1. [Local Deployment](###Run-it-Locally) for complete control and customization
+2. [Hosted Version](###Run-the-Hosted-API) for quick setup without infrastructure concerns
 3. [Enterprise Version](#gateway-enterprise-version) with advanced features and dedicated support for large-scale deployments.
 
 The Gateway fully OpenAI API compatible, so in order to start routing your requests through the Gateway to multiple LLMs, just change your OpenAI base URL to https://api.portkey.ai (for hosted) or localhost:8787 (for local).
