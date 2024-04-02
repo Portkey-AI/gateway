@@ -224,7 +224,6 @@ console.log(chatCompletion)
 ##  Expand your Gateway!
 
 ### Fallbacks 
-This feature allows you to specify a prioritized list of LLMs. If the primary LLM fails, Portkey will automatically fallback to the next LLM in the list to ensure reliability.
 
 <details><summary>Here's an example config that retries an OpenAI request 5 times before falling back to Gemini Pro</summary>
 
@@ -247,7 +246,6 @@ This feature allows you to specify a prioritized list of LLMs. If the primary LL
 
 
 ### Load Balancing
-Distribute load effectively across multiple API keys or providers based on custom weights to ensure high availability and optimal performance.
 <details>
 <summary>This config would enable load balancing equally between 2 OpenAI keys</summary>
 
@@ -270,7 +268,6 @@ Distribute load effectively across multiple API keys or providers based on custo
 
 
 ### Automatic Retries
-AI Gateway can automatically retry failed requests up to 5 times. A backoff strategy spaces out retry attempts to prevent network overload.
 
 <details>
 <summary>This config would enable to retry with 5 attempts</summary>
@@ -286,7 +283,6 @@ AI Gateway can automatically retry failed requests up to 5 times. A backoff stra
 </details>
 
 ### Request Timeouts
-Manage unruly LLMs & latencies by setting up granular request timeouts, allowing automatic termination of requests that exceed a specified duration.
 
 <details>
 <summary>Here, the request timeout of 10 seconds will be applied to *all* the targets.</summary>
