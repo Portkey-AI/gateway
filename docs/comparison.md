@@ -21,7 +21,7 @@ While Portkey itself has a generous free tier (1k requests free / month), if you
 
 | Product | Feature | Open Source <br>(Host Locally) | Hosted <br>(Free) | Hosted <br>($100/Month) | Enterprise <br>(On-Prem) |
 | - | - | - | - | - | - |
-| Requests per Month |  | No Limit | 1K <br>+ $19/Month for every 100K | 1M/Month | No Limit |
+| Requests per Month |  | No Limit | 1K + $19/Month <br>for every 100K | 1M | No Limit |
 | **Observability** | | | |
 | | Logs | ❌ | ✅ <br>Up to 3 Days | ✅ <br>Up to 30 Days | ✅ |
 | | Traces | ❌ | ✅  <br>Up to 3 Days | ✅ <br>Up to 30 Days | ✅ |
@@ -35,9 +35,9 @@ While Portkey itself has a generous free tier (1k requests free / month), if you
 | | Automatic Retries | ✅ | ✅  | ✅ | ✅ |
 | | Request Timeouts | ✅ | ✅  | ✅ | ✅ |
 | | Config Management | ❌ | ✅ <br>Up to 1 Config | ✅ | ✅ |
-| | Virtual Keys & Key Management | ❌ | ❌ | ✅ | ✅ |
 | | Simple Caching | ❌ | ✅ | ✅ | ✅ |
 | | Semantic Caching | ❌ | ❌ | ✅ | ✅ |
+| | Virtual Keys & Key Management | ❌ | ❌ | ✅ | ✅ |
 | **Prompt Management** | | | |
 | | Prompt Templates | ❌ | ✅ <br>Up to 3 Templates | ✅ | ✅ |
 | | Playground | ❌ | ✅ | ✅ | ✅ |
@@ -48,8 +48,8 @@ While Portkey itself has a generous free tier (1k requests free / month), if you
 | | Eval Templates | ❌ | ✅ <br>Up to 1 Eval | ✅ | ✅ |
 | **Security & Compliance** | | | |
 | | Role Based<br>Access Control | ❌ | ❌ | ✅ | ✅ |
-| | PII Anonymizer | ❌ | ❌ | ❌ | ✅ |
 | | SOC2, ISO27001,<br>GDPR, HIPAA Compliances | ❌ | ❌ | ✅ | ✅ |
+| | PII Anonymizer | ❌ | ❌ | ❌ | ✅ |
 | | BAA Signing<br>for Compliances | ❌ | ❌ | ❌ | ✅ |
 | | VPC Managed Hosting | ❌ | ❌ | ❌ | ✅ |
 | | Configurable Retention<br>Periods | ❌ | ❌ | ❌ | ✅ |
