@@ -65,7 +65,7 @@ npx @portkey-ai/gateway
 
 Gateway is edge-deployment ready. Explore Cloudflare, Docker, AWS etc deployment guides [here](#deploying-ai-gateway)
 
-### Usage
+#### Usage
 Let's try making a **chat completions** call to OpenAI through the AI gateway:
 ```bash
 curl '127.0.0.1:8787/v1/chat/completions' \
