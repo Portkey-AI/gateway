@@ -118,8 +118,6 @@ export const WorkersAiChatCompleteResponseTransform: (
   }
 
   if ('result' in response) {
-    // const { input_tokens = 0, output_tokens = 0 } = {};
-
     return {
       id: Date.now().toString(),
       object: 'chat_completion',
@@ -134,11 +132,6 @@ export const WorkersAiChatCompleteResponseTransform: (
           finish_reason: '',
         },
       ],
-      // usage: {
-      //   prompt_tokens: input_tokens,
-      //   completion_tokens: output_tokens,
-      //   total_tokens: input_tokens + output_tokens,
-      // },
     };
   }
 
