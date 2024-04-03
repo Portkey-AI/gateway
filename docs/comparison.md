@@ -19,9 +19,10 @@ Portkey processes **billions** of tokens everyday for our customers worldwide. A
 
 While Portkey itself has a generous free tier (1k requests free / month), if you are considering to use the open source Gateway in your projects instead, here's a handy guide illustrating the key differences between [Portkey's hosted app](https://app.portkey.ai/) and the open source Gateway that powers it:
 
-| Product | Feature | Open Source <br>(Host Locally) | Hosted <br>(Free) | Hosted <br>($99/Month) | Enterprise <br>(On-Prem) |
-| - | - | - | - | - | - |
-| Requests per Month |  | No Limit | 3K + $9/Month <br>for every 100K | 1M + $99/Month <br>for every 1M | Unlimited |
+| Product | Feature | Open Source <br>(Free Forever) | Hosted - Developer<br>(Free Forever) | Hosted - Business<br>($99/Month) | Enterprise <br>(On-Prem) |
+| :- | :- | :- | :- | :- | :- |
+| Requests per Month |  | No Limit | 3K + $9/Month<br>for every 100K | 1M + $99/Month<br>for every 1M | Unlimited |
+| Trial Period | | - | - | 21-Days<br>No Credit Card | 2-Months<br>Money Back | 
 | **Observability** | | | |
 | | Logs | ❌ | ✅ <br>Up to 3 Days | ✅ <br>Up to 30 Days | ✅ <br>Unlimited |
 | | Traces | ❌ | ✅  <br>Up to 3 Days | ✅ <br>Up to 30 Days | ✅ <br>Unlimited |
