@@ -5,6 +5,7 @@ import {
   ErrorResponse,
   ProviderConfig,
 } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 
 export const WorkersAiChatCompleteConfig: ProviderConfig = {
   messages: [
@@ -76,13 +77,13 @@ export const WorkersAiChatCompleteConfig: ProviderConfig = {
 };
 
 export interface WorkersAiErrorObject {
-  type: string;
+  code: string;
   message: string;
 }
 
 interface WorkersAiErrorResponse {
-  type: string;
-  error: WorkersAiErrorObject;
+  success: boolean;
+  errors: WorkersAiErrorObject[];
 }
 
 interface WorkersAiChatCompleteResponse {
@@ -99,22 +100,35 @@ interface WorkersAiChatCompleteStreamResponse {
   p?: string;
 }
 
+export const WorkersAiErrorResponseTransform: (
+  response: WorkersAiErrorResponse
+) => ErrorResponse | undefined = (response) => {
+  if ('errors' in response) {
+    return generateErrorResponse(
+      {
+        message: response.errors?.map((error) => `Error ${error.code}:${error.message}`).join(', '),
+        type: null,
+        param: null,
+        code: null,
+      },
+      WORKERS_AI
+    );
+  }
+
+  return undefined;
+};
+
 // TODO: cloudflare do not return the usage
 // TODO: return the model
 export const WorkersAiChatCompleteResponseTransform: (
   response: WorkersAiChatCompleteResponse | WorkersAiErrorResponse,
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if (responseStatus !== 200 && 'errors' in response) {
-    return {
-      error: {
-        message: response.errors?.join(','),
-        type: null,
-        param: null,
-        code: null,
-      },
-      provider: WORKERS_AI,
-    } as ErrorResponse;
+  if (responseStatus !== 200) {
+    const errorResponse = WorkersAiErrorResponseTransform(
+      response as WorkersAiErrorResponse
+    );
+    if (errorResponse) return errorResponse;
   }
 
   if ('result' in response) {
@@ -135,15 +149,7 @@ export const WorkersAiChatCompleteResponseTransform: (
     };
   }
 
-  return {
-    error: {
-      message: `Invalid response received from WorkersAi: ${JSON.stringify(response)}`,
-      type: null,
-      param: null,
-      code: null,
-    },
-    provider: WORKERS_AI,
-  } as ErrorResponse;
+  return generateInvalidProviderResponseError(response, WORKERS_AI);
 };
 
 export const WorkersAiChatCompleteStreamChunkTransform: (

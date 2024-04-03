@@ -1,7 +1,7 @@
 import { Params } from '../../types/requestBody';
 import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
-import { WorkersAiErrorObject } from './chatComplete';
 import { WORKERS_AI } from '../../globals';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 
 export const WorkersAiCompleteConfig: ProviderConfig = {
   prompt: {
@@ -14,6 +14,16 @@ export const WorkersAiCompleteConfig: ProviderConfig = {
     default: false,
   },
 };
+
+export interface WorkersAiErrorObject {
+  code: string;
+  message: string;
+}
+
+interface WorkersAiErrorResponse {
+  success: boolean;
+  errors: WorkersAiErrorObject[];
+}
 
 interface WorkersAiCompleteResponse {
   result: {
@@ -29,37 +39,54 @@ interface WorkersAiCompleteStreamResponse {
   p?: string;
 }
 
-export const WorkersAiCompleteResponseTransform: (
-  response: WorkersAiCompleteResponse,
-  responseStatus: number
-) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if (responseStatus !== 200 && 'errors' in response) {
-    return {
-      error: {
-        message: response.errors?.join(','),
+export const WorkersAiErrorResponseTransform: (
+  response: WorkersAiErrorResponse
+) => ErrorResponse | undefined = (response) => {
+  if ('errors' in response) {
+    return generateErrorResponse(
+      {
+        message: response.errors?.map((error) => `Error ${error.code}:${error.message}`).join(', '),
         type: null,
         param: null,
         code: null,
       },
-      provider: WORKERS_AI,
-    } as ErrorResponse;
+      WORKERS_AI
+    );
   }
 
-  return {
-    id: Date.now().toString(),
-    object: 'text_completion',
-    created: Math.floor(Date.now() / 1000),
-    model: '',
-    provider: WORKERS_AI,
-    choices: [
-      {
-        text: response.result.response,
-        index: 0,
-        logprobs: null,
-        finish_reason: '',
-      },
-    ],
-  };
+  return undefined;
+};
+
+export const WorkersAiCompleteResponseTransform: (
+  response: WorkersAiCompleteResponse | WorkersAiErrorResponse,
+  responseStatus: number
+) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
+  if (responseStatus !== 200) {
+    const errorResponse = WorkersAiErrorResponseTransform(
+      response as WorkersAiErrorResponse
+    );
+    if (errorResponse) return errorResponse;
+  }
+
+  if ('result' in response) {
+    return {
+      id: Date.now().toString(),
+      object: 'text_completion',
+      created: Math.floor(Date.now() / 1000),
+      model: '',
+      provider: WORKERS_AI,
+      choices: [
+        {
+          text: response.result.response,
+          index: 0,
+          logprobs: null,
+          finish_reason: '',
+        },
+      ],
+    };
+  }
+
+  return generateInvalidProviderResponseError(response, WORKERS_AI);
 };
 
 export const WorkersAiCompleteStreamChunkTransform: (
