@@ -191,8 +191,8 @@ export const fetchProviderOptionsFromConfig = (
       providerOptions[0].deploymentId = camelCaseConfig.deploymentId;
     if (camelCaseConfig.apiVersion)
       providerOptions[0].apiVersion = camelCaseConfig.apiVersion;
-    if (camelCaseConfig.accountId)
-      providerOptions[0].accountId = camelCaseConfig.accountId;
+    if (camelCaseConfig.workersAiAccountId)
+      providerOptions[0].workersAiAccountId = camelCaseConfig.workersAiAccountId;
     mode = 'single';
   } else {
     if (camelCaseConfig.strategy && camelCaseConfig.strategy.mode) {
@@ -955,7 +955,7 @@ export function constructConfigFromRequestHeaders(
   };
 
   const workersAiConfig = {
-    accountId: requestHeaders[`x-${POWERED_BY}-workers-ai-account-id`],
+    workersAiAccountId: requestHeaders[`x-${POWERED_BY}-workers-ai-account-id`],
   };
 
   if (requestHeaders[`x-${POWERED_BY}-config`]) {

@@ -2,8 +2,8 @@ import { ProviderAPIConfig } from '../types';
 
 const WorkersAiAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
-    const { accountId } = providerOptions;
-    return `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run`;
+    const { workersAiAccountId } = providerOptions;
+    return `https://api.cloudflare.com/client/v4/accounts/${workersAiAccountId}/ai/run`;
   },
   headers: ({ providerOptions }) => {
     const { apiKey } = providerOptions;

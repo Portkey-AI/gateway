@@ -44,7 +44,7 @@ export interface Options {
   apiVersion?: string;
   adAuth?: string;
   /** Workers AI specific */
-  accountId?: string;
+  workersAiAccountId?: string;
   /** The parameter to set custom base url */
   customHost?: string;
   /** The parameter to set list of headers to be forwarded as-is to the provider */
@@ -241,7 +241,7 @@ export interface ShortConfig {
   retry?: RetrySettings;
   resourceName?: string;
   deploymentId?: string;
-  accountId?: string;
+  workersAiAccountId?: string;
   apiVersion?: string;
   customHost?: string;
 }
