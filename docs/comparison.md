@@ -21,7 +21,7 @@ While Portkey itself has a generous free tier (1k requests free / month), if you
 
 | Product | Feature | Open Source <br>(Host Locally) | Hosted <br>(Free) | Hosted <br>($100/Month) | Enterprise <br>(On-Prem) |
 | - | - | - | - | - | - |
-| Requests per Month |  | No Limit | 1K + $19/Month <br>for every 100K | 1M | No Limit |
+| Requests per Month |  | No Limit | 1K + $19/Month <br>for every 100K | 1M | Unlimited |
 | **Observability** | | | |
 | | Logs | ❌ | ✅ <br>Up to 3 Days | ✅ <br>Up to 30 Days | ✅ <br>Unlimited |
 | | Traces | ❌ | ✅  <br>Up to 3 Days | ✅ <br>Up to 30 Days | ✅ <br>Unlimited |
