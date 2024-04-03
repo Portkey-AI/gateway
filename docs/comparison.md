@@ -23,8 +23,8 @@ While Portkey itself has a generous free tier (1k requests free / month), if you
 | - | - | - | - | - | - |
 | Requests per Month |  | No Limit | 1K + $19/Month <br>for every 100K | 1M | No Limit |
 | **Observability** | | | |
-| | Logs | ❌ | ✅ <br>Up to 3 Days | ✅ <br>Up to 30 Days | ✅ |
-| | Traces | ❌ | ✅  <br>Up to 3 Days | ✅ <br>Up to 30 Days | ✅ |
+| | Logs | ❌ | ✅ <br>Up to 3 Days | ✅ <br>Up to 30 Days | ✅ <br>Unlimited |
+| | Traces | ❌ | ✅  <br>Up to 3 Days | ✅ <br>Up to 30 Days | ✅ <br>Unlimited |
 | | Feedback | ❌ | ✅  | ✅ | ✅ |
 | | Custom Metadata | ❌ | ✅  | ✅ | ✅ |
 | | Filters | ❌ | ✅  | ✅ | ✅ |
@@ -34,18 +34,18 @@ While Portkey itself has a generous free tier (1k requests free / month), if you
 | | Loadbalancing | ✅ | ✅  | ✅ | ✅ |
 | | Automatic Retries | ✅ | ✅  | ✅ | ✅ |
 | | Request Timeouts | ✅ | ✅  | ✅ | ✅ |
-| | Config Management | ❌ | ✅ <br>Up to 1 Config | ✅ | ✅ |
+| | Config Management | ❌ | ✅ <br>Up to 1 Config | ✅ <br>Unlimited | ✅ <br>Unlimited |
 | | Simple Caching | ❌ | ✅ | ✅ | ✅ |
 | | Semantic Caching | ❌ | ❌ | ✅ | ✅ |
 | | Virtual Keys & Key Management | ❌ | ❌ | ✅ | ✅ |
 | **Prompt Management** | | | |
-| | Prompt Templates | ❌ | ✅ <br>Up to 3 Templates | ✅ | ✅ |
+| | Prompt Templates | ❌ | ✅ <br>Up to 3 Templates | ✅ <br>Unlimited | ✅ <br>Unlimited |
 | | Playground | ❌ | ✅ | ✅ | ✅ |
 | | API Deployment | ❌ | ✅ | ✅ | ✅ |
 | | Versioning | ❌ | ✅ | ✅ | ✅ |
 | | Variable Management | ❌ | ✅  | ✅ | ✅ |
 | **Guardrails** | | | |
-| | Eval Templates | ❌ | ✅ <br>Up to 1 Eval | ✅ | ✅ |
+| | Eval Templates | ❌ | ✅ <br>Up to 1 Eval | ✅ <br> Unlimited | ✅ <br> Unlimited |
 | **Security & Compliance** | | | |
 | | Role Based<br>Access Control | ❌ | ❌ | ✅ | ✅ |
 | | SOC2, ISO27001,<br>GDPR, HIPAA Compliances | ❌ | ❌ | ✅ | ✅ |
