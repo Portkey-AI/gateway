@@ -118,6 +118,11 @@ export interface FireworksAIStreamChunk {
     index: number;
     finish_reason: string | null;
   }[];
+  usage: null | {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
 }
 
 export const FireworksAIErrorResponseTransform: (
@@ -200,6 +205,7 @@ export const FireworksAIChatCompleteStreamChunkTransform: (
           finish_reason: parsedChunk.choices[0].finish_reason,
         },
       ],
+      ...(parsedChunk.usage ? { usage: parsedChunk.usage } : {}),
     })}` + '\n\n'
   );
 };
