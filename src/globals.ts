@@ -42,6 +42,7 @@ export const GROQ: string = 'groq';
 export const SEGMIND: string = 'segmind';
 export const MOONSHOT: string = "moonshot";
 export const OPENROUTER: string = "openrouter";
+export const LINGYI: string  = "lingyi";
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -64,6 +65,7 @@ export const VALID_PROVIDERS = [
   SEGMIND,
   MOONSHOT,
   OPENROUTER,
+  LINGYI,
 ];
 
 export const CONTENT_TYPES = {

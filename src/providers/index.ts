@@ -19,6 +19,7 @@ import GroqConfig from './groq';
 import SegmindConfig from './segmind';
 import MoonshotConfig from './moonshot';
 import OpenrouterConfig from './openrouter';
+import LingYiConfig from './lingyi';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -41,6 +42,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   segmind: SegmindConfig,
   moonshot: MoonshotConfig,
   openrouter: OpenrouterConfig,
+  lingyi: LingYiConfig,
 };
 
 export default Providers;
