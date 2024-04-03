@@ -1,13 +1,22 @@
-import { ProviderAPIConfig } from "../types";
+import { ProviderAPIConfig } from '../types';
 
 const AnyscaleAPIConfig: ProviderAPIConfig = {
-  baseURL: "https://api.endpoints.anyscale.com/v1",
-  headers: (API_KEY:string) => {
-    return {"Authorization": `Bearer ${API_KEY}`}
+  getBaseURL: () => 'https://api.endpoints.anyscale.com/v1',
+  headers: ({ providerOptions }) => {
+    return { Authorization: `Bearer ${providerOptions.apiKey}` };
   },
-  chatComplete: "/chat/completions",
-  complete: "/completions",
-  embed: "/embeddings"
+  getEndpoint: ({ fn }) => {
+    switch (fn) {
+      case 'chatComplete':
+        return '/chat/completions';
+      case 'complete':
+        return '/completions';
+      case 'embed':
+        return '/embeddings';
+      default:
+        return '';
+    }
+  },
 };
 
 export default AnyscaleAPIConfig;

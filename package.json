@@ -1,6 +1,6 @@
 {
   "name": "@portkey-ai/gateway",
-  "version": "1.0.10",
+  "version": "1.1.2",
   "description": "A fast AI gateway by Portkey",
   "repository": {
     "type": "git",
@@ -30,7 +30,9 @@
     "pretty": "prettier --write \"./**/*.{js,jsx,ts,tsx,json}\"",
     "build": "rollup -c",
     "prepublishOnly": "npm run build",
-    "start:node": "node build/start-server.js"
+    "start:node": "node build/start-server.js",
+    "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,json}\"",
+    "format:check": "prettier --check \"./**/*.{js,jsx,ts,tsx,json}\""
   },
   "dependencies": {
     "@aws-crypto/sha256-js": "^5.2.0",
@@ -48,7 +50,7 @@
     "@rollup/plugin-typescript": "^11.1.5",
     "@types/async-retry": "^1.4.5",
     "@types/node": "20.8.3",
-    "prettier": "^3.1.1",
+    "prettier": "3.2.5",
     "rollup": "^4.9.1",
     "tsx": "^4.7.0",
     "wrangler": "^3.0.1"

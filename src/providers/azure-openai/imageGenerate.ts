@@ -1,8 +1,8 @@
-import { OPEN_AI } from '../../globals';
+import { AZURE_OPEN_AI } from '../../globals';
+import { OpenAIErrorResponseTransform } from '../openai/chatComplete';
 import { ErrorResponse, ImageGenerateResponse, ProviderConfig } from '../types';
-import { OpenAIErrorResponseTransform } from './chatComplete';
 
-export const OpenAIImageGenerateConfig: ProviderConfig = {
+export const AzureOpenAIImageGenerateConfig: ProviderConfig = {
   prompt: {
     param: 'prompt',
     required: true,
@@ -10,7 +10,7 @@ export const OpenAIImageGenerateConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
-    default: 'dall-e-2',
+    default: 'dall-e-3',
   },
   n: {
     param: 'n',
@@ -34,22 +34,22 @@ export const OpenAIImageGenerateConfig: ProviderConfig = {
   },
 };
 
-interface OpenAIImageObject {
+interface AzureOpenAIImageObject {
   b64_json?: string; // The base64-encoded JSON of the generated image, if response_format is b64_json.
   url?: string; // The URL of the generated image, if response_format is url (default).
   revised_prompt?: string; // The prompt that was used to generate the image, if there was any revision to the prompt.
 }
 
-interface OpenAIImageGenerateResponse extends ImageGenerateResponse {
-  data: OpenAIImageObject[];
+interface AzureOpenAIImageGenerateResponse extends ImageGenerateResponse {
+  data: AzureOpenAIImageObject[];
 }
 
-export const OpenAIImageGenerateResponseTransform: (
-  response: OpenAIImageGenerateResponse | ErrorResponse,
+export const AzureOpenAIImageGenerateResponseTransform: (
+  response: AzureOpenAIImageGenerateResponse | ErrorResponse,
   responseStatus: number
 ) => ImageGenerateResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'error' in response) {
-    return OpenAIErrorResponseTransform(response, OPEN_AI);
+    return OpenAIErrorResponseTransform(response, AZURE_OPEN_AI);
   }
 
   return response;

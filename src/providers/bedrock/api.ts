@@ -1,59 +1,62 @@
-import { Options } from "../../types/requestBody";
-import { ProviderAPIConfig } from "../types";
-import { generateAWSHeaders } from "./utils";
+import { Options } from '../../types/requestBody';
+import { ProviderAPIConfig } from '../types';
+import { generateAWSHeaders } from './utils';
 
 const BedrockAPIConfig: ProviderAPIConfig = {
-    getBaseURL: (REGION: string = "us-east-1") =>
-        `https://bedrock-runtime.${REGION}.amazonaws.com`,
-    headers: async (
-        providerOption: Options,
-        body: Record<string, any>,
-        url: string
-    ) => {
-        const headers = {
-            "content-type": "application/json",
-        };
+  getBaseURL: ({ providerOptions }) =>
+    `https://bedrock-runtime.${providerOptions.awsRegion || 'us-east-1'}.amazonaws.com`,
+  headers: async ({
+    providerOptions,
+    transformedRequestBody,
+    transformedRequestUrl,
+  }) => {
+    const headers = {
+      'content-type': 'application/json',
+    };
 
-        return generateAWSHeaders(
-            body,
-            headers,
-            url,
-            "POST",
-            "bedrock",
-            providerOption.awsRegion || "",
-            providerOption.awsAccessKeyId || "",
-            providerOption.awsSecretAccessKey || "",
-            providerOption.awsSessionToken || ""
-        );
-    },
-    getEndpoint: (fn: string, model: string, stream: boolean) => {
-        let mappedFn = fn;
-        if (stream) {
-            mappedFn = `stream-${fn}`;
-        }
-        const endpoint = `/model/${model}/invoke`;
-        const streamEndpoint = `/model/${model}/invoke-with-response-stream`;
-        switch (mappedFn) {
-            case "chatComplete": {
-                return endpoint;
-            }
-            case "stream-chatComplete": {
-                return streamEndpoint;
-            }
-            case "complete": {
-                return endpoint;
-            }
-            case "stream-complete": {
-                return streamEndpoint;
-            }
-            case "embed": {
-                return endpoint;
-            }
-            case "imageGenerate": {
-                return endpoint;
-            }
-        }
-    },
+    return generateAWSHeaders(
+      transformedRequestBody,
+      headers,
+      transformedRequestUrl,
+      'POST',
+      'bedrock',
+      providerOptions.awsRegion || '',
+      providerOptions.awsAccessKeyId || '',
+      providerOptions.awsSecretAccessKey || '',
+      providerOptions.awsSessionToken || ''
+    );
+  },
+  getEndpoint: ({ fn, gatewayRequestBody }) => {
+    const { model, stream } = gatewayRequestBody;
+    let mappedFn = fn;
+    if (stream) {
+      mappedFn = `stream-${fn}`;
+    }
+    const endpoint = `/model/${model}/invoke`;
+    const streamEndpoint = `/model/${model}/invoke-with-response-stream`;
+    switch (mappedFn) {
+      case 'chatComplete': {
+        return endpoint;
+      }
+      case 'stream-chatComplete': {
+        return streamEndpoint;
+      }
+      case 'complete': {
+        return endpoint;
+      }
+      case 'stream-complete': {
+        return streamEndpoint;
+      }
+      case 'embed': {
+        return endpoint;
+      }
+      case 'imageGenerate': {
+        return endpoint;
+      }
+      default:
+        return '';
+    }
+  },
 };
 
 export default BedrockAPIConfig;

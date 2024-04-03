@@ -1,25 +1,5 @@
-import { z } from "zod";
-import {
-  ANTHROPIC,
-  ANYSCALE,
-  AZURE_OPEN_AI,
-  COHERE,
-  GOOGLE,
-  MISTRAL_AI,
-  OPEN_AI,
-  PERPLEXITY_AI,
-  TOGETHER_AI,
-  DEEPINFRA,
-  NOMIC,
-  STABILITY_AI,
-  OLLAMA,
-  BEDROCK,
-  AI21,
-  GROQ,
-  SEGMIND,
-  MOONSHOT,
-  OPENROUTER,
-} from "../../../globals";
+import { z } from 'zod';
+import { OLLAMA, VALID_PROVIDERS } from '../../../globals';
 
 export const configSchema: any = z
   .object({
@@ -28,45 +8,20 @@ export const configSchema: any = z
         mode: z
           .string()
           .refine(
-            (value) => ["single", "loadbalance", "fallback"].includes(value),
+            (value) => ['single', 'loadbalance', 'fallback'].includes(value),
             {
               message:
                 "Invalid 'mode' value. Must be one of: single, loadbalance, fallback",
-            },
+            }
           ),
         on_status_codes: z.array(z.number()).optional(),
       })
       .optional(),
     provider: z
       .string()
-      .refine(
-        (value) =>
-          [
-            OPEN_AI,
-            ANTHROPIC,
-            AZURE_OPEN_AI,
-            ANYSCALE,
-            COHERE,
-            TOGETHER_AI,
-            GOOGLE,
-            PERPLEXITY_AI,
-            MISTRAL_AI,
-            DEEPINFRA,
-            NOMIC,
-            STABILITY_AI,
-            OLLAMA,
-            AI21,
-            BEDROCK,
-            GROQ,
-            SEGMIND,
-            MOONSHOT,
-            OPENROUTER,
-          ].includes(value),
-        {
-          message:
-            "Invalid 'provider' value. Must be one of: openai, anthropic, azure-openai, anyscale, cohere",
-        },
-      )
+      .refine((value) => VALID_PROVIDERS.includes(value), {
+        message: `Invalid 'provider' value. Must be one of: ${VALID_PROVIDERS.join(', ')}`,
+      })
       .optional(),
     api_key: z.string().optional(),
     aws_secret_access_key: z.string().optional(),
@@ -77,7 +32,7 @@ export const configSchema: any = z
       .object({
         mode: z
           .string()
-          .refine((value) => ["simple", "semantic"].includes(value), {
+          .refine((value) => ['simple', 'semantic'].includes(value), {
             message:
               "Invalid 'cache.mode' value. Must be one of: simple, semantic",
           }),
@@ -126,17 +81,17 @@ export const configSchema: any = z
     {
       message:
         "Invalid configuration. It must have either 'provider' and 'api_key', or 'strategy' and 'targets', or 'cache', or 'retry', or 'request_timeout'",
-    },
+    }
   )
   .refine(
     (value) => {
       const customHost = value.custom_host;
-      if (customHost && customHost.indexOf("api.portkey") > -1) {
+      if (customHost && customHost.indexOf('api.portkey') > -1) {
         return false;
       }
       return true;
     },
     {
-      message: "Invalid custom host",
-    },
+      message: 'Invalid custom host',
+    }
   );
