@@ -47,7 +47,7 @@ devDependencies:
     specifier: 20.8.3
     version: 20.8.3
   prettier:
-    specifier: ^3.1.1
+    specifier: 3.2.5
     version: 3.2.5
   rollup:
     specifier: ^4.9.1

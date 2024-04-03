@@ -1,11 +1,18 @@
-import { ProviderAPIConfig } from "../types";
+import { ProviderAPIConfig } from '../types';
 
 const OpenrouterAPIConfig: ProviderAPIConfig = {
-  baseURL: "https://openrouter.ai/api/v1",
-  headers: (API_KEY: string) => {
-    return { Authorization: `Bearer ${API_KEY}` };
+  getBaseURL: () => 'https://openrouter.ai/api',
+  headers: ({ providerOptions }) => {
+    return { Authorization: `Bearer ${providerOptions.apiKey}` };
   },
-  chatComplete: "/chat/completions",
+  getEndpoint: ({ fn }) => {
+    switch (fn) {
+      case 'chatComplete':
+        return '/v1/chat/completions';
+      default:
+        return '';
+    }
+  },
 };
 
 export default OpenrouterAPIConfig;

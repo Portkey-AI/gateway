@@ -1,11 +1,18 @@
-import { ProviderAPIConfig } from "../types";
+import { ProviderAPIConfig } from '../types';
 
 const MoonshotAPIConfig: ProviderAPIConfig = {
-  baseURL: "https://api.moonshot.cn/v1",
-  headers: (API_KEY: string) => {
-    return { Authorization: `Bearer ${API_KEY}` };
+  getBaseURL: () => 'https://api.moonshot.cn',
+  headers: ({ providerOptions }) => {
+    return { Authorization: `Bearer ${providerOptions.apiKey}` };
   },
-  chatComplete: "/chat/completions",
+  getEndpoint: ({ fn }) => {
+    switch (fn) {
+      case 'chatComplete':
+        return '/v1/chat/completions';
+      default:
+        return '';
+    }
+  },
 };
 
 export default MoonshotAPIConfig;
