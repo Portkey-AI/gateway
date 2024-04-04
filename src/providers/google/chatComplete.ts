@@ -44,8 +44,44 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
     transform: (params: Params) => {
       let lastRole: 'user' | 'model' | undefined;
       const messages: { role: string; parts: { text: string }[] }[] = [];
+      const systemMessage = params.messages
+        ?.filter((message) => message.role === 'system')
+        .reduce((parts, message) => {
+          if (typeof message.content === 'string') {
+            parts.push({
+              type: 'text',
+              text: message.content,
+            });
+          }
 
-      params.messages?.forEach((message: Message) => {
+          if (message.content && typeof message.content === 'object') {
+            message.content.forEach((c: ContentType) => {
+              if (c.type === 'text' && c.text) {
+                parts.push({
+                  type: 'text',
+                  text: c.text,
+                });
+              }
+            });
+          }
+          return parts;
+        }, [] as ContentType[])
+        .map((content) => {
+          return content.text;
+        })
+        .filter((text): text is string => !!text?.length)
+        .join('\n');
+
+      const fixedMessages: Message[] = [
+        ...(systemMessage
+          ? [{ role: 'assistant' as const, content: systemMessage }]
+          : []),
+        ...(params.messages?.filter((message) => {
+          return message.role === 'user' || message.role === 'assistant';
+        }) ?? []),
+      ];
+
+      fixedMessages.forEach((message: Message) => {
         const role = message.role === 'assistant' ? 'model' : 'user';
         let parts = [];
         if (typeof message.content === 'string') {
