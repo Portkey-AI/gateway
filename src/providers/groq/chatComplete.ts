@@ -1,4 +1,5 @@
 import { GROQ } from '../../globals';
+import { Params, Message } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -15,10 +16,46 @@ export const GroqChatCompleteConfig: ProviderConfig = {
     required: true,
     default: 'mixtral-8x7b-32768',
   },
-  messages: {
-    param: 'messages',
-    default: '',
-  },
+  messages: [
+    {
+      param: 'messages',
+      default: '',
+      transform: (params: Params) => {
+        let messages: Message[] = [];
+        // Transform the chat messages into a simple prompt
+        if (!!params.messages) {
+          params.messages.forEach((msg) => {
+            if (
+              msg.content &&
+              typeof msg.content === 'object' &&
+              msg.content.length
+            ) {
+              const transformedMessage: Record<string, any> = {
+                role: msg.role,
+                content: [],
+              };
+              msg.content.forEach((item) => {
+                // FOR NOW, we only support text messages
+                if (item.type === 'text') {
+                  messages.push({
+                    role: msg.role,
+                    content: item.text,
+                  });
+                }
+              });
+            } else {
+              messages.push({
+                role: msg.role,
+                content: msg.content,
+              });
+            }
+          });
+        }
+
+        return messages;
+      },
+    },
+  ],
   max_tokens: {
     param: 'max_tokens',
     default: 100,

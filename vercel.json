@@ -1,0 +1,9 @@
+{
+  "buildCommand": "echo 'true'",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api"
+    }
+  ]
+}

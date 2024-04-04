@@ -136,3 +136,4 @@ build
 
 # Wrangler temp directory
 .wrangler 
+.vercel

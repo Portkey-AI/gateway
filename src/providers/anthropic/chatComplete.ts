@@ -95,12 +95,12 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
               typeof msg.content === 'object' &&
               msg.content[0].text
             ) {
-              systemMessage = msg.content[0].text;
+              systemMessage = `${systemMessage}${msg.content[0].text}`;
             } else if (
               msg.role === 'system' &&
               typeof msg.content === 'string'
             ) {
-              systemMessage = msg.content;
+              systemMessage = `${systemMessage}${msg.content}`;
             }
           });
         }
