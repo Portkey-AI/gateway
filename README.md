@@ -50,16 +50,9 @@ Sign up for the free developer plan (10K request/month) [here](https://app.portk
 ## How To Use Gateway?
 
 The Gateway supports **5 main** endpoints: `/chat/completions`, `/completions`, `/embeddings`, `/images/*`, `/audio/*` and transforms other endpoints from providers to be OpenAI copmliant. 
-
-| Provider | Model & Endpoint | Gateway-Mapped Endpoint |
-| :- | :- | :- |
-| <img src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Google-favicon-2015.png" width=15> | Gemini 1.0, 1.5 `/generateContent` | `/chat/completions` | 
-| <img src="docs/images/anthropic.png" width=15> | Claude 3 `/messages` | `/chat/completions` |
-| <img src="https://www.perplexity.ai/favicon.svg" width=15> <img src="https://docs.mistral.ai/img/favicon.ico" width=15> <img src="https://assets-global.website-files.com/64f6f2c0e3f4c5a91c1e823a/654693d569494912cfc0c0d4_favicon.svg" width=15> <img src="docs/images/anyscale.png" width=15> <img src="https://ollama.com/public/ollama.png" width=15> | Llama2, Mistral, Mixtral, Gemma `/chat/completions`, `/embeddings` | `/chat/completions`, `/embeddings` |
-
 <sup>Full list of supported providers & endpoints [here](#supported-providers).</sup>
 
-### Example: Call Gemini in OpenAI Spec (REST)
+### REST Example: Call Gemini in OpenAI Spec
 In a typical OpenAI REST request, 
 1. Change the request URL to `http://localhost:8787/v1` (or `https://api.portkey.ai/v1` if you're using the hosted version)
 2. Pass an additional `x-portkey-provider` header with the provider's name
@@ -77,7 +70,7 @@ curl 'http://localhost:8787/v1/chat/completions' \
 
 Similarly, for Anthropic, change the `provider` to `anthropic` and model name to whatever you like! And so on for other providers.
 
-### Example: Call Anthropic with OpenAI SDK (Python)
+### Python Example: Call Anthropic with OpenAI SDK
 While instantiating your OpenAI client,
 1. Set the `base_URL` to `http://localhost:8787/v1` (or `PORTKEY_GATEWAY_URL` through the Portkey SDK if you're using the hosted version)
 2. Pass the provider name in the `default_headers` param (here we are using `createHeaders` method with the Portkey SDK to auto-create the full header)
@@ -108,7 +101,7 @@ chat_complete = gateway.chat.completions.create(
 ```
 If you want to run the Gateway locally, don't forget to run `npx @portkey-ai/gateway` in your terminal before this! Otherwise just [sign up on Portkey](https://app.portkey.ai/) and keep your Portkey API Key handy.
 
-### Example: Call Azure with OpenAI SDK (Node)
+### Node Example: Call Azure with OpenAI SDK
 You can add your Azure details like `Deployment, Resource Names`, `API Version & Key` to Portkey and get a unique `Virtual Key` that maps to these details.
 
 ```NODE```
