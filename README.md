@@ -1,9 +1,14 @@
+<div align="center">
+
 # AI Gateway
 #### Reliably route to 100+ LLMs with 1 fast & friendly API
-<img src="https://portkey.ai/blog/content/images/2024/04/code-1.gif" width="500" alt="Gateway Demo"><br>
+<img src="https://portkey.ai/blog/content/images/2024/04/code-1.gif" width="500" alt="Gateway Demo">
 
 #### [AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and LLMs.
-It streamlines requests to 100+ open & closed source models with a unified API. It is also production-ready with support for caching, fallbacks, retries, timeouts, loadbalancing, and can be edge-deployed for minimum latency.
+
+</div>
+
+Gateway streamlines requests to 100+ open & closed source models with a unified API. It is also production-ready with support for caching, fallbacks, retries, timeouts, loadbalancing, and can be edge-deployed for minimum latency.
 
 ✅&nbsp; **Blazing fast** (9.9x faster) with a **tiny footprint** (~45kb installed) <br>
 ✅&nbsp; **Load balance** across multiple models, providers, and keys <br>
@@ -49,7 +54,7 @@ Sign up for the free developer plan (10K request/month) [here](https://app.portk
 
 ## How To Use Gateway?
 
-The Gateway supports **5 main** endpoints: `/chat/completions`, `/completions`, `/embeddings`, `/images/*`, `/audio/*` and transforms other endpoints from providers to be OpenAI copmliant. 
+The Gateway supports **5 main** endpoints: `/chat/completions`, `/completions`, `/embeddings`, `/images/*`, `/audio/*` and transforms other endpoints from providers to be OpenAI copmliant.<br><br>
 <sup>Full list of supported providers & endpoints [here](#supported-providers).</sup>
 
 ### REST Example: Call Gemini in OpenAI Spec
