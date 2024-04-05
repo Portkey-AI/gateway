@@ -51,6 +51,7 @@ export const JinaEmbedResponseTransform: (
         index: d.index,
         embedding: d.embedding,
       })),
+      provider: JINA,
       model: response.model,
       usage: {
         prompt_tokens: response.usage?.prompt_tokens,
