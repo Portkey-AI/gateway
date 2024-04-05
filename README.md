@@ -58,30 +58,15 @@ Sign up for the free developer plan (10K request/month) [here](https://app.portk
 
 Let's see how we can use the Gateway to make an Anthropic request in OpenAI spec below - the same will follow for all the other providers.
 
-### REST
-In a typical OpenAI REST request, 
-1. Change the request URL to `http://localhost:8787/v1` (or `https://api.portkey.ai/v1` if you're using the hosted version)
-2. Pass an additional `x-portkey-provider` header with the provider's name
-3. Change the model's name to claude-3
-
-```bash
-curl 'http://localhost:8787/v1/chat/completions' \
-  -H 'x-portkey-provider: anthropic' \
-  -H "Authorization: Bearer $ANTHROPIC_API_KEY" \
-  -H 'Content-Type: application/json' \
-  -d '{ "model": "claude-3-haiku-20240229", "messages": [{"role": "user","content": "Hi"}] }'
-```
-
-Similarly for other providers, change the `provider` & `model` to their respective names.
-
 ### Python
+```bash
+pip install portkey-ai
+```
+<a href="https://colab.research.google.com/drive/1hLvoq_VdGlJ_92sPPiwTznSra5Py0FuW?usp=sharing"><img src="https://colab.research.google.com/assets/colab-badge.svg"></a>
+
 While instantiating your OpenAI client,
 1. Set the `base_URL` to `http://localhost:8787/v1` (or `PORTKEY_GATEWAY_URL` through the Portkey SDK if you're using the hosted version)
 2. Pass the provider name in the `default_headers` param (here we are using `createHeaders` method with the Portkey SDK to auto-create the full header)
-
-```bash
-pip install openai portkey-ai
-```
 
 ```python
 from openai import OpenAI
@@ -102,10 +87,6 @@ chat_complete = gateway.chat.completions.create(
 )
 ```
 If you want to run the Gateway locally, don't forget to run `npx @portkey-ai/gateway` in your terminal before this! Otherwise just [sign up on Portkey](https://app.portkey.ai/) and keep your Portkey API Key handy.
-
-### Detailed Guide to Run 100+ LLMs in your Colab!
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1hLvoq_VdGlJ_92sPPiwTznSra5Py0FuW?usp=sharing)
 
 ### Node
 Works same as in Python. Add `baseURL` & `defaultHeaders` while instantiating your OpenAI client and pass the relevant provider details.
@@ -135,7 +116,23 @@ async function main(){
 
 main()
 ```
-> Full list of supported providers & endpoints [here](#supported-providers).
+
+### REST
+In a typical OpenAI REST request, 
+1. Change the request URL to `http://localhost:8787/v1` (or `https://api.portkey.ai/v1` if you're using the hosted version)
+2. Pass an additional `x-portkey-provider` header with the provider's name
+3. Change the model's name to claude-3
+
+```bash
+curl 'http://localhost:8787/v1/chat/completions' \
+  -H 'x-portkey-provider: anthropic' \
+  -H "Authorization: Bearer $ANTHROPIC_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{ "model": "claude-3-haiku-20240229", "messages": [{"role": "user","content": "Hi"}] }'
+```
+
+Similarly for other providers, change the `provider` & `model` to their respective names.
+
 
 ## Gateway Docs
 
