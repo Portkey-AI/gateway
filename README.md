@@ -6,6 +6,12 @@
 
 #### [AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and LLMs.
 
+[![License](https://img.shields.io/github/license/Ileriayo/markdown-badges)](./LICENSE)
+[![Discord](https://img.shields.io/discord/1143393887742861333)](https://portkey.ai/community)
+[![Twitter](https://img.shields.io/twitter/url/https/twitter/follow/portkeyai?style=social&label=Follow%20%40PortkeyAI)](https://twitter.com/portkeyai)
+[![npm version](https://badge.fury.io/js/%40portkey-ai%2Fgateway.svg)](https://www.npmjs.com/package/@portkey-ai/gateway)
+<a href="https://replit.com/@portkey/AI-Gateway?v=1"><img src="https://replit.com/badge?caption=Deploy%20on%20Replit" width=99 style="display:block;"/></a>
+
 </div>
 
 Gateway streamlines requests to 100+ open & closed source models with a unified API. It is also production-ready with support for caching, fallbacks, retries, timeouts, loadbalancing, and can be edge-deployed for minimum latency.
@@ -20,11 +26,6 @@ Gateway streamlines requests to 100+ open & closed source models with a unified 
 ✅&nbsp; Battle tested over **300B tokens** <br>
 ✅&nbsp; **Enterprise-ready** for enhanced security, scale, and custom deployments <br>
 
-[![License](https://img.shields.io/github/license/Ileriayo/markdown-badges)](./LICENSE)
-[![Discord](https://img.shields.io/discord/1143393887742861333)](https://portkey.ai/community)
-[![Twitter](https://img.shields.io/twitter/url/https/twitter/follow/portkeyai?style=social&label=Follow%20%40PortkeyAI)](https://twitter.com/portkeyai)
-[![npm version](https://badge.fury.io/js/%40portkey-ai%2Fgateway.svg)](https://www.npmjs.com/package/@portkey-ai/gateway)
-<a href="https://replit.com/@portkey/AI-Gateway?v=1"><img src="https://replit.com/badge?caption=Deploy%20on%20Replit" width=99 style="display:block;"/></a>
 
 ## Compatibility with OpenAI API & SDK
 
