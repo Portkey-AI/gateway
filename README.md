@@ -106,7 +106,7 @@ chat_complete = gateway.chat.completions.create(
     max_tokens=512
 )
 ```
-If you want to run the Gateway locally, don't forget to run `npx @portkey-ai/gateway` in your terminal before this!
+If you want to run the Gateway locally, don't forget to run `npx @portkey-ai/gateway` in your terminal before this! Otherwise just [sign up on Portkey](https://app.portkey.ai/) and keep your Portkey API Key handy.
 
 ### Example: Call Azure with OpenAI SDK (Node)
 You can add your Azure details like `Deployment, Resource Names`, `API Version & Key` to Portkey and get a unique `Virtual Key` that maps to these details.
@@ -176,13 +176,13 @@ Head over to [Portkey docs](https://portkey.ai/docs/welcome/integration-guides) 
       <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/fallbacks">Fallback</a></h4>
       This feature allows you to specify a prioritized list of LLMs. If the primary LLM fails, Portkey will automatically fallback to the next LLM in the list to ensure reliability.
       <br><br>
-      <img src="https://framerusercontent.com/images/gmlOW8yeKP2pGuIsObM6gKLzeMI.png" height=200 />
+      <img src="https://framerusercontent.com/images/gmlOW8yeKP2pGuIsObM6gKLzeMI.png" height=100 />
     </td>
     <td width="50%">
       <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/automatic-retries">Automatic Retries</a></h4>
       AI Gateway can automatically retry failed requests up to 5 times. A backoff strategy spaces out retry attempts to prevent network overload.
       <br><br>
-      <img src="https://github.com/roh26it/Rubeus/assets/971978/8a6e653c-94b2-4ba7-95c7-93544ee476b1" height=200 />
+      <img src="https://github.com/roh26it/Rubeus/assets/971978/8a6e653c-94b2-4ba7-95c7-93544ee476b1" height=100 />
     </td>
   </tr>
 </table>
@@ -192,83 +192,96 @@ Head over to [Portkey docs](https://portkey.ai/docs/welcome/integration-guides) 
       <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/load-balancing">Load Balancing</a></h4>
       Distribute load effectively across multiple API keys or providers based on custom weights to ensure high availability and optimal performance.
       <br><br>
-      <img src="https://framerusercontent.com/images/6EWuq3FWhqrPe3kKLqVspevi4.png" height=200 />
+      <img src="https://framerusercontent.com/images/6EWuq3FWhqrPe3kKLqVspevi4.png" height=100 />
     </td>
     <td width="50%">
       <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/request-timeouts">Request Timeouts</a></h4>
       Manage unruly LLMs & latencies by setting up granular request timeouts, allowing automatic termination of requests that exceed a specified duration.
       <br><br>
-      <img src="https://github.com/vrushankportkey/gateway/assets/134934501/b23b98b2-6451-4747-8898-6847ad8baed4" height=200 />
+      <img src="https://github.com/vrushankportkey/gateway/assets/134934501/b23b98b2-6451-4747-8898-6847ad8baed4" height=100 />
     </td>
   </tr>
 </table>
-<br>
 
-### Fallbacks 
+#### Reliability features are set by passing a relevant Gateway Config (JSON) with the `x-portkey-config` header or with the `config` param in the SDKs
 
-<details><summary>Here's an example config that retries an OpenAI request 5 times before falling back to Gemini Pro</summary>
+### Example: Setting up Fallback from OpenAI to Anthropic
 
-```js
+#### Write the fallback logic
+```json
 {
-  "retry": { "count": 5 },
   "strategy": { "mode": "fallback" },
-  "targets": [{
-      "provider": "openai",
-      "api_key": "sk-***"
-    },{
-      "provider": "google",
-      "api_key": "gt5***",
-      "override_params": {"model": "gemini-pro"}
-  }]
-}
-```
-</details>
-
-
-
-### Load Balancing
-<details>
-<summary>This config would enable load balancing equally between 2 OpenAI keys</summary>
-
-```js
-{
-  "strategy": { "mode": "loadbalance" },
-  "targets": [{
-      "provider": "openai",
-      "api_key": "sk-***",
-      "weight": "0.5"
-    },{
-      "provider": "openai",
-      "api_key": "sk-***",
-      "weight": "0.5"
-    }
+  "targets": [
+    { "provider": "openai", "api_key": "OPENAI_API_KEY" },
+    { "provider": "anthropic", "api_key": "ANTHROPIC_API_KEY" }
   ]
 }
 ```
-</details>
+#### Pass it while making your request
+Portkey Gateway will automatically trigger Anthropic if the OpenAI request fails:
 
+```REST```
+```bash
+curl 'http://localhost:8787/v1/chat/completions' \
+  -H 'x-portkey-provider: google' \
+  -H 'x-portkey-config: $CONFIG' \
+  -H "Authorization: Bearer $GOOGLE_AI_STUDIO_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{ "model": "gemini-1.5-pro-latest", "messages": [{"role": "user","content": "Hi"}] }'
+```
+You can also trigger Fallbacks only on specific status codes by passing an array of status codes with the `on_status_codes` param in `strategy`. 
+
+[Read the full Fallback documentation here.](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/fallbacks)
+
+### Example: Loadbalance Requests on 3 Accounts
+#### Write the loadbalancer
+```json
+{
+  "strategy": { "mode": "loadbalance" },
+  "targets": [
+    { "provider": "openai", "api_key": "ACCOUNT_1_KEY", "weight": 1 },
+    { "provider": "openai", "api_key": "ACCOUNT_2_KEY", "weight": 1 },
+    { "provider": "openai", "api_key": "ACCOUNT_3_KEY", "weight": 1 }
+  ]
+}
+```
+#### Pass the Config while instantiating OpenAI client
+```ts
+import OpenAI from 'openai';
+import { PORTKEY_GATEWAY_URL, createHeaders } from 'portkey-ai'
+ 
+const gateway = new OpenAI({
+  baseURL: PORTKEY_GATEWAY_URL,
+  defaultHeaders: createHeaders({
+    apiKey: "PORTKEY_API_KEY",
+    config: "CONFIG_ID"
+  })
+});
+```
+
+[Read the full Loadbalancing documentation here.](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/load-balancing)
 
 ### Automatic Retries
 
 <details>
-<summary>This config would enable to retry with 5 attempts</summary>
-
-```js
+<summary>Similarly, you can write a Config that will attempt retries up to 5 times</summary>
+  
+```json
 {
-    "retry": {
-        "attempts": 5
-    },
-    "virtual_key": "virtual-key-xxx"
+    "retry": { "attempts": 5 }
 }
 ```
+[Read the full Retries documentation here.](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/automatic-retries)
+
 </details>
+
 
 ### Request Timeouts
 
 <details>
 <summary>Here, the request timeout of 10 seconds will be applied to *all* the targets.</summary>
 
-```js
+```json
 {
   "strategy": { "mode": "fallback" },
   "request_timeout": 10000,
@@ -278,10 +291,16 @@ Head over to [Portkey docs](https://portkey.ai/docs/welcome/integration-guides) 
   ]
 }
 ```
+
+[Read the full Request Timeouts documentation here.](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/request-timeouts)
+
 </details>
 
 
+### Using Gateway Configs
+
 Here's a guide to [use config object in your request](https://portkey.ai/docs/api-reference/config-object).
+
 <br>
 
 ## Supported SDKs
