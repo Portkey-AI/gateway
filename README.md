@@ -1,8 +1,19 @@
-<div align="center">
+# AI Gateway
+### Reliably route to 100+ LLMs with 1 fast & friendly API
+<img src="docs/images/gateway_demo.gif" width="800px" alt="Gateway Demo"><br>
 
-# Gateway
-### Route to 100+ LLMs with 1 fast & friendly API.
+#### [AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and LLMs.
+It streamlines requests to 100+ open & closed source models with a unified API. It is also production-ready with support for caching, fallbacks, retries, timeouts, loadbalancing, and can be edge-deployed for minimum latency.
 
+✅&nbsp; **Blazing fast** (9.9x faster) with a **tiny footprint** (~45kb installed) <br>
+✅&nbsp; **Load balance** across multiple models, providers, and keys <br>
+✅&nbsp; **Fallbacks** make sure your app stays resilient <br>
+✅&nbsp; **Automatic Retries** with exponential fallbacks come by default <br>
+✅&nbsp; **Configurable Request Timeouts** to easily handle unresponsive LLM requests <br>
+✅&nbsp; **Multimodal** to support routing between Vision, TTS, STT, Image Gen, and more models <br>
+✅&nbsp; **Plug-in** middleware as needed <br>
+✅&nbsp; Battle tested over **300B tokens** <br>
+✅&nbsp; **Enterprise-ready** for enhanced security, scale, and custom deployments <br>
 
 [![License](https://img.shields.io/github/license/Ileriayo/markdown-badges)](./LICENSE)
 [![Discord](https://img.shields.io/discord/1143393887742861333)](https://portkey.ai/community)
@@ -10,158 +21,130 @@
 [![npm version](https://badge.fury.io/js/%40portkey-ai%2Fgateway.svg)](https://www.npmjs.com/package/@portkey-ai/gateway)
 <a href="https://replit.com/@portkey/AI-Gateway?v=1"><img src="https://replit.com/badge?caption=Deploy%20on%20Replit" width=99 style="display:block;"/></a>
 
+## Compatibility with OpenAI API & SDK
 
+#### Gateway is fully compatible with the OpenAI API & SDK, and extends them to work with 100 LLMs and make them reliable.
 
-[Portkey's AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and hosted LLMs. It streamlines API requests to OpenAI, Anthropic, Mistral, LLama2, Anyscale, Google Gemini and more with a unified API.
+You can directly use the OpenAI SDKs with Gateway and start calling other LLMs like Anthropic, Google, Azure, Mistral etc. and setup fallbacks, loadbalancing etc. between them. 
 
-<!-- Demo GIF or Image -->
-<p align="center">
-  <img src="docs/images/gateway_demo.gif" width="800px" alt="Gateway Demo">
-</p>
+## How To Run Gateway?
 
+There are 2 ways:
 
-</div>
+### 1) Run it Locally
 
-
-Salient Features of Portkey's AI Gateway: 
-
-✅&nbsp; Blazing **fast** (9.9x faster) with a **tiny footprint** (~45kb installed) <br>
-✅&nbsp; **Load balance** across multiple models, providers, and keys <br>
-✅&nbsp; **Fallbacks** make sure your app stays resilient  <br>
-✅&nbsp; **Automatic Retries** with exponential fallbacks come by default  <br>
-✅&nbsp; **Configurable Request Timeouts** to easily handle unresponsive LLM requests<br>
-✅&nbsp; Plug-in middleware as needed <br>
-✅&nbsp; Battle tested over **100B tokens** <br>
-✅&nbsp; **Enterprise-ready** for enhanced security, scale, and custom deployments <br>
-
-<br>
-
-
-## How can you run Gateway?
-
-Gateway offers three options for running: 
-1. [Local Deployment](#Run-it-Locally) for complete control and customization
-2. [Hosted Version](#Run-the-Hosted-API) for quick setup without infrastructure concerns
-3. [Enterprise Version](#gateway-enterprise-version) with advanced features and dedicated support for large-scale deployments.
-
-### Compatibility with OpenAI API
-
-Gateway is fully compatible with the OpenAI API, making it seamless to integrate with your existing applications. To start routing your requests through Gateway to multiple LLMs, you only need to update your OpenAI base URL.
-
-- For the hosted version, set your base URL to: `https://api.portkey.ai`
-- For local deployment, use: `http://localhost:8787`
-
-<br>
-
-##  Getting Started
-
-### Run it Locally
-
-If you're familiar with Node.js and `npx`, you can run your private AI gateway locally.
+Run the following command in your terminal and it will spin up the Gateway on your local system:
 ```bash
 npx @portkey-ai/gateway
 ```
-> Your AI Gateway is now running on http://localhost:8787 🚀
+<sup>Your AI Gateway is now running on http://localhost:8787 🚀</sup>
 
-Gateway is edge-deployment ready. Explore Cloudflare, Docker, AWS etc deployment guides [here](#deploying-ai-gateway)
+Gateway is also edge-deployment ready. Explore Cloudflare, Docker, AWS etc. deployment [guides here](#deploying-ai-gateway).
 
-#### Usage
-Let's try making a **chat completions** call to OpenAI through the AI gateway:
+### 2) Through Hosted API
+
+This same open-source Gateway powers Portkey API that processes **billions of tokens** daily. 
+
+Sign up for the free developer plan (10K request/month) [here](https://app.portkey.ai/) or [discuss here](https://calendly.com/rohit-portkey/noam) for enterprise deployments.
+
+## How To Use Gateway?
+
+The Gateway supports **5 main** endpoints: `/chat/completions`, `/completions`, `/embeddings`, `/images/*`, `/audio/*` and transforms other endpoints from providers to be OpenAI copmliant. 
+
+| Provider | Model & Endpoint | Gateway-Mapped Endpoint |
+| :- | :- | :- |
+| <img src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Google-favicon-2015.png" width=15> | Gemini 1.0, 1.5 `/generateContent` | `/chat/completions` | 
+| <img src="docs/images/anthropic.png" width=15> | Claude 3 `/messages` | `/chat/completions` |
+| <img src="https://www.perplexity.ai/favicon.svg" width=15> <img src="https://docs.mistral.ai/img/favicon.ico" width=15> <img src="https://assets-global.website-files.com/64f6f2c0e3f4c5a91c1e823a/654693d569494912cfc0c0d4_favicon.svg" width=15> <img src="docs/images/anyscale.png" width=15> <img src="https://ollama.com/public/ollama.png" width=15> | Llama2, Mistral, Mixtral, Gemma `/chat/completions`, `/embeddings` | `/chat/completions`, `/embeddings` |
+
+<sup>Full list of supported providers & endpoints [here](#supported-providers).</sup>
+
+### Example: Call Gemini in OpenAI Spec (REST)
+In a typical OpenAI REST request, 
+1. Change the request URL to `http://localhost:8787/v1` (or `https://api.portkey.ai/v1` if you're using the hosted version)
+2. Pass an additional `x-portkey-provider` header with the provider's name
+3. Change the model's name to gemini
+
+```REST```
+
 ```bash
-curl '127.0.0.1:8787/v1/chat/completions' \
-  -H 'x-portkey-provider: openai' \
-  -H "Authorization: Bearer $OPENAI_KEY" \
+curl 'http://localhost:8787/v1/chat/completions' \
+  -H 'x-portkey-provider: google' \
+  -H "Authorization: Bearer $GOOGLE_AI_STUDIO_KEY" \
   -H 'Content-Type: application/json' \
-  -d '{"messages": [{"role": "user","content": "Say this is test."}], "max_tokens": 20, "model": "gpt-4"}'
+  -d '{ "model": "gemini-1.5-pro-latest", "messages": [{"role": "user","content": "Hi"}] }'
 ```
 
-### Run the Hosted API
+Similarly, for Anthropic, change the `provider` to `anthropic` and model name to whatever you like! And so on for other providers.
 
-Our [hosted Gateway](https://portkey.ai/features/ai-gateway) is the go-to solution for many prominent organizations in production.  Having processed in excess of 300 billion tokens, our Gateway has proven its reliability and scalability. 
+### Example: Call Anthropic with OpenAI SDK (Python)
+While instantiating your OpenAI client,
+1. Set the `base_URL` to `http://localhost:8787/v1` (or `PORTKEY_GATEWAY_URL` through the Portkey SDK if you're using the hosted version)
+2. Pass the provider name in the `default_headers` param (here we are using `createHeaders` method with the Portkey SDK to auto-create the full header)
 
-### Python
+```PYTHON```
 
 ```bash
-pip install portkey-ai
+pip install openai portkey-ai
 ```
-
-#### Detailed guide to run 100+ LLMs in your Colab!
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1hLvoq_VdGlJ_92sPPiwTznSra5Py0FuW?usp=sharing)
-
-
-
-Run any LLM using OpenAI Client
 
 ```python
 from openai import OpenAI
 from portkey_ai import PORTKEY_GATEWAY_URL, createHeaders
 
-client = OpenAI(
-    api_key="sk-xx",  # replace it with your API key
-    base_url=PORTKEY_GATEWAY_URL,
+gateway = OpenAI(
+    base_url=PORTKEY_GATEWAY_URL, # Or http://localhost:8787/v1 if you are running locally
     default_headers=createHeaders(
-        provider="openai",
-        api_key="portkey-api" # replace it with your API key
+        provider="anthropic",
+        api_key="PORTKEY_API_KEY" # Grab from https://app.portkey.ai Not needed if you are running locally
     )
 )
 
-chat_complete = client.chat.completions.create(
-    model="gpt-4",
+chat_complete = gateway.chat.completions.create(
+    model="claude-3-haiku-20240229",
     messages=[{"role": "user", "content": "What's a fractal?"}],
+    max_tokens=512
 )
 ```
+If you want to run the Gateway locally, don't forget to run `npx @portkey-ai/gateway` in your terminal before this!
 
-<details><summary>You can also run any LLM using Portkey Client</summary>
+### Example: Call Azure with OpenAI SDK (Node)
+You can add your Azure details like `Deployment, Resource Names`, `API Version & Key` to Portkey and get a unique `Virtual Key` that maps to these details.
 
-```python
-
-from portkey_ai import Portkey
-
-portkey = Portkey(
-    api_key = PORTKEY_API_KEY,  # defaults to os.environ["PORTKEY_API_KEY"]
-    virtual_key= OPENAI_VIRTUAL_KEY,   # use virtual key of any provider of your choice
-)
-
-completion = portkey.chat.completions.create(
-    messages= [{ "role": 'user', "content": 'Who are you?'}],
-    model= 'gpt-3.5-turbo-0125', 
-    max_tokens=250
-)
-
-print(completion)
-
-```
-Note: Portkey allows you to manage all your API keys centrally using virtual keys. [setup guide](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/virtual-keys#using-virtual-keys) 
-
-</details>
-
-
-
-### Node.js
+```NODE```
 ```bash
-npm install portkey-ai
+npm install openai portkey-ai
 ```
-
-Run any LLM using Portkey Node.js 
 
 ```js
-import Portkey from 'portkey-ai'
+import OpenAI from 'openai';
+import { PORTKEY_GATEWAY_URL, createHeaders } from 'portkey-ai'
  
-const portkey = new Portkey({
-    apiKey: PORTKEY_API_KEY, // defaults to process.env["PORTKEY_API_KEY"]
-    virtualKey: OPENAI_VIRTUAL_KEY // use virtual key of any provider of your choice
-})
-
-
-const chatCompletion = await portkey.chat.completions.create({
-    messages: [{ role: 'user', content: 'Who are you?' }],
-    model: 'gpt-3.5-turbo',
+const gateway = new OpenAI({
+  baseURL: PORTKEY_GATEWAY_URL,
+  defaultHeaders: createHeaders({
+    apiKey: "PORTKEY_API_KEY",
+    virtualKey: "AZURE_VIRTUAL_KEY"
+  })
 });
 
-console.log(chatCompletion)
+async function main(){
+  const chatCompletion = await portkey.chat.completions.create({
+      messages: [{ role: 'user', content: 'Who are you?' }],
+      model: 'gpt-3.5-turbo',
+  });
+}
+
+main()
 ```
 
+### Detailed Guide to Run 100+ LLMs in your Colab!
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1hLvoq_VdGlJ_92sPPiwTznSra5Py0FuW?usp=sharing)
+
+## Gateway Docs
+
+Head over to [Portkey docs](https://portkey.ai/docs/welcome/integration-guides) for detailed [guides & cookbooks](https://portkey.ai/docs/welcome/integration-guides) on more provider integrations.
 
 ## Supported Providers
 
@@ -185,7 +168,7 @@ console.log(chatCompletion)
 > [View the complete list of 100+ supported models here](https://portkey.ai/docs/welcome/what-is-portkey#ai-providers-supported)
 <br>
 
-## Features
+## Reliability Features
 
 <table width=100%>
   <tr>
@@ -220,8 +203,6 @@ console.log(chatCompletion)
   </tr>
 </table>
 <br>
-
-##  Expand your Gateway!
 
 ### Fallbacks 
 
