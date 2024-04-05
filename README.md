@@ -1,6 +1,6 @@
 # AI Gateway
-### Reliably route to 100+ LLMs with 1 fast & friendly API
-<img src="docs/images/gateway_demo.gif" width="800px" alt="Gateway Demo"><br>
+#### Reliably route to 100+ LLMs with 1 fast & friendly API
+<img src="https://portkey.ai/blog/content/images/2024/04/code-1.gif" width="500" alt="Gateway Demo"><br>
 
 #### [AI Gateway](https://portkey.ai/features/ai-gateway) is the interface between your app and LLMs.
 It streamlines requests to 100+ open & closed source models with a unified API. It is also production-ready with support for caching, fallbacks, retries, timeouts, loadbalancing, and can be edge-deployed for minimum latency.
@@ -31,7 +31,7 @@ You can directly use the OpenAI SDKs with Gateway and start calling other LLMs l
 
 There are 2 ways:
 
-### 1) Run it Locally
+### 1. Run it Locally
 
 Run the following command in your terminal and it will spin up the Gateway on your local system:
 ```bash
@@ -41,7 +41,7 @@ npx @portkey-ai/gateway
 
 Gateway is also edge-deployment ready. Explore Cloudflare, Docker, AWS etc. deployment [guides here](#deploying-ai-gateway).
 
-### 2) Through Hosted API
+### 2. Through Hosted API
 
 This same open-source Gateway powers Portkey API that processes **billions of tokens** daily. 
 
