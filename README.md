@@ -2,7 +2,7 @@
 
 # AI Gateway
 #### Reliably route to 100+ LLMs with 1 fast & friendly API
-<img src="https://portkey.ai/blog/content/images/2024/04/code-1.gif" width="500" alt="Gateway Demo"><br>
+<img src="docs/images/demo.gif" width="650" alt="Gateway Demo"><br>
 
 [![License](https://img.shields.io/github/license/Ileriayo/markdown-badges)](./LICENSE)
 [![Discord](https://img.shields.io/discord/1143393887742861333)](https://portkey.ai/community)
@@ -73,6 +73,7 @@ from openai import OpenAI
 from portkey_ai import PORTKEY_GATEWAY_URL, createHeaders
 
 gateway = OpenAI(
+    api_key="ANTHROPIC_API_KEY",
     base_url=PORTKEY_GATEWAY_URL, # Or http://localhost:8787/v1 if you are running locally
     default_headers=createHeaders(
         provider="anthropic",
@@ -81,7 +82,7 @@ gateway = OpenAI(
 )
 
 chat_complete = gateway.chat.completions.create(
-    model="claude-3-haiku-20240229",
+    model="claude-3-sonnet-20240229",
     messages=[{"role": "user", "content": "What's a fractal?"}],
     max_tokens=512
 )
@@ -92,7 +93,7 @@ If you want to run the Gateway locally, don't forget to run `npx @portkey-ai/gat
 Works same as in Python. Add `baseURL` & `defaultHeaders` while instantiating your OpenAI client and pass the relevant provider details.
 
 ```bash
-npm install openai portkey-ai
+npm install portkey-ai
 ```
 
 ```js
@@ -100,17 +101,18 @@ import OpenAI from 'openai';
 import { PORTKEY_GATEWAY_URL, createHeaders } from 'portkey-ai'
  
 const gateway = new OpenAI({
-  baseURL: PORTKEY_GATEWAY_URL,
-  defaultHeaders: createHeaders({
-    apiKey: "PORTKEY_API_KEY",
-    provider: "ANTHROPIC_API_KEY"
+    apiKey: "ANTHROPIC_API_KEY",
+    baseURL: PORTKEY_GATEWAY_URL,
+    defaultHeaders: createHeaders({
+        provider: "anthropic",
+        apiKey: "PORTKEY_API_KEY"
   })
 });
 
 async function main(){
   const chatCompletion = await portkey.chat.completions.create({
       messages: [{ role: 'user', content: 'Who are you?' }],
-      model: 'claude-3-haiku-20240229',
+      model: 'claude-3-sonnet-20240229',
   });
 }
 
