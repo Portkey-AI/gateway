@@ -2,6 +2,7 @@ import {
   ANTHROPIC,
   COHERE,
   GOOGLE,
+  GOOGLE_VERTEX_AI,
   PERPLEXITY_AI,
   DEEPINFRA,
   OLLAMA,
@@ -12,15 +13,22 @@ export const getStreamModeSplitPattern = (
   proxyProvider: string,
   requestURL: string
 ) => {
-  let splitPattern = '\n\n';
+  let splitPattern: SplitPatternType = '\n\n';
+
   if (proxyProvider === ANTHROPIC && requestURL.endsWith('/complete')) {
     splitPattern = '\r\n\r\n';
   }
+
   if (proxyProvider === COHERE) {
     splitPattern = '\n';
   }
+
   if (proxyProvider === GOOGLE) {
     splitPattern = '\r\n';
+  }
+
+  if (proxyProvider === GOOGLE_VERTEX_AI) {
+    splitPattern = '\r\n\r\n';
   }
 
   if (proxyProvider === PERPLEXITY_AI) {
@@ -33,6 +41,7 @@ export const getStreamModeSplitPattern = (
 
   return splitPattern;
 };
+export type SplitPatternType = '\n\n' | '\r\n\r\n' | '\n' | '\r\n';
 
 export const getStreamingMode = (
   reqBody: Params,

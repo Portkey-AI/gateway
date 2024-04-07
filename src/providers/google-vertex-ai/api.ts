@@ -27,7 +27,7 @@ export const GoogleApiConfig: ProviderAPIConfig = {
         return `/models/${model}:generateContent`;
       }
       case 'stream-chatComplete': {
-        return `/models/${model}:streamGenerateContent`;
+        return `/models/${model}:streamGenerateContent?alt=sse`;
       }
 
       // Embed API is not yet implemented in the gateway
