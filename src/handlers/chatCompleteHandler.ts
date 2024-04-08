@@ -5,7 +5,7 @@ import {
 } from './handlerUtils';
 import { Context } from 'hono';
 
-/**
+
  * @deprecated
  * Handles the 'chatComplete' API request by selecting the appropriate provider(s) and making the request to them.
  *
