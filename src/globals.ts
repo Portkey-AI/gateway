@@ -40,6 +40,7 @@ export const AI21: string = 'ai21';
 export const BEDROCK: string = 'bedrock';
 export const GROQ: string = 'groq';
 export const SEGMIND: string = 'segmind';
+export const JINA: string = 'jina';
 export const MONSTERAPI: string = 'monsterapi';
 
 export const VALID_PROVIDERS = [
@@ -61,6 +62,7 @@ export const VALID_PROVIDERS = [
   BEDROCK,
   GROQ,
   SEGMIND,
+  JINA,
   MONSTERAPI,
 ];
 
