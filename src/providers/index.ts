@@ -21,6 +21,7 @@ import JinaConfig from './jina';
 import MoonshotConfig from './moonshot';
 import OpenrouterConfig from './openrouter';
 import LingYiConfig from './lingyi';
+import ZhipuConfig from './zhipu';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -45,6 +46,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   moonshot: MoonshotConfig,
   openrouter: OpenrouterConfig,
   lingyi: LingYiConfig,
+  zhipu: ZhipuConfig,
 };
 
 export default Providers;

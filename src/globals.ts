@@ -44,6 +44,7 @@ export const JINA: string = 'jina';
 export const MOONSHOT: string = "moonshot";
 export const OPENROUTER: string = "openrouter";
 export const LINGYI: string  = "lingyi";
+export const ZHIPU: string = "zhipu";
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -68,6 +69,7 @@ export const VALID_PROVIDERS = [
   MOONSHOT,
   OPENROUTER,
   LINGYI,
+  ZHIPU,
 ];
 
 export const CONTENT_TYPES = {
