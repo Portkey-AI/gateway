@@ -1,14 +1,24 @@
-import { ProviderAPIConfig } from "../types";
+import { ProviderAPIConfig } from '../types';
 
 const OpenAIAPIConfig: ProviderAPIConfig = {
-  baseURL: "https://api.openai.com/v1",
-  headers: (API_KEY:string) => {
-    return {"Authorization": `Bearer ${API_KEY}`}
+  getBaseURL: () => 'https://api.openai.com/v1',
+  headers: ({ providerOptions }) => {
+    return { Authorization: `Bearer ${providerOptions.apiKey}` };
   },
-  complete: "/completions",
-  chatComplete: "/chat/completions",
-  embed: "/embeddings",
-  imageGenerate: "/images/generations"
+  getEndpoint: ({ fn }) => {
+    switch (fn) {
+      case 'complete':
+        return '/completions';
+      case 'chatComplete':
+        return '/chat/completions';
+      case 'embed':
+        return '/embeddings';
+      case 'imageGenerate':
+        return '/images/generations';
+      default:
+        return '';
+    }
+  },
 };
 
 export default OpenAIAPIConfig;
