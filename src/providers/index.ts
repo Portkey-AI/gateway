@@ -18,6 +18,7 @@ import { ProviderConfigs } from './types';
 import GroqConfig from './groq';
 import SegmindConfig from './segmind';
 import JinaConfig from './jina';
+import FireworksAIConfig from './fireworks-ai';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -39,6 +40,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   groq: GroqConfig,
   segmind: SegmindConfig,
   jina: JinaConfig,
+  'fireworks-ai': FireworksAIConfig,
 };
 
 export default Providers;
