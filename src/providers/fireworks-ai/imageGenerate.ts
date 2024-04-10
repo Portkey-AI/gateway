@@ -8,27 +8,41 @@ import {
 } from './chatComplete';
 
 export const FireworksAIImageGenerateConfig: ProviderConfig = {
-  text_prompts: {
+  prompt: {
     param: 'text_prompts',
     required: true,
+    transform: (params: any) => {
+      return [
+        {
+          text: params.prompt,
+          weight: 1,
+        },
+      ];
+    },
   },
   model: {
     param: 'model',
     required: true,
     default: 'stable-diffusion-xl-1024-v1-0',
   },
-  height: {
-    param: 'height',
-    min: 512,
-    max: 1024,
-    default: 1024,
-  },
-  width: {
-    param: 'width',
-    min: 512,
-    max: 1024,
-    default: 1024,
-  },
+  size: [
+    {
+      param: 'height',
+      transform: (params: any) =>
+        parseInt(params.size.toLowerCase().split('x')[1]),
+      min: 512,
+      max: 1024,
+      default: 1024,
+    },
+    {
+      param: 'width',
+      transform: (params: any) =>
+        parseInt(params.size.toLowerCase().split('x')[0]),
+      min: 512,
+      max: 1024,
+      default: 1024,
+    },
+  ],
   cfg_scale: {
     param: 'cfg_scale',
     default: 7,
