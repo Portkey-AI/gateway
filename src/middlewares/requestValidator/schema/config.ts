@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { OLLAMA, VALID_PROVIDERS } from '../../../globals';
+import { OLLAMA, VALID_PROVIDERS, GOOGLE_VERTEX_AI } from '../../../globals';
 
 export const configSchema: any = z
   .object({
@@ -20,7 +20,9 @@ export const configSchema: any = z
     provider: z
       .string()
       .refine((value) => VALID_PROVIDERS.includes(value), {
-        message: `Invalid 'provider' value. Must be one of: ${VALID_PROVIDERS.join(', ')}`,
+        message: `Invalid 'provider' value. Must be one of: ${VALID_PROVIDERS.join(
+          ', '
+        )}`,
       })
       .optional(),
     api_key: z.string().optional(),
@@ -57,6 +59,9 @@ export const configSchema: any = z
     request_timeout: z.number().optional(),
     custom_host: z.string().optional(),
     forward_headers: z.array(z.string()).optional(),
+    // Google Vertex AI specific
+    vertex_project_id: z.string().optional(),
+    vertex_region: z.string().optional(),
   })
   .refine(
     (value) => {
@@ -93,5 +98,17 @@ export const configSchema: any = z
     },
     {
       message: 'Invalid custom host',
+    }
+  )
+  // Validate Google Vertex AI specific fields
+  .refine(
+    (value) => {
+      const isGoogleVertexAIProvider = value.provider === GOOGLE_VERTEX_AI;
+      const hasGoogleVertexAIFields =
+        value.vertex_project_id && value.vertex_region;
+      return !(isGoogleVertexAIProvider && !hasGoogleVertexAIFields);
+    },
+    {
+      message: `Invalid configuration. 'vertex_project_id' and 'vertex_region' are required for '${GOOGLE_VERTEX_AI}' provider. Example: { 'provider': 'vertex-ai', 'vertex_project_id': 'my-project-id', 'vertex_region': 'us-central1', api_key: 'ya29...' }`,
     }
   );

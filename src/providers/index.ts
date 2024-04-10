@@ -6,6 +6,7 @@ import BedrockConfig from './bedrock';
 import CohereConfig from './cohere';
 import DeepInfraConfig from './deepinfra';
 import GoogleConfig from './google';
+import VertexConfig from './google-vertex-ai';
 import MistralAIConfig from './mistral-ai';
 import NomicConfig from './nomic';
 import OpenAIConfig from './openai';
@@ -30,6 +31,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   palm: PalmAIConfig,
   'together-ai': TogetherAIConfig,
   google: GoogleConfig,
+  'vertex-ai': VertexConfig,
   'perplexity-ai': PerplexityAIConfig,
   'mistral-ai': MistralAIConfig,
   deepinfra: DeepInfraConfig,

@@ -30,6 +30,7 @@ export const ANYSCALE: string = 'anyscale';
 export const PALM: string = 'palm';
 export const TOGETHER_AI: string = 'together-ai';
 export const GOOGLE: string = 'google';
+export const GOOGLE_VERTEX_AI: string = 'vertex-ai';
 export const PERPLEXITY_AI: string = 'perplexity-ai';
 export const MISTRAL_AI: string = 'mistral-ai';
 export const DEEPINFRA: string = 'deepinfra';
@@ -50,6 +51,7 @@ export const VALID_PROVIDERS = [
   AZURE_OPEN_AI,
   COHERE,
   GOOGLE,
+  GOOGLE_VERTEX_AI,
   MISTRAL_AI,
   OPEN_AI,
   PALM,

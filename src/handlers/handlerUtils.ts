@@ -191,6 +191,10 @@ export const fetchProviderOptionsFromConfig = (
       providerOptions[0].deploymentId = camelCaseConfig.deploymentId;
     if (camelCaseConfig.apiVersion)
       providerOptions[0].apiVersion = camelCaseConfig.apiVersion;
+    if (camelCaseConfig.apiVersion)
+      providerOptions[0].vertexProjectId = camelCaseConfig.vertexProjectId;
+    if (camelCaseConfig.apiVersion)
+      providerOptions[0].vertexRegion = camelCaseConfig.vertexRegion;
     if (camelCaseConfig.workersAiAccountId)
       providerOptions[0].workersAiAccountId =
         camelCaseConfig.workersAiAccountId;
@@ -395,7 +399,11 @@ export async function tryPostProxy(
   c.set('requestOptions', [
     ...requestOptions,
     {
-      providerOptions: { ...providerOption, requestURL: url, rubeusURL: fn },
+      providerOptions: {
+        ...providerOption,
+        requestURL: url,
+        rubeusURL: fn,
+      },
       requestParams: params,
       response: mappedResponse.clone(),
       cacheStatus: cacheStatus,
@@ -589,7 +597,11 @@ export async function tryPost(
   c.set('requestOptions', [
     ...requestOptions,
     {
-      providerOptions: { ...providerOption, requestURL: url, rubeusURL: fn },
+      providerOptions: {
+        ...providerOption,
+        requestURL: url,
+        rubeusURL: fn,
+      },
       requestParams: transformedRequestBody,
       response: mappedResponse.clone(),
       cacheStatus: cacheStatus,

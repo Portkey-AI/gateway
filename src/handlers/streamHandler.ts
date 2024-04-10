@@ -8,7 +8,7 @@ import {
 } from '../globals';
 import { OpenAIChatCompleteResponse } from '../providers/openai/chatComplete';
 import { OpenAICompleteResponse } from '../providers/openai/complete';
-import { getStreamModeSplitPattern } from '../utils';
+import { getStreamModeSplitPattern, type SplitPatternType } from '../utils';
 
 function readUInt32BE(buffer: Uint8Array, offset: number) {
   return (
@@ -114,7 +114,7 @@ export async function* readAWSStream(
 
 export async function* readStream(
   reader: ReadableStreamDefaultReader,
-  splitPattern: string,
+  splitPattern: SplitPatternType,
   transformFunction: Function | undefined,
   isSleepTimeRequired: boolean,
   fallbackChunkId: string
@@ -235,7 +235,9 @@ export async function handleStreamingMode(
   requestURL: string
 ): Promise<Response> {
   const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);
-  const fallbackChunkId = Date.now().toString();
+  // If the provider doesn't supply completion id,
+  // we generate a fallback id using the provider name + timestamp.
+  const fallbackChunkId = `${proxyProvider}-${Date.now().toString()}`;
 
   if (!response.body) {
     throw new Error('Response format is invalid. Body not found');
@@ -274,7 +276,12 @@ export async function handleStreamingMode(
 
   // Convert GEMINI/COHERE json stream to text/event-stream for non-proxy calls
   if (
-    [GOOGLE, COHERE, BEDROCK].includes(proxyProvider) &&
+    [
+      //
+      GOOGLE,
+      COHERE,
+      BEDROCK,
+    ].includes(proxyProvider) &&
     responseTransformer
   ) {
     return new Response(readable, {

@@ -59,6 +59,10 @@ export interface Options {
   awsAccessKeyId?: string;
   awsSessionToken?: string;
   awsRegion?: string;
+
+  /** Google Vertex AI specific */
+  vertexRegion?: string;
+  vertexProjectId?: string;
 }
 
 /**
@@ -244,6 +248,9 @@ export interface ShortConfig {
   workersAiAccountId?: string;
   apiVersion?: string;
   customHost?: string;
+  // Google Vertex AI specific
+  vertexRegion?: string;
+  vertexProjectId?: string;
 }
 
 /**
