@@ -17,6 +17,7 @@ import OllamaAPIConfig from './ollama';
 import { ProviderConfigs } from './types';
 import GroqConfig from './groq';
 import SegmindConfig from './segmind';
+import JinaConfig from './jina';
 import MoonshotConfig from './moonshot';
 import OpenrouterConfig from './openrouter';
 import LingYiConfig from './lingyi';
@@ -40,6 +41,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   bedrock: BedrockConfig,
   groq: GroqConfig,
   segmind: SegmindConfig,
+  jina: JinaConfig,
   moonshot: MoonshotConfig,
   openrouter: OpenrouterConfig,
   lingyi: LingYiConfig,

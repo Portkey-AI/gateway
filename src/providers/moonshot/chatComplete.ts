@@ -10,7 +10,7 @@ export const MoonshotChatCompleteConfig: ProviderConfig = {
   model: {
     param: "model",
     required: true,
-    default: "moonshot-v1-8k",
+    default: "moonshot-v1",
   },
   messages: {
     param: "messages",
@@ -47,7 +47,7 @@ export interface MoonshotStreamChunk {
   id: string;
   object: string;
   created: number;
-  model: "moonshot-v1-8k" | "moonshot-v1-32k" | "moonshot-v1-128k";
+  model: "moonshot-v1" | "moonshot-v1-8k" | "moonshot-v1-32k" | "moonshot-v1-128k";
   choices: {
     delta: {
       content?: string;

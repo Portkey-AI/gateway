@@ -40,6 +40,7 @@ export const AI21: string = 'ai21';
 export const BEDROCK: string = 'bedrock';
 export const GROQ: string = 'groq';
 export const SEGMIND: string = 'segmind';
+export const JINA: string = 'jina';
 export const MOONSHOT: string = "moonshot";
 export const OPENROUTER: string = "openrouter";
 export const LINGYI: string  = "lingyi";
@@ -63,6 +64,7 @@ export const VALID_PROVIDERS = [
   BEDROCK,
   GROQ,
   SEGMIND,
+  JINA,
   MOONSHOT,
   OPENROUTER,
   LINGYI,
