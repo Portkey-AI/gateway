@@ -17,6 +17,9 @@ import {
   BedrockTitanChatCompleteResponseTransform,
   BedrockTitanChatCompleteStreamChunkTransform,
   BedrockTitanChatompleteConfig,
+  BedrockMistralChatCompleteConfig,
+  BedrockMistralChatCompleteResponseTransform,
+  BedrockMistralChatCompleteStreamChunkTransform,
 } from './chatComplete';
 import {
   BedrockAI21CompleteConfig,
@@ -30,6 +33,9 @@ import {
   BedrockLLamaCompleteConfig,
   BedrockLlamaCompleteResponseTransform,
   BedrockLlamaCompleteStreamChunkTransform,
+  BedrockMistralCompleteConfig,
+  BedrockMistralCompleteResponseTransform,
+  BedrockMistralCompleteStreamChunkTransform,
   BedrockTitanCompleteConfig,
   BedrockTitanCompleteResponseTransform,
   BedrockTitanCompleteStreamChunkTransform,
@@ -89,6 +95,19 @@ const BedrockConfig: ProviderConfigs = {
             complete: BedrockLlamaCompleteResponseTransform,
             'stream-chatComplete': BedrockLlamaChatCompleteStreamChunkTransform,
             chatComplete: BedrockLlamaChatCompleteResponseTransform,
+          },
+        };
+      case 'mistral':
+        return {
+          complete: BedrockMistralCompleteConfig,
+          chatComplete: BedrockMistralChatCompleteConfig,
+          api: BedrockAPIConfig,
+          responseTransforms: {
+            'stream-complete': BedrockMistralCompleteStreamChunkTransform,
+            complete: BedrockMistralCompleteResponseTransform,
+            'stream-chatComplete':
+              BedrockMistralChatCompleteStreamChunkTransform,
+            chatComplete: BedrockMistralChatCompleteResponseTransform,
           },
         };
       case 'amazon':
