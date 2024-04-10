@@ -48,10 +48,10 @@ interface MoonshotChatCompleteResponse extends ChatCompletionResponse {
   object: string;
   created: number;
   model:
-  | 'moonshot-v1'
-  | 'moonshot-v1-8k'
-  | 'moonshot-v1-32k'
-  | 'moonshot-v1-128k';
+    | 'moonshot-v1'
+    | 'moonshot-v1-8k'
+    | 'moonshot-v1-32k'
+    | 'moonshot-v1-128k';
   usage: {
     prompt_tokens: number;
     completion_tokens: number;
