@@ -41,6 +41,7 @@ export const BEDROCK: string = 'bedrock';
 export const GROQ: string = 'groq';
 export const SEGMIND: string = 'segmind';
 export const JINA: string = 'jina';
+export const FIREWORKS_AI: string = 'fireworks-ai';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -62,6 +63,7 @@ export const VALID_PROVIDERS = [
   GROQ,
   SEGMIND,
   JINA,
+  FIREWORKS_AI,
 ];
 
 export const CONTENT_TYPES = {
