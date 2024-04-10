@@ -5,7 +5,10 @@ import {
   ErrorResponse,
   ProviderConfig,
 } from '../types';
-import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
+import {
+  generateErrorResponse,
+  generateInvalidProviderResponseError,
+} from '../utils';
 
 export const WorkersAiChatCompleteConfig: ProviderConfig = {
   messages: {
@@ -17,11 +20,11 @@ export const WorkersAiChatCompleteConfig: ProviderConfig = {
     default: false,
   },
   raw: {
-    param: 'raw'
+    param: 'raw',
   },
   max_tokens: {
-    param: "max_tokens"
-  }
+    param: 'max_tokens',
+  },
 };
 
 export interface WorkersAiErrorObject {
@@ -54,7 +57,9 @@ export const WorkersAiErrorResponseTransform: (
   if ('errors' in response) {
     return generateErrorResponse(
       {
-        message: response.errors?.map((error) => `Error ${error.code}:${error.message}`).join(', '),
+        message: response.errors
+          ?.map((error) => `Error ${error.code}:${error.message}`)
+          .join(', '),
         type: null,
         param: null,
         code: null,
@@ -83,7 +88,7 @@ export const WorkersAiChatCompleteResponseTransform: (
       id: Date.now().toString(),
       object: 'chat_completion',
       created: Math.floor(Date.now() / 1000),
-      model: '',  // TODO: find a way to send the cohere embedding model name back
+      model: '', // TODO: find a way to send the cohere embedding model name back
       provider: WORKERS_AI,
       choices: [
         {

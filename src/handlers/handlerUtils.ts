@@ -192,7 +192,8 @@ export const fetchProviderOptionsFromConfig = (
     if (camelCaseConfig.apiVersion)
       providerOptions[0].apiVersion = camelCaseConfig.apiVersion;
     if (camelCaseConfig.workersAiAccountId)
-      providerOptions[0].workersAiAccountId = camelCaseConfig.workersAiAccountId;
+      providerOptions[0].workersAiAccountId =
+        camelCaseConfig.workersAiAccountId;
     mode = 'single';
   } else {
     if (camelCaseConfig.strategy && camelCaseConfig.strategy.mode) {

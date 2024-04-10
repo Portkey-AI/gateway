@@ -1,7 +1,10 @@
 import { WORKERS_AI } from '../../globals';
 import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
 import { ErrorResponse, ProviderConfig } from '../types';
-import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
+import {
+  generateErrorResponse,
+  generateInvalidProviderResponseError,
+} from '../utils';
 
 export const WorkersAiEmbedConfig: ProviderConfig = {
   input: {
@@ -33,7 +36,9 @@ export const WorkersAiErrorResponseTransform: (
   if ('errors' in response) {
     return generateErrorResponse(
       {
-        message: response.errors?.map((error) => `Error ${error.code}:${error.message}`).join(', '),
+        message: response.errors
+          ?.map((error) => `Error ${error.code}:${error.message}`)
+          .join(', '),
         type: null,
         param: null,
         code: null,
@@ -56,7 +61,7 @@ export interface WorkersAiEmbedResponse {
 
     /** A 2D array of floating point numbers representing the embeddings. */
     data: number[][];
-  }
+  };
 }
 
 export const WorkersAiEmbedResponseTransform: (
