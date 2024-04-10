@@ -18,6 +18,8 @@ const WorkersAiAPIConfig: ProviderAPIConfig = {
       case 'chatComplete': {
         return `/${model}`;
       }
+      case 'embed':
+        return `/${model}`;
       default:
         return '';
     }

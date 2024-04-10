@@ -107,7 +107,7 @@ export const WorkersAiCompleteStreamChunkTransform: (
       id: '',
       object: 'text_completion',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: '',  // TODO: find a way to send the cohere embedding model name back
       provider: WORKERS_AI,
       choices: [
         {

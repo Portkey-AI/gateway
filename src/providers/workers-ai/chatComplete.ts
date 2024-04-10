@@ -119,7 +119,6 @@ export const WorkersAiErrorResponseTransform: (
 };
 
 // TODO: cloudflare do not return the usage
-// TODO: return the model
 export const WorkersAiChatCompleteResponseTransform: (
   response: WorkersAiChatCompleteResponse | WorkersAiErrorResponse,
   responseStatus: number
@@ -136,7 +135,7 @@ export const WorkersAiChatCompleteResponseTransform: (
       id: Date.now().toString(),
       object: 'chat_completion',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: '',  // TODO: find a way to send the cohere embedding model name back
       provider: WORKERS_AI,
       choices: [
         {
