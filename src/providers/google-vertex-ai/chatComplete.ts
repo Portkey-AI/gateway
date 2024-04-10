@@ -315,19 +315,11 @@ export const GoogleChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string
 ) => string = (responseChunk, fallbackId) => {
-  let chunk = responseChunk.trim();
-  if (chunk.startsWith('[')) {
-    chunk = chunk.slice(1);
-  }
+  const chunk = responseChunk
+    .trim()
+    .replace(/^data: /, '')
+    .trim();
 
-  if (chunk.endsWith(',')) {
-    chunk = chunk.slice(0, chunk.length - 1);
-  }
-  if (chunk.endsWith(']')) {
-    chunk = chunk.slice(0, chunk.length - 2);
-  }
-  chunk = chunk.replace(/^data: /, '');
-  chunk = chunk.trim();
   if (chunk === '[DONE]') {
     return `data: ${chunk}\n\n`;
   }
