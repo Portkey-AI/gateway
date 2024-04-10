@@ -1,5 +1,10 @@
 <div align="center">
 
+<p align="right">
+   <strong>English</strong> | <a href="./README.cn.md">中文</a> 
+</p>
+
+
 # AI Gateway
 #### Reliably route to 100+ LLMs with 1 fast & friendly API
 <img src="https://portkey.ai/blog/content/images/2024/04/code-1.gif" width="500" alt="Gateway Demo"><br>
