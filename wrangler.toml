@@ -1,4 +1,4 @@
-name = "ai-gateway"
+name = "rubeus"
 compatibility_date = "2023-01-01"
 main = "src/index.ts"
 node_compat = true
@@ -11,7 +11,7 @@ CUSTOM_HEADERS_TO_IGNORE = []
 #Configuration for DEVELOPMENT environment
 #
 [env.staging]
-name = "ai-gateway-dev"
+name = "rubeus-dev"
 
 [env.staging.vars]
 ENVIRONMENT = 'staging'
@@ -22,12 +22,9 @@ CUSTOM_HEADERS_TO_IGNORE = []
 #Configuration for PRODUCTION environment
 #
 [env.production]
-name = "ai-gateway"
+name = "rubeus"
 logpush=true
 
 [env.production.vars]
 ENVIRONMENT = 'production'
 CUSTOM_HEADERS_TO_IGNORE = []
-
-[placement]
-mode = "smart"

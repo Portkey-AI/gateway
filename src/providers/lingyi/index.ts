@@ -1,18 +1,18 @@
 import { ProviderConfigs } from '../types';
-import LingYiAPIConfig from './api';
+import LingyiAPIConfig from './api';
 import {
-  LingYiChatCompleteConfig,
-  LingYiChatCompleteResponseTransform,
-  LingYiChatCompleteStreamChunkTransform,
+  LingyiChatCompleteConfig,
+  LingyiChatCompleteResponseTransform,
+  LingyiChatCompleteStreamChunkTransform,
 } from './chatComplete';
 
-const LingYiConfig: ProviderConfigs = {
-  chatComplete: LingYiChatCompleteConfig,
-  api: LingYiAPIConfig,
+const LingyiConfig: ProviderConfigs = {
+  chatComplete: LingyiChatCompleteConfig,
+  api: LingyiAPIConfig,
   responseTransforms: {
-    chatComplete: LingYiChatCompleteResponseTransform,
-    'stream-chatComplete': LingYiChatCompleteStreamChunkTransform,
+    chatComplete: LingyiChatCompleteResponseTransform,
+    'stream-chatComplete': LingyiChatCompleteStreamChunkTransform,
   },
 };
 
-export default LingYiConfig;
+export default LingyiConfig;

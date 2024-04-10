@@ -1,10 +1,13 @@
 import { ZHIPU } from '../../globals';
-
 import {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
 } from '../types';
+import {
+  generateErrorResponse,
+  generateInvalidProviderResponseError,
+} from '../utils';
 
 export const ZhipuChatCompleteConfig: ProviderConfig = {
   model: {
@@ -39,17 +42,34 @@ export const ZhipuChatCompleteConfig: ProviderConfig = {
   },
 };
 
-export interface ZhipuChatCompleteResponse extends ChatCompletionResponse {}
-
-export interface ZhipuErrorResponse extends ErrorResponse {}
-
-export interface ZhipuStreamChunk {
+interface ZhipuChatCompleteResponse extends ChatCompletionResponse {
   id: string;
   object: string;
   created: number;
-  model: 'glm-3-turbo' | 'glm-4' | 'glm-4v';
+  model: string;
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
+export interface ZhipuErrorResponse {
+  object: string;
+  message: string;
+  type: string;
+  param: string | null;
+  code: string;
+}
+
+interface ZhipuStreamChunk {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
   choices: {
     delta: {
+      role?: string | null;
       content?: string;
     };
     index: number;
@@ -61,16 +81,16 @@ export const ZhipuChatCompleteResponseTransform: (
   response: ZhipuChatCompleteResponse | ZhipuErrorResponse,
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if ('error' in response && responseStatus !== 200) {
-    return {
-      error: {
-        message: response.error.message,
-        type: response.error.type,
-        param: null,
-        code: response.error.code?.toString() || null,
+  if ('message' in response && responseStatus !== 200) {
+    return generateErrorResponse(
+      {
+        message: response.message,
+        type: response.type,
+        param: response.param,
+        code: response.code,
       },
-      provider: ZHIPU,
-    } as ErrorResponse;
+      ZHIPU
+    );
   }
 
   if ('choices' in response) {
@@ -82,28 +102,21 @@ export const ZhipuChatCompleteResponseTransform: (
       provider: ZHIPU,
       choices: response.choices.map((c) => ({
         index: c.index,
-        message: c.message,
+        message: {
+          role: c.message.role,
+          content: c.message.content,
+        },
         finish_reason: c.finish_reason,
       })),
       usage: {
-        prompt_tokens: response.usage?.prompt_tokens || 0,
-        completion_tokens: response.usage?.completion_tokens || 0,
-        total_tokens: response.usage?.total_tokens || 0,
+        prompt_tokens: response.usage?.prompt_tokens,
+        completion_tokens: response.usage?.completion_tokens,
+        total_tokens: response.usage?.total_tokens,
       },
     };
   }
 
-  return {
-    error: {
-      message: `Invalid response recieved from ${ZHIPU}: ${JSON.stringify(
-        response
-      )}`,
-      type: null,
-      param: null,
-      code: null,
-    },
-    provider: ZHIPU,
-  } as ErrorResponse;
+  return generateInvalidProviderResponseError(response, ZHIPU);
 };
 
 export const ZhipuChatCompleteStreamChunkTransform: (
@@ -115,23 +128,21 @@ export const ZhipuChatCompleteStreamChunkTransform: (
   if (chunk === '[DONE]') {
     return `data: ${chunk}\n\n`;
   }
-
   const parsedChunk: ZhipuStreamChunk = JSON.parse(chunk);
-  return `data: ${JSON.stringify({
-    id: parsedChunk.id,
-    object: parsedChunk.object,
-    created: parsedChunk.created,
-    model: parsedChunk.model,
-    provider: ZHIPU,
-    choices: [
-      {
-        index: parsedChunk.choices[0].index || 0,
-        delta: {
-          role: 'assistant',
-          content: parsedChunk.choices[0].delta.content,
+  return (
+    `data: ${JSON.stringify({
+      id: parsedChunk.id,
+      object: parsedChunk.object,
+      created: parsedChunk.created,
+      model: parsedChunk.model,
+      provider: ZHIPU,
+      choices: [
+        {
+          index: parsedChunk.choices[0].index,
+          delta: parsedChunk.choices[0].delta,
+          finish_reason: parsedChunk.choices[0].finish_reason,
         },
-        finish_reason: parsedChunk.choices[0].finish_reason || null,
-      },
-    ],
-  })}\n\n`;
+      ],
+    })}` + '\n\n'
+  );
 };

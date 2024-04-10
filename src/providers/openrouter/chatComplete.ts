@@ -1,16 +1,19 @@
 import { OPENROUTER } from '../../globals';
-
 import {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
 } from '../types';
+import {
+  generateErrorResponse,
+  generateInvalidProviderResponseError,
+} from '../utils';
 
 export const OpenrouterChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
-    default: 'openrouter/auto',
+    default: 'glm-3-turbo',
   },
   messages: {
     param: 'messages',
@@ -39,18 +42,34 @@ export const OpenrouterChatCompleteConfig: ProviderConfig = {
   },
 };
 
-export interface OpenrouterChatCompleteResponse
-  extends ChatCompletionResponse {}
+interface OpenrouterChatCompleteResponse extends ChatCompletionResponse {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
 
-export interface OpenrouterErrorResponse extends ErrorResponse {}
+export interface OpenrouterErrorResponse {
+  object: string;
+  message: string;
+  type: string;
+  param: string | null;
+  code: string;
+}
 
-export interface OpenrouterStreamChunk {
+interface OpenrouterStreamChunk {
   id: string;
   object: string;
   created: number;
   model: string;
   choices: {
     delta: {
+      role?: string | null;
       content?: string;
     };
     index: number;
@@ -62,16 +81,16 @@ export const OpenrouterChatCompleteResponseTransform: (
   response: OpenrouterChatCompleteResponse | OpenrouterErrorResponse,
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if ('error' in response && responseStatus !== 200) {
-    return {
-      error: {
-        message: response.error.message,
-        type: response.error.type,
-        param: null,
-        code: response.error.code?.toString() || null,
+  if ('message' in response && responseStatus !== 200) {
+    return generateErrorResponse(
+      {
+        message: response.message,
+        type: response.type,
+        param: response.param,
+        code: response.code,
       },
-      provider: OPENROUTER,
-    } as ErrorResponse;
+      OPENROUTER
+    );
   }
 
   if ('choices' in response) {
@@ -83,28 +102,21 @@ export const OpenrouterChatCompleteResponseTransform: (
       provider: OPENROUTER,
       choices: response.choices.map((c) => ({
         index: c.index,
-        message: c.message,
+        message: {
+          role: c.message.role,
+          content: c.message.content,
+        },
         finish_reason: c.finish_reason,
       })),
       usage: {
-        prompt_tokens: response.usage?.prompt_tokens || 0,
-        completion_tokens: response.usage?.completion_tokens || 0,
-        total_tokens: response.usage?.total_tokens || 0,
+        prompt_tokens: response.usage?.prompt_tokens,
+        completion_tokens: response.usage?.completion_tokens,
+        total_tokens: response.usage?.total_tokens,
       },
     };
   }
 
-  return {
-    error: {
-      message: `Invalid response recieved from ${OPENROUTER}: ${JSON.stringify(
-        response
-      )}`,
-      type: null,
-      param: null,
-      code: null,
-    },
-    provider: OPENROUTER,
-  } as ErrorResponse;
+  return generateInvalidProviderResponseError(response, OPENROUTER);
 };
 
 export const OpenrouterChatCompleteStreamChunkTransform: (
@@ -116,23 +128,21 @@ export const OpenrouterChatCompleteStreamChunkTransform: (
   if (chunk === '[DONE]') {
     return `data: ${chunk}\n\n`;
   }
-
   const parsedChunk: OpenrouterStreamChunk = JSON.parse(chunk);
-  return `data: ${JSON.stringify({
-    id: parsedChunk.id,
-    object: parsedChunk.object,
-    created: parsedChunk.created,
-    model: parsedChunk.model,
-    provider: OPENROUTER,
-    choices: [
-      {
-        index: parsedChunk.choices[0].index || 0,
-        delta: {
-          role: 'assistant',
-          content: parsedChunk.choices[0].delta.content,
+  return (
+    `data: ${JSON.stringify({
+      id: parsedChunk.id,
+      object: parsedChunk.object,
+      created: parsedChunk.created,
+      model: parsedChunk.model,
+      provider: OPENROUTER,
+      choices: [
+        {
+          index: parsedChunk.choices[0].index,
+          delta: parsedChunk.choices[0].delta,
+          finish_reason: parsedChunk.choices[0].finish_reason,
         },
-        finish_reason: parsedChunk.choices[0].finish_reason || null,
-      },
-    ],
-  })}\n\n`;
+      ],
+    })}` + '\n\n'
+  );
 };
