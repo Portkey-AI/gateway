@@ -129,6 +129,24 @@ export const FireworksAICompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, FIREWORKS_AI);
 };
 
+export interface FireworksAICompleteStreamChunk {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: {
+    text: string;
+    index: number;
+    finish_reason: string | null;
+    logprobs: null;
+  }[];
+  usage: null | {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
 export const FireworksAICompleteStreamChunkTransform: (
   response: string
 ) => string = (responseChunk) => {
@@ -138,7 +156,7 @@ export const FireworksAICompleteStreamChunkTransform: (
   if (chunk === '[DONE]') {
     return `data: ${chunk}\n\n`;
   }
-  const parsedChunk: FireworksAIStreamChunk = JSON.parse(chunk);
+  const parsedChunk: FireworksAICompleteStreamChunk = JSON.parse(chunk);
   return (
     `data: ${JSON.stringify({
       id: parsedChunk.id,
@@ -148,8 +166,9 @@ export const FireworksAICompleteStreamChunkTransform: (
       provider: FIREWORKS_AI,
       choices: [
         {
-          index: parsedChunk.choices[0].index,
-          delta: parsedChunk.choices[0].delta,
+          index: parsedChunk.choices[0].index ?? 0,
+          text: parsedChunk.choices[0].text,
+          logprobs: null,
           finish_reason: parsedChunk.choices[0].finish_reason,
         },
       ],
