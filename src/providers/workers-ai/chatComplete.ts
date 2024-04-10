@@ -16,6 +16,12 @@ export const WorkersAiChatCompleteConfig: ProviderConfig = {
     param: 'stream',
     default: false,
   },
+  raw: {
+    param: 'raw'
+  },
+  max_tokens: {
+    param: "max_tokens"
+  }
 };
 
 export interface WorkersAiErrorObject {
