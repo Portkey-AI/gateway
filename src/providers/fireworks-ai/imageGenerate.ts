@@ -50,7 +50,7 @@ export const FireworksAIImageGenerateConfig: ProviderConfig = {
   sampler: {
     param: 'sampler',
   },
-  samples: {
+  n: {
     param: 'samples',
     min: 1,
     max: 10,

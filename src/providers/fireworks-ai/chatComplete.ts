@@ -138,6 +138,16 @@ export const FireworksAIErrorResponseTransform: (
       },
       FIREWORKS_AI
     );
+  } else if ('detail' in response) {
+    return generateErrorResponse(
+      {
+        message: response.detail as string,
+        type: null,
+        param: null,
+        code: null,
+      },
+      FIREWORKS_AI
+    );
   }
   return generateErrorResponse(response.error, FIREWORKS_AI);
 };

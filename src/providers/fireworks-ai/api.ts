@@ -18,7 +18,7 @@ const FireworksAIAPIConfig: ProviderAPIConfig = {
       case 'embed':
         return '/embeddings';
       case 'imageGenerate':
-        return `/image_generation/accounts/fireworks/models/${model}`;
+        return `/image_generation/${model}`;
       default:
         return '';
     }
