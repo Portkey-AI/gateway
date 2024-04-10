@@ -18,6 +18,7 @@ import { ProviderConfigs } from './types';
 import GroqConfig from './groq';
 import SegmindConfig from './segmind';
 import JinaConfig from './jina';
+import FireworksAIConfig from './fireworks-ai';
 import MoonshotConfig from './moonshot';
 import OpenrouterConfig from './openrouter';
 import LingYiConfig from './lingyi';
@@ -43,6 +44,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   groq: GroqConfig,
   segmind: SegmindConfig,
   jina: JinaConfig,
+  'fireworks-ai': FireworksAIConfig,
   moonshot: MoonshotConfig,
   openrouter: OpenrouterConfig,
   lingyi: LingYiConfig,
