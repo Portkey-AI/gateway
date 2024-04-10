@@ -1,5 +1,8 @@
-import { constructConfigFromRequestHeaders, tryTargetsRecursively } from "./handlerUtils";
-import { Context } from "hono";
+import {
+  constructConfigFromRequestHeaders,
+  tryTargetsRecursively,
+} from './handlerUtils';
+import { Context } from 'hono';
 
 /**
  * Handles the '/chat/completions' API request by selecting the appropriate provider(s) and making the request to them.
@@ -10,33 +13,34 @@ import { Context } from "hono";
  * @throws Will throw an 500 error if the handler fails due to some reasons
  */
 export async function chatCompletionsHandler(c: Context): Promise<Response> {
-    try {
-        let request = await c.req.json();
-        let requestHeaders = Object.fromEntries(c.req.raw.headers);
-        const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders)
-        const tryTargetsResponse = await tryTargetsRecursively(
-            c,
-            camelCaseConfig ?? {},
-            request,
-            requestHeaders,
-            "chatComplete",
-            "POST",
-            "config"
-        );
+  try {
+    let request = await c.req.json();
+    let requestHeaders = Object.fromEntries(c.req.raw.headers);
+    const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
+    const tryTargetsResponse = await tryTargetsRecursively(
+      c,
+      camelCaseConfig ?? {},
+      request,
+      requestHeaders,
+      'chatComplete',
+      'POST',
+      'config'
+    );
 
-        return tryTargetsResponse;
-    } catch (err: any) {
-        console.log("chatCompletion error", err.message);
-        return new Response(
-            JSON.stringify({
-                status: "failure",
-                message: "Something went wrong",
-            }), {
-                status: 500,
-                headers: {
-                    "content-type": "application/json"
-                }
-            }
-        );
-    }
+    return tryTargetsResponse;
+  } catch (err: any) {
+    console.log('chatCompletion error', err.message);
+    return new Response(
+      JSON.stringify({
+        status: 'failure',
+        message: 'Something went wrong',
+      }),
+      {
+        status: 500,
+        headers: {
+          'content-type': 'application/json',
+        },
+      }
+    );
+  }
 }

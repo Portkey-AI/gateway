@@ -1,11 +1,18 @@
-import { ProviderAPIConfig } from "../types";
+import { ProviderAPIConfig } from '../types';
 
 const PerplexityAIApiConfig: ProviderAPIConfig = {
-  baseURL: "https://api.perplexity.ai",
-  headers: (API_KEY:string) => {
-    return {"Authorization": `Bearer ${API_KEY}`}
+  getBaseURL: () => 'https://api.perplexity.ai',
+  headers: ({ providerOptions }) => {
+    return { Authorization: `Bearer ${providerOptions.apiKey}` };
   },
-  chatComplete: "/chat/completions"
+  getEndpoint: ({ fn }) => {
+    switch (fn) {
+      case 'chatComplete':
+        return '/chat/completions';
+      default:
+        return '';
+    }
+  },
 };
 
 export default PerplexityAIApiConfig;

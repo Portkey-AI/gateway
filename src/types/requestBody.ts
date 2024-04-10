@@ -25,7 +25,7 @@ interface Strategy {
  */
 export interface Options {
   /** The name of the provider. */
-  provider: string|undefined;
+  provider: string | undefined;
   /** The name of the API key for the provider. */
   virtualKey?: string;
   /** The API key for the provider. */
@@ -42,12 +42,21 @@ export interface Options {
   resourceName?: string;
   deploymentId?: string;
   apiVersion?: string;
-  adAuth?:string;
+  adAuth?: string;
+  /** The parameter to set custom base url */
+  customHost?: string;
+  /** The parameter to set list of headers to be forwarded as-is to the provider */
+  forwardHeaders?: string[];
   /** provider option index picked based on weight in loadbalance mode */
   index?: number;
   cache?: CacheSettings | string;
   metadata?: Record<string, string>;
   requestTimeout?: number;
+  /** AWS Bedrock specific */
+  awsSecretAccessKey?: string;
+  awsAccessKeyId?: string;
+  awsSessionToken?: string;
+  awsRegion?: string;
 }
 
 /**
@@ -57,7 +66,7 @@ export interface Options {
 export interface Targets {
   strategy?: Strategy;
   /** The name of the provider. */
-  provider?: string|undefined;
+  provider?: string | undefined;
   /** The name of the API key for the provider. */
   virtualKey?: string;
   /** The API key for the provider. */
@@ -74,11 +83,11 @@ export interface Targets {
   resourceName?: string;
   deploymentId?: string;
   apiVersion?: string;
-  adAuth?:string;
+  adAuth?: string;
   /** provider option index picked based on weight in loadbalance mode */
   index?: number;
-  cache?: CacheSettings | string,
-  targets?: Targets[]
+  cache?: CacheSettings | string;
+  targets?: Targets[];
 }
 
 /**
@@ -87,13 +96,14 @@ export interface Targets {
  */
 export interface Config {
   /** The mode for handling the request. It can be "single", "fallback", "loadbalance", or "scientist". */
-  mode: "single" | "fallback" | "loadbalance" | "scientist";
+  mode: 'single' | 'fallback' | 'loadbalance' | 'scientist';
   /** The configuration for the provider(s). */
   options: Options[];
   targets?: Targets[];
   cache?: CacheSettings;
   retry?: RetrySettings;
   strategy?: Strategy;
+  customHost?: string;
 }
 
 /**
@@ -105,7 +115,7 @@ export interface ContentType {
   text?: string;
   image_url?: {
     url: string;
-  }
+  };
 }
 
 /**
@@ -122,11 +132,11 @@ export interface Message {
   /** The function call to make, if any. */
   function_call?: any;
   tool_calls?: any;
-  citationMetadata?: CitationMetadata
+  citationMetadata?: CitationMetadata;
 }
 
 export interface CitationMetadata {
-  citationSources?: CitationSource[]
+  citationSources?: CitationSource[];
 }
 
 export interface CitationSource {
@@ -178,7 +188,7 @@ export interface Params {
   prompt?: string | string[];
   messages?: Message[];
   functions?: Function[];
-  function_call?: "none" | "auto" | {name: string;};
+  function_call?: 'none' | 'auto' | { name: string };
   max_tokens?: number;
   temperature?: number;
   top_p?: number;
@@ -200,7 +210,7 @@ export interface Params {
 
 interface Examples {
   input?: Message;
-  output?: Message
+  output?: Message;
 }
 
 /**
@@ -230,6 +240,7 @@ export interface ShortConfig {
   resourceName?: string;
   deploymentId?: string;
   apiVersion?: string;
+  customHost?: string;
 }
 
 /**

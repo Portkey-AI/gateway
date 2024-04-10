@@ -72,7 +72,15 @@ To run using Docker
 docker run -d -p 8787:8787 portkeyai/gateway:latest
 ```
 
-## Docker Compose
+
+# Deploy to Zeabur
+
+Click on the button below to deploy.
+
+[![Deploy on Zeabur](https://zeabur.com/button.svg)](https://zeabur.com/templates/RU38E3)
+
+# Deploy to Vercel
+Docs to be written, please help!
 
 Download compose file
 
