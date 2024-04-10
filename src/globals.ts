@@ -42,10 +42,10 @@ export const GROQ: string = 'groq';
 export const SEGMIND: string = 'segmind';
 export const JINA: string = 'jina';
 export const FIREWORKS_AI: string = 'fireworks-ai';
-export const MOONSHOT: string = "moonshot";
-export const OPENROUTER: string = "openrouter";
-export const LINGYI: string  = "lingyi";
-export const ZHIPU: string = "zhipu";
+export const MOONSHOT: string = 'moonshot';
+export const OPENROUTER: string = 'openrouter';
+export const LINGYI: string = 'lingyi';
+export const ZHIPU: string = 'zhipu';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,

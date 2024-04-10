@@ -1,17 +1,17 @@
-import { ProviderConfigs } from "../types";
-import LingYiAPIConfig from "./api";
+import { ProviderConfigs } from '../types';
+import LingYiAPIConfig from './api';
 import {
   LingYiChatCompleteConfig,
   LingYiChatCompleteResponseTransform,
   LingYiChatCompleteStreamChunkTransform,
-} from "./chatComplete";
+} from './chatComplete';
 
 const LingYiConfig: ProviderConfigs = {
   chatComplete: LingYiChatCompleteConfig,
   api: LingYiAPIConfig,
   responseTransforms: {
     chatComplete: LingYiChatCompleteResponseTransform,
-    "stream-chatComplete": LingYiChatCompleteStreamChunkTransform,
+    'stream-chatComplete': LingYiChatCompleteStreamChunkTransform,
   },
 };
 

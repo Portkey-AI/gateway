@@ -1,40 +1,40 @@
-import { LINGYI } from "../../globals";
+import { LINGYI } from '../../globals';
 
 import {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
-} from "../types";
+} from '../types';
 
 export const LingYiChatCompleteConfig: ProviderConfig = {
   model: {
-    param: "model",
+    param: 'model',
     required: true,
-    default: "yi-34b-chat-0205",
+    default: 'yi-34b-chat-0205',
   },
   messages: {
-    param: "messages",
-    default: "",
+    param: 'messages',
+    default: '',
   },
   max_tokens: {
-    param: "max_tokens",
+    param: 'max_tokens',
     default: 100,
     min: 0,
   },
   temperature: {
-    param: "temperature",
+    param: 'temperature',
     default: 1,
     min: 0,
     max: 2,
   },
   top_p: {
-    param: "top_p",
+    param: 'top_p',
     default: 1,
     min: 0,
     max: 1,
   },
   stream: {
-    param: "stream",
+    param: 'stream',
     default: false,
   },
 };
@@ -47,7 +47,7 @@ export interface LingYiStreamChunk {
   id: string;
   object: string;
   created: number;
-  model: "yi-34b-chat-0205" | "yi-34b-chat-200k" | "yi-vl-plus";
+  model: 'yi-34b-chat-0205' | 'yi-34b-chat-200k' | 'yi-vl-plus';
   choices: {
     delta: {
       content?: string;
@@ -59,9 +59,9 @@ export interface LingYiStreamChunk {
 
 export const LingYiChatCompleteResponseTransform: (
   response: LingYiChatCompleteResponse | LingYiErrorResponse,
-  responseStatus: number,
+  responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if ("error" in response && responseStatus !== 200) {
+  if ('error' in response && responseStatus !== 200) {
     return {
       error: {
         message: response.error.message,
@@ -73,7 +73,7 @@ export const LingYiChatCompleteResponseTransform: (
     } as ErrorResponse;
   }
 
-  if ("choices" in response) {
+  if ('choices' in response) {
     return {
       id: response.id,
       object: response.object,
@@ -96,7 +96,7 @@ export const LingYiChatCompleteResponseTransform: (
   return {
     error: {
       message: `Invalid response recieved from ${LINGYI}: ${JSON.stringify(
-        response,
+        response
       )}`,
       type: null,
       param: null,
@@ -107,12 +107,12 @@ export const LingYiChatCompleteResponseTransform: (
 };
 
 export const LingYiChatCompleteStreamChunkTransform: (
-  response: string,
+  response: string
 ) => string = (responseChunk) => {
   let chunk = responseChunk.trim();
-  chunk = chunk.replace(/^data: /, "");
+  chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
-  if (chunk === "[DONE]") {
+  if (chunk === '[DONE]') {
     return `data: ${chunk}\n\n`;
   }
 
@@ -127,7 +127,7 @@ export const LingYiChatCompleteStreamChunkTransform: (
       {
         index: parsedChunk.choices[0].index || 0,
         delta: {
-          role: "assistant",
+          role: 'assistant',
           content: parsedChunk.choices[0].delta.content,
         },
         finish_reason: parsedChunk.choices[0].finish_reason || null,

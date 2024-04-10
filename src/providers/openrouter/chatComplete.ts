@@ -1,40 +1,40 @@
-import { OPENROUTER } from "../../globals";
+import { OPENROUTER } from '../../globals';
 
 import {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
-} from "../types";
+} from '../types';
 
 export const OpenrouterChatCompleteConfig: ProviderConfig = {
   model: {
-    param: "model",
+    param: 'model',
     required: true,
-    default: "openrouter/auto",
+    default: 'openrouter/auto',
   },
   messages: {
-    param: "messages",
-    default: "",
+    param: 'messages',
+    default: '',
   },
   max_tokens: {
-    param: "max_tokens",
+    param: 'max_tokens',
     default: 100,
     min: 0,
   },
   temperature: {
-    param: "temperature",
+    param: 'temperature',
     default: 1,
     min: 0,
     max: 2,
   },
   top_p: {
-    param: "top_p",
+    param: 'top_p',
     default: 1,
     min: 0,
     max: 1,
   },
   stream: {
-    param: "stream",
+    param: 'stream',
     default: false,
   },
 };
@@ -60,9 +60,9 @@ export interface OpenrouterStreamChunk {
 
 export const OpenrouterChatCompleteResponseTransform: (
   response: OpenrouterChatCompleteResponse | OpenrouterErrorResponse,
-  responseStatus: number,
+  responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if ("error" in response && responseStatus !== 200) {
+  if ('error' in response && responseStatus !== 200) {
     return {
       error: {
         message: response.error.message,
@@ -74,7 +74,7 @@ export const OpenrouterChatCompleteResponseTransform: (
     } as ErrorResponse;
   }
 
-  if ("choices" in response) {
+  if ('choices' in response) {
     return {
       id: response.id,
       object: response.object,
@@ -97,7 +97,7 @@ export const OpenrouterChatCompleteResponseTransform: (
   return {
     error: {
       message: `Invalid response recieved from ${OPENROUTER}: ${JSON.stringify(
-        response,
+        response
       )}`,
       type: null,
       param: null,
@@ -108,12 +108,12 @@ export const OpenrouterChatCompleteResponseTransform: (
 };
 
 export const OpenrouterChatCompleteStreamChunkTransform: (
-  response: string,
+  response: string
 ) => string = (responseChunk) => {
   let chunk = responseChunk.trim();
-  chunk = chunk.replace(/^data: /, "");
+  chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
-  if (chunk === "[DONE]") {
+  if (chunk === '[DONE]') {
     return `data: ${chunk}\n\n`;
   }
 
@@ -128,7 +128,7 @@ export const OpenrouterChatCompleteStreamChunkTransform: (
       {
         index: parsedChunk.choices[0].index || 0,
         delta: {
-          role: "assistant",
+          role: 'assistant',
           content: parsedChunk.choices[0].delta.content,
         },
         finish_reason: parsedChunk.choices[0].finish_reason || null,

@@ -1,40 +1,40 @@
-import { MOONSHOT } from "../../globals";
+import { MOONSHOT } from '../../globals';
 
 import {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
-} from "../types";
+} from '../types';
 
 export const MoonshotChatCompleteConfig: ProviderConfig = {
   model: {
-    param: "model",
+    param: 'model',
     required: true,
-    default: "moonshot-v1",
+    default: 'moonshot-v1',
   },
   messages: {
-    param: "messages",
-    default: "",
+    param: 'messages',
+    default: '',
   },
   max_tokens: {
-    param: "max_tokens",
+    param: 'max_tokens',
     default: 100,
     min: 0,
   },
   temperature: {
-    param: "temperature",
+    param: 'temperature',
     default: 1,
     min: 0,
     max: 2,
   },
   top_p: {
-    param: "top_p",
+    param: 'top_p',
     default: 1,
     min: 0,
     max: 1,
   },
   stream: {
-    param: "stream",
+    param: 'stream',
     default: false,
   },
 };
@@ -47,7 +47,11 @@ export interface MoonshotStreamChunk {
   id: string;
   object: string;
   created: number;
-  model: "moonshot-v1" | "moonshot-v1-8k" | "moonshot-v1-32k" | "moonshot-v1-128k";
+  model:
+    | 'moonshot-v1'
+    | 'moonshot-v1-8k'
+    | 'moonshot-v1-32k'
+    | 'moonshot-v1-128k';
   choices: {
     delta: {
       content?: string;
@@ -59,9 +63,9 @@ export interface MoonshotStreamChunk {
 
 export const MoonshotChatCompleteResponseTransform: (
   response: MoonshotChatCompleteResponse | MoonshotErrorResponse,
-  responseStatus: number,
+  responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if ("error" in response && responseStatus !== 200) {
+  if ('error' in response && responseStatus !== 200) {
     return {
       error: {
         message: response.error.message,
@@ -73,7 +77,7 @@ export const MoonshotChatCompleteResponseTransform: (
     } as ErrorResponse;
   }
 
-  if ("choices" in response) {
+  if ('choices' in response) {
     return {
       id: response.id,
       object: response.object,
@@ -96,7 +100,7 @@ export const MoonshotChatCompleteResponseTransform: (
   return {
     error: {
       message: `Invalid response recieved from ${MOONSHOT}: ${JSON.stringify(
-        response,
+        response
       )}`,
       type: null,
       param: null,
@@ -107,12 +111,12 @@ export const MoonshotChatCompleteResponseTransform: (
 };
 
 export const MoonshotChatCompleteStreamChunkTransform: (
-  response: string,
+  response: string
 ) => string = (responseChunk) => {
   let chunk = responseChunk.trim();
-  chunk = chunk.replace(/^data: /, "");
+  chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
-  if (chunk === "[DONE]") {
+  if (chunk === '[DONE]') {
     return `data: ${chunk}\n\n`;
   }
 
@@ -127,7 +131,7 @@ export const MoonshotChatCompleteStreamChunkTransform: (
       {
         index: parsedChunk.choices[0].index || 0,
         delta: {
-          role: "assistant",
+          role: 'assistant',
           content: parsedChunk.choices[0].delta.content,
         },
         finish_reason: parsedChunk.choices[0].finish_reason || null,
