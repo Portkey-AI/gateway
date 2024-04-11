@@ -1,14 +1,16 @@
 import { ProviderAPIConfig } from '../types';
 
 const ZhipuAPIConfig: ProviderAPIConfig = {
-  getBaseURL: () => 'https://open.bigmodel.cn/api/paas',
+  getBaseURL: () => 'https://open.bigmodel.cn/api/paas/v4',
   headers: ({ providerOptions }) => {
-    return { Authorization: `${providerOptions.apiKey}` }; // https://platform.moonshot.cn/console/api-keys
+    return { Authorization: `${providerOptions.apiKey}` }; // https://open.bigmodel.cn/usercenter/apikeys
   },
   getEndpoint: ({ fn }) => {
     switch (fn) {
       case 'chatComplete':
-        return '/v4/chat/completions';
+        return '/chat/completions';
+      case 'embed':
+        return '/embeddings';
       default:
         return '';
     }

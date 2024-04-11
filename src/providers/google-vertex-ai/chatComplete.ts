@@ -66,7 +66,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
               });
             }
             if (c.type === 'image_url') {
-              const { url } = c.image_url;
+              const { url } = c.image_url || {};
 
               if (!url) {
                 // Shouldn't throw error?
