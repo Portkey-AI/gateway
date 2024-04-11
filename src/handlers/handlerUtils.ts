@@ -2,6 +2,7 @@ import { Context } from 'hono';
 import {
   AZURE_OPEN_AI,
   BEDROCK,
+  WORKERS_AI,
   CONTENT_TYPES,
   HEADER_KEYS,
   POWERED_BY,
@@ -190,6 +191,13 @@ export const fetchProviderOptionsFromConfig = (
       providerOptions[0].deploymentId = camelCaseConfig.deploymentId;
     if (camelCaseConfig.apiVersion)
       providerOptions[0].apiVersion = camelCaseConfig.apiVersion;
+    if (camelCaseConfig.apiVersion)
+      providerOptions[0].vertexProjectId = camelCaseConfig.vertexProjectId;
+    if (camelCaseConfig.apiVersion)
+      providerOptions[0].vertexRegion = camelCaseConfig.vertexRegion;
+    if (camelCaseConfig.workersAiAccountId)
+      providerOptions[0].workersAiAccountId =
+        camelCaseConfig.workersAiAccountId;
     mode = 'single';
   } else {
     if (camelCaseConfig.strategy && camelCaseConfig.strategy.mode) {
@@ -391,7 +399,11 @@ export async function tryPostProxy(
   c.set('requestOptions', [
     ...requestOptions,
     {
-      providerOptions: { ...providerOption, requestURL: url, rubeusURL: fn },
+      providerOptions: {
+        ...providerOption,
+        requestURL: url,
+        rubeusURL: fn,
+      },
       requestParams: params,
       response: mappedResponse.clone(),
       cacheStatus: cacheStatus,
@@ -585,7 +597,11 @@ export async function tryPost(
   c.set('requestOptions', [
     ...requestOptions,
     {
-      providerOptions: { ...providerOption, requestURL: url, rubeusURL: fn },
+      providerOptions: {
+        ...providerOption,
+        requestURL: url,
+        rubeusURL: fn,
+      },
       requestParams: transformedRequestBody,
       response: mappedResponse.clone(),
       cacheStatus: cacheStatus,
@@ -951,6 +967,10 @@ export function constructConfigFromRequestHeaders(
     awsRegion: requestHeaders[`x-${POWERED_BY}-aws-region`],
   };
 
+  const workersAiConfig = {
+    workersAiAccountId: requestHeaders[`x-${POWERED_BY}-workers-ai-account-id`],
+  };
+
   if (requestHeaders[`x-${POWERED_BY}-config`]) {
     let parsedConfigJson = JSON.parse(requestHeaders[`x-${POWERED_BY}-config`]);
 
@@ -974,6 +994,13 @@ export function constructConfigFromRequestHeaders(
           ...bedrockConfig,
         };
       }
+
+      if (parsedConfigJson.provider === WORKERS_AI) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...workersAiConfig,
+        };
+      }
     }
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
@@ -988,5 +1015,7 @@ export function constructConfigFromRequestHeaders(
       azureConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === BEDROCK &&
       bedrockConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === WORKERS_AI &&
+      workersAiConfig),
   };
 }

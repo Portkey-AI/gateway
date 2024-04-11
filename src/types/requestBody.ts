@@ -43,6 +43,8 @@ export interface Options {
   deploymentId?: string;
   apiVersion?: string;
   adAuth?: string;
+  /** Workers AI specific */
+  workersAiAccountId?: string;
   /** The parameter to set custom base url */
   customHost?: string;
   /** The parameter to set list of headers to be forwarded as-is to the provider */
@@ -57,6 +59,10 @@ export interface Options {
   awsAccessKeyId?: string;
   awsSessionToken?: string;
   awsRegion?: string;
+
+  /** Google Vertex AI specific */
+  vertexRegion?: string;
+  vertexProjectId?: string;
 }
 
 /**
@@ -239,8 +245,12 @@ export interface ShortConfig {
   retry?: RetrySettings;
   resourceName?: string;
   deploymentId?: string;
+  workersAiAccountId?: string;
   apiVersion?: string;
   customHost?: string;
+  // Google Vertex AI specific
+  vertexRegion?: string;
+  vertexProjectId?: string;
 }
 
 /**
