@@ -125,7 +125,7 @@ export const OpenrouterChatCompleteStreamChunkTransform: (
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
-  if (chunk === '[DONE]') {
+  if (chunk === '[DONE]' || chunk.includes('OPENROUTER PROCESSING')) {
     return `data: ${chunk}\n\n`;
   }
   const parsedChunk: OpenrouterStreamChunk = JSON.parse(chunk);
