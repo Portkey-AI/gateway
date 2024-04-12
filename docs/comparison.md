@@ -39,6 +39,7 @@ While Portkey itself has a generous free tier (1k requests free / month), if you
 | | Simple Caching | ❌ | ✅ | ✅ | ✅ |
 | | Semantic Caching | ❌ | ❌ | ✅ | ✅ |
 | | Virtual Keys & Key Management | ❌ | ❌ | ✅ | ✅ |
+| | Support for AWS, GCP, Azure <br>Private LLM Deployments | ❌ | ❌ | ❌ | ✅ |
 | **Prompt Management** | | | |
 | | Prompt Templates | ❌ | ✅ <br>Up to 3 Templates | ✅ <br>Unlimited | ✅ <br>Unlimited |
 | | Playground | ❌ | ✅ | ✅ | ✅ |
