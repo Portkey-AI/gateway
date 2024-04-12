@@ -48,6 +48,7 @@ While Portkey itself has a generous free tier (1k requests free / month), if you
 | **Guardrails** | | | |
 | | Eval Templates | ❌ | ✅ <br>Up to 3 Evals | ✅ <br> Unlimited | ✅ <br> Unlimited |
 | **Security & Compliance** | | | |
+| | SSO with Okta Auth | ❌ | ❌ | ❌ | ✅ |
 | | Role Based<br>Access Control | ❌ | ❌ | ✅ | ✅ |
 | | SOC2, ISO27001,<br>GDPR, HIPAA Compliances | ❌ | ❌ | ✅ | ✅ |
 | | PII Anonymizer | ❌ | ❌ | ❌ | ✅ |
