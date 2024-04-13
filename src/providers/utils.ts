@@ -6,7 +6,7 @@ export const generateInvalidProviderResponseError: (
 ) => ErrorResponse = (response, provider) => {
   return {
     error: {
-      message: `Invalid response recieved from ${provider}: ${JSON.stringify(
+      message: `Invalid response received from ${provider}: ${JSON.stringify(
         response
       )}`,
       type: null,
