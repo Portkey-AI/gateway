@@ -212,6 +212,7 @@ export interface Params {
   examples?: Examples[];
   top_k?: number;
   tools?: Tool[];
+  response_format?: { type: 'json_object' | 'text' };
 }
 
 interface Examples {

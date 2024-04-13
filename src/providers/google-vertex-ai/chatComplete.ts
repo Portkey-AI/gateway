@@ -124,6 +124,10 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
+  response_format: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
   // https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/configure-safety-attributes
   // Example payload to be included in the request that sets the safety settings:
   //   "safety_settings": [

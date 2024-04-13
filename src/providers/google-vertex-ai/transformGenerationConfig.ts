@@ -20,6 +20,9 @@ export function transformGenerationConfig(params: Params) {
   if (params['stop']) {
     generationConfig['stopSequences'] = params['stop'];
   }
+  if (params?.response_format?.type === 'json_object') {
+    generationConfig['responseMimeType'] = 'application/json';
+  }
 
   return generationConfig;
 }
