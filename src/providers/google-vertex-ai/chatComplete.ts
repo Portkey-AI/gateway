@@ -198,6 +198,13 @@ export const GoogleChatCompleteResponseTransform: (
     );
   }
 
+  if (
+    'candidates' in response &&
+    response.candidates[0].finishReason === 'PROHIBITED_CONTENT'
+  ) {
+    return generateInvalidProviderResponseError(response, GOOGLE_VERTEX_AI);
+  }
+
   if ('candidates' in response) {
     const {
       promptTokenCount = 0,

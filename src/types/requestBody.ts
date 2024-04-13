@@ -213,6 +213,8 @@ export interface Params {
   top_k?: number;
   tools?: Tool[];
   response_format?: { type: 'json_object' | 'text' };
+  // Google Vertex AI specific
+  safety_settings?: any;
 }
 
 interface Examples {
