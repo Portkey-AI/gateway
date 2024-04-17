@@ -2,7 +2,7 @@
 
 ### At Portkey, we are building a Control Panel for Gen AI apps
 
-We do **5 things** to help you control your in-production app:
+We do **6 things** to help you control your in-production app:
 1. **Observability**
     * Setup instant monitoring, tracing, feedback loops, and alerts for all of your LLM calls - to help easily debug issues, find usage patterns, and areas of improvement
 3. **AI Gateway**
@@ -12,7 +12,9 @@ We do **5 things** to help you control your in-production app:
     * Manage all your prompts, variables, and their various versions in one place with advanced publishing controls - to ship your prompts directly to production without making any changes to production
 4. **Guardrails**
    * ...
-5. **Security & Compliance**
+5. **Autonomous Fine-Tuning**
+   * ...
+6. **Security & Compliance**
    * Mask provider keys, setup access control & inbound rules, and redact sensitive data - to ensure enterprisse-grade privacy & security, and compliance with SOC2, ISO, HIPAA, GDPR standards.
 
 Portkey processes **billions** of tokens everyday for our customers worldwide. All these requests are routed through our AI Gateway. We've open sourced this core AI Gateway that we use internally, to the community. 
