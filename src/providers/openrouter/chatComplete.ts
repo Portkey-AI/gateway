@@ -13,7 +13,7 @@ export const OpenrouterChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
-    default: 'glm-3-turbo',
+    default: 'openrouter/auto',
   },
   messages: {
     param: 'messages',
@@ -81,6 +81,7 @@ export const OpenrouterChatCompleteResponseTransform: (
   response: OpenrouterChatCompleteResponse | OpenrouterErrorResponse,
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+  console.log('response:', response);
   if ('message' in response && responseStatus !== 200) {
     return generateErrorResponse(
       {
@@ -125,8 +126,23 @@ export const OpenrouterChatCompleteStreamChunkTransform: (
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
-  if (chunk === '[DONE]' || chunk.includes('OPENROUTER PROCESSING')) {
+  if (chunk === '[DONE]') {
     return `data: ${chunk}\n\n`;
+  }
+  if (chunk.includes('OPENROUTER PROCESSING')) {
+    chunk = JSON.stringify({
+      id: 0,
+      model: '',
+      object: 'chat.completion.processing',
+      created: Date.now(),
+      choices: [
+        {
+          index: 0,
+          delta: { role: 'assistant', content: '' },
+          finish_reason: null,
+        },
+      ],
+    });
   }
   const parsedChunk: OpenrouterStreamChunk = JSON.parse(chunk);
   return (

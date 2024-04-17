@@ -14,7 +14,7 @@ export const MoonshotChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
-    default: 'moonshot-v1',
+    default: 'moonshot-v1-8k',
   },
   messages: {
     param: 'messages',
@@ -47,11 +47,7 @@ interface MoonshotChatCompleteResponse extends ChatCompletionResponse {
   id: string;
   object: string;
   created: number;
-  model:
-    | 'moonshot-v1'
-    | 'moonshot-v1-8k'
-    | 'moonshot-v1-32k'
-    | 'moonshot-v1-128k';
+  model: 'moonshot-v1-8k' | 'moonshot-v1-32k' | 'moonshot-v1-128k';
   usage: {
     prompt_tokens: number;
     completion_tokens: number;
