@@ -21,6 +21,8 @@ Portkey processes **billions** of tokens everyday for our customers worldwide. A
 
 While Portkey itself has a generous free tier (1k requests free / month), if you are considering to use the open source Gateway in your projects instead, here's a handy guide illustrating the key differences between [Portkey's hosted app](https://app.portkey.ai/) and the open source Gateway that powers it:
 
+## Comparison Table
+
 | Product | Feature | Open Source | Dev<br>(Free Forever) | Pro<br>($49/Month) | Enterprise <br>(Starts at $499/Month) |
 | :- | :- | :- | :- | :- | :- |
 | Requests per Month |  | No Limit | 10K | 100K | Unlimited |
