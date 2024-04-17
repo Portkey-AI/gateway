@@ -21,7 +21,7 @@ While Portkey itself has a generous free tier (1k requests free / month), if you
 
 | Product | Feature | Open Source | Dev<br>(Free Forever) | Pro<br>($49/Month) | Enterprise <br>(Starts at $499/Month) |
 | :- | :- | :- | :- | :- | :- |
-| Requests per Month |  | No Limit | 10K | 100K +<br>$15/Month for every 100K<br>Up to 3M Requests | Unlimited<br>Volume Discounts |
+| Requests per Month |  | No Limit | 10K | 100K +<br>$15/Month for every 100K<br><br>Up to 3M Requests | Unlimited Requests<br><br>Volume Discounts |
 | **Observability** | | | |
 | | Logs | ❌ | ✅ | ✅ | ✅ |
 | | Traces | ❌ | ✅ | ✅ | ✅ |
@@ -52,8 +52,8 @@ While Portkey itself has a generous free tier (1k requests free / month), if you
 | **Autonomous Fine-Tuning** | | | |
 | | Continuous improvement | ❌ | ❌ | ✅ | ✅ |
 | **Security & Compliance** | | | |
-| | SSO with Okta Auth | ❌ | ❌ | ❌ | ✅ |
 | | Role Based<br>Access Control | ❌ | ❌ | ✅ | ✅ |
+| | SSO with Okta Auth | ❌ | ❌ | ❌ | ✅ |
 | | SOC2, ISO27001,<br>GDPR, HIPAA Compliances | ❌ | ❌ | ❌ | ✅ |
 | | PII Anonymizer | ❌ | ❌ | ❌ | ✅ |
 | | BAA Signing<br>for Compliances | ❌ | ❌ | ❌ | ✅ |
