@@ -28,30 +28,20 @@ While Portkey itself has a generous free tier (1k requests free / month), if you
 | Requests per Month |  | No Limit | 10K | 100K | Unlimited |
 | Overage | | - | None | $15/Month for Every 100K<br><br>Up to 3M Requests | - |
 | **Observability** | | | |
-| | Logs | ❌ | ✅ | ✅ | ✅ |
-| | Traces | ❌ | ✅ | ✅ | ✅ |
-| | Feedback | ❌ | ✅  | ✅ | ✅ |
-| | Custom Metadata | ❌ | ✅  | ✅ | ✅ |
-| | Filters | ❌ | ✅  | ✅ | ✅ |
+| | Logs, Traces, Filters,<br>Custom Metadata | ❌ | ✅ | ✅ | ✅ |
+| | Feedbacks | ❌ | ✅  | ✅ | ✅ |
 | | Alerts | ❌ | ❌ | ✅ | ✅ |
-| | Retention Period | ❌ | 3 Days  | 30 Days | Custom |
+| | Retention Period | - | 3 Days  | 30 Days | Custom |
 | **AI Gateway** | | | |
-| | Universal API | ✅ | ✅  | ✅ | ✅ |
-| | Automatic Fallbacks | ✅ | ✅  | ✅ | ✅ |
-| | Loadbalancing | ✅ | ✅  | ✅ | ✅ |
-| | Automatic Retries | ✅ | ✅  | ✅ | ✅ |
-| | Request Timeouts | ✅ | ✅  | ✅ | ✅ |
+| | Universal API, Fallbacks,<br>Loadbalancing, Timeouts, Retries | ✅ | ✅  | ✅ | ✅ |
 | | Config Management | ❌ | ✅ | ✅ | ✅ |
-| | Virtual Keys & Key Management | ❌ | ✅ | ✅ | ✅ |
+| | Virtual Keys<br>& Key Management | ❌ | ✅ | ✅ | ✅ |
 | | Simple Caching | ❌ | ✅ <br>1 Day TTL<br>No Streaming | ✅ <br>Unlimited TTL<br>Stream from Cache | ✅ <br>Unlimited TTL<br>Stream from Cache |
 | | Semantic Caching | ❌ | ❌ | ✅ <br>Unlimited TTL<br>Stream from Cache | ✅ <br>Unlimited TTL<br>Stream from Cache |
-| | Support for AWS, GCP, Azure <br>Private LLM Deployments | ❌ | ❌ | ❌ | ✅ |
+| | Support for AWS, GCP, Azure<br>Private LLM Deployments | ❌ | ❌ | ❌ | ✅ |
 | **Prompt Management** | | | |
 | | Prompt Templates | ❌ | ✅ <br>Up to 3 Templates | ✅ <br>Unlimited | ✅ <br>Unlimited |
-| | Playground | ❌ | ✅ | ✅ | ✅ |
-| | API Deployment | ❌ | ✅ | ✅ | ✅ |
-| | Versioning | ❌ | ✅ | ✅ | ✅ |
-| | Variable Management | ❌ | ✅  | ✅ | ✅ |
+| | Playground, Versioning,<br>Deployments, Variables  | ❌ | ✅ | ✅ | ✅ |
 | **Guardrails** | | | |
 | | Eval Templates | ❌ | ✅ <br>Limited Access | ✅ <br>Unlimited | ✅ <br>Unlimited |
 | **Autonomous Fine-Tuning** | | | |
