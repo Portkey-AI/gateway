@@ -32,7 +32,7 @@ While Portkey itself has a generous free tier (1k requests free / month), if you
 | | Custom Metadata | ❌ | ✅  | ✅ | ✅ |
 | | Filters | ❌ | ✅  | ✅ | ✅ |
 | | Alerts | ❌ | ❌ | ✅ | ✅ |
-| | Log Retention | ❌ | 3 Days  | 30 Days | Custom |
+| | Retention Period | ❌ | 3 Days  | 30 Days | Custom |
 | **AI Gateway** | | | |
 | | Universal API | ✅ | ✅  | ✅ | ✅ |
 | | Automatic Fallbacks | ✅ | ✅  | ✅ | ✅ |
