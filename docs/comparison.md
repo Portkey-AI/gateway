@@ -42,7 +42,7 @@ While Portkey itself has a generous free tier (1k requests free / month), if you
 | | Config Management | ❌ | ✅ | ✅ | ✅ |
 | | Virtual Keys & Key Management | ❌ | ✅ | ✅ | ✅ |
 | | Simple Caching | ❌ | ✅ <br>1 Day TTL<br>No Streaming | ✅ <br>Unlimited TTL<br>Stream from Cache | ✅ <br>Unlimited TTL<br>Stream from Cache |
-| | Semantic Caching | ❌ | ❌ | ✅ | ✅ |
+| | Semantic Caching | ❌ | ❌ | ✅ <br>Unlimited TTL<br>Stream from Cache | ✅ <br>Unlimited TTL<br>Stream from Cache |
 | | Support for AWS, GCP, Azure <br>Private LLM Deployments | ❌ | ❌ | ❌ | ✅ |
 | **Prompt Management** | | | |
 | | Prompt Templates | ❌ | ✅ <br>Up to 3 Templates | ✅ <br>Unlimited | ✅ <br>Unlimited |
@@ -53,7 +53,7 @@ While Portkey itself has a generous free tier (1k requests free / month), if you
 | **Guardrails** | | | |
 | | Eval Templates | ❌ | ✅ <br>Limited Access | ✅ <br>Unlimited | ✅ <br>Unlimited |
 | **Autonomous Fine-Tuning** | | | |
-| | Continuous improvement | ❌ | ❌ | ✅ | ✅ |
+| | Continuous Improvement | ❌ | ❌ | ✅ | ✅ |
 | **Security & Compliance** | | | |
 | | Role Based<br>Access Control | ❌ | ❌ | ✅ | ✅ |
 | | SSO with Okta Auth | ❌ | ❌ | ❌ | ✅ |
