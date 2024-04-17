@@ -19,25 +19,27 @@ Portkey processes **billions** of tokens everyday for our customers worldwide. A
 
 While Portkey itself has a generous free tier (1k requests free / month), if you are considering to use the open source Gateway in your projects instead, here's a handy guide illustrating the key differences between [Portkey's hosted app](https://app.portkey.ai/) and the open source Gateway that powers it:
 
-| Product | Feature | Open Source <br>(Free Forever) | Dev<br>(Free Forever) | Pro<br>($49/Month) | Enterprise <br>(Starts at $499/Month) |
+| Product | Feature | Open Source | Dev<br>(Free Forever) | Pro<br>($49/Month) | Enterprise <br>(Starts at $499/Month) |
 | :- | :- | :- | :- | :- | :- |
-| Requests per Month |  | No Limit | 10K | 100K + $15/Month<br>for every 100K | Unlimited |
+| Requests per Month |  | No Limit | 10K | 100K +<br>$15/Month for every 100K<br>Up to 3M Requests | Unlimited<br>Volume Discounts |
 | **Observability** | | | |
-| | Logs | ❌ | ✅ <br>Up to 3 Days | ✅ <br>Up to 30 Days | ✅ <br>Unlimited |
-| | Traces | ❌ | ✅  <br>Up to 3 Days | ✅ <br>Up to 30 Days | ✅ <br>Unlimited |
+| | Logs | ❌ | ✅ | ✅ | ✅ |
+| | Traces | ❌ | ✅ | ✅ | ✅ |
 | | Feedback | ❌ | ✅  | ✅ | ✅ |
 | | Custom Metadata | ❌ | ✅  | ✅ | ✅ |
 | | Filters | ❌ | ✅  | ✅ | ✅ |
+| | Alerts | ❌ | ❌ | ✅ | ✅ |
+| | Log Retention | ❌ | 3 Days  | 30 Days | Custom |
 | **AI Gateway** | | | |
 | | Universal API | ✅ | ✅  | ✅ | ✅ |
 | | Automatic Fallbacks | ✅ | ✅  | ✅ | ✅ |
 | | Loadbalancing | ✅ | ✅  | ✅ | ✅ |
 | | Automatic Retries | ✅ | ✅  | ✅ | ✅ |
 | | Request Timeouts | ✅ | ✅  | ✅ | ✅ |
-| | Config Management | ❌ | ✅ <br>Up to 3 Configs | ✅ <br>Unlimited | ✅ <br>Unlimited |
-| | Simple Caching | ❌ | ✅ | ✅ | ✅ |
+| | Config Management | ❌ | ✅ | ✅ | ✅ |
+| | Virtual Keys & Key Management | ❌ | ✅ | ✅ | ✅ |
+| | Simple Caching | ❌ | ✅ <br>1 Day TTL<br>No Streaming | ✅ <br>Unlimited TTL<br>Stream from Cache | ✅ <br>Unlimited TTL<br>Stream from Cache |
 | | Semantic Caching | ❌ | ❌ | ✅ | ✅ |
-| | Virtual Keys & Key Management | ❌ | ❌ | ✅ | ✅ |
 | | Support for AWS, GCP, Azure <br>Private LLM Deployments | ❌ | ❌ | ❌ | ✅ |
 | **Prompt Management** | | | |
 | | Prompt Templates | ❌ | ✅ <br>Up to 3 Templates | ✅ <br>Unlimited | ✅ <br>Unlimited |
@@ -46,14 +48,17 @@ While Portkey itself has a generous free tier (1k requests free / month), if you
 | | Versioning | ❌ | ✅ | ✅ | ✅ |
 | | Variable Management | ❌ | ✅  | ✅ | ✅ |
 | **Guardrails** | | | |
-| | Eval Templates | ❌ | ✅ <br>Up to 3 Evals | ✅ <br> Unlimited | ✅ <br> Unlimited |
+| | Eval Templates | ❌ | ✅ <br>Limited Access | ✅ <br>Unlimited | ✅ <br>Unlimited |
+| **Autonomous Fine-Tuning** | | | |
+| | Continuous improvement | ❌ | ❌ | ✅ | ✅ |
 | **Security & Compliance** | | | |
 | | SSO with Okta Auth | ❌ | ❌ | ❌ | ✅ |
 | | Role Based<br>Access Control | ❌ | ❌ | ✅ | ✅ |
-| | SOC2, ISO27001,<br>GDPR, HIPAA Compliances | ❌ | ❌ | ✅ | ✅ |
+| | SOC2, ISO27001,<br>GDPR, HIPAA Compliances | ❌ | ❌ | ❌ | ✅ |
 | | PII Anonymizer | ❌ | ❌ | ❌ | ✅ |
 | | BAA Signing<br>for Compliances | ❌ | ❌ | ❌ | ✅ |
 | | VPC Managed Hosting | ❌ | ❌ | ❌ | ✅ |
+| | Private Tenancy | ❌ | ❌ | ❌ | ✅ |
 | | Configurable Retention<br>Periods | ❌ | ❌ | ❌ | ✅ |
 
 ### Using Open Source
