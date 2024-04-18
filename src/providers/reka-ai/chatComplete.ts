@@ -30,8 +30,7 @@ export const RekaAIChatCompleteConfig: ProviderConfig = {
     param: 'request_output_len',
   },
   temperature: {
-    param: 'temperature'
-
+    param: 'temperature',
   },
   top_p: {
     param: 'runtime_top_p',
@@ -42,7 +41,6 @@ export const RekaAIChatCompleteConfig: ProviderConfig = {
   stop: {
     param: 'stop_words',
   },
-
 };
 
 export interface RekaAIChatCompleteResponse {
@@ -53,7 +51,7 @@ export interface RekaAIChatCompleteResponse {
     input_tokens: number;
     generated_tokens: number;
   };
-};
+}
 
 export interface RekaAIErrorResponse {
   detail: any; // could be string or array
@@ -86,7 +84,7 @@ export const RekaAIChatCompleteResponseTransform: (
         {
           message: {
             role: 'assistant',
-            content: response.text
+            content: response.text,
           },
           index: 0,
           logprobs: null,
@@ -97,8 +95,7 @@ export const RekaAIChatCompleteResponseTransform: (
         prompt_tokens: response.metadata.input_tokens,
         completion_tokens: response.metadata.generated_tokens,
         total_tokens:
-          response.metadata.input_tokens +
-          response.metadata.generated_tokens,
+          response.metadata.input_tokens + response.metadata.generated_tokens,
       },
     };
   }
