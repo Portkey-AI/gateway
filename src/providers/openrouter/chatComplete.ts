@@ -81,7 +81,6 @@ export const OpenrouterChatCompleteResponseTransform: (
   response: OpenrouterChatCompleteResponse | OpenrouterErrorResponse,
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  console.log('response:', response);
   if ('message' in response && responseStatus !== 200) {
     return generateErrorResponse(
       {
