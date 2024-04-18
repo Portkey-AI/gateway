@@ -35,11 +35,37 @@ export const RekaAIChatCompleteConfig: ProviderConfig = {
   top_p: {
     param: 'runtime_top_p',
   },
+  stop: {
+    param: 'stop_words',
+    transform: (params: Params) => {
+      if (params.stop && !Array.isArray(params.stop)) {
+        return [params.stop];
+      }
+
+      return params.stop;
+    },
+  },
+  seed: {
+    param: 'random_seed',
+  },
+  frequency_penalty: {
+    param: 'frequency_penalty',
+  },
+  presence_penalty: {
+    param: 'presence_penalty',
+  },
+  // the following are reka specific
   top_k: {
     param: 'runtime_top_k',
   },
-  stop: {
-    param: 'stop_words',
+  length_penalty: {
+    param: 'length_penalty',
+  },
+  retrieval_dataset: {
+    param: 'retrieval_dataset',
+  },
+  use_search_engine: {
+    param: 'use_search_engine',
   },
 };
 
