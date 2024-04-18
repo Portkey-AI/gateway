@@ -1,5 +1,5 @@
 import { REKA_AI } from '../../globals';
-import { Params } from '../../types/requestBody';
+import { Message, Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -10,6 +10,12 @@ import {
   generateInvalidProviderResponseError,
 } from '../utils';
 
+interface RekaMessageItem {
+  text: string;
+  media_url?: string;
+  type: 'human' | 'model';
+}
+
 export const RekaAIChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model_name',
@@ -19,11 +25,53 @@ export const RekaAIChatCompleteConfig: ProviderConfig = {
   messages: {
     param: 'conversation_history',
     transform: (params: Params) => {
-      const mappedMessages = params.messages?.map((message) => ({
-        type: message.role === 'user' ? 'human' : 'model',
-        text: message.content,
-      }));
-      return mappedMessages;
+      const messages: RekaMessageItem[] = [];
+      let lastType: 'human' | 'model' | undefined;
+
+      const addMessage = ({ type, text, media_url }: { type: 'human' | 'model'; text: string; media_url?: string }) => {
+        // NOTE: can't have more than one image in conversation history
+        if (media_url && messages[0].media_url) {
+          return;
+        }
+
+        const newMessage: RekaMessageItem = { type, text, media_url };
+
+        if (lastType === type) {
+          const placeholder: RekaMessageItem = {
+            type: type === 'human' ? 'model' : 'human',
+            text: 'Placeholder for alternation'
+          };
+          media_url ? messages.unshift(placeholder) : messages.push(placeholder);
+        }
+
+        // NOTE: image need to be first
+        media_url ? messages.unshift(newMessage) : messages.push(newMessage);
+        lastType = type;
+      };
+
+      params.messages?.forEach(message => {
+        const currentType: 'human' | 'model' = message.role === 'user' ? 'human' : 'model';
+
+        if (!Array.isArray(message.content)) {
+          addMessage({ type: currentType, text: message.content || '' });
+        } else {
+          message.content.forEach(item => {
+            addMessage({
+              type: currentType,
+              text: item.text || '',
+              media_url: item.image_url?.url
+            });
+          });
+        }
+      });
+
+      if (messages[0].type !== 'human') {
+        messages.unshift({
+          type: 'human',
+          text: 'Placeholder for alternation'
+        });
+      }
+      return messages;
     },
   },
   max_tokens: {
