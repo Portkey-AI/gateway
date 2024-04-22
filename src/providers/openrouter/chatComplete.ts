@@ -130,9 +130,9 @@ export const OpenrouterChatCompleteStreamChunkTransform: (
   }
   if (chunk.includes('OPENROUTER PROCESSING')) {
     chunk = JSON.stringify({
-      id: 0,
+      id: `${Date.now()}`,
       model: '',
-      object: 'chat.completion.processing',
+      object: 'chat.completion.chunk',
       created: Date.now(),
       choices: [
         {
