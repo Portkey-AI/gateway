@@ -31,13 +31,15 @@ const app = new Hono();
  * This check if its not any of the 2 and then applies the compress middleware to avoid double compression.
  */
 
-app.use('*', (c, next) => {
-  const runtime = getRuntimeKey();
-  if (runtime !== 'lagon' && runtime !== 'workerd') {
-    return compress()(c, next);
-  }
-  return next();
-});
+if (getRuntimeKey() != 'node') {
+  app.use('*', (c, next) => {
+    const runtime = getRuntimeKey();
+    if (runtime !== 'lagon' && runtime !== 'workerd') {
+      return compress()(c, next);
+    }
+    return next();
+  });
+}
 
 /**
  * GET route for the root path.
