@@ -110,6 +110,8 @@ export async function proxyGetHandler(c: Context): Promise<Response> {
       null
     );
 
+    const [streamCallbackFunction] = [c.get('streamCallbackFunction')];
+
     const mappedResponse = await responseHandler(
       lastResponse,
       store.isStreamingMode,
@@ -117,7 +119,8 @@ export async function proxyGetHandler(c: Context): Promise<Response> {
       undefined,
       urlToFetch,
       false,
-      store.reqBody
+      store.reqBody,
+      streamCallbackFunction
     );
     updateResponseHeaders(
       mappedResponse,

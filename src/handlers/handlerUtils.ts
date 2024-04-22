@@ -302,9 +302,17 @@ export async function tryPostProxy(
     };
   }
 
-  const getFromCacheFunction = c.get('getFromCache');
-  const cacheIdentifier = c.get('cacheIdentifier');
-  const requestOptions = c.get('requestOptions') ?? [];
+  const [
+    getFromCacheFunction,
+    cacheIdentifier,
+    requestOptions,
+    streamCallbackFunction,
+  ] = [
+    c.get('getFromCache'),
+    c.get('cacheIdentifier'),
+    c.get('requestOptions') ?? [],
+    c.get('streamCallbackFunction'),
+  ];
 
   let cacheResponse, cacheKey, cacheMode, cacheMaxAge;
   let cacheStatus = 'DISABLED';
@@ -347,7 +355,8 @@ export async function tryPostProxy(
         undefined,
         url,
         false,
-        params
+        params,
+        streamCallbackFunction
       );
       c.set('requestOptions', [
         ...requestOptions,
@@ -392,7 +401,8 @@ export async function tryPostProxy(
     undefined,
     url,
     false,
-    params
+    params,
+    streamCallbackFunction
   );
   updateResponseHeaders(
     mappedResponse,
@@ -514,11 +524,13 @@ export async function tryPost(
     cacheIdentifier,
     requestOptions,
     preRequestValidator,
+    streamCallbackFunction,
   ] = [
     c.get('getFromCache'),
     c.get('cacheIdentifier'),
     c.get('requestOptions') ?? [],
     c.get('preRequestValidator'),
+    c.get('streamCallbackFunction'),
   ];
 
   let cacheResponse, cacheKey, cacheMode, cacheMaxAge;
@@ -551,7 +563,8 @@ export async function tryPost(
         fn,
         url,
         true,
-        params
+        params,
+        streamCallbackFunction
       );
       c.set('requestOptions', [
         ...requestOptions,
@@ -603,7 +616,8 @@ export async function tryPost(
     fn,
     url,
     false,
-    params
+    params,
+    streamCallbackFunction
   );
   updateResponseHeaders(
     mappedResponse,
@@ -719,7 +733,8 @@ export function responseHandler(
   responseTransformer: string | undefined,
   requestURL: string,
   isCacheHit: boolean = false,
-  gatewayRequest: Params
+  gatewayRequest: Params,
+  streamCallbackFunction: Function | undefined
 ): Promise<Response> {
   let responseTransformerFunction: Function | undefined;
   const responseContentType = response.headers?.get('content-type');
@@ -759,14 +774,16 @@ export function responseHandler(
     return handleJSONToStreamResponse(
       response,
       proxyProvider,
-      responseTransformerFunction
+      responseTransformerFunction,
+      streamCallbackFunction
     );
   } else if (streamingMode && response.status === 200) {
     return handleStreamingMode(
       response,
       proxyProvider,
       responseTransformerFunction,
-      requestURL
+      requestURL,
+      streamCallbackFunction
     );
   } else if (
     responseContentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
