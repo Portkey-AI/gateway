@@ -31,6 +31,7 @@ export const PALM: string = 'palm';
 export const TOGETHER_AI: string = 'together-ai';
 export const GOOGLE: string = 'google';
 export const PERPLEXITY_AI: string = 'perplexity-ai';
+export const REKA_AI: string = 'reka-ai';
 export const MISTRAL_AI: string = 'mistral-ai';
 export const DEEPINFRA: string = 'deepinfra';
 export const STABILITY_AI: string = 'stability-ai';
@@ -51,6 +52,7 @@ export const VALID_PROVIDERS = [
   OPEN_AI,
   PALM,
   PERPLEXITY_AI,
+  REKA_AI,
   TOGETHER_AI,
   DEEPINFRA,
   STABILITY_AI,
