@@ -24,6 +24,7 @@ interface Strategy {
  * @interface
  */
 export interface Options {
+  baseUrl?: string | undefined;
   /** The name of the provider. */
   provider: string | undefined;
   /** The name of the API key for the provider. */
@@ -70,6 +71,7 @@ export interface Options {
  * @interface
  */
 export interface Targets {
+  
   strategy?: Strategy;
   /** The name of the provider. */
   provider?: string | undefined;
@@ -77,6 +79,7 @@ export interface Targets {
   virtualKey?: string;
   /** The API key for the provider. */
   apiKey?: string;
+  baseUrl?: string | undefined;
   /** The weight of the provider, used for load balancing. */
   weight?: number;
   /** The retry settings for the provider. */
@@ -105,6 +108,7 @@ export interface Config {
   mode: 'single' | 'fallback' | 'loadbalance' | 'scientist';
   /** The configuration for the provider(s). */
   options: Options[];
+  baseUrl: string | undefined;
   targets?: Targets[];
   cache?: CacheSettings;
   retry?: RetrySettings;
@@ -191,6 +195,7 @@ export interface Tool {
  */
 export interface Params {
   model?: string;
+  baseUrl?: string;
   prompt?: string | string[];
   messages?: Message[];
   functions?: Function[];
@@ -240,7 +245,8 @@ export interface ShortConfig {
   /** The name of the API key for the provider. */
   virtualKey?: string;
   /** The API key for the provider. */
-  apiKey?: string;
+  apiKey?: string | undefined;
+  baseUrl?: string | undefined;
   cache?: CacheSettings;
   retry?: RetrySettings;
   resourceName?: string;

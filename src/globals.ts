@@ -23,6 +23,7 @@ export const MAX_RETRIES = 5;
 export const REQUEST_TIMEOUT_STATUS_CODE = 408;
 
 export const OPEN_AI: string = 'openai';
+export const LOCAL_AI: string = 'local-ai';
 export const COHERE: string = 'cohere';
 export const AZURE_OPEN_AI: string = 'azure-openai';
 export const ANTHROPIC: string = 'anthropic';
@@ -54,6 +55,7 @@ export const VALID_PROVIDERS = [
   GOOGLE_VERTEX_AI,
   MISTRAL_AI,
   OPEN_AI,
+  LOCAL_AI,
   PALM,
   PERPLEXITY_AI,
   TOGETHER_AI,

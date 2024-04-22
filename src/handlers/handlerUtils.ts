@@ -180,6 +180,7 @@ export const fetchProviderOptionsFromConfig = (
         provider: camelCaseConfig.provider,
         virtualKey: camelCaseConfig.virtualKey,
         apiKey: camelCaseConfig.apiKey,
+        baseUrl: camelCaseConfig.baseUrl,
         cache: camelCaseConfig.cache,
         retry: camelCaseConfig.retry,
         customHost: camelCaseConfig.customHost,
@@ -195,6 +196,8 @@ export const fetchProviderOptionsFromConfig = (
       providerOptions[0].vertexProjectId = camelCaseConfig.vertexProjectId;
     if (camelCaseConfig.apiVersion)
       providerOptions[0].vertexRegion = camelCaseConfig.vertexRegion;
+    if (camelCaseConfig.baseUrl)
+      providerOptions[0].baseUrl = camelCaseConfig.baseUrl;
     if (camelCaseConfig.workersAiAccountId)
       providerOptions[0].workersAiAccountId =
         camelCaseConfig.workersAiAccountId;
@@ -782,13 +785,13 @@ export async function tryTargetsRecursively(
   let currentTarget: any = { ...targetGroup };
   let currentJsonPath = jsonPath;
   const strategyMode = currentTarget.strategy?.mode;
-
   // start: merge inherited config with current target config (preference given to current)
   const currentInheritedConfig: Record<string, any> = {
     overrideParams: {
       ...inheritedConfig.overrideParams,
       ...currentTarget.overrideParams,
     },
+    baseUrl: request.baseUrl,
     retry: currentTarget.retry
       ? { ...currentTarget.retry }
       : { ...inheritedConfig.retry },
@@ -826,6 +829,7 @@ export async function tryTargetsRecursively(
   currentTarget.retry = {
     ...currentInheritedConfig.retry,
   };
+  currentTarget.baseUrl = request.baseUrl;
 
   currentTarget.cache = {
     ...currentInheritedConfig.cache,

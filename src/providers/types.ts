@@ -41,7 +41,8 @@ export interface ProviderAPIConfig {
     transformedRequestUrl: string;
   }) => Promise<Record<string, any>> | Record<string, any>;
   /** A function to generate the baseURL based on parameters */
-  getBaseURL: (args: { providerOptions: Options }) => string;
+  getBaseURL: (args: { providerOptions: Options}) => string;
+  // getLocalBaseURL: (args: { providerOptions: Options}) => string;
   /** A function to generate the endpoint based on parameters */
   getEndpoint: (args: {
     providerOptions: Options;

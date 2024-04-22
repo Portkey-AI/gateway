@@ -10,6 +10,7 @@ import VertexConfig from './google-vertex-ai';
 import MistralAIConfig from './mistral-ai';
 import NomicConfig from './nomic';
 import OpenAIConfig from './openai';
+import LocalAIConfig from './local-ai';
 import PalmAIConfig from './palm';
 import PerplexityAIConfig from './perplexity-ai';
 import TogetherAIConfig from './together-ai';
@@ -24,6 +25,7 @@ import WorkersAiConfig from './workers-ai';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
+  'local-ai': LocalAIConfig,
   cohere: CohereConfig,
   anthropic: AnthropicConfig,
   'azure-openai': AzureOpenAIConfig,
