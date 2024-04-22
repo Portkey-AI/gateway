@@ -264,7 +264,8 @@ export async function handleStreamingMode(
         fallbackChunkId
       )) {
         await writer.write(encoder.encode(chunk));
-        chunks.push(chunk);
+        // collect chunks for our callback
+        if (streamCallbackFunction) chunks.push(chunk);
       }
       if (streamCallbackFunction) streamCallbackFunction(chunks);
       writer.close();
@@ -280,7 +281,8 @@ export async function handleStreamingMode(
         fallbackChunkId
       )) {
         await writer.write(encoder.encode(chunk));
-        chunks.push(chunk);
+        // collect chunks for our callback
+        if (streamCallbackFunction) chunks.push(chunk);
       }
       if (streamCallbackFunction) streamCallbackFunction(chunks);
       writer.close();
@@ -326,7 +328,8 @@ export async function handleJSONToStreamResponse(
     const chunks = [];
     for (const chunk of streamChunkArray) {
       await writer.write(encoder.encode(chunk));
-      chunks.push(chunk);
+      // collect chunks for our callback
+      if (streamCallbackFunction) chunks.push(chunk);
     }
     if (streamCallbackFunction) streamCallbackFunction(chunks);
     writer.close();
