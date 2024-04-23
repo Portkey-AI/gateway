@@ -3,13 +3,13 @@ import MonsterAPIApiConfig from './api';
 import {
   MonsterAPIChatCompleteConfig,
   MonsterAPIChatCompleteResponseTransform,
-} from './generate';
+} from './chatComplete'; // Change this line if file is renamed
 
 const MonsterAPIConfig: ProviderConfigs = {
   api: MonsterAPIApiConfig,
-  generate: MonsterAPIChatCompleteConfig,
+  chatComplete: MonsterAPIChatCompleteConfig, // Changed from generate
   responseTransforms: {
-    generate: MonsterAPIChatCompleteResponseTransform,
+    chatComplete: MonsterAPIChatCompleteResponseTransform, // Changed from generate
   },
 };
 

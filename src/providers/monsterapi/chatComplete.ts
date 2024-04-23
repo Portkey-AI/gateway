@@ -1,4 +1,4 @@
-// generate.ts
+// chatComplete.ts
 import { MONSTERAPI } from '../../globals';
 import {
   ChatCompletionResponse,
@@ -52,6 +52,7 @@ export const MonsterAPIChatCompleteConfig: ProviderConfig = {
 };
 
 export interface MonsterAPIChatCompleteResponse {
+  model: string;
   response: {
     text: string[];
     token_counts: {
@@ -88,10 +89,10 @@ export const MonsterAPIChatCompleteResponseTransform: (
 
   if ('response' in response) {
     return {
-      id: '',
-      object: '',
-      created: 0,
-      model: '', // Include the model property here
+      id: Date.now().toString(), // Generate a unique ID
+      object: 'chat.completion', // Follow naming convention
+      created: Math.floor(Date.now() / 1000), // Use UNIX timestamp
+      model: response?.model, // Make sure to dynamically assign model based on API response or request
       choices: [
         {
           message: {
@@ -100,7 +101,7 @@ export const MonsterAPIChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: '',
+          finish_reason: 'completed',
         },
       ],
       usage: {
