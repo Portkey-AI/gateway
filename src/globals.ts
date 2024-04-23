@@ -30,6 +30,7 @@ export const ANYSCALE: string = 'anyscale';
 export const PALM: string = 'palm';
 export const TOGETHER_AI: string = 'together-ai';
 export const GOOGLE: string = 'google';
+export const GOOGLE_VERTEX_AI: string = 'vertex-ai';
 export const PERPLEXITY_AI: string = 'perplexity-ai';
 export const MISTRAL_AI: string = 'mistral-ai';
 export const DEEPINFRA: string = 'deepinfra';
@@ -41,6 +42,8 @@ export const BEDROCK: string = 'bedrock';
 export const GROQ: string = 'groq';
 export const SEGMIND: string = 'segmind';
 export const JINA: string = 'jina';
+export const FIREWORKS_AI: string = 'fireworks-ai';
+export const WORKERS_AI: string = 'workers-ai';
 export const MONSTERAPI: string = 'monsterapi';
 
 export const VALID_PROVIDERS = [
@@ -49,6 +52,7 @@ export const VALID_PROVIDERS = [
   AZURE_OPEN_AI,
   COHERE,
   GOOGLE,
+  GOOGLE_VERTEX_AI,
   MISTRAL_AI,
   OPEN_AI,
   PALM,
@@ -63,6 +67,8 @@ export const VALID_PROVIDERS = [
   GROQ,
   SEGMIND,
   JINA,
+  FIREWORKS_AI,
+  WORKERS_AI,
   MONSTERAPI,
 ];
 

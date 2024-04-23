@@ -6,6 +6,7 @@ import BedrockConfig from './bedrock';
 import CohereConfig from './cohere';
 import DeepInfraConfig from './deepinfra';
 import GoogleConfig from './google';
+import VertexConfig from './google-vertex-ai';
 import MistralAIConfig from './mistral-ai';
 import NomicConfig from './nomic';
 import OpenAIConfig from './openai';
@@ -18,6 +19,8 @@ import { ProviderConfigs } from './types';
 import GroqConfig from './groq';
 import SegmindConfig from './segmind';
 import JinaConfig from './jina';
+import FireworksAIConfig from './fireworks-ai';
+import WorkersAiConfig from './workers-ai';
 import MonsterAPIConfig from './monsterapi';
 
 const Providers: { [key: string]: ProviderConfigs } = {
@@ -29,6 +32,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   palm: PalmAIConfig,
   'together-ai': TogetherAIConfig,
   google: GoogleConfig,
+  'vertex-ai': VertexConfig,
   'perplexity-ai': PerplexityAIConfig,
   'mistral-ai': MistralAIConfig,
   deepinfra: DeepInfraConfig,
@@ -40,7 +44,10 @@ const Providers: { [key: string]: ProviderConfigs } = {
   groq: GroqConfig,
   segmind: SegmindConfig,
   jina: JinaConfig,
-  monsterapi: MonsterAPIConfig,
+  'fireworks-ai': FireworksAIConfig,
+  'workers-ai': WorkersAiConfig,
+   monsterapi: MonsterAPIConfig,
+
 };
 
 export default Providers;
