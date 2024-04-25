@@ -29,17 +29,11 @@ Gateway streamlines requests to 100+ open & closed source models with a unified 
 ✅&nbsp; Battle tested over **300B tokens** <br>
 ✅&nbsp; **Enterprise-ready** for enhanced security, scale, and custom deployments <br>
 <br>
-## How to Run Gateway?
+## How to Run the Gateway?
 
 1. [Run it Locally](#run-it-locally) for complete control & customization
 2. [Hosted by Portkey](#gateway-hosted-by-portkey) for quick setup without infrastructure concerns
 3. [Enterprise On-Prem](#gateway-enterprise-version) for advanced features and dedicated support
-
-### Compatible with OpenAI API & SDK
-
-Gateway is fully compatible with the OpenAI API & SDK, and extends them to call 100+ LLMs and makes them reliable. To use the Gateway through OpenAI, you only need to update your `base_URL` and pass the provider name in headers.
-* To use through Portkey, set your `base_URL` to: `https://api.portkey.ai/v1`
-* To run locally, set: `http://localhost:8787/v1`
 
 ### Run it Locally
 
@@ -59,11 +53,17 @@ Sign up for the free developer plan (10K request/month) [here](https://app.portk
 
 <br>
 
-## How to Use Gateway?
+## How to Use the Gateway?
+
+### Compatible with OpenAI API & SDK
+
+Gateway is fully compatible with the OpenAI API & SDK, and extends them to call 100+ LLMs and makes them reliable. To use the Gateway through OpenAI, you only need to update your `base_URL` and pass the provider name in headers.
+* To use through Portkey, set your `base_URL` to: `https://api.portkey.ai/v1`
+* To run locally, set: `http://localhost:8787/v1`
 
 Let's see how we can use the Gateway to make an Anthropic request in OpenAI spec below - the same will follow for all the other providers.
 
-### Python
+### <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/1869px-Python-logo-notext.svg.png" height=20 /> Python
 ```bash
 pip install portkey-ai
 ```
@@ -94,8 +94,8 @@ chat_complete = gateway.chat.completions.create(
 ```
 If you want to run the Gateway locally, don't forget to run `npx @portkey-ai/gateway` in your terminal before this! Otherwise just [sign up on Portkey](https://app.portkey.ai/) and keep your Portkey API Key handy.
 
-### Node
-Works same as in Python. Add `baseURL` & `defaultHeaders` while instantiating your OpenAI client and pass the relevant provider details.
+### <img src="https://cdn-icons-png.flaticon.com/512/5968/5968322.png" height=20 /> Node.JS
+Works the same as in Python. Add `baseURL` & `defaultHeaders` while instantiating your OpenAI client and pass the relevant provider details.
 
 ```bash
 npm install portkey-ai
@@ -124,11 +124,11 @@ async function main(){
 main()
 ```
 
-### REST
-In a typical OpenAI REST request, 
-1. Change the request URL to `http://localhost:8787/v1` (or `https://api.portkey.ai/v1` if you're using the hosted version)
+### <img src="https://www.svgrepo.com/show/305922/curl.svg" height=20 /> REST
+In your OpenAI REST request, 
+1. Change the request URL to `https://api.portkey.ai/v1` (or `http://localhost:8787/v1` if you're hosting locally)
 2. Pass an additional `x-portkey-provider` header with the provider's name
-3. Change the model's name to claude-3
+3. Change the model's name to `claude-3`
 
 ```bash
 curl 'http://localhost:8787/v1/chat/completions' \
@@ -138,31 +138,29 @@ curl 'http://localhost:8787/v1/chat/completions' \
   -d '{ "model": "claude-3-haiku-20240229", "messages": [{"role": "user","content": "Hi"}] }'
 ```
 
-Similarly for other providers, change the `provider` & `model` to their respective names.
+For other providers, change the `provider` & `model` to their respective values.
 
 
 ## Gateway Docs
 
-Head over to [Portkey docs](https://portkey.ai/docs/welcome/integration-guides) for detailed [guides & cookbooks](https://portkey.ai/docs/welcome/integration-guides) on more provider integrations.
+Head over to [Portkey docs](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations) for detailed [guides & cookbooks](https://portkey.ai/docs/welcome/integration-guides) on more [provider integrations](https://portkey.ai/docs/welcome/integration-guides).
 
-## Supported Providers
-
-|| Provider  | Support | Stream | Supported Endpoints |
-|---|---|---|---|--|
-| <img src="docs/images/openai.png" width=35 />| OpenAI | ✅  |✅  | `/completions`, `/chat/completions`,`/embeddings`, `/assistants`, `/threads`, `/runs`, `/images/generations`, `/audio/*`|
-| <img src="docs/images/azure.png" width=35>| Azure OpenAI | ✅  |✅  | `/completions`, `/chat/completions`,`/embeddings` |
-| <img src="docs/images/anyscale.png" width=35>| Anyscale | ✅   | ✅  | `/chat/completions` |
-| <img src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Google-favicon-2015.png" width=35>| Google Gemini & Palm | ✅  |✅  | `/generateMessage`, `/generateText`, `/embedText` |
-| <img src="docs/images/anthropic.png" width=35>| Anthropic  | ✅  |✅  | `/messages`, `/complete` |
-| <img src="docs/images/cohere.png" width=35>| Cohere  | ✅  |✅  | `/generate`, `/embed`, `/rerank` |
-| <img src="https://assets-global.website-files.com/64f6f2c0e3f4c5a91c1e823a/654693d569494912cfc0c0d4_favicon.svg" width=35>| Together AI  | ✅  |✅  | `/chat/completions`, `/completions`, `/inference` |
-| <img src="https://www.perplexity.ai/favicon.svg" width=35>| Perplexity  | ✅  |✅  | `/chat/completions` |
-| <img src="https://docs.mistral.ai/img/favicon.ico" width=35>| Mistral  | ✅  |✅  | `/chat/completions`, `/embeddings` |
-| <img src="https://docs.nomic.ai/img/nomic-logo.png" width=35>| Nomic  | ✅  |✅  | `/embeddings` |
-| <img src="https://files.readme.io/d38a23e-small-studio-favicon.png" width=35>| AI21  | ✅  |✅  | `/complete`, `/chat`, `/embed` |
-| <img src="https://platform.stability.ai/small-logo-purple.svg" width=35>| Stability AI  | ✅  |✅  | `/generation/{engine_id}/text-to-image` |
-| <img src="https://deepinfra.com/_next/static/media/logo.4a03fd3d.svg" width=35>| DeepInfra  | ✅  |✅  | `/inference` |
-| <img src="https://ollama.com/public/ollama.png" width=35>| Ollama  | ✅  |✅  | `/chat/completions` |
+|| Provider  | Support | Stream |
+|---|---|---|---|
+| <img src="docs/images/openai.png" width=35 />| [OpenAI](https://portkey.ai/docs/welcome/integration-guides/openai) | ✅  |✅  |
+| <img src="docs/images/azure.png" width=35>| [Azure OpenAI](https://portkey.ai/docs/welcome/integration-guides/azure-openai) | ✅  |✅  |
+| <img src="docs/images/anyscale.png" width=35>| [Anyscale](https://portkey.ai/docs/welcome/integration-guides/anyscale-llama2-mistral-zephyr) | ✅   | ✅  |
+| <img src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Google-favicon-2015.png" width=35>| [Google Gemini & Palm](https://portkey.ai/docs/welcome/integration-guides/gemini) | ✅  |✅  |
+| <img src="docs/images/anthropic.png" width=35>| [Anthropic](https://portkey.ai/docs/welcome/integration-guides/anthropic)  | ✅  |✅  |
+| <img src="docs/images/cohere.png" width=35>| [Cohere](https://portkey.ai/docs/welcome/integration-guides/cohere)  | ✅  |✅  |
+| <img src="https://assets-global.website-files.com/64f6f2c0e3f4c5a91c1e823a/654693d569494912cfc0c0d4_favicon.svg" width=35>| [Together AI](https://portkey.ai/docs/welcome/integration-guides/together-ai)  | ✅  |✅  |
+| <img src="https://www.perplexity.ai/favicon.svg" width=35>| [Perplexity](https://portkey.ai/docs/welcome/integration-guides/perplexity-ai)  | ✅  |✅  |
+| <img src="https://docs.mistral.ai/img/favicon.ico" width=35>| [Mistral](https://portkey.ai/docs/welcome/integration-guides/mistral-ai)  | ✅  |✅  |
+| <img src="https://docs.nomic.ai/img/nomic-logo.png" width=35>| [Nomic](https://portkey.ai/docs/welcome/integration-guides/nomic)  | ✅  |✅  |
+| <img src="https://files.readme.io/d38a23e-small-studio-favicon.png" width=35>| [AI21](https://portkey.ai/docs/welcome/integration-guides)  | ✅  |✅  |
+| <img src="https://platform.stability.ai/small-logo-purple.svg" width=35>| [Stability AI](https://portkey.ai/docs/welcome/integration-guides/stability-ai)  | ✅  |✅  |
+| <img src="https://deepinfra.com/_next/static/media/logo.4a03fd3d.svg" width=35>| [DeepInfra](https://portkey.ai/docs/welcome/integration-guides)  | ✅  |✅  |
+| <img src="https://ollama.com/public/ollama.png" width=35>| [Ollama](https://portkey.ai/docs/welcome/integration-guides/ollama)  | ✅  |✅  |
 
 > [View the complete list of 100+ supported models here](https://portkey.ai/docs/welcome/what-is-portkey#ai-providers-supported)
 <br>
@@ -172,7 +170,7 @@ Head over to [Portkey docs](https://portkey.ai/docs/welcome/integration-guides) 
 <table width=100%>
   <tr>
     <td width="50%">
-      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/fallbacks">Fallback</a></h4>
+      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/fallbacks">Fallbacks</a></h4>
       This feature allows you to specify a prioritized list of LLMs. If the primary LLM fails, Portkey will automatically fallback to the next LLM in the list to ensure reliability.
       <br><br>
       <img src="https://framerusercontent.com/images/gmlOW8yeKP2pGuIsObM6gKLzeMI.png" height=100 />
@@ -216,7 +214,7 @@ Head over to [Portkey docs](https://portkey.ai/docs/welcome/integration-guides) 
   ]
 }
 ```
-#### Pass it while making your request
+#### Use it while making your request
 Portkey Gateway will automatically trigger Anthropic if the OpenAI request fails:
 
 ```REST```
@@ -232,8 +230,8 @@ You can also trigger Fallbacks only on specific status codes by passing an array
 
 [Read the full Fallback documentation here.](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/fallbacks)
 
-### Example: Loadbalance Requests on 3 Accounts
-#### Write the loadbalancer
+### Example: Loadbalance Requests across 3 Accounts
+#### Write the loadbalancer config
 ```json
 {
   "strategy": { "mode": "loadbalance" },
@@ -244,7 +242,7 @@ You can also trigger Fallbacks only on specific status codes by passing an array
   ]
 }
 ```
-#### Pass the Config while instantiating OpenAI client
+#### Pass the config while instantiating OpenAI client
 ```ts
 import OpenAI from 'openai';
 import { PORTKEY_GATEWAY_URL, createHeaders } from 'portkey-ai'
@@ -258,7 +256,7 @@ const gateway = new OpenAI({
 });
 ```
 
-[Read the full Loadbalancing documentation here.](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/load-balancing)
+[Read the Loadbalancing docs here.](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/load-balancing)
 
 ### Automatic Retries
 
@@ -298,7 +296,7 @@ const gateway = new OpenAI({
 
 ### Using Gateway Configs
 
-Here's a guide to [use config object in your request](https://portkey.ai/docs/api-reference/config-object).
+Here's a guide to [use the config object in your request](https://portkey.ai/docs/api-reference/config-object).
 
 <br>
 
@@ -317,7 +315,7 @@ Here's a guide to [use config object in your request](https://portkey.ai/docs/ap
 
 
 
-## Deploying AI Gateway
+## Deploying the AI Gateway
 [See docs](docs/installation-deployments.md) on installing the AI Gateway locally or deploying it on popular locations.
 - Deploy to [Cloudflare Workers](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-to-cloudflare-workers)
 - Deploy using [Docker](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-using-docker)
@@ -354,7 +352,7 @@ Bug Report? [File here](https://github.com/Portkey-AI/gateway/issues) | Feature 
 Join our growing community around the world, for help, ideas, and discussions on AI.
 
 - View our official [Blog](https://portkey.ai/blog)
-- Chat live with us on [Discord](https://portkey.ai/community)
+- Chat with us on [Discord](https://portkey.ai/community)
 - Follow us on [Twitter](https://twitter.com/PortkeyAI)
 - Connect with us on [LinkedIn](https://www.linkedin.com/company/portkey-ai/)
 <!-- - Visit us on [YouTube](https://www.youtube.com/channel/UCZph50gLNXAh1DpmeX8sBdw) -->
