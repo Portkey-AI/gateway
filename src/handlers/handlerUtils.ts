@@ -1023,6 +1023,7 @@ export function constructConfigFromRequestHeaders(
       bedrockConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === WORKERS_AI &&
       workersAiConfig),
-    ...(requestHeaders[`x-${POWERED_BY}-provider`] === GOOGLE_VERTEX_AI && vertexConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === GOOGLE_VERTEX_AI &&
+      vertexConfig),
   };
 }
