@@ -43,7 +43,7 @@ npx @portkey-ai/gateway
 ```
 <sup>Your AI Gateway is now running on http://localhost:8787 🚀</sup>
 
-Gateway is also edge-deployment ready. Explore Cloudflare, Docker, AWS etc. deployment [guides here](#deploying-ai-gateway).
+Gateway is also edge-deployment ready. Explore Cloudflare, Docker, AWS etc. deployment [guides here](#deploying-the-ai-gateway).
 
 ### Gateway Hosted by Portkey
 
