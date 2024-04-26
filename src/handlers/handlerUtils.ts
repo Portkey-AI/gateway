@@ -686,7 +686,7 @@ export async function tryProvidersInSequence(
 /**
  * Handles various types of responses based on the specified parameters
  * and returns a mapped response
- * @param {Response} response - The HTTP response recieved from LLM.
+ * @param {Response} response - The HTTP response received from LLM.
  * @param {boolean} streamingMode - Indicates whether streaming mode is enabled.
  * @param {string} proxyProvider - The provider string.
  * @param {string | undefined} responseTransformer - The response transformer to determine type of call.
