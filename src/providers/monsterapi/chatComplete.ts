@@ -1,4 +1,3 @@
-// chatComplete.ts
 import { MONSTERAPI } from '../../globals';
 import {
   ChatCompletionResponse,
@@ -21,8 +20,8 @@ export const MonsterAPIChatCompleteConfig: ProviderConfig = {
     min: 0,
     max: 1,
   },
-  temp: {
-    param: 'temp',
+  temperature: {
+    param: 'temperature',
     min: 0,
     max: 1,
   },
@@ -89,10 +88,10 @@ export const MonsterAPIChatCompleteResponseTransform: (
 
   if ('response' in response) {
     return {
-      id: Date.now().toString(), // Generate a unique ID
-      object: 'chat.completion', // Follow naming convention
-      created: Math.floor(Date.now() / 1000), // Use UNIX timestamp
-      model: response?.model, // Make sure to dynamically assign model based on API response or request
+      id: Date.now().toString(),
+      object: 'chat.completion',
+      created: Math.floor(Date.now() / 1000),
+      model: response?.model,
       choices: [
         {
           message: {

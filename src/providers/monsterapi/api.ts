@@ -7,10 +7,10 @@ const MonsterAPIApiConfig: ProviderAPIConfig = {
   },
   getEndpoint: ({ fn }) => {
     switch (fn) {
-      case 'generate':
+      case 'chatComplete':
         return '/generate';
       default:
-        return '/generate';
+        return '';
     }
   },
 };

@@ -46,8 +46,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   jina: JinaConfig,
   'fireworks-ai': FireworksAIConfig,
   'workers-ai': WorkersAiConfig,
-   monsterapi: MonsterAPIConfig,
-
+  monsterapi: MonsterAPIConfig,
 };
 
 export default Providers;
