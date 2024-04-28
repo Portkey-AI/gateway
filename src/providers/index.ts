@@ -25,6 +25,7 @@ import MoonshotConfig from './moonshot';
 import OpenrouterConfig from './openrouter';
 import LingYiConfig from './lingyi';
 import ZhipuConfig from './zhipu';
+import AtomLLamaConfig from './atom-llama';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -53,6 +54,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   openrouter: OpenrouterConfig,
   lingyi: LingYiConfig,
   zhipu: ZhipuConfig,
+  'atom-llama': AtomLLamaConfig,
 };
 
 export default Providers;

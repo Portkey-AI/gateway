@@ -48,6 +48,7 @@ export const MOONSHOT: string = 'moonshot';
 export const OPENROUTER: string = 'openrouter';
 export const LINGYI: string = 'lingyi';
 export const ZHIPU: string = 'zhipu';
+export const LLAMA_CN: string = 'llama-cn';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -76,6 +77,7 @@ export const VALID_PROVIDERS = [
   OPENROUTER,
   LINGYI,
   ZHIPU,
+  LLAMA_CN,
 ];
 
 export const CONTENT_TYPES = {
