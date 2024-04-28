@@ -1,4 +1,4 @@
-import { LLAMA_CN } from '../../globals';
+import { ATOM_LLAMA } from '../../globals';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -89,7 +89,7 @@ export const AtomLLamaChatCompleteResponseTransform: (
         param: response.param,
         code: response.code,
       },
-      LLAMA_CN
+      ATOM_LLAMA
     );
   }
 
@@ -99,7 +99,7 @@ export const AtomLLamaChatCompleteResponseTransform: (
       object: response.object,
       created: response.created,
       model: response.model,
-      provider: LLAMA_CN,
+      provider: ATOM_LLAMA,
       choices: response.choices.map((c) => ({
         index: c.index,
         message: {
@@ -116,7 +116,7 @@ export const AtomLLamaChatCompleteResponseTransform: (
     };
   }
 
-  return generateInvalidProviderResponseError(response, LLAMA_CN);
+  return generateInvalidProviderResponseError(response, ATOM_LLAMA);
 };
 
 export const AtomLLamaChatCompleteStreamChunkTransform: (
@@ -128,7 +128,7 @@ export const AtomLLamaChatCompleteStreamChunkTransform: (
   if (chunk === '[DONE]') {
     return `data: ${chunk}\n\n`;
   }
-  if (chunk.includes('LLAMA_CN PROCESSING')) {
+  if (chunk.includes('ATOM_LLAMA PROCESSING')) {
     chunk = JSON.stringify({
       id: `${Date.now()}`,
       model: '',
@@ -150,7 +150,7 @@ export const AtomLLamaChatCompleteStreamChunkTransform: (
       object: parsedChunk.object,
       created: parsedChunk.created,
       model: parsedChunk.model,
-      provider: LLAMA_CN,
+      provider: ATOM_LLAMA,
       choices: [
         {
           index: parsedChunk.choices[0].index,
