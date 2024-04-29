@@ -8,6 +8,7 @@ import {
   POWERED_BY,
   RESPONSE_HEADER_KEYS,
   RETRY_STATUS_CODES,
+  GOOGLE_VERTEX_AI,
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
@@ -686,7 +687,7 @@ export async function tryProvidersInSequence(
 /**
  * Handles various types of responses based on the specified parameters
  * and returns a mapped response
- * @param {Response} response - The HTTP response recieved from LLM.
+ * @param {Response} response - The HTTP response received from LLM.
  * @param {boolean} streamingMode - Indicates whether streaming mode is enabled.
  * @param {string} proxyProvider - The provider string.
  * @param {string | undefined} responseTransformer - The response transformer to determine type of call.
@@ -975,6 +976,11 @@ export function constructConfigFromRequestHeaders(
     workersAiAccountId: requestHeaders[`x-${POWERED_BY}-workers-ai-account-id`],
   };
 
+  const vertexConfig = {
+    vertexProjectId: requestHeaders[`x-${POWERED_BY}-vertex-project-id`],
+    vertexRegion: requestHeaders[`x-${POWERED_BY}-vertex-region`],
+  };
+
   if (requestHeaders[`x-${POWERED_BY}-config`]) {
     let parsedConfigJson = JSON.parse(requestHeaders[`x-${POWERED_BY}-config`]);
 
@@ -1021,5 +1027,7 @@ export function constructConfigFromRequestHeaders(
       bedrockConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === WORKERS_AI &&
       workersAiConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === GOOGLE_VERTEX_AI &&
+      vertexConfig),
   };
 }
