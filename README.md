@@ -1,4 +1,4 @@
-<div align="center">
+****<div align="center">
 
 <p align="right">
    <strong>English</strong> | <a href="./README.cn.md">中文</a> 
@@ -145,22 +145,23 @@ For other providers, change the `provider` & `model` to their respective values.
 
 Head over to [Portkey docs](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations) for detailed [guides & cookbooks](https://portkey.ai/docs/welcome/integration-guides) on more [provider integrations](https://portkey.ai/docs/welcome/integration-guides).
 
-|| Provider  | Support | Stream |
-|---|---|---|---|
-| <img src="docs/images/openai.png" width=35 />| [OpenAI](https://portkey.ai/docs/welcome/integration-guides/openai) | ✅  |✅  |
-| <img src="docs/images/azure.png" width=35>| [Azure OpenAI](https://portkey.ai/docs/welcome/integration-guides/azure-openai) | ✅  |✅  |
-| <img src="docs/images/anyscale.png" width=35>| [Anyscale](https://portkey.ai/docs/welcome/integration-guides/anyscale-llama2-mistral-zephyr) | ✅   | ✅  |
-| <img src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Google-favicon-2015.png" width=35>| [Google Gemini & Palm](https://portkey.ai/docs/welcome/integration-guides/gemini) | ✅  |✅  |
-| <img src="docs/images/anthropic.png" width=35>| [Anthropic](https://portkey.ai/docs/welcome/integration-guides/anthropic)  | ✅  |✅  |
-| <img src="docs/images/cohere.png" width=35>| [Cohere](https://portkey.ai/docs/welcome/integration-guides/cohere)  | ✅  |✅  |
-| <img src="https://assets-global.website-files.com/64f6f2c0e3f4c5a91c1e823a/654693d569494912cfc0c0d4_favicon.svg" width=35>| [Together AI](https://portkey.ai/docs/welcome/integration-guides/together-ai)  | ✅  |✅  |
-| <img src="https://www.perplexity.ai/favicon.svg" width=35>| [Perplexity](https://portkey.ai/docs/welcome/integration-guides/perplexity-ai)  | ✅  |✅  |
-| <img src="https://docs.mistral.ai/img/favicon.ico" width=35>| [Mistral](https://portkey.ai/docs/welcome/integration-guides/mistral-ai)  | ✅  |✅  |
-| <img src="https://docs.nomic.ai/img/nomic-logo.png" width=35>| [Nomic](https://portkey.ai/docs/welcome/integration-guides/nomic)  | ✅  |✅  |
-| <img src="https://files.readme.io/d38a23e-small-studio-favicon.png" width=35>| [AI21](https://portkey.ai/docs/welcome/integration-guides)  | ✅  |✅  |
-| <img src="https://platform.stability.ai/small-logo-purple.svg" width=35>| [Stability AI](https://portkey.ai/docs/welcome/integration-guides/stability-ai)  | ✅  |✅  |
-| <img src="https://deepinfra.com/_next/static/media/logo.4a03fd3d.svg" width=35>| [DeepInfra](https://portkey.ai/docs/welcome/integration-guides)  | ✅  |✅  |
-| <img src="https://ollama.com/public/ollama.png" width=35>| [Ollama](https://portkey.ai/docs/welcome/integration-guides/ollama)  | ✅  |✅  |
+|                                                                                                                            | Provider                                                                                      | Support | Stream |
+| -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------- | ------ |
+| <img src="docs/images/openai.png" width=35 />                                                                              | [OpenAI](https://portkey.ai/docs/welcome/integration-guides/openai)                           | ✅       | ✅      |
+| <img src="docs/images/azure.png" width=35>                                                                                 | [Azure OpenAI](https://portkey.ai/docs/welcome/integration-guides/azure-openai)               | ✅       | ✅      |
+| <img src="docs/images/anyscale.png" width=35>                                                                              | [Anyscale](https://portkey.ai/docs/welcome/integration-guides/anyscale-llama2-mistral-zephyr) | ✅       | ✅      |
+| <img src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Google-favicon-2015.png" width=35>                           | [Google Gemini & Palm](https://portkey.ai/docs/welcome/integration-guides/gemini)             | ✅       | ✅      |
+| <img src="docs/images/anthropic.png" width=35>                                                                             | [Anthropic](https://portkey.ai/docs/welcome/integration-guides/anthropic)                     | ✅       | ✅      |
+| <img src="docs/images/cohere.png" width=35>                                                                                | [Cohere](https://portkey.ai/docs/welcome/integration-guides/cohere)                           | ✅       | ✅      |
+| <img src="https://assets-global.website-files.com/64f6f2c0e3f4c5a91c1e823a/654693d569494912cfc0c0d4_favicon.svg" width=35> | [Together AI](https://portkey.ai/docs/welcome/integration-guides/together-ai)                 | ✅       | ✅      |
+| <img src="https://www.perplexity.ai/favicon.svg" width=35>                                                                 | [Perplexity](https://portkey.ai/docs/welcome/integration-guides/perplexity-ai)                | ✅       | ✅      |
+| <img src="https://docs.mistral.ai/img/favicon.ico" width=35>                                                               | [Mistral](https://portkey.ai/docs/welcome/integration-guides/mistral-ai)                      | ✅       | ✅      |
+| <img src="https://docs.nomic.ai/img/nomic-logo.png" width=35>                                                              | [Nomic](https://portkey.ai/docs/welcome/integration-guides/nomic)                             | ✅       | ✅      |
+| <img src="https://files.readme.io/d38a23e-small-studio-favicon.png" width=35>                                              | [AI21](https://portkey.ai/docs/welcome/integration-guides)                                    | ✅       | ✅      |
+| <img src="https://platform.stability.ai/small-logo-purple.svg" width=35>                                                   | [Stability AI](https://portkey.ai/docs/welcome/integration-guides/stability-ai)               | ✅       | ✅      |
+| <img src="https://deepinfra.com/_next/static/media/logo.4a03fd3d.svg" width=35>                                            | [DeepInfra](https://portkey.ai/docs/welcome/integration-guides)                               | ✅       | ✅      |
+| <img src="https://ollama.com/public/ollama.png" width=35>                                                                  | [Ollama](https://portkey.ai/docs/welcome/integration-guides/ollama)                           | ✅       | ✅      |
+| <img src="https://novita.ai/favicon.ico" width=35>                                                                         | Novita AI                                                                                     | ✅       | ✅      | `/chat/completions`, `/completions` |
 
 > [View the complete list of 100+ supported models here](https://portkey.ai/docs/welcome/what-is-portkey#ai-providers-supported)
 <br>
@@ -302,14 +303,14 @@ Here's a guide to [use the config object in your request](https://portkey.ai/doc
 
 ## Supported SDKs
 
-| Language | Supported SDKs |
-|---|---|
-| Node.js / JS / TS | [Portkey SDK](https://www.npmjs.com/package/portkey-ai) <br> [OpenAI SDK](https://www.npmjs.com/package/openai) <br> [LangchainJS](https://www.npmjs.com/package/langchain) <br> [LlamaIndex.TS](https://www.npmjs.com/package/llamaindex) |
-| Python | [Portkey SDK](https://pypi.org/project/portkey-ai/) <br> [OpenAI SDK](https://portkey.ai/docs/welcome/integration-guides/openai) <br> [Langchain](https://portkey.ai/docs/welcome/integration-guides/langchain-python) <br> [LlamaIndex](https://portkey.ai/docs/welcome/integration-guides/llama-index-python) |
-| Go | [go-openai](https://github.com/sashabaranov/go-openai) |
-| Java | [openai-java](https://github.com/TheoKanning/openai-java) |
-| Rust | [async-openai](https://docs.rs/async-openai/latest/async_openai/) |
-| Ruby | [ruby-openai](https://github.com/alexrudall/ruby-openai) |
+| Language          | Supported SDKs                                                                                                                                                                                                                                                                                                  |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Node.js / JS / TS | [Portkey SDK](https://www.npmjs.com/package/portkey-ai) <br> [OpenAI SDK](https://www.npmjs.com/package/openai) <br> [LangchainJS](https://www.npmjs.com/package/langchain) <br> [LlamaIndex.TS](https://www.npmjs.com/package/llamaindex)                                                                      |
+| Python            | [Portkey SDK](https://pypi.org/project/portkey-ai/) <br> [OpenAI SDK](https://portkey.ai/docs/welcome/integration-guides/openai) <br> [Langchain](https://portkey.ai/docs/welcome/integration-guides/langchain-python) <br> [LlamaIndex](https://portkey.ai/docs/welcome/integration-guides/llama-index-python) |
+| Go                | [go-openai](https://github.com/sashabaranov/go-openai)                                                                                                                                                                                                                                                          |
+| Java              | [openai-java](https://github.com/TheoKanning/openai-java)                                                                                                                                                                                                                                                       |
+| Rust              | [async-openai](https://docs.rs/async-openai/latest/async_openai/)                                                                                                                                                                                                                                               |
+| Ruby              | [ruby-openai](https://github.com/alexrudall/ruby-openai)                                                                                                                                                                                                                                                        |
 <br>
 
 

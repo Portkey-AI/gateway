@@ -25,6 +25,7 @@ import MoonshotConfig from './moonshot';
 import OpenrouterConfig from './openrouter';
 import LingYiConfig from './lingyi';
 import ZhipuConfig from './zhipu';
+import NovitaAIConfig from './novita-ai';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -53,6 +54,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   openrouter: OpenrouterConfig,
   lingyi: LingYiConfig,
   zhipu: ZhipuConfig,
+  'novita-ai': NovitaAIConfig,
 };
 
 export default Providers;
