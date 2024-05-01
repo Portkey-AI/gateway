@@ -28,4 +28,3 @@ logpush=true
 [env.production.vars]
 ENVIRONMENT = 'production'
 CUSTOM_HEADERS_TO_IGNORE = []
-
