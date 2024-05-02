@@ -45,6 +45,12 @@ export const SEGMIND: string = 'segmind';
 export const JINA: string = 'jina';
 export const FIREWORKS_AI: string = 'fireworks-ai';
 export const WORKERS_AI: string = 'workers-ai';
+export const MOONSHOT: string = 'moonshot';
+export const OPENROUTER: string = 'openrouter';
+export const LINGYI: string = 'lingyi';
+export const ZHIPU: string = 'zhipu';
+export const NOVITA_AI: string = 'novita-ai';
+export const MONSTERAPI: string = 'monsterapi';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -70,6 +76,12 @@ export const VALID_PROVIDERS = [
   JINA,
   FIREWORKS_AI,
   WORKERS_AI,
+  MOONSHOT,
+  OPENROUTER,
+  LINGYI,
+  ZHIPU,
+  NOVITA_AI,
+  MONSTERAPI,
 ];
 
 export const CONTENT_TYPES = {
