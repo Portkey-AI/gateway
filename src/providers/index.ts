@@ -21,6 +21,11 @@ import SegmindConfig from './segmind';
 import JinaConfig from './jina';
 import FireworksAIConfig from './fireworks-ai';
 import WorkersAiConfig from './workers-ai';
+import MoonshotConfig from './moonshot';
+import OpenrouterConfig from './openrouter';
+import LingYiConfig from './lingyi';
+import ZhipuConfig from './zhipu';
+import NovitaAIConfig from './novita-ai';
 import MonsterAPIConfig from './monsterapi';
 
 const Providers: { [key: string]: ProviderConfigs } = {
@@ -46,6 +51,11 @@ const Providers: { [key: string]: ProviderConfigs } = {
   jina: JinaConfig,
   'fireworks-ai': FireworksAIConfig,
   'workers-ai': WorkersAiConfig,
+  moonshot: MoonshotConfig,
+  openrouter: OpenrouterConfig,
+  lingyi: LingYiConfig,
+  zhipu: ZhipuConfig,
+  'novita-ai': NovitaAIConfig,
   monsterapi: MonsterAPIConfig,
 };
 
