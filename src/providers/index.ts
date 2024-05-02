@@ -26,6 +26,7 @@ import OpenrouterConfig from './openrouter';
 import LingYiConfig from './lingyi';
 import ZhipuConfig from './zhipu';
 import NovitaAIConfig from './novita-ai';
+import MonsterAPIConfig from './monsterapi';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -55,6 +56,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   lingyi: LingYiConfig,
   zhipu: ZhipuConfig,
   'novita-ai': NovitaAIConfig,
+  monsterapi: MonsterAPIConfig,
 };
 
 export default Providers;

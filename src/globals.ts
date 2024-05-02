@@ -49,6 +49,7 @@ export const OPENROUTER: string = 'openrouter';
 export const LINGYI: string = 'lingyi';
 export const ZHIPU: string = 'zhipu';
 export const NOVITA_AI: string = 'novita-ai';
+export const MONSTERAPI: string = 'monsterapi';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -78,6 +79,7 @@ export const VALID_PROVIDERS = [
   LINGYI,
   ZHIPU,
   NOVITA_AI,
+  MONSTERAPI,
 ];
 
 export const CONTENT_TYPES = {
