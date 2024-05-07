@@ -503,10 +503,16 @@ export async function tryPost(
     onStatusCodes: providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES,
   };
 
-  const [getFromCacheFunction, cacheIdentifier, requestOptions] = [
+  const [
+    getFromCacheFunction,
+    cacheIdentifier,
+    requestOptions,
+    preRequestValidator,
+  ] = [
     c.get('getFromCache'),
     c.get('cacheIdentifier'),
     c.get('requestOptions') ?? [],
+    c.get('preRequestValidator'),
   ];
 
   let cacheResponse, cacheKey, cacheMode, cacheMaxAge;
@@ -570,13 +576,19 @@ export async function tryPost(
     }
   }
 
-  [response, retryCount] = await retryRequest(
-    url,
-    fetchOptions,
-    providerOption.retry.attempts,
-    providerOption.retry.onStatusCodes,
-    providerOption.requestTimeout || null
-  );
+  response = preRequestValidator
+    ? preRequestValidator(providerOption)
+    : undefined;
+
+  if (!response) {
+    [response, retryCount] = await retryRequest(
+      url,
+      fetchOptions,
+      providerOption.retry.attempts,
+      providerOption.retry.onStatusCodes,
+      providerOption.requestTimeout || null
+    );
+  }
 
   const mappedResponse = await responseHandler(
     response,
