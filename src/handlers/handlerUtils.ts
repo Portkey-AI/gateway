@@ -577,7 +577,7 @@ export async function tryPost(
   }
 
   response = preRequestValidator
-    ? preRequestValidator(providerOption)
+    ? preRequestValidator(providerOption, requestHeaders)
     : undefined;
 
   if (!response) {
