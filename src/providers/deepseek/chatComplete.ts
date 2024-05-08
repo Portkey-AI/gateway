@@ -82,7 +82,6 @@ export const DeepSeekChatCompleteResponseTransform: (
   response: DeepSeekChatCompleteResponse | DeepSeekErrorResponse,
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  console.log(responseStatus, response)
   if ('message' in response && responseStatus !== 200) {
     return generateErrorResponse(
       {
@@ -124,7 +123,6 @@ export const DeepSeekChatCompleteResponseTransform: (
 export const DeepSeekChatCompleteStreamChunkTransform: (
   response: string
 ) => string = (responseChunk) => {
-  console.log('chunk:', chunk)
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();

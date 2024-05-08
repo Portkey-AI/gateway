@@ -21,11 +21,16 @@ import SegmindConfig from './segmind';
 import JinaConfig from './jina';
 import FireworksAIConfig from './fireworks-ai';
 import WorkersAiConfig from './workers-ai';
+import RekaAIConfig from './reka-ai';
 import MoonshotConfig from './moonshot';
 import OpenrouterConfig from './openrouter';
 import LingYiConfig from './lingyi';
 import ZhipuConfig from './zhipu';
+import NovitaAIConfig from './novita-ai';
+import MonsterAPIConfig from './monsterapi';
 import AtomLLamaConfig from './atom-llama';
+import CozeConfig from './coze';
+import DeepSeekConfig from './deepseek';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -50,11 +55,16 @@ const Providers: { [key: string]: ProviderConfigs } = {
   jina: JinaConfig,
   'fireworks-ai': FireworksAIConfig,
   'workers-ai': WorkersAiConfig,
+  'reka-ai': RekaAIConfig,
   moonshot: MoonshotConfig,
   openrouter: OpenrouterConfig,
   lingyi: LingYiConfig,
   zhipu: ZhipuConfig,
+  'novita-ai': NovitaAIConfig,
+  monsterapi: MonsterAPIConfig,
   'atom-llama': AtomLLamaConfig,
+  coze: CozeConfig,
+  deepseek: DeepSeekConfig,
 };
 
 export default Providers;

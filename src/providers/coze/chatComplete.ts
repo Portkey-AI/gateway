@@ -14,6 +14,7 @@ const transformGenerationConfig = (params: Params) => {
   const generationConfig: Record<string, any> = {
     conversation_id: '',
     user: 'apiuser',
+    stream: params.stream ?? false,
   };
   if (params['model']) {
     generationConfig['bot_id'] = params['model'];
@@ -24,7 +25,6 @@ const transformGenerationConfig = (params: Params) => {
       const message = params['messages'][i];
       const role = message.role;
       const content = message.content;
-
       chatHistory.push({
         role: role,
         content: content,
@@ -36,7 +36,6 @@ const transformGenerationConfig = (params: Params) => {
     generationConfig['chat_history'] = chatHistory;
     generationConfig['query'] = queryString;
   }
-  console.log('generationConfig:', generationConfig);
   return generationConfig;
 };
 
@@ -66,6 +65,10 @@ export const CozeChatCompleteConfig: ProviderConfig = {
     transform: (params: Params) => transformGenerationConfig(params),
   },
   stop: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
+  stream: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
@@ -156,7 +159,6 @@ export const CozeChatCompleteStreamChunkTransform: (
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data:/, '');
   chunk = chunk.trim();
-  console.log(chunk);
   const parsedChunk: CozeStreamChunk = JSON.parse(chunk);
   if (parsedChunk.event === 'done') {
     return `data: [DONE]\n\n`;
