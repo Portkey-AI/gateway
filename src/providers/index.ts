@@ -21,6 +21,7 @@ import SegmindConfig from './segmind';
 import JinaConfig from './jina';
 import FireworksAIConfig from './fireworks-ai';
 import WorkersAiConfig from './workers-ai';
+import RekaAIConfig from './reka-ai';
 import MoonshotConfig from './moonshot';
 import OpenrouterConfig from './openrouter';
 import LingYiConfig from './lingyi';
@@ -51,6 +52,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   jina: JinaConfig,
   'fireworks-ai': FireworksAIConfig,
   'workers-ai': WorkersAiConfig,
+  'reka-ai': RekaAIConfig,
   moonshot: MoonshotConfig,
   openrouter: OpenrouterConfig,
   lingyi: LingYiConfig,
