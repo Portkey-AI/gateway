@@ -91,6 +91,8 @@ interface CozeChunkMessage {
 }
 
 interface CozeStreamChunk {
+  code: number;
+  msg: string;
   event: 'message' | 'done';
   message: CozeChunkMessage;
   is_finish: boolean;
@@ -162,6 +164,24 @@ export const CozeChatCompleteStreamChunkTransform: (
   const parsedChunk: CozeStreamChunk = JSON.parse(chunk);
   if (parsedChunk.event === 'done') {
     return `data: [DONE]\n\n`;
+  }
+  if (parsedChunk.code) {
+    return (
+      `data: ${JSON.stringify({
+        id: `chatcmpl-${Date.now()}`,
+        object: 'chat.completion.chunk',
+        created: Math.floor(Date.now() / 1000),
+        model: '',
+        provider: COZE,
+        choices: [
+          {
+            index: 0,
+            delta: parsedChunk.msg,
+            finish_reason: 'stop',
+          },
+        ],
+      })}` + '\n\n'
+    );
   }
   return (
     `data: ${JSON.stringify({
