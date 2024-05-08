@@ -49,6 +49,8 @@ export const OPENROUTER: string = 'openrouter';
 export const LINGYI: string = 'lingyi';
 export const ZHIPU: string = 'zhipu';
 export const ATOM_LLAMA: string = 'atom-llama';
+export const COZE: string = 'coze';
+export const DEEPSEEK: string = 'deepseek';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -78,6 +80,8 @@ export const VALID_PROVIDERS = [
   LINGYI,
   ZHIPU,
   ATOM_LLAMA,
+  COZE,
+  DEEPSEEK,
 ];
 
 export const CONTENT_TYPES = {

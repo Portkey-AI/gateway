@@ -1,18 +1,18 @@
 import { ProviderAPIConfig } from '../types';
 
-const CozeAPIConfig: ProviderAPIConfig = {
-  getBaseURL: () => 'https://api.coze.com',
+const DeepSeekAPIConfig: ProviderAPIConfig = {
+  getBaseURL: () => 'https://api.deepseek.com',
   headers: ({ providerOptions }) => {
     return { Authorization: `Bearer ${providerOptions.apiKey}` };
   },
   getEndpoint: ({ fn }) => {
     switch (fn) {
       case 'chatComplete':
-        return '/open_api/v2/chat';
+        return '/v1/chat/completions';
       default:
         return '';
     }
   },
 };
 
-export default CozeAPIConfig;
+export default DeepSeekAPIConfig;
