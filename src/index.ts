@@ -7,6 +7,7 @@
 import { Hono } from 'hono';
 import { prettyJSON } from 'hono/pretty-json';
 import { HTTPException } from 'hono/http-exception';
+import { cors } from 'hono/cors'
 // import { env } from 'hono/adapter' // Have to set this up for multi-environment deployment
 
 import { completeHandler } from './handlers/completeHandler';
@@ -44,9 +45,10 @@ app.use('*', (c, next) => {
  * Returns a greeting message.
  */
 app.get('/', (c) => c.text('AI Gateway says hey!'));
-
 // Use prettyJSON middleware for all routes
+
 app.use('*', prettyJSON());
+app.use('*', cors())
 
 /**
  * Default route when no other route matches.
