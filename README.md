@@ -104,13 +104,15 @@ npm install portkey-ai
 ```js
 import OpenAI from 'openai';
 import { PORTKEY_GATEWAY_URL, createHeaders } from 'portkey-ai'
+// Set PORTKEY_GATEWAY_URL as http://localhost:8787/v1 when running locally
+// PORTKEY_GATEWAY_URL = "http://localhost:8787/v1"
  
 const gateway = new OpenAI({
     apiKey: "ANTHROPIC_API_KEY",
     baseURL: PORTKEY_GATEWAY_URL,
     defaultHeaders: createHeaders({
         provider: "anthropic",
-        apiKey: "PORTKEY_API_KEY"
+        apiKey: "PORTKEY_API_KEY" // Not needed when running locally
   })
 });
 
@@ -118,7 +120,9 @@ async function main(){
   const chatCompletion = await portkey.chat.completions.create({
       messages: [{ role: 'user', content: 'Who are you?' }],
       model: 'claude-3-sonnet-20240229',
+      max_tokens: 512
   });
+  console.log(chatCompletion.choices[0].message.content);
 }
 
 main()
