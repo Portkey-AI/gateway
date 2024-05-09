@@ -174,6 +174,16 @@ interface AnthropicChatCompleteStreamResponse {
     text: string;
     stop_reason?: string;
   };
+  usage?: {
+    output_tokens?: number;
+    input_tokens?: number;
+  };
+  message?: {
+    usage?: {
+      output_tokens?: number;
+      input_tokens?: number;
+    };
+  };
 }
 
 export const AnthropicErrorResponseTransform: (
@@ -241,7 +251,6 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   let chunk = responseChunk.trim();
   if (
     chunk.startsWith('event: ping') ||
-    chunk.startsWith('event: message_start') ||
     chunk.startsWith('event: content_block_start') ||
     chunk.startsWith('event: content_block_stop')
   ) {
@@ -254,10 +263,59 @@ export const AnthropicChatCompleteStreamChunkTransform: (
 
   chunk = chunk.replace(/^event: content_block_delta[\r\n]*/, '');
   chunk = chunk.replace(/^event: message_delta[\r\n]*/, '');
+  chunk = chunk.replace(/^event: message_start[\r\n]*/, '');
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
 
   const parsedChunk: AnthropicChatCompleteStreamResponse = JSON.parse(chunk);
+
+  if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
+    return (
+      `data: ${JSON.stringify({
+        id: fallbackId,
+        object: 'chat.completion.chunk',
+        created: Math.floor(Date.now() / 1000),
+        model: '',
+        provider: ANTHROPIC,
+        choices: [
+          {
+            delta: {
+              content: '',
+            },
+            index: 0,
+            logprobs: null,
+            finish_reason: null,
+          },
+        ],
+        usage: {
+          prompt_tokens: parsedChunk.message?.usage?.input_tokens,
+        },
+      })}` + '\n\n'
+    );
+  }
+
+  if (parsedChunk.type === 'message_delta' && parsedChunk.usage) {
+    return (
+      `data: ${JSON.stringify({
+        id: fallbackId,
+        object: 'chat.completion.chunk',
+        created: Math.floor(Date.now() / 1000),
+        model: '',
+        provider: ANTHROPIC,
+        choices: [
+          {
+            index: 0,
+            delta: {},
+            finish_reason: parsedChunk.delta?.stop_reason,
+          },
+        ],
+        usage: {
+          completion_tokens: parsedChunk.usage?.output_tokens,
+        },
+      })}` + '\n\n'
+    );
+  }
+
   return (
     `data: ${JSON.stringify({
       id: fallbackId,
