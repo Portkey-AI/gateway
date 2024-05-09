@@ -79,7 +79,7 @@ from portkey_ai import PORTKEY_GATEWAY_URL, createHeaders
 
 gateway = OpenAI(
     api_key="ANTHROPIC_API_KEY",
-    base_url=PORTKEY_GATEWAY_URL, # Or http://localhost:8787/v1 when are running locally
+    base_url=PORTKEY_GATEWAY_URL, # Or http://localhost:8787/v1 when running locally
     default_headers=createHeaders(
         provider="anthropic",
         api_key="PORTKEY_API_KEY" # Grab from https://app.portkey.ai # Not needed when running locally
@@ -107,7 +107,7 @@ import { PORTKEY_GATEWAY_URL, createHeaders } from 'portkey-ai'
  
 const gateway = new OpenAI({
    apiKey: "ANTHROPIC_API_KEY",
-    baseURL: PORTKEY_GATEWAY_URL, // Or http://localhost:8787/v1 when are running locally
+    baseURL: PORTKEY_GATEWAY_URL, // Or http://localhost:8787/v1 when running locally
     defaultHeaders: createHeaders({
         provider: "anthropic",
         apiKey: "PORTKEY_API_KEY" // Grab from https://app.portkey.ai / Not needed when running locally
