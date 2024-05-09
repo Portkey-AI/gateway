@@ -28,7 +28,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKER_USERNAME }}/gateway
+          images: ${{ secrets.DOCKER_ORGANISATION }}/gateway
           tags: |
             type=raw,value=latest
             type=pep440,pattern={{version}},value=${{ github.event.release.tag_name }}
