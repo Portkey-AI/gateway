@@ -269,7 +269,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
 
   const parsedChunk: AnthropicChatCompleteStreamResponse = JSON.parse(chunk);
 
-  if (parsedChunk.type === 'message_start') {
+  if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
     return (
       `data: ${JSON.stringify({
         id: fallbackId,
@@ -294,7 +294,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
     );
   }
 
-  if (parsedChunk.type === 'message_delta') {
+  if (parsedChunk.type === 'message_delta' && parsedChunk.usage) {
     return (
       `data: ${JSON.stringify({
         id: fallbackId,
