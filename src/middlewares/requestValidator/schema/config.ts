@@ -70,7 +70,10 @@ export const configSchema: any = z
       const hasModeTargets =
         value.strategy !== undefined && value.targets !== undefined;
       const isOllamaProvider = value.provider === OLLAMA;
-      const isVertexAIProvider = value.provider === GOOGLE_VERTEX_AI && value.vertex_project_id && value.vertex_region;
+      const isVertexAIProvider =
+        value.provider === GOOGLE_VERTEX_AI &&
+        value.vertex_project_id &&
+        value.vertex_region;
       const hasAWSDetails =
         value.aws_access_key_id && value.aws_secret_access_key;
 
