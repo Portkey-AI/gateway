@@ -211,7 +211,7 @@ export const NovitaAIChatCompleteStreamChunkTransform: (
           delta: {
             content: parsedChunk.choices[0]?.delta.content,
           },
-          index: 0,
+          index: parsedChunk.choices[0]?.index || 0,
           finish_reason: '',
         },
       ],
