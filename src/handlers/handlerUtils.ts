@@ -54,14 +54,19 @@ export function constructRequest(
     'content-type': 'application/json',
   };
 
-  let headers: Record<string, string> = {
-    ...providerConfigMappedHeaders,
-  };
+  let headers: Record<string, string> = {};
+
+  Object.keys(providerConfigMappedHeaders).forEach((h: string) => {
+    headers[h.toLowerCase()] = providerConfigMappedHeaders[h];
+  });
 
   const forwardHeadersMap: Record<string, string> = {};
 
   forwardHeaders.forEach((h: string) => {
-    if (requestHeaders[h]) forwardHeadersMap[h] = requestHeaders[h];
+    const lowerCaseHeaderKey = h.toLowerCase();
+    if (requestHeaders[lowerCaseHeaderKey])
+      forwardHeadersMap[lowerCaseHeaderKey] =
+        requestHeaders[lowerCaseHeaderKey];
   });
 
   // Add any headers that the model might need

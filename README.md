@@ -1,4 +1,4 @@
-****<div align="center">
+<div align="center">
 
 <p align="right">
    <strong>English</strong> | <a href="./README.cn.md">中文</a> 
@@ -79,10 +79,10 @@ from portkey_ai import PORTKEY_GATEWAY_URL, createHeaders
 
 gateway = OpenAI(
     api_key="ANTHROPIC_API_KEY",
-    base_url=PORTKEY_GATEWAY_URL, # Or http://localhost:8787/v1 if you are running locally
+    base_url=PORTKEY_GATEWAY_URL, # Or http://localhost:8787/v1 when running locally
     default_headers=createHeaders(
         provider="anthropic",
-        api_key="PORTKEY_API_KEY" # Grab from https://app.portkey.ai Not needed if you are running locally
+        api_key="PORTKEY_API_KEY" # Grab from https://app.portkey.ai # Not needed when running locally
     )
 )
 
@@ -106,19 +106,21 @@ import OpenAI from 'openai';
 import { PORTKEY_GATEWAY_URL, createHeaders } from 'portkey-ai'
  
 const gateway = new OpenAI({
-    apiKey: "ANTHROPIC_API_KEY",
-    baseURL: PORTKEY_GATEWAY_URL,
+   apiKey: "ANTHROPIC_API_KEY",
+    baseURL: PORTKEY_GATEWAY_URL, // Or http://localhost:8787/v1 when running locally
     defaultHeaders: createHeaders({
         provider: "anthropic",
-        apiKey: "PORTKEY_API_KEY"
+        apiKey: "PORTKEY_API_KEY" // Grab from https://app.portkey.ai / Not needed when running locally
   })
 });
 
 async function main(){
-  const chatCompletion = await portkey.chat.completions.create({
+   const chatCompletion = await portkey.chat.completions.create({
       messages: [{ role: 'user', content: 'Who are you?' }],
       model: 'claude-3-sonnet-20240229',
-  });
+      maxTokens:512
+   });
+   console.log(chatCompletion.choices[0].message.content);
 }
 
 main()
