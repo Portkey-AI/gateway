@@ -1,0 +1,8 @@
+{
+  "plugins_enabled": ["default", "portkey"],
+  "credentials": {
+    "portkey": {
+      "apiKey": "..."
+    }
+  }
+}
