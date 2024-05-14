@@ -345,6 +345,22 @@ export const AnthropicErrorResponseTransform: (
   return undefined;
 };
 
+// this converts the anthropic stop_reason to an openai finish_reason
+const getFinishReason = (stopReason?: string): string | null => {
+  if (!stopReason) return null;
+
+  if (stopReason === 'max_tokens') {
+    return 'length';
+  }
+
+  if (stopReason === 'stop_sequence' || stopReason === 'end_turn') {
+    return 'stop';
+  }
+
+  // manages the case where the stop_reason is set but not recognized
+  return 'stop';
+};
+
 // TODO: The token calculation is wrong atm
 export const AnthropicChatCompleteResponseTransform: (
   response: AnthropicChatCompleteResponse | AnthropicErrorResponse,
@@ -479,7 +495,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           {
             index: 0,
             delta: {},
-            finish_reason: parsedChunk.delta?.stop_reason,
+            finish_reason: getFinishReason(parsedChunk.delta?.stop_reason),
           },
         ],
         usage: {
@@ -534,7 +550,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: parsedChunk.delta?.stop_reason ?? null,
+          finish_reason: getFinishReason(parsedChunk.delta?.stop_reason),
         },
       ],
     })}` + '\n\n'
