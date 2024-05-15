@@ -9,6 +9,7 @@ import {
   RESPONSE_HEADER_KEYS,
   RETRY_STATUS_CODES,
   GOOGLE_VERTEX_AI,
+  OPEN_AI,
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
@@ -989,6 +990,11 @@ export function constructConfigFromRequestHeaders(
     workersAiAccountId: requestHeaders[`x-${POWERED_BY}-workers-ai-account-id`],
   };
 
+  const openAiConfig = {
+    openaiOrganization: requestHeaders[`x-${POWERED_BY}-openai-organization`],
+    openaiProject: requestHeaders[`x-${POWERED_BY}-openai-project`],
+  };
+
   const vertexConfig = {
     vertexProjectId: requestHeaders[`x-${POWERED_BY}-vertex-project-id`],
     vertexRegion: requestHeaders[`x-${POWERED_BY}-vertex-region`],
@@ -1024,6 +1030,13 @@ export function constructConfigFromRequestHeaders(
           ...workersAiConfig,
         };
       }
+
+      if (parsedConfigJson.provider === OPEN_AI) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...openAiConfig,
+        };
+      }
     }
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
@@ -1042,5 +1055,6 @@ export function constructConfigFromRequestHeaders(
       workersAiConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === GOOGLE_VERTEX_AI &&
       vertexConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === OPEN_AI && openAiConfig),
   };
 }
