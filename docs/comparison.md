@@ -42,7 +42,7 @@ While Portkey itself has a generous free tier (1k requests free / month), if you
 | | Automatic Retries | ✅ | ✅  | ✅ | ✅ |
 | | Request Timeouts | ✅ | ✅  | ✅ | ✅ |
 | | Config Management | ❌ | ✅ | ✅ | ✅ |
-| | Virtual Keys & Key Management | ❌ | ✅ | ✅ | ✅ |
+| | Virtual Keys & Key Management | ❌ | ✅ | ✅ | ✅ (with Budgeting support) |
 | | Simple Caching | ❌ | ✅ <br>1 Day TTL<br>No Streaming | ✅ <br>Unlimited TTL<br>Stream from Cache | ✅ <br>Unlimited TTL<br>Stream from Cache |
 | | Semantic Caching | ❌ | ❌ | ✅ <br>Unlimited TTL<br>Stream from Cache | ✅ <br>Unlimited TTL<br>Stream from Cache |
 | | Support for AWS, GCP, Azure <br>Private LLM Deployments | ❌ | ❌ | ❌ | ✅ |
@@ -57,14 +57,16 @@ While Portkey itself has a generous free tier (1k requests free / month), if you
 | **Autonomous Fine-Tuning** | | | |
 | | Continuous Improvement | ❌ | ❌ | ✅ | ✅ |
 | **Security & Compliance** | | | |
-| | Role Based<br>Access Control | ❌ | ❌ | ✅ | ✅ |
+| | Role Based<br>Access Control | ❌ | ❌ | ✅ | ✅ (Advanced) |
+| | Team Management | ❌ | ✅ | ✅ | ✅ (Advanced) |
 | | SSO with Okta Auth | ❌ | ❌ | ❌ | ✅ |
-| | SOC2, ISO27001,<br>GDPR, HIPAA Compliances | ❌ | ❌ | ❌ | ✅ |
+| | SOC2, ISO27001,<br>GDPR, HIPAA Compliance<br>Certificates | ❌ | ❌ | ❌ | ✅ |
 | | PII Anonymizer | ❌ | ❌ | ❌ | ✅ |
 | | BAA Signing<br>for Compliances | ❌ | ❌ | ❌ | ✅ |
 | | VPC Managed Hosting | ❌ | ❌ | ❌ | ✅ |
 | | Private Tenancy | ❌ | ❌ | ❌ | ✅ |
 | | Configurable Retention<br>Periods | ❌ | ❌ | ❌ | ✅ |
+| | Configurable exports<br>to datalakes | ❌ | ❌ | ❌ | ✅ |
 
 ### Using Open Source
 Just do `npx @portkey-ai/gateway` and Portkey Gateway will spin up on your machine, on port `8787`. You can now use the OpenAI SDK directly to call any other LLM, setup fallbacks/retries etc.
