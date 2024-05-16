@@ -5,6 +5,7 @@ import {
   COHERE,
   GOOGLE,
   REQUEST_TIMEOUT_STATUS_CODE,
+  PRECONDITION_CHECK_FAILED_STATUS_CODE,
 } from '../globals';
 import { OpenAIChatCompleteResponse } from '../providers/openai/chatComplete';
 import { OpenAICompleteResponse } from '../providers/openai/complete';
@@ -200,7 +201,12 @@ export async function handleNonStreamingMode(
   // 408 is thrown whenever a request takes more than request_timeout to respond.
   // In that case, response thrown by gateway is already in OpenAI format.
   // So no need to transform it again.
-  if (response.status === REQUEST_TIMEOUT_STATUS_CODE) {
+  if (
+    [
+      REQUEST_TIMEOUT_STATUS_CODE,
+      PRECONDITION_CHECK_FAILED_STATUS_CODE,
+    ].includes(response.status)
+  ) {
     return response;
   }
 

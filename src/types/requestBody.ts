@@ -63,6 +63,10 @@ export interface Options {
   /** Google Vertex AI specific */
   vertexRegion?: string;
   vertexProjectId?: string;
+
+  /** OpenAI specific */
+  openaiProject?: string;
+  openaiOrganization?: string;
 }
 
 /**
