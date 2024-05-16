@@ -226,6 +226,28 @@ interface GoogleGenerateContentResponse {
   };
 }
 
+// this converts the google stop_reason to an openai finish_reason
+// https://ai.google.dev/api/python/google/ai/generativelanguage/Candidate/FinishReason
+const getFinishReason = (stopReason?: string): string | null => {
+  if (!stopReason) return null;
+
+  if (stopReason === 'MAX_TOKENS') {
+    return 'length';
+  }
+
+  if (
+    stopReason === 'STOP' ||
+    stopReason === 'SAFETY' ||
+    stopReason === 'RECITATION' ||
+    stopReason === 'OTHER'
+  ) {
+    return 'stop';
+  }
+
+  // manages the case where the stop_reason is set but not recognized
+  return 'stop';
+};
+
 export const GoogleErrorResponseTransform: (
   response: GoogleErrorResponse,
   provider?: string
@@ -291,7 +313,9 @@ export const GoogleChatCompleteResponseTransform: (
           return {
             message: message,
             index: generation.index,
-            finish_reason: generation.finishReason,
+            finish_reason:
+              getFinishReason(generation.finishReason) ??
+              generation.finishReason,
           };
         }) ?? [],
     };
@@ -359,7 +383,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
           return {
             delta: message,
             index: generation.index,
-            finish_reason: generation.finishReason,
+            finish_reason: getFinishReason(generation.finishReason),
           };
         }) ?? [],
     })}` + '\n\n'
