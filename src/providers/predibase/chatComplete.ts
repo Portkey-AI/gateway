@@ -10,14 +10,10 @@ import {
 } from '../utils';
 
 export const PredibaseChatCompleteConfig: ProviderConfig = {
-  user: {
-    param: 'user',
-    required: true,
-  },
   model: {
     param: 'model',
-    required: true,
-    default: 'mistral-7b-instruct-v0-2',
+    required: false,
+    transform: (value: string) => {return ""},
   },
   messages: {
     param: 'messages',
@@ -26,11 +22,13 @@ export const PredibaseChatCompleteConfig: ProviderConfig = {
   },
   max_tokens: {
     param: 'max_tokens',
-    default: 2048,
+    required: false,
+    default: 4096,
     min: 0,
   },
   temperature: {
     param: 'temperature',
+    required: false,
     default: 0.1,
     min: 0,
     max: 1,

@@ -6,7 +6,6 @@ const PredibaseAPIConfig: ProviderAPIConfig = {
   headers: ({ providerOptions }) => {
     return {
       'Authorization': `Bearer ${providerOptions.apiKey}`,
-      // 'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
   },
@@ -17,9 +16,7 @@ const PredibaseAPIConfig: ProviderAPIConfig = {
     console.log(gatewayRequestBody)
     switch (fn) {
       case 'chatComplete':
-        return `${user}/deployments/v2/llms/${model}/generate`;
-      // case 'chat/completions':
-      //   return `${user}/deployments/v2/llms/${model}/generate`;
+        return `/${user}/deployments/v2/llms/${model}/v1/chat/completions`;
       default:
         return '';
     }
