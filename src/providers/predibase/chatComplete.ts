@@ -10,6 +10,7 @@ import {
 } from '../utils';
 
 export const PredibaseChatCompleteConfig: ProviderConfig = {
+  //Add more parameters once prototype with basics works.
   model: {
     param: 'model',
     required: false,
@@ -33,32 +34,6 @@ export const PredibaseChatCompleteConfig: ProviderConfig = {
     min: 0,
     max: 1,
   },
-  //Add more parameters once prototype with basics works.
-  /*
-  ignore_eos_token: {
-    param: 'ignore_eos_token',
-    default: false,
-  },
-  top_p: {
-    param: 'top_k',
-    default: 1,
-    min: 0,
-    max: 1,
-  },
-  */
-  /*
-  ignore_eos_token: bool = False,
-  best_of: Optional[int] = None,
-  repetition_penalty: Optional[float] = None,
-  return_full_text: bool = False,
-  seed: Optional[int] = None,
-  stop_sequences: Optional[List[str]] = None,
-  temperature: Optional[float] = None,
-  top_k: Optional[int] = None,
-  top_p: Optional[float] = None,
-  truncate: Optional[int] = None,
-  typical_p: Optional[float] = None,
-  */
 };
 
 interface PredibaseChatCompleteResponse extends ChatCompletionResponse {
