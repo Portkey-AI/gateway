@@ -14,7 +14,9 @@ export const PredibaseChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: false,
-    transform: (value: string) => {return ""},
+    transform: (value: string) => {
+      return value;
+    },
   },
   messages: {
     param: 'messages',

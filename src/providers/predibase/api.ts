@@ -4,8 +4,8 @@ const PredibaseAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://serving.app.predibase.com',
   headers: ({ providerOptions }) => {
     return {
-      'Authorization': `Bearer ${providerOptions.apiKey}`,
-      'Accept': 'application/json',
+      Authorization: `Bearer ${providerOptions.apiKey}`,
+      Accept: 'application/json',
     };
   },
   getEndpoint: ({ fn, gatewayRequestBody }) => {
