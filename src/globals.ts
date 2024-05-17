@@ -52,6 +52,7 @@ export const LINGYI: string = 'lingyi';
 export const ZHIPU: string = 'zhipu';
 export const NOVITA_AI: string = 'novita-ai';
 export const MONSTERAPI: string = 'monsterapi';
+export const DEEPSEEK: string = 'deepseek';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -83,6 +84,7 @@ export const VALID_PROVIDERS = [
   ZHIPU,
   NOVITA_AI,
   MONSTERAPI,
+  DEEPSEEK,
 ];
 
 export const CONTENT_TYPES = {

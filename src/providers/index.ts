@@ -28,6 +28,7 @@ import LingYiConfig from './lingyi';
 import ZhipuConfig from './zhipu';
 import NovitaAIConfig from './novita-ai';
 import MonsterAPIConfig from './monsterapi';
+import DeepSeekAPIConfig from './deepseek';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -59,6 +60,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   zhipu: ZhipuConfig,
   'novita-ai': NovitaAIConfig,
   monsterapi: MonsterAPIConfig,
+  deepseek: DeepSeekAPIConfig,
 };
 
 export default Providers;
