@@ -2,7 +2,6 @@ import { ProviderAPIConfig } from '../types';
 
 const PredibaseAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://serving.app.predibase.com',
-  // getBaseURL: () => 'https://serving.staging.predibase.com',
   headers: ({ providerOptions }) => {
     return {
       'Authorization': `Bearer ${providerOptions.apiKey}`,
