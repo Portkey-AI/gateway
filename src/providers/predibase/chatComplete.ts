@@ -67,8 +67,8 @@ export const PredibaseChatCompleteConfig: ProviderConfig = {
   top_k: {
     param: 'top_k',
     required: false,
-    default: -1, 
-  }, 
+    default: -1,
+  },
   best_of: {
     param: 'best_of',
     required: false,
