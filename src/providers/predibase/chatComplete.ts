@@ -44,8 +44,13 @@ export const PredibaseChatCompleteConfig: ProviderConfig = {
     min: 0,
     max: 1,
   },
+  response_format: {
+    param: 'response_format',
+    required: false,
+  },
   stream: {
     param: 'stream',
+    required: false,
     default: false,
   },
   n: {
@@ -57,6 +62,15 @@ export const PredibaseChatCompleteConfig: ProviderConfig = {
   },
   stop: {
     param: 'stop',
+    required: false,
+  },
+  top_k: {
+    param: 'top_k',
+    required: false,
+    default: -1, 
+  }, 
+  best_of: {
+    param: 'best_of',
     required: false,
   },
 };
