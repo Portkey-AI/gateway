@@ -1,4 +1,5 @@
 import { ProviderAPIConfig } from '../types';
+import { splitString } from '../utils';
 
 const PredibaseAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://serving.app.predibase.com',
@@ -11,9 +12,11 @@ const PredibaseAPIConfig: ProviderAPIConfig = {
   getEndpoint: ({ fn, gatewayRequestBody }) => {
     const user = gatewayRequestBody?.user;
     const model = gatewayRequestBody?.model;
+    const base_model = splitString(`${model}`, ":").before
     switch (fn) {
       case 'chatComplete':
-        return `/${user}/deployments/v2/llms/${model}/v1/chat/completions`;
+        // The Predibase model format is "<base_model>[:adapter_id]".
+        return `/${user}/deployments/v2/llms/${base_model}/v1/chat/completions`;
       default:
         return '';
     }

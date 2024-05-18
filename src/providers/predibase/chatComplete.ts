@@ -7,15 +7,16 @@ import {
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
+  splitString,
 } from '../utils';
 
 export const PredibaseChatCompleteConfig: ProviderConfig = {
-  //Add more parameters once prototype with basics works.
   model: {
     param: 'model',
     required: false,
-    transform: (value: string) => {
-      return value;
+    // The Predibase model format is "<base_model>[:adapter_id]".
+    transform: (value: PredibaseChatCompleteResponse) => {
+      return splitString(value.model, ":").after;
     },
   },
   messages: {
@@ -35,6 +36,28 @@ export const PredibaseChatCompleteConfig: ProviderConfig = {
     default: 0.1,
     min: 0,
     max: 1,
+  },
+  top_p: {
+    param: 'top_p',
+    required: false,
+    default: 1,
+    min: 0,
+    max: 1,
+  },
+  stream: {
+    param: 'stream',
+    default: false,
+  },
+  n: {
+    param: 'n',
+    required: false,
+    default: 1,
+    max: 1,
+    min: 1,
+  },
+  stop: {
+    param: 'stop',
+    required: false,
   },
 };
 
