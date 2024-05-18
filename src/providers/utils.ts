@@ -44,16 +44,16 @@ type SplitResult = {
 
 export function splitString(input: string, separator: string): SplitResult {
   const sepIndex = input.indexOf(separator);
-  
+
   if (sepIndex === -1) {
     return {
       before: input,
-      after: ''
+      after: '',
     };
   }
-  
+
   return {
     before: input.substring(0, sepIndex),
-    after: input.substring(sepIndex + 1)
+    after: input.substring(sepIndex + 1),
   };
 }

@@ -16,7 +16,7 @@ export const PredibaseChatCompleteConfig: ProviderConfig = {
     required: false,
     // The Predibase model format is "<base_model>[:adapter_id]".
     transform: (value: PredibaseChatCompleteResponse) => {
-      return splitString(value.model, ":").after;
+      return splitString(value.model, ':').after;
     },
   },
   messages: {

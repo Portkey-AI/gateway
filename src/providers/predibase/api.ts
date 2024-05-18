@@ -12,7 +12,7 @@ const PredibaseAPIConfig: ProviderAPIConfig = {
   getEndpoint: ({ fn, gatewayRequestBody }) => {
     const user = gatewayRequestBody?.user;
     const model = gatewayRequestBody?.model;
-    const base_model = splitString(`${model}`, ":").before
+    const base_model = splitString(`${model}`, ':').before;
     switch (fn) {
       case 'chatComplete':
         // The Predibase model format is "<base_model>[:adapter_id]".
