@@ -30,6 +30,16 @@ const transformGenerationConfig = (params: Params) => {
   return generationConfig;
 };
 
+// models for which systemInstruction is not supported
+const SYSTEM_INSTRUCTION_DISABLED_MODELS = [
+  'gemini-1.0-pro',
+  'gemini-1.0-pro-001',
+  'gemini-1.0-pro-latest',
+  'gemini-1.0-pro-vision-latest',
+  'gemini-pro',
+  'gemini-pro-vision',
+];
+
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
 export const GoogleChatCompleteConfig: ProviderConfig = {
@@ -38,57 +48,112 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
     required: true,
     default: 'gemini-pro',
   },
-  messages: {
-    param: 'contents',
-    default: '',
-    transform: (params: Params) => {
-      let lastRole: 'user' | 'model' | undefined;
-      const messages: { role: string; parts: { text: string }[] }[] = [];
+  messages: [
+    {
+      param: 'contents',
+      default: '',
+      transform: (params: Params) => {
+        let lastRole: 'user' | 'model' | 'system' | undefined;
+        const messages: { role: string; parts: { text: string }[] }[] = [];
 
-      params.messages?.forEach((message: Message) => {
-        const role = message.role === 'assistant' ? 'model' : 'user';
-        let parts = [];
-        if (typeof message.content === 'string') {
-          parts.push({
-            text: message.content,
-          });
-        }
+        params.messages?.forEach((message: Message) => {
+          // From gemini-1.5 onwards, systemInstruction is supported
+          // Skipping system message and sending it in systemInstruction for gemini 1.5 models
+          if (
+            message.role === 'system' &&
+            !SYSTEM_INSTRUCTION_DISABLED_MODELS.includes(params.model as string)
+          )
+            return;
 
-        if (message.content && typeof message.content === 'object') {
-          message.content.forEach((c: ContentType) => {
-            if (c.type === 'text') {
-              parts.push({
-                text: c.text,
-              });
-            }
-            if (c.type === 'image_url') {
-              parts.push({
-                inlineData: {
-                  mimeType: 'image/jpeg',
-                  data: c.image_url?.url,
-                },
-              });
-            }
-          });
-        }
+          const role = message.role === 'assistant' ? 'model' : 'user';
+          let parts = [];
+          if (typeof message.content === 'string') {
+            parts.push({
+              text: message.content,
+            });
+          }
 
-        // @NOTE: This takes care of the "Please ensure that multiturn requests alternate between user and model."
-        // error that occurs when we have multiple user messages in a row.
-        const shouldAppendEmptyModeChat =
-          lastRole === 'user' &&
-          role === 'user' &&
-          !params.model?.includes('vision');
+          if (message.content && typeof message.content === 'object') {
+            message.content.forEach((c: ContentType) => {
+              if (c.type === 'text') {
+                parts.push({
+                  text: c.text,
+                });
+              }
+              if (c.type === 'image_url') {
+                parts.push({
+                  inlineData: {
+                    mimeType: 'image/jpeg',
+                    data: c.image_url?.url,
+                  },
+                });
+              }
+            });
+          }
 
-        if (shouldAppendEmptyModeChat) {
-          messages.push({ role: 'model', parts: [{ text: '' }] });
-        }
+          // @NOTE: This takes care of the "Please ensure that multiturn requests alternate between user and model."
+          // error that occurs when we have multiple user messages in a row.
+          const shouldAppendEmptyModeChat =
+            lastRole === 'user' &&
+            role === 'user' &&
+            !params.model?.includes('vision');
 
-        messages.push({ role, parts });
-        lastRole = role;
-      });
-      return messages;
+          if (shouldAppendEmptyModeChat) {
+            messages.push({ role: 'model', parts: [{ text: '' }] });
+          }
+
+          messages.push({ role, parts });
+          lastRole = role;
+        });
+
+        return messages;
+      },
     },
-  },
+    {
+      param: 'systemInstruction',
+      default: '',
+      transform: (params: Params) => {
+        // systemInstruction is only supported from gemini 1.5 models
+        if (SYSTEM_INSTRUCTION_DISABLED_MODELS.includes(params.model as string))
+          return;
+
+        const firstMessage = params.messages?.[0] || null;
+
+        if (!firstMessage) return;
+
+        if (
+          firstMessage.role === 'system' &&
+          typeof firstMessage.content === 'string'
+        ) {
+          return {
+            parts: [
+              {
+                text: firstMessage.content,
+              },
+            ],
+            role: 'system',
+          };
+        }
+
+        if (
+          firstMessage.role === 'system' &&
+          typeof firstMessage.content === 'object' &&
+          firstMessage.content?.[0]?.text
+        ) {
+          return {
+            parts: [
+              {
+                text: firstMessage.content?.[0].text,
+              },
+            ],
+            role: 'system',
+          };
+        }
+
+        return;
+      },
+    },
+  ],
   temperature: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
