@@ -49,7 +49,7 @@ async function fetchWithTimeout(
  * @param {RequestInit} options - The options for the request, such as method, headers, and body.
  * @param {number} retryCount - The maximum number of times to retry the request.
  * @param {number[]} statusCodesToRetry - The HTTP status codes that should trigger a retry.
- * @returns {Promise<[Response, number | undefined]>} - The response from the request and the number of attempts it took to get a successful response.
+ * @returns {Promise<[Response, number | undefined, number | undefined]>} - The response from the request, the number of attempts it took to get a successful response, and the start time of the latest fetch call.
  *                                                     If all attempts fail, the error message and status code are returned as a Response object, and the number of attempts is undefined.
  * @throws Will throw an error if the request fails after all retry attempts, with the error message and status code in the thrown error.
  */
@@ -59,14 +59,16 @@ export const retryRequest = async (
   retryCount: number,
   statusCodesToRetry: number[],
   timeout: number | null
-): Promise<[Response, number | undefined]> => {
+): Promise<[Response, number | undefined, number | undefined]> => {
   let lastError: any | undefined;
   let lastResponse: Response | undefined;
   let lastAttempt: number | undefined;
+  let requestExecTime: number | undefined;
   try {
     await retry(
       async (bail: any, attempt: number) => {
         try {
+          requestExecTime = Date.now();
           const response: Response = timeout
             ? await fetchWithTimeout(url, options, timeout)
             : await fetch(url, options);
@@ -117,5 +119,5 @@ export const retryRequest = async (
       `Tried ${lastAttempt} time(s) but failed. Error: ${JSON.stringify(error)}`
     );
   }
-  return [lastResponse as Response, lastAttempt];
+  return [lastResponse as Response, lastAttempt, requestExecTime];
 };
