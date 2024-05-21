@@ -3,6 +3,7 @@ import PredibaseAPIConfig from './api';
 import {
   PredibaseChatCompleteConfig,
   PredibaseChatCompleteResponseTransform,
+  PredibaseChatCompleteStreamChunkTransform,
 } from './chatComplete';
 
 const PredibaseConfig: ProviderConfigs = {
@@ -10,6 +11,7 @@ const PredibaseConfig: ProviderConfigs = {
   api: PredibaseAPIConfig,
   responseTransforms: {
     chatComplete: PredibaseChatCompleteResponseTransform,
+    'stream-chatComplete': PredibaseChatCompleteStreamChunkTransform,
   },
 };
 

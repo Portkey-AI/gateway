@@ -133,3 +133,80 @@ export const PredibaseChatCompleteResponseTransform: (
 
   return generateInvalidProviderResponseError(response, PREDIBASE);
 };
+
+interface PredibaseChatChoice {
+  message: {
+    role: string;
+    content: string;
+  };
+  delta: {
+    role: string;
+    content: string;
+  };
+  index: number;
+  finish_reason: string | null;
+}
+
+export interface PredibaseChatCompletionStreamChunk {
+  id: string;
+  model: string;
+  object: string;
+  created: number;
+  error: string;
+  error_type: string;
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+  choices: PredibaseChatChoice[];
+}
+
+export const PredibaseChatCompleteStreamChunkTransform: (
+  response: string
+) => string | ErrorResponse = (responseChunk) => {
+  let chunk = responseChunk.trim();
+  chunk = chunk.replace(/^data:\s*/, '');
+  chunk = chunk.trim();
+  if (chunk === '[DONE]') {
+    return `data: ${chunk}\n\n`;
+  }
+
+  const parsedChunk: PredibaseChatCompletionStreamChunk = JSON.parse(chunk);
+
+  if ('error' in parsedChunk) {
+    return (
+      `data: ${JSON.stringify({
+        id: null,
+        object: null,
+        created: null,
+        model: null,
+        provider: PREDIBASE,
+        choices: [
+          {
+            index: 0,
+            delta: { role: parsedChunk.error_type, content: parsedChunk.error },
+            finish_reason: 'error',
+          },
+        ],
+      })}` + '\n\n'
+    );
+  }
+  return (
+    `data: ${JSON.stringify({
+      id: parsedChunk['id'],
+      object: parsedChunk['object'],
+      created: parsedChunk['created'],
+      model: parsedChunk['model'],
+      provider: PREDIBASE,
+      choices: [
+        {
+          index: parsedChunk['choices'][0]['index'],
+          delta: parsedChunk['choices'][0]['delta'],
+          finish_reason: parsedChunk['choices'][0]['finish_reason'],
+        },
+      ],
+      ...(parsedChunk['usage'] ? { usage: parsedChunk['usage'] } : {}),
+    })}` + '\n\n'
+  );
+};
