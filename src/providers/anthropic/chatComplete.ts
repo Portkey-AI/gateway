@@ -246,7 +246,8 @@ export const AnthropicChatCompleteResponseTransform: (
           message: { role: 'assistant', content: response.content[0].text },
           index: 0,
           logprobs: null,
-          finish_reason: response.stop_reason,
+          finish_reason:
+            getFinishReason(response.stop_reason) || response.stop_reason,
         },
       ],
       usage: {
