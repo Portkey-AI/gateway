@@ -50,11 +50,12 @@ export const MOONSHOT: string = 'moonshot';
 export const OPENROUTER: string = 'openrouter';
 export const LINGYI: string = 'lingyi';
 export const ZHIPU: string = 'zhipu';
-export const DEEPSEEK: string = 'deepseek';
 export const NOVITA_AI: string = 'novita-ai';
 export const MONSTERAPI: string = 'monsterapi';
+export const PREDIBASE: string = 'predibase';
 export const ATOM_LLAMA: string = 'atom-llama';
 export const COZE: string = 'coze';
+export const DEEPSEEK: string = 'deepseek';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -86,6 +87,7 @@ export const VALID_PROVIDERS = [
   ZHIPU,
   NOVITA_AI,
   MONSTERAPI,
+  PREDIBASE,
   ATOM_LLAMA,
   COZE,
   DEEPSEEK,

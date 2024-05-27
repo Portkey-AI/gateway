@@ -28,6 +28,7 @@ import LingYiConfig from './lingyi';
 import ZhipuConfig from './zhipu';
 import NovitaAIConfig from './novita-ai';
 import MonsterAPIConfig from './monsterapi';
+import PredibaseConfig from './predibase';
 import AtomLLamaConfig from './atom-llama';
 import CozeConfig from './coze';
 import DeepSeekConfig from './deepseek';
@@ -51,7 +52,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   ai21: AI21Config,
   bedrock: BedrockConfig,
   groq: GroqConfig,
-  segmind: SegmindConfig,
+ segmind: SegmindConfig,
   jina: JinaConfig,
   'fireworks-ai': FireworksAIConfig,
   'workers-ai': WorkersAiConfig,
@@ -62,6 +63,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   zhipu: ZhipuConfig,
   'novita-ai': NovitaAIConfig,
   monsterapi: MonsterAPIConfig,
+  predibase: PredibaseConfig,
   'atom-llama': AtomLLamaConfig,
   coze: CozeConfig,
   deepseek: DeepSeekConfig,
