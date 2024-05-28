@@ -204,6 +204,10 @@ export async function handleNonStreamingMode(
     return response;
   }
 
+  if (response.status === 446) {
+    return response;
+  }
+
   let responseBodyJson = await response.json();
   if (responseTransformer) {
     responseBodyJson = responseTransformer(
