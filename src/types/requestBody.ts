@@ -63,6 +63,9 @@ export interface Options {
   /** Google Vertex AI specific */
   vertexRegion?: string;
   vertexProjectId?: string;
+
+  afterRequestHooks?: any;
+  beforeRequestHooks?: any;
 }
 
 /**
