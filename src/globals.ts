@@ -21,6 +21,7 @@ export const RESPONSE_HEADER_KEYS: Record<string, string> = {
 export const RETRY_STATUS_CODES = [429, 500, 502, 503, 504];
 export const MAX_RETRIES = 5;
 export const REQUEST_TIMEOUT_STATUS_CODE = 408;
+export const PRECONDITION_CHECK_FAILED_STATUS_CODE = 412;
 
 export const OPEN_AI: string = 'openai';
 export const COHERE: string = 'cohere';
@@ -51,6 +52,7 @@ export const LINGYI: string = 'lingyi';
 export const ZHIPU: string = 'zhipu';
 export const NOVITA_AI: string = 'novita-ai';
 export const MONSTERAPI: string = 'monsterapi';
+export const PREDIBASE: string = 'predibase';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -82,6 +84,7 @@ export const VALID_PROVIDERS = [
   ZHIPU,
   NOVITA_AI,
   MONSTERAPI,
+  PREDIBASE,
 ];
 
 export const CONTENT_TYPES = {

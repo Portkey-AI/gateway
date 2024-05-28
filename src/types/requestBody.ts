@@ -66,6 +66,9 @@ export interface Options {
 
   afterRequestHooks?: any;
   beforeRequestHooks?: any;
+  /** OpenAI specific */
+  openaiProject?: string;
+  openaiOrganization?: string;
 }
 
 /**

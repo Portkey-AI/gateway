@@ -25,85 +25,130 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
     required: true,
     default: 'gemini-1.0-pro',
   },
-  messages: {
-    param: 'contents',
-    default: '',
-    transform: (params: Params) => {
-      let lastRole: 'user' | 'model' | undefined;
-      const messages: { role: string; parts: { text: string }[] }[] = [];
+  messages: [
+    {
+      param: 'contents',
+      default: '',
+      transform: (params: Params) => {
+        let lastRole: 'user' | 'model' | undefined;
+        const messages: { role: string; parts: { text: string }[] }[] = [];
 
-      params.messages?.forEach((message: Message) => {
-        const role = message.role === 'assistant' ? 'model' : 'user';
-        let parts = [];
-        if (typeof message.content === 'string') {
-          parts.push({
-            text: message.content,
-          });
-        }
+        params.messages?.forEach((message: Message) => {
+          if (message.role === 'system') return;
 
-        if (message.content && typeof message.content === 'object') {
-          message.content.forEach((c: ContentType) => {
-            if (c.type === 'text') {
-              parts.push({
-                text: c.text,
-              });
-            }
-            if (c.type === 'image_url') {
-              const { url } = c.image_url || {};
+          const role = message.role === 'assistant' ? 'model' : 'user';
 
-              if (!url) {
-                // Shouldn't throw error?
-                return;
-              }
+          let parts = [];
+          if (typeof message.content === 'string') {
+            parts.push({
+              text: message.content,
+            });
+          }
 
-              // Example: data:image/png;base64,abcdefg...
-              if (url.startsWith('data:')) {
-                const [mimeTypeWithPrefix, base64Image] = url.split(';base64,');
-                const mimeType = mimeTypeWithPrefix.split(':')[1];
-
+          if (message.content && typeof message.content === 'object') {
+            message.content.forEach((c: ContentType) => {
+              if (c.type === 'text') {
                 parts.push({
-                  inlineData: {
-                    mimeType: mimeType,
-                    data: base64Image,
+                  text: c.text,
+                });
+              }
+              if (c.type === 'image_url') {
+                const { url } = c.image_url || {};
+
+                if (!url) {
+                  // Shouldn't throw error?
+                  return;
+                }
+
+                // Example: data:image/png;base64,abcdefg...
+                if (url.startsWith('data:')) {
+                  const [mimeTypeWithPrefix, base64Image] =
+                    url.split(';base64,');
+                  const mimeType = mimeTypeWithPrefix.split(':')[1];
+
+                  parts.push({
+                    inlineData: {
+                      mimeType: mimeType,
+                      data: base64Image,
+                    },
+                  });
+
+                  return;
+                }
+
+                // This part is problematic because URLs are not supported in the current implementation.
+                // Two problems exist:
+                // 1. Only Google Cloud Storage URLs are supported.
+                // 2. MimeType is not supported in OpenAI API, but it is required in Google Vertex AI API.
+                // Google will return an error here if any other URL is provided.
+                parts.push({
+                  fileData: {
+                    mimeType: 'image/jpeg',
+                    fileUri: url,
                   },
                 });
-
-                return;
               }
+            });
+          }
 
-              // This part is problematic because URLs are not supported in the current implementation.
-              // Two problems exist:
-              // 1. Only Google Cloud Storage URLs are supported.
-              // 2. MimeType is not supported in OpenAI API, but it is required in Google Vertex AI API.
-              // Google will return an error here if any other URL is provided.
-              parts.push({
-                fileData: {
-                  mimeType: 'image/jpeg',
-                  fileUri: url,
-                },
-              });
-            }
-          });
-        }
+          // @NOTE: This takes care of the "Please ensure that multiturn requests alternate between user and model."
+          // error that occurs when we have multiple user messages in a row.
+          const shouldAppendEmptyModeChat =
+            lastRole === 'user' &&
+            role === 'user' &&
+            !params.model?.includes('vision');
 
-        // @NOTE: This takes care of the "Please ensure that multiturn requests alternate between user and model."
-        // error that occurs when we have multiple user messages in a row.
-        const shouldAppendEmptyModeChat =
-          lastRole === 'user' &&
-          role === 'user' &&
-          !params.model?.includes('vision');
+          if (shouldAppendEmptyModeChat) {
+            messages.push({ role: 'model', parts: [{ text: '' }] });
+          }
 
-        if (shouldAppendEmptyModeChat) {
-          messages.push({ role: 'model', parts: [{ text: '' }] });
-        }
+          messages.push({ role, parts });
+          lastRole = role;
+        });
 
-        messages.push({ role, parts });
-        lastRole = role;
-      });
-
-      return messages;
+        return messages;
+      },
     },
-  },
+    {
+      param: 'systemInstruction',
+      default: '',
+      transform: (params: Params) => {
+        const firstMessage = params.messages?.[0] || null;
+        if (!firstMessage) return;
+
+        if (
+          firstMessage.role === 'system' &&
+          typeof firstMessage.content === 'string'
+        ) {
+          return {
+            parts: [
+              {
+                text: firstMessage.content,
+              },
+            ],
+            role: 'system',
+          };
+        }
+
+        if (
+          firstMessage.role === 'system' &&
+          typeof firstMessage.content === 'object' &&
+          firstMessage.content?.[0]?.text
+        ) {
+          return {
+            parts: [
+              {
+                text: firstMessage.content?.[0].text,
+              },
+            ],
+            role: 'system',
+          };
+        }
+
+        return;
+      },
+    },
+  ],
   temperature: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),

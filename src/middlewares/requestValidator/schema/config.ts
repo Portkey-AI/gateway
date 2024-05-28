@@ -63,7 +63,10 @@ export const configSchema: any = z
     vertex_project_id: z.string().optional(),
     vertex_region: z.string().optional(),
     after_request_hooks: z.any().optional(),
-    before_request_hooks: z.any().optional()
+    before_request_hooks: z.any().optional(),
+    // OpenAI specific
+    openai_project: z.string().optional(),
+    openai_organization: z.string().optional(),
   })
   .refine(
     (value) => {

@@ -9,6 +9,7 @@ import {
   RESPONSE_HEADER_KEYS,
   RETRY_STATUS_CODES,
   GOOGLE_VERTEX_AI,
+  OPEN_AI,
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
@@ -508,10 +509,14 @@ export async function tryPost(
     onStatusCodes: providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES,
   };
 
-  const [getFromCacheFunction, cacheIdentifier, requestOptions] = [
+  const [
+    getFromCacheFunction,
+    cacheIdentifier,
+    requestOptions
+  ] = [
     c.get('getFromCache'),
     c.get('cacheIdentifier'),
-    c.get('requestOptions') ?? [],
+    c.get('requestOptions') ?? []
   ];
 
   let cacheResponse, cacheKey, cacheMode, cacheMaxAge;
@@ -596,7 +601,8 @@ export async function tryPost(
       params,
       0,
       fn,
-      beforeRequestHooksResult
+      beforeRequestHooksResult,
+      requestHeaders
     );
   }
 
@@ -1010,6 +1016,11 @@ export function constructConfigFromRequestHeaders(
     workersAiAccountId: requestHeaders[`x-${POWERED_BY}-workers-ai-account-id`],
   };
 
+  const openAiConfig = {
+    openaiOrganization: requestHeaders[`x-${POWERED_BY}-openai-organization`],
+    openaiProject: requestHeaders[`x-${POWERED_BY}-openai-project`],
+  };
+
   const vertexConfig = {
     vertexProjectId: requestHeaders[`x-${POWERED_BY}-vertex-project-id`],
     vertexRegion: requestHeaders[`x-${POWERED_BY}-vertex-region`],
@@ -1045,6 +1056,13 @@ export function constructConfigFromRequestHeaders(
           ...workersAiConfig,
         };
       }
+
+      if (parsedConfigJson.provider === OPEN_AI) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...openAiConfig,
+        };
+      }
     }
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
@@ -1063,6 +1081,7 @@ export function constructConfigFromRequestHeaders(
       workersAiConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === GOOGLE_VERTEX_AI &&
       vertexConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === OPEN_AI && openAiConfig),
   };
 }
 
@@ -1075,19 +1094,30 @@ export async function recursiveAfterRequestHookHandler(
   gatewayParams: any,
   retryAttemptsMade: any,
   fn: any,
-  beforeRequestHookResult: any
+  beforeRequestHookResult: any,
+  requestHeaders: Record<string, string>
 ): Promise<any> {
   const { afterRequestHooks, retry, requestTimeout } = providerOption;
 
   const syncHooks = afterRequestHooks?.filter((h: any) => !h.async) || [];
+  const preRequestValidator = c.get('preRequestValidator');
+  let response, retryCount;
 
-  const [response, retryCount] = await retryRequest(
-    url,
-    options,
-    retry?.attempts || 0,
-    retry?.onStatusCodes || [],
-    requestTimeout || null,
-  );
+  response = preRequestValidator
+    ? preRequestValidator(providerOption, )
+    : undefined;
+
+  if (!response) {
+    [response, retryCount] = await retryRequest(
+      url,
+      options,
+      retry?.attempts || 0,
+      retry?.onStatusCodes || [],
+      requestTimeout || null,
+    );
+  }
+
+
 
   let mappedResponse = await responseHandler(
     response,
@@ -1198,7 +1228,8 @@ export async function recursiveAfterRequestHookHandler(
       gatewayParams,
       ((retryCount || 0) + 1) + retryAttemptsMade,
       fn,
-      beforeRequestHookResult
+      beforeRequestHookResult,
+      requestHeaders
     );
   }
 

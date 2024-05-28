@@ -320,6 +320,7 @@ Here's a guide to [use the config object in your request](https://portkey.ai/doc
 
 ## Deploying the AI Gateway
 [See docs](docs/installation-deployments.md) on installing the AI Gateway locally or deploying it on popular locations.
+- Deploy to [App Stack](docs/installation-deployments.md#deploy-to-app-stack)
 - Deploy to [Cloudflare Workers](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-to-cloudflare-workers)
 - Deploy using [Docker](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-using-docker)
 - Deploy using [Docker Compose](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-using-docker-compose)
