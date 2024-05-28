@@ -1,0 +1,151 @@
+{
+  "id": "portkey",
+  "name": "Portkey",
+  "description": "Guardrails from your friendly neighbourhood AI gateway",
+  "credentials": ["PORTKEY_API_KEY"],
+  "functions": [
+    {
+      "name": "Moderate Content",
+      "id": "moderateContent",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks if the content passes the mentioned content moderation checks."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "label": "Moderation Checks",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Select the categories that should NOT be allowed in the content. (Checked via OpenAI moderation API)"
+              }
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "hate",
+                "hate/threatening",
+                "harassment",
+                "harassment/threatening",
+                "self-harm",
+                "self-harm/intent",
+                "self-harm/instructions",
+                "sexual",
+                "sexual/minors",
+                "violence",
+                "violence/graphic"
+              ],
+              "default": [
+                "hate/threatening",
+                "harassment/threatening",
+                "self-harm/intent",
+                "self-harm/instructions",
+                "sexual/minors",
+                "violence/graphic"
+              ]
+            }
+          }
+        },
+        "required": ["categories"]
+      }
+    }, {
+      "name": "Check Language",
+      "id": "language",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks if the response content is in the mentioned language."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": "string",
+            "label": "Language",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Select the language that should be allowed in the content."
+              }
+            ],
+            "enum": [],
+            "enumNames": []
+          }
+        }
+      }
+    }, {
+      "name": "Detect PII",
+      "id": "pii",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Detects Personally Identifiable Information (PII) in the content."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "label": "PII Categories",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Select the types of PII that should NOT be allowed in the content."
+              }
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "email",
+                "phone",
+                "address",
+                "name",
+                "ip",
+                "credit_card",
+                "ssn"
+              ],
+              "default": [
+                "email",
+                "phone",
+                "address",
+                "name",
+                "ip",
+                "credit_card",
+                "ssn"
+              ]
+            }
+          }
+        },
+        "required": ["categories"]
+      }
+    }, {
+      "name": "Detect Gibberish",
+      "id": "gibberish",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Detects if the content is gibberish."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ]
+}

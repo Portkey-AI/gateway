@@ -6,7 +6,7 @@ import { handler as containsCodeHandler } from './containsCode';
 import { handler as wordCountHandler } from './wordCount';
 import { handler as sentenceCountHandler } from './sentenceCount';
 
-import { ZodSchema, z } from 'zod';
+import { z } from 'zod';
 import { PluginContext, PluginParameters } from '../types';
 
 describe('jsonSchema handler', () => {

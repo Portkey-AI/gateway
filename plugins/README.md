@@ -23,3 +23,4 @@ Todos
 - Plugins should handle finding the text
 - Plugins before being called should check if they support that particular hook type or should be skipped.
 - Will need to support enum names
+- Tools need to be supported on Portkey
