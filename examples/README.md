@@ -1,41 +1,41 @@
 # Portkey Practitioners' Cookbooks
 
-<img src="../docs/images/cookbook-header.png" height=300 />
+<img src="../docs/images/cookbook-header.png" height=300 alt="header" />
 
 #### Strategies and examples for tackling the production challenges of LLMs with Portkey Gateway
 
 [![Discord](https://img.shields.io/discord/1143393887742861333)](https://portkey.ai/community)
 [![Twitter](https://img.shields.io/twitter/url/https/twitter/follow/portkeyai?style=social&label=Follow%20%40PortkeyAI)](https://twitter.com/portkeyai)
 
-## Quickstarts
-* [Use Portkey cache to save LLM cost & time](./quickstarts/return-repeat-requests-from-cache.md)
-* [Retry automatically on LLM failures](./quickstarts/trigger-automatic-retries-on-llm-failures.md)
-* [Image generation with Gateway](./quickstarts/image-generation-with-gateway.ipynb)
-* [101 on using Gateway Configs](./quickstarts/using-gateway-configs.md)
-* [Get started with AI Gateway](./quickstarts/get-started-with-ai-gateway.ipynb)
+## Getting Started
+* [Use Portkey cache to save LLM cost & time](./Getting%20Started/enable-cache.md)
+* [Retry automatically on LLM failures](./Getting%20Started/automatic-retries-on-failures.md)
+* [Image generation with Gateway](./Getting%20Started/image-generation.ipynb)
+* [Writing your first Gateway Config](./Getting%20Started/writing-your-first-gateway-config.md)
+* [Gentle introduction to Portkey Gateway](./Getting%20Started/gentle-introduction-to-portkey-gateway.ipynb)
+* [Automatically Fallback from OpenAI to Azure](./Getting%20Started/fallback-from-openai-to-azure.ipynb)
+* [Setting up resilient Load balancers with failure-mitigating Fallbacks](./Getting%20Started/resilient-loadbalancing-with-failure-mitigating-fallbacks.md)
+* [Set up Fallback from Stable Diffusion to Dall-E](./Getting%20Started/fallback-from-stable-diffusion-to-dall-e.ipynb)
 
 
 ## Integrations
-* [OpenAI](./integrations/openai.ipynb)
-* [Anyscale](./integrations/anyscale.md)
-* [Mistral](./integrations/mistral.md)
-* [Vercel AI](./integrations/vercel-ai.md)
-* [Groq](./integrations/groq.ipynb)
-* [Mistral 8x22b](./integrations/mixtral-8x22b.ipynb)
-* [Langchain](./integrations/langchain.ipynb)
-* [Deepinfra](./integrations/deepInfra.ipynb)
-* [Segmind](./integrations/segmind.ipynb)
+* [OpenAI](./Integrations/openai.ipynb)
+* [Anyscale](./Integrations/anyscale.md)
+* [Mistral](./Integrations/mistral.md)
+* [Vercel AI](./Integrations/vercel-ai.md)
+* [Groq](./Integrations/groq.ipynb)
+* [Mistral 8x22b](./Integrations/mixtral-8x22b.ipynb)
+* [Langchain](./Integrations/langchain.ipynb)
+* [Deepinfra](./Integrations/deepInfra.ipynb)
+* [Segmind](./Integrations/segmind.ipynb)
 
 
-## How-tos
-* [Automatically Fallback from OpenAI to Azure](./howtos/fallback-from-openai-to-azure.ipynb)
-* [Use OpenAI SDK with Portkey prompt templates](./howtos/use-openai-sdk-with-portkey-prompt-templates.md)
-* [Run Gateway on prompts from Langchain hub](./howtos/run-gateway-on-prompts-from-langchain-hub.md)
-* [Setting up resilient Load balancers with failure-mitigating Fallbacks](./howtos/resilient-loadbalancing-with-failure-mitigating-fallbacks.md)
-* [Set up Fallback from Stable Diffusion to Dall-E](./howtos/fallback-from-stable-diffusion-to-dall-e.ipynb)
-* [Smart fallback with model optimized prompts](./howtos/smart-fallback-with-model-optimized-prompts.md)
-* [Build an article suggestion app with Supabase pgvector, and Portkey](./howtos/build-an-article-suggestion-app-with-supabase-pgvector-and-portkey.md)
-* [Call Llama 3 on Groq](./quickstarts/llama-3-on-groq.ipynb)
+## Use Cases
+* [Use OpenAI SDK with Portkey prompt templates](./Use%20Cases/use-openai-sdk-with-portkey-prompt-templates.md)
+* [Run Gateway on prompts from Langchain hub](./Use%20Cases/run-gateway-on-prompts-from-langchain-hub.md)
+* [Smart fallback with model optimized prompts](./Use%20Cases/smart-fallback-with-model-optimized-prompts.md)
+* [Build an article suggestion app with Supabase pgvector, and Portkey](./Use%20Cases/supabase-pgvector-and-portkey.md)
+* [Call Llama 3 on Groq](./Use%20Cases/llama-3-on-groq.ipynb)
 
 
 ## Contributing
