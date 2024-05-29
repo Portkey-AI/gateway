@@ -19,15 +19,15 @@
 
 
 ## Integrations
-* [OpenAI](./Integrations/openai.ipynb)
-* [Anyscale](./Integrations/anyscale.md)
-* [Mistral](./Integrations/mistral.md)
-* [Vercel AI](./Integrations/vercel-ai.md)
-* [Groq](./Integrations/groq.ipynb)
-* [Mistral 8x22b](./Integrations/mixtral-8x22b.ipynb)
-* [Langchain](./Integrations/langchain.ipynb)
-* [Deepinfra](./Integrations/deepInfra.ipynb)
-* [Segmind](./Integrations/segmind.ipynb)
+* [OpenAI](./Gateway%20Integrations/openai.ipynb)
+* [Anyscale](./Gateway%20Integrations/anyscale.md)
+* [Mistral](./Gateway%20Integrations/mistral.md)
+* [Vercel AI](./Gateway%20Integrations/vercel-ai.md)
+* [Groq](./Gateway%20Integrations/groq.ipynb)
+* [Mistral 8x22b](./Gateway%20Integrations/Mistral.ipynb)
+* [Langchain](./Gateway%20Integrations/langchain.ipynb)
+* [Deepinfra](./Gateway%20Integrations/deepinfra.ipynb)
+* [Segmind](./Gateway%20Integrations/segmind.ipynb)
 
 
 ## Use Cases

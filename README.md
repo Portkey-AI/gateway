@@ -147,7 +147,7 @@ For other providers, change the `provider` & `model` to their respective values.
 
 ### Trending Cookbooks
 * [Run Gateway on prompts from Langchain hub](/examples/Use%20Cases/run-gateway-on-prompts-from-langchain-hub.md)
-* [Use Porkey Gateway with Vercel's AI SDK](/examples/Integrations/vercel-ai.md)
+* [Use Porkey Gateway with Vercel's AI SDK](/examples/Gateway%20Integrations/vercel-ai.md)
 * [Set up fallback from SDXL to Dall-E-3](/examples/Getting%20Started/fallback-from-stable-diffusion-to-dall-e.ipynb)
 
 ### Latest Cookbooks
