@@ -146,14 +146,14 @@ For other providers, change the `provider` & `model` to their respective values.
 ## Gateway Cookbooks
 
 ### Trending Cookbooks
-* [Run Gateway on prompts from Langchain hub](/examples/howtos/run-gateway-on-prompts-from-langchain-hub.md)
-* [Use Porkey Gateway with Vercel's AI SDK](/examples/integrations/vercel-ai.md)
-* [Set up fallback from SDXL to Dall-E-3](/examples/howtos/fallback-from-stable-diffusion-to-dall-e.ipynb)
+* [Run Gateway on prompts from Langchain hub](/examples/Use%20Cases/run-gateway-on-prompts-from-langchain-hub.md)
+* [Use Porkey Gateway with Vercel's AI SDK](/examples/Integrations/vercel-ai.md)
+* [Set up fallback from SDXL to Dall-E-3](/examples/Getting%20Started/fallback-from-stable-diffusion-to-dall-e.ipynb)
 
 ### Latest Cookbooks
-* [Fallback from OpenAI to Azure OpenAI](/examples/howtos/fallback-from-openai-to-azure.ipynb)
-* [Set up automatic retries for failed requests](/examples/quickstarts/trigger-automatic-retries-on-llm-failures.md)
-* [Call Llama 3 on Groq](/examples/quickstarts/llama-3-on-groq.ipynb)
+* [Fallback from OpenAI to Azure OpenAI](/examples/Getting%20Started/fallback-from-openai-to-azure.ipynb)
+* [Set up automatic retries for failed requests](/examples/Getting%20Started/automatic-retries-on-failures.md)
+* [Call Llama 3 on Groq](/examples/Use%20Cases/llama-3-on-groq.ipynb)
 
 ### [More Examples](/examples/)
 
