@@ -29,6 +29,7 @@
     "deploy": "wrangler deploy --minify src/index.ts",
     "pretty": "prettier --write \"./**/*.{js,jsx,ts,tsx,json}\"",
     "build": "rollup -c",
+    "build-plugins": "tsx plugins/build.ts",
     "prepublishOnly": "npm run build",
     "start:node": "node build/start-server.js",
     "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,json}\"",

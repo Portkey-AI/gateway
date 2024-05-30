@@ -139,4 +139,4 @@ build
 
 # IntelliJ Idea
 .idea
-plugins/portkey/.test-creds.json
+plugins/portkey/.creds.json

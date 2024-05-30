@@ -24,3 +24,4 @@ Todos
 - Plugins before being called should check if they support that particular hook type or should be skipped.
 - Will need to support enum names
 - Tools need to be supported on Portkey
+- Config should support only hooks coming in without any other parameters

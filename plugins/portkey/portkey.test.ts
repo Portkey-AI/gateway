@@ -1,5 +1,5 @@
 import { handler as moderateContentHandler } from './moderateContent';
-import testCreds from './.test-creds.json';
+import testCreds from './.creds.json';
 
 describe.only('moderateContentHandler', () => {
   it('should return an error if hook type is not supported', async () => {
