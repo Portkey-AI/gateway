@@ -337,7 +337,7 @@ export async function tryPostProxy(
       cacheMaxAge
     );
     if (cacheResponse) {
-      response = await responseHandler(
+      ({ response } = await responseHandler(
         new Response(cacheResponse, {
           headers: {
             'content-type': 'application/json',
@@ -349,7 +349,7 @@ export async function tryPostProxy(
         url,
         false,
         params
-      );
+      ));
       c.set('requestOptions', [
         ...requestOptions,
         {
@@ -386,7 +386,7 @@ export async function tryPostProxy(
     providerOption.retry.onStatusCodes,
     null
   );
-  const mappedResponse = await responseHandler(
+  const {response: mappedResponse} = await responseHandler(
     response,
     isStreamingMode,
     provider,
@@ -541,7 +541,7 @@ export async function tryPost(
       cacheMaxAge
     );
     if (cacheResponse) {
-      response = await responseHandler(
+      ({ response } = await responseHandler(
         new Response(cacheResponse, {
           headers: { 'content-type': 'application/json' },
         }),
@@ -551,7 +551,7 @@ export async function tryPost(
         url,
         true,
         params
-      );
+      ));
       c.set('requestOptions', [
         ...requestOptions,
         {
@@ -721,7 +721,7 @@ export function responseHandler(
   requestURL: string,
   isCacheHit: boolean = false,
   gatewayRequest: Params
-): Promise<Response> {
+): Promise<{response: Response, json?: any}> {
   let responseTransformerFunction: Function | undefined;
   const responseContentType = response.headers?.get('content-type');
 
@@ -1117,7 +1117,7 @@ export async function recursiveAfterRequestHookHandler(
 
 
 
-  let mappedResponse = await responseHandler(
+  let {response: mappedResponse, json: responseJSON} = await responseHandler(
     response,
     isStreamingMode,
     providerOption.provider as string,
@@ -1131,6 +1131,7 @@ export async function recursiveAfterRequestHookHandler(
     c, 
     providerOption,
     mappedResponse,
+    responseJSON,
     fn,
     isStreamingMode,
     gatewayParams,
@@ -1160,7 +1161,8 @@ export async function recursiveAfterRequestHookHandler(
 export async function afterRequestHookHandler(
   c: Context, 
   providerOption: any, 
-  response: any, 
+  response: any,
+  responseJSON: any,
   fn: any, 
   isStreamingMode:boolean,
   gatewayParams: any,
@@ -1178,7 +1180,6 @@ export async function afterRequestHookHandler(
   }
 
   try {
-    const responseJSON: any = await response.clone().json();
     const hooksManager = c.get("hooksManager");
 
     hooksManager.setContext("afterRequestHook", provider, gatewayParams, responseJSON);
@@ -1198,7 +1199,7 @@ export async function afterRequestHookHandler(
 
     response = new Response(JSON.stringify(responseJSON), {
       status: (afterHooksVerdict && beforeHooksVerdict) ? response.status : 246,
-      statusText: response.statusText,
+      statusText: (afterHooksVerdict && beforeHooksVerdict) ? response.statusText : "Guardrails failed",
       headers: response.headers,
     })
 

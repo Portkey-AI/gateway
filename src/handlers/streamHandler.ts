@@ -181,17 +181,17 @@ export async function handleTextResponse(
       { 'html-message': text },
       response.status
     );
-    return new Response(JSON.stringify(transformedText), {
+    return { response: new Response(JSON.stringify(transformedText), {
       ...response,
       status: response.status,
       headers: new Headers({
         ...Object.fromEntries(response.headers),
         'content-type': 'application/json',
       }),
-    });
+    })};
   }
 
-  return new Response(text, response);
+  return { response: new Response(text, response) };
 }
 
 export async function handleNonStreamingMode(
@@ -207,11 +207,11 @@ export async function handleNonStreamingMode(
       PRECONDITION_CHECK_FAILED_STATUS_CODE,
     ].includes(response.status)
   ) {
-    return response;
+    return {response};
   }
 
   if (response.status === 446) {
-    return response;
+    return {response};
   }
 
   let responseBodyJson = await response.json();
@@ -223,19 +223,19 @@ export async function handleNonStreamingMode(
     );
   }
 
-  return new Response(JSON.stringify(responseBodyJson), response);
+  return { response: new Response(JSON.stringify(responseBodyJson), response), json: responseBodyJson };
 }
 
 export async function handleAudioResponse(response: Response) {
-  return new Response(response.body, response);
+  return { response: new Response(response.body, response) };
 }
 
 export async function handleOctetStreamResponse(response: Response) {
-  return new Response(response.body, response);
+  return { response: new Response(response.body, response) };
 }
 
 export async function handleImageResponse(response: Response) {
-  return new Response(response.body, response);
+  return { response: new Response(response.body, response) };
 }
 
 export async function handleStreamingMode(
@@ -243,7 +243,7 @@ export async function handleStreamingMode(
   proxyProvider: string,
   responseTransformer: Function | undefined,
   requestURL: string
-): Promise<Response> {
+): Promise<{response: Response}> {
   const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);
   // If the provider doesn't supply completion id,
   // we generate a fallback id using the provider name + timestamp.
@@ -294,23 +294,23 @@ export async function handleStreamingMode(
     ].includes(proxyProvider) &&
     responseTransformer
   ) {
-    return new Response(readable, {
+    return { response: new Response(readable, {
       ...response,
       headers: new Headers({
         ...Object.fromEntries(response.headers),
         'content-type': 'text/event-stream',
       }),
-    });
+    })};
   }
 
-  return new Response(readable, response);
+  return { response: new Response(readable, response) };
 }
 
 export async function handleJSONToStreamResponse(
   response: Response,
   provider: string,
   responseTransformerFunction: Function
-): Promise<Response> {
+): Promise<{response: Response}> {
   const { readable, writable } = new TransformStream();
   const writer = writable.getWriter();
   const encoder = new TextEncoder();
@@ -325,10 +325,10 @@ export async function handleJSONToStreamResponse(
     writer.close();
   })();
 
-  return new Response(readable, {
+  return {response: new Response(readable, {
     headers: new Headers({
       ...Object.fromEntries(response.headers),
       'content-type': CONTENT_TYPES.EVENT_STREAM,
     }),
-  });
+  })};
 }
