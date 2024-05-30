@@ -35,6 +35,7 @@ import {
 import { env } from 'hono/adapter';
 import { OpenAIChatCompleteJSONToStreamResponseTransform } from '../providers/openai/chatComplete';
 import { OpenAICompleteJSONToStreamResponseTransform } from '../providers/openai/complete';
+import { HookResult } from '../middlewares/hooks/types';
 
 /**
  * Constructs the request options for the API call.
@@ -581,18 +582,17 @@ export async function tryPost(
   }
 
   let mappedResponse, retryCount;
-  let beforeRequestHooksResult = [];
-  let afterRequestHooksResult = [];
+  let beforeRequestHooksResult:HookResult[] = [];
 
-  [mappedResponse, beforeRequestHooksResult] = await beforeRequestHookHandler(
+  ({response: mappedResponse, results: beforeRequestHooksResult} = await beforeRequestHookHandler(
     c,
     providerOption,
     params,
     fn
-  );
- 
+  ));
+
   if (!mappedResponse) {
-    [mappedResponse, retryCount, afterRequestHooksResult] = await recursiveAfterRequestHookHandler(
+    [mappedResponse, retryCount] = await recursiveAfterRequestHookHandler(
       c,
       url,
       fetchOptions,
@@ -1094,15 +1094,13 @@ export async function recursiveAfterRequestHookHandler(
   gatewayParams: any,
   retryAttemptsMade: any,
   fn: any,
-  beforeRequestHookResult: any,
+  beforeRequestHooksResult: any,
   requestHeaders: Record<string, string>
 ): Promise<any> {
+  let response, retryCount;
   const { afterRequestHooks, retry, requestTimeout } = providerOption;
 
-  const syncHooks = afterRequestHooks?.filter((h: any) => !h.async) || [];
   const preRequestValidator = c.get('preRequestValidator');
-  let response, retryCount;
-
   response = preRequestValidator
     ? preRequestValidator(providerOption, )
     : undefined;
@@ -1129,96 +1127,19 @@ export async function recursiveAfterRequestHookHandler(
     gatewayParams
   );
 
-  if (
-    isStreamingMode ||
-    !mappedResponse.headers.get('content-type')?.startsWith('application/json') ||
-    !mappedResponse.ok
-  ) {
-    return [mappedResponse, retryAttemptsMade, []];
-  }
-
-  if (!["chatComplete", "complete"].includes(fn)) {
-    return [mappedResponse, retryAttemptsMade, []];
-  }
-
-  const responseJSON: any = await mappedResponse.clone().json();
-  const hooksManager = c.get("hooksManager");
-
-  hooksManager.setContext({
-    response: {
-      json: responseJSON,
-      text: responseJSON?.choices[0]?.message?.content || responseJSON?.choices[0]?.text || "",
-    },
-    request: {
-      json: gatewayParams,
-      text: gatewayParams?.prompt || gatewayParams?.messages?.[gatewayParams?.messages.length - 1]?.message || "",
-    },
-    provider: providerOption.provider
-  })
-
-  const hooksPromiseList = syncHooks.map((h: any) => hooksManager.executeHooks(h, "afterRequestHook"));
-  const hooksResultList = await Promise.all(hooksPromiseList);
-
-  const shouldDeny = hooksResultList.filter(h => !h.verdict && h.deny).length > 0;  
-  const didAnyHookFail = hooksResultList.filter(h => !h.verdict).length > 0;
-  const didAnyBeforeRequestHookFail = beforeRequestHookResult.filter(h => !h.verdict).length > 0;
-
-  let responseStatus = mappedResponse.status;  
-
-  if (!shouldDeny && !didAnyHookFail && !didAnyBeforeRequestHookFail) {
-    mappedResponse = new Response(
-      JSON.stringify({
-        ...responseJSON,
-        hooks_result: {
-          "after_request_hooks_result": hooksResultList,
-          ...(beforeRequestHookResult?.length && { before_request_hooks_result: beforeRequestHookResult})
-        }
-      }),
-      mappedResponse
-    )
-  } else if (shouldDeny) {
-    responseStatus = 446;
-    mappedResponse = new Response(
-      JSON.stringify({
-        error: {
-          message: "Hooks failure",
-          type: 'hooks_failure',
-          param: null,
-          code: null,
-        },
-        hooks_result: {
-          "after_request_hooks_result": hooksResultList,
-          ...(beforeRequestHookResult?.length && { before_request_hooks_result: beforeRequestHookResult})
-        }
-      }),
-      {
-        status: 446,
-        headers: {
-          "content-type": "application/json"
-        }
-      }
-    )
-  } else {
-    responseStatus = 246;
-    mappedResponse = new Response(
-      JSON.stringify({
-        ...responseJSON,
-        hooks_result: {
-          "after_request_hooks_result": hooksResultList,
-          ...(beforeRequestHookResult?.length && { before_request_hooks_result: beforeRequestHookResult})
-        }
-      }),
-      {
-        ...mappedResponse,
-        status: 246,
-        headers: mappedResponse.headers
-      }
-    )
-  }
+  ({response: mappedResponse} = await afterRequestHookHandler(
+    c, 
+    providerOption,
+    mappedResponse,
+    fn,
+    isStreamingMode,
+    gatewayParams,
+    beforeRequestHooksResult
+  ));
 
   const remainingRetryCount = (retry?.attempts || 0) - (retryCount || 0) - retryAttemptsMade;
 
-  if (remainingRetryCount > 0 && retry?.onStatusCodes?.includes(responseStatus)) {
+  if (remainingRetryCount > 0 && retry?.onStatusCodes?.includes(mappedResponse.status)) {
     return recursiveAfterRequestHookHandler(
       c,
       url,
@@ -1228,66 +1149,82 @@ export async function recursiveAfterRequestHookHandler(
       gatewayParams,
       ((retryCount || 0) + 1) + retryAttemptsMade,
       fn,
-      beforeRequestHookResult,
+      beforeRequestHooksResult,
       requestHeaders
     );
   }
 
-  return [mappedResponse, retryAttemptsMade, hooksResultList];
+  return [mappedResponse, retryAttemptsMade];
 }
 
-export async function beforeRequestHookHandler(
-  c: Context,
-  providerOption: any,
-  params: any,
-  fn: any
+export async function afterRequestHookHandler(
+  c: Context, 
+  providerOption: any, 
+  response: any, 
+  fn: any, 
+  isStreamingMode:boolean,
+  gatewayParams: any,
+  beforeRequestHooksResult: any
 ): Promise<any> {
+  const { afterRequestHooks, provider } = providerOption;
+
+  if (
+    (isStreamingMode ||
+    !response.headers.get('content-type')?.startsWith('application/json') ||
+    !response.ok) ||
+    !["chatComplete", "complete"].includes(fn)
+  ) {
+    return {response, results: []};
+  }
+
+  try {
+    const responseJSON: any = await response.clone().json();
+    const hooksManager = c.get("hooksManager");
+
+    hooksManager.setContext("afterRequestHook", provider, gatewayParams, responseJSON);
+    let {result: afterRequestHooksResult, response: hooksResponse} = await hooksManager.executeHooksSync(afterRequestHooks);
+
+    if (!!hooksResponse) {
+      return {response: hooksResponse, results: afterRequestHooksResult};
+    }
+    
+    let afterHooksVerdict = afterRequestHooksResult?.every((h: any) => h.verdict) ?? true;
+    let beforeHooksVerdict = beforeRequestHooksResult?.every((h: any) => h.verdict) ?? true;
+
+    responseJSON.hook_results = {
+      ...(afterRequestHooksResult?.length && {after_request_hooks: afterRequestHooksResult}),
+      ...(beforeRequestHooksResult.length && {before_request_hooks: beforeRequestHooksResult})
+    }
+
+    response = new Response(JSON.stringify(responseJSON), {
+      status: (afterHooksVerdict && beforeHooksVerdict) ? response.status : 246,
+      statusText: response.statusText,
+      headers: response.headers,
+    })
+
+    return {response, results: afterRequestHooksResult};
+  } catch (err) {
+    console.log(err);
+    return {error: err}
+    // TODO: Handle this!!
+  }
+}
+
+export async function beforeRequestHookHandler(c: Context, providerOption: any, params: any, fn: any): Promise<any> {
+  console.log("Before Request Hook Handler", providerOption, params, fn);
   const { beforeRequestHooks, provider } = providerOption;
+
   if (!["chatComplete", "complete"].includes(fn)) {
-    return [undefined, []];
-  }
-  const syncHooks = beforeRequestHooks?.filter((h: any) => !h.async) || [];
-  if (syncHooks.length === 0) {
-    return [undefined, []]
+    return {response: undefined, results: []};
   }
 
-  const hooksManager = c.get("hooksManager");
-
-  hooksManager.setContext({
-    request: {
-      json: params,
-      text: params?.prompt || params?.messages?.[params?.messages.length - 1]?.message || "",
-    },
-    response: {},
-    provider
-  })
-
-  const hooksPromiseList = syncHooks.map((h: any) => hooksManager.executeHooks(h, "beforeRequestHook"));
-  const hooksResultList = await Promise.all(hooksPromiseList);
-
-  const shouldDeny = hooksResultList.filter(h => !h.verdict && h.deny).length > 0;
-  let response;
-  if (shouldDeny) {
-    response =  new Response(
-      JSON.stringify({
-        error: {
-          message: "Hooks failure",
-          type: 'hooks_failure',
-          param: null,
-          code: null,
-        },
-        hooks_result: {
-          "before_request_hooks_result": hooksResultList
-        }
-      }),
-      {
-        status: 446,
-        headers: {
-          "content-type": "application/json"
-        }
-      }
-    )
+  try {
+    const hooksManager = c.get("hooksManager");
+    hooksManager.setContext("beforeRequestHook", provider, params)
+    return hooksManager.executeHooksSync(beforeRequestHooks);
+  } catch (err) {
+    console.log(err);
+    return {error: err}
+    // TODO: Handle this error!!!
   }
-
-  return [response, hooksResultList];
 }
