@@ -4,5 +4,6 @@
     "portkey": {
       "apiKey": "..."
     }
-  }
+  },
+  "cache": false
 }

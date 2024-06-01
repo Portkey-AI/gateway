@@ -22,6 +22,7 @@ import { hooks } from './middlewares/hooks';
 import { compress } from 'hono/compress';
 import { getRuntimeKey } from 'hono/adapter';
 import { imageGenerationsHandler } from './handlers/imageGenerationsHandler';
+import conf from '../conf.json'
 
 // Create a new Hono server instance
 const app = new Hono();
@@ -51,6 +52,10 @@ app.use('*', prettyJSON());
 
 // Use hooks middleware for all routes
 app.use('*', hooks);
+
+if (conf.cache) {
+  app.use('*', require('./middlewares/cache').memoryCache());
+}
 
 /**
  * Default route when no other route matches.
