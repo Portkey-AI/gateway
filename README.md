@@ -115,7 +115,7 @@ const gateway = new OpenAI({
 });
 
 async function main() {
-  const chatCompletion = await portkey.chat.completions.create({
+  const chatCompletion = await gateway.chat.completions.create({
     messages: [{ role: 'user', content: 'Who are you?' }],
     model: 'claude-3-sonnet-20240229',
     max_tokens: 512,
