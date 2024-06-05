@@ -6,7 +6,7 @@
 
 
 # AI Gateway
-#### Reliably route to 100+ LLMs with 1 fast & friendly API
+#### Reliably route to 200+ LLMs with 1 fast & friendly API
 <img src="docs/images/demo.gif" width="650" alt="Gateway Demo"><br>
 
 [![License](https://img.shields.io/github/license/Ileriayo/markdown-badges)](./LICENSE)
@@ -17,7 +17,7 @@
 
 </div>
 
-Gateway streamlines requests to 100+ open & closed source models with a unified API. It is also production-ready with support for caching, fallbacks, retries, timeouts, loadbalancing, and can be edge-deployed for minimum latency.
+Gateway streamlines requests to 200+ open & closed source models with a unified API. It is also production-ready with support for caching, fallbacks, retries, timeouts, loadbalancing, and can be edge-deployed for minimum latency.
 
 ✅&nbsp; **Blazing fast** (9.9x faster) with a **tiny footprint** (~45kb installed) <br>
 ✅&nbsp; **Load balance** across multiple models, providers, and keys <br>
@@ -57,7 +57,7 @@ Sign up for the free developer plan (10K request/month) [here](https://app.portk
 
 ### Compatible with OpenAI API & SDK
 
-Gateway is fully compatible with the OpenAI API & SDK, and extends them to call 100+ LLMs and makes them reliable. To use the Gateway through OpenAI, you only need to update your `base_URL` and pass the provider name in headers.
+Gateway is fully compatible with the OpenAI API & SDK, and extends them to call 200+ LLMs and makes them reliable. To use the Gateway through OpenAI, you only need to update your `base_URL` and pass the provider name in headers.
 * To use through Portkey, set your `base_URL` to: `https://api.portkey.ai/v1`
 * To run locally, set: `http://localhost:8787/v1`
 
@@ -143,9 +143,23 @@ curl 'http://localhost:8787/v1/chat/completions' \
 For other providers, change the `provider` & `model` to their respective values.
 
 
-## Gateway Docs
+## Gateway Cookbooks
 
-Head over to [Portkey docs](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations) for detailed [guides & cookbooks](https://portkey.ai/docs/welcome/integration-guides) on more [provider integrations](https://portkey.ai/docs/welcome/integration-guides).
+### Trending Cookbooks
+* [Run Gateway on prompts from Langchain hub](/examples/Use%20Cases/run-gateway-on-prompts-from-langchain-hub.md)
+* [Use Porkey Gateway with Vercel's AI SDK](/examples/Gateway%20Integrations/vercel-ai.md)
+* [Set up fallback from SDXL to Dall-E-3](/examples/Getting%20Started/fallback-from-stable-diffusion-to-dall-e.ipynb)
+
+### Latest Cookbooks
+* [Fallback from OpenAI to Azure OpenAI](/examples/Getting%20Started/fallback-from-openai-to-azure.ipynb)
+* [Set up automatic retries for failed requests](/examples/Getting%20Started/automatic-retries-on-failures.md)
+* [Call Llama 3 on Groq](/examples/Use%20Cases/llama-3-on-groq.ipynb)
+
+### [More Examples](/examples/)
+
+## Supported Providers
+
+Explpore Gateway integrations with [20+ providers](https://portkey.ai/docs/welcome/integration-guides) and [6+ frameworks](https://portkey.ai/docs/welcome/integration-guides).
 
 |                                                                                                                            | Provider                                                                                      | Support | Stream |
 | -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------- | ------ |
@@ -165,7 +179,7 @@ Head over to [Portkey docs](https://portkey.ai/docs/product/ai-gateway-streamlin
 | <img src="https://ollama.com/public/ollama.png" width=35>                                                                  | [Ollama](https://portkey.ai/docs/welcome/integration-guides/ollama)                           | ✅       | ✅      |
 | <img src="https://novita.ai/favicon.ico" width=35>                                                                         | Novita AI                                                                                     | ✅       | ✅      | `/chat/completions`, `/completions` |
 
-> [View the complete list of 100+ supported models here](https://portkey.ai/docs/welcome/what-is-portkey#ai-providers-supported)
+> [View the complete list of 200+ supported models here](https://portkey.ai/docs/welcome/what-is-portkey#ai-providers-supported)
 <br>
 
 ## Reliability Features
