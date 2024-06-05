@@ -16,13 +16,14 @@ export class HooksManager {
   }
 
   private async executeFunction(check:Check): Promise<GuardrailCheckResult> {
-    console.log(`Executing check "${check.id}"`);
     return new Promise(async (resolve, reject) => {
       const [source, fn] = check.id.split(".");
       try {
         // console.log("Executing check", check.id, "with parameters", check.parameters, "context", this.context)
         let result = await this.plugins[source][fn](this.context, check.parameters);
         result.handlerName = check.id;
+        // Remove the stack trace
+        delete result.error?.stack;
         resolve(result as GuardrailCheckResult);
       } catch (err) {
         console.error(`Error executing check "${check.id}":`, err);
@@ -53,6 +54,7 @@ export class HooksManager {
       hookResult.error = err
     }
 
+    // console.log(hookResult);
     return hookResult;
   }
 
@@ -70,19 +72,19 @@ export class HooksManager {
     feedbackObj.metadata = {
       ...results.map(result => result.metadata),
       successfulChecks: results.filter(result => result.verdict === true).map(result => result.handlerName).join(', '),
-      failedChecks: results.filter(result => result.verdict === false).map(result => result.handlerName).join(', '),
-      erroredChecks: results.filter(result => result.success === false).map(result => result.handlerName).join(', '),
+      failedChecks: results.filter(result => result.verdict === false && !result.error).map(result => result.handlerName).join(', '),
+      erroredChecks: results.filter(result => result.verdict === false && !!result.error).map(result => result.handlerName).join(', '),
     };
     
     return feedbackObj;
   }
 
   async executeHooksSync(hooks:HookObject[]): Promise<any> {
-    console.log("Executing hooks", hooks)
+    if(hooks?.length) {
+      // console.log("Executing hooks: ", hooks?.map(hook => hook.name).join(", "), "with context", this.context);
+    }
     // Filter out any async hooks as we don't support them right now.
     let hooksToExecute = hooks?.filter(hook => !hook.async) || [];
-
-    console.log("Executing hooks", hooksToExecute)
 
     try {
       const execPromises = hooksToExecute.map(hook => this.executeEachHook(hook));
@@ -114,14 +116,33 @@ export class HooksManager {
   }
 
   setContext(hookType:string, provider:string, requestParams:any = {}, responseJSON:any) {
+    let requestText:string = "", responseText:string = "";
+
+    // If the request has a prompt, use that as the text
+    if (requestParams?.prompt) {
+      requestText = requestParams.prompt;
+    } else if (requestParams?.messages?.length) {
+      let content = requestParams.messages[requestParams.messages.length - 1].content;
+      requestText = content.text || content;
+    }
+
+    // If the response has a prompt, use that as the text
+    if (responseJSON?.choices?.length) {
+      let choice = responseJSON.choices[0];
+      if(choice.text) { responseText = choice.text;}
+      else if (choice?.message?.content) { 
+        responseText = choice.message.content.text || choice.message.content; 
+      }
+    }
+
     this.context = {
       request: {
         json: requestParams,
-        text: requestParams?.prompt || requestParams?.messages?.[requestParams?.messages.length - 1]?.content || "",
+        text: requestText,
       },
       response: {
         json: responseJSON,
-        text: responseJSON?.choices[0]?.message?.content || responseJSON?.choices[0]?.text || ""
+        text: responseText
       },
       provider,
       hookType

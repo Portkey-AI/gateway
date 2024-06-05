@@ -14,13 +14,13 @@ import {
 } from '../globals';
 import {
   fetchProviderOptionsFromConfig,
-  responseHandler,
   tryProvidersInSequence,
   updateResponseHeaders,
 } from './handlerUtils';
 import { convertKeysToCamelCase, getStreamingMode } from '../utils';
 import { Config, ShortConfig } from '../types/requestBody';
 import { env } from 'hono/adapter';
+import { responseHandler } from './responseHandlers';
 // Find the proxy provider
 function proxyProvider(proxyModeHeader: string, providerHeader: string) {
   const proxyProvider = proxyModeHeader?.split(' ')[1] ?? providerHeader;

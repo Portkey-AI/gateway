@@ -53,7 +53,7 @@ app.use('*', prettyJSON());
 // Use hooks middleware for all routes
 app.use('*', hooks);
 
-if (conf.cache) {
+if (conf.cache === true) {
   app.use('*', require('./middlewares/cache').memoryCache());
 }
 

@@ -181,17 +181,17 @@ export async function handleTextResponse(
       { 'html-message': text },
       response.status
     );
-    return { response: new Response(JSON.stringify(transformedText), {
+    return new Response(JSON.stringify(transformedText), {
       ...response,
       status: response.status,
       headers: new Headers({
         ...Object.fromEntries(response.headers),
         'content-type': 'application/json',
       }),
-    })};
+    });
   }
 
-  return { response: new Response(text, response) };
+  return new Response(text, response);
 }
 
 export async function handleNonStreamingMode(
@@ -210,10 +210,6 @@ export async function handleNonStreamingMode(
     return {response};
   }
 
-  if (response.status === 446) {
-    return {response};
-  }
-
   let responseBodyJson = await response.json();
   if (responseTransformer) {
     responseBodyJson = responseTransformer(
@@ -227,15 +223,15 @@ export async function handleNonStreamingMode(
 }
 
 export async function handleAudioResponse(response: Response) {
-  return { response: new Response(response.body, response) };
+  return new Response(response.body, response);
 }
 
 export async function handleOctetStreamResponse(response: Response) {
-  return { response: new Response(response.body, response) };
+  return new Response(response.body, response);
 }
 
 export async function handleImageResponse(response: Response) {
-  return { response: new Response(response.body, response) };
+  return new Response(response.body, response);
 }
 
 export async function handleStreamingMode(
@@ -243,7 +239,7 @@ export async function handleStreamingMode(
   proxyProvider: string,
   responseTransformer: Function | undefined,
   requestURL: string
-): Promise<{response: Response}> {
+): Promise<Response> {
   const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);
   // If the provider doesn't supply completion id,
   // we generate a fallback id using the provider name + timestamp.
@@ -294,23 +290,23 @@ export async function handleStreamingMode(
     ].includes(proxyProvider) &&
     responseTransformer
   ) {
-    return { response: new Response(readable, {
+    return new Response(readable, {
       ...response,
       headers: new Headers({
         ...Object.fromEntries(response.headers),
         'content-type': 'text/event-stream',
       }),
-    })};
+    });
   }
 
-  return { response: new Response(readable, response) };
+  return new Response(readable, response);
 }
 
 export async function handleJSONToStreamResponse(
   response: Response,
   provider: string,
   responseTransformerFunction: Function
-): Promise<{response: Response}> {
+): Promise<Response> {
   const { readable, writable } = new TransformStream();
   const writer = writable.getWriter();
   const encoder = new TextEncoder();
@@ -325,10 +321,10 @@ export async function handleJSONToStreamResponse(
     writer.close();
   })();
 
-  return {response: new Response(readable, {
+  return new Response(readable, {
     headers: new Headers({
       ...Object.fromEntries(response.headers),
       'content-type': CONTENT_TYPES.EVENT_STREAM,
     }),
-  })};
+  });
 }

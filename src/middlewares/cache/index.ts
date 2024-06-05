@@ -13,6 +13,9 @@ const CACHE_STATUS = {
 
 // Cache Handling
 export const getFromCache = async (env:any, requestHeaders:any, requestBody:any, url:string, organisationId:string, cacheMode: string, cacheMaxAge: number | null) => {
+  if('x-portkey-cache-force-refresh' in requestHeaders) {
+    return [null, CACHE_STATUS.REFRESH, null];
+  }
   try {
     const stringToHash = `${JSON.stringify(requestBody)}-${url}`;
     const myText = new TextEncoder().encode(stringToHash);
@@ -39,6 +42,10 @@ export const getFromCache = async (env:any, requestHeaders:any, requestBody:any,
 }
 
 export const putInCache = async (env:any, requestHeaders:any, requestBody:any, responseBody:any, url:string, organisationId:string, cacheMode: string | null, cacheMaxAge: number | null) => {
+  if (requestBody.stream) {
+    // Does not support caching of streams
+    return;
+  }
   const stringToHash = `${JSON.stringify(requestBody)}-${url}`;
   const myText = new TextEncoder().encode(stringToHash);
 
@@ -63,10 +70,12 @@ export const memoryCache = () => {
 
     if (requestOptions && Array.isArray(requestOptions) && requestOptions.length > 0) {
       requestOptions = requestOptions[0];
-      await putInCache(null, null, 
-        requestOptions.requestParams, 
-        await requestOptions.response.json(), 
-        requestOptions.providerOptions.rubeusURL, "", null, null);
+      if (requestOptions.cacheMode === "simple") {
+        await putInCache(null, null, 
+          requestOptions.requestParams, 
+          await requestOptions.response.json(), 
+          requestOptions.providerOptions.rubeusURL, "", null, null);
+      }
     }
   }
 }
