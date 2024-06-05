@@ -259,7 +259,7 @@ describe('sentenceCount handler', () => {
       response: { text: 'This is a sentence. This is another sentence.' },
     };
     const parameters: PluginParameters = {
-      minSentences: 2,
+      minSentences: 0,
       maxSentences: 2,
     };
 
