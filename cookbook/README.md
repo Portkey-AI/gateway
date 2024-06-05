@@ -7,7 +7,7 @@
 [![Discord](https://img.shields.io/discord/1143393887742861333)](https://portkey.ai/community)
 [![Twitter](https://img.shields.io/twitter/url/https/twitter/follow/portkeyai?style=social&label=Follow%20%40PortkeyAI)](https://twitter.com/portkeyai)
 
-## Getting Started
+## getting-started
 * [Use Portkey cache to save LLM cost & time](./Getting%20Started/enable-cache.md)
 * [Retry automatically on LLM failures](./Getting%20Started/automatic-retries-on-failures.md)
 * [Image generation with Gateway](./Getting%20Started/image-generation.ipynb)
@@ -18,7 +18,7 @@
 * [Set up Fallback from Stable Diffusion to Dall-E](./Getting%20Started/fallback-from-stable-diffusion-to-dall-e.ipynb)
 
 
-## Integrations
+## integrations
 * [OpenAI](./Gateway%20Integrations/openai.ipynb)
 * [Anyscale](./Gateway%20Integrations/anyscale.md)
 * [Mistral](./Gateway%20Integrations/mistral.md)
@@ -30,7 +30,7 @@
 * [Segmind](./Gateway%20Integrations/segmind.ipynb)
 
 
-## Use Cases
+## use-cases
 * [Use OpenAI SDK with Portkey prompt templates](./Use%20Cases/use-openai-sdk-with-portkey-prompt-templates.md)
 * [Run Gateway on prompts from Langchain hub](./Use%20Cases/run-gateway-on-prompts-from-langchain-hub.md)
 * [Smart fallback with model optimized prompts](./Use%20Cases/smart-fallback-with-model-optimized-prompts.md)
@@ -38,7 +38,7 @@
 * [Call Llama 3 on Groq](./Use%20Cases/llama-3-on-groq.ipynb)
 
 
-## Contributing
+## contributing
 
 This is a community-driven resource! We welcome ideas, improvements, quick fixes, and deeper contributions that help the community.
 
