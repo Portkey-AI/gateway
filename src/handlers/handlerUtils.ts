@@ -1002,8 +1002,6 @@ export async function recursiveAfterRequestHookHandler(
   let response, retryCount;
   const { retry, requestTimeout } = providerOption;
 
-  c.get('setTime')('reqStart', Date.now());
-
   if (!response) {
     [response, retryCount] = await retryRequest(
       url,
@@ -1013,8 +1011,6 @@ export async function recursiveAfterRequestHookHandler(
       requestTimeout || null,
     );
   }
-
-  c.get('setTime')('reqEnd', Date.now());
 
   let mappedResponse = await responseHandler(
     response,
