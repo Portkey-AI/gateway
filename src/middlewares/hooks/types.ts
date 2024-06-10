@@ -25,13 +25,13 @@ export interface HookOnSuccessObject {
 // Interface for Hook that will be contain a name for the hook and parameters for it which would be an object
 // this can be extended for specific hook types later on
 export interface HookObject {
-  type: "guardrail" | "custom";
+  type: 'guardrail' | 'custom';
   name: string;
   checks?: Check[];
   async?: boolean;
   onFail?: HookOnFailObject;
   onSuccess?: HookOnSuccessObject;
-  deny?:boolean;
+  deny?: boolean;
 }
 
 export interface HookContextRequest {
@@ -60,7 +60,7 @@ export interface GuardrailFeedbackMetadata {
 
 export interface GuardrailFeedback {
   value?: number;
-  weight?: number
+  weight?: number;
   metadata?: GuardrailFeedbackMetadata;
 }
 

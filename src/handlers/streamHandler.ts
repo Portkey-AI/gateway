@@ -207,7 +207,7 @@ export async function handleNonStreamingMode(
       PRECONDITION_CHECK_FAILED_STATUS_CODE,
     ].includes(response.status)
   ) {
-    return {response};
+    return { response };
   }
 
   let responseBodyJson = await response.json();
@@ -219,7 +219,10 @@ export async function handleNonStreamingMode(
     );
   }
 
-  return { response: new Response(JSON.stringify(responseBodyJson), response), json: responseBodyJson };
+  return {
+    response: new Response(JSON.stringify(responseBodyJson), response),
+    json: responseBodyJson,
+  };
 }
 
 export async function handleAudioResponse(response: Response) {

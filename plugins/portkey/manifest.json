@@ -55,7 +55,8 @@
         },
         "required": ["categories"]
       }
-    }, {
+    },
+    {
       "name": "Check Language",
       "id": "language",
       "type": "guardrail",
@@ -83,7 +84,8 @@
           }
         }
       }
-    }, {
+    },
+    {
       "name": "Detect PII",
       "id": "pii",
       "type": "guardrail",
@@ -131,7 +133,8 @@
         },
         "required": ["categories"]
       }
-    }, {
+    },
+    {
       "name": "Detect Gibberish",
       "id": "gibberish",
       "type": "guardrail",

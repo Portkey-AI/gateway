@@ -15,12 +15,15 @@ export const handler: PluginHandler = async (
     const text = getText(context);
 
     // Check if the text is gibberish
-    const result:any = await fetchPortkey(PORTKEY_ENDPOINTS.GIBBERISH, parameters.credentials, {text});
+    const result: any = await fetchPortkey(
+      PORTKEY_ENDPOINTS.GIBBERISH,
+      parameters.credentials,
+      { text }
+    );
     verdict = !result.results[0].isGibberish;
-
   } catch (e) {
     error = e as Error;
   }
 
-  return { error, verdict, data};
+  return { error, verdict, data };
 };

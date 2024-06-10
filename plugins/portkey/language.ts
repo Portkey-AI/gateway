@@ -16,7 +16,11 @@ export const handler: PluginHandler = async (
     const language = parameters.language;
 
     // Find the language of the text
-    const result:any = await fetchPortkey(PORTKEY_ENDPOINTS.LANGUAGE, parameters.credentials, {text});
+    const result: any = await fetchPortkey(
+      PORTKEY_ENDPOINTS.LANGUAGE,
+      parameters.credentials,
+      { text }
+    );
     const predictedLanguage = result.results[0].label;
 
     // Check if the predicted language matches the language set in the parameters
@@ -24,12 +28,11 @@ export const handler: PluginHandler = async (
       verdict = true;
     } else {
       verdict = false;
-      data = {predicted_language: predictedLanguage};
+      data = { predicted_language: predictedLanguage };
     }
-
   } catch (e) {
     error = e as Error;
   }
 
-  return { error, verdict, data};
+  return { error, verdict, data };
 };

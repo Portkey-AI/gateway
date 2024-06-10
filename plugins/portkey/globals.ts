@@ -68,17 +68,21 @@ export const PORTKEY_ENDPOINTS = {
 //   return { error, verdict, data };
 // };
 
-export const fetchPortkey = async (endpoint: string, credentials: any, data:any) => {
+export const fetchPortkey = async (
+  endpoint: string,
+  credentials: any,
+  data: any
+) => {
   const result = await fetch(`${PORTKEY_BASE_URL}${endpoint}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'x-portkey-api-key': `${credentials.PORTKEY_API_KEY}`,
-      'x-portkey-provider': "openai",
-      'x-portkey-virtual-key': `${credentials.PORTKEY_VIRTUAL_KEY}`
+      'x-portkey-provider': 'openai',
+      'x-portkey-virtual-key': `${credentials.PORTKEY_VIRTUAL_KEY}`,
     },
     body: JSON.stringify(data),
   });
 
   return result.json();
-}
+};

@@ -18,7 +18,11 @@ export const handler: PluginHandler = async (
     const maxCount = parameters.maxWords;
     let text = getText(context);
 
-    if (Number.isInteger(minCount) && Number.isInteger(maxCount) && text.length >= 0) {
+    if (
+      Number.isInteger(minCount) &&
+      Number.isInteger(maxCount) &&
+      text.length >= 0
+    ) {
       let count = countWords(text);
       verdict = count >= minCount && count <= maxCount;
     } else {

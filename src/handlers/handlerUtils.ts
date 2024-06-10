@@ -498,24 +498,30 @@ export async function tryPost(
 
   const requestOptions = c.get('requestOptions') ?? [];
 
-  let mappedResponse:Response|undefined, retryCount:number|undefined;
-  
-  let cacheKey:string|undefined;
-  let {cacheMode, cacheMaxAge, cacheStatus} = getCacheOptions(providerOption.cache);
-  let cacheResponse:Response|undefined;
-  
-  let beforeRequestHooksResult:HookResult[] = [];
-  let brhResponse:Response|undefined;
+  let mappedResponse: Response | undefined, retryCount: number | undefined;
 
-  async function createResponse(response:Response, responseTransformer:string|undefined, isCacheHit:boolean) {
+  let cacheKey: string | undefined;
+  let { cacheMode, cacheMaxAge, cacheStatus } = getCacheOptions(
+    providerOption.cache
+  );
+  let cacheResponse: Response | undefined;
+
+  let beforeRequestHooksResult: HookResult[] = [];
+  let brhResponse: Response | undefined;
+
+  async function createResponse(
+    response: Response,
+    responseTransformer: string | undefined,
+    isCacheHit: boolean
+  ) {
     // console.log("Creating a response", )
     mappedResponse = await responseHandler(
-      response, 
-      isStreamingMode, 
-      provider, 
-      responseTransformer, 
-      url, 
-      isCacheHit, 
+      response,
+      isStreamingMode,
+      provider,
+      responseTransformer,
+      url,
+      isCacheHit,
       params,
       beforeRequestHooksResult,
       c,
@@ -557,24 +563,20 @@ export async function tryPost(
       throw errorObj;
     }
 
-    return mappedResponse
+    return mappedResponse;
   }
 
   // BeforeHooksHandler
-  ({response: brhResponse, results: beforeRequestHooksResult} = await beforeRequestHookHandler(
-    c,
-    providerOption,
-    params,
-    fn
-  ));
-  if(!!brhResponse) {
+  ({ response: brhResponse, results: beforeRequestHooksResult } =
+    await beforeRequestHookHandler(c, providerOption, params, fn));
+  if (!!brhResponse) {
     // console.log("brhResponse came in");
     // If before requestHandler returns a response, return it
     return createResponse(brhResponse, undefined, false);
   }
 
   // Cache Handler
-  ({cacheResponse, cacheStatus, cacheKey} = await cacheHandler(
+  ({ cacheResponse, cacheStatus, cacheKey } = await cacheHandler(
     c,
     providerOption,
     requestHeaders,
@@ -582,17 +584,17 @@ export async function tryPost(
     transformedRequestBody,
     fn
   ));
-  if(!!cacheResponse) {
+  if (!!cacheResponse) {
     // console.log("cacheRespoinse came in", beforeRequestHooksResult);
     return createResponse(cacheResponse, undefined, true);
   }
-  
+
   // Prerequest validator (For virtual key budgets)
   const preRequestValidator = c.get('preRequestValidator');
   let preRequestValidatorResponse = preRequestValidator
-    ? preRequestValidator(providerOption, )
+    ? preRequestValidator(providerOption)
     : undefined;
-  if(!!preRequestValidatorResponse) {
+  if (!!preRequestValidatorResponse) {
     // console.log("preReuqestValidaion response came in");
     return createResponse(preRequestValidatorResponse, undefined, false);
   }
@@ -733,28 +735,24 @@ export async function tryTargetsRecursively(
 
   if (currentTarget.afterRequestHooks) {
     currentInheritedConfig.afterRequestHooks = [
-      ...currentTarget.afterRequestHooks
+      ...currentTarget.afterRequestHooks,
     ];
   } else if (inheritedConfig.afterRequestHooks) {
     currentInheritedConfig.afterRequestHooks = [
-      ...inheritedConfig.afterRequestHooks
+      ...inheritedConfig.afterRequestHooks,
     ];
-    currentTarget.afterRequestHooks = [
-      ...inheritedConfig.afterRequestHooks
-    ];
+    currentTarget.afterRequestHooks = [...inheritedConfig.afterRequestHooks];
   }
 
   if (currentTarget.beforeRequestHooks) {
     currentInheritedConfig.beforeRequestHooks = [
-      ...currentTarget.beforeRequestHooks
+      ...currentTarget.beforeRequestHooks,
     ];
   } else if (inheritedConfig.beforeRequestHooks) {
     currentInheritedConfig.beforeRequestHooks = [
-      ...inheritedConfig.beforeRequestHooks
+      ...inheritedConfig.beforeRequestHooks,
     ];
-    currentTarget.beforeRequestHooks = [
-      ...inheritedConfig.beforeRequestHooks
-    ];
+    currentTarget.beforeRequestHooks = [...inheritedConfig.beforeRequestHooks];
   }
 
   currentTarget.overrideParams = {
@@ -857,7 +855,6 @@ export async function tryTargetsRecursively(
   return response;
 }
 
-
 /**
  * Updates the response headers with the provided values.
  * @param {Response} response - The response object.
@@ -880,7 +877,9 @@ export function updateResponseHeaders(
     currentIndex.toString()
   );
 
-  if (cacheStatus) { response.headers.append(RESPONSE_HEADER_KEYS.CACHE_STATUS, cacheStatus); }
+  if (cacheStatus) {
+    response.headers.append(RESPONSE_HEADER_KEYS.CACHE_STATUS, cacheStatus);
+  }
   response.headers.append(RESPONSE_HEADER_KEYS.TRACE_ID, traceId);
   response.headers.append(
     RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT,
@@ -1008,7 +1007,7 @@ export async function recursiveAfterRequestHookHandler(
       options,
       retry?.attempts || 0,
       retry?.onStatusCodes || [],
-      requestTimeout || null,
+      requestTimeout || null
     );
   }
 
@@ -1025,9 +1024,13 @@ export async function recursiveAfterRequestHookHandler(
     fn
   );
 
-  const remainingRetryCount = (retry?.attempts || 0) - (retryCount || 0) - retryAttemptsMade;
+  const remainingRetryCount =
+    (retry?.attempts || 0) - (retryCount || 0) - retryAttemptsMade;
 
-  if (remainingRetryCount > 0 && retry?.onStatusCodes?.includes(mappedResponse.status)) {
+  if (
+    remainingRetryCount > 0 &&
+    retry?.onStatusCodes?.includes(mappedResponse.status)
+  ) {
     return recursiveAfterRequestHookHandler(
       c,
       url,
@@ -1035,7 +1038,7 @@ export async function recursiveAfterRequestHookHandler(
       providerOption,
       isStreamingMode,
       gatewayParams,
-      ((retryCount || 0) + 1) + retryAttemptsMade,
+      (retryCount || 0) + 1 + retryAttemptsMade,
       fn,
       beforeRequestHooksResult,
       requestHeaders
@@ -1052,42 +1055,43 @@ export async function recursiveAfterRequestHookHandler(
  */
 function getCacheOptions(cacheConfig: any) {
   // providerOption.cache needs to be sent here
-  let cacheMode:string|undefined;
-  let cacheMaxAge:string|number = "";
+  let cacheMode: string | undefined;
+  let cacheMaxAge: string | number = '';
   let cacheStatus = 'DISABLED';
-  
+
   if (typeof cacheConfig === 'object' && cacheConfig?.mode) {
     cacheMode = cacheConfig.mode;
     cacheMaxAge = cacheConfig.maxAge;
   } else if (typeof cacheConfig === 'string') {
     cacheMode = cacheConfig;
   }
-  return {cacheMode, cacheMaxAge, cacheStatus};
+  return { cacheMode, cacheMaxAge, cacheStatus };
 }
 
 async function cacheHandler(
-  c:Context,
+  c: Context,
   providerOption: Options,
   requestHeaders: Record<string, string>,
   fetchOptions: any,
   transformedRequestBody: any,
-  fn: endpointStrings,
+  fn: endpointStrings
 ) {
-  const [
-    getFromCacheFunction,
-    cacheIdentifier
-  ] = [
+  const [getFromCacheFunction, cacheIdentifier] = [
     c.get('getFromCache'),
-    c.get('cacheIdentifier')
+    c.get('cacheIdentifier'),
   ];
 
   let cacheResponse, cacheKey;
-  let cacheMode:string|undefined, cacheMaxAge:string|number|undefined, cacheStatus:string;
-  ({cacheMode, cacheMaxAge, cacheStatus} = getCacheOptions(providerOption.cache));
+  let cacheMode: string | undefined,
+    cacheMaxAge: string | number | undefined,
+    cacheStatus: string;
+  ({ cacheMode, cacheMaxAge, cacheStatus } = getCacheOptions(
+    providerOption.cache
+  ));
 
   // console.log(cacheMode)
 
-  if(getFromCacheFunction && cacheMode) {
+  if (getFromCacheFunction && cacheMode) {
     [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(
       env(c),
       { ...requestHeaders, ...fetchOptions.headers },
@@ -1100,27 +1104,35 @@ async function cacheHandler(
   }
 
   return {
-    cacheResponse: !!cacheResponse ? new Response(cacheResponse, {
-      headers: { 'content-type': 'application/json' }
-    }) : undefined, 
-    cacheStatus, 
-    cacheKey};
+    cacheResponse: !!cacheResponse
+      ? new Response(cacheResponse, {
+          headers: { 'content-type': 'application/json' },
+        })
+      : undefined,
+    cacheStatus,
+    cacheKey,
+  };
 }
 
-export async function beforeRequestHookHandler(c: Context, providerOption: any, params: any, fn: any): Promise<any> {
+export async function beforeRequestHookHandler(
+  c: Context,
+  providerOption: any,
+  params: any,
+  fn: any
+): Promise<any> {
   const { beforeRequestHooks, provider } = providerOption;
 
-  if (!["chatComplete", "complete"].includes(fn)) {
-    return {response: undefined, results: []};
+  if (!['chatComplete', 'complete'].includes(fn)) {
+    return { response: undefined, results: [] };
   }
 
   try {
-    const hooksManager = c.get("hooksManager");
-    hooksManager.setContext("beforeRequestHook", provider, params)
+    const hooksManager = c.get('hooksManager');
+    hooksManager.setContext('beforeRequestHook', provider, params);
     return hooksManager.executeHooksSync(beforeRequestHooks);
   } catch (err) {
     console.log(err);
-    return {error: err}
+    return { error: err };
     // TODO: Handle this error!!!
   }
 }

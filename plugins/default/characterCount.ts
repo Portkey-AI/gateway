@@ -1,8 +1,4 @@
-import {
-  PluginContext,
-  PluginHandler,
-  PluginParameters,
-} from '../types';
+import { PluginContext, PluginHandler, PluginParameters } from '../types';
 import { getText } from '../utils';
 
 function countCharacters(text: string): number {
@@ -22,7 +18,11 @@ export const handler: PluginHandler = async (
     const maxCount = parameters.maxCharacters;
     let text = getText(context);
 
-    if (Number.isInteger(minCount) && Number.isInteger(maxCount) && text.length >= 0) {
+    if (
+      Number.isInteger(minCount) &&
+      Number.isInteger(maxCount) &&
+      text.length >= 0
+    ) {
       let count = countCharacters(text);
       verdict = count >= minCount && count <= maxCount;
     } else {

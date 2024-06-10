@@ -25,10 +25,13 @@ describe.only('moderateContentHandler', () => {
       hookType: 'beforeRequestHook',
       request: { text: 'this is a test string for moderations' },
     };
-    const parameters = { 
-      credentials: { PORTKEY_API_KEY: testCreds.PORTKEY_API_KEY, PORTKEY_VIRTUAL_KEY: testCreds.PORTKEY_VIRTUAL_KEY }, 
-      categories: ['violence']
-    }
+    const parameters = {
+      credentials: {
+        PORTKEY_API_KEY: testCreds.PORTKEY_API_KEY,
+        PORTKEY_VIRTUAL_KEY: testCreds.PORTKEY_VIRTUAL_KEY,
+      },
+      categories: ['violence'],
+    };
     const result = await moderateContentHandler(context, parameters);
     expect(result.error).toBeNull();
     expect(result.verdict).toBeDefined();
@@ -40,10 +43,13 @@ describe.only('moderateContentHandler', () => {
       hookType: 'beforeRequestHook',
       request: { text: 'I really want to murder him brutally.' },
     };
-    const parameters = { 
-      credentials: { PORTKEY_API_KEY: testCreds.PORTKEY_API_KEY, PORTKEY_VIRTUAL_KEY: testCreds.PORTKEY_VIRTUAL_KEY }, 
-      categories: ['violence']
-    }
+    const parameters = {
+      credentials: {
+        PORTKEY_API_KEY: testCreds.PORTKEY_API_KEY,
+        PORTKEY_VIRTUAL_KEY: testCreds.PORTKEY_VIRTUAL_KEY,
+      },
+      categories: ['violence'],
+    };
     const result = await moderateContentHandler(context, parameters);
     expect(result.error).toBeNull();
     expect(result.verdict).toBe(false);
