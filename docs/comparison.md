@@ -12,7 +12,7 @@
 | Universal API | ✅ | ✅ | ✅ |
 | Routing<br><sup>Fallback, Loadbalance, Retries, Timeouts</sup> | ✅ | ✅ | ✅ |
 | Cache<br>Simple<br>Semantic<br>Stream from Cache<br>Cache TTL | <br>✅<br>❌<br>❌<br>1 Day | <br>✅<br>✅<br>✅<br>Unlimited | <br>✅<br>✅<br>✅<br>Unlimited |
-| Virtual Keys<br>Budget Limits<br>Rate Limits | ✅<br>✅<br>✅ | ✅<br>❌<br>❌ | ✅<br>✅<br>✅ |
+| Virtual Keys<br>Budget Limits<br>Rate Limits | ✅<br>❌<br>❌ | ✅<br>❌<br>❌ | ✅<br>✅<br>✅ |
 | Prompt Templates & Partials<br><sup>Variable Management</sup><br>No. of Templates | ✅<br>3 | ✅<br>Unlimited | ✅<br>Unlimited |
 | Universal Playground | ✅ | ✅ | ✅ |
 | Team Management & RBAC |  ❌ | ✅ | ✅ |
