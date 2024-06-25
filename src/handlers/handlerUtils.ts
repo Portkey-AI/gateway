@@ -508,6 +508,7 @@ export async function tryPost(
 
   let response: Response;
   let retryCount: number | undefined;
+  let requestExecTime: number | undefined;
 
   providerOption.retry = {
     attempts: providerOption.retry?.attempts ?? 0,
@@ -537,6 +538,7 @@ export async function tryPost(
   }
 
   if (getFromCacheFunction && cacheMode) {
+    requestExecTime = Date.now();
     [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(
       env(c),
       { ...requestHeaders, ...fetchOptions.headers },
@@ -567,6 +569,7 @@ export async function tryPost(
             rubeusURL: fn,
           },
           requestParams: transformedRequestBody,
+          requestExecTime: requestExecTime,
           response: response.clone(),
           cacheStatus: cacheStatus,
           lastUsedOptionIndex: currentIndex,
@@ -592,7 +595,7 @@ export async function tryPost(
     : undefined;
 
   if (!response) {
-    [response, retryCount] = await retryRequest(
+    [response, retryCount, requestExecTime] = await retryRequest(
       url,
       fetchOptions,
       providerOption.retry.attempts,
@@ -627,6 +630,7 @@ export async function tryPost(
         rubeusURL: fn,
       },
       requestParams: transformedRequestBody,
+      requestExecTime: requestExecTime,
       response: mappedResponse.clone(),
       cacheStatus: cacheStatus,
       lastUsedOptionIndex: currentIndex,
