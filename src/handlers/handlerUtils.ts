@@ -1042,6 +1042,13 @@ export function constructConfigFromRequestHeaders(
           ...openAiConfig,
         };
       }
+
+      if (parsedConfigJson.provider === GOOGLE_VERTEX_AI) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...vertexConfig,
+        };
+      }
     }
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
