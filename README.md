@@ -103,27 +103,27 @@ npm install portkey-ai
 
 ```js
 import OpenAI from 'openai';
-import { PORTKEY_GATEWAY_URL, createHeaders } from 'portkey-ai'
- 
+import { PORTKEY_GATEWAY_URL, createHeaders } from 'portkey-ai';
+
 const gateway = new OpenAI({
-   apiKey: "ANTHROPIC_API_KEY",
-    baseURL: PORTKEY_GATEWAY_URL, // Or http://localhost:8787/v1 when running locally
-    defaultHeaders: createHeaders({
-        provider: "anthropic",
-        apiKey: "PORTKEY_API_KEY" // Grab from https://app.portkey.ai / Not needed when running locally
-  })
+  apiKey: 'ANTHROPIC_API_KEY',
+  baseURL: PORTKEY_GATEWAY_URL, // Or http://localhost:8787/v1 when running locally
+  defaultHeaders: createHeaders({
+    provider: 'anthropic',
+    apiKey: 'PORTKEY_API_KEY', // Grab from https://app.portkey.ai / Not needed when running locally
+  }),
 });
 
-async function main(){
-   const chatCompletion = await portkey.chat.completions.create({
-      messages: [{ role: 'user', content: 'Who are you?' }],
-      model: 'claude-3-sonnet-20240229',
-      maxTokens:512
-   });
-   console.log(chatCompletion.choices[0].message.content);
+async function main() {
+  const chatCompletion = await gateway.chat.completions.create({
+    messages: [{ role: 'user', content: 'Who are you?' }],
+    model: 'claude-3-sonnet-20240229',
+    max_tokens: 512,
+  });
+  console.log(chatCompletion.choices[0].message.content);
 }
 
-main()
+main();
 ```
 
 ### <img src="https://www.svgrepo.com/show/305922/curl.svg" height=20 /> REST
