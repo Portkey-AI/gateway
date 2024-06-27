@@ -597,7 +597,7 @@ export async function tryPost(
   // Prerequest validator (For virtual key budgets)
   const preRequestValidator = c.get('preRequestValidator');
   let preRequestValidatorResponse = preRequestValidator
-    ? preRequestValidator(providerOption)
+    ? preRequestValidator(providerOption, requestHeaders)
     : undefined;
   if (!!preRequestValidatorResponse) {
     // console.log("preReuqestValidaion response came in");
