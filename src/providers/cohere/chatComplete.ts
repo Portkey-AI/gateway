@@ -16,11 +16,11 @@ export const CohereChatCompleteConfig: ProviderConfig = {
     default: 'command',
     required: true,
   },
-  messages: {
+  message: {
     param: 'message',
     required: true,
   },
-  chat_history: {
+  messages: {
     param: 'chat_history',
     required: false,
     transform: (params: Params) => {
