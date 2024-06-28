@@ -64,6 +64,8 @@ export interface Options {
   vertexRegion?: string;
   vertexProjectId?: string;
 
+  afterRequestHooks?: any;
+  beforeRequestHooks?: any;
   /** OpenAI specific */
   openaiProject?: string;
   openaiOrganization?: string;

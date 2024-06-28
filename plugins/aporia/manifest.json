@@ -1,0 +1,45 @@
+{
+  "id": "aporia",
+  "description": "This is portkey native rule",
+  "credentials": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "helpText": ""
+    },
+    {
+      "id": "api_key",
+      "label": "API Key",
+      "helpText": ""
+    }
+  ],
+  "functions": [
+    {
+      "name": "Regex Match",
+      "id": "regexMatch",
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Check if the text matches a regex pattern."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "rule": {
+            "type": "string",
+            "label": "Regex Rule",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enter the regex pattern"
+              }
+            ]
+          }
+        },
+        "required": ["rule"]
+      }
+    }
+  ]
+}
