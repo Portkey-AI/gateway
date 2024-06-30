@@ -474,6 +474,11 @@ export async function tryPost(
   const customHost =
     requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || '';
 
+  const requestTimeout =
+    Number(requestHeaders[HEADER_KEYS.REQUEST_TIMEOUT]) ||
+    providerOption.requestTimeout ||
+    null;
+
   const baseUrl =
     customHost || apiConfig.getBaseURL({ providerOptions: providerOption });
   const endpoint = apiConfig.getEndpoint({
@@ -592,7 +597,7 @@ export async function tryPost(
       fetchOptions,
       providerOption.retry.attempts,
       providerOption.retry.onStatusCodes,
-      providerOption.requestTimeout || null
+      requestTimeout
     );
   }
 
@@ -1035,6 +1040,13 @@ export function constructConfigFromRequestHeaders(
         parsedConfigJson = {
           ...parsedConfigJson,
           ...openAiConfig,
+        };
+      }
+
+      if (parsedConfigJson.provider === GOOGLE_VERTEX_AI) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...vertexConfig,
         };
       }
     }

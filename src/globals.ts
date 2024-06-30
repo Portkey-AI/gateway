@@ -8,6 +8,7 @@ export const HEADER_KEYS: Record<string, string> = {
   CACHE: `x-${POWERED_BY}-cache`,
   FORWARD_HEADERS: `x-${POWERED_BY}-forward-headers`,
   CUSTOM_HOST: `x-${POWERED_BY}-custom-host`,
+  REQUEST_TIMEOUT: `x-${POWERED_BY}-request-timeout`,
 };
 
 export const RESPONSE_HEADER_KEYS: Record<string, string> = {
