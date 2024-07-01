@@ -10,8 +10,8 @@ export const CohereCompleteConfig: ProviderConfig = {
     default: 'command',
     required: true,
   },
-  prompt: {
-    param: 'prompt',
+  message: {
+    param: 'message',
     required: true,
   },
   max_tokens: {
@@ -48,15 +48,6 @@ export const CohereCompleteConfig: ProviderConfig = {
     min: 0,
     max: 1,
   },
-  logit_bias: {
-    param: 'logit_bias',
-  },
-  n: {
-    param: 'num_generations',
-    default: 1,
-    min: 1,
-    max: 5,
-  },
   stop: {
     param: 'end_sequences',
   },
@@ -67,40 +58,36 @@ export const CohereCompleteConfig: ProviderConfig = {
 };
 
 interface CohereCompleteResponse {
-  id: string;
-  generations: {
-    id: string;
-    text: string;
-  }[];
-  prompt: string;
+  text: string;
+  generation_id: string;
+  finish_reason:
+    | 'COMPLETE'
+    | 'STOP_SEQUENCE'
+    | 'ERROR'
+    | 'ERROR_TOXIC'
+    | 'ERROR_LIMIT'
+    | 'USER_CANCEL'
+    | 'MAX_TOKENS';
   meta: {
     api_version: {
       version: string;
     };
   };
+  chat_history?: {
+    role: 'CHATBOT' | 'SYSTEM' | 'TOOL' | 'USER';
+    message: string;
+  }[];
   message?: string;
   status?: number;
 }
 
-export interface CohereStreamChunk {
-  id?: string;
-  response: {
-    generations?: {
-      id: string;
-      text: string;
-      finish_reason: boolean;
-    }[];
-  };
-  prompt?: string;
-  meta?: {
-    api_version: {
-      version: string;
+export type CohereStreamChunk =
+  | { type: 'stream-start'; generation_id: string }
+  | { type: 'text-generation'; text: string }
+  | {
+      type: 'stream-end';
+      finish_reason: CohereCompleteResponse['finish_reason'];
     };
-  };
-  text: string;
-  is_finished: boolean;
-  index?: number;
-}
 
 export const CohereCompleteResponseTransform: (
   response: CohereCompleteResponse,
@@ -119,19 +106,23 @@ export const CohereCompleteResponseTransform: (
   }
 
   return {
-    id: response.id,
+    id: response.generation_id,
     object: 'text_completion',
     created: Math.floor(Date.now() / 1000),
     model: 'Unknown',
     provider: COHERE,
-    choices: response.generations.map((generation, index) => ({
-      text: generation.text,
-      index: index,
-      logprobs: null,
-      finish_reason: 'length',
-    })),
+    choices: [
+      {
+        text: response.text,
+        index: 0,
+        logprobs: null,
+        finish_reason: response.finish_reason.toLowerCase(),
+      },
+    ],
   };
 };
+
+let generation_id = '';
 
 export const CohereCompleteStreamChunkTransform: (
   response: string,
@@ -143,25 +134,33 @@ export const CohereCompleteStreamChunkTransform: (
   const parsedChunk: CohereStreamChunk = JSON.parse(chunk);
 
   // discard the last cohere chunk as it sends the whole response combined.
-  if (parsedChunk.is_finished) {
+  // if (parsedChunk.type === 'stream-end') {
+  //   // reset generation_id to support new stream's value.
+  //   generation_id = '';
+  //   return '';
+  // }
+
+  if (parsedChunk.type === 'stream-start') {
+    generation_id = parsedChunk.generation_id;
+  }
+
+  if (!['stream-end', 'text-generation'].includes(parsedChunk.type)) {
     return '';
   }
 
   return (
     `data: ${JSON.stringify({
-      id: parsedChunk.id ?? fallbackId,
+      id: generation_id ?? fallbackId,
       object: 'text_completion',
       created: Math.floor(Date.now() / 1000),
       model: '',
       provider: COHERE,
       choices: [
         {
-          text:
-            parsedChunk.response?.generations?.[0]?.text ?? parsedChunk.text,
-          index: parsedChunk.index ?? 0,
+          text: (parsedChunk as any).text ?? '',
+          index: 0,
           logprobs: null,
-          finish_reason:
-            parsedChunk.response?.generations?.[0]?.finish_reason ?? null,
+          finish_reason: (parsedChunk as any).finish_reason || null,
         },
       ],
     })}` + '\n\n'
