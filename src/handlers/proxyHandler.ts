@@ -230,8 +230,11 @@ export async function proxyHandler(c: Context): Promise<Response> {
 
     retryCount = Math.min(retryCount, MAX_RETRIES);
 
-    const getFromCacheFunction = c.get('getFromCache');
-    const cacheIdentifier = c.get('cacheIdentifier');
+    const [getFromCacheFunction, cacheIdentifier, streamCallbackFunction] = [
+      c.get('getFromCache'),
+      c.get('cacheIdentifier'),
+      c.get('streamCallbackFunction'),
+    ];
 
     let cacheResponse, cacheKey, cacheMaxAge;
     let cacheStatus = 'DISABLED';
@@ -272,7 +275,8 @@ export async function proxyHandler(c: Context): Promise<Response> {
           undefined,
           urlToFetch,
           false,
-          store.reqBody
+          store.reqBody,
+          streamCallbackFunction
         );
         c.set('requestOptions', [
           {
@@ -310,6 +314,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
       retryStatusCodes,
       null
     );
+
     const mappedResponse = await responseHandler(
       lastResponse,
       store.isStreamingMode,
@@ -317,7 +322,8 @@ export async function proxyHandler(c: Context): Promise<Response> {
       undefined,
       urlToFetch,
       false,
-      store.reqBody
+      store.reqBody,
+      streamCallbackFunction
     );
     updateResponseHeaders(
       mappedResponse,
