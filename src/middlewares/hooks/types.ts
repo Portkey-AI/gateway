@@ -26,22 +26,25 @@ export interface HookOnSuccessObject {
 // this can be extended for specific hook types later on
 export interface HookObject {
   type: 'guardrail' | 'custom';
-  name: string;
+  id: string;
   checks?: Check[];
   async?: boolean;
   onFail?: HookOnFailObject;
   onSuccess?: HookOnSuccessObject;
   deny?: boolean;
+  eventType: 'beforeRequestHook' | 'afterRequestHook';
 }
 
 export interface HookContextRequest {
   text: string;
   json: any;
+  isStreamingRequest: boolean;
 }
 
 export interface HookContextResponse {
   text: string;
   json: any;
+  statusCode: number | null;
 }
 
 // Interface for the context object that will be passed to the hooks
@@ -76,7 +79,7 @@ export interface GuardrailCheckResult {
 export interface GuardrailResult {
   verdict: boolean;
   id?: string;
-  name?: string;
+  // name?: string;
   checks: GuardrailCheckResult[];
   feedback: GuardrailFeedback;
   error?: Error | null;
