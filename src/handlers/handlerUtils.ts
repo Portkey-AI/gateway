@@ -23,8 +23,7 @@ import {
 import { convertKeysToCamelCase } from '../utils';
 import { retryRequest } from './retryHandler';
 import { env } from 'hono/adapter';
-import { HookResult } from '../middlewares/hooks/types';
-import { responseHandler } from './responseHandlers';
+import { afterRequestHookHandler, responseHandler } from './responseHandlers';
 
 /**
  * Constructs the request options for the API call.
@@ -326,7 +325,7 @@ export async function tryPostProxy(
       cacheMaxAge
     );
     if (cacheResponse) {
-      response = await responseHandler(
+      ({ response } = await responseHandler(
         new Response(cacheResponse, {
           headers: {
             'content-type': 'application/json',
@@ -338,7 +337,8 @@ export async function tryPostProxy(
         url,
         false,
         params
-      );
+      ));
+
       c.set('requestOptions', [
         ...requestOptions,
         {
@@ -385,7 +385,7 @@ export async function tryPostProxy(
     params
   );
   updateResponseHeaders(
-    mappedResponse,
+    mappedResponse.response,
     currentIndex,
     params,
     cacheStatus,
@@ -402,7 +402,7 @@ export async function tryPostProxy(
         rubeusURL: fn,
       },
       requestParams: params,
-      response: mappedResponse.clone(),
+      response: mappedResponse.response.clone(),
       cacheStatus: cacheStatus,
       lastUsedOptionIndex: currentIndex,
       cacheKey: cacheKey,
@@ -412,12 +412,12 @@ export async function tryPostProxy(
   // If the response was not ok, throw an error
   if (!response.ok) {
     // Check if this request needs to be retried
-    const errorObj: any = new Error(await mappedResponse.text());
-    errorObj.status = mappedResponse.status;
+    const errorObj: any = new Error(await mappedResponse.response.text());
+    errorObj.status = mappedResponse.response.status;
     throw errorObj;
   }
 
-  return mappedResponse;
+  return mappedResponse.response;
 }
 
 /**
@@ -445,6 +445,16 @@ export async function tryPost(
 
   const provider: string = providerOption.provider ?? '';
 
+  const hooksManager = c.get('hooksManager');
+  const hookSpan = hooksManager.createSpan(
+    params,
+    provider,
+    isStreamingMode,
+    providerOption.beforeRequestHooks || [],
+    providerOption.afterRequestHooks || [],
+    null
+  );
+
   // Mapping providers to corresponding URLs
   const apiConfig: ProviderAPIConfig = Providers[provider].api;
   // Attach the body of the request
@@ -463,11 +473,6 @@ export async function tryPost(
 
   const customHost =
     requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || '';
-
-  const requestTimeout =
-    Number(requestHeaders[HEADER_KEYS.REQUEST_TIMEOUT]) ||
-    providerOption.requestTimeout ||
-    null;
 
   const baseUrl =
     customHost || apiConfig.getBaseURL({ providerOptions: providerOption });
@@ -511,7 +516,6 @@ export async function tryPost(
   );
   let cacheResponse: Response | undefined;
 
-  let beforeRequestHooksResult: HookResult[] = [];
   let brhResponse: Response | undefined;
 
   async function createResponse(
@@ -519,19 +523,15 @@ export async function tryPost(
     responseTransformer: string | undefined,
     isCacheHit: boolean
   ) {
-    // console.log("Creating a response", )
-    mappedResponse = await responseHandler(
+    ({ response: mappedResponse } = await responseHandler(
       response,
       isStreamingMode,
       provider,
       responseTransformer,
       url,
       isCacheHit,
-      params,
-      beforeRequestHooksResult,
-      c,
-      fn
-    );
+      params
+    ));
 
     updateResponseHeaders(
       mappedResponse,
@@ -557,6 +557,7 @@ export async function tryPost(
         cacheKey: cacheKey,
         cacheMode: cacheMode,
         cacheMaxAge: cacheMaxAge,
+        hookSpanId: hookSpan.id,
       },
     ]);
 
@@ -572,8 +573,8 @@ export async function tryPost(
   }
 
   // BeforeHooksHandler
-  ({ response: brhResponse, results: beforeRequestHooksResult } =
-    await beforeRequestHookHandler(c, providerOption, params, fn));
+  brhResponse = await beforeRequestHookHandler(c, hookSpan.id);
+
   if (!!brhResponse) {
     // console.log("brhResponse came in");
     // If before requestHandler returns a response, return it
@@ -614,16 +615,9 @@ export async function tryPost(
     params,
     0,
     fn,
-    beforeRequestHooksResult,
-    requestHeaders
+    requestHeaders,
+    hookSpan.id
   );
-
-  // Now we should have the mappedResponse.
-  // If it is still undefined, then we have an error.
-  if (!mappedResponse) {
-    // console.error('No response received from cache or the provider');
-    throw new Error('No response received from cache or the provider');
-  }
 
   // console.log("actual response came in", mappedResponse);
   return createResponse(mappedResponse, undefined, false);
@@ -1007,11 +1001,16 @@ export async function recursiveAfterRequestHookHandler(
   gatewayParams: any,
   retryAttemptsMade: any,
   fn: any,
-  beforeRequestHooksResult: any,
-  requestHeaders: Record<string, string>
-): Promise<any> {
+  requestHeaders: Record<string, string>,
+  hookSpanId: string
+): Promise<[Response, number]> {
   let response, retryCount;
-  const { retry, requestTimeout } = providerOption;
+  const requestTimeout =
+    Number(requestHeaders[HEADER_KEYS.REQUEST_TIMEOUT]) ||
+    providerOption.requestTimeout ||
+    null;
+
+  const { retry } = providerOption;
 
   if (!response) {
     [response, retryCount] = await retryRequest(
@@ -1023,17 +1022,22 @@ export async function recursiveAfterRequestHookHandler(
     );
   }
 
-  let mappedResponse = await responseHandler(
-    response,
-    isStreamingMode,
-    providerOption,
-    fn,
-    url,
-    false,
-    gatewayParams,
-    beforeRequestHooksResult,
+  const { response: mappedResponse, responseJson: mappedResponseJson } =
+    await responseHandler(
+      response,
+      isStreamingMode,
+      providerOption,
+      fn,
+      url,
+      false,
+      gatewayParams
+    );
+
+  const arhResponse = await afterRequestHookHandler(
     c,
-    fn
+    mappedResponse,
+    mappedResponseJson,
+    hookSpanId
   );
 
   const remainingRetryCount =
@@ -1041,7 +1045,7 @@ export async function recursiveAfterRequestHookHandler(
 
   if (
     remainingRetryCount > 0 &&
-    retry?.onStatusCodes?.includes(mappedResponse.status)
+    retry?.onStatusCodes?.includes(arhResponse.status)
   ) {
     return recursiveAfterRequestHookHandler(
       c,
@@ -1052,12 +1056,12 @@ export async function recursiveAfterRequestHookHandler(
       gatewayParams,
       (retryCount || 0) + 1 + retryAttemptsMade,
       fn,
-      beforeRequestHooksResult,
-      requestHeaders
+      requestHeaders,
+      hookSpanId
     );
   }
 
-  return [mappedResponse, retryAttemptsMade];
+  return [arhResponse, retryAttemptsMade];
 }
 
 /**
@@ -1128,20 +1132,35 @@ async function cacheHandler(
 
 export async function beforeRequestHookHandler(
   c: Context,
-  providerOption: any,
-  params: any,
-  fn: any
+  hookSpanId: string
 ): Promise<any> {
-  const { beforeRequestHooks, provider } = providerOption;
-
-  if (!['chatComplete', 'complete'].includes(fn)) {
-    return { response: undefined, results: [] };
-  }
-
   try {
     const hooksManager = c.get('hooksManager');
-    hooksManager.setContext('beforeRequestHook', provider, params);
-    return hooksManager.executeHooksSync(beforeRequestHooks);
+    const hooksResult = await hooksManager.executeHooks(hookSpanId, [
+      'syncBeforeRequestHook',
+    ]);
+
+    if (hooksResult.shouldDeny) {
+      return new Response(
+        JSON.stringify({
+          error: {
+            message:
+              'The guardrail checks defined in the config failed. You can find more information in the `hooks_result` object.',
+            type: 'hooks_failed',
+            param: null,
+            code: null,
+          },
+          hook_results: {
+            before_request_hooks: hooksResult.results,
+            after_request_hooks: [],
+          },
+        }),
+        {
+          status: 446,
+          headers: { 'content-type': 'application/json' },
+        }
+      );
+    }
   } catch (err) {
     console.log(err);
     return { error: err };
