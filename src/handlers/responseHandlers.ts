@@ -31,18 +31,15 @@ import { endpointStrings } from '../providers/types';
  * @param {endpointStrings} fn - The endpoint string. (Optional)
  * @returns {Promise<{response: Response, json?: any}>} - The mapped response.
  */
-export function responseHandler(
+export async function responseHandler(
   response: Response,
   streamingMode: boolean,
   provider: string | Options,
   responseTransformer: string | undefined,
   requestURL: string,
   isCacheHit: boolean = false,
-  gatewayRequest: Params,
-  beforeRequestHooksResult: any = {},
-  c: Context | undefined = undefined,
-  fn: endpointStrings = 'chatComplete'
-): Promise<Response> {
+  gatewayRequest: Params
+): Promise<{ response: Response; responseJson: any }> {
   let responseTransformerFunction: Function | undefined;
   let providerOption: Options | undefined;
   const responseContentType = response.headers?.get('content-type');
@@ -85,143 +82,138 @@ export function responseHandler(
     isCacheHit &&
     responseTransformerFunction
   ) {
-    return handleJSONToStreamResponse(
+    const streamingResponse = await handleJSONToStreamResponse(
       response,
       provider,
       responseTransformerFunction
     );
+    return { response: streamingResponse, responseJson: null };
   }
 
   if (streamingMode && response.status === 200) {
-    return handleStreamingMode(
-      response,
-      provider,
-      responseTransformerFunction,
-      requestURL
-    );
+    return {
+      response: handleStreamingMode(
+        response,
+        provider,
+        responseTransformerFunction,
+        requestURL
+      ),
+      responseJson: null,
+    };
   }
 
   if (responseContentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)) {
-    return handleAudioResponse(response);
+    return { response: handleAudioResponse(response), responseJson: null };
   }
 
   if (responseContentType === CONTENT_TYPES.APPLICATION_OCTET_STREAM) {
-    return handleOctetStreamResponse(response);
+    return {
+      response: handleOctetStreamResponse(response),
+      responseJson: null,
+    };
   }
 
   if (responseContentType?.startsWith(CONTENT_TYPES.GENERIC_IMAGE_PATTERN)) {
-    return handleImageResponse(response);
+    return { response: handleImageResponse(response), responseJson: null };
   }
 
   if (
     responseContentType?.startsWith(CONTENT_TYPES.PLAIN_TEXT) ||
     responseContentType?.startsWith(CONTENT_TYPES.HTML)
   ) {
-    return handleTextResponse(response, responseTransformerFunction);
-  }
-
-  // console.log("this is a non-streaming mode response")
-  return (async () => {
-    let responseJSON: any;
-    ({ response, json: responseJSON } = await handleNonStreamingMode(
+    const textResponse = await handleTextResponse(
       response,
       responseTransformerFunction
-    ));
+    );
+    return { response: textResponse, responseJson: null };
+  }
 
-    let afterRequestHooksResult: any =
-      responseJSON?.hook_results?.after_request_hooks;
+  const nonStreamingResponse = await handleNonStreamingMode(
+    response,
+    responseTransformerFunction
+  );
 
-    // Check and run afterRequestHooks
-    if (
-      typeof providerOption == 'object' &&
-      typeof c != 'undefined' &&
-      typeof responseJSON != 'undefined' &&
-      response.status < 400
-    ) {
-      ({ response, results: afterRequestHooksResult } =
-        await afterRequestHookHandler(
-          c,
-          providerOption,
-          response,
-          responseJSON,
-          fn,
-          streamingMode,
-          gatewayRequest
-        ));
-    }
-
-    if (
-      response.status < 400 &&
-      (beforeRequestHooksResult?.length || afterRequestHooksResult?.length)
-    ) {
-      let afterHooksVerdict =
-        afterRequestHooksResult?.every((h: any) => h.verdict) ?? true;
-      let beforeHooksVerdict =
-        beforeRequestHooksResult?.every((h: any) => h.verdict) ?? true;
-
-      responseJSON.hook_results = {
-        ...(afterRequestHooksResult?.length && {
-          after_request_hooks: afterRequestHooksResult,
-        }),
-        ...(beforeRequestHooksResult?.length && {
-          before_request_hooks: beforeRequestHooksResult,
-        }),
-      };
-
-      response = new Response(JSON.stringify(responseJSON), {
-        status: afterHooksVerdict && beforeHooksVerdict ? response.status : 246,
-        statusText:
-          afterHooksVerdict && beforeHooksVerdict
-            ? response.statusText
-            : 'Guardrails failed',
-        headers: response.headers,
-      });
-    }
-
-    return response;
-  })();
+  return {
+    response: nonStreamingResponse.response,
+    responseJson: nonStreamingResponse.json,
+  };
 }
 
 export async function afterRequestHookHandler(
   c: Context,
-  providerOption: any,
   response: any,
   responseJSON: any,
-  fn: any,
-  isStreamingMode: boolean,
-  gatewayParams: any
-): Promise<{ response: Response; results?: any }> {
-  const { afterRequestHooks, provider } = providerOption;
-
-  if (
-    isStreamingMode ||
-    !response.headers.get('content-type')?.startsWith('application/json') ||
-    !response.ok ||
-    !['chatComplete', 'complete'].includes(fn)
-  ) {
-    return { response, results: [] };
-  }
-
+  hookSpanId: string
+): Promise<Response> {
   try {
     const hooksManager = c.get('hooksManager');
 
-    hooksManager.setContext(
-      'afterRequestHook',
-      provider,
-      gatewayParams,
-      responseJSON
+    hooksManager.setSpanContextResponse(
+      hookSpanId,
+      responseJSON,
+      response.status
     );
-    let { results: afterRequestHooksResult, response: hooksResponse } =
-      await hooksManager.executeHooksSync(afterRequestHooks);
 
-    if (!!hooksResponse) {
-      response = hooksResponse;
+    let { shouldDeny, results } = await hooksManager.executeHooks(hookSpanId, [
+      'syncAfterRequestHook',
+    ]);
+
+    if (!responseJSON) {
+      return response;
     }
 
-    return { response, results: afterRequestHooksResult };
+    const span = hooksManager.getSpan(hookSpanId);
+    const hooksResult = {
+      before_request_hooks: span.hooksResult.beforeRequestHooksResult,
+      after_request_hooks: span.hooksResult.afterRequestHooksResult,
+    };
+
+    if (shouldDeny) {
+      return new Response(
+        JSON.stringify({
+          error: {
+            message:
+              'The guardrail checks defined in the config failed. You can find more information in the `hooks_result` object.',
+            type: 'hooks_failed',
+            param: null,
+            code: null,
+          },
+          hook_results: hooksResult,
+        }),
+        {
+          status: 446,
+          headers: { 'content-type': 'application/json' },
+        }
+      );
+    }
+
+    const failedBeforeRequestHooks =
+      span.hooksResult.beforeRequestHooksResult.filter((h) => !h.verdict);
+    const failedAfterRequestHooks =
+      span.hooksResult.afterRequestHooksResult.filter((h) => !h.verdict);
+
+    if (failedBeforeRequestHooks.length || failedAfterRequestHooks.length) {
+      response = new Response(
+        JSON.stringify({ ...responseJSON, hook_results: hooksResult }),
+        {
+          status: 246,
+          statusText: 'Hooks failed',
+          headers: response.headers,
+        }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ ...responseJSON, hook_results: hooksResult }),
+      {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+      }
+    );
   } catch (err) {
     console.error(err);
-    return { response, results: [] };
+    return response;
     // TODO: Handle this!!
   }
 }

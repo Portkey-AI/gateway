@@ -1,4 +1,9 @@
-import { PluginContext, PluginHandler, PluginParameters } from '../types';
+import {
+  HookEventType,
+  PluginContext,
+  PluginHandler,
+  PluginParameters,
+} from '../types';
 import { getText } from '../utils';
 
 function countWords(text: string): number {
@@ -7,7 +12,8 @@ function countWords(text: string): number {
 
 export const handler: PluginHandler = async (
   context: PluginContext,
-  parameters: PluginParameters
+  parameters: PluginParameters,
+  eventType: HookEventType
 ) => {
   let error = null;
   let verdict = false;
@@ -16,7 +22,7 @@ export const handler: PluginHandler = async (
   try {
     const minCount = parameters.minWords;
     const maxCount = parameters.maxWords;
-    let text = getText(context);
+    let text = getText(context, eventType);
 
     if (
       Number.isInteger(minCount) &&

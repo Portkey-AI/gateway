@@ -1,9 +1,15 @@
-import { PluginContext, PluginHandler, PluginParameters } from '../types';
+import {
+  HookEventType,
+  PluginContext,
+  PluginHandler,
+  PluginParameters,
+} from '../types';
 import { getText } from '../utils';
 
 export const handler: PluginHandler = async (
   context: PluginContext,
-  parameters: PluginParameters
+  parameters: PluginParameters,
+  eventType: HookEventType
 ) => {
   let error = null;
   let verdict = false;
@@ -13,7 +19,7 @@ export const handler: PluginHandler = async (
   // The plugin will return true if the regex matches the string, and false otherwise.
   try {
     const regex = new RegExp(parameters.regex);
-    let textToMatch = getText(context);
+    let textToMatch = getText(context, eventType);
 
     if (regex && textToMatch && !error) {
       const match = textToMatch.match(regex);
