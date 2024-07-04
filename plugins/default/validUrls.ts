@@ -1,19 +1,23 @@
-import { PluginContext, PluginHandler, PluginParameters } from '../types';
+import {
+  HookEventType,
+  PluginContext,
+  PluginHandler,
+  PluginParameters,
+} from '../types';
 import dns from 'dns';
-import http from 'http';
-import https from 'https';
 import { getText } from '../utils';
 
 export const handler: PluginHandler = async (
   context: PluginContext,
-  parameters: PluginParameters
+  parameters: PluginParameters,
+  eventType: HookEventType
 ) => {
   let error = null;
   let verdict = false;
   let data = null;
 
   try {
-    let content = getText(context);
+    let content = getText(context, eventType);
 
     // Find all URLs in the content, they may or may not start with http(s)
     const urls = content.match(/(https?:\/\/[^\s]+)/g) || [];

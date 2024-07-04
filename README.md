@@ -103,27 +103,27 @@ npm install portkey-ai
 
 ```js
 import OpenAI from 'openai';
-import { PORTKEY_GATEWAY_URL, createHeaders } from 'portkey-ai'
- 
+import { PORTKEY_GATEWAY_URL, createHeaders } from 'portkey-ai';
+
 const gateway = new OpenAI({
-   apiKey: "ANTHROPIC_API_KEY",
-    baseURL: PORTKEY_GATEWAY_URL, // Or http://localhost:8787/v1 when running locally
-    defaultHeaders: createHeaders({
-        provider: "anthropic",
-        apiKey: "PORTKEY_API_KEY" // Grab from https://app.portkey.ai / Not needed when running locally
-  })
+  apiKey: 'ANTHROPIC_API_KEY',
+  baseURL: PORTKEY_GATEWAY_URL, // Or http://localhost:8787/v1 when running locally
+  defaultHeaders: createHeaders({
+    provider: 'anthropic',
+    apiKey: 'PORTKEY_API_KEY', // Grab from https://app.portkey.ai / Not needed when running locally
+  }),
 });
 
-async function main(){
-   const chatCompletion = await portkey.chat.completions.create({
-      messages: [{ role: 'user', content: 'Who are you?' }],
-      model: 'claude-3-sonnet-20240229',
-      maxTokens:512
-   });
-   console.log(chatCompletion.choices[0].message.content);
+async function main() {
+  const chatCompletion = await gateway.chat.completions.create({
+    messages: [{ role: 'user', content: 'Who are you?' }],
+    model: 'claude-3-sonnet-20240229',
+    max_tokens: 512,
+  });
+  console.log(chatCompletion.choices[0].message.content);
 }
 
-main()
+main();
 ```
 
 ### <img src="https://www.svgrepo.com/show/305922/curl.svg" height=20 /> REST
@@ -146,14 +146,15 @@ For other providers, change the `provider` & `model` to their respective values.
 ## Gateway Cookbooks
 
 ### Trending Cookbooks
-* [Run Gateway on prompts from Langchain hub](/examples/Use%20Cases/run-gateway-on-prompts-from-langchain-hub.md)
-* [Use Porkey Gateway with Vercel's AI SDK](/examples/Gateway%20Integrations/vercel-ai.md)
-* [Set up fallback from SDXL to Dall-E-3](/examples/Getting%20Started/fallback-from-stable-diffusion-to-dall-e.ipynb)
+* [Run Gateway on prompts from Langchain hub](/cookbook/use-cases/run-gateway-on-prompts-from-langchain-hub.md)
+* [Use Porkey Gateway with Vercel's AI SDK](/cookbook/integrations/vercel-ai.md)
+* [Set up fallback from SDXL to Dall-E-3](/cookbook/getting-started/fallback-from-stable-diffusion-to-dall-e.ipynb)
 
 ### Latest Cookbooks
-* [Fallback from OpenAI to Azure OpenAI](/examples/Getting%20Started/fallback-from-openai-to-azure.ipynb)
-* [Set up automatic retries for failed requests](/examples/Getting%20Started/automatic-retries-on-failures.md)
-* [Call Llama 3 on Groq](/examples/Use%20Cases/llama-3-on-groq.ipynb)
+* [Comparing Top 10 LMSYS Models with Portkey](/cookbook/use-cases/LMSYS%20Series/comparing-top10-LMSYS-models-with-Portkey.ipynb)
+* [Fallback from OpenAI to Azure OpenAI](/cookbook/getting-started/fallback-from-openai-to-azure.ipynb)
+* [Set up automatic retries for failed requests](/cookbook/getting-started/automatic-retries-on-failures.md)
+* [Call Llama 3 on Groq](/cookbook/use-cases/llama-3-on-groq.ipynb)
 
 ### [More Examples](/examples/)
 

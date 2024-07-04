@@ -207,7 +207,7 @@ export async function handleNonStreamingMode(
       PRECONDITION_CHECK_FAILED_STATUS_CODE,
     ].includes(response.status)
   ) {
-    return {response};
+    return { response, json: await response.clone().json() };
   }
 
   let responseBodyJson = await response.json();
@@ -219,27 +219,30 @@ export async function handleNonStreamingMode(
     );
   }
 
-  return { response: new Response(JSON.stringify(responseBodyJson), response), json: responseBodyJson };
+  return {
+    response: new Response(JSON.stringify(responseBodyJson), response),
+    json: responseBodyJson,
+  };
 }
 
-export async function handleAudioResponse(response: Response) {
+export function handleAudioResponse(response: Response) {
   return new Response(response.body, response);
 }
 
-export async function handleOctetStreamResponse(response: Response) {
+export function handleOctetStreamResponse(response: Response) {
   return new Response(response.body, response);
 }
 
-export async function handleImageResponse(response: Response) {
+export function handleImageResponse(response: Response) {
   return new Response(response.body, response);
 }
 
-export async function handleStreamingMode(
+export function handleStreamingMode(
   response: Response,
   proxyProvider: string,
   responseTransformer: Function | undefined,
   requestURL: string
-): Promise<Response> {
+): Response {
   const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);
   // If the provider doesn't supply completion id,
   // we generate a fallback id using the provider name + timestamp.

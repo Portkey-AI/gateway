@@ -1,4 +1,4 @@
-import { PluginContext } from './types';
+import { HookEventType, PluginContext } from './types';
 
 interface PostOptions extends RequestInit {
   headers?: Record<string, string>;
@@ -34,8 +34,11 @@ class TimeoutError extends Error {
   }
 }
 
-export const getText = (context: PluginContext): string => {
-  switch (context.hookType) {
+export const getText = (
+  context: PluginContext,
+  eventType: HookEventType
+): string => {
+  switch (eventType) {
     case 'beforeRequestHook':
       return context.request?.text;
     case 'afterRequestHook':

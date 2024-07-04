@@ -1,10 +1,16 @@
-import { PluginContext, PluginHandler, PluginParameters } from '../types';
+import {
+  HookEventType,
+  PluginContext,
+  PluginHandler,
+  PluginParameters,
+} from '../types';
 import { getText } from '../utils';
 import { PORTKEY_ENDPOINTS, fetchPortkey } from './globals';
 
 export const handler: PluginHandler = async (
   context: PluginContext,
-  parameters: PluginParameters
+  parameters: PluginParameters,
+  eventType: HookEventType
 ) => {
   let error = null;
   let verdict = false;
@@ -12,20 +18,23 @@ export const handler: PluginHandler = async (
 
   try {
     // Get the text from the request or response
-    const text = getText(context);
+    const text = getText(context, eventType);
     const categoriesToCheck = parameters.categories;
 
     // Check if any of the PII category is found in the text
-    const result:any = await fetchPortkey(PORTKEY_ENDPOINTS.PII, parameters.credentials, {text, categoriesToCheck});
+    const result: any = await fetchPortkey(
+      PORTKEY_ENDPOINTS.PII,
+      parameters.credentials,
+      { text, categoriesToCheck }
+    );
     // const result = result.results[0].categories;
 
     // TODO: complete this function based on the remote function call.
-    
-    verdict = true;
 
+    verdict = true;
   } catch (e) {
     error = e as Error;
   }
 
-  return { error, verdict, data};
+  return { error, verdict, data };
 };

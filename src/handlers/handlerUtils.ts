@@ -23,8 +23,7 @@ import {
 import { convertKeysToCamelCase } from '../utils';
 import { retryRequest } from './retryHandler';
 import { env } from 'hono/adapter';
-import { HookResult } from '../middlewares/hooks/types';
-import { responseHandler } from './responseHandlers';
+import { afterRequestHookHandler, responseHandler } from './responseHandlers';
 
 /**
  * Constructs the request options for the API call.
@@ -326,7 +325,7 @@ export async function tryPostProxy(
       cacheMaxAge
     );
     if (cacheResponse) {
-      response = await responseHandler(
+      ({ response } = await responseHandler(
         new Response(cacheResponse, {
           headers: {
             'content-type': 'application/json',
@@ -338,7 +337,8 @@ export async function tryPostProxy(
         url,
         false,
         params
-      );
+      ));
+
       c.set('requestOptions', [
         ...requestOptions,
         {
@@ -385,7 +385,7 @@ export async function tryPostProxy(
     params
   );
   updateResponseHeaders(
-    mappedResponse,
+    mappedResponse.response,
     currentIndex,
     params,
     cacheStatus,
@@ -402,7 +402,7 @@ export async function tryPostProxy(
         rubeusURL: fn,
       },
       requestParams: params,
-      response: mappedResponse.clone(),
+      response: mappedResponse.response.clone(),
       cacheStatus: cacheStatus,
       lastUsedOptionIndex: currentIndex,
       cacheKey: cacheKey,
@@ -412,12 +412,12 @@ export async function tryPostProxy(
   // If the response was not ok, throw an error
   if (!response.ok) {
     // Check if this request needs to be retried
-    const errorObj: any = new Error(await mappedResponse.text());
-    errorObj.status = mappedResponse.status;
+    const errorObj: any = new Error(await mappedResponse.response.text());
+    errorObj.status = mappedResponse.response.status;
     throw errorObj;
   }
 
-  return mappedResponse;
+  return mappedResponse.response;
 }
 
 /**
@@ -444,6 +444,16 @@ export async function tryPost(
   const isStreamingMode = params.stream ? true : false;
 
   const provider: string = providerOption.provider ?? '';
+
+  const hooksManager = c.get('hooksManager');
+  const hookSpan = hooksManager.createSpan(
+    params,
+    provider,
+    isStreamingMode,
+    providerOption.beforeRequestHooks || [],
+    providerOption.afterRequestHooks || [],
+    null
+  );
 
   // Mapping providers to corresponding URLs
   const apiConfig: ProviderAPIConfig = Providers[provider].api;
@@ -498,29 +508,30 @@ export async function tryPost(
 
   const requestOptions = c.get('requestOptions') ?? [];
 
-  let mappedResponse:Response|undefined, retryCount:number|undefined;
-  
-  let cacheKey:string|undefined;
-  let {cacheMode, cacheMaxAge, cacheStatus} = getCacheOptions(providerOption.cache);
-  let cacheResponse:Response|undefined;
-  
-  let beforeRequestHooksResult:HookResult[] = [];
-  let brhResponse:Response|undefined;
+  let mappedResponse: Response | undefined, retryCount: number | undefined;
 
-  async function createResponse(response:Response, responseTransformer:string|undefined, isCacheHit:boolean) {
-    // console.log("Creating a response", )
-    mappedResponse = await responseHandler(
-      response, 
-      isStreamingMode, 
-      provider, 
-      responseTransformer, 
-      url, 
-      isCacheHit, 
-      params,
-      beforeRequestHooksResult,
-      c,
-      fn
-    );
+  let cacheKey: string | undefined;
+  let { cacheMode, cacheMaxAge, cacheStatus } = getCacheOptions(
+    providerOption.cache
+  );
+  let cacheResponse: Response | undefined;
+
+  let brhResponse: Response | undefined;
+
+  async function createResponse(
+    response: Response,
+    responseTransformer: string | undefined,
+    isCacheHit: boolean
+  ) {
+    ({ response: mappedResponse } = await responseHandler(
+      response,
+      isStreamingMode,
+      provider,
+      responseTransformer,
+      url,
+      isCacheHit,
+      params
+    ));
 
     updateResponseHeaders(
       mappedResponse,
@@ -546,6 +557,7 @@ export async function tryPost(
         cacheKey: cacheKey,
         cacheMode: cacheMode,
         cacheMaxAge: cacheMaxAge,
+        hookSpanId: hookSpan.id,
       },
     ]);
 
@@ -557,24 +569,20 @@ export async function tryPost(
       throw errorObj;
     }
 
-    return mappedResponse
+    return mappedResponse;
   }
 
   // BeforeHooksHandler
-  ({response: brhResponse, results: beforeRequestHooksResult} = await beforeRequestHookHandler(
-    c,
-    providerOption,
-    params,
-    fn
-  ));
-  if(!!brhResponse) {
+  brhResponse = await beforeRequestHookHandler(c, hookSpan.id);
+
+  if (!!brhResponse) {
     // console.log("brhResponse came in");
     // If before requestHandler returns a response, return it
     return createResponse(brhResponse, undefined, false);
   }
 
   // Cache Handler
-  ({cacheResponse, cacheStatus, cacheKey} = await cacheHandler(
+  ({ cacheResponse, cacheStatus, cacheKey } = await cacheHandler(
     c,
     providerOption,
     requestHeaders,
@@ -582,17 +590,17 @@ export async function tryPost(
     transformedRequestBody,
     fn
   ));
-  if(!!cacheResponse) {
+  if (!!cacheResponse) {
     // console.log("cacheRespoinse came in", beforeRequestHooksResult);
     return createResponse(cacheResponse, undefined, true);
   }
-  
+
   // Prerequest validator (For virtual key budgets)
   const preRequestValidator = c.get('preRequestValidator');
   let preRequestValidatorResponse = preRequestValidator
-    ? preRequestValidator(providerOption, )
+    ? preRequestValidator(providerOption, requestHeaders)
     : undefined;
-  if(!!preRequestValidatorResponse) {
+  if (!!preRequestValidatorResponse) {
     // console.log("preReuqestValidaion response came in");
     return createResponse(preRequestValidatorResponse, undefined, false);
   }
@@ -607,16 +615,9 @@ export async function tryPost(
     params,
     0,
     fn,
-    beforeRequestHooksResult,
-    requestHeaders
+    requestHeaders,
+    hookSpan.id
   );
-
-  // Now we should have the mappedResponse.
-  // If it is still undefined, then we have an error.
-  if (!mappedResponse) {
-    // console.error('No response received from cache or the provider');
-    throw new Error('No response received from cache or the provider');
-  }
 
   // console.log("actual response came in", mappedResponse);
   return createResponse(mappedResponse, undefined, false);
@@ -733,28 +734,24 @@ export async function tryTargetsRecursively(
 
   if (currentTarget.afterRequestHooks) {
     currentInheritedConfig.afterRequestHooks = [
-      ...currentTarget.afterRequestHooks
+      ...currentTarget.afterRequestHooks,
     ];
   } else if (inheritedConfig.afterRequestHooks) {
     currentInheritedConfig.afterRequestHooks = [
-      ...inheritedConfig.afterRequestHooks
+      ...inheritedConfig.afterRequestHooks,
     ];
-    currentTarget.afterRequestHooks = [
-      ...inheritedConfig.afterRequestHooks
-    ];
+    currentTarget.afterRequestHooks = [...inheritedConfig.afterRequestHooks];
   }
 
   if (currentTarget.beforeRequestHooks) {
     currentInheritedConfig.beforeRequestHooks = [
-      ...currentTarget.beforeRequestHooks
+      ...currentTarget.beforeRequestHooks,
     ];
   } else if (inheritedConfig.beforeRequestHooks) {
     currentInheritedConfig.beforeRequestHooks = [
-      ...inheritedConfig.beforeRequestHooks
+      ...inheritedConfig.beforeRequestHooks,
     ];
-    currentTarget.beforeRequestHooks = [
-      ...inheritedConfig.beforeRequestHooks
-    ];
+    currentTarget.beforeRequestHooks = [...inheritedConfig.beforeRequestHooks];
   }
 
   currentTarget.overrideParams = {
@@ -857,7 +854,6 @@ export async function tryTargetsRecursively(
   return response;
 }
 
-
 /**
  * Updates the response headers with the provided values.
  * @param {Response} response - The response object.
@@ -880,7 +876,9 @@ export function updateResponseHeaders(
     currentIndex.toString()
   );
 
-  if (cacheStatus) { response.headers.append(RESPONSE_HEADER_KEYS.CACHE_STATUS, cacheStatus); }
+  if (cacheStatus) {
+    response.headers.append(RESPONSE_HEADER_KEYS.CACHE_STATUS, cacheStatus);
+  }
   response.headers.append(RESPONSE_HEADER_KEYS.TRACE_ID, traceId);
   response.headers.append(
     RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT,
@@ -965,6 +963,13 @@ export function constructConfigFromRequestHeaders(
           ...openAiConfig,
         };
       }
+
+      if (parsedConfigJson.provider === GOOGLE_VERTEX_AI) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...vertexConfig,
+        };
+      }
     }
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
@@ -996,11 +1001,16 @@ export async function recursiveAfterRequestHookHandler(
   gatewayParams: any,
   retryAttemptsMade: any,
   fn: any,
-  beforeRequestHooksResult: any,
-  requestHeaders: Record<string, string>
-): Promise<any> {
+  requestHeaders: Record<string, string>,
+  hookSpanId: string
+): Promise<[Response, number]> {
   let response, retryCount;
-  const { retry, requestTimeout } = providerOption;
+  const requestTimeout =
+    Number(requestHeaders[HEADER_KEYS.REQUEST_TIMEOUT]) ||
+    providerOption.requestTimeout ||
+    null;
+
+  const { retry } = providerOption;
 
   if (!response) {
     [response, retryCount] = await retryRequest(
@@ -1008,26 +1018,35 @@ export async function recursiveAfterRequestHookHandler(
       options,
       retry?.attempts || 0,
       retry?.onStatusCodes || [],
-      requestTimeout || null,
+      requestTimeout || null
     );
   }
 
-  let mappedResponse = await responseHandler(
-    response,
-    isStreamingMode,
-    providerOption,
-    fn,
-    url,
-    false,
-    gatewayParams,
-    beforeRequestHooksResult,
+  const { response: mappedResponse, responseJson: mappedResponseJson } =
+    await responseHandler(
+      response,
+      isStreamingMode,
+      providerOption,
+      fn,
+      url,
+      false,
+      gatewayParams
+    );
+
+  const arhResponse = await afterRequestHookHandler(
     c,
-    fn
+    mappedResponse,
+    mappedResponseJson,
+    hookSpanId
   );
 
-  const remainingRetryCount = (retry?.attempts || 0) - (retryCount || 0) - retryAttemptsMade;
+  const remainingRetryCount =
+    (retry?.attempts || 0) - (retryCount || 0) - retryAttemptsMade;
 
-  if (remainingRetryCount > 0 && retry?.onStatusCodes?.includes(mappedResponse.status)) {
+  if (
+    remainingRetryCount > 0 &&
+    retry?.onStatusCodes?.includes(arhResponse.status)
+  ) {
     return recursiveAfterRequestHookHandler(
       c,
       url,
@@ -1035,14 +1054,14 @@ export async function recursiveAfterRequestHookHandler(
       providerOption,
       isStreamingMode,
       gatewayParams,
-      ((retryCount || 0) + 1) + retryAttemptsMade,
+      (retryCount || 0) + 1 + retryAttemptsMade,
       fn,
-      beforeRequestHooksResult,
-      requestHeaders
+      requestHeaders,
+      hookSpanId
     );
   }
 
-  return [mappedResponse, retryAttemptsMade];
+  return [arhResponse, retryAttemptsMade];
 }
 
 /**
@@ -1052,42 +1071,43 @@ export async function recursiveAfterRequestHookHandler(
  */
 function getCacheOptions(cacheConfig: any) {
   // providerOption.cache needs to be sent here
-  let cacheMode:string|undefined;
-  let cacheMaxAge:string|number = "";
+  let cacheMode: string | undefined;
+  let cacheMaxAge: string | number = '';
   let cacheStatus = 'DISABLED';
-  
+
   if (typeof cacheConfig === 'object' && cacheConfig?.mode) {
     cacheMode = cacheConfig.mode;
     cacheMaxAge = cacheConfig.maxAge;
   } else if (typeof cacheConfig === 'string') {
     cacheMode = cacheConfig;
   }
-  return {cacheMode, cacheMaxAge, cacheStatus};
+  return { cacheMode, cacheMaxAge, cacheStatus };
 }
 
 async function cacheHandler(
-  c:Context,
+  c: Context,
   providerOption: Options,
   requestHeaders: Record<string, string>,
   fetchOptions: any,
   transformedRequestBody: any,
-  fn: endpointStrings,
+  fn: endpointStrings
 ) {
-  const [
-    getFromCacheFunction,
-    cacheIdentifier
-  ] = [
+  const [getFromCacheFunction, cacheIdentifier] = [
     c.get('getFromCache'),
-    c.get('cacheIdentifier')
+    c.get('cacheIdentifier'),
   ];
 
   let cacheResponse, cacheKey;
-  let cacheMode:string|undefined, cacheMaxAge:string|number|undefined, cacheStatus:string;
-  ({cacheMode, cacheMaxAge, cacheStatus} = getCacheOptions(providerOption.cache));
+  let cacheMode: string | undefined,
+    cacheMaxAge: string | number | undefined,
+    cacheStatus: string;
+  ({ cacheMode, cacheMaxAge, cacheStatus } = getCacheOptions(
+    providerOption.cache
+  ));
 
   // console.log(cacheMode)
 
-  if(getFromCacheFunction && cacheMode) {
+  if (getFromCacheFunction && cacheMode) {
     [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(
       env(c),
       { ...requestHeaders, ...fetchOptions.headers },
@@ -1100,27 +1120,50 @@ async function cacheHandler(
   }
 
   return {
-    cacheResponse: !!cacheResponse ? new Response(cacheResponse, {
-      headers: { 'content-type': 'application/json' }
-    }) : undefined, 
-    cacheStatus, 
-    cacheKey};
+    cacheResponse: !!cacheResponse
+      ? new Response(cacheResponse, {
+          headers: { 'content-type': 'application/json' },
+        })
+      : undefined,
+    cacheStatus,
+    cacheKey,
+  };
 }
 
-export async function beforeRequestHookHandler(c: Context, providerOption: any, params: any, fn: any): Promise<any> {
-  const { beforeRequestHooks, provider } = providerOption;
-
-  if (!["chatComplete", "complete"].includes(fn)) {
-    return {response: undefined, results: []};
-  }
-
+export async function beforeRequestHookHandler(
+  c: Context,
+  hookSpanId: string
+): Promise<any> {
   try {
-    const hooksManager = c.get("hooksManager");
-    hooksManager.setContext("beforeRequestHook", provider, params)
-    return hooksManager.executeHooksSync(beforeRequestHooks);
+    const hooksManager = c.get('hooksManager');
+    const hooksResult = await hooksManager.executeHooks(hookSpanId, [
+      'syncBeforeRequestHook',
+    ]);
+
+    if (hooksResult.shouldDeny) {
+      return new Response(
+        JSON.stringify({
+          error: {
+            message:
+              'The guardrail checks defined in the config failed. You can find more information in the `hooks_result` object.',
+            type: 'hooks_failed',
+            param: null,
+            code: null,
+          },
+          hook_results: {
+            before_request_hooks: hooksResult.results,
+            after_request_hooks: [],
+          },
+        }),
+        {
+          status: 446,
+          headers: { 'content-type': 'application/json' },
+        }
+      );
+    }
   } catch (err) {
     console.log(err);
-    return {error: err}
+    return { error: err };
     // TODO: Handle this error!!!
   }
 }

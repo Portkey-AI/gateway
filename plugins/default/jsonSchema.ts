@@ -1,10 +1,16 @@
-import { PluginContext, PluginHandler, PluginParameters } from '../types';
+import {
+  HookEventType,
+  PluginContext,
+  PluginHandler,
+  PluginParameters,
+} from '../types';
 import { z, ZodSchema } from 'zod';
 import { getText } from '../utils';
 
 export const handler: PluginHandler = async (
   context: PluginContext,
-  parameters: PluginParameters
+  parameters: PluginParameters,
+  eventType: HookEventType
 ) => {
   let error = null;
   let verdict = false;
@@ -12,7 +18,7 @@ export const handler: PluginHandler = async (
 
   try {
     const schema: ZodSchema<any> = parameters.schema;
-    let responseText = getText(context);
+    let responseText = getText(context, eventType);
 
     // Check if the text contains JSON inside it.
     // The text can contain JSON along with other text before and after it.

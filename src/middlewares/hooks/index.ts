@@ -1,26 +1,170 @@
-import { Check, GuardrailCheckResult, GuardrailFeedback, GuardrailResult, HookContext, HookContextRequest, HookContextResponse, HookObject, HookOnFailObject, HookOnSuccessObject, HookResult } from "./types";
-import { plugins } from "../../../plugins";
-import { Context } from "hono";
+import {
+  Check,
+  GuardrailCheckResult,
+  GuardrailFeedback,
+  GuardrailResult,
+  HookContext,
+  HookContextRequest,
+  HookContextResponse,
+  HookObject,
+  HookOnFailObject,
+  HookOnSuccessObject,
+  HookResult,
+} from './types';
+import { plugins } from '../../../plugins';
+import { Context } from 'hono';
+import { HOOKS_EVENT_TYPE_PRESETS } from './globals';
+
+class HookSpan {
+  public context: HookContext;
+  public beforeRequestHooks: HookObject[];
+  public afterRequestHooks: HookObject[];
+  public hooksResult: {
+    beforeRequestHooksResult: HookResult[];
+    afterRequestHooksResult: HookResult[];
+  };
+  public parentHookSpanId: string | null;
+  public id: string;
+
+  constructor(
+    requestParams: any,
+    provider: string,
+    isStreamingRequest: boolean,
+    beforeRequestHooks: any,
+    afterRequestHooks: any,
+    parentHookSpanId: any
+  ) {
+    let requestText: string = '';
+
+    if (requestParams?.prompt) {
+      requestText = requestParams.prompt;
+    } else if (requestParams?.messages?.length) {
+      let content =
+        requestParams.messages[requestParams.messages.length - 1].content;
+      requestText = content.text || content;
+    }
+
+    this.context = {
+      request: {
+        json: requestParams,
+        text: requestText,
+        isStreamingRequest: isStreamingRequest,
+      },
+      response: {
+        json: {},
+        text: '',
+        statusCode: null,
+      },
+      provider,
+    };
+    this.beforeRequestHooks = beforeRequestHooks || [];
+    this.beforeRequestHooks.forEach((h: HookObject) => {
+      h.eventType = 'beforeRequestHook';
+    });
+
+    this.afterRequestHooks = afterRequestHooks || [];
+    this.afterRequestHooks.forEach((h: HookObject) => {
+      h.eventType = 'afterRequestHook';
+    });
+
+    this.parentHookSpanId = parentHookSpanId;
+    this.hooksResult = {
+      beforeRequestHooksResult: [],
+      afterRequestHooksResult: [],
+    };
+
+    this.id = crypto.randomUUID();
+  }
+
+  setContextResponse(
+    responseJSON: Record<string, any>,
+    responseStatus: number
+  ) {
+    let responseText: string = '';
+
+    if (responseJSON?.choices?.length) {
+      let choice = responseJSON.choices[0];
+      if (choice.text) {
+        responseText = choice.text;
+      } else if (choice?.message?.content) {
+        responseText = choice.message.content.text || choice.message.content;
+      }
+    }
+
+    this.context.response = {
+      json: responseJSON,
+      text: responseText,
+      statusCode: responseStatus,
+    };
+  }
+
+  addAfterResponseHookResult(result: HookResult) {
+    this.hooksResult.afterRequestHooksResult.push(result);
+  }
+
+  addBeforeRequestHookResult(result: HookResult) {
+    this.hooksResult.beforeRequestHooksResult.push(result);
+  }
+}
 
 export class HooksManager {
-  public context: HookContext = { 
-    request: {} as HookContextRequest, 
-    response: {} as HookContextResponse, 
-    provider: "",
-  };
+  public spans: Record<string, HookSpan> = {};
 
   private plugins: any = {};
 
   constructor() {
     this.plugins = plugins;
+    this.spans = {};
   }
 
-  private async executeFunction(check:Check): Promise<GuardrailCheckResult> {
+  createSpan(
+    requestParams: any,
+    provider: string,
+    isStreamingRequest: boolean,
+    beforeRequestHooks: any,
+    afterRequestHooks: any,
+    parentHookSpanId: any
+  ): HookSpan {
+    const span = new HookSpan(
+      requestParams,
+      provider,
+      isStreamingRequest,
+      beforeRequestHooks,
+      afterRequestHooks,
+      parentHookSpanId
+    );
+
+    this.spans[span.id] = span;
+    return span;
+  }
+
+  setSpanContextResponse(
+    spanId: string,
+    responseJson: any,
+    responseStatusCode: number
+  ) {
+    const span = this.spans[spanId];
+    span.setContextResponse(responseJson, responseStatusCode);
+  }
+
+  getSpan(spanId: string) {
+    return this.spans[spanId];
+  }
+
+  private async executeFunction(
+    context: HookContext,
+    check: Check,
+    eventType: string
+  ): Promise<GuardrailCheckResult> {
     return new Promise(async (resolve, reject) => {
-      const [source, fn] = check.id.split(".");
+      const [source, fn] = check.id.split('.');
       try {
         // console.log("Executing check", check.id, "with parameters", check.parameters, "context", this.context)
-        let result = await this.plugins[source][fn](this.context, check.parameters);
+        let result = await this.plugins[source][fn](
+          context,
+          check.parameters,
+          eventType
+        );
         result.handlerName = check.id;
         // Remove the stack trace
         delete result.error?.stack;
@@ -32,36 +176,75 @@ export class HooksManager {
     });
   }
 
-  async executeEachHook(hook: HookObject): Promise<HookResult> {
+  async executeEachHook(spanId: string, hook: HookObject): Promise<HookResult> {
     let promises: Promise<any>[] = [];
-    let hookResult: HookResult = {name: hook.name};
+    let hookResult: HookResult = { id: hook.id };
+    const span = this.spans[spanId];
 
     try {
       // Only executing guardrail hooks for now
-      if (hook.type === "guardrail" && hook.checks) {
-        promises.push(...hook.checks.map(check => this.executeFunction(check)));
-        let checkResults:GuardrailCheckResult[] = await Promise.all(promises);
+      if (hook.type === 'guardrail' && hook.checks) {
+        if (
+          hook.eventType === 'afterRequestHook' &&
+          span.context.response.statusCode !== 200
+        ) {
+          hookResult.skipped = true;
+          return hookResult;
+        }
+
+        if (
+          span.context.request.isStreamingRequest &&
+          !span.context.response.text
+        ) {
+          hookResult.skipped = true;
+          return hookResult;
+        }
+
+        if (hook.eventType === 'beforeRequestHook' && span.parentHookSpanId) {
+          hookResult.skipped = true;
+          return hookResult;
+        }
+
+        promises.push(
+          ...hook.checks.map((check) =>
+            this.executeFunction(span.context, check, hook.eventType)
+          )
+        );
+        let checkResults: GuardrailCheckResult[] = await Promise.all(promises);
 
         hookResult = {
-          verdict: checkResults.every(result => result.verdict),
-          name: hook.name,
+          verdict: checkResults.every((result) => result.verdict),
+          id: hook.id,
           checks: checkResults,
-          feedback: this.createFeedbackObject(checkResults, hook.onFail, hook.onSuccess)
+          feedback: this.createFeedbackObject(
+            checkResults,
+            hook.onFail,
+            hook.onSuccess
+          ),
         } as GuardrailResult;
       }
     } catch (err) {
-      console.error(`Error executing hook ${hook.name}:`, err);
-      hookResult.error = err
+      console.error(`Error executing hook ${hook.id}:`, err);
+      hookResult.error = err;
     }
 
-    // console.log(hookResult);
+    if (hook.eventType === 'beforeRequestHook') {
+      span.addBeforeRequestHookResult(hookResult);
+    } else if (hook.eventType === 'afterRequestHook') {
+      span.addAfterResponseHookResult(hookResult);
+    }
+
     return hookResult;
   }
 
-  private createFeedbackObject(results: any[], onFail:HookOnFailObject|undefined, onSuccess:HookOnSuccessObject|undefined): GuardrailFeedback {
-    const feedbackObj: GuardrailFeedback = {}
+  private createFeedbackObject(
+    results: any[],
+    onFail: HookOnFailObject | undefined,
+    onSuccess: HookOnSuccessObject | undefined
+  ): GuardrailFeedback {
+    const feedbackObj: GuardrailFeedback = {};
 
-    if (results.some(result => result.verdict === false)) {
+    if (results.some((result) => result.verdict === false)) {
       feedbackObj.value = onFail?.feedback?.value || 0;
       feedbackObj.weight = onFail?.feedback?.weight || 0;
     } else {
@@ -70,89 +253,95 @@ export class HooksManager {
     }
 
     feedbackObj.metadata = {
-      ...results.map(result => result.metadata),
-      successfulChecks: results.filter(result => result.verdict === true).map(result => result.handlerName).join(', '),
-      failedChecks: results.filter(result => result.verdict === false && !result.error).map(result => result.handlerName).join(', '),
-      erroredChecks: results.filter(result => result.verdict === false && !!result.error).map(result => result.handlerName).join(', '),
+      ...results.map((result) => result.metadata),
+      successfulChecks: results
+        .filter((result) => result.verdict === true)
+        .map((result) => result.handlerName)
+        .join(', '),
+      failedChecks: results
+        .filter((result) => result.verdict === false && !result.error)
+        .map((result) => result.handlerName)
+        .join(', '),
+      erroredChecks: results
+        .filter((result) => result.verdict === false && !!result.error)
+        .map((result) => result.handlerName)
+        .join(', '),
     };
-    
+
     return feedbackObj;
   }
 
-  async executeHooksSync(hooks:HookObject[]): Promise<any> {
-    if(hooks?.length) {
-      // console.log("Executing hooks: ", hooks?.map(hook => hook.name).join(", "), "with context", this.context);
+  async executeHooks(spanId: string, eventTypePresets: string[]): Promise<any> {
+    const { beforeRequestHooks, afterRequestHooks } = this.spans[spanId];
+
+    const hooksToExecute: HookObject[] = [];
+
+    if (
+      eventTypePresets.includes(
+        HOOKS_EVENT_TYPE_PRESETS.ASYNC_BEFORE_REQUEST_HOOK
+      )
+    ) {
+      hooksToExecute.push(
+        ...beforeRequestHooks.filter((h: HookObject) => h.async)
+      );
     }
-    // Filter out any async hooks as we don't support them right now.
-    let hooksToExecute = hooks?.filter(hook => !hook.async) || [];
+
+    if (
+      eventTypePresets.includes(
+        HOOKS_EVENT_TYPE_PRESETS.SYNC_BEFORE_REQUEST_HOOK
+      )
+    ) {
+      hooksToExecute.push(
+        ...beforeRequestHooks.filter((h: HookObject) => !h.async)
+      );
+    }
+
+    if (
+      eventTypePresets.includes(
+        HOOKS_EVENT_TYPE_PRESETS.ASYNC_AFTER_REQUEST_HOOK
+      )
+    ) {
+      hooksToExecute.push(
+        ...afterRequestHooks.filter((h: HookObject) => h.async)
+      );
+    }
+
+    if (
+      eventTypePresets.includes(
+        HOOKS_EVENT_TYPE_PRESETS.SYNC_AFTER_REQUEST_HOOK
+      )
+    ) {
+      hooksToExecute.push(
+        ...afterRequestHooks.filter((h: HookObject) => !h.async)
+      );
+    }
+
+    if (hooksToExecute.length === 0) {
+      return { results: [] };
+    }
 
     try {
-      const execPromises = hooksToExecute.map(hook => this.executeEachHook(hook));
-      const results:HookResult[] = await Promise.all(execPromises);
-      let response:any;
+      const execPromises = hooksToExecute.map((hook) =>
+        this.executeEachHook(spanId, hook)
+      );
+      const results: HookResult[] = await Promise.all(execPromises);
 
-      const shouldDeny = results.some((obj: any, index: number) => !obj.verdict && hooksToExecute[index].deny);
-      // const verdict = results.every((obj: any) => obj.verdict);
-      if (shouldDeny) {
-        response =  new Response(JSON.stringify({
-          error: {
-            message: "The guardrail checks defined in the config failed. You can find more information in the `hooks_result` object.",
-            type: 'hooks_failed',
-            param: null,
-            code: null,
-          },
-          hooks_result: { "before_request_hooks": results }
-        }),{
-          status: 446,
-          headers: { "content-type": "application/json" }
-        })
-      }
+      const shouldDeny = results.some(
+        (obj: any, index: number) =>
+          !obj.verdict && hooksToExecute[index].deny && !obj.skipped
+      );
 
-      return {results: results || [], response};
+      return { results: results || [], shouldDeny };
     } catch (err) {
-      console.error(`Error executing hooks"${hooks}":`, err);
-      return {error: err};
+      console.error(`Error executing hooks"${hooksToExecute}":`, err);
+      return { error: err };
     }
-  }
-
-  setContext(hookType:string, provider:string, requestParams:any = {}, responseJSON:any) {
-    let requestText:string = "", responseText:string = "";
-
-    // If the request has a prompt, use that as the text
-    if (requestParams?.prompt) {
-      requestText = requestParams.prompt;
-    } else if (requestParams?.messages?.length) {
-      let content = requestParams.messages[requestParams.messages.length - 1].content;
-      requestText = content.text || content;
-    }
-
-    // If the response has a prompt, use that as the text
-    if (responseJSON?.choices?.length) {
-      let choice = responseJSON.choices[0];
-      if(choice.text) { responseText = choice.text;}
-      else if (choice?.message?.content) { 
-        responseText = choice.message.content.text || choice.message.content; 
-      }
-    }
-
-    this.context = {
-      request: {
-        json: requestParams,
-        text: requestText,
-      },
-      response: {
-        json: responseJSON,
-        text: responseText
-      },
-      provider,
-      hookType
-    };
   }
 }
 
 export const hooks = (c: Context, next: any) => {
   const hooksManager = new HooksManager();
   c.set('hooksManager', hooksManager);
-  c.set('executeHooks', hooksManager.executeHooksSync.bind(hooksManager));
+  c.set('executeHooks', hooksManager.executeHooks.bind(hooksManager));
   return next();
-}
+};

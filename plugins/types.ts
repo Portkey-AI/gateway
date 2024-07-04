@@ -14,7 +14,10 @@ export interface PluginHandlerResponse {
   data?: any | null;
 }
 
+export type HookEventType = 'beforeRequestHook' | 'afterRequestHook';
+
 export type PluginHandler = (
   context: PluginContext,
-  parameters: PluginParameters
+  parameters: PluginParameters,
+  eventType: HookEventType
 ) => Promise<PluginHandlerResponse>;
