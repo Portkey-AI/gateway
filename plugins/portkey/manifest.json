@@ -2,7 +2,18 @@
   "id": "portkey",
   "name": "Portkey",
   "description": "Guardrails from your friendly neighbourhood AI gateway",
-  "credentials": ["PORTKEY_API_KEY"],
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "API Key for the Portkey plugin.",
+        "encrypted": true
+      }
+    },
+    "required": ["apiKey"]
+  },
   "functions": [
     {
       "name": "Moderate Content",

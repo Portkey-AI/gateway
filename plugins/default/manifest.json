@@ -292,6 +292,44 @@
       }
     },
     {
+      "name": "Webhook",
+      "id": "webhook",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequest","afterRequest"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Makes a request to a webhook which returns the verdict and data"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "webhookURL": {
+            "type": "string",
+            "label": "Webhook URL",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "eg: https://webhook.site/guardrail"
+              }
+            ]
+          },
+          "headers": {
+            "type": "json",
+            "label": "Headers",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enter the headers to send with the request."
+              }
+            ]
+          },
+          "required": ["webhookURL"]
+        }
+      }
+    },
+    {
       "name": "Contains Code",
       "id": "containsCode",
       "type": "guardrail",

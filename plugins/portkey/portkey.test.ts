@@ -1,7 +1,7 @@
 import { handler as moderateContentHandler } from './moderateContent';
 import testCreds from './.creds.json';
 
-describe.only('moderateContentHandler', () => {
+describe('moderateContentHandler', () => {
   it('should return an error if hook type is not supported', async () => {
     const context = { hookType: 'unsupported' };
     const parameters = {};
@@ -13,7 +13,7 @@ describe.only('moderateContentHandler', () => {
 
   it('should return an error if fetch request fails', async () => {
     const context = { hookType: 'beforeRequestHook' };
-    const parameters = { PORTKEY_API_KEY: 'test' };
+    const parameters = testCreds;
     const result = await moderateContentHandler(context, parameters);
     expect(result.error).toBeDefined();
     expect(result.verdict).toBe(false);
@@ -26,7 +26,7 @@ describe.only('moderateContentHandler', () => {
       request: { text: 'this is a test string for moderations' },
     };
     const parameters = { 
-      credentials: { PORTKEY_API_KEY: testCreds.PORTKEY_API_KEY, PORTKEY_VIRTUAL_KEY: testCreds.PORTKEY_VIRTUAL_KEY }, 
+      credentials: testCreds, 
       categories: ['violence']
     }
     const result = await moderateContentHandler(context, parameters);
@@ -41,7 +41,7 @@ describe.only('moderateContentHandler', () => {
       request: { text: 'I really want to murder him brutally.' },
     };
     const parameters = { 
-      credentials: { PORTKEY_API_KEY: testCreds.PORTKEY_API_KEY, PORTKEY_VIRTUAL_KEY: testCreds.PORTKEY_VIRTUAL_KEY }, 
+      credentials: testCreds, 
       categories: ['violence']
     }
     const result = await moderateContentHandler(context, parameters);

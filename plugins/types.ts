@@ -8,10 +8,10 @@ export interface PluginParameters {
 }
 
 export interface PluginHandlerResponse {
-  error: Error | null;
+  error: any;
   verdict?: boolean;
   // The data object can be any JSON object or null.
-  data?: {} | null;
+  data?: any | null;
 }
 
 export type PluginHandler = (
