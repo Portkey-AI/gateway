@@ -423,8 +423,8 @@ describe('wordCount handler', () => {
 
 describe.only('webhook handler', () => {
   it("should handle a postive result from a webhook", async () => {
+    const eventType = "afterRequestHook"
     const context: PluginContext = {
-      hookType: 'afterResponseHook',
       response: {
         text: `adding some text before this \`\`\`json\n{"key1": "value"}\n\`\`\`\n and adding some text after {"key":"value"}`,
       },
@@ -433,7 +433,7 @@ describe.only('webhook handler', () => {
       webhookURL: "https://roh26it-blackplanarian.web.val.run/true",
     };
 
-    const result = await webhookHandler(context, parameters);
+    const result = await webhookHandler(context, parameters, eventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
@@ -441,8 +441,8 @@ describe.only('webhook handler', () => {
   })
 
   it("should handle a negative result from a webhook", async () => {
+    const eventType = "afterRequestHook"
     const context: PluginContext = {
-      hookType: 'afterResponseHook',
       response: {
         text: `adding some text before this \`\`\`json\n{"key1": "value"}\n\`\`\`\n and adding some text after {"key":"value"}`,
       },
@@ -451,7 +451,7 @@ describe.only('webhook handler', () => {
       webhookURL: "https://roh26it-blackplanarian.web.val.run/false",
     };
 
-    const result = await webhookHandler(context, parameters);
+    const result = await webhookHandler(context, parameters, eventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
@@ -459,8 +459,8 @@ describe.only('webhook handler', () => {
   });
 
   it("should handle an error from a webhook", async () => {
+    const eventType = "afterRequestHook";
     const context: PluginContext = {
-      hookType: 'afterResponseHook',
       response: {
         text: `adding some text before this \`\`\`json\n{"key1": "value"}\n\`\`\`\n and adding some text after {"key":"value"}`,
       },
@@ -470,7 +470,7 @@ describe.only('webhook handler', () => {
       webhookURL: "https://roh26it-blackplanarian.web.val.run/error",
     };
 
-    const result = await webhookHandler(context, parameters);
+    const result = await webhookHandler(context, parameters, eventType);
 
     expect(result.error).toBeDefined();
     expect(result.verdict).toBe(false);
@@ -478,8 +478,8 @@ describe.only('webhook handler', () => {
   });
 
   it("should handle a timeout from a webhook", async () => {
+    const eventType = "afterRequestHook";
     const context: PluginContext = {
-      hookType: 'afterResponseHook',
       response: {
         text: `adding some text before this \`\`\`json\n{"key1": "value"}\n\`\`\`\n and adding some text after {"key":"value"}`,
       },
@@ -489,9 +489,7 @@ describe.only('webhook handler', () => {
       webhookURL: "https://roh26it-blackplanarian.web.val.run/timeout",
     };
 
-    const result = await webhookHandler(context, parameters);
-
-    console.log(result);
+    const result = await webhookHandler(context, parameters, eventType);
 
     expect(result.error).toBeDefined();
     expect(result.verdict).toBe(false);

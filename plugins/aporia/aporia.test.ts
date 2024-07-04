@@ -10,14 +10,14 @@ function getParameters() {
 
 describe("validateProject handler", () => {
   it("should fail if the apiKey is invalid", async () => {
+    const eventType = 'beforeRequestHook';
     const context = { 
-      type: 'beforeRequestHook', 
       request: { text: 'this is a test string for moderations' } 
     };
     const parameters = JSON.parse(JSON.stringify(getParameters()));
     parameters.credentials.apiKey =  "invalid-api-key";
 
-    const result = await validateProjectHandler(context, parameters);
+    const result = await validateProjectHandler(context, parameters, eventType);
     console.log(result);
     expect(result).toBeDefined();
     expect(result.verdict).toBe(false);

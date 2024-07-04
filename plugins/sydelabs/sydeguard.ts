@@ -1,4 +1,4 @@
-import { PluginContext, PluginHandler, PluginParameters } from '../types';
+import { HookEventType, PluginContext, PluginHandler, PluginParameters } from '../types';
 import { getText, post } from '../utils';
 
 export const SYDEGUARD_URL = 'https://guard.sydelabs.ai/api/v1/guard/generate-score';
@@ -14,7 +14,8 @@ export const fetchSydeGuard = async (credentials: any, data:any) => {
 
 export const handler: PluginHandler = async (
   context: PluginContext,
-  parameters: PluginParameters
+  parameters: PluginParameters,
+  eventType: HookEventType
 ) => {
   let error = null;
   let verdict = false;
@@ -22,7 +23,7 @@ export const handler: PluginHandler = async (
 
   try {
     // Get the text from the request or response
-    const text = getText(context);
+    const text = getText(context, eventType);
 
     // Get data from the relevant tool
     const result:any = await fetchSydeGuard(parameters.credentials, {prompt: text});

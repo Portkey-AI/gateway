@@ -1,4 +1,4 @@
-import { PluginContext, PluginHandler, PluginParameters } from '../types';
+import { HookEventType, PluginContext, PluginHandler, PluginParameters } from '../types';
 import { getText, post } from '../utils';
 
 export const APORIA_BASE_URL = 'https://gr-prd.aporia.com';
@@ -14,7 +14,8 @@ export const validate = async (projectID:string, credentials: any, data:any) => 
 
 export const handler: PluginHandler = async (
   context: PluginContext,
-  parameters: PluginParameters
+  parameters: PluginParameters,
+  eventType: HookEventType
 ) => {
   let error = null;
   let verdict = false;
@@ -26,7 +27,7 @@ export const handler: PluginHandler = async (
       explain: true,
     }
 
-    if(context.type === 'beforeRequestHook') {
+    if(eventType === 'beforeRequestHook') {
       aporiaObject.validation_target = "prompt"
     } else {
       aporiaObject.response = context.response?.text;
