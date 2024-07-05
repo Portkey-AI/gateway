@@ -11,6 +11,7 @@ import { handler as moderateContent } from './portkey/moderateContent';
 import { handler as language } from './portkey/language';
 import { handler as pii } from './portkey/pii';
 import { handler as gibberish } from './portkey/gibberish';
+import { handler as sydeguard } from './sydelabs/sydeguard';
 
 export const plugins = {
   default: {
@@ -29,5 +30,8 @@ export const plugins = {
     language: language,
     pii: pii,
     gibberish: gibberish,
+  },
+  sydelabs: {
+    sydeguard: sydeguard,
   },
 };
