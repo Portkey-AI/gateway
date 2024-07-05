@@ -1,5 +1,5 @@
 import testCreds from './.creds.json';
-import {handler as validateProjectHandler} from './validateProject';
+import { handler as validateProjectHandler } from './validateProject';
 
 function getParameters() {
   return {
@@ -8,14 +8,14 @@ function getParameters() {
   };
 }
 
-describe("validateProject handler", () => {
-  it("should fail if the apiKey is invalid", async () => {
+describe('validateProject handler', () => {
+  it('should fail if the apiKey is invalid', async () => {
     const eventType = 'beforeRequestHook';
-    const context = { 
-      request: { text: 'this is a test string for moderations' } 
+    const context = {
+      request: { text: 'this is a test string for moderations' },
     };
     const parameters = JSON.parse(JSON.stringify(getParameters()));
-    parameters.credentials.apiKey =  "invalid-api-key";
+    parameters.credentials.apiKey = 'invalid-api-key';
 
     const result = await validateProjectHandler(context, parameters, eventType);
     console.log(result);

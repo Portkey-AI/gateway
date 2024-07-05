@@ -11,8 +11,10 @@ export const handler: PluginHandler = async (
 
   try {
     let url = parameters.webhookURL;
-    let headers: Record<string, string> = parameters?.headers ? JSON.parse(parameters.headers) : {};
-    ({verdict, data} = await post(url, context, { headers }, 3000));
+    let headers: Record<string, string> = parameters?.headers
+      ? JSON.parse(parameters.headers)
+      : {};
+    ({ verdict, data } = await post(url, context, { headers }, 3000));
   } catch (e: any) {
     delete e.stack;
     error = e;

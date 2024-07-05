@@ -295,7 +295,7 @@
       "name": "Webhook",
       "id": "webhook",
       "type": "guardrail",
-      "supportedHooks": ["beforeRequest","afterRequest"],
+      "supportedHooks": ["beforeRequest", "afterRequest"],
       "description": [
         {
           "type": "subHeading",

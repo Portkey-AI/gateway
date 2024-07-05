@@ -75,7 +75,10 @@ export async function post<T = any>(
   const mergedOptions: PostOptions = { ...defaultOptions, ...options };
 
   if (mergedOptions.headers) {
-    mergedOptions.headers = { ...defaultOptions.headers, ...mergedOptions.headers };
+    mergedOptions.headers = {
+      ...defaultOptions.headers,
+      ...mergedOptions.headers,
+    };
   }
 
   try {
@@ -103,11 +106,14 @@ export async function post<T = any>(
         body: errorBody,
       };
 
-      throw new HttpError(`HTTP error! status: ${response.status}`, errorResponse);
+      throw new HttpError(
+        `HTTP error! status: ${response.status}`,
+        errorResponse
+      );
     }
-    
-    return await response.json() as T;
-  } catch (error:any) {
+
+    return (await response.json()) as T;
+  } catch (error: any) {
     if (error instanceof HttpError) {
       throw error;
     }

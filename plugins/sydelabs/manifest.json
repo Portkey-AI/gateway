@@ -32,8 +32,8 @@
             "label": "Prompt Injection Threshold",
             "description": [
               {
-              "type": "subHeading",
-              "text": "The threshold for the prompt injection risk score (0-1)."
+                "type": "subHeading",
+                "text": "The threshold for the prompt injection risk score (0-1)."
               }
             ],
             "minimum": 0,
@@ -46,8 +46,8 @@
             "label": "Toxicity Threshold",
             "description": [
               {
-              "type": "subHeading",
-              "text": "The threshold for the toxicity risk score (0-1)."
+                "type": "subHeading",
+                "text": "The threshold for the toxicity risk score (0-1)."
               }
             ],
             "minimum": 0,
@@ -60,8 +60,8 @@
             "label": "Evasion Threshold",
             "description": [
               {
-              "type": "subHeading",
-              "text": "The threshold for the evasion risk score (0-1)."
+                "type": "subHeading",
+                "text": "The threshold for the evasion risk score (0-1)."
               }
             ],
             "minimum": 0,
