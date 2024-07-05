@@ -18,7 +18,7 @@ export const handler: PluginHandler = async (
   // The following code is an example of a plugin that uses regex to match a string in the response body.
   // The plugin will return true if the regex matches the string, and false otherwise.
   try {
-    const regex = new RegExp(parameters.regex);
+    const regex = new RegExp(parameters.rule);
     let textToMatch = getText(context, eventType);
 
     if (regex && textToMatch && !error) {
