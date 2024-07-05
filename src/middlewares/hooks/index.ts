@@ -165,13 +165,23 @@ export class HooksManager {
           check.parameters,
           eventType
         );
-        result.handlerName = check.id;
+        // console.log("executeFuntion", result)
+        result.id = check.id;
         // Remove the stack trace
         delete result.error?.stack;
         resolve(result as GuardrailCheckResult);
-      } catch (err) {
+      } catch (err: any) {
         console.error(`Error executing check "${check.id}":`, err);
-        reject(err);
+        delete err.stack;
+        resolve({
+          error: {
+            name: 'Check error',
+            message: 'Error executing check',
+          },
+          verdict: false,
+          data: null,
+          id: check.id,
+        });
       }
     });
   }
@@ -213,7 +223,9 @@ export class HooksManager {
         let checkResults: GuardrailCheckResult[] = await Promise.all(promises);
 
         hookResult = {
-          verdict: checkResults.every((result) => result.verdict),
+          verdict: checkResults.every(
+            (result) => result.verdict || result.error
+          ),
           id: hook.id,
           checks: checkResults,
           feedback: this.createFeedbackObject(
@@ -256,15 +268,15 @@ export class HooksManager {
       ...results.map((result) => result.metadata),
       successfulChecks: results
         .filter((result) => result.verdict === true)
-        .map((result) => result.handlerName)
+        .map((result) => result.id)
         .join(', '),
       failedChecks: results
         .filter((result) => result.verdict === false && !result.error)
-        .map((result) => result.handlerName)
+        .map((result) => result.id)
         .join(', '),
       erroredChecks: results
         .filter((result) => result.verdict === false && !!result.error)
-        .map((result) => result.handlerName)
+        .map((result) => result.id)
         .join(', '),
     };
 
