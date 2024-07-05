@@ -974,6 +974,8 @@ export function constructConfigFromRequestHeaders(
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
       'params',
+      'before_request_hooks',
+      'after_request_hooks',
     ]) as any;
   }
 
