@@ -123,13 +123,14 @@ export async function* readStream(
   let buffer = '';
   let decoder = new TextDecoder();
   let isFirstChunk = true;
+  const streamState = {};
 
-  while (true) {
+   while (true) {
     const { done, value } = await reader.read();
     if (done) {
       if (buffer.length > 0) {
         if (transformFunction) {
-          yield transformFunction(buffer, fallbackChunkId);
+          yield transformFunction(buffer, fallbackChunkId, streamState);
         } else {
           yield buffer;
         }
@@ -155,7 +156,7 @@ export async function* readStream(
           }
 
           if (transformFunction) {
-            const transformedChunk = transformFunction(part, fallbackChunkId);
+            const transformedChunk = transformFunction(part, fallbackChunkId, streamState);
             if (transformedChunk !== undefined) {
               yield transformedChunk;
             }
