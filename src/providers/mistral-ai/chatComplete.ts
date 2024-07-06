@@ -133,17 +133,8 @@ export const MistralAIChatCompleteResponseTransform: (
 };
 
 export const MistralAIChatCompleteStreamChunkTransform: (
-  response: string,
-  _: any,
-  streamState: any
-) => string = (responseChunk, _, streamState) => {
-  // WIP: Example of updating stream state so new chunks can have knowledge of old chunks
-  if (!streamState.count) {
-    streamState.count = 1;
-  } else {
-    streamState.count++;
-  }
-
+  response: string
+) => string = (responseChunk) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();

@@ -135,7 +135,7 @@ export interface ContentType {
  */
 export interface Message {
   /** The role of the message sender. It can be 'system', 'user', 'assistant', or 'function'. */
-  role: 'system' | 'user' | 'assistant' | 'function';
+  role: 'system' | 'user' | 'assistant' | 'function' | 'tool';
   /** The content of the message. */
   content?: string | ContentType[];
   /** The name of the function to call, if any. */
@@ -143,6 +143,7 @@ export interface Message {
   /** The function call to make, if any. */
   function_call?: any;
   tool_calls?: any;
+  tool_call_id?: string;
   citationMetadata?: CitationMetadata;
 }
 
@@ -190,6 +191,13 @@ export interface Tool {
   function?: Function;
 }
 
+export interface ToolChoice {
+  type: string;
+  function: {
+    name: string;
+  };
+}
+
 /**
  * The parameters for the request.
  * @interface
@@ -217,6 +225,7 @@ export interface Params {
   examples?: Examples[];
   top_k?: number;
   tools?: Tool[];
+  tool_choice?: ToolChoice | 'none' | 'auto' | 'required';
   response_format?: { type: 'json_object' | 'text' };
   // Google Vertex AI specific
   safety_settings?: any;
