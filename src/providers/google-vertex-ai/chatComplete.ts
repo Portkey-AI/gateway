@@ -2,7 +2,13 @@
 // https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/send-multimodal-prompts#gemini-send-multimodal-samples-drest
 
 import { GOOGLE_VERTEX_AI } from '../../globals';
+import { VERTEX_AI } from '../../middlewares/portkey/globals';
 import { ContentType, Message, Params } from '../../types/requestBody';
+import {
+  AnthropicChatCompleteResponse,
+  AnthropicChatCompleteStreamResponse,
+  AnthropicErrorResponse,
+} from '../anthropic/chatComplete';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -18,7 +24,7 @@ import type {
   GoogleGenerateContentResponse,
 } from './types';
 
-export const GoogleChatCompleteConfig: ProviderConfig = {
+export const VertexGoogleChatCompleteConfig: ProviderConfig = {
   // https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning#gemini-model-versions
   model: {
     param: 'model',
@@ -203,6 +209,133 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
   },
 };
 
+export const VertexAnthropicChatCompleteConfig: ProviderConfig = {
+  messages: [
+    {
+      param: 'messages',
+      required: true,
+      transform: (params: Params) => {
+        let messages: Message[] = [];
+        // Transform the chat messages into a simple prompt
+        if (!!params.messages) {
+          params.messages.forEach((msg) => {
+            if (msg.role !== 'system') {
+              if (
+                msg.content &&
+                typeof msg.content === 'object' &&
+                msg.content.length
+              ) {
+                const transformedMessage: Record<string, any> = {
+                  role: msg.role,
+                  content: [],
+                };
+                msg.content.forEach((item) => {
+                  if (item.type === 'text') {
+                    transformedMessage.content.push({
+                      type: item.type,
+                      text: item.text,
+                    });
+                  } else if (
+                    item.type === 'image_url' &&
+                    item.image_url &&
+                    item.image_url.url
+                  ) {
+                    const parts = item.image_url.url.split(';');
+                    if (parts.length === 2) {
+                      const base64ImageParts = parts[1].split(',');
+                      const base64Image = base64ImageParts[1];
+                      const mediaTypeParts = parts[0].split(':');
+                      if (mediaTypeParts.length === 2 && base64Image) {
+                        const mediaType = mediaTypeParts[1];
+                        transformedMessage.content.push({
+                          type: 'image',
+                          source: {
+                            type: 'base64',
+                            media_type: mediaType,
+                            data: base64Image,
+                          },
+                        });
+                      }
+                    }
+                  }
+                });
+                messages.push(transformedMessage as Message);
+              } else {
+                messages.push({
+                  role: msg.role,
+                  content: msg.content,
+                });
+              }
+            }
+          });
+        }
+
+        return messages;
+      },
+    },
+    {
+      param: 'system',
+      required: false,
+      transform: (params: Params) => {
+        let systemMessage: string = '';
+        // Transform the chat messages into a simple prompt
+        if (!!params.messages) {
+          params.messages.forEach((msg) => {
+            if (
+              msg.role === 'system' &&
+              msg.content &&
+              typeof msg.content === 'object' &&
+              msg.content[0].text
+            ) {
+              systemMessage = msg.content[0].text;
+            } else if (
+              msg.role === 'system' &&
+              typeof msg.content === 'string'
+            ) {
+              systemMessage = msg.content;
+            }
+          });
+        }
+        return systemMessage;
+      },
+    },
+  ],
+  max_tokens: {
+    param: 'max_tokens',
+    required: true,
+  },
+  temperature: {
+    param: 'temperature',
+    default: 1,
+    min: 0,
+    max: 1,
+  },
+  top_p: {
+    param: 'top_p',
+    default: -1,
+    min: -1,
+  },
+  top_k: {
+    param: 'top_k',
+    default: -1,
+  },
+  stop: {
+    param: 'stop_sequences',
+  },
+  stream: {
+    param: 'stream',
+    default: false,
+  },
+  user: {
+    param: 'metadata.user_id',
+  },
+  anthropic_version: {
+    param: 'anthropic_version',
+    required: true,
+    default: 'vertex-2023-10-16',
+  },
+};
+
 export const GoogleChatCompleteResponseTransform: (
   response:
     | GoogleGenerateContentResponse
@@ -371,4 +504,156 @@ export const GoogleChatCompleteStreamChunkTransform: (
   };
 
   return `data: ${JSON.stringify(dataChunk)}\n\n`;
+};
+
+export const AnthropicErrorResponseTransform: (
+  response: AnthropicErrorResponse
+) => ErrorResponse | undefined = (response) => {
+  if ('error' in response) {
+    return generateErrorResponse(
+      {
+        message: response.error?.message,
+        type: response.error?.type,
+        param: null,
+        code: null,
+      },
+      VERTEX_AI
+    );
+  }
+
+  return undefined;
+};
+
+export const VertexAnthropicChatCompleteResponseTransform: (
+  response: AnthropicChatCompleteResponse | AnthropicErrorResponse,
+  responseStatus: number
+) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+  if (responseStatus !== 200) {
+    const errorResposne = AnthropicErrorResponseTransform(
+      response as AnthropicErrorResponse
+    );
+    if (errorResposne) return errorResposne;
+  }
+
+  if ('content' in response) {
+    const { input_tokens = 0, output_tokens = 0 } = response?.usage;
+
+    return {
+      id: response.id,
+      object: 'chat_completion',
+      created: Math.floor(Date.now() / 1000),
+      model: response.model,
+      provider: VERTEX_AI,
+      choices: [
+        {
+          message: { role: 'assistant', content: response.content[0].text },
+          index: 0,
+          logprobs: null,
+          finish_reason: response.stop_reason,
+        },
+      ],
+      usage: {
+        prompt_tokens: input_tokens,
+        completion_tokens: output_tokens,
+        total_tokens: input_tokens + output_tokens,
+      },
+    };
+  }
+
+  return generateInvalidProviderResponseError(response, VERTEX_AI);
+};
+
+export const VertexAnthropicChatCompleteStreamChunkTransform: (
+  response: string,
+  fallbackId: string
+) => string | undefined = (responseChunk, fallbackId) => {
+  let chunk = responseChunk.trim();
+
+  if (
+    chunk.startsWith('event: ping') ||
+    chunk.startsWith('event: content_block_start') ||
+    chunk.startsWith('event: content_block_stop') ||
+    chunk.startsWith('event: vertex_event')
+  ) {
+    return;
+  }
+
+  if (chunk.startsWith('event: message_stop')) {
+    return 'data: [DONE]\n\n';
+  }
+
+  chunk = chunk.replace(/^event: content_block_delta[\r\n]*/, '');
+  chunk = chunk.replace(/^event: message_delta[\r\n]*/, '');
+  chunk = chunk.replace(/^event: message_start[\r\n]*/, '');
+  chunk = chunk.replace(/^data: /, '');
+  chunk = chunk.trim();
+
+  const parsedChunk: AnthropicChatCompleteStreamResponse = JSON.parse(chunk);
+
+  if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
+    return (
+      `data: ${JSON.stringify({
+        id: fallbackId,
+        object: 'chat.completion.chunk',
+        created: Math.floor(Date.now() / 1000),
+        model: '',
+        provider: VERTEX_AI,
+        choices: [
+          {
+            delta: {
+              content: '',
+            },
+            index: 0,
+            logprobs: null,
+            finish_reason: null,
+          },
+        ],
+        usage: {
+          prompt_tokens: parsedChunk.message?.usage?.input_tokens,
+        },
+      })}` + '\n\n'
+    );
+  }
+
+  if (parsedChunk.type === 'message_delta' && parsedChunk.usage) {
+    return (
+      `data: ${JSON.stringify({
+        id: fallbackId,
+        object: 'chat.completion.chunk',
+        created: Math.floor(Date.now() / 1000),
+        model: '',
+        provider: VERTEX_AI,
+        choices: [
+          {
+            index: 0,
+            delta: {},
+            finish_reason: parsedChunk.delta?.stop_reason,
+          },
+        ],
+        usage: {
+          completion_tokens: parsedChunk.usage?.output_tokens,
+        },
+      })}` + '\n\n'
+    );
+  }
+
+  return (
+    `data: ${JSON.stringify({
+      id: fallbackId,
+      object: 'chat.completion.chunk',
+      created: Math.floor(Date.now() / 1000),
+      model: '',
+      provider: VERTEX_AI,
+      choices: [
+        {
+          delta: {
+            content: parsedChunk.delta?.text,
+          },
+          index: 0,
+          logprobs: null,
+          finish_reason: parsedChunk.delta?.stop_reason ?? null,
+        },
+      ],
+    })}` + '\n\n'
+  );
 };

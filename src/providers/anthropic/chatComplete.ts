@@ -149,7 +149,7 @@ export interface AnthropicErrorResponse {
   error: AnthropicErrorObject;
 }
 
-interface AnthropicChatCompleteResponse {
+export interface AnthropicChatCompleteResponse {
   id: string;
   type: string;
   role: string;
@@ -166,7 +166,7 @@ interface AnthropicChatCompleteResponse {
   };
 }
 
-interface AnthropicChatCompleteStreamResponse {
+export interface AnthropicChatCompleteStreamResponse {
   type: string;
   index: number;
   delta: {
