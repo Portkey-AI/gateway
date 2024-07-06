@@ -1066,6 +1066,7 @@ export function constructConfigFromRequestHeaders(
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
       'params',
+      'vertex_service_account_json',
     ]) as any;
   }
 
