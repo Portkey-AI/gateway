@@ -114,10 +114,11 @@ export const configSchema: any = z
     (value) => {
       const isGoogleVertexAIProvider = value.provider === GOOGLE_VERTEX_AI;
       const hasGoogleVertexAIFields =
-        value.vertex_project_id && value.vertex_region;
+        (value.vertex_project_id && value.vertex_region) ||
+        (value.vertex_region && value.vertex_service_account_json);
       return !(isGoogleVertexAIProvider && !hasGoogleVertexAIFields);
     },
     {
-      message: `Invalid configuration. 'vertex_project_id' and 'vertex_region' are required for '${GOOGLE_VERTEX_AI}' provider. Example: { 'provider': 'vertex-ai', 'vertex_project_id': 'my-project-id', 'vertex_region': 'us-central1', api_key: 'ya29...' }`,
+      message: `Invalid configuration. ('vertex_project_id' and 'vertex_region') or ('vertex_service_account_json' and 'vertex_region') are required for '${GOOGLE_VERTEX_AI}' provider. Example: { 'provider': 'vertex-ai', 'vertex_project_id': 'my-project-id', 'vertex_region': 'us-central1', api_key: 'ya29...' }`,
     }
   );
