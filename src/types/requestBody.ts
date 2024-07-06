@@ -132,6 +132,7 @@ export interface ContentType {
 export interface ToolCall {
   id: string;
   type: string;
+  index?: number;
   function: {
     name: string;
     arguments: string;
@@ -144,35 +145,73 @@ export type OpenAIMessageRole =
   | 'assistant'
   | 'function'
   | 'tool';
+export interface SystemMessage {
+  content: string;
+  role: 'system';
+  name?: string;
+}
+
+export type UserMessageContentPart = {
+  type: string;
+  text?: string;
+  image_url?: {
+    url: string;
+    detail?: string;
+  };
+};
+
+export interface UserMessage {
+  content: string | UserMessageContentPart[];
+  role: 'user';
+  name?: string;
+}
+
+export interface AssistantMessage {
+  content?: string;
+  role: 'assistant';
+  name?: string;
+  tool_calls?: ToolCall[]; // TODO: copy this from upstream branch once gemini changes are merged
+}
+
+export interface ToolMessage {
+  content: string;
+  role: 'tool',
+  tool_call_id: string;
+}
 
 /**
  * A message in the conversation.
- * @interface
+ * @type
  */
-export interface Message {
-  /** The role of the message sender. It can be 'system', 'user', 'assistant', or 'function'. */
-  role: OpenAIMessageRole;
-  /** The content of the message. */
-  content?: string | ContentType[];
-  /** The name of the function to call, if any. */
-  name?: string;
-  /** The function call to make, if any. */
-  function_call?: any;
-  tool_calls?: any;
-  tool_call_id?: string;
-  citationMetadata?: CitationMetadata;
-}
+export type Message = SystemMessage | UserMessage | AssistantMessage | ToolMessage;
 
-export interface CitationMetadata {
-  citationSources?: CitationSource[];
-}
+// /**
+//  * A message in the conversation.
+//  * @interface
+//  */
+// export interface Message {
+//   /** The role of the message sender. It can be 'system', 'user', 'assistant', or 'function'. */
+//   role: 'system' | 'user' | 'assistant' | 'function';
+//   /** The content of the message. */
+//   content?: string | ContentType[];
+//   /** The name of the function to call, if any. */
+//   name?: string;
+//   /** The function call to make, if any. */
+//   function_call?: any;
+//   tool_calls?: any;
+//   citationMetadata?: CitationMetadata;
+// }
 
-export interface CitationSource {
-  startIndex?: number;
-  endIndex?: number;
-  uri?: string;
-  license?: string;
-}
+// export interface CitationMetadata {
+//   citationSources?: CitationSource[];
+// }
+
+// export interface CitationSource {
+//   startIndex?: number;
+//   endIndex?: number;
+//   uri?: string;
+//   license?: string;
+// }
 
 /**
  * A JSON schema.

@@ -228,21 +228,6 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
           };
         }
 
-        if (
-          firstMessage.role === 'system' &&
-          typeof firstMessage.content === 'object' &&
-          firstMessage.content?.[0]?.text
-        ) {
-          return {
-            parts: [
-              {
-                text: firstMessage.content?.[0].text,
-              },
-            ],
-            role: 'system',
-          };
-        }
-
         return;
       },
     },
@@ -496,5 +481,5 @@ export const GoogleChatCompleteStreamChunkTransform: (
         total_tokens: parsedChunk.usageMetadata.totalTokenCount,
       },
     })}` + '\n\n'
-  );
+  )
 };

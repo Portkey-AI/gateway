@@ -173,15 +173,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
         if (!!params.messages) {
           params.messages.forEach((msg) => {
             if (
-              msg.role === 'system' &&
-              msg.content &&
-              typeof msg.content === 'object' &&
-              msg.content[0].text
-            ) {
-              systemMessage = msg.content[0].text;
-            } else if (
-              msg.role === 'system' &&
-              typeof msg.content === 'string'
+              msg.role === 'system'
             ) {
               systemMessage = msg.content;
             }
