@@ -62,6 +62,7 @@ export const configSchema: any = z
     // Google Vertex AI specific
     vertex_project_id: z.string().optional(),
     vertex_region: z.string().optional(),
+    vertex_service_account_json: z.object({}).catchall(z.string()).optional(),
     // OpenAI specific
     openai_project: z.string().optional(),
     openai_organization: z.string().optional(),
@@ -75,8 +76,8 @@ export const configSchema: any = z
       const isOllamaProvider = value.provider === OLLAMA;
       const isVertexAIProvider =
         value.provider === GOOGLE_VERTEX_AI &&
-        value.vertex_project_id &&
-        value.vertex_region;
+        value.vertex_region &&
+        (value.vertex_service_account_json || value.vertex_project_id);
       const hasAWSDetails =
         value.aws_access_key_id && value.aws_secret_access_key;
 
@@ -113,10 +114,11 @@ export const configSchema: any = z
     (value) => {
       const isGoogleVertexAIProvider = value.provider === GOOGLE_VERTEX_AI;
       const hasGoogleVertexAIFields =
-        value.vertex_project_id && value.vertex_region;
+        (value.vertex_project_id && value.vertex_region) ||
+        (value.vertex_region && value.vertex_service_account_json);
       return !(isGoogleVertexAIProvider && !hasGoogleVertexAIFields);
     },
     {
-      message: `Invalid configuration. 'vertex_project_id' and 'vertex_region' are required for '${GOOGLE_VERTEX_AI}' provider. Example: { 'provider': 'vertex-ai', 'vertex_project_id': 'my-project-id', 'vertex_region': 'us-central1', api_key: 'ya29...' }`,
+      message: `Invalid configuration. ('vertex_project_id' and 'vertex_region') or ('vertex_service_account_json' and 'vertex_region') are required for '${GOOGLE_VERTEX_AI}' provider. Example: { 'provider': 'vertex-ai', 'vertex_project_id': 'my-project-id', 'vertex_region': 'us-central1', api_key: 'ya29...' }`,
     }
   );
