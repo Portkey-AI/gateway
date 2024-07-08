@@ -48,6 +48,7 @@ export async function* readAWSStream(
 ) {
   let buffer = new Uint8Array();
   let expectedLength = 0;
+  const streamState = {};
   while (true) {
     const { done, value } = await reader.read();
     if (done) {
@@ -64,7 +65,8 @@ export async function* readAWSStream(
           if (transformFunction) {
             const transformedChunk = transformFunction(
               payload,
-              fallbackChunkId
+              fallbackChunkId,
+              streamState
             );
             if (Array.isArray(transformedChunk)) {
               for (var item of transformedChunk) {
@@ -98,7 +100,11 @@ export async function* readAWSStream(
       ).toString();
 
       if (transformFunction) {
-        const transformedChunk = transformFunction(payload, fallbackChunkId);
+        const transformedChunk = transformFunction(
+          payload,
+          fallbackChunkId,
+          streamState
+        );
         if (Array.isArray(transformedChunk)) {
           for (var item of transformedChunk) {
             yield item;

@@ -250,7 +250,9 @@ interface AnthropicToolContentItem {
 
 type AnthropicContentItem = AnthorpicTextContentItem | AnthropicToolContentItem;
 
-const transformAssistantMessageForAnthropic = (msg: Message): AnthropicMessage => {
+const transformAssistantMessageForAnthropic = (
+  msg: Message
+): AnthropicMessage => {
   let content: AnthropicContentItem[] = [];
   const containsToolCalls = msg.tool_calls && msg.tool_calls.length;
 

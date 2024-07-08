@@ -64,7 +64,9 @@ interface AnthropicToolContentItem {
 
 type AnthropicContentItem = AnthorpicTextContentItem | AnthropicToolContentItem;
 
-const transformAssistantMessageForAnthropic = (msg: Message): AnthropicMessage => {
+const transformAssistantMessageForAnthropic = (
+  msg: Message
+): AnthropicMessage => {
   let content: AnthropicContentItem[] = [];
   const containsToolCalls = msg.tool_calls && msg.tool_calls.length;
 
@@ -105,73 +107,73 @@ const transformToolMessageForAnthropic = (msg: Message): AnthropicMessage => {
 
 export const BedrockAnthropicChatCompleteConfig: ProviderConfig = {
   messages: [
-      {
-        param: 'messages',
-        required: true,
-        transform: (params: Params) => {
-          let messages: AnthropicMessage[] = [];
-          // Transform the chat messages into a simple prompt
-          if (!!params.messages) {
-            params.messages.forEach((msg) => {
-              if (msg.role === 'system') return;
-  
-              if (msg.role === 'assistant') {
-                messages.push(transformAssistantMessageForAnthropic(msg));
-              } else if (
-                msg.content &&
-                typeof msg.content === 'object' &&
-                msg.content.length
-              ) {
-                const transformedMessage: Record<string, any> = {
-                  role: msg.role,
-                  content: [],
-                };
-                msg.content.forEach((item) => {
-                  if (item.type === 'text') {
-                    transformedMessage.content.push({
-                      type: item.type,
-                      text: item.text,
-                    });
-                  } else if (
-                    item.type === 'image_url' &&
-                    item.image_url &&
-                    item.image_url.url
-                  ) {
-                    const parts = item.image_url.url.split(';');
-                    if (parts.length === 2) {
-                      const base64ImageParts = parts[1].split(',');
-                      const base64Image = base64ImageParts[1];
-                      const mediaTypeParts = parts[0].split(':');
-                      if (mediaTypeParts.length === 2 && base64Image) {
-                        const mediaType = mediaTypeParts[1];
-                        transformedMessage.content.push({
-                          type: 'image',
-                          source: {
-                            type: 'base64',
-                            media_type: mediaType,
-                            data: base64Image,
-                          },
-                        });
-                      }
+    {
+      param: 'messages',
+      required: true,
+      transform: (params: Params) => {
+        let messages: AnthropicMessage[] = [];
+        // Transform the chat messages into a simple prompt
+        if (!!params.messages) {
+          params.messages.forEach((msg) => {
+            if (msg.role === 'system') return;
+
+            if (msg.role === 'assistant') {
+              messages.push(transformAssistantMessageForAnthropic(msg));
+            } else if (
+              msg.content &&
+              typeof msg.content === 'object' &&
+              msg.content.length
+            ) {
+              const transformedMessage: Record<string, any> = {
+                role: msg.role,
+                content: [],
+              };
+              msg.content.forEach((item) => {
+                if (item.type === 'text') {
+                  transformedMessage.content.push({
+                    type: item.type,
+                    text: item.text,
+                  });
+                } else if (
+                  item.type === 'image_url' &&
+                  item.image_url &&
+                  item.image_url.url
+                ) {
+                  const parts = item.image_url.url.split(';');
+                  if (parts.length === 2) {
+                    const base64ImageParts = parts[1].split(',');
+                    const base64Image = base64ImageParts[1];
+                    const mediaTypeParts = parts[0].split(':');
+                    if (mediaTypeParts.length === 2 && base64Image) {
+                      const mediaType = mediaTypeParts[1];
+                      transformedMessage.content.push({
+                        type: 'image',
+                        source: {
+                          type: 'base64',
+                          media_type: mediaType,
+                          data: base64Image,
+                        },
+                      });
                     }
                   }
-                });
-                messages.push(transformedMessage as Message);
-              } else if (msg.role === 'tool') {
-                // even though anthropic supports images in tool results, openai doesn't support it yet
-                messages.push(transformToolMessageForAnthropic(msg));
-              } else {
-                messages.push({
-                  role: msg.role,
-                  content: msg.content,
-                });
-              }
-            });
-          }
-  
-          return messages;
-        },
+                }
+              });
+              messages.push(transformedMessage as Message);
+            } else if (msg.role === 'tool') {
+              // even though anthropic supports images in tool results, openai doesn't support it yet
+              messages.push(transformToolMessageForAnthropic(msg));
+            } else {
+              messages.push({
+                role: msg.role,
+                content: msg.content,
+              });
+            }
+          });
+        }
+
+        return messages;
       },
+    },
     {
       param: 'system',
       required: false,
@@ -850,24 +852,24 @@ export const BedrockAnthropicChatCompleteResponseTransform: (
     const completion_tokens =
       Number(responseHeaders.get('X-Amzn-Bedrock-Output-Token-Count')) || 0;
 
-      let content = '';
-      if (response.content[0].type === 'text') {
-        content = response.content[0].text;
+    let content = '';
+    if (response.content[0].type === 'text') {
+      content = response.content[0].text;
+    }
+
+    let toolCalls: any = [];
+    response.content.forEach((item) => {
+      if (item.type === 'tool_use') {
+        toolCalls.push({
+          id: item.id,
+          type: 'function',
+          function: {
+            name: item.name,
+            arguments: JSON.stringify(item.input),
+          },
+        });
       }
-  
-      let toolCalls: any = [];
-      response.content.forEach((item) => {
-        if (item.type === 'tool_use') {
-          toolCalls.push({
-            id: item.id,
-            type: 'function',
-            function: {
-              name: item.name,
-              arguments: JSON.stringify(item.input),
-            },
-          });
-        }
-      });
+    });
 
     return {
       id: response.id,
@@ -926,7 +928,11 @@ export const BedrockAnthropicChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
   streamState: Record<string, boolean>
-) => string | string[] | undefined = (responseChunk, fallbackId, streamState) => {
+) => string | string[] | undefined = (
+  responseChunk,
+  fallbackId,
+  streamState
+) => {
   let chunk = responseChunk.trim();
 
   const parsedChunk: BedrockAnthropicChatCompleteStreamResponse =
@@ -937,6 +943,14 @@ export const BedrockAnthropicChatCompleteStreamChunkTransform: (
     parsedChunk.type === 'content_block_stop'
   ) {
     return [];
+  }
+
+  if (
+    parsedChunk.type === 'content_block_start' &&
+    parsedChunk.content_block?.type === 'text'
+  ) {
+    streamState.containsChainOfThoughtMessage = true;
+    return;
   }
 
   if (parsedChunk.type === 'message_stop') {
