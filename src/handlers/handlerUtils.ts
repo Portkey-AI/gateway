@@ -481,6 +481,7 @@ export async function tryPost(
 
   const baseUrl =
     customHost || apiConfig.getBaseURL({ providerOptions: providerOption });
+
   const endpoint = apiConfig.getEndpoint({
     providerOptions: providerOption,
     fn,
@@ -1000,10 +1001,22 @@ export function constructConfigFromRequestHeaders(
     openaiProject: requestHeaders[`x-${POWERED_BY}-openai-project`],
   };
 
-  const vertexConfig = {
+  const vertexConfig: Record<string, any> = {
     vertexProjectId: requestHeaders[`x-${POWERED_BY}-vertex-project-id`],
     vertexRegion: requestHeaders[`x-${POWERED_BY}-vertex-region`],
   };
+
+  let vertexServiceAccountJson =
+    requestHeaders[`x-${POWERED_BY}-vertex-service-account-json`];
+  if (vertexServiceAccountJson) {
+    try {
+      vertexConfig.vertexServiceAccountJson = JSON.parse(
+        vertexServiceAccountJson
+      );
+    } catch (e) {
+      vertexConfig.vertexServiceAccountJson = null;
+    }
+  }
 
   if (requestHeaders[`x-${POWERED_BY}-config`]) {
     let parsedConfigJson = JSON.parse(requestHeaders[`x-${POWERED_BY}-config`]);
@@ -1053,6 +1066,7 @@ export function constructConfigFromRequestHeaders(
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
       'params',
+      'vertex_service_account_json',
     ]) as any;
   }
 
