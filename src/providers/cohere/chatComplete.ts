@@ -23,7 +23,7 @@ export const CohereChatCompleteConfig: ProviderConfig = {
     param: 'chat_history',
     required: false,
     transform: (params: Params) => {
-      // generate history and forware it to model
+      // generate history and forward it to model
       const history: (Message & { message?: string })[] = (
         params.messages || []
       ).map((message) => ({
