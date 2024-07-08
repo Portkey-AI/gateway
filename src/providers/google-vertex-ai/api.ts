@@ -52,7 +52,7 @@ export const GoogleApiConfig: ProviderAPIConfig = {
         if (mappedFn === 'chatComplete') {
           return `/publishers/${provider}/models/${model}:rawPredict`;
         } else if (mappedFn === 'stream-chatComplete') {
-          return `/publishers/${provider}/models/${model}:rawPredict`;
+          return `/publishers/${provider}/models/${model}:streamRawPredict`;
         }
       }
 
