@@ -2,7 +2,6 @@
 // https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/send-multimodal-prompts#gemini-send-multimodal-samples-drest
 
 import { GOOGLE_VERTEX_AI } from '../../globals';
-import { VERTEX_AI } from '../../middlewares/portkey/globals';
 import { ContentType, Message, Params } from '../../types/requestBody';
 import {
   AnthropicChatCompleteResponse,
@@ -517,7 +516,7 @@ export const AnthropicErrorResponseTransform: (
         param: null,
         code: null,
       },
-      VERTEX_AI
+      GOOGLE_VERTEX_AI
     );
   }
 
@@ -543,7 +542,7 @@ export const VertexAnthropicChatCompleteResponseTransform: (
       object: 'chat_completion',
       created: Math.floor(Date.now() / 1000),
       model: response.model,
-      provider: VERTEX_AI,
+      provider: GOOGLE_VERTEX_AI,
       choices: [
         {
           message: { role: 'assistant', content: response.content[0].text },
@@ -560,7 +559,7 @@ export const VertexAnthropicChatCompleteResponseTransform: (
     };
   }
 
-  return generateInvalidProviderResponseError(response, VERTEX_AI);
+  return generateInvalidProviderResponseError(response, GOOGLE_VERTEX_AI);
 };
 
 export const VertexAnthropicChatCompleteStreamChunkTransform: (
@@ -597,7 +596,7 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
         object: 'chat.completion.chunk',
         created: Math.floor(Date.now() / 1000),
         model: '',
-        provider: VERTEX_AI,
+        provider: GOOGLE_VERTEX_AI,
         choices: [
           {
             delta: {
@@ -622,7 +621,7 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
         object: 'chat.completion.chunk',
         created: Math.floor(Date.now() / 1000),
         model: '',
-        provider: VERTEX_AI,
+        provider: GOOGLE_VERTEX_AI,
         choices: [
           {
             index: 0,
@@ -643,7 +642,7 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
       object: 'chat.completion.chunk',
       created: Math.floor(Date.now() / 1000),
       model: '',
-      provider: VERTEX_AI,
+      provider: GOOGLE_VERTEX_AI,
       choices: [
         {
           delta: {
