@@ -6,7 +6,6 @@ import {
   ProviderConfig,
 } from '../types';
 import { generateErrorResponse } from '../utils';
-import { CohereStreamChunk } from './complete';
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -16,21 +15,22 @@ export const CohereChatCompleteConfig: ProviderConfig = {
     default: 'command',
     required: true,
   },
-  messages: {
-    param: 'prompt',
+  message: {
+    param: 'message',
     required: true,
+  },
+  messages: {
+    param: 'chat_history',
+    required: false,
     transform: (params: Params) => {
-      let prompt: string = '';
-      // Transform the chat messages into a simple prompt
-      if (!!params.messages) {
-        let messages: Message[] = params.messages;
-        messages.forEach((msg) => {
-          prompt += `${msg.role}:${msg.content}\n`;
-        });
-        prompt = prompt.trim();
-      }
-
-      return prompt;
+      // generate history and forware it to model
+      const history: (Message & { message?: string })[] = (
+        params.messages || []
+      ).map((message) => ({
+        role: message.role,
+        message: message.content as string,
+      }));
+      return history;
     },
   },
   max_tokens: {
@@ -67,15 +67,6 @@ export const CohereChatCompleteConfig: ProviderConfig = {
     min: 0,
     max: 1,
   },
-  logit_bias: {
-    param: 'logit_bias',
-  },
-  n: {
-    param: 'num_generations',
-    default: 1,
-    min: 1,
-    max: 5,
-  },
   stop: {
     param: 'end_sequences',
   },
@@ -86,17 +77,25 @@ export const CohereChatCompleteConfig: ProviderConfig = {
 };
 
 interface CohereCompleteResponse {
-  id: string;
-  generations: {
-    id: string;
-    text: string;
-  }[];
-  prompt: string;
+  text: string;
+  generation_id: string;
+  finish_reason:
+    | 'COMPLETE'
+    | 'STOP_SEQUENCE'
+    | 'ERROR'
+    | 'ERROR_TOXIC'
+    | 'ERROR_LIMIT'
+    | 'USER_CANCEL'
+    | 'MAX_TOKENS';
   meta: {
     api_version: {
       version: string;
     };
   };
+  chat_history?: {
+    role: 'CHATBOT' | 'SYSTEM' | 'TOOL' | 'USER';
+    message: string;
+  }[];
   message?: string;
   status?: number;
 }
@@ -118,18 +117,28 @@ export const CohereChatCompleteResponseTransform: (
   }
 
   return {
-    id: response.id,
+    id: response.generation_id,
     object: 'chat_completion',
     created: Math.floor(Date.now() / 1000),
     model: 'Unknown',
     provider: COHERE,
-    choices: response.generations.map((generation, index) => ({
-      message: { role: 'assistant', content: generation.text },
-      index: index,
-      finish_reason: 'length',
-    })),
+    choices: [
+      {
+        message: { role: 'assistant', content: response.text },
+        index: 0,
+        finish_reason: 'length',
+      },
+    ],
   };
 };
+
+export type CohereStreamChunk =
+  | { type: 'stream-start'; generation_id: string }
+  | { type: 'text-generation'; text: string }
+  | {
+      type: 'stream-end';
+      finish_reason: CohereCompleteResponse['finish_reason'];
+    };
 
 export const CohereChatCompleteStreamChunkTransform: (
   response: string,
@@ -140,14 +149,13 @@ export const CohereChatCompleteStreamChunkTransform: (
   chunk = chunk.trim();
   const parsedChunk: CohereStreamChunk = JSON.parse(chunk);
 
-  // discard the last cohere chunk as it sends the whole response combined.
-  if (parsedChunk.is_finished) {
+  if (['stream-end'].includes(parsedChunk.type)) {
     return '';
   }
 
   return (
     `data: ${JSON.stringify({
-      id: parsedChunk.id ?? fallbackId,
+      id: fallbackId,
       object: 'chat.completion.chunk',
       created: Math.floor(Date.now() / 1000),
       model: '',
@@ -155,13 +163,11 @@ export const CohereChatCompleteStreamChunkTransform: (
       choices: [
         {
           delta: {
-            content:
-              parsedChunk.response?.generations?.[0]?.text ?? parsedChunk.text,
+            content: (parsedChunk as any)?.text,
           },
-          index: parsedChunk.index ?? 0,
+          index: 0,
           logprobs: null,
-          finish_reason:
-            parsedChunk.response?.generations?.[0]?.finish_reason ?? null,
+          finish_reason: (parsedChunk as any)?.finish_reason ?? null,
         },
       ],
     })}` + '\n\n'
