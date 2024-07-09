@@ -18,7 +18,7 @@ import {
   GoogleMessageRole,
   SYSTEM_INSTRUCTION_DISABLED_MODELS,
   transformOpenAIRoleToGoogleRole,
-  transformToolChoice,
+  transformToolChoiceForGemini,
 } from '../google/chatComplete';
 import {
   ChatCompletionResponse,
@@ -260,7 +260,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
         }
         return {
           functionCallingConfig: {
-            mode: transformToolChoice(params.tool_choice),
+            mode: transformToolChoiceForGemini(params.tool_choice),
             allowedFunctionNames,
           },
         };

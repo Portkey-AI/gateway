@@ -88,7 +88,7 @@ export const transformOpenAIRoleToGoogleRole = (
 
 type GoogleToolChoiceType = 'AUTO' | 'ANY' | 'NONE';
 
-export const transformToolChoice = (
+export const transformToolChoiceForGemini = (
   tool_choice: ToolChoice
 ): GoogleToolChoiceType | undefined => {
   if (typeof tool_choice === 'object' && tool_choice.type === 'function')
@@ -287,7 +287,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
         }
         return {
           functionCallingConfig: {
-            mode: transformToolChoice(params.tool_choice),
+            mode: transformToolChoiceForGemini(params.tool_choice),
             allowedFunctionNames,
           },
         };
