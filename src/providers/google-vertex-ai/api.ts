@@ -44,7 +44,7 @@ export const GoogleApiConfig: ProviderAPIConfig = {
         if (mappedFn === 'chatComplete') {
           return `/publishers/${provider}/models/${model}:generateContent`;
         } else if (mappedFn === 'stream-chatComplete') {
-          return `/publishers/${provider}/models/${model}/streamGenerateContent?alt=sse`;
+          return `/publishers/${provider}/models/${model}:streamGenerateContent?alt=sse`;
         }
       }
 
