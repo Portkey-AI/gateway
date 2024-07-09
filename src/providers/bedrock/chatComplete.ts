@@ -1,5 +1,5 @@
 import { BEDROCK } from '../../globals';
-import { Message, Params } from '../../types/requestBody';
+import { ContentType, Message, Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -22,63 +22,151 @@ import {
 } from './complete';
 import { BedrockErrorResponse } from './embed';
 
+interface AnthropicTool {
+  name: string;
+  description: string;
+  input_schema: {
+    type: string;
+    properties: Record<
+      string,
+      {
+        type: string;
+        description: string;
+      }
+    >;
+    required: string[];
+  };
+}
+
+interface AnthropicToolResultContentItem {
+  type: 'tool_result';
+  tool_use_id: string;
+  content?: string;
+}
+
+type AnthropicMessageContentItem = AnthropicToolResultContentItem | ContentType;
+
+interface AnthropicMessage extends Message {
+  content?: string | AnthropicMessageContentItem[];
+}
+
+interface AnthorpicTextContentItem {
+  type: 'text';
+  text: string;
+}
+
+interface AnthropicToolContentItem {
+  type: 'tool_use';
+  name: string;
+  id: string;
+  input: Record<string, any>;
+}
+
+type AnthropicContentItem = AnthorpicTextContentItem | AnthropicToolContentItem;
+
+const transformAssistantMessageForAnthropic = (
+  msg: Message
+): AnthropicMessage => {
+  let content: AnthropicContentItem[] = [];
+  const containsToolCalls = msg.tool_calls && msg.tool_calls.length;
+
+  if (msg.content && typeof msg.content === 'string') {
+    content.push({
+      type: 'text',
+      text: msg.content,
+    });
+  }
+  if (containsToolCalls) {
+    msg.tool_calls.forEach((toolCall: any) => {
+      content.push({
+        type: 'tool_use',
+        name: toolCall.function.name,
+        id: toolCall.id,
+        input: JSON.parse(toolCall.function.arguments),
+      });
+    });
+  }
+  return {
+    role: msg.role,
+    content,
+  };
+};
+
+const transformToolMessageForAnthropic = (msg: Message): AnthropicMessage => {
+  return {
+    role: 'user',
+    content: [
+      {
+        type: 'tool_result',
+        tool_use_id: msg.tool_call_id,
+        content: msg.content as string,
+      },
+    ],
+  };
+};
+
 export const BedrockAnthropicChatCompleteConfig: ProviderConfig = {
   messages: [
     {
       param: 'messages',
       required: true,
       transform: (params: Params) => {
-        let messages: Message[] = [];
+        let messages: AnthropicMessage[] = [];
         // Transform the chat messages into a simple prompt
         if (!!params.messages) {
           params.messages.forEach((msg) => {
-            if (msg.role !== 'system') {
-              if (
-                msg.content &&
-                typeof msg.content === 'object' &&
-                msg.content.length
-              ) {
-                const transformedMessage: Record<string, any> = {
-                  role: msg.role,
-                  content: [],
-                };
-                msg.content.forEach((item) => {
-                  if (item.type === 'text') {
-                    transformedMessage.content.push({
-                      type: item.type,
-                      text: item.text,
-                    });
-                  } else if (
-                    item.type === 'image_url' &&
-                    item.image_url &&
-                    item.image_url.url
-                  ) {
-                    const parts = item.image_url.url.split(';');
-                    if (parts.length === 2) {
-                      const base64ImageParts = parts[1].split(',');
-                      const base64Image = base64ImageParts[1];
-                      const mediaTypeParts = parts[0].split(':');
-                      if (mediaTypeParts.length === 2 && base64Image) {
-                        const mediaType = mediaTypeParts[1];
-                        transformedMessage.content.push({
-                          type: 'image',
-                          source: {
-                            type: 'base64',
-                            media_type: mediaType,
-                            data: base64Image,
-                          },
-                        });
-                      }
+            if (msg.role === 'system') return;
+
+            if (msg.role === 'assistant') {
+              messages.push(transformAssistantMessageForAnthropic(msg));
+            } else if (
+              msg.content &&
+              typeof msg.content === 'object' &&
+              msg.content.length
+            ) {
+              const transformedMessage: Record<string, any> = {
+                role: msg.role,
+                content: [],
+              };
+              msg.content.forEach((item) => {
+                if (item.type === 'text') {
+                  transformedMessage.content.push({
+                    type: item.type,
+                    text: item.text,
+                  });
+                } else if (
+                  item.type === 'image_url' &&
+                  item.image_url &&
+                  item.image_url.url
+                ) {
+                  const parts = item.image_url.url.split(';');
+                  if (parts.length === 2) {
+                    const base64ImageParts = parts[1].split(',');
+                    const base64Image = base64ImageParts[1];
+                    const mediaTypeParts = parts[0].split(':');
+                    if (mediaTypeParts.length === 2 && base64Image) {
+                      const mediaType = mediaTypeParts[1];
+                      transformedMessage.content.push({
+                        type: 'image',
+                        source: {
+                          type: 'base64',
+                          media_type: mediaType,
+                          data: base64Image,
+                        },
+                      });
                     }
                   }
-                });
-                messages.push(transformedMessage as Message);
-              } else {
-                messages.push({
-                  role: msg.role,
-                  content: msg.content,
-                });
-              }
+                }
+              });
+              messages.push(transformedMessage as Message);
+            } else if (msg.role === 'tool') {
+              // even though anthropic supports images in tool results, openai doesn't support it yet
+              messages.push(transformToolMessageForAnthropic(msg));
+            } else {
+              messages.push({
+                role: msg.role,
+                content: msg.content,
+              });
             }
           });
         }
@@ -113,6 +201,45 @@ export const BedrockAnthropicChatCompleteConfig: ProviderConfig = {
       },
     },
   ],
+  tools: {
+    param: 'tools',
+    required: false,
+    transform: (params: Params) => {
+      let tools: AnthropicTool[] = [];
+      if (params.tools) {
+        params.tools.forEach((tool) => {
+          if (tool.function) {
+            tools.push({
+              name: tool.function.name,
+              description: tool.function?.description || '',
+              input_schema: {
+                type: tool.function.parameters?.type || 'object',
+                properties: tool.function.parameters?.properties || {},
+                required: tool.function.parameters?.required || [],
+              },
+            });
+          }
+        });
+      }
+      return tools;
+    },
+  },
+  // None is not supported by Anthropic, defaults to auto
+  tool_choice: {
+    param: 'tool_choice',
+    required: false,
+    transform: (params: Params) => {
+      if (params.tool_choice) {
+        if (typeof params.tool_choice === 'string') {
+          if (params.tool_choice === 'required') return { type: 'any' };
+          else if (params.tool_choice === 'auto') return { type: 'auto' };
+        } else if (typeof params.tool_choice === 'object') {
+          return { type: 'tool', name: params.tool_choice.function.name };
+        }
+      }
+      return null;
+    },
+  },
   max_tokens: {
     param: 'max_tokens',
     required: true,
@@ -697,10 +824,7 @@ interface BedrockAnthropicChatCompleteResponse {
   id: string;
   type: string;
   role: string;
-  content: {
-    type: string;
-    text: string;
-  }[];
+  content: AnthropicContentItem[];
   stop_reason: string;
   model: string;
   stop_sequence: null | string;
@@ -727,6 +851,26 @@ export const BedrockAnthropicChatCompleteResponseTransform: (
       Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || 0;
     const completion_tokens =
       Number(responseHeaders.get('X-Amzn-Bedrock-Output-Token-Count')) || 0;
+
+    let content = '';
+    if (response.content[0].type === 'text') {
+      content = response.content[0].text;
+    }
+
+    let toolCalls: any = [];
+    response.content.forEach((item) => {
+      if (item.type === 'tool_use') {
+        toolCalls.push({
+          id: item.id,
+          type: 'function',
+          function: {
+            name: item.name,
+            arguments: JSON.stringify(item.input),
+          },
+        });
+      }
+    });
+
     return {
       id: response.id,
       object: 'chat.completion',
@@ -737,7 +881,8 @@ export const BedrockAnthropicChatCompleteResponseTransform: (
         {
           message: {
             role: 'assistant',
-            content: response.content[0].text,
+            content,
+            tool_calls: toolCalls.length ? toolCalls : undefined,
           },
           index: 0,
           logprobs: null,
@@ -761,7 +906,15 @@ interface BedrockAnthropicChatCompleteStreamResponse {
   delta: {
     type: string;
     text: string;
+    partial_json?: string;
     stop_reason?: string;
+  };
+  content_block?: {
+    type: string;
+    id?: string;
+    text?: string;
+    name?: string;
+    input?: {};
   };
   'amazon-bedrock-invocationMetrics': {
     inputTokenCount: number;
@@ -773,8 +926,13 @@ interface BedrockAnthropicChatCompleteStreamResponse {
 
 export const BedrockAnthropicChatCompleteStreamChunkTransform: (
   response: string,
-  fallbackId: string
-) => string | string[] = (responseChunk, fallbackId) => {
+  fallbackId: string,
+  streamState: Record<string, boolean>
+) => string | string[] | undefined = (
+  responseChunk,
+  fallbackId,
+  streamState
+) => {
   let chunk = responseChunk.trim();
 
   const parsedChunk: BedrockAnthropicChatCompleteStreamResponse =
@@ -782,10 +940,17 @@ export const BedrockAnthropicChatCompleteStreamChunkTransform: (
   if (
     parsedChunk.type === 'ping' ||
     parsedChunk.type === 'message_start' ||
-    parsedChunk.type === 'content_block_start' ||
     parsedChunk.type === 'content_block_stop'
   ) {
     return [];
+  }
+
+  if (
+    parsedChunk.type === 'content_block_start' &&
+    parsedChunk.content_block?.type === 'text'
+  ) {
+    streamState.containsChainOfThoughtMessage = true;
+    return;
   }
 
   if (parsedChunk.type === 'message_stop') {
@@ -839,6 +1004,36 @@ export const BedrockAnthropicChatCompleteStreamChunkTransform: (
     ];
   }
 
+  const toolCalls = [];
+  const isToolBlockStart: boolean =
+    parsedChunk.type === 'content_block_start' &&
+    !!parsedChunk.content_block?.id;
+  const isToolBlockDelta: boolean =
+    parsedChunk.type === 'content_block_delta' &&
+    !!parsedChunk.delta.partial_json;
+  const toolIndex: number = streamState.containsChainOfThoughtMessage
+    ? parsedChunk.index - 1
+    : parsedChunk.index;
+
+  if (isToolBlockStart && parsedChunk.content_block) {
+    toolCalls.push({
+      index: toolIndex,
+      id: parsedChunk.content_block.id,
+      type: 'function',
+      function: {
+        name: parsedChunk.content_block.name,
+        arguments: '',
+      },
+    });
+  } else if (isToolBlockDelta) {
+    toolCalls.push({
+      index: toolIndex,
+      function: {
+        arguments: parsedChunk.delta.partial_json,
+      },
+    });
+  }
+
   return `data: ${JSON.stringify({
     id: fallbackId,
     object: 'chat.completion.chunk',
@@ -849,6 +1044,7 @@ export const BedrockAnthropicChatCompleteStreamChunkTransform: (
       {
         delta: {
           content: parsedChunk.delta?.text,
+          tool_calls: toolCalls.length ? toolCalls : undefined,
         },
         index: 0,
         logprobs: null,
