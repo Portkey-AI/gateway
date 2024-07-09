@@ -109,10 +109,20 @@ export const retryRequest = async (
       }
     );
   } catch (error: any) {
-    lastResponse = new Response(error.message, {
-      status: error.status,
-      headers: error.headers,
-    });
+    if (error instanceof TypeError && error.message?.includes('fetch failed')) {
+      console.error('Fetch failed:', error);
+      // This error comes in case the host address is unreachable. Empty status code used to get returned
+      // from here hence no retry logic used to get called.
+      lastResponse = new Response(error.message, {
+        status: 503,
+      });
+    }
+    else {
+      lastResponse = new Response(error.message, {
+        status: error.status,
+        headers: error.headers,
+      });
+    }
     console.warn(
       `Tried ${lastAttempt} time(s) but failed. Error: ${JSON.stringify(error)}`
     );

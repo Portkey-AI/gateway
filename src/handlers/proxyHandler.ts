@@ -11,6 +11,7 @@ import {
   AZURE_OPEN_AI,
   CONTENT_TYPES,
   OLLAMA,
+  TRITON,
 } from '../globals';
 import {
   fetchProviderOptionsFromConfig,
@@ -49,7 +50,7 @@ function getProxyPath(
     return `https:/${reqPath}${reqQuery}`;
   }
 
-  if (proxyProvider === OLLAMA) {
+  if (proxyProvider === OLLAMA || proxyProvider === TRITON) {
     return `https:/${reqPath}`;
   }
   let proxyPath = `${providerBasePath}${reqPath}${reqQuery}`;
