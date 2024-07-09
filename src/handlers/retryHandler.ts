@@ -119,8 +119,7 @@ export const retryRequest = async (
       lastResponse = new Response(error.message, {
         status: 503,
       });
-    }
-    else {
+    } else {
       lastResponse = new Response(error.message, {
         status: error.status,
         headers: error.headers,
