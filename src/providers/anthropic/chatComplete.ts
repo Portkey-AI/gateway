@@ -361,7 +361,7 @@ export const AnthropicChatCompleteResponseTransform: (
     const { input_tokens = 0, output_tokens = 0 } = response?.usage;
 
     let content = '';
-    if (response.content[0].type === 'text') {
+    if (response.content.length && response.content[0].type === 'text') {
       content = response.content[0].text;
     }
 
