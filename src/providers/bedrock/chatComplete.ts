@@ -864,7 +864,7 @@ export const BedrockAnthropicChatCompleteResponseTransform: (
       Number(responseHeaders.get('X-Amzn-Bedrock-Output-Token-Count')) || 0;
 
     let content = '';
-    if (response.content[0].type === 'text') {
+    if (response.content.length && response.content[0].type === 'text') {
       content = response.content[0].text;
     }
 
