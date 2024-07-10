@@ -261,6 +261,17 @@ const transformAssistantMessageForAnthropic = (
       type: 'text',
       text: msg.content,
     });
+  } else if (
+    msg.content &&
+    typeof msg.content === 'object' &&
+    msg.content.length
+  ) {
+    if (msg.content[0].text) {
+      content.push({
+        type: 'text',
+        text: msg.content[0].text,
+      });
+    }
   }
   if (containsToolCalls) {
     msg.tool_calls.forEach((toolCall: any) => {
