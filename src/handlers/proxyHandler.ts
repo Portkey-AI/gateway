@@ -109,7 +109,7 @@ function headersToSend(
     }
   });
 
-  delete final['expect']
+  delete final['expect'];
 
   return final;
 }

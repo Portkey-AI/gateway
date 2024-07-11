@@ -65,8 +65,9 @@ export const requestValidator = (c: Context, next: any) => {
     );
   }
 
-  const isSupportedProvider: boolean = !!requestHeaders[`x-${POWERED_BY}-provider`] &&
-  VALID_PROVIDERS.includes(requestHeaders[`x-${POWERED_BY}-provider`]);
+  const isSupportedProvider: boolean =
+    !!requestHeaders[`x-${POWERED_BY}-provider`] &&
+    VALID_PROVIDERS.includes(requestHeaders[`x-${POWERED_BY}-provider`]);
 
   if (!customHostHeader && !isSupportedProvider) {
     return new Response(
