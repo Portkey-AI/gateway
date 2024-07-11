@@ -66,10 +66,11 @@ async function getRequestData(request: Request, contentType: string) {
   let requestJSON: Record<string, any> = {};
   let requestFormData;
   let requestBody = '';
+  let requestBinary: ArrayBuffer = new ArrayBuffer(0);
 
   if (contentType == CONTENT_TYPES.APPLICATION_JSON) {
     if (['GET', 'DELETE'].includes(request.method)) {
-      return [requestJSON, requestFormData];
+      return { requestJSON, requestFormData };
     }
     requestBody = await request.text();
     requestJSON = JSON.parse(requestBody);
@@ -78,9 +79,11 @@ async function getRequestData(request: Request, contentType: string) {
     requestFormData.forEach(function (value, key) {
       requestJSON[key] = value;
     });
+  } else if (contentType.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)) {
+    requestBinary = await request.arrayBuffer();
   }
 
-  return [requestJSON, requestFormData];
+  return { requestJSON, requestFormData, requestBinary };
 }
 
 function headersToSend(
@@ -113,10 +116,8 @@ export async function proxyHandler(c: Context): Promise<Response> {
   try {
     const requestHeaders = Object.fromEntries(c.req.raw.headers);
     const requestContentType = requestHeaders['content-type']?.split(';')[0];
-    const [requestJSON, requestFormData] = await getRequestData(
-      c.req.raw,
-      requestContentType
-    );
+    const { requestJSON, requestFormData, requestBinary } =
+      await getRequestData(c.req.raw, requestContentType);
     const store: Record<string, any> = {
       proxyProvider: proxyProvider(
         requestHeaders[HEADER_KEYS.MODE],
@@ -206,13 +207,19 @@ export async function proxyHandler(c: Context): Promise<Response> {
       ) as Config | ShortConfig;
     }
 
+    let body;
+    if (requestContentType.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)) {
+      body = requestBinary;
+    } else if (requestContentType === CONTENT_TYPES.APPLICATION_JSON) {
+      body = store.requestFormData;
+    } else {
+      body = JSON.stringify(store.reqBody);
+    }
+
     let fetchOptions = {
       headers: headersToSend(requestHeaders, store.customHeadersToAvoid),
       method: c.req.method,
-      body:
-        requestContentType === CONTENT_TYPES.MULTIPART_FORM_DATA
-          ? store.requestFormData
-          : JSON.stringify(store.reqBody),
+      body: body,
     };
 
     let retryCount = 0;

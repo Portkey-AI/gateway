@@ -5,13 +5,16 @@ import { configSchema } from './schema/config';
 export const requestValidator = (c: Context, next: any) => {
   const requestHeaders = Object.fromEntries(c.req.raw.headers);
 
-  if (
-    requestHeaders['content-type'] &&
-    ![
+  const isSupportedContentType: boolean =
+    [
       CONTENT_TYPES.APPLICATION_JSON,
       CONTENT_TYPES.MULTIPART_FORM_DATA,
-    ].includes(requestHeaders['content-type'].split(';')[0])
-  ) {
+    ].includes(requestHeaders['content-type'].split(';')[0]) ||
+    requestHeaders['content-type']
+      .split(';')[0]
+      .startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN);
+
+  if (requestHeaders['content-type'] && !isSupportedContentType) {
     return new Response(
       JSON.stringify({
         status: 'failure',
@@ -45,14 +48,13 @@ export const requestValidator = (c: Context, next: any) => {
       }
     );
   }
-  if (
-    requestHeaders[`x-${POWERED_BY}-provider`] &&
-    !VALID_PROVIDERS.includes(requestHeaders[`x-${POWERED_BY}-provider`])
-  ) {
+
+  const customHostHeader = requestHeaders[`x-${POWERED_BY}-custom-host`];
+  if (customHostHeader && customHostHeader.indexOf('api.portkey') > -1) {
     return new Response(
       JSON.stringify({
         status: 'failure',
-        message: `Invalid provider passed`,
+        message: `Invalid custom host`,
       }),
       {
         status: 400,
@@ -63,12 +65,14 @@ export const requestValidator = (c: Context, next: any) => {
     );
   }
 
-  const customHostHeader = requestHeaders[`x-${POWERED_BY}-custom-host`];
-  if (customHostHeader && customHostHeader.indexOf('api.portkey') > -1) {
+  const isSupportedProvider: boolean = !!requestHeaders[`x-${POWERED_BY}-provider`] &&
+  VALID_PROVIDERS.includes(requestHeaders[`x-${POWERED_BY}-provider`]);
+
+  if (!customHostHeader && !isSupportedProvider) {
     return new Response(
       JSON.stringify({
         status: 'failure',
-        message: `Invalid custom host`,
+        message: `Invalid provider passed`,
       }),
       {
         status: 400,
