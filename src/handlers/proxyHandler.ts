@@ -109,6 +109,8 @@ function headersToSend(
     }
   });
 
+  delete final['expect']
+
   return final;
 }
 
