@@ -145,36 +145,61 @@ export type OpenAIMessageRole =
   | 'assistant'
   | 'function'
   | 'tool';
+  
+export interface TextMessageContentItem {
+  type: 'text';
+  text: string;
+}
+
+interface ImageMessageContentItem {
+  type: 'image_url';
+  image_url: {
+    url: string;
+    detail?: string;
+  };
+}
+
+type SystemMessageContent = string | TextMessageContentItem[];
+
+type UserMessageContent = string | (TextMessageContentItem | ImageMessageContentItem)[];
+
+export type AssistantMessageContent = string | TextMessageContentItem[];
+
+type ToolMessageContent = string | TextMessageContentItem[];
+
 export interface SystemMessage {
-  content: string;
+  content: SystemMessageContent;
   role: 'system';
   name?: string;
 }
 
-export type UserMessageContentPart = {
-  type: string;
-  text?: string;
-  image_url?: {
-    url: string;
-    detail?: string;
-  };
-};
-
+/**
+ * A User message in the conversation.
+ * @interface
+ */
 export interface UserMessage {
-  content: string | UserMessageContentPart[];
+  content: UserMessageContent;
   role: 'user';
   name?: string;
 }
 
+/**
+ * An Assistant message in teh conversation.
+ * @interface
+ */
 export interface AssistantMessage {
-  content?: string;
+  content?: AssistantMessageContent;
   role: 'assistant';
   name?: string;
-  tool_calls?: ToolCall[]; // TODO: copy this from upstream branch once gemini changes are merged
+  tool_calls?: ToolCall[];
 }
 
+/**
+ * A Tool message.
+ * @interface
+ */
 export interface ToolMessage {
-  content: string;
+  content: ToolMessageContent;
   role: 'tool',
   tool_call_id: string;
 }
@@ -184,34 +209,6 @@ export interface ToolMessage {
  * @type
  */
 export type Message = SystemMessage | UserMessage | AssistantMessage | ToolMessage;
-
-// /**
-//  * A message in the conversation.
-//  * @interface
-//  */
-// export interface Message {
-//   /** The role of the message sender. It can be 'system', 'user', 'assistant', or 'function'. */
-//   role: 'system' | 'user' | 'assistant' | 'function';
-//   /** The content of the message. */
-//   content?: string | ContentType[];
-//   /** The name of the function to call, if any. */
-//   name?: string;
-//   /** The function call to make, if any. */
-//   function_call?: any;
-//   tool_calls?: any;
-//   citationMetadata?: CitationMetadata;
-// }
-
-// export interface CitationMetadata {
-//   citationSources?: CitationSource[];
-// }
-
-// export interface CitationSource {
-//   startIndex?: number;
-//   endIndex?: number;
-//   uri?: string;
-//   license?: string;
-// }
 
 /**
  * A JSON schema.
@@ -260,9 +257,9 @@ export interface Tool {
  * @interface
  */
 export interface Params {
-  model?: string;
+  model: string;
   prompt?: string | string[];
-  messages?: Message[];
+  messages: Message[];
   functions?: Function[];
   function_call?: 'none' | 'auto' | { name: string };
   max_tokens?: number;
