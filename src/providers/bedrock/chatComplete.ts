@@ -1,5 +1,11 @@
 import { BEDROCK } from '../../globals';
-import { AssistantMessage, ContentType, Message, Params, ToolMessage } from '../../types/requestBody';
+import {
+  AssistantMessage,
+  ContentType,
+  Message,
+  Params,
+  ToolMessage,
+} from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -102,7 +108,9 @@ const transformAssistantMessageForAnthropic = (
   };
 };
 
-const transformToolMessageForAnthropic = (msg: ToolMessage): AnthropicMessage => {
+const transformToolMessageForAnthropic = (
+  msg: ToolMessage
+): AnthropicMessage => {
   return {
     role: 'user',
     content: [

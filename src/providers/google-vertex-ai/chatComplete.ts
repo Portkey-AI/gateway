@@ -357,7 +357,9 @@ const transformAssistantMessageForAnthropic = (
   };
 };
 
-const transformToolMessageForAnthropic = (msg: ToolMessage): AnthropicMessage => {
+const transformToolMessageForAnthropic = (
+  msg: ToolMessage
+): AnthropicMessage => {
   return {
     role: 'user',
     content: [

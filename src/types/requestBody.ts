@@ -145,7 +145,7 @@ export type OpenAIMessageRole =
   | 'assistant'
   | 'function'
   | 'tool';
-  
+
 export interface TextMessageContentItem {
   type: 'text';
   text: string;
@@ -161,7 +161,9 @@ export interface ImageMessageContentItem {
 
 type SystemMessageContent = string | TextMessageContentItem[];
 
-type UserMessageContent = string | (TextMessageContentItem | ImageMessageContentItem)[];
+type UserMessageContent =
+  | string
+  | (TextMessageContentItem | ImageMessageContentItem)[];
 
 export type AssistantMessageContent = string | TextMessageContentItem[];
 
@@ -200,7 +202,7 @@ export interface AssistantMessage {
  */
 export interface ToolMessage {
   content: ToolMessageContent;
-  role: 'tool',
+  role: 'tool';
   tool_call_id: string;
 }
 
@@ -208,7 +210,11 @@ export interface ToolMessage {
  * A message in the conversation.
  * @type
  */
-export type Message = SystemMessage | UserMessage | AssistantMessage | ToolMessage;
+export type Message =
+  | SystemMessage
+  | UserMessage
+  | AssistantMessage
+  | ToolMessage;
 
 /**
  * A JSON schema.

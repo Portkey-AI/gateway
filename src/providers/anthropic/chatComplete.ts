@@ -1,5 +1,11 @@
 import { ANTHROPIC } from '../../globals';
-import { Params, Message, ContentType, ToolMessage, AssistantMessage } from '../../types/requestBody';
+import {
+  Params,
+  Message,
+  ContentType,
+  ToolMessage,
+  AssistantMessage,
+} from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -171,9 +177,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
         // Transform the chat messages into a simple prompt
         if (!!params.messages) {
           params.messages.forEach((msg) => {
-            if (
-              msg.role === 'system' && typeof msg.content === 'string'
-            ) {
+            if (msg.role === 'system' && typeof msg.content === 'string') {
               systemMessage = msg.content;
             }
           });

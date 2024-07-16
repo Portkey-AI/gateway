@@ -86,7 +86,9 @@ interface PortkeyGoogleToolMessage extends ToolMessage {
   name?: string;
 }
 
-export type PortkeyGeminiMessage = Exclude<Message, ToolMessage> | PortkeyGoogleToolMessage;
+export type PortkeyGeminiMessage =
+  | Exclude<Message, ToolMessage>
+  | PortkeyGoogleToolMessage;
 
 export const transformOpenAIRoleToGoogleRole = (
   role: OpenAIMessageRole
@@ -489,5 +491,5 @@ export const GoogleChatCompleteStreamChunkTransform: (
         total_tokens: parsedChunk.usageMetadata.totalTokenCount,
       },
     })}` + '\n\n'
-  )
+  );
 };
