@@ -146,15 +146,17 @@ For other providers, change the `provider` & `model` to their respective values.
 ## Gateway Cookbooks
 
 ### Trending Cookbooks
-* [Run LLMs from Nvidia NIM](/cookbook/providers/nvidia.ipynb)
-* [Monitor CrewAI Agents with Portkey](/cookbook/monitoring-agents/CrewAI_with_Telemetry.ipynb)
-* [Use Porkey Gateway with Vercel's AI SDK](/cookbook/integrations/vercel-ai.md)
+- Use models from [Nvidia NIM](/cookbook/providers/nvidia.ipynb) with AI Gateway
+- Monitor [CrewAI Agents](/cookbook/monitoring-agents/CrewAI_with_Telemetry.ipynb) with Portkey!
+- Comparing [Top 10 LMSYS Models](./use-cases/LMSYS%20Series/comparing-top10-LMSYS-models-with-Portkey.ipynb) with AI Gateway.
 
 ### Latest Cookbooks
 * [Create Synthetic Datasets using Nemotron](/cookbook/use-cases/Nemotron_GPT_Finetuning_Portkey.ipynb)
-* [Comparing Top 10 LMSYS Models with Portkey](/cookbook/use-cases/LMSYS%20Series/comparing-top10-LMSYS-models-with-Portkey.ipynb)
+* [Use Portkey Gateway with Vercel's AI SDK](/cookbook/integrations/vercel-ai.md)
 * [Monitor Llama Agents with Portkey](/cookbook/monitoring-agents/Llama_Agents_with_Telemetry.ipynb)
 * [Set up automatic retries for failed requests](/cookbook/getting-started/automatic-retries-on-failures.md)
+
+
 
 ### [More Examples](/examples/)
 

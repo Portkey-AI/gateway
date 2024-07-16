@@ -16,6 +16,7 @@ Please use the below table of contents to navigate through the cookbook.
 - Use models from [Nvidia NIM](/cookbook/providers/nvidia.ipynb) with AI Gateway
 - Monitor [Llama Agents](/cookbook/monitoring-agents/Llama_Agents_with_Telemetry.ipynb) with Portkey!
 - Create [Synthetic Datasets](/cookbook/use-cases/Nemotron_GPT_Finetuning_Portkey.ipynb) using Nemotron-340B
+- Comparing [Top 10 LMSYS Models](./use-cases/LMSYS%20Series/comparing-top10-LMSYS-models-with-Portkey.ipynb) with AI Gateway.
 
 
 ## getting-started
@@ -25,6 +26,8 @@ Please use the below table of contents to navigate through the cookbook.
 * [Image generation with Gateway](./getting-started/image-generation.ipynb)
 * [Writing your first Gateway Config](./getting-started/writing-your-first-gateway-config.md)
 * [Automatically Fallback from OpenAI to Azure](./getting-started/fallback-from-openai-to-azure.ipynb)
+
+View the [official docs](https://portkey.ai/docs)
 
 ## providers
 * [OpenAI](./providers/openai.ipynb)
@@ -37,27 +40,21 @@ Please use the below table of contents to navigate through the cookbook.
 * [Segmind](./providers/segmind.ipynb)
 * [Nvidia](./providers/nvidia.ipynb)
 
+View the [full list of providers here](https://portkey.ai/docs/welcome/integration-guides).
+
 ## integrations
 * [Langchain](./integrations/langchain.ipynb)
 * [Llama Index](./integrations/llama-index.ipynb)
 * [Instructor](./integrations/Instructor_with_Portkey.ipynb)
 * [Phidata](./integrations/Phidata_with_Portkey.ipynb)
 
+View the [full list of integrations here](https://portkey.ai/docs/welcome/integration-guides).
 
 ## monitoring-agents
 * [Autogen](./monitoring-agents/Autogen_with_Telemetry.ipynb)
 * [CrewAI](./monitoring-agents/CrewAI_with_Telemetry.ipynb)
 * [Llama Agents](./monitoring-agents/Llama_Agents_with_Telemetry.ipynb)
 * [ControlFlow](./monitoring-agents/ControlFlow_with_Telemetry.ipynb)
-
-
-## use-cases
-* [Comparing Top 10 LMSYS Models using Portkey](./use-cases/LMSYS%20Series/comparing-top10-LMSYS-models-with-Portkey.ipynb)
-* [Use OpenAI SDK with Portkey prompt templates](./use-cases/use-openai-sdk-with-portkey-prompt-templates.md)
-* [Run Gateway on prompts from Langchain hub](./use-cases/run-gateway-on-prompts-from-langchain-hub.md)
-* [Smart fallback with model optimized prompts](./use-cases/smart-fallback-with-model-optimized-prompts.md)
-* [Build an article suggestion app with Supabase pgvector, and Portkey](./use-cases/supabase-pgvector-and-portkey.md)
-* [Call Llama 3 on Groq](./use-cases/llama-3-on-groq.ipynb)
 
 
 ## contributing
