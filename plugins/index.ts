@@ -12,6 +12,7 @@ import { handler as language } from './portkey/language';
 import { handler as pii } from './portkey/pii';
 import { handler as gibberish } from './portkey/gibberish';
 import { handler as sydeguard } from './sydelabs/sydeguard';
+import { handler as validateProject } from './aporia/validateProject';
 
 export const plugins = {
   default: {
@@ -33,5 +34,8 @@ export const plugins = {
   },
   sydelabs: {
     sydeguard: sydeguard,
+  },
+  aporia: {
+    validateProject: validateProject,
   },
 };
