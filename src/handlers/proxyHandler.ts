@@ -8,7 +8,7 @@ import {
   MAX_RETRIES,
   OLLAMA,
   POWERED_BY,
-  RETRY_STATUS_CODES
+  RETRY_STATUS_CODES,
 } from '../globals';
 import Providers from '../providers';
 import { Config, ShortConfig } from '../types/requestBody';
