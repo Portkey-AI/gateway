@@ -43,7 +43,7 @@ export interface Options {
   deploymentId?: string;
   apiVersion?: string;
   adAuth?: string;
-  modelName?: string;
+  azureModelName?: string;
   /** Workers AI specific */
   workersAiAccountId?: string;
   /** The parameter to set custom base url */
@@ -281,7 +281,7 @@ export interface ShortConfig {
   retry?: RetrySettings;
   resourceName?: string;
   deploymentId?: string;
-  modelName?: string;
+  azureModelName?: string;
   workersAiAccountId?: string;
   apiVersion?: string;
   customHost?: string;
