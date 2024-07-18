@@ -1,26 +1,25 @@
 import { Context } from 'hono';
-import { retryRequest } from './retryHandler';
-import Providers from '../providers';
+import { env } from 'hono/adapter';
 import {
   ANTHROPIC,
-  MAX_RETRIES,
-  HEADER_KEYS,
-  RETRY_STATUS_CODES,
-  POWERED_BY,
-  RESPONSE_HEADER_KEYS,
   AZURE_OPEN_AI,
   CONTENT_TYPES,
+  HEADER_KEYS,
+  MAX_RETRIES,
   OLLAMA,
+  POWERED_BY,
+  RETRY_STATUS_CODES
 } from '../globals';
+import Providers from '../providers';
+import { Config, ShortConfig } from '../types/requestBody';
+import { convertKeysToCamelCase, getStreamingMode } from '../utils';
 import {
   fetchProviderOptionsFromConfig,
   responseHandler,
   tryProvidersInSequence,
   updateResponseHeaders,
 } from './handlerUtils';
-import { convertKeysToCamelCase, getStreamingMode } from '../utils';
-import { Config, ShortConfig } from '../types/requestBody';
-import { env } from 'hono/adapter';
+import { retryRequest } from './retryHandler';
 // Find the proxy provider
 function proxyProvider(proxyModeHeader: string, providerHeader: string) {
   const proxyProvider = proxyModeHeader?.split(' ')[1] ?? providerHeader;
@@ -212,7 +211,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
     let body;
     if (requestContentType.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)) {
       body = requestBinary;
-    } else if (requestContentType === CONTENT_TYPES.APPLICATION_JSON) {
+    } else if (requestContentType === CONTENT_TYPES.MULTIPART_FORM_DATA) {
       body = store.requestFormData;
     } else {
       body = JSON.stringify(store.reqBody);
