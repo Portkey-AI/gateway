@@ -11,6 +11,8 @@ const MistralAIAPIConfig: ProviderAPIConfig = {
         return '/chat/completions';
       case 'embed':
         return '/embeddings';
+        case 'fimComplete':
+          return '/fim/completions';
       default:
         return '';
     }

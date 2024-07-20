@@ -59,7 +59,8 @@ export type endpointStrings =
   | 'stream-complete'
   | 'stream-chatComplete'
   | 'proxy'
-  | 'imageGenerate';
+  | 'imageGenerate'
+  | 'fimComplete';
 
 /**
  * A collection of API configurations for multiple AI providers.
@@ -152,4 +153,23 @@ export interface ImageGenerateResponse {
   created: string;
   data: object[];
   provider: string;
+}
+
+/**
+ * The structure of a completion response for the 'fimComplete' function.
+ * @interface
+ */
+export interface FimCompletionResponse extends CResponse {
+  choices: FimChoice[];
+}
+
+/**
+ * The structure of a choice in a chat completion response.
+ * @interface
+ */
+export interface FimChoice {
+  index: number;
+  message: Message;
+  finish_reason: string;
+  logprobs?: object | null;
 }
