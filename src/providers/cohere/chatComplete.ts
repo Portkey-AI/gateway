@@ -85,6 +85,11 @@ export const CohereChatCompleteConfig: ProviderConfig = {
   },
 };
 
+export enum CohereFinishReason {
+  COMPLETE = 'COMPLETE',
+  MAX_TOKENS = 'MAX_TOKENS',
+}
+
 interface CohereCompleteResponse {
   id: string;
   generations: {

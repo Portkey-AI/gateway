@@ -358,14 +358,13 @@ export const getAnthropicFinishReason = (
   stopReason?: AnthropicStopReason
 ): OpenAIFinishReason => {
   switch (stopReason) {
-    case AnthropicStopReason.max_tokens:
-      return OpenAIFinishReason.length;
     case AnthropicStopReason.stop_sequence:
+    case AnthropicStopReason.end_turn:
       return OpenAIFinishReason.stop;
     case AnthropicStopReason.tool_use:
       return OpenAIFinishReason.tool_calls;
-    case AnthropicStopReason.end_turn:
-      return OpenAIFinishReason.stop;
+    case AnthropicStopReason.max_tokens:
+      return OpenAIFinishReason.length;
     default:
       return OpenAIFinishReason.stop;
   }

@@ -5,6 +5,9 @@ import { generateInvalidProviderResponseError } from '../utils';
 import {
   AnthropicErrorResponse,
   AnthropicErrorResponseTransform,
+  AnthropicStopReason,
+  getAnthropicFinishReason,
+  getAnthropicStreamChunkFinishReason,
 } from './chatComplete';
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
@@ -59,7 +62,7 @@ export const AnthropicCompleteConfig: ProviderConfig = {
 
 interface AnthropicCompleteResponse {
   completion: string;
-  stop_reason: string;
+  stop_reason?: AnthropicStopReason;
   model: string;
   truncated: boolean;
   stop: null | string;
@@ -91,7 +94,7 @@ export const AnthropicCompleteResponseTransform: (
           text: response.completion,
           index: 0,
           logprobs: null,
-          finish_reason: response.stop_reason,
+          finish_reason: getAnthropicFinishReason(response.stop_reason),
         },
       ],
     };
@@ -127,7 +130,9 @@ export const AnthropicCompleteStreamChunkTransform: (
           text: parsedChunk.completion,
           index: 0,
           logprobs: null,
-          finish_reason: parsedChunk.stop_reason,
+          finish_reason: getAnthropicStreamChunkFinishReason(
+            parsedChunk.stop_reason
+          ),
         },
       ],
     })}` + '\n\n'

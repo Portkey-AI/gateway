@@ -1,6 +1,11 @@
 import { AI21 } from '../../globals';
 import { Params } from '../../types/requestBody';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import {
+  CompletionResponse,
+  ErrorResponse,
+  OpenAIFinishReason,
+  ProviderConfig,
+} from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { AI21ErrorResponseTransform } from './chatComplete';
 
@@ -65,6 +70,11 @@ export const AI21CompleteConfig: ProviderConfig = {
   },
 };
 
+export enum AI21FinishReason {
+  stop = 'stop',
+  length = 'length',
+}
+
 interface AI21CompleteResponse {
   id: string;
   prompt: {
@@ -78,7 +88,7 @@ interface AI21CompleteResponse {
         tokens: Record<string, any>[];
       };
       finishReason: {
-        reason: string;
+        reason: AI21FinishReason;
         length: number;
       };
     },
@@ -88,6 +98,19 @@ interface AI21CompleteResponse {
 export interface AI21ErrorResponse {
   detail: string;
 }
+
+export const transformAI21FinishReason = (
+  reason: AI21FinishReason
+): OpenAIFinishReason => {
+  switch (reason) {
+    case AI21FinishReason.stop:
+      return OpenAIFinishReason.stop;
+    case AI21FinishReason.length:
+      return OpenAIFinishReason.length;
+    default:
+      return OpenAIFinishReason.stop;
+  }
+};
 
 export const AI21CompleteResponseTransform: (
   response: AI21CompleteResponse | AI21ErrorResponse,
@@ -116,7 +139,9 @@ export const AI21CompleteResponseTransform: (
         text: completion.data.text,
         index: index,
         logprobs: null,
-        finish_reason: completion.finishReason?.reason,
+        finish_reason: transformAI21FinishReason(
+          completion.finishReason?.reason
+        ),
       })),
       usage: {
         prompt_tokens: inputTokens,

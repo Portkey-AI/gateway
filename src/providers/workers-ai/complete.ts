@@ -1,5 +1,10 @@
 import { Params } from '../../types/requestBody';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import {
+  CompletionResponse,
+  ErrorResponse,
+  OpenAIFinishReason,
+  ProviderConfig,
+} from '../types';
 import { WORKERS_AI } from '../../globals';
 import {
   generateErrorResponse,
@@ -91,7 +96,7 @@ export const WorkersAiCompleteResponseTransform: (
           text: response.result.response,
           index: 0,
           logprobs: null,
-          finish_reason: '',
+          finish_reason: OpenAIFinishReason.stop,
         },
       ],
     };
