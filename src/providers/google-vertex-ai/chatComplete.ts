@@ -3,11 +3,14 @@
 
 import { GOOGLE_VERTEX_AI } from '../../globals';
 import {
+  AssistantMessage,
   ContentType,
   Message,
   Params,
   ToolCall,
+  ToolMessage,
 } from '../../types/requestBody';
+import { Message as ResponseMessage } from '../../types/responseBody';
 import {
   AnthropicChatCompleteResponse,
   AnthropicChatCompleteStreamResponse,
@@ -17,6 +20,7 @@ import {
   GoogleMessage,
   GoogleMessageRole,
   GoogleToolConfig,
+  PortkeyGeminiMessage,
   SYSTEM_INSTRUCTION_DISABLED_MODELS,
   transformOpenAIRoleToGoogleRole,
   transformToolChoiceForGemini,
@@ -51,7 +55,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
         let lastRole: GoogleMessageRole | undefined;
         const messages: GoogleMessage[] = [];
 
-        params.messages?.forEach((message: Message) => {
+        params.messages?.forEach((message: PortkeyGeminiMessage) => {
           // From gemini-1.5 onwards, systemInstruction is supported
           // Skipping system message and sending it in systemInstruction for gemini 1.5 models
           if (
@@ -297,7 +301,7 @@ interface AnthropicToolResultContentItem {
 
 type AnthropicMessageContentItem = AnthropicToolResultContentItem | ContentType;
 
-interface AnthropicMessage extends Message {
+interface AnthropicMessage extends Omit<Message, 'content'> {
   content?: string | AnthropicMessageContentItem[];
 }
 
@@ -316,10 +320,9 @@ interface AnthropicToolContentItem {
 type AnthropicContentItem = AnthorpicTextContentItem | AnthropicToolContentItem;
 
 const transformAssistantMessageForAnthropic = (
-  msg: Message
+  msg: AssistantMessage
 ): AnthropicMessage => {
   let content: AnthropicContentItem[] = [];
-  const containsToolCalls = msg.tool_calls && msg.tool_calls.length;
 
   if (msg.content && typeof msg.content === 'string') {
     content.push({
@@ -338,7 +341,7 @@ const transformAssistantMessageForAnthropic = (
       });
     }
   }
-  if (containsToolCalls) {
+  if (msg.tool_calls) {
     msg.tool_calls.forEach((toolCall: any) => {
       content.push({
         type: 'tool_use',
@@ -354,7 +357,9 @@ const transformAssistantMessageForAnthropic = (
   };
 };
 
-const transformToolMessageForAnthropic = (msg: Message): AnthropicMessage => {
+const transformToolMessageForAnthropic = (
+  msg: ToolMessage
+): AnthropicMessage => {
   return {
     role: 'user',
     content: [
@@ -600,7 +605,7 @@ export const GoogleChatCompleteResponseTransform: (
       provider: GOOGLE_VERTEX_AI,
       choices:
         response.candidates?.map((generation, index) => {
-          let message: Message = { role: 'assistant', content: '' };
+          let message: ResponseMessage = { role: 'assistant', content: '' };
           if (generation.content.parts[0]?.text) {
             message = {
               role: 'assistant',
@@ -672,7 +677,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
     provider: GOOGLE_VERTEX_AI,
     choices:
       parsedChunk.candidates?.map((generation, index) => {
-        let message: Message = { role: 'assistant', content: '' };
+        let message: ResponseMessage = { role: 'assistant', content: '' };
         if (generation.content.parts[0]?.text) {
           message = {
             role: 'assistant',
