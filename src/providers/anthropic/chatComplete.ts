@@ -9,6 +9,7 @@ import {
 import {
   ChatCompletionResponse,
   ErrorResponse,
+  OpenAIFinishReason,
   ProviderConfig,
 } from '../types';
 import {
@@ -295,7 +296,7 @@ export interface AnthropicChatCompleteResponse {
   type: string;
   role: string;
   content: AnthropicContentItem[];
-  stop_reason: string;
+  stop_reason?: AnthropicStopReason;
   model: string;
   stop_sequence: null | string;
   usage: {
@@ -311,7 +312,7 @@ export interface AnthropicChatCompleteStreamResponse {
     type: string;
     text: string;
     partial_json?: string;
-    stop_reason?: string;
+    stop_reason?: AnthropicStopReason;
   };
   content_block?: {
     type: string;
@@ -330,6 +331,13 @@ export interface AnthropicChatCompleteStreamResponse {
       input_tokens?: number;
     };
   };
+}
+
+export enum AnthropicStopReason {
+  max_tokens = 'max_tokens',
+  stop_sequence = 'stop_sequence',
+  tool_use = 'tool_use',
+  end_turn = 'end_turn',
 }
 
 export const AnthropicErrorResponseTransform: (
@@ -351,19 +359,29 @@ export const AnthropicErrorResponseTransform: (
 };
 
 // this converts the anthropic stop_reason to an openai finish_reason
-const getFinishReason = (stopReason?: string): string | null => {
+export const getAnthropicFinishReason = (
+  stopReason?: AnthropicStopReason
+): OpenAIFinishReason => {
+  switch (stopReason) {
+    case AnthropicStopReason.max_tokens:
+      return OpenAIFinishReason.length;
+    case AnthropicStopReason.stop_sequence:
+      return OpenAIFinishReason.stop;
+    case AnthropicStopReason.tool_use:
+      return OpenAIFinishReason.tool_calls;
+    case AnthropicStopReason.end_turn:
+      return OpenAIFinishReason.stop;
+    default:
+      return OpenAIFinishReason.stop;
+  }
+};
+
+// finish_reason may be null for stream chunks
+export const getAnthropicStreamChunkFinishReason = (
+  stopReason?: AnthropicStopReason
+): OpenAIFinishReason | null => {
   if (!stopReason) return null;
-
-  if (stopReason === 'max_tokens') {
-    return 'length';
-  }
-
-  if (stopReason === 'stop_sequence' || stopReason === 'end_turn') {
-    return 'stop';
-  }
-
-  // manages the case where the stop_reason is set but not recognized
-  return 'stop';
+  return getAnthropicFinishReason(stopReason);
 };
 
 // TODO: The token calculation is wrong atm
@@ -415,8 +433,7 @@ export const AnthropicChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason:
-            getFinishReason(response.stop_reason) || response.stop_reason,
+          finish_reason: getAnthropicFinishReason(response.stop_reason),
         },
       ],
       usage: {
@@ -501,7 +518,9 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           {
             index: 0,
             delta: {},
-            finish_reason: getFinishReason(parsedChunk.delta?.stop_reason),
+            finish_reason: getAnthropicStreamChunkFinishReason(
+              parsedChunk.delta.stop_reason
+            ),
           },
         ],
         usage: {
@@ -556,7 +575,9 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: getFinishReason(parsedChunk.delta?.stop_reason),
+          finish_reason: getAnthropicFinishReason(
+            parsedChunk.delta?.stop_reason
+          ),
         },
       ],
     })}` + '\n\n'

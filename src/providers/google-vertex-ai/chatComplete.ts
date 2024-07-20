@@ -15,6 +15,8 @@ import {
   AnthropicChatCompleteResponse,
   AnthropicChatCompleteStreamResponse,
   AnthropicErrorResponse,
+  getAnthropicFinishReason,
+  getAnthropicStreamChunkFinishReason,
 } from '../anthropic/chatComplete';
 import {
   GoogleMessage,
@@ -779,7 +781,7 @@ export const VertexAnthropicChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: response.stop_reason,
+          finish_reason: getAnthropicFinishReason(response.stop_reason),
         },
       ],
       usage: {
@@ -866,7 +868,9 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
           {
             index: 0,
             delta: {},
-            finish_reason: parsedChunk.delta?.stop_reason,
+            finish_reason: getAnthropicStreamChunkFinishReason(
+              parsedChunk.delta?.stop_reason
+            ),
           },
         ],
         usage: {
@@ -921,7 +925,9 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: parsedChunk.delta?.stop_reason ?? null,
+          finish_reason: getAnthropicStreamChunkFinishReason(
+            parsedChunk.delta?.stop_reason
+          ),
         },
       ],
     })}` + '\n\n'

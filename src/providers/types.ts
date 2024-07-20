@@ -99,6 +99,14 @@ export interface CResponse extends BaseResponse {
   };
 }
 
+export enum OpenAIFinishReason {
+  stop = 'stop',
+  length = 'length',
+  tool_calls = 'tool_calls',
+  content_filter = 'content_filter',
+  function_call = 'function_call',
+}
+
 /**
  * The structure of a completion response for the 'complete' function.
  * @interface
@@ -108,7 +116,7 @@ export interface CompletionResponse extends CResponse {
     text: string;
     index: number;
     logprobs: null;
-    finish_reason: string;
+    finish_reason: OpenAIFinishReason;
   }[];
 }
 

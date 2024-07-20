@@ -7,6 +7,11 @@ import {
   ToolMessage,
 } from '../../types/requestBody';
 import {
+  AnthropicStopReason,
+  getAnthropicFinishReason,
+  getAnthropicStreamChunkFinishReason,
+} from '../anthropic/chatComplete';
+import {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
@@ -843,7 +848,7 @@ interface BedrockAnthropicChatCompleteResponse {
   type: string;
   role: string;
   content: AnthropicContentItem[];
-  stop_reason: string;
+  stop_reason?: AnthropicStopReason;
   model: string;
   stop_sequence: null | string;
 }
@@ -904,7 +909,7 @@ export const BedrockAnthropicChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: response.stop_reason,
+          finish_reason: getAnthropicFinishReason(response.stop_reason),
         },
       ],
       usage: {
@@ -925,7 +930,7 @@ interface BedrockAnthropicChatCompleteStreamResponse {
     type: string;
     text: string;
     partial_json?: string;
-    stop_reason?: string;
+    stop_reason?: AnthropicStopReason;
   };
   content_block?: {
     type: string;
@@ -983,7 +988,9 @@ export const BedrockAnthropicChatCompleteStreamChunkTransform: (
           {
             index: 0,
             delta: {},
-            finish_reason: parsedChunk.delta?.stop_reason,
+            finish_reason: getAnthropicStreamChunkFinishReason(
+              parsedChunk.delta?.stop_reason
+            ),
           },
         ],
         usage: {
@@ -1015,7 +1022,9 @@ export const BedrockAnthropicChatCompleteStreamChunkTransform: (
             },
             index: 0,
             logprobs: null,
-            finish_reason: parsedChunk.delta?.stop_reason ?? null,
+            finish_reason: getAnthropicStreamChunkFinishReason(
+              parsedChunk.delta?.stop_reason
+            ),
           },
         ],
       })}\n\n`,
