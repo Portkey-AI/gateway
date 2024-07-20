@@ -67,18 +67,10 @@ export const RekaAIChatCompleteConfig: ProviderConfig = {
           addMessage({ type: currentType, text: message.content || '' });
         } else {
           message.content.forEach((item) => {
-            let text = '';
-            if (typeof item === 'string') {
-              text = item;
-            } else if (item.type === 'text') {
-              text = item.text;
-            }
-            let media_url =
-              item.type === 'image_url' ? item.image_url?.url : undefined;
             addMessage({
               type: currentType,
-              text,
-              media_url,
+              text: item.text || '',
+              media_url: item.image_url?.url,
             });
           });
         }

@@ -6,9 +6,7 @@ import {
   Params,
   ToolCall,
   ToolChoice,
-  ToolMessage,
 } from '../../types/requestBody';
-import { Message as ResponseMessage } from '../../types/responseBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -82,14 +80,6 @@ export interface GoogleToolConfig {
   };
 }
 
-interface PortkeyGoogleToolMessage extends ToolMessage {
-  name?: string;
-}
-
-export type PortkeyGeminiMessage =
-  | Exclude<Message, ToolMessage>
-  | PortkeyGoogleToolMessage;
-
 export const transformOpenAIRoleToGoogleRole = (
   role: OpenAIMessageRole
 ): GoogleMessageRole => {
@@ -139,7 +129,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
         let lastRole: GoogleMessageRole | undefined;
         const messages: GoogleMessage[] = [];
 
-        params.messages?.forEach((message: PortkeyGeminiMessage) => {
+        params.messages?.forEach((message: Message) => {
           // From gemini-1.5 onwards, systemInstruction is supported
           // Skipping system message and sending it in systemInstruction for gemini 1.5 models
           if (
@@ -420,7 +410,7 @@ export const GoogleChatCompleteResponseTransform: (
       provider: 'google',
       choices:
         response.candidates?.map((generation, index) => {
-          let message: ResponseMessage = { role: 'assistant', content: '' };
+          let message: Message = { role: 'assistant', content: '' };
           if (generation.content.parts[0]?.text) {
             message = {
               role: 'assistant',
@@ -494,7 +484,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
       provider: 'google',
       choices:
         parsedChunk.candidates?.map((generation, index) => {
-          let message: ResponseMessage = { role: 'assistant', content: '' };
+          let message: Message = { role: 'assistant', content: '' };
           if (generation.content.parts[0]?.text) {
             message = {
               role: 'assistant',

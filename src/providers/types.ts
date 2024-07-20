@@ -1,5 +1,4 @@
-import { Options, Params } from '../types/requestBody';
-import { Message } from '../types/responseBody';
+import { Message, Options, Params } from '../types/requestBody';
 
 /**
  * Configuration for a parameter.

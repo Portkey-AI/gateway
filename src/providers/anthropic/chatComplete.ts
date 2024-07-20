@@ -1,11 +1,5 @@
 import { ANTHROPIC } from '../../globals';
-import {
-  AssistantMessage,
-  ContentType,
-  Message,
-  Params,
-  ToolMessage,
-} from '../../types/requestBody';
+import { Params, Message, ContentType } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -43,12 +37,13 @@ interface AnthropicToolResultContentItem {
 
 type AnthropicMessageContentItem = AnthropicToolResultContentItem | ContentType;
 
-interface AnthropicMessage extends Omit<Message, 'content'> {
+interface AnthropicMessage extends Message {
   content?: string | AnthropicMessageContentItem[];
 }
 
-const transformAssistantMessage = (msg: AssistantMessage): AnthropicMessage => {
+const transformAssistantMessage = (msg: Message): AnthropicMessage => {
   let content: AnthropicContentItem[] = [];
+  const containsToolCalls = msg.tool_calls && msg.tool_calls.length;
 
   if (msg.content && typeof msg.content === 'string') {
     content.push({
@@ -67,7 +62,7 @@ const transformAssistantMessage = (msg: AssistantMessage): AnthropicMessage => {
       });
     }
   }
-  if (msg.tool_calls) {
+  if (containsToolCalls) {
     msg.tool_calls.forEach((toolCall: any) => {
       content.push({
         type: 'tool_use',
@@ -83,7 +78,7 @@ const transformAssistantMessage = (msg: AssistantMessage): AnthropicMessage => {
   };
 };
 
-const transformToolMessage = (msg: ToolMessage): AnthropicMessage => {
+const transformToolMessage = (msg: Message): AnthropicMessage => {
   return {
     role: 'user',
     content: [

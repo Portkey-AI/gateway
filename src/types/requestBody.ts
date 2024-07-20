@@ -132,7 +132,6 @@ export interface ContentType {
 export interface ToolCall {
   id: string;
   type: string;
-  index?: number;
   function: {
     name: string;
     arguments: string;
@@ -146,75 +145,34 @@ export type OpenAIMessageRole =
   | 'function'
   | 'tool';
 
-export interface TextMessageContentItem {
-  type: 'text';
-  text: string;
-}
-
-export interface ImageMessageContentItem {
-  type: 'image_url';
-  image_url: {
-    url: string;
-    detail?: string;
-  };
-}
-
-type SystemMessageContent = string | TextMessageContentItem[];
-
-type UserMessageContent =
-  | string
-  | (TextMessageContentItem | ImageMessageContentItem)[];
-
-export type AssistantMessageContent = string | TextMessageContentItem[];
-
-type ToolMessageContent = string | TextMessageContentItem[];
-
-export interface SystemMessage {
-  content: SystemMessageContent;
-  role: 'system';
-  name?: string;
-}
-
-/**
- * A User message in the conversation.
- * @interface
- */
-export interface UserMessage {
-  content: UserMessageContent;
-  role: 'user';
-  name?: string;
-}
-
-/**
- * An Assistant message in teh conversation.
- * @interface
- */
-export interface AssistantMessage {
-  content?: AssistantMessageContent;
-  role: 'assistant';
-  name?: string;
-  tool_calls?: ToolCall[];
-}
-
-/**
- * A Tool message.
- * @interface
- */
-export interface ToolMessage {
-  content: ToolMessageContent;
-  role: 'tool';
-  tool_call_id: string;
-}
-
 /**
  * A message in the conversation.
- * @type
+ * @interface
  */
-export type Message =
-  | SystemMessage
-  | UserMessage
-  | AssistantMessage
-  | ToolMessage;
+export interface Message {
+  /** The role of the message sender. It can be 'system', 'user', 'assistant', or 'function'. */
+  role: OpenAIMessageRole;
+  /** The content of the message. */
+  content?: string | ContentType[];
+  /** The name of the function to call, if any. */
+  name?: string;
+  /** The function call to make, if any. */
+  function_call?: any;
+  tool_calls?: any;
+  tool_call_id?: string;
+  citationMetadata?: CitationMetadata;
+}
+
+export interface CitationMetadata {
+  citationSources?: CitationSource[];
+}
+
+export interface CitationSource {
+  startIndex?: number;
+  endIndex?: number;
+  uri?: string;
+  license?: string;
+}
 
 /**
  * A JSON schema.
@@ -263,9 +221,9 @@ export interface Tool {
  * @interface
  */
 export interface Params {
-  model: string;
+  model?: string;
   prompt?: string | string[];
-  messages: Message[];
+  messages?: Message[];
   functions?: Function[];
   function_call?: 'none' | 'auto' | { name: string };
   max_tokens?: number;

@@ -1,32 +1,3 @@
-export interface ContentType {
-  type: string;
-  text?: string;
-  image_url?: {
-    url: string;
-  };
-}
-
-export type OpenAIMessageRole =
-  | 'system'
-  | 'user'
-  | 'assistant'
-  | 'function'
-  | 'tool';
-
-export interface Message {
-  /** The role of the message sender. It can be 'system', 'user', 'assistant', or 'function'. */
-  role: OpenAIMessageRole;
-  /** The content of the message. */
-  content?: string | ContentType[];
-  /** The name of the function to call, if any. */
-  name?: string;
-  /** The function call to make, if any. */
-  function_call?: any;
-  tool_calls?: any;
-  tool_call_id?: string;
-  citationMetadata?: CitationMetadata;
-}
-
 interface CitationSource {
   startIndex?: number;
   endIndex?: number;
