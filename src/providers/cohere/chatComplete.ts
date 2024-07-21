@@ -15,24 +15,39 @@ export const CohereChatCompleteConfig: ProviderConfig = {
     default: 'command',
     required: true,
   },
-  message: {
-    param: 'message',
-    required: true,
-  },
-  messages: {
-    param: 'chat_history',
-    required: false,
-    transform: (params: Params) => {
-      // generate history and forware it to model
-      const history: (Message & { message?: string })[] = (
-        params.messages || []
-      ).map((message) => ({
-        role: message.role,
-        message: message.content as string,
-      }));
-      return history;
+  messages: [
+    {
+      param: 'prompt',
+      required: true,
+      transform: (params: Params) => {
+        const messages = params.messages || [];
+        const prompt = messages.at(-1);
+        if (!prompt) {
+          throw new Error('messages length should be at least length of 1');
+        }
+
+        return prompt;
+      },
     },
-  },
+    {
+      param: 'chat_history',
+      required: false,
+      transform: (params: Params) => {
+        const messages = params.messages || [];
+        const messagesWithoutLastMessage = messages.slice(
+          0,
+          messages.length - 1
+        );
+        // generate history and forware it to model
+        const history: (Message & { message?: string })[] =
+          messagesWithoutLastMessage.map((message) => ({
+            role: message.role,
+            message: message.content as string,
+          }));
+        return history;
+      },
+    },
+  ],
   max_tokens: {
     param: 'max_tokens',
     default: 20,
