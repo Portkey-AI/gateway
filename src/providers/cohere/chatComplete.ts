@@ -23,7 +23,7 @@ export const CohereChatCompleteConfig: ProviderConfig = {
         const messages = params.messages || [];
         const prompt = messages.at(-1);
         if (!prompt) {
-          throw new Error('messages length should be at least length of 1');
+          throw new Error('messages length should be at least of length 1');
         }
 
         return prompt;
