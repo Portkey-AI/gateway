@@ -2,12 +2,25 @@
 // https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/send-multimodal-prompts#gemini-send-multimodal-samples-drest
 
 import { GOOGLE_VERTEX_AI } from '../../globals';
-import { ContentType, Message, Params } from '../../types/requestBody';
+import {
+  ContentType,
+  Message,
+  Params,
+  ToolCall,
+} from '../../types/requestBody';
 import {
   AnthropicChatCompleteResponse,
   AnthropicChatCompleteStreamResponse,
   AnthropicErrorResponse,
 } from '../anthropic/chatComplete';
+import {
+  GoogleMessage,
+  GoogleMessageRole,
+  GoogleToolConfig,
+  SYSTEM_INSTRUCTION_DISABLED_MODELS,
+  transformOpenAIRoleToGoogleRole,
+  transformToolChoiceForGemini,
+} from '../google/chatComplete';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -35,22 +48,43 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
       param: 'contents',
       default: '',
       transform: (params: Params) => {
-        let lastRole: 'user' | 'model' | undefined;
-        const messages: { role: string; parts: { text: string }[] }[] = [];
+        let lastRole: GoogleMessageRole | undefined;
+        const messages: GoogleMessage[] = [];
 
         params.messages?.forEach((message: Message) => {
-          if (message.role === 'system') return;
+          // From gemini-1.5 onwards, systemInstruction is supported
+          // Skipping system message and sending it in systemInstruction for gemini 1.5 models
+          if (
+            message.role === 'system' &&
+            !SYSTEM_INSTRUCTION_DISABLED_MODELS.includes(params.model as string)
+          )
+            return;
 
-          const role = message.role === 'assistant' ? 'model' : 'user';
-
+          const role = transformOpenAIRoleToGoogleRole(message.role);
           let parts = [];
-          if (typeof message.content === 'string') {
-            parts.push({
-              text: message.content,
-            });
-          }
 
-          if (message.content && typeof message.content === 'object') {
+          if (message.role === 'assistant' && message.tool_calls) {
+            message.tool_calls.forEach((tool_call: ToolCall) => {
+              parts.push({
+                functionCall: {
+                  name: tool_call.function.name,
+                  args: JSON.parse(tool_call.function.arguments),
+                },
+              });
+            });
+          } else if (
+            message.role === 'tool' &&
+            typeof message.content === 'string'
+          ) {
+            parts.push({
+              functionResponse: {
+                name: message.name ?? 'gateway-tool-filler-name',
+                response: {
+                  content: message.content,
+                },
+              },
+            });
+          } else if (message.content && typeof message.content === 'object') {
             message.content.forEach((c: ContentType) => {
               if (c.type === 'text') {
                 parts.push({
@@ -94,20 +128,23 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
                 });
               }
             });
+          } else if (typeof message.content === 'string') {
+            parts.push({
+              text: message.content,
+            });
           }
 
           // @NOTE: This takes care of the "Please ensure that multiturn requests alternate between user and model."
           // error that occurs when we have multiple user messages in a row.
-          const shouldAppendEmptyModeChat =
-            lastRole === 'user' &&
-            role === 'user' &&
-            !params.model?.includes('vision');
+          const shouldCombineMessages =
+            lastRole === role && !params.model?.includes('vision');
 
-          if (shouldAppendEmptyModeChat) {
-            messages.push({ role: 'model', parts: [{ text: '' }] });
+          if (shouldCombineMessages) {
+            messages[messages.length - 1].parts.push(...parts);
+          } else {
+            messages.push({ role, parts });
           }
 
-          messages.push({ role, parts });
           lastRole = role;
         });
 
@@ -118,6 +155,9 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
       param: 'systemInstruction',
       default: '',
       transform: (params: Params) => {
+        // systemInstruction is only supported from gemini 1.5 models
+        if (SYSTEM_INSTRUCTION_DISABLED_MODELS.includes(params.model as string))
+          return;
         const firstMessage = params.messages?.[0] || null;
         if (!firstMessage) return;
 
@@ -203,7 +243,32 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
           functionDeclarations.push(tool.function);
         }
       });
-      return [{ functionDeclarations }];
+      return { functionDeclarations };
+    },
+  },
+  tool_choice: {
+    param: 'tool_config',
+    default: '',
+    transform: (params: Params) => {
+      if (params.tool_choice) {
+        const allowedFunctionNames: string[] = [];
+        if (
+          typeof params.tool_choice === 'object' &&
+          params.tool_choice.type === 'function'
+        ) {
+          allowedFunctionNames.push(params.tool_choice.function.name);
+        }
+        const toolConfig: GoogleToolConfig = {
+          function_calling_config: {
+            mode: transformToolChoiceForGemini(params.tool_choice),
+          },
+        };
+        if (allowedFunctionNames.length > 0) {
+          toolConfig.function_calling_config.allowed_function_names =
+            allowedFunctionNames;
+        }
+        return toolConfig;
+      }
     },
   },
 };
@@ -528,7 +593,7 @@ export const GoogleChatCompleteResponseTransform: (
     } = response.usageMetadata;
 
     return {
-      id: crypto.randomUUID(),
+      id: 'portkey-' + crypto.randomUUID(),
       object: 'chat_completion',
       created: Math.floor(Date.now() / 1000),
       model: 'Unknown',
@@ -544,18 +609,18 @@ export const GoogleChatCompleteResponseTransform: (
           } else if (generation.content.parts[0]?.functionCall) {
             message = {
               role: 'assistant',
-              tool_calls: [
-                {
-                  id: crypto.randomUUID(),
-                  type: 'function',
-                  function: {
-                    name: generation.content.parts[0]?.functionCall.name,
-                    arguments: JSON.stringify(
-                      generation.content.parts[0]?.functionCall.args
-                    ),
-                  },
-                },
-              ],
+              tool_calls: generation.content.parts.map((part) => {
+                if (part.functionCall) {
+                  return {
+                    id: 'portkey-' + crypto.randomUUID(),
+                    type: 'function',
+                    function: {
+                      name: part.functionCall.name,
+                      arguments: JSON.stringify(part.functionCall.args),
+                    },
+                  };
+                }
+              }),
             };
           }
           return {
@@ -616,19 +681,19 @@ export const GoogleChatCompleteStreamChunkTransform: (
         } else if (generation.content.parts[0]?.functionCall) {
           message = {
             role: 'assistant',
-            tool_calls: [
-              {
-                id: crypto.randomUUID(),
-                type: 'function',
-                index: 0,
-                function: {
-                  name: generation.content.parts[0]?.functionCall.name,
-                  arguments: JSON.stringify(
-                    generation.content.parts[0]?.functionCall.args
-                  ),
-                },
-              },
-            ],
+            tool_calls: generation.content.parts.map((part, idx) => {
+              if (part.functionCall) {
+                return {
+                  index: idx,
+                  id: 'portkey-' + crypto.randomUUID(),
+                  type: 'function',
+                  function: {
+                    name: part.functionCall.name,
+                    arguments: JSON.stringify(part.functionCall.args),
+                  },
+                };
+              }
+            }),
           };
         }
         return {
