@@ -75,6 +75,17 @@ const transformAssistantMessageForAnthropic = (
       type: 'text',
       text: msg.content,
     });
+  } else if (
+    msg.content &&
+    typeof msg.content === 'object' &&
+    msg.content.length
+  ) {
+    if (msg.content[0].text) {
+      content.push({
+        type: 'text',
+        text: msg.content[0].text,
+      });
+    }
   }
   if (containsToolCalls) {
     msg.tool_calls.forEach((toolCall: any) => {
@@ -853,7 +864,7 @@ export const BedrockAnthropicChatCompleteResponseTransform: (
       Number(responseHeaders.get('X-Amzn-Bedrock-Output-Token-Count')) || 0;
 
     let content = '';
-    if (response.content[0].type === 'text') {
+    if (response.content.length && response.content[0].type === 'text') {
       content = response.content[0].text;
     }
 
