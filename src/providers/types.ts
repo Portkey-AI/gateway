@@ -98,7 +98,13 @@ export interface CResponse extends BaseResponse {
   };
 }
 
-export enum OpenAIFinishReason {
+export enum OPEN_AI_COMPLETION_FINISH_REASON {
+  stop = 'stop',
+  length = 'length',
+  content_filter = 'content_filter',
+}
+
+export enum OPEN_AI_CHAT_COMPLETION_FINISH_REASON {
   stop = 'stop',
   length = 'length',
   tool_calls = 'tool_calls',
@@ -115,7 +121,7 @@ export interface CompletionResponse extends CResponse {
     text: string;
     index: number;
     logprobs: null;
-    finish_reason: OpenAIFinishReason;
+    finish_reason: OPEN_AI_COMPLETION_FINISH_REASON;
   }[];
 }
 
@@ -126,7 +132,7 @@ export interface CompletionResponse extends CResponse {
 export interface ChatChoice {
   index: number;
   message: Message;
-  finish_reason: string;
+  finish_reason: OPEN_AI_CHAT_COMPLETION_FINISH_REASON;
   logprobs?: object | null;
 }
 
