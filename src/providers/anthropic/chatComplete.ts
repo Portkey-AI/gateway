@@ -3,7 +3,7 @@ import { Params, Message, ContentType } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
-  OpenAIFinishReason,
+  OPEN_AI_CHAT_COMPLETION_FINISH_REASON,
   ProviderConfig,
 } from '../types';
 import {
@@ -354,28 +354,28 @@ export const AnthropicErrorResponseTransform: (
 };
 
 // this converts the anthropic stop_reason to an openai finish_reason
-export const getAnthropicFinishReason = (
+export const transformAnthropicChatCompletionFinishReason = (
   stopReason?: AnthropicStopReason
-): OpenAIFinishReason => {
+): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
   switch (stopReason) {
     case AnthropicStopReason.stop_sequence:
     case AnthropicStopReason.end_turn:
-      return OpenAIFinishReason.stop;
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
     case AnthropicStopReason.tool_use:
-      return OpenAIFinishReason.tool_calls;
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.tool_calls;
     case AnthropicStopReason.max_tokens:
-      return OpenAIFinishReason.length;
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.length;
     default:
-      return OpenAIFinishReason.stop;
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
   }
 };
 
 // finish_reason may be null for stream chunks
 export const getAnthropicStreamChunkFinishReason = (
   stopReason?: AnthropicStopReason
-): OpenAIFinishReason | null => {
+): OPEN_AI_CHAT_COMPLETION_FINISH_REASON | null => {
   if (!stopReason) return null;
-  return getAnthropicFinishReason(stopReason);
+  return transformAnthropicChatCompletionFinishReason(stopReason);
 };
 
 // TODO: The token calculation is wrong atm
@@ -427,7 +427,7 @@ export const AnthropicChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: getAnthropicFinishReason(response.stop_reason),
+          finish_reason: transformAnthropicChatCompletionFinishReason(response.stop_reason),
         },
       ],
       usage: {
@@ -569,7 +569,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: getAnthropicFinishReason(
+          finish_reason: transformAnthropicChatCompletionFinishReason(
             parsedChunk.delta?.stop_reason
           ),
         },

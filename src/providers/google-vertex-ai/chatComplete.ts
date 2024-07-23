@@ -12,7 +12,7 @@ import {
   AnthropicChatCompleteResponse,
   AnthropicChatCompleteStreamResponse,
   AnthropicErrorResponse,
-  getAnthropicFinishReason,
+  transformAnthropicChatCompletionFinishReason,
   getAnthropicStreamChunkFinishReason,
 } from '../anthropic/chatComplete';
 import {
@@ -776,7 +776,7 @@ export const VertexAnthropicChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: getAnthropicFinishReason(response.stop_reason),
+          finish_reason: transformAnthropicChatCompletionFinishReason(response.stop_reason),
         },
       ],
       usage: {
