@@ -3,6 +3,7 @@ import { Params, Message } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
+  OPEN_AI_CHAT_COMPLETION_FINISH_REASON,
   ProviderConfig,
 } from '../types';
 import {
@@ -95,7 +96,7 @@ export const WorkersAiChatCompleteResponseTransform: (
           message: { role: 'assistant', content: response.result.response },
           index: 0,
           logprobs: null,
-          finish_reason: '',
+          finish_reason: OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop,
         },
       ],
     };
