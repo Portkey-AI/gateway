@@ -2,7 +2,7 @@ import { Params } from '../../types/requestBody';
 import {
   CompletionResponse,
   ErrorResponse,
-  OpenAIFinishReason,
+  OPEN_AI_COMPLETION_FINISH_REASON,
   ProviderConfig,
 } from '../types';
 import { WORKERS_AI } from '../../globals';
@@ -96,7 +96,7 @@ export const WorkersAiCompleteResponseTransform: (
           text: response.result.response,
           index: 0,
           logprobs: null,
-          finish_reason: OpenAIFinishReason.stop,
+          finish_reason: OPEN_AI_COMPLETION_FINISH_REASON.stop,
         },
       ],
     };

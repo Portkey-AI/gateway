@@ -8,7 +8,7 @@ import {
 import {
   CompletionResponse,
   ErrorResponse,
-  OpenAIFinishReason,
+  OPEN_AI_COMPLETION_FINISH_REASON,
   ProviderConfig,
 } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
@@ -90,7 +90,7 @@ export const PalmCompleteResponseTransform: (
           text: generation.output,
           index: index,
           logprobs: null,
-          finish_reason: OpenAIFinishReason.length,
+          finish_reason: OPEN_AI_COMPLETION_FINISH_REASON.length,
         })) ?? [],
     };
   }

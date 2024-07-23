@@ -2,7 +2,7 @@ import { COHERE } from '../../globals';
 import {
   CompletionResponse,
   ErrorResponse,
-  OpenAIFinishReason,
+  OPEN_AI_COMPLETION_FINISH_REASON,
   ProviderConfig,
 } from '../types';
 import { generateErrorResponse } from '../utils';
@@ -133,7 +133,7 @@ export const CohereCompleteResponseTransform: (
       text: generation.text,
       index: index,
       logprobs: null,
-      finish_reason: OpenAIFinishReason.length,
+      finish_reason: OPEN_AI_COMPLETION_FINISH_REASON.length,
     })),
   };
 };

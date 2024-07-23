@@ -1,15 +1,15 @@
 import { BEDROCK } from '../../globals';
 import { Params } from '../../types/requestBody';
-import { AI21FinishReason, transformAI21FinishReason } from '../ai21/complete';
+import { AI21_FINISH_REASON, transformAI21FinishReason } from '../ai21/complete';
 import {
   AnthropicStopReason,
-  getAnthropicFinishReason,
   getAnthropicStreamChunkFinishReason,
 } from '../anthropic/chatComplete';
+import { transformAnthropicCompletionFinishReason } from '../anthropic/complete';
 import {
   CompletionResponse,
   ErrorResponse,
-  OpenAIFinishReason,
+  OPEN_AI_COMPLETION_FINISH_REASON,
   ProviderConfig,
 } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
@@ -289,8 +289,8 @@ export const BedrockLlamaCompleteResponseTransform: (
           logprobs: null,
           finish_reason:
             response.stop_reason === BedrockLlamaStopReason.length
-              ? OpenAIFinishReason.length
-              : OpenAIFinishReason.stop,
+              ? OPEN_AI_COMPLETION_FINISH_REASON.length
+              : OPEN_AI_COMPLETION_FINISH_REASON.stop,
         },
       ],
       usage: {
@@ -392,18 +392,18 @@ export interface BedrockTitanCompleteResponse {
 
 const transformBedrockTitanCompletionReason = (
   completionReason: BedrockTitanCompletionReason
-): OpenAIFinishReason => {
+): OPEN_AI_COMPLETION_FINISH_REASON => {
   switch (completionReason) {
     case BedrockTitanCompletionReason.FINISHED:
     case BedrockTitanCompletionReason.STOP_CRITERIA_MET:
     case BedrockTitanCompletionReason.RAG_QUERY_WHEN_RAG_DISABLED:
-      return OpenAIFinishReason.stop;
+      return OPEN_AI_COMPLETION_FINISH_REASON.stop;
     case BedrockTitanCompletionReason.LENGTH:
-      return OpenAIFinishReason.length;
+      return OPEN_AI_COMPLETION_FINISH_REASON.length;
     case BedrockTitanCompletionReason.CONTENT_FILTERED:
-      return OpenAIFinishReason.content_filter;
+      return OPEN_AI_COMPLETION_FINISH_REASON.content_filter;
     default:
-      return OpenAIFinishReason.stop;
+      return OPEN_AI_COMPLETION_FINISH_REASON.stop;
   }
 };
 
@@ -525,7 +525,7 @@ export interface BedrockAI21CompleteResponse {
         tokens: Record<string, any>[];
       };
       finishReason: {
-        reason: AI21FinishReason;
+        reason: AI21_FINISH_REASON;
         length: number;
       };
     },
@@ -616,7 +616,7 @@ export const BedrockAnthropicCompleteResponseTransform: (
           text: response.completion,
           index: 0,
           logprobs: null,
-          finish_reason: getAnthropicFinishReason(response.stop_reason),
+          finish_reason: transformAnthropicCompletionFinishReason(response.stop_reason),
         },
       ],
       usage: {
@@ -731,16 +731,16 @@ export interface BedrockCohereCompleteResponse {
 
 const transformBedrockCohereFinishReason = (
   finishReason: BedrockCohereFinishReason
-): OpenAIFinishReason => {
+): OPEN_AI_COMPLETION_FINISH_REASON => {
   switch (finishReason) {
     case BedrockCohereFinishReason.COMPLETE:
     case BedrockCohereFinishReason.ERROR:
     case BedrockCohereFinishReason.ERROR_TOXIC:
-      return OpenAIFinishReason.stop;
+      return OPEN_AI_COMPLETION_FINISH_REASON.stop;
     case BedrockCohereFinishReason.MAX_TOKENS:
-      return OpenAIFinishReason.length;
+      return OPEN_AI_COMPLETION_FINISH_REASON.length;
     default:
-      return OpenAIFinishReason.stop;
+      return OPEN_AI_COMPLETION_FINISH_REASON.stop;
   }
 };
 
@@ -941,18 +941,16 @@ export interface BedrockMistralCompleteResponse {
   }[];
 }
 
-const transformBedrockMistralStopReason = (
+const transformBedrockMistralCompletionStopReason = (
   stopReason: BedrockMistralStopReason
-): OpenAIFinishReason => {
+): OPEN_AI_COMPLETION_FINISH_REASON => {
   switch (stopReason) {
     case BedrockMistralStopReason.stop:
-      return OpenAIFinishReason.stop;
+      return OPEN_AI_COMPLETION_FINISH_REASON.stop;
     case BedrockMistralStopReason.length:
-      return OpenAIFinishReason.length;
-    case BedrockMistralStopReason.tool_calls:
-      return OpenAIFinishReason.tool_calls;
+      return OPEN_AI_COMPLETION_FINISH_REASON.length;
     default:
-      return OpenAIFinishReason.stop;
+      return OPEN_AI_COMPLETION_FINISH_REASON.stop;
   }
 };
 
@@ -988,7 +986,7 @@ export const BedrockMistralCompleteResponseTransform: (
           text: response.outputs[0].text,
           index: 0,
           logprobs: null,
-          finish_reason: transformBedrockMistralStopReason(
+          finish_reason: transformBedrockMistralCompletionStopReason(
             response.outputs[0].stop_reason
           ),
         },

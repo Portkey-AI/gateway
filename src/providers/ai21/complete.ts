@@ -3,7 +3,7 @@ import { Params } from '../../types/requestBody';
 import {
   CompletionResponse,
   ErrorResponse,
-  OpenAIFinishReason,
+  OPEN_AI_COMPLETION_FINISH_REASON,
   ProviderConfig,
 } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
@@ -70,7 +70,7 @@ export const AI21CompleteConfig: ProviderConfig = {
   },
 };
 
-export enum AI21FinishReason {
+export enum AI21_FINISH_REASON {
   stop = 'stop',
   length = 'length',
 }
@@ -88,7 +88,7 @@ interface AI21CompleteResponse {
         tokens: Record<string, any>[];
       };
       finishReason: {
-        reason: AI21FinishReason;
+        reason: AI21_FINISH_REASON;
         length: number;
       };
     },
@@ -100,15 +100,15 @@ export interface AI21ErrorResponse {
 }
 
 export const transformAI21FinishReason = (
-  reason: AI21FinishReason
-): OpenAIFinishReason => {
+  reason: AI21_FINISH_REASON
+): OPEN_AI_COMPLETION_FINISH_REASON => {
   switch (reason) {
-    case AI21FinishReason.stop:
-      return OpenAIFinishReason.stop;
-    case AI21FinishReason.length:
-      return OpenAIFinishReason.length;
+    case AI21_FINISH_REASON.stop:
+      return OPEN_AI_COMPLETION_FINISH_REASON.stop;
+    case AI21_FINISH_REASON.length:
+      return OPEN_AI_COMPLETION_FINISH_REASON.length;
     default:
-      return OpenAIFinishReason.stop;
+      return OPEN_AI_COMPLETION_FINISH_REASON.stop;
   }
 };
 

@@ -1,12 +1,11 @@
 import { ANTHROPIC } from '../../globals';
 import { Params } from '../../types/requestBody';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { CompletionResponse, ErrorResponse, OPEN_AI_COMPLETION_FINISH_REASON, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import {
   AnthropicErrorResponse,
   AnthropicErrorResponseTransform,
   AnthropicStopReason,
-  getAnthropicFinishReason,
   getAnthropicStreamChunkFinishReason,
 } from './chatComplete';
 
@@ -70,6 +69,20 @@ interface AnthropicCompleteResponse {
   exception: null | string;
 }
 
+export const transformAnthropicCompletionFinishReason = (
+  stopReason?: AnthropicStopReason
+): OPEN_AI_COMPLETION_FINISH_REASON => {
+  switch (stopReason) {
+    case AnthropicStopReason.stop_sequence:
+    case AnthropicStopReason.end_turn:
+      return OPEN_AI_COMPLETION_FINISH_REASON.stop;
+    case AnthropicStopReason.tool_use:
+      return OPEN_AI_COMPLETION_FINISH_REASON.length;
+    default:
+      return OPEN_AI_COMPLETION_FINISH_REASON.stop;
+  }
+};
+
 // TODO: The token calculation is wrong atm
 export const AnthropicCompleteResponseTransform: (
   response: AnthropicCompleteResponse | AnthropicErrorResponse,
@@ -94,7 +107,7 @@ export const AnthropicCompleteResponseTransform: (
           text: response.completion,
           index: 0,
           logprobs: null,
-          finish_reason: getAnthropicFinishReason(response.stop_reason),
+          finish_reason: transformAnthropicCompletionFinishReason(response.stop_reason),
         },
       ],
     };
