@@ -1,5 +1,6 @@
 import { BEDROCK } from '../../globals';
 import { ContentType, Message, Params } from '../../types/requestBody';
+import { transformAI21ChatFinishReason } from '../ai21/chatComplete';
 import {
   AnthropicStopReason,
   transformAnthropicChatCompletionFinishReason,
@@ -8,6 +9,7 @@ import {
 import {
   ChatCompletionResponse,
   ErrorResponse,
+  OPEN_AI_CHAT_COMPLETION_FINISH_REASON,
   ProviderConfig,
 } from '../types';
 import {
@@ -24,6 +26,10 @@ import {
   BedrockTitanStreamChunk,
   BedrockMistralCompleteResponse,
   BedrocMistralStreamChunk,
+  BedrockLlamaStopReason,
+  BedrockTitanCompletionReason,
+  BedrockCohereFinishReason,
+  BedrockMistralStopReason,
 } from './complete';
 import { BedrockErrorResponse } from './embed';
 
@@ -625,7 +631,10 @@ export const BedrockLlamaChatCompleteResponseTransform: (
             role: 'assistant',
             content: response.generation,
           },
-          finish_reason: response.stop_reason,
+          finish_reason:
+            response.stop_reason === BedrockLlamaStopReason.length
+              ? OPEN_AI_CHAT_COMPLETION_FINISH_REASON.length
+              : OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop,
         },
       ],
       usage: {
@@ -697,6 +706,23 @@ export const BedrockLlamaChatCompleteStreamChunkTransform: (
   })}\n\n`;
 };
 
+const transformBedrockTitanChatCompletionReason = (
+  completionReason: BedrockTitanCompletionReason
+): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
+  switch (completionReason) {
+    case BedrockTitanCompletionReason.FINISHED:
+    case BedrockTitanCompletionReason.STOP_CRITERIA_MET:
+    case BedrockTitanCompletionReason.RAG_QUERY_WHEN_RAG_DISABLED:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
+    case BedrockTitanCompletionReason.LENGTH:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.length;
+    case BedrockTitanCompletionReason.CONTENT_FILTERED:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.content_filter;
+    default:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
+  }
+};
+
 export const BedrockTitanChatCompleteResponseTransform: (
   response: BedrockTitanCompleteResponse | BedrockErrorResponse,
   responseStatus: number
@@ -724,7 +750,9 @@ export const BedrockTitanChatCompleteResponseTransform: (
           role: 'assistant',
           content: generation.outputText,
         },
-        finish_reason: generation.completionReason,
+        finish_reason: transformBedrockTitanChatCompletionReason(
+          generation.completionReason
+        ),
       })),
       usage: {
         prompt_tokens: response.inputTextTokenCount,
@@ -823,7 +851,9 @@ export const BedrockAI21ChatCompleteResponseTransform: (
           role: 'assistant',
           content: completion.data.text,
         },
-        finish_reason: completion.finishReason?.reason,
+        finish_reason: transformAI21ChatFinishReason(
+          completion.finishReason?.reason
+        ),
       })),
       usage: {
         prompt_tokens: prompt_tokens,
@@ -902,7 +932,9 @@ export const BedrockAnthropicChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: transformAnthropicChatCompletionFinishReason(response.stop_reason),
+          finish_reason: transformAnthropicChatCompletionFinishReason(
+            response.stop_reason
+          ),
         },
       ],
       usage: {
@@ -1074,6 +1106,21 @@ export const BedrockAnthropicChatCompleteStreamChunkTransform: (
   })}\n\n`;
 };
 
+const transformBedrockCohereFinishReason = (
+  finishReason?: BedrockCohereFinishReason
+): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
+  switch (finishReason) {
+    case BedrockCohereFinishReason.COMPLETE:
+    case BedrockCohereFinishReason.ERROR:
+    case BedrockCohereFinishReason.ERROR_TOXIC:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
+    case BedrockCohereFinishReason.MAX_TOKENS:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.length;
+    default:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
+  }
+};
+
 export const BedrockCohereChatCompleteResponseTransform: (
   response: BedrockCohereCompleteResponse | BedrockErrorResponse,
   responseStatus: number,
@@ -1107,7 +1154,9 @@ export const BedrockCohereChatCompleteResponseTransform: (
           role: 'assistant',
           content: generation.text,
         },
-        finish_reason: generation.finish_reason,
+        finish_reason: transformBedrockCohereFinishReason(
+          generation.finish_reason
+        ),
       })),
       usage: {
         prompt_tokens: prompt_tokens,
@@ -1178,6 +1227,19 @@ export const BedrockCohereChatCompleteStreamChunkTransform: (
   })}\n\n`;
 };
 
+const transformBedrockMistralCompletionStopReason = (
+  stopReason: BedrockMistralStopReason
+): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
+  switch (stopReason) {
+    case BedrockMistralStopReason.stop:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
+    case BedrockMistralStopReason.length:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.length;
+    default:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
+  }
+};
+
 export const BedrockMistralChatCompleteResponseTransform: (
   response: BedrockMistralCompleteResponse | BedrockErrorResponse,
   responseStatus: number,
@@ -1212,7 +1274,9 @@ export const BedrockMistralChatCompleteResponseTransform: (
             role: 'assistant',
             content: response.outputs[0].text,
           },
-          finish_reason: response.outputs[0].stop_reason,
+          finish_reason: transformBedrockMistralCompletionStopReason(
+            response.outputs[0].stop_reason
+          ),
         },
       ],
       usage: {

@@ -8,6 +8,7 @@ import {
 import {
   ChatCompletionResponse,
   ErrorResponse,
+  OPEN_AI_CHAT_COMPLETION_FINISH_REASON,
   ProviderConfig,
 } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
@@ -94,7 +95,7 @@ export const PalmChatCompleteResponseTransform: (
         response.candidates?.map((generation, index) => ({
           message: { role: 'assistant', content: generation.content },
           index: index,
-          finish_reason: 'length',
+          finish_reason: OPEN_AI_CHAT_COMPLETION_FINISH_REASON.length,
         })) ?? [],
     };
   }

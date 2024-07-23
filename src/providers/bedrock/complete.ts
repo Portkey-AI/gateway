@@ -1,6 +1,9 @@
 import { BEDROCK } from '../../globals';
 import { Params } from '../../types/requestBody';
-import { AI21_FINISH_REASON, transformAI21FinishReason } from '../ai21/complete';
+import {
+  AI21_FINISH_REASON,
+  transformAI21FinishReason,
+} from '../ai21/complete';
 import {
   AnthropicStopReason,
   getAnthropicStreamChunkFinishReason,
@@ -252,7 +255,7 @@ export const BedrockAI21CompleteConfig: ProviderConfig = {
   },
 };
 
-enum BedrockLlamaStopReason {
+export enum BedrockLlamaStopReason {
   stop = 'stop',
   length = 'length',
 }
@@ -373,7 +376,7 @@ export const BedrockLlamaCompleteStreamChunkTransform: (
   })}\n\n`;
 };
 
-enum BedrockTitanCompletionReason {
+export enum BedrockTitanCompletionReason {
   FINISHED = 'FINISHED',
   LENGTH = 'LENGTH',
   STOP_CRITERIA_MET = 'STOP_CRITERIA_MET',
@@ -616,7 +619,9 @@ export const BedrockAnthropicCompleteResponseTransform: (
           text: response.completion,
           index: 0,
           logprobs: null,
-          finish_reason: transformAnthropicCompletionFinishReason(response.stop_reason),
+          finish_reason: transformAnthropicCompletionFinishReason(
+            response.stop_reason
+          ),
         },
       ],
       usage: {
@@ -712,7 +717,7 @@ export const BedrockAnthropicCompleteStreamChunkTransform: (
   })}\n\n`;
 };
 
-enum BedrockCohereFinishReason {
+export enum BedrockCohereFinishReason {
   COMPLETE = 'COMPLETE',
   MAX_TOKENS = 'MAX_TOKENS',
   ERROR = 'ERROR',
@@ -928,7 +933,7 @@ export const BedrockMistralCompleteStreamChunkTransform: (
   })}\n\n`;
 };
 
-enum BedrockMistralStopReason {
+export enum BedrockMistralStopReason {
   stop = 'stop',
   length = 'length',
   tool_calls = 'tool_calls',

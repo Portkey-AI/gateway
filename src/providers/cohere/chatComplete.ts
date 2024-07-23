@@ -3,6 +3,7 @@ import { Message, Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
+  OPEN_AI_CHAT_COMPLETION_FINISH_REASON,
   ProviderConfig,
 } from '../types';
 import { generateErrorResponse } from '../utils';
@@ -131,7 +132,7 @@ export const CohereChatCompleteResponseTransform: (
     choices: response.generations.map((generation, index) => ({
       message: { role: 'assistant', content: generation.text },
       index: index,
-      finish_reason: 'length',
+      finish_reason: OPEN_AI_CHAT_COMPLETION_FINISH_REASON.length,
     })),
   };
 };

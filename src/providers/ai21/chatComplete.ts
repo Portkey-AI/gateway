@@ -3,13 +3,14 @@ import { Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
+  OPEN_AI_CHAT_COMPLETION_FINISH_REASON,
   ProviderConfig,
 } from '../types';
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
-import { AI21ErrorResponse } from './complete';
+import { AI21_FINISH_REASON, AI21ErrorResponse } from './complete';
 
 export const AI21ChatCompleteConfig: ProviderConfig = {
   messages: [
@@ -103,12 +104,25 @@ interface AI21ChatCompleteResponse {
     text: string;
     role: string;
     finishReason: {
-      reason: string;
+      reason: AI21_FINISH_REASON;
       length: number | null;
       sequence: string | null;
     };
   }[];
 }
+
+export const transformAI21ChatFinishReason = (
+  reason?: AI21_FINISH_REASON
+): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
+  switch (reason) {
+    case AI21_FINISH_REASON.stop:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
+    case AI21_FINISH_REASON.length:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.length;
+    default:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
+  }
+};
 
 export const AI21ErrorResponseTransform: (
   response: AI21ErrorResponse
@@ -148,7 +162,7 @@ export const AI21ChatCompleteResponseTransform: (
         },
         index: index,
         logprobs: null,
-        finish_reason: o.finishReason?.reason,
+        finish_reason: transformAI21ChatFinishReason(o.finishReason?.reason),
       })),
     };
   }

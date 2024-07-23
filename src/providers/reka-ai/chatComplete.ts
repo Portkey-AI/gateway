@@ -145,7 +145,9 @@ export interface RekaAIChatCompleteResponse {
   };
 }
 
-const transformRekAIChatCompletionFinishReason = (finishReason: REKA_AI_CHAT_COMPLETE_FINISH_REASON) => {
+const transformRekAIChatCompletionFinishReason = (
+  finishReason: REKA_AI_CHAT_COMPLETE_FINISH_REASON
+) => {
   switch (finishReason) {
     case REKA_AI_CHAT_COMPLETE_FINISH_REASON.stop:
     case REKA_AI_CHAT_COMPLETE_FINISH_REASON.context:
@@ -155,7 +157,7 @@ const transformRekAIChatCompletionFinishReason = (finishReason: REKA_AI_CHAT_COM
     default:
       return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
   }
-}
+};
 
 export interface RekaAIErrorResponse {
   detail: any; // could be string or array
@@ -192,7 +194,9 @@ export const RekaAIChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: transformRekAIChatCompletionFinishReason(response.finish_reason),
+          finish_reason: transformRekAIChatCompletionFinishReason(
+            response.finish_reason
+          ),
         },
       ],
       usage: {

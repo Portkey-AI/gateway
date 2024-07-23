@@ -12,6 +12,18 @@ export interface GoogleGenerateFunctionCall {
   args: Record<string, any>;
 }
 
+export enum VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON {
+  FINISH_REASON_UNSPECIFIED = 'FINISH_REASON_UNSPECIFIED',
+  STOP = 'STOP',
+  MAX_TOKENS = 'MAX_TOKENS',
+  SAFETY = 'SAFETY',
+  RECITATION = 'RECITATION',
+  OTHER = 'OTHER',
+  BLOCKLIST = 'BLOCKLIST',
+  PROHIBITED_CONTENT = 'PROHIBITED_CONTENT',
+  SPII = 'SPII',
+}
+
 export interface GoogleGenerateContentResponse {
   candidates: {
     content: {
@@ -20,7 +32,7 @@ export interface GoogleGenerateContentResponse {
         functionCall?: GoogleGenerateFunctionCall;
       }[];
     };
-    finishReason: string;
+    finishReason: VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON;
     index: 0;
     safetyRatings: {
       category: string;

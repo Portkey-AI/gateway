@@ -26,6 +26,7 @@ import {
 import {
   ChatCompletionResponse,
   ErrorResponse,
+  OPEN_AI_CHAT_COMPLETION_FINISH_REASON,
   ProviderConfig,
 } from '../types';
 import {
@@ -33,9 +34,10 @@ import {
   generateInvalidProviderResponseError,
 } from '../utils';
 import { transformGenerationConfig } from './transformGenerationConfig';
-import type {
-  GoogleErrorResponse,
-  GoogleGenerateContentResponse,
+import {
+  VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON,
+  type GoogleErrorResponse,
+  type GoogleGenerateContentResponse,
 } from './types';
 
 export const VertexGoogleChatCompleteConfig: ProviderConfig = {
@@ -540,6 +542,25 @@ export const VertexAnthropicChatCompleteConfig: ProviderConfig = {
   },
 };
 
+const transformVertexGeminiChatCompletionStopReason = (
+  stopReason?: VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON
+): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
+  switch (stopReason) {
+    case VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.STOP:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
+    case VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.SAFETY:
+    case VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.RECITATION:
+    case VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.BLOCKLIST:
+    case VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.PROHIBITED_CONTENT:
+    case VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.SPII:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.content_filter;
+    case VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.MAX_TOKENS:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.length;
+    default:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
+  }
+};
+
 export const GoogleChatCompleteResponseTransform: (
   response:
     | GoogleGenerateContentResponse
@@ -582,7 +603,8 @@ export const GoogleChatCompleteResponseTransform: (
 
   if (
     'candidates' in response &&
-    response.candidates[0].finishReason === 'PROHIBITED_CONTENT'
+    response.candidates[0].finishReason ===
+      VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.PROHIBITED_CONTENT
   ) {
     return generateInvalidProviderResponseError(response, GOOGLE_VERTEX_AI);
   }
@@ -628,7 +650,9 @@ export const GoogleChatCompleteResponseTransform: (
           return {
             message: message,
             index: index,
-            finish_reason: generation.finishReason,
+            finish_reason: transformVertexGeminiChatCompletionStopReason(
+              generation.finishReason
+            ),
           };
         }) ?? [],
       usage: {
@@ -776,7 +800,9 @@ export const VertexAnthropicChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: transformAnthropicChatCompletionFinishReason(response.stop_reason),
+          finish_reason: transformAnthropicChatCompletionFinishReason(
+            response.stop_reason
+          ),
         },
       ],
       usage: {

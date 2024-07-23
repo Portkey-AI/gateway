@@ -1,6 +1,11 @@
 import { ANTHROPIC } from '../../globals';
 import { Params } from '../../types/requestBody';
-import { CompletionResponse, ErrorResponse, OPEN_AI_COMPLETION_FINISH_REASON, ProviderConfig } from '../types';
+import {
+  CompletionResponse,
+  ErrorResponse,
+  OPEN_AI_COMPLETION_FINISH_REASON,
+  ProviderConfig,
+} from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import {
   AnthropicErrorResponse,
@@ -107,7 +112,9 @@ export const AnthropicCompleteResponseTransform: (
           text: response.completion,
           index: 0,
           logprobs: null,
-          finish_reason: transformAnthropicCompletionFinishReason(response.stop_reason),
+          finish_reason: transformAnthropicCompletionFinishReason(
+            response.stop_reason
+          ),
         },
       ],
     };

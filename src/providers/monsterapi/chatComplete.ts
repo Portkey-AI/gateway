@@ -2,6 +2,7 @@ import { MONSTERAPI } from '../../globals';
 import {
   ChatCompletionResponse,
   ErrorResponse,
+  OPEN_AI_CHAT_COMPLETION_FINISH_REASON,
   ProviderConfig,
 } from '../types';
 import {
@@ -100,7 +101,7 @@ export const MonsterAPIChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: 'completed',
+          finish_reason: OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop,
         },
       ],
       usage: {

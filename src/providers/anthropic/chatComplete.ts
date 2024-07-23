@@ -427,7 +427,9 @@ export const AnthropicChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: transformAnthropicChatCompletionFinishReason(response.stop_reason),
+          finish_reason: transformAnthropicChatCompletionFinishReason(
+            response.stop_reason
+          ),
         },
       ],
       usage: {
