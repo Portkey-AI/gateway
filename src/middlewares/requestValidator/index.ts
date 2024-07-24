@@ -6,10 +6,11 @@ export const requestValidator = (c: Context, next: any) => {
   const requestHeaders = Object.fromEntries(c.req.raw.headers);
 
   const isSupportedContentType: boolean =
-    [
-      CONTENT_TYPES.APPLICATION_JSON,
-      CONTENT_TYPES.MULTIPART_FORM_DATA,
-    ].includes(requestHeaders['content-type'].split(';')[0]) ||
+    (requestHeaders['content-type'] &&
+      [
+        CONTENT_TYPES.APPLICATION_JSON,
+        CONTENT_TYPES.MULTIPART_FORM_DATA,
+      ].includes(requestHeaders['content-type'].split(';')[0])) ||
     requestHeaders['content-type']
       .split(';')[0]
       ?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN);
