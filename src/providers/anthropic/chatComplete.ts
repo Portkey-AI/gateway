@@ -291,7 +291,7 @@ export interface AnthropicChatCompleteResponse {
   type: string;
   role: string;
   content: AnthropicContentItem[];
-  stop_reason?: AnthropicStopReason;
+  stop_reason: ANTHROPIC_STOP_REASON;
   model: string;
   stop_sequence: null | string;
   usage: {
@@ -307,7 +307,7 @@ export interface AnthropicChatCompleteStreamResponse {
     type: string;
     text: string;
     partial_json?: string;
-    stop_reason?: AnthropicStopReason;
+    stop_reason: ANTHROPIC_STOP_REASON;
   };
   content_block?: {
     type: string;
@@ -328,7 +328,7 @@ export interface AnthropicChatCompleteStreamResponse {
   };
 }
 
-export enum AnthropicStopReason {
+export enum ANTHROPIC_STOP_REASON {
   max_tokens = 'max_tokens',
   stop_sequence = 'stop_sequence',
   tool_use = 'tool_use',
@@ -354,16 +354,16 @@ export const AnthropicErrorResponseTransform: (
 };
 
 // this converts the anthropic stop_reason to an openai finish_reason
-export const transformAnthropicChatCompletionFinishReason = (
-  stopReason?: AnthropicStopReason
+export const transformAnthropicChatStopReason = (
+  stopReason: ANTHROPIC_STOP_REASON
 ): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
   switch (stopReason) {
-    case AnthropicStopReason.stop_sequence:
-    case AnthropicStopReason.end_turn:
+    case ANTHROPIC_STOP_REASON.stop_sequence:
+    case ANTHROPIC_STOP_REASON.end_turn:
       return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
-    case AnthropicStopReason.tool_use:
+    case ANTHROPIC_STOP_REASON.tool_use:
       return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.tool_calls;
-    case AnthropicStopReason.max_tokens:
+    case ANTHROPIC_STOP_REASON.max_tokens:
       return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.length;
     default:
       return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
@@ -371,11 +371,11 @@ export const transformAnthropicChatCompletionFinishReason = (
 };
 
 // finish_reason may be null for stream chunks
-export const getAnthropicStreamChunkFinishReason = (
-  stopReason?: AnthropicStopReason
+export const transformAnthropicChatStreamChunkStopReason = (
+  stopReason?: ANTHROPIC_STOP_REASON | null
 ): OPEN_AI_CHAT_COMPLETION_FINISH_REASON | null => {
   if (!stopReason) return null;
-  return transformAnthropicChatCompletionFinishReason(stopReason);
+  return transformAnthropicChatStopReason(stopReason);
 };
 
 // TODO: The token calculation is wrong atm
@@ -384,10 +384,10 @@ export const AnthropicChatCompleteResponseTransform: (
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    const errorResposne = AnthropicErrorResponseTransform(
+    const errorResponse = AnthropicErrorResponseTransform(
       response as AnthropicErrorResponse
     );
-    if (errorResposne) return errorResposne;
+    if (errorResponse) return errorResponse;
   }
 
   if ('content' in response) {
@@ -427,9 +427,7 @@ export const AnthropicChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: transformAnthropicChatCompletionFinishReason(
-            response.stop_reason
-          ),
+          finish_reason: transformAnthropicChatStopReason(response.stop_reason),
         },
       ],
       usage: {
@@ -514,7 +512,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           {
             index: 0,
             delta: {},
-            finish_reason: getAnthropicStreamChunkFinishReason(
+            finish_reason: transformAnthropicChatStreamChunkStopReason(
               parsedChunk.delta.stop_reason
             ),
           },
@@ -571,7 +569,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: transformAnthropicChatCompletionFinishReason(
+          finish_reason: transformAnthropicChatStreamChunkStopReason(
             parsedChunk.delta?.stop_reason
           ),
         },

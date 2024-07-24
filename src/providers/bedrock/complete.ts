@@ -5,10 +5,9 @@ import {
   transformAI21FinishReason,
 } from '../ai21/complete';
 import {
-  AnthropicStopReason,
-  getAnthropicStreamChunkFinishReason,
+  ANTHROPIC_STOP_REASON,
 } from '../anthropic/chatComplete';
-import { transformAnthropicCompletionFinishReason } from '../anthropic/complete';
+import { transformAnthropicCompletionStopReason, transformAnthropicCompletionStreamChunkStopReason } from '../anthropic/complete';
 import {
   CompletionResponse,
   ErrorResponse,
@@ -583,7 +582,7 @@ export const BedrockAI21CompleteResponseTransform: (
 
 export interface BedrockAnthropicCompleteResponse {
   completion: string;
-  stop_reason: AnthropicStopReason;
+  stop_reason: ANTHROPIC_STOP_REASON;
   stop: null | string;
 }
 
@@ -619,7 +618,7 @@ export const BedrockAnthropicCompleteResponseTransform: (
           text: response.completion,
           index: 0,
           logprobs: null,
-          finish_reason: transformAnthropicCompletionFinishReason(
+          finish_reason: transformAnthropicCompletionStopReason(
             response.stop_reason
           ),
         },
@@ -637,7 +636,7 @@ export const BedrockAnthropicCompleteResponseTransform: (
 
 export interface BedrockAnthropicStreamChunk {
   completion: string;
-  stop_reason?: AnthropicStopReason;
+  stop_reason?: ANTHROPIC_STOP_REASON;
   stop: string | null;
   'amazon-bedrock-invocationMetrics': {
     inputTokenCount: number;
@@ -682,7 +681,7 @@ export const BedrockAnthropicCompleteStreamChunkTransform: (
             text: '',
             index: 0,
             logprobs: null,
-            finish_reason: getAnthropicStreamChunkFinishReason(
+            finish_reason: transformAnthropicCompletionStreamChunkStopReason(
               parsedChunk.stop_reason
             ),
           },

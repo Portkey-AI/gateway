@@ -2,9 +2,9 @@ import { BEDROCK } from '../../globals';
 import { ContentType, Message, Params } from '../../types/requestBody';
 import { transformAI21ChatFinishReason } from '../ai21/chatComplete';
 import {
-  AnthropicStopReason,
-  transformAnthropicChatCompletionFinishReason,
-  getAnthropicStreamChunkFinishReason,
+  ANTHROPIC_STOP_REASON,
+  transformAnthropicChatStopReason,
+  transformAnthropicChatStreamChunkStopReason,
 } from '../anthropic/chatComplete';
 import {
   ChatCompletionResponse,
@@ -871,7 +871,7 @@ interface BedrockAnthropicChatCompleteResponse {
   type: string;
   role: string;
   content: AnthropicContentItem[];
-  stop_reason?: AnthropicStopReason;
+  stop_reason: ANTHROPIC_STOP_REASON;
   model: string;
   stop_sequence: null | string;
 }
@@ -932,9 +932,7 @@ export const BedrockAnthropicChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: transformAnthropicChatCompletionFinishReason(
-            response.stop_reason
-          ),
+          finish_reason: transformAnthropicChatStopReason(response.stop_reason),
         },
       ],
       usage: {
@@ -955,7 +953,7 @@ interface BedrockAnthropicChatCompleteStreamResponse {
     type: string;
     text: string;
     partial_json?: string;
-    stop_reason?: AnthropicStopReason;
+    stop_reason?: ANTHROPIC_STOP_REASON;
   };
   content_block?: {
     type: string;
@@ -1013,7 +1011,7 @@ export const BedrockAnthropicChatCompleteStreamChunkTransform: (
           {
             index: 0,
             delta: {},
-            finish_reason: getAnthropicStreamChunkFinishReason(
+            finish_reason: transformAnthropicChatStreamChunkStopReason(
               parsedChunk.delta?.stop_reason
             ),
           },
@@ -1047,7 +1045,7 @@ export const BedrockAnthropicChatCompleteStreamChunkTransform: (
             },
             index: 0,
             logprobs: null,
-            finish_reason: getAnthropicStreamChunkFinishReason(
+            finish_reason: transformAnthropicChatStreamChunkStopReason(
               parsedChunk.delta?.stop_reason
             ),
           },

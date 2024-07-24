@@ -112,7 +112,7 @@ interface AI21ChatCompleteResponse {
 }
 
 export const transformAI21ChatFinishReason = (
-  reason?: AI21_FINISH_REASON
+  reason: AI21_FINISH_REASON
 ): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
   switch (reason) {
     case AI21_FINISH_REASON.stop:
