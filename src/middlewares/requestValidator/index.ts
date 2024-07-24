@@ -6,17 +6,16 @@ export const requestValidator = (c: Context, next: any) => {
   const requestHeaders = Object.fromEntries(c.req.raw.headers);
 
   const contentType = requestHeaders['content-type'];
-  const isSupportedContentType: boolean =
+  if (
     !!contentType &&
-    ([
+    ![
       CONTENT_TYPES.APPLICATION_JSON,
       CONTENT_TYPES.MULTIPART_FORM_DATA,
-    ].includes(contentType.split(';')[0]) ||
-      contentType
+    ].includes(requestHeaders['content-type'].split(';')[0]) &&
+      !contentType
         .split(';')[0]
-        ?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN));
-
-  if (!!contentType && !isSupportedContentType) {
+        ?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
+  ) {
     return new Response(
       JSON.stringify({
         status: 'failure',
@@ -50,13 +49,14 @@ export const requestValidator = (c: Context, next: any) => {
       }
     );
   }
-
-  const customHostHeader = requestHeaders[`x-${POWERED_BY}-custom-host`];
-  if (customHostHeader && customHostHeader.indexOf('api.portkey') > -1) {
+  if (
+    requestHeaders[`x-${POWERED_BY}-provider`] &&
+    !VALID_PROVIDERS.includes(requestHeaders[`x-${POWERED_BY}-provider`])
+  ) {
     return new Response(
       JSON.stringify({
         status: 'failure',
-        message: `Invalid custom host`,
+        message: `Invalid provider passed`,
       }),
       {
         status: 400,
@@ -67,15 +67,12 @@ export const requestValidator = (c: Context, next: any) => {
     );
   }
 
-  const isSupportedProvider: boolean =
-    !!requestHeaders[`x-${POWERED_BY}-provider`] &&
-    VALID_PROVIDERS.includes(requestHeaders[`x-${POWERED_BY}-provider`]);
-
-  if (!customHostHeader && !isSupportedProvider) {
+  const customHostHeader = requestHeaders[`x-${POWERED_BY}-custom-host`];
+  if (customHostHeader && customHostHeader.indexOf('api.portkey') > -1) {
     return new Response(
       JSON.stringify({
         status: 'failure',
-        message: `Invalid provider passed`,
+        message: `Invalid custom host`,
       }),
       {
         status: 400,
