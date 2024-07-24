@@ -542,7 +542,7 @@ export const VertexAnthropicChatCompleteConfig: ProviderConfig = {
   },
 };
 
-const transformVertexGeminiChatCompletionStopReason = (
+const transformVertexGeminiChatStopReason = (
   stopReason?: VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON
 ): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
   switch (stopReason) {
@@ -650,7 +650,7 @@ export const GoogleChatCompleteResponseTransform: (
           return {
             message: message,
             index: index,
-            finish_reason: transformVertexGeminiChatCompletionStopReason(
+            finish_reason: transformVertexGeminiChatStopReason(
               generation.finishReason
             ),
           };

@@ -1105,7 +1105,7 @@ export const BedrockAnthropicChatCompleteStreamChunkTransform: (
 };
 
 const transformBedrockCohereFinishReason = (
-  finishReason?: BEDROCK_COHERE_FINISH_REASON
+  finishReason: BEDROCK_COHERE_FINISH_REASON
 ): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
   switch (finishReason) {
     case BEDROCK_COHERE_FINISH_REASON.COMPLETE:
