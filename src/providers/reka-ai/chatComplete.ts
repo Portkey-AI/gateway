@@ -145,7 +145,7 @@ export interface RekaAIChatCompleteResponse {
   };
 }
 
-const transformRekAIChatCompletionFinishReason = (
+const transformRekaAIChatFinishReason = (
   finishReason: REKA_AI_CHAT_COMPLETE_FINISH_REASON
 ) => {
   switch (finishReason) {
@@ -194,7 +194,7 @@ export const RekaAIChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: transformRekAIChatCompletionFinishReason(
+          finish_reason: transformRekaAIChatFinishReason(
             response.finish_reason
           ),
         },
