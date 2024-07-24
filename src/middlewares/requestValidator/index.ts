@@ -12,7 +12,7 @@ export const requestValidator = (c: Context, next: any) => {
     ].includes(requestHeaders['content-type'].split(';')[0]) ||
     requestHeaders['content-type']
       .split(';')[0]
-      .startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN);
+      ?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN);
 
   if (requestHeaders['content-type'] && !isSupportedContentType) {
     return new Response(
