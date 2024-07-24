@@ -91,7 +91,8 @@ function headersToSend(
 ): Record<string, string> {
   let final: Record<string, string> = {};
   const poweredByHeadersPattern = `x-${POWERED_BY}-`;
-  const headersToAvoid = [...customHeadersToIgnore];
+  const headersToAvoidForCloudflare = ['expect'];
+  const headersToAvoid = [...customHeadersToIgnore, ...headersToAvoidForCloudflare];
   if (
     headersObj['content-type']?.split(';')[0] ===
     CONTENT_TYPES.MULTIPART_FORM_DATA
@@ -108,7 +109,8 @@ function headersToSend(
     }
   });
 
-  delete final['expect'];
+  // Remove brotli from accept-encoding because cloudflare has problems with it
+  final['accept-encoding'] = final['accept-encoding']?.replace('br', '');
 
   return final;
 }
