@@ -12,9 +12,7 @@ export const requestValidator = (c: Context, next: any) => {
       CONTENT_TYPES.APPLICATION_JSON,
       CONTENT_TYPES.MULTIPART_FORM_DATA,
     ].includes(requestHeaders['content-type'].split(';')[0]) &&
-      !contentType
-        .split(';')[0]
-        ?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
+    !contentType.split(';')[0]?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
   ) {
     return new Response(
       JSON.stringify({
