@@ -5,17 +5,18 @@ import { configSchema } from './schema/config';
 export const requestValidator = (c: Context, next: any) => {
   const requestHeaders = Object.fromEntries(c.req.raw.headers);
 
+  const contentType = requestHeaders['content-type'];
   const isSupportedContentType: boolean =
-    (requestHeaders['content-type'] &&
-      [
-        CONTENT_TYPES.APPLICATION_JSON,
-        CONTENT_TYPES.MULTIPART_FORM_DATA,
-      ].includes(requestHeaders['content-type'].split(';')[0])) ||
-    requestHeaders['content-type']
-      .split(';')[0]
-      ?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN);
+    !!contentType &&
+    ([
+      CONTENT_TYPES.APPLICATION_JSON,
+      CONTENT_TYPES.MULTIPART_FORM_DATA,
+    ].includes(contentType.split(';')[0]) ||
+      contentType
+        .split(';')[0]
+        ?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN));
 
-  if (requestHeaders['content-type'] && !isSupportedContentType) {
+  if (!!contentType && !isSupportedContentType) {
     return new Response(
       JSON.stringify({
         status: 'failure',
