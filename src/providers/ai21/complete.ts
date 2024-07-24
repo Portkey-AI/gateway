@@ -99,7 +99,7 @@ export interface AI21ErrorResponse {
   detail: string;
 }
 
-export const transformAI21FinishReason = (
+export const transformAI21CompletionFinishReason = (
   reason: AI21_FINISH_REASON
 ): OPEN_AI_COMPLETION_FINISH_REASON => {
   switch (reason) {
@@ -139,7 +139,7 @@ export const AI21CompleteResponseTransform: (
         text: completion.data.text,
         index: index,
         logprobs: null,
-        finish_reason: transformAI21FinishReason(
+        finish_reason: transformAI21CompletionFinishReason(
           completion.finishReason?.reason
         ),
       })),

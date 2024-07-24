@@ -73,7 +73,7 @@ interface AnthropicCompleteResponse {
   exception: null | string;
 }
 
-export const transformAnthropicCompletionStopReason = (
+export const transformAnthropicCompletionFinishReason = (
   stopReason: ANTHROPIC_STOP_REASON
 ): OPEN_AI_COMPLETION_FINISH_REASON => {
   switch (stopReason) {
@@ -87,11 +87,11 @@ export const transformAnthropicCompletionStopReason = (
   }
 };
 
-export const transformAnthropicCompletionStreamChunkStopReason = (
+export const transformAnthropicCompletionStreamChunkFinishReason = (
   stopReason?: ANTHROPIC_STOP_REASON | null
 ): OPEN_AI_COMPLETION_FINISH_REASON | null => {
   if (!stopReason) return null;
-  return transformAnthropicCompletionStopReason(stopReason);
+  return transformAnthropicCompletionFinishReason(stopReason);
 };
 
 // TODO: The token calculation is wrong atm
@@ -118,7 +118,7 @@ export const AnthropicCompleteResponseTransform: (
           text: response.completion,
           index: 0,
           logprobs: null,
-          finish_reason: transformAnthropicCompletionStopReason(
+          finish_reason: transformAnthropicCompletionFinishReason(
             response.stop_reason
           ),
         },
@@ -156,7 +156,7 @@ export const AnthropicCompleteStreamChunkTransform: (
           text: parsedChunk.completion,
           index: 0,
           logprobs: null,
-          finish_reason: transformAnthropicCompletionStreamChunkStopReason(
+          finish_reason: transformAnthropicCompletionStreamChunkFinishReason(
             parsedChunk.stop_reason
           ),
         },
