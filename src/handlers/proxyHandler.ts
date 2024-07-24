@@ -92,7 +92,10 @@ function headersToSend(
   let final: Record<string, string> = {};
   const poweredByHeadersPattern = `x-${POWERED_BY}-`;
   const headersToAvoidForCloudflare = ['expect'];
-  const headersToAvoid = [...customHeadersToIgnore, ...headersToAvoidForCloudflare];
+  const headersToAvoid = [
+    ...customHeadersToIgnore,
+    ...headersToAvoidForCloudflare,
+  ];
   if (
     headersObj['content-type']?.split(';')[0] ===
     CONTENT_TYPES.MULTIPART_FORM_DATA
