@@ -4,10 +4,11 @@ import {
   AI21_FINISH_REASON,
   transformAI21CompletionFinishReason,
 } from '../ai21/complete';
+import { ANTHROPIC_STOP_REASON } from '../anthropic/chatComplete';
 import {
-  ANTHROPIC_STOP_REASON,
-} from '../anthropic/chatComplete';
-import { transformAnthropicCompletionFinishReason, transformAnthropicCompletionStreamChunkFinishReason } from '../anthropic/complete';
+  transformAnthropicCompletionFinishReason,
+  transformAnthropicCompletionStreamChunkFinishReason,
+} from '../anthropic/complete';
 import {
   CompletionResponse,
   ErrorResponse,
