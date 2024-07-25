@@ -113,7 +113,8 @@ function headersToSend(
   });
 
   // Remove brotli from accept-encoding because cloudflare has problems with it
-  if (final['accept-encoding']?.includes('br')) final['accept-encoding'] = final['accept-encoding']?.replace('br', '');
+  if (final['accept-encoding']?.includes('br'))
+    final['accept-encoding'] = final['accept-encoding']?.replace('br', '');
 
   return final;
 }
