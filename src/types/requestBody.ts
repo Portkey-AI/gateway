@@ -129,13 +129,29 @@ export interface ContentType {
   };
 }
 
+export interface ToolCall {
+  id: string;
+  type: string;
+  function: {
+    name: string;
+    arguments: string;
+  };
+}
+
+export type OpenAIMessageRole =
+  | 'system'
+  | 'user'
+  | 'assistant'
+  | 'function'
+  | 'tool';
+
 /**
  * A message in the conversation.
  * @interface
  */
 export interface Message {
   /** The role of the message sender. It can be 'system', 'user', 'assistant', or 'function'. */
-  role: 'system' | 'user' | 'assistant' | 'function' | 'tool';
+  role: OpenAIMessageRole;
   /** The content of the message. */
   content?: string | ContentType[];
   /** The name of the function to call, if any. */
@@ -180,6 +196,15 @@ export interface Function {
   parameters?: JsonSchema;
 }
 
+export interface ToolChoiceObject {
+  type: string;
+  function: {
+    name: string;
+  };
+}
+
+export type ToolChoice = ToolChoiceObject | 'none' | 'auto' | 'required';
+
 /**
  * A tool in the conversation.
  * @interface
@@ -189,13 +214,6 @@ export interface Tool {
   type: string;
   /** A description of the function. */
   function?: Function;
-}
-
-export interface ToolChoice {
-  type: string;
-  function: {
-    name: string;
-  };
 }
 
 /**
@@ -225,7 +243,7 @@ export interface Params {
   examples?: Examples[];
   top_k?: number;
   tools?: Tool[];
-  tool_choice?: ToolChoice | 'none' | 'auto' | 'required';
+  tool_choice?: ToolChoice;
   response_format?: { type: 'json_object' | 'text' };
   // Google Vertex AI specific
   safety_settings?: any;
