@@ -58,7 +58,8 @@
         },
         "required": ["scanners"]
       }
-    }, {
+    },
+    {
       "name": "Scan Response",
       "id": "scanResponse",
       "supportedHooks": ["afterRequestHook"],
@@ -83,16 +84,8 @@
             ],
             "items": {
               "type": "string",
-              "enum": [
-                "pii",
-                "secrets",
-                "toxic_language"
-              ],
-              "default": [
-                "pii",
-                "secrets",
-                "toxic_language"
-              ]
+              "enum": ["pii", "secrets", "toxic_language"],
+              "default": ["pii", "secrets", "toxic_language"]
             }
           }
         },

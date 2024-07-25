@@ -2,10 +2,18 @@ import testCreds from './.creds.json';
 import { handler as scanPromptHandler } from './scanPrompt';
 import { handler as scanResponseHandler } from './scanResponse';
 
-function getParameters(scanners:string[] = ['pii', 'prompt_injection', 'secrets', 'toxic_language', 'invisible_characters']) {
+function getParameters(
+  scanners: string[] = [
+    'pii',
+    'prompt_injection',
+    'secrets',
+    'toxic_language',
+    'invisible_characters',
+  ]
+) {
   return {
-    credentials: testCreds, 
-    scanners
+    credentials: testCreds,
+    scanners,
   };
 }
 
@@ -26,7 +34,7 @@ describe('scanPrompt handler', () => {
     expect(result.data).toBeNull();
   });
 
-  it("should pass when text is clean", async () => {
+  it('should pass when text is clean', async () => {
     const eventType = 'beforeRequestHook';
     const context = {
       request: { text: 'this is a test string for moderations' },
@@ -41,7 +49,7 @@ describe('scanPrompt handler', () => {
     expect(result.data).toBeDefined();
   });
 
-  it("should fail when text contains PII", async () => {
+  it('should fail when text contains PII', async () => {
     const eventType = 'beforeRequestHook';
     const context = {
       request: { text: 'My social security number is 112-42-3323' },
@@ -88,4 +96,3 @@ describe('scanResponse handler', () => {
     expect(result.data).toBeDefined();
   });
 });
-
