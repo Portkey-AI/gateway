@@ -4,8 +4,6 @@ import {
   GuardrailFeedback,
   GuardrailResult,
   HookContext,
-  HookContextRequest,
-  HookContextResponse,
   HookObject,
   HookOnFailObject,
   HookOnSuccessObject,
@@ -230,8 +228,8 @@ export class HooksManager {
           checks: checkResults,
           feedback: this.createFeedbackObject(
             checkResults,
-            hook.onFail,
-            hook.onSuccess
+            hook.on_fail,
+            hook.on_success
           ),
         } as GuardrailResult;
       }
@@ -255,17 +253,29 @@ export class HooksManager {
     onSuccess: HookOnSuccessObject | undefined
   ): GuardrailFeedback {
     const feedbackObj: GuardrailFeedback = {};
+    const verdict = results.every((result) => result.verdict || result.error);
 
-    if (results.some((result) => result.verdict === false)) {
+    if (verdict && !onSuccess?.feedback) {
+      return feedbackObj;
+    }
+
+    if (!verdict && !onFail?.feedback) {
+      return feedbackObj;
+    }
+
+    if (!verdict) {
       feedbackObj.value = onFail?.feedback?.value || 0;
       feedbackObj.weight = onFail?.feedback?.weight || 0;
+      feedbackObj.metadata = onFail?.feedback?.metadata || {};
     } else {
       feedbackObj.value = onSuccess?.feedback?.value || 0;
       feedbackObj.weight = onSuccess?.feedback?.weight || 0;
+      feedbackObj.metadata = onSuccess?.feedback?.metadata || {};
     }
 
     feedbackObj.metadata = {
       ...results.map((result) => result.metadata),
+      ...feedbackObj.metadata,
       successfulChecks: results
         .filter((result) => result.verdict === true)
         .map((result) => result.id)
