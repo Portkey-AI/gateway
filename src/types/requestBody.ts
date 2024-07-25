@@ -65,6 +65,8 @@ export interface Options {
   vertexProjectId?: string;
   vertexServiceAccountJson?: Record<string, any>;
 
+  afterRequestHooks?: any;
+  beforeRequestHooks?: any;
   /** OpenAI specific */
   openaiProject?: string;
   openaiOrganization?: string;
