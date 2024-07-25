@@ -13,6 +13,8 @@ import { handler as pii } from './portkey/pii';
 import { handler as gibberish } from './portkey/gibberish';
 import { handler as sydeguard } from './sydelabs/sydeguard';
 import { handler as validateProject } from './aporia/validateProject';
+import { handler as scanResponse } from './pillar/scanResponse';
+import { handler as scanPrompt } from './pillar/scanPrompt';
 
 export const plugins = {
   default: {
@@ -37,5 +39,9 @@ export const plugins = {
   },
   aporia: {
     validateProject: validateProject,
+  },
+  pillar: {
+    scanPrompt: scanPrompt,
+    scanResponse: scanResponse,
   },
 };
