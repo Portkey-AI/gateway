@@ -17,6 +17,7 @@
     {
       "name": "Validate - Project",
       "id": "validateProject",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
       "type": "guardrail",
       "description": [
         {
