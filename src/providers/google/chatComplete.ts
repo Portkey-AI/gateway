@@ -1,5 +1,12 @@
 import { GOOGLE } from '../../globals';
-import { ContentType, Message, Params } from '../../types/requestBody';
+import {
+  ContentType,
+  Message,
+  OpenAIMessageRole,
+  Params,
+  ToolCall,
+  ToolChoice,
+} from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -30,6 +37,82 @@ const transformGenerationConfig = (params: Params) => {
   return generationConfig;
 };
 
+// models for which systemInstruction is not supported
+export const SYSTEM_INSTRUCTION_DISABLED_MODELS = [
+  'gemini-1.0-pro',
+  'gemini-1.0-pro-001',
+  'gemini-1.0-pro-latest',
+  'gemini-1.0-pro-vision-latest',
+  'gemini-pro',
+  'gemini-pro-vision',
+];
+
+export type GoogleMessageRole = 'user' | 'model' | 'system' | 'function';
+
+interface GoogleFunctionCallMessagePart {
+  functionCall: GoogleGenerateFunctionCall;
+}
+
+interface GoogleFunctionResponseMessagePart {
+  functionResponse: {
+    name: string;
+    response: {
+      name?: string;
+      content: string;
+    };
+  };
+}
+
+type GoogleMessagePart =
+  | GoogleFunctionCallMessagePart
+  | GoogleFunctionResponseMessagePart
+  | { text: string };
+
+export interface GoogleMessage {
+  role: GoogleMessageRole;
+  parts: GoogleMessagePart[];
+}
+
+export interface GoogleToolConfig {
+  function_calling_config: {
+    mode: GoogleToolChoiceType | undefined;
+    allowed_function_names?: string[];
+  };
+}
+
+export const transformOpenAIRoleToGoogleRole = (
+  role: OpenAIMessageRole
+): GoogleMessageRole => {
+  switch (role) {
+    case 'assistant':
+      return 'model';
+    case 'tool':
+      return 'function';
+    default:
+      return role;
+  }
+};
+
+type GoogleToolChoiceType = 'AUTO' | 'ANY' | 'NONE';
+
+export const transformToolChoiceForGemini = (
+  tool_choice: ToolChoice
+): GoogleToolChoiceType | undefined => {
+  if (typeof tool_choice === 'object' && tool_choice.type === 'function')
+    return 'ANY';
+  if (typeof tool_choice === 'string') {
+    switch (tool_choice) {
+      case 'auto':
+        return 'AUTO';
+      case 'none':
+        return 'NONE';
+      case 'required':
+        return 'ANY';
+    }
+  }
+  return undefined;
+};
+
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
 export const GoogleChatCompleteConfig: ProviderConfig = {
@@ -38,57 +121,132 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
     required: true,
     default: 'gemini-pro',
   },
-  messages: {
-    param: 'contents',
-    default: '',
-    transform: (params: Params) => {
-      let lastRole: 'user' | 'model' | undefined;
-      const messages: { role: string; parts: { text: string }[] }[] = [];
+  messages: [
+    {
+      param: 'contents',
+      default: '',
+      transform: (params: Params) => {
+        let lastRole: GoogleMessageRole | undefined;
+        const messages: GoogleMessage[] = [];
 
-      params.messages?.forEach((message: Message) => {
-        const role = message.role === 'assistant' ? 'model' : 'user';
-        let parts = [];
-        if (typeof message.content === 'string') {
-          parts.push({
-            text: message.content,
-          });
-        }
+        params.messages?.forEach((message: Message) => {
+          // From gemini-1.5 onwards, systemInstruction is supported
+          // Skipping system message and sending it in systemInstruction for gemini 1.5 models
+          if (
+            message.role === 'system' &&
+            !SYSTEM_INSTRUCTION_DISABLED_MODELS.includes(params.model as string)
+          )
+            return;
 
-        if (message.content && typeof message.content === 'object') {
-          message.content.forEach((c: ContentType) => {
-            if (c.type === 'text') {
+          const role = transformOpenAIRoleToGoogleRole(message.role);
+          let parts = [];
+
+          if (message.role === 'assistant' && message.tool_calls) {
+            message.tool_calls.forEach((tool_call: ToolCall) => {
               parts.push({
-                text: c.text,
-              });
-            }
-            if (c.type === 'image_url') {
-              parts.push({
-                inlineData: {
-                  mimeType: 'image/jpeg',
-                  data: c.image_url?.url,
+                functionCall: {
+                  name: tool_call.function.name,
+                  args: JSON.parse(tool_call.function.arguments),
                 },
               });
-            }
-          });
-        }
+            });
+          } else if (
+            message.role === 'tool' &&
+            typeof message.content === 'string'
+          ) {
+            parts.push({
+              functionResponse: {
+                name: message.name ?? 'gateway-tool-filler-name',
+                response: {
+                  content: message.content,
+                },
+              },
+            });
+          } else if (message.content && typeof message.content === 'object') {
+            message.content.forEach((c: ContentType) => {
+              if (c.type === 'text') {
+                parts.push({
+                  text: c.text,
+                });
+              }
+              if (c.type === 'image_url') {
+                parts.push({
+                  inlineData: {
+                    mimeType: 'image/jpeg',
+                    data: c.image_url?.url,
+                  },
+                });
+              }
+            });
+          } else if (typeof message.content === 'string') {
+            parts.push({
+              text: message.content,
+            });
+          }
 
-        // @NOTE: This takes care of the "Please ensure that multiturn requests alternate between user and model."
-        // error that occurs when we have multiple user messages in a row.
-        const shouldAppendEmptyModeChat =
-          lastRole === 'user' &&
-          role === 'user' &&
-          !params.model?.includes('vision');
+          // @NOTE: This takes care of the "Please ensure that multiturn requests alternate between user and model."
+          // error that occurs when we have multiple user messages in a row.
+          const shouldAppendEmptyModeChat =
+            lastRole === 'user' &&
+            role === 'user' &&
+            !params.model?.includes('vision');
 
-        if (shouldAppendEmptyModeChat) {
-          messages.push({ role: 'model', parts: [{ text: '' }] });
-        }
+          if (shouldAppendEmptyModeChat) {
+            messages.push({ role: 'model', parts: [{ text: '' }] });
+          }
 
-        messages.push({ role, parts });
-        lastRole = role;
-      });
-      return messages;
+          messages.push({ role, parts });
+          lastRole = role;
+        });
+
+        return messages;
+      },
     },
-  },
+    {
+      param: 'systemInstruction',
+      default: '',
+      transform: (params: Params) => {
+        // systemInstruction is only supported from gemini 1.5 models
+        if (SYSTEM_INSTRUCTION_DISABLED_MODELS.includes(params.model as string))
+          return;
+
+        const firstMessage = params.messages?.[0] || null;
+
+        if (!firstMessage) return;
+
+        if (
+          firstMessage.role === 'system' &&
+          typeof firstMessage.content === 'string'
+        ) {
+          return {
+            parts: [
+              {
+                text: firstMessage.content,
+              },
+            ],
+            role: 'system',
+          };
+        }
+
+        if (
+          firstMessage.role === 'system' &&
+          typeof firstMessage.content === 'object' &&
+          firstMessage.content?.[0]?.text
+        ) {
+          return {
+            parts: [
+              {
+                text: firstMessage.content?.[0].text,
+              },
+            ],
+            role: 'system',
+          };
+        }
+
+        return;
+      },
+    },
+  ],
   temperature: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
@@ -119,7 +277,32 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
           functionDeclarations.push(tool.function);
         }
       });
-      return [{ functionDeclarations }];
+      return { functionDeclarations };
+    },
+  },
+  tool_choice: {
+    param: 'tool_config',
+    default: '',
+    transform: (params: Params) => {
+      if (params.tool_choice) {
+        const allowedFunctionNames: string[] = [];
+        if (
+          typeof params.tool_choice === 'object' &&
+          params.tool_choice.type === 'function'
+        ) {
+          allowedFunctionNames.push(params.tool_choice.function.name);
+        }
+        const toolConfig: GoogleToolConfig = {
+          function_calling_config: {
+            mode: transformToolChoiceForGemini(params.tool_choice),
+          },
+        };
+        if (allowedFunctionNames.length > 0) {
+          toolConfig.function_calling_config.allowed_function_names =
+            allowedFunctionNames;
+        }
+        return toolConfig;
+      }
     },
   },
 };
@@ -159,6 +342,11 @@ interface GoogleGenerateContentResponse {
       probability: string;
     }[];
   };
+  usageMetadata: {
+    promptTokenCount: number;
+    candidatesTokenCount: number;
+    totalTokenCount: number;
+  };
 }
 
 export const GoogleErrorResponseTransform: (
@@ -193,7 +381,7 @@ export const GoogleChatCompleteResponseTransform: (
 
   if ('candidates' in response) {
     return {
-      id: crypto.randomUUID(),
+      id: 'portkey-' + crypto.randomUUID(),
       object: 'chat_completion',
       created: Math.floor(Date.now() / 1000),
       model: 'Unknown',
@@ -209,18 +397,18 @@ export const GoogleChatCompleteResponseTransform: (
           } else if (generation.content.parts[0]?.functionCall) {
             message = {
               role: 'assistant',
-              tool_calls: [
-                {
-                  id: crypto.randomUUID(),
-                  type: 'function',
-                  function: {
-                    name: generation.content.parts[0]?.functionCall.name,
-                    arguments: JSON.stringify(
-                      generation.content.parts[0]?.functionCall.args
-                    ),
-                  },
-                },
-              ],
+              tool_calls: generation.content.parts.map((part) => {
+                if (part.functionCall) {
+                  return {
+                    id: 'portkey-' + crypto.randomUUID(),
+                    type: 'function',
+                    function: {
+                      name: part.functionCall.name,
+                      arguments: JSON.stringify(part.functionCall.args),
+                    },
+                  };
+                }
+              }),
             };
           }
           return {
@@ -229,6 +417,11 @@ export const GoogleChatCompleteResponseTransform: (
             finish_reason: generation.finishReason,
           };
         }) ?? [],
+      usage: {
+        prompt_tokens: response.usageMetadata.promptTokenCount,
+        completion_tokens: response.usageMetadata.candidatesTokenCount,
+        total_tokens: response.usageMetadata.totalTokenCount,
+      },
     };
   }
 
@@ -276,19 +469,19 @@ export const GoogleChatCompleteStreamChunkTransform: (
           } else if (generation.content.parts[0]?.functionCall) {
             message = {
               role: 'assistant',
-              tool_calls: [
-                {
-                  id: crypto.randomUUID(),
-                  type: 'function',
-                  index: 0,
-                  function: {
-                    name: generation.content.parts[0]?.functionCall.name,
-                    arguments: JSON.stringify(
-                      generation.content.parts[0]?.functionCall.args
-                    ),
-                  },
-                },
-              ],
+              tool_calls: generation.content.parts.map((part, idx) => {
+                if (part.functionCall) {
+                  return {
+                    index: idx,
+                    id: 'portkey-' + crypto.randomUUID(),
+                    type: 'function',
+                    function: {
+                      name: part.functionCall.name,
+                      arguments: JSON.stringify(part.functionCall.args),
+                    },
+                  };
+                }
+              }),
             };
           }
           return {
@@ -297,6 +490,11 @@ export const GoogleChatCompleteStreamChunkTransform: (
             finish_reason: generation.finishReason,
           };
         }) ?? [],
+      usage: {
+        prompt_tokens: parsedChunk.usageMetadata.promptTokenCount,
+        completion_tokens: parsedChunk.usageMetadata.candidatesTokenCount,
+        total_tokens: parsedChunk.usageMetadata.totalTokenCount,
+      },
     })}` + '\n\n'
   );
 };

@@ -1,5 +1,5 @@
 import { ANTHROPIC } from '../../globals';
-import { Params, Message } from '../../types/requestBody';
+import { Params, Message, ContentType } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -12,6 +12,84 @@ import {
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
+interface AnthropicTool {
+  name: string;
+  description: string;
+  input_schema: {
+    type: string;
+    properties: Record<
+      string,
+      {
+        type: string;
+        description: string;
+      }
+    >;
+    required: string[];
+  };
+}
+
+interface AnthropicToolResultContentItem {
+  type: 'tool_result';
+  tool_use_id: string;
+  content?: string;
+}
+
+type AnthropicMessageContentItem = AnthropicToolResultContentItem | ContentType;
+
+interface AnthropicMessage extends Message {
+  content?: string | AnthropicMessageContentItem[];
+}
+
+const transformAssistantMessage = (msg: Message): AnthropicMessage => {
+  let content: AnthropicContentItem[] = [];
+  const containsToolCalls = msg.tool_calls && msg.tool_calls.length;
+
+  if (msg.content && typeof msg.content === 'string') {
+    content.push({
+      type: 'text',
+      text: msg.content,
+    });
+  } else if (
+    msg.content &&
+    typeof msg.content === 'object' &&
+    msg.content.length
+  ) {
+    if (msg.content[0].text) {
+      content.push({
+        type: 'text',
+        text: msg.content[0].text,
+      });
+    }
+  }
+  if (containsToolCalls) {
+    msg.tool_calls.forEach((toolCall: any) => {
+      content.push({
+        type: 'tool_use',
+        name: toolCall.function.name,
+        id: toolCall.id,
+        input: JSON.parse(toolCall.function.arguments),
+      });
+    });
+  }
+  return {
+    role: msg.role,
+    content,
+  };
+};
+
+const transformToolMessage = (msg: Message): AnthropicMessage => {
+  return {
+    role: 'user',
+    content: [
+      {
+        type: 'tool_result',
+        tool_use_id: msg.tool_call_id,
+        content: msg.content as string,
+      },
+    ],
+  };
+};
+
 export const AnthropicChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
@@ -23,57 +101,62 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
       param: 'messages',
       required: true,
       transform: (params: Params) => {
-        let messages: Message[] = [];
+        let messages: AnthropicMessage[] = [];
         // Transform the chat messages into a simple prompt
         if (!!params.messages) {
           params.messages.forEach((msg) => {
-            if (msg.role !== 'system') {
-              if (
-                msg.content &&
-                typeof msg.content === 'object' &&
-                msg.content.length
-              ) {
-                const transformedMessage: Record<string, any> = {
-                  role: msg.role,
-                  content: [],
-                };
-                msg.content.forEach((item) => {
-                  if (item.type === 'text') {
-                    transformedMessage.content.push({
-                      type: item.type,
-                      text: item.text,
-                    });
-                  } else if (
-                    item.type === 'image_url' &&
-                    item.image_url &&
-                    item.image_url.url
-                  ) {
-                    const parts = item.image_url.url.split(';');
-                    if (parts.length === 2) {
-                      const base64ImageParts = parts[1].split(',');
-                      const base64Image = base64ImageParts[1];
-                      const mediaTypeParts = parts[0].split(':');
-                      if (mediaTypeParts.length === 2 && base64Image) {
-                        const mediaType = mediaTypeParts[1];
-                        transformedMessage.content.push({
-                          type: 'image',
-                          source: {
-                            type: 'base64',
-                            media_type: mediaType,
-                            data: base64Image,
-                          },
-                        });
-                      }
+            if (msg.role === 'system') return;
+
+            if (msg.role === 'assistant') {
+              messages.push(transformAssistantMessage(msg));
+            } else if (
+              msg.content &&
+              typeof msg.content === 'object' &&
+              msg.content.length
+            ) {
+              const transformedMessage: Record<string, any> = {
+                role: msg.role,
+                content: [],
+              };
+              msg.content.forEach((item) => {
+                if (item.type === 'text') {
+                  transformedMessage.content.push({
+                    type: item.type,
+                    text: item.text,
+                  });
+                } else if (
+                  item.type === 'image_url' &&
+                  item.image_url &&
+                  item.image_url.url
+                ) {
+                  const parts = item.image_url.url.split(';');
+                  if (parts.length === 2) {
+                    const base64ImageParts = parts[1].split(',');
+                    const base64Image = base64ImageParts[1];
+                    const mediaTypeParts = parts[0].split(':');
+                    if (mediaTypeParts.length === 2 && base64Image) {
+                      const mediaType = mediaTypeParts[1];
+                      transformedMessage.content.push({
+                        type: 'image',
+                        source: {
+                          type: 'base64',
+                          media_type: mediaType,
+                          data: base64Image,
+                        },
+                      });
                     }
                   }
-                });
-                messages.push(transformedMessage as Message);
-              } else {
-                messages.push({
-                  role: msg.role,
-                  content: msg.content,
-                });
-              }
+                }
+              });
+              messages.push(transformedMessage as Message);
+            } else if (msg.role === 'tool') {
+              // even though anthropic supports images in tool results, openai doesn't support it yet
+              messages.push(transformToolMessage(msg));
+            } else {
+              messages.push({
+                role: msg.role,
+                content: msg.content,
+              });
             }
           });
         }
@@ -108,6 +191,45 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
       },
     },
   ],
+  tools: {
+    param: 'tools',
+    required: false,
+    transform: (params: Params) => {
+      let tools: AnthropicTool[] = [];
+      if (params.tools) {
+        params.tools.forEach((tool) => {
+          if (tool.function) {
+            tools.push({
+              name: tool.function.name,
+              description: tool.function?.description || '',
+              input_schema: {
+                type: tool.function.parameters?.type || 'object',
+                properties: tool.function.parameters?.properties || {},
+                required: tool.function.parameters?.required || [],
+              },
+            });
+          }
+        });
+      }
+      return tools;
+    },
+  },
+  // None is not supported by Anthropic, defaults to auto
+  tool_choice: {
+    param: 'tool_choice',
+    required: false,
+    transform: (params: Params) => {
+      if (params.tool_choice) {
+        if (typeof params.tool_choice === 'string') {
+          if (params.tool_choice === 'required') return { type: 'any' };
+          else if (params.tool_choice === 'auto') return { type: 'auto' };
+        } else if (typeof params.tool_choice === 'object') {
+          return { type: 'tool', name: params.tool_choice.function.name };
+        }
+      }
+      return null;
+    },
+  },
   max_tokens: {
     param: 'max_tokens',
     required: true,
@@ -149,14 +271,25 @@ export interface AnthropicErrorResponse {
   error: AnthropicErrorObject;
 }
 
-interface AnthropicChatCompleteResponse {
+interface AnthorpicTextContentItem {
+  type: 'text';
+  text: string;
+}
+
+interface AnthropicToolContentItem {
+  type: 'tool_use';
+  name: string;
+  id: string;
+  input: Record<string, any>;
+}
+
+type AnthropicContentItem = AnthorpicTextContentItem | AnthropicToolContentItem;
+
+export interface AnthropicChatCompleteResponse {
   id: string;
   type: string;
   role: string;
-  content: {
-    type: string;
-    text: string;
-  }[];
+  content: AnthropicContentItem[];
   stop_reason: string;
   model: string;
   stop_sequence: null | string;
@@ -166,13 +299,31 @@ interface AnthropicChatCompleteResponse {
   };
 }
 
-interface AnthropicChatCompleteStreamResponse {
+export interface AnthropicChatCompleteStreamResponse {
   type: string;
   index: number;
   delta: {
     type: string;
     text: string;
+    partial_json?: string;
     stop_reason?: string;
+  };
+  content_block?: {
+    type: string;
+    id?: string;
+    text?: string;
+    name?: string;
+    input?: {};
+  };
+  usage?: {
+    output_tokens?: number;
+    input_tokens?: number;
+  };
+  message?: {
+    usage?: {
+      output_tokens?: number;
+      input_tokens?: number;
+    };
   };
 }
 
@@ -209,6 +360,25 @@ export const AnthropicChatCompleteResponseTransform: (
   if ('content' in response) {
     const { input_tokens = 0, output_tokens = 0 } = response?.usage;
 
+    let content = '';
+    if (response.content.length && response.content[0].type === 'text') {
+      content = response.content[0].text;
+    }
+
+    let toolCalls: any = [];
+    response.content.forEach((item) => {
+      if (item.type === 'tool_use') {
+        toolCalls.push({
+          id: item.id,
+          type: 'function',
+          function: {
+            name: item.name,
+            arguments: JSON.stringify(item.input),
+          },
+        });
+      }
+    });
+
     return {
       id: response.id,
       object: 'chat_completion',
@@ -217,7 +387,11 @@ export const AnthropicChatCompleteResponseTransform: (
       provider: ANTHROPIC,
       choices: [
         {
-          message: { role: 'assistant', content: response.content[0].text },
+          message: {
+            role: 'assistant',
+            content,
+            tool_calls: toolCalls.length ? toolCalls : undefined,
+          },
           index: 0,
           logprobs: null,
           finish_reason: response.stop_reason,
@@ -236,13 +410,12 @@ export const AnthropicChatCompleteResponseTransform: (
 
 export const AnthropicChatCompleteStreamChunkTransform: (
   response: string,
-  fallbackId: string
-) => string | undefined = (responseChunk, fallbackId) => {
+  fallbackId: string,
+  streamState: Record<string, boolean>
+) => string | undefined = (responseChunk, fallbackId, streamState) => {
   let chunk = responseChunk.trim();
   if (
     chunk.startsWith('event: ping') ||
-    chunk.startsWith('event: message_start') ||
-    chunk.startsWith('event: content_block_start') ||
     chunk.startsWith('event: content_block_stop')
   ) {
     return;
@@ -253,11 +426,99 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   }
 
   chunk = chunk.replace(/^event: content_block_delta[\r\n]*/, '');
+  chunk = chunk.replace(/^event: content_block_start[\r\n]*/, '');
   chunk = chunk.replace(/^event: message_delta[\r\n]*/, '');
+  chunk = chunk.replace(/^event: message_start[\r\n]*/, '');
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
 
   const parsedChunk: AnthropicChatCompleteStreamResponse = JSON.parse(chunk);
+
+  if (
+    parsedChunk.type === 'content_block_start' &&
+    parsedChunk.content_block?.type === 'text'
+  ) {
+    streamState.containsChainOfThoughtMessage = true;
+    return;
+  }
+
+  if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
+    return (
+      `data: ${JSON.stringify({
+        id: fallbackId,
+        object: 'chat.completion.chunk',
+        created: Math.floor(Date.now() / 1000),
+        model: '',
+        provider: ANTHROPIC,
+        choices: [
+          {
+            delta: {
+              content: '',
+            },
+            index: 0,
+            logprobs: null,
+            finish_reason: null,
+          },
+        ],
+        usage: {
+          prompt_tokens: parsedChunk.message?.usage?.input_tokens,
+        },
+      })}` + '\n\n'
+    );
+  }
+
+  if (parsedChunk.type === 'message_delta' && parsedChunk.usage) {
+    return (
+      `data: ${JSON.stringify({
+        id: fallbackId,
+        object: 'chat.completion.chunk',
+        created: Math.floor(Date.now() / 1000),
+        model: '',
+        provider: ANTHROPIC,
+        choices: [
+          {
+            index: 0,
+            delta: {},
+            finish_reason: parsedChunk.delta?.stop_reason,
+          },
+        ],
+        usage: {
+          completion_tokens: parsedChunk.usage?.output_tokens,
+        },
+      })}` + '\n\n'
+    );
+  }
+
+  const toolCalls = [];
+  const isToolBlockStart: boolean =
+    parsedChunk.type === 'content_block_start' &&
+    !!parsedChunk.content_block?.id;
+  const isToolBlockDelta: boolean =
+    parsedChunk.type === 'content_block_delta' &&
+    !!parsedChunk.delta.partial_json;
+  const toolIndex: number = streamState.containsChainOfThoughtMessage
+    ? parsedChunk.index - 1
+    : parsedChunk.index;
+
+  if (isToolBlockStart && parsedChunk.content_block) {
+    toolCalls.push({
+      index: toolIndex,
+      id: parsedChunk.content_block.id,
+      type: 'function',
+      function: {
+        name: parsedChunk.content_block.name,
+        arguments: '',
+      },
+    });
+  } else if (isToolBlockDelta) {
+    toolCalls.push({
+      index: toolIndex,
+      function: {
+        arguments: parsedChunk.delta.partial_json,
+      },
+    });
+  }
+
   return (
     `data: ${JSON.stringify({
       id: fallbackId,
@@ -269,6 +530,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
         {
           delta: {
             content: parsedChunk.delta?.text,
+            tool_calls: toolCalls.length ? toolCalls : undefined,
           },
           index: 0,
           logprobs: null,

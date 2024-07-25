@@ -27,7 +27,11 @@ export const getStreamModeSplitPattern = (
     splitPattern = '\r\n';
   }
 
-  if (proxyProvider === GOOGLE_VERTEX_AI) {
+  // Anthropic vertex has \n\n as the pattern
+  if (
+    proxyProvider === GOOGLE_VERTEX_AI &&
+    requestURL.indexOf('/publishers/anthropic') === -1
+  ) {
     splitPattern = '\r\n\r\n';
   }
 
