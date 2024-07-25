@@ -733,7 +733,7 @@ export function responseHandler(
   const providerConfig = Providers[proxyProvider];
   let providerTransformers = Providers[proxyProvider]?.responseTransforms;
 
-  if (providerConfig.getConfig) {
+  if (providerConfig?.getConfig) {
     providerTransformers =
       providerConfig.getConfig(gatewayRequest).responseTransforms;
   }
