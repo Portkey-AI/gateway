@@ -199,6 +199,8 @@ export const fetchProviderOptionsFromConfig = (
       providerOptions[0].deploymentId = camelCaseConfig.deploymentId;
     if (camelCaseConfig.apiVersion)
       providerOptions[0].apiVersion = camelCaseConfig.apiVersion;
+    if (camelCaseConfig.azureModelName)
+      providerOptions[0].azureModelName = camelCaseConfig.azureModelName;
     if (camelCaseConfig.apiVersion)
       providerOptions[0].vertexProjectId = camelCaseConfig.vertexProjectId;
     if (camelCaseConfig.apiVersion)
@@ -987,6 +989,7 @@ export function constructConfigFromRequestHeaders(
     resourceName: requestHeaders[`x-${POWERED_BY}-azure-resource-name`],
     deploymentId: requestHeaders[`x-${POWERED_BY}-azure-deployment-id`],
     apiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
+    azureModelName: requestHeaders[`x-${POWERED_BY}-azure-model-name`],
   };
 
   const bedrockConfig = {
