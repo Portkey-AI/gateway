@@ -73,6 +73,13 @@ export interface GoogleMessage {
   parts: GoogleMessagePart[];
 }
 
+export interface GoogleToolConfig {
+  function_calling_config: {
+    mode: GoogleToolChoiceType | undefined;
+    allowed_function_names?: string[];
+  };
+}
+
 export const transformOpenAIRoleToGoogleRole = (
   role: OpenAIMessageRole
 ): GoogleMessageRole => {
@@ -285,12 +292,16 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
         ) {
           allowedFunctionNames.push(params.tool_choice.function.name);
         }
-        return {
-          functionCallingConfig: {
+        const toolConfig: GoogleToolConfig = {
+          function_calling_config: {
             mode: transformToolChoiceForGemini(params.tool_choice),
-            allowedFunctionNames,
           },
         };
+        if (allowedFunctionNames.length > 0) {
+          toolConfig.function_calling_config.allowed_function_names =
+            allowedFunctionNames;
+        }
+        return toolConfig;
       }
     },
   },

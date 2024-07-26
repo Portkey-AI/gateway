@@ -16,6 +16,7 @@ import {
 import {
   GoogleMessage,
   GoogleMessageRole,
+  GoogleToolConfig,
   SYSTEM_INSTRUCTION_DISABLED_MODELS,
   transformOpenAIRoleToGoogleRole,
   transformToolChoiceForGemini,
@@ -135,16 +136,15 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
 
           // @NOTE: This takes care of the "Please ensure that multiturn requests alternate between user and model."
           // error that occurs when we have multiple user messages in a row.
-          const shouldAppendEmptyModeChat =
-            lastRole === 'user' &&
-            role === 'user' &&
-            !params.model?.includes('vision');
+          const shouldCombineMessages =
+            lastRole === role && !params.model?.includes('vision');
 
-          if (shouldAppendEmptyModeChat) {
-            messages.push({ role: 'model', parts: [{ text: '' }] });
+          if (shouldCombineMessages) {
+            messages[messages.length - 1].parts.push(...parts);
+          } else {
+            messages.push({ role, parts });
           }
 
-          messages.push({ role, parts });
           lastRole = role;
         });
 
@@ -258,12 +258,16 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
         ) {
           allowedFunctionNames.push(params.tool_choice.function.name);
         }
-        return {
-          functionCallingConfig: {
+        const toolConfig: GoogleToolConfig = {
+          function_calling_config: {
             mode: transformToolChoiceForGemini(params.tool_choice),
-            allowedFunctionNames,
           },
         };
+        if (allowedFunctionNames.length > 0) {
+          toolConfig.function_calling_config.allowed_function_names =
+            allowedFunctionNames;
+        }
+        return toolConfig;
       }
     },
   },

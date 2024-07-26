@@ -35,6 +35,7 @@ import {
 import { env } from 'hono/adapter';
 import { OpenAIChatCompleteJSONToStreamResponseTransform } from '../providers/openai/chatComplete';
 import { OpenAICompleteJSONToStreamResponseTransform } from '../providers/openai/complete';
+import { getRuntimeKey } from 'hono/adapter';
 
 /**
  * Constructs the request options for the API call.
@@ -735,7 +736,7 @@ export function responseHandler(
   const providerConfig = Providers[proxyProvider];
   let providerTransformers = Providers[proxyProvider]?.responseTransforms;
 
-  if (providerConfig.getConfig) {
+  if (providerConfig?.getConfig) {
     providerTransformers =
       providerConfig.getConfig(gatewayRequest).responseTransforms;
   }
@@ -970,6 +971,9 @@ export function updateResponseHeaders(
   const contentEncodingHeader = response.headers.get('content-encoding');
   if (contentEncodingHeader && contentEncodingHeader.indexOf('br') > -1) {
     // Brotli compression causes errors at runtime, removing the header in that case
+    response.headers.delete('content-encoding');
+  }
+  if (getRuntimeKey() == 'node') {
     response.headers.delete('content-encoding');
   }
 
