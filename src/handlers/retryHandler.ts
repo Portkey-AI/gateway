@@ -117,7 +117,7 @@ export const retryRequest = async (
       headers: error.headers,
     });
     console.warn(
-      `Tried ${lastAttempt} time(s) but failed. Error: ${JSON.stringify(error)}`
+      `Tried ${lastAttempt ?? 1} time(s) but failed. Error: ${JSON.stringify(error)}`
     );
   }
   return [lastResponse as Response, lastAttempt];
