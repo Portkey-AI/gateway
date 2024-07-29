@@ -366,7 +366,7 @@ export const transformAnthropicChatStopReason = (
 
 // finish_reason may be null for stream chunks
 export const transformAnthropicChatStreamChunkStopReason = (
-  stopReason?: ANTHROPIC_STOP_REASON | string | null 
+  stopReason?: ANTHROPIC_STOP_REASON | string | null
 ): OPEN_AI_CHAT_COMPLETION_FINISH_REASON | null => {
   if (!stopReason) return null;
   return transformAnthropicChatStopReason(stopReason);

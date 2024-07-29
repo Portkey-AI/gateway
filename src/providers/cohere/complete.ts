@@ -94,7 +94,7 @@ export interface CohereStreamChunk {
     generations?: {
       id: string;
       text: string;
-      finish_reason: COHERE_FINISH_REASON;
+      finish_reason: COHERE_FINISH_REASON | string;
     }[];
   };
   prompt?: string;
@@ -109,7 +109,7 @@ export interface CohereStreamChunk {
 }
 
 const transformCohereCompletionFinishReason = (
-  finishReason: COHERE_FINISH_REASON
+  finishReason: COHERE_FINISH_REASON | string
 ): OPEN_AI_COMPLETION_FINISH_REASON => {
   switch (finishReason) {
     case COHERE_FINISH_REASON.COMPLETE:
@@ -122,7 +122,7 @@ const transformCohereCompletionFinishReason = (
 };
 
 const transformCohereCompletionStreamFinishReason = (
-  finishReason?: COHERE_FINISH_REASON | null
+  finishReason?: COHERE_FINISH_REASON | string | null
 ): OPEN_AI_COMPLETION_FINISH_REASON | null => {
   if (!finishReason) return null;
   return transformCohereCompletionFinishReason(finishReason);

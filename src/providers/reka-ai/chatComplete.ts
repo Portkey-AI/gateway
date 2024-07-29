@@ -138,7 +138,7 @@ enum REKA_AI_CHAT_COMPLETE_FINISH_REASON {
 export interface RekaAIChatCompleteResponse {
   type: string;
   text: string;
-  finish_reason: REKA_AI_CHAT_COMPLETE_FINISH_REASON;
+  finish_reason: REKA_AI_CHAT_COMPLETE_FINISH_REASON | string;
   metadata: {
     input_tokens: number;
     generated_tokens: number;
@@ -146,7 +146,7 @@ export interface RekaAIChatCompleteResponse {
 }
 
 const transformRekaAIChatFinishReason = (
-  finishReason: REKA_AI_CHAT_COMPLETE_FINISH_REASON
+  finishReason: REKA_AI_CHAT_COMPLETE_FINISH_REASON | string
 ) => {
   switch (finishReason) {
     case REKA_AI_CHAT_COMPLETE_FINISH_REASON.stop:

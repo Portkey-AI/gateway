@@ -105,7 +105,7 @@ interface CohereCompleteResponse {
 }
 
 const transformCohereChatFinishReason = (
-  finishReason: COHERE_FINISH_REASON
+  finishReason: COHERE_FINISH_REASON | string
 ): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
   switch (finishReason) {
     case COHERE_FINISH_REASON.COMPLETE:
@@ -118,7 +118,7 @@ const transformCohereChatFinishReason = (
 };
 
 const transformCohereChatStreamFinishReason = (
-  finishReason?: COHERE_FINISH_REASON | null
+  finishReason?: COHERE_FINISH_REASON | string | null
 ): OPEN_AI_CHAT_COMPLETION_FINISH_REASON | null => {
   if (!finishReason) return null;
   return transformCohereChatFinishReason(finishReason);

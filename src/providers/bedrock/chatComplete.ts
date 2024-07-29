@@ -707,7 +707,7 @@ export const BedrockLlamaChatCompleteStreamChunkTransform: (
 };
 
 const transformBedrockTitanChatCompletionReason = (
-  completionReason: BEDROCK_TITAN_COMPLETION_REASON
+  completionReason: BEDROCK_TITAN_COMPLETION_REASON | string
 ): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
   switch (completionReason) {
     case BEDROCK_TITAN_COMPLETION_REASON.FINISHED:
@@ -1105,7 +1105,7 @@ export const BedrockAnthropicChatCompleteStreamChunkTransform: (
 };
 
 const transformBedrockCohereFinishReason = (
-  finishReason: BEDROCK_COHERE_FINISH_REASON
+  finishReason: BEDROCK_COHERE_FINISH_REASON | string
 ): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
   switch (finishReason) {
     case BEDROCK_COHERE_FINISH_REASON.COMPLETE:
@@ -1226,7 +1226,7 @@ export const BedrockCohereChatCompleteStreamChunkTransform: (
 };
 
 const transformBedrockMistralCompletionStopReason = (
-  stopReason: BEDROCK_MISTRAL_STOP_REASON
+  stopReason: BEDROCK_MISTRAL_STOP_REASON | string
 ): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
   switch (stopReason) {
     case BEDROCK_MISTRAL_STOP_REASON.stop:

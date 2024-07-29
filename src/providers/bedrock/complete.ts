@@ -1,8 +1,6 @@
 import { BEDROCK } from '../../globals';
 import { Params } from '../../types/requestBody';
-import {
-  transformAI21CompletionFinishReason,
-} from '../ai21/complete';
+import { transformAI21CompletionFinishReason } from '../ai21/complete';
 import { AI21_FINISH_REASON } from '../ai21/types';
 import { ANTHROPIC_STOP_REASON } from '../anthropic/types';
 import {

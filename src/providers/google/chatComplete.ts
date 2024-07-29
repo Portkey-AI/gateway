@@ -340,7 +340,7 @@ interface GoogleGenerateContentResponse {
         functionCall?: GoogleGenerateFunctionCall;
       }[];
     };
-    finishReason: GOOGLE_GENERATE_CONTENT_FINISH_REASON;
+    finishReason: GOOGLE_GENERATE_CONTENT_FINISH_REASON | string;
     index: 0;
     safetyRatings: {
       category: string;
@@ -363,7 +363,7 @@ interface GoogleGenerateContentResponse {
 // this converts the google stop_reason to an openai finish_reason
 // https://ai.google.dev/api/python/google/ai/generativelanguage/Candidate/FinishReason
 const transformGoogleGeminiChatFinishReason = (
-  stopReason: GOOGLE_GENERATE_CONTENT_FINISH_REASON
+  stopReason: GOOGLE_GENERATE_CONTENT_FINISH_REASON | string
 ): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
   switch (stopReason) {
     case GOOGLE_GENERATE_CONTENT_FINISH_REASON.STOP:
@@ -380,7 +380,7 @@ const transformGoogleGeminiChatFinishReason = (
 };
 
 const transformGoogleGeminiStreamingChatCompletionFinishReason = (
-  finishReason?: GOOGLE_GENERATE_CONTENT_FINISH_REASON
+  finishReason?: GOOGLE_GENERATE_CONTENT_FINISH_REASON | string
 ): OPEN_AI_CHAT_COMPLETION_FINISH_REASON | null => {
   if (!finishReason) return null;
   return transformGoogleGeminiChatFinishReason(finishReason);
