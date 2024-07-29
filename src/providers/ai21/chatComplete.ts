@@ -10,7 +10,8 @@ import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
-import { AI21_FINISH_REASON, AI21ErrorResponse } from './complete';
+import { AI21ErrorResponse } from './complete';
+import { AI21_FINISH_REASON } from './types';
 
 export const AI21ChatCompleteConfig: ProviderConfig = {
   messages: [
@@ -104,7 +105,7 @@ interface AI21ChatCompleteResponse {
     text: string;
     role: string;
     finishReason: {
-      reason: AI21_FINISH_REASON;
+      reason: AI21_FINISH_REASON | string;
       length: number | null;
       sequence: string | null;
     };
@@ -112,7 +113,7 @@ interface AI21ChatCompleteResponse {
 }
 
 export const transformAI21ChatFinishReason = (
-  reason: AI21_FINISH_REASON
+  reason: AI21_FINISH_REASON | string
 ): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
   switch (reason) {
     case AI21_FINISH_REASON.stop:

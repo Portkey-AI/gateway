@@ -8,6 +8,7 @@ import {
 } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { AI21ErrorResponseTransform } from './chatComplete';
+import { AI21_FINISH_REASON } from './types';
 
 export const AI21CompleteConfig: ProviderConfig = {
   prompt: {
@@ -70,11 +71,6 @@ export const AI21CompleteConfig: ProviderConfig = {
   },
 };
 
-export enum AI21_FINISH_REASON {
-  stop = 'stop',
-  length = 'length',
-}
-
 interface AI21CompleteResponse {
   id: string;
   prompt: {
@@ -88,7 +84,7 @@ interface AI21CompleteResponse {
         tokens: Record<string, any>[];
       };
       finishReason: {
-        reason: AI21_FINISH_REASON;
+        reason: AI21_FINISH_REASON | string;
         length: number;
       };
     },
@@ -100,7 +96,7 @@ export interface AI21ErrorResponse {
 }
 
 export const transformAI21CompletionFinishReason = (
-  reason: AI21_FINISH_REASON
+  reason: AI21_FINISH_REASON | string
 ): OPEN_AI_COMPLETION_FINISH_REASON => {
   switch (reason) {
     case AI21_FINISH_REASON.stop:

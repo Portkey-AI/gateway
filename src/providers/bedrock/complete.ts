@@ -1,10 +1,10 @@
 import { BEDROCK } from '../../globals';
 import { Params } from '../../types/requestBody';
 import {
-  AI21_FINISH_REASON,
   transformAI21CompletionFinishReason,
 } from '../ai21/complete';
-import { ANTHROPIC_STOP_REASON } from '../anthropic/chatComplete';
+import { AI21_FINISH_REASON } from '../ai21/types';
+import { ANTHROPIC_STOP_REASON } from '../anthropic/types';
 import {
   transformAnthropicCompletionFinishReason,
   transformAnthropicCompletionStreamChunkFinishReason,
@@ -528,7 +528,7 @@ export interface BedrockAI21CompleteResponse {
         tokens: Record<string, any>[];
       };
       finishReason: {
-        reason: AI21_FINISH_REASON;
+        reason: AI21_FINISH_REASON | string;
         length: number;
       };
     },
@@ -583,7 +583,7 @@ export const BedrockAI21CompleteResponseTransform: (
 
 export interface BedrockAnthropicCompleteResponse {
   completion: string;
-  stop_reason: ANTHROPIC_STOP_REASON;
+  stop_reason: ANTHROPIC_STOP_REASON | string;
   stop: null | string;
 }
 
@@ -637,7 +637,7 @@ export const BedrockAnthropicCompleteResponseTransform: (
 
 export interface BedrockAnthropicStreamChunk {
   completion: string;
-  stop_reason: ANTHROPIC_STOP_REASON;
+  stop_reason: ANTHROPIC_STOP_REASON | string;
   stop: string | null;
   'amazon-bedrock-invocationMetrics': {
     inputTokenCount: number;

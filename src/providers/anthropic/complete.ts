@@ -10,8 +10,8 @@ import { generateInvalidProviderResponseError } from '../utils';
 import {
   AnthropicErrorResponse,
   AnthropicErrorResponseTransform,
-  ANTHROPIC_STOP_REASON,
 } from './chatComplete';
+import { ANTHROPIC_STOP_REASON } from './types';
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -65,7 +65,7 @@ export const AnthropicCompleteConfig: ProviderConfig = {
 
 interface AnthropicCompleteResponse {
   completion: string;
-  stop_reason: ANTHROPIC_STOP_REASON;
+  stop_reason: ANTHROPIC_STOP_REASON | string;
   model: string;
   truncated: boolean;
   stop: null | string;
@@ -74,7 +74,7 @@ interface AnthropicCompleteResponse {
 }
 
 export const transformAnthropicCompletionFinishReason = (
-  stopReason: ANTHROPIC_STOP_REASON
+  stopReason: ANTHROPIC_STOP_REASON | string
 ): OPEN_AI_COMPLETION_FINISH_REASON => {
   switch (stopReason) {
     case ANTHROPIC_STOP_REASON.stop_sequence:
@@ -88,7 +88,7 @@ export const transformAnthropicCompletionFinishReason = (
 };
 
 export const transformAnthropicCompletionStreamChunkFinishReason = (
-  stopReason?: ANTHROPIC_STOP_REASON | null
+  stopReason?: ANTHROPIC_STOP_REASON | string | null
 ): OPEN_AI_COMPLETION_FINISH_REASON | null => {
   if (!stopReason) return null;
   return transformAnthropicCompletionFinishReason(stopReason);
@@ -100,10 +100,10 @@ export const AnthropicCompleteResponseTransform: (
   responseStatus: number
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    const errorResposne = AnthropicErrorResponseTransform(
+    const errorResponse = AnthropicErrorResponseTransform(
       response as AnthropicErrorResponse
     );
-    if (errorResposne) return errorResposne;
+    if (errorResponse) return errorResponse;
   }
 
   if ('completion' in response) {

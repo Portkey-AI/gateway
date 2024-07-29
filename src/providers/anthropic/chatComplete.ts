@@ -10,6 +10,7 @@ import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
+import { ANTHROPIC_STOP_REASON } from './types';
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -291,7 +292,7 @@ export interface AnthropicChatCompleteResponse {
   type: string;
   role: string;
   content: AnthropicContentItem[];
-  stop_reason: ANTHROPIC_STOP_REASON;
+  stop_reason: ANTHROPIC_STOP_REASON | string;
   model: string;
   stop_sequence: null | string;
   usage: {
@@ -307,7 +308,7 @@ export interface AnthropicChatCompleteStreamResponse {
     type: string;
     text: string;
     partial_json?: string;
-    stop_reason: ANTHROPIC_STOP_REASON;
+    stop_reason: ANTHROPIC_STOP_REASON | string;
   };
   content_block?: {
     type: string;
@@ -326,13 +327,6 @@ export interface AnthropicChatCompleteStreamResponse {
       input_tokens?: number;
     };
   };
-}
-
-export enum ANTHROPIC_STOP_REASON {
-  max_tokens = 'max_tokens',
-  stop_sequence = 'stop_sequence',
-  tool_use = 'tool_use',
-  end_turn = 'end_turn',
 }
 
 export const AnthropicErrorResponseTransform: (
@@ -355,7 +349,7 @@ export const AnthropicErrorResponseTransform: (
 
 // this converts the anthropic stop_reason to an openai finish_reason
 export const transformAnthropicChatStopReason = (
-  stopReason: ANTHROPIC_STOP_REASON
+  stopReason: ANTHROPIC_STOP_REASON | string
 ): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
   switch (stopReason) {
     case ANTHROPIC_STOP_REASON.stop_sequence:
@@ -372,7 +366,7 @@ export const transformAnthropicChatStopReason = (
 
 // finish_reason may be null for stream chunks
 export const transformAnthropicChatStreamChunkStopReason = (
-  stopReason?: ANTHROPIC_STOP_REASON | null
+  stopReason?: ANTHROPIC_STOP_REASON | string | null 
 ): OPEN_AI_CHAT_COMPLETION_FINISH_REASON | null => {
   if (!stopReason) return null;
   return transformAnthropicChatStopReason(stopReason);

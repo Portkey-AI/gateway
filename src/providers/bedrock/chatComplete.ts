@@ -2,10 +2,10 @@ import { BEDROCK } from '../../globals';
 import { ContentType, Message, Params } from '../../types/requestBody';
 import { transformAI21ChatFinishReason } from '../ai21/chatComplete';
 import {
-  ANTHROPIC_STOP_REASON,
   transformAnthropicChatStopReason,
   transformAnthropicChatStreamChunkStopReason,
 } from '../anthropic/chatComplete';
+import { ANTHROPIC_STOP_REASON } from '../anthropic/types';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -871,7 +871,7 @@ interface BedrockAnthropicChatCompleteResponse {
   type: string;
   role: string;
   content: AnthropicContentItem[];
-  stop_reason: ANTHROPIC_STOP_REASON;
+  stop_reason: ANTHROPIC_STOP_REASON | string;
   model: string;
   stop_sequence: null | string;
 }
@@ -953,7 +953,7 @@ interface BedrockAnthropicChatCompleteStreamResponse {
     type: string;
     text: string;
     partial_json?: string;
-    stop_reason?: ANTHROPIC_STOP_REASON;
+    stop_reason?: ANTHROPIC_STOP_REASON | string;
   };
   content_block?: {
     type: string;
