@@ -543,7 +543,7 @@ export const VertexAnthropicChatCompleteConfig: ProviderConfig = {
 };
 
 const transformVertexGeminiChatStopReason = (
-  stopReason?: VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON
+  stopReason?: VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON | string
 ): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
   switch (stopReason) {
     case VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.STOP:
@@ -560,6 +560,13 @@ const transformVertexGeminiChatStopReason = (
       return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
   }
 };
+
+const transformVertexGeminiChatStreamChunkStopReason = (
+  stopReason?: VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON | string | null
+): OPEN_AI_CHAT_COMPLETION_FINISH_REASON | null => {
+  if (!stopReason) return null;
+  return transformVertexGeminiChatStopReason(stopReason);
+}
 
 export const GoogleChatCompleteResponseTransform: (
   response:
@@ -725,7 +732,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
         return {
           delta: message,
           index: index,
-          finish_reason: generation.finishReason,
+          finish_reason: transformVertexGeminiChatStreamChunkStopReason(generation.finishReason),
         };
       }) ?? [],
     usage: usageMetadata,

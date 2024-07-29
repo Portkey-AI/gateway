@@ -487,7 +487,7 @@ const transformTitanGenerationConfig = (params: Params) => {
   return generationConfig;
 };
 
-export const BedrockTitanChatompleteConfig: ProviderConfig = {
+export const BedrockTitanChatCompleteConfig: ProviderConfig = {
   messages: {
     param: 'inputText',
     required: true,
@@ -606,6 +606,22 @@ export const BedrockErrorResponseTransform: (
   return undefined;
 };
 
+const transformBedrockLlamaChatFinishReason = (finishReason: BEDROCK_LLAMA_STOP_REASON | string) : OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
+  switch (finishReason) {
+    case BEDROCK_LLAMA_STOP_REASON.length:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.length;
+    case BEDROCK_LLAMA_STOP_REASON.stop:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
+    default:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
+  }
+}
+
+const transformBedrockLlamaChatStreamFinishReason = (finishReason?: BEDROCK_LLAMA_STOP_REASON | string | null) : OPEN_AI_CHAT_COMPLETION_FINISH_REASON | null => {
+  if (!finishReason) return null;
+  return transformBedrockLlamaChatFinishReason(finishReason);
+}
+
 export const BedrockLlamaChatCompleteResponseTransform: (
   response: BedrockLlamaCompleteResponse | BedrockErrorResponse,
   responseStatus: number
@@ -631,10 +647,7 @@ export const BedrockLlamaChatCompleteResponseTransform: (
             role: 'assistant',
             content: response.generation,
           },
-          finish_reason:
-            response.stop_reason === BEDROCK_LLAMA_STOP_REASON.length
-              ? OPEN_AI_CHAT_COMPLETION_FINISH_REASON.length
-              : OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop,
+          finish_reason: transformBedrockLlamaChatFinishReason(response.stop_reason),
         },
       ],
       usage: {
@@ -670,7 +683,7 @@ export const BedrockLlamaChatCompleteStreamChunkTransform: (
             delta: {},
             index: 0,
             logprobs: null,
-            finish_reason: parsedChunk.stop_reason,
+            finish_reason: transformBedrockLlamaChatStreamFinishReason(parsedChunk.stop_reason),
           },
         ],
         usage: {
@@ -722,6 +735,11 @@ const transformBedrockTitanChatCompletionReason = (
       return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
   }
 };
+
+const transformBedrockTitanChatStreamCompletionReason = (completionReason?: BEDROCK_TITAN_COMPLETION_REASON | string | null) : OPEN_AI_CHAT_COMPLETION_FINISH_REASON | null => {
+  if (!completionReason) return null;
+  return transformBedrockTitanChatCompletionReason(completionReason);
+}
 
 export const BedrockTitanChatCompleteResponseTransform: (
   response: BedrockTitanCompleteResponse | BedrockErrorResponse,
@@ -801,7 +819,7 @@ export const BedrockTitanChatCompleteStreamChunkTransform: (
         {
           index: 0,
           delta: {},
-          finish_reason: parsedChunk.completionReason,
+          finish_reason: transformBedrockTitanChatStreamCompletionReason(parsedChunk.completionReason),
         },
       ],
       usage: {
@@ -1119,6 +1137,13 @@ const transformBedrockCohereFinishReason = (
   }
 };
 
+const transformBedrockCohereChatStreamFinishReason = (
+  finishReason?: BEDROCK_COHERE_FINISH_REASON | string | null
+): OPEN_AI_CHAT_COMPLETION_FINISH_REASON | null => {
+  if (!finishReason) return null;
+  return transformBedrockCohereFinishReason(finishReason);
+}
+
 export const BedrockCohereChatCompleteResponseTransform: (
   response: BedrockCohereCompleteResponse | BedrockErrorResponse,
   responseStatus: number,
@@ -1189,7 +1214,7 @@ export const BedrockCohereChatCompleteStreamChunkTransform: (
           {
             index: parsedChunk.index ?? 0,
             delta: {},
-            finish_reason: parsedChunk.finish_reason,
+            finish_reason: transformBedrockCohereChatStreamFinishReason(parsedChunk.finish_reason),
           },
         ],
         usage: {
@@ -1225,7 +1250,7 @@ export const BedrockCohereChatCompleteStreamChunkTransform: (
   })}\n\n`;
 };
 
-const transformBedrockMistralCompletionStopReason = (
+const transformBedrockMistralChatStopReason = (
   stopReason: BEDROCK_MISTRAL_STOP_REASON | string
 ): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
   switch (stopReason) {
@@ -1237,6 +1262,13 @@ const transformBedrockMistralCompletionStopReason = (
       return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
   }
 };
+
+const transformBedrockMistralChatStreamStopReason = (
+  stopReason?: BEDROCK_MISTRAL_STOP_REASON | string | null
+): OPEN_AI_CHAT_COMPLETION_FINISH_REASON | null => {
+  if (!stopReason) return null;
+  return transformBedrockMistralChatStopReason(stopReason);
+}
 
 export const BedrockMistralChatCompleteResponseTransform: (
   response: BedrockMistralCompleteResponse | BedrockErrorResponse,
@@ -1272,7 +1304,7 @@ export const BedrockMistralChatCompleteResponseTransform: (
             role: 'assistant',
             content: response.outputs[0].text,
           },
-          finish_reason: transformBedrockMistralCompletionStopReason(
+          finish_reason: transformBedrockMistralChatStopReason(
             response.outputs[0].stop_reason
           ),
         },
@@ -1310,7 +1342,7 @@ export const BedrockMistralChatCompleteStreamChunkTransform: (
           {
             index: 0,
             delta: {},
-            finish_reason: parsedChunk.outputs[0].stop_reason,
+            finish_reason: transformBedrockMistralChatStreamStopReason(parsedChunk.outputs[0].stop_reason),
           },
         ],
         usage: {
