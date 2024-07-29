@@ -1,5 +1,7 @@
 import { SignatureV4 } from '@smithy/signature-v4';
 import { Sha256 } from '@aws-crypto/sha256-js';
+import { BEDROCK_LLAMA_STOP_REASON } from './types';
+import { OPEN_AI_CHAT_COMPLETION_FINISH_REASON } from '../types';
 
 export const generateAWSHeaders = async (
   body: Record<string, any>,
@@ -38,3 +40,14 @@ export const generateAWSHeaders = async (
   const signed = await signer.sign(request);
   return signed.headers;
 };
+
+export const transformBedrockLlamaChatFinishReason = (finishReason: BEDROCK_LLAMA_STOP_REASON | string): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
+  switch (finishReason) {
+    case BEDROCK_LLAMA_STOP_REASON.stop:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
+    case BEDROCK_LLAMA_STOP_REASON.length:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.length;
+    default:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
+  }
+}
