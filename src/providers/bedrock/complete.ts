@@ -16,6 +16,7 @@ import {
 import { generateInvalidProviderResponseError } from '../utils';
 import { BedrockErrorResponseTransform } from './chatComplete';
 import { BedrockErrorResponse } from './embed';
+import { BEDROCK_LLAMA_STOP_REASON } from './types';
 
 export const BedrockAnthropicCompleteConfig: ProviderConfig = {
   prompt: {
@@ -253,16 +254,11 @@ export const BedrockAI21CompleteConfig: ProviderConfig = {
   },
 };
 
-export enum BEDROCK_LLAMA_STOP_REASON {
-  stop = 'stop',
-  length = 'length',
-}
-
 export interface BedrockLlamaCompleteResponse {
   generation: string;
   prompt_token_count: number;
   generation_token_count: number;
-  stop_reason: BEDROCK_LLAMA_STOP_REASON;
+  stop_reason: BEDROCK_LLAMA_STOP_REASON | string;
 }
 
 export const BedrockLlamaCompleteResponseTransform: (
@@ -387,12 +383,12 @@ export interface BedrockTitanCompleteResponse {
   results: {
     tokenCount: number;
     outputText: string;
-    completionReason: BEDROCK_TITAN_COMPLETION_REASON;
+    completionReason: BEDROCK_TITAN_COMPLETION_REASON | string;
   }[];
 }
 
 const transformBedrockTitanCompletionReason = (
-  completionReason: BEDROCK_TITAN_COMPLETION_REASON
+  completionReason: BEDROCK_TITAN_COMPLETION_REASON | string
 ): OPEN_AI_COMPLETION_FINISH_REASON => {
   switch (completionReason) {
     case BEDROCK_TITAN_COMPLETION_REASON.FINISHED:
@@ -727,13 +723,13 @@ export interface BedrockCohereCompleteResponse {
   generations: {
     id: string;
     text: string;
-    finish_reason: BEDROCK_COHERE_FINISH_REASON;
+    finish_reason: BEDROCK_COHERE_FINISH_REASON | string;
   }[];
   prompt: string;
 }
 
 const transformBedrockCohereCompletionFinishReason = (
-  finishReason: BEDROCK_COHERE_FINISH_REASON
+  finishReason: BEDROCK_COHERE_FINISH_REASON | string
 ): OPEN_AI_COMPLETION_FINISH_REASON => {
   switch (finishReason) {
     case BEDROCK_COHERE_FINISH_REASON.COMPLETE:
@@ -940,12 +936,12 @@ export enum BEDROCK_MISTRAL_STOP_REASON {
 export interface BedrockMistralCompleteResponse {
   outputs: {
     text: string;
-    stop_reason: BEDROCK_MISTRAL_STOP_REASON;
+    stop_reason: BEDROCK_MISTRAL_STOP_REASON | string;
   }[];
 }
 
 const transformBedrockMistralCompletionStopReason = (
-  stopReason: BEDROCK_MISTRAL_STOP_REASON
+  stopReason: BEDROCK_MISTRAL_STOP_REASON | string
 ): OPEN_AI_COMPLETION_FINISH_REASON => {
   switch (stopReason) {
     case BEDROCK_MISTRAL_STOP_REASON.stop:

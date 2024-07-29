@@ -32,7 +32,7 @@ export interface GoogleGenerateContentResponse {
         functionCall?: GoogleGenerateFunctionCall;
       }[];
     };
-    finishReason: VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON;
+    finishReason: VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON | string;
     index: 0;
     safetyRatings: {
       category: string;

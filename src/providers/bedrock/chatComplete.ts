@@ -26,11 +26,11 @@ import {
   BedrockTitanStreamChunk,
   BedrockMistralCompleteResponse,
   BedrocMistralStreamChunk,
-  BEDROCK_LLAMA_STOP_REASON,
   BEDROCK_TITAN_COMPLETION_REASON,
   BEDROCK_COHERE_FINISH_REASON,
   BEDROCK_MISTRAL_STOP_REASON,
 } from './complete';
+import { BEDROCK_LLAMA_STOP_REASON } from './types';
 import { BedrockErrorResponse } from './embed';
 
 interface AnthropicTool {
