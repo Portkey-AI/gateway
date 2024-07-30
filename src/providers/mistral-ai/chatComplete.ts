@@ -1,4 +1,5 @@
 import { MISTRAL_AI } from '../../globals';
+import { Message } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -8,6 +9,8 @@ import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
+import {MISTRAL_AI_CHAT_FINISH_REASON} from './types';
+import { transformMistralChatFinishReason, transformMistralChatStreamFinishReason } from './utils';
 
 export const MistralAIChatCompleteConfig: ProviderConfig = {
   model: {
@@ -55,7 +58,7 @@ export const MistralAIChatCompleteConfig: ProviderConfig = {
   },
 };
 
-interface MistralAIChatCompleteResponse extends ChatCompletionResponse {
+interface MistralAIChatCompleteResponse extends Omit<ChatCompletionResponse, 'choices'> {
   id: string;
   object: string;
   created: number;
@@ -65,6 +68,12 @@ interface MistralAIChatCompleteResponse extends ChatCompletionResponse {
     completion_tokens: number;
     total_tokens: number;
   };
+  choices: {
+    index: number;
+    message: Message;
+    finish_reason: MISTRAL_AI_CHAT_FINISH_REASON;
+    logprobs?: object | null;
+  }[];
 }
 
 export interface MistralAIErrorResponse {
@@ -119,7 +128,7 @@ export const MistralAIChatCompleteResponseTransform: (
           role: c.message.role,
           content: c.message.content,
         },
-        finish_reason: c.finish_reason,
+        finish_reason: transformMistralChatFinishReason(c.finish_reason),
       })),
       usage: {
         prompt_tokens: response.usage?.prompt_tokens,
@@ -153,7 +162,7 @@ export const MistralAIChatCompleteStreamChunkTransform: (
         {
           index: parsedChunk.choices[0].index,
           delta: parsedChunk.choices[0].delta,
-          finish_reason: parsedChunk.choices[0].finish_reason,
+          finish_reason: transformMistralChatStreamFinishReason(parsedChunk.choices[0].finish_reason),
         },
       ],
     })}` + '\n\n'

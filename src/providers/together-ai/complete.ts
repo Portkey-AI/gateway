@@ -6,6 +6,8 @@ import {
   TogetherAIErrorResponseTransform,
   TogetherAIOpenAICompatibleErrorResponse,
 } from './chatComplete';
+import { TOGETHER_AI_FINISH_REASON } from './types';
+import { transformTogetherAICompletionFinishReason } from './utils';
 
 export const TogetherAICompleteConfig: ProviderConfig = {
   model: {
@@ -48,12 +50,18 @@ export const TogetherAICompleteConfig: ProviderConfig = {
   },
 };
 
-interface TogetherAICompleteResponse extends CompletionResponse {
+interface TogetherAICompleteResponse extends Omit<CompletionResponse, 'choices'> {
   usage: {
     prompt_tokens: number;
     completion_tokens: number;
     total_tokens: number;
   };
+  choices: {
+    text: string;
+    index: number;
+    logprobs: null;
+    finish_reason: TOGETHER_AI_FINISH_REASON;
+  }[];
 }
 
 interface TogetherAICompletionStreamChunk {
@@ -89,7 +97,7 @@ export const TogetherAICompleteResponseTransform: (
         text: choice.text,
         index: choice.index || 0,
         logprobs: null,
-        finish_reason: choice.finish_reason,
+        finish_reason: transformTogetherAICompletionFinishReason(choice.finish_reason),
       })),
       usage: {
         prompt_tokens: response.usage?.prompt_tokens,

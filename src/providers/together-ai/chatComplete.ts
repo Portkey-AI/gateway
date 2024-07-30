@@ -1,4 +1,5 @@
 import { TOGETHER_AI } from '../../globals';
+import { Message } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -8,6 +9,8 @@ import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
+import { TOGETHER_AI_FINISH_REASON } from './types';
+import { transformTogetherAIChatFinishReason } from './utils';
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -61,12 +64,18 @@ export const TogetherAIChatCompleteConfig: ProviderConfig = {
   },
 };
 
-export interface TogetherAIChatCompleteResponse extends ChatCompletionResponse {
+export interface TogetherAIChatCompleteResponse extends Omit<ChatCompletionResponse, 'choices'> {
   usage: {
     prompt_tokens: number;
     completion_tokens: number;
     total_tokens: number;
   };
+  choices: {
+    index: number;
+    message: Message;
+    finish_reason: TOGETHER_AI_FINISH_REASON;
+    logprobs?: object | null;
+  }[];
 }
 
 export interface TogetherAIErrorResponse {
@@ -166,7 +175,7 @@ export const TogetherAIChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: choice.finish_reason,
+          finish_reason: transformTogetherAIChatFinishReason(choice.finish_reason),
         };
       }),
       usage: {
