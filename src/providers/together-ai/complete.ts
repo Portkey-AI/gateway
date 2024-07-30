@@ -50,7 +50,8 @@ export const TogetherAICompleteConfig: ProviderConfig = {
   },
 };
 
-interface TogetherAICompleteResponse extends Omit<CompletionResponse, 'choices'> {
+interface TogetherAICompleteResponse
+  extends Omit<CompletionResponse, 'choices'> {
   usage: {
     prompt_tokens: number;
     completion_tokens: number;
@@ -97,7 +98,9 @@ export const TogetherAICompleteResponseTransform: (
         text: choice.text,
         index: choice.index || 0,
         logprobs: null,
-        finish_reason: transformTogetherAICompletionFinishReason(choice.finish_reason),
+        finish_reason: transformTogetherAICompletionFinishReason(
+          choice.finish_reason
+        ),
       })),
       usage: {
         prompt_tokens: response.usage?.prompt_tokens,

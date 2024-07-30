@@ -18,7 +18,9 @@ export const transformMistralChatFinishReason = (
   }
 };
 
-export const transformMistralChatStreamFinishReason = (reason?: MISTRAL_AI_CHAT_FINISH_REASON | string | null): OPEN_AI_CHAT_COMPLETION_FINISH_REASON | null => {
-    if (!reason) return null;
-    return transformMistralChatFinishReason(reason);
-}
+export const transformMistralChatStreamFinishReason = (
+  reason?: MISTRAL_AI_CHAT_FINISH_REASON | string | null
+): OPEN_AI_CHAT_COMPLETION_FINISH_REASON | null => {
+  if (!reason) return null;
+  return transformMistralChatFinishReason(reason);
+};

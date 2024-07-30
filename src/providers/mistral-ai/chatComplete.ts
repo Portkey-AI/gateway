@@ -9,8 +9,11 @@ import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
-import {MISTRAL_AI_CHAT_FINISH_REASON} from './types';
-import { transformMistralChatFinishReason, transformMistralChatStreamFinishReason } from './utils';
+import { MISTRAL_AI_CHAT_FINISH_REASON } from './types';
+import {
+  transformMistralChatFinishReason,
+  transformMistralChatStreamFinishReason,
+} from './utils';
 
 export const MistralAIChatCompleteConfig: ProviderConfig = {
   model: {
@@ -58,7 +61,8 @@ export const MistralAIChatCompleteConfig: ProviderConfig = {
   },
 };
 
-interface MistralAIChatCompleteResponse extends Omit<ChatCompletionResponse, 'choices'> {
+interface MistralAIChatCompleteResponse
+  extends Omit<ChatCompletionResponse, 'choices'> {
   id: string;
   object: string;
   created: number;
@@ -162,7 +166,9 @@ export const MistralAIChatCompleteStreamChunkTransform: (
         {
           index: parsedChunk.choices[0].index,
           delta: parsedChunk.choices[0].delta,
-          finish_reason: transformMistralChatStreamFinishReason(parsedChunk.choices[0].finish_reason),
+          finish_reason: transformMistralChatStreamFinishReason(
+            parsedChunk.choices[0].finish_reason
+          ),
         },
       ],
     })}` + '\n\n'

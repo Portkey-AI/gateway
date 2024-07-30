@@ -64,7 +64,8 @@ export const TogetherAIChatCompleteConfig: ProviderConfig = {
   },
 };
 
-export interface TogetherAIChatCompleteResponse extends Omit<ChatCompletionResponse, 'choices'> {
+export interface TogetherAIChatCompleteResponse
+  extends Omit<ChatCompletionResponse, 'choices'> {
   usage: {
     prompt_tokens: number;
     completion_tokens: number;
@@ -175,7 +176,9 @@ export const TogetherAIChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: transformTogetherAIChatFinishReason(choice.finish_reason),
+          finish_reason: transformTogetherAIChatFinishReason(
+            choice.finish_reason
+          ),
         };
       }),
       usage: {
