@@ -1,12 +1,12 @@
 import { BEDROCK } from '../../globals';
 import { Params } from '../../types/requestBody';
-import { transformAI21CompletionFinishReason } from '../ai21/complete';
+import { transformAI21CompletionFinishReason } from '../ai21/utils';
 import { AI21_FINISH_REASON } from '../ai21/types';
 import { ANTHROPIC_STOP_REASON } from '../anthropic/types';
 import {
   transformAnthropicCompletionFinishReason,
   transformAnthropicCompletionStreamChunkFinishReason,
-} from '../anthropic/complete';
+} from '../anthropic/utils';
 import {
   CompletionResponse,
   ErrorResponse,
@@ -272,14 +272,14 @@ const transformBedrockLlamaCompletionStopReason = (
     default:
       return OPEN_AI_COMPLETION_FINISH_REASON.stop;
   }
-}
+};
 
 const transformBedrockLlamaCompletionStreamStopReason = (
   stopReason?: BEDROCK_LLAMA_STOP_REASON | string | null
 ): OPEN_AI_COMPLETION_FINISH_REASON | null => {
   if (!stopReason) return null;
   return transformBedrockLlamaCompletionStopReason(stopReason);
-}
+};
 
 export const BedrockLlamaCompleteResponseTransform: (
   response: BedrockLlamaCompleteResponse | BedrockErrorResponse,
@@ -304,8 +304,10 @@ export const BedrockLlamaCompleteResponseTransform: (
           text: response.generation,
           index: 0,
           logprobs: null,
-          finish_reason: transformBedrockLlamaCompletionStopReason(response.stop_reason),
-        }
+          finish_reason: transformBedrockLlamaCompletionStopReason(
+            response.stop_reason
+          ),
+        },
       ],
       usage: {
         prompt_tokens: response.prompt_token_count,
@@ -353,7 +355,9 @@ export const BedrockLlamaCompleteStreamChunkTransform: (
             text: '',
             index: 0,
             logprobs: null,
-            finish_reason: transformBedrockLlamaCompletionStreamStopReason(parsedChunk.stop_reason),
+            finish_reason: transformBedrockLlamaCompletionStreamStopReason(
+              parsedChunk.stop_reason
+            ),
           },
         ],
         usage: {
@@ -426,7 +430,7 @@ const transformBedrockTitanCompletionStreamReason = (
 ): OPEN_AI_COMPLETION_FINISH_REASON | null => {
   if (!completionReason) return null;
   return transformBedrockTitanCompletionReason(completionReason);
-}
+};
 
 export const BedrockTitanCompleteResponseTransform: (
   response: BedrockTitanCompleteResponse | BedrockErrorResponse,
@@ -516,7 +520,9 @@ export const BedrockTitanCompleteStreamChunkTransform: (
           text: '',
           index: 0,
           logprobs: null,
-          finish_reason: transformBedrockTitanCompletionStreamReason(parsedChunk.completionReason),
+          finish_reason: transformBedrockTitanCompletionStreamReason(
+            parsedChunk.completionReason
+          ),
         },
       ],
       usage: {
@@ -768,10 +774,11 @@ const transformBedrockCohereCompletionFinishReason = (
 };
 
 const transformBedrockCohereCompletionStreamFinishReason = (
-  finishReason?: BEDROCK_COHERE_FINISH_REASON | string | null) : OPEN_AI_COMPLETION_FINISH_REASON | null => {
-    if (!finishReason) return null;
-    return transformBedrockCohereCompletionFinishReason(finishReason);
-  }
+  finishReason?: BEDROCK_COHERE_FINISH_REASON | string | null
+): OPEN_AI_COMPLETION_FINISH_REASON | null => {
+  if (!finishReason) return null;
+  return transformBedrockCohereCompletionFinishReason(finishReason);
+};
 
 export const BedrockCohereCompleteResponseTransform: (
   response: BedrockCohereCompleteResponse | BedrockErrorResponse,
@@ -855,7 +862,9 @@ export const BedrockCohereCompleteStreamChunkTransform: (
             text: '',
             index: 0,
             logprobs: null,
-            finish_reason: transformBedrockCohereCompletionStreamFinishReason(parsedChunk.finish_reason),
+            finish_reason: transformBedrockCohereCompletionStreamFinishReason(
+              parsedChunk.finish_reason
+            ),
           },
         ],
         usage: {
@@ -926,7 +935,7 @@ const transformBedrockMistralCompletionStreamStopReason = (
 ): OPEN_AI_COMPLETION_FINISH_REASON | null => {
   if (!stopReason) return null;
   return transformBedrockMistralCompletionStopReason(stopReason);
-}
+};
 
 export const BedrockMistralCompleteStreamChunkTransform: (
   response: string,
@@ -949,7 +958,9 @@ export const BedrockMistralCompleteStreamChunkTransform: (
             text: parsedChunk.outputs[0].text,
             index: 0,
             logprobs: null,
-            finish_reason: transformBedrockMistralCompletionStreamStopReason(parsedChunk.outputs[0].stop_reason),
+            finish_reason: transformBedrockMistralCompletionStreamStopReason(
+              parsedChunk.outputs[0].stop_reason
+            ),
           },
         ],
         usage: {
@@ -982,7 +993,6 @@ export const BedrockMistralCompleteStreamChunkTransform: (
     ],
   })}\n\n`;
 };
-
 
 export interface BedrockMistralCompleteResponse {
   outputs: {

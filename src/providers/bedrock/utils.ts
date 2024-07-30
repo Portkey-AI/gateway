@@ -41,7 +41,9 @@ export const generateAWSHeaders = async (
   return signed.headers;
 };
 
-export const transformBedrockLlamaChatFinishReason = (finishReason: BEDROCK_LLAMA_STOP_REASON | string): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
+export const transformBedrockLlamaChatFinishReason = (
+  finishReason: BEDROCK_LLAMA_STOP_REASON | string
+): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
   switch (finishReason) {
     case BEDROCK_LLAMA_STOP_REASON.stop:
       return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
@@ -50,4 +52,4 @@ export const transformBedrockLlamaChatFinishReason = (finishReason: BEDROCK_LLAM
     default:
       return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
   }
-}
+};

@@ -3,15 +3,15 @@ import { Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
-  OPEN_AI_CHAT_COMPLETION_FINISH_REASON,
   ProviderConfig,
 } from '../types';
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
-import { AI21ErrorResponse } from './complete';
-import { AI21_FINISH_REASON } from './types';
+import { AI21ErrorResponse } from './types';
+import { AI21ChatCompleteResponse } from './types';
+import { transformAI21ChatFinishReason } from './utils';
 
 export const AI21ChatCompleteConfig: ProviderConfig = {
   messages: [
@@ -97,32 +97,6 @@ export const AI21ChatCompleteConfig: ProviderConfig = {
   presencePenalty: {
     param: 'presencePenalty',
   },
-};
-
-interface AI21ChatCompleteResponse {
-  id: string;
-  outputs: {
-    text: string;
-    role: string;
-    finishReason: {
-      reason: AI21_FINISH_REASON | string;
-      length: number | null;
-      sequence: string | null;
-    };
-  }[];
-}
-
-export const transformAI21ChatFinishReason = (
-  reason: AI21_FINISH_REASON | string
-): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
-  switch (reason) {
-    case AI21_FINISH_REASON.stop:
-      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
-    case AI21_FINISH_REASON.length:
-      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.length;
-    default:
-      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
-  }
 };
 
 export const AI21ErrorResponseTransform: (

@@ -1,17 +1,16 @@
 import { ANTHROPIC } from '../../globals';
 import { Params } from '../../types/requestBody';
-import {
-  CompletionResponse,
-  ErrorResponse,
-  OPEN_AI_COMPLETION_FINISH_REASON,
-  ProviderConfig,
-} from '../types';
+import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import {
   AnthropicErrorResponse,
   AnthropicErrorResponseTransform,
 } from './chatComplete';
 import { ANTHROPIC_STOP_REASON } from './types';
+import {
+  transformAnthropicCompletionFinishReason,
+  transformAnthropicCompletionStreamChunkFinishReason,
+} from './utils';
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -72,27 +71,6 @@ interface AnthropicCompleteResponse {
   log_id: string;
   exception: null | string;
 }
-
-export const transformAnthropicCompletionFinishReason = (
-  stopReason: ANTHROPIC_STOP_REASON | string
-): OPEN_AI_COMPLETION_FINISH_REASON => {
-  switch (stopReason) {
-    case ANTHROPIC_STOP_REASON.stop_sequence:
-    case ANTHROPIC_STOP_REASON.end_turn:
-      return OPEN_AI_COMPLETION_FINISH_REASON.stop;
-    case ANTHROPIC_STOP_REASON.tool_use:
-      return OPEN_AI_COMPLETION_FINISH_REASON.length;
-    default:
-      return OPEN_AI_COMPLETION_FINISH_REASON.stop;
-  }
-};
-
-export const transformAnthropicCompletionStreamChunkFinishReason = (
-  stopReason?: ANTHROPIC_STOP_REASON | string | null
-): OPEN_AI_COMPLETION_FINISH_REASON | null => {
-  if (!stopReason) return null;
-  return transformAnthropicCompletionFinishReason(stopReason);
-};
 
 // TODO: The token calculation is wrong atm
 export const AnthropicCompleteResponseTransform: (

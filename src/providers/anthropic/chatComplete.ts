@@ -3,7 +3,6 @@ import { Params, Message, ContentType } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
-  OPEN_AI_CHAT_COMPLETION_FINISH_REASON,
   ProviderConfig,
 } from '../types';
 import {
@@ -11,6 +10,10 @@ import {
   generateInvalidProviderResponseError,
 } from '../utils';
 import { ANTHROPIC_STOP_REASON } from './types';
+import {
+  transformAnthropicChatStopReason,
+  transformAnthropicChatStreamChunkStopReason,
+} from './utils';
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -345,31 +348,6 @@ export const AnthropicErrorResponseTransform: (
   }
 
   return undefined;
-};
-
-// this converts the anthropic stop_reason to an openai finish_reason
-export const transformAnthropicChatStopReason = (
-  stopReason: ANTHROPIC_STOP_REASON | string
-): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
-  switch (stopReason) {
-    case ANTHROPIC_STOP_REASON.stop_sequence:
-    case ANTHROPIC_STOP_REASON.end_turn:
-      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
-    case ANTHROPIC_STOP_REASON.tool_use:
-      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.tool_calls;
-    case ANTHROPIC_STOP_REASON.max_tokens:
-      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.length;
-    default:
-      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
-  }
-};
-
-// finish_reason may be null for stream chunks
-export const transformAnthropicChatStreamChunkStopReason = (
-  stopReason?: ANTHROPIC_STOP_REASON | string | null
-): OPEN_AI_CHAT_COMPLETION_FINISH_REASON | null => {
-  if (!stopReason) return null;
-  return transformAnthropicChatStopReason(stopReason);
 };
 
 // TODO: The token calculation is wrong atm

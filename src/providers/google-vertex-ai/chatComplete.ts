@@ -12,9 +12,11 @@ import {
   AnthropicChatCompleteResponse,
   AnthropicChatCompleteStreamResponse,
   AnthropicErrorResponse,
+} from '../anthropic/chatComplete';
+import {
   transformAnthropicChatStopReason,
   transformAnthropicChatStreamChunkStopReason,
-} from '../anthropic/chatComplete';
+} from '../anthropic/utils';
 import {
   GoogleMessage,
   GoogleMessageRole,
@@ -566,7 +568,7 @@ const transformVertexGeminiChatStreamChunkStopReason = (
 ): OPEN_AI_CHAT_COMPLETION_FINISH_REASON | null => {
   if (!stopReason) return null;
   return transformVertexGeminiChatStopReason(stopReason);
-}
+};
 
 export const GoogleChatCompleteResponseTransform: (
   response:
@@ -732,7 +734,9 @@ export const GoogleChatCompleteStreamChunkTransform: (
         return {
           delta: message,
           index: index,
-          finish_reason: transformVertexGeminiChatStreamChunkStopReason(generation.finishReason),
+          finish_reason: transformVertexGeminiChatStreamChunkStopReason(
+            generation.finishReason
+          ),
         };
       }) ?? [],
     usage: usageMetadata,

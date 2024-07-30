@@ -1,14 +1,10 @@
 import { AI21 } from '../../globals';
 import { Params } from '../../types/requestBody';
-import {
-  CompletionResponse,
-  ErrorResponse,
-  OPEN_AI_COMPLETION_FINISH_REASON,
-  ProviderConfig,
-} from '../types';
+import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { AI21ErrorResponseTransform } from './chatComplete';
-import { AI21_FINISH_REASON } from './types';
+import { AI21CompleteResponse, AI21ErrorResponse } from './types';
+import { transformAI21CompletionFinishReason } from './utils';
 
 export const AI21CompleteConfig: ProviderConfig = {
   prompt: {
@@ -69,43 +65,6 @@ export const AI21CompleteConfig: ProviderConfig = {
   presencePenalty: {
     param: 'presencePenalty',
   },
-};
-
-interface AI21CompleteResponse {
-  id: string;
-  prompt: {
-    text: string;
-    tokens: Record<string, any>[];
-  };
-  completions: [
-    {
-      data: {
-        text: string;
-        tokens: Record<string, any>[];
-      };
-      finishReason: {
-        reason: AI21_FINISH_REASON | string;
-        length: number;
-      };
-    },
-  ];
-}
-
-export interface AI21ErrorResponse {
-  detail: string;
-}
-
-export const transformAI21CompletionFinishReason = (
-  reason: AI21_FINISH_REASON | string
-): OPEN_AI_COMPLETION_FINISH_REASON => {
-  switch (reason) {
-    case AI21_FINISH_REASON.stop:
-      return OPEN_AI_COMPLETION_FINISH_REASON.stop;
-    case AI21_FINISH_REASON.length:
-      return OPEN_AI_COMPLETION_FINISH_REASON.length;
-    default:
-      return OPEN_AI_COMPLETION_FINISH_REASON.stop;
-  }
 };
 
 export const AI21CompleteResponseTransform: (
