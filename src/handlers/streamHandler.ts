@@ -249,7 +249,8 @@ export async function handleStreamingMode(
   response: Response,
   proxyProvider: string,
   responseTransformer: Function | undefined,
-  requestURL: string
+  requestURL: string,
+  streamCallbackFunction: Function | undefined
 ): Promise<Response> {
   const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);
   // If the provider doesn't supply completion id,
@@ -267,17 +268,22 @@ export async function handleStreamingMode(
 
   if (proxyProvider === BEDROCK) {
     (async () => {
+      const chunks = [];
       for await (const chunk of readAWSStream(
         reader,
         responseTransformer,
         fallbackChunkId
       )) {
         await writer.write(encoder.encode(chunk));
+        // collect chunks for our callback
+        if (streamCallbackFunction) chunks.push(chunk);
       }
+      if (streamCallbackFunction) streamCallbackFunction(chunks);
       writer.close();
     })();
   } else {
     (async () => {
+      const chunks = [];
       for await (const chunk of readStream(
         reader,
         splitPattern,
@@ -286,7 +292,10 @@ export async function handleStreamingMode(
         fallbackChunkId
       )) {
         await writer.write(encoder.encode(chunk));
+        // collect chunks for our callback
+        if (streamCallbackFunction) chunks.push(chunk);
       }
+      if (streamCallbackFunction) streamCallbackFunction(chunks);
       writer.close();
     })();
   }
@@ -316,7 +325,8 @@ export async function handleStreamingMode(
 export async function handleJSONToStreamResponse(
   response: Response,
   provider: string,
-  responseTransformerFunction: Function
+  responseTransformerFunction: Function,
+  streamCallbackFunction: Function | undefined
 ): Promise<Response> {
   const { readable, writable } = new TransformStream();
   const writer = writable.getWriter();
@@ -326,9 +336,13 @@ export async function handleJSONToStreamResponse(
   const streamChunkArray = responseTransformerFunction(responseJSON, provider);
 
   (async () => {
+    const chunks = [];
     for (const chunk of streamChunkArray) {
       await writer.write(encoder.encode(chunk));
+      // collect chunks for our callback
+      if (streamCallbackFunction) chunks.push(chunk);
     }
+    if (streamCallbackFunction) streamCallbackFunction(chunks);
     writer.close();
   })();
 
