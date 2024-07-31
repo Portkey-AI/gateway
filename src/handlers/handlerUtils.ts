@@ -35,6 +35,7 @@ import {
 import { env } from 'hono/adapter';
 import { OpenAIChatCompleteJSONToStreamResponseTransform } from '../providers/openai/chatComplete';
 import { OpenAICompleteJSONToStreamResponseTransform } from '../providers/openai/complete';
+import { getRuntimeKey } from 'hono/adapter';
 
 /**
  * Constructs the request options for the API call.
@@ -198,6 +199,8 @@ export const fetchProviderOptionsFromConfig = (
       providerOptions[0].deploymentId = camelCaseConfig.deploymentId;
     if (camelCaseConfig.apiVersion)
       providerOptions[0].apiVersion = camelCaseConfig.apiVersion;
+    if (camelCaseConfig.azureModelName)
+      providerOptions[0].azureModelName = camelCaseConfig.azureModelName;
     if (camelCaseConfig.apiVersion)
       providerOptions[0].vertexProjectId = camelCaseConfig.vertexProjectId;
     if (camelCaseConfig.apiVersion)
@@ -474,8 +477,14 @@ export async function tryPost(
   const customHost =
     requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || '';
 
+  const requestTimeout =
+    Number(requestHeaders[HEADER_KEYS.REQUEST_TIMEOUT]) ||
+    providerOption.requestTimeout ||
+    null;
+
   const baseUrl =
     customHost || apiConfig.getBaseURL({ providerOptions: providerOption });
+
   const endpoint = apiConfig.getEndpoint({
     providerOptions: providerOption,
     fn,
@@ -592,7 +601,7 @@ export async function tryPost(
       fetchOptions,
       providerOption.retry.attempts,
       providerOption.retry.onStatusCodes,
-      providerOption.requestTimeout || null
+      requestTimeout
     );
   }
 
@@ -727,7 +736,7 @@ export function responseHandler(
   const providerConfig = Providers[proxyProvider];
   let providerTransformers = Providers[proxyProvider]?.responseTransforms;
 
-  if (providerConfig.getConfig) {
+  if (providerConfig?.getConfig) {
     providerTransformers =
       providerConfig.getConfig(gatewayRequest).responseTransforms;
   }
@@ -964,6 +973,9 @@ export function updateResponseHeaders(
     // Brotli compression causes errors at runtime, removing the header in that case
     response.headers.delete('content-encoding');
   }
+  if (getRuntimeKey() == 'node') {
+    response.headers.delete('content-encoding');
+  }
 
   // Delete content-length header to avoid conflicts with hono compress middleware
   // workerd environment handles this authomatically
@@ -977,6 +989,7 @@ export function constructConfigFromRequestHeaders(
     resourceName: requestHeaders[`x-${POWERED_BY}-azure-resource-name`],
     deploymentId: requestHeaders[`x-${POWERED_BY}-azure-deployment-id`],
     apiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
+    azureModelName: requestHeaders[`x-${POWERED_BY}-azure-model-name`],
   };
 
   const bedrockConfig = {
@@ -995,10 +1008,22 @@ export function constructConfigFromRequestHeaders(
     openaiProject: requestHeaders[`x-${POWERED_BY}-openai-project`],
   };
 
-  const vertexConfig = {
+  const vertexConfig: Record<string, any> = {
     vertexProjectId: requestHeaders[`x-${POWERED_BY}-vertex-project-id`],
     vertexRegion: requestHeaders[`x-${POWERED_BY}-vertex-region`],
   };
+
+  let vertexServiceAccountJson =
+    requestHeaders[`x-${POWERED_BY}-vertex-service-account-json`];
+  if (vertexServiceAccountJson) {
+    try {
+      vertexConfig.vertexServiceAccountJson = JSON.parse(
+        vertexServiceAccountJson
+      );
+    } catch (e) {
+      vertexConfig.vertexServiceAccountJson = null;
+    }
+  }
 
   if (requestHeaders[`x-${POWERED_BY}-config`]) {
     let parsedConfigJson = JSON.parse(requestHeaders[`x-${POWERED_BY}-config`]);
@@ -1037,10 +1062,18 @@ export function constructConfigFromRequestHeaders(
           ...openAiConfig,
         };
       }
+
+      if (parsedConfigJson.provider === GOOGLE_VERTEX_AI) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...vertexConfig,
+        };
+      }
     }
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
       'params',
+      'vertex_service_account_json',
     ]) as any;
   }
 

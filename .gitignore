@@ -139,3 +139,5 @@ build
 
 # IntelliJ Idea
 .idea
+
+plugins/**/.creds.json

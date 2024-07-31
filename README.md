@@ -1,7 +1,7 @@
 <div align="center">
 
 <p align="right">
-   <strong>English</strong> | <a href="./README.cn.md">中文</a> 
+   <strong>English</strong> | <a href="./.github/README.cn.md">中文</a> 
 </p>
 
 
