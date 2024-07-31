@@ -350,7 +350,8 @@ export async function tryPostProxy(
         undefined,
         url,
         false,
-        params
+        params,
+        false
       );
       c.set('requestOptions', [
         ...requestOptions,
@@ -395,7 +396,8 @@ export async function tryPostProxy(
     undefined,
     url,
     false,
-    params
+    params,
+    false
   );
   updateResponseHeaders(
     mappedResponse,
@@ -455,6 +457,13 @@ export async function tryPost(
   const overrideParams = providerOption?.overrideParams || {};
   const params: Params = { ...inputParams, ...overrideParams };
   const isStreamingMode = params.stream ? true : false;
+  let strictOpenAiCompliance = true;
+
+  if (requestHeaders[HEADER_KEYS.STRICT_OPEN_AI_COMPLIANCE] === 'false') {
+    strictOpenAiCompliance = false;
+  } else if (providerOption.strictOpenAiCompliance === false) {
+    strictOpenAiCompliance = false;
+  }
 
   const provider: string = providerOption.provider ?? '';
 
@@ -560,7 +569,8 @@ export async function tryPost(
         fn,
         url,
         true,
-        params
+        params,
+        strictOpenAiCompliance
       );
       c.set('requestOptions', [
         ...requestOptions,
@@ -612,7 +622,8 @@ export async function tryPost(
     fn,
     url,
     false,
-    params
+    params,
+    strictOpenAiCompliance
   );
   updateResponseHeaders(
     mappedResponse,
@@ -728,7 +739,8 @@ export function responseHandler(
   responseTransformer: string | undefined,
   requestURL: string,
   isCacheHit: boolean = false,
-  gatewayRequest: Params
+  gatewayRequest: Params,
+  strictOpenAiCompliance: boolean
 ): Promise<Response> {
   let responseTransformerFunction: Function | undefined;
   const responseContentType = response.headers?.get('content-type');
@@ -775,7 +787,8 @@ export function responseHandler(
       response,
       proxyProvider,
       responseTransformerFunction,
-      requestURL
+      requestURL,
+      strictOpenAiCompliance
     );
   } else if (
     responseContentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
@@ -793,7 +806,11 @@ export function responseHandler(
   ) {
     return handleTextResponse(response, responseTransformerFunction);
   } else {
-    return handleNonStreamingMode(response, responseTransformerFunction);
+    return handleNonStreamingMode(
+      response,
+      responseTransformerFunction,
+      strictOpenAiCompliance
+    );
   }
 }
 
@@ -825,6 +842,14 @@ export async function tryTargetsRecursively(
       : { ...inheritedConfig.cache },
     requestTimeout: null,
   };
+
+  if (typeof currentTarget.strictOpenAiCompliance === 'boolean') {
+    currentInheritedConfig.strictOpenAiCompliance =
+      currentTarget.strictOpenAiCompliance;
+  } else if (typeof inheritedConfig.strictOpenAiCompliance === 'boolean') {
+    currentInheritedConfig.strictOpenAiCompliance =
+      inheritedConfig.strictOpenAiCompliance;
+  }
 
   if (currentTarget.forwardHeaders) {
     currentInheritedConfig.forwardHeaders = [...currentTarget.forwardHeaders];

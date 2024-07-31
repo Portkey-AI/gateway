@@ -286,7 +286,8 @@ export async function proxyHandler(c: Context): Promise<Response> {
           undefined,
           urlToFetch,
           false,
-          store.reqBody
+          store.reqBody,
+          false
         );
         c.set('requestOptions', [
           {
@@ -331,7 +332,8 @@ export async function proxyHandler(c: Context): Promise<Response> {
       undefined,
       urlToFetch,
       false,
-      store.reqBody
+      store.reqBody,
+      false
     );
     updateResponseHeaders(
       mappedResponse,
