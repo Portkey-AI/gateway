@@ -2,6 +2,7 @@ import { PERPLEXITY_AI } from '../../globals';
 import {
   ChatCompletionResponse,
   ErrorResponse,
+  OPEN_AI_CHAT_COMPLETION_FINISH_REASON,
   ProviderConfig,
 } from '../types';
 import {
@@ -139,7 +140,7 @@ export const PerplexityAIChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: '',
+          finish_reason: OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop,
         },
       ],
       usage: {

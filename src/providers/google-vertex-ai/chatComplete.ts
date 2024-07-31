@@ -14,6 +14,10 @@ import {
   AnthropicErrorResponse,
 } from '../anthropic/chatComplete';
 import {
+  transformAnthropicChatStopReason,
+  transformAnthropicChatStreamChunkStopReason,
+} from '../anthropic/utils';
+import {
   GoogleMessage,
   GoogleMessageRole,
   GoogleToolConfig,
@@ -24,6 +28,7 @@ import {
 import {
   ChatCompletionResponse,
   ErrorResponse,
+  OPEN_AI_CHAT_COMPLETION_FINISH_REASON,
   ProviderConfig,
 } from '../types';
 import {
@@ -31,9 +36,10 @@ import {
   generateInvalidProviderResponseError,
 } from '../utils';
 import { transformGenerationConfig } from './transformGenerationConfig';
-import type {
-  GoogleErrorResponse,
-  GoogleGenerateContentResponse,
+import {
+  VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON,
+  type GoogleErrorResponse,
+  type GoogleGenerateContentResponse,
 } from './types';
 
 export const VertexGoogleChatCompleteConfig: ProviderConfig = {
@@ -538,6 +544,32 @@ export const VertexAnthropicChatCompleteConfig: ProviderConfig = {
   },
 };
 
+const transformVertexGeminiChatStopReason = (
+  stopReason?: VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON | string
+): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
+  switch (stopReason) {
+    case VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.STOP:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
+    case VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.SAFETY:
+    case VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.RECITATION:
+    case VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.BLOCKLIST:
+    case VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.PROHIBITED_CONTENT:
+    case VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.SPII:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.content_filter;
+    case VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.MAX_TOKENS:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.length;
+    default:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
+  }
+};
+
+const transformVertexGeminiChatStreamChunkStopReason = (
+  stopReason?: VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON | string | null
+): OPEN_AI_CHAT_COMPLETION_FINISH_REASON | null => {
+  if (!stopReason) return null;
+  return transformVertexGeminiChatStopReason(stopReason);
+};
+
 export const GoogleChatCompleteResponseTransform: (
   response:
     | GoogleGenerateContentResponse
@@ -580,7 +612,8 @@ export const GoogleChatCompleteResponseTransform: (
 
   if (
     'candidates' in response &&
-    response.candidates[0].finishReason === 'PROHIBITED_CONTENT'
+    response.candidates[0].finishReason ===
+      VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.PROHIBITED_CONTENT
   ) {
     return generateInvalidProviderResponseError(response, GOOGLE_VERTEX_AI);
   }
@@ -626,7 +659,9 @@ export const GoogleChatCompleteResponseTransform: (
           return {
             message: message,
             index: index,
-            finish_reason: generation.finishReason,
+            finish_reason: transformVertexGeminiChatStopReason(
+              generation.finishReason
+            ),
           };
         }) ?? [],
       usage: {
@@ -699,7 +734,9 @@ export const GoogleChatCompleteStreamChunkTransform: (
         return {
           delta: message,
           index: index,
-          finish_reason: generation.finishReason,
+          finish_reason: transformVertexGeminiChatStreamChunkStopReason(
+            generation.finishReason
+          ),
         };
       }) ?? [],
     usage: usageMetadata,
@@ -774,7 +811,7 @@ export const VertexAnthropicChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: response.stop_reason,
+          finish_reason: transformAnthropicChatStopReason(response.stop_reason),
         },
       ],
       usage: {
@@ -861,7 +898,9 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
           {
             index: 0,
             delta: {},
-            finish_reason: parsedChunk.delta?.stop_reason,
+            finish_reason: transformAnthropicChatStreamChunkStopReason(
+              parsedChunk.delta?.stop_reason
+            ),
           },
         ],
         usage: {
@@ -916,7 +955,9 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: parsedChunk.delta?.stop_reason ?? null,
+          finish_reason: transformAnthropicChatStreamChunkStopReason(
+            parsedChunk.delta?.stop_reason
+          ),
         },
       ],
     })}` + '\n\n'

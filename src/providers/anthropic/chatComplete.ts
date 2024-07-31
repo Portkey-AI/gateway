@@ -9,6 +9,11 @@ import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
+import { ANTHROPIC_STOP_REASON } from './types';
+import {
+  transformAnthropicChatStopReason,
+  transformAnthropicChatStreamChunkStopReason,
+} from './utils';
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -290,7 +295,7 @@ export interface AnthropicChatCompleteResponse {
   type: string;
   role: string;
   content: AnthropicContentItem[];
-  stop_reason: string;
+  stop_reason: ANTHROPIC_STOP_REASON | string;
   model: string;
   stop_sequence: null | string;
   usage: {
@@ -306,7 +311,7 @@ export interface AnthropicChatCompleteStreamResponse {
     type: string;
     text: string;
     partial_json?: string;
-    stop_reason?: string;
+    stop_reason: ANTHROPIC_STOP_REASON | string;
   };
   content_block?: {
     type: string;
@@ -351,10 +356,10 @@ export const AnthropicChatCompleteResponseTransform: (
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    const errorResposne = AnthropicErrorResponseTransform(
+    const errorResponse = AnthropicErrorResponseTransform(
       response as AnthropicErrorResponse
     );
-    if (errorResposne) return errorResposne;
+    if (errorResponse) return errorResponse;
   }
 
   if ('content' in response) {
@@ -394,7 +399,7 @@ export const AnthropicChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: response.stop_reason,
+          finish_reason: transformAnthropicChatStopReason(response.stop_reason),
         },
       ],
       usage: {
@@ -479,7 +484,9 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           {
             index: 0,
             delta: {},
-            finish_reason: parsedChunk.delta?.stop_reason,
+            finish_reason: transformAnthropicChatStreamChunkStopReason(
+              parsedChunk.delta.stop_reason
+            ),
           },
         ],
         usage: {
@@ -534,7 +541,9 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: parsedChunk.delta?.stop_reason ?? null,
+          finish_reason: transformAnthropicChatStreamChunkStopReason(
+            parsedChunk.delta?.stop_reason
+          ),
         },
       ],
     })}` + '\n\n'

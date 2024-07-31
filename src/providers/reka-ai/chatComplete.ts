@@ -3,6 +3,7 @@ import { Message, Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
+  OPEN_AI_CHAT_COMPLETION_FINISH_REASON,
   ProviderConfig,
 } from '../types';
 import {
@@ -128,15 +129,35 @@ export const RekaAIChatCompleteConfig: ProviderConfig = {
   },
 };
 
+enum REKA_AI_CHAT_COMPLETE_FINISH_REASON {
+  stop = 'stop',
+  length = 'length',
+  context = 'context',
+}
+
 export interface RekaAIChatCompleteResponse {
   type: string;
   text: string;
-  finish_reason: string;
+  finish_reason: REKA_AI_CHAT_COMPLETE_FINISH_REASON | string;
   metadata: {
     input_tokens: number;
     generated_tokens: number;
   };
 }
+
+const transformRekaAIChatFinishReason = (
+  finishReason: REKA_AI_CHAT_COMPLETE_FINISH_REASON | string
+) => {
+  switch (finishReason) {
+    case REKA_AI_CHAT_COMPLETE_FINISH_REASON.stop:
+    case REKA_AI_CHAT_COMPLETE_FINISH_REASON.context:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
+    case REKA_AI_CHAT_COMPLETE_FINISH_REASON.length:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.length;
+    default:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
+  }
+};
 
 export interface RekaAIErrorResponse {
   detail: any; // could be string or array
@@ -173,7 +194,9 @@ export const RekaAIChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: response.finish_reason,
+          finish_reason: transformRekaAIChatFinishReason(
+            response.finish_reason
+          ),
         },
       ],
       usage: {

@@ -1,6 +1,12 @@
 import { COHERE } from '../../globals';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import {
+  CompletionResponse,
+  ErrorResponse,
+  OPEN_AI_COMPLETION_FINISH_REASON,
+  ProviderConfig,
+} from '../types';
 import { generateErrorResponse } from '../utils';
+import { COHERE_FINISH_REASON } from './types';
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -88,7 +94,7 @@ export interface CohereStreamChunk {
     generations?: {
       id: string;
       text: string;
-      finish_reason: boolean;
+      finish_reason: COHERE_FINISH_REASON | string;
     }[];
   };
   prompt?: string;
@@ -101,6 +107,26 @@ export interface CohereStreamChunk {
   is_finished: boolean;
   index?: number;
 }
+
+const transformCohereCompletionFinishReason = (
+  finishReason: COHERE_FINISH_REASON | string
+): OPEN_AI_COMPLETION_FINISH_REASON => {
+  switch (finishReason) {
+    case COHERE_FINISH_REASON.COMPLETE:
+      return OPEN_AI_COMPLETION_FINISH_REASON.stop;
+    case COHERE_FINISH_REASON.MAX_TOKENS:
+      return OPEN_AI_COMPLETION_FINISH_REASON.length;
+    default:
+      return OPEN_AI_COMPLETION_FINISH_REASON.stop;
+  }
+};
+
+const transformCohereCompletionStreamFinishReason = (
+  finishReason?: COHERE_FINISH_REASON | string | null
+): OPEN_AI_COMPLETION_FINISH_REASON | null => {
+  if (!finishReason) return null;
+  return transformCohereCompletionFinishReason(finishReason);
+};
 
 export const CohereCompleteResponseTransform: (
   response: CohereCompleteResponse,
@@ -128,7 +154,7 @@ export const CohereCompleteResponseTransform: (
       text: generation.text,
       index: index,
       logprobs: null,
-      finish_reason: 'length',
+      finish_reason: OPEN_AI_COMPLETION_FINISH_REASON.length,
     })),
   };
 };
@@ -160,8 +186,9 @@ export const CohereCompleteStreamChunkTransform: (
             parsedChunk.response?.generations?.[0]?.text ?? parsedChunk.text,
           index: parsedChunk.index ?? 0,
           logprobs: null,
-          finish_reason:
-            parsedChunk.response?.generations?.[0]?.finish_reason ?? null,
+          finish_reason: transformCohereCompletionStreamFinishReason(
+            parsedChunk.response?.generations?.[0]?.finish_reason
+          ),
         },
       ],
     })}` + '\n\n'

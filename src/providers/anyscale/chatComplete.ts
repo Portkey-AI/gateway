@@ -2,6 +2,7 @@ import { ANYSCALE } from '../../globals';
 import {
   ChatCompletionResponse,
   ErrorResponse,
+  OPEN_AI_CHAT_COMPLETION_FINISH_REASON,
   ProviderConfig,
 } from '../types';
 import {
@@ -111,7 +112,7 @@ export interface AnyscaleStreamChunk {
       content?: string;
     };
     index: number;
-    finish_reason: string | null;
+    finish_reason: OPEN_AI_CHAT_COMPLETION_FINISH_REASON | null;
   }[];
 }
 
@@ -165,10 +166,10 @@ export const AnyscaleChatCompleteResponseTransform: (
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    const errorResposne = AnyscaleErrorResponseTransform(
+    const errorResponse = AnyscaleErrorResponseTransform(
       response as AnyscaleErrorResponse | AnyscaleValidationErrorResponse
     );
-    if (errorResposne) return errorResposne;
+    if (errorResponse) return errorResponse;
   }
 
   if ('choices' in response) {

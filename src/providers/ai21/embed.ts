@@ -1,6 +1,6 @@
 import { ErrorResponse, ProviderConfig } from '../types';
 import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
-import { AI21ErrorResponse } from './complete';
+import { AI21ErrorResponse } from './types';
 import { AI21 } from '../../globals';
 import { generateInvalidProviderResponseError } from '../utils';
 import { AI21ErrorResponseTransform } from './chatComplete';

@@ -16,7 +16,7 @@ import {
   BedrockLlamaChatCompleteStreamChunkTransform,
   BedrockTitanChatCompleteResponseTransform,
   BedrockTitanChatCompleteStreamChunkTransform,
-  BedrockTitanChatompleteConfig,
+  BedrockTitanChatCompleteConfig,
   BedrockMistralChatCompleteConfig,
   BedrockMistralChatCompleteResponseTransform,
   BedrockMistralChatCompleteStreamChunkTransform,
@@ -113,7 +113,7 @@ const BedrockConfig: ProviderConfigs = {
       case 'amazon':
         return {
           complete: BedrockTitanCompleteConfig,
-          chatComplete: BedrockTitanChatompleteConfig,
+          chatComplete: BedrockTitanChatCompleteConfig,
           embed: BedrockTitanEmbedConfig,
           api: BedrockAPIConfig,
           responseTransforms: {

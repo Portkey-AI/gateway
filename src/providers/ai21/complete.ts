@@ -3,6 +3,8 @@ import { Params } from '../../types/requestBody';
 import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { AI21ErrorResponseTransform } from './chatComplete';
+import { AI21CompleteResponse, AI21ErrorResponse } from './types';
+import { transformAI21CompletionFinishReason } from './utils';
 
 export const AI21CompleteConfig: ProviderConfig = {
   prompt: {
@@ -65,30 +67,6 @@ export const AI21CompleteConfig: ProviderConfig = {
   },
 };
 
-interface AI21CompleteResponse {
-  id: string;
-  prompt: {
-    text: string;
-    tokens: Record<string, any>[];
-  };
-  completions: [
-    {
-      data: {
-        text: string;
-        tokens: Record<string, any>[];
-      };
-      finishReason: {
-        reason: string;
-        length: number;
-      };
-    },
-  ];
-}
-
-export interface AI21ErrorResponse {
-  detail: string;
-}
-
 export const AI21CompleteResponseTransform: (
   response: AI21CompleteResponse | AI21ErrorResponse,
   responseStatus: number
@@ -116,7 +94,9 @@ export const AI21CompleteResponseTransform: (
         text: completion.data.text,
         index: index,
         logprobs: null,
-        finish_reason: completion.finishReason?.reason,
+        finish_reason: transformAI21CompletionFinishReason(
+          completion.finishReason?.reason
+        ),
       })),
       usage: {
         prompt_tokens: inputTokens,

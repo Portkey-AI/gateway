@@ -9,7 +9,9 @@ import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
-import { AI21ErrorResponse } from './complete';
+import { AI21ErrorResponse } from './types';
+import { AI21ChatCompleteResponse } from './types';
+import { transformAI21ChatFinishReason } from './utils';
 
 export const AI21ChatCompleteConfig: ProviderConfig = {
   messages: [
@@ -97,19 +99,6 @@ export const AI21ChatCompleteConfig: ProviderConfig = {
   },
 };
 
-interface AI21ChatCompleteResponse {
-  id: string;
-  outputs: {
-    text: string;
-    role: string;
-    finishReason: {
-      reason: string;
-      length: number | null;
-      sequence: string | null;
-    };
-  }[];
-}
-
 export const AI21ErrorResponseTransform: (
   response: AI21ErrorResponse
 ) => ErrorResponse | undefined = (response) => {
@@ -148,7 +137,7 @@ export const AI21ChatCompleteResponseTransform: (
         },
         index: index,
         logprobs: null,
-        finish_reason: o.finishReason?.reason,
+        finish_reason: transformAI21ChatFinishReason(o.finishReason?.reason),
       })),
     };
   }

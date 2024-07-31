@@ -10,6 +10,7 @@ import {
 import {
   ChatCompletionResponse,
   ErrorResponse,
+  OPEN_AI_CHAT_COMPLETION_FINISH_REASON,
   ProviderConfig,
 } from '../types';
 import {
@@ -321,6 +322,16 @@ interface GoogleGenerateFunctionCall {
   args: Record<string, any>;
 }
 
+export enum GOOGLE_GENERATE_CONTENT_FINISH_REASON {
+  FINISH_REASON_UNSPECIFIED = 'FINISH_REASON_UNSPECIFIED',
+  STOP = 'STOP',
+  MAX_TOKENS = 'MAX_TOKENS',
+  SAFETY = 'SAFETY',
+  RECITATION = 'RECITATION',
+  LANGUAGE = 'LANGUAGE',
+  OTHER = 'OTHER',
+}
+
 interface GoogleGenerateContentResponse {
   candidates: {
     content: {
@@ -329,7 +340,7 @@ interface GoogleGenerateContentResponse {
         functionCall?: GoogleGenerateFunctionCall;
       }[];
     };
-    finishReason: string;
+    finishReason: GOOGLE_GENERATE_CONTENT_FINISH_REASON | string;
     index: 0;
     safetyRatings: {
       category: string;
@@ -348,6 +359,32 @@ interface GoogleGenerateContentResponse {
     totalTokenCount: number;
   };
 }
+
+// this converts the google stop_reason to an openai finish_reason
+// https://ai.google.dev/api/python/google/ai/generativelanguage/Candidate/FinishReason
+const transformGoogleGeminiChatFinishReason = (
+  stopReason: GOOGLE_GENERATE_CONTENT_FINISH_REASON | string
+): OPEN_AI_CHAT_COMPLETION_FINISH_REASON => {
+  switch (stopReason) {
+    case GOOGLE_GENERATE_CONTENT_FINISH_REASON.STOP:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
+    case GOOGLE_GENERATE_CONTENT_FINISH_REASON.SAFETY:
+    case GOOGLE_GENERATE_CONTENT_FINISH_REASON.RECITATION:
+    case GOOGLE_GENERATE_CONTENT_FINISH_REASON.LANGUAGE:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.content_filter;
+    case GOOGLE_GENERATE_CONTENT_FINISH_REASON.MAX_TOKENS:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.length;
+    default:
+      return OPEN_AI_CHAT_COMPLETION_FINISH_REASON.stop;
+  }
+};
+
+const transformGoogleGeminiStreamingChatCompletionFinishReason = (
+  finishReason?: GOOGLE_GENERATE_CONTENT_FINISH_REASON | string
+): OPEN_AI_CHAT_COMPLETION_FINISH_REASON | null => {
+  if (!finishReason) return null;
+  return transformGoogleGeminiChatFinishReason(finishReason);
+};
 
 export const GoogleErrorResponseTransform: (
   response: GoogleErrorResponse,
@@ -414,7 +451,9 @@ export const GoogleChatCompleteResponseTransform: (
           return {
             message: message,
             index: generation.index,
-            finish_reason: generation.finishReason,
+            finish_reason: transformGoogleGeminiChatFinishReason(
+              generation.finishReason
+            ),
           };
         }) ?? [],
       usage: {
@@ -487,7 +526,10 @@ export const GoogleChatCompleteStreamChunkTransform: (
           return {
             delta: message,
             index: generation.index,
-            finish_reason: generation.finishReason,
+            finish_reason:
+              transformGoogleGeminiStreamingChatCompletionFinishReason(
+                generation.finishReason
+              ),
           };
         }) ?? [],
       usage: {
