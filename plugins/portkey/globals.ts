@@ -1,11 +1,10 @@
 import { post } from '../utils';
 
-export const PORTKEY_BASE_URL = 'https://api.portkey.ai/v1';
 export const PORTKEY_ENDPOINTS = {
   MODERATIONS: '/moderations',
-  LANGUAGE: '/tools/detect-language',
-  PII: '/tools/detect-pii',
-  GIBBERISH: '/tools/detect-gibberish',
+  LANGUAGE: '/language',
+  PII: '/pii',
+  GIBBERISH: '/gibberish',
 };
 
 export const fetchPortkey = async (
@@ -15,11 +14,9 @@ export const fetchPortkey = async (
 ) => {
   const options = {
     headers: {
-      'x-portkey-api-key': `${credentials.apiKey}`,
-      'x-portkey-provider': 'openai',
-      'x-portkey-virtual-key': `${credentials.virtualKey}`,
+      'Authorization': `Bearer ${credentials.apiKey}`,
     },
   };
 
-  return post(`${PORTKEY_BASE_URL}${endpoint}`, data, options);
+  return post(`${credentials.baseURL}${endpoint}`, data, options);
 };
