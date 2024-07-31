@@ -35,6 +35,7 @@ import {
 import { env } from 'hono/adapter';
 import { OpenAIChatCompleteJSONToStreamResponseTransform } from '../providers/openai/chatComplete';
 import { OpenAICompleteJSONToStreamResponseTransform } from '../providers/openai/complete';
+import { getRuntimeKey } from 'hono/adapter';
 
 /**
  * Constructs the request options for the API call.
@@ -198,6 +199,8 @@ export const fetchProviderOptionsFromConfig = (
       providerOptions[0].deploymentId = camelCaseConfig.deploymentId;
     if (camelCaseConfig.apiVersion)
       providerOptions[0].apiVersion = camelCaseConfig.apiVersion;
+    if (camelCaseConfig.azureModelName)
+      providerOptions[0].azureModelName = camelCaseConfig.azureModelName;
     if (camelCaseConfig.apiVersion)
       providerOptions[0].vertexProjectId = camelCaseConfig.vertexProjectId;
     if (camelCaseConfig.apiVersion)
@@ -733,7 +736,7 @@ export function responseHandler(
   const providerConfig = Providers[proxyProvider];
   let providerTransformers = Providers[proxyProvider]?.responseTransforms;
 
-  if (providerConfig.getConfig) {
+  if (providerConfig?.getConfig) {
     providerTransformers =
       providerConfig.getConfig(gatewayRequest).responseTransforms;
   }
@@ -970,6 +973,9 @@ export function updateResponseHeaders(
     // Brotli compression causes errors at runtime, removing the header in that case
     response.headers.delete('content-encoding');
   }
+  if (getRuntimeKey() == 'node') {
+    response.headers.delete('content-encoding');
+  }
 
   // Delete content-length header to avoid conflicts with hono compress middleware
   // workerd environment handles this authomatically
@@ -983,6 +989,7 @@ export function constructConfigFromRequestHeaders(
     resourceName: requestHeaders[`x-${POWERED_BY}-azure-resource-name`],
     deploymentId: requestHeaders[`x-${POWERED_BY}-azure-deployment-id`],
     apiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
+    azureModelName: requestHeaders[`x-${POWERED_BY}-azure-model-name`],
   };
 
   const bedrockConfig = {

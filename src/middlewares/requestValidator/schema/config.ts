@@ -66,6 +66,8 @@ export const configSchema: any = z
     // OpenAI specific
     openai_project: z.string().optional(),
     openai_organization: z.string().optional(),
+    // AzureOpenAI specific
+    azure_model_name: z.string().optional(),
   })
   .refine(
     (value) => {
