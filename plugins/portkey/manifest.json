@@ -10,6 +10,12 @@
         "label": "API Key",
         "description": "API Key for the Portkey plugin.",
         "encrypted": true
+      },
+      "baseURL": {
+        "type": "string",
+        "label": "Base URL (optional)",
+        "description": "Custom base URL for the advanced Portkey guardrails",
+        "encrypted": true
       }
     },
     "required": ["apiKey"]
