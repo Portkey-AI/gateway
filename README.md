@@ -59,27 +59,17 @@ The enterprise deployment architecture, supported platforms is available here - 
 
 ## Making requests through the AI gateway
 
-### <img src="docs/images/openai.png" height=20 /> Compatible with OpenAI API & SDKs
+### <img src="docs/images/openai.png" height=15 /> Compatible with OpenAI API & SDKs
 
-The AI Gateway is compatible with the OpenAI API & SDKs, and extends them to call 200+ LLMs reliably.  To use the Gateway through OpenAI, **update the client** to include the gateway's URL and headers.
-```python
-# OpenAI Python Client Example
-client = OpenAI(
-    api_key=os.environ.get("OPENAI_API_KEY"),
-    base_url="http://localhost:8787/v1" # 👈 or 'https://api.portkey.ai/v1'
-    headers={
-		'x-portkey-provider': 'openai' # 👈 or 'anthropic', 'vertex-ai', 'stability-ai', etc
-	}
-)
-```
-
-And make requests as usual. The AI gateway can translate requests written in the OpenAI format to the signature expected by the specified provider. [View examples](https://docs.portkey.ai/docs/guides/getting-started/getting-started-with-ai-gateway)
+The AI Gateway is compatible with the OpenAI API & SDKs, and extends them to call 200+ LLMs reliably.  To use the Gateway through OpenAI, **update the client** to include the gateway's URL and headers and make requests as usual. The AI gateway can translate requests written in the OpenAI format to the signature expected by the specified provider. [View examples](https://docs.portkey.ai/docs/guides/getting-started/getting-started-with-ai-gateway)
+<br><br>
 
 ### <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/1869px-Python-logo-notext.svg.png" height=15 /> Using the Python SDK &nbsp;&nbsp;<a href="https://colab.research.google.com/drive/1hLvoq_VdGlJ_92sPPiwTznSra5Py0FuW?usp=sharing"><img src="https://colab.research.google.com/assets/colab-badge.svg"></a>
 [Portkey Python SDK](https://github.com/Portkey-AI/portkey-python-sdk) is a wrapper over the OpenAI Python SDK with added support for additional parameters across all other providers. **If you're building with Python, this is the recommended library** to connect to the Gateway.
 ```bash
 pip install -qU portkey-ai
 ```
+<br>
 
 
 ### <img src="https://cdn-icons-png.flaticon.com/512/5968/5968322.png" height=15 /> Using the Node.JS SDK
@@ -88,9 +78,12 @@ pip install -qU portkey-ai
 ```bash
 npm install --save portkey-ai
 ```
+<br>
+
 
 ### <img src="https://www.svgrepo.com/show/305922/curl.svg" height=15 /> Using the REST APIs
 The AI gateway supports OpenAI compatible endpoints with added parameter support for all other providers and models. [View API Reference](https://docs.portkey.ai/docs/api-reference/introduction).
+<br><br>
 
 ### Other Integrations
 
