@@ -13,43 +13,47 @@
 [![Discord](https://img.shields.io/discord/1143393887742861333)](https://portkey.ai/community)
 [![Twitter](https://img.shields.io/twitter/url/https/twitter/follow/portkeyai?style=social&label=Follow%20%40PortkeyAI)](https://twitter.com/portkeyai)
 [![npm version](https://badge.fury.io/js/%40portkey-ai%2Fgateway.svg)](https://www.npmjs.com/package/@portkey-ai/gateway)
-<a href="https://replit.com/@portkey/AI-Gateway?v=1"><img src="https://replit.com/badge?caption=Deploy%20on%20Replit" width=99 style="display:block;"/></a>
+[![Better Stack Badge](https://uptime.betterstack.com/status-badges/v1/monitor/q94g.svg)](https://status.portkey.ai/?utm_source=status_badge)
 
 </div>
 
-Gateway streamlines requests to 200+ open & closed source models with a unified API. It is also production-ready with support for caching, fallbacks, retries, timeouts, loadbalancing, and can be edge-deployed for minimum latency.
+The [AI Gateway](https://portkey.ai/features/ai-gateway) streamlines requests to 250+ language, vision, audio and image models with a unified API. It is production-ready with support for caching, fallbacks, retries, timeouts, loadbalancing, and can be edge-deployed for minimum latency.
 
-✅&nbsp; **Blazing fast** (9.9x faster) with a **tiny footprint** (~45kb installed) <br>
+✅&nbsp; **Blazing fast** (9.9x faster) with a **tiny footprint** (~100kb build) <br>
 ✅&nbsp; **Load balance** across multiple models, providers, and keys <br>
 ✅&nbsp; **Fallbacks** make sure your app stays resilient <br>
 ✅&nbsp; **Automatic Retries** with exponential fallbacks come by default <br>
 ✅&nbsp; **Configurable Request Timeouts** to easily handle unresponsive LLM requests <br>
 ✅&nbsp; **Multimodal** to support routing between Vision, TTS, STT, Image Gen, and more models <br>
 ✅&nbsp; **Plug-in** middleware as needed <br>
-✅&nbsp; Battle tested over **300B tokens** <br>
+✅&nbsp; Battle tested over **480B tokens** <br>
 ✅&nbsp; **Enterprise-ready** for enhanced security, scale, and custom deployments <br>
 <br>
-## How to Run the Gateway?
+## Setup & Installation
+Use the AI gateway through the **hosted API** or **self-host** the open-source or enterprise versions on your environment.
+<br><br>
 
-1. [Run it Locally](#run-it-locally) for complete control & customization
-2. [Hosted by Portkey](#gateway-hosted-by-portkey) for quick setup without infrastructure concerns
-3. [Enterprise On-Prem](#gateway-enterprise-version) for advanced features and dedicated support
+### 👉 Hosted Gateway on portkey.ai (Fastest)
+The hosted API is the fastest way to setup an AI Gateway for your Gen AI application. We process **billions of tokens** daily and is in production with companies like Postman, Haptik, Turing, MultiOn, SiteGPT, and more.
 
-### Run it Locally
+<a href="https://app.portkey.ai/signup"><img src="https://portkey.ai/blog/content/images/2024/08/Get-API-Key--3-.png" height=50 alt="Get API Key" /></a><br>
+<br><br>
 
-Run the following command in your terminal and it will spin up the Gateway on your local system:
+### 👉 Self-hosting the OSS version ([MIT License](https://github.com/Portkey-AI/gateway?tab=MIT-1-ov-file#readme))
+
+To run the AI gateway locally, execute the following command in your terminal. (Needs npx installed) Or, explore deployment guides for [Cloudflare](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#cloudflare-workers), [Docker](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#docker), [Node.js](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#nodejs-server) and more [here](#deploying-the-ai-gateway).
 ```bash
 npx @portkey-ai/gateway
 ```
 <sup>Your AI Gateway is now running on http://localhost:8787 🚀</sup>
 
-Gateway is also edge-deployment ready. Explore Cloudflare, Docker, AWS etc. deployment [guides here](#deploying-the-ai-gateway).
+<br><br>
+### 👉 Self-hosting the Enterprise Version
+The AI Gateway's enterprise version offers enterprise-ready capabilities for **org management**, **governance**, **security** and [more](https://docs.portkey.ai/docs/product/enterprise-offering) out of the box. Compare the open source, hosted and enterprise versions here.
 
-### Gateway Hosted by Portkey
+The enterprise deployment architecture, supported platforms is available here - [**Enterprise Private Cloud Deployments**](https://docs.portkey.ai/docs/product/enterprise-offering/private-cloud-deployments)
 
-This same open-source Gateway powers Portkey API that processes **billions of tokens** daily and is in production with companies like Postman, Haptik, Turing, MultiOn, SiteGPT, and more.
-
-Sign up for the free developer plan (10K request/month) [here](https://app.portkey.ai/) or [discuss here](https://calendly.com/rohit-portkey/noam) for enterprise deployments.
+<a href="https://app.portkey.ai/signup"><img src="https://portkey.ai/blog/content/images/2024/08/Get-API-Key--5-.png" height=50 alt="Book an enterprise AI gateway demo" /></a><br>
 
 <br>
 
@@ -57,7 +61,9 @@ Sign up for the free developer plan (10K request/month) [here](https://app.portk
 
 ### Compatible with OpenAI API & SDK
 
-Gateway is fully compatible with the OpenAI API & SDK, and extends them to call 200+ LLMs and makes them reliable. To use the Gateway through OpenAI, you only need to update your `base_URL` and pass the provider name in headers.
+The AI Gateway is compatible with the OpenAI API & SDK, and extends them to call 200+ LLMs and makes them reliable. 
+
+To use the Gateway through OpenAI, update the `base_URL` and pass the `provider` in headers.
 * To use through Portkey, set your `base_URL` to: `https://api.portkey.ai/v1`
 * To run locally, set: `http://localhost:8787/v1`
 
@@ -183,7 +189,9 @@ Explpore Gateway integrations with [20+ providers](https://portkey.ai/docs/welco
 > [View the complete list of 200+ supported models here](https://portkey.ai/docs/welcome/what-is-portkey#ai-providers-supported)
 <br>
 
-## Reliability Features
+<br>
+
+## Features
 
 <table width=100%>
   <tr>
@@ -200,6 +208,7 @@ Explpore Gateway integrations with [20+ providers](https://portkey.ai/docs/welco
       <img src="https://github.com/roh26it/Rubeus/assets/971978/8a6e653c-94b2-4ba7-95c7-93544ee476b1" height=100 />
     </td>
   </tr>
+  
 </table>
 <table width="100%">
   <tr>
