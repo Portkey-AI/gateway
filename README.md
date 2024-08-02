@@ -75,21 +75,21 @@ client = OpenAI(
 
 And make requests as usual. The AI gateway can translate requests written in the OpenAI format to the signature expected by the specified provider. [View examples](https://docs.portkey.ai/docs/guides/getting-started/getting-started-with-ai-gateway)
 
-### <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/1869px-Python-logo-notext.svg.png" height=20 /> Using the Python SDK
-[Portkey Python SDK](https://github.com/Portkey-AI/portkey-python-sdk) is a wrapper over the OpenAI Python SDK with added support for additional parameters across all other providers as well. **If you're building with Python, this is the recommended library** to connect to the Gateway.
+### <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/1869px-Python-logo-notext.svg.png" height=15 /> Using the Python SDK &nbsp;&nbsp;<a href="https://colab.research.google.com/drive/1hLvoq_VdGlJ_92sPPiwTznSra5Py0FuW?usp=sharing"><img src="https://colab.research.google.com/assets/colab-badge.svg"></a>
+[Portkey Python SDK](https://github.com/Portkey-AI/portkey-python-sdk) is a wrapper over the OpenAI Python SDK with added support for additional parameters across all other providers. **If you're building with Python, this is the recommended library** to connect to the Gateway.
 ```bash
 pip install -qU portkey-ai
 ```
-<a href="https://colab.research.google.com/drive/1hLvoq_VdGlJ_92sPPiwTznSra5Py0FuW?usp=sharing"><img src="https://colab.research.google.com/assets/colab-badge.svg"></a>
 
-### <img src="https://cdn-icons-png.flaticon.com/512/5968/5968322.png" height=20 /> Using the Node.JS SDK
-[Portkey JS/TS SDK](https://www.npmjs.com/package/portkey-ai) is a wrapper over the OpenAI JS SDK with added support for additional parameters across all other providers as well. **If you're building with Javascript or Typescript, this is the recommended library** to connect to the Gateway.
+
+### <img src="https://cdn-icons-png.flaticon.com/512/5968/5968322.png" height=15 /> Using the Node.JS SDK
+[Portkey JS/TS SDK](https://www.npmjs.com/package/portkey-ai) is a wrapper over the OpenAI JS SDK with added support for additional parameters across all other providers. **If you're building with JS or TS, this is the recommended library** to connect to the Gateway.
 
 ```bash
 npm install --save portkey-ai
 ```
 
-### <img src="https://www.svgrepo.com/show/305922/curl.svg" height=20 /> Using the REST APIs
+### <img src="https://www.svgrepo.com/show/305922/curl.svg" height=15 /> Using the REST APIs
 The AI gateway supports OpenAI compatible endpoints with added parameter support for all other providers and models. [View API Reference](https://docs.portkey.ai/docs/api-reference/introduction).
 
 ### Other Integrations
