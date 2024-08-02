@@ -8,12 +8,7 @@ const CHAT_COMPLETE_WITH_MESSAGE_CONTENT_ARRAYS_REQUEST: Params = {
   messages: [
     {
       role: 'system',
-      content: [
-        {
-          type: 'text',
-          text: 'You are Batman',
-        },
-      ],
+      content: 'You are batman',
     },
     {
       role: 'user',
@@ -21,15 +16,6 @@ const CHAT_COMPLETE_WITH_MESSAGE_CONTENT_ARRAYS_REQUEST: Params = {
         {
           type: 'text',
           text: 'Who is the greatest detective',
-        },
-      ],
-    },
-    {
-      role: 'assistant',
-      content: [
-        {
-          type: 'text',
-          text: 'is it me?',
         },
       ],
     },
@@ -46,7 +32,7 @@ export const getChatCompleteWithMessageContentArraysRequest = (
 };
 
 export const CHAT_COMPLETE_WITH_MESSAGE_STRING_REQUEST: Params = {
-  model: 'j2-ultra',
+  model: 'MODEL_PLACEHOLDER',
   max_tokens: 200,
   stream: false,
   messages: [
@@ -59,4 +45,11 @@ export const CHAT_COMPLETE_WITH_MESSAGE_STRING_REQUEST: Params = {
       content: "Who's the worlds greatest detective?",
     },
   ],
+};
+
+export const getChatCompleteWithMessageStringRequest = (model: string) => {
+  return JSON.stringify({
+    ...CHAT_COMPLETE_WITH_MESSAGE_STRING_REQUEST,
+    model,
+  });
 };
