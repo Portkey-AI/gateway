@@ -57,106 +57,63 @@ The enterprise deployment architecture, supported platforms is available here - 
 
 <br>
 
-## How to Use the Gateway?
+## Making requests through the AI gateway
 
-### Compatible with OpenAI API & SDK
+### <img src="docs/images/openai.png" height=20 /> Compatible with OpenAI API & SDKs
 
-The AI Gateway is compatible with the OpenAI API & SDK, and extends them to call 200+ LLMs and makes them reliable. 
+The AI Gateway is compatible with the OpenAI API & SDKs, and extends them to call 200+ LLMs reliably.  To use the Gateway through OpenAI, **update the client** to include the gateway's URL and headers.
+```python
+# OpenAI Python Client Example
+client = OpenAI(
+    api_key=os.environ.get("OPENAI_API_KEY"),
+    base_url="http://localhost:8787/v1" # 👈 or 'https://api.portkey.ai/v1'
+    headers={
+		'x-portkey-provider': 'openai' # 👈 or 'anthropic', 'vertex-ai', 'stability-ai', etc
+	}
+)
+```
 
-To use the Gateway through OpenAI, update the `base_URL` and pass the `provider` in headers.
-* To use through Portkey, set your `base_URL` to: `https://api.portkey.ai/v1`
-* To run locally, set: `http://localhost:8787/v1`
+And make requests as usual. The AI gateway can translate requests written in the OpenAI format to the signature expected by the specified provider. [View examples](https://docs.portkey.ai/docs/guides/getting-started/getting-started-with-ai-gateway)
 
-Let's see how we can use the Gateway to make an Anthropic request in OpenAI spec below - the same will follow for all the other providers.
-
-### <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/1869px-Python-logo-notext.svg.png" height=20 /> Python
+### <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/1869px-Python-logo-notext.svg.png" height=20 /> Using the Python SDK
+[Portkey Python SDK](https://github.com/Portkey-AI/portkey-python-sdk) is a wrapper over the OpenAI Python SDK with added support for additional parameters across all other providers as well. **If you're building with Python, this is the recommended library** to connect to the Gateway.
 ```bash
-pip install portkey-ai
+pip install -qU portkey-ai
 ```
 <a href="https://colab.research.google.com/drive/1hLvoq_VdGlJ_92sPPiwTznSra5Py0FuW?usp=sharing"><img src="https://colab.research.google.com/assets/colab-badge.svg"></a>
 
-While instantiating your OpenAI client,
-1. Set the `base_URL` to `http://localhost:8787/v1` (or `PORTKEY_GATEWAY_URL` through the Portkey SDK if you're using the hosted version)
-2. Pass the provider name in the `default_headers` param (here we are using `createHeaders` method with the Portkey SDK to auto-create the full header)
-
-```python
-from openai import OpenAI
-from portkey_ai import PORTKEY_GATEWAY_URL, createHeaders
-
-gateway = OpenAI(
-    api_key="ANTHROPIC_API_KEY",
-    base_url=PORTKEY_GATEWAY_URL, # Or http://localhost:8787/v1 when running locally
-    default_headers=createHeaders(
-        provider="anthropic",
-        api_key="PORTKEY_API_KEY" # Grab from https://app.portkey.ai # Not needed when running locally
-    )
-)
-
-chat_complete = gateway.chat.completions.create(
-    model="claude-3-sonnet-20240229",
-    messages=[{"role": "user", "content": "What's a fractal?"}],
-    max_tokens=512
-)
-```
-If you want to run the Gateway locally, don't forget to run `npx @portkey-ai/gateway` in your terminal before this! Otherwise just [sign up on Portkey](https://app.portkey.ai/) and keep your Portkey API Key handy.
-
-### <img src="https://cdn-icons-png.flaticon.com/512/5968/5968322.png" height=20 /> Node.JS
-Works the same as in Python. Add `baseURL` & `defaultHeaders` while instantiating your OpenAI client and pass the relevant provider details.
+### <img src="https://cdn-icons-png.flaticon.com/512/5968/5968322.png" height=20 /> Using the Node.JS SDK
+[Portkey JS/TS SDK](https://www.npmjs.com/package/portkey-ai) is a wrapper over the OpenAI JS SDK with added support for additional parameters across all other providers as well. **If you're building with Javascript or Typescript, this is the recommended library** to connect to the Gateway.
 
 ```bash
-npm install portkey-ai
+npm install --save portkey-ai
 ```
 
-```js
-import OpenAI from 'openai';
-import { PORTKEY_GATEWAY_URL, createHeaders } from 'portkey-ai';
+### <img src="https://www.svgrepo.com/show/305922/curl.svg" height=20 /> Using the REST APIs
+The AI gateway supports OpenAI compatible endpoints with added parameter support for all other providers and models. [View API Reference](https://docs.portkey.ai/docs/api-reference/introduction).
 
-const gateway = new OpenAI({
-  apiKey: 'ANTHROPIC_API_KEY',
-  baseURL: PORTKEY_GATEWAY_URL, // Or http://localhost:8787/v1 when running locally
-  defaultHeaders: createHeaders({
-    provider: 'anthropic',
-    apiKey: 'PORTKEY_API_KEY', // Grab from https://app.portkey.ai / Not needed when running locally
-  }),
-});
+### Other Integrations
 
-async function main() {
-  const chatCompletion = await gateway.chat.completions.create({
-    messages: [{ role: 'user', content: 'Who are you?' }],
-    model: 'claude-3-sonnet-20240229',
-    max_tokens: 512,
-  });
-  console.log(chatCompletion.choices[0].message.content);
-}
+| Language          | Supported SDKs                                                                                                                                                                                                                                                                                                  |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| JS / TS |  [LangchainJS](https://www.npmjs.com/package/langchain) <br> [LlamaIndex.TS](https://www.npmjs.com/package/llamaindex)                                                                      |
+| Python            | <br> [Langchain](https://portkey.ai/docs/welcome/integration-guides/langchain-python) <br> [LlamaIndex](https://portkey.ai/docs/welcome/integration-guides/llama-index-python) |
+| Go                | [go-openai](https://github.com/sashabaranov/go-openai)                                                                                                                                                                                                                                                          |
+| Java              | [openai-java](https://github.com/TheoKanning/openai-java)                                                                                                                                                                                                                                                       |
+| Rust              | [async-openai](https://docs.rs/async-openai/latest/async_openai/)                                                                                                                                                                                                                                               |
+| Ruby              | [ruby-openai](https://github.com/alexrudall/ruby-openai)                                                                                                                                                                                                                                                        |
+<br>
 
-main();
-```
-
-### <img src="https://www.svgrepo.com/show/305922/curl.svg" height=20 /> REST
-In your OpenAI REST request, 
-1. Change the request URL to `https://api.portkey.ai/v1` (or `http://localhost:8787/v1` if you're hosting locally)
-2. Pass an additional `x-portkey-provider` header with the provider's name
-3. Change the model's name to `claude-3`
-
-```bash
-curl 'http://localhost:8787/v1/chat/completions' \
-  -H 'x-portkey-provider: anthropic' \
-  -H "Authorization: Bearer $ANTHROPIC_API_KEY" \
-  -H 'Content-Type: application/json' \
-  -d '{ "model": "claude-3-haiku-20240229", "messages": [{"role": "user","content": "Hi"}] }'
-```
-
-For other providers, change the `provider` & `model` to their respective values.
 
 
 ## Gateway Cookbooks
 
-### Trending Cookbooks
+### 📈 Trending Cookbooks
 * [Run Gateway on prompts from Langchain hub](/cookbook/use-cases/run-gateway-on-prompts-from-langchain-hub.md)
 * [Use Porkey Gateway with Vercel's AI SDK](/cookbook/integrations/vercel-ai.md)
 * [Set up fallback from SDXL to Dall-E-3](/cookbook/getting-started/fallback-from-stable-diffusion-to-dall-e.ipynb)
 
-### Latest Cookbooks
+### ✨ Latest Cookbooks
 * [Comparing Top 10 LMSYS Models with Portkey](/cookbook/use-cases/LMSYS%20Series/comparing-top10-LMSYS-models-with-Portkey.ipynb)
 * [Fallback from OpenAI to Azure OpenAI](/cookbook/getting-started/fallback-from-openai-to-azure.ipynb)
 * [Set up automatic retries for failed requests](/cookbook/getting-started/automatic-retries-on-failures.md)
@@ -327,30 +284,6 @@ Here's a guide to [use the config object in your request](https://portkey.ai/doc
 
 <br>
 
-## Supported SDKs
-
-| Language          | Supported SDKs                                                                                                                                                                                                                                                                                                  |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Node.js / JS / TS | [Portkey SDK](https://www.npmjs.com/package/portkey-ai) <br> [OpenAI SDK](https://www.npmjs.com/package/openai) <br> [LangchainJS](https://www.npmjs.com/package/langchain) <br> [LlamaIndex.TS](https://www.npmjs.com/package/llamaindex)                                                                      |
-| Python            | [Portkey SDK](https://pypi.org/project/portkey-ai/) <br> [OpenAI SDK](https://portkey.ai/docs/welcome/integration-guides/openai) <br> [Langchain](https://portkey.ai/docs/welcome/integration-guides/langchain-python) <br> [LlamaIndex](https://portkey.ai/docs/welcome/integration-guides/llama-index-python) |
-| Go                | [go-openai](https://github.com/sashabaranov/go-openai)                                                                                                                                                                                                                                                          |
-| Java              | [openai-java](https://github.com/TheoKanning/openai-java)                                                                                                                                                                                                                                                       |
-| Rust              | [async-openai](https://docs.rs/async-openai/latest/async_openai/)                                                                                                                                                                                                                                               |
-| Ruby              | [ruby-openai](https://github.com/alexrudall/ruby-openai)                                                                                                                                                                                                                                                        |
-<br>
-
-
-
-
-## Deploying the AI Gateway
-[See docs](docs/installation-deployments.md) on installing the AI Gateway locally or deploying it on popular locations.
-- Deploy to [App Stack](docs/installation-deployments.md#deploy-to-app-stack)
-- Deploy to [Cloudflare Workers](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-to-cloudflare-workers)
-- Deploy using [Docker](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-using-docker)
-- Deploy using [Docker Compose](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-using-docker-compose)
-- Deploy to [Zeabur](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-to-zeabur)
-- Run a [Node.js server](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#run-a-nodejs-server)
-<br>
 
 ## Gateway Enterprise Version
 Make your AI app more <ins>reliable</ins> and <ins>forward compatible</ins>, while ensuring complete <ins>data security</ins> and <ins>privacy</ins>.
@@ -369,7 +302,7 @@ Make your AI app more <ins>reliable</ins> and <ins>forward compatible</ins>, whi
 
 ## Contributing
 
-The easiest way to contribute is to pick any issue with the `good first issue` tag 💪. Read the Contributing guidelines [here](/CONTRIBUTING.md).
+The easiest way to contribute is to pick an issue with the `good first issue` tag 💪. Read the contribution guidelines [here](/CONTRIBUTING.md).
 
 Bug Report? [File here](https://github.com/Portkey-AI/gateway/issues) | Feature Request? [File here](https://github.com/Portkey-AI/gateway/issues)
 
