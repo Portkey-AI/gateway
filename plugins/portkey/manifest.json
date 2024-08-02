@@ -14,8 +14,7 @@
       "baseURL": {
         "type": "string",
         "label": "Base URL (optional)",
-        "description": "Custom base URL for the advanced Portkey guardrails",
-        "encrypted": true
+        "description": "Custom base URL for the advanced Portkey guardrails"
       }
     },
     "required": ["apiKey"]
