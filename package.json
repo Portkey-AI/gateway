@@ -34,7 +34,7 @@
     "start:node": "node build/start-server.js",
     "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,json}\"",
     "format:check": "prettier --check \"./**/*.{js,jsx,ts,tsx,json}\"",
-    "test": "ts-jest"
+    "test": "jest"
   },
   "dependencies": {
     "@aws-crypto/sha256-js": "^5.2.0",
@@ -57,7 +57,7 @@
     "jest": "^29.7.0",
     "prettier": "3.2.5",
     "rollup": "^4.9.1",
-    "ts-jest": "^29.1.2",
+    "ts-jest": "^29.2.4",
     "tsx": "^4.7.0",
     "typescript-eslint": "^8.1.0",
     "wrangler": "^3.48.0"
