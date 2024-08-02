@@ -31,13 +31,13 @@ The [AI Gateway](https://portkey.ai/features/ai-gateway) streamlines requests to
 <br>
 ## Setup & Installation
 Use the AI gateway through the **hosted API** or **self-host** the open-source or enterprise versions on your environment.
-<br><br>
+<br>
 
 ### 👉 Hosted Gateway on portkey.ai (Fastest)
 The hosted API is the fastest way to setup an AI Gateway for your Gen AI application. We process **billions of tokens** daily and is in production with companies like Postman, Haptik, Turing, MultiOn, SiteGPT, and more.
 
 <a href="https://app.portkey.ai/signup"><img src="https://portkey.ai/blog/content/images/2024/08/Get-API-Key--3-.png" height=50 alt="Get API Key" /></a><br>
-<br><br>
+<br>
 
 ### 👉 Self-hosting the OSS version ([MIT License](https://github.com/Portkey-AI/gateway?tab=MIT-1-ov-file#readme))
 
@@ -47,7 +47,7 @@ npx @portkey-ai/gateway
 ```
 <sup>Your AI Gateway is now running on http://localhost:8787 🚀</sup>
 
-<br><br>
+<br>
 ### 👉 Self-hosting the Enterprise Version
 The AI Gateway's enterprise version offers enterprise-ready capabilities for **org management**, **governance**, **security** and [more](https://docs.portkey.ai/docs/product/enterprise-offering) out of the box. Compare the open source, hosted and enterprise versions here.
 
