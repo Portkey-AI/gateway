@@ -46,8 +46,8 @@ To run the AI gateway locally, execute the following command in your terminal. (
 npx @portkey-ai/gateway
 ```
 <sup>Your AI Gateway is now running on http://localhost:8787 🚀</sup>
-
 <br>
+
 ### 👉 Self-hosting the Enterprise Version
 The AI Gateway's enterprise version offers enterprise-ready capabilities for **org management**, **governance**, **security** and [more](https://docs.portkey.ai/docs/product/enterprise-offering) out of the box. Compare the open source, hosted and enterprise versions here.
 
