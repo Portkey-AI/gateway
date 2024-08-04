@@ -146,15 +146,17 @@ For other providers, change the `provider` & `model` to their respective values.
 ## Gateway Cookbooks
 
 ### Trending Cookbooks
-* [Run Gateway on prompts from Langchain hub](/cookbook/use-cases/run-gateway-on-prompts-from-langchain-hub.md)
-* [Use Porkey Gateway with Vercel's AI SDK](/cookbook/integrations/vercel-ai.md)
-* [Set up fallback from SDXL to Dall-E-3](/cookbook/getting-started/fallback-from-stable-diffusion-to-dall-e.ipynb)
+- Use models from [Nvidia NIM](/cookbook/providers/nvidia.ipynb) with AI Gateway
+- Monitor [CrewAI Agents](/cookbook/monitoring-agents/CrewAI_with_Telemetry.ipynb) with Portkey!
+- Comparing [Top 10 LMSYS Models](./use-cases/LMSYS%20Series/comparing-top10-LMSYS-models-with-Portkey.ipynb) with AI Gateway.
 
 ### Latest Cookbooks
-* [Comparing Top 10 LMSYS Models with Portkey](/cookbook/use-cases/LMSYS%20Series/comparing-top10-LMSYS-models-with-Portkey.ipynb)
-* [Fallback from OpenAI to Azure OpenAI](/cookbook/getting-started/fallback-from-openai-to-azure.ipynb)
+* [Create Synthetic Datasets using Nemotron](/cookbook/use-cases/Nemotron_GPT_Finetuning_Portkey.ipynb)
+* [Use Portkey Gateway with Vercel's AI SDK](/cookbook/integrations/vercel-ai.md)
+* [Monitor Llama Agents with Portkey](/cookbook/monitoring-agents/Llama_Agents_with_Telemetry.ipynb)
 * [Set up automatic retries for failed requests](/cookbook/getting-started/automatic-retries-on-failures.md)
-* [Call Llama 3 on Groq](/cookbook/use-cases/llama-3-on-groq.ipynb)
+
+
 
 ### [More Examples](/examples/)
 

@@ -7,36 +7,54 @@
 [![Discord](https://img.shields.io/discord/1143393887742861333)](https://portkey.ai/community)
 [![Twitter](https://img.shields.io/twitter/url/https/twitter/follow/portkeyai?style=social&label=Follow%20%40PortkeyAI)](https://twitter.com/portkeyai)
 
+## Table of Contents
+
+Please use the below table of contents to navigate through the cookbook.
+
+### Latest Notebooks
+
+- Use models from [Nvidia NIM](/cookbook/providers/nvidia.ipynb) with AI Gateway
+- Monitor [Llama Agents](/cookbook/monitoring-agents/Llama_Agents_with_Telemetry.ipynb) with Portkey!
+- Create [Synthetic Datasets](/cookbook/use-cases/Nemotron_GPT_Finetuning_Portkey.ipynb) using Nemotron-340B
+- Comparing [Top 10 LMSYS Models](./use-cases/LMSYS%20Series/comparing-top10-LMSYS-models-with-Portkey.ipynb) with AI Gateway.
+
+
 ## getting-started
+* [Gentle introduction to Portkey Gateway](./getting-started/gentle-introduction-to-portkey-gateway.ipynb)
 * [Use Portkey cache to save LLM cost & time](./getting-started/enable-cache.md)
 * [Retry automatically on LLM failures](./getting-started/automatic-retries-on-failures.md)
 * [Image generation with Gateway](./getting-started/image-generation.ipynb)
 * [Writing your first Gateway Config](./getting-started/writing-your-first-gateway-config.md)
-* [Gentle introduction to Portkey Gateway](./getting-started/gentle-introduction-to-portkey-gateway.ipynb)
 * [Automatically Fallback from OpenAI to Azure](./getting-started/fallback-from-openai-to-azure.ipynb)
-* [Setting up resilient Load balancers with failure-mitigating Fallbacks](./getting-started/resilient-loadbalancing-with-failure-mitigating-fallbacks.md)
-* [Set up Fallback from Stable Diffusion to Dall-E](./getting-started/fallback-from-stable-diffusion-to-dall-e.ipynb)
 
+View the [official docs](https://portkey.ai/docs)
+
+## providers
+* [OpenAI](./providers/openai.ipynb)
+* [Anthropic](./providers/anthropic.md)
+* [Mistral](./providers/mistral.md)
+* [Vercel AI](./integrations/vercel-ai.md)
+* [Groq](./providers/groq.ipynb)
+* [Mistral](./providers/mistral.ipynb)
+* [Deepinfra](./providers/deepinfra.ipynb)
+* [Segmind](./providers/segmind.ipynb)
+* [Nvidia](./providers/nvidia.ipynb)
+
+View the [full list of providers here](https://portkey.ai/docs/welcome/integration-guides).
 
 ## integrations
-* [OpenAI](./integrations/openai.ipynb)
-* [Anyscale](./integrations/anyscale.md)
-* [Mistral](./integrations/mistral.md)
-* [Vercel AI](./integrations/vercel-ai.md)
-* [Groq](./integrations/groq.ipynb)
-* [Mistral 8x22b](./integrations/mistral.md)
 * [Langchain](./integrations/langchain.ipynb)
-* [Deepinfra](./integrations/deepinfra.ipynb)
-* [Segmind](./integrations/segmind.ipynb)
+* [Llama Index](./integrations/llama-index.ipynb)
+* [Instructor](./integrations/Instructor_with_Portkey.ipynb)
+* [Phidata](./integrations/Phidata_with_Portkey.ipynb)
 
+View the [full list of integrations here](https://portkey.ai/docs/welcome/integration-guides).
 
-## use-cases
-* [Comparing Top 10 LMSYS Models using Portkey](./use-cases/LMSYS%20Series/comparing-top10-LMSYS-models-with-Portkey.ipynb)
-* [Use OpenAI SDK with Portkey prompt templates](./use-cases/use-openai-sdk-with-portkey-prompt-templates.md)
-* [Run Gateway on prompts from Langchain hub](./use-cases/run-gateway-on-prompts-from-langchain-hub.md)
-* [Smart fallback with model optimized prompts](./use-cases/smart-fallback-with-model-optimized-prompts.md)
-* [Build an article suggestion app with Supabase pgvector, and Portkey](./use-cases/supabase-pgvector-and-portkey.md)
-* [Call Llama 3 on Groq](./use-cases/llama-3-on-groq.ipynb)
+## monitoring-agents
+* [Autogen](./monitoring-agents/Autogen_with_Telemetry.ipynb)
+* [CrewAI](./monitoring-agents/CrewAI_with_Telemetry.ipynb)
+* [Llama Agents](./monitoring-agents/Llama_Agents_with_Telemetry.ipynb)
+* [ControlFlow](./monitoring-agents/ControlFlow_with_Telemetry.ipynb)
 
 
 ## contributing
