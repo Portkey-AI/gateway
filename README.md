@@ -183,16 +183,16 @@ Here's a sample config JSON showcasing the above features. All the features are 
 
 ```json
 {
-	"retry": { "attempts": 5 },
-	"request_timeout": 10000,
-	"strategy": { "mode": "fallback" }, // or 'loadbalance', etc
-	"targets": [{
-		"provider": "openai",
-		"api_key": "sk-***"
-	},{
-		"strategy": {"mode": "loadbalance"}, // Optional nesting
-		"targets": {...}
-	}]
+  "retry": { "attempts": 5 },
+  "request_timeout": 10000,
+  "strategy": { "mode": "fallback" }, // or 'loadbalance', etc
+  "targets": [{
+    "provider": "openai",
+     "api_key": "sk-***"
+  },{
+    "strategy": {"mode": "loadbalance"}, // Optional nesting
+    "targets": {...}
+  }]
 }
 ```
 
