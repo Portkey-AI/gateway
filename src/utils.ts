@@ -27,7 +27,7 @@ export const getStreamModeSplitPattern = (
     splitPattern = '\r\n';
   }
 
-  // Anthropic vertex has \n\n as the pattern
+  // In Vertex Anthropic and LLama have \n\n as the pattern only Gemini has \r\n\r\n
   if (
     proxyProvider === GOOGLE_VERTEX_AI &&
     requestURL.includes('/publishers/google')
