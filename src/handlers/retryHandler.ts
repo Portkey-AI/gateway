@@ -70,6 +70,7 @@ export const retryRequest = async (
     await retry(
       async (bail: any, attempt: number) => {
         try {
+          console.log(options);
           const response: Response = timeout
             ? await fetchWithTimeout(url, options, timeout)
             : await fetch(url, options);

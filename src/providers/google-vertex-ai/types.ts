@@ -66,4 +66,5 @@ export interface VertexLlamaChatCompleteStreamChunk {
   };
   id?: string;
   created?: number;
+  provider?: string;
 }

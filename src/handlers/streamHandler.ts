@@ -298,7 +298,7 @@ export async function handleStreamingMode(
     proxyProvider
   );
   const isVertexLlama =
-    GOOGLE_VERTEX_AI.includes(proxyProvider) &&
+    proxyProvider === GOOGLE_VERTEX_AI &&
     responseTransformer?.name ===
       VertexLlamaChatCompleteStreamChunkTransform.name;
   const isJsonStream = isGoogleCohereOrBedrock || isVertexLlama;

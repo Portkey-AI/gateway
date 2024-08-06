@@ -992,6 +992,7 @@ export const VertexLlamaChatCompleteResponseTransform: (
     return {
       id: crypto.randomUUID(),
       created: Math.floor(Date.now() / 1000),
+      provider: GOOGLE_VERTEX_AI,
       ...response,
     };
   }
@@ -1005,9 +1006,9 @@ export const VertexLlamaChatCompleteStreamChunkTransform: (
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
-  console.log(chunk);
   const parsedChunk: VertexLlamaChatCompleteStreamChunk = JSON.parse(chunk);
   parsedChunk.id = fallbackId;
   parsedChunk.created = Math.floor(Date.now() / 1000);
+  parsedChunk.provider = GOOGLE_VERTEX_AI;
   return `data: ${JSON.stringify(parsedChunk)}` + '\n\n';
 };
