@@ -17,7 +17,7 @@ export const CohereChatCompleteConfig: ProviderConfig = {
   },
   messages: [
     {
-      param: 'prompt',
+      param: 'message',
       required: true,
       transform: (params: Params) => {
         const messages = params.messages || [];
@@ -26,7 +26,7 @@ export const CohereChatCompleteConfig: ProviderConfig = {
           throw new Error('messages length should be at least of length 1');
         }
 
-        return prompt;
+        return prompt.content;
       },
     },
     {
@@ -39,11 +39,23 @@ export const CohereChatCompleteConfig: ProviderConfig = {
           messages.length - 1
         );
         // generate history and forware it to model
-        const history: (Message & { message?: string })[] =
-          messagesWithoutLastMessage.map((message) => ({
-            role: message.role,
-            message: message.content as string,
-          }));
+        const history: { message?: string; role: string }[] =
+          messagesWithoutLastMessage.map((message) => {
+            const _message: { role: any; message: string } = {
+              role: message.role === 'assistant' ? 'chatbot' : message.role,
+              message: '',
+            };
+
+            if (typeof message.content === 'string') {
+              _message['message'] = message.content;
+            } else {
+              _message['message'] = (message.content ?? [])
+                ?.map((content) => content.text || content.image_url)
+                .join('');
+            }
+
+            return _message;
+          });
         return history;
       },
     },
