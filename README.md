@@ -17,7 +17,7 @@
 
 </div>
 
-[AI Gateway](https://portkey.ai/features/ai-gateway) streamlines requests to 250+ language, vision, audio and image models with a unified API. It is production-ready with support for caching, fallbacks, retries, timeouts, loadbalancing, and can be edge-deployed for minimum latency.
+The [AI Gateway](https://portkey.ai/features/ai-gateway) streamlines requests to 250+ language, vision, audio and image models with a unified API. It is production-ready with support for caching, fallbacks, retries, timeouts, loadbalancing, and can be edge-deployed for minimum latency.
 
 ✅&nbsp; **Blazing fast** (9.9x faster) with a **tiny footprint** (~100kb build) <br>
 ✅&nbsp; **Load balance** across multiple models, providers, and keys <br>
@@ -177,22 +177,40 @@ Explore Gateway integrations with [25+ providers](https://portkey.ai/docs/welcom
   </tr>
 </table>
 
-#### These features are configured through the Gateway Config (JSON) added to the  `x-portkey-config` header or the `config` parameter in the SDKs.
+</table>
+<table width="100%">
+  <tr>
+    <td width="50%"> 
+      <strong><a href="https://docs.portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/multimodal-capabilities">Multi-modal LLM Gateway</a></strong><br/>
+      Call vision, audio (text-to-speech & speech-to-text), and image generation models from multiple providers  — all using the familiar OpenAI signature
+      <br><br>
+      <img src="https://docs.portkey.ai/~gitbook/image?url=https%3A%2F%2F2878743244-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252Fy3MCfQqftZOnHqSmVV5x%252Fuploads%252FOVuOxN4uFdBp1BdXX4E6%252Fmultimodal-icon.png%3Falt%3Dmedia%26token%3Db8b7bd49-0194-4d2f-89d4-c6633a872372&width=768&dpr=2&quality=100&sign=f51129a9&sv=1" height=100 />
+    </td>
+    <td width="50%">
+      <strong><a href="https://docs.portkey.ai/docs/product/guardrails">Guardrails</a></strong></br><br/>
+      Verify your LLM inputs AND outputs to adhere to your specified checks. Build your own checks or choose from the 20+ pre-built guardrails.
+      <br><br>
+      <img src="https://docs.portkey.ai/~gitbook/image?url=https%3A%2F%2F2878743244-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252Fy3MCfQqftZOnHqSmVV5x%252Fuploads%252FDFkhZpqtBfQMIW9BhVum%252Fguardrails-icon.png%3Falt%3Dmedia%26token%3D91cfe226-5ce9-44b3-a0e8-be9f3ae3917f&width=768&dpr=2&quality=100&sign=73608afc&sv=1" height=100 />
+    </td>
+  </tr>
+</table>
+
+**These features are configured through the Gateway Config added to the  `x-portkey-config` header or the `config` parameter in the SDKs.**
 
 Here's a sample config JSON showcasing the above features. All the features are optional
 
 ```json
 {
-  "retry": { "attempts": 5 },
-  "request_timeout": 10000,
-  "strategy": { "mode": "fallback" }, // or 'loadbalance', etc
-  "targets": [{
-    "provider": "openai",
-     "api_key": "sk-***"
-  },{
-    "strategy": {"mode": "loadbalance"}, // Optional nesting
-    "targets": {...}
-  }]
+	"retry": { "attempts": 5 },
+	"request_timeout": 10000,
+	"strategy": { "mode": "fallback" }, // or 'loadbalance', etc
+	"targets": [{
+		"provider": "openai",
+		"api_key": "sk-***"
+	},{
+		"strategy": {"mode": "loadbalance"}, // Optional nesting
+		"targets": {...}
+	}]
 }
 ```
 
