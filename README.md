@@ -13,144 +13,100 @@
 [![Discord](https://img.shields.io/discord/1143393887742861333)](https://portkey.ai/community)
 [![Twitter](https://img.shields.io/twitter/url/https/twitter/follow/portkeyai?style=social&label=Follow%20%40PortkeyAI)](https://twitter.com/portkeyai)
 [![npm version](https://badge.fury.io/js/%40portkey-ai%2Fgateway.svg)](https://www.npmjs.com/package/@portkey-ai/gateway)
-<a href="https://replit.com/@portkey/AI-Gateway?v=1"><img src="https://replit.com/badge?caption=Deploy%20on%20Replit" width=99 style="display:block;"/></a>
+[![Better Stack Badge](https://uptime.betterstack.com/status-badges/v1/monitor/q94g.svg)](https://status.portkey.ai/?utm_source=status_badge)
 
 </div>
 
-Gateway streamlines requests to 200+ open & closed source models with a unified API. It is also production-ready with support for caching, fallbacks, retries, timeouts, loadbalancing, and can be edge-deployed for minimum latency.
+The [AI Gateway](https://portkey.ai/features/ai-gateway) streamlines requests to 250+ language, vision, audio and image models with a unified API. It is production-ready with support for caching, fallbacks, retries, timeouts, loadbalancing, and can be edge-deployed for minimum latency.
 
-✅&nbsp; **Blazing fast** (9.9x faster) with a **tiny footprint** (~45kb installed) <br>
+✅&nbsp; **Blazing fast** (9.9x faster) with a **tiny footprint** (~100kb build) <br>
 ✅&nbsp; **Load balance** across multiple models, providers, and keys <br>
 ✅&nbsp; **Fallbacks** make sure your app stays resilient <br>
 ✅&nbsp; **Automatic Retries** with exponential fallbacks come by default <br>
 ✅&nbsp; **Configurable Request Timeouts** to easily handle unresponsive LLM requests <br>
 ✅&nbsp; **Multimodal** to support routing between Vision, TTS, STT, Image Gen, and more models <br>
 ✅&nbsp; **Plug-in** middleware as needed <br>
-✅&nbsp; Battle tested over **300B tokens** <br>
+✅&nbsp; Battle tested over **480B tokens** <br>
 ✅&nbsp; **Enterprise-ready** for enhanced security, scale, and custom deployments <br>
 <br>
-## How to Run the Gateway?
+## Setup & Installation
+Use the AI gateway through the **hosted API** or **self-host** the open-source or enterprise versions on your environment.
+<br>
 
-1. [Run it Locally](#run-it-locally) for complete control & customization
-2. [Hosted by Portkey](#gateway-hosted-by-portkey) for quick setup without infrastructure concerns
-3. [Enterprise On-Prem](#gateway-enterprise-version) for advanced features and dedicated support
+#### 👉 Hosted Gateway on portkey.ai (Fastest)
+The hosted API is the fastest way to setup an AI Gateway for your Gen AI application. We process **billions of tokens** daily and is in production with companies like Postman, Haptik, Turing, MultiOn, SiteGPT, and more.
 
-### Run it Locally
+<a href="https://app.portkey.ai/signup"><img src="https://portkey.ai/blog/content/images/2024/08/Get-API-Key--3-.png" height=50 alt="Get API Key" /></a><br>
+<br>
 
-Run the following command in your terminal and it will spin up the Gateway on your local system:
+#### 👉 Self-hosting the OSS version ([MIT License](https://github.com/Portkey-AI/gateway?tab=MIT-1-ov-file#readme))
+
+To run the AI gateway locally, execute the following command in your terminal. (Needs npx installed) Or, explore deployment guides for [Cloudflare](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#cloudflare-workers), [Docker](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#docker), [Node.js](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#nodejs-server) and more [here](#deploying-the-ai-gateway).
 ```bash
 npx @portkey-ai/gateway
 ```
 <sup>Your AI Gateway is now running on http://localhost:8787 🚀</sup>
+<br>
 
-Gateway is also edge-deployment ready. Explore Cloudflare, Docker, AWS etc. deployment [guides here](#deploying-the-ai-gateway).
+#### 👉 Self-hosting the Enterprise Version
+The AI Gateway's enterprise version offers enterprise-ready capabilities for **org management**, **governance**, **security** and [more](https://docs.portkey.ai/docs/product/enterprise-offering) out of the box. Compare the open source, hosted and enterprise versions here.
 
-### Gateway Hosted by Portkey
+The enterprise deployment architecture, supported platforms is available here - [**Enterprise Private Cloud Deployments**](https://docs.portkey.ai/docs/product/enterprise-offering/private-cloud-deployments)
 
-This same open-source Gateway powers Portkey API that processes **billions of tokens** daily and is in production with companies like Postman, Haptik, Turing, MultiOn, SiteGPT, and more.
-
-Sign up for the free developer plan (10K request/month) [here](https://app.portkey.ai/) or [discuss here](https://calendly.com/rohit-portkey/noam) for enterprise deployments.
+<a href="https://app.portkey.ai/signup"><img src="https://portkey.ai/blog/content/images/2024/08/Get-API-Key--5-.png" height=50 alt="Book an enterprise AI gateway demo" /></a><br>
 
 <br>
 
-## How to Use the Gateway?
+## Making requests through the AI gateway
 
-### Compatible with OpenAI API & SDK
+#### <img src="docs/images/openai.png" height=15 /> Compatible with OpenAI API & SDKs
 
-Gateway is fully compatible with the OpenAI API & SDK, and extends them to call 200+ LLMs and makes them reliable. To use the Gateway through OpenAI, you only need to update your `base_URL` and pass the provider name in headers.
-* To use through Portkey, set your `base_URL` to: `https://api.portkey.ai/v1`
-* To run locally, set: `http://localhost:8787/v1`
+The AI Gateway is compatible with the OpenAI API & SDKs, and extends them to call 200+ LLMs reliably.  To use the Gateway through OpenAI, **update the client** to include the gateway's URL and headers and make requests as usual. The AI gateway can translate requests written in the OpenAI format to the signature expected by the specified provider. [View examples](https://docs.portkey.ai/docs/guides/getting-started/getting-started-with-ai-gateway)
+<br><br>
 
-Let's see how we can use the Gateway to make an Anthropic request in OpenAI spec below - the same will follow for all the other providers.
-
-### <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/1869px-Python-logo-notext.svg.png" height=20 /> Python
+#### <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/1869px-Python-logo-notext.svg.png" height=15 /> Using the Python SDK &nbsp;&nbsp;<a href="https://colab.research.google.com/drive/1hLvoq_VdGlJ_92sPPiwTznSra5Py0FuW?usp=sharing"><img src="https://colab.research.google.com/assets/colab-badge.svg"></a>
+[Portkey Python SDK](https://github.com/Portkey-AI/portkey-python-sdk) is a wrapper over the OpenAI Python SDK with added support for additional parameters across all other providers. **If you're building with Python, this is the recommended library** to connect to the Gateway.
 ```bash
-pip install portkey-ai
+pip install -qU portkey-ai
 ```
-<a href="https://colab.research.google.com/drive/1hLvoq_VdGlJ_92sPPiwTznSra5Py0FuW?usp=sharing"><img src="https://colab.research.google.com/assets/colab-badge.svg"></a>
+<br>
 
-While instantiating your OpenAI client,
-1. Set the `base_URL` to `http://localhost:8787/v1` (or `PORTKEY_GATEWAY_URL` through the Portkey SDK if you're using the hosted version)
-2. Pass the provider name in the `default_headers` param (here we are using `createHeaders` method with the Portkey SDK to auto-create the full header)
 
-```python
-from openai import OpenAI
-from portkey_ai import PORTKEY_GATEWAY_URL, createHeaders
-
-gateway = OpenAI(
-    api_key="ANTHROPIC_API_KEY",
-    base_url=PORTKEY_GATEWAY_URL, # Or http://localhost:8787/v1 when running locally
-    default_headers=createHeaders(
-        provider="anthropic",
-        api_key="PORTKEY_API_KEY" # Grab from https://app.portkey.ai # Not needed when running locally
-    )
-)
-
-chat_complete = gateway.chat.completions.create(
-    model="claude-3-sonnet-20240229",
-    messages=[{"role": "user", "content": "What's a fractal?"}],
-    max_tokens=512
-)
-```
-If you want to run the Gateway locally, don't forget to run `npx @portkey-ai/gateway` in your terminal before this! Otherwise just [sign up on Portkey](https://app.portkey.ai/) and keep your Portkey API Key handy.
-
-### <img src="https://cdn-icons-png.flaticon.com/512/5968/5968322.png" height=20 /> Node.JS
-Works the same as in Python. Add `baseURL` & `defaultHeaders` while instantiating your OpenAI client and pass the relevant provider details.
+#### <img src="https://cdn-icons-png.flaticon.com/512/5968/5968322.png" height=15 /> Using the Node.JS SDK
+[Portkey JS/TS SDK](https://www.npmjs.com/package/portkey-ai) is a wrapper over the OpenAI JS SDK with added support for additional parameters across all other providers. **If you're building with JS or TS, this is the recommended library** to connect to the Gateway.
 
 ```bash
-npm install portkey-ai
+npm install --save portkey-ai
 ```
+<br>
 
-```js
-import OpenAI from 'openai';
-import { PORTKEY_GATEWAY_URL, createHeaders } from 'portkey-ai';
 
-const gateway = new OpenAI({
-  apiKey: 'ANTHROPIC_API_KEY',
-  baseURL: PORTKEY_GATEWAY_URL, // Or http://localhost:8787/v1 when running locally
-  defaultHeaders: createHeaders({
-    provider: 'anthropic',
-    apiKey: 'PORTKEY_API_KEY', // Grab from https://app.portkey.ai / Not needed when running locally
-  }),
-});
+#### <img src="https://www.svgrepo.com/show/305922/curl.svg" height=15 /> Using the REST APIs
+The AI gateway supports OpenAI compatible endpoints with added parameter support for all other providers and models. [View API Reference](https://docs.portkey.ai/docs/api-reference/introduction).
+<br><br>
 
-async function main() {
-  const chatCompletion = await gateway.chat.completions.create({
-    messages: [{ role: 'user', content: 'Who are you?' }],
-    model: 'claude-3-sonnet-20240229',
-    max_tokens: 512,
-  });
-  console.log(chatCompletion.choices[0].message.content);
-}
+#### Other Integrations
 
-main();
-```
+| Language          | Supported SDKs                                                                                                                                                                                                                                                                                                  |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| JS / TS |  [LangchainJS](https://www.npmjs.com/package/langchain) <br> [LlamaIndex.TS](https://www.npmjs.com/package/llamaindex)                                                                      |
+| Python            | <br> [Langchain](https://portkey.ai/docs/welcome/integration-guides/langchain-python) <br> [LlamaIndex](https://portkey.ai/docs/welcome/integration-guides/llama-index-python) |
+| Go                | [go-openai](https://github.com/sashabaranov/go-openai)                                                                                                                                                                                                                                                          |
+| Java              | [openai-java](https://github.com/TheoKanning/openai-java)                                                                                                                                                                                                                                                       |
+| Rust              | [async-openai](https://docs.rs/async-openai/latest/async_openai/)                                                                                                                                                                                                                                               |
+| Ruby              | [ruby-openai](https://github.com/alexrudall/ruby-openai)                                                                                                                                                                                                                                                        |
+<br>
 
-### <img src="https://www.svgrepo.com/show/305922/curl.svg" height=20 /> REST
-In your OpenAI REST request, 
-1. Change the request URL to `https://api.portkey.ai/v1` (or `http://localhost:8787/v1` if you're hosting locally)
-2. Pass an additional `x-portkey-provider` header with the provider's name
-3. Change the model's name to `claude-3`
-
-```bash
-curl 'http://localhost:8787/v1/chat/completions' \
-  -H 'x-portkey-provider: anthropic' \
-  -H "Authorization: Bearer $ANTHROPIC_API_KEY" \
-  -H 'Content-Type: application/json' \
-  -d '{ "model": "claude-3-haiku-20240229", "messages": [{"role": "user","content": "Hi"}] }'
-```
-
-For other providers, change the `provider` & `model` to their respective values.
 
 
 ## Gateway Cookbooks
 
-### Trending Cookbooks
+### 📈 Trending Cookbooks
 * [Run Gateway on prompts from Langchain hub](/cookbook/use-cases/run-gateway-on-prompts-from-langchain-hub.md)
 * [Use Porkey Gateway with Vercel's AI SDK](/cookbook/integrations/vercel-ai.md)
 * [Set up fallback from SDXL to Dall-E-3](/cookbook/getting-started/fallback-from-stable-diffusion-to-dall-e.ipynb)
 
-### Latest Cookbooks
+### ✨ Latest Cookbooks
 * [Comparing Top 10 LMSYS Models with Portkey](/cookbook/use-cases/LMSYS%20Series/comparing-top10-LMSYS-models-with-Portkey.ipynb)
 * [Fallback from OpenAI to Azure OpenAI](/cookbook/getting-started/fallback-from-openai-to-azure.ipynb)
 * [Set up automatic retries for failed requests](/cookbook/getting-started/automatic-retries-on-failures.md)
@@ -160,7 +116,7 @@ For other providers, change the `provider` & `model` to their respective values.
 
 ## Supported Providers
 
-Explpore Gateway integrations with [20+ providers](https://portkey.ai/docs/welcome/integration-guides) and [6+ frameworks](https://portkey.ai/docs/welcome/integration-guides).
+Explore Gateway integrations with [25+ providers](https://portkey.ai/docs/welcome/integration-guides) and [6+ frameworks](https://portkey.ai/docs/welcome/integration-guides).
 
 |                                                                                                                            | Provider                                                                                      | Support | Stream |
 | -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------- | ------ |
@@ -183,34 +139,37 @@ Explpore Gateway integrations with [20+ providers](https://portkey.ai/docs/welco
 > [View the complete list of 200+ supported models here](https://portkey.ai/docs/welcome/what-is-portkey#ai-providers-supported)
 <br>
 
-## Reliability Features
+<br>
+
+## Features
 
 <table width=100%>
   <tr>
     <td width="50%">
-      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/fallbacks">Fallbacks</a></h4>
-      This feature allows you to specify a prioritized list of LLMs. If the primary LLM fails, Portkey will automatically fallback to the next LLM in the list to ensure reliability.
+      <strong><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/fallbacks">Fallbacks</a></strong><br/>
+      Fallback to another provider or model on failed requests. You can specify the errors on which to trigger the fallback. Improves reliability of your application
       <br><br>
       <img src="https://framerusercontent.com/images/gmlOW8yeKP2pGuIsObM6gKLzeMI.png" height=100 />
     </td>
     <td width="50%">
-      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/automatic-retries">Automatic Retries</a></h4>
-      AI Gateway can automatically retry failed requests up to 5 times. A backoff strategy spaces out retry attempts to prevent network overload.
+      <strong><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/automatic-retries">Automatic Retries</a></strong><br/>
+      Automatically retry failed requests up to 5 times. An exponential backoff strategy spaces out retry attempts to prevent network overload.
       <br><br>
       <img src="https://github.com/roh26it/Rubeus/assets/971978/8a6e653c-94b2-4ba7-95c7-93544ee476b1" height=100 />
     </td>
   </tr>
+  
 </table>
 <table width="100%">
   <tr>
     <td width="50%"> 
-      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/load-balancing">Load Balancing</a></h4>
-      Distribute load effectively across multiple API keys or providers based on custom weights to ensure high availability and optimal performance.
+      <strong><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/load-balancing">Load Balancing</a></strong><br/>
+      Distribute LLM requests across multiple API keys or AI providers with weights to ensure high availability and optimal performance.
       <br><br>
       <img src="https://framerusercontent.com/images/6EWuq3FWhqrPe3kKLqVspevi4.png" height=100 />
     </td>
     <td width="50%">
-      <h4><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/request-timeouts">Request Timeouts</a></h4>
+      <strong><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/request-timeouts">Request Timeouts</a></strong></br><br/>
       Manage unruly LLMs & latencies by setting up granular request timeouts, allowing automatic termination of requests that exceed a specified duration.
       <br><br>
       <img src="https://github.com/vrushankportkey/gateway/assets/134934501/b23b98b2-6451-4747-8898-6847ad8baed4" height=100 />
@@ -218,98 +177,44 @@ Explpore Gateway integrations with [20+ providers](https://portkey.ai/docs/welco
   </tr>
 </table>
 
-#### Reliability features are set by passing a relevant Gateway Config (JSON) with the `x-portkey-config` header or with the `config` param in the SDKs
+</table>
+<table width="100%">
+  <tr>
+    <td width="50%"> 
+      <strong><a href="https://docs.portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/multimodal-capabilities">Multi-modal LLM Gateway</a></strong><br/>
+      Call vision, audio (text-to-speech & speech-to-text), and image generation models from multiple providers  — all using the familiar OpenAI signature
+      <br><br>
+      <img src="https://docs.portkey.ai/~gitbook/image?url=https%3A%2F%2F2878743244-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252Fy3MCfQqftZOnHqSmVV5x%252Fuploads%252FOVuOxN4uFdBp1BdXX4E6%252Fmultimodal-icon.png%3Falt%3Dmedia%26token%3Db8b7bd49-0194-4d2f-89d4-c6633a872372&width=768&dpr=2&quality=100&sign=f51129a9&sv=1" height=100 />
+    </td>
+    <td width="50%">
+      <strong><a href="https://docs.portkey.ai/docs/product/guardrails">Guardrails</a></strong></br><br/>
+      Verify your LLM inputs AND outputs to adhere to your specified checks. Build your own checks or choose from the 20+ pre-built guardrails.
+      <br><br>
+      <img src="https://docs.portkey.ai/~gitbook/image?url=https%3A%2F%2F2878743244-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252Fy3MCfQqftZOnHqSmVV5x%252Fuploads%252FDFkhZpqtBfQMIW9BhVum%252Fguardrails-icon.png%3Falt%3Dmedia%26token%3D91cfe226-5ce9-44b3-a0e8-be9f3ae3917f&width=768&dpr=2&quality=100&sign=73608afc&sv=1" height=100 />
+    </td>
+  </tr>
+</table>
 
-### Example: Setting up Fallback from OpenAI to Anthropic
+**These features are configured through the Gateway Config added to the  `x-portkey-config` header or the `config` parameter in the SDKs.**
 
-#### Write the fallback logic
-```json
-{
-  "strategy": { "mode": "fallback" },
-  "targets": [
-    { "provider": "openai", "api_key": "OPENAI_API_KEY" },
-    { "provider": "anthropic", "api_key": "ANTHROPIC_API_KEY" }
-  ]
-}
-```
-#### Use it while making your request
-Portkey Gateway will automatically trigger Anthropic if the OpenAI request fails:
-
-```REST```
-```bash
-curl 'http://localhost:8787/v1/chat/completions' \
-  -H 'x-portkey-provider: google' \
-  -H 'x-portkey-config: $CONFIG' \
-  -H "Authorization: Bearer $GOOGLE_AI_STUDIO_KEY" \
-  -H 'Content-Type: application/json' \
-  -d '{ "model": "gemini-1.5-pro-latest", "messages": [{"role": "user","content": "Hi"}] }'
-```
-You can also trigger Fallbacks only on specific status codes by passing an array of status codes with the `on_status_codes` param in `strategy`. 
-
-[Read the full Fallback documentation here.](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/fallbacks)
-
-### Example: Loadbalance Requests across 3 Accounts
-#### Write the loadbalancer config
-```json
-{
-  "strategy": { "mode": "loadbalance" },
-  "targets": [
-    { "provider": "openai", "api_key": "ACCOUNT_1_KEY", "weight": 1 },
-    { "provider": "openai", "api_key": "ACCOUNT_2_KEY", "weight": 1 },
-    { "provider": "openai", "api_key": "ACCOUNT_3_KEY", "weight": 1 }
-  ]
-}
-```
-#### Pass the config while instantiating OpenAI client
-```ts
-import OpenAI from 'openai';
-import { PORTKEY_GATEWAY_URL, createHeaders } from 'portkey-ai'
- 
-const gateway = new OpenAI({
-  baseURL: PORTKEY_GATEWAY_URL,
-  defaultHeaders: createHeaders({
-    apiKey: "PORTKEY_API_KEY",
-    config: "CONFIG_ID"
-  })
-});
-```
-
-[Read the Loadbalancing docs here.](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/load-balancing)
-
-### Automatic Retries
-
-<details>
-<summary>Similarly, you can write a Config that will attempt retries up to 5 times</summary>
-  
-```json
-{
-    "retry": { "attempts": 5 }
-}
-```
-[Read the full Retries documentation here.](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/automatic-retries)
-
-</details>
-
-
-### Request Timeouts
-
-<details>
-<summary>Here, the request timeout of 10 seconds will be applied to *all* the targets.</summary>
+Here's a sample config JSON showcasing the above features. All the features are optional
 
 ```json
 {
-  "strategy": { "mode": "fallback" },
-  "request_timeout": 10000,
-  "targets": [
-    { "virtual_key": "open-ai-xxx" },
-    { "virtual_key": "azure-open-ai-xxx" }
-  ]
+	"retry": { "attempts": 5 },
+	"request_timeout": 10000,
+	"strategy": { "mode": "fallback" }, // or 'loadbalance', etc
+	"targets": [{
+		"provider": "openai",
+		"api_key": "sk-***"
+	},{
+		"strategy": {"mode": "loadbalance"}, // Optional nesting
+		"targets": {...}
+	}]
 }
 ```
 
-[Read the full Request Timeouts documentation here.](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/request-timeouts)
-
-</details>
+Then use the config in your API requests to the gateway.
 
 
 ### Using Gateway Configs
@@ -318,30 +223,6 @@ Here's a guide to [use the config object in your request](https://portkey.ai/doc
 
 <br>
 
-## Supported SDKs
-
-| Language          | Supported SDKs                                                                                                                                                                                                                                                                                                  |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Node.js / JS / TS | [Portkey SDK](https://www.npmjs.com/package/portkey-ai) <br> [OpenAI SDK](https://www.npmjs.com/package/openai) <br> [LangchainJS](https://www.npmjs.com/package/langchain) <br> [LlamaIndex.TS](https://www.npmjs.com/package/llamaindex)                                                                      |
-| Python            | [Portkey SDK](https://pypi.org/project/portkey-ai/) <br> [OpenAI SDK](https://portkey.ai/docs/welcome/integration-guides/openai) <br> [Langchain](https://portkey.ai/docs/welcome/integration-guides/langchain-python) <br> [LlamaIndex](https://portkey.ai/docs/welcome/integration-guides/llama-index-python) |
-| Go                | [go-openai](https://github.com/sashabaranov/go-openai)                                                                                                                                                                                                                                                          |
-| Java              | [openai-java](https://github.com/TheoKanning/openai-java)                                                                                                                                                                                                                                                       |
-| Rust              | [async-openai](https://docs.rs/async-openai/latest/async_openai/)                                                                                                                                                                                                                                               |
-| Ruby              | [ruby-openai](https://github.com/alexrudall/ruby-openai)                                                                                                                                                                                                                                                        |
-<br>
-
-
-
-
-## Deploying the AI Gateway
-[See docs](docs/installation-deployments.md) on installing the AI Gateway locally or deploying it on popular locations.
-- Deploy to [App Stack](docs/installation-deployments.md#deploy-to-app-stack)
-- Deploy to [Cloudflare Workers](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-to-cloudflare-workers)
-- Deploy using [Docker](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-using-docker)
-- Deploy using [Docker Compose](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-using-docker-compose)
-- Deploy to [Zeabur](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-to-zeabur)
-- Run a [Node.js server](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#run-a-nodejs-server)
-<br>
 
 ## Gateway Enterprise Version
 Make your AI app more <ins>reliable</ins> and <ins>forward compatible</ins>, while ensuring complete <ins>data security</ins> and <ins>privacy</ins>.
@@ -360,7 +241,7 @@ Make your AI app more <ins>reliable</ins> and <ins>forward compatible</ins>, whi
 
 ## Contributing
 
-The easiest way to contribute is to pick any issue with the `good first issue` tag 💪. Read the Contributing guidelines [here](/CONTRIBUTING.md).
+The easiest way to contribute is to pick an issue with the `good first issue` tag 💪. Read the contribution guidelines [here](/CONTRIBUTING.md).
 
 Bug Report? [File here](https://github.com/Portkey-AI/gateway/issues) | Feature Request? [File here](https://github.com/Portkey-AI/gateway/issues)
 
