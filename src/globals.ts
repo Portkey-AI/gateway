@@ -55,6 +55,7 @@ export const ZHIPU: string = 'zhipu';
 export const NOVITA_AI: string = 'novita-ai';
 export const MONSTERAPI: string = 'monsterapi';
 export const PREDIBASE: string = 'predibase';
+export const VOYAGE: string = 'voyage';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -87,6 +88,7 @@ export const VALID_PROVIDERS = [
   NOVITA_AI,
   MONSTERAPI,
   PREDIBASE,
+  VOYAGE,
 ];
 
 export const CONTENT_TYPES = {
