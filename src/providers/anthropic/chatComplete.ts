@@ -9,6 +9,7 @@ import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
+import { AnthropicStreamState } from './types';
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -411,7 +412,7 @@ export const AnthropicChatCompleteResponseTransform: (
 export const AnthropicChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
-  streamState: Record<string, boolean>
+  streamState: AnthropicStreamState
 ) => string | undefined = (responseChunk, fallbackId, streamState) => {
   let chunk = responseChunk.trim();
   if (
@@ -443,6 +444,9 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   }
 
   if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
+    streamState.usage = {
+      prompt_tokens: parsedChunk.message?.usage?.input_tokens,
+    };
     return (
       `data: ${JSON.stringify({
         id: fallbackId,
@@ -460,9 +464,6 @@ export const AnthropicChatCompleteStreamChunkTransform: (
             finish_reason: null,
           },
         ],
-        usage: {
-          prompt_tokens: parsedChunk.message?.usage?.input_tokens,
-        },
       })}` + '\n\n'
     );
   }
@@ -484,6 +485,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
         ],
         usage: {
           completion_tokens: parsedChunk.usage?.output_tokens,
+          prompt_tokens: streamState.usage?.prompt_tokens,
         },
       })}` + '\n\n'
     );
