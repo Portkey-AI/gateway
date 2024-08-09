@@ -34,6 +34,8 @@ import { transformGenerationConfig } from './transformGenerationConfig';
 import type {
   GoogleErrorResponse,
   GoogleGenerateContentResponse,
+  VertexLlamaChatCompleteStreamChunk,
+  VertexLLamaChatCompleteResponse,
 } from './types';
 
 export const VertexGoogleChatCompleteConfig: ProviderConfig = {
@@ -643,6 +645,47 @@ export const GoogleChatCompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, GOOGLE_VERTEX_AI);
 };
 
+export const VertexLlamaChatCompleteConfig: ProviderConfig = {
+  model: {
+    param: 'model',
+    required: true,
+    default: 'meta/llama3-405b-instruct-maas',
+  },
+  messages: {
+    param: 'messages',
+    required: true,
+    default: [],
+  },
+  max_tokens: {
+    param: 'max_tokens',
+    default: 512,
+    min: 1,
+    max: 2048,
+  },
+  temperature: {
+    param: 'temperature',
+    default: 0.5,
+    min: 0,
+    max: 1,
+  },
+  top_p: {
+    param: 'top_p',
+    default: 0.9,
+    min: 0,
+    max: 1,
+  },
+  top_k: {
+    param: 'top_k',
+    default: 0,
+    min: 0,
+    max: 2048,
+  },
+  stream: {
+    param: 'stream',
+    default: false,
+  },
+};
+
 export const GoogleChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
@@ -934,4 +977,51 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
       ],
     })}` + '\n\n'
   );
+};
+
+export const VertexLlamaChatCompleteResponseTransform: (
+  response: VertexLLamaChatCompleteResponse | GoogleErrorResponse,
+  responseStatus: number
+) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+  if (
+    responseStatus !== 200 &&
+    Array.isArray(response) &&
+    response.length > 0 &&
+    'error' in response[0]
+  ) {
+    const { error } = response[0];
+
+    return generateErrorResponse(
+      {
+        message: error.message,
+        type: error.status,
+        param: null,
+        code: String(error.code),
+      },
+      GOOGLE_VERTEX_AI
+    );
+  }
+  if ('choices' in response) {
+    return {
+      id: crypto.randomUUID(),
+      created: Math.floor(Date.now() / 1000),
+      provider: GOOGLE_VERTEX_AI,
+      ...response,
+    };
+  }
+  return generateInvalidProviderResponseError(response, GOOGLE_VERTEX_AI);
+};
+
+export const VertexLlamaChatCompleteStreamChunkTransform: (
+  response: string,
+  fallbackId: string
+) => string = (responseChunk, fallbackId) => {
+  let chunk = responseChunk.trim();
+  chunk = chunk.replace(/^data: /, '');
+  chunk = chunk.trim();
+  const parsedChunk: VertexLlamaChatCompleteStreamChunk = JSON.parse(chunk);
+  parsedChunk.id = fallbackId;
+  parsedChunk.created = Math.floor(Date.now() / 1000);
+  parsedChunk.provider = GOOGLE_VERTEX_AI;
+  return `data: ${JSON.stringify(parsedChunk)}` + '\n\n';
 };

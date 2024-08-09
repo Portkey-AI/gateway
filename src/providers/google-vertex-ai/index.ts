@@ -7,6 +7,9 @@ import {
   VertexAnthropicChatCompleteResponseTransform,
   VertexAnthropicChatCompleteStreamChunkTransform,
   VertexGoogleChatCompleteConfig,
+  VertexLlamaChatCompleteConfig,
+  VertexLlamaChatCompleteResponseTransform,
+  VertexLlamaChatCompleteStreamChunkTransform,
 } from './chatComplete';
 import { getModelAndProvider } from './utils';
 
@@ -34,6 +37,15 @@ const VertexConfig: ProviderConfigs = {
             'stream-chatComplete':
               VertexAnthropicChatCompleteStreamChunkTransform,
             chatComplete: VertexAnthropicChatCompleteResponseTransform,
+          },
+        };
+      case 'meta':
+        return {
+          chatComplete: VertexLlamaChatCompleteConfig,
+          api: GoogleApiConfig,
+          responseTransforms: {
+            chatComplete: VertexLlamaChatCompleteResponseTransform,
+            'stream-chatComplete': VertexLlamaChatCompleteStreamChunkTransform,
           },
         };
     }

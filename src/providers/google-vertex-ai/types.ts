@@ -1,3 +1,5 @@
+import { ChatCompletionResponse } from '../types';
+
 export interface GoogleErrorResponse {
   error: {
     code: number;
@@ -41,4 +43,28 @@ export interface GoogleGenerateContentResponse {
     candidatesTokenCount: number;
     totalTokenCount: number;
   };
+}
+
+export interface VertexLLamaChatCompleteResponse
+  extends Omit<ChatCompletionResponse, 'id' | 'created'> {}
+
+export interface VertexLlamaChatCompleteStreamChunk {
+  choices: {
+    delta: {
+      content: string;
+      role: string;
+    };
+    finish_reason?: string;
+    index: 0;
+  }[];
+  model: string;
+  object: string;
+  usage?: {
+    completion_tokens: number;
+    prompt_tokens: number;
+    total_tokens: number;
+  };
+  id?: string;
+  created?: number;
+  provider?: string;
 }

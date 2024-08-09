@@ -129,6 +129,8 @@ export const getModelAndProvider = (modelString: string) => {
   ) {
     provider = modelStringParts[0];
     model = modelStringParts.slice(1).join('.');
+  } else if (modelString.includes('llama')) {
+    provider = 'meta';
   }
 
   return { provider, model };
