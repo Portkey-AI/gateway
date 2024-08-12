@@ -26,6 +26,8 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
         return '/embeddings';
       case 'imageGenerate':
         return '/images/generations';
+      case 'createSpeech':
+        return '/audio/speech';
       default:
         return '';
     }

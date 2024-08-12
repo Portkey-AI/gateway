@@ -13,6 +13,7 @@ import {
   OpenAIImageGenerateConfig,
   OpenAIImageGenerateResponseTransform,
 } from './imageGenerate';
+import { OpenAICreateSpeechConfig } from './createSpeech';
 
 const OpenAIConfig: ProviderConfigs = {
   complete: OpenAICompleteConfig,
@@ -20,6 +21,7 @@ const OpenAIConfig: ProviderConfigs = {
   api: OpenAIAPIConfig,
   chatComplete: OpenAIChatCompleteConfig,
   imageGenerate: OpenAIImageGenerateConfig,
+  createSpeech: OpenAICreateSpeechConfig,
   responseTransforms: {
     complete: OpenAICompleteResponseTransform,
     // 'stream-complete': OpenAICompleteResponseTransform,

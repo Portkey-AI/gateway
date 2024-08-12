@@ -59,7 +59,8 @@ export type endpointStrings =
   | 'stream-complete'
   | 'stream-chatComplete'
   | 'proxy'
-  | 'imageGenerate';
+  | 'imageGenerate'
+  | 'createSpeech';
 
 /**
  * A collection of API configurations for multiple AI providers.
