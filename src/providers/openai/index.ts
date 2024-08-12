@@ -13,7 +13,10 @@ import {
   OpenAIImageGenerateConfig,
   OpenAIImageGenerateResponseTransform,
 } from './imageGenerate';
-import { OpenAICreateSpeechConfig, OpenAICreateSpeechResponseTransform } from './createSpeech';
+import {
+  OpenAICreateSpeechConfig,
+  OpenAICreateSpeechResponseTransform,
+} from './createSpeech';
 
 const OpenAIConfig: ProviderConfigs = {
   complete: OpenAICompleteConfig,
