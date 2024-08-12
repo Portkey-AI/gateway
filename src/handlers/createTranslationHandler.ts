@@ -12,9 +12,7 @@ import { Context } from 'hono';
  * @throws Will throw an error if no provider options can be determined or if the request to the provider(s) fails.
  * @throws Will throw an 500 error if the handler fails due to some reasons
  */
-export async function createTranscriptionHandler(
-  c: Context
-): Promise<Response> {
+export async function createTranslationHandler(c: Context): Promise<Response> {
   try {
     let request = await c.req.raw.formData();
     let requestHeaders = Object.fromEntries(c.req.raw.headers);
@@ -24,14 +22,14 @@ export async function createTranscriptionHandler(
       camelCaseConfig ?? {},
       request,
       requestHeaders,
-      'createTranscription',
+      'createTranslation',
       'POST',
       'config'
     );
 
     return tryTargetsResponse;
   } catch (err: any) {
-    console.log('createTranscription error', err.message);
+    console.log('createTranslation error', err.message);
     return new Response(
       JSON.stringify({
         status: 'failure',

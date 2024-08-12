@@ -14,7 +14,8 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
       headersObj['OpenAI-Project'] = providerOptions.openaiProject;
     }
 
-    if (fn === 'createTranscription') headersObj['Content-Type'] = 'multipart/form-data';
+    if (fn === 'createTranscription' || fn === 'createTranslation')
+      headersObj['Content-Type'] = 'multipart/form-data';
 
     return headersObj;
   },
@@ -32,7 +33,9 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
         return '/audio/speech';
       case 'createTranscription':
         return '/audio/transcriptions';
-     default:
+      case 'createTranslation':
+        return '/audio/translations';
+      default:
         return '';
     }
   },

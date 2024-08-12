@@ -72,7 +72,8 @@ export function constructRequest(
   console.log(contentType);
   const isGetMethod = method === 'GET';
   const isMultipartFormData = contentType === CONTENT_TYPES.MULTIPART_FORM_DATA;
-  const shouldDeleteContentTypeHeader = (isGetMethod || isMultipartFormData) && fetchOptions.headers;
+  const shouldDeleteContentTypeHeader =
+    (isGetMethod || isMultipartFormData) && fetchOptions.headers;
 
   if (shouldDeleteContentTypeHeader) {
     let headers = fetchOptions.headers as Record<string, unknown>;
@@ -432,7 +433,7 @@ export async function tryPostProxy(
 
 /**
  * Transforms the request parameters to the format expected by the provider.
- * 
+ *
  * @param {string} provider - The name of the provider (e.g., 'openai', 'anthropic').
  * @param {Params} params - The parameters for the request.
  * @param {Params | FormData} inputParams - The original input parameters.
@@ -443,7 +444,7 @@ const transformToProviderRequest = (
   provider: string,
   params: Params,
   inputParams: Params | FormData,
-  fn: endpointStrings,
+  fn: endpointStrings
 ) => {
   return MULTIPART_FORM_DATA_ENDPOINTS.includes(fn)
     ? inputParams
@@ -540,7 +541,7 @@ export async function tryPost(
   );
 
   fetchOptions.body = MULTIPART_FORM_DATA_ENDPOINTS.includes(fn)
-    ? transformedRequestBody as FormData
+    ? (transformedRequestBody as FormData)
     : JSON.stringify(transformedRequestBody);
 
   providerOption.retry = {

@@ -61,7 +61,8 @@ export type endpointStrings =
   | 'proxy'
   | 'imageGenerate'
   | 'createSpeech'
-  | 'createTranscription';
+  | 'createTranscription'
+  | 'createTranslation';
 
 /**
  * A collection of API configurations for multiple AI providers.

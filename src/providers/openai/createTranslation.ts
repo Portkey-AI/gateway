@@ -2,7 +2,7 @@ import { OPEN_AI } from '../../globals';
 import { ErrorResponse } from '../types';
 import { OpenAIErrorResponseTransform } from './utils';
 
-export const OpenAICreateTranscriptionResponseTransform: (
+export const OpenAICreateTranslationResponseTransform: (
   response: Response | ErrorResponse,
   responseStatus: number
 ) => Response | ErrorResponse = (response, responseStatus) => {

@@ -25,6 +25,7 @@ import { imageGenerationsHandler } from './handlers/imageGenerationsHandler';
 import { createSpeechHandler } from './handlers/createSpeechHandler';
 import conf from '../conf.json';
 import { createTranscriptionHandler } from './handlers/createTranscriptionHandler';
+import { createTranslationHandler } from './handlers/createTranslationHandler';
 
 // Create a new Hono server instance
 const app = new Hono();
@@ -133,7 +134,17 @@ app.post('/v1/audio/speech', requestValidator, createSpeechHandler);
  * POST route for '/v1/audio/transcriptions'.
  * Handles requests by passing them to the createTranscriptionHandler.
  */
-app.post('/v1/audio/transcriptions', requestValidator, createTranscriptionHandler);
+app.post(
+  '/v1/audio/transcriptions',
+  requestValidator,
+  createTranscriptionHandler
+);
+
+/**
+ * POST route for '/v1/audio/translations'.
+ * Handles requests by passing them to the createTranslationHandler.
+ */
+app.post('/v1/audio/translations', requestValidator, createTranslationHandler);
 
 /**
  * POST route for '/v1/prompts/:id/completions'.

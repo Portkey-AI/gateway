@@ -1,4 +1,4 @@
-import { endpointStrings } from "./providers/types";
+import { endpointStrings } from './providers/types';
 
 export const POWERED_BY: string = 'portkey';
 
@@ -107,4 +107,7 @@ export const CONTENT_TYPES = {
   GENERIC_IMAGE_PATTERN: 'image/',
 };
 
-export const MULTIPART_FORM_DATA_ENDPOINTS: endpointStrings[] = ['createTranscription'];
+export const MULTIPART_FORM_DATA_ENDPOINTS: endpointStrings[] = [
+  'createTranscription',
+  'createTranslation',
+];

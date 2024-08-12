@@ -18,6 +18,7 @@ import {
   OpenAICreateSpeechResponseTransform,
 } from './createSpeech';
 import { OpenAICreateTranscriptionResponseTransform } from './createTranscription';
+import { OpenAICreateTranslationResponseTransform } from './createTranslation';
 
 const OpenAIConfig: ProviderConfigs = {
   complete: OpenAICompleteConfig,
@@ -27,6 +28,7 @@ const OpenAIConfig: ProviderConfigs = {
   imageGenerate: OpenAIImageGenerateConfig,
   createSpeech: OpenAICreateSpeechConfig,
   createTranscription: {},
+  createTranslation: {},
   responseTransforms: {
     complete: OpenAICompleteResponseTransform,
     // 'stream-complete': OpenAICompleteResponseTransform,
@@ -36,6 +38,7 @@ const OpenAIConfig: ProviderConfigs = {
     imageGenerate: OpenAIImageGenerateResponseTransform,
     createSpeech: OpenAICreateSpeechResponseTransform,
     createTranscription: OpenAICreateTranscriptionResponseTransform,
+    createTranslation: OpenAICreateTranslationResponseTransform,
   },
 };
 
