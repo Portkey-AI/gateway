@@ -1,6 +1,6 @@
 import { OPEN_AI } from '../../globals';
 import { ErrorResponse, ImageGenerateResponse, ProviderConfig } from '../types';
-import { OpenAIErrorResponseTransform } from './chatComplete';
+import { OpenAIErrorResponseTransform } from './utils';
 
 export const OpenAIImageGenerateConfig: ProviderConfig = {
   prompt: {
