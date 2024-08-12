@@ -112,7 +112,7 @@ The AI gateway supports OpenAI compatible endpoints with added parameter support
 * [Set up automatic retries for failed requests](/cookbook/getting-started/automatic-retries-on-failures.md)
 * [Call Llama 3 on Groq](/cookbook/use-cases/llama-3-on-groq.ipynb)
 
-### [More Examples](/examples/)
+### [More Examples](https://github.com/Portkey-AI/gateway/tree/main/cookbook)
 
 ## Supported Providers
 
@@ -140,6 +140,24 @@ Explore Gateway integrations with [25+ providers](https://portkey.ai/docs/welcom
 <br>
 
 <br>
+
+## Agents
+Gateway seamlessly integrates with popular agent frameworks. [Read the documentation here](https://docs.portkey.ai/docs/welcome/agents).  
+
+
+| Framework | Call 200+ LLMs | Advanced Routing | Caching | Logging & Tracing* | Observability* | Prompt Management* |
+|------------------------------|--------|-------------|---------|------|---------------|-------------------|
+| [Autogen](https://docs.portkey.ai/docs/welcome/agents/autogen)    | ✅     | ✅          | ✅      | ✅   | ✅            | ✅                |
+| [CrewAI](https://docs.portkey.ai/docs/welcome/agents/crewai)             | ✅     | ✅          | ✅      | ✅   | ✅            | ✅                |
+| [Phidata](https://docs.portkey.ai/docs/welcome/agents/phidata)             | ✅     | ✅          | ✅      | ✅   | ✅            | ✅                |
+| [Llama Index](https://docs.portkey.ai/docs/welcome/agents/llama-agents)             | ✅     | ✅          | ✅      | ✅   | ✅            | ✅                |
+| [Control Flow](https://docs.portkey.ai/docs/welcome/agents/control-flow) | ✅     | ✅          | ✅      | ✅   | ✅            | ✅                |
+| [Build Your Own Agents](https://docs.portkey.ai/docs/welcome/agents/bring-your-own-agents) | ✅     | ✅          | ✅      | ✅   | ✅            | ✅                |
+
+<br>
+
+*Only available on the [hosted app](https://portkey.ai). For detailed documentation [click here](https://docs.portkey.ai/docs/welcome/agents). 
+
 
 ## Features
 
