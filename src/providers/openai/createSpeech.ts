@@ -29,7 +29,7 @@ export const OpenAICreateSpeechConfig: ProviderConfig = {
   },
 };
 
-export const OpenAICreateSpeechConfigResponseTransform: (
+export const OpenAICreateSpeechResponseTransform: (
   response: Response | ErrorResponse,
   responseStatus: number
 ) => Response | ErrorResponse = (response, responseStatus) => {

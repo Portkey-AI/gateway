@@ -13,7 +13,7 @@ import {
   OpenAIImageGenerateConfig,
   OpenAIImageGenerateResponseTransform,
 } from './imageGenerate';
-import { OpenAICreateSpeechConfig } from './createSpeech';
+import { OpenAICreateSpeechConfig, OpenAICreateSpeechResponseTransform } from './createSpeech';
 
 const OpenAIConfig: ProviderConfigs = {
   complete: OpenAICompleteConfig,
@@ -29,6 +29,7 @@ const OpenAIConfig: ProviderConfigs = {
     // 'stream-chatComplete': OpenAIChatCompleteResponseTransform,
     embed: OpenAIEmbedResponseTransform,
     imageGenerate: OpenAIImageGenerateResponseTransform,
+    createSpeech: OpenAICreateSpeechResponseTransform,
   },
 };
 
