@@ -2,7 +2,7 @@ import { ProviderAPIConfig } from '../types';
 
 const OpenAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.openai.com/v1',
-  headers: ({ providerOptions }) => {
+  headers: ({ providerOptions, fn }) => {
     const headersObj: Record<string, string> = {
       Authorization: `Bearer ${providerOptions.apiKey}`,
     };
@@ -13,6 +13,8 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
     if (providerOptions.openaiProject) {
       headersObj['OpenAI-Project'] = providerOptions.openaiProject;
     }
+
+    if (fn === 'createTranscription') headersObj['Content-Type'] = 'multipart/form-data';
 
     return headersObj;
   },
@@ -28,7 +30,9 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
         return '/images/generations';
       case 'createSpeech':
         return '/audio/speech';
-      default:
+      case 'createTranscription':
+        return '/audio/transcriptions';
+     default:
         return '';
     }
   },

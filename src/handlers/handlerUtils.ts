@@ -9,10 +9,11 @@ import {
   RETRY_STATUS_CODES,
   GOOGLE_VERTEX_AI,
   OPEN_AI,
+  MULTIPART_FORM_DATA_ENDPOINTS,
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
-import transformToProviderRequest from '../services/transformToProviderRequest';
+import transformToProviderRequestJSON from '../services/transformToProviderRequest';
 import {
   Config,
   Options,
@@ -67,9 +68,13 @@ export function constructRequest(
     method,
     headers,
   };
+  const contentType = headers['content-type'];
+  console.log(contentType);
+  const isGetMethod = method === 'GET';
+  const isMultipartFormData = contentType === CONTENT_TYPES.MULTIPART_FORM_DATA;
+  const shouldDeleteContentTypeHeader = (isGetMethod || isMultipartFormData) && fetchOptions.headers;
 
-  // If the method is GET, delete the content-type header
-  if (method === 'GET' && fetchOptions.headers) {
+  if (shouldDeleteContentTypeHeader) {
     let headers = fetchOptions.headers as Record<string, unknown>;
     delete headers['content-type'];
   }
@@ -426,6 +431,26 @@ export async function tryPostProxy(
 }
 
 /**
+ * Transforms the request parameters to the format expected by the provider.
+ * 
+ * @param {string} provider - The name of the provider (e.g., 'openai', 'anthropic').
+ * @param {Params} params - The parameters for the request.
+ * @param {Params | FormData} inputParams - The original input parameters.
+ * @param {endpointStrings} fn - The function endpoint being called (e.g., 'complete', 'chatComplete').
+ * @returns {Params | FormData} - The transformed request parameters.
+ */
+const transformToProviderRequest = (
+  provider: string,
+  params: Params,
+  inputParams: Params | FormData,
+  fn: endpointStrings,
+) => {
+  return MULTIPART_FORM_DATA_ENDPOINTS.includes(fn)
+    ? inputParams
+    : transformToProviderRequestJSON(provider, params as Params, fn);
+};
+
+/**
  * Makes a POST request to a provider and returns the response.
  * The POST request is constructed using the provider, apiKey, and requestBody parameters.
  * The fn parameter is the type of request being made (e.g., "complete", "chatComplete").
@@ -439,7 +464,7 @@ export async function tryPostProxy(
 export async function tryPost(
   c: Context,
   providerOption: Options,
-  inputParams: Params,
+  inputParams: Params | FormData,
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
   currentIndex: number | string
@@ -474,6 +499,7 @@ export async function tryPost(
   const transformedRequestBody = transformToProviderRequest(
     provider,
     params,
+    inputParams,
     fn
   );
 
@@ -513,7 +539,9 @@ export async function tryPost(
     requestHeaders
   );
 
-  fetchOptions.body = JSON.stringify(transformedRequestBody);
+  fetchOptions.body = MULTIPART_FORM_DATA_ENDPOINTS.includes(fn)
+    ? transformedRequestBody as FormData
+    : JSON.stringify(transformedRequestBody);
 
   providerOption.retry = {
     attempts: providerOption.retry?.attempts ?? 0,
@@ -701,7 +729,7 @@ export async function tryProvidersInSequence(
 export async function tryTargetsRecursively(
   c: Context,
   targetGroup: Targets,
-  request: Params,
+  request: Params | FormData,
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
   method: string,

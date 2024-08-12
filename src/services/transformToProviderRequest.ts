@@ -34,7 +34,7 @@ function setNestedProperty(obj: any, path: string, value: any) {
  *
  * @throws {Error} If the provider is not supported.
  */
-const transformToProviderRequest = (
+const transformToProviderRequestJSON = (
   provider: string,
   params: Params,
   fn: string
@@ -130,4 +130,4 @@ const transformToProviderRequest = (
   return transformedRequest;
 };
 
-export default transformToProviderRequest;
+export default transformToProviderRequestJSON;
