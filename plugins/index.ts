@@ -6,15 +6,16 @@ import { handler as jsonSchema } from './default/jsonSchema';
 import { handler as jsonKeys } from './default/jsonKeys';
 import { handler as contains } from './default/contains';
 import { handler as validUrls } from './default/validUrls';
+import { handler as webhook } from './default/webhook';
 import { handler as containsCode } from './default/containsCode';
 import { handler as moderateContent } from './portkey/moderateContent';
 import { handler as language } from './portkey/language';
 import { handler as pii } from './portkey/pii';
 import { handler as gibberish } from './portkey/gibberish';
-import { handler as sydeguard } from './sydelabs/sydeguard';
 import { handler as validateProject } from './aporia/validateProject';
-import { handler as scanResponse } from './pillar/scanResponse';
+import { handler as sydeguard } from './sydelabs/sydeguard';
 import { handler as scanPrompt } from './pillar/scanPrompt';
+import { handler as scanResponse } from './pillar/scanResponse';
 
 export const plugins = {
   default: {
@@ -26,6 +27,7 @@ export const plugins = {
     jsonKeys: jsonKeys,
     contains: contains,
     validUrls: validUrls,
+    webhook: webhook,
     containsCode: containsCode,
   },
   portkey: {
@@ -34,11 +36,11 @@ export const plugins = {
     pii: pii,
     gibberish: gibberish,
   },
-  sydelabs: {
-    sydeguard: sydeguard,
-  },
   aporia: {
     validateProject: validateProject,
+  },
+  sydelabs: {
+    sydeguard: sydeguard,
   },
   pillar: {
     scanPrompt: scanPrompt,
