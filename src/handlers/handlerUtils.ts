@@ -24,6 +24,9 @@ import { convertKeysToCamelCase } from '../utils';
 import { retryRequest } from './retryHandler';
 import { env } from 'hono/adapter';
 import { afterRequestHookHandler, responseHandler } from './responseHandlers';
+import { OpenAIChatCompleteJSONToStreamResponseTransform } from '../providers/openai/chatComplete';
+import { OpenAICompleteJSONToStreamResponseTransform } from '../providers/openai/complete';
+import { getRuntimeKey } from 'hono/adapter';
 
 /**
  * Constructs the request options for the API call.
@@ -187,6 +190,8 @@ export const fetchProviderOptionsFromConfig = (
       providerOptions[0].deploymentId = camelCaseConfig.deploymentId;
     if (camelCaseConfig.apiVersion)
       providerOptions[0].apiVersion = camelCaseConfig.apiVersion;
+    if (camelCaseConfig.azureModelName)
+      providerOptions[0].azureModelName = camelCaseConfig.azureModelName;
     if (camelCaseConfig.apiVersion)
       providerOptions[0].vertexProjectId = camelCaseConfig.vertexProjectId;
     if (camelCaseConfig.apiVersion)
@@ -336,7 +341,8 @@ export async function tryPostProxy(
         undefined,
         url,
         false,
-        params
+        params,
+        false
       ));
 
       c.set('requestOptions', [
@@ -382,7 +388,8 @@ export async function tryPostProxy(
     undefined,
     url,
     false,
-    params
+    params,
+    false
   );
   updateResponseHeaders(
     mappedResponse.response,
@@ -442,6 +449,13 @@ export async function tryPost(
   const overrideParams = providerOption?.overrideParams || {};
   const params: Params = { ...inputParams, ...overrideParams };
   const isStreamingMode = params.stream ? true : false;
+  let strictOpenAiCompliance = true;
+
+  if (requestHeaders[HEADER_KEYS.STRICT_OPEN_AI_COMPLIANCE] === 'false') {
+    strictOpenAiCompliance = false;
+  } else if (providerOption.strictOpenAiCompliance === false) {
+    strictOpenAiCompliance = false;
+  }
 
   const provider: string = providerOption.provider ?? '';
 
@@ -533,7 +547,8 @@ export async function tryPost(
         responseTransformer,
         url,
         isCacheHit,
-        params
+        params,
+        strictOpenAiCompliance
       ));
     }
 
@@ -620,7 +635,8 @@ export async function tryPost(
     0,
     fn,
     requestHeaders,
-    hookSpan.id
+    hookSpan.id,
+    strictOpenAiCompliance
   );
 
   // console.log("actual response came in", mappedResponse);
@@ -714,6 +730,14 @@ export async function tryTargetsRecursively(
       : { ...inheritedConfig.cache },
     requestTimeout: null,
   };
+
+  if (typeof currentTarget.strictOpenAiCompliance === 'boolean') {
+    currentInheritedConfig.strictOpenAiCompliance =
+      currentTarget.strictOpenAiCompliance;
+  } else if (typeof inheritedConfig.strictOpenAiCompliance === 'boolean') {
+    currentInheritedConfig.strictOpenAiCompliance =
+      inheritedConfig.strictOpenAiCompliance;
+  }
 
   if (currentTarget.forwardHeaders) {
     currentInheritedConfig.forwardHeaders = [...currentTarget.forwardHeaders];
@@ -894,6 +918,9 @@ export function updateResponseHeaders(
     // Brotli compression causes errors at runtime, removing the header in that case
     response.headers.delete('content-encoding');
   }
+  if (getRuntimeKey() == 'node') {
+    response.headers.delete('content-encoding');
+  }
 
   // Delete content-length header to avoid conflicts with hono compress middleware
   // workerd environment handles this authomatically
@@ -907,6 +934,7 @@ export function constructConfigFromRequestHeaders(
     resourceName: requestHeaders[`x-${POWERED_BY}-azure-resource-name`],
     deploymentId: requestHeaders[`x-${POWERED_BY}-azure-deployment-id`],
     apiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
+    azureModelName: requestHeaders[`x-${POWERED_BY}-azure-model-name`],
   };
 
   const bedrockConfig = {
@@ -1020,7 +1048,8 @@ export async function recursiveAfterRequestHookHandler(
   retryAttemptsMade: any,
   fn: any,
   requestHeaders: Record<string, string>,
-  hookSpanId: string
+  hookSpanId: string,
+  strictOpenAiCompliance: boolean
 ): Promise<[Response, number]> {
   let response, retryCount;
   const requestTimeout =
@@ -1048,7 +1077,8 @@ export async function recursiveAfterRequestHookHandler(
       fn,
       url,
       false,
-      gatewayParams
+      gatewayParams,
+      strictOpenAiCompliance
     );
 
   const arhResponse = await afterRequestHookHandler(
@@ -1075,7 +1105,8 @@ export async function recursiveAfterRequestHookHandler(
       (retryCount || 0) + 1 + retryAttemptsMade,
       fn,
       requestHeaders,
-      hookSpanId
+      hookSpanId,
+      strictOpenAiCompliance
     );
   }
 

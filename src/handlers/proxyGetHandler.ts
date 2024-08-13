@@ -118,7 +118,8 @@ export async function proxyGetHandler(c: Context): Promise<Response> {
       undefined,
       urlToFetch,
       false,
-      store.reqBody
+      store.reqBody,
+      false
     );
     updateResponseHeaders(
       mappedResponse,

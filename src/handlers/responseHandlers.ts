@@ -38,7 +38,8 @@ export async function responseHandler(
   responseTransformer: string | undefined,
   requestURL: string,
   isCacheHit: boolean = false,
-  gatewayRequest: Params
+  gatewayRequest: Params,
+  strictOpenAiCompliance: boolean
 ): Promise<{ response: Response; responseJson: any }> {
   let responseTransformerFunction: Function | undefined;
   let providerOption: Options | undefined;
@@ -52,7 +53,7 @@ export async function responseHandler(
   const providerConfig = Providers[provider];
   let providerTransformers = Providers[provider]?.responseTransforms;
 
-  if (providerConfig.getConfig) {
+  if (providerConfig?.getConfig) {
     providerTransformers =
       providerConfig.getConfig(gatewayRequest).responseTransforms;
   }
@@ -96,7 +97,8 @@ export async function responseHandler(
         response,
         provider,
         responseTransformerFunction,
-        requestURL
+        requestURL,
+        strictOpenAiCompliance
       ),
       responseJson: null,
     };
@@ -130,7 +132,8 @@ export async function responseHandler(
 
   const nonStreamingResponse = await handleNonStreamingMode(
     response,
-    responseTransformerFunction
+    responseTransformerFunction,
+    strictOpenAiCompliance
   );
 
   return {
