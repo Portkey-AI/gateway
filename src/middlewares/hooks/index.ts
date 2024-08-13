@@ -30,12 +30,14 @@ class HookSpan {
     isStreamingRequest: boolean,
     beforeRequestHooks: HookObject[],
     afterRequestHooks: HookObject[],
-    parentHookSpanId: string | null
+    parentHookSpanId: string | null,
+    requestType: string
   ) {
     this.context = this.createContext(
       requestParams,
       provider,
-      isStreamingRequest
+      isStreamingRequest,
+      requestType
     );
     this.beforeRequestHooks = this.initializeHooks(
       beforeRequestHooks,
@@ -56,7 +58,8 @@ class HookSpan {
   private createContext(
     requestParams: Record<string, any>,
     provider: string,
-    isStreamingRequest: boolean
+    isStreamingRequest: boolean,
+    requestType: string
   ): HookContext {
     const requestText = this.extractRequestText(requestParams);
     return {
@@ -71,6 +74,7 @@ class HookSpan {
         statusCode: null,
       },
       provider,
+      requestType,
     };
   }
 
@@ -124,6 +128,14 @@ class HookSpan {
     }
   }
 
+  public resetHookResult(eventType: EventType): void {
+    if (eventType === 'beforeRequestHook') {
+      this.hooksResult.beforeRequestHooksResult = [];
+    } else if (eventType === 'afterRequestHook') {
+      this.hooksResult.afterRequestHooksResult = [];
+    }
+  }
+
   public getContext(): HookContext {
     return this.context;
   }
@@ -162,7 +174,8 @@ export class HooksManager {
     isStreamingRequest: boolean,
     beforeRequestHooks: HookObject[],
     afterRequestHooks: HookObject[],
-    parentHookSpanId: string | null
+    parentHookSpanId: string | null,
+    requestType: string
   ): HookSpan {
     const span = new HookSpan(
       requestParams,
@@ -170,7 +183,8 @@ export class HooksManager {
       isStreamingRequest,
       beforeRequestHooks,
       afterRequestHooks,
-      parentHookSpanId
+      parentHookSpanId,
+      requestType
     );
 
     this.spans[span.id] = span;
@@ -271,7 +285,7 @@ export class HooksManager {
 
     if (hook.type === 'guardrail' && hook.checks) {
       const checkResults = await Promise.all(
-        hook.checks.map((check) =>
+        hook.checks.map((check: Check) =>
           this.executeFunction(span.getContext(), check, hook.eventType)
         )
       );
@@ -305,9 +319,12 @@ export class HooksManager {
   private shouldSkipHook(span: HookSpan, hook: HookObject): boolean {
     const context = span.getContext();
     return (
+      !['chatComplete', 'complete'].includes(context.requestType) ||
       (hook.eventType === 'afterRequestHook' &&
         context.response.statusCode !== 200) ||
-      (context.request.isStreamingRequest && !context.response.text) ||
+      (hook.eventType === 'afterRequestHook' &&
+        context.request.isStreamingRequest &&
+        !context.response.text) ||
       (hook.eventType === 'beforeRequestHook' &&
         span.getParentHookSpanId() !== null)
     );
