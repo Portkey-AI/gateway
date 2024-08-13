@@ -8,6 +8,7 @@ export const HEADER_KEYS: Record<string, string> = {
   CACHE: `x-${POWERED_BY}-cache`,
   FORWARD_HEADERS: `x-${POWERED_BY}-forward-headers`,
   CUSTOM_HOST: `x-${POWERED_BY}-custom-host`,
+  REQUEST_TIMEOUT: `x-${POWERED_BY}-request-timeout`,
 };
 
 export const RESPONSE_HEADER_KEYS: Record<string, string> = {
@@ -21,6 +22,7 @@ export const RESPONSE_HEADER_KEYS: Record<string, string> = {
 export const RETRY_STATUS_CODES = [429, 500, 502, 503, 504];
 export const MAX_RETRIES = 5;
 export const REQUEST_TIMEOUT_STATUS_CODE = 408;
+export const PRECONDITION_CHECK_FAILED_STATUS_CODE = 412;
 
 export const OPEN_AI: string = 'openai';
 export const COHERE: string = 'cohere';
@@ -30,6 +32,7 @@ export const ANYSCALE: string = 'anyscale';
 export const PALM: string = 'palm';
 export const TOGETHER_AI: string = 'together-ai';
 export const GOOGLE: string = 'google';
+export const GOOGLE_VERTEX_AI: string = 'vertex-ai';
 export const PERPLEXITY_AI: string = 'perplexity-ai';
 export const REKA_AI: string = 'reka-ai';
 export const MISTRAL_AI: string = 'mistral-ai';
@@ -41,6 +44,16 @@ export const AI21: string = 'ai21';
 export const BEDROCK: string = 'bedrock';
 export const GROQ: string = 'groq';
 export const SEGMIND: string = 'segmind';
+export const JINA: string = 'jina';
+export const FIREWORKS_AI: string = 'fireworks-ai';
+export const WORKERS_AI: string = 'workers-ai';
+export const MOONSHOT: string = 'moonshot';
+export const OPENROUTER: string = 'openrouter';
+export const LINGYI: string = 'lingyi';
+export const ZHIPU: string = 'zhipu';
+export const NOVITA_AI: string = 'novita-ai';
+export const MONSTERAPI: string = 'monsterapi';
+export const PREDIBASE: string = 'predibase';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -48,6 +61,7 @@ export const VALID_PROVIDERS = [
   AZURE_OPEN_AI,
   COHERE,
   GOOGLE,
+  GOOGLE_VERTEX_AI,
   MISTRAL_AI,
   OPEN_AI,
   PALM,
@@ -62,6 +76,16 @@ export const VALID_PROVIDERS = [
   BEDROCK,
   GROQ,
   SEGMIND,
+  JINA,
+  FIREWORKS_AI,
+  WORKERS_AI,
+  MOONSHOT,
+  OPENROUTER,
+  LINGYI,
+  ZHIPU,
+  NOVITA_AI,
+  MONSTERAPI,
+  PREDIBASE,
 ];
 
 export const CONTENT_TYPES = {

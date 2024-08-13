@@ -1,6 +1,6 @@
 {
   "name": "@portkey-ai/gateway",
-  "version": "1.1.1",
+  "version": "1.5.3",
   "description": "A fast AI gateway by Portkey",
   "repository": {
     "type": "git",
@@ -53,7 +53,7 @@
     "prettier": "3.2.5",
     "rollup": "^4.9.1",
     "tsx": "^4.7.0",
-    "wrangler": "^3.0.1"
+    "wrangler": "^3.48.0"
   },
   "bin": "build/start-server.js",
   "type": "module"

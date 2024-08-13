@@ -10,6 +10,34 @@ import {
   generateInvalidProviderResponseError,
 } from '../utils';
 
+const joinSystemMessages = (messages: Message[]) =>
+  messages
+    ?.filter((message) => message.role === 'system')
+    .reduce((parts, message) => {
+      if (typeof message.content === 'string') {
+        parts.push({
+          type: 'text',
+          text: message.content,
+        });
+      }
+      if (message.content && typeof message.content === 'object') {
+        message.content.forEach((c: ContentType) => {
+          if (c.type === 'text' && c.text) {
+            parts.push({
+              type: 'text',
+              text: c.text,
+            });
+          }
+        });
+      }
+      return parts;
+    }, [] as ContentType[])
+    .map((content) => {
+      return content.text;
+    })
+    .filter((text): text is string => !!text?.length)
+    .join('\n');
+
 const transformGenerationConfig = (params: Params) => {
   const generationConfig: Record<string, any> = {};
   if (params['temperature']) {
@@ -30,6 +58,16 @@ const transformGenerationConfig = (params: Params) => {
   return generationConfig;
 };
 
+// models for which systemInstruction is not supported
+const SYSTEM_INSTRUCTION_DISABLED_MODELS = [
+  'gemini-1.0-pro',
+  'gemini-1.0-pro-001',
+  'gemini-1.0-pro-latest',
+  'gemini-1.0-pro-vision-latest',
+  'gemini-pro',
+  'gemini-pro-vision',
+];
+
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
 export const GoogleChatCompleteConfig: ProviderConfig = {
@@ -38,93 +76,99 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
     required: true,
     default: 'gemini-pro',
   },
-  messages: {
-    param: 'contents',
-    default: '',
-    transform: (params: Params) => {
-      let lastRole: 'user' | 'model' | undefined;
-      const messages: { role: string; parts: { text: string }[] }[] = [];
-      const systemMessage = params.messages
-        ?.filter((message) => message.role === 'system')
-        .reduce((parts, message) => {
+  messages: [
+    {
+      param: 'contents',
+      default: '',
+      transform: (params: Params) => {
+        let lastRole: 'user' | 'model' | 'system' | undefined;
+        const messages: { role: string; parts: { text: string }[] }[] = [];
+        const systemMessage = SYSTEM_INSTRUCTION_DISABLED_MODELS.includes(
+          params.model as string
+        )
+          ? joinSystemMessages(params.messages ?? [])
+          : null;
+
+        const fixedMessages: Message[] = [
+          ...(systemMessage
+            ? [
+                {
+                  // From gemini-1.5 onwards, systemInstruction is supported
+                  role: 'assistant' as const,
+                  content: systemMessage,
+                },
+              ]
+            : []),
+          ...(params.messages?.filter((message) => {
+            return message.role === 'user' || message.role === 'assistant';
+          }) ?? []),
+        ];
+
+        fixedMessages.forEach((message: Message) => {
+          const role = message.role === 'assistant' ? 'model' : 'user';
+          let parts = [];
           if (typeof message.content === 'string') {
             parts.push({
-              type: 'text',
               text: message.content,
             });
           }
 
           if (message.content && typeof message.content === 'object') {
             message.content.forEach((c: ContentType) => {
-              if (c.type === 'text' && c.text) {
+              if (c.type === 'text') {
                 parts.push({
-                  type: 'text',
                   text: c.text,
+                });
+              }
+              if (c.type === 'image_url') {
+                parts.push({
+                  inlineData: {
+                    mimeType: 'image/jpeg',
+                    data: c.image_url?.url,
+                  },
                 });
               }
             });
           }
-          return parts;
-        }, [] as ContentType[])
-        .map((content) => {
-          return content.text;
-        })
-        .filter((text): text is string => !!text?.length)
-        .join('\n');
 
-      const fixedMessages: Message[] = [
-        ...(systemMessage
-          ? [{ role: 'assistant' as const, content: systemMessage }]
-          : []),
-        ...(params.messages?.filter((message) => {
-          return message.role === 'user' || message.role === 'assistant';
-        }) ?? []),
-      ];
+          // @NOTE: This takes care of the "Please ensure that multiturn requests alternate between user and model."
+          // error that occurs when we have multiple user messages in a row.
+          const shouldAppendEmptyModeChat =
+            lastRole === 'user' &&
+            role === 'user' &&
+            !params.model?.includes('vision');
 
-      fixedMessages.forEach((message: Message) => {
-        const role = message.role === 'assistant' ? 'model' : 'user';
-        let parts = [];
-        if (typeof message.content === 'string') {
-          parts.push({
-            text: message.content,
-          });
-        }
+          if (shouldAppendEmptyModeChat) {
+            messages.push({ role: 'model', parts: [{ text: '' }] });
+          }
 
-        if (message.content && typeof message.content === 'object') {
-          message.content.forEach((c: ContentType) => {
-            if (c.type === 'text') {
-              parts.push({
-                text: c.text,
-              });
-            }
-            if (c.type === 'image_url') {
-              parts.push({
-                inlineData: {
-                  mimeType: 'image/jpeg',
-                  data: c.image_url?.url,
-                },
-              });
-            }
-          });
-        }
+          messages.push({ role, parts });
+          lastRole = role;
+        });
 
-        // @NOTE: This takes care of the "Please ensure that multiturn requests alternate between user and model."
-        // error that occurs when we have multiple user messages in a row.
-        const shouldAppendEmptyModeChat =
-          lastRole === 'user' &&
-          role === 'user' &&
-          !params.model?.includes('vision');
-
-        if (shouldAppendEmptyModeChat) {
-          messages.push({ role: 'model', parts: [{ text: '' }] });
-        }
-
-        messages.push({ role, parts });
-        lastRole = role;
-      });
-      return messages;
+        return messages;
+      },
     },
-  },
+    {
+      param: 'systemInstruction',
+      default: '',
+      transform: (params: Params) => {
+        // systemInstruction is only supported from gemini 1.5 models
+        if (SYSTEM_INSTRUCTION_DISABLED_MODELS.includes(params.model as string))
+          return;
+
+        const systemMessage = joinSystemMessages(params.messages ?? []);
+        return {
+          parts: [
+            {
+              text: systemMessage,
+            },
+          ],
+          role: 'system',
+        };
+      },
+    },
+  ],
   temperature: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),

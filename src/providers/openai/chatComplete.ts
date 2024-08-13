@@ -87,6 +87,9 @@ export const OpenAIChatCompleteConfig: ProviderConfig = {
   top_logprobs: {
     param: 'top_logprobs',
   },
+  stream_options: {
+    param: 'stream_options',
+  },
 };
 
 export interface OpenAIChatCompleteResponse extends ChatCompletionResponse {

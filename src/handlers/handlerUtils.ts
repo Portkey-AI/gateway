@@ -2,11 +2,14 @@ import { Context } from 'hono';
 import {
   AZURE_OPEN_AI,
   BEDROCK,
+  WORKERS_AI,
   CONTENT_TYPES,
   HEADER_KEYS,
   POWERED_BY,
   RESPONSE_HEADER_KEYS,
   RETRY_STATUS_CODES,
+  GOOGLE_VERTEX_AI,
+  OPEN_AI,
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
@@ -52,14 +55,19 @@ export function constructRequest(
     'content-type': 'application/json',
   };
 
-  let headers: Record<string, string> = {
-    ...providerConfigMappedHeaders,
-  };
+  let headers: Record<string, string> = {};
+
+  Object.keys(providerConfigMappedHeaders).forEach((h: string) => {
+    headers[h.toLowerCase()] = providerConfigMappedHeaders[h];
+  });
 
   const forwardHeadersMap: Record<string, string> = {};
 
   forwardHeaders.forEach((h: string) => {
-    if (requestHeaders[h]) forwardHeadersMap[h] = requestHeaders[h];
+    const lowerCaseHeaderKey = h.toLowerCase();
+    if (requestHeaders[lowerCaseHeaderKey])
+      forwardHeadersMap[lowerCaseHeaderKey] =
+        requestHeaders[lowerCaseHeaderKey];
   });
 
   // Add any headers that the model might need
@@ -190,6 +198,13 @@ export const fetchProviderOptionsFromConfig = (
       providerOptions[0].deploymentId = camelCaseConfig.deploymentId;
     if (camelCaseConfig.apiVersion)
       providerOptions[0].apiVersion = camelCaseConfig.apiVersion;
+    if (camelCaseConfig.apiVersion)
+      providerOptions[0].vertexProjectId = camelCaseConfig.vertexProjectId;
+    if (camelCaseConfig.apiVersion)
+      providerOptions[0].vertexRegion = camelCaseConfig.vertexRegion;
+    if (camelCaseConfig.workersAiAccountId)
+      providerOptions[0].workersAiAccountId =
+        camelCaseConfig.workersAiAccountId;
     mode = 'single';
   } else {
     if (camelCaseConfig.strategy && camelCaseConfig.strategy.mode) {
@@ -391,7 +406,11 @@ export async function tryPostProxy(
   c.set('requestOptions', [
     ...requestOptions,
     {
-      providerOptions: { ...providerOption, requestURL: url, rubeusURL: fn },
+      providerOptions: {
+        ...providerOption,
+        requestURL: url,
+        rubeusURL: fn,
+      },
       requestParams: params,
       response: mappedResponse.clone(),
       cacheStatus: cacheStatus,
@@ -455,8 +474,14 @@ export async function tryPost(
   const customHost =
     requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || '';
 
+  const requestTimeout =
+    Number(requestHeaders[HEADER_KEYS.REQUEST_TIMEOUT]) ||
+    providerOption.requestTimeout ||
+    null;
+
   const baseUrl =
     customHost || apiConfig.getBaseURL({ providerOptions: providerOption });
+
   const endpoint = apiConfig.getEndpoint({
     providerOptions: providerOption,
     fn,
@@ -490,10 +515,16 @@ export async function tryPost(
     onStatusCodes: providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES,
   };
 
-  const [getFromCacheFunction, cacheIdentifier, requestOptions] = [
+  const [
+    getFromCacheFunction,
+    cacheIdentifier,
+    requestOptions,
+    preRequestValidator,
+  ] = [
     c.get('getFromCache'),
     c.get('cacheIdentifier'),
     c.get('requestOptions') ?? [],
+    c.get('preRequestValidator'),
   ];
 
   let cacheResponse, cacheKey, cacheMode, cacheMaxAge;
@@ -557,13 +588,19 @@ export async function tryPost(
     }
   }
 
-  [response, retryCount] = await retryRequest(
-    url,
-    fetchOptions,
-    providerOption.retry.attempts,
-    providerOption.retry.onStatusCodes,
-    providerOption.requestTimeout || null
-  );
+  response = preRequestValidator
+    ? preRequestValidator(providerOption, requestHeaders)
+    : undefined;
+
+  if (!response) {
+    [response, retryCount] = await retryRequest(
+      url,
+      fetchOptions,
+      providerOption.retry.attempts,
+      providerOption.retry.onStatusCodes,
+      requestTimeout
+    );
+  }
 
   const mappedResponse = await responseHandler(
     response,
@@ -585,7 +622,11 @@ export async function tryPost(
   c.set('requestOptions', [
     ...requestOptions,
     {
-      providerOptions: { ...providerOption, requestURL: url, rubeusURL: fn },
+      providerOptions: {
+        ...providerOption,
+        requestURL: url,
+        rubeusURL: fn,
+      },
       requestParams: transformedRequestBody,
       response: mappedResponse.clone(),
       cacheStatus: cacheStatus,
@@ -669,7 +710,7 @@ export async function tryProvidersInSequence(
 /**
  * Handles various types of responses based on the specified parameters
  * and returns a mapped response
- * @param {Response} response - The HTTP response recieved from LLM.
+ * @param {Response} response - The HTTP response received from LLM.
  * @param {boolean} streamingMode - Indicates whether streaming mode is enabled.
  * @param {string} proxyProvider - The provider string.
  * @param {string | undefined} responseTransformer - The response transformer to determine type of call.
@@ -951,6 +992,32 @@ export function constructConfigFromRequestHeaders(
     awsRegion: requestHeaders[`x-${POWERED_BY}-aws-region`],
   };
 
+  const workersAiConfig = {
+    workersAiAccountId: requestHeaders[`x-${POWERED_BY}-workers-ai-account-id`],
+  };
+
+  const openAiConfig = {
+    openaiOrganization: requestHeaders[`x-${POWERED_BY}-openai-organization`],
+    openaiProject: requestHeaders[`x-${POWERED_BY}-openai-project`],
+  };
+
+  const vertexConfig: Record<string, any> = {
+    vertexProjectId: requestHeaders[`x-${POWERED_BY}-vertex-project-id`],
+    vertexRegion: requestHeaders[`x-${POWERED_BY}-vertex-region`],
+  };
+
+  let vertexServiceAccountJson =
+    requestHeaders[`x-${POWERED_BY}-vertex-service-account-json`];
+  if (vertexServiceAccountJson) {
+    try {
+      vertexConfig.vertexServiceAccountJson = JSON.parse(
+        vertexServiceAccountJson
+      );
+    } catch (e) {
+      vertexConfig.vertexServiceAccountJson = null;
+    }
+  }
+
   if (requestHeaders[`x-${POWERED_BY}-config`]) {
     let parsedConfigJson = JSON.parse(requestHeaders[`x-${POWERED_BY}-config`]);
 
@@ -974,10 +1041,32 @@ export function constructConfigFromRequestHeaders(
           ...bedrockConfig,
         };
       }
+
+      if (parsedConfigJson.provider === WORKERS_AI) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...workersAiConfig,
+        };
+      }
+
+      if (parsedConfigJson.provider === OPEN_AI) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...openAiConfig,
+        };
+      }
+
+      if (parsedConfigJson.provider === GOOGLE_VERTEX_AI) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...vertexConfig,
+        };
+      }
     }
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
       'params',
+      'vertex_service_account_json',
     ]) as any;
   }
 
@@ -988,5 +1077,10 @@ export function constructConfigFromRequestHeaders(
       azureConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === BEDROCK &&
       bedrockConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === WORKERS_AI &&
+      workersAiConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === GOOGLE_VERTEX_AI &&
+      vertexConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === OPEN_AI && openAiConfig),
   };
 }
