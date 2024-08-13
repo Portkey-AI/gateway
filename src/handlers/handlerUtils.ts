@@ -25,6 +25,7 @@ import { retryRequest } from './retryHandler';
 import { env } from 'hono/adapter';
 import { afterRequestHookHandler, responseHandler } from './responseHandlers';
 import { getRuntimeKey } from 'hono/adapter';
+import { HookSpan, HooksManager } from '../middlewares/hooks';
 
 /**
  * Constructs the request options for the API call.
@@ -1168,8 +1169,8 @@ async function cacheHandler(
     );
   }
 
-  const hooksManager = c.get('hooksManager');
-  const span = hooksManager.getSpan(hookSpanId);
+  const hooksManager = c.get('hooksManager') as HooksManager;
+  const span = hooksManager.getSpan(hookSpanId) as HookSpan;
   const results = span.getHooksResult();
   const failedBeforeRequestHooks = results.beforeRequestHooksResult.filter(
     (h) => !h.verdict
