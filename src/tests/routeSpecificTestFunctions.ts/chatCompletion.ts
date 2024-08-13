@@ -19,7 +19,7 @@ export const executeChatCompletionEndpointTests: (
     );
     return;
   }
-  
+
   test(`${providerName} /chat/completions test message strings`, async () => {
     const request = new Request(CHAT_COMPLETIONS_ENDPOINT, {
       method: 'POST',
