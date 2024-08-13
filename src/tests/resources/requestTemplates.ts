@@ -3,7 +3,6 @@ import { Params } from '../../types/requestBody';
 const CHAT_COMPLETE_WITH_MESSAGE_CONTENT_ARRAYS_REQUEST: Params = {
   model: 'MODEL_PLACE_HOLDER',
   max_tokens: 200,
-  temperature: -120,
   stream: false,
   messages: [
     {
@@ -23,7 +22,7 @@ const CHAT_COMPLETE_WITH_MESSAGE_CONTENT_ARRAYS_REQUEST: Params = {
 };
 
 export const getChatCompleteWithMessageContentArraysRequest = (
-  model: string
+  model?: string
 ) => {
   return JSON.stringify({
     ...CHAT_COMPLETE_WITH_MESSAGE_CONTENT_ARRAYS_REQUEST,
@@ -47,7 +46,7 @@ export const CHAT_COMPLETE_WITH_MESSAGE_STRING_REQUEST: Params = {
   ],
 };
 
-export const getChatCompleteWithMessageStringRequest = (model: string) => {
+export const getChatCompleteWithMessageStringRequest = (model?: string) => {
   return JSON.stringify({
     ...CHAT_COMPLETE_WITH_MESSAGE_STRING_REQUEST,
     model,
