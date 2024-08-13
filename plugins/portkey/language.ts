@@ -22,7 +22,11 @@ export const handler: PluginHandler = async (
     const languages = parameters.language;
 
     // Find the language of the text
-    const result: any = await fetchPortkey(PORTKEY_ENDPOINTS.LANGUAGE, parameters.credentials, {input: text});
+    const result: any = await fetchPortkey(
+      PORTKEY_ENDPOINTS.LANGUAGE,
+      parameters.credentials,
+      { input: text }
+    );
     const predictedLanguage = result[0][0].label;
 
     // Check if the predicted language matches the language set in the parameters

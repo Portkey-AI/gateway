@@ -14,7 +14,7 @@ export const fetchPortkey = async (
 ) => {
   const options = {
     headers: {
-      'Authorization': `Bearer ${credentials.apiKey}`,
+      Authorization: `Bearer ${credentials.apiKey}`,
     },
   };
 
