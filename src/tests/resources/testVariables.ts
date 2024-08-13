@@ -1,6 +1,17 @@
 import Providers from '../../providers';
 
-const providersConfig: Record<keyof typeof Providers, any> = {
+export interface TestVariable {
+  apiKey: string;
+  chatCompletions?: {
+    model: string;
+  };
+}
+
+export interface TestVariables {
+  [key: keyof typeof Providers]: TestVariable;
+}
+
+const testVariables: TestVariables = {
   openai: {
     apiKey: '',
     chatCompletions: { model: 'gpt-3.5-turbo' },
@@ -127,4 +138,4 @@ const providersConfig: Record<keyof typeof Providers, any> = {
   },
 };
 
-export default providersConfig;
+export default testVariables;
