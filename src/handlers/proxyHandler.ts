@@ -261,7 +261,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
         cacheMode
       );
       if (cacheResponse) {
-        const cacheMappedResponse = await responseHandler(
+        const { response: cacheMappedResponse } = await responseHandler(
           new Response(cacheResponse, {
             headers: {
               'content-type': 'application/json',
@@ -310,7 +310,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
       retryStatusCodes,
       null
     );
-    const mappedResponse = await responseHandler(
+    const { response: mappedResponse } = await responseHandler(
       lastResponse,
       store.isStreamingMode,
       store.proxyProvider,

@@ -111,7 +111,7 @@ export async function proxyGetHandler(c: Context): Promise<Response> {
       null
     );
 
-    const mappedResponse = await responseHandler(
+    const { response: mappedResponse } = await responseHandler(
       lastResponse,
       store.isStreamingMode,
       store.proxyProvider,
