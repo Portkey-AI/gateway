@@ -2,19 +2,19 @@ import { Params } from '../../types/requestBody';
 
 const CHAT_COMPLETE_WITH_MESSAGE_CONTENT_ARRAYS_REQUEST: Params = {
   model: 'MODEL_PLACE_HOLDER',
-  max_tokens: 200,
+  max_tokens: 20,
   stream: false,
   messages: [
     {
       role: 'system',
-      content: 'You are batman',
+      content: 'You are the half-blood prince',
     },
     {
       role: 'user',
       content: [
         {
           type: 'text',
-          text: 'Who is the greatest detective',
+          text: 'Can you teach me a useful spell?',
         },
       ],
     },
@@ -32,16 +32,16 @@ export const getChatCompleteWithMessageContentArraysRequest = (
 
 export const CHAT_COMPLETE_WITH_MESSAGE_STRING_REQUEST: Params = {
   model: 'MODEL_PLACEHOLDER',
-  max_tokens: 200,
+  max_tokens: 20,
   stream: false,
   messages: [
     {
       role: 'system',
-      content: 'You are batman',
+      content: 'You are the half-blood prince',
     },
     {
       role: 'user',
-      content: "Who's the worlds greatest detective?",
+      content: "Can you teach me a useful spell?",
     },
   ],
 };
