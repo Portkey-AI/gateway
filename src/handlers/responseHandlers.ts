@@ -14,7 +14,7 @@ import {
   handleStreamingMode,
   handleTextResponse,
 } from './streamHandler';
-import { endpointStrings } from '../providers/types';
+import { HookSpan } from '../middlewares/hooks';
 
 /**
  * Handles various types of responses based on the specified parameters
@@ -170,11 +170,8 @@ export async function afterRequestHookHandler(
       return response;
     }
 
-    const span = hooksManager.getSpan(hookSpanId);
-    const hooksResult = {
-      before_request_hooks: span.hooksResult.beforeRequestHooksResult,
-      after_request_hooks: span.hooksResult.afterRequestHooksResult,
-    };
+    const span = hooksManager.getSpan(hookSpanId) as HookSpan;
+    const hooksResult = span.getHooksResult();
 
     if (shouldDeny) {
       return new Response(
@@ -186,9 +183,12 @@ export async function afterRequestHookHandler(
             param: null,
             code: null,
           },
-          ...((hooksResult.before_request_hooks?.length ||
-            hooksResult.after_request_hooks?.length) && {
-            hook_results: hooksResult,
+          ...((hooksResult.beforeRequestHooksResult?.length ||
+            hooksResult.afterRequestHooksResult?.length) && {
+            hook_results: {
+              before_request_hooks: hooksResult.beforeRequestHooksResult,
+              after_request_hooks: hooksResult.afterRequestHooksResult,
+            },
           }),
         }),
         {
@@ -199,9 +199,10 @@ export async function afterRequestHookHandler(
     }
 
     const failedBeforeRequestHooks =
-      span.hooksResult.beforeRequestHooksResult.filter((h) => !h.verdict);
-    const failedAfterRequestHooks =
-      span.hooksResult.afterRequestHooksResult.filter((h) => !h.verdict);
+      hooksResult.beforeRequestHooksResult.filter((h) => !h.verdict);
+    const failedAfterRequestHooks = hooksResult.afterRequestHooksResult.filter(
+      (h) => !h.verdict
+    );
 
     if (failedBeforeRequestHooks.length || failedAfterRequestHooks.length) {
       response = new Response(
@@ -217,9 +218,12 @@ export async function afterRequestHookHandler(
     return new Response(
       JSON.stringify({
         ...responseJSON,
-        ...((hooksResult.before_request_hooks?.length ||
-          hooksResult.after_request_hooks?.length) && {
-          hook_results: hooksResult,
+        ...((hooksResult.beforeRequestHooksResult?.length ||
+          hooksResult.afterRequestHooksResult?.length) && {
+          hook_results: {
+            before_request_hooks: hooksResult.beforeRequestHooksResult,
+            after_request_hooks: hooksResult.afterRequestHooksResult,
+          },
         }),
       }),
       {
