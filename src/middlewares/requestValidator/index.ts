@@ -5,12 +5,14 @@ import { configSchema } from './schema/config';
 export const requestValidator = (c: Context, next: any) => {
   const requestHeaders = Object.fromEntries(c.req.raw.headers);
 
+  const contentType = requestHeaders['content-type'];
   if (
-    requestHeaders['content-type'] &&
+    !!contentType &&
     ![
       CONTENT_TYPES.APPLICATION_JSON,
       CONTENT_TYPES.MULTIPART_FORM_DATA,
-    ].includes(requestHeaders['content-type'].split(';')[0])
+    ].includes(requestHeaders['content-type'].split(';')[0]) &&
+    !contentType.split(';')[0]?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
   ) {
     return new Response(
       JSON.stringify({

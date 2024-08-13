@@ -5,17 +5,20 @@ async function fetchWithTimeout(
   options: RequestInit,
   timeout: number
 ) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
   const timeoutRequestOptions = {
     ...options,
-    signal: AbortSignal.timeout(timeout),
+    signal: controller.signal,
   };
 
   let response;
 
   try {
     response = await fetch(url, timeoutRequestOptions);
+    clearTimeout(timeoutId);
   } catch (err: any) {
-    if (err.name === 'TimeoutError') {
+    if (err.name === 'AbortError') {
       response = new Response(
         JSON.stringify({
           error: {
@@ -115,9 +118,7 @@ export const retryRequest = async (
     });
     console.error(error);
     console.warn(
-      `Tried ${lastAttempt ?? 1} time(s) but failed. Error: ${JSON.stringify(
-        error
-      )}`
+      `Tried ${lastAttempt ?? 1} time(s) but failed. Error: ${JSON.stringify(error)}`
     );
   }
   return [lastResponse as Response, lastAttempt];

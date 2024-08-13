@@ -9,6 +9,7 @@ export const HEADER_KEYS: Record<string, string> = {
   FORWARD_HEADERS: `x-${POWERED_BY}-forward-headers`,
   CUSTOM_HOST: `x-${POWERED_BY}-custom-host`,
   REQUEST_TIMEOUT: `x-${POWERED_BY}-request-timeout`,
+  STRICT_OPEN_AI_COMPLIANCE: `x-${POWERED_BY}-strict-open-ai-compliance`,
 };
 
 export const RESPONSE_HEADER_KEYS: Record<string, string> = {

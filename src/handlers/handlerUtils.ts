@@ -35,6 +35,7 @@ import {
 import { env } from 'hono/adapter';
 import { OpenAIChatCompleteJSONToStreamResponseTransform } from '../providers/openai/chatComplete';
 import { OpenAICompleteJSONToStreamResponseTransform } from '../providers/openai/complete';
+import { getRuntimeKey } from 'hono/adapter';
 
 /**
  * Constructs the request options for the API call.
@@ -198,6 +199,8 @@ export const fetchProviderOptionsFromConfig = (
       providerOptions[0].deploymentId = camelCaseConfig.deploymentId;
     if (camelCaseConfig.apiVersion)
       providerOptions[0].apiVersion = camelCaseConfig.apiVersion;
+    if (camelCaseConfig.azureModelName)
+      providerOptions[0].azureModelName = camelCaseConfig.azureModelName;
     if (camelCaseConfig.apiVersion)
       providerOptions[0].vertexProjectId = camelCaseConfig.vertexProjectId;
     if (camelCaseConfig.apiVersion)
@@ -347,7 +350,8 @@ export async function tryPostProxy(
         undefined,
         url,
         false,
-        params
+        params,
+        false
       );
       c.set('requestOptions', [
         ...requestOptions,
@@ -392,7 +396,8 @@ export async function tryPostProxy(
     undefined,
     url,
     false,
-    params
+    params,
+    false
   );
   updateResponseHeaders(
     mappedResponse,
@@ -452,6 +457,13 @@ export async function tryPost(
   const overrideParams = providerOption?.overrideParams || {};
   const params: Params = { ...inputParams, ...overrideParams };
   const isStreamingMode = params.stream ? true : false;
+  let strictOpenAiCompliance = true;
+
+  if (requestHeaders[HEADER_KEYS.STRICT_OPEN_AI_COMPLIANCE] === 'false') {
+    strictOpenAiCompliance = false;
+  } else if (providerOption.strictOpenAiCompliance === false) {
+    strictOpenAiCompliance = false;
+  }
 
   const provider: string = providerOption.provider ?? '';
 
@@ -557,7 +569,8 @@ export async function tryPost(
         fn,
         url,
         true,
-        params
+        params,
+        strictOpenAiCompliance
       );
       c.set('requestOptions', [
         ...requestOptions,
@@ -609,7 +622,8 @@ export async function tryPost(
     fn,
     url,
     false,
-    params
+    params,
+    strictOpenAiCompliance
   );
   updateResponseHeaders(
     mappedResponse,
@@ -725,7 +739,8 @@ export function responseHandler(
   responseTransformer: string | undefined,
   requestURL: string,
   isCacheHit: boolean = false,
-  gatewayRequest: Params
+  gatewayRequest: Params,
+  strictOpenAiCompliance: boolean
 ): Promise<Response> {
   let responseTransformerFunction: Function | undefined;
   const responseContentType = response.headers?.get('content-type');
@@ -733,7 +748,7 @@ export function responseHandler(
   const providerConfig = Providers[proxyProvider];
   let providerTransformers = Providers[proxyProvider]?.responseTransforms;
 
-  if (providerConfig.getConfig) {
+  if (providerConfig?.getConfig) {
     providerTransformers =
       providerConfig.getConfig(gatewayRequest).responseTransforms;
   }
@@ -772,7 +787,8 @@ export function responseHandler(
       response,
       proxyProvider,
       responseTransformerFunction,
-      requestURL
+      requestURL,
+      strictOpenAiCompliance
     );
   } else if (
     responseContentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
@@ -790,7 +806,11 @@ export function responseHandler(
   ) {
     return handleTextResponse(response, responseTransformerFunction);
   } else {
-    return handleNonStreamingMode(response, responseTransformerFunction);
+    return handleNonStreamingMode(
+      response,
+      responseTransformerFunction,
+      strictOpenAiCompliance
+    );
   }
 }
 
@@ -822,6 +842,14 @@ export async function tryTargetsRecursively(
       : { ...inheritedConfig.cache },
     requestTimeout: null,
   };
+
+  if (typeof currentTarget.strictOpenAiCompliance === 'boolean') {
+    currentInheritedConfig.strictOpenAiCompliance =
+      currentTarget.strictOpenAiCompliance;
+  } else if (typeof inheritedConfig.strictOpenAiCompliance === 'boolean') {
+    currentInheritedConfig.strictOpenAiCompliance =
+      inheritedConfig.strictOpenAiCompliance;
+  }
 
   if (currentTarget.forwardHeaders) {
     currentInheritedConfig.forwardHeaders = [...currentTarget.forwardHeaders];
@@ -970,6 +998,9 @@ export function updateResponseHeaders(
     // Brotli compression causes errors at runtime, removing the header in that case
     response.headers.delete('content-encoding');
   }
+  if (getRuntimeKey() == 'node') {
+    response.headers.delete('content-encoding');
+  }
 
   // Delete content-length header to avoid conflicts with hono compress middleware
   // workerd environment handles this authomatically
@@ -983,6 +1014,7 @@ export function constructConfigFromRequestHeaders(
     resourceName: requestHeaders[`x-${POWERED_BY}-azure-resource-name`],
     deploymentId: requestHeaders[`x-${POWERED_BY}-azure-deployment-id`],
     apiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
+    azureModelName: requestHeaders[`x-${POWERED_BY}-azure-model-name`],
   };
 
   const bedrockConfig = {
