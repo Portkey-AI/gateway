@@ -41,7 +41,7 @@ export const CHAT_COMPLETE_WITH_MESSAGE_STRING_REQUEST: Params = {
     },
     {
       role: 'user',
-      content: "Can you teach me a useful spell?",
+      content: 'Can you teach me a useful spell?',
     },
   ],
 };
