@@ -509,7 +509,7 @@ export async function tryPost(
 
   const requestOptions = c.get('requestOptions') ?? [];
 
-  let mappedResponse: Response | undefined, retryCount: number | undefined;
+  let mappedResponse: Response, retryCount: number | undefined;
 
   let cacheKey: string | undefined;
   let { cacheMode, cacheMaxAge, cacheStatus } = getCacheOptions(
@@ -522,20 +522,23 @@ export async function tryPost(
   async function createResponse(
     response: Response,
     responseTransformer: string | undefined,
-    isCacheHit: boolean
+    isCacheHit: boolean,
+    isResponseAlreadyMapped: boolean = false
   ) {
-    ({ response: mappedResponse } = await responseHandler(
-      response,
-      isStreamingMode,
-      provider,
-      responseTransformer,
-      url,
-      isCacheHit,
-      params
-    ));
+    if (!isResponseAlreadyMapped) {
+      ({ response: mappedResponse } = await responseHandler(
+        response,
+        isStreamingMode,
+        provider,
+        responseTransformer,
+        url,
+        isCacheHit,
+        params
+      ));
+    }
 
     updateResponseHeaders(
-      mappedResponse,
+      mappedResponse as Response,
       currentIndex,
       params,
       cacheStatus,
@@ -621,7 +624,7 @@ export async function tryPost(
   );
 
   // console.log("actual response came in", mappedResponse);
-  return createResponse(mappedResponse, undefined, false);
+  return createResponse(mappedResponse, undefined, false, true);
 }
 
 /**
@@ -987,8 +990,7 @@ export function constructConfigFromRequestHeaders(
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
       'params',
-      'before_request_hooks',
-      'after_request_hooks',
+      'checks',
       'vertex_service_account_json',
     ]) as any;
   }
