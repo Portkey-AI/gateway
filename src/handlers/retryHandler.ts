@@ -112,8 +112,12 @@ export const retryRequest = async (
       }
     );
   } catch (error: any) {
-    if (error instanceof TypeError && error.message?.includes('fetch failed')) {
-      console.error('Fetch failed:', error);
+    if (
+      error instanceof TypeError &&
+      error.cause instanceof Error &&
+      error.cause?.name === 'ConnectTimeoutError'
+    ) {
+      console.error('ConnectTimeoutError: ', error.cause);
       // This error comes in case the host address is unreachable. Empty status code used to get returned
       // from here hence no retry logic used to get called.
       lastResponse = new Response(error.message, {
