@@ -2,9 +2,7 @@ import {
   getChatCompleteWithMessageContentArraysRequest,
   getChatCompleteWithMessageStringRequest,
 } from './resources/requestTemplates';
-import transformToProviderRequest from '../services/transformToProviderRequest';
 import Providers from '../providers';
-import { Context, Hono, HonoRequest } from 'hono';
 import app from '../index';
 import providersConfig from './resources/providersConfig';
 import { CHAT_COMPLETIONS_ENDPOINT } from './resources/constants';
