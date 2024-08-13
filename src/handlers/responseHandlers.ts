@@ -146,7 +146,8 @@ export async function afterRequestHookHandler(
   c: Context,
   response: any,
   responseJSON: any,
-  hookSpanId: string
+  hookSpanId: string,
+  retryAttemptsMade: number
 ): Promise<Response> {
   try {
     const hooksManager = c.get('hooksManager');
@@ -156,6 +157,10 @@ export async function afterRequestHookHandler(
       responseJSON,
       response.status
     );
+
+    if (retryAttemptsMade > 0) {
+      hooksManager.getSpan(hookSpanId).resetHookResult('afterRequestHook');
+    }
 
     let { shouldDeny, results } = await hooksManager.executeHooks(hookSpanId, [
       'syncAfterRequestHook',
@@ -176,12 +181,15 @@ export async function afterRequestHookHandler(
         JSON.stringify({
           error: {
             message:
-              'The guardrail checks defined in the config failed. You can find more information in the `hooks_result` object.',
+              'The guardrail checks defined in the config failed. You can find more information in the `hook_results` object.',
             type: 'hooks_failed',
             param: null,
             code: null,
           },
-          hook_results: hooksResult,
+          ...((hooksResult.before_request_hooks?.length ||
+            hooksResult.after_request_hooks?.length) && {
+            hook_results: hooksResult,
+          }),
         }),
         {
           status: 446,
@@ -207,7 +215,13 @@ export async function afterRequestHookHandler(
     }
 
     return new Response(
-      JSON.stringify({ ...responseJSON, hook_results: hooksResult }),
+      JSON.stringify({
+        ...responseJSON,
+        ...((hooksResult.before_request_hooks?.length ||
+          hooksResult.after_request_hooks?.length) && {
+          hook_results: hooksResult,
+        }),
+      }),
       {
         status: response.status,
         statusText: response.statusText,

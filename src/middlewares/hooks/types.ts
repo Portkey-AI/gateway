@@ -53,6 +53,7 @@ export interface HookContext {
   response: HookContextResponse;
   provider: string;
   hookType?: string;
+  requestType: string;
 }
 
 export interface GuardrailFeedbackMetadata {

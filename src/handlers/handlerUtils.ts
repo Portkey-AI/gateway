@@ -24,8 +24,6 @@ import { convertKeysToCamelCase } from '../utils';
 import { retryRequest } from './retryHandler';
 import { env } from 'hono/adapter';
 import { afterRequestHookHandler, responseHandler } from './responseHandlers';
-import { OpenAIChatCompleteJSONToStreamResponseTransform } from '../providers/openai/chatComplete';
-import { OpenAICompleteJSONToStreamResponseTransform } from '../providers/openai/complete';
 import { getRuntimeKey } from 'hono/adapter';
 
 /**
@@ -466,7 +464,8 @@ export async function tryPost(
     isStreamingMode,
     providerOption.beforeRequestHooks || [],
     providerOption.afterRequestHooks || [],
-    null
+    null,
+    fn
   );
 
   // Mapping providers to corresponding URLs
@@ -607,6 +606,7 @@ export async function tryPost(
     requestHeaders,
     fetchOptions,
     transformedRequestBody,
+    hookSpan.id,
     fn
   ));
   if (!!cacheResponse) {
@@ -1085,7 +1085,8 @@ export async function recursiveAfterRequestHookHandler(
     c,
     mappedResponse,
     mappedResponseJson,
-    hookSpanId
+    hookSpanId,
+    retryAttemptsMade
   );
 
   const remainingRetryCount =
@@ -1139,6 +1140,7 @@ async function cacheHandler(
   requestHeaders: Record<string, string>,
   fetchOptions: any,
   transformedRequestBody: any,
+  hookSpanId: string,
   fn: endpointStrings
 ) {
   const [getFromCacheFunction, cacheIdentifier] = [
@@ -1154,8 +1156,6 @@ async function cacheHandler(
     providerOption.cache
   ));
 
-  // console.log(cacheMode)
-
   if (getFromCacheFunction && cacheMode) {
     [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(
       env(c),
@@ -1168,11 +1168,27 @@ async function cacheHandler(
     );
   }
 
+  const hooksManager = c.get('hooksManager');
+  const span = hooksManager.getSpan(hookSpanId);
+  const results = span.getHooksResult();
+  const failedBeforeRequestHooks = results.beforeRequestHooksResult.filter(
+    (h) => !h.verdict
+  );
+
   return {
     cacheResponse: !!cacheResponse
-      ? new Response(cacheResponse, {
-          headers: { 'content-type': 'application/json' },
-        })
+      ? new Response(
+          JSON.stringify({
+            ...JSON.parse(cacheResponse),
+            hook_results: {
+              before_request_hooks: results.beforeRequestHooksResult,
+            },
+          }),
+          {
+            headers: { 'content-type': 'application/json' },
+            status: failedBeforeRequestHooks.length ? 246 : 200,
+          }
+        )
       : undefined,
     cacheStatus,
     cacheKey,
@@ -1194,7 +1210,7 @@ export async function beforeRequestHookHandler(
         JSON.stringify({
           error: {
             message:
-              'The guardrail checks defined in the config failed. You can find more information in the `hooks_result` object.',
+              'The guardrail checks defined in the config failed. You can find more information in the `hook_results` object.',
             type: 'hooks_failed',
             param: null,
             code: null,
