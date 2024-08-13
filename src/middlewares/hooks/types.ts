@@ -74,6 +74,8 @@ export interface GuardrailCheckResult {
   error?: Error | null;
   data?: any;
   id: string;
+  execution_time: number;
+  created_at: Date;
 }
 
 export interface GuardrailResult {
@@ -83,7 +85,15 @@ export interface GuardrailResult {
   checks: GuardrailCheckResult[];
   feedback: GuardrailFeedback;
   error?: Error | null;
+  async: boolean;
+  deny: boolean;
+  execution_time: number;
+  skipped: boolean;
+  type: 'guardrail';
+  created_at: Date;
 }
 
 // HookResult can be of type GuardrailResult or any other type of result
-export type HookResult = GuardrailResult | any;
+export type HookResult = GuardrailResult;
+
+export type EventType = 'beforeRequestHook' | 'afterRequestHook';
