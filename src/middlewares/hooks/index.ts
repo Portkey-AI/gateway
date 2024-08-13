@@ -13,7 +13,7 @@ import { plugins } from '../../../plugins';
 import { Context } from 'hono';
 import { HOOKS_EVENT_TYPE_PRESETS } from './globals';
 
-class HookSpan {
+export class HookSpan {
   private context: HookContext;
   private beforeRequestHooks: HookObject[];
   private afterRequestHooks: HookObject[];
@@ -228,7 +228,7 @@ export class HooksManager {
     }
   }
 
-  private getSpan(spanId: string): HookSpan {
+  public getSpan(spanId: string): HookSpan {
     const span = this.spans[spanId] || {};
     return span;
   }
@@ -334,12 +334,12 @@ export class HooksManager {
     results: GuardrailCheckResult[],
     onFail?: HookOnFailObject,
     onSuccess?: HookOnSuccessObject
-  ): GuardrailFeedback {
+  ): GuardrailFeedback | null {
     const verdict = results.every((result) => result.verdict || result.error);
     const feedbackConfig = verdict ? onSuccess?.feedback : onFail?.feedback;
 
     if (!feedbackConfig) {
-      return {};
+      return null;
     }
 
     return {
