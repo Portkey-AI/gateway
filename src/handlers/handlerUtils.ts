@@ -595,7 +595,6 @@ export async function tryPost(
   brhResponse = await beforeRequestHookHandler(c, hookSpan.id);
 
   if (!!brhResponse) {
-    // console.log("brhResponse came in");
     // If before requestHandler returns a response, return it
     return createResponse(brhResponse, undefined, false);
   }
@@ -611,7 +610,6 @@ export async function tryPost(
     fn
   ));
   if (!!cacheResponse) {
-    // console.log("cacheRespoinse came in", beforeRequestHooksResult);
     return createResponse(cacheResponse, undefined, true);
   }
 
@@ -621,7 +619,6 @@ export async function tryPost(
     ? preRequestValidator(providerOption, requestHeaders)
     : undefined;
   if (!!preRequestValidatorResponse) {
-    // console.log("preReuqestValidaion response came in");
     return createResponse(preRequestValidatorResponse, undefined, false);
   }
 
@@ -640,7 +637,6 @@ export async function tryPost(
     strictOpenAiCompliance
   );
 
-  // console.log("actual response came in", mappedResponse);
   return createResponse(mappedResponse, undefined, false, true);
 }
 
