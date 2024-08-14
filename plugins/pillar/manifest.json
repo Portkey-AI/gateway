@@ -1,5 +1,5 @@
 {
-  "id": "Pillar",
+  "id": "pillar",
   "description": "Pillar security Plugin",
   "credentials": {
     "type": "object",
