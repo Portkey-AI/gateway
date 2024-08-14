@@ -36,3 +36,24 @@ export const generateErrorResponse: (
     provider: provider,
   } as ErrorResponse;
 };
+
+type SplitResult = {
+  before: string;
+  after: string;
+};
+
+export function splitString(input: string, separator: string): SplitResult {
+  const sepIndex = input.indexOf(separator);
+
+  if (sepIndex === -1) {
+    return {
+      before: input,
+      after: '',
+    };
+  }
+
+  return {
+    before: input.substring(0, sepIndex),
+    after: input.substring(sepIndex + 1),
+  };
+}

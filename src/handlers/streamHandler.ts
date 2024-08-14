@@ -5,6 +5,7 @@ import {
   COHERE,
   GOOGLE,
   REQUEST_TIMEOUT_STATUS_CODE,
+  PRECONDITION_CHECK_FAILED_STATUS_CODE,
 } from '../globals';
 import { OpenAIChatCompleteResponse } from '../providers/openai/chatComplete';
 import { OpenAICompleteResponse } from '../providers/openai/complete';
@@ -47,6 +48,7 @@ export async function* readAWSStream(
 ) {
   let buffer = new Uint8Array();
   let expectedLength = 0;
+  const streamState = {};
   while (true) {
     const { done, value } = await reader.read();
     if (done) {
@@ -63,7 +65,8 @@ export async function* readAWSStream(
           if (transformFunction) {
             const transformedChunk = transformFunction(
               payload,
-              fallbackChunkId
+              fallbackChunkId,
+              streamState
             );
             if (Array.isArray(transformedChunk)) {
               for (var item of transformedChunk) {
@@ -97,7 +100,11 @@ export async function* readAWSStream(
       ).toString();
 
       if (transformFunction) {
-        const transformedChunk = transformFunction(payload, fallbackChunkId);
+        const transformedChunk = transformFunction(
+          payload,
+          fallbackChunkId,
+          streamState
+        );
         if (Array.isArray(transformedChunk)) {
           for (var item of transformedChunk) {
             yield item;
@@ -117,18 +124,25 @@ export async function* readStream(
   splitPattern: SplitPatternType,
   transformFunction: Function | undefined,
   isSleepTimeRequired: boolean,
-  fallbackChunkId: string
+  fallbackChunkId: string,
+  strictOpenAiCompliance: boolean
 ) {
   let buffer = '';
   let decoder = new TextDecoder();
   let isFirstChunk = true;
+  const streamState = {};
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) {
       if (buffer.length > 0) {
         if (transformFunction) {
-          yield transformFunction(buffer, fallbackChunkId);
+          yield transformFunction(
+            buffer,
+            fallbackChunkId,
+            streamState,
+            strictOpenAiCompliance
+          );
         } else {
           yield buffer;
         }
@@ -154,7 +168,12 @@ export async function* readStream(
           }
 
           if (transformFunction) {
-            const transformedChunk = transformFunction(part, fallbackChunkId);
+            const transformedChunk = transformFunction(
+              part,
+              fallbackChunkId,
+              streamState,
+              strictOpenAiCompliance
+            );
             if (transformedChunk !== undefined) {
               yield transformedChunk;
             }
@@ -195,13 +214,19 @@ export async function handleTextResponse(
 
 export async function handleNonStreamingMode(
   response: Response,
-  responseTransformer: Function | undefined
+  responseTransformer: Function | undefined,
+  strictOpenAiCompliance: boolean
 ) {
   // 408 is thrown whenever a request takes more than request_timeout to respond.
   // In that case, response thrown by gateway is already in OpenAI format.
   // So no need to transform it again.
-  if (response.status === REQUEST_TIMEOUT_STATUS_CODE) {
-    return response;
+  if (
+    [
+      REQUEST_TIMEOUT_STATUS_CODE,
+      PRECONDITION_CHECK_FAILED_STATUS_CODE,
+    ].includes(response.status)
+  ) {
+    return { response, json: await response.clone().json() };
   }
 
   let responseBodyJson = await response.json();
@@ -209,31 +234,36 @@ export async function handleNonStreamingMode(
     responseBodyJson = responseTransformer(
       responseBodyJson,
       response.status,
-      response.headers
+      response.headers,
+      strictOpenAiCompliance
     );
   }
 
-  return new Response(JSON.stringify(responseBodyJson), response);
+  return {
+    response: new Response(JSON.stringify(responseBodyJson), response),
+    json: responseBodyJson,
+  };
 }
 
-export async function handleAudioResponse(response: Response) {
+export function handleAudioResponse(response: Response) {
   return new Response(response.body, response);
 }
 
-export async function handleOctetStreamResponse(response: Response) {
+export function handleOctetStreamResponse(response: Response) {
   return new Response(response.body, response);
 }
 
-export async function handleImageResponse(response: Response) {
+export function handleImageResponse(response: Response) {
   return new Response(response.body, response);
 }
 
-export async function handleStreamingMode(
+export function handleStreamingMode(
   response: Response,
   proxyProvider: string,
   responseTransformer: Function | undefined,
-  requestURL: string
-): Promise<Response> {
+  requestURL: string,
+  strictOpenAiCompliance: boolean
+): Response {
   const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);
   // If the provider doesn't supply completion id,
   // we generate a fallback id using the provider name + timestamp.
@@ -266,7 +296,8 @@ export async function handleStreamingMode(
         splitPattern,
         responseTransformer,
         isSleepTimeRequired,
-        fallbackChunkId
+        fallbackChunkId,
+        strictOpenAiCompliance
       )) {
         await writer.write(encoder.encode(chunk));
       }

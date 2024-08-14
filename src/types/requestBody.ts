@@ -1,3 +1,5 @@
+import { HookObject } from '../middlewares/hooks/types';
+
 /**
  * Settings for retrying requests.
  * @interface
@@ -43,6 +45,7 @@ export interface Options {
   deploymentId?: string;
   apiVersion?: string;
   adAuth?: string;
+  azureModelName?: string;
   /** Workers AI specific */
   workersAiAccountId?: string;
   /** The parameter to set custom base url */
@@ -63,6 +66,16 @@ export interface Options {
   /** Google Vertex AI specific */
   vertexRegion?: string;
   vertexProjectId?: string;
+  vertexServiceAccountJson?: Record<string, any>;
+
+  afterRequestHooks?: HookObject[];
+  beforeRequestHooks?: HookObject[];
+  /** OpenAI specific */
+  openaiProject?: string;
+  openaiOrganization?: string;
+
+  /** The parameter to determine if extra non-openai compliant fields should be returned in response */
+  strictOpenAiCompliance?: boolean;
 }
 
 /**
@@ -124,13 +137,29 @@ export interface ContentType {
   };
 }
 
+export interface ToolCall {
+  id: string;
+  type: string;
+  function: {
+    name: string;
+    arguments: string;
+  };
+}
+
+export type OpenAIMessageRole =
+  | 'system'
+  | 'user'
+  | 'assistant'
+  | 'function'
+  | 'tool';
+
 /**
  * A message in the conversation.
  * @interface
  */
 export interface Message {
   /** The role of the message sender. It can be 'system', 'user', 'assistant', or 'function'. */
-  role: 'system' | 'user' | 'assistant' | 'function';
+  role: OpenAIMessageRole;
   /** The content of the message. */
   content?: string | ContentType[];
   /** The name of the function to call, if any. */
@@ -138,6 +167,7 @@ export interface Message {
   /** The function call to make, if any. */
   function_call?: any;
   tool_calls?: any;
+  tool_call_id?: string;
   citationMetadata?: CitationMetadata;
 }
 
@@ -173,6 +203,15 @@ export interface Function {
   /** The parameters for the function. */
   parameters?: JsonSchema;
 }
+
+export interface ToolChoiceObject {
+  type: string;
+  function: {
+    name: string;
+  };
+}
+
+export type ToolChoice = ToolChoiceObject | 'none' | 'auto' | 'required';
 
 /**
  * A tool in the conversation.
@@ -212,6 +251,7 @@ export interface Params {
   examples?: Examples[];
   top_k?: number;
   tools?: Tool[];
+  tool_choice?: ToolChoice;
   response_format?: { type: 'json_object' | 'text' };
   // Google Vertex AI specific
   safety_settings?: any;
@@ -248,6 +288,7 @@ export interface ShortConfig {
   retry?: RetrySettings;
   resourceName?: string;
   deploymentId?: string;
+  azureModelName?: string;
   workersAiAccountId?: string;
   apiVersion?: string;
   customHost?: string;

@@ -8,6 +8,8 @@ export const HEADER_KEYS: Record<string, string> = {
   CACHE: `x-${POWERED_BY}-cache`,
   FORWARD_HEADERS: `x-${POWERED_BY}-forward-headers`,
   CUSTOM_HOST: `x-${POWERED_BY}-custom-host`,
+  REQUEST_TIMEOUT: `x-${POWERED_BY}-request-timeout`,
+  STRICT_OPEN_AI_COMPLIANCE: `x-${POWERED_BY}-strict-open-ai-compliance`,
 };
 
 export const RESPONSE_HEADER_KEYS: Record<string, string> = {
@@ -21,6 +23,7 @@ export const RESPONSE_HEADER_KEYS: Record<string, string> = {
 export const RETRY_STATUS_CODES = [429, 500, 502, 503, 504];
 export const MAX_RETRIES = 5;
 export const REQUEST_TIMEOUT_STATUS_CODE = 408;
+export const PRECONDITION_CHECK_FAILED_STATUS_CODE = 412;
 
 export const OPEN_AI: string = 'openai';
 export const COHERE: string = 'cohere';
@@ -52,6 +55,7 @@ export const ZHIPU: string = 'zhipu';
 export const NOVITA_AI: string = 'novita-ai';
 export const MONSTERAPI: string = 'monsterapi';
 export const DEEPSEEK: string = 'deepseek';
+export const PREDIBASE: string = 'predibase';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -84,6 +88,7 @@ export const VALID_PROVIDERS = [
   NOVITA_AI,
   MONSTERAPI,
   DEEPSEEK,
+  PREDIBASE,
 ];
 
 export const CONTENT_TYPES = {
