@@ -79,11 +79,11 @@ export const retryRequest = async (
             errorObj.headers = Object.fromEntries(response.headers);
             throw errorObj;
           } else if (response.status >= 200 && response.status <= 204) {
-            console.log(
-              `Returned in Retry Attempt ${attempt}. Status:`,
-              response.ok,
-              response.status
-            );
+            // console.log(
+            //   `Returned in Retry Attempt ${attempt}. Status:`,
+            //   response.ok,
+            //   response.status
+            // );
           } else {
             // All error codes that aren't retried need to be propogated up
             const errorObj: any = new Error(await response.clone().text());
