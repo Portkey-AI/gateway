@@ -1,73 +1,73 @@
-import { handler as regexMatch } from './default/regexMatch';
-import { handler as sentenceCount } from './default/sentenceCount';
-import { handler as wordCount } from './default/wordCount';
-import { handler as characterCount } from './default/characterCount';
-import { handler as jsonSchema } from './default/jsonSchema';
-import { handler as jsonKeys } from './default/jsonKeys';
-import { handler as contains } from './default/contains';
-import { handler as validUrls } from './default/validUrls';
-import { handler as webhook } from './default/webhook';
-import { handler as containsCode } from './default/containsCode';
-import { handler as moderateContent } from './portkey/moderateContent';
-import { handler as language } from './portkey/language';
-import { handler as pii } from './portkey/pii';
-import { handler as gibberish } from './portkey/gibberish';
-import { handler as validateProject } from './aporia/validateProject';
-import { handler as sydeguard } from './sydelabs/sydeguard';
-import { handler as scanPrompt } from './pillar/scanPrompt';
-import { handler as scanResponse } from './pillar/scanResponse';
-import { handler as phi } from './patronus/phi';
-import { handler as patronusPii } from './patronus/pii';
-import { handler as isConcise } from './patronus/isConcise';
-import { handler as isHelpful } from './patronus/isHelpful';
-import { handler as isPolite } from './patronus/isPolite';
-import { handler as noApologies } from './patronus/noApologies';
-import { handler as noGenderBias } from './patronus/noGenderBias';
-import { handler as noRacialBias } from './patronus/noRacialBias';
-import { handler as retrievalAnswerRelevance } from './patronus/retrievalAnswerRelevance';
-import { handler as toxicity } from './patronus/toxicity';
-import { handler as custom } from './patronus/custom';
+import { handler as defaultregexMatch } from './default/regexMatch';
+import { handler as defaultsentenceCount } from './default/sentenceCount';
+import { handler as defaultwordCount } from './default/wordCount';
+import { handler as defaultcharacterCount } from './default/characterCount';
+import { handler as defaultjsonSchema } from './default/jsonSchema';
+import { handler as defaultjsonKeys } from './default/jsonKeys';
+import { handler as defaultcontains } from './default/contains';
+import { handler as defaultvalidUrls } from './default/validUrls';
+import { handler as defaultwebhook } from './default/webhook';
+import { handler as defaultcontainsCode } from './default/containsCode';
+import { handler as portkeymoderateContent } from './portkey/moderateContent';
+import { handler as portkeylanguage } from './portkey/language';
+import { handler as portkeypii } from './portkey/pii';
+import { handler as portkeygibberish } from './portkey/gibberish';
+import { handler as aporiavalidateProject } from './aporia/validateProject';
+import { handler as sydelabssydeguard } from './sydelabs/sydeguard';
+import { handler as pillarscanPrompt } from './pillar/scanPrompt';
+import { handler as pillarscanResponse } from './pillar/scanResponse';
+import { handler as patronusphi } from './patronus/phi';
+import { handler as patronuspii } from './patronus/pii';
+import { handler as patronusisConcise } from './patronus/isConcise';
+import { handler as patronusisHelpful } from './patronus/isHelpful';
+import { handler as patronusisPolite } from './patronus/isPolite';
+import { handler as patronusnoApologies } from './patronus/noApologies';
+import { handler as patronusnoGenderBias } from './patronus/noGenderBias';
+import { handler as patronusnoRacialBias } from './patronus/noRacialBias';
+import { handler as patronusretrievalAnswerRelevance } from './patronus/retrievalAnswerRelevance';
+import { handler as patronustoxicity } from './patronus/toxicity';
+import { handler as patronuscustom } from './patronus/custom';
 
 export const plugins = {
   default: {
-    regexMatch: regexMatch,
-    sentenceCount: sentenceCount,
-    wordCount: wordCount,
-    characterCount: characterCount,
-    jsonSchema: jsonSchema,
-    jsonKeys: jsonKeys,
-    contains: contains,
-    validUrls: validUrls,
-    webhook: webhook,
-    containsCode: containsCode,
+    regexMatch: defaultregexMatch,
+    sentenceCount: defaultsentenceCount,
+    wordCount: defaultwordCount,
+    characterCount: defaultcharacterCount,
+    jsonSchema: defaultjsonSchema,
+    jsonKeys: defaultjsonKeys,
+    contains: defaultcontains,
+    validUrls: defaultvalidUrls,
+    webhook: defaultwebhook,
+    containsCode: defaultcontainsCode,
   },
   portkey: {
-    moderateContent: moderateContent,
-    language: language,
-    pii: pii,
-    gibberish: gibberish,
+    moderateContent: portkeymoderateContent,
+    language: portkeylanguage,
+    pii: portkeypii,
+    gibberish: portkeygibberish,
   },
   aporia: {
-    validateProject: validateProject,
+    validateProject: aporiavalidateProject,
   },
   sydelabs: {
-    sydeguard: sydeguard,
+    sydeguard: sydelabssydeguard,
   },
   pillar: {
-    scanPrompt: scanPrompt,
-    scanResponse: scanResponse,
+    scanPrompt: pillarscanPrompt,
+    scanResponse: pillarscanResponse,
   },
   patronus: {
-    phi: phi,
-    pii: patronusPii,
-    isConcise: isConcise,
-    isHelpful: isHelpful,
-    isPolite: isPolite,
-    noApologies: noApologies,
-    noGenderBias: noGenderBias,
-    noRacialBias: noRacialBias,
-    retrievalAnswerRelevance: retrievalAnswerRelevance,
-    toxicity: toxicity,
-    custom: custom,
+    phi: patronusphi,
+    pii: patronuspii,
+    isConcise: patronusisConcise,
+    isHelpful: patronusisHelpful,
+    isPolite: patronusisPolite,
+    noApologies: patronusnoApologies,
+    noGenderBias: patronusnoGenderBias,
+    noRacialBias: patronusnoRacialBias,
+    retrievalAnswerRelevance: patronusretrievalAnswerRelevance,
+    toxicity: patronustoxicity,
+    custom: patronuscustom,
   },
 };
