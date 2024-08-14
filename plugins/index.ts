@@ -16,6 +16,17 @@ import { handler as validateProject } from './aporia/validateProject';
 import { handler as sydeguard } from './sydelabs/sydeguard';
 import { handler as scanPrompt } from './pillar/scanPrompt';
 import { handler as scanResponse } from './pillar/scanResponse';
+import { handler as phi } from './patronus/phi';
+import { handler as patronusPii } from './patronus/pii';
+import { handler as isConcise } from './patronus/isConcise';
+import { handler as isHelpful } from './patronus/isHelpful';
+import { handler as isPolite } from './patronus/isPolite';
+import { handler as noApologies } from './patronus/noApologies';
+import { handler as noGenderBias } from './patronus/noGenderBias';
+import { handler as noRacialBias } from './patronus/noRacialBias';
+import { handler as retrievalAnswerRelevance } from './patronus/retrievalAnswerRelevance';
+import { handler as toxicity } from './patronus/toxicity';
+import { handler as custom } from './patronus/custom';
 
 export const plugins = {
   default: {
@@ -45,5 +56,18 @@ export const plugins = {
   pillar: {
     scanPrompt: scanPrompt,
     scanResponse: scanResponse,
+  },
+  patronus: {
+    phi: phi,
+    pii: patronusPii,
+    isConcise: isConcise,
+    isHelpful: isHelpful,
+    isPolite: isPolite,
+    noApologies: noApologies,
+    noGenderBias: noGenderBias,
+    noRacialBias: noRacialBias,
+    retrievalAnswerRelevance: retrievalAnswerRelevance,
+    toxicity: toxicity,
+    custom: custom,
   },
 };
