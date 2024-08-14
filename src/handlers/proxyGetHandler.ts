@@ -10,8 +10,9 @@ import {
   RESPONSE_HEADER_KEYS,
   AZURE_OPEN_AI,
 } from '../globals';
-import { responseHandler, updateResponseHeaders } from './handlerUtils';
+import { updateResponseHeaders } from './handlerUtils';
 import { env } from 'hono/adapter';
+import { responseHandler } from './responseHandlers';
 // Find the proxy provider
 function proxyProvider(proxyModeHeader: string, providerHeader: string) {
   const proxyProvider = proxyModeHeader?.split(' ')[1] ?? providerHeader;
@@ -110,7 +111,7 @@ export async function proxyGetHandler(c: Context): Promise<Response> {
       null
     );
 
-    const mappedResponse = await responseHandler(
+    const { response: mappedResponse } = await responseHandler(
       lastResponse,
       store.isStreamingMode,
       store.proxyProvider,
