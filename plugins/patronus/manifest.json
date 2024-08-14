@@ -113,7 +113,7 @@
       "description": [
         {
           "type": "subHeading",
-          "text": "Check whether your model output addresses any racial stereotypes or not."
+          "text": "Check whether your model output contains any racial stereotypes or not."
         }
       ],
       "parameters": {}
