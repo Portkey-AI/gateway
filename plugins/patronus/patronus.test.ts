@@ -1,7 +1,7 @@
 import testCreds from './.creds.json';
 import { handler as phiHandler } from './phi';
 import { handler as piiHandler } from './pii';
-import { handler as  toxicityHandler } from './toxicity';
+import { handler as toxicityHandler } from './toxicity';
 import { handler as retrievalAnswerRelevanceHandler } from './retrievalAnswerRelevance';
 import { handler as customHandler } from './custom';
 
@@ -11,7 +11,7 @@ describe('phi handler', () => {
     const context = {
       request: { text: 'this is a test string for moderations' },
     };
-    const parameters = {credentials: testCreds};
+    const parameters = { credentials: testCreds };
 
     const result = await phiHandler(context, parameters, eventType);
     // console.log(result);
@@ -27,7 +27,7 @@ describe('phi handler', () => {
       response: { text: 'this is a test string for moderations' },
     };
 
-    const parameters = {credentials: testCreds};
+    const parameters = { credentials: testCreds };
 
     const result = await phiHandler(context, parameters, eventType);
     // console.log(result);
@@ -40,11 +40,15 @@ describe('phi handler', () => {
   it('should fail when text contains PHI', async () => {
     const eventType = 'afterRequestHook';
     const context = {
-      request: { text: `Your hospital's patient - John Doe. What is he in for?` },
-      response: { text: 'John Doe is in the hospital for a bad case of carpal tunnel.' },
+      request: {
+        text: `Your hospital's patient - John Doe. What is he in for?`,
+      },
+      response: {
+        text: 'John Doe is in the hospital for a bad case of carpal tunnel.',
+      },
     };
 
-    const parameters = {credentials: testCreds};
+    const parameters = { credentials: testCreds };
 
     const result = await phiHandler(context, parameters, eventType);
     // console.log(result);
@@ -61,7 +65,7 @@ describe('pii handler', () => {
     const context = {
       request: { text: 'this is a test string for moderations' },
     };
-    const parameters = {credentials: testCreds};
+    const parameters = { credentials: testCreds };
 
     const result = await piiHandler(context, parameters, eventType);
     // console.log(result);
@@ -77,7 +81,7 @@ describe('pii handler', () => {
       response: { text: 'this is a test string for moderations' },
     };
 
-    const parameters = {credentials: testCreds};
+    const parameters = { credentials: testCreds };
 
     const result = await piiHandler(context, parameters, eventType);
     // console.log(result);
@@ -90,11 +94,15 @@ describe('pii handler', () => {
   it('should fail when text contains PII', async () => {
     const eventType = 'afterRequestHook';
     const context = {
-      request: { text: `Your hospital's patient - John Doe. What is he in for?` },
-      response: { text: `Sure! Happy to provide the SSN of John Doe - it's 123-45-6789.` },
+      request: {
+        text: `Your hospital's patient - John Doe. What is he in for?`,
+      },
+      response: {
+        text: `Sure! Happy to provide the SSN of John Doe - it's 123-45-6789.`,
+      },
     };
 
-    const parameters = {credentials: testCreds};
+    const parameters = { credentials: testCreds };
 
     const result = await piiHandler(context, parameters, eventType);
     // console.log(result);
@@ -111,7 +119,7 @@ describe('toxicity handler', () => {
     const context = {
       request: { text: 'this is a test string for moderations' },
     };
-    const parameters = {credentials: testCreds};
+    const parameters = { credentials: testCreds };
 
     const result = await toxicityHandler(context, parameters, eventType);
     // console.log(result);
@@ -127,7 +135,7 @@ describe('toxicity handler', () => {
       response: { text: 'this is a test string for moderations' },
     };
 
-    const parameters = {credentials: testCreds};
+    const parameters = { credentials: testCreds };
 
     const result = await toxicityHandler(context, parameters, eventType);
     console.log(result);
@@ -144,7 +152,7 @@ describe('toxicity handler', () => {
       response: { text: `piece of shit! Who do you think you are?` },
     };
 
-    const parameters = {credentials: testCreds};
+    const parameters = { credentials: testCreds };
 
     const result = await toxicityHandler(context, parameters, eventType);
     console.log(result);
@@ -161,9 +169,13 @@ describe('retrieval answer relevance handler', () => {
     const context = {
       request: { text: 'this is a test string for moderations' },
     };
-    const parameters = {credentials: testCreds};
+    const parameters = { credentials: testCreds };
 
-    const result = await retrievalAnswerRelevanceHandler(context, parameters, eventType);
+    const result = await retrievalAnswerRelevanceHandler(
+      context,
+      parameters,
+      eventType
+    );
     // console.log(result);
     expect(result).toBeDefined();
     expect(result.error).toBeDefined();
@@ -174,12 +186,18 @@ describe('retrieval answer relevance handler', () => {
     const eventType = 'afterRequestHook';
     const context = {
       request: { text: 'What is one of the biggest benefits of Gen AI?' },
-      response: { text: `Gen AI will free up humanity's time so that we humans can focus on more purposeful ideals.` },
+      response: {
+        text: `Gen AI will free up humanity's time so that we humans can focus on more purposeful ideals.`,
+      },
     };
 
-    const parameters = {credentials: testCreds};
+    const parameters = { credentials: testCreds };
 
-    const result = await retrievalAnswerRelevanceHandler(context, parameters, eventType);
+    const result = await retrievalAnswerRelevanceHandler(
+      context,
+      parameters,
+      eventType
+    );
     console.log(result);
     expect(result).toBeDefined();
     expect(result.verdict).toBe(true);
@@ -194,9 +212,13 @@ describe('retrieval answer relevance handler', () => {
       response: { text: `Betty bought a bit of butter` },
     };
 
-    const parameters = {credentials: testCreds};
+    const parameters = { credentials: testCreds };
 
-    const result = await retrievalAnswerRelevanceHandler(context, parameters, eventType);
+    const result = await retrievalAnswerRelevanceHandler(
+      context,
+      parameters,
+      eventType
+    );
     console.log(result);
     expect(result).toBeDefined();
     expect(result.verdict).toBe(false);
@@ -210,10 +232,12 @@ describe('custom handler (is-concise)', () => {
     const eventType = 'afterRequestHook';
     const context = {
       request: { text: 'Tell me a bit more about Company A.' },
-      response: { text: `Company A builds the leading platform for database management software, called A-DB.` },
+      response: {
+        text: `Company A builds the leading platform for database management software, called A-DB.`,
+      },
     };
 
-    const parameters = {credentials: testCreds, profile: 'system:is-concise'};
+    const parameters = { credentials: testCreds, profile: 'system:is-concise' };
 
     const result = await customHandler(context, parameters, eventType);
     console.log(result);
@@ -227,10 +251,12 @@ describe('custom handler (is-concise)', () => {
     const eventType = 'afterRequestHook';
     const context = {
       request: { text: `What is one of the biggest benefits of Gen AI?` },
-      response: { text: `Company A builds the leading platform for database management software, called A-DB. Company A has won many awards for their innovative work here, including the '2023 Innovative Company of the year' award for their groundbreaking features. Sign up to get access to A-DB, and accelerate your engineering teams today!` },
+      response: {
+        text: `Company A builds the leading platform for database management software, called A-DB. Company A has won many awards for their innovative work here, including the '2023 Innovative Company of the year' award for their groundbreaking features. Sign up to get access to A-DB, and accelerate your engineering teams today!`,
+      },
     };
 
-    const parameters = {credentials: testCreds, profile: 'system:is-concise'};
+    const parameters = { credentials: testCreds, profile: 'system:is-concise' };
 
     const result = await customHandler(context, parameters, eventType);
     console.log(result);
@@ -239,4 +265,4 @@ describe('custom handler (is-concise)', () => {
     expect(result.error).toBeNull();
     expect(result.data).toBeDefined();
   }, 10000);
-})
+});

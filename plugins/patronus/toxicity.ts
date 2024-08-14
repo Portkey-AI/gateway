@@ -15,19 +15,24 @@ export const handler: PluginHandler = async (
   let verdict = false;
   let data = null;
 
-  const evaluator = "toxicity";
+  const evaluator = 'toxicity';
 
   if (eventType !== 'afterRequestHook') {
-    return { error: { message: 'Patronus guardrails only support after_request_hooks.' }, verdict: true, data };
+    return {
+      error: {
+        message: 'Patronus guardrails only support after_request_hooks.',
+      },
+      verdict: true,
+      data,
+    };
   }
 
-  const evaluationBody:any = {
+  const evaluationBody: any = {
     input: context.request.text,
     output: context.response.text,
-  }
+  };
 
   try {
-
     const result: any = await postPatronus(
       evaluator,
       parameters.credentials,

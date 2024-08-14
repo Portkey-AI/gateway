@@ -10,20 +10,22 @@ export const postPatronus = async (
 ) => {
   const options = {
     headers: {
-      "x-api-key": `${credentials.apiKey}`,
+      'x-api-key': `${credentials.apiKey}`,
     },
   };
 
   const body = {
-    "evaluators": [{
-      "evaluator": evaluator,
-      "explain_strategy": "always",
-      ...(profile && { "profile_name": profile })
-    }],
-    "evaluated_model_input": data.input,
-    "evaluated_model_output": data.output
+    evaluators: [
+      {
+        evaluator: evaluator,
+        explain_strategy: 'always',
+        ...(profile && { profile_name: profile }),
+      },
+    ],
+    evaluated_model_input: data.input,
+    evaluated_model_output: data.output,
     // "evaluated_model_retrieved_context": ["I am John."]
-  }
+  };
 
   const timeout = data.timeout || 5000;
 
