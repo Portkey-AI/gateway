@@ -48,10 +48,11 @@ export const CohereChatCompleteConfig: ProviderConfig = {
 
             if (typeof message.content === 'string') {
               _message['message'] = message.content;
-            } else {
+            } else if (Array.isArray(message.content)) {
               _message['message'] = (message.content ?? [])
-                ?.map((content) => content.text || content.image_url)
-                .join('');
+                .filter((c) => Boolean(c.text))
+                .map((content) => content.text)
+                .join('\n');
             }
 
             return _message;
@@ -118,6 +119,10 @@ interface CohereCompleteResponse {
     api_version: {
       version: string;
     };
+    billed_units: {
+      input_tokens: number;
+      output_tokens: number;
+    };
   };
   chat_history?: {
     role: 'CHATBOT' | 'SYSTEM' | 'TOOL' | 'USER';
@@ -156,15 +161,27 @@ export const CohereChatCompleteResponseTransform: (
         finish_reason: 'length',
       },
     ],
+    usage: {
+      completion_tokens: response.meta.billed_units.output_tokens,
+      prompt_tokens: response.meta.billed_units.input_tokens,
+      total_tokens: Number(
+        response.meta.billed_units.output_tokens +
+          response.meta.billed_units.input_tokens
+      ),
+    },
   };
 };
 
 export type CohereStreamChunk =
-  | { type: 'stream-start'; generation_id: string }
-  | { type: 'text-generation'; text: string }
+  | { event_type: 'stream-start'; generation_id: string }
+  | { event_type: 'text-generation'; text: string }
   | {
-      type: 'stream-end';
-      finish_reason: CohereCompleteResponse['finish_reason'];
+      event_type: 'stream-end';
+      response_id: string;
+      response: {
+        finish_reason: CohereCompleteResponse['finish_reason'];
+        meta: CohereCompleteResponse['meta'];
+      };
     };
 
 export const CohereChatCompleteStreamChunkTransform: (
@@ -176,10 +193,6 @@ export const CohereChatCompleteStreamChunkTransform: (
   chunk = chunk.trim();
   const parsedChunk: CohereStreamChunk = JSON.parse(chunk);
 
-  if (['stream-end'].includes(parsedChunk.type)) {
-    return '';
-  }
-
   return (
     `data: ${JSON.stringify({
       id: fallbackId,
@@ -187,14 +200,28 @@ export const CohereChatCompleteStreamChunkTransform: (
       created: Math.floor(Date.now() / 1000),
       model: '',
       provider: COHERE,
+      ...(parsedChunk.event_type === 'stream-end'
+        ? {
+            usage: {
+              completion_tokens:
+                parsedChunk.response.meta.billed_units.output_tokens,
+              prompt_tokens:
+                parsedChunk.response.meta.billed_units.input_tokens,
+              total_tokens: Number(
+                parsedChunk.response.meta.billed_units.output_tokens +
+                  parsedChunk.response.meta.billed_units.input_tokens
+              ),
+            },
+          }
+        : { usage: null }),
       choices: [
         {
           delta: {
-            content: (parsedChunk as any)?.text,
+            content: (parsedChunk as any)?.text ?? '',
           },
           index: 0,
           logprobs: null,
-          finish_reason: (parsedChunk as any)?.finish_reason ?? null,
+          finish_reason: (parsedChunk as any).finish_reason ?? null,
         },
       ],
     })}` + '\n\n'
