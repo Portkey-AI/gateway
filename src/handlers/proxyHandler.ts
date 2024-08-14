@@ -15,11 +15,11 @@ import { Config, ShortConfig } from '../types/requestBody';
 import { convertKeysToCamelCase, getStreamingMode } from '../utils';
 import {
   fetchProviderOptionsFromConfig,
-  responseHandler,
   tryProvidersInSequence,
   updateResponseHeaders,
 } from './handlerUtils';
 import { retryRequest } from './retryHandler';
+import { responseHandler } from './responseHandlers';
 // Find the proxy provider
 function proxyProvider(proxyModeHeader: string, providerHeader: string) {
   const proxyProvider = proxyModeHeader?.split(' ')[1] ?? providerHeader;
@@ -275,7 +275,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
         cacheMode
       );
       if (cacheResponse) {
-        const cacheMappedResponse = await responseHandler(
+        const { response: cacheMappedResponse } = await responseHandler(
           new Response(cacheResponse, {
             headers: {
               'content-type': 'application/json',
@@ -286,7 +286,8 @@ export async function proxyHandler(c: Context): Promise<Response> {
           undefined,
           urlToFetch,
           false,
-          store.reqBody
+          store.reqBody,
+          false
         );
         c.set('requestOptions', [
           {
@@ -324,14 +325,15 @@ export async function proxyHandler(c: Context): Promise<Response> {
       retryStatusCodes,
       null
     );
-    const mappedResponse = await responseHandler(
+    const { response: mappedResponse } = await responseHandler(
       lastResponse,
       store.isStreamingMode,
       store.proxyProvider,
       undefined,
       urlToFetch,
       false,
-      store.reqBody
+      store.reqBody,
+      false
     );
     updateResponseHeaders(
       mappedResponse,

@@ -62,10 +62,15 @@ export const configSchema: any = z
     // Google Vertex AI specific
     vertex_project_id: z.string().optional(),
     vertex_region: z.string().optional(),
+    after_request_hooks: z.any().optional(),
+    before_request_hooks: z.any().optional(),
     vertex_service_account_json: z.object({}).catchall(z.string()).optional(),
     // OpenAI specific
     openai_project: z.string().optional(),
     openai_organization: z.string().optional(),
+    // AzureOpenAI specific
+    azure_model_name: z.string().optional(),
+    strict_open_ai_compliance: z.boolean().optional(),
   })
   .refine(
     (value) => {
@@ -89,7 +94,9 @@ export const configSchema: any = z
         value.request_timeout ||
         isOllamaProvider ||
         hasAWSDetails ||
-        isVertexAIProvider
+        isVertexAIProvider ||
+        value.after_request_hooks ||
+        value.before_request_hooks
       );
     },
     {
