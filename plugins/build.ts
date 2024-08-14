@@ -13,7 +13,8 @@ for (const plugin of pluginsEnabled) {
   importStrings = [
     ...importStrings,
     ...functions.map(
-      (func: any) => `import { handler as ${func} } from "./${plugin}/${func}"`
+      (func: any) =>
+        `import { handler as ${manifest.id}${func} } from "./${plugin}/${func}"`
     ),
   ];
 
@@ -24,7 +25,7 @@ for (const plugin of pluginsEnabled) {
 
   funcStrings[plugin] = [];
   for (let key in funcs[plugin]) {
-    funcStrings[plugin].push(`"${key}": ${funcs[plugin][key]}`);
+    funcStrings[plugin].push(`"${key}": ${manifest.id}${funcs[plugin][key]}`);
   }
 }
 
