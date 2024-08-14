@@ -1056,15 +1056,13 @@ export async function recursiveAfterRequestHookHandler(
 
   const { retry } = providerOption;
 
-  if (!response) {
-    [response, retryCount] = await retryRequest(
-      url,
-      options,
-      retry?.attempts || 0,
-      retry?.onStatusCodes || [],
-      requestTimeout || null
-    );
-  }
+  [response, retryCount] = await retryRequest(
+    url,
+    options,
+    retry?.attempts || 0,
+    retry?.onStatusCodes || [],
+    requestTimeout || null
+  );
 
   const { response: mappedResponse, responseJson: mappedResponseJson } =
     await responseHandler(
