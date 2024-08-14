@@ -1,4 +1,4 @@
-import { HookObject } from "../middlewares/hooks/types";
+import { HookObject } from '../middlewares/hooks/types';
 
 /**
  * Settings for retrying requests.
