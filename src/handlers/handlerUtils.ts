@@ -1172,24 +1172,30 @@ async function cacheHandler(
   const hooksManager = c.get('hooksManager') as HooksManager;
   const span = hooksManager.getSpan(hookSpanId) as HookSpan;
   const results = span.getHooksResult();
-  const failedBeforeRequestHooks = results.beforeRequestHooksResult.filter(
+  const failedBeforeRequestHooks = results.beforeRequestHooksResult?.filter(
     (h) => !h.verdict
   );
 
+  let responseBody = cacheResponse;
+
+  const hasHookResults = results.beforeRequestHooksResult?.length > 0;
+  const responseStatus = failedBeforeRequestHooks.length ? 246 : 200;
+
+  if (hasHookResults && cacheResponse) {
+    responseBody = JSON.stringify({
+      ...JSON.parse(cacheResponse),
+      hook_results: {
+        before_request_hooks: results.beforeRequestHooksResult,
+      },
+    });
+  }
+
   return {
     cacheResponse: !!cacheResponse
-      ? new Response(
-          JSON.stringify({
-            ...JSON.parse(cacheResponse),
-            hook_results: {
-              before_request_hooks: results.beforeRequestHooksResult,
-            },
-          }),
-          {
-            headers: { 'content-type': 'application/json' },
-            status: failedBeforeRequestHooks.length ? 246 : 200,
-          }
-        )
+      ? new Response(responseBody, {
+          headers: { 'content-type': 'application/json' },
+          status: responseStatus,
+        })
       : undefined,
     cacheStatus,
     cacheKey,
