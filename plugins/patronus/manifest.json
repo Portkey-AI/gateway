@@ -1,5 +1,5 @@
 {
-  "id": "Patronus",
+  "id": "patronus",
   "description": "Patronus AI is the leading LLM automated testing and evaluation platform.",
   "credentials": {
     "type": "object",
