@@ -3,7 +3,7 @@ import {
   EventType,
   GuardrailCheckResult,
   GuardrailFeedback,
-  HookContext,
+  HookSpanContext,
   HookObject,
   HookOnFailObject,
   HookOnSuccessObject,
@@ -14,7 +14,7 @@ import { Context } from 'hono';
 import { HOOKS_EVENT_TYPE_PRESETS } from './globals';
 
 export class HookSpan {
-  private context: HookContext;
+  private context: HookSpanContext;
   private beforeRequestHooks: HookObject[];
   private afterRequestHooks: HookObject[];
   private hooksResult: {
@@ -60,7 +60,7 @@ export class HookSpan {
     provider: string,
     isStreamingRequest: boolean,
     requestType: string
-  ): HookContext {
+  ): HookSpanContext {
     const requestText = this.extractRequestText(requestParams);
     return {
       request: {
@@ -136,7 +136,7 @@ export class HookSpan {
     }
   }
 
-  public getContext(): HookContext {
+  public getContext(): HookSpanContext {
     return this.context;
   }
 
@@ -234,7 +234,7 @@ export class HooksManager {
   }
 
   private async executeFunction(
-    context: HookContext,
+    context: HookSpanContext,
     check: Check,
     eventType: EventType
   ): Promise<GuardrailCheckResult> {

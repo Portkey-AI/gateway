@@ -1,10 +1,3 @@
-export interface Hooks {
-  onStart: HookObject[];
-  beforeRequest: HookObject[];
-  afterRequest: HookObject[];
-  onFinish: HookObject[];
-}
-
 export interface Check {
   id: string;
   parameters: object;
@@ -12,20 +5,16 @@ export interface Check {
 
 export interface HookOnFailObject {
   feedback?: HookFeedback;
-  webhook?: string;
-  deny?: boolean;
-  custom_status_code?: number;
 }
 
 export interface HookOnSuccessObject {
   feedback?: HookFeedback;
-  webhook?: string;
 }
 
 // Interface for Hook that will be contain a name for the hook and parameters for it which would be an object
 // this can be extended for specific hook types later on
 export interface HookObject {
-  type: 'guardrail' | 'custom';
+  type: 'guardrail';
   id: string;
   checks?: Check[];
   async?: boolean;
@@ -35,24 +24,23 @@ export interface HookObject {
   eventType: 'beforeRequestHook' | 'afterRequestHook';
 }
 
-export interface HookContextRequest {
+export interface HookSpanContextRequest {
   text: string;
   json: any;
   isStreamingRequest: boolean;
 }
 
-export interface HookContextResponse {
+export interface HookSpanContextResponse {
   text: string;
   json: any;
   statusCode: number | null;
 }
 
 // Interface for the context object that will be passed to the hooks
-export interface HookContext {
-  request: HookContextRequest;
-  response: HookContextResponse;
+export interface HookSpanContext {
+  request: HookSpanContextRequest;
+  response: HookSpanContextResponse;
   provider: string;
-  hookType?: string;
   requestType: string;
 }
 
@@ -81,8 +69,7 @@ export interface GuardrailCheckResult {
 
 export interface GuardrailResult {
   verdict: boolean;
-  id?: string;
-  // name?: string;
+  id: string;
   checks: GuardrailCheckResult[];
   feedback: GuardrailFeedback;
   error?: Error | null;
