@@ -235,6 +235,5 @@ export async function afterRequestHookHandler(
   } catch (err) {
     console.error(err);
     return response;
-    // TODO: Handle this!!
   }
 }
