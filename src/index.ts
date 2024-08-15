@@ -23,7 +23,7 @@ import { compress } from 'hono/compress';
 import { getRuntimeKey } from 'hono/adapter';
 import { imageGenerationsHandler } from './handlers/imageGenerationsHandler';
 import conf from '../conf.json';
-
+import { memoryCache } from './middlewares/cache'
 // Create a new Hono server instance
 const app = new Hono();
 
@@ -54,7 +54,7 @@ app.use('*', prettyJSON());
 app.use('*', hooks);
 
 if (conf.cache === true) {
-  app.use('*', require('./middlewares/cache').memoryCache());
+  app.use('*', memoryCache());
 }
 
 /**
