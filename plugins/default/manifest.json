@@ -330,6 +330,44 @@
       }
     },
     {
+      "name": "Log",
+      "id": "log",
+      "type": "guardrail",
+      "supportedHooks": ["afterRequest"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Makes a request to a log URL and always gives `true` as the verdict."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "logURL": {
+            "type": "string",
+            "label": "Log URL",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "eg: https://logging.site/collector"
+              }
+            ]
+          },
+          "headers": {
+            "type": "json",
+            "label": "Headers",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enter the headers to send with the request."
+              }
+            ]
+          },
+          "required": ["logURL"]
+        }
+      }
+    },
+    {
       "name": "Contains Code",
       "id": "containsCode",
       "type": "guardrail",
