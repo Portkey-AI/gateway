@@ -32,6 +32,8 @@ import PredibaseConfig from './predibase';
 import AtomLLamaConfig from './atom-llama';
 import CozeConfig from './coze';
 import DeepSeekConfig from './deepseek';
+import DeepbricksConfig from './deepbricks';
+import SiliconFlowConfig from './siliconflow';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -67,6 +69,8 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'atom-llama': AtomLLamaConfig,
   coze: CozeConfig,
   deepseek: DeepSeekConfig,
+  'deepbricks': DeepbricksConfig,
+  'siliconflow': SiliconFlowConfig,
 };
 
 export default Providers;

@@ -58,6 +58,8 @@ export const PREDIBASE: string = 'predibase';
 export const ATOM_LLAMA: string = 'atom-llama';
 export const COZE: string = 'coze';
 export const DEEPSEEK: string = 'deepseek';
+export const DEEPBRICKS: string = 'deepbricks';
+export const SILICON_FLOW: string = 'siliconflow';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -93,6 +95,8 @@ export const VALID_PROVIDERS = [
   ATOM_LLAMA,
   COZE,
   DEEPSEEK,
+  DEEPBRICKS,
+  SILICON_FLOW,
 ];
 
 export const CONTENT_TYPES = {
