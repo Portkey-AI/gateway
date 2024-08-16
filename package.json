@@ -35,7 +35,7 @@
     "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,json}\"",
     "format:check": "prettier --check \"./**/*.{js,jsx,ts,tsx,json}\"",
     "test": "ts-jest",
-    "pre-push": "node start-test.js",
+    "pre-push": "npm run build && node start-test.js",
     "prepare": "husky"
   },
   "dependencies": {
