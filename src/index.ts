@@ -19,9 +19,11 @@ import { chatCompletionsHandler } from './handlers/chatCompletionsHandler';
 import { completionsHandler } from './handlers/completionsHandler';
 import { embeddingsHandler } from './handlers/embeddingsHandler';
 import { requestValidator } from './middlewares/requestValidator';
+import { hooks } from './middlewares/hooks';
 import { compress } from 'hono/compress';
 import { getRuntimeKey } from 'hono/adapter';
 import { imageGenerationsHandler } from './handlers/imageGenerationsHandler';
+import conf from '../conf.json';
 
 // Create a new Hono server instance
 const app = new Hono();
@@ -49,6 +51,13 @@ app.get('/', (c) => c.text('AI Gateway says hey!'));
 
 app.use('*', prettyJSON());
 app.use('*', cors())
+
+// Use hooks middleware for all routes
+app.use('*', hooks);
+
+if (conf.cache === true) {
+  app.use('*', require('./middlewares/cache').memoryCache());
+}
 
 /**
  * Default route when no other route matches.

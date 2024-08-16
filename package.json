@@ -1,6 +1,6 @@
 {
   "name": "@portkey-ai/gateway",
-  "version": "1.5.6",
+  "version": "1.6.0",
   "description": "A fast AI gateway by Portkey",
   "repository": {
     "type": "git",
@@ -29,10 +29,12 @@
     "deploy": "wrangler deploy --minify src/index.ts",
     "pretty": "prettier --write \"./**/*.{js,jsx,ts,tsx,json}\"",
     "build": "rollup -c",
+    "build-plugins": "tsx plugins/build.ts",
     "prepublishOnly": "npm run build",
     "start:node": "node build/start-server.js",
     "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,json}\"",
-    "format:check": "prettier --check \"./**/*.{js,jsx,ts,tsx,json}\""
+    "format:check": "prettier --check \"./**/*.{js,jsx,ts,tsx,json}\"",
+    "test": "ts-jest"
   },
   "dependencies": {
     "@aws-crypto/sha256-js": "^5.2.0",
@@ -46,12 +48,16 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20230518.0",
+    "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^11.1.5",
     "@types/async-retry": "^1.4.5",
+    "@types/jest": "^29.5.12",
     "@types/node": "20.8.3",
+    "jest": "^29.7.0",
     "prettier": "3.2.5",
     "rollup": "^4.9.1",
+    "ts-jest": "^29.1.2",
     "tsx": "^4.7.0",
     "wrangler": "^3.48.0"
   },
