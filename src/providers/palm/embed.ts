@@ -1,5 +1,5 @@
 import { PALM } from '../../globals';
-import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
+import { EmbedResponse } from '../../types/embedRequestBody';
 import {
   GoogleErrorResponse,
   GoogleErrorResponseTransform,

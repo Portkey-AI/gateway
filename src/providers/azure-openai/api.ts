@@ -1,4 +1,3 @@
-import { Options } from '../../types/requestBody';
 import { ProviderAPIConfig } from '../types';
 
 const AzureOpenAIAPIConfig: ProviderAPIConfig = {
