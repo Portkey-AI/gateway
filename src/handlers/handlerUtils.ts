@@ -22,9 +22,8 @@ import {
 } from '../types/requestBody';
 import { convertKeysToCamelCase } from '../utils';
 import { retryRequest } from './retryHandler';
-import { env } from 'hono/adapter';
+import { env, getRuntimeKey } from 'hono/adapter';
 import { afterRequestHookHandler, responseHandler } from './responseHandlers';
-import { getRuntimeKey } from 'hono/adapter';
 import { HookSpan, HooksManager } from '../middlewares/hooks';
 
 /**

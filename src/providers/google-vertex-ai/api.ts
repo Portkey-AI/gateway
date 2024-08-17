@@ -1,6 +1,5 @@
 import { ProviderAPIConfig } from '../types';
-import { getModelAndProvider } from './utils';
-import { getAccessToken } from './utils';
+import { getModelAndProvider, getAccessToken } from './utils';
 
 // Good reference for using REST: https://cloud.google.com/vertex-ai/generative-ai/docs/start/quickstarts/quickstart-multimodal#gemini-beginner-samples-drest
 // Difference versus Studio AI: https://cloud.google.com/vertex-ai/docs/start/ai-platform-users
