@@ -37,6 +37,7 @@ export const PALM: string = 'palm';
 export const TOGETHER_AI: string = 'together-ai';
 export const GOOGLE: string = 'google';
 export const GOOGLE_VERTEX_AI: string = 'vertex-ai';
+export const HUGGING_FACE: string = 'huggingface';
 export const PERPLEXITY_AI: string = 'perplexity-ai';
 export const REKA_AI: string = 'reka-ai';
 export const MISTRAL_AI: string = 'mistral-ai';
@@ -94,6 +95,7 @@ export const VALID_PROVIDERS = [
   DEEPSEEK,
   PREDIBASE,
   VOYAGE,
+  HUGGING_FACE,
 ];
 
 export const CONTENT_TYPES = {
