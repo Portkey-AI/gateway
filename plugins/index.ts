@@ -7,6 +7,7 @@ import { handler as defaultjsonKeys } from './default/jsonKeys';
 import { handler as defaultcontains } from './default/contains';
 import { handler as defaultvalidUrls } from './default/validUrls';
 import { handler as defaultwebhook } from './default/webhook';
+import { handler as defaultlog } from './default/log';
 import { handler as defaultcontainsCode } from './default/containsCode';
 import { handler as portkeymoderateContent } from './portkey/moderateContent';
 import { handler as portkeylanguage } from './portkey/language';
@@ -39,6 +40,7 @@ export const plugins = {
     contains: defaultcontains,
     validUrls: defaultvalidUrls,
     webhook: defaultwebhook,
+    log: defaultlog,
     containsCode: defaultcontainsCode,
   },
   portkey: {
