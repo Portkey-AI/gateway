@@ -7,7 +7,8 @@ const DeepbricksAPIConfig: ProviderAPIConfig = {
       Authorization: `Bearer ${providerOptions.apiKey}`,
     };
     if (providerOptions.openaiOrganization) {
-      headersObj['Deepbricks-Organization'] = providerOptions.openaiOrganization;
+      headersObj['Deepbricks-Organization'] =
+        providerOptions.openaiOrganization;
     }
 
     if (providerOptions.openaiProject) {

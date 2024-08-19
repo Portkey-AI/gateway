@@ -1,5 +1,8 @@
 import { ProviderConfigs } from '../types';
-import { SiliconFlowAIEmbedConfig, SiliconFlowAIEmbedResponseTransform } from './embed';
+import {
+  SiliconFlowAIEmbedConfig,
+  SiliconFlowAIEmbedResponseTransform,
+} from './embed';
 import SiliconFlowAIAPIConfig from './api';
 import {
   SiliconFlowAIChatCompleteConfig,

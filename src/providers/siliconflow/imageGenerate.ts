@@ -9,19 +9,19 @@ export const SiliconFlowAIImageGenerateConfig: ProviderConfig = {
   },
   image_size: {
     param: 'image_size',
-    default: ''
+    default: '',
   },
   num_inference_steps: {
     param: 'num_inference_steps',
-    default: 20
+    default: 20,
   },
   batch_size: {
     param: 'batch_size',
-    default: 1
+    default: 1,
   },
   guidance_scale: {
     param: 'guidance_scale',
-    default: 7.5
+    default: 7.5,
   },
 };
 
