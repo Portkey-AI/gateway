@@ -29,6 +29,9 @@ import ZhipuConfig from './zhipu';
 import NovitaAIConfig from './novita-ai';
 import MonsterAPIConfig from './monsterapi';
 import PredibaseConfig from './predibase';
+import DeepbricksConfig from './deepbricks';
+import SiliconFlowConfig from './siliconflow';
+import DeepSeekConfig from './deepseek';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -61,6 +64,9 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'novita-ai': NovitaAIConfig,
   monsterapi: MonsterAPIConfig,
   predibase: PredibaseConfig,
+  deepbricks: DeepbricksConfig,
+  siliconflow: SiliconFlowConfig,
+  deepseek: DeepSeekConfig,
 };
 
 export default Providers;
