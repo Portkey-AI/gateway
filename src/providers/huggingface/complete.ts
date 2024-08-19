@@ -100,7 +100,7 @@ export const HuggingFaceCompleteStreamChunkTransform: (
   return (
     `data: ${JSON.stringify({
       ...parsedChunk,
-      id: 'portkey-' + crypto.randomUUID()
+      id: 'portkey-' + crypto.randomUUID(),
     })}` + '\n\n'
   );
 };
