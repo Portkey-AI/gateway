@@ -616,7 +616,7 @@ export async function tryPost(
   // Prerequest validator (For virtual key budgets)
   const preRequestValidator = c.get('preRequestValidator');
   let preRequestValidatorResponse = preRequestValidator
-    ? preRequestValidator(providerOption, requestHeaders)
+    ? await preRequestValidator(env(c), providerOption, requestHeaders)
     : undefined;
   if (!!preRequestValidatorResponse) {
     return createResponse(preRequestValidatorResponse, undefined, false);
