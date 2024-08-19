@@ -77,5 +77,30 @@ export const HuggingFaceCompleteResponseTransform: (
     return OpenAIErrorResponseTransform(response, HUGGING_FACE);
   }
 
-  return response;
+  return {
+    ...response,
+    id: 'portkey-' + crypto.randomUUID(),
+  };
+};
+
+export const HuggingFaceCompleteStreamChunkTransform: (
+  response: string
+) => string | undefined = (responseChunk) => {
+  let chunk = responseChunk.trim();
+  if (chunk.startsWith('event: ping')) {
+    return;
+  }
+
+  chunk = chunk.replace(/^data: /, '');
+  chunk = chunk.trim();
+  if (chunk === '[DONE]') {
+    return 'data: [DONE]\n\n';
+  }
+  const parsedChunk = JSON.parse(chunk);
+  return (
+    `data: ${JSON.stringify({
+      ...parsedChunk,
+      id: 'portkey-' + crypto.randomUUID()
+    })}` + '\n\n'
+  );
 };
