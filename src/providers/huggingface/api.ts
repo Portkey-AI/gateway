@@ -1,9 +1,9 @@
 import { ProviderAPIConfig } from '../types';
 
-const HuggingFaceAPIConfig: ProviderAPIConfig = {
+const HuggingfaceAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
     return (
-      providerOptions.huggingFaceBaseUrl ||
+      providerOptions.huggingfaceBaseUrl ||
       'https://api-inference.huggingface.co'
     );
   },
@@ -12,7 +12,7 @@ const HuggingFaceAPIConfig: ProviderAPIConfig = {
   }),
   getEndpoint: ({ fn, gatewayRequestBody, providerOptions }) => {
     const { model } = gatewayRequestBody;
-    const modelPath = providerOptions.huggingFaceBaseUrl
+    const modelPath = providerOptions.huggingfaceBaseUrl
       ? ''
       : `/models/${model}`;
     switch (fn) {
@@ -26,4 +26,4 @@ const HuggingFaceAPIConfig: ProviderAPIConfig = {
   },
 };
 
-export default HuggingFaceAPIConfig;
+export default HuggingfaceAPIConfig;

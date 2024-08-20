@@ -3,11 +3,11 @@ import { OpenAIErrorResponseTransform } from '../openai/chatComplete';
 import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { HuggingfaceErrorResponse } from './types';
-import { HuggingFaceErrorResponseTransform } from './utils';
+import { HuggingfaceErrorResponseTransform } from './utils';
 
-interface HuggingFaceCompleteResponse extends CompletionResponse {}
+interface HuggingfaceCompleteResponse extends CompletionResponse {}
 
-export const HuggingFaceCompleteConfig: ProviderConfig = {
+export const HuggingfaceCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
   },
@@ -72,12 +72,12 @@ export const HuggingFaceCompleteConfig: ProviderConfig = {
   },
 };
 
-export const HuggingFaceCompleteResponseTransform: (
-  response: HuggingFaceCompleteResponse | HuggingfaceErrorResponse,
+export const HuggingfaceCompleteResponseTransform: (
+  response: HuggingfaceCompleteResponse | HuggingfaceErrorResponse,
   responseStatus: number
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
   if ('error' in response && responseStatus !== 200) {
-    return HuggingFaceErrorResponseTransform(response, responseStatus);
+    return HuggingfaceErrorResponseTransform(response, responseStatus);
   }
 
   if ('choices' in response) {
@@ -91,7 +91,7 @@ export const HuggingFaceCompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, HUGGING_FACE);
 };
 
-export const HuggingFaceCompleteStreamChunkTransform: (
+export const HuggingfaceCompleteStreamChunkTransform: (
   response: string
 ) => string | undefined = (responseChunk) => {
   let chunk = responseChunk.trim();

@@ -7,11 +7,11 @@ import {
 } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { HuggingfaceErrorResponse } from './types';
-import { HuggingFaceErrorResponseTransform } from './utils';
+import { HuggingfaceErrorResponseTransform } from './utils';
 
-interface HuggingFaceChatCompleteResponse extends ChatCompletionResponse {}
+interface HuggingfaceChatCompleteResponse extends ChatCompletionResponse {}
 
-export const HuggingFaceChatCompleteConfig: ProviderConfig = {
+export const HuggingfaceChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
   },
@@ -80,12 +80,12 @@ export const HuggingFaceChatCompleteConfig: ProviderConfig = {
   },
 };
 
-export const HuggingFaceChatCompleteResponseTransform: (
-  response: HuggingFaceChatCompleteResponse | HuggingfaceErrorResponse,
+export const HuggingfaceChatCompleteResponseTransform: (
+  response: HuggingfaceChatCompleteResponse | HuggingfaceErrorResponse,
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if ('error' in response && responseStatus !== 200) {
-    return HuggingFaceErrorResponseTransform(response, responseStatus);
+    return HuggingfaceErrorResponseTransform(response, responseStatus);
   }
 
   if ('choices' in response) {
@@ -99,7 +99,7 @@ export const HuggingFaceChatCompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, HUGGING_FACE);
 };
 
-export const HuggingFaceChatCompleteStreamChunkTransform: (
+export const HuggingfaceChatCompleteStreamChunkTransform: (
   response: string
 ) => string | undefined = (responseChunk) => {
   let chunk = responseChunk.trim();

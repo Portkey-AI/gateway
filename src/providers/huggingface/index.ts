@@ -1,26 +1,26 @@
 import { ProviderConfigs } from '../types';
 import {
-  HuggingFaceCompleteConfig,
-  HuggingFaceCompleteResponseTransform,
-  HuggingFaceCompleteStreamChunkTransform,
+  HuggingfaceCompleteConfig,
+  HuggingfaceCompleteResponseTransform,
+  HuggingfaceCompleteStreamChunkTransform,
 } from './complete';
-import HuggingFaceAPIConfig from './api';
+import HuggingfaceAPIConfig from './api';
 import {
-  HuggingFaceChatCompleteConfig,
-  HuggingFaceChatCompleteResponseTransform,
-  HuggingFaceChatCompleteStreamChunkTransform,
+  HuggingfaceChatCompleteConfig,
+  HuggingfaceChatCompleteResponseTransform,
+  HuggingfaceChatCompleteStreamChunkTransform,
 } from './chatComplete';
 
-const HuggingFaceConfig: ProviderConfigs = {
-  complete: HuggingFaceCompleteConfig,
-  api: HuggingFaceAPIConfig,
-  chatComplete: HuggingFaceChatCompleteConfig,
+const HuggingfaceConfig: ProviderConfigs = {
+  complete: HuggingfaceCompleteConfig,
+  api: HuggingfaceAPIConfig,
+  chatComplete: HuggingfaceChatCompleteConfig,
   responseTransforms: {
-    complete: HuggingFaceCompleteResponseTransform,
-    'stream-complete': HuggingFaceCompleteStreamChunkTransform,
-    chatComplete: HuggingFaceChatCompleteResponseTransform,
-    'stream-chatComplete': HuggingFaceChatCompleteStreamChunkTransform,
+    complete: HuggingfaceCompleteResponseTransform,
+    'stream-complete': HuggingfaceCompleteStreamChunkTransform,
+    chatComplete: HuggingfaceChatCompleteResponseTransform,
+    'stream-chatComplete': HuggingfaceChatCompleteStreamChunkTransform,
   },
 };
 
-export default HuggingFaceConfig;
+export default HuggingfaceConfig;

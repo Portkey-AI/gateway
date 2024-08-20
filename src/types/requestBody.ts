@@ -78,7 +78,7 @@ export interface Options {
   awsRegion?: string;
 
   /** Hugging Face specific */
-  huggingFaceBaseUrl?: string;
+  huggingfaceBaseUrl?: string;
 
   /** Google Vertex AI specific */
   vertexRegion?: string;

@@ -991,7 +991,7 @@ export function constructConfigFromRequestHeaders(
   };
 
   const huggingfaceConfig = {
-    huggingFaceBaseUrl: requestHeaders[`x-${POWERED_BY}-huggingface-base-url`],
+    huggingfaceBaseUrl: requestHeaders[`x-${POWERED_BY}-huggingface-base-url`],
   };
 
   const vertexConfig: Record<string, any> = {
