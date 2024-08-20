@@ -41,13 +41,39 @@ export const DeepSeekChatCompleteConfig: ProviderConfig = {
     param: 'stream',
     default: false,
   },
+  frequency_penalty: {
+    param: 'frequency_penalty',
+    default: 0,
+    min: -2,
+    max: 2,
+  },
+  presence_penalty: {
+    param: 'presence_penalty',
+    default: 0,
+    min: -2,
+    max: 2,
+  },
+  stop: {
+    param: 'stop',
+    default: null,
+  },
+  logprobs: {
+    param: 'logprobs',
+    default: false,
+  },
+  top_logprobs: {
+    param: 'top_logprobs',
+    default: 0,
+    min: 0,
+    max: 20,
+  },
 };
 
 interface DeepSeekChatCompleteResponse extends ChatCompletionResponse {
   id: string;
   object: string;
   created: number;
-  model: string;
+  model: 'deepseek-chat' | 'deepseek-coder';
   usage: {
     prompt_tokens: number;
     completion_tokens: number;
