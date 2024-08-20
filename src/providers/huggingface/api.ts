@@ -1,13 +1,15 @@
 import { ProviderAPIConfig } from '../types';
 
 const HuggingFaceAPIConfig: ProviderAPIConfig = {
-  getBaseURL: () => 'https://api-inference.huggingface.co',
+  getBaseURL: ({ providerOptions }) => {
+    return providerOptions.huggingFaceBaseUrl || 'https://api-inference.huggingface.co';
+  },
   headers: ({ providerOptions }) => ({
     Authorization: `Bearer ${providerOptions.apiKey}`,
   }),
-  getEndpoint: ({ fn, gatewayRequestBody }) => {
+  getEndpoint: ({ fn, gatewayRequestBody, providerOptions }) => {
     const { model } = gatewayRequestBody;
-    const modelPath = `/models/${model}`;
+    const modelPath = providerOptions.huggingFaceBaseUrl ? '' : `/models/${model}`;
     switch (fn) {
       case 'chatComplete':
         return `${modelPath}/v1/chat/completions`;
