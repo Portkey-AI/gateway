@@ -57,6 +57,8 @@ export const MONSTERAPI: string = 'monsterapi';
 export const DEEPSEEK: string = 'deepseek';
 export const PREDIBASE: string = 'predibase';
 export const VOYAGE: string = 'voyage';
+export const DEEPBRICKS: string = 'deepbricks';
+export const SILICON_FLOW: string = 'siliconflow';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -91,6 +93,8 @@ export const VALID_PROVIDERS = [
   DEEPSEEK,
   PREDIBASE,
   VOYAGE,
+  DEEPBRICKS,
+  SILICON_FLOW,
 ];
 
 export const CONTENT_TYPES = {

@@ -31,6 +31,8 @@ import MonsterAPIConfig from './monsterapi';
 import DeepSeekAPIConfig from './deepseek';
 import PredibaseConfig from './predibase';
 import VoyageConfig from './voyage';
+import DeepbricksConfig from './deepbricks';
+import SiliconFlowConfig from './siliconflow';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -65,6 +67,8 @@ const Providers: { [key: string]: ProviderConfigs } = {
   deepseek: DeepSeekAPIConfig,
   predibase: PredibaseConfig,
   voyage: VoyageConfig,
+  deepbricks: DeepbricksConfig,
+  siliconflow: SiliconFlowConfig,
 };
 
 export default Providers;
