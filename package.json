@@ -59,6 +59,7 @@
     "rollup": "^4.9.1",
     "ts-jest": "^29.1.2",
     "tsx": "^4.7.0",
+    "typescript-eslint": "^8.1.0",
     "wrangler": "^3.48.0"
   },
   "bin": "build/start-server.js",
