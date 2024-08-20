@@ -6,6 +6,7 @@ const OpenrouterAPIConfig: ProviderAPIConfig = {
   headers: ({ providerOptions }) => {
     return {
       Authorization: `Bearer ${providerOptions.apiKey}`, // https://openrouter.ai/keys
+      'HTTP-Referer': 'https://portkey.ai/',
       'X-Title': POWERED_BY,
     };
   },
