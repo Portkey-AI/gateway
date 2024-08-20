@@ -610,7 +610,7 @@ export async function tryPost(
     fn
   ));
   if (!!cacheResponse) {
-    return createResponse(cacheResponse, undefined, true);
+    return createResponse(cacheResponse, fn, true);
   }
 
   // Prerequest validator (For virtual key budgets)
