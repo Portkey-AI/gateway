@@ -1,6 +1,11 @@
 import { HUGGING_FACE } from '../../globals';
 import { OpenAIErrorResponseTransform } from '../openai/chatComplete';
 import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { generateInvalidProviderResponseError } from '../utils';
+import { HuggingfaceErrorResponse } from './types';
+import { HuggingFaceErrorResponseTransform } from './utils';
+
+interface HuggingFaceCompleteResponse extends CompletionResponse {}
 
 export const HuggingFaceCompleteConfig: ProviderConfig = {
   model: {
@@ -67,20 +72,23 @@ export const HuggingFaceCompleteConfig: ProviderConfig = {
   },
 };
 
-interface HuggingFaceCompleteResponse extends CompletionResponse {}
-
 export const HuggingFaceCompleteResponseTransform: (
-  response: HuggingFaceCompleteResponse | ErrorResponse,
+  response: HuggingFaceCompleteResponse | HuggingfaceErrorResponse,
   responseStatus: number
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if (responseStatus !== 200 && 'error' in response) {
-    return OpenAIErrorResponseTransform(response, HUGGING_FACE);
+  if ('error' in response && responseStatus !== 200) {
+    return HuggingFaceErrorResponseTransform(response, responseStatus);
   }
 
-  return {
-    ...response,
-    id: 'portkey-' + crypto.randomUUID(),
-  };
+  if ('choices' in response) {
+    return {
+      ...response,
+      id: 'portkey-' + crypto.randomUUID(),
+      provider: HUGGING_FACE,
+    };
+  }
+
+  return generateInvalidProviderResponseError(response, HUGGING_FACE);
 };
 
 export const HuggingFaceCompleteStreamChunkTransform: (
@@ -101,6 +109,7 @@ export const HuggingFaceCompleteStreamChunkTransform: (
     `data: ${JSON.stringify({
       ...parsedChunk,
       id: 'portkey-' + crypto.randomUUID(),
+      provider: HUGGING_FACE,
     })}` + '\n\n'
   );
 };
