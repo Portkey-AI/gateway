@@ -106,7 +106,7 @@
       "parameters": {}
     },
     {
-      "name": "No Racias Bias",
+      "name": "No Racial Bias",
       "id": "noRacialBias",
       "supportedHooks": ["afterRequestHook"],
       "type": "guardrail",
