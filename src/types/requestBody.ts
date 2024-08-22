@@ -1,3 +1,5 @@
+import { HookObject } from '../middlewares/hooks/types';
+
 /**
  * Settings for retrying requests.
  * @interface
@@ -66,9 +68,14 @@ export interface Options {
   vertexProjectId?: string;
   vertexServiceAccountJson?: Record<string, any>;
 
+  afterRequestHooks?: HookObject[];
+  beforeRequestHooks?: HookObject[];
   /** OpenAI specific */
   openaiProject?: string;
   openaiOrganization?: string;
+
+  /** The parameter to determine if extra non-openai compliant fields should be returned in response */
+  strictOpenAiCompliance?: boolean;
 }
 
 /**

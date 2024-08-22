@@ -545,8 +545,15 @@ export const GoogleChatCompleteResponseTransform: (
     | GoogleGenerateContentResponse
     | GoogleErrorResponse
     | GoogleErrorResponse[],
-  responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean
+) => ChatCompletionResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  strictOpenAiCompliance
+) => {
   // when error occurs on streaming request, the response is an array of errors.
   if (
     responseStatus !== 200 &&
@@ -580,13 +587,6 @@ export const GoogleChatCompleteResponseTransform: (
     );
   }
 
-  if (
-    'candidates' in response &&
-    response.candidates[0].finishReason === 'PROHIBITED_CONTENT'
-  ) {
-    return generateInvalidProviderResponseError(response, GOOGLE_VERTEX_AI);
-  }
-
   if ('candidates' in response) {
     const {
       promptTokenCount = 0,
@@ -603,12 +603,12 @@ export const GoogleChatCompleteResponseTransform: (
       choices:
         response.candidates?.map((generation, index) => {
           let message: Message = { role: 'assistant', content: '' };
-          if (generation.content.parts[0]?.text) {
+          if (generation.content?.parts[0]?.text) {
             message = {
               role: 'assistant',
               content: generation.content.parts[0]?.text,
             };
-          } else if (generation.content.parts[0]?.functionCall) {
+          } else if (generation.content?.parts[0]?.functionCall) {
             message = {
               role: 'assistant',
               tool_calls: generation.content.parts.map((part) => {
@@ -629,6 +629,9 @@ export const GoogleChatCompleteResponseTransform: (
             message: message,
             index: index,
             finish_reason: generation.finishReason,
+            ...(!strictOpenAiCompliance && {
+              safetyRatings: generation.safetyRatings,
+            }),
           };
         }) ?? [],
       usage: {
@@ -685,8 +688,15 @@ export const VertexLlamaChatCompleteConfig: ProviderConfig = {
 
 export const GoogleChatCompleteStreamChunkTransform: (
   response: string,
-  fallbackId: string
-) => string = (responseChunk, fallbackId) => {
+  fallbackId: string,
+  streamState: any,
+  strictOpenAiCompliance: boolean
+) => string = (
+  responseChunk,
+  fallbackId,
+  _streamState,
+  strictOpenAiCompliance
+) => {
   const chunk = responseChunk
     .trim()
     .replace(/^data: /, '')
@@ -716,12 +726,12 @@ export const GoogleChatCompleteStreamChunkTransform: (
     choices:
       parsedChunk.candidates?.map((generation, index) => {
         let message: Message = { role: 'assistant', content: '' };
-        if (generation.content.parts[0]?.text) {
+        if (generation.content?.parts[0]?.text) {
           message = {
             role: 'assistant',
             content: generation.content.parts[0]?.text,
           };
-        } else if (generation.content.parts[0]?.functionCall) {
+        } else if (generation.content?.parts[0]?.functionCall) {
           message = {
             role: 'assistant',
             tool_calls: generation.content.parts.map((part, idx) => {
@@ -743,6 +753,9 @@ export const GoogleChatCompleteStreamChunkTransform: (
           delta: message,
           index: index,
           finish_reason: generation.finishReason,
+          ...(!strictOpenAiCompliance && {
+            safetyRatings: generation.safetyRatings,
+          }),
         };
       }) ?? [],
     usage: usageMetadata,

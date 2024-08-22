@@ -9,6 +9,7 @@ export const HEADER_KEYS: Record<string, string> = {
   FORWARD_HEADERS: `x-${POWERED_BY}-forward-headers`,
   CUSTOM_HOST: `x-${POWERED_BY}-custom-host`,
   REQUEST_TIMEOUT: `x-${POWERED_BY}-request-timeout`,
+  STRICT_OPEN_AI_COMPLIANCE: `x-${POWERED_BY}-strict-open-ai-compliance`,
 };
 
 export const RESPONSE_HEADER_KEYS: Record<string, string> = {
@@ -53,7 +54,9 @@ export const LINGYI: string = 'lingyi';
 export const ZHIPU: string = 'zhipu';
 export const NOVITA_AI: string = 'novita-ai';
 export const MONSTERAPI: string = 'monsterapi';
+export const DEEPSEEK: string = 'deepseek';
 export const PREDIBASE: string = 'predibase';
+export const VOYAGE: string = 'voyage';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -85,7 +88,9 @@ export const VALID_PROVIDERS = [
   ZHIPU,
   NOVITA_AI,
   MONSTERAPI,
+  DEEPSEEK,
   PREDIBASE,
+  VOYAGE,
 ];
 
 export const CONTENT_TYPES = {
