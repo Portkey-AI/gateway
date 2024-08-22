@@ -1,7 +1,6 @@
 import { Options } from '../../types/requestBody';
 import { ProviderAPIConfig } from '../types';
-import { getModelAndProvider } from './utils';
-import { getAccessToken } from './utils';
+import { getModelAndProvider, getAccessToken } from './utils';
 
 const getProjectRoute = (
   providerOptions: Options,

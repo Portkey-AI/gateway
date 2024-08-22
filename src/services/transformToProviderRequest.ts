@@ -20,16 +20,6 @@ function setNestedProperty(obj: any, path: string, value: any) {
   current[parts[parts.length - 1]] = value;
 }
 
-function setArrayNestedProperties(
-  obj: any,
-  path: Array<string>,
-  value: Array<any>
-) {
-  for (let i = 0; i < path.length; i++) {
-    setNestedProperty(obj, path[i], value[i]);
-  }
-}
-
 /**
  * Transforms the request body to match the structure required by the AI provider.
  * It also ensures the values for each parameter are within the minimum and maximum

@@ -387,7 +387,7 @@ export const GoogleChatCompleteResponseTransform: (
       model: 'Unknown',
       provider: 'google',
       choices:
-        response.candidates?.map((generation, index) => {
+        response.candidates?.map((generation) => {
           let message: Message = { role: 'assistant', content: '' };
           if (generation.content.parts[0]?.text) {
             message = {
@@ -459,7 +459,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
       model: '',
       provider: 'google',
       choices:
-        parsedChunk.candidates?.map((generation, index) => {
+        parsedChunk.candidates?.map((generation) => {
           let message: Message = { role: 'assistant', content: '' };
           if (generation.content.parts[0]?.text) {
             message = {

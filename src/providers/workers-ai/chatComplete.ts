@@ -1,5 +1,4 @@
 import { WORKERS_AI } from '../../globals';
-import { Params, Message } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,

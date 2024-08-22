@@ -5,7 +5,6 @@ import {
   GOOGLE_VERTEX_AI,
   PERPLEXITY_AI,
   DEEPINFRA,
-  OLLAMA,
 } from './globals';
 import { Params } from './types/requestBody';
 
