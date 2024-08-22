@@ -9,6 +9,7 @@ import {
   RETRY_STATUS_CODES,
   GOOGLE_VERTEX_AI,
   OPEN_AI,
+  AZURE_AI_INFERENCE,
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
@@ -934,6 +935,15 @@ export function constructConfigFromRequestHeaders(
     azureModelName: requestHeaders[`x-${POWERED_BY}-azure-model-name`],
   };
 
+  const azureAiInferenceConfig = {
+    azureDeploymentName:
+      requestHeaders[`x-${POWERED_BY}-azure-deployment-name`],
+    azureRegion: requestHeaders[`x-${POWERED_BY}-azure-region`],
+    azureDeploymentType:
+      requestHeaders[`x-${POWERED_BY}-azure-deployment-type`],
+    apiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
+  };
+
   const bedrockConfig = {
     awsAccessKeyId: requestHeaders[`x-${POWERED_BY}-aws-access-key-id`],
     awsSecretAccessKey: requestHeaders[`x-${POWERED_BY}-aws-secret-access-key`],
@@ -1011,6 +1021,13 @@ export function constructConfigFromRequestHeaders(
           ...vertexConfig,
         };
       }
+
+      if (parsedConfigJson.provider === AZURE_AI_INFERENCE) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...azureAiInferenceConfig,
+        };
+      }
     }
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
@@ -1031,6 +1048,8 @@ export function constructConfigFromRequestHeaders(
       workersAiConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === GOOGLE_VERTEX_AI &&
       vertexConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === AZURE_AI_INFERENCE &&
+      azureAiInferenceConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === OPEN_AI && openAiConfig),
   };
 }

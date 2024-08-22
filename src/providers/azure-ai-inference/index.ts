@@ -1,34 +1,28 @@
 import { ProviderConfigs } from '../types';
 import {
-  AzureOpenAICompleteConfig,
-  AzureOpenAICompleteResponseTransform,
+  AzureAIInferenceCompleteConfig,
+  AzureAIInferenceCompleteResponseTransform,
 } from './complete';
 import {
-  AzureOpenAIEmbedConfig,
-  AzureOpenAIEmbedResponseTransform,
+  AzureAIInferenceEmbedConfig,
+  AzureAIInferenceEmbedResponseTransform,
 } from './embed';
-import AzureOpenAIAPIConfig from './api';
+import AzureAIInferenceAPI from './api';
 import {
-  AzureOpenAIChatCompleteConfig,
-  AzureOpenAIChatCompleteResponseTransform,
+  AzureAIInferenceChatCompleteConfig,
+  AzureAIInferenceChatCompleteResponseTransform,
 } from './chatComplete';
-import {
-  AzureOpenAIImageGenerateConfig,
-  AzureOpenAIImageGenerateResponseTransform,
-} from './imageGenerate';
 
-const AzureOpenAIConfig: ProviderConfigs = {
-  complete: AzureOpenAICompleteConfig,
-  embed: AzureOpenAIEmbedConfig,
-  api: AzureOpenAIAPIConfig,
-  imageGenerate: AzureOpenAIImageGenerateConfig,
-  chatComplete: AzureOpenAIChatCompleteConfig,
+const AzureAIInferenceAPIConfig: ProviderConfigs = {
+  complete: AzureAIInferenceCompleteConfig,
+  embed: AzureAIInferenceEmbedConfig,
+  api: AzureAIInferenceAPI,
+  chatComplete: AzureAIInferenceChatCompleteConfig,
   responseTransforms: {
-    complete: AzureOpenAICompleteResponseTransform,
-    chatComplete: AzureOpenAIChatCompleteResponseTransform,
-    embed: AzureOpenAIEmbedResponseTransform,
-    imageGenerate: AzureOpenAIImageGenerateResponseTransform,
+    complete: AzureAIInferenceCompleteResponseTransform,
+    chatComplete: AzureAIInferenceEmbedResponseTransform,
+    embed: AzureAIInferenceChatCompleteResponseTransform,
   },
 };
 
-export default AzureOpenAIConfig;
+export default AzureAIInferenceAPIConfig;

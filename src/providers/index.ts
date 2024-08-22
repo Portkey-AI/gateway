@@ -31,6 +31,7 @@ import MonsterAPIConfig from './monsterapi';
 import DeepSeekAPIConfig from './deepseek';
 import PredibaseConfig from './predibase';
 import VoyageConfig from './voyage';
+import AzureAIInferenceAPIConfig from './azure-ai-inference';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -65,6 +66,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   deepseek: DeepSeekAPIConfig,
   predibase: PredibaseConfig,
   voyage: VoyageConfig,
+  'azure-ai-inference': AzureAIInferenceAPIConfig,
 };
 
 export default Providers;

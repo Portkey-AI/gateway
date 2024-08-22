@@ -1,7 +1,6 @@
-import { Options } from '../../types/requestBody';
 import { ProviderAPIConfig } from '../types';
 
-const AzureOpenAIAPIConfig: ProviderAPIConfig = {
+const AzureAIInferenceAPI: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
     const { azureDeploymentName, azureRegion, azureDeploymentType } =
       providerOptions;
@@ -44,4 +43,4 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
   },
 };
 
-export default AzureOpenAIAPIConfig;
+export default AzureAIInferenceAPI;

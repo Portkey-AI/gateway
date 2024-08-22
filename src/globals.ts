@@ -28,6 +28,7 @@ export const PRECONDITION_CHECK_FAILED_STATUS_CODE = 412;
 export const OPEN_AI: string = 'openai';
 export const COHERE: string = 'cohere';
 export const AZURE_OPEN_AI: string = 'azure-openai';
+export const AZURE_AI_INFERENCE: string = 'azure-ai-inference';
 export const ANTHROPIC: string = 'anthropic';
 export const ANYSCALE: string = 'anyscale';
 export const PALM: string = 'palm';
