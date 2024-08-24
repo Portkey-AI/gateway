@@ -10,6 +10,7 @@ import {
   GOOGLE_VERTEX_AI,
   OPEN_AI,
   MULTIPART_FORM_DATA_ENDPOINTS,
+  CONTENT_TYPES,
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
@@ -69,7 +70,6 @@ export function constructRequest(
     headers,
   };
   const contentType = headers['content-type'];
-  console.log(contentType);
   const isGetMethod = method === 'GET';
   const isMultipartFormData = contentType === CONTENT_TYPES.MULTIPART_FORM_DATA;
   const shouldDeleteContentTypeHeader =
@@ -543,6 +543,8 @@ export async function tryPost(
   fetchOptions.body = MULTIPART_FORM_DATA_ENDPOINTS.includes(fn)
     ? (transformedRequestBody as FormData)
     : JSON.stringify(transformedRequestBody);
+
+  console.log('fetchOptions', fetchOptions);
 
   providerOption.retry = {
     attempts: providerOption.retry?.attempts ?? 0,
