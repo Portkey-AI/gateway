@@ -11,20 +11,24 @@ export const TritonCompleteConfig: ProviderConfig = {
   max_tokens: {
     param: 'max_tokens',
     default: 100,
+    required: true,
   },
   temperature: {
     param: 'temperature',
     default: 0.7,
     min: 0,
     max: 1,
+    required: true,
   },
   top_p: {
     param: 'top_p',
-    default: 1,
+    default: 0.7,
+    required: true,
   },
   top_k: {
     param: 'top_k',
     default: 50,
+    required: true,
   },
   stop: {
     param: 'stop_words',
