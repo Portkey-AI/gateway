@@ -8,6 +8,7 @@ import { ErrorResponse, ProviderConfig } from '../types';
 export const AzureAIInferenceEmbedConfig: ProviderConfig = {
   model: {
     param: 'model',
+    required: false,
   },
   input: {
     param: 'input',

@@ -66,7 +66,8 @@ const Providers: { [key: string]: ProviderConfigs } = {
   deepseek: DeepSeekAPIConfig,
   predibase: PredibaseConfig,
   voyage: VoyageConfig,
-  'azure-ai-inference': AzureAIInferenceAPIConfig,
+  'azure-ai': AzureAIInferenceAPIConfig,
+  github: AzureAIInferenceAPIConfig,
 };
 
 export default Providers;

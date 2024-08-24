@@ -7,6 +7,7 @@ import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 export const AzureAIInferenceCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
+    required: false,
   },
   prompt: {
     param: 'prompt',
@@ -29,20 +30,8 @@ export const AzureAIInferenceCompleteConfig: ProviderConfig = {
     min: 0,
     max: 1,
   },
-  n: {
-    param: 'n',
-    default: 1,
-  },
   stream: {
     param: 'stream',
-    default: false,
-  },
-  logprobs: {
-    param: 'logprobs',
-    max: 5,
-  },
-  echo: {
-    param: 'echo',
     default: false,
   },
   stop: {
@@ -57,12 +46,6 @@ export const AzureAIInferenceCompleteConfig: ProviderConfig = {
     param: 'frequency_penalty',
     min: -2,
     max: 2,
-  },
-  best_of: {
-    param: 'best_of',
-  },
-  logit_bias: {
-    param: 'logit_bias',
   },
   user: {
     param: 'user',

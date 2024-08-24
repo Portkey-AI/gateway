@@ -28,7 +28,7 @@ export const PRECONDITION_CHECK_FAILED_STATUS_CODE = 412;
 export const OPEN_AI: string = 'openai';
 export const COHERE: string = 'cohere';
 export const AZURE_OPEN_AI: string = 'azure-openai';
-export const AZURE_AI_INFERENCE: string = 'azure-ai-inference';
+export const AZURE_AI_INFERENCE: string = 'azure-ai';
 export const ANTHROPIC: string = 'anthropic';
 export const ANYSCALE: string = 'anyscale';
 export const PALM: string = 'palm';
@@ -58,6 +58,7 @@ export const MONSTERAPI: string = 'monsterapi';
 export const DEEPSEEK: string = 'deepseek';
 export const PREDIBASE: string = 'predibase';
 export const VOYAGE: string = 'voyage';
+export const GITHUB: string = 'github';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -92,6 +93,8 @@ export const VALID_PROVIDERS = [
   DEEPSEEK,
   PREDIBASE,
   VOYAGE,
+  AZURE_AI_INFERENCE,
+  GITHUB,
 ];
 
 export const CONTENT_TYPES = {
