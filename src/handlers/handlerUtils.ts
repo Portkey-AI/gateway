@@ -18,6 +18,7 @@ import {
   Options,
   Params,
   ShortConfig,
+  StrategyModes,
   Targets,
 } from '../types/requestBody';
 import { convertKeysToCamelCase } from '../utils';
@@ -25,6 +26,8 @@ import { retryRequest } from './retryHandler';
 import { env, getRuntimeKey } from 'hono/adapter';
 import { afterRequestHookHandler, responseHandler } from './responseHandlers';
 import { HookSpan, HooksManager } from '../middlewares/hooks';
+import { ConditionalRouter } from '../services/conditionalRouter';
+import { RouterError } from '../errors/RouterError';
 
 /**
  * Constructs the request options for the API call.
@@ -794,7 +797,7 @@ export async function tryTargetsRecursively(
   let response;
 
   switch (strategyMode) {
-    case 'fallback':
+    case StrategyModes.FALLBACK:
       for (let [index, target] of currentTarget.targets.entries()) {
         response = await tryTargetsRecursively(
           c,
@@ -815,7 +818,7 @@ export async function tryTargetsRecursively(
       }
       break;
 
-    case 'loadbalance':
+    case StrategyModes.LOADBALANCE:
       currentTarget.targets.forEach((t: Options) => {
         if (t.weight === undefined) {
           t.weight = 1;
@@ -846,7 +849,35 @@ export async function tryTargetsRecursively(
       }
       break;
 
-    case 'single':
+    case StrategyModes.CONDITIONAL:
+      let metadata: Record<string, string>;
+      try {
+        metadata = JSON.parse(requestHeaders[HEADER_KEYS.METADATA]);
+      } catch (err) {
+        metadata = {};
+      }
+      let conditionalRouter: ConditionalRouter;
+      let finalTarget: Targets;
+      try {
+        conditionalRouter = new ConditionalRouter(currentTarget, { metadata });
+        finalTarget = conditionalRouter.resolveTarget();
+      } catch (conditionalRouter: any) {
+        throw new RouterError(conditionalRouter.message);
+      }
+
+      response = await tryTargetsRecursively(
+        c,
+        finalTarget,
+        request,
+        requestHeaders,
+        fn,
+        method,
+        `${currentJsonPath}.targets[${finalTarget.index}]`,
+        currentInheritedConfig
+      );
+      break;
+
+    case StrategyModes.SINGLE:
       response = await tryTargetsRecursively(
         c,
         currentTarget.targets[0],
@@ -1016,6 +1047,7 @@ export function constructConfigFromRequestHeaders(
       'params',
       'checks',
       'vertex_service_account_json',
+      'conditions',
     ]) as any;
   }
 
