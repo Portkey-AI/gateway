@@ -1,5 +1,5 @@
 import { AZURE_OPEN_AI } from '../../globals';
-import { OpenAIErrorResponseTransform } from '../openai/chatComplete';
+import { OpenAIErrorResponseTransform } from '../openai/utils';
 import {
   ChatCompletionResponse,
   ErrorResponse,

@@ -1,4 +1,4 @@
-import { Context, HonoRequest } from 'hono';
+import { Context } from 'hono';
 import { retryRequest } from './retryHandler';
 import Providers from '../providers';
 import {
@@ -7,7 +7,6 @@ import {
   HEADER_KEYS,
   RETRY_STATUS_CODES,
   POWERED_BY,
-  RESPONSE_HEADER_KEYS,
   AZURE_OPEN_AI,
 } from '../globals';
 import { updateResponseHeaders } from './handlerUtils';
