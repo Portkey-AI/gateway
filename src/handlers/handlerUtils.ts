@@ -14,7 +14,7 @@ import {
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
-import transformToProviderRequestJSON from '../services/transformToProviderRequest';
+import transformToProviderRequest from '../services/transformToProviderRequest';
 import {
   Config,
   Options,
@@ -430,26 +430,6 @@ export async function tryPostProxy(
 
   return mappedResponse.response;
 }
-
-/**
- * Transforms the request parameters to the format expected by the provider.
- *
- * @param {string} provider - The name of the provider (e.g., 'openai', 'anthropic').
- * @param {Params} params - The parameters for the request.
- * @param {Params | FormData} inputParams - The original input parameters.
- * @param {endpointStrings} fn - The function endpoint being called (e.g., 'complete', 'chatComplete').
- * @returns {Params | FormData} - The transformed request parameters.
- */
-const transformToProviderRequest = (
-  provider: string,
-  params: Params,
-  inputParams: Params | FormData,
-  fn: endpointStrings
-) => {
-  return MULTIPART_FORM_DATA_ENDPOINTS.includes(fn)
-    ? inputParams
-    : transformToProviderRequestJSON(provider, params as Params, fn);
-};
 
 /**
  * Makes a POST request to a provider and returns the response.
