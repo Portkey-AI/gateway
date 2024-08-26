@@ -16,7 +16,10 @@ import {
   AzureOpenAIImageGenerateConfig,
   AzureOpenAIImageGenerateResponseTransform,
 } from './imageGenerate';
-import { AzureOpenAICreateSpeechConfig, AzureOpenAICreateSpeechResponseTransform } from './createSpeech';
+import {
+  AzureOpenAICreateSpeechConfig,
+  AzureOpenAICreateSpeechResponseTransform,
+} from './createSpeech';
 import { AzureOpenAICreateTranscriptionResponseTransform } from './createTranscription';
 import { AzureOpenAICreateTranslationResponseTransform } from './createTranslation';
 
