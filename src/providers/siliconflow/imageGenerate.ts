@@ -7,7 +7,7 @@ export const SiliconFlowImageGenerateConfig: ProviderConfig = {
     param: 'prompt',
     required: true,
   },
-  image_size: {
+  size: {
     param: 'image_size',
     default: '',
   },
