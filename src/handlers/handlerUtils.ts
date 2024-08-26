@@ -544,7 +544,6 @@ export async function tryPost(
     ? (transformedRequestBody as FormData)
     : JSON.stringify(transformedRequestBody);
 
-  console.log('fetchOptions', fetchOptions);
 
   providerOption.retry = {
     attempts: providerOption.retry?.attempts ?? 0,
