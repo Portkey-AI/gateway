@@ -1,4 +1,6 @@
+import { MULTIPART_FORM_DATA_ENDPOINTS } from '../globals';
 import ProviderConfigs from '../providers';
+import { endpointStrings } from '../providers/types';
 import { Params } from '../types/requestBody';
 
 /**
@@ -34,7 +36,7 @@ function setNestedProperty(obj: any, path: string, value: any) {
  *
  * @throws {Error} If the provider is not supported.
  */
-const transformToProviderRequest = (
+const transformToProviderRequestJSON = (
   provider: string,
   params: Params,
   fn: string
@@ -128,6 +130,26 @@ const transformToProviderRequest = (
   }
 
   return transformedRequest;
+};
+
+/**
+ * Transforms the request parameters to the format expected by the provider.
+ *
+ * @param {string} provider - The name of the provider (e.g., 'openai', 'anthropic').
+ * @param {Params} params - The parameters for the request.
+ * @param {Params | FormData} inputParams - The original input parameters.
+ * @param {endpointStrings} fn - The function endpoint being called (e.g., 'complete', 'chatComplete').
+ * @returns {Params | FormData} - The transformed request parameters.
+ */
+export const transformToProviderRequest = (
+  provider: string,
+  params: Params,
+  inputParams: Params | FormData,
+  fn: endpointStrings
+) => {
+  return MULTIPART_FORM_DATA_ENDPOINTS.includes(fn)
+    ? inputParams
+    : transformToProviderRequestJSON(provider, params as Params, fn);
 };
 
 export default transformToProviderRequest;

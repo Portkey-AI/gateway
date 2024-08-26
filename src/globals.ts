@@ -1,3 +1,5 @@
+import { endpointStrings } from './providers/types';
+
 export const POWERED_BY: string = 'portkey';
 
 export const HEADER_KEYS: Record<string, string> = {
@@ -105,3 +107,8 @@ export const CONTENT_TYPES = {
   HTML: 'text/html',
   GENERIC_IMAGE_PATTERN: 'image/',
 };
+
+export const MULTIPART_FORM_DATA_ENDPOINTS: endpointStrings[] = [
+  'createTranscription',
+  'createTranslation',
+];

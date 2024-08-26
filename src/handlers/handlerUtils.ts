@@ -9,6 +9,8 @@ import {
   RETRY_STATUS_CODES,
   GOOGLE_VERTEX_AI,
   OPEN_AI,
+  MULTIPART_FORM_DATA_ENDPOINTS,
+  CONTENT_TYPES,
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
@@ -70,9 +72,13 @@ export function constructRequest(
     method,
     headers,
   };
+  const contentType = headers['content-type'];
+  const isGetMethod = method === 'GET';
+  const isMultipartFormData = contentType === CONTENT_TYPES.MULTIPART_FORM_DATA;
+  const shouldDeleteContentTypeHeader =
+    (isGetMethod || isMultipartFormData) && fetchOptions.headers;
 
-  // If the method is GET, delete the content-type header
-  if (method === 'GET' && fetchOptions.headers) {
+  if (shouldDeleteContentTypeHeader) {
     let headers = fetchOptions.headers as Record<string, unknown>;
     delete headers['content-type'];
   }
@@ -442,7 +448,7 @@ export async function tryPostProxy(
 export async function tryPost(
   c: Context,
   providerOption: Options,
-  inputParams: Params,
+  inputParams: Params | FormData,
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
   currentIndex: number | string
@@ -477,6 +483,7 @@ export async function tryPost(
   const transformedRequestBody = transformToProviderRequest(
     provider,
     params,
+    inputParams,
     fn
   );
 
@@ -516,7 +523,9 @@ export async function tryPost(
     requestHeaders
   );
 
-  fetchOptions.body = JSON.stringify(transformedRequestBody);
+  fetchOptions.body = MULTIPART_FORM_DATA_ENDPOINTS.includes(fn)
+    ? (transformedRequestBody as FormData)
+    : JSON.stringify(transformedRequestBody);
 
   providerOption.retry = {
     attempts: providerOption.retry?.attempts ?? 0,
@@ -704,7 +713,7 @@ export async function tryProvidersInSequence(
 export async function tryTargetsRecursively(
   c: Context,
   targetGroup: Targets,
-  request: Params,
+  request: Params | FormData,
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
   method: string,
