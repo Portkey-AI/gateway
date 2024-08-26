@@ -8,6 +8,7 @@ export const HEADER_KEYS: Record<string, string> = {
   PROVIDER: `x-${POWERED_BY}-provider`,
   TRACE_ID: `x-${POWERED_BY}-trace-id`,
   CACHE: `x-${POWERED_BY}-cache`,
+  METADATA: `x-${POWERED_BY}-metadata`,
   FORWARD_HEADERS: `x-${POWERED_BY}-forward-headers`,
   CUSTOM_HOST: `x-${POWERED_BY}-custom-host`,
   REQUEST_TIMEOUT: `x-${POWERED_BY}-request-timeout`,
