@@ -117,7 +117,7 @@ export class ConditionalRouter {
         case Operator.Regex:
           try {
             const regex = new RegExp(compareValue);
-            return value.test(regex);
+            return regex.test(value);
           } catch (e) {
             return false;
           }
