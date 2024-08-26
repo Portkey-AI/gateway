@@ -5,7 +5,7 @@ import {
 import { Context } from 'hono';
 
 /**
- * Handles the '/chat/completions' API request by selecting the appropriate provider(s) and making the request to them.
+ * Handles the '/audio/speech' API request by selecting the appropriate provider(s) and making the request to them.
  *
  * @param {Context} c - The Cloudflare Worker context.
  * @returns {Promise<Response>} - The response from the provider.
