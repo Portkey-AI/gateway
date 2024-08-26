@@ -16,7 +16,10 @@ import {
   AzureOpenAIImageGenerateConfig,
   AzureOpenAIImageGenerateResponseTransform,
 } from './imageGenerate';
-import { AzureOpenAICreateSpeechResponseTransform } from './createSpeech';
+import {
+  AzureOpenAICreateSpeechConfig,
+  AzureOpenAICreateSpeechResponseTransform,
+} from './createSpeech';
 import { AzureOpenAICreateTranscriptionResponseTransform } from './createTranscription';
 import { AzureOpenAICreateTranslationResponseTransform } from './createTranslation';
 
@@ -26,6 +29,9 @@ const AzureOpenAIConfig: ProviderConfigs = {
   api: AzureOpenAIAPIConfig,
   imageGenerate: AzureOpenAIImageGenerateConfig,
   chatComplete: AzureOpenAIChatCompleteConfig,
+  createSpeech: AzureOpenAICreateSpeechConfig,
+  createTranscription: {},
+  createTranslation: {},
   responseTransforms: {
     complete: AzureOpenAICompleteResponseTransform,
     chatComplete: AzureOpenAIChatCompleteResponseTransform,
