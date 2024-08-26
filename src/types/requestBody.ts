@@ -20,7 +20,7 @@ export enum StrategyModes {
   LOADBALANCE = 'loadbalance',
   FALLBACK = 'fallback',
   SINGLE = 'single',
-  QUERY = 'query',
+  CONDITIONAL = 'conditional',
 }
 
 interface Strategy {

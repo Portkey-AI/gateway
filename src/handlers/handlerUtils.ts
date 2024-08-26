@@ -26,7 +26,7 @@ import { retryRequest } from './retryHandler';
 import { env, getRuntimeKey } from 'hono/adapter';
 import { afterRequestHookHandler, responseHandler } from './responseHandlers';
 import { HookSpan, HooksManager } from '../middlewares/hooks';
-import { QueryRouter } from '../services/queryRouter';
+import { ConditionalRouter } from '../services/conditionalRouter';
 import { RouterError } from '../errors/RouterError';
 
 /**
@@ -849,20 +849,20 @@ export async function tryTargetsRecursively(
       }
       break;
 
-    case StrategyModes.QUERY:
+    case StrategyModes.CONDITIONAL:
       let metadata: Record<string, string>;
       try {
         metadata = JSON.parse(requestHeaders[HEADER_KEYS.METADATA]);
       } catch (err) {
         metadata = {};
       }
-      let queryRouter: QueryRouter;
+      let conditionalRouter: ConditionalRouter;
       let finalTarget: Targets;
       try {
-        queryRouter = new QueryRouter(currentTarget, { metadata });
-        finalTarget = queryRouter.resolveTarget();
-      } catch (queryRouterError: any) {
-        throw new RouterError(queryRouterError.message);
+        conditionalRouter = new ConditionalRouter(currentTarget, { metadata });
+        finalTarget = conditionalRouter.resolveTarget();
+      } catch (conditionalRouter: any) {
+        throw new RouterError(conditionalRouter.message);
       }
 
       response = await tryTargetsRecursively(

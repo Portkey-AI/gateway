@@ -25,14 +25,14 @@ enum Operator {
   Or = '$or',
 }
 
-export class QueryRouter {
+export class ConditionalRouter {
   private config: Targets;
   private context: RouterContext;
 
   constructor(config: Targets, context: RouterContext) {
     this.config = config;
     this.context = context;
-    if (this.config.strategy?.mode !== StrategyModes.QUERY) {
+    if (this.config.strategy?.mode !== StrategyModes.CONDITIONAL) {
       throw new Error('Unsupported strategy mode');
     }
   }
