@@ -34,6 +34,8 @@ import { transformGenerationConfig } from './transformGenerationConfig';
 import type {
   GoogleErrorResponse,
   GoogleGenerateContentResponse,
+  VertexLlamaChatCompleteStreamChunk,
+  VertexLLamaChatCompleteResponse,
 } from './types';
 
 export const VertexGoogleChatCompleteConfig: ProviderConfig = {
@@ -543,8 +545,15 @@ export const GoogleChatCompleteResponseTransform: (
     | GoogleGenerateContentResponse
     | GoogleErrorResponse
     | GoogleErrorResponse[],
-  responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean
+) => ChatCompletionResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  strictOpenAiCompliance
+) => {
   // when error occurs on streaming request, the response is an array of errors.
   if (
     responseStatus !== 200 &&
@@ -578,13 +587,6 @@ export const GoogleChatCompleteResponseTransform: (
     );
   }
 
-  if (
-    'candidates' in response &&
-    response.candidates[0].finishReason === 'PROHIBITED_CONTENT'
-  ) {
-    return generateInvalidProviderResponseError(response, GOOGLE_VERTEX_AI);
-  }
-
   if ('candidates' in response) {
     const {
       promptTokenCount = 0,
@@ -601,12 +603,12 @@ export const GoogleChatCompleteResponseTransform: (
       choices:
         response.candidates?.map((generation, index) => {
           let message: Message = { role: 'assistant', content: '' };
-          if (generation.content.parts[0]?.text) {
+          if (generation.content?.parts[0]?.text) {
             message = {
               role: 'assistant',
               content: generation.content.parts[0]?.text,
             };
-          } else if (generation.content.parts[0]?.functionCall) {
+          } else if (generation.content?.parts[0]?.functionCall) {
             message = {
               role: 'assistant',
               tool_calls: generation.content.parts.map((part) => {
@@ -627,6 +629,9 @@ export const GoogleChatCompleteResponseTransform: (
             message: message,
             index: index,
             finish_reason: generation.finishReason,
+            ...(!strictOpenAiCompliance && {
+              safetyRatings: generation.safetyRatings,
+            }),
           };
         }) ?? [],
       usage: {
@@ -640,10 +645,58 @@ export const GoogleChatCompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, GOOGLE_VERTEX_AI);
 };
 
+export const VertexLlamaChatCompleteConfig: ProviderConfig = {
+  model: {
+    param: 'model',
+    required: true,
+    default: 'meta/llama3-405b-instruct-maas',
+  },
+  messages: {
+    param: 'messages',
+    required: true,
+    default: [],
+  },
+  max_tokens: {
+    param: 'max_tokens',
+    default: 512,
+    min: 1,
+    max: 2048,
+  },
+  temperature: {
+    param: 'temperature',
+    default: 0.5,
+    min: 0,
+    max: 1,
+  },
+  top_p: {
+    param: 'top_p',
+    default: 0.9,
+    min: 0,
+    max: 1,
+  },
+  top_k: {
+    param: 'top_k',
+    default: 0,
+    min: 0,
+    max: 2048,
+  },
+  stream: {
+    param: 'stream',
+    default: false,
+  },
+};
+
 export const GoogleChatCompleteStreamChunkTransform: (
   response: string,
-  fallbackId: string
-) => string = (responseChunk, fallbackId) => {
+  fallbackId: string,
+  streamState: any,
+  strictOpenAiCompliance: boolean
+) => string = (
+  responseChunk,
+  fallbackId,
+  _streamState,
+  strictOpenAiCompliance
+) => {
   const chunk = responseChunk
     .trim()
     .replace(/^data: /, '')
@@ -673,12 +726,12 @@ export const GoogleChatCompleteStreamChunkTransform: (
     choices:
       parsedChunk.candidates?.map((generation, index) => {
         let message: Message = { role: 'assistant', content: '' };
-        if (generation.content.parts[0]?.text) {
+        if (generation.content?.parts[0]?.text) {
           message = {
             role: 'assistant',
             content: generation.content.parts[0]?.text,
           };
-        } else if (generation.content.parts[0]?.functionCall) {
+        } else if (generation.content?.parts[0]?.functionCall) {
           message = {
             role: 'assistant',
             tool_calls: generation.content.parts.map((part, idx) => {
@@ -700,6 +753,9 @@ export const GoogleChatCompleteStreamChunkTransform: (
           delta: message,
           index: index,
           finish_reason: generation.finishReason,
+          ...(!strictOpenAiCompliance && {
+            safetyRatings: generation.safetyRatings,
+          }),
         };
       }) ?? [],
     usage: usageMetadata,
@@ -921,4 +977,51 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
       ],
     })}` + '\n\n'
   );
+};
+
+export const VertexLlamaChatCompleteResponseTransform: (
+  response: VertexLLamaChatCompleteResponse | GoogleErrorResponse,
+  responseStatus: number
+) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+  if (
+    responseStatus !== 200 &&
+    Array.isArray(response) &&
+    response.length > 0 &&
+    'error' in response[0]
+  ) {
+    const { error } = response[0];
+
+    return generateErrorResponse(
+      {
+        message: error.message,
+        type: error.status,
+        param: null,
+        code: String(error.code),
+      },
+      GOOGLE_VERTEX_AI
+    );
+  }
+  if ('choices' in response) {
+    return {
+      id: crypto.randomUUID(),
+      created: Math.floor(Date.now() / 1000),
+      provider: GOOGLE_VERTEX_AI,
+      ...response,
+    };
+  }
+  return generateInvalidProviderResponseError(response, GOOGLE_VERTEX_AI);
+};
+
+export const VertexLlamaChatCompleteStreamChunkTransform: (
+  response: string,
+  fallbackId: string
+) => string = (responseChunk, fallbackId) => {
+  let chunk = responseChunk.trim();
+  chunk = chunk.replace(/^data: /, '');
+  chunk = chunk.trim();
+  const parsedChunk: VertexLlamaChatCompleteStreamChunk = JSON.parse(chunk);
+  parsedChunk.id = fallbackId;
+  parsedChunk.created = Math.floor(Date.now() / 1000);
+  parsedChunk.provider = GOOGLE_VERTEX_AI;
+  return `data: ${JSON.stringify(parsedChunk)}` + '\n\n';
 };

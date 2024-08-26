@@ -1,3 +1,5 @@
+import { endpointStrings } from './providers/types';
+
 export const POWERED_BY: string = 'portkey';
 
 export const HEADER_KEYS: Record<string, string> = {
@@ -6,9 +8,11 @@ export const HEADER_KEYS: Record<string, string> = {
   PROVIDER: `x-${POWERED_BY}-provider`,
   TRACE_ID: `x-${POWERED_BY}-trace-id`,
   CACHE: `x-${POWERED_BY}-cache`,
+  METADATA: `x-${POWERED_BY}-metadata`,
   FORWARD_HEADERS: `x-${POWERED_BY}-forward-headers`,
   CUSTOM_HOST: `x-${POWERED_BY}-custom-host`,
   REQUEST_TIMEOUT: `x-${POWERED_BY}-request-timeout`,
+  STRICT_OPEN_AI_COMPLIANCE: `x-${POWERED_BY}-strict-open-ai-compliance`,
 };
 
 export const RESPONSE_HEADER_KEYS: Record<string, string> = {
@@ -53,7 +57,9 @@ export const LINGYI: string = 'lingyi';
 export const ZHIPU: string = 'zhipu';
 export const NOVITA_AI: string = 'novita-ai';
 export const MONSTERAPI: string = 'monsterapi';
+export const DEEPSEEK: string = 'deepseek';
 export const PREDIBASE: string = 'predibase';
+export const VOYAGE: string = 'voyage';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -85,7 +91,9 @@ export const VALID_PROVIDERS = [
   ZHIPU,
   NOVITA_AI,
   MONSTERAPI,
+  DEEPSEEK,
   PREDIBASE,
+  VOYAGE,
 ];
 
 export const CONTENT_TYPES = {
@@ -99,3 +107,8 @@ export const CONTENT_TYPES = {
   HTML: 'text/html',
   GENERIC_IMAGE_PATTERN: 'image/',
 };
+
+export const MULTIPART_FORM_DATA_ENDPOINTS: endpointStrings[] = [
+  'createTranscription',
+  'createTranslation',
+];

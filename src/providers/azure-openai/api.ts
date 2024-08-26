@@ -1,4 +1,3 @@
-import { Options } from '../../types/requestBody';
 import { ProviderAPIConfig } from '../types';
 
 const AzureOpenAIAPIConfig: ProviderAPIConfig = {
@@ -6,9 +5,13 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     const { resourceName, deploymentId } = providerOptions;
     return `https://${resourceName}.openai.azure.com/openai/deployments/${deploymentId}`;
   },
-  headers: ({ providerOptions }) => {
-    const { apiKey } = providerOptions;
-    return { 'api-key': `${apiKey}` };
+  headers: ({ providerOptions, fn }) => {
+    const headersObj: Record<string, string> = {
+      'api-key': `${providerOptions.apiKey}`,
+    };
+    if (fn === 'createTranscription' || fn === 'createTranslation')
+      headersObj['Content-Type'] = 'multipart/form-data';
+    return headersObj;
   },
   getEndpoint: ({ providerOptions, fn }) => {
     const { apiVersion, urlToFetch } = providerOptions;

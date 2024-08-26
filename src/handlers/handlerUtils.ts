@@ -3,13 +3,14 @@ import {
   AZURE_OPEN_AI,
   BEDROCK,
   WORKERS_AI,
-  CONTENT_TYPES,
   HEADER_KEYS,
   POWERED_BY,
   RESPONSE_HEADER_KEYS,
   RETRY_STATUS_CODES,
   GOOGLE_VERTEX_AI,
   OPEN_AI,
+  MULTIPART_FORM_DATA_ENDPOINTS,
+  CONTENT_TYPES,
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
@@ -19,22 +20,16 @@ import {
   Options,
   Params,
   ShortConfig,
+  StrategyModes,
   Targets,
 } from '../types/requestBody';
 import { convertKeysToCamelCase } from '../utils';
 import { retryRequest } from './retryHandler';
-import {
-  handleAudioResponse,
-  handleImageResponse,
-  handleJSONToStreamResponse,
-  handleNonStreamingMode,
-  handleOctetStreamResponse,
-  handleStreamingMode,
-  handleTextResponse,
-} from './streamHandler';
-import { env } from 'hono/adapter';
-import { OpenAIChatCompleteJSONToStreamResponseTransform } from '../providers/openai/chatComplete';
-import { OpenAICompleteJSONToStreamResponseTransform } from '../providers/openai/complete';
+import { env, getRuntimeKey } from 'hono/adapter';
+import { afterRequestHookHandler, responseHandler } from './responseHandlers';
+import { HookSpan, HooksManager } from '../middlewares/hooks';
+import { ConditionalRouter } from '../services/conditionalRouter';
+import { RouterError } from '../errors/RouterError';
 
 /**
  * Constructs the request options for the API call.
@@ -77,9 +72,13 @@ export function constructRequest(
     method,
     headers,
   };
+  const contentType = headers['content-type'];
+  const isGetMethod = method === 'GET';
+  const isMultipartFormData = contentType === CONTENT_TYPES.MULTIPART_FORM_DATA;
+  const shouldDeleteContentTypeHeader =
+    (isGetMethod || isMultipartFormData) && fetchOptions.headers;
 
-  // If the method is GET, delete the content-type header
-  if (method === 'GET' && fetchOptions.headers) {
+  if (shouldDeleteContentTypeHeader) {
     let headers = fetchOptions.headers as Record<string, unknown>;
     delete headers['content-type'];
   }
@@ -198,6 +197,8 @@ export const fetchProviderOptionsFromConfig = (
       providerOptions[0].deploymentId = camelCaseConfig.deploymentId;
     if (camelCaseConfig.apiVersion)
       providerOptions[0].apiVersion = camelCaseConfig.apiVersion;
+    if (camelCaseConfig.azureModelName)
+      providerOptions[0].azureModelName = camelCaseConfig.azureModelName;
     if (camelCaseConfig.apiVersion)
       providerOptions[0].vertexProjectId = camelCaseConfig.vertexProjectId;
     if (camelCaseConfig.apiVersion)
@@ -336,7 +337,7 @@ export async function tryPostProxy(
       cacheMaxAge
     );
     if (cacheResponse) {
-      response = await responseHandler(
+      ({ response } = await responseHandler(
         new Response(cacheResponse, {
           headers: {
             'content-type': 'application/json',
@@ -347,8 +348,10 @@ export async function tryPostProxy(
         undefined,
         url,
         false,
-        params
-      );
+        params,
+        false
+      ));
+
       c.set('requestOptions', [
         ...requestOptions,
         {
@@ -392,10 +395,11 @@ export async function tryPostProxy(
     undefined,
     url,
     false,
-    params
+    params,
+    false
   );
   updateResponseHeaders(
-    mappedResponse,
+    mappedResponse.response,
     currentIndex,
     params,
     cacheStatus,
@@ -412,7 +416,7 @@ export async function tryPostProxy(
         rubeusURL: fn,
       },
       requestParams: params,
-      response: mappedResponse.clone(),
+      response: mappedResponse.response.clone(),
       cacheStatus: cacheStatus,
       lastUsedOptionIndex: currentIndex,
       cacheKey: cacheKey,
@@ -422,12 +426,12 @@ export async function tryPostProxy(
   // If the response was not ok, throw an error
   if (!response.ok) {
     // Check if this request needs to be retried
-    const errorObj: any = new Error(await mappedResponse.text());
-    errorObj.status = mappedResponse.status;
+    const errorObj: any = new Error(await mappedResponse.response.text());
+    errorObj.status = mappedResponse.response.status;
     throw errorObj;
   }
 
-  return mappedResponse;
+  return mappedResponse.response;
 }
 
 /**
@@ -444,7 +448,7 @@ export async function tryPostProxy(
 export async function tryPost(
   c: Context,
   providerOption: Options,
-  inputParams: Params,
+  inputParams: Params | FormData,
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
   currentIndex: number | string
@@ -452,8 +456,26 @@ export async function tryPost(
   const overrideParams = providerOption?.overrideParams || {};
   const params: Params = { ...inputParams, ...overrideParams };
   const isStreamingMode = params.stream ? true : false;
+  let strictOpenAiCompliance = true;
+
+  if (requestHeaders[HEADER_KEYS.STRICT_OPEN_AI_COMPLIANCE] === 'false') {
+    strictOpenAiCompliance = false;
+  } else if (providerOption.strictOpenAiCompliance === false) {
+    strictOpenAiCompliance = false;
+  }
 
   const provider: string = providerOption.provider ?? '';
+
+  const hooksManager = c.get('hooksManager');
+  const hookSpan = hooksManager.createSpan(
+    params,
+    provider,
+    isStreamingMode,
+    providerOption.beforeRequestHooks || [],
+    providerOption.afterRequestHooks || [],
+    null,
+    fn
+  );
 
   // Mapping providers to corresponding URLs
   const apiConfig: ProviderAPIConfig = Providers[provider].api;
@@ -461,6 +483,7 @@ export async function tryPost(
   const transformedRequestBody = transformToProviderRequest(
     provider,
     params,
+    inputParams,
     fn
   );
 
@@ -473,11 +496,6 @@ export async function tryPost(
 
   const customHost =
     requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || '';
-
-  const requestTimeout =
-    Number(requestHeaders[HEADER_KEYS.REQUEST_TIMEOUT]) ||
-    providerOption.requestTimeout ||
-    null;
 
   const baseUrl =
     customHost || apiConfig.getBaseURL({ providerOptions: providerOption });
@@ -505,147 +523,132 @@ export async function tryPost(
     requestHeaders
   );
 
-  fetchOptions.body = JSON.stringify(transformedRequestBody);
-
-  let response: Response;
-  let retryCount: number | undefined;
+  fetchOptions.body = MULTIPART_FORM_DATA_ENDPOINTS.includes(fn)
+    ? (transformedRequestBody as FormData)
+    : JSON.stringify(transformedRequestBody);
 
   providerOption.retry = {
     attempts: providerOption.retry?.attempts ?? 0,
     onStatusCodes: providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES,
   };
 
-  const [
-    getFromCacheFunction,
-    cacheIdentifier,
-    requestOptions,
-    preRequestValidator,
-  ] = [
-    c.get('getFromCache'),
-    c.get('cacheIdentifier'),
-    c.get('requestOptions') ?? [],
-    c.get('preRequestValidator'),
-  ];
+  const requestOptions = c.get('requestOptions') ?? [];
 
-  let cacheResponse, cacheKey, cacheMode, cacheMaxAge;
-  let cacheStatus = 'DISABLED';
+  let mappedResponse: Response, retryCount: number | undefined;
 
-  if (typeof providerOption.cache === 'object' && providerOption.cache?.mode) {
-    cacheMode = providerOption.cache.mode;
-    cacheMaxAge = providerOption.cache.maxAge;
-  } else if (typeof providerOption.cache === 'string') {
-    cacheMode = providerOption.cache;
-  }
+  let cacheKey: string | undefined;
+  let { cacheMode, cacheMaxAge, cacheStatus } = getCacheOptions(
+    providerOption.cache
+  );
+  let cacheResponse: Response | undefined;
 
-  if (getFromCacheFunction && cacheMode) {
-    [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(
-      env(c),
-      { ...requestHeaders, ...fetchOptions.headers },
-      transformedRequestBody,
-      fn,
-      cacheIdentifier,
-      cacheMode,
-      cacheMaxAge
-    );
-    if (cacheResponse) {
-      response = await responseHandler(
-        new Response(cacheResponse, {
-          headers: { 'content-type': 'application/json' },
-        }),
+  let brhResponse: Response | undefined;
+
+  async function createResponse(
+    response: Response,
+    responseTransformer: string | undefined,
+    isCacheHit: boolean,
+    isResponseAlreadyMapped: boolean = false
+  ) {
+    if (!isResponseAlreadyMapped) {
+      ({ response: mappedResponse } = await responseHandler(
+        response,
         isStreamingMode,
         provider,
-        fn,
+        responseTransformer,
         url,
-        true,
-        params
-      );
-      c.set('requestOptions', [
-        ...requestOptions,
-        {
-          providerOptions: {
-            ...providerOption,
-            requestURL: url,
-            rubeusURL: fn,
-          },
-          requestParams: transformedRequestBody,
-          response: response.clone(),
-          cacheStatus: cacheStatus,
-          lastUsedOptionIndex: currentIndex,
-          cacheKey: cacheKey,
-          cacheMode: cacheMode,
-        },
-      ]);
-      updateResponseHeaders(
-        response,
-        currentIndex,
+        isCacheHit,
         params,
-        cacheStatus,
-        0,
-        requestHeaders[HEADER_KEYS.TRACE_ID] ?? ''
-      );
-
-      return response;
+        strictOpenAiCompliance
+      ));
     }
-  }
 
-  response = preRequestValidator
-    ? preRequestValidator(providerOption, requestHeaders)
-    : undefined;
-
-  if (!response) {
-    [response, retryCount] = await retryRequest(
-      url,
-      fetchOptions,
-      providerOption.retry.attempts,
-      providerOption.retry.onStatusCodes,
-      requestTimeout
+    updateResponseHeaders(
+      mappedResponse as Response,
+      currentIndex,
+      params,
+      cacheStatus,
+      retryCount ?? 0,
+      requestHeaders[HEADER_KEYS.TRACE_ID] ?? ''
     );
-  }
 
-  const mappedResponse = await responseHandler(
-    response,
-    isStreamingMode,
-    provider,
-    fn,
-    url,
-    false,
-    params
-  );
-  updateResponseHeaders(
-    mappedResponse,
-    currentIndex,
-    params,
-    cacheStatus,
-    retryCount ?? 0,
-    requestHeaders[HEADER_KEYS.TRACE_ID] ?? ''
-  );
-  c.set('requestOptions', [
-    ...requestOptions,
-    {
-      providerOptions: {
-        ...providerOption,
-        requestURL: url,
-        rubeusURL: fn,
+    c.set('requestOptions', [
+      ...requestOptions,
+      {
+        providerOptions: {
+          ...providerOption,
+          requestURL: url,
+          rubeusURL: fn,
+        },
+        requestParams: transformedRequestBody,
+        response: mappedResponse.clone(),
+        cacheStatus: cacheStatus,
+        lastUsedOptionIndex: currentIndex,
+        cacheKey: cacheKey,
+        cacheMode: cacheMode,
+        cacheMaxAge: cacheMaxAge,
+        hookSpanId: hookSpan.id,
       },
-      requestParams: transformedRequestBody,
-      response: mappedResponse.clone(),
-      cacheStatus: cacheStatus,
-      lastUsedOptionIndex: currentIndex,
-      cacheKey: cacheKey,
-      cacheMode: cacheMode,
-      cacheMaxAge: cacheMaxAge,
-    },
-  ]);
-  // If the response was not ok, throw an error
-  if (!response.ok) {
-    // Check if this request needs to be retried
-    const errorObj: any = new Error(await mappedResponse.clone().text());
-    errorObj.status = mappedResponse.status;
-    errorObj.response = mappedResponse;
-    throw errorObj;
+    ]);
+
+    // If the response was not ok, throw an error
+    if (!mappedResponse.ok) {
+      const errorObj: any = new Error(await mappedResponse.clone().text());
+      errorObj.status = mappedResponse.status;
+      errorObj.response = mappedResponse;
+      throw errorObj;
+    }
+
+    return mappedResponse;
   }
 
-  return mappedResponse;
+  // BeforeHooksHandler
+  brhResponse = await beforeRequestHookHandler(c, hookSpan.id);
+
+  if (!!brhResponse) {
+    // If before requestHandler returns a response, return it
+    return createResponse(brhResponse, undefined, false);
+  }
+
+  // Cache Handler
+  ({ cacheResponse, cacheStatus, cacheKey } = await cacheHandler(
+    c,
+    providerOption,
+    requestHeaders,
+    fetchOptions,
+    transformedRequestBody,
+    hookSpan.id,
+    fn
+  ));
+  if (!!cacheResponse) {
+    return createResponse(cacheResponse, fn, true);
+  }
+
+  // Prerequest validator (For virtual key budgets)
+  const preRequestValidator = c.get('preRequestValidator');
+  let preRequestValidatorResponse = preRequestValidator
+    ? await preRequestValidator(env(c), providerOption, requestHeaders)
+    : undefined;
+  if (!!preRequestValidatorResponse) {
+    return createResponse(preRequestValidatorResponse, undefined, false);
+  }
+
+  // Request Handler (Including retries, recursion and hooks)
+  [mappedResponse, retryCount] = await recursiveAfterRequestHookHandler(
+    c,
+    url,
+    fetchOptions,
+    providerOption,
+    isStreamingMode,
+    params,
+    0,
+    fn,
+    requestHeaders,
+    hookSpan.id,
+    strictOpenAiCompliance
+  );
+
+  return createResponse(mappedResponse, undefined, false, true);
 }
 
 /**
@@ -707,97 +710,10 @@ export async function tryProvidersInSequence(
   throw new Error(JSON.stringify(errors));
 }
 
-/**
- * Handles various types of responses based on the specified parameters
- * and returns a mapped response
- * @param {Response} response - The HTTP response received from LLM.
- * @param {boolean} streamingMode - Indicates whether streaming mode is enabled.
- * @param {string} proxyProvider - The provider string.
- * @param {string | undefined} responseTransformer - The response transformer to determine type of call.
- * @param {string} requestURL - The URL of the original LLM request.
- * @param {boolean} [isCacheHit=false] - Indicates whether the response is a cache hit.
- * @returns {Promise<Response>} - A promise that resolves to the processed response.
- */
-export function responseHandler(
-  response: Response,
-  streamingMode: boolean,
-  proxyProvider: string,
-  responseTransformer: string | undefined,
-  requestURL: string,
-  isCacheHit: boolean = false,
-  gatewayRequest: Params
-): Promise<Response> {
-  let responseTransformerFunction: Function | undefined;
-  const responseContentType = response.headers?.get('content-type');
-
-  const providerConfig = Providers[proxyProvider];
-  let providerTransformers = Providers[proxyProvider]?.responseTransforms;
-
-  if (providerConfig.getConfig) {
-    providerTransformers =
-      providerConfig.getConfig(gatewayRequest).responseTransforms;
-  }
-
-  // Checking status 200 so that errors are not considered as stream mode.
-  if (responseTransformer && streamingMode && response.status === 200) {
-    responseTransformerFunction =
-      providerTransformers?.[`stream-${responseTransformer}`];
-  } else if (responseTransformer) {
-    responseTransformerFunction = providerTransformers?.[responseTransformer];
-  }
-
-  // JSON to text/event-stream conversion is only allowed for unified routes: chat completions and completions.
-  // Set the transformer to OpenAI json to stream convertor function in that case.
-  if (responseTransformer && streamingMode && isCacheHit) {
-    responseTransformerFunction =
-      responseTransformer === 'chatComplete'
-        ? OpenAIChatCompleteJSONToStreamResponseTransform
-        : OpenAICompleteJSONToStreamResponseTransform;
-  } else if (responseTransformer && !streamingMode && isCacheHit) {
-    responseTransformerFunction = undefined;
-  }
-  if (
-    streamingMode &&
-    response.status === 200 &&
-    isCacheHit &&
-    responseTransformerFunction
-  ) {
-    return handleJSONToStreamResponse(
-      response,
-      proxyProvider,
-      responseTransformerFunction
-    );
-  } else if (streamingMode && response.status === 200) {
-    return handleStreamingMode(
-      response,
-      proxyProvider,
-      responseTransformerFunction,
-      requestURL
-    );
-  } else if (
-    responseContentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
-  ) {
-    return handleAudioResponse(response);
-  } else if (responseContentType === CONTENT_TYPES.APPLICATION_OCTET_STREAM) {
-    return handleOctetStreamResponse(response);
-  } else if (
-    responseContentType?.startsWith(CONTENT_TYPES.GENERIC_IMAGE_PATTERN)
-  ) {
-    return handleImageResponse(response);
-  } else if (
-    responseContentType?.startsWith(CONTENT_TYPES.PLAIN_TEXT) ||
-    responseContentType?.startsWith(CONTENT_TYPES.HTML)
-  ) {
-    return handleTextResponse(response, responseTransformerFunction);
-  } else {
-    return handleNonStreamingMode(response, responseTransformerFunction);
-  }
-}
-
 export async function tryTargetsRecursively(
   c: Context,
   targetGroup: Targets,
-  request: Params,
+  request: Params | FormData,
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
   method: string,
@@ -823,6 +739,14 @@ export async function tryTargetsRecursively(
     requestTimeout: null,
   };
 
+  if (typeof currentTarget.strictOpenAiCompliance === 'boolean') {
+    currentInheritedConfig.strictOpenAiCompliance =
+      currentTarget.strictOpenAiCompliance;
+  } else if (typeof inheritedConfig.strictOpenAiCompliance === 'boolean') {
+    currentInheritedConfig.strictOpenAiCompliance =
+      inheritedConfig.strictOpenAiCompliance;
+  }
+
   if (currentTarget.forwardHeaders) {
     currentInheritedConfig.forwardHeaders = [...currentTarget.forwardHeaders];
   } else if (inheritedConfig.forwardHeaders) {
@@ -844,6 +768,28 @@ export async function tryTargetsRecursively(
     currentTarget.requestTimeout = inheritedConfig.requestTimeout;
   }
 
+  if (currentTarget.afterRequestHooks) {
+    currentInheritedConfig.afterRequestHooks = [
+      ...currentTarget.afterRequestHooks,
+    ];
+  } else if (inheritedConfig.afterRequestHooks) {
+    currentInheritedConfig.afterRequestHooks = [
+      ...inheritedConfig.afterRequestHooks,
+    ];
+    currentTarget.afterRequestHooks = [...inheritedConfig.afterRequestHooks];
+  }
+
+  if (currentTarget.beforeRequestHooks) {
+    currentInheritedConfig.beforeRequestHooks = [
+      ...currentTarget.beforeRequestHooks,
+    ];
+  } else if (inheritedConfig.beforeRequestHooks) {
+    currentInheritedConfig.beforeRequestHooks = [
+      ...inheritedConfig.beforeRequestHooks,
+    ];
+    currentTarget.beforeRequestHooks = [...inheritedConfig.beforeRequestHooks];
+  }
+
   currentTarget.overrideParams = {
     ...currentInheritedConfig.overrideParams,
   };
@@ -860,7 +806,7 @@ export async function tryTargetsRecursively(
   let response;
 
   switch (strategyMode) {
-    case 'fallback':
+    case StrategyModes.FALLBACK:
       for (let [index, target] of currentTarget.targets.entries()) {
         response = await tryTargetsRecursively(
           c,
@@ -873,16 +819,15 @@ export async function tryTargetsRecursively(
           currentInheritedConfig
         );
         if (
-          response?.ok ||
-          (currentTarget.strategy.onStatusCodes &&
-            !currentTarget.strategy.onStatusCodes.includes(response?.status))
+          response?.ok &&
+          !currentTarget.strategy?.onStatusCodes?.includes(response?.status)
         ) {
           break;
         }
       }
       break;
 
-    case 'loadbalance':
+    case StrategyModes.LOADBALANCE:
       currentTarget.targets.forEach((t: Options) => {
         if (t.weight === undefined) {
           t.weight = 1;
@@ -913,7 +858,35 @@ export async function tryTargetsRecursively(
       }
       break;
 
-    case 'single':
+    case StrategyModes.CONDITIONAL:
+      let metadata: Record<string, string>;
+      try {
+        metadata = JSON.parse(requestHeaders[HEADER_KEYS.METADATA]);
+      } catch (err) {
+        metadata = {};
+      }
+      let conditionalRouter: ConditionalRouter;
+      let finalTarget: Targets;
+      try {
+        conditionalRouter = new ConditionalRouter(currentTarget, { metadata });
+        finalTarget = conditionalRouter.resolveTarget();
+      } catch (conditionalRouter: any) {
+        throw new RouterError(conditionalRouter.message);
+      }
+
+      response = await tryTargetsRecursively(
+        c,
+        finalTarget,
+        request,
+        requestHeaders,
+        fn,
+        method,
+        `${currentJsonPath}.targets[${finalTarget.index}]`,
+        currentInheritedConfig
+      );
+      break;
+
+    case StrategyModes.SINGLE:
       response = await tryTargetsRecursively(
         c,
         currentTarget.targets[0],
@@ -945,11 +918,20 @@ export async function tryTargetsRecursively(
   return response;
 }
 
+/**
+ * Updates the response headers with the provided values.
+ * @param {Response} response - The response object.
+ * @param {string | number} currentIndex - The current index value.
+ * @param {Record<string, any>} params - The parameters object.
+ * @param {string} cacheStatus - The cache status value.
+ * @param {number} retryAttempt - The retry attempt count.
+ * @param {string} traceId - The trace ID value.
+ */
 export function updateResponseHeaders(
   response: Response,
   currentIndex: string | number,
   params: Record<string, any>,
-  cacheStatus: string,
+  cacheStatus: string | undefined,
   retryAttempt: number,
   traceId: string
 ) {
@@ -958,7 +940,9 @@ export function updateResponseHeaders(
     currentIndex.toString()
   );
 
-  response.headers.append(RESPONSE_HEADER_KEYS.CACHE_STATUS, cacheStatus);
+  if (cacheStatus) {
+    response.headers.append(RESPONSE_HEADER_KEYS.CACHE_STATUS, cacheStatus);
+  }
   response.headers.append(RESPONSE_HEADER_KEYS.TRACE_ID, traceId);
   response.headers.append(
     RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT,
@@ -968,6 +952,9 @@ export function updateResponseHeaders(
   const contentEncodingHeader = response.headers.get('content-encoding');
   if (contentEncodingHeader && contentEncodingHeader.indexOf('br') > -1) {
     // Brotli compression causes errors at runtime, removing the header in that case
+    response.headers.delete('content-encoding');
+  }
+  if (getRuntimeKey() == 'node') {
     response.headers.delete('content-encoding');
   }
 
@@ -983,6 +970,7 @@ export function constructConfigFromRequestHeaders(
     resourceName: requestHeaders[`x-${POWERED_BY}-azure-resource-name`],
     deploymentId: requestHeaders[`x-${POWERED_BY}-azure-deployment-id`],
     apiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
+    azureModelName: requestHeaders[`x-${POWERED_BY}-azure-model-name`],
   };
 
   const bedrockConfig = {
@@ -1066,7 +1054,9 @@ export function constructConfigFromRequestHeaders(
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
       'params',
+      'checks',
       'vertex_service_account_json',
+      'conditions',
     ]) as any;
   }
 
@@ -1083,4 +1073,203 @@ export function constructConfigFromRequestHeaders(
       vertexConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === OPEN_AI && openAiConfig),
   };
+}
+
+export async function recursiveAfterRequestHookHandler(
+  c: Context,
+  url: any,
+  options: any,
+  providerOption: Options,
+  isStreamingMode: any,
+  gatewayParams: any,
+  retryAttemptsMade: any,
+  fn: any,
+  requestHeaders: Record<string, string>,
+  hookSpanId: string,
+  strictOpenAiCompliance: boolean
+): Promise<[Response, number]> {
+  let response, retryCount;
+  const requestTimeout =
+    Number(requestHeaders[HEADER_KEYS.REQUEST_TIMEOUT]) ||
+    providerOption.requestTimeout ||
+    null;
+
+  const { retry } = providerOption;
+
+  [response, retryCount] = await retryRequest(
+    url,
+    options,
+    retry?.attempts || 0,
+    retry?.onStatusCodes || [],
+    requestTimeout || null
+  );
+
+  const { response: mappedResponse, responseJson: mappedResponseJson } =
+    await responseHandler(
+      response,
+      isStreamingMode,
+      providerOption,
+      fn,
+      url,
+      false,
+      gatewayParams,
+      strictOpenAiCompliance
+    );
+
+  const arhResponse = await afterRequestHookHandler(
+    c,
+    mappedResponse,
+    mappedResponseJson,
+    hookSpanId,
+    retryAttemptsMade
+  );
+
+  const remainingRetryCount =
+    (retry?.attempts || 0) - (retryCount || 0) - retryAttemptsMade;
+
+  if (
+    remainingRetryCount > 0 &&
+    retry?.onStatusCodes?.includes(arhResponse.status)
+  ) {
+    return recursiveAfterRequestHookHandler(
+      c,
+      url,
+      options,
+      providerOption,
+      isStreamingMode,
+      gatewayParams,
+      (retryCount || 0) + 1 + retryAttemptsMade,
+      fn,
+      requestHeaders,
+      hookSpanId,
+      strictOpenAiCompliance
+    );
+  }
+
+  return [arhResponse, retryAttemptsMade];
+}
+
+/**
+ * Retrieves the cache options based on the provided cache configuration.
+ * @param cacheConfig - The cache configuration object or string.
+ * @returns An object containing the cache mode and cache max age.
+ */
+function getCacheOptions(cacheConfig: any) {
+  // providerOption.cache needs to be sent here
+  let cacheMode: string | undefined;
+  let cacheMaxAge: string | number = '';
+  let cacheStatus = 'DISABLED';
+
+  if (typeof cacheConfig === 'object' && cacheConfig?.mode) {
+    cacheMode = cacheConfig.mode;
+    cacheMaxAge = cacheConfig.maxAge;
+  } else if (typeof cacheConfig === 'string') {
+    cacheMode = cacheConfig;
+  }
+  return { cacheMode, cacheMaxAge, cacheStatus };
+}
+
+async function cacheHandler(
+  c: Context,
+  providerOption: Options,
+  requestHeaders: Record<string, string>,
+  fetchOptions: any,
+  transformedRequestBody: any,
+  hookSpanId: string,
+  fn: endpointStrings
+) {
+  const [getFromCacheFunction, cacheIdentifier] = [
+    c.get('getFromCache'),
+    c.get('cacheIdentifier'),
+  ];
+
+  let cacheResponse, cacheKey;
+  let cacheMode: string | undefined,
+    cacheMaxAge: string | number | undefined,
+    cacheStatus: string;
+  ({ cacheMode, cacheMaxAge, cacheStatus } = getCacheOptions(
+    providerOption.cache
+  ));
+
+  if (getFromCacheFunction && cacheMode) {
+    [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(
+      env(c),
+      { ...requestHeaders, ...fetchOptions.headers },
+      transformedRequestBody,
+      fn,
+      cacheIdentifier,
+      cacheMode,
+      cacheMaxAge
+    );
+  }
+
+  const hooksManager = c.get('hooksManager') as HooksManager;
+  const span = hooksManager.getSpan(hookSpanId) as HookSpan;
+  const results = span.getHooksResult();
+  const failedBeforeRequestHooks = results.beforeRequestHooksResult?.filter(
+    (h) => !h.verdict
+  );
+
+  let responseBody = cacheResponse;
+
+  const hasHookResults = results.beforeRequestHooksResult?.length > 0;
+  const responseStatus = failedBeforeRequestHooks.length ? 246 : 200;
+
+  if (hasHookResults && cacheResponse) {
+    responseBody = JSON.stringify({
+      ...JSON.parse(cacheResponse),
+      hook_results: {
+        before_request_hooks: results.beforeRequestHooksResult,
+      },
+    });
+  }
+
+  return {
+    cacheResponse: !!cacheResponse
+      ? new Response(responseBody, {
+          headers: { 'content-type': 'application/json' },
+          status: responseStatus,
+        })
+      : undefined,
+    cacheStatus,
+    cacheKey,
+  };
+}
+
+export async function beforeRequestHookHandler(
+  c: Context,
+  hookSpanId: string
+): Promise<any> {
+  try {
+    const hooksManager = c.get('hooksManager');
+    const hooksResult = await hooksManager.executeHooks(hookSpanId, [
+      'syncBeforeRequestHook',
+    ]);
+
+    if (hooksResult.shouldDeny) {
+      return new Response(
+        JSON.stringify({
+          error: {
+            message:
+              'The guardrail checks defined in the config failed. You can find more information in the `hook_results` object.',
+            type: 'hooks_failed',
+            param: null,
+            code: null,
+          },
+          hook_results: {
+            before_request_hooks: hooksResult.results,
+            after_request_hooks: [],
+          },
+        }),
+        {
+          status: 446,
+          headers: { 'content-type': 'application/json' },
+        }
+      );
+    }
+  } catch (err) {
+    console.log(err);
+    return { error: err };
+    // TODO: Handle this error!!!
+  }
 }

@@ -86,10 +86,6 @@ interface FireworksAIImageObject {
   ['X-Fireworks-Billing-Idempotency-Id']: string;
 }
 
-interface FireworksAIImageGenerateResponse extends ImageGenerateResponse {
-  data: FireworksAIImageObject[];
-}
-
 export const FireworksAIImageGenerateResponseTransform: (
   response:
     | FireworksAIImageObject[]
