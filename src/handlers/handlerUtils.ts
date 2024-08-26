@@ -544,7 +544,6 @@ export async function tryPost(
     ? (transformedRequestBody as FormData)
     : JSON.stringify(transformedRequestBody);
 
-
   providerOption.retry = {
     attempts: providerOption.retry?.attempts ?? 0,
     onStatusCodes: providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES,
