@@ -9,7 +9,9 @@ export const configSchema: any = z
           .string()
           .refine(
             (value) =>
-              ['single', 'loadbalance', 'fallback', 'conditional'].includes(value),
+              ['single', 'loadbalance', 'fallback', 'conditional'].includes(
+                value
+              ),
             {
               message:
                 "Invalid 'mode' value. Must be one of: single, loadbalance, fallback, conditional",
