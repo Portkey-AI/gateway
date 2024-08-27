@@ -16,9 +16,23 @@ interface CacheSettings {
   maxAge?: number;
 }
 
+export enum StrategyModes {
+  LOADBALANCE = 'loadbalance',
+  FALLBACK = 'fallback',
+  SINGLE = 'single',
+  CONDITIONAL = 'conditional',
+}
+
 interface Strategy {
-  mode: string;
+  mode: StrategyModes;
   onStatusCodes?: Array<number>;
+  conditions?: {
+    query: {
+      [key: string]: any;
+    };
+    then: string;
+  }[];
+  default?: string;
 }
 
 /**
@@ -88,6 +102,7 @@ export interface Options {
  * @interface
  */
 export interface Targets {
+  name?: string;
   strategy?: Strategy;
   /** The name of the provider. */
   provider?: string | undefined;

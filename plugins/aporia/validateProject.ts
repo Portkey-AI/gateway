@@ -4,7 +4,7 @@ import {
   PluginHandler,
   PluginParameters,
 } from '../types';
-import { getText, post } from '../utils';
+import { post } from '../utils';
 
 export const APORIA_BASE_URL = 'https://gr-prd.aporia.com';
 

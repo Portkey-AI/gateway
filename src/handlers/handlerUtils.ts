@@ -10,6 +10,8 @@ import {
   GOOGLE_VERTEX_AI,
   OPEN_AI,
   AZURE_AI_INFERENCE,
+  MULTIPART_FORM_DATA_ENDPOINTS,
+  CONTENT_TYPES,
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
@@ -19,14 +21,16 @@ import {
   Options,
   Params,
   ShortConfig,
+  StrategyModes,
   Targets,
 } from '../types/requestBody';
 import { convertKeysToCamelCase } from '../utils';
 import { retryRequest } from './retryHandler';
-import { env } from 'hono/adapter';
+import { env, getRuntimeKey } from 'hono/adapter';
 import { afterRequestHookHandler, responseHandler } from './responseHandlers';
-import { getRuntimeKey } from 'hono/adapter';
 import { HookSpan, HooksManager } from '../middlewares/hooks';
+import { ConditionalRouter } from '../services/conditionalRouter';
+import { RouterError } from '../errors/RouterError';
 
 /**
  * Constructs the request options for the API call.
@@ -69,9 +73,13 @@ export function constructRequest(
     method,
     headers,
   };
+  const contentType = headers['content-type'];
+  const isGetMethod = method === 'GET';
+  const isMultipartFormData = contentType === CONTENT_TYPES.MULTIPART_FORM_DATA;
+  const shouldDeleteContentTypeHeader =
+    (isGetMethod || isMultipartFormData) && fetchOptions.headers;
 
-  // If the method is GET, delete the content-type header
-  if (method === 'GET' && fetchOptions.headers) {
+  if (shouldDeleteContentTypeHeader) {
     let headers = fetchOptions.headers as Record<string, unknown>;
     delete headers['content-type'];
   }
@@ -441,7 +449,7 @@ export async function tryPostProxy(
 export async function tryPost(
   c: Context,
   providerOption: Options,
-  inputParams: Params,
+  inputParams: Params | FormData,
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
   currentIndex: number | string
@@ -476,6 +484,7 @@ export async function tryPost(
   const transformedRequestBody = transformToProviderRequest(
     provider,
     params,
+    inputParams,
     fn
   );
 
@@ -515,7 +524,9 @@ export async function tryPost(
     requestHeaders
   );
 
-  fetchOptions.body = JSON.stringify(transformedRequestBody);
+  fetchOptions.body = MULTIPART_FORM_DATA_ENDPOINTS.includes(fn)
+    ? (transformedRequestBody as FormData)
+    : JSON.stringify(transformedRequestBody);
 
   providerOption.retry = {
     attempts: providerOption.retry?.attempts ?? 0,
@@ -703,7 +714,7 @@ export async function tryProvidersInSequence(
 export async function tryTargetsRecursively(
   c: Context,
   targetGroup: Targets,
-  request: Params,
+  request: Params | FormData,
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
   method: string,
@@ -796,7 +807,7 @@ export async function tryTargetsRecursively(
   let response;
 
   switch (strategyMode) {
-    case 'fallback':
+    case StrategyModes.FALLBACK:
       for (let [index, target] of currentTarget.targets.entries()) {
         response = await tryTargetsRecursively(
           c,
@@ -817,7 +828,7 @@ export async function tryTargetsRecursively(
       }
       break;
 
-    case 'loadbalance':
+    case StrategyModes.LOADBALANCE:
       currentTarget.targets.forEach((t: Options) => {
         if (t.weight === undefined) {
           t.weight = 1;
@@ -848,7 +859,35 @@ export async function tryTargetsRecursively(
       }
       break;
 
-    case 'single':
+    case StrategyModes.CONDITIONAL:
+      let metadata: Record<string, string>;
+      try {
+        metadata = JSON.parse(requestHeaders[HEADER_KEYS.METADATA]);
+      } catch (err) {
+        metadata = {};
+      }
+      let conditionalRouter: ConditionalRouter;
+      let finalTarget: Targets;
+      try {
+        conditionalRouter = new ConditionalRouter(currentTarget, { metadata });
+        finalTarget = conditionalRouter.resolveTarget();
+      } catch (conditionalRouter: any) {
+        throw new RouterError(conditionalRouter.message);
+      }
+
+      response = await tryTargetsRecursively(
+        c,
+        finalTarget,
+        request,
+        requestHeaders,
+        fn,
+        method,
+        `${currentJsonPath}.targets[${finalTarget.index}]`,
+        currentInheritedConfig
+      );
+      break;
+
+    case StrategyModes.SINGLE:
       response = await tryTargetsRecursively(
         c,
         currentTarget.targets[0],
@@ -1034,6 +1073,7 @@ export function constructConfigFromRequestHeaders(
       'params',
       'checks',
       'vertex_service_account_json',
+      'conditions',
     ]) as any;
   }
 
