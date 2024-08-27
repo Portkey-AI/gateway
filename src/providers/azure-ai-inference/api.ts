@@ -7,7 +7,7 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
     if (provider === 'github') {
       return 'https://models.inference.ai.azure.com';
     }
-    return `https://${azureDeploymentName}-${azureDeploymentType === 'serverless' ? 'serverless' : ''}.${azureRegion}.inference.ai.azure.com`;
+    return `https://${azureDeploymentName?.toLowerCase()}.${azureRegion}.models.ai.azure.com`;
   },
   headers: ({ providerOptions }) => {
     const { apiKey } = providerOptions;

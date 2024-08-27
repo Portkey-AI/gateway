@@ -20,8 +20,8 @@ const AzureAIInferenceAPIConfig: ProviderConfigs = {
   chatComplete: AzureAIInferenceChatCompleteConfig,
   responseTransforms: {
     complete: AzureAIInferenceCompleteResponseTransform,
-    chatComplete: AzureAIInferenceEmbedResponseTransform,
-    embed: AzureAIInferenceChatCompleteResponseTransform,
+    chatComplete: AzureAIInferenceChatCompleteResponseTransform,
+    embed: AzureAIInferenceEmbedResponseTransform,
   },
 };
 
