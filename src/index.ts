@@ -22,6 +22,7 @@ import { hooks } from './middlewares/hooks';
 import { compress } from 'hono/compress';
 import { getRuntimeKey } from 'hono/adapter';
 import { imageGenerationsHandler } from './handlers/imageGenerationsHandler';
+import { memoryCache } from './middlewares/cache';
 import { createSpeechHandler } from './handlers/createSpeechHandler';
 import conf from '../conf.json';
 import { createTranscriptionHandler } from './handlers/createTranscriptionHandler';
@@ -57,7 +58,7 @@ app.use('*', prettyJSON());
 app.use('*', hooks);
 
 if (conf.cache === true) {
-  app.use('*', require('./middlewares/cache').memoryCache());
+  app.use('*', memoryCache());
 }
 
 /**
