@@ -1,3 +1,5 @@
+import { endpointStrings } from './providers/types';
+
 export const POWERED_BY: string = 'portkey';
 
 export const HEADER_KEYS: Record<string, string> = {
@@ -6,6 +8,7 @@ export const HEADER_KEYS: Record<string, string> = {
   PROVIDER: `x-${POWERED_BY}-provider`,
   TRACE_ID: `x-${POWERED_BY}-trace-id`,
   CACHE: `x-${POWERED_BY}-cache`,
+  METADATA: `x-${POWERED_BY}-metadata`,
   FORWARD_HEADERS: `x-${POWERED_BY}-forward-headers`,
   CUSTOM_HOST: `x-${POWERED_BY}-custom-host`,
   REQUEST_TIMEOUT: `x-${POWERED_BY}-request-timeout`,
@@ -34,6 +37,7 @@ export const PALM: string = 'palm';
 export const TOGETHER_AI: string = 'together-ai';
 export const GOOGLE: string = 'google';
 export const GOOGLE_VERTEX_AI: string = 'vertex-ai';
+export const HUGGING_FACE: string = 'huggingface';
 export const PERPLEXITY_AI: string = 'perplexity-ai';
 export const REKA_AI: string = 'reka-ai';
 export const MISTRAL_AI: string = 'mistral-ai';
@@ -95,6 +99,7 @@ export const VALID_PROVIDERS = [
   VOYAGE,
   DEEPBRICKS,
   SILICONFLOW,
+  HUGGING_FACE,
 ];
 
 export const CONTENT_TYPES = {
@@ -108,3 +113,8 @@ export const CONTENT_TYPES = {
   HTML: 'text/html',
   GENERIC_IMAGE_PATTERN: 'image/',
 };
+
+export const MULTIPART_FORM_DATA_ENDPOINTS: endpointStrings[] = [
+  'createTranscription',
+  'createTranslation',
+];

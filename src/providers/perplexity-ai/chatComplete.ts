@@ -111,7 +111,7 @@ export interface PerplexityAIChatCompletionStreamChunk {
 export const PerplexityAIChatCompleteResponseTransform: (
   response: PerplexityAIChatCompleteResponse | PerplexityAIErrorResponse,
   responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+) => ChatCompletionResponse | ErrorResponse = (response) => {
   if ('error' in response) {
     return generateErrorResponse(
       {

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { any, z } from 'zod';
 import { OLLAMA, VALID_PROVIDERS, GOOGLE_VERTEX_AI } from '../../../globals';
 
 export const configSchema: any = z
@@ -8,13 +8,25 @@ export const configSchema: any = z
         mode: z
           .string()
           .refine(
-            (value) => ['single', 'loadbalance', 'fallback'].includes(value),
+            (value) =>
+              ['single', 'loadbalance', 'fallback', 'conditional'].includes(
+                value
+              ),
             {
               message:
-                "Invalid 'mode' value. Must be one of: single, loadbalance, fallback",
+                "Invalid 'mode' value. Must be one of: single, loadbalance, fallback, conditional",
             }
           ),
         on_status_codes: z.array(z.number()).optional(),
+        conditions: z
+          .array(
+            z.object({
+              query: z.object({}),
+              then: z.string(),
+            })
+          )
+          .optional(),
+        default: z.string().optional(),
       })
       .optional(),
     provider: z

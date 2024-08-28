@@ -1,4 +1,3 @@
-import { Options } from '../../types/requestBody';
 import { ProviderAPIConfig } from '../types';
 import { generateAWSHeaders } from './utils';
 

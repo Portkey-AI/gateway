@@ -33,12 +33,14 @@ import PredibaseConfig from './predibase';
 import VoyageConfig from './voyage';
 import DeepbricksConfig from './deepbricks';
 import SiliconFlowConfig from './siliconflow';
+import HuggingfaceConfig from './huggingface';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
   cohere: CohereConfig,
   anthropic: AnthropicConfig,
   'azure-openai': AzureOpenAIConfig,
+  huggingface: HuggingfaceConfig,
   anyscale: AnyscaleConfig,
   palm: PalmAIConfig,
   'together-ai': TogetherAIConfig,
