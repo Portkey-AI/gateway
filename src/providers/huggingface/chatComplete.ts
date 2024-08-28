@@ -1,5 +1,5 @@
 import { HUGGING_FACE } from '../../globals';
-import { OpenAIErrorResponseTransform } from '../openai/chatComplete';
+import { OpenAIErrorResponseTransform } from '../openai/utils';
 import {
   ChatCompletionResponse,
   ErrorResponse,
