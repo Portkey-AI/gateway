@@ -54,13 +54,17 @@ export const AzureAIInferenceCompleteConfig: ProviderConfig = {
 
 interface AzureAIInferenceCompleteResponse extends CompletionResponse {}
 
-export const AzureAIInferenceCompleteResponseTransform: (
-  response: AzureAIInferenceCompleteResponse | ErrorResponse,
-  responseStatus: number
-) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if (responseStatus !== 200 && 'error' in response) {
-    return OpenAIErrorResponseTransform(response, AZURE_AI_INFERENCE);
-  }
+export const AzureAIInferenceCompleteResponseTransform = (provider: string) => {
+  const transformer: (
+    response: AzureAIInferenceCompleteResponse | ErrorResponse,
+    responseStatus: number
+  ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
+    if (responseStatus !== 200 && 'error' in response) {
+      return OpenAIErrorResponseTransform(response, provider);
+    }
 
-  return { ...response, provider: AZURE_AI_INFERENCE };
+    return { ...response, provider: provider };
+  };
+
+  return transformer;
 };

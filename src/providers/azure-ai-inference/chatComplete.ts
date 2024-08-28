@@ -66,13 +66,18 @@ export const AzureAIInferenceChatCompleteConfig: ProviderConfig = {
 
 interface AzureAIInferenceChatCompleteResponse extends ChatCompletionResponse {}
 
-export const AzureAIInferenceChatCompleteResponseTransform: (
-  response: AzureAIInferenceChatCompleteResponse | ErrorResponse,
-  responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if (responseStatus !== 200 && 'error' in response) {
-    return OpenAIErrorResponseTransform(response, AZURE_AI_INFERENCE);
-  }
+export const AzureAIInferenceChatCompleteResponseTransform = (
+  provider: string
+) => {
+  const transformer: (
+    response: AzureAIInferenceChatCompleteResponse | ErrorResponse,
+    responseStatus: number
+  ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+    if (responseStatus !== 200 && 'error' in response) {
+      return OpenAIErrorResponseTransform(response, AZURE_AI_INFERENCE);
+    }
 
-  return { ...response, provider: AZURE_AI_INFERENCE };
+    return { ...response, provider: AZURE_AI_INFERENCE };
+  };
+  return transformer;
 };

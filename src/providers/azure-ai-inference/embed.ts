@@ -19,13 +19,17 @@ export const AzureAIInferenceEmbedConfig: ProviderConfig = {
 
 interface AzureAIInferenceEmbedResponse extends EmbedResponse {}
 
-export const AzureAIInferenceEmbedResponseTransform: (
-  response: AzureAIInferenceEmbedResponse | ErrorResponse,
-  responseStatus: number
-) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
-  if (responseStatus !== 200 && 'error' in response) {
-    return OpenAIErrorResponseTransform(response, AZURE_AI_INFERENCE);
-  }
+export const AzureAIInferenceEmbedResponseTransform = (provider: string) => {
+  const transformer: (
+    response: AzureAIInferenceEmbedResponse | ErrorResponse,
+    responseStatus: number
+  ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
+    if (responseStatus !== 200 && 'error' in response) {
+      return OpenAIErrorResponseTransform(response, provider);
+    }
 
-  return { ...response, provider: AZURE_AI_INFERENCE };
+    return { ...response, provider: provider };
+  };
+
+  return transformer;
 };
