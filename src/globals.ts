@@ -60,6 +60,7 @@ export const NOVITA_AI: string = 'novita-ai';
 export const MONSTERAPI: string = 'monsterapi';
 export const DEEPSEEK: string = 'deepseek';
 export const PREDIBASE: string = 'predibase';
+export const TRITON: string = 'triton';
 export const VOYAGE: string = 'voyage';
 export const DEEPBRICKS: string = 'deepbricks';
 export const SILICONFLOW: string = 'siliconflow';
@@ -96,6 +97,7 @@ export const VALID_PROVIDERS = [
   MONSTERAPI,
   DEEPSEEK,
   PREDIBASE,
+  TRITON,
   VOYAGE,
   DEEPBRICKS,
   SILICONFLOW,
