@@ -31,12 +31,14 @@ import MonsterAPIConfig from './monsterapi';
 import DeepSeekAPIConfig from './deepseek';
 import PredibaseConfig from './predibase';
 import VoyageConfig from './voyage';
+import HuggingfaceConfig from './huggingface';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
   cohere: CohereConfig,
   anthropic: AnthropicConfig,
   'azure-openai': AzureOpenAIConfig,
+  huggingface: HuggingfaceConfig,
   anyscale: AnyscaleConfig,
   palm: PalmAIConfig,
   'together-ai': TogetherAIConfig,

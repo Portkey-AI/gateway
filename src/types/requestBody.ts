@@ -77,6 +77,9 @@ export interface Options {
   awsSessionToken?: string;
   awsRegion?: string;
 
+  /** Hugging Face specific */
+  huggingfaceBaseUrl?: string;
+
   /** Google Vertex AI specific */
   vertexRegion?: string;
   vertexProjectId?: string;

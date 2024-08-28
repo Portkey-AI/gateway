@@ -11,6 +11,7 @@ import {
   OPEN_AI,
   MULTIPART_FORM_DATA_ENDPOINTS,
   CONTENT_TYPES,
+  HUGGING_FACE,
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
@@ -989,6 +990,10 @@ export function constructConfigFromRequestHeaders(
     openaiProject: requestHeaders[`x-${POWERED_BY}-openai-project`],
   };
 
+  const huggingfaceConfig = {
+    huggingfaceBaseUrl: requestHeaders[`x-${POWERED_BY}-huggingface-base-url`],
+  };
+
   const vertexConfig: Record<string, any> = {
     vertexProjectId: requestHeaders[`x-${POWERED_BY}-vertex-project-id`],
     vertexRegion: requestHeaders[`x-${POWERED_BY}-vertex-region`],
@@ -1044,6 +1049,13 @@ export function constructConfigFromRequestHeaders(
         };
       }
 
+      if (parsedConfigJson.provider === HUGGING_FACE) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...huggingfaceConfig,
+        };
+      }
+
       if (parsedConfigJson.provider === GOOGLE_VERTEX_AI) {
         parsedConfigJson = {
           ...parsedConfigJson,
@@ -1072,6 +1084,8 @@ export function constructConfigFromRequestHeaders(
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === GOOGLE_VERTEX_AI &&
       vertexConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === OPEN_AI && openAiConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === HUGGING_FACE &&
+      huggingfaceConfig),
   };
 }
 
