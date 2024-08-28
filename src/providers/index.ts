@@ -31,6 +31,7 @@ import MonsterAPIConfig from './monsterapi';
 import DeepSeekAPIConfig from './deepseek';
 import PredibaseConfig from './predibase';
 import VoyageConfig from './voyage';
+import SambaNovaConfig from './sambanova';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -65,6 +66,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   deepseek: DeepSeekAPIConfig,
   predibase: PredibaseConfig,
   voyage: VoyageConfig,
+  sambanova: SambaNovaConfig,
 };
 
 export default Providers;

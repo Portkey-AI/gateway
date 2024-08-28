@@ -60,6 +60,7 @@ export const MONSTERAPI: string = 'monsterapi';
 export const DEEPSEEK: string = 'deepseek';
 export const PREDIBASE: string = 'predibase';
 export const VOYAGE: string = 'voyage';
+export const SAMBANOVA: string = 'sambanova';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -94,6 +95,7 @@ export const VALID_PROVIDERS = [
   DEEPSEEK,
   PREDIBASE,
   VOYAGE,
+  SAMBANOVA,
 ];
 
 export const CONTENT_TYPES = {
