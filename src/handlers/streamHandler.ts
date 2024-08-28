@@ -6,7 +6,9 @@ import {
   GOOGLE,
   REQUEST_TIMEOUT_STATUS_CODE,
   PRECONDITION_CHECK_FAILED_STATUS_CODE,
+  GOOGLE_VERTEX_AI,
 } from '../globals';
+import { VertexLlamaChatCompleteStreamChunkTransform } from '../providers/google-vertex-ai/chatComplete';
 import { OpenAIChatCompleteResponse } from '../providers/openai/chatComplete';
 import { OpenAICompleteResponse } from '../providers/openai/complete';
 import { getStreamModeSplitPattern, type SplitPatternType } from '../utils';
@@ -306,15 +308,15 @@ export function handleStreamingMode(
   }
 
   // Convert GEMINI/COHERE json stream to text/event-stream for non-proxy calls
-  if (
-    [
-      //
-      GOOGLE,
-      COHERE,
-      BEDROCK,
-    ].includes(proxyProvider) &&
-    responseTransformer
-  ) {
+  const isGoogleCohereOrBedrock = [GOOGLE, COHERE, BEDROCK].includes(
+    proxyProvider
+  );
+  const isVertexLlama =
+    proxyProvider === GOOGLE_VERTEX_AI &&
+    responseTransformer?.name ===
+      VertexLlamaChatCompleteStreamChunkTransform.name;
+  const isJsonStream = isGoogleCohereOrBedrock || isVertexLlama;
+  if (isJsonStream && responseTransformer) {
     return new Response(readable, {
       ...response,
       headers: new Headers({

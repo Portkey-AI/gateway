@@ -28,7 +28,7 @@ interface OllamaErrorResponse {
 export const OllamaEmbedResponseTransform: (
   response: OllamaEmbedResponse | OllamaErrorResponse,
   responseStatus: number
-) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
+) => EmbedResponse | ErrorResponse = (response) => {
   if ('error' in response) {
     return generateErrorResponse(
       { message: response.error, type: null, param: null, code: null },

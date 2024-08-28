@@ -5,11 +5,16 @@ const AnthropicAPIConfig: ProviderAPIConfig = {
   headers: ({ providerOptions, fn }) => {
     const headers: Record<string, string> = {
       'X-API-Key': `${providerOptions.apiKey}`,
-      'anthropic-version': '2023-06-01',
     };
+
+    const betaHeader =
+      providerOptions?.['anthropicBeta'] ?? 'messages-2023-12-15';
+    const version = providerOptions?.['anthropicVersion'] ?? '2023-06-01';
+
     if (fn === 'chatComplete') {
-      headers['anthropic-beta'] = 'messages-2023-12-15';
+      headers['anthropic-beta'] = betaHeader;
     }
+    headers['anthropic-version'] = version;
     return headers;
   },
   getEndpoint: ({ fn }) => {
