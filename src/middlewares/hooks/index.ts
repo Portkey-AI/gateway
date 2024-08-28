@@ -84,7 +84,12 @@ export class HookSpan {
     } else if (requestParams?.messages?.length) {
       const lastMessage =
         requestParams.messages[requestParams.messages.length - 1];
-      return lastMessage.content.text || lastMessage.content;
+      const concatenatedText = Array.isArray(lastMessage.content)
+        ? lastMessage.content
+            .map((contentPart: any) => contentPart.text)
+            .join('\n')
+        : '';
+      return concatenatedText || lastMessage.content;
     }
     return '';
   }

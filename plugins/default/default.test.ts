@@ -6,6 +6,7 @@ import { handler as containsCodeHandler } from './containsCode';
 import { handler as wordCountHandler } from './wordCount';
 import { handler as sentenceCountHandler } from './sentenceCount';
 import { handler as webhookHandler } from './webhook';
+import { handler as logHandler } from './log';
 
 import { z } from 'zod';
 import { PluginContext, PluginParameters } from '../types';
@@ -421,7 +422,7 @@ describe('wordCount handler', () => {
   });
 });
 
-describe.only('webhook handler', () => {
+describe('webhook handler', () => {
   it('should handle a postive result from a webhook', async () => {
     const eventType = 'afterRequestHook';
     const context: PluginContext = {
@@ -494,5 +495,30 @@ describe.only('webhook handler', () => {
     expect(result.error).toBeDefined();
     expect(result.verdict).toBe(false);
     expect(result.data).toBe(null);
+  });
+});
+
+describe('log handler', () => {
+  it('should log details to a URL', async () => {
+    const eventType = 'afterRequestHook';
+    const context: PluginContext = {
+      request: {
+        text: `adding some text before this \`\`\`json\n{"key1": "value"}\n\`\`\`\n and adding some text after {"key":"value"}`,
+        json: { key: 'value' },
+      },
+      response: {
+        text: `adding some text before this \`\`\`json\n{"key1": "value"}\n\`\`\`\n and adding some text after {"key":"value"}`,
+        json: { key: 'value' },
+      },
+    };
+    const parameters: PluginParameters = {
+      logURL: 'https://roh26it-upsetharlequinfrog.web.val.run',
+      headers: '{"Authorization": "this is some secret"}',
+    };
+
+    const result = await logHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
   });
 });

@@ -28,14 +28,20 @@ import LingYiConfig from './lingyi';
 import ZhipuConfig from './zhipu';
 import NovitaAIConfig from './novita-ai';
 import MonsterAPIConfig from './monsterapi';
+import DeepSeekAPIConfig from './deepseek';
 import PredibaseConfig from './predibase';
 import TritonConfig from './triton/';
+import VoyageConfig from './voyage';
+import DeepbricksConfig from './deepbricks';
+import SiliconFlowConfig from './siliconflow';
+import HuggingfaceConfig from './huggingface';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
   cohere: CohereConfig,
   anthropic: AnthropicConfig,
   'azure-openai': AzureOpenAIConfig,
+  huggingface: HuggingfaceConfig,
   anyscale: AnyscaleConfig,
   palm: PalmAIConfig,
   'together-ai': TogetherAIConfig,
@@ -61,8 +67,12 @@ const Providers: { [key: string]: ProviderConfigs } = {
   zhipu: ZhipuConfig,
   'novita-ai': NovitaAIConfig,
   monsterapi: MonsterAPIConfig,
+  deepseek: DeepSeekAPIConfig,
   predibase: PredibaseConfig,
   triton: TritonConfig,
+  voyage: VoyageConfig,
+  deepbricks: DeepbricksConfig,
+  siliconflow: SiliconFlowConfig,
 };
 
 export default Providers;

@@ -199,7 +199,7 @@ const client = new OpenAI({
 
 ## 贡献
 
-最简单的贡献方式是选择任何带有 `good first issue` 标签的问题 💪。在[这里](/CONTRIBUTING.cn.md.md)阅读贡献指南。
+最简单的贡献方式是选择任何带有 `good first issue` 标签的问题 💪。在[这里](./CONTRIBUTING.md)阅读贡献指南。
 
 发现 Bug？[在这里提交](https://github.com/Portkey-AI/gateway/issues) | 有功能请求？[在这里提交](https://github.com/Portkey-AI/gateway/issues)
 

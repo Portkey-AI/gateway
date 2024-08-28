@@ -16,9 +16,23 @@ interface CacheSettings {
   maxAge?: number;
 }
 
+export enum StrategyModes {
+  LOADBALANCE = 'loadbalance',
+  FALLBACK = 'fallback',
+  SINGLE = 'single',
+  CONDITIONAL = 'conditional',
+}
+
 interface Strategy {
-  mode: string;
+  mode: StrategyModes;
   onStatusCodes?: Array<number>;
+  conditions?: {
+    query: {
+      [key: string]: any;
+    };
+    then: string;
+  }[];
+  default?: string;
 }
 
 /**
@@ -63,6 +77,9 @@ export interface Options {
   awsSessionToken?: string;
   awsRegion?: string;
 
+  /** Hugging Face specific */
+  huggingfaceBaseUrl?: string;
+
   /** Google Vertex AI specific */
   vertexRegion?: string;
   vertexProjectId?: string;
@@ -76,6 +93,10 @@ export interface Options {
 
   /** The parameter to determine if extra non-openai compliant fields should be returned in response */
   strictOpenAiCompliance?: boolean;
+
+  /** Anthropic specific headers */
+  anthropicBeta?: string;
+  anthropicVersion?: string;
 }
 
 /**
@@ -83,6 +104,7 @@ export interface Options {
  * @interface
  */
 export interface Targets {
+  name?: string;
   strategy?: Strategy;
   /** The name of the provider. */
   provider?: string | undefined;
@@ -171,6 +193,10 @@ export interface Message {
   citationMetadata?: CitationMetadata;
 }
 
+export interface AnthropicPromptCache {
+  cache_control?: { type: 'ephemeral' };
+}
+
 export interface CitationMetadata {
   citationSources?: CitationSource[];
 }
@@ -215,9 +241,12 @@ export type ToolChoice = ToolChoiceObject | 'none' | 'auto' | 'required';
 
 /**
  * A tool in the conversation.
+ *
+ * `cache_control` is extended to support for prompt-cache
+ *
  * @interface
  */
-export interface Tool {
+export interface Tool extends AnthropicPromptCache {
   /** The name of the function. */
   type: string;
   /** A description of the function. */

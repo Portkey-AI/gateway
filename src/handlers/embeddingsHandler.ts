@@ -1,3 +1,4 @@
+import { RouterError } from '../errors/RouterError';
 import {
   constructConfigFromRequestHeaders,
   tryTargetsRecursively,
@@ -30,7 +31,15 @@ export async function embeddingsHandler(c: Context): Promise<Response> {
 
     return tryTargetsResponse;
   } catch (err: any) {
-    console.log('completion error', err.message);
+    console.log('embeddings error', err.message);
+    let statusCode = 500;
+    let errorMessage = 'Something went wrong';
+
+    if (err instanceof RouterError) {
+      statusCode = 400;
+      errorMessage = err.message;
+    }
+
     return new Response(
       JSON.stringify({
         status: 'failure',
