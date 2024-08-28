@@ -26,7 +26,13 @@ export const CohereChatCompleteConfig: ProviderConfig = {
           throw new Error('messages length should be at least of length 1');
         }
 
-        return prompt.content;
+        if (typeof prompt.content === 'string') {
+          return prompt.content;
+        }
+
+        return prompt.content
+          ?.filter((_msg) => _msg.type === 'text')
+          .map((_msg) => _msg.text);
       },
     },
     {
@@ -186,16 +192,24 @@ export type CohereStreamChunk =
 
 export const CohereChatCompleteStreamChunkTransform: (
   response: string,
-  fallbackId: string
-) => string = (responseChunk, fallbackId) => {
+  fallbackId: string,
+  streamState: CohereStreamState
+) => string = (
+  responseChunk,
+  fallbackId,
+  streamState = { generation_id: '' }
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
   const parsedChunk: CohereStreamChunk = JSON.parse(chunk);
+  if (parsedChunk.event_type === 'stream-start') {
+    streamState.generation_id = parsedChunk.generation_id;
+  }
 
   return (
     `data: ${JSON.stringify({
-      id: fallbackId,
+      id: streamState?.generation_id ?? fallbackId,
       object: 'chat.completion.chunk',
       created: Math.floor(Date.now() / 1000),
       model: '',
