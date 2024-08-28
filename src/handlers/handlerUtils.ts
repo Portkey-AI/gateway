@@ -9,6 +9,7 @@ import {
   RETRY_STATUS_CODES,
   GOOGLE_VERTEX_AI,
   OPEN_AI,
+  ANTHROPIC,
   MULTIPART_FORM_DATA_ENDPOINTS,
   CONTENT_TYPES,
   HUGGING_FACE,
@@ -999,6 +1000,11 @@ export function constructConfigFromRequestHeaders(
     vertexRegion: requestHeaders[`x-${POWERED_BY}-vertex-region`],
   };
 
+  const anthropicConfig = {
+    anthropicBeta: requestHeaders[`x-${POWERED_BY}-anthropic-beta`],
+    anthropicVersion: requestHeaders[`x-${POWERED_BY}-anthropic-version`],
+  };
+
   let vertexServiceAccountJson =
     requestHeaders[`x-${POWERED_BY}-vertex-service-account-json`];
   if (vertexServiceAccountJson) {
@@ -1062,6 +1068,13 @@ export function constructConfigFromRequestHeaders(
           ...vertexConfig,
         };
       }
+
+      if (parsedConfigJson.provider === ANTHROPIC) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...anthropicConfig,
+        };
+      }
     }
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
@@ -1084,6 +1097,8 @@ export function constructConfigFromRequestHeaders(
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === GOOGLE_VERTEX_AI &&
       vertexConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === OPEN_AI && openAiConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === ANTHROPIC &&
+      anthropicConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === HUGGING_FACE &&
       huggingfaceConfig),
   };
