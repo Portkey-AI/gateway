@@ -18,7 +18,13 @@ export const validate = async (
       'X-APORIA-API-KEY': `${credentials.apiKey}`,
     },
   };
-  return post(`${APORIA_BASE_URL}/${projectID}/validate`, data, options);
+  let baseURL = APORIA_BASE_URL;
+  // Allow endpoint configuration to support aporia trial endpoint
+  // Aporia trial endpoint: https://gr-prd-trial.aporia.com
+  if (credentials.apiEndpoint) {
+    baseURL = credentials.apiEndpoint;
+  }
+  return post(`${baseURL}/${projectID}/validate`, data, options);
 };
 
 export const handler: PluginHandler = async (
