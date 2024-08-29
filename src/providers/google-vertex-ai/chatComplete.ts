@@ -37,6 +37,7 @@ import type {
   VertexLlamaChatCompleteStreamChunk,
   VertexLLamaChatCompleteResponse,
 } from './types';
+import { getMimeType } from './utils';
 
 export const VertexGoogleChatCompleteConfig: ProviderConfig = {
   // https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning#gemini-model-versions
@@ -124,7 +125,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
                 // Google will return an error here if any other URL is provided.
                 parts.push({
                   fileData: {
-                    mimeType: 'image/jpeg',
+                    mimeType: getMimeType(url),
                     fileUri: url,
                   },
                 });
