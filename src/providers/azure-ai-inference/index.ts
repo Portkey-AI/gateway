@@ -39,4 +39,4 @@ const GithubModelAPiConfig: ProviderConfigs = {
   },
 };
 
-export default AzureAIInferenceAPIConfig;
+export { AzureAIInferenceAPIConfig, GithubModelAPiConfig };

@@ -1,3 +1,4 @@
+import { GITHUB } from '../../globals';
 import { ProviderAPIConfig } from '../types';
 
 const AzureAIInferenceAPI: ProviderAPIConfig = {
@@ -9,7 +10,7 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
       provider,
       azureEndpointName,
     } = providerOptions;
-    if (provider === 'github') {
+    if (provider === GITHUB) {
       return 'https://models.inference.ai.azure.com';
     }
     if (azureDeploymentType === 'serverless') {
@@ -34,6 +35,14 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
     const { azureApiVersion, urlToFetch } = providerOptions;
     let mappedFn = fn;
 
+    const ENDPOINT_MAPPING: Record<string, string> = {
+      complete: '/completions',
+      chatComplete: '/chat/completions',
+      embed: '/embeddings',
+    };
+
+    const isGithub = providerOptions.provider === GITHUB;
+
     if (fn === 'proxy' && urlToFetch) {
       if (urlToFetch?.indexOf('/chat/completions') > -1) {
         mappedFn = 'chatComplete';
@@ -46,13 +55,19 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
 
     switch (mappedFn) {
       case 'complete': {
-        return `/completions?api-version=${azureApiVersion}`;
+        return isGithub
+          ? ENDPOINT_MAPPING[mappedFn]
+          : `${ENDPOINT_MAPPING[mappedFn]}?api-version=${azureApiVersion}`;
       }
       case 'chatComplete': {
-        return `/chat/completions?api-version=${azureApiVersion}`;
+        return isGithub
+          ? ENDPOINT_MAPPING[mappedFn]
+          : `${ENDPOINT_MAPPING[mappedFn]}?api-version=${azureApiVersion}`;
       }
       case 'embed': {
-        return `/embeddings?api-version=${azureApiVersion}`;
+        return isGithub
+          ? ENDPOINT_MAPPING[mappedFn]
+          : `${ENDPOINT_MAPPING[mappedFn]}?api-version=${azureApiVersion}`;
       }
       default:
         return '';
