@@ -980,7 +980,8 @@ export function constructConfigFromRequestHeaders(
     azureRegion: requestHeaders[`x-${POWERED_BY}-azure-region`],
     azureDeploymentType:
       requestHeaders[`x-${POWERED_BY}-azure-deployment-type`],
-    apiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
+    azureApiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
+    azureEndpointName: requestHeaders[`x-${POWERED_BY}-azure-endpoint-name`],
   };
 
   const bedrockConfig = {
