@@ -1,14 +1,14 @@
-import { ANTHROPIC, OPEN_AI } from '../../globals';
+import { DEEPBRICKS } from '../../globals';
 import {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
 } from '../types';
-import { OpenAIErrorResponseTransform } from './utils';
+import { generateErrorResponse } from '../utils';
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
-export const OpenAIChatCompleteConfig: ProviderConfig = {
+export const DeepbricksChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
@@ -92,50 +92,52 @@ export const OpenAIChatCompleteConfig: ProviderConfig = {
   },
 };
 
-export interface OpenAIChatCompleteResponse extends ChatCompletionResponse {
+export interface DeepbricksChatCompleteResponse extends ChatCompletionResponse {
   system_fingerprint: string;
 }
 
-export const OpenAIChatCompleteResponseTransform: (
-  response: OpenAIChatCompleteResponse | ErrorResponse,
+export const DeepbricksErrorResponseTransform: (
+  response: ErrorResponse,
+  provider: string
+) => ErrorResponse = (response, provider) => {
+  return generateErrorResponse(
+    {
+      ...response.error,
+    },
+    provider
+  );
+};
+
+export const DeepbricksChatCompleteResponseTransform: (
+  response: DeepbricksChatCompleteResponse | ErrorResponse,
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'error' in response) {
-    return OpenAIErrorResponseTransform(response, OPEN_AI);
+    return DeepbricksErrorResponseTransform(response, DEEPBRICKS);
   }
 
   return response;
 };
 
 /**
- * Transforms an OpenAI-format chat completions JSON response into an array of formatted OpenAI compatible text/event-stream chunks.
+ * Transforms an Deepbricks-format chat completions JSON response into an array of formatted Deepbricks compatible text/event-stream chunks.
  *
- * @param {Object} response - The OpenAIChatCompleteResponse object.
+ * @param {Object} response - The DeepbricksChatCompleteResponse object.
  * @param {string} provider - The provider string.
  * @returns {Array<string>} - An array of formatted stream chunks.
  */
-export const OpenAIChatCompleteJSONToStreamResponseTransform: (
-  response: OpenAIChatCompleteResponse,
+export const DeepbricksChatCompleteJSONToStreamResponseTransform: (
+  response: DeepbricksChatCompleteResponse,
   provider: string
 ) => Array<string> = (response, provider) => {
   const streamChunkArray: Array<string> = [];
   const { id, model, system_fingerprint, choices } = response;
 
-  const {
-    prompt_tokens,
-    completion_tokens,
-    cache_read_input_tokens,
-    cache_creation_input_tokens,
-  } = response.usage || {};
+  const { prompt_tokens, completion_tokens } = response.usage || {};
 
   let total_tokens;
   if (prompt_tokens && completion_tokens)
     total_tokens = prompt_tokens + completion_tokens;
-
-  const shouldSendCacheUsage =
-    provider === ANTHROPIC &&
-    (Number.isInteger(cache_read_input_tokens) ||
-      Number.isInteger(cache_creation_input_tokens));
 
   const streamChunkTemplate: Record<string, any> = {
     id,
@@ -148,10 +150,6 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
       ...(completion_tokens && { completion_tokens }),
       ...(prompt_tokens && { prompt_tokens }),
       ...(total_tokens && { total_tokens }),
-      ...(shouldSendCacheUsage && {
-        cache_read_input_tokens,
-        cache_creation_input_tokens,
-      }),
     },
   };
 
