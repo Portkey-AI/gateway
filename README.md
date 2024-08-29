@@ -49,7 +49,7 @@ npx @portkey-ai/gateway
 <br>
 
 #### 👉 Self-hosting the Enterprise Version
-The AI Gateway's enterprise version offers enterprise-ready capabilities for **org management**, **governance**, **security** and [more](https://docs.portkey.ai/docs/product/enterprise-offering) out of the box. Compare the open source, hosted and enterprise versions here.
+The AI Gateway's enterprise version offers enterprise-ready capabilities for **org management**, **governance**, **security** and [more](https://docs.portkey.ai/docs/product/enterprise-offering) out of the box. Compare the open source, hosted and enterprise versions [here](https://docs.portkey.ai/docs/product/product-feature-comparison).
 
 The enterprise deployment architecture, supported platforms is available here - [**Enterprise Private Cloud Deployments**](https://docs.portkey.ai/docs/product/enterprise-offering/private-cloud-deployments)
 
