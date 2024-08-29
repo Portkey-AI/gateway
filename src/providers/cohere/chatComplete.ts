@@ -214,20 +214,17 @@ export const CohereChatCompleteStreamChunkTransform: (
       created: Math.floor(Date.now() / 1000),
       model: '',
       provider: COHERE,
-      ...(parsedChunk.event_type === 'stream-end'
-        ? {
-            usage: {
-              completion_tokens:
-                parsedChunk.response.meta.billed_units.output_tokens,
-              prompt_tokens:
-                parsedChunk.response.meta.billed_units.input_tokens,
-              total_tokens: Number(
-                parsedChunk.response.meta.billed_units.output_tokens +
-                  parsedChunk.response.meta.billed_units.input_tokens
-              ),
-            },
-          }
-        : { usage: null }),
+      ...(parsedChunk.event_type === 'stream-end' && {
+        usage: {
+          completion_tokens:
+            parsedChunk.response.meta.billed_units.output_tokens,
+          prompt_tokens: parsedChunk.response.meta.billed_units.input_tokens,
+          total_tokens: Number(
+            parsedChunk.response.meta.billed_units.output_tokens +
+              parsedChunk.response.meta.billed_units.input_tokens
+          ),
+        },
+      }),
       choices: [
         {
           delta: {
