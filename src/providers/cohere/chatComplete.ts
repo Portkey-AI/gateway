@@ -227,10 +227,11 @@ export const CohereChatCompleteStreamChunkTransform: (
       }),
       choices: [
         {
+          index: 0,
           delta: {
             content: (parsedChunk as any)?.text ?? '',
+            role: 'assistant',
           },
-          index: 0,
           logprobs: null,
           finish_reason: (parsedChunk as any).finish_reason ?? null,
         },
