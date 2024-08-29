@@ -43,10 +43,10 @@ export const handler: PluginHandler = async (
     const evalResult = result.results[0];
     error = evalResult.error_message;
 
-    // verdict is true if evalResult.result.pass is 1
-    verdict = evalResult.result.pass === 1;
+    // verdict can be true/false
+    verdict = evalResult.evaluation_result.pass;
 
-    data = evalResult.result.additional_info;
+    data = evalResult.evaluation_result.additional_info;
   } catch (e: any) {
     delete e.stack;
     error = e;
