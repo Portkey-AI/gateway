@@ -32,7 +32,7 @@ export const handler: PluginHandler = async (
 
   try {
     const aporiaObject: any = {
-      messages: context.request?.json?.messages,
+      messages: context.request?.messages,
       explain: true,
     };
 
