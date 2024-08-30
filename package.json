@@ -1,6 +1,6 @@
 {
   "name": "@portkey-ai/gateway",
-  "version": "1.7.1",
+  "version": "1.7.2",
   "description": "A fast AI gateway by Portkey",
   "repository": {
     "type": "git",
@@ -36,7 +36,7 @@
     "format:check": "prettier --check \"./**/*.{js,jsx,ts,tsx,json}\"",
     "test": "ts-jest",
     "pre-push": "npm run build && node start-test.js",
-    "prepare": "husky"
+    "prepare": "node -e \"if (process.env.NODE_ENV !== 'production'){process.exit(1)} \" || husky install"
   },
   "dependencies": {
     "@aws-crypto/sha256-js": "^5.2.0",

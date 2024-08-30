@@ -91,6 +91,13 @@ export interface Options {
   openaiProject?: string;
   openaiOrganization?: string;
 
+  /** Azure Inference Specific */
+  azureRegion?: string;
+  azureDeploymentName?: string;
+  azureDeploymentType?: 'managed' | 'serverless';
+  azureEndpointName?: string;
+  azureApiVersion?: string;
+
   /** The parameter to determine if extra non-openai compliant fields should be returned in response */
   strictOpenAiCompliance?: boolean;
 
@@ -156,6 +163,7 @@ export interface ContentType {
   text?: string;
   image_url?: {
     url: string;
+    detail?: string;
   };
 }
 

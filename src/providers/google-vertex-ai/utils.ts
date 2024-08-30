@@ -135,3 +135,32 @@ export const getModelAndProvider = (modelString: string) => {
 
   return { provider, model };
 };
+
+const fileExtensionMimeTypeMap = {
+  mp4: 'video/mp4',
+  jpeg: 'image/jpeg',
+  jpg: 'image/jpeg',
+  png: 'image/png',
+  bmp: 'image/bmp',
+  tiff: 'image/tiff',
+  webp: 'image/webp',
+  pdf: 'application/pdf',
+  mp3: 'audio/mp3',
+  wav: 'audio/wav',
+  txt: 'text/plain',
+  mov: 'video/mov',
+  mpeg: 'video/mpeg',
+  mpg: 'video/mpg',
+  avi: 'video/avi',
+  wmv: 'video/wmv',
+  mpegps: 'video/mpegps',
+  flv: 'video/flv',
+};
+
+export const getMimeType = (url: string) => {
+  const urlParts = url.split('.');
+  const extension = urlParts[
+    urlParts.length - 1
+  ] as keyof typeof fileExtensionMimeTypeMap;
+  return fileExtensionMimeTypeMap[extension] || 'image/jpeg';
+};

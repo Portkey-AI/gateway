@@ -32,6 +32,10 @@ import DeepSeekAPIConfig from './deepseek';
 import PredibaseConfig from './predibase';
 import TritonConfig from './triton/';
 import VoyageConfig from './voyage';
+import {
+  AzureAIInferenceAPIConfig,
+  GithubModelAPiConfig,
+} from './azure-ai-inference';
 import DeepbricksConfig from './deepbricks';
 import SiliconFlowConfig from './siliconflow';
 import HuggingfaceConfig from './huggingface';
@@ -72,6 +76,8 @@ const Providers: { [key: string]: ProviderConfigs } = {
   predibase: PredibaseConfig,
   triton: TritonConfig,
   voyage: VoyageConfig,
+  'azure-ai': AzureAIInferenceAPIConfig,
+  github: GithubModelAPiConfig,
   deepbricks: DeepbricksConfig,
   siliconflow: SiliconFlowConfig,
   cerebras: cerebrasProviderAPIConfig,
