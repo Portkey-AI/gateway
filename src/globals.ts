@@ -64,6 +64,7 @@ export const TRITON: string = 'triton';
 export const VOYAGE: string = 'voyage';
 export const DEEPBRICKS: string = 'deepbricks';
 export const SILICONFLOW: string = 'siliconflow';
+export const CREEBRAS: string = 'cerebras';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -102,6 +103,7 @@ export const VALID_PROVIDERS = [
   DEEPBRICKS,
   SILICONFLOW,
   HUGGING_FACE,
+  CREEBRAS,
 ];
 
 export const CONTENT_TYPES = {
