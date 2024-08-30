@@ -3,6 +3,7 @@ import {
     FimCompletionResponse,
     ErrorResponse,
     ProviderConfig,
+    MistralFinishReason
   } from '../types';
 
   import {
@@ -60,9 +61,9 @@ import {
         param: 'stop',
         default: []
     }
-  };
+};
 
-  interface MistralAIFimCompleteResponse extends FimCompletionResponse {
+interface MistralAIFimCompleteResponse extends FimCompletionResponse {
     id: string;
     object: string;
     created: number;
@@ -72,15 +73,15 @@ import {
       completion_tokens: number;
       total_tokens: number;
     };
-  }
+}
 
-  export interface MistralAIErrorResponse {
+export interface MistralAIErrorResponse {
     object: string;
     message: string;
     type: string;
     param: string | null;
     code: string;
-  }
+}
 
 
 interface MistralAIStreamChunk {
@@ -99,7 +100,24 @@ interface MistralAIStreamChunk {
   }
 
 
-  export const MistralAIFimCompleteResponseTransform: (
+  function transformMistralFinishReasonToOpenAIFinishReason(finish_reason: MistralFinishReason | string): string {
+    switch (finish_reason) {
+        case MistralFinishReason.STOP:
+            return 'stop';
+        case MistralFinishReason.LENGTH:
+            return 'length';
+        case MistralFinishReason.MODEL_LENGTH:
+            return 'model_length';
+        case MistralFinishReason.TOOL_CALLS:
+            return 'tool_calls';
+        default:
+            return 'stop'; 
+    }
+}
+
+
+
+export const MistralAIFimCompleteResponseTransform: (
     response: MistralAIFimCompleteResponse | MistralAIErrorResponse,
     responseStatus: number
   ) => FimCompletionResponse | ErrorResponse = (response, responseStatus) => {
@@ -128,7 +146,7 @@ interface MistralAIStreamChunk {
             role: c.message.role,
             content: c.message.content,
           },
-          finish_reason: c.finish_reason,
+          finish_reason: transformMistralFinishReasonToOpenAIFinishReason(c.finish_reason),
         })),
         usage: {
           prompt_tokens: response.usage?.prompt_tokens,
@@ -142,7 +160,7 @@ interface MistralAIStreamChunk {
   };
 
 
-  export const MistralAIFimCompleteStreamChunkTransform: (
+export const MistralAIFimCompleteStreamChunkTransform: (
   response: string
 ) => string = (responseChunk) => {
   let chunk = responseChunk.trim();
@@ -150,8 +168,8 @@ interface MistralAIStreamChunk {
   chunk = chunk.trim();
   if (chunk === '[DONE]') {
     return `data: ${chunk}\n\n`;
-  }
-  const parsedChunk: MistralAIStreamChunk = JSON.parse(chunk);
+}
+const parsedChunk: MistralAIStreamChunk = JSON.parse(chunk);
   return (
     `data: ${JSON.stringify({
       id: parsedChunk.id,

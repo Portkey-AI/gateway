@@ -170,9 +170,16 @@ export interface FimCompletionResponse extends CResponse {
  * The structure of a choice in a chat completion response.
  * @interface
  */
+export enum MistralFinishReason {
+  STOP = "stop",
+  LENGTH = "length",
+  MODEL_LENGTH = "model_length",
+  ERROR = "error",
+  TOOL_CALLS = "tool_calls",
+}
+
 export interface FimChoice {
   index: number;
   message: Message;
-  finish_reason: string;
-  logprobs?: object | null;
+  finish_reason: MistralFinishReason | string;
 }
