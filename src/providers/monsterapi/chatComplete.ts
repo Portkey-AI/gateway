@@ -50,17 +50,6 @@ export const MonsterAPIChatCompleteConfig: ProviderConfig = {
   },
 };
 
-export interface MonsterAPIChatCompleteResponse {
-  model: string;
-  response: {
-    text: string[];
-    token_counts: {
-      input: number;
-      output: number;
-    };
-    credits_consumed: number;
-  };
-}
 
 export interface MonsterAPIErrorResponse {
   error: {
@@ -71,9 +60,10 @@ export interface MonsterAPIErrorResponse {
 }
 
 export const MonsterAPIChatCompleteResponseTransform: (
-  response: MonsterAPIChatCompleteResponse | MonsterAPIErrorResponse,
+  response: ChatCompletionResponse | MonsterAPIErrorResponse,
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+  console.log(response);
   if ('error' in response) {
     return generateErrorResponse(
       {
@@ -86,30 +76,9 @@ export const MonsterAPIChatCompleteResponseTransform: (
     );
   }
 
-  if ('response' in response) {
+  if ('choices' in response) {
     return {
-      id: Date.now().toString(),
-      object: 'chat.completion',
-      created: Math.floor(Date.now() / 1000),
-      model: response?.model,
-      choices: [
-        {
-          message: {
-            role: 'assistant',
-            content: response.response.text.join('\n'),
-          },
-          index: 0,
-          logprobs: null,
-          finish_reason: 'completed',
-        },
-      ],
-      usage: {
-        prompt_tokens: response.response.token_counts.input,
-        completion_tokens: response.response.token_counts.output,
-        total_tokens:
-          response.response.token_counts.input +
-          response.response.token_counts.output,
-      },
+      ...response,
       provider: MONSTERAPI,
     };
   }
