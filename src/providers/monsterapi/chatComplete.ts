@@ -50,7 +50,6 @@ export const MonsterAPIChatCompleteConfig: ProviderConfig = {
   },
 };
 
-
 export interface MonsterAPIErrorResponse {
   error: {
     message: string;
