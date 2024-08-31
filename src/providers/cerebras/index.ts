@@ -1,4 +1,4 @@
-import { CREEBRAS } from '../../globals';
+import { CEREBRAS } from '../../globals';
 import { chatCompleteParams, responseTransformers } from '../open-ai-base';
 import { ProviderConfigs } from '../types';
 import { cerebrasAPIConfig } from './api';
@@ -13,7 +13,7 @@ export const cerebrasProviderAPIConfig: ProviderConfigs = {
     'service_tier',
   ]),
   api: cerebrasAPIConfig,
-  responseTransforms: responseTransformers(CREEBRAS, {
+  responseTransforms: responseTransformers(CEREBRAS, {
     chatComplete: true,
   }),
 };

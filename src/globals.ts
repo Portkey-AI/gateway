@@ -66,7 +66,7 @@ export const VOYAGE: string = 'voyage';
 export const GITHUB: string = 'github';
 export const DEEPBRICKS: string = 'deepbricks';
 export const SILICONFLOW: string = 'siliconflow';
-export const CREEBRAS: string = 'cerebras';
+export const CEREBRAS: string = 'cerebras';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -107,7 +107,7 @@ export const VALID_PROVIDERS = [
   DEEPBRICKS,
   SILICONFLOW,
   HUGGING_FACE,
-  CREEBRAS,
+  CEREBRAS,
 ];
 
 export const CONTENT_TYPES = {
