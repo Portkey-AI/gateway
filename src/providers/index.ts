@@ -39,6 +39,7 @@ import {
 import DeepbricksConfig from './deepbricks';
 import SiliconFlowConfig from './siliconflow';
 import HuggingfaceConfig from './huggingface';
+import { cerebrasProviderAPIConfig } from './cerebras';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -79,6 +80,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   github: GithubModelAPiConfig,
   deepbricks: DeepbricksConfig,
   siliconflow: SiliconFlowConfig,
+  cerebras: cerebrasProviderAPIConfig,
 };
 
 export default Providers;
