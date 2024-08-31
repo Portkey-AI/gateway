@@ -413,12 +413,12 @@ export const GoogleChatCompleteResponseTransform: (
       choices:
         response.candidates?.map((generation) => {
           let message: Message = { role: 'assistant', content: '' };
-          if (generation.content.parts[0]?.text) {
+          if (generation.content?.parts[0]?.text) {
             message = {
               role: 'assistant',
               content: generation.content.parts[0]?.text,
             };
-          } else if (generation.content.parts[0]?.functionCall) {
+          } else if (generation.content?.parts[0]?.functionCall) {
             message = {
               role: 'assistant',
               tool_calls: generation.content.parts.map((part) => {
