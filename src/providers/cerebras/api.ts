@@ -1,7 +1,7 @@
 import { ProviderAPIConfig } from '../types';
 
 export const cerebrasAPIConfig: ProviderAPIConfig = {
-  getBaseURL: () => 'http://localhost:8009/v1',
+  getBaseURL: () => 'https://api.cerebras.ai/v1',
   headers: ({ providerOptions }) => {
     return { Authorization: `Bearer ${providerOptions.apiKey}` };
   },
