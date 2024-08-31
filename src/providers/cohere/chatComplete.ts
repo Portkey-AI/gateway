@@ -32,7 +32,7 @@ export const CohereChatCompleteConfig: ProviderConfig = {
 
         return prompt.content
           ?.filter((_msg) => _msg.type === 'text')
-          .map((_msg) => _msg.text);
+          .reduce((acc, _msg) => acc + _msg.text, '');
       },
     },
     {
@@ -44,7 +44,7 @@ export const CohereChatCompleteConfig: ProviderConfig = {
           0,
           messages.length - 1
         );
-        // generate history and forware it to model
+        // generate history and forward it to model
         const history: { message?: string; role: string }[] =
           messagesWithoutLastMessage.map((message) => {
             const _message: { role: any; message: string } = {
@@ -164,7 +164,7 @@ export const CohereChatCompleteResponseTransform: (
       {
         message: { role: 'assistant', content: response.text },
         index: 0,
-        finish_reason: 'length',
+        finish_reason: response.finish_reason,
       },
     ],
     usage: {
