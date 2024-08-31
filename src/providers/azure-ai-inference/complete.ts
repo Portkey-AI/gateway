@@ -1,4 +1,3 @@
-import { AZURE_AI_INFERENCE } from '../../globals';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
 import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 
