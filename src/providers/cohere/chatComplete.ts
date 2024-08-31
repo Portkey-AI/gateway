@@ -164,7 +164,7 @@ export const CohereChatCompleteResponseTransform: (
       {
         message: { role: 'assistant', content: response.text },
         index: 0,
-        finish_reason: 'length',
+        finish_reason: response.finish_reason,
       },
     ],
     usage: {
