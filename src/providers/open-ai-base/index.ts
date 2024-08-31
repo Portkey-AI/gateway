@@ -238,7 +238,8 @@ export const embedParams = (
 };
 
 const EmbedResponseTransformer = <T extends EmbedResponse | ErrorResponse>(
-  provider: string
+  provider: string,
+  customTransformer?: CustomTransformer<EmbedResponse, T>
 ) => {
   const transformer: (
     response: T | ErrorResponse,
@@ -358,11 +359,17 @@ export const responseTransformers = <
   };
 
   if (options.embed) {
-    transformers.embed = EmbedResponseTransformer<T>(provider);
+    transformers.embed = EmbedResponseTransformer<T>(
+      provider,
+      typeof options.embed === 'function' ? options.embed : undefined
+    );
   }
 
   if (options.complete) {
-    transformers.complete = CompleteResponseTransformer<U>(provider);
+    transformers.complete = CompleteResponseTransformer<U>(
+      provider,
+      typeof options.complete === 'function' ? options.complete : undefined
+    );
   }
 
   if (options.chatComplete) {
