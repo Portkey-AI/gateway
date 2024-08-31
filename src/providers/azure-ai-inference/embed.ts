@@ -1,4 +1,3 @@
-import { AZURE_AI_INFERENCE } from '../../globals';
 import { EmbedResponse } from '../../types/embedRequestBody';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
 import { ErrorResponse, ProviderConfig } from '../types';
