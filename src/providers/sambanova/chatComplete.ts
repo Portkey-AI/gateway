@@ -4,10 +4,6 @@ import {
   ErrorResponse,
   ProviderConfig,
 } from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
 
 export const SamvaNovaChatCompleteConfig: ProviderConfig = {
   model: {
@@ -24,6 +20,7 @@ export const SamvaNovaChatCompleteConfig: ProviderConfig = {
     default: 100,
     min: 0,
   },
+  // Currently FastAPI supports stream responses only.
   stream: {
     param: 'stream',
     default: true,
@@ -31,8 +28,6 @@ export const SamvaNovaChatCompleteConfig: ProviderConfig = {
   stream_options: {
     param: 'stream_options',
   },
-  // todo: `temperature`, `top_p`, and etc does not exist on document but api-starter-kit have.
-  // todo: Current API supports only stream.
   stop: {
     param: 'stop',
   },
@@ -71,46 +66,6 @@ export interface SamvaNovaStreamChunk {
     completion_tokens_after_first_per_sec_first_ten: number;
   } | null;
 }
-
-export const SamvaNovaChatCompleteResponseTransform: (
-  response: SamvaNovaChatCompleteResponse | SamvaNovaErrorResponse,
-  responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if ('error' in response && responseStatus !== 200) {
-    return generateErrorResponse(
-      {
-        message: response.error.message,
-        type: response.error.type,
-        param: null,
-        code: response.error.code?.toString() || null,
-      },
-      SAMBANOVA
-    );
-  }
-
-  if ('choices' in response) {
-    return {
-      id: response.id,
-      object: response.object,
-      created: response.created,
-      model: response.model,
-      provider: SAMBANOVA,
-      choices: response.choices.map((c) => ({
-        index: c.index,
-        message: c.message,
-        logprobs: c.logprobs,
-        finish_reason: c.finish_reason,
-      })),
-      usage: {
-        prompt_tokens: response.usage?.prompt_tokens || 0,
-        completion_tokens: response.usage?.completion_tokens || 0,
-        total_tokens: response.usage?.total_tokens || 0,
-      },
-    };
-  }
-
-  return generateInvalidProviderResponseError(response, SAMBANOVA);
-};
 
 export const SamvaNovaChatCompleteStreamChunkTransform: (
   response: string
