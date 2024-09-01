@@ -98,6 +98,11 @@ export interface CResponse extends BaseResponse {
     prompt_tokens: number;
     completion_tokens: number;
     total_tokens: number;
+    /*
+     * Anthropic Prompt cache token usage
+     */
+    cache_read_input_tokens?: number;
+    cache_creation_input_tokens?: number;
   };
 }
 
