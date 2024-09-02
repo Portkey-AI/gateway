@@ -28,6 +28,7 @@ import { handler as patronusnoRacialBias } from './patronus/noRacialBias';
 import { handler as patronusretrievalAnswerRelevance } from './patronus/retrievalAnswerRelevance';
 import { handler as patronustoxicity } from './patronus/toxicity';
 import { handler as patronuscustom } from './patronus/custom';
+import { handler as uppercasealluppercase } from './all-uppercase/alluppercase';
 
 export const plugins = {
   default: {
@@ -71,5 +72,8 @@ export const plugins = {
     retrievalAnswerRelevance: patronusretrievalAnswerRelevance,
     toxicity: patronustoxicity,
     custom: patronuscustom,
+  },
+  'all-uppercase': {
+    alluppercase: uppercasealluppercase,
   },
 };
