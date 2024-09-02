@@ -5,34 +5,6 @@ import {
   ProviderConfig,
 } from '../types';
 
-export const SamvaNovaChatCompleteConfig: ProviderConfig = {
-  model: {
-    param: 'model',
-    required: true,
-    default: 'Meta-Llama-3.1-8B-Instruct',
-  },
-  messages: {
-    param: 'messages',
-    default: '',
-  },
-  max_tokens: {
-    param: 'max_tokens',
-    default: 100,
-    min: 0,
-  },
-  // Currently FastAPI supports stream responses only.
-  stream: {
-    param: 'stream',
-    default: true,
-  },
-  stream_options: {
-    param: 'stream_options',
-  },
-  stop: {
-    param: 'stop',
-  },
-};
-
 export interface SamvaNovaChatCompleteResponse extends ChatCompletionResponse {}
 
 export interface SamvaNovaErrorResponse extends ErrorResponse {}
