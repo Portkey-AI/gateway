@@ -6,7 +6,9 @@ import {
   GOOGLE,
   REQUEST_TIMEOUT_STATUS_CODE,
   PRECONDITION_CHECK_FAILED_STATUS_CODE,
+  GOOGLE_VERTEX_AI,
 } from '../globals';
+import { VertexLlamaChatCompleteStreamChunkTransform } from '../providers/google-vertex-ai/chatComplete';
 import { OpenAIChatCompleteResponse } from '../providers/openai/chatComplete';
 import { OpenAICompleteResponse } from '../providers/openai/complete';
 import { getStreamModeSplitPattern, type SplitPatternType } from '../utils';
@@ -124,7 +126,8 @@ export async function* readStream(
   splitPattern: SplitPatternType,
   transformFunction: Function | undefined,
   isSleepTimeRequired: boolean,
-  fallbackChunkId: string
+  fallbackChunkId: string,
+  strictOpenAiCompliance: boolean
 ) {
   let buffer = '';
   let decoder = new TextDecoder();
@@ -136,7 +139,12 @@ export async function* readStream(
     if (done) {
       if (buffer.length > 0) {
         if (transformFunction) {
-          yield transformFunction(buffer, fallbackChunkId, streamState);
+          yield transformFunction(
+            buffer,
+            fallbackChunkId,
+            streamState,
+            strictOpenAiCompliance
+          );
         } else {
           yield buffer;
         }
@@ -165,7 +173,8 @@ export async function* readStream(
             const transformedChunk = transformFunction(
               part,
               fallbackChunkId,
-              streamState
+              streamState,
+              strictOpenAiCompliance
             );
             if (transformedChunk !== undefined) {
               yield transformedChunk;
@@ -207,7 +216,8 @@ export async function handleTextResponse(
 
 export async function handleNonStreamingMode(
   response: Response,
-  responseTransformer: Function | undefined
+  responseTransformer: Function | undefined,
+  strictOpenAiCompliance: boolean
 ) {
   // 408 is thrown whenever a request takes more than request_timeout to respond.
   // In that case, response thrown by gateway is already in OpenAI format.
@@ -218,7 +228,7 @@ export async function handleNonStreamingMode(
       PRECONDITION_CHECK_FAILED_STATUS_CODE,
     ].includes(response.status)
   ) {
-    return response;
+    return { response, json: await response.clone().json() };
   }
 
   let responseBodyJson = await response.json();
@@ -226,31 +236,36 @@ export async function handleNonStreamingMode(
     responseBodyJson = responseTransformer(
       responseBodyJson,
       response.status,
-      response.headers
+      response.headers,
+      strictOpenAiCompliance
     );
   }
 
-  return new Response(JSON.stringify(responseBodyJson), response);
+  return {
+    response: new Response(JSON.stringify(responseBodyJson), response),
+    json: responseBodyJson,
+  };
 }
 
-export async function handleAudioResponse(response: Response) {
+export function handleAudioResponse(response: Response) {
   return new Response(response.body, response);
 }
 
-export async function handleOctetStreamResponse(response: Response) {
+export function handleOctetStreamResponse(response: Response) {
   return new Response(response.body, response);
 }
 
-export async function handleImageResponse(response: Response) {
+export function handleImageResponse(response: Response) {
   return new Response(response.body, response);
 }
 
-export async function handleStreamingMode(
+export function handleStreamingMode(
   response: Response,
   proxyProvider: string,
   responseTransformer: Function | undefined,
-  requestURL: string
-): Promise<Response> {
+  requestURL: string,
+  strictOpenAiCompliance: boolean
+): Response {
   const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);
   // If the provider doesn't supply completion id,
   // we generate a fallback id using the provider name + timestamp.
@@ -283,7 +298,8 @@ export async function handleStreamingMode(
         splitPattern,
         responseTransformer,
         isSleepTimeRequired,
-        fallbackChunkId
+        fallbackChunkId,
+        strictOpenAiCompliance
       )) {
         await writer.write(encoder.encode(chunk));
       }
@@ -292,15 +308,15 @@ export async function handleStreamingMode(
   }
 
   // Convert GEMINI/COHERE json stream to text/event-stream for non-proxy calls
-  if (
-    [
-      //
-      GOOGLE,
-      COHERE,
-      BEDROCK,
-    ].includes(proxyProvider) &&
-    responseTransformer
-  ) {
+  const isGoogleCohereOrBedrock = [GOOGLE, COHERE, BEDROCK].includes(
+    proxyProvider
+  );
+  const isVertexLlama =
+    proxyProvider === GOOGLE_VERTEX_AI &&
+    responseTransformer?.name ===
+      VertexLlamaChatCompleteStreamChunkTransform.name;
+  const isJsonStream = isGoogleCohereOrBedrock || isVertexLlama;
+  if (isJsonStream && responseTransformer) {
     return new Response(readable, {
       ...response,
       headers: new Headers({

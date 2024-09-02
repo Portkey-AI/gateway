@@ -1,3 +1,4 @@
+import { RouterError } from '../errors/RouterError';
 import {
   constructConfigFromRequestHeaders,
   tryTargetsRecursively,
@@ -30,13 +31,21 @@ export async function chatCompletionsHandler(c: Context): Promise<Response> {
     return tryTargetsResponse;
   } catch (err: any) {
     console.log('chatCompletion error', err.message);
+    let statusCode = 500;
+    let errorMessage = 'Something went wrong';
+
+    if (err instanceof RouterError) {
+      statusCode = 400;
+      errorMessage = err.message;
+    }
+
     return new Response(
       JSON.stringify({
         status: 'failure',
-        message: 'Something went wrong',
+        message: errorMessage,
       }),
       {
-        status: 500,
+        status: statusCode,
         headers: {
           'content-type': 'application/json',
         },

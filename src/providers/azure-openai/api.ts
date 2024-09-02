@@ -1,4 +1,3 @@
-import { Options } from '../../types/requestBody';
 import { ProviderAPIConfig } from '../types';
 
 const AzureOpenAIAPIConfig: ProviderAPIConfig = {
@@ -6,9 +5,13 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     const { resourceName, deploymentId } = providerOptions;
     return `https://${resourceName}.openai.azure.com/openai/deployments/${deploymentId}`;
   },
-  headers: ({ providerOptions }) => {
-    const { apiKey } = providerOptions;
-    return { 'api-key': `${apiKey}` };
+  headers: ({ providerOptions, fn }) => {
+    const headersObj: Record<string, string> = {
+      'api-key': `${providerOptions.apiKey}`,
+    };
+    if (fn === 'createTranscription' || fn === 'createTranslation')
+      headersObj['Content-Type'] = 'multipart/form-data';
+    return headersObj;
   },
   getEndpoint: ({ providerOptions, fn }) => {
     const { apiVersion, urlToFetch } = providerOptions;
@@ -23,6 +26,12 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
         mappedFn = 'embed';
       } else if (urlToFetch?.indexOf('/images/generations') > -1) {
         mappedFn = 'imageGenerate';
+      } else if (urlToFetch?.indexOf('/audio/speech') > -1) {
+        mappedFn = 'createSpeech';
+      } else if (urlToFetch?.indexOf('/audio/transcriptions') > -1) {
+        mappedFn = 'createTranscription';
+      } else if (urlToFetch?.indexOf('/audio/translations') > -1) {
+        mappedFn = 'createTranslation';
       }
     }
 
@@ -38,6 +47,15 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       }
       case 'imageGenerate': {
         return `/images/generations?api-version=${apiVersion}`;
+      }
+      case 'createSpeech': {
+        return `/audio/speech?api-version=${apiVersion}`;
+      }
+      case 'createTranscription': {
+        return `/audio/transcriptions?api-version=${apiVersion}`;
+      }
+      case 'createTranslation': {
+        return `/audio/translations?api-version=${apiVersion}`;
       }
       default:
         return '';

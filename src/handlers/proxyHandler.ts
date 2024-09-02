@@ -1,26 +1,26 @@
 import { Context } from 'hono';
-import { retryRequest } from './retryHandler';
-import Providers from '../providers';
+import { env } from 'hono/adapter';
 import {
   ANTHROPIC,
-  MAX_RETRIES,
-  HEADER_KEYS,
-  RETRY_STATUS_CODES,
-  POWERED_BY,
-  RESPONSE_HEADER_KEYS,
   AZURE_OPEN_AI,
   CONTENT_TYPES,
+  HEADER_KEYS,
+  MAX_RETRIES,
   OLLAMA,
+  POWERED_BY,
+  RETRY_STATUS_CODES,
+  TRITON,
 } from '../globals';
+import Providers from '../providers';
+import { Config, ShortConfig } from '../types/requestBody';
+import { convertKeysToCamelCase, getStreamingMode } from '../utils';
 import {
   fetchProviderOptionsFromConfig,
-  responseHandler,
   tryProvidersInSequence,
   updateResponseHeaders,
 } from './handlerUtils';
-import { convertKeysToCamelCase, getStreamingMode } from '../utils';
-import { Config, ShortConfig } from '../types/requestBody';
-import { env } from 'hono/adapter';
+import { retryRequest } from './retryHandler';
+import { responseHandler } from './responseHandlers';
 // Find the proxy provider
 function proxyProvider(proxyModeHeader: string, providerHeader: string) {
   const proxyProvider = proxyModeHeader?.split(' ')[1] ?? providerHeader;
@@ -49,7 +49,7 @@ function getProxyPath(
     return `https:/${reqPath}${reqQuery}`;
   }
 
-  if (proxyProvider === OLLAMA) {
+  if (proxyProvider === OLLAMA || proxyProvider === TRITON) {
     return `https:/${reqPath}`;
   }
   let proxyPath = `${providerBasePath}${reqPath}${reqQuery}`;
@@ -66,10 +66,11 @@ async function getRequestData(request: Request, contentType: string) {
   let requestJSON: Record<string, any> = {};
   let requestFormData;
   let requestBody = '';
+  let requestBinary: ArrayBuffer = new ArrayBuffer(0);
 
   if (contentType == CONTENT_TYPES.APPLICATION_JSON) {
     if (['GET', 'DELETE'].includes(request.method)) {
-      return [requestJSON, requestFormData];
+      return { requestJSON, requestFormData };
     }
     requestBody = await request.text();
     requestJSON = JSON.parse(requestBody);
@@ -78,9 +79,11 @@ async function getRequestData(request: Request, contentType: string) {
     requestFormData.forEach(function (value, key) {
       requestJSON[key] = value;
     });
+  } else if (contentType.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)) {
+    requestBinary = await request.arrayBuffer();
   }
 
-  return [requestJSON, requestFormData];
+  return { requestJSON, requestFormData, requestBinary };
 }
 
 function headersToSend(
@@ -89,7 +92,11 @@ function headersToSend(
 ): Record<string, string> {
   let final: Record<string, string> = {};
   const poweredByHeadersPattern = `x-${POWERED_BY}-`;
-  const headersToAvoid = [...customHeadersToIgnore];
+  const headersToAvoidForCloudflare = ['expect'];
+  const headersToAvoid = [
+    ...customHeadersToIgnore,
+    ...headersToAvoidForCloudflare,
+  ];
   if (
     headersObj['content-type']?.split(';')[0] ===
     CONTENT_TYPES.MULTIPART_FORM_DATA
@@ -106,6 +113,10 @@ function headersToSend(
     }
   });
 
+  // Remove brotli from accept-encoding because cloudflare has problems with it
+  if (final['accept-encoding']?.includes('br'))
+    final['accept-encoding'] = final['accept-encoding']?.replace('br', '');
+
   return final;
 }
 
@@ -113,10 +124,8 @@ export async function proxyHandler(c: Context): Promise<Response> {
   try {
     const requestHeaders = Object.fromEntries(c.req.raw.headers);
     const requestContentType = requestHeaders['content-type']?.split(';')[0];
-    const [requestJSON, requestFormData] = await getRequestData(
-      c.req.raw,
-      requestContentType
-    );
+    const { requestJSON, requestFormData, requestBinary } =
+      await getRequestData(c.req.raw, requestContentType);
     const store: Record<string, any> = {
       proxyProvider: proxyProvider(
         requestHeaders[HEADER_KEYS.MODE],
@@ -206,13 +215,19 @@ export async function proxyHandler(c: Context): Promise<Response> {
       ) as Config | ShortConfig;
     }
 
+    let body;
+    if (requestContentType.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)) {
+      body = requestBinary;
+    } else if (requestContentType === CONTENT_TYPES.MULTIPART_FORM_DATA) {
+      body = store.requestFormData;
+    } else {
+      body = JSON.stringify(store.reqBody);
+    }
+
     let fetchOptions = {
       headers: headersToSend(requestHeaders, store.customHeadersToAvoid),
       method: c.req.method,
-      body:
-        requestContentType === CONTENT_TYPES.MULTIPART_FORM_DATA
-          ? store.requestFormData
-          : JSON.stringify(store.reqBody),
+      body: body,
     };
 
     let retryCount = 0;
@@ -261,7 +276,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
         cacheMode
       );
       if (cacheResponse) {
-        const cacheMappedResponse = await responseHandler(
+        const { response: cacheMappedResponse } = await responseHandler(
           new Response(cacheResponse, {
             headers: {
               'content-type': 'application/json',
@@ -272,7 +287,8 @@ export async function proxyHandler(c: Context): Promise<Response> {
           undefined,
           urlToFetch,
           false,
-          store.reqBody
+          store.reqBody,
+          false
         );
         c.set('requestOptions', [
           {
@@ -310,14 +326,15 @@ export async function proxyHandler(c: Context): Promise<Response> {
       retryStatusCodes,
       null
     );
-    const mappedResponse = await responseHandler(
+    const { response: mappedResponse } = await responseHandler(
       lastResponse,
       store.isStreamingMode,
       store.proxyProvider,
       undefined,
       urlToFetch,
       false,
-      store.reqBody
+      store.reqBody,
+      false
     );
     updateResponseHeaders(
       mappedResponse,

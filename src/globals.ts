@@ -1,3 +1,5 @@
+import { endpointStrings } from './providers/types';
+
 export const POWERED_BY: string = 'portkey';
 
 export const HEADER_KEYS: Record<string, string> = {
@@ -6,9 +8,11 @@ export const HEADER_KEYS: Record<string, string> = {
   PROVIDER: `x-${POWERED_BY}-provider`,
   TRACE_ID: `x-${POWERED_BY}-trace-id`,
   CACHE: `x-${POWERED_BY}-cache`,
+  METADATA: `x-${POWERED_BY}-metadata`,
   FORWARD_HEADERS: `x-${POWERED_BY}-forward-headers`,
   CUSTOM_HOST: `x-${POWERED_BY}-custom-host`,
   REQUEST_TIMEOUT: `x-${POWERED_BY}-request-timeout`,
+  STRICT_OPEN_AI_COMPLIANCE: `x-${POWERED_BY}-strict-open-ai-compliance`,
 };
 
 export const RESPONSE_HEADER_KEYS: Record<string, string> = {
@@ -27,12 +31,14 @@ export const PRECONDITION_CHECK_FAILED_STATUS_CODE = 412;
 export const OPEN_AI: string = 'openai';
 export const COHERE: string = 'cohere';
 export const AZURE_OPEN_AI: string = 'azure-openai';
+export const AZURE_AI_INFERENCE: string = 'azure-ai';
 export const ANTHROPIC: string = 'anthropic';
 export const ANYSCALE: string = 'anyscale';
 export const PALM: string = 'palm';
 export const TOGETHER_AI: string = 'together-ai';
 export const GOOGLE: string = 'google';
 export const GOOGLE_VERTEX_AI: string = 'vertex-ai';
+export const HUGGING_FACE: string = 'huggingface';
 export const PERPLEXITY_AI: string = 'perplexity-ai';
 export const REKA_AI: string = 'reka-ai';
 export const MISTRAL_AI: string = 'mistral-ai';
@@ -53,7 +59,14 @@ export const LINGYI: string = 'lingyi';
 export const ZHIPU: string = 'zhipu';
 export const NOVITA_AI: string = 'novita-ai';
 export const MONSTERAPI: string = 'monsterapi';
+export const DEEPSEEK: string = 'deepseek';
 export const PREDIBASE: string = 'predibase';
+export const TRITON: string = 'triton';
+export const VOYAGE: string = 'voyage';
+export const GITHUB: string = 'github';
+export const DEEPBRICKS: string = 'deepbricks';
+export const SILICONFLOW: string = 'siliconflow';
+export const CEREBRAS: string = 'cerebras';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -85,7 +98,16 @@ export const VALID_PROVIDERS = [
   ZHIPU,
   NOVITA_AI,
   MONSTERAPI,
+  DEEPSEEK,
   PREDIBASE,
+  TRITON,
+  VOYAGE,
+  AZURE_AI_INFERENCE,
+  GITHUB,
+  DEEPBRICKS,
+  SILICONFLOW,
+  HUGGING_FACE,
+  CEREBRAS,
 ];
 
 export const CONTENT_TYPES = {
@@ -99,3 +121,8 @@ export const CONTENT_TYPES = {
   HTML: 'text/html',
   GENERIC_IMAGE_PATTERN: 'image/',
 };
+
+export const MULTIPART_FORM_DATA_ENDPOINTS: endpointStrings[] = [
+  'createTranscription',
+  'createTranslation',
+];

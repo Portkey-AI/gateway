@@ -8,7 +8,7 @@ const CohereAPIConfig: ProviderAPIConfig = {
   getEndpoint: ({ fn }) => {
     switch (fn) {
       case 'chatComplete':
-        return '/generate';
+        return '/chat';
       case 'complete':
         return '/generate';
       case 'embed':
