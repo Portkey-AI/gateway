@@ -78,7 +78,7 @@ export const SamvaNovaChatCompleteStreamChunkTransform: (
           role: 'assistant',
           content: parsedChunk.choices[0].delta.content,
         },
-        logprobs: null,
+        logprobs: parsedChunk.choices[0].logprobs,
         finish_reason: parsedChunk.choices[0].finish_reason || null,
       },
     ],
