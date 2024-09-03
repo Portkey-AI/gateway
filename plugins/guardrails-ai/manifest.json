@@ -1,0 +1,104 @@
+{
+  "id": "guardrails-ai",
+  "name": "Guardrails AI",
+  "description": "Guardrails AI validators for Portkey Gateway",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "API Key for Guardrails AI",
+        "encrypted": true
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Toxic Language",
+      "id": "toxicLanguage",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Detect toxic language in the content."
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Competitor Check",
+      "id": "competitorCheck",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Check for mentions of competitors in the content."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "competitors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "label": "Competitors",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "List of competitor names to check for."
+              }
+            ]
+          }
+        },
+        "required": ["competitors"]
+      }
+    },
+    {
+      "name": "Restrict to Topic",
+      "id": "restrictToTopic",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Ensure the content stays on the specified topic."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string",
+            "label": "Topic",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "The topic to restrict the content to."
+              }
+            ]
+          }
+        },
+        "required": ["topic"]
+      }
+    },
+    {
+      "name": "Detect PII",
+      "id": "detectPII",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Detect Personally Identifiable Information (PII) in the content."
+        }
+      ],
+      "parameters": {}
+    }
+  ]
+}
