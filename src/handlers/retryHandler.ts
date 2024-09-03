@@ -79,11 +79,11 @@ export const retryRequest = async (
             errorObj.headers = Object.fromEntries(response.headers);
             throw errorObj;
           } else if (response.status >= 200 && response.status <= 204) {
-            console.log(
-              `Returned in Retry Attempt ${attempt}. Status:`,
-              response.ok,
-              response.status
-            );
+            // console.log(
+            //   `Returned in Retry Attempt ${attempt}. Status:`,
+            //   response.ok,
+            //   response.status
+            // );
           } else {
             // All error codes that aren't retried need to be propogated up
             const errorObj: any = new Error(await response.clone().text());
@@ -112,11 +112,23 @@ export const retryRequest = async (
       }
     );
   } catch (error: any) {
-    lastResponse = new Response(error.message, {
-      status: error.status,
-      headers: error.headers,
-    });
-    console.error(error);
+    if (
+      error instanceof TypeError &&
+      error.cause instanceof Error &&
+      error.cause?.name === 'ConnectTimeoutError'
+    ) {
+      console.error('ConnectTimeoutError: ', error.cause);
+      // This error comes in case the host address is unreachable. Empty status code used to get returned
+      // from here hence no retry logic used to get called.
+      lastResponse = new Response(error.message, {
+        status: 503,
+      });
+    } else {
+      lastResponse = new Response(error.message, {
+        status: error.status,
+        headers: error.headers,
+      });
+    }
     console.warn(
       `Tried ${lastAttempt ?? 1} time(s) but failed. Error: ${JSON.stringify(error)}`
     );

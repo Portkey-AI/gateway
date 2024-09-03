@@ -49,7 +49,7 @@ npx @portkey-ai/gateway
 <br>
 
 #### 👉 Self-hosting the Enterprise Version
-The AI Gateway's enterprise version offers enterprise-ready capabilities for **org management**, **governance**, **security** and [more](https://docs.portkey.ai/docs/product/enterprise-offering) out of the box. Compare the open source, hosted and enterprise versions here.
+The AI Gateway's enterprise version offers enterprise-ready capabilities for **org management**, **governance**, **security** and [more](https://docs.portkey.ai/docs/product/enterprise-offering) out of the box. Compare the open source, hosted and enterprise versions [here](https://docs.portkey.ai/docs/product/product-feature-comparison).
 
 The enterprise deployment architecture, supported platforms is available here - [**Enterprise Private Cloud Deployments**](https://docs.portkey.ai/docs/product/enterprise-offering/private-cloud-deployments)
 
@@ -101,16 +101,17 @@ The AI gateway supports OpenAI compatible endpoints with added parameter support
 
 ## Gateway Cookbooks
 
-### 📈 Trending Cookbooks
-* [Run Gateway on prompts from Langchain hub](/cookbook/use-cases/run-gateway-on-prompts-from-langchain-hub.md)
-* [Use Porkey Gateway with Vercel's AI SDK](/cookbook/integrations/vercel-ai.md)
-* [Set up fallback from SDXL to Dall-E-3](/cookbook/getting-started/fallback-from-stable-diffusion-to-dall-e.ipynb)
+### Trending Cookbooks
+- Use models from [Nvidia NIM](/cookbook/providers/nvidia.ipynb) with AI Gateway
+- Monitor [CrewAI Agents](/cookbook/monitoring-agents/CrewAI_with_Telemetry.ipynb) with Portkey!
+- Comparing [Top 10 LMSYS Models](./use-cases/LMSYS%20Series/comparing-top10-LMSYS-models-with-Portkey.ipynb) with AI Gateway.
 
-### ✨ Latest Cookbooks
-* [Comparing Top 10 LMSYS Models with Portkey](/cookbook/use-cases/LMSYS%20Series/comparing-top10-LMSYS-models-with-Portkey.ipynb)
-* [Fallback from OpenAI to Azure OpenAI](/cookbook/getting-started/fallback-from-openai-to-azure.ipynb)
-* [Set up automatic retries for failed requests](/cookbook/getting-started/automatic-retries-on-failures.md)
-* [Call Llama 3 on Groq](/cookbook/use-cases/llama-3-on-groq.ipynb)
+### Latest Cookbooks
+* [Create Synthetic Datasets using Nemotron](/cookbook/use-cases/Nemotron_GPT_Finetuning_Portkey.ipynb)
+* [Use Portkey Gateway with Vercel's AI SDK](/cookbook/integrations/vercel-ai.md)
+* [Monitor Llama Agents with Portkey](/cookbook/monitoring-agents/Llama_Agents_with_Telemetry.ipynb)
+
+
 
 ### [More Examples](https://github.com/Portkey-AI/gateway/tree/main/cookbook)
 
@@ -149,6 +150,7 @@ Gateway seamlessly integrates with popular agent frameworks. [Read the documenta
 |------------------------------|--------|-------------|---------|------|---------------|-------------------|
 | [Autogen](https://docs.portkey.ai/docs/welcome/agents/autogen)    | ✅     | ✅          | ✅      | ✅   | ✅            | ✅                |
 | [CrewAI](https://docs.portkey.ai/docs/welcome/agents/crewai)             | ✅     | ✅          | ✅      | ✅   | ✅            | ✅                |
+| [LangChain](https://docs.portkey.ai/docs/welcome/agents/langchain-agents)             | ✅     | ✅          | ✅      | ✅   | ✅            | ✅                |
 | [Phidata](https://docs.portkey.ai/docs/welcome/agents/phidata)             | ✅     | ✅          | ✅      | ✅   | ✅            | ✅                |
 | [Llama Index](https://docs.portkey.ai/docs/welcome/agents/llama-agents)             | ✅     | ✅          | ✅      | ✅   | ✅            | ✅                |
 | [Control Flow](https://docs.portkey.ai/docs/welcome/agents/control-flow) | ✅     | ✅          | ✅      | ✅   | ✅            | ✅                |
@@ -259,7 +261,7 @@ Make your AI app more <ins>reliable</ins> and <ins>forward compatible</ins>, whi
 
 ## Contributing
 
-The easiest way to contribute is to pick an issue with the `good first issue` tag 💪. Read the contribution guidelines [here](/CONTRIBUTING.md).
+The easiest way to contribute is to pick an issue with the `good first issue` tag 💪. Read the contribution guidelines [here](/.github/CONTRIBUTING.md).
 
 Bug Report? [File here](https://github.com/Portkey-AI/gateway/issues) | Feature Request? [File here](https://github.com/Portkey-AI/gateway/issues)
 

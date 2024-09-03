@@ -1,3 +1,5 @@
+import { HookObject } from '../middlewares/hooks/types';
+
 /**
  * Settings for retrying requests.
  * @interface
@@ -14,9 +16,23 @@ interface CacheSettings {
   maxAge?: number;
 }
 
+export enum StrategyModes {
+  LOADBALANCE = 'loadbalance',
+  FALLBACK = 'fallback',
+  SINGLE = 'single',
+  CONDITIONAL = 'conditional',
+}
+
 interface Strategy {
-  mode: string;
+  mode: StrategyModes;
   onStatusCodes?: Array<number>;
+  conditions?: {
+    query: {
+      [key: string]: any;
+    };
+    then: string;
+  }[];
+  default?: string;
 }
 
 /**
@@ -61,17 +77,33 @@ export interface Options {
   awsSessionToken?: string;
   awsRegion?: string;
 
+  /** Hugging Face specific */
+  huggingfaceBaseUrl?: string;
+
   /** Google Vertex AI specific */
   vertexRegion?: string;
   vertexProjectId?: string;
   vertexServiceAccountJson?: Record<string, any>;
 
+  afterRequestHooks?: HookObject[];
+  beforeRequestHooks?: HookObject[];
   /** OpenAI specific */
   openaiProject?: string;
   openaiOrganization?: string;
 
+  /** Azure Inference Specific */
+  azureRegion?: string;
+  azureDeploymentName?: string;
+  azureDeploymentType?: 'managed' | 'serverless';
+  azureEndpointName?: string;
+  azureApiVersion?: string;
+
   /** The parameter to determine if extra non-openai compliant fields should be returned in response */
   strictOpenAiCompliance?: boolean;
+
+  /** Anthropic specific headers */
+  anthropicBeta?: string;
+  anthropicVersion?: string;
 }
 
 /**
@@ -79,6 +111,7 @@ export interface Options {
  * @interface
  */
 export interface Targets {
+  name?: string;
   strategy?: Strategy;
   /** The name of the provider. */
   provider?: string | undefined;
@@ -130,6 +163,7 @@ export interface ContentType {
   text?: string;
   image_url?: {
     url: string;
+    detail?: string;
   };
 }
 
@@ -165,6 +199,10 @@ export interface Message {
   tool_calls?: any;
   tool_call_id?: string;
   citationMetadata?: CitationMetadata;
+}
+
+export interface AnthropicPromptCache {
+  cache_control?: { type: 'ephemeral' };
 }
 
 export interface CitationMetadata {
@@ -211,9 +249,12 @@ export type ToolChoice = ToolChoiceObject | 'none' | 'auto' | 'required';
 
 /**
  * A tool in the conversation.
+ *
+ * `cache_control` is extended to support for prompt-cache
+ *
  * @interface
  */
-export interface Tool {
+export interface Tool extends AnthropicPromptCache {
   /** The name of the function. */
   type: string;
   /** A description of the function. */

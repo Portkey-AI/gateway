@@ -5,7 +5,6 @@ import {
   GOOGLE_VERTEX_AI,
   PERPLEXITY_AI,
   DEEPINFRA,
-  OLLAMA,
 } from './globals';
 import { Params } from './types/requestBody';
 
@@ -27,10 +26,10 @@ export const getStreamModeSplitPattern = (
     splitPattern = '\r\n';
   }
 
-  // Anthropic vertex has \n\n as the pattern
+  // In Vertex Anthropic and LLama have \n\n as the pattern only Gemini has \r\n\r\n
   if (
     proxyProvider === GOOGLE_VERTEX_AI &&
-    requestURL.indexOf('/publishers/anthropic') === -1
+    requestURL.includes('/publishers/google')
   ) {
     splitPattern = '\r\n\r\n';
   }

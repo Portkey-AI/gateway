@@ -139,7 +139,6 @@ build
 
 # IntelliJ Idea
 .idea
-
 plugins/**/.creds.json
-
+plugins/**/creds.json
 .vercel

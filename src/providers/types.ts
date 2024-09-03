@@ -59,7 +59,10 @@ export type endpointStrings =
   | 'stream-complete'
   | 'stream-chatComplete'
   | 'proxy'
-  | 'imageGenerate';
+  | 'imageGenerate'
+  | 'createSpeech'
+  | 'createTranscription'
+  | 'createTranslation';
 
 /**
  * A collection of API configurations for multiple AI providers.
@@ -95,6 +98,11 @@ export interface CResponse extends BaseResponse {
     prompt_tokens: number;
     completion_tokens: number;
     total_tokens: number;
+    /*
+     * Anthropic Prompt cache token usage
+     */
+    cache_read_input_tokens?: number;
+    cache_creation_input_tokens?: number;
   };
 }
 

@@ -6,7 +6,9 @@ import {
   GOOGLE,
   REQUEST_TIMEOUT_STATUS_CODE,
   PRECONDITION_CHECK_FAILED_STATUS_CODE,
+  GOOGLE_VERTEX_AI,
 } from '../globals';
+import { VertexLlamaChatCompleteStreamChunkTransform } from '../providers/google-vertex-ai/chatComplete';
 import { OpenAIChatCompleteResponse } from '../providers/openai/chatComplete';
 import { OpenAICompleteResponse } from '../providers/openai/complete';
 import { getStreamModeSplitPattern, type SplitPatternType } from '../utils';
@@ -226,7 +228,7 @@ export async function handleNonStreamingMode(
       PRECONDITION_CHECK_FAILED_STATUS_CODE,
     ].includes(response.status)
   ) {
-    return response;
+    return { response, json: await response.clone().json() };
   }
 
   let responseBodyJson = await response.json();
@@ -239,28 +241,31 @@ export async function handleNonStreamingMode(
     );
   }
 
-  return new Response(JSON.stringify(responseBodyJson), response);
+  return {
+    response: new Response(JSON.stringify(responseBodyJson), response),
+    json: responseBodyJson,
+  };
 }
 
-export async function handleAudioResponse(response: Response) {
+export function handleAudioResponse(response: Response) {
   return new Response(response.body, response);
 }
 
-export async function handleOctetStreamResponse(response: Response) {
+export function handleOctetStreamResponse(response: Response) {
   return new Response(response.body, response);
 }
 
-export async function handleImageResponse(response: Response) {
+export function handleImageResponse(response: Response) {
   return new Response(response.body, response);
 }
 
-export async function handleStreamingMode(
+export function handleStreamingMode(
   response: Response,
   proxyProvider: string,
   responseTransformer: Function | undefined,
   requestURL: string,
   strictOpenAiCompliance: boolean
-): Promise<Response> {
+): Response {
   const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);
   // If the provider doesn't supply completion id,
   // we generate a fallback id using the provider name + timestamp.
@@ -303,15 +308,15 @@ export async function handleStreamingMode(
   }
 
   // Convert GEMINI/COHERE json stream to text/event-stream for non-proxy calls
-  if (
-    [
-      //
-      GOOGLE,
-      COHERE,
-      BEDROCK,
-    ].includes(proxyProvider) &&
-    responseTransformer
-  ) {
+  const isGoogleCohereOrBedrock = [GOOGLE, COHERE, BEDROCK].includes(
+    proxyProvider
+  );
+  const isVertexLlama =
+    proxyProvider === GOOGLE_VERTEX_AI &&
+    responseTransformer?.name ===
+      VertexLlamaChatCompleteStreamChunkTransform.name;
+  const isJsonStream = isGoogleCohereOrBedrock || isVertexLlama;
+  if (isJsonStream && responseTransformer) {
     return new Response(readable, {
       ...response,
       headers: new Headers({

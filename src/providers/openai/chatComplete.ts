@@ -1,10 +1,10 @@
-import { OPEN_AI } from '../../globals';
+import { ANTHROPIC, OPEN_AI } from '../../globals';
 import {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
 } from '../types';
-import { generateErrorResponse } from '../utils';
+import { OpenAIErrorResponseTransform } from './utils';
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -96,18 +96,6 @@ export interface OpenAIChatCompleteResponse extends ChatCompletionResponse {
   system_fingerprint: string;
 }
 
-export const OpenAIErrorResponseTransform: (
-  response: ErrorResponse,
-  provider: string
-) => ErrorResponse = (response, provider) => {
-  return generateErrorResponse(
-    {
-      ...response.error,
-    },
-    provider
-  );
-};
-
 export const OpenAIChatCompleteResponseTransform: (
   response: OpenAIChatCompleteResponse | ErrorResponse,
   responseStatus: number
@@ -133,11 +121,21 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
   const streamChunkArray: Array<string> = [];
   const { id, model, system_fingerprint, choices } = response;
 
-  const { prompt_tokens, completion_tokens } = response.usage || {};
+  const {
+    prompt_tokens,
+    completion_tokens,
+    cache_read_input_tokens,
+    cache_creation_input_tokens,
+  } = response.usage || {};
 
   let total_tokens;
   if (prompt_tokens && completion_tokens)
     total_tokens = prompt_tokens + completion_tokens;
+
+  const shouldSendCacheUsage =
+    provider === ANTHROPIC &&
+    (Number.isInteger(cache_read_input_tokens) ||
+      Number.isInteger(cache_creation_input_tokens));
 
   const streamChunkTemplate: Record<string, any> = {
     id,
@@ -150,6 +148,10 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
       ...(completion_tokens && { completion_tokens }),
       ...(prompt_tokens && { prompt_tokens }),
       ...(total_tokens && { total_tokens }),
+      ...(shouldSendCacheUsage && {
+        cache_read_input_tokens,
+        cache_creation_input_tokens,
+      }),
     },
   };
 

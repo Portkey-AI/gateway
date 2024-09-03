@@ -18,9 +18,15 @@ import { chatCompletionsHandler } from './handlers/chatCompletionsHandler';
 import { completionsHandler } from './handlers/completionsHandler';
 import { embeddingsHandler } from './handlers/embeddingsHandler';
 import { requestValidator } from './middlewares/requestValidator';
+import { hooks } from './middlewares/hooks';
 import { compress } from 'hono/compress';
 import { getRuntimeKey } from 'hono/adapter';
 import { imageGenerationsHandler } from './handlers/imageGenerationsHandler';
+import { memoryCache } from './middlewares/cache';
+import { createSpeechHandler } from './handlers/createSpeechHandler';
+import conf from '../conf.json';
+import { createTranscriptionHandler } from './handlers/createTranscriptionHandler';
+import { createTranslationHandler } from './handlers/createTranslationHandler';
 
 // Create a new Hono server instance
 const app = new Hono();
@@ -47,6 +53,13 @@ app.get('/', (c) => c.text('AI Gateway says hey!'));
 
 // Use prettyJSON middleware for all routes
 app.use('*', prettyJSON());
+
+// Use hooks middleware for all routes
+app.use('*', hooks);
+
+if (conf.cache === true) {
+  app.use('*', memoryCache());
+}
 
 /**
  * Default route when no other route matches.
@@ -111,6 +124,28 @@ app.post('/v1/embeddings', requestValidator, embeddingsHandler);
  * Handles requests by passing them to the imageGenerations handler.
  */
 app.post('/v1/images/generations', requestValidator, imageGenerationsHandler);
+
+/**
+ * POST route for '/v1/audio/speech'.
+ * Handles requests by passing them to the createSpeechHandler.
+ */
+app.post('/v1/audio/speech', requestValidator, createSpeechHandler);
+
+/**
+ * POST route for '/v1/audio/transcriptions'.
+ * Handles requests by passing them to the createTranscriptionHandler.
+ */
+app.post(
+  '/v1/audio/transcriptions',
+  requestValidator,
+  createTranscriptionHandler
+);
+
+/**
+ * POST route for '/v1/audio/translations'.
+ * Handles requests by passing them to the createTranslationHandler.
+ */
+app.post('/v1/audio/translations', requestValidator, createTranslationHandler);
 
 /**
  * POST route for '/v1/prompts/:id/completions'.
