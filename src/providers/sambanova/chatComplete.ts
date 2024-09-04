@@ -57,7 +57,14 @@ export const SamvaNovaChatCompleteStreamChunkTransform: (
       created: parsedChunk.created,
       model: parsedChunk.model,
       provider: SAMBANOVA,
-      choices: [],
+      choices: [
+        {
+          index: 0,
+          delta: {},
+          logprobs: null,
+          finish_reason: 'stop',
+        },
+      ],
       usage: {
         prompt_tokens: parsedChunk.usage.prompt_tokens || 0,
         completion_tokens: parsedChunk.usage.completion_tokens || 0,
