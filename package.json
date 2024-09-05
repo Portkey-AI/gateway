@@ -46,6 +46,7 @@
     "@types/mustache": "^4.2.5",
     "async-retry": "^1.3.3",
     "hono": "^3.12.0",
+    "ts-node": "^10.9.2",
     "zod": "^3.22.4"
   },
   "devDependencies": {
