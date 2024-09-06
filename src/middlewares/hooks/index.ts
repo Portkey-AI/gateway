@@ -9,6 +9,7 @@ import {
   HookOnSuccessObject,
   HookResult,
 } from './types';
+import { Message } from '../../types/requestBody';
 import { plugins } from '../../../plugins';
 import { Context } from 'hono';
 import { HOOKS_EVENT_TYPE_PRESETS } from './globals';
@@ -62,9 +63,26 @@ export class HookSpan {
     requestType: string
   ): HookSpanContext {
     const requestText = this.extractRequestText(requestParams);
+
+    const messagesFormatted = requestParams?.messages?.map(
+      (message: Message) => {
+        if (typeof message.content === 'string') {
+          return message.content;
+        } else {
+          const _content = message.content?.reduce(
+            (value, item) =>
+              value + (item.type === 'text' ? `${item.text}\n` ?? '' : ''),
+            ''
+          );
+
+          return _content;
+        }
+      }
+    );
+
     return {
       request: {
-        json: requestParams,
+        json: { ...requestParams, messages: messagesFormatted },
         text: requestText,
         isStreamingRequest,
       },
