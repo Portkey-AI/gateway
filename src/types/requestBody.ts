@@ -60,6 +60,9 @@ export interface Options {
   apiVersion?: string;
   adAuth?: string;
   azureModelName?: string;
+  azureEntraClientId?: string;
+  azureEntraClientSecret?: string;
+  azureEntraTenantId?: string;
   /** Workers AI specific */
   workersAiAccountId?: string;
   /** The parameter to set custom base url */
