@@ -5,11 +5,11 @@ import {
   ProviderConfig,
 } from '../types';
 
-export interface SamvaNovaChatCompleteResponse extends ChatCompletionResponse {}
+export interface SambaNovaChatCompleteResponse extends ChatCompletionResponse {}
 
-export interface SamvaNovaErrorResponse extends ErrorResponse {}
+export interface SambaNovaErrorResponse extends ErrorResponse {}
 
-export interface SamvaNovaStreamChunk {
+export interface SambaNovaStreamChunk {
   id: string;
   object: string;
   created: number;
@@ -39,7 +39,7 @@ export interface SamvaNovaStreamChunk {
   } | null;
 }
 
-export const SamvaNovaChatCompleteStreamChunkTransform: (
+export const SambaNovaChatCompleteStreamChunkTransform: (
   response: string
 ) => string = (responseChunk) => {
   let chunk = responseChunk.trim();
@@ -49,7 +49,7 @@ export const SamvaNovaChatCompleteStreamChunkTransform: (
     return `data: ${chunk}\n\n`;
   }
 
-  const parsedChunk: SamvaNovaStreamChunk = JSON.parse(chunk);
+  const parsedChunk: SambaNovaStreamChunk = JSON.parse(chunk);
   if (parsedChunk.usage) {
     return `data: ${JSON.stringify({
       id: parsedChunk.id,
