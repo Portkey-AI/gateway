@@ -1,7 +1,11 @@
-import { chatCompleteParams } from '../open-ai-base';
+import { SAMBANOVA } from '../../globals';
+import { chatCompleteParams, responseTransformers } from '../open-ai-base';
 import { ProviderConfigs } from '../types';
 import SambaNovaAPIConfig from './api';
-import { SambaNovaChatCompleteStreamChunkTransform } from './chatComplete';
+import {
+  SambaNovaChatCompleteResponseTransform,
+  SambaNovaChatCompleteStreamChunkTransform,
+} from './chatComplete';
 
 const SambaNovaConfig: ProviderConfigs = {
   chatComplete: chatCompleteParams(
@@ -25,6 +29,9 @@ const SambaNovaConfig: ProviderConfigs = {
   ),
   api: SambaNovaAPIConfig,
   responseTransforms: {
+    ...responseTransformers(SAMBANOVA, {
+      chatComplete: SambaNovaChatCompleteResponseTransform,
+    }),
     'stream-chatComplete': SambaNovaChatCompleteStreamChunkTransform,
   },
 };
