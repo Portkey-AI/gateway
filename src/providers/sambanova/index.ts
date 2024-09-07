@@ -31,6 +31,7 @@ const SambaNovaConfig: ProviderConfigs = {
 
         return {
           ...response,
+          provider: SAMBANOVA,
           choices: response.choices.map((choice) => ({
             ...choice,
             message: {
