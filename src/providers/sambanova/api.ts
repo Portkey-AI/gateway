@@ -4,7 +4,7 @@ const SambaNovaAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) =>
     providerOptions.customHost || 'https://fast-api.snova.ai',
   headers: ({ providerOptions }) => {
-    return { Authorization: `Basic ${providerOptions.apiKey}` };
+    return { Authorization: `Bearer ${providerOptions.apiKey}` };
   },
   getEndpoint: ({ fn }) => {
     switch (fn) {
