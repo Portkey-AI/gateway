@@ -333,7 +333,7 @@
       "name": "Log",
       "id": "log",
       "type": "guardrail",
-      "supportedHooks": ["beforeRequestHook","afterRequest"],
+      "supportedHooks": ["beforeRequestHook", "afterRequest"],
       "description": [
         {
           "type": "subHeading",
