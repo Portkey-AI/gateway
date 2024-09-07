@@ -27,8 +27,22 @@ The [AI Gateway](https://portkey.ai/features/ai-gateway) streamlines requests to
 ✅&nbsp; **Multimodal** to support routing between Vision, TTS, STT, Image Gen, and more models <br>
 ✅&nbsp; **Plug-in** middleware as needed <br>
 ✅&nbsp; Battle tested over **480B tokens** <br>
-✅&nbsp; **Enterprise-ready** for enhanced security, scale, and custom deployments <br>
+✅&nbsp; **Enterprise-ready** for enhanced security, scale, and custom deployments <br><br>
+
+> [!TIP]
+>  ⭐️ **Star this repo** to get Github release notifications for new provider integrations and features.
+
+![star-2](https://github.com/user-attachments/assets/53597dce-6333-4ecc-a154-eb05532954e4)
+
+<details>
+  <summary><kbd>Star History</kbd></summary>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=portkey-ai%2Fgateway&theme=dark&type=Date">
+    <img width="100%" src="https://api.star-history.com/svg?repos=portkey-ai%2Fgateway&type=Date">
+  </picture>
+</details>
 <br>
+
 ## Setup & Installation
 Use the AI gateway through the **hosted API** or **self-host** the open-source or enterprise versions on your environment.
 <br>
