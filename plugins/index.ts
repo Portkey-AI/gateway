@@ -9,6 +9,7 @@ import { handler as defaultvalidUrls } from './default/validUrls';
 import { handler as defaultwebhook } from './default/webhook';
 import { handler as defaultlog } from './default/log';
 import { handler as defaultcontainsCode } from './default/containsCode';
+import { handler as defaultalluppercase } from './default/alluppercase';
 import { handler as portkeymoderateContent } from './portkey/moderateContent';
 import { handler as portkeylanguage } from './portkey/language';
 import { handler as portkeypii } from './portkey/pii';
@@ -28,7 +29,6 @@ import { handler as patronusnoRacialBias } from './patronus/noRacialBias';
 import { handler as patronusretrievalAnswerRelevance } from './patronus/retrievalAnswerRelevance';
 import { handler as patronustoxicity } from './patronus/toxicity';
 import { handler as patronuscustom } from './patronus/custom';
-import { handler as uppercasealluppercase } from './all-uppercase/alluppercase';
 
 export const plugins = {
   default: {
@@ -43,6 +43,7 @@ export const plugins = {
     webhook: defaultwebhook,
     log: defaultlog,
     containsCode: defaultcontainsCode,
+    alluppercase: defaultalluppercase,
   },
   portkey: {
     moderateContent: portkeymoderateContent,
@@ -72,8 +73,5 @@ export const plugins = {
     retrievalAnswerRelevance: patronusretrievalAnswerRelevance,
     toxicity: patronustoxicity,
     custom: patronuscustom,
-  },
-  'all-uppercase': {
-    alluppercase: uppercasealluppercase,
   },
 };

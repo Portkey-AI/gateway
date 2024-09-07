@@ -333,7 +333,7 @@
       "name": "Log",
       "id": "log",
       "type": "guardrail",
-      "supportedHooks": ["afterRequest"],
+      "supportedHooks": ["beforeRequestHook","afterRequest"],
       "description": [
         {
           "type": "subHeading",
@@ -421,6 +421,27 @@
         },
         "required": ["format"]
       }
+    },
+    {
+      "id": "alluppercase",
+      "name": "Uppercase check",
+      "description": "Passes when the text is fully uppercase.",
+      "credentials": [],
+      "functions": [
+        {
+          "name": "All Uppercase Check",
+          "id": "alluppercase",
+          "type": "guardrail",
+          "supportedHooks": ["beforeRequest", "afterRequest"],
+          "description": [
+            {
+              "type": "subHeading",
+              "text": "Checks if all characters are uppercase."
+            }
+          ],
+          "parameters": {}
+        }
+      ]
     }
   ]
 }

@@ -7,6 +7,7 @@ import { handler as wordCountHandler } from './wordCount';
 import { handler as sentenceCountHandler } from './sentenceCount';
 import { handler as webhookHandler } from './webhook';
 import { handler as logHandler } from './log';
+import { handler as allUppercaseHandler } from './alluppercase';
 
 import { z } from 'zod';
 import { PluginContext, PluginParameters } from '../types';
@@ -520,5 +521,30 @@ describe('log handler', () => {
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
+  });
+});
+
+describe('allUppercase handler', () => {
+  it('should return true verdict for a sentence with all uppercase characters', async () => {
+    const context: PluginContext = {
+      response: { text: 'THIS IS A SENTENCE. THIS IS ANOTHER SENTENCE.' },
+    };
+    const eventType = 'afterRequestHook';
+
+    const result = await allUppercaseHandler(context, {}, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+  });
+  it('should return false verdict for a sentence with not all uppercase characters', async () => {
+    const context: PluginContext = {
+      response: { text: 'This is a sentence. This is another sentence' },
+    };
+    const eventType = 'afterRequestHook';
+
+    const result = await allUppercaseHandler(context, {}, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
   });
 });
