@@ -1,28 +1,4 @@
 import { SAMBANOVA } from '../../globals';
-import { OpenAIChatCompleteResponse } from '../openai/chatComplete';
-import { ErrorResponse } from '../types';
-
-export interface SambaNovaChatCompleteResponse
-  extends OpenAIChatCompleteResponse {
-  usage?:
-    | {
-        prompt_tokens: number;
-        completion_tokens: number;
-        completion_tokens_after_first_per_sec: number;
-        completion_tokens_after_first_per_sec_first_ten: number;
-        completion_tokens_per_sec: number;
-        end_time: number;
-        is_last_response: number;
-        start_time: number;
-        time_to_first_token: number;
-        total_tokens: number;
-        total_latency: number;
-        total_tokens_per_sec: number;
-      }
-    | OpenAIChatCompleteResponse['usage'];
-}
-
-export interface SambaNovaErrorResponse extends ErrorResponse {}
 
 export interface SambaNovaStreamChunk {
   id: string;
@@ -53,38 +29,6 @@ export interface SambaNovaStreamChunk {
     completion_tokens_after_first_per_sec_first_ten: number;
   };
 }
-
-export const SambaNovaChatCompleteResponseTransform: (
-  response: SambaNovaChatCompleteResponse | SambaNovaErrorResponse,
-  isError?: boolean
-) => OpenAIChatCompleteResponse | ErrorResponse = (response, isError) => {
-  if (isError || 'choices' in response === false) {
-    return response;
-  }
-
-  return {
-    id: response.id,
-    object: response.object,
-    created: response.created,
-    model: response.model,
-    provider: SAMBANOVA,
-    choices: response.choices.map((c) => ({
-      index: c.index,
-      message: {
-        role: 'assistant',
-        ...(c.message as any),
-      },
-      logprobs: c.logprobs,
-      finish_reason: c.finish_reason,
-    })),
-    system_fingerprint: response.system_fingerprint,
-    usage: {
-      prompt_tokens: response.usage?.prompt_tokens || 0,
-      completion_tokens: response.usage?.completion_tokens || 0,
-      total_tokens: response.usage?.total_tokens || 0,
-    },
-  };
-};
 
 export const SambaNovaChatCompleteStreamChunkTransform: (
   response: string

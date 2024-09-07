@@ -2,10 +2,7 @@ import { SAMBANOVA } from '../../globals';
 import { chatCompleteParams, responseTransformers } from '../open-ai-base';
 import { ProviderConfigs } from '../types';
 import SambaNovaAPIConfig from './api';
-import {
-  SambaNovaChatCompleteResponseTransform,
-  SambaNovaChatCompleteStreamChunkTransform,
-} from './chatComplete';
+import { SambaNovaChatCompleteStreamChunkTransform } from './chatComplete';
 
 const SambaNovaConfig: ProviderConfigs = {
   chatComplete: chatCompleteParams(
@@ -29,7 +26,25 @@ const SambaNovaConfig: ProviderConfigs = {
   api: SambaNovaAPIConfig,
   responseTransforms: {
     ...responseTransformers(SAMBANOVA, {
-      chatComplete: SambaNovaChatCompleteResponseTransform,
+      chatComplete: (response, isError) => {
+        if (isError || 'choices' in response === false) return response;
+
+        return {
+          ...response,
+          choices: response.choices.map((choice) => ({
+            ...choice,
+            message: {
+              role: 'assistant',
+              ...(choice.message as any),
+            },
+          })),
+          usage: {
+            prompt_tokens: response.usage?.prompt_tokens || 0,
+            completion_tokens: response.usage?.completion_tokens || 0,
+            total_tokens: response.usage?.total_tokens || 0,
+          },
+        };
+      },
     }),
     'stream-chatComplete': SambaNovaChatCompleteStreamChunkTransform,
   },
