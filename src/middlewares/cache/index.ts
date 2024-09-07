@@ -100,14 +100,14 @@ export const memoryCache = () => {
       Array.isArray(requestOptions) &&
       requestOptions.length > 0
     ) {
-      requestOptions = requestOptions[0];
-      if (requestOptions.cacheMode === 'simple') {
+      const _requestOptions = requestOptions[0];
+      if (_requestOptions.cacheMode === 'simple') {
         await putInCache(
           null,
           null,
-          requestOptions.requestParams,
-          await requestOptions.response.json(),
-          requestOptions.providerOptions.rubeusURL,
+          _requestOptions.requestParams,
+          await _requestOptions.response.json(),
+          _requestOptions.providerOptions.rubeusURL,
           '',
           null,
           null
