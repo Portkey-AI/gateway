@@ -13,22 +13,52 @@ export const handler: PluginHandler = async (
 ) => {
   let error = null;
   let verdict = false;
-  let data = null;
-
-  // The following code is an example of a plugin that uses regex to match a string in the response body.
-  // The plugin will return true if the regex matches the string, and false otherwise.
+  let data: any = null;
   try {
-    const regex = new RegExp(parameters.rule);
+    const regexPattern = parameters.rule;
     let textToMatch = getText(context, eventType);
 
-    if (regex && textToMatch && !error) {
-      const match = textToMatch.match(regex);
-      verdict = match ? true : false;
-    } else {
-      error = new Error('Missing regex or text');
+    if (!regexPattern) {
+      throw new Error('Missing regex pattern');
     }
-  } catch (e) {
-    error = e as Error;
+
+    if (!textToMatch) {
+      throw new Error('Missing text to match');
+    }
+
+    const regex = new RegExp(regexPattern);
+    const match = regex.exec(textToMatch);
+
+    verdict = match !== null;
+
+    data = {
+      regexPattern,
+      verdict,
+      explanation: verdict
+        ? `The regex pattern '${regexPattern}' successfully matched the text.`
+        : `The regex pattern '${regexPattern}' did not match the text.`,
+      matchDetails: match
+        ? {
+            matchedText: match[0],
+            index: match.index,
+            groups: match.groups || {},
+            captures: match.slice(1),
+          }
+        : null,
+      textExcerpt:
+        textToMatch.length > 100
+          ? textToMatch.slice(0, 100) + '...'
+          : textToMatch,
+    };
+  } catch (e: any) {
+    error = e;
+    data = {
+      explanation: `An error occurred while processing the regex: ${e.message}`,
+      regexPattern: parameters.rule,
+      textExcerpt:
+        getText(context, eventType)?.slice(0, 100) + '...' ||
+        'No text available',
+    };
   }
 
   return { error, verdict, data };

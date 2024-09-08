@@ -1,3 +1,4 @@
+import { handler as regexMatchHandler } from './regexMatch';
 import { handler as jsonSchemaHandler } from './jsonSchema';
 import { handler as jsonKeysHandler } from './jsonKeys';
 import { handler as containsHandler } from './contains';
@@ -10,6 +11,140 @@ import { handler as logHandler } from './log';
 
 import { z } from 'zod';
 import { PluginContext, PluginParameters } from '../types';
+
+describe('Regex Matcher Plugin', () => {
+  const mockContext: PluginContext = {
+    response: {
+      text: 'The quick brown fox jumps over the lazy dog.',
+    },
+  };
+
+  const mockEventType = 'afterRequestHook';
+
+  it('should match a simple regex pattern', async () => {
+    const parameters: PluginParameters = { rule: 'quick.*fox' };
+    const result = await regexMatchHandler(
+      mockContext,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.verdict).toBe(true);
+    expect(result.data.explanation).toContain('successfully matched');
+    expect(result.data.matchDetails.matchedText).toBe('quick brown fox');
+  });
+
+  it('should not match when pattern is not found', async () => {
+    const parameters: PluginParameters = { rule: 'zebra' };
+    const result = await regexMatchHandler(
+      mockContext,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.verdict).toBe(false);
+    expect(result.data.explanation).toContain('did not match');
+    expect(result.data.matchDetails).toBeNull();
+  });
+
+  it('should handle regex with capturing groups', async () => {
+    const parameters: PluginParameters = { rule: '(quick) (brown) (fox)' };
+    const result = await regexMatchHandler(
+      mockContext,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.verdict).toBe(true);
+    expect(result.data.matchDetails.captures).toEqual([
+      'quick',
+      'brown',
+      'fox',
+    ]);
+    expect(result.data.matchDetails.groups).toEqual({});
+  });
+
+  it('should handle regex with named capturing groups', async () => {
+    const parameters: PluginParameters = {
+      rule: '(?<adjective1>quick) (?<adjective2>brown) (?<animal>fox)',
+    };
+    const result = await regexMatchHandler(
+      mockContext,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.verdict).toBe(true);
+    expect(result.data.matchDetails.groups).toEqual({
+      adjective1: 'quick',
+      adjective2: 'brown',
+      animal: 'fox',
+    });
+  });
+
+  it('should provide text excerpt in data', async () => {
+    const parameters: PluginParameters = { rule: 'dog' };
+    const result = await regexMatchHandler(
+      mockContext,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.data.textExcerpt).toBe(
+      'The quick brown fox jumps over the lazy dog.'
+    );
+  });
+
+  it('should handle long text by truncating excerpt', async () => {
+    const longText = 'a'.repeat(200);
+    const longTextContext: PluginContext = { response: { text: longText } };
+    const parameters: PluginParameters = { rule: 'a' };
+    const result = await regexMatchHandler(
+      longTextContext,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.data.textExcerpt).toBe('a'.repeat(100) + '...');
+  });
+
+  it('should throw error for invalid regex', async () => {
+    const parameters: PluginParameters = { rule: '(' }; // Invalid regex
+    const result = await regexMatchHandler(
+      mockContext,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.error).not.toBeNull();
+    expect(result.data.explanation).toContain('An error occurred');
+  });
+
+  it('should handle missing regex pattern', async () => {
+    const parameters: PluginParameters = { rule: '' };
+    const result = await regexMatchHandler(
+      mockContext,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.error).not.toBeNull();
+    expect(result.data.explanation).toContain('Missing regex pattern');
+  });
+
+  it('should handle missing text to match', async () => {
+    const emptyContext: PluginContext = { response: { text: '' } };
+    const parameters: PluginParameters = { rule: 'test' };
+    const result = await regexMatchHandler(
+      emptyContext,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.error).not.toBeNull();
+    expect(result.data.explanation).toContain('Missing text to match');
+  });
+});
 
 describe('jsonSchema handler', () => {
   it('should validate JSON in response text', async () => {
