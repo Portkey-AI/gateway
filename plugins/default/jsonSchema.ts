@@ -25,13 +25,13 @@ export const handler: PluginHandler = async (
       const codeBlockRegex = /```+(?:json)?\s*([\s\S]*?)```+/g;
       const jsonRegex = /{[\s\S]*?}/g;
       const matches = [];
-      
+
       // Extract from code blocks
       let match;
       while ((match = codeBlockRegex.exec(text)) !== null) {
         matches.push(match[1].trim());
       }
-      
+
       // Extract JSON-like structures
       while ((match = jsonRegex.exec(text)) !== null) {
         matches.push(match[0]);
@@ -67,24 +67,26 @@ export const handler: PluginHandler = async (
             data = {
               matchedJson: responseJson,
               explanation: `Failed to validate JSON against the provided schema.`,
-              validationErrors: (validationResult.error as ZodError).errors.map(err => ({
-                path: err.path.join('.'),
-                message: err.message
-              }))
+              validationErrors: (validationResult.error as ZodError).errors.map(
+                (err) => ({
+                  path: err.path.join('.'),
+                  message: err.message,
+                })
+              ),
             };
           }
         }
       }
     } else {
       data = {
-        explanation: "No valid JSON found in the response."
+        explanation: 'No valid JSON found in the response.',
       };
     }
-  } catch (e:any) {
+  } catch (e: any) {
     error = e;
     data = {
-      explanation: "An error occurred while processing the JSON.",
-      error: e.message || e.toString()
+      explanation: 'An error occurred while processing the JSON.',
+      error: e.message || e.toString(),
     };
   }
 

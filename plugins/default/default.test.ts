@@ -28,14 +28,14 @@ describe('jsonSchema handler', () => {
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
     expect(result.data).toBeDefined();
-    expect(result.data.matchedJson).toEqual({ key: "value" });
-    expect(result.data.explanation).toContain("Successfully validated");
+    expect(result.data.matchedJson).toEqual({ key: 'value' });
+    expect(result.data.explanation).toContain('Successfully validated');
   });
 
   it('should validate JSON in response text - complex', async () => {
     const context: PluginContext = {
       response: {
-        text: '```json\n{\n  \"title\": \"The Rise of AI Agents: Transforming the Future\",\n  \"short_intro\": \"Artificial Intelligence (AI) agents are revolutionizing various sectors, from healthcare to finance. In this blog, we explore the development of AI agents, their applications, and their potential to reshape our world.\"\n}\n```'
+        text: '```json\n{\n  "title": "The Rise of AI Agents: Transforming the Future",\n  "short_intro": "Artificial Intelligence (AI) agents are revolutionizing various sectors, from healthcare to finance. In this blog, we explore the development of AI agents, their applications, and their potential to reshape our world."\n}\n```',
       },
     };
     const eventType = 'afterRequestHook';
@@ -50,13 +50,13 @@ describe('jsonSchema handler', () => {
     expect(result.data).toBeDefined();
     expect(result.data.matchedJson).toHaveProperty('title');
     expect(result.data.matchedJson).toHaveProperty('short_intro');
-    expect(result.data.explanation).toContain("Successfully validated");
+    expect(result.data.explanation).toContain('Successfully validated');
   });
 
   it('should validate only JSON in response text', async () => {
     const context: PluginContext = {
       response: {
-        text: '{\n  \"title\": \"The Rise of AI Agents: Transforming the Future\",\n  \"short_intro\": \"Artificial Intelligence (AI) agents are revolutionizing various sectors, from healthcare to finance. In this blog, we explore the development of AI agents, their applications, and their potential to reshape our world.\"\n}'
+        text: '{\n  "title": "The Rise of AI Agents: Transforming the Future",\n  "short_intro": "Artificial Intelligence (AI) agents are revolutionizing various sectors, from healthcare to finance. In this blog, we explore the development of AI agents, their applications, and their potential to reshape our world."\n}',
       },
     };
     const eventType = 'afterRequestHook';
@@ -71,7 +71,7 @@ describe('jsonSchema handler', () => {
     expect(result.data).toBeDefined();
     expect(result.data.matchedJson).toHaveProperty('title');
     expect(result.data.matchedJson).toHaveProperty('short_intro');
-    expect(result.data.explanation).toContain("Successfully validated");
+    expect(result.data.explanation).toContain('Successfully validated');
   });
 
   it('should return a false verdict for invalid JSON in response text', async () => {
@@ -90,7 +90,7 @@ describe('jsonSchema handler', () => {
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
     expect(result.data).toBeDefined();
-    expect(result.data.explanation).toContain("Failed to validate");
+    expect(result.data.explanation).toContain('Failed to validate');
     expect(result.data.validationErrors).toBeDefined();
     expect(Array.isArray(result.data.validationErrors)).toBe(true);
   });
@@ -111,7 +111,7 @@ describe('jsonSchema handler', () => {
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
     expect(result.data).toBeDefined();
-    expect(result.data.explanation).toContain("No valid JSON found");
+    expect(result.data.explanation).toContain('No valid JSON found');
   });
 });
 
