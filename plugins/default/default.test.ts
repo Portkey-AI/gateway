@@ -249,8 +249,8 @@ describe('jsonKeys handler', () => {
   });
 });
 
-describe('contains handler', () => {
-  it('should return true verdict for any word in response text', async () => {
+describe.only('contains handler', () => {
+  it('should return true verdict and correct data for any word in response text', async () => {
     const context: PluginContext = {
       response: {
         text: 'adding some text before this word1 and adding some text after',
@@ -259,7 +259,7 @@ describe('contains handler', () => {
     const eventType = 'afterRequestHook';
 
     const parameters: PluginParameters = {
-      words: ['word1'],
+      words: ['word1', 'word2'],
       operator: 'any',
     };
 
@@ -267,9 +267,15 @@ describe('contains handler', () => {
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
+    expect(result.data).toEqual({
+      explanation: "Check passed for 'any' words. At least one word was found.",
+      foundWords: ['word1'],
+      missingWords: ['word2'],
+      operator: 'any',
+    });
   });
 
-  it('should return false verdict for all words in response text', async () => {
+  it('should return false verdict and correct data for all words in response text', async () => {
     const context: PluginContext = {
       response: {
         text: 'adding some text before this word1 and adding some text after',
@@ -286,9 +292,15 @@ describe('contains handler', () => {
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      explanation: "Check failed for 'all' words. Some words were missing.",
+      foundWords: ['word1'],
+      missingWords: ['word2'],
+      operator: 'all',
+    });
   });
 
-  it('should return true verdict for none of the words in response text', async () => {
+  it('should return true verdict and correct data for none of the words in response text', async () => {
     const context: PluginContext = {
       response: {
         text: 'adding some text before this word1 and adding some text after',
@@ -297,7 +309,7 @@ describe('contains handler', () => {
     const eventType = 'afterRequestHook';
 
     const parameters: PluginParameters = {
-      words: ['word2'],
+      words: ['word2', 'word3'],
       operator: 'none',
     };
 
@@ -305,6 +317,62 @@ describe('contains handler', () => {
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
+    expect(result.data).toEqual({
+      explanation: "Check passed for 'none' words. No words were found.",
+      foundWords: [],
+      missingWords: ['word2', 'word3'],
+      operator: 'none',
+    });
+  });
+
+  it('should handle empty word list', async () => {
+    const context: PluginContext = {
+      response: {
+        text: 'some text',
+      },
+    };
+    const eventType = 'afterRequestHook';
+
+    const parameters: PluginParameters = {
+      words: [],
+      operator: 'any',
+    };
+
+    const result = await containsHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      explanation: "Check failed for 'any' words. No words were found.",
+      foundWords: [],
+      missingWords: [],
+      operator: 'any',
+    });
+  });
+
+  it('should handle case sensitivity', async () => {
+    const context: PluginContext = {
+      response: {
+        text: 'Adding some TEXT before this Word1 and adding some text after',
+      },
+    };
+    const eventType = 'afterRequestHook';
+
+    const parameters: PluginParameters = {
+      words: ['text', 'word1'],
+      operator: 'all',
+    };
+
+    const result = await containsHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      explanation: "Check failed for 'all' words. Some words were missing.",
+      foundWords: ['text'],
+      missingWords: ['word1'],
+      operator: 'all',
+    });
   });
 });
 
