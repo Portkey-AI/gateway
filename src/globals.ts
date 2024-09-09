@@ -67,6 +67,7 @@ export const GITHUB: string = 'github';
 export const DEEPBRICKS: string = 'deepbricks';
 export const SILICONFLOW: string = 'siliconflow';
 export const CEREBRAS: string = 'cerebras';
+export const INFERENCENET: string = 'inference-net';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -108,6 +109,7 @@ export const VALID_PROVIDERS = [
   SILICONFLOW,
   HUGGING_FACE,
   CEREBRAS,
+  INFERENCENET,
 ];
 
 export const CONTENT_TYPES = {
