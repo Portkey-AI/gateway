@@ -10,6 +10,16 @@ type CustomTransformer<T extends any, U> = (
   isError?: boolean
 ) => U;
 
+type DefaultValues = {
+  model?: string;
+  max_tokens?: number;
+  temperature?: number;
+  top_p?: number;
+  stream?: boolean;
+  logprobs?: boolean;
+  [key: string]: any;
+};
+
 const excludeObjectKeys = (keyList: string[], object: Record<string, any>) => {
   if (keyList) {
     keyList.forEach((excludeKey) => {
@@ -29,7 +39,7 @@ const excludeObjectKeys = (keyList: string[], object: Record<string, any>) => {
  */
 export const chatCompleteParams = (
   exclude: string[],
-  defaultValues?: Record<string, string>,
+  defaultValues?: DefaultValues,
   extra?: ProviderConfig
 ): ProviderConfig => {
   const baseParams: ProviderConfig = {
@@ -125,7 +135,7 @@ export const chatCompleteParams = (
  */
 export const completeParams = (
   exclude: string[],
-  defaultValues?: Record<string, string>,
+  defaultValues?: DefaultValues,
   extra?: ProviderConfig
 ): ProviderConfig => {
   const baseParams: ProviderConfig = {
