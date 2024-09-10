@@ -115,7 +115,7 @@ describe('jsonSchema handler', () => {
   });
 });
 
-describe.only('jsonKeys handler', () => {
+describe('jsonKeys handler', () => {
   it('should validate JSON with "any" operator', async () => {
     const context: PluginContext = {
       response: {
