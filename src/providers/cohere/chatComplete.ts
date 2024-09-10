@@ -32,7 +32,7 @@ export const CohereChatCompleteConfig: ProviderConfig = {
 
         return prompt.content
           ?.filter((_msg) => _msg.type === 'text')
-          .reduce((acc, _msg) => acc + _msg.text, '');
+          .reduce((acc, _msg) => acc + _msg.text + '\n', '');
       },
     },
     {

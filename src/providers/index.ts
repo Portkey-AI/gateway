@@ -40,6 +40,7 @@ import DeepbricksConfig from './deepbricks';
 import SiliconFlowConfig from './siliconflow';
 import HuggingfaceConfig from './huggingface';
 import { cerebrasProviderAPIConfig } from './cerebras';
+import SambaNovaConfig from './sambanova';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -81,6 +82,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   deepbricks: DeepbricksConfig,
   siliconflow: SiliconFlowConfig,
   cerebras: cerebrasProviderAPIConfig,
+  sambanova: SambaNovaConfig,
 };
 
 export default Providers;
