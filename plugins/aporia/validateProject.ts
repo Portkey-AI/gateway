@@ -25,6 +25,7 @@ export const validate = async (
   if (credentials.apiEndpoint) {
     baseURL = credentials.apiEndpoint;
   }
+
   return post(`${baseURL}/${projectID}/validate`, data, options);
 };
 
@@ -43,23 +44,23 @@ export const handler: PluginHandler = async (
       explain: true,
     };
 
+    aporiaObject['messages'] = aporiaObject['messages']?.map(
+      (message: Message) => {
+        if (typeof message.content === 'string') {
+          return message;
+        } else {
+          const _content = message.content?.reduce(
+            (value, item) =>
+              value + (item.type === 'text' ? `${item.text}\n` ?? '' : ''),
+            ''
+          );
+          return { ...message, content: _content };
+        }
+      }
+    );
+
     if (eventType === 'beforeRequestHook') {
       aporiaObject.validation_target = 'prompt';
-      aporiaObject['messages'] = aporiaObject['messages']?.map(
-        (message: Message) => {
-          if (typeof message.content === 'string') {
-            return message.content;
-          } else {
-            const _content = message.content?.reduce(
-              (value, item) =>
-                value + (item.type === 'text' ? `${item.text}\n` ?? '' : ''),
-              ''
-            );
-
-            return _content;
-          }
-        }
-      );
     } else {
       aporiaObject.response = context.response?.text;
       aporiaObject.validation_target = 'response';
