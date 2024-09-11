@@ -7,7 +7,7 @@ import { handler as wordCountHandler } from './wordCount';
 import { handler as sentenceCountHandler } from './sentenceCount';
 import { handler as webhookHandler } from './webhook';
 import { handler as logHandler } from './log';
-import {handler as endsWithHandler} from './endsWith';
+import { handler as endsWithHandler } from './endsWith';
 
 import { z } from 'zod';
 import { PluginContext, PluginParameters } from '../types';
@@ -529,7 +529,7 @@ describe('endsWith handler', () => {
     const eventType = 'afterRequestHook';
     const context: PluginContext = {
       response: {
-        text: 'This is a sentence that ends with the expect word i.e. HarryPortkey',
+        text: 'This is a sentence that ends with the expected word i.e. HarryPortkey.',
       },
     };
     const parameters: PluginParameters = {
@@ -541,7 +541,9 @@ describe('endsWith handler', () => {
   });
   it('should return false verdict if response not ending with provided suffix', async () => {
     const context: PluginContext = {
-      response: { text: 'This is a sentence ending with wrong word i.e. MalfoyPortkey.' },
+      response: {
+        text: 'This is a sentence ending with wrong word i.e. MalfoyPortkey.',
+      },
     };
     const eventType = 'afterRequestHook';
 
