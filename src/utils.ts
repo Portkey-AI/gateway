@@ -5,6 +5,7 @@ import {
   GOOGLE_VERTEX_AI,
   PERPLEXITY_AI,
   DEEPINFRA,
+  SAMBANOVA,
 } from './globals';
 import { Params } from './types/requestBody';
 
@@ -40,6 +41,10 @@ export const getStreamModeSplitPattern = (
 
   if (proxyProvider === DEEPINFRA) {
     splitPattern = '\r\n\r\n';
+  }
+
+  if (proxyProvider === SAMBANOVA) {
+    splitPattern = '\n';
   }
 
   return splitPattern;

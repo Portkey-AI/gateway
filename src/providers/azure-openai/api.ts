@@ -26,6 +26,12 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
         mappedFn = 'embed';
       } else if (urlToFetch?.indexOf('/images/generations') > -1) {
         mappedFn = 'imageGenerate';
+      } else if (urlToFetch?.indexOf('/audio/speech') > -1) {
+        mappedFn = 'createSpeech';
+      } else if (urlToFetch?.indexOf('/audio/transcriptions') > -1) {
+        mappedFn = 'createTranscription';
+      } else if (urlToFetch?.indexOf('/audio/translations') > -1) {
+        mappedFn = 'createTranslation';
       }
     }
 
@@ -41,6 +47,15 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       }
       case 'imageGenerate': {
         return `/images/generations?api-version=${apiVersion}`;
+      }
+      case 'createSpeech': {
+        return `/audio/speech?api-version=${apiVersion}`;
+      }
+      case 'createTranscription': {
+        return `/audio/transcriptions?api-version=${apiVersion}`;
+      }
+      case 'createTranslation': {
+        return `/audio/translations?api-version=${apiVersion}`;
       }
       default:
         return '';

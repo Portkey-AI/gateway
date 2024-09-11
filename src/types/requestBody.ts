@@ -77,6 +77,9 @@ export interface Options {
   awsSessionToken?: string;
   awsRegion?: string;
 
+  /** Hugging Face specific */
+  huggingfaceBaseUrl?: string;
+
   /** Google Vertex AI specific */
   vertexRegion?: string;
   vertexProjectId?: string;
@@ -88,9 +91,20 @@ export interface Options {
   openaiProject?: string;
   openaiOrganization?: string;
 
+  /** Azure Inference Specific */
+  azureRegion?: string;
+  azureDeploymentName?: string;
+  azureDeploymentType?: 'managed' | 'serverless';
+  azureEndpointName?: string;
+  azureApiVersion?: string;
+
   /** The parameter to determine if extra non-openai compliant fields should be returned in response */
   strictOpenAiCompliance?: boolean;
+  /** Parameter to determine if fim/completions endpoint is to be used */
   mistralFimCompletion?: String;
+  /** Anthropic specific headers */
+  anthropicBeta?: string;
+  anthropicVersion?: string;
 }
 
 /**
@@ -150,6 +164,7 @@ export interface ContentType {
   text?: string;
   image_url?: {
     url: string;
+    detail?: string;
   };
 }
 
@@ -185,6 +200,10 @@ export interface Message {
   tool_calls?: any;
   tool_call_id?: string;
   citationMetadata?: CitationMetadata;
+}
+
+export interface AnthropicPromptCache {
+  cache_control?: { type: 'ephemeral' };
 }
 
 export interface CitationMetadata {
@@ -231,9 +250,12 @@ export type ToolChoice = ToolChoiceObject | 'none' | 'auto' | 'required';
 
 /**
  * A tool in the conversation.
+ *
+ * `cache_control` is extended to support for prompt-cache
+ *
  * @interface
  */
-export interface Tool {
+export interface Tool extends AnthropicPromptCache {
   /** The name of the function. */
   type: string;
   /** A description of the function. */

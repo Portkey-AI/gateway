@@ -27,8 +27,22 @@ The [AI Gateway](https://portkey.ai/features/ai-gateway) streamlines requests to
 ✅&nbsp; **Multimodal** to support routing between Vision, TTS, STT, Image Gen, and more models <br>
 ✅&nbsp; **Plug-in** middleware as needed <br>
 ✅&nbsp; Battle tested over **480B tokens** <br>
-✅&nbsp; **Enterprise-ready** for enhanced security, scale, and custom deployments <br>
+✅&nbsp; **Enterprise-ready** for enhanced security, scale, and custom deployments <br><br>
+
+> [!TIP]
+>  ⭐️ **Star this repo** to get Github release notifications for new provider integrations and features.
+
+![star-2](https://github.com/user-attachments/assets/53597dce-6333-4ecc-a154-eb05532954e4)
+
+<details>
+  <summary><kbd>Star History</kbd></summary>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=portkey-ai%2Fgateway&theme=dark&type=Date">
+    <img width="100%" src="https://api.star-history.com/svg?repos=portkey-ai%2Fgateway&type=Date">
+  </picture>
+</details>
 <br>
+
 ## Setup & Installation
 Use the AI gateway through the **hosted API** or **self-host** the open-source or enterprise versions on your environment.
 <br>
@@ -49,7 +63,7 @@ npx @portkey-ai/gateway
 <br>
 
 #### 👉 Self-hosting the Enterprise Version
-The AI Gateway's enterprise version offers enterprise-ready capabilities for **org management**, **governance**, **security** and [more](https://docs.portkey.ai/docs/product/enterprise-offering) out of the box. Compare the open source, hosted and enterprise versions here.
+The AI Gateway's enterprise version offers enterprise-ready capabilities for **org management**, **governance**, **security** and [more](https://docs.portkey.ai/docs/product/enterprise-offering) out of the box. Compare the open source, hosted and enterprise versions [here](https://docs.portkey.ai/docs/product/product-feature-comparison).
 
 The enterprise deployment architecture, supported platforms is available here - [**Enterprise Private Cloud Deployments**](https://docs.portkey.ai/docs/product/enterprise-offering/private-cloud-deployments)
 
@@ -101,16 +115,17 @@ The AI gateway supports OpenAI compatible endpoints with added parameter support
 
 ## Gateway Cookbooks
 
-### 📈 Trending Cookbooks
-* [Run Gateway on prompts from Langchain hub](/cookbook/use-cases/run-gateway-on-prompts-from-langchain-hub.md)
-* [Use Porkey Gateway with Vercel's AI SDK](/cookbook/integrations/vercel-ai.md)
-* [Set up fallback from SDXL to Dall-E-3](/cookbook/getting-started/fallback-from-stable-diffusion-to-dall-e.ipynb)
+### Trending Cookbooks
+- Use models from [Nvidia NIM](/cookbook/providers/nvidia.ipynb) with AI Gateway
+- Monitor [CrewAI Agents](/cookbook/monitoring-agents/CrewAI_with_Telemetry.ipynb) with Portkey!
+- Comparing [Top 10 LMSYS Models](./use-cases/LMSYS%20Series/comparing-top10-LMSYS-models-with-Portkey.ipynb) with AI Gateway.
 
-### ✨ Latest Cookbooks
-* [Comparing Top 10 LMSYS Models with Portkey](/cookbook/use-cases/LMSYS%20Series/comparing-top10-LMSYS-models-with-Portkey.ipynb)
-* [Fallback from OpenAI to Azure OpenAI](/cookbook/getting-started/fallback-from-openai-to-azure.ipynb)
-* [Set up automatic retries for failed requests](/cookbook/getting-started/automatic-retries-on-failures.md)
-* [Call Llama 3 on Groq](/cookbook/use-cases/llama-3-on-groq.ipynb)
+### Latest Cookbooks
+* [Create Synthetic Datasets using Nemotron](/cookbook/use-cases/Nemotron_GPT_Finetuning_Portkey.ipynb)
+* [Use Portkey Gateway with Vercel's AI SDK](/cookbook/integrations/vercel-ai.md)
+* [Monitor Llama Agents with Portkey](/cookbook/monitoring-agents/Llama_Agents_with_Telemetry.ipynb)
+
+
 
 ### [More Examples](https://github.com/Portkey-AI/gateway/tree/main/cookbook)
 
@@ -260,7 +275,7 @@ Make your AI app more <ins>reliable</ins> and <ins>forward compatible</ins>, whi
 
 ## Contributing
 
-The easiest way to contribute is to pick an issue with the `good first issue` tag 💪. Read the contribution guidelines [here](/CONTRIBUTING.md).
+The easiest way to contribute is to pick an issue with the `good first issue` tag 💪. Read the contribution guidelines [here](/.github/CONTRIBUTING.md).
 
 Bug Report? [File here](https://github.com/Portkey-AI/gateway/issues) | Feature Request? [File here](https://github.com/Portkey-AI/gateway/issues)
 

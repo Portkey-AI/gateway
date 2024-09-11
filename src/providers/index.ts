@@ -30,13 +30,25 @@ import NovitaAIConfig from './novita-ai';
 import MonsterAPIConfig from './monsterapi';
 import DeepSeekAPIConfig from './deepseek';
 import PredibaseConfig from './predibase';
+import TritonConfig from './triton/';
 import VoyageConfig from './voyage';
+import {
+  AzureAIInferenceAPIConfig,
+  GithubModelAPiConfig,
+} from './azure-ai-inference';
+import DeepbricksConfig from './deepbricks';
+import SiliconFlowConfig from './siliconflow';
+import HuggingfaceConfig from './huggingface';
+import { cerebrasProviderAPIConfig } from './cerebras';
+import { InferenceNetProviderConfigs } from './inference-net';
+import SambaNovaConfig from './sambanova';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
   cohere: CohereConfig,
   anthropic: AnthropicConfig,
   'azure-openai': AzureOpenAIConfig,
+  huggingface: HuggingfaceConfig,
   anyscale: AnyscaleConfig,
   palm: PalmAIConfig,
   'together-ai': TogetherAIConfig,
@@ -64,7 +76,15 @@ const Providers: { [key: string]: ProviderConfigs } = {
   monsterapi: MonsterAPIConfig,
   deepseek: DeepSeekAPIConfig,
   predibase: PredibaseConfig,
+  triton: TritonConfig,
   voyage: VoyageConfig,
+  'azure-ai': AzureAIInferenceAPIConfig,
+  github: GithubModelAPiConfig,
+  deepbricks: DeepbricksConfig,
+  siliconflow: SiliconFlowConfig,
+  cerebras: cerebrasProviderAPIConfig,
+  'inference-net': InferenceNetProviderConfigs,
+  sambanova: SambaNovaConfig,
 };
 
 export default Providers;

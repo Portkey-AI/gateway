@@ -8,7 +8,7 @@ const MonsterAPIApiConfig: ProviderAPIConfig = {
   getEndpoint: ({ fn }) => {
     switch (fn) {
       case 'chatComplete':
-        return '/generate';
+        return '/chat/completions';
       default:
         return '';
     }

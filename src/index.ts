@@ -22,6 +22,7 @@ import { hooks } from './middlewares/hooks';
 import { compress } from 'hono/compress';
 import { getRuntimeKey } from 'hono/adapter';
 import { imageGenerationsHandler } from './handlers/imageGenerationsHandler';
+import { memoryCache } from './middlewares/cache';
 import { createSpeechHandler } from './handlers/createSpeechHandler';
 import conf from '../conf.json';
 import { createTranscriptionHandler } from './handlers/createTranscriptionHandler';
@@ -38,10 +39,11 @@ const app = new Hono();
 
 app.use('*', (c, next) => {
   const runtime = getRuntimeKey();
-  if (runtime !== 'lagon' && runtime !== 'workerd' && runtime !== 'node') {
-    return compress()(c, next);
+  const runtimesThatDontNeedCompression = ['lagon', 'workerd', 'node'];
+  if (runtimesThatDontNeedCompression.includes(runtime)) {
+    return next();
   }
-  return next();
+  return compress()(c, next);
 });
 
 /**
@@ -57,7 +59,7 @@ app.use('*', prettyJSON());
 app.use('*', hooks);
 
 if (conf.cache === true) {
-  app.use('*', require('./middlewares/cache').memoryCache());
+  app.use('*', memoryCache());
 }
 
 /**

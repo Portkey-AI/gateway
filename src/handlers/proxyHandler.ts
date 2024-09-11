@@ -9,6 +9,7 @@ import {
   OLLAMA,
   POWERED_BY,
   RETRY_STATUS_CODES,
+  TRITON,
 } from '../globals';
 import Providers from '../providers';
 import { Config, ShortConfig } from '../types/requestBody';
@@ -48,7 +49,7 @@ function getProxyPath(
     return `https:/${reqPath}${reqQuery}`;
   }
 
-  if (proxyProvider === OLLAMA) {
+  if (proxyProvider === OLLAMA || proxyProvider === TRITON) {
     return `https:/${reqPath}`;
   }
   let proxyPath = `${providerBasePath}${reqPath}${reqQuery}`;

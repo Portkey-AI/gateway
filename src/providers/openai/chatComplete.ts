@@ -1,4 +1,4 @@
-import { OPEN_AI } from '../../globals';
+import { ANTHROPIC, OPEN_AI } from '../../globals';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -121,11 +121,21 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
   const streamChunkArray: Array<string> = [];
   const { id, model, system_fingerprint, choices } = response;
 
-  const { prompt_tokens, completion_tokens } = response.usage || {};
+  const {
+    prompt_tokens,
+    completion_tokens,
+    cache_read_input_tokens,
+    cache_creation_input_tokens,
+  } = response.usage || {};
 
   let total_tokens;
   if (prompt_tokens && completion_tokens)
     total_tokens = prompt_tokens + completion_tokens;
+
+  const shouldSendCacheUsage =
+    provider === ANTHROPIC &&
+    (Number.isInteger(cache_read_input_tokens) ||
+      Number.isInteger(cache_creation_input_tokens));
 
   const streamChunkTemplate: Record<string, any> = {
     id,
@@ -138,6 +148,10 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
       ...(completion_tokens && { completion_tokens }),
       ...(prompt_tokens && { prompt_tokens }),
       ...(total_tokens && { total_tokens }),
+      ...(shouldSendCacheUsage && {
+        cache_read_input_tokens,
+        cache_creation_input_tokens,
+      }),
     },
   };
 

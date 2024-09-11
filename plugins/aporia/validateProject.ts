@@ -1,3 +1,4 @@
+import { Message } from '../../src/types/requestBody';
 import {
   HookEventType,
   PluginContext,
@@ -18,7 +19,14 @@ export const validate = async (
       'X-APORIA-API-KEY': `${credentials.apiKey}`,
     },
   };
-  return post(`${APORIA_BASE_URL}/${projectID}/validate`, data, options);
+  let baseURL = APORIA_BASE_URL;
+  // Allow endpoint configuration to support aporia trial endpoint
+  // Aporia trial endpoint: https://gr-prd-trial.aporia.com
+  if (credentials.apiEndpoint) {
+    baseURL = credentials.apiEndpoint;
+  }
+
+  return post(`${baseURL}/${projectID}/validate`, data, options);
 };
 
 export const handler: PluginHandler = async (
@@ -32,9 +40,24 @@ export const handler: PluginHandler = async (
 
   try {
     const aporiaObject: any = {
-      messages: context.request?.messages,
+      messages: context.request?.json?.messages,
       explain: true,
     };
+
+    aporiaObject['messages'] = aporiaObject['messages']?.map(
+      (message: Message) => {
+        if (typeof message.content === 'string') {
+          return message;
+        } else {
+          const _content = message.content?.reduce(
+            (value, item) =>
+              value + (item.type === 'text' ? `${item.text}\n` ?? '' : ''),
+            ''
+          );
+          return { ...message, content: _content };
+        }
+      }
+    );
 
     if (eventType === 'beforeRequestHook') {
       aporiaObject.validation_target = 'prompt';
