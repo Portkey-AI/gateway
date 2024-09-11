@@ -258,7 +258,7 @@ export async function tryPostProxy(
     providerOptions: providerOption,
     fn,
     gatewayRequestBody: params,
-  });
+      });
 
   const url = endpoint
     ? `${baseUrl}${endpoint}`
@@ -1059,7 +1059,7 @@ export function constructConfigFromRequestHeaders(
       'conditions',
     ]) as any;
   }
-
+  
   return {
     provider: requestHeaders[`x-${POWERED_BY}-provider`],
     apiKey: requestHeaders['authorization']?.replace('Bearer ', ''),
@@ -1072,6 +1072,7 @@ export function constructConfigFromRequestHeaders(
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === GOOGLE_VERTEX_AI &&
       vertexConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === OPEN_AI && openAiConfig),
+    mistralFimCompletion: requestHeaders[`x-${POWERED_BY}-mistral-fim-completion`],
   };
 }
 

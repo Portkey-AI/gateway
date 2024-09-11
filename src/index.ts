@@ -22,7 +22,6 @@ import { hooks } from './middlewares/hooks';
 import { compress } from 'hono/compress';
 import { getRuntimeKey } from 'hono/adapter';
 import { imageGenerationsHandler } from './handlers/imageGenerationsHandler';
-import { fimCompletionsHandler } from './handlers/fimCompletionsHandler';
 import { createSpeechHandler } from './handlers/createSpeechHandler';
 import conf from '../conf.json';
 import { createTranscriptionHandler } from './handlers/createTranscriptionHandler';
@@ -125,11 +124,6 @@ app.post('/v1/embeddings', requestValidator, embeddingsHandler);
  */
 app.post('/v1/images/generations', requestValidator, imageGenerationsHandler);
 
-/**
- * POST route for '/v1/fim/completions'.
- * Handles requests by passing them to the fimCompletionsHandler.
- */
-app.post('/v1/fim/completions', requestValidator, fimCompletionsHandler);
 /**
  * POST route for '/v1/audio/speech'.
  * Handles requests by passing them to the createSpeechHandler.

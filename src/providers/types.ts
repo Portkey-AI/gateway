@@ -60,7 +60,6 @@ export type endpointStrings =
   | 'stream-chatComplete'
   | 'proxy'
   | 'imageGenerate'
-  | 'fimComplete'
   | 'createSpeech'
   | 'createTranscription'
   | 'createTranslation';
@@ -156,30 +155,4 @@ export interface ImageGenerateResponse {
   created: string;
   data: object[];
   provider: string;
-}
-
-/**
- * The structure of a completion response for the 'fimComplete' function.
- * @interface
- */
-export interface FimCompletionResponse extends CResponse {
-  choices: FimChoice[];
-}
-
-/**
- * The structure of a choice in a chat completion response.
- * @interface
- */
-export enum MistralFinishReason {
-  STOP = "stop",
-  LENGTH = "length",
-  MODEL_LENGTH = "model_length",
-  ERROR = "error",
-  TOOL_CALLS = "tool_calls",
-}
-
-export interface FimChoice {
-  index: number;
-  message: Message;
-  finish_reason: MistralFinishReason | string;
 }

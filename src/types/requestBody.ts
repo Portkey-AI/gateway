@@ -90,6 +90,7 @@ export interface Options {
 
   /** The parameter to determine if extra non-openai compliant fields should be returned in response */
   strictOpenAiCompliance?: boolean;
+  mistralFimCompletion?: String;
 }
 
 /**

@@ -53,6 +53,16 @@ export const MistralAIChatCompleteConfig: ProviderConfig = {
     param: 'safe_prompt',
     default: false,
   },
+  prompt: {
+    param: 'prompt',
+    required: true,
+    default: '',
+  },
+  suffix: {
+    param: 'suffix',
+    required: false,
+    default: '',
+  },
 };
 
 interface MistralAIChatCompleteResponse extends ChatCompletionResponse {
