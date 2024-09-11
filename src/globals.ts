@@ -68,6 +68,7 @@ export const DEEPBRICKS: string = 'deepbricks';
 export const SILICONFLOW: string = 'siliconflow';
 export const CEREBRAS: string = 'cerebras';
 export const INFERENCENET: string = 'inference-net';
+export const SAMBANOVA: string = 'sambanova';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -110,6 +111,7 @@ export const VALID_PROVIDERS = [
   HUGGING_FACE,
   CEREBRAS,
   INFERENCENET,
+  SAMBANOVA,
 ];
 
 export const CONTENT_TYPES = {

@@ -421,6 +421,19 @@
         },
         "required": ["format"]
       }
+    },
+    {
+      "name": "Uppercase check",
+      "id": "alluppercase",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequest", "afterRequest"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks if content has all uppercase letters."
+        }
+      ],
+      "parameters": {}
     }
   ]
 }
