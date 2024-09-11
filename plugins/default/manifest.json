@@ -426,7 +426,7 @@
       "name": "Uppercase check",
       "id": "alluppercase",
       "type": "guardrail",
-      "supportedHooks": ["beforeRequestHook", "afterRequest"],
+      "supportedHooks": ["beforeRequest", "afterRequest"],
       "description": [
         {
           "type": "subHeading",
