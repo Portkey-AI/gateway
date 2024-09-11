@@ -423,25 +423,17 @@
       }
     },
     {
-      "id": "alluppercase",
       "name": "Uppercase check",
-      "description": "Passes when the text is fully uppercase.",
-      "credentials": [],
-      "functions": [
+      "id": "alluppercase",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequest"],
+      "description": [
         {
-          "name": "All Uppercase Check",
-          "id": "alluppercase",
-          "type": "guardrail",
-          "supportedHooks": ["beforeRequest", "afterRequest"],
-          "description": [
-            {
-              "type": "subHeading",
-              "text": "Checks if all characters are uppercase."
-            }
-          ],
-          "parameters": {}
+          "type": "subHeading",
+          "text": "Checks if content has all uppercase letters."
         }
-      ]
+      ],
+      "parameters": {}
     }
   ]
 }
