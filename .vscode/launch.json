@@ -5,7 +5,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Wrangler",
+      "name": "Wrangler debug",
       "type": "node",
       "request": "attach",
       "port": 9229,
@@ -17,7 +17,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug Gateway launched with node environment",
+      "name": "Node debug",
       "runtimeExecutable": "tsx",
       "runtimeArgs": ["${workspaceFolder}/build/src/start-server.js"],
       "sourceMaps": true,
