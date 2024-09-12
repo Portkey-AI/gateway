@@ -1,7 +1,14 @@
 {
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  /*
+    1. steps to run wrangler debugger (https://blog.cloudflare.com/debugging-cloudflare-workers/)
+    - run `npm run dev` in a terminal
+    - in debug and run tab, select 'Wrangler debug' and run
+    - add a breakpoint and verify
+    
+    2. Steps tp run node debugger
+    - In debug tab select "Node debug" and run
+    - add a breakpoint and verify
+    */
   "version": "0.2.0",
   "configurations": [
     {
