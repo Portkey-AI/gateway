@@ -90,6 +90,15 @@ export const OpenAIChatCompleteConfig: ProviderConfig = {
   stream_options: {
     param: 'stream_options',
   },
+  service_tier: {
+    param: 'stream_options',
+  },
+  parallel_tool_calls: {
+    param: 'stream_options',
+  },
+  max_completion_tokens: {
+    param: 'max_completion_tokens',
+  },
 };
 
 export interface OpenAIChatCompleteResponse extends ChatCompletionResponse {
