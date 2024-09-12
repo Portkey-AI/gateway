@@ -91,10 +91,10 @@ export const OpenAIChatCompleteConfig: ProviderConfig = {
     param: 'stream_options',
   },
   service_tier: {
-    param: 'stream_options',
+    param: 'service_tier',
   },
   parallel_tool_calls: {
-    param: 'stream_options',
+    param: 'parallel_tool_calls',
   },
   max_completion_tokens: {
     param: 'max_completion_tokens',
