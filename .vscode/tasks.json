@@ -7,11 +7,29 @@
       "type": "shell",
       "label": "npx tsc",
       "command": "npx",
-      "args": ["tsc"],
+      "args": [
+        "tsc",
+        "--sourcemap",
+        "true",
+        "--outDir",
+        "${workspaceFolder}/build"
+      ],
       "problemMatcher": ["$tsc"],
       "group": {
         "kind": "build",
         "isDefault": true
+      }
+    },
+    {
+      "type": "shell",
+      "label": "cleanup build",
+      "command": "rm",
+      "args": ["-rf", "${workspaceFolder}/build"],
+      "problemMatcher": [],
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
       }
     }
   ]
