@@ -5,6 +5,16 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Wrangler",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "cwd": "/",
+      "resolveSourceMapLocations": null,
+      "attachExistingChildren": false,
+      "autoAttachChildProcesses": false
+    },
+    {
       "type": "node",
       "request": "launch",
       "name": "Debug Gateway launched with node environment",
