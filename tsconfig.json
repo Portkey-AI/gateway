@@ -10,9 +10,7 @@
     "types": ["@cloudflare/workers-types", "node", "jest"],
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
-    "resolveJsonModule": true,
-    "sourceMap": true,
-    "outDir": "./build"
+    "resolveJsonModule": true
   },
   "exclude": ["**/*.test.ts"]
 }
