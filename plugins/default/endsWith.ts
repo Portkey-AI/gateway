@@ -30,4 +30,3 @@ export const handler: PluginHandler = async (
 
   return { error, verdict, data };
 };
-
