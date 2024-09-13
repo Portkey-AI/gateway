@@ -42,6 +42,7 @@ import HuggingfaceConfig from './huggingface';
 import { cerebrasProviderAPIConfig } from './cerebras';
 import { InferenceNetProviderConfigs } from './inference-net';
 import SambaNovaConfig from './sambanova';
+import { UpstageProviderConfig } from './upstage';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -85,6 +86,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   cerebras: cerebrasProviderAPIConfig,
   'inference-net': InferenceNetProviderConfigs,
   sambanova: SambaNovaConfig,
+  upstage: UpstageProviderConfig,
 };
 
 export default Providers;
