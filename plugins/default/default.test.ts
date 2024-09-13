@@ -8,6 +8,7 @@ import { handler as sentenceCountHandler } from './sentenceCount';
 import { handler as webhookHandler } from './webhook';
 import { handler as logHandler } from './log';
 import { handler as allUppercaseHandler } from './alluppercase';
+import { handler as endsWithHandler } from './endsWith';
 
 import { z } from 'zod';
 import { PluginContext, PluginParameters } from '../types';
@@ -703,5 +704,53 @@ describe('allUppercase handler', () => {
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
+  });
+});
+describe('endsWith handler', () => {
+  it('should return true verdict if response ends with provided suffix', async () => {
+    const eventType = 'afterRequestHook';
+    const context: PluginContext = {
+      response: {
+        text: 'This is a sentence that ends with the expected word i.e. HarryPortkey.',
+      },
+    };
+    const parameters: PluginParameters = {
+      suffix: 'HarryPortkey',
+    };
+    const result = await endsWithHandler(context, parameters, eventType);
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+  });
+  it('should return false verdict if response not ending with provided suffix', async () => {
+    const context: PluginContext = {
+      response: {
+        text: 'This is a sentence ending with wrong word i.e. MalfoyPortkey.',
+      },
+    };
+    const eventType = 'afterRequestHook';
+
+    const parameters: PluginParameters = {
+      suffix: 'HarryPortkey',
+    };
+
+    const result = await endsWithHandler(context, parameters, eventType);
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+  });
+
+  it('should return error for missing suffix in parameters', async () => {
+    const context: PluginContext = {
+      response: { text: 'This is a sentence which ends with Portkey.' },
+    };
+    const eventType = 'afterRequestHook';
+
+    const parameters: PluginParameters = {};
+
+    const result = await endsWithHandler(context, parameters, eventType);
+
+    expect(result.error).toBeInstanceOf(Error);
+    expect(result.error?.message).toBe('Missing suffix or text');
+    expect(result.verdict).toBe(false);
+    expect(result.data).toBe(null);
   });
 });
