@@ -19,6 +19,18 @@ export const CohereEmbedConfig: ProviderConfig = {
     param: 'model',
     default: 'embed-english-light-v2.0',
   },
+  input_type: {
+    param: 'input_type',
+    required: false,
+  },
+  embedding_type: {
+    param: 'embedding_type',
+    required: false,
+  },
+  truncate: {
+    param: 'truncate',
+    required: false,
+  },
 };
 
 /**
