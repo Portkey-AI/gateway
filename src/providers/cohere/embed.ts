@@ -23,8 +23,8 @@ export const CohereEmbedConfig: ProviderConfig = {
     param: 'input_type',
     required: false,
   },
-  embedding_type: {
-    param: 'embedding_type',
+  embedding_types: {
+    param: 'embedding_types',
     required: false,
   },
   truncate: {
