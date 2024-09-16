@@ -7,6 +7,7 @@ import { handler as wordCountHandler } from './wordCount';
 import { handler as sentenceCountHandler } from './sentenceCount';
 import { handler as webhookHandler } from './webhook';
 import { handler as logHandler } from './log';
+import { handler as allUppercaseHandler } from './alluppercase';
 
 import { z } from 'zod';
 import { PluginContext, PluginParameters } from '../types';
@@ -15,7 +16,7 @@ describe('jsonSchema handler', () => {
   it('should validate JSON in response text', async () => {
     const context: PluginContext = {
       response: {
-        text: `adding some text before this \`\`\`json\n{"key1": "value"}\n\`\`\`\n and adding some text after {"key":"value"}`,
+        text: `adding some text before this \`\`\`json\n{"key": "value"}\n\`\`\`\n and adding some text after {"key":"value"}`,
       },
     };
     const eventType = 'afterRequestHook';
@@ -27,7 +28,51 @@ describe('jsonSchema handler', () => {
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
-    expect(result.data).toEqual({ key: 'value' });
+    expect(result.data).toBeDefined();
+    expect(result.data.matchedJson).toEqual({ key: 'value' });
+    expect(result.data.explanation).toContain('Successfully validated');
+  });
+
+  it('should validate JSON in response text - complex', async () => {
+    const context: PluginContext = {
+      response: {
+        text: '```json\n{\n  "title": "The Rise of AI Agents: Transforming the Future",\n  "short_intro": "Artificial Intelligence (AI) agents are revolutionizing various sectors, from healthcare to finance. In this blog, we explore the development of AI agents, their applications, and their potential to reshape our world."\n}\n```',
+      },
+    };
+    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      schema: z.object({ title: z.string(), short_intro: z.string() }),
+    };
+
+    const result = await jsonSchemaHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toBeDefined();
+    expect(result.data.matchedJson).toHaveProperty('title');
+    expect(result.data.matchedJson).toHaveProperty('short_intro');
+    expect(result.data.explanation).toContain('Successfully validated');
+  });
+
+  it('should validate only JSON in response text', async () => {
+    const context: PluginContext = {
+      response: {
+        text: '{\n  "title": "The Rise of AI Agents: Transforming the Future",\n  "short_intro": "Artificial Intelligence (AI) agents are revolutionizing various sectors, from healthcare to finance. In this blog, we explore the development of AI agents, their applications, and their potential to reshape our world."\n}',
+      },
+    };
+    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      schema: z.object({ title: z.string(), short_intro: z.string() }),
+    };
+
+    const result = await jsonSchemaHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toBeDefined();
+    expect(result.data.matchedJson).toHaveProperty('title');
+    expect(result.data.matchedJson).toHaveProperty('short_intro');
+    expect(result.data.explanation).toContain('Successfully validated');
   });
 
   it('should return a false verdict for invalid JSON in response text', async () => {
@@ -45,21 +90,42 @@ describe('jsonSchema handler', () => {
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
-    expect(result.data).toBe(null);
+    expect(result.data).toBeDefined();
+    expect(result.data.explanation).toContain('Failed to validate');
+    expect(result.data.validationErrors).toBeDefined();
+    expect(Array.isArray(result.data.validationErrors)).toBe(true);
+  });
+
+  it('should return explanation when no valid JSON is found', async () => {
+    const context: PluginContext = {
+      response: {
+        text: 'This is just plain text with no JSON',
+      },
+    };
+    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      schema: z.object({ key: z.string() }),
+    };
+
+    const result = await jsonSchemaHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toBeDefined();
+    expect(result.data.explanation).toContain('No valid JSON found');
   });
 });
 
 describe('jsonKeys handler', () => {
-  it('should return true verdict for any key in JSON', async () => {
+  it('should validate JSON with "any" operator', async () => {
     const context: PluginContext = {
       response: {
-        text: `adding some text before this \`\`\`json\n{"key1": "value"}\n\`\`\`\n and adding some text after {"key":"value"}`,
+        text: '{"key1": "value1", "key2": "value2"}',
       },
     };
     const eventType = 'afterRequestHook';
-
     const parameters: PluginParameters = {
-      keys: ['key1'],
+      keys: ['key1', 'key3'],
       operator: 'any',
     };
 
@@ -67,17 +133,20 @@ describe('jsonKeys handler', () => {
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
-    expect(result.data).toEqual({ key1: 'value' });
+    expect(result.data).toBeDefined();
+    expect(result.data.matchedJson).toEqual({ key1: 'value1', key2: 'value2' });
+    expect(result.data.explanation).toContain('Successfully matched');
+    expect(result.data.presentKeys).toContain('key1');
+    expect(result.data.missingKeys).toContain('key3');
   });
 
-  it('should return false verdict for all keys in JSON', async () => {
+  it('should validate JSON with "all" operator', async () => {
     const context: PluginContext = {
       response: {
-        text: `adding some text before this \`\`\`json\n{"key1": "value"}\n\`\`\`\n and adding some text after {"key":"value"}`,
+        text: '{"key1": "value1", "key2": "value2"}',
       },
     };
     const eventType = 'afterRequestHook';
-
     const parameters: PluginParameters = {
       keys: ['key1', 'key2'],
       operator: 'all',
@@ -86,21 +155,23 @@ describe('jsonKeys handler', () => {
     const result = await jsonKeysHandler(context, parameters, eventType);
 
     expect(result.error).toBe(null);
-    expect(result.verdict).toBe(false);
-
-    // console.log(result);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toBeDefined();
+    expect(result.data.matchedJson).toEqual({ key1: 'value1', key2: 'value2' });
+    expect(result.data.explanation).toContain('Successfully matched');
+    expect(result.data.presentKeys).toEqual(['key1', 'key2']);
+    expect(result.data.missingKeys).toEqual([]);
   });
 
-  it('should return true verdict for none of the keys in JSON', async () => {
+  it('should validate JSON with "none" operator', async () => {
     const context: PluginContext = {
       response: {
-        text: `adding some text before this \`\`\`json\n{"key1": "value"}\n\`\`\`\n and adding some text after {"key":"value"}`,
+        text: '{"key1": "value1", "key2": "value2"}',
       },
     };
     const eventType = 'afterRequestHook';
-
     const parameters: PluginParameters = {
-      keys: ['key2'],
+      keys: ['key3', 'key4'],
       operator: 'none',
     };
 
@@ -108,9 +179,96 @@ describe('jsonKeys handler', () => {
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
-    expect(result.data).toEqual({ key1: 'value' });
+    expect(result.data).toBeDefined();
+    expect(result.data.matchedJson).toEqual({ key1: 'value1', key2: 'value2' });
+    expect(result.data.explanation).toContain('Successfully matched');
+    expect(result.data.presentKeys).toEqual([]);
+    expect(result.data.missingKeys).toEqual(['key3', 'key4']);
+  });
 
-    // console.log(result);
+  it('should handle JSON in code blocks', async () => {
+    const context: PluginContext = {
+      response: {
+        text: '```json\n{"key1": "value1", "key2": "value2"}\n```',
+      },
+    };
+    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      keys: ['key1', 'key2'],
+      operator: 'all',
+    };
+
+    const result = await jsonKeysHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toBeDefined();
+    expect(result.data.matchedJson).toEqual({ key1: 'value1', key2: 'value2' });
+    expect(result.data.explanation).toContain('Successfully matched');
+  });
+
+  it('should return false verdict when keys are not found', async () => {
+    const context: PluginContext = {
+      response: {
+        text: '{"key1": "value1", "key2": "value2"}',
+      },
+    };
+    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      keys: ['key3', 'key4'],
+      operator: 'any',
+    };
+
+    const result = await jsonKeysHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toBeDefined();
+    expect(result.data.explanation).toContain('Failed to match');
+    expect(result.data.presentKeys).toEqual([]);
+    expect(result.data.missingKeys).toEqual(['key3', 'key4']);
+  });
+
+  it('should handle multiple JSON objects in text', async () => {
+    const context: PluginContext = {
+      response: {
+        text: '{"key1": "value1"} Some text {"key2": "value2", "key3": "value3"}',
+      },
+    };
+    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      keys: ['key2', 'key3'],
+      operator: 'all',
+    };
+
+    const result = await jsonKeysHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toBeDefined();
+    expect(result.data.matchedJson).toEqual({ key2: 'value2', key3: 'value3' });
+    expect(result.data.explanation).toContain('Successfully matched');
+  });
+
+  it('should return explanation when no valid JSON is found', async () => {
+    const context: PluginContext = {
+      response: {
+        text: 'This is just plain text with no JSON',
+      },
+    };
+    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      keys: ['key1', 'key2'],
+      operator: 'any',
+    };
+
+    const result = await jsonKeysHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toBeDefined();
+    expect(result.data.explanation).toContain('No valid JSON found');
+    expect(result.data.operator).toBe('any');
   });
 });
 
@@ -520,5 +678,30 @@ describe('log handler', () => {
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
+  });
+});
+
+describe('allUppercase handler', () => {
+  it('should return true verdict for a sentence with all uppercase characters', async () => {
+    const context: PluginContext = {
+      response: { text: 'THIS IS A SENTENCE. THIS IS ANOTHER SENTENCE.' },
+    };
+    const eventType = 'afterRequestHook';
+
+    const result = await allUppercaseHandler(context, {}, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+  });
+  it('should return false verdict for a sentence with not all uppercase characters', async () => {
+    const context: PluginContext = {
+      response: { text: 'This is a sentence. This is another sentence' },
+    };
+    const eventType = 'afterRequestHook';
+
+    const result = await allUppercaseHandler(context, {}, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
   });
 });

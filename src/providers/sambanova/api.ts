@@ -2,7 +2,7 @@ import { ProviderAPIConfig } from '../types';
 
 const SambaNovaAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) =>
-    providerOptions.customHost || 'https://fast-api.snova.ai',
+    providerOptions.customHost || 'https://api.sambanova.ai',
   headers: ({ providerOptions }) => {
     return { Authorization: `Bearer ${providerOptions.apiKey}` };
   },

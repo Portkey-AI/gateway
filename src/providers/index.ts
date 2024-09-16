@@ -40,6 +40,7 @@ import DeepbricksConfig from './deepbricks';
 import SiliconFlowConfig from './siliconflow';
 import HuggingfaceConfig from './huggingface';
 import { cerebrasProviderAPIConfig } from './cerebras';
+import { InferenceNetProviderConfigs } from './inference-net';
 import SambaNovaConfig from './sambanova';
 
 const Providers: { [key: string]: ProviderConfigs } = {
@@ -82,6 +83,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   deepbricks: DeepbricksConfig,
   siliconflow: SiliconFlowConfig,
   cerebras: cerebrasProviderAPIConfig,
+  'inference-net': InferenceNetProviderConfigs,
   sambanova: SambaNovaConfig,
 };
 
