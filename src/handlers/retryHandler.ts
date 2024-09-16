@@ -72,13 +72,7 @@ export const retryRequest = async (
         try {
           const response: Response = timeout
             ? await fetchWithTimeout(url, options, timeout)
-            : await fetch(url, {
-                ...options,
-                headers: {
-                  ...options.headers,
-                  'User-Agent': 'Portkey Gateway/1.0',
-                },
-              });
+            : await fetch(url, options);
           if (statusCodesToRetry.includes(response.status)) {
             const errorObj: any = new Error(await response.text());
             errorObj.status = response.status;
