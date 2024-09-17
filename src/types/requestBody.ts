@@ -71,11 +71,18 @@ export interface Options {
   cache?: CacheSettings | string;
   metadata?: Record<string, string>;
   requestTimeout?: number;
+  /** This is used to determine if the request should be transformed to formData Example: Stability V2 */
+  transFormToFormData?: boolean;
   /** AWS Bedrock specific */
   awsSecretAccessKey?: string;
   awsAccessKeyId?: string;
   awsSessionToken?: string;
   awsRegion?: string;
+
+  /** Stability AI specific */
+  stabilityClientId?: string;
+  stabilityClientUserId?: string;
+  stabilityClientVersion?: string;
 
   /** Hugging Face specific */
   huggingfaceBaseUrl?: string;
@@ -137,6 +144,8 @@ export interface Targets {
   index?: number;
   cache?: CacheSettings | string;
   targets?: Targets[];
+  /** This is used to determine if the request should be transformed to formData Example: Stability V2 */
+  transFormToFormData?: boolean;
 }
 
 /**

@@ -1,4 +1,5 @@
 import { RouterError } from '../errors/RouterError';
+import { STABILITY_V2_MODELS } from '../providers/stability-ai/constants';
 import {
   constructConfigFromRequestHeaders,
   tryTargetsRecursively,
@@ -18,6 +19,12 @@ export async function imageGenerationsHandler(c: Context): Promise<Response> {
     let request = await c.req.json();
     let requestHeaders = Object.fromEntries(c.req.raw.headers);
     const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
+    if (
+      typeof request.model === 'string' &&
+      STABILITY_V2_MODELS.includes(request.model)
+    ) {
+      camelCaseConfig.transFormToFormData = true;
+    }
 
     const tryTargetsResponse = await tryTargetsRecursively(
       c,
