@@ -528,7 +528,7 @@ export async function tryPost(
   );
 
   fetchOptions.body =
-    headers['Content-Type'] === CONTENT_TYPES.MULTIPART_FORM_DATA
+    headers[HEADER_KEYS.CONTENT_TYPE] === CONTENT_TYPES.MULTIPART_FORM_DATA
       ? (transformedRequestBody as FormData)
       : JSON.stringify(transformedRequestBody);
 
