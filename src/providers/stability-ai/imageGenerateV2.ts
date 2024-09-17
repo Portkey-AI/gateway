@@ -1,4 +1,3 @@
-import { error } from 'console';
 import { STABILITY_AI } from '../../globals';
 import { ErrorResponse, ImageGenerateResponse, ProviderConfig } from '../types';
 import {
