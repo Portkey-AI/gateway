@@ -11,9 +11,9 @@ import {
   OPEN_AI,
   AZURE_AI_INFERENCE,
   ANTHROPIC,
-  MULTIPART_FORM_DATA_ENDPOINTS,
   CONTENT_TYPES,
   HUGGING_FACE,
+  STABILITY_AI,
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
@@ -487,7 +487,8 @@ export async function tryPost(
     provider,
     params,
     inputParams,
-    fn
+    fn,
+    providerOption
   );
 
   const forwardHeaders =
@@ -526,9 +527,10 @@ export async function tryPost(
     requestHeaders
   );
 
-  fetchOptions.body = MULTIPART_FORM_DATA_ENDPOINTS.includes(fn)
-    ? (transformedRequestBody as FormData)
-    : JSON.stringify(transformedRequestBody);
+  fetchOptions.body =
+    headers['Content-Type'] === CONTENT_TYPES.MULTIPART_FORM_DATA
+      ? (transformedRequestBody as FormData)
+      : JSON.stringify(transformedRequestBody);
 
   providerOption.retry = {
     attempts: providerOption.retry?.attempts ?? 0,
@@ -976,6 +978,14 @@ export function constructConfigFromRequestHeaders(
     azureModelName: requestHeaders[`x-${POWERED_BY}-azure-model-name`],
   };
 
+  const stabilityAiConfig = {
+    stabilityClientId: requestHeaders[`x-${POWERED_BY}-stability-client-id`],
+    stabilityClientUserId:
+      requestHeaders[`x-${POWERED_BY}-stability-client-user-id`],
+    stabilityClientVersion:
+      requestHeaders[`x-${POWERED_BY}-stability-client-version`],
+  };
+
   const azureAiInferenceConfig = {
     azureDeploymentName:
       requestHeaders[`x-${POWERED_BY}-azure-deployment-name`],
@@ -1092,6 +1102,12 @@ export function constructConfigFromRequestHeaders(
           ...anthropicConfig,
         };
       }
+      if (parsedConfigJson.provider === STABILITY_AI) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...stabilityAiConfig,
+        };
+      }
     }
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
@@ -1120,6 +1136,8 @@ export function constructConfigFromRequestHeaders(
       anthropicConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === HUGGING_FACE &&
       huggingfaceConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === STABILITY_AI &&
+      stabilityAiConfig),
   };
 }
 

@@ -64,10 +64,6 @@ interface StabilityAIImageGenerateResponse extends ImageGenerateResponse {
   artifacts: ImageArtifact[];
 }
 
-interface StabilityAIImageGenerateResponse extends ImageGenerateResponse {
-  artifacts: ImageArtifact[];
-}
-
 interface StabilityAIImageGenerateErrorResponse {
   id: string;
   name: string;
