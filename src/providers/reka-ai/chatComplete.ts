@@ -88,6 +88,9 @@ export const RekaAIChatCompleteConfig: ProviderConfig = {
   max_tokens: {
     param: 'request_output_len',
   },
+  max_completion_tokens: {
+    param: 'request_output_len',
+  },
   temperature: {
     param: 'temperature',
   },

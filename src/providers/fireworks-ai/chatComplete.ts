@@ -28,6 +28,11 @@ export const FireworksAIChatCompleteConfig: ProviderConfig = {
     default: 200,
     min: 1,
   },
+  max_completion_tokens: {
+    param: 'max_tokens',
+    default: 200,
+    min: 1,
+  },
   prompt_truncate_len: {
     param: 'prompt_truncate_len',
     default: 1500,

@@ -213,6 +213,10 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
+  max_completion_tokens: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
   stop: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
