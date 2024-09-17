@@ -13,6 +13,7 @@ export const HEADER_KEYS: Record<string, string> = {
   CUSTOM_HOST: `x-${POWERED_BY}-custom-host`,
   REQUEST_TIMEOUT: `x-${POWERED_BY}-request-timeout`,
   STRICT_OPEN_AI_COMPLIANCE: `x-${POWERED_BY}-strict-open-ai-compliance`,
+  CONTENT_TYPE: `content-type`,
 };
 
 export const RESPONSE_HEADER_KEYS: Record<string, string> = {
@@ -124,6 +125,10 @@ export const CONTENT_TYPES = {
   PLAIN_TEXT: 'text/plain',
   HTML: 'text/html',
   GENERIC_IMAGE_PATTERN: 'image/',
+};
+
+export const ACCEPT_TYPES = {
+  APPLICATION_JSON: 'application/json',
 };
 
 export const MULTIPART_FORM_DATA_ENDPOINTS: endpointStrings[] = [
