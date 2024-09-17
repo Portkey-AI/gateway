@@ -437,6 +437,11 @@ export const BedrockMistralChatCompleteConfig: ProviderConfig = {
     default: 20,
     min: 1,
   },
+  max_completion_tokens: {
+    param: 'max_tokens',
+    default: 20,
+    min: 1,
+  },
   temperature: {
     param: 'temperature',
     default: 0.75,
