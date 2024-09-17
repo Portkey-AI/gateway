@@ -2,8 +2,8 @@ import { ProviderConfigs } from '../types';
 import StabilityAIAPIConfig from './api';
 import { STABILITY_V2_MODELS } from './constants';
 import {
-  StabilityAIImageGenerateConfig,
-  StabilityAIImageGenerateResponseTransform,
+  StabilityAIImageGenerateV1Config,
+  StabilityAIImageGenerateV1ResponseTransform,
 } from './imageGenerate';
 import {
   StabilityAIImageGenerateV2Config,
@@ -23,9 +23,9 @@ const StabilityAIConfig: ProviderConfigs = {
       };
     }
     return {
-      imageGenerate: StabilityAIImageGenerateConfig,
+      imageGenerate: StabilityAIImageGenerateV1Config,
       responseTransforms: {
-        imageGenerate: StabilityAIImageGenerateResponseTransform,
+        imageGenerate: StabilityAIImageGenerateV1ResponseTransform,
       },
     };
   },

@@ -5,7 +5,7 @@ import {
   generateInvalidProviderResponseError,
 } from '../utils';
 
-export const StabilityAIImageGenerateConfig: ProviderConfig = {
+export const StabilityAIImageGenerateV1Config: ProviderConfig = {
   prompt: {
     param: 'text_prompts',
     required: true,
@@ -60,11 +60,11 @@ export const StabilityAIImageGenerateConfig: ProviderConfig = {
   },
 };
 
-interface StabilityAIImageGenerateResponse extends ImageGenerateResponse {
+interface StabilityAIImageGenerateV1Response extends ImageGenerateResponse {
   artifacts: ImageArtifact[];
 }
 
-interface StabilityAIImageGenerateErrorResponse {
+interface StabilityAIImageGenerateV1ErrorResponse {
   id: string;
   name: string;
   message: string;
@@ -76,10 +76,10 @@ interface ImageArtifact {
   seed: number; // The seed associated with this image
 }
 
-export const StabilityAIImageGenerateResponseTransform: (
+export const StabilityAIImageGenerateV1ResponseTransform: (
   response:
-    | StabilityAIImageGenerateResponse
-    | StabilityAIImageGenerateErrorResponse,
+    | StabilityAIImageGenerateV1Response
+    | StabilityAIImageGenerateV1ErrorResponse,
   responseStatus: number
 ) => ImageGenerateResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'message' in response) {
