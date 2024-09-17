@@ -42,6 +42,7 @@ import {
   BedrockTitanCompleteResponseTransform,
   BedrockTitanCompleteStreamChunkTransform,
 } from './complete';
+import { BEDROCK_STABILITY_V2_MODELS } from './constants';
 import {
   BedrockCohereEmbedConfig,
   BedrockCohereEmbedResponseTransform,
@@ -49,8 +50,10 @@ import {
   BedrockTitanEmbedResponseTransform,
 } from './embed';
 import {
-  BedrockStabilityAIImageGenerateConfig,
-  BedrockStabilityAIImageGenerateResponseTransform,
+  BedrockStabilityAIImageGenerateV1Config,
+  BedrockStabilityAIImageGenerateV1ResponseTransform,
+  BedrockStabilityAIImageGenerateV2Config,
+  BedrockStabilityAIImageGenerateV2ResponseTransform,
 } from './imageGenerate';
 
 const BedrockConfig: ProviderConfigs = {
@@ -148,11 +151,20 @@ const BedrockConfig: ProviderConfigs = {
           },
         };
       case 'stability':
+        if (model && BEDROCK_STABILITY_V2_MODELS.includes(model)) {
+          return {
+            imageGenerate: BedrockStabilityAIImageGenerateV2Config,
+            api: BedrockAPIConfig,
+            responseTransforms: {
+              imageGenerate: BedrockStabilityAIImageGenerateV2ResponseTransform,
+            },
+          };
+        }
         return {
-          imageGenerate: BedrockStabilityAIImageGenerateConfig,
+          imageGenerate: BedrockStabilityAIImageGenerateV1Config,
           api: BedrockAPIConfig,
           responseTransforms: {
-            imageGenerate: BedrockStabilityAIImageGenerateResponseTransform,
+            imageGenerate: BedrockStabilityAIImageGenerateV1ResponseTransform,
           },
         };
       default:
