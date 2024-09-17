@@ -36,7 +36,7 @@ export const PredibaseChatCompleteConfig: ProviderConfig = {
     min: 0,
   },
   max_completion_tokens: {
-    param: 'max_completion_tokens',
+    param: 'max_tokens',
     required: false,
     default: 4096,
     min: 0,
