@@ -55,7 +55,7 @@ export const MistralAIChatCompleteConfig: ProviderConfig = {
   },
   prompt: {
     param: 'prompt',
-    required: true,
+    required: false,
     default: '',
   },
   suffix: {
