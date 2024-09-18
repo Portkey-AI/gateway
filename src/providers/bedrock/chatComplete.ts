@@ -374,7 +374,7 @@ export const BedrockLLamaChatCompleteConfig: ProviderConfig = {
         let messages: Message[] = params.messages;
         messages.forEach((msg, index) => {
           if (index === 0 && msg.role === 'system') {
-            prompt += `system: ${messages}\n`;
+            prompt += `system: ${msg.content}\n`;
           } else if (msg.role == 'user') {
             prompt += `user: ${msg.content}\n`;
           } else if (msg.role == 'assistant') {
@@ -418,7 +418,7 @@ export const BedrockMistralChatCompleteConfig: ProviderConfig = {
         let messages: Message[] = params.messages;
         messages.forEach((msg, index) => {
           if (index === 0 && msg.role === 'system') {
-            prompt += `system: ${messages}\n`;
+            prompt += `system: ${msg.content}\n`;
           } else if (msg.role == 'user') {
             prompt += `user: ${msg.content}\n`;
           } else if (msg.role == 'assistant') {
