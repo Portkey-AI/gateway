@@ -21,6 +21,7 @@ import {
   BedrocMistralStreamChunk,
 } from './complete';
 import { BedrockErrorResponse } from './embed';
+import { transformMessagesForLLamaPrompt } from './utils';
 
 interface AnthropicTool {
   name: string;
@@ -364,28 +365,13 @@ export const BedrockCohereChatCompleteConfig: ProviderConfig = {
   },
 };
 
-export const BedrockLLamaChatCompleteConfig: ProviderConfig = {
+export const BedrockLlamaChatCompleteConfig: ProviderConfig = {
   messages: {
     param: 'prompt',
     required: true,
     transform: (params: Params) => {
-      let prompt: string = '';
-      if (!!params.messages) {
-        let messages: Message[] = params.messages;
-        messages.forEach((msg, index) => {
-          if (index === 0 && msg.role === 'system') {
-            prompt += `system: ${msg.content}\n`;
-          } else if (msg.role == 'user') {
-            prompt += `user: ${msg.content}\n`;
-          } else if (msg.role == 'assistant') {
-            prompt += `assistant: ${msg.content}\n`;
-          } else {
-            prompt += `${msg.role}: ${msg.content}\n`;
-          }
-        });
-        prompt += 'Assistant:';
-      }
-      return prompt;
+      if (!params.messages) return '';
+      return transformMessagesForLLamaPrompt(params.messages);
     },
   },
   max_tokens: {

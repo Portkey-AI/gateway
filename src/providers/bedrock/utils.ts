@@ -1,5 +1,6 @@
 import { SignatureV4 } from '@smithy/signature-v4';
 import { Sha256 } from '@aws-crypto/sha256-js';
+import { Message, MESSAGE_ROLES } from '../../types/requestBody';
 
 export const generateAWSHeaders = async (
   body: Record<string, any>,
@@ -37,4 +38,34 @@ export const generateAWSHeaders = async (
 
   const signed = await signer.sign(request);
   return signed.headers;
+};
+
+const LLAMA_3_SPECIAL_TOKENS = {
+  PROMPT_START: '<|begin_of_text|>',
+  PROMPT_END: '<|end_of_text|>',
+  PADDING: '<|finetune_right_pad_id|>',
+  ROLE_START: '<|start_header_id|>',
+  ROLE_END: '<|end_header_id|>',
+  END_OF_MESSAGE: '<|eom_id|>',
+  END_OF_TURN: '<|eot_id|>',
+  TOOL_CALL: '<|python_tag|>',
+};
+
+export const transformMessagesForLLamaPrompt = (messages: Message[]) => {
+  let prompt: string = '';
+  prompt += LLAMA_3_SPECIAL_TOKENS.PROMPT_START + '\n';
+  messages.forEach((msg, index) => {
+    prompt +=
+      LLAMA_3_SPECIAL_TOKENS.ROLE_START +
+      msg.role +
+      LLAMA_3_SPECIAL_TOKENS.ROLE_END +
+      '\n';
+    prompt += msg.content + LLAMA_3_SPECIAL_TOKENS.END_OF_TURN;
+  });
+  prompt +=
+    LLAMA_3_SPECIAL_TOKENS.ROLE_START +
+    MESSAGE_ROLES.ASSISTANT +
+    LLAMA_3_SPECIAL_TOKENS.ROLE_END +
+    '\n';
+  return prompt;
 };

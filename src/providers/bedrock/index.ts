@@ -11,7 +11,7 @@ import {
   BedrockCohereChatCompleteConfig,
   BedrockCohereChatCompleteResponseTransform,
   BedrockCohereChatCompleteStreamChunkTransform,
-  BedrockLLamaChatCompleteConfig,
+  BedrockLlamaChatCompleteConfig,
   BedrockLlamaChatCompleteResponseTransform,
   BedrockLlamaChatCompleteStreamChunkTransform,
   BedrockTitanChatCompleteResponseTransform,
@@ -88,7 +88,7 @@ const BedrockConfig: ProviderConfigs = {
       case 'meta':
         return {
           complete: BedrockLLamaCompleteConfig,
-          chatComplete: BedrockLLamaChatCompleteConfig,
+          chatComplete: BedrockLlamaChatCompleteConfig,
           api: BedrockAPIConfig,
           responseTransforms: {
             'stream-complete': BedrockLlamaCompleteStreamChunkTransform,

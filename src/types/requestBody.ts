@@ -177,6 +177,14 @@ export interface ToolCall {
   };
 }
 
+export enum MESSAGE_ROLES {
+  SYSTEM = 'system',
+  USER = 'user',
+  ASSISTANT = 'assistant',
+  FUNCTION = 'function',
+  TOOL = 'tool',
+}
+
 export type OpenAIMessageRole =
   | 'system'
   | 'user'
