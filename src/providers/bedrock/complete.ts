@@ -3,7 +3,6 @@ import { Params } from '../../types/requestBody';
 import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { BedrockErrorResponseTransform } from './chatComplete';
-import { LLAMA_2_SPECIAL_TOKENS, LLAMA_3_SPECIAL_TOKENS } from './constants';
 import { BedrockErrorResponse } from './embed';
 
 export const BedrockAnthropicCompleteConfig: ProviderConfig = {
