@@ -21,7 +21,10 @@ import {
   BedrocMistralStreamChunk,
 } from './complete';
 import { BedrockErrorResponse } from './embed';
-import { transformMessagesForLLamaPrompt } from './utils';
+import {
+  transformMessagesForLLama2Prompt,
+  transformMessagesForLLama3Prompt,
+} from './utils';
 
 interface AnthropicTool {
   name: string;
@@ -365,13 +368,13 @@ export const BedrockCohereChatCompleteConfig: ProviderConfig = {
   },
 };
 
-export const BedrockLlamaChatCompleteConfig: ProviderConfig = {
+export const BedrockLlama2ChatCompleteConfig: ProviderConfig = {
   messages: {
     param: 'prompt',
     required: true,
     transform: (params: Params) => {
       if (!params.messages) return '';
-      return transformMessagesForLLamaPrompt(params.messages);
+      return transformMessagesForLLama2Prompt(params.messages);
     },
   },
   max_tokens: {
@@ -379,6 +382,34 @@ export const BedrockLlamaChatCompleteConfig: ProviderConfig = {
     default: 512,
     min: 1,
     max: 2048,
+  },
+  temperature: {
+    param: 'temperature',
+    default: 0.5,
+    min: 0,
+    max: 1,
+  },
+  top_p: {
+    param: 'top_p',
+    default: 0.9,
+    min: 0,
+    max: 1,
+  },
+};
+
+export const BedrockLlama3ChatCompleteConfig: ProviderConfig = {
+  messages: {
+    param: 'prompt',
+    required: true,
+    transform: (params: Params) => {
+      if (!params.messages) return '';
+      return transformMessagesForLLama3Prompt(params.messages);
+    },
+  },
+  max_tokens: {
+    param: 'max_gen_len',
+    default: 512,
+    min: 1,
   },
   temperature: {
     param: 'temperature',
