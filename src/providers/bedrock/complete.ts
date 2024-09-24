@@ -3,6 +3,7 @@ import { Params } from '../../types/requestBody';
 import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { BedrockErrorResponseTransform } from './chatComplete';
+import { LLAMA_2_SPECIAL_TOKENS, LLAMA_3_SPECIAL_TOKENS } from './constants';
 import { BedrockErrorResponse } from './embed';
 
 export const BedrockAnthropicCompleteConfig: ProviderConfig = {
@@ -104,6 +105,11 @@ export const BedrockLLamaCompleteConfig: ProviderConfig = {
   prompt: {
     param: 'prompt',
     required: true,
+    transform: (params: Params) => {
+      return params.model?.search('llama3') === -1
+        ? `${LLAMA_2_SPECIAL_TOKENS.BEGINNING_OF_SENTENCE}${params.prompt}`
+        : `${LLAMA_3_SPECIAL_TOKENS.PROMPT_START}${params.prompt}`;
+    },
   },
   max_tokens: {
     param: 'max_gen_len',
