@@ -1,6 +1,6 @@
 import { SignatureV4 } from '@smithy/signature-v4';
 import { Sha256 } from '@aws-crypto/sha256-js';
-import { Message, MESSAGE_ROLES } from '../../types/requestBody';
+import { ContentType, Message, MESSAGE_ROLES } from '../../types/requestBody';
 
 export const generateAWSHeaders = async (
   body: Record<string, any>,
@@ -40,6 +40,26 @@ export const generateAWSHeaders = async (
   return signed.headers;
 };
 
+/*
+  Helper function to use inside reduce to convert ContentType array to string
+*/
+const convertContentTypesToString = (acc: string, curr: ContentType) => {
+  if (curr.type !== 'text') return acc;
+  acc += curr.text + '\n';
+  return acc;
+};
+
+/*
+  Handle messages of both string and ContentType array
+*/
+const getMessageContent = (message: Message) => {
+  if (message === undefined) return '';
+  if (typeof message.content === 'object') {
+    return message.content.reduce(convertContentTypesToString, '');
+  }
+  return message.content || '';
+};
+
 const LLAMA_3_SPECIAL_TOKENS = {
   PROMPT_START: '<|begin_of_text|>',
   PROMPT_END: '<|end_of_text|>',
@@ -65,7 +85,7 @@ export const transformMessagesForLLama3Prompt = (messages: Message[]) => {
       msg.role +
       LLAMA_3_SPECIAL_TOKENS.ROLE_END +
       '\n';
-    prompt += msg.content + LLAMA_3_SPECIAL_TOKENS.END_OF_TURN;
+    prompt += getMessageContent(msg) + LLAMA_3_SPECIAL_TOKENS.END_OF_TURN;
   });
   prompt +=
     LLAMA_3_SPECIAL_TOKENS.ROLE_START +
@@ -97,17 +117,17 @@ export const transformMessagesForLLama2Prompt = (messages: Message[]) => {
   if (messages.length > 0 && messages[0].role === MESSAGE_ROLES.SYSTEM) {
     messages[0].content =
       LLAMA_2_SPECIAL_TOKENS.SYSTEM_MESSAGE_START +
-      messages[0].content +
+      getMessageContent(messages[0]) +
       LLAMA_2_SPECIAL_TOKENS.SYSTEM_MESSAGE_END +
-      messages[1].content;
+      getMessageContent(messages[1]);
   }
   messages = [messages[0], ...messages.slice(2)];
   // attach message pairs
   for (let i = 1; i < messages.length; i += 2) {
-    let prompt = messages[i - 1].content;
-    let answer = messages[i].content;
+    let prompt = getMessageContent(messages[i - 1]);
+    let answer = getMessageContent(messages[i]);
     finalPrompt += `${LLAMA_2_SPECIAL_TOKENS.BEGINNING_OF_SENTENCE}${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_START} ${prompt} ${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_END} ${answer} ${LLAMA_2_SPECIAL_TOKENS.END_OF_SENTENCE}`;
   }
-  finalPrompt += `${LLAMA_2_SPECIAL_TOKENS.BEGINNING_OF_SENTENCE}${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_START} ${messages[messages.length - 1].content} ${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_END}`;
+  finalPrompt += `${LLAMA_2_SPECIAL_TOKENS.BEGINNING_OF_SENTENCE}${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_START} ${getMessageContent(messages[messages.length - 1])} ${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_END}`;
   return finalPrompt;
 };
