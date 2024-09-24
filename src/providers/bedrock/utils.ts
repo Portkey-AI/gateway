@@ -1,7 +1,11 @@
 import { SignatureV4 } from '@smithy/signature-v4';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { ContentType, Message, MESSAGE_ROLES } from '../../types/requestBody';
-import { LLAMA_2_SPECIAL_TOKENS, LLAMA_3_SPECIAL_TOKENS } from './constants';
+import {
+  LLAMA_2_SPECIAL_TOKENS,
+  LLAMA_3_SPECIAL_TOKENS,
+  MISTRAL_CONTROL_TOKENS,
+} from './constants';
 
 export const generateAWSHeaders = async (
   body: Record<string, any>,
@@ -110,5 +114,27 @@ export const transformMessagesForLLama2Prompt = (messages: Message[]) => {
     finalPrompt += `${LLAMA_2_SPECIAL_TOKENS.BEGINNING_OF_SENTENCE}${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_START} ${prompt} ${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_END} ${answer} ${LLAMA_2_SPECIAL_TOKENS.END_OF_SENTENCE}`;
   }
   finalPrompt += `${LLAMA_2_SPECIAL_TOKENS.BEGINNING_OF_SENTENCE}${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_START} ${getMessageContent(messages[messages.length - 1])} ${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_END}`;
+  return finalPrompt;
+};
+
+/*
+refer: https://docs.mistral.ai/guides/tokenization/
+refer: https://github.com/chujiezheng/chat_templates/blob/main/chat_templates/mistral-instruct.jinja
+*/
+export const transformMessagesForMistralPrompt = (messages: Message[]) => {
+  let finalPrompt: string = `${MISTRAL_CONTROL_TOKENS.BEGINNING_OF_SENTENCE}`;
+  // Mistral does not support system messages. (ref: https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3/discussions/14)
+  if (messages.length > 0 && messages[0].role === MESSAGE_ROLES.SYSTEM) {
+    messages[0].content =
+      getMessageContent(messages[0]) + '\n' + getMessageContent(messages[1]);
+    messages[0].role = MESSAGE_ROLES.USER;
+  }
+  for (const message of messages) {
+    if (message.role === MESSAGE_ROLES.USER) {
+      finalPrompt += `${MISTRAL_CONTROL_TOKENS.CONVERSATION_TURN_START} ${message.content} ${MISTRAL_CONTROL_TOKENS.CONVERSATION_TURN_END}`;
+    } else {
+      finalPrompt += ` ${message.content} ${MISTRAL_CONTROL_TOKENS.END_OF_SENTENCE}`;
+    }
+  }
   return finalPrompt;
 };

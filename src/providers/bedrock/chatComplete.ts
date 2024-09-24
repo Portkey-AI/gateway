@@ -24,6 +24,7 @@ import { BedrockErrorResponse } from './embed';
 import {
   transformMessagesForLLama2Prompt,
   transformMessagesForLLama3Prompt,
+  transformMessagesForMistralPrompt,
 } from './utils';
 
 interface AnthropicTool {
@@ -431,21 +432,8 @@ export const BedrockMistralChatCompleteConfig: ProviderConfig = {
     required: true,
     transform: (params: Params) => {
       let prompt: string = '';
-      if (!!params.messages) {
-        let messages: Message[] = params.messages;
-        messages.forEach((msg, index) => {
-          if (index === 0 && msg.role === 'system') {
-            prompt += `system: ${msg.content}\n`;
-          } else if (msg.role == 'user') {
-            prompt += `user: ${msg.content}\n`;
-          } else if (msg.role == 'assistant') {
-            prompt += `assistant: ${msg.content}\n`;
-          } else {
-            prompt += `${msg.role}: ${msg.content}\n`;
-          }
-        });
-        prompt += 'Assistant:';
-      }
+      if (!!params.messages)
+        prompt = transformMessagesForMistralPrompt(params.messages);
       return prompt;
     },
   },

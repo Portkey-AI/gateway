@@ -105,11 +105,6 @@ export const BedrockLLamaCompleteConfig: ProviderConfig = {
   prompt: {
     param: 'prompt',
     required: true,
-    transform: (params: Params) => {
-      return params.model?.search('llama3') === -1
-        ? `${LLAMA_2_SPECIAL_TOKENS.BEGINNING_OF_SENTENCE}${params.prompt}`
-        : `${LLAMA_3_SPECIAL_TOKENS.PROMPT_START}${params.prompt}`;
-    },
   },
   max_tokens: {
     param: 'max_gen_len',
