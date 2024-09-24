@@ -69,6 +69,7 @@ const getMessageContent = (message: Message) => {
   This function transforms the messages for the LLama 3.1 prompt.
   It adds the special tokens to the beginning and end of the prompt.
   refer: https://www.llama.com/docs/model-cards-and-prompt-formats/llama3_1
+  NOTE: Portkey does not restrict messages to alternate user and assistant roles, this is to support more flexible use cases.
 */
 export const transformMessagesForLLama3Prompt = (messages: Message[]) => {
   let prompt: string = '';
@@ -113,7 +114,9 @@ export const transformMessagesForLLama2Prompt = (messages: Message[]) => {
     let answer = getMessageContent(messages[i]);
     finalPrompt += `${LLAMA_2_SPECIAL_TOKENS.BEGINNING_OF_SENTENCE}${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_START} ${prompt} ${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_END} ${answer} ${LLAMA_2_SPECIAL_TOKENS.END_OF_SENTENCE}`;
   }
-  finalPrompt += `${LLAMA_2_SPECIAL_TOKENS.BEGINNING_OF_SENTENCE}${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_START} ${getMessageContent(messages[messages.length - 1])} ${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_END}`;
+  if (messages.length % 2 === 1) {
+    finalPrompt += `${LLAMA_2_SPECIAL_TOKENS.BEGINNING_OF_SENTENCE}${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_START} ${getMessageContent(messages[messages.length - 1])} ${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_END}`;
+  }
   return finalPrompt;
 };
 
