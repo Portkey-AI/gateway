@@ -51,6 +51,11 @@ const LLAMA_3_SPECIAL_TOKENS = {
   TOOL_CALL: '<|python_tag|>',
 };
 
+/*
+  This function transforms the messages for the LLama 3.1 prompt.
+  It adds the special tokens to the beginning and end of the prompt.
+  refer: https://www.llama.com/docs/model-cards-and-prompt-formats/llama3_1
+*/
 export const transformMessagesForLLama3Prompt = (messages: Message[]) => {
   let prompt: string = '';
   prompt += LLAMA_3_SPECIAL_TOKENS.PROMPT_START + '\n';
