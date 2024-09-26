@@ -3,24 +3,9 @@ import { Params } from '../../types/requestBody';
 import { ProviderConfigs } from '../types';
 import BedrockAPIConfig from './api';
 import {
-  BedrockAI21ChatCompleteConfig,
-  BedrockAI21ChatCompleteResponseTransform,
-  BedrockAnthropicChatCompleteConfig,
-  BedrockAnthropicChatCompleteResponseTransform,
-  BedrockAnthropicChatCompleteStreamChunkTransform,
-  BedrockCohereChatCompleteConfig,
-  BedrockCohereChatCompleteResponseTransform,
-  BedrockCohereChatCompleteStreamChunkTransform,
-  BedrockLlamaChatCompleteResponseTransform,
-  BedrockLlamaChatCompleteStreamChunkTransform,
-  BedrockTitanChatCompleteResponseTransform,
-  BedrockTitanChatCompleteStreamChunkTransform,
-  BedrockTitanChatompleteConfig,
-  BedrockMistralChatCompleteConfig,
-  BedrockMistralChatCompleteResponseTransform,
-  BedrockMistralChatCompleteStreamChunkTransform,
-  BedrockLlama3ChatCompleteConfig,
-  BedrockLlama2ChatCompleteConfig,
+  BedrockConverseChatCompleteConfig,
+  BedrockChatCompleteStreamChunkTransform,
+  BedrockChatCompleteResponseTransform,
 } from './chatComplete';
 import {
   BedrockAI21CompleteConfig,
@@ -57,91 +42,67 @@ const BedrockConfig: ProviderConfigs = {
   getConfig: (params: Params) => {
     const providerModel = params.model;
     const provider = providerModel?.split('.')[0];
-    const model = providerModel?.split('.')[1];
+    let config: ProviderConfigs = {};
     switch (provider) {
       case ANTHROPIC:
-        return {
+        config = {
           complete: BedrockAnthropicCompleteConfig,
-          chatComplete: BedrockAnthropicChatCompleteConfig,
           api: BedrockAPIConfig,
           responseTransforms: {
             'stream-complete': BedrockAnthropicCompleteStreamChunkTransform,
             complete: BedrockAnthropicCompleteResponseTransform,
-            'stream-chatComplete':
-              BedrockAnthropicChatCompleteStreamChunkTransform,
-            chatComplete: BedrockAnthropicChatCompleteResponseTransform,
           },
         };
       case COHERE:
-        return {
+        config = {
           complete: BedrockCohereCompleteConfig,
-          chatComplete: BedrockCohereChatCompleteConfig,
           embed: BedrockCohereEmbedConfig,
           api: BedrockAPIConfig,
           responseTransforms: {
             'stream-complete': BedrockCohereCompleteStreamChunkTransform,
             complete: BedrockCohereCompleteResponseTransform,
-            'stream-chatComplete':
-              BedrockCohereChatCompleteStreamChunkTransform,
-            chatComplete: BedrockCohereChatCompleteResponseTransform,
             embed: BedrockCohereEmbedResponseTransform,
           },
         };
       case 'meta':
-        const chatCompleteConfig =
-          model?.search('llama3') === -1
-            ? BedrockLlama2ChatCompleteConfig
-            : BedrockLlama3ChatCompleteConfig;
-        return {
+        config = {
           complete: BedrockLLamaCompleteConfig,
-          chatComplete: chatCompleteConfig,
           api: BedrockAPIConfig,
           responseTransforms: {
             'stream-complete': BedrockLlamaCompleteStreamChunkTransform,
             complete: BedrockLlamaCompleteResponseTransform,
-            'stream-chatComplete': BedrockLlamaChatCompleteStreamChunkTransform,
-            chatComplete: BedrockLlamaChatCompleteResponseTransform,
           },
         };
       case 'mistral':
-        return {
+        config = {
           complete: BedrockMistralCompleteConfig,
-          chatComplete: BedrockMistralChatCompleteConfig,
           api: BedrockAPIConfig,
           responseTransforms: {
             'stream-complete': BedrockMistralCompleteStreamChunkTransform,
             complete: BedrockMistralCompleteResponseTransform,
-            'stream-chatComplete':
-              BedrockMistralChatCompleteStreamChunkTransform,
-            chatComplete: BedrockMistralChatCompleteResponseTransform,
           },
         };
       case 'amazon':
-        return {
+        config = {
           complete: BedrockTitanCompleteConfig,
-          chatComplete: BedrockTitanChatompleteConfig,
           embed: BedrockTitanEmbedConfig,
           api: BedrockAPIConfig,
           responseTransforms: {
             'stream-complete': BedrockTitanCompleteStreamChunkTransform,
             complete: BedrockTitanCompleteResponseTransform,
-            'stream-chatComplete': BedrockTitanChatCompleteStreamChunkTransform,
-            chatComplete: BedrockTitanChatCompleteResponseTransform,
             embed: BedrockTitanEmbedResponseTransform,
           },
         };
       case AI21:
-        return {
+        config = {
           complete: BedrockAI21CompleteConfig,
-          chatComplete: BedrockAI21ChatCompleteConfig,
           api: BedrockAPIConfig,
           responseTransforms: {
             complete: BedrockAI21CompleteResponseTransform,
-            chatComplete: BedrockAI21ChatCompleteResponseTransform,
           },
         };
       case 'stability':
-        return {
+        config = {
           imageGenerate: BedrockStabilityAIImageGenerateConfig,
           api: BedrockAPIConfig,
           responseTransforms: {
@@ -149,6 +110,12 @@ const BedrockConfig: ProviderConfigs = {
           },
         };
     }
+    config.chatComplete = BedrockConverseChatCompleteConfig;
+    config.responseTransforms['stream-chatComplete'] =
+      BedrockChatCompleteStreamChunkTransform;
+    config.responseTransforms.chatComplete =
+      BedrockChatCompleteResponseTransform;
+    return config;
   },
 };
 

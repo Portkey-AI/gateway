@@ -31,8 +31,12 @@ const BedrockAPIConfig: ProviderAPIConfig = {
     if (stream) {
       mappedFn = `stream-${fn}`;
     }
-    const endpoint = `/model/${model}/invoke`;
-    const streamEndpoint = `/model/${model}/invoke-with-response-stream`;
+    let endpoint = `/model/${model}/invoke`;
+    let streamEndpoint = `/model/${model}/invoke-with-response-stream`;
+    if (mappedFn === 'chatComplete' || mappedFn === 'stream-chatComplete') {
+      endpoint = `/model/${model}/converse`;
+      streamEndpoint = `/model/${model}/converse-stream`;
+    }
     switch (mappedFn) {
       case 'chatComplete': {
         return endpoint;

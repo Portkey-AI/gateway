@@ -136,6 +136,7 @@ export interface ChatChoice {
  */
 export interface ChatCompletionResponse extends CResponse {
   choices: ChatChoice[];
+  provider?: string;
 }
 
 /**
