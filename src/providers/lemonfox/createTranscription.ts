@@ -14,18 +14,18 @@ export const LemonfoxAIcreateTranscriptionConfig: ProviderConfig = {
         param: 'file',
         required: true,
     },
-    // response_format: {
-    //     param: 'response_format',
-    // },
-    // prompt: {
-    //     param: 'prompt',
-    // },
-    // language: {
-    //     param: 'language',
-    // },
-    // translate: {
-    //     param: 'translate',
-    // },
+    response_format: {
+        param: 'response_format',
+    },
+    prompt: {
+        param: 'prompt',
+    },
+    language: {
+        param: 'language',
+    },
+    translate: {
+        param: 'translate',
+    },
 };
   
 export const LemonfoxAICreateTranscriptionResponseTransform : (
