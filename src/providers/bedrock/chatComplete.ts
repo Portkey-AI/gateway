@@ -443,7 +443,7 @@ const getMessageTextContentArray = (message: Message): { text: string }[] => {
   ];
 };
 
-export const BedrockMistralChatCompleteConfig: ProviderConfig = {
+export const BedrockConverseChatCompleteConfig: ProviderConfig = {
   messages: [
     {
       param: 'messages',
@@ -497,6 +497,43 @@ export const BedrockMistralChatCompleteConfig: ProviderConfig = {
       },
     },
   ],
+  tools: {
+    param: 'toolConfig',
+    transform: (params: Params) => {
+      const toolConfig = {
+        tools: params.tools?.map((tool) => {
+          if (!tool.function) return;
+          return {
+            toolSpec: {
+              name: tool.function.name,
+              description: tool.function.description,
+              inputSchema: { json: tool.function.parameters },
+            },
+          };
+        }),
+      };
+      if (params.tool_choice) {
+        if (typeof params.tool_choice === 'object') {
+          return {
+            tool: {
+              name: params.tool_choice.function.name,
+            },
+          };
+        }
+        switch (params.tool_choice) {
+          case 'required':
+            return {
+              any: {},
+            };
+          case 'auto':
+            return {
+              auto: {},
+            };
+        }
+      }
+      return toolConfig;
+    },
+  },
 };
 
 const transformTitanGenerationConfig = (params: Params) => {
@@ -1219,6 +1256,11 @@ interface BedrockChatCompletionResponse {
       content: [
         {
           text: string;
+          toolUse: {
+            toolUseId: string;
+            name: string;
+            input: object;
+          };
         },
       ];
     };
@@ -1231,7 +1273,7 @@ interface BedrockChatCompletionResponse {
   };
 }
 
-export const BedrockMistralChatCompleteResponseTransform: (
+export const BedrockConverseChatCompleteResponseTransform: (
   response: BedrockChatCompletionResponse | BedrockErrorResponse,
   responseStatus: number,
   responseHeaders: Headers
@@ -1248,7 +1290,7 @@ export const BedrockMistralChatCompleteResponseTransform: (
   }
 
   if ('output' in response) {
-    return {
+    const responseObj: ChatCompletionResponse = {
       id: Date.now().toString(),
       object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
@@ -1259,7 +1301,19 @@ export const BedrockMistralChatCompleteResponseTransform: (
           index: 0,
           message: {
             role: 'assistant',
-            content: response.output.message.content[0].text,
+            content: response.output.message.content
+              .filter((content) => content.text)
+              .reduce((acc, content) => acc + content.text + '\n', ''),
+            tool_calls: response.output.message.content
+              .filter((content) => content.toolUse)
+              .map((content) => ({
+                id: content.toolUse.toolUseId,
+                type: 'function',
+                function: {
+                  name: content.toolUse.name,
+                  arguments: content.toolUse.input,
+                },
+              })),
           },
           finish_reason: response.stopReason,
         },
@@ -1270,6 +1324,20 @@ export const BedrockMistralChatCompleteResponseTransform: (
         total_tokens: response.usage.totalTokens,
       },
     };
+    if (response.output.message.content[0].toolUse) {
+      const toolUse = response.output.message.content[0].toolUse;
+      responseObj.choices[0].message.tool_calls = [
+        {
+          id: toolUse.toolUseId,
+          type: 'function',
+          function: {
+            name: toolUse.name,
+            arguments: toolUse.input,
+          },
+        },
+      ];
+    }
+    return responseObj;
   }
 
   return generateInvalidProviderResponseError(response, BEDROCK);
@@ -1295,7 +1363,7 @@ interface BedrockMistralStreamState {
   stopReason?: string;
 }
 
-export const BedrockMistralChatCompleteStreamChunkTransform: (
+export const BedrockConverseChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
   streamState: BedrockMistralStreamState
