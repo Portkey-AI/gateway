@@ -1,5 +1,10 @@
 import { BEDROCK } from '../../globals';
-import { ContentType, Message, Params } from '../../types/requestBody';
+import {
+  ContentType,
+  Message,
+  Params,
+  ToolCall,
+} from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -443,6 +448,47 @@ const getMessageTextContentArray = (message: Message): { text: string }[] => {
   ];
 };
 
+const getMessageContent = (message: Message) => {
+  if (!message.content) return [];
+  if (message.role === 'tool') {
+    return [
+      {
+        toolResult: {
+          content: getMessageTextContentArray(message),
+          toolUseId: message.tool_call_id,
+        },
+      },
+    ];
+  }
+  const out = [];
+  // if message is a string, return a single element array with the text
+  if (typeof message.content === 'string') {
+    out.push({
+      text: message.content,
+    });
+  } else {
+    message.content
+      .filter((item) => item.type === 'text')
+      .forEach((item) => {
+        out.push({
+          text: item.text || '',
+        });
+      });
+  }
+
+  // If message is an array of objects, handle text content, tool calls, tool results, this would be much cleaner if portkeys chat create object were a union type
+  const toolCalls = message.tool_calls?.forEach((toolCall: ToolCall) => {
+    out.push({
+      toolUse: {
+        name: toolCall.function.name,
+        input: JSON.parse(toolCall.function.arguments),
+        toolUseId: toolCall.id,
+      },
+    });
+  });
+  return out;
+};
+
 export const BedrockConverseChatCompleteConfig: ProviderConfig = {
   messages: [
     {
@@ -453,8 +499,8 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
         return params.messages.map((msg) => {
           if (msg.role === 'system') return;
           return {
-            role: msg.role,
-            content: getMessageTextContentArray(msg),
+            role: msg.role === 'assistant' ? 'assistant' : 'user',
+            content: getMessageContent(msg),
           };
         });
       },
