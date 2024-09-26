@@ -1347,6 +1347,11 @@ export interface BedrockChatCompleteStreamChunk {
   contentBlockIndex?: number;
   delta?: {
     text: string;
+    toolUse: {
+      toolUseId: string;
+      name: string;
+      input: object;
+    };
   };
   stopReason?: string;
   metrics?: {
@@ -1372,6 +1377,7 @@ export const BedrockConverseChatCompleteStreamChunkTransform: (
   if (parsedChunk.stopReason) {
     streamState.stopReason = parsedChunk.stopReason;
   }
+  console.log(JSON.stringify(parsedChunk, null, 4));
 
   // // discard the last cohere chunk as it sends the whole response combined.
   if (parsedChunk.usage) {
@@ -1399,6 +1405,18 @@ export const BedrockConverseChatCompleteStreamChunkTransform: (
     ];
   }
 
+  const toolCalls = [];
+  if (parsedChunk.delta?.toolUse) {
+    toolCalls.push({
+      id: parsedChunk.delta.toolUse.toolUseId,
+      type: 'function',
+      function: {
+        name: parsedChunk.delta.toolUse.name,
+        arguments: parsedChunk.delta.toolUse.input,
+      },
+    });
+  }
+
   return `data: ${JSON.stringify({
     id: fallbackId,
     object: 'chat.completion.chunk',
@@ -1411,6 +1429,7 @@ export const BedrockConverseChatCompleteStreamChunkTransform: (
         delta: {
           role: 'assistant',
           content: parsedChunk.delta?.text,
+          tool_calls: toolCalls,
         },
       },
     ],
