@@ -57,7 +57,7 @@ const convertContentTypesToString = (acc: string, curr: ContentType) => {
 /*
   Handle messages of both string and ContentType array
 */
-const getMessageContent = (message: Message) => {
+const getMessageTextContent = (message: Message) => {
   if (message === undefined) return '';
   if (typeof message.content === 'object') {
     return message.content.reduce(convertContentTypesToString, '');
@@ -80,7 +80,7 @@ export const transformMessagesForLLama3Prompt = (messages: Message[]) => {
       msg.role +
       LLAMA_3_SPECIAL_TOKENS.ROLE_END +
       '\n';
-    prompt += getMessageContent(msg) + LLAMA_3_SPECIAL_TOKENS.END_OF_TURN;
+    prompt += getMessageTextContent(msg) + LLAMA_3_SPECIAL_TOKENS.END_OF_TURN;
   });
   prompt +=
     LLAMA_3_SPECIAL_TOKENS.ROLE_START +
@@ -103,19 +103,19 @@ export const transformMessagesForLLama2Prompt = (messages: Message[]) => {
   if (messages.length > 0 && messages[0].role === MESSAGE_ROLES.SYSTEM) {
     messages[0].content =
       LLAMA_2_SPECIAL_TOKENS.SYSTEM_MESSAGE_START +
-      getMessageContent(messages[0]) +
+      getMessageTextContent(messages[0]) +
       LLAMA_2_SPECIAL_TOKENS.SYSTEM_MESSAGE_END +
-      getMessageContent(messages[1]);
+      getMessageTextContent(messages[1]);
   }
   messages = [messages[0], ...messages.slice(2)];
   // attach message pairs
   for (let i = 1; i < messages.length; i += 2) {
-    let prompt = getMessageContent(messages[i - 1]);
-    let answer = getMessageContent(messages[i]);
+    let prompt = getMessageTextContent(messages[i - 1]);
+    let answer = getMessageTextContent(messages[i]);
     finalPrompt += `${LLAMA_2_SPECIAL_TOKENS.BEGINNING_OF_SENTENCE}${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_START} ${prompt} ${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_END} ${answer} ${LLAMA_2_SPECIAL_TOKENS.END_OF_SENTENCE}`;
   }
   if (messages.length % 2 === 1) {
-    finalPrompt += `${LLAMA_2_SPECIAL_TOKENS.BEGINNING_OF_SENTENCE}${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_START} ${getMessageContent(messages[messages.length - 1])} ${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_END}`;
+    finalPrompt += `${LLAMA_2_SPECIAL_TOKENS.BEGINNING_OF_SENTENCE}${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_START} ${getMessageTextContent(messages[messages.length - 1])} ${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_END}`;
   }
   return finalPrompt;
 };
@@ -129,7 +129,9 @@ export const transformMessagesForMistralPrompt = (messages: Message[]) => {
   // Mistral does not support system messages. (ref: https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3/discussions/14)
   if (messages.length > 0 && messages[0].role === MESSAGE_ROLES.SYSTEM) {
     messages[0].content =
-      getMessageContent(messages[0]) + '\n' + getMessageContent(messages[1]);
+      getMessageTextContent(messages[0]) +
+      '\n' +
+      getMessageTextContent(messages[1]);
     messages[0].role = MESSAGE_ROLES.USER;
   }
   for (const message of messages) {

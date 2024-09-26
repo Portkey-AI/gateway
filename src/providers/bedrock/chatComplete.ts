@@ -426,42 +426,77 @@ export const BedrockLlama3ChatCompleteConfig: ProviderConfig = {
   },
 };
 
-export const BedrockMistralChatCompleteConfig: ProviderConfig = {
-  messages: {
-    param: 'prompt',
-    required: true,
-    transform: (params: Params) => {
-      let prompt: string = '';
-      if (!!params.messages)
-        prompt = transformMessagesForMistralPrompt(params.messages);
-      return prompt;
+const getMessageTextContentArray = (message: Message): { text: string }[] => {
+  if (message.content && typeof message.content === 'object') {
+    return message.content
+      .filter((item) => item.type === 'text')
+      .map((item) => {
+        return {
+          text: item.text || '',
+        };
+      });
+  }
+  return [
+    {
+      text: message.content || '',
     },
-  },
-  max_tokens: {
-    param: 'max_tokens',
-    default: 20,
-    min: 1,
-  },
-  temperature: {
-    param: 'temperature',
-    default: 0.75,
-    min: 0,
-    max: 5,
-  },
-  top_p: {
-    param: 'top_p',
-    default: 0.75,
-    min: 0,
-    max: 1,
-  },
-  top_k: {
-    param: 'top_k',
-    default: 0,
-    max: 200,
-  },
-  stop: {
-    param: 'stop',
-  },
+  ];
+};
+
+export const BedrockMistralChatCompleteConfig: ProviderConfig = {
+  messages: [
+    {
+      param: 'messages',
+      required: true,
+      transform: (params: Params) => {
+        if (!params.messages) return [];
+        return params.messages.map((msg) => {
+          if (msg.role === 'system') return;
+          return {
+            role: msg.role,
+            content: getMessageTextContentArray(msg),
+          };
+        });
+      },
+    },
+    {
+      param: 'system',
+      required: false,
+      transform: (params: Params) => {
+        if (!params.messages) return;
+        const systemMessages = params.messages.reduce(
+          (acc: { text: string }[], msg) => {
+            if (msg.role === 'system')
+              return acc.concat(...getMessageTextContentArray(msg));
+            return acc;
+          },
+          []
+        );
+        if (!systemMessages.length) return;
+        return systemMessages;
+      },
+    },
+    {
+      param: 'inferenceConfig',
+      transform: (params: Params) => {
+        return {
+          maxTokens: params.max_tokens,
+          stopSequences:
+            typeof params.stop === 'string' ? [params.stop] : params.stop,
+          temperature: params.temperature,
+          topP: params.top_p,
+        };
+      },
+    },
+    {
+      param: 'additionalModelRequestFields',
+      transform: (params: Params) => {
+        return {
+          topK: params.top_k,
+        };
+      },
+    },
+  ],
 };
 
 const transformTitanGenerationConfig = (params: Params) => {
@@ -1174,8 +1209,30 @@ export const BedrockCohereChatCompleteStreamChunkTransform: (
   })}\n\n`;
 };
 
+interface BedrockChatCompletionResponse {
+  metrics: {
+    latencyMs: number;
+  };
+  output: {
+    message: {
+      role: string;
+      content: [
+        {
+          text: string;
+        },
+      ];
+    };
+  };
+  stopReason: string;
+  usage: {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+  };
+}
+
 export const BedrockMistralChatCompleteResponseTransform: (
-  response: BedrockMistralCompleteResponse | BedrockErrorResponse,
+  response: BedrockChatCompletionResponse | BedrockErrorResponse,
   responseStatus: number,
   responseHeaders: Headers
 ) => ChatCompletionResponse | ErrorResponse = (
@@ -1190,11 +1247,7 @@ export const BedrockMistralChatCompleteResponseTransform: (
     if (errorResposne) return errorResposne;
   }
 
-  if ('outputs' in response) {
-    const prompt_tokens =
-      Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || 0;
-    const completion_tokens =
-      Number(responseHeaders.get('X-Amzn-Bedrock-Output-Token-Count')) || 0;
+  if ('output' in response) {
     return {
       id: Date.now().toString(),
       object: 'chat.completion',
@@ -1206,15 +1259,15 @@ export const BedrockMistralChatCompleteResponseTransform: (
           index: 0,
           message: {
             role: 'assistant',
-            content: response.outputs[0].text,
+            content: response.output.message.content[0].text,
           },
-          finish_reason: response.outputs[0].stop_reason,
+          finish_reason: response.stopReason,
         },
       ],
       usage: {
-        prompt_tokens: prompt_tokens,
-        completion_tokens: completion_tokens,
-        total_tokens: prompt_tokens + completion_tokens,
+        prompt_tokens: response.usage.inputTokens,
+        completion_tokens: response.usage.outputTokens,
+        total_tokens: response.usage.totalTokens,
       },
     };
   }
@@ -1222,17 +1275,38 @@ export const BedrockMistralChatCompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, BEDROCK);
 };
 
+export interface BedrockChatCompleteStreamChunk {
+  contentBlockIndex?: number;
+  delta?: {
+    text: string;
+  };
+  stopReason?: string;
+  metrics?: {
+    latencyMs: number;
+  };
+  usage?: {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+  };
+}
+
+interface BedrockMistralStreamState {
+  stopReason?: string;
+}
+
 export const BedrockMistralChatCompleteStreamChunkTransform: (
   response: string,
-  fallbackId: string
-) => string | string[] = (responseChunk, fallbackId) => {
-  let chunk = responseChunk.trim();
-  chunk = chunk.replace(/^data: /, '');
-  chunk = chunk.trim();
-  const parsedChunk: BedrocMistralStreamChunk = JSON.parse(chunk);
+  fallbackId: string,
+  streamState: BedrockMistralStreamState
+) => string | string[] = (responseChunk, fallbackId, streamState) => {
+  const parsedChunk: BedrockChatCompleteStreamChunk = JSON.parse(responseChunk);
+  if (parsedChunk.stopReason) {
+    streamState.stopReason = parsedChunk.stopReason;
+  }
 
-  // discard the last cohere chunk as it sends the whole response combined.
-  if (parsedChunk.outputs[0].stop_reason) {
+  // // discard the last cohere chunk as it sends the whole response combined.
+  if (parsedChunk.usage) {
     return [
       `data: ${JSON.stringify({
         id: fallbackId,
@@ -1244,17 +1318,13 @@ export const BedrockMistralChatCompleteStreamChunkTransform: (
           {
             index: 0,
             delta: {},
-            finish_reason: parsedChunk.outputs[0].stop_reason,
+            finish_reason: streamState.stopReason,
           },
         ],
         usage: {
-          prompt_tokens:
-            parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount,
-          completion_tokens:
-            parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
-          total_tokens:
-            parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount +
-            parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
+          prompt_tokens: parsedChunk.usage.inputTokens,
+          completion_tokens: parsedChunk.usage.outputTokens,
+          total_tokens: parsedChunk.usage.totalTokens,
         },
       })}\n\n`,
       `data: [DONE]\n\n`,
@@ -1269,12 +1339,11 @@ export const BedrockMistralChatCompleteStreamChunkTransform: (
     provider: BEDROCK,
     choices: [
       {
-        index: 0,
+        index: parsedChunk.contentBlockIndex ?? 0,
         delta: {
           role: 'assistant',
-          content: parsedChunk.outputs[0].text,
+          content: parsedChunk.delta?.text,
         },
-        finish_reason: null,
       },
     ],
   })}\n\n`;

@@ -33,7 +33,10 @@ function getPayloadFromAWSChunk(chunk: Uint8Array): string {
 
   const payloadLength = chunkLength - headersEnd - 4; // Subtracting 4 for the message crc
   const payload = chunk.slice(headersEnd, headersEnd + payloadLength);
-  return decoder.decode(payload);
+  const decodedJson = JSON.parse(decoder.decode(payload));
+  return decodedJson.bytes
+    ? Buffer.from(decodedJson.bytes, 'base64').toString()
+    : JSON.stringify(decodedJson);
 }
 
 function concatenateUint8Arrays(a: Uint8Array, b: Uint8Array): Uint8Array {
@@ -60,10 +63,7 @@ export async function* readAWSStream(
           const data = buffer.subarray(0, expectedLength);
           buffer = buffer.subarray(expectedLength);
           expectedLength = readUInt32BE(buffer, 0);
-          const payload = Buffer.from(
-            JSON.parse(getPayloadFromAWSChunk(data)).bytes,
-            'base64'
-          ).toString();
+          const payload = getPayloadFromAWSChunk(data);
           if (transformFunction) {
             const transformedChunk = transformFunction(
               payload,
@@ -96,11 +96,7 @@ export async function* readAWSStream(
       buffer = buffer.subarray(expectedLength);
 
       expectedLength = readUInt32BE(buffer, 0);
-      const payload = Buffer.from(
-        JSON.parse(getPayloadFromAWSChunk(data)).bytes,
-        'base64'
-      ).toString();
-
+      const payload = getPayloadFromAWSChunk(data);
       if (transformFunction) {
         const transformedChunk = transformFunction(
           payload,
