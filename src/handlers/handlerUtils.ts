@@ -1120,6 +1120,8 @@ export function constructConfigFromRequestHeaders(
       anthropicConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === HUGGING_FACE &&
       huggingfaceConfig),
+    mistralFimCompletion:
+      requestHeaders[`x-${POWERED_BY}-mistral-fim-completion`],
   };
 }
 
