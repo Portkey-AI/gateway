@@ -100,7 +100,8 @@ export interface Options {
 
   /** The parameter to determine if extra non-openai compliant fields should be returned in response */
   strictOpenAiCompliance?: boolean;
-
+  /** Parameter to determine if fim/completions endpoint is to be used */
+  mistralFimCompletion?: String;
   /** Anthropic specific headers */
   anthropicBeta?: string;
   anthropicVersion?: string;
@@ -272,6 +273,7 @@ export interface Params {
   functions?: Function[];
   function_call?: 'none' | 'auto' | { name: string };
   max_tokens?: number;
+  max_completion_tokens?: number;
   temperature?: number;
   top_p?: number;
   n?: number;
