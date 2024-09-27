@@ -7,7 +7,7 @@ import {
 import { ProviderConfigs } from '../types';
 import { upstageAPIConfig } from './api';
 
-export const UpstageProviderConfig: ProviderConfigs = {
+export const UpstageConfig: ProviderConfigs = {
   chatComplete: chatCompleteParams([], { model: 'solar-pro' }),
   embed: embedParams([], { model: 'solar-embedding-1-large-query' }),
   api: upstageAPIConfig,
