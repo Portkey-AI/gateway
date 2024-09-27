@@ -3,12 +3,15 @@ import { EmbedResponse, EmbedResponseData } from '../../types/embedRequestBody';
 import {
   VertexEmbedParams,
   GoogleErrorResponse,
-  GoogleErrorResponseTransform,
   EmbedInstancesData,
   GoogleEmbedResponse,
 } from './types';
 import { GOOGLE_VERTEX_AI } from '../../globals';
 import { generateInvalidProviderResponseError } from '../utils';
+import { GoogleErrorResponseTransform } from './utils';
+
+
+
 
 export const GoogleEmbedConfig: ProviderConfig = {
   input: {

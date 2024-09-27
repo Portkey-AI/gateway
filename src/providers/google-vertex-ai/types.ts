@@ -1,6 +1,5 @@
-import { GOOGLE_VERTEX_AI } from '../../globals';
-import { ChatCompletionResponse, ErrorResponse } from '../types';
-import { generateErrorResponse } from '../utils';
+import { ChatCompletionResponse } from '../types';
+
 
 export interface GoogleErrorResponse {
   error: {
@@ -70,25 +69,6 @@ export interface VertexLlamaChatCompleteStreamChunk {
   created?: number;
   provider?: string;
 }
-
-export const GoogleErrorResponseTransform: (
-  response: GoogleErrorResponse,
-  provider?: string
-) => ErrorResponse | undefined = (response, provider = GOOGLE_VERTEX_AI) => {
-  if ('error' in response) {
-    return generateErrorResponse(
-      {
-        message: response.error.message ?? '',
-        type: response.error.status ?? null,
-        param: null,
-        code: response.error.status ?? null,
-      },
-      provider
-    );
-  }
-
-  return undefined;
-};
 
 export interface EmbedInstancesData {
   task_type: string;

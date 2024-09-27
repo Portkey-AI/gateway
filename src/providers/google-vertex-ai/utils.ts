@@ -1,3 +1,8 @@
+import { GoogleErrorResponse } from './types';
+import { generateErrorResponse } from '../utils';
+import { GOOGLE_VERTEX_AI } from '../../globals';
+import { ErrorResponse } from '../types';
+
 /**
  * Encodes an object as a Base64 URL-encoded string.
  * @param obj The object to encode.
@@ -164,4 +169,23 @@ export const getMimeType = (url: string): string | undefined => {
   ] as keyof typeof fileExtensionMimeTypeMap;
   const mimeType = fileExtensionMimeTypeMap[extension];
   return mimeType;
+};
+
+export const GoogleErrorResponseTransform: (
+  response: GoogleErrorResponse,
+  provider?: string
+) => ErrorResponse | undefined = (response, provider = GOOGLE_VERTEX_AI) => {
+  if ('error' in response) {
+    return generateErrorResponse(
+      {
+        message: response.error.message ?? '',
+        type: response.error.status ?? null,
+        param: null,
+        code: response.error.status ?? null,
+      },
+      provider
+    );
+  }
+
+  return undefined;
 };
