@@ -1,4 +1,4 @@
-import { LEMONFOX_AI } from "../../globals";
+import { LEMONFOX_AI } from '../../globals';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -6,78 +6,77 @@ import {
 } from '../types';
 
 import {
-generateErrorResponse,
-generateInvalidProviderResponseError,
+  generateErrorResponse,
+  generateInvalidProviderResponseError,
 } from '../utils';
 
 export const LemonfoxAIChatCompleteConfig: ProviderConfig = {
-model: {
+  model: {
     param: 'model',
     required: true,
     default: 'zephyr-chat',
-},
-messages: {
+  },
+  messages: {
     param: 'messages',
     default: [],
-},
-temperature: {
+  },
+  temperature: {
     param: 'temperature',
     default: 1,
     min: 0,
     max: 2,
-},
-top_p: {
+  },
+  top_p: {
     param: 'top_p',
     default: 1,
     min: 0,
     max: 1,
-},
-max_tokens: {
+  },
+  max_tokens: {
     param: 'max_tokens',
     default: Infinity,
     min: 1,
-},
-stream: {
+  },
+  stream: {
     param: 'stream',
     default: false,
-},
-stop: {
+  },
+  stop: {
     param: 'stop',
-    default:  null,
-},
-frequency_penalty: {
+    default: null,
+  },
+  frequency_penalty: {
     param: 'frequency_penalty',
     default: 0,
     min: -2,
     max: 2,
-},
-presence_penalty: {
+  },
+  presence_penalty: {
     param: 'presence_penalty',
     default: 0,
     min: -2,
     max: 2,
-},
-
+  },
 };
 
 interface LemonfoxAIChatCompleteResponse extends ChatCompletionResponse {
-id: string;
-object: string;
-created: number;
-model: string;
-usage: {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  usage: {
     prompt_tokens: number;
     completion_tokens: number;
     total_tokens: number;
-};
+  };
 }
 
 export interface LemonfoxAIErrorResponse {
-    object: string;
-    message: string;
-    type: string;
-    param: string | null;
-    code: string;
+  object: string;
+  message: string;
+  type: string;
+  param: string | null;
+  code: string;
 }
 
 interface LemonfoxAIStreamChunk {
