@@ -123,7 +123,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
-    default: 'gemini-pro',
+    default: 'gemini-1.5-pro',
   },
   messages: [
     {
