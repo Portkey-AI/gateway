@@ -8,7 +8,7 @@ const StabilityAIAPIConfig: ProviderAPIConfig = {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${providerOptions.apiKey}`,
     };
-    if (providerOptions.transFormToFormData) {
+    if (providerOptions.transformToFormData) {
       headers['Content-Type'] = CONTENT_TYPES.MULTIPART_FORM_DATA;
       headers['Accept'] = ACCEPT_TYPES.APPLICATION_JSON;
     }
