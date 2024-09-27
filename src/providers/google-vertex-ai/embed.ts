@@ -1,5 +1,9 @@
 import { ErrorResponse, ProviderConfig } from '../types';
-import { EmbedResponse, EmbedResponseData } from '../../types/embedRequestBody';
+import { 
+  EmbedResponse, 
+  EmbedResponseData, 
+  EmbedParams 
+} from '../../types/embedRequestBody';
 import {
   VertexEmbedParams,
   GoogleErrorResponse,
@@ -10,21 +14,39 @@ import { GOOGLE_VERTEX_AI } from '../../globals';
 import { generateInvalidProviderResponseError } from '../utils';
 import { GoogleErrorResponseTransform } from './utils';
 
+enum TASK_TYPE {
+  RETRIEVAL_QUERY = "RETRIEVAL_QUERY",
+  RETRIEVAL_DOCUMENT = "RETRIEVAL_DOCUMENT",
+  SEMANTIC_SIMILARITY = "SEMANTIC_SIMILARITY",
+  CLASSIFICATION = "CLASSIFICATION",
+  CLUSTERING = "CLUSTERING",
+  QUESTION_ANSWERING = "QUESTION_ANSWERING",
+  FACT_VERIFICATION = "FACT_VERIFICATION",
+  CODE_RETRIEVAL_QUERY = "CODE_RETRIEVAL_QUERY",
+}
 
-
+interface GoogleEmbedParams extends EmbedParams {
+  task_type: TASK_TYPE | string
+}
 
 export const GoogleEmbedConfig: ProviderConfig = {
   input: {
     param: 'instances',
     required: true,
-    transform: (params: VertexEmbedParams): Array<EmbedInstancesData> => {
+    transform: (params: GoogleEmbedParams): Array<EmbedInstancesData> => {
       const instances = Array<EmbedInstancesData>();
-      if (Array.isArray(params.input.instances)) {
-        params.input.instances.forEach((i) => {
-          instances.push(i);
+      if (Array.isArray(params.input)) {
+        params.input.forEach((text) => {
+          instances.push({
+            content: text,
+            task_type: params.task_type
+          });
         });
       } else {
-        instances.push(params.input.instances);
+        instances.push({
+          content: params.input,
+          task_type: params.task_type
+        });
       }
       return instances;
     },
