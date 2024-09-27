@@ -13,6 +13,7 @@ export const FireworksAIChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
+    default: 'accounts/fireworks/models/llama-v3p1-405b-instruct',
   },
   messages: {
     param: 'messages',
