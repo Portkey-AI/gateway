@@ -255,6 +255,10 @@ export const BedrockAnthropicChatCompleteConfig: ProviderConfig = {
     param: 'max_tokens',
     required: true,
   },
+  max_completion_tokens: {
+    param: 'max_tokens',
+    required: true,
+  },
   temperature: {
     param: 'temperature',
     default: 1,
@@ -314,6 +318,11 @@ export const BedrockCohereChatCompleteConfig: ProviderConfig = {
     },
   },
   max_tokens: {
+    param: 'max_tokens',
+    default: 20,
+    min: 1,
+  },
+  max_completion_tokens: {
     param: 'max_tokens',
     default: 20,
     min: 1,
@@ -394,6 +403,12 @@ export const BedrockLLamaChatCompleteConfig: ProviderConfig = {
     min: 1,
     max: 2048,
   },
+  max_completion_tokens: {
+    param: 'max_gen_len',
+    default: 512,
+    min: 1,
+    max: 2048,
+  },
   temperature: {
     param: 'temperature',
     default: 0.5,
@@ -437,6 +452,11 @@ export const BedrockMistralChatCompleteConfig: ProviderConfig = {
     default: 20,
     min: 1,
   },
+  max_completion_tokens: {
+    param: 'max_tokens',
+    default: 20,
+    min: 1,
+  },
   temperature: {
     param: 'temperature',
     default: 0.75,
@@ -469,6 +489,9 @@ const transformTitanGenerationConfig = (params: Params) => {
   }
   if (params['max_tokens']) {
     generationConfig['maxTokenCount'] = params['max_tokens'];
+  }
+  if (params['max_completion_tokens']) {
+    generationConfig['maxTokenCount'] = params['max_completion_tokens'];
   }
   if (params['stop']) {
     generationConfig['stopSequences'] = params['stop'];
@@ -508,6 +531,10 @@ export const BedrockTitanChatompleteConfig: ProviderConfig = {
     param: 'textGenerationConfig',
     transform: (params: Params) => transformTitanGenerationConfig(params),
   },
+  max_completion_tokens: {
+    param: 'textGenerationConfig',
+    transform: (params: Params) => transformTitanGenerationConfig(params),
+  },
   top_p: {
     param: 'textGenerationConfig',
     transform: (params: Params) => transformTitanGenerationConfig(params),
@@ -539,6 +566,10 @@ export const BedrockAI21ChatCompleteConfig: ProviderConfig = {
     },
   },
   max_tokens: {
+    param: 'maxTokens',
+    default: 200,
+  },
+  max_completion_tokens: {
     param: 'maxTokens',
     default: 200,
   },
