@@ -28,6 +28,12 @@ export const TogetherAIChatCompleteConfig: ProviderConfig = {
     default: 128,
     min: 1,
   },
+  max_completion_tokens: {
+    param: 'max_tokens',
+    required: true,
+    default: 128,
+    min: 1,
+  },
   stop: {
     param: 'stop',
   },
