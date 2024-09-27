@@ -72,7 +72,7 @@ export interface Options {
   metadata?: Record<string, string>;
   requestTimeout?: number;
   /** This is used to determine if the request should be transformed to formData Example: Stability V2 */
-  transFormToFormData?: boolean;
+  transformToFormData?: boolean;
   /** AWS Bedrock specific */
   awsSecretAccessKey?: string;
   awsAccessKeyId?: string;
@@ -145,7 +145,7 @@ export interface Targets {
   cache?: CacheSettings | string;
   targets?: Targets[];
   /** This is used to determine if the request should be transformed to formData Example: Stability V2 */
-  transFormToFormData?: boolean;
+  transformToFormData?: boolean;
 }
 
 /**

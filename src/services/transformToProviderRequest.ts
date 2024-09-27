@@ -189,7 +189,7 @@ export const transformToProviderRequest = (
   providerOption: Options | Targets
 ) => {
   if (MULTIPART_FORM_DATA_ENDPOINTS.includes(fn)) return inputParams;
-  if (providerOption.transFormToFormData)
+  if (providerOption.transformToFormData)
     return transformToProviderRequestFormData(provider, params as Params, fn);
   return transformToProviderRequestJSON(provider, params as Params, fn);
 };

@@ -23,7 +23,7 @@ export async function imageGenerationsHandler(c: Context): Promise<Response> {
       typeof request.model === 'string' &&
       STABILITY_V2_MODELS.includes(request.model)
     ) {
-      camelCaseConfig.transFormToFormData = true;
+      camelCaseConfig.transformToFormData = true;
     }
 
     const tryTargetsResponse = await tryTargetsRecursively(
