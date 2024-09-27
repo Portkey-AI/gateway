@@ -116,19 +116,27 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
                   });
 
                   return;
+                } else if (
+                  url.startsWith('gs://') ||
+                  url.startsWith('https://') ||
+                  url.startsWith('http://')
+                ) {
+                  parts.push({
+                    fileData: {
+                      mimeType: getMimeType(url),
+                      fileUri: url,
+                    },
+                  });
+                } else {
+                  // NOTE: This block is kept to maintain backward compatibility
+                  // Earlier we were assuming that all images will be base64 with image/jpeg mimeType
+                  parts.push({
+                    inlineData: {
+                      mimeType: 'image/jpeg',
+                      data: c.image_url?.url,
+                    },
+                  });
                 }
-
-                // This part is problematic because URLs are not supported in the current implementation.
-                // Two problems exist:
-                // 1. Only Google Cloud Storage URLs are supported.
-                // 2. MimeType is not supported in OpenAI API, but it is required in Google Vertex AI API.
-                // Google will return an error here if any other URL is provided.
-                parts.push({
-                  fileData: {
-                    mimeType: getMimeType(url),
-                    fileUri: url,
-                  },
-                });
               }
             });
           } else if (typeof message.content === 'string') {

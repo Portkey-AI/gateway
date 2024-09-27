@@ -157,10 +157,11 @@ const fileExtensionMimeTypeMap = {
   flv: 'video/flv',
 };
 
-export const getMimeType = (url: string) => {
+export const getMimeType = (url: string): string | undefined => {
   const urlParts = url.split('.');
   const extension = urlParts[
     urlParts.length - 1
   ] as keyof typeof fileExtensionMimeTypeMap;
-  return fileExtensionMimeTypeMap[extension] || 'image/jpeg';
+  const mimeType = fileExtensionMimeTypeMap[extension];
+  return mimeType;
 };
