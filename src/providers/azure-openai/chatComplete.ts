@@ -48,6 +48,13 @@ export const AzureOpenAIChatCompleteConfig: ProviderConfig = {
     param: 'n',
     default: 1,
   },
+  logprobs: {
+    param: 'logprobs',
+    default: false,
+  },
+  top_logprobs: {
+    param: 'top_logprobs',
+  },
   stream: {
     param: 'stream',
     default: false,
