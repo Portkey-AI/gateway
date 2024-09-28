@@ -1,11 +1,10 @@
 import { ErrorResponse, ProviderConfig } from '../types';
-import { 
-  EmbedResponse, 
-  EmbedResponseData, 
-  EmbedParams 
+import {
+  EmbedResponse,
+  EmbedResponseData,
+  EmbedParams,
 } from '../../types/embedRequestBody';
 import {
-  VertexEmbedParams,
   GoogleErrorResponse,
   EmbedInstancesData,
   GoogleEmbedResponse,
@@ -15,18 +14,18 @@ import { generateInvalidProviderResponseError } from '../utils';
 import { GoogleErrorResponseTransform } from './utils';
 
 enum TASK_TYPE {
-  RETRIEVAL_QUERY = "RETRIEVAL_QUERY",
-  RETRIEVAL_DOCUMENT = "RETRIEVAL_DOCUMENT",
-  SEMANTIC_SIMILARITY = "SEMANTIC_SIMILARITY",
-  CLASSIFICATION = "CLASSIFICATION",
-  CLUSTERING = "CLUSTERING",
-  QUESTION_ANSWERING = "QUESTION_ANSWERING",
-  FACT_VERIFICATION = "FACT_VERIFICATION",
-  CODE_RETRIEVAL_QUERY = "CODE_RETRIEVAL_QUERY",
+  RETRIEVAL_QUERY = 'RETRIEVAL_QUERY',
+  RETRIEVAL_DOCUMENT = 'RETRIEVAL_DOCUMENT',
+  SEMANTIC_SIMILARITY = 'SEMANTIC_SIMILARITY',
+  CLASSIFICATION = 'CLASSIFICATION',
+  CLUSTERING = 'CLUSTERING',
+  QUESTION_ANSWERING = 'QUESTION_ANSWERING',
+  FACT_VERIFICATION = 'FACT_VERIFICATION',
+  CODE_RETRIEVAL_QUERY = 'CODE_RETRIEVAL_QUERY',
 }
 
 interface GoogleEmbedParams extends EmbedParams {
-  task_type: TASK_TYPE | string
+  task_type: TASK_TYPE | string;
 }
 
 export const GoogleEmbedConfig: ProviderConfig = {
@@ -39,13 +38,13 @@ export const GoogleEmbedConfig: ProviderConfig = {
         params.input.forEach((text) => {
           instances.push({
             content: text,
-            task_type: params.task_type
+            task_type: params.task_type,
           });
         });
       } else {
         instances.push({
           content: params.input,
-          task_type: params.task_type
+          task_type: params.task_type,
         });
       }
       return instances;
