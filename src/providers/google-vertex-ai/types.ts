@@ -1,6 +1,5 @@
 import { ChatCompletionResponse } from '../types';
 
-
 export interface GoogleErrorResponse {
   error: {
     code: number;
@@ -73,11 +72,6 @@ export interface VertexLlamaChatCompleteStreamChunk {
 export interface EmbedInstancesData {
   task_type: string;
   content: string;
-}
-
-export interface VertexEmbedParams {
-  model: string; // The model name to be used as the embedding model
-  input: { instances: EmbedInstancesData }; // The instances to be embedded with the task type
 }
 
 interface EmbedPredictionsResponse {
