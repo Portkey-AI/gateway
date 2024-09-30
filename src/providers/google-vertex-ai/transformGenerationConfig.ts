@@ -17,6 +17,9 @@ export function transformGenerationConfig(params: Params) {
   if (params['max_tokens']) {
     generationConfig['maxOutputTokens'] = params['max_tokens'];
   }
+  if (params['max_completion_tokens']) {
+    generationConfig['maxOutputTokens'] = params['max_completion_tokens'];
+  }
   if (params['stop']) {
     generationConfig['stopSequences'] = params['stop'];
   }
