@@ -69,6 +69,7 @@ const getMessageContent = (message: Message) => {
   return out;
 };
 
+// refer: https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html
 export const BedrockConverseChatCompleteConfig: ProviderConfig = {
   messages: [
     {
@@ -297,6 +298,7 @@ interface BedrockStreamState {
   stopReason?: string;
 }
 
+// refer: https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStream.html
 export const BedrockChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
