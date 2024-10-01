@@ -53,6 +53,7 @@ const BedrockConfig: ProviderConfigs = {
             complete: BedrockAnthropicCompleteResponseTransform,
           },
         };
+        break;
       case COHERE:
         config = {
           complete: BedrockCohereCompleteConfig,
@@ -64,6 +65,7 @@ const BedrockConfig: ProviderConfigs = {
             embed: BedrockCohereEmbedResponseTransform,
           },
         };
+        break;
       case 'meta':
         config = {
           complete: BedrockLLamaCompleteConfig,
@@ -73,6 +75,7 @@ const BedrockConfig: ProviderConfigs = {
             complete: BedrockLlamaCompleteResponseTransform,
           },
         };
+        break;
       case 'mistral':
         config = {
           complete: BedrockMistralCompleteConfig,
@@ -82,6 +85,7 @@ const BedrockConfig: ProviderConfigs = {
             complete: BedrockMistralCompleteResponseTransform,
           },
         };
+        break;
       case 'amazon':
         config = {
           complete: BedrockTitanCompleteConfig,
@@ -93,6 +97,7 @@ const BedrockConfig: ProviderConfigs = {
             embed: BedrockTitanEmbedResponseTransform,
           },
         };
+        break;
       case AI21:
         config = {
           complete: BedrockAI21CompleteConfig,
@@ -101,6 +106,7 @@ const BedrockConfig: ProviderConfigs = {
             complete: BedrockAI21CompleteResponseTransform,
           },
         };
+        break;
       case 'stability':
         config = {
           imageGenerate: BedrockStabilityAIImageGenerateConfig,
@@ -109,6 +115,7 @@ const BedrockConfig: ProviderConfigs = {
             imageGenerate: BedrockStabilityAIImageGenerateResponseTransform,
           },
         };
+        break;
     }
     config.chatComplete = BedrockConverseChatCompleteConfig;
     config.responseTransforms['stream-chatComplete'] =
