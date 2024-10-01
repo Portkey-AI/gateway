@@ -50,14 +50,24 @@ export const GoogleApiConfig: ProviderAPIConfig = {
 
     const { provider, model } = getModelAndProvider(inputModel as string);
     const projectRoute = getProjectRoute(providerOptions, inputModel as string);
+    const googleUrlMap = new Map<string, string>([
+      [
+        'chatComplete',
+        `${projectRoute}/publishers/${provider}/models/${model}:generateContent`,
+      ],
+      [
+        'stream-chatComplete',
+        `${projectRoute}/publishers/${provider}/models/${model}:streamGenerateContent?alt=sse`,
+      ],
+      [
+        'embed',
+        `${projectRoute}/publishers/${provider}/models/${model}:predict`,
+      ],
+    ]);
 
     switch (provider) {
       case 'google': {
-        if (mappedFn === 'chatComplete') {
-          return `${projectRoute}/publishers/${provider}/models/${model}:generateContent`;
-        } else if (mappedFn === 'stream-chatComplete') {
-          return `${projectRoute}/publishers/${provider}/models/${model}:streamGenerateContent?alt=sse`;
-        }
+        return googleUrlMap.get(mappedFn) || `${projectRoute}`;
       }
 
       case 'anthropic': {
@@ -72,8 +82,6 @@ export const GoogleApiConfig: ProviderAPIConfig = {
         return `${projectRoute}/endpoints/openapi/chat/completions`;
       }
 
-      // Embed API is not yet implemented in the gateway
-      // This may be as easy as copy-paste from Google provider, but needs to be tested
       default:
         return `${projectRoute}`;
     }
