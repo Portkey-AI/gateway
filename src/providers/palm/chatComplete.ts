@@ -66,6 +66,11 @@ export const PalmChatCompleteConfig: ProviderConfig = {
     default: 100,
     min: 1,
   },
+  max_completion_tokens: {
+    param: 'maxOutputTokens',
+    default: 100,
+    min: 1,
+  },
   stop: {
     param: 'stopSequences',
   },

@@ -213,6 +213,10 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
+  max_completion_tokens: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
   stop: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
@@ -509,6 +513,10 @@ export const VertexAnthropicChatCompleteConfig: ProviderConfig = {
     param: 'max_tokens',
     required: true,
   },
+  max_completion_tokens: {
+    param: 'max_tokens',
+    required: true,
+  },
   temperature: {
     param: 'temperature',
     default: 1,
@@ -658,6 +666,12 @@ export const VertexLlamaChatCompleteConfig: ProviderConfig = {
     default: [],
   },
   max_tokens: {
+    param: 'max_tokens',
+    default: 512,
+    min: 1,
+    max: 2048,
+  },
+  max_completion_tokens: {
     param: 'max_tokens',
     default: 512,
     min: 1,
