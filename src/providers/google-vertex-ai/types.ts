@@ -68,3 +68,25 @@ export interface VertexLlamaChatCompleteStreamChunk {
   created?: number;
   provider?: string;
 }
+
+export interface EmbedInstancesData {
+  task_type: string;
+  content: string;
+}
+
+interface EmbedPredictionsResponse {
+  embeddings: {
+    values: number[];
+    statistics: {
+      truncated: string;
+      token_count: number;
+    };
+  };
+}
+
+export interface GoogleEmbedResponse {
+  predictions: EmbedPredictionsResponse[];
+  metadata: {
+    billableCharacterCount: number;
+  };
+}

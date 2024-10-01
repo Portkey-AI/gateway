@@ -13,6 +13,7 @@ export const FireworksAIChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
+    default: 'accounts/fireworks/models/llama-v3p1-405b-instruct',
   },
   messages: {
     param: 'messages',
@@ -23,6 +24,11 @@ export const FireworksAIChatCompleteConfig: ProviderConfig = {
     param: 'tools',
   },
   max_tokens: {
+    param: 'max_tokens',
+    default: 200,
+    min: 1,
+  },
+  max_completion_tokens: {
     param: 'max_tokens',
     default: 200,
     min: 1,

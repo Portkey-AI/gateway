@@ -27,6 +27,11 @@ export const PerplexityAIChatCompleteConfig: ProviderConfig = {
     required: true,
     min: 1,
   },
+  max_completion_tokens: {
+    param: 'max_tokens',
+    required: true,
+    min: 1,
+  },
   temperature: {
     param: 'temperature',
     min: 0,

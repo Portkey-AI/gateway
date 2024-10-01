@@ -34,6 +34,11 @@ export const DeepInfraChatCompleteConfig: ProviderConfig = {
     default: 100,
     min: 1,
   },
+  max_completion_tokens: {
+    param: 'max_tokens',
+    default: 100,
+    min: 1,
+  },
   n: {
     param: 'n',
     default: 1,

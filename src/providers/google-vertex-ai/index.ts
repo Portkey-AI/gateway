@@ -12,6 +12,7 @@ import {
   VertexLlamaChatCompleteStreamChunkTransform,
 } from './chatComplete';
 import { getModelAndProvider } from './utils';
+import { GoogleEmbedConfig, GoogleEmbedResponseTransform } from './embed';
 
 const VertexConfig: ProviderConfigs = {
   api: VertexApiConfig,
@@ -24,9 +25,11 @@ const VertexConfig: ProviderConfigs = {
         return {
           chatComplete: VertexGoogleChatCompleteConfig,
           api: GoogleApiConfig,
+          embed: GoogleEmbedConfig,
           responseTransforms: {
             'stream-chatComplete': GoogleChatCompleteStreamChunkTransform,
             chatComplete: GoogleChatCompleteResponseTransform,
+            embed: GoogleEmbedResponseTransform,
           },
         };
       case 'anthropic':

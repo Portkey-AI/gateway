@@ -24,6 +24,9 @@ export const WorkersAiChatCompleteConfig: ProviderConfig = {
   max_tokens: {
     param: 'max_tokens',
   },
+  max_completion_tokens: {
+    param: 'max_tokens',
+  },
 };
 
 export interface WorkersAiErrorObject {

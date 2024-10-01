@@ -36,6 +36,11 @@ export const MistralAIChatCompleteConfig: ProviderConfig = {
     default: null,
     min: 1,
   },
+  max_completion_tokens: {
+    param: 'max_tokens',
+    default: null,
+    min: 1,
+  },
   stream: {
     param: 'stream',
     default: false,
