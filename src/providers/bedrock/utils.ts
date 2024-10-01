@@ -1,11 +1,5 @@
 import { SignatureV4 } from '@smithy/signature-v4';
 import { Sha256 } from '@aws-crypto/sha256-js';
-import { ContentType, Message, MESSAGE_ROLES } from '../../types/requestBody';
-import {
-  LLAMA_2_SPECIAL_TOKENS,
-  LLAMA_3_SPECIAL_TOKENS,
-  MISTRAL_CONTROL_TOKENS,
-} from './constants';
 
 export const generateAWSHeaders = async (
   body: Record<string, any>,
