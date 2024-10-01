@@ -306,9 +306,7 @@ export const BedrockChatCompleteStreamChunkTransform: (
   if (parsedChunk.stopReason) {
     streamState.stopReason = parsedChunk.stopReason;
   }
-  console.log(JSON.stringify(parsedChunk, null, 4));
 
-  // // discard the last cohere chunk as it sends the whole response combined.
   if (parsedChunk.usage) {
     return [
       `data: ${JSON.stringify({
