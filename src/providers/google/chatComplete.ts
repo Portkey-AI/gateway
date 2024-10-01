@@ -188,7 +188,11 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                       data: base64Image,
                     },
                   });
-                } else if (url.startsWith('gs://')) {
+                } else if (
+                  url.startsWith('gs://') ||
+                  url.startsWith('https://') ||
+                  url.startsWith('http://')
+                ) {
                   parts.push({
                     fileData: {
                       mimeType: getMimeType(url),
