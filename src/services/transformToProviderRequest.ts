@@ -1,3 +1,4 @@
+import { GatewayError } from '../errors/GatewayError';
 import { MULTIPART_FORM_DATA_ENDPOINTS } from '../globals';
 import ProviderConfigs from '../providers';
 import { endpointStrings } from '../providers/types';
@@ -49,9 +50,8 @@ const transformToProviderRequestJSON = (
     providerConfig = providerConfig[fn];
   }
 
-  // If the provider is not supported, throw an error
   if (!providerConfig) {
-    throw new Error('Unsupported provider');
+    throw new GatewayError(`${fn} is not supported by ${provider}`);
   }
 
   const transformedRequest: { [key: string]: any } = {};
