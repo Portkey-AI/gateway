@@ -57,7 +57,7 @@ const getMessageContent = (message: Message) => {
   }
 
   // If message is an array of objects, handle text content, tool calls, tool results, this would be much cleaner if portkeys chat create object were a union type
-  const toolCalls = message.tool_calls?.forEach((toolCall: ToolCall) => {
+  message.tool_calls?.forEach((toolCall: ToolCall) => {
     out.push({
       toolUse: {
         name: toolCall.function.name,
