@@ -33,7 +33,7 @@ const BedrockAPIConfig: ProviderAPIConfig = {
     }
     let endpoint = `/model/${model}/invoke`;
     let streamEndpoint = `/model/${model}/invoke-with-response-stream`;
-    if (model?.includes('mistral')) {
+    if (mappedFn === 'chatComplete' || mappedFn === 'stream-chatComplete') {
       endpoint = `/model/${model}/converse`;
       streamEndpoint = `/model/${model}/converse-stream`;
     }
