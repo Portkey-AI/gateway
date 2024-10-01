@@ -12,7 +12,6 @@ import {
   BedrockCohereChatCompleteConfig,
   BedrockCohereChatCompleteResponseTransform,
   BedrockCohereChatCompleteStreamChunkTransform,
-  BedrockLLamaChatCompleteConfig,
   BedrockLlamaChatCompleteResponseTransform,
   BedrockLlamaChatCompleteStreamChunkTransform,
   BedrockTitanChatCompleteResponseTransform,
@@ -21,6 +20,8 @@ import {
   BedrockMistralChatCompleteConfig,
   BedrockMistralChatCompleteResponseTransform,
   BedrockMistralChatCompleteStreamChunkTransform,
+  BedrockLlama3ChatCompleteConfig,
+  BedrockLlama2ChatCompleteConfig,
 } from './chatComplete';
 import {
   BedrockAI21CompleteConfig,
@@ -57,6 +58,7 @@ const BedrockConfig: ProviderConfigs = {
   getConfig: (params: Params) => {
     const providerModel = params.model;
     const provider = providerModel?.split('.')[0];
+    const model = providerModel?.split('.')[1];
     switch (provider) {
       case ANTHROPIC:
         return {
@@ -87,9 +89,13 @@ const BedrockConfig: ProviderConfigs = {
           },
         };
       case 'meta':
+        const chatCompleteConfig =
+          model?.search('llama3') === -1
+            ? BedrockLlama2ChatCompleteConfig
+            : BedrockLlama3ChatCompleteConfig;
         return {
           complete: BedrockLLamaCompleteConfig,
-          chatComplete: BedrockLLamaChatCompleteConfig,
+          chatComplete: chatCompleteConfig,
           api: BedrockAPIConfig,
           responseTransforms: {
             'stream-complete': BedrockLlamaCompleteStreamChunkTransform,

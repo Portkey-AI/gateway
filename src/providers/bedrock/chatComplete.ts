@@ -21,6 +21,11 @@ import {
   BedrocMistralStreamChunk,
 } from './complete';
 import { BedrockErrorResponse } from './embed';
+import {
+  transformMessagesForLLama2Prompt,
+  transformMessagesForLLama3Prompt,
+  transformMessagesForMistralPrompt,
+} from './utils';
 
 interface AnthropicTool {
   name: string;
@@ -373,28 +378,13 @@ export const BedrockCohereChatCompleteConfig: ProviderConfig = {
   },
 };
 
-export const BedrockLLamaChatCompleteConfig: ProviderConfig = {
+export const BedrockLlama2ChatCompleteConfig: ProviderConfig = {
   messages: {
     param: 'prompt',
     required: true,
     transform: (params: Params) => {
-      let prompt: string = '';
-      if (!!params.messages) {
-        let messages: Message[] = params.messages;
-        messages.forEach((msg, index) => {
-          if (index === 0 && msg.role === 'system') {
-            prompt += `system: ${msg.content}\n`;
-          } else if (msg.role == 'user') {
-            prompt += `user: ${msg.content}\n`;
-          } else if (msg.role == 'assistant') {
-            prompt += `assistant: ${msg.content}\n`;
-          } else {
-            prompt += `${msg.role}: ${msg.content}\n`;
-          }
-        });
-        prompt += 'Assistant:';
-      }
-      return prompt;
+      if (!params.messages) return '';
+      return transformMessagesForLLama2Prompt(params.messages);
     },
   },
   max_tokens: {
@@ -423,27 +413,42 @@ export const BedrockLLamaChatCompleteConfig: ProviderConfig = {
   },
 };
 
+export const BedrockLlama3ChatCompleteConfig: ProviderConfig = {
+  messages: {
+    param: 'prompt',
+    required: true,
+    transform: (params: Params) => {
+      if (!params.messages) return '';
+      return transformMessagesForLLama3Prompt(params.messages);
+    },
+  },
+  max_tokens: {
+    param: 'max_gen_len',
+    default: 512,
+    min: 1,
+  },
+  temperature: {
+    param: 'temperature',
+    default: 0.5,
+    min: 0,
+    max: 1,
+  },
+  top_p: {
+    param: 'top_p',
+    default: 0.9,
+    min: 0,
+    max: 1,
+  },
+};
+
 export const BedrockMistralChatCompleteConfig: ProviderConfig = {
   messages: {
     param: 'prompt',
     required: true,
     transform: (params: Params) => {
       let prompt: string = '';
-      if (!!params.messages) {
-        let messages: Message[] = params.messages;
-        messages.forEach((msg, index) => {
-          if (index === 0 && msg.role === 'system') {
-            prompt += `system: ${msg.content}\n`;
-          } else if (msg.role == 'user') {
-            prompt += `user: ${msg.content}\n`;
-          } else if (msg.role == 'assistant') {
-            prompt += `assistant: ${msg.content}\n`;
-          } else {
-            prompt += `${msg.role}: ${msg.content}\n`;
-          }
-        });
-        prompt += 'Assistant:';
-      }
+      if (!!params.messages)
+        prompt = transformMessagesForMistralPrompt(params.messages);
       return prompt;
     },
   },
