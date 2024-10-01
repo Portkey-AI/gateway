@@ -1,3 +1,4 @@
+import { GatewayError } from '../../errors/GatewayError';
 import { AI21, ANTHROPIC, COHERE } from '../../globals';
 import { Params } from '../../types/requestBody';
 import { ProviderConfigs } from '../types';
@@ -142,6 +143,8 @@ const BedrockConfig: ProviderConfigs = {
             imageGenerate: BedrockStabilityAIImageGenerateResponseTransform,
           },
         };
+      default:
+        throw new GatewayError('Invalid bedrock provider');
     }
   },
 };
