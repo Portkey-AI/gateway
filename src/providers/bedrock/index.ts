@@ -12,7 +12,6 @@ import {
   BedrockCohereChatCompleteConfig,
   BedrockCohereChatCompleteResponseTransform,
   BedrockCohereChatCompleteStreamChunkTransform,
-  BedrockLLamaChatCompleteConfig,
   BedrockLlamaChatCompleteResponseTransform,
   BedrockLlamaChatCompleteStreamChunkTransform,
   BedrockTitanChatCompleteResponseTransform,
@@ -21,6 +20,8 @@ import {
   BedrockMistralChatCompleteConfig,
   BedrockMistralChatCompleteResponseTransform,
   BedrockMistralChatCompleteStreamChunkTransform,
+  BedrockLlama3ChatCompleteConfig,
+  BedrockLlama2ChatCompleteConfig,
 } from './chatComplete';
 import {
   BedrockAI21CompleteConfig,
@@ -63,6 +64,7 @@ const BedrockConfig: ProviderConfigs = {
     // https://docs.aws.amazon.com/bedrock/latest/userguide/cross-region-inference-support.html
     const providerModel = params.model.replace(/^(us\.|eu\.)/, '');
     const provider = providerModel?.split('.')[0];
+    const model = providerModel?.split('.')[1];
     switch (provider) {
       case ANTHROPIC:
         return {
@@ -93,9 +95,13 @@ const BedrockConfig: ProviderConfigs = {
           },
         };
       case 'meta':
+        const chatCompleteConfig =
+          model?.search('llama3') === -1
+            ? BedrockLlama2ChatCompleteConfig
+            : BedrockLlama3ChatCompleteConfig;
         return {
           complete: BedrockLLamaCompleteConfig,
-          chatComplete: BedrockLLamaChatCompleteConfig,
+          chatComplete: chatCompleteConfig,
           api: BedrockAPIConfig,
           responseTransforms: {
             'stream-complete': BedrockLlamaCompleteStreamChunkTransform,

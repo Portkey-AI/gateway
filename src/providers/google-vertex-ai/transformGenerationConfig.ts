@@ -26,6 +26,10 @@ export function transformGenerationConfig(params: Params) {
   if (params?.response_format?.type === 'json_object') {
     generationConfig['responseMimeType'] = 'application/json';
   }
+  if (params?.response_format?.type === 'json_schema') {
+    generationConfig['responseMimeType'] = 'application/json';
+    generationConfig['responseSchema'] = params?.response_format.json_schema;
+  }
 
   return generationConfig;
 }
