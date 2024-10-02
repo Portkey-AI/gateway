@@ -260,6 +260,10 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
     param: 'max_tokens',
     required: true,
   },
+  max_completion_tokens: {
+    param: 'max_tokens',
+    required: true,
+  },
   temperature: {
     param: 'temperature',
     default: 1,

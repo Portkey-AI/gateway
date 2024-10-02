@@ -1,0 +1,36 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "shell",
+      "label": "npx tsc",
+      "command": "npx",
+      "args": [
+        "tsc",
+        "--sourcemap",
+        "true",
+        "--outDir",
+        "${workspaceFolder}/build"
+      ],
+      "problemMatcher": ["$tsc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "type": "shell",
+      "label": "cleanup build",
+      "command": "rm",
+      "args": ["-rf", "${workspaceFolder}/build"],
+      "problemMatcher": [],
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    }
+  ]
+}

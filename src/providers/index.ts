@@ -43,6 +43,7 @@ import { cerebrasProviderAPIConfig } from './cerebras';
 import { InferenceNetProviderConfigs } from './inference-net';
 import SambaNovaConfig from './sambanova';
 import LemonfoxAIConfig from './lemonfox-ai';
+import { UpstageConfig } from './upstage';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -87,6 +88,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'inference-net': InferenceNetProviderConfigs,
   sambanova: SambaNovaConfig,
   'lemonfox-ai': LemonfoxAIConfig,
+  upstage: UpstageConfig,
 };
 
 export default Providers;

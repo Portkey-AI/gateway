@@ -177,6 +177,14 @@ export interface ToolCall {
   };
 }
 
+export enum MESSAGE_ROLES {
+  SYSTEM = 'system',
+  USER = 'user',
+  ASSISTANT = 'assistant',
+  FUNCTION = 'function',
+  TOOL = 'tool',
+}
+
 export type OpenAIMessageRole =
   | 'system'
   | 'user'
@@ -273,6 +281,7 @@ export interface Params {
   functions?: Function[];
   function_call?: 'none' | 'auto' | { name: string };
   max_tokens?: number;
+  max_completion_tokens?: number;
   temperature?: number;
   top_p?: number;
   n?: number;
