@@ -123,6 +123,11 @@ export const retryRequest = async (
       lastResponse = new Response(error.message, {
         status: 503,
       });
+    } else if (error instanceof TypeError) {
+      // Handle other fetch-level errors
+      lastResponse = new Response(error.message, {
+        status: 500,
+      });
     } else {
       lastResponse = new Response(error.message, {
         status: error.status,
