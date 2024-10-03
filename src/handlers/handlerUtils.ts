@@ -468,11 +468,19 @@ export async function tryPost(
     strictOpenAiCompliance = false;
   }
 
+  let metadata: Record<string, string>;
+  try {
+    metadata = JSON.parse(requestHeaders[HEADER_KEYS.METADATA]);
+  } catch (err) {
+    metadata = {};
+  }
+
   const provider: string = providerOption.provider ?? '';
 
   const hooksManager = c.get('hooksManager');
   const hookSpan = hooksManager.createSpan(
     params,
+    metadata,
     provider,
     isStreamingMode,
     providerOption.beforeRequestHooks || [],
