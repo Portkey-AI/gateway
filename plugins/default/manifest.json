@@ -325,18 +325,7 @@
               }
             ]
           },
-          "sendMetadata": {
-            "type": "boolean",
-            "label": "Send Metadata",
-            "default": false,
-            "description": [
-              {
-                "type": "subHeading",
-                "text": "Send metadata with the request."
-              }
-            ]
-          },
-          "required": ["webhookURL", "sendMetadata"]
+          "required": ["webhookURL"]
         }
       }
     },

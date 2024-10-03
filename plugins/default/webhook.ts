@@ -25,11 +25,6 @@ export const handler: PluginHandler = async (
       ? JSON.parse(parameters.headers)
       : {};
 
-    // Remove metadata from context if sendMetadata is false
-    if (!parameters.sendMetadata) {
-      delete context.metadata;
-    }
-
     ({ verdict, data } = await post(url, context, { headers }, 3000));
   } catch (e: any) {
     delete e.stack;
