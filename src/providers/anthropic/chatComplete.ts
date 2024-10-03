@@ -180,7 +180,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
       param: 'system',
       required: false,
       transform: (params: Params) => {
-        let systemMessage: AnthropicMessage['content'] | string = '';
+        let systemMessages: AnthropicMessageContentItem[] = [];
         // Transform the chat messages into a simple prompt
         if (!!params.messages) {
           params.messages.forEach((msg: Message & AnthropicPromptCache) => {
@@ -190,9 +190,8 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
               typeof msg.content === 'object' &&
               msg.content[0].text
             ) {
-              systemMessage = [];
               msg.content.forEach((_msg) => {
-                (systemMessage as Array<ContentType>)?.push({
+                systemMessages.push({
                   text: _msg.text,
                   type: 'text',
                   ...((_msg as any)?.cache_control && {
@@ -204,11 +203,14 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
               msg.role === 'system' &&
               typeof msg.content === 'string'
             ) {
-              systemMessage = msg.content;
+              systemMessages.push({
+                text: msg.content,
+                type: 'text',
+              });
             }
           });
         }
-        return systemMessage;
+        return systemMessages;
       },
     },
   ],
@@ -255,6 +257,10 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
     },
   },
   max_tokens: {
+    param: 'max_tokens',
+    required: true,
+  },
+  max_completion_tokens: {
     param: 'max_tokens',
     required: true,
   },

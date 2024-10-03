@@ -100,7 +100,8 @@ export interface Options {
 
   /** The parameter to determine if extra non-openai compliant fields should be returned in response */
   strictOpenAiCompliance?: boolean;
-
+  /** Parameter to determine if fim/completions endpoint is to be used */
+  mistralFimCompletion?: String;
   /** Anthropic specific headers */
   anthropicBeta?: string;
   anthropicVersion?: string;
@@ -174,6 +175,14 @@ export interface ToolCall {
     name: string;
     arguments: string;
   };
+}
+
+export enum MESSAGE_ROLES {
+  SYSTEM = 'system',
+  USER = 'user',
+  ASSISTANT = 'assistant',
+  FUNCTION = 'function',
+  TOOL = 'tool',
 }
 
 export type OpenAIMessageRole =
@@ -272,6 +281,7 @@ export interface Params {
   functions?: Function[];
   function_call?: 'none' | 'auto' | { name: string };
   max_tokens?: number;
+  max_completion_tokens?: number;
   temperature?: number;
   top_p?: number;
   n?: number;
@@ -289,7 +299,10 @@ export interface Params {
   top_k?: number;
   tools?: Tool[];
   tool_choice?: ToolChoice;
-  response_format?: { type: 'json_object' | 'text' };
+  response_format?: {
+    type: 'json_object' | 'text' | 'json_schema';
+    json_schema?: any;
+  };
   // Google Vertex AI specific
   safety_settings?: any;
 }

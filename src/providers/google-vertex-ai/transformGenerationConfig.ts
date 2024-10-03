@@ -17,11 +17,18 @@ export function transformGenerationConfig(params: Params) {
   if (params['max_tokens']) {
     generationConfig['maxOutputTokens'] = params['max_tokens'];
   }
+  if (params['max_completion_tokens']) {
+    generationConfig['maxOutputTokens'] = params['max_completion_tokens'];
+  }
   if (params['stop']) {
     generationConfig['stopSequences'] = params['stop'];
   }
   if (params?.response_format?.type === 'json_object') {
     generationConfig['responseMimeType'] = 'application/json';
+  }
+  if (params?.response_format?.type === 'json_schema') {
+    generationConfig['responseMimeType'] = 'application/json';
+    generationConfig['responseSchema'] = params?.response_format.json_schema;
   }
 
   return generationConfig;

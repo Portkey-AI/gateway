@@ -32,7 +32,7 @@ export const CohereChatCompleteConfig: ProviderConfig = {
 
         return prompt.content
           ?.filter((_msg) => _msg.type === 'text')
-          .reduce((acc, _msg) => acc + _msg.text, '');
+          .reduce((acc, _msg) => acc + _msg.text + '\n', '');
       },
     },
     {
@@ -68,6 +68,11 @@ export const CohereChatCompleteConfig: ProviderConfig = {
     },
   ],
   max_tokens: {
+    param: 'max_tokens',
+    default: 20,
+    min: 1,
+  },
+  max_completion_tokens: {
     param: 'max_tokens',
     default: 20,
     min: 1,

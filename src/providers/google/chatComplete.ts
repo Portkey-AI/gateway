@@ -32,8 +32,18 @@ const transformGenerationConfig = (params: Params) => {
   if (params['max_tokens']) {
     generationConfig['maxOutputTokens'] = params['max_tokens'];
   }
+  if (params['max_completion_tokens']) {
+    generationConfig['maxOutputTokens'] = params['max_completion_tokens'];
+  }
   if (params['stop']) {
     generationConfig['stopSequences'] = params['stop'];
+  }
+  if (params?.response_format?.type === 'json_object') {
+    generationConfig['responseMimeType'] = 'application/json';
+  }
+  if (params?.response_format?.type === 'json_schema') {
+    generationConfig['responseMimeType'] = 'application/json';
+    generationConfig['responseSchema'] = params?.response_format.json_schema;
   }
   return generationConfig;
 };
@@ -120,7 +130,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
-    default: 'gemini-pro',
+    default: 'gemini-1.5-pro',
   },
   messages: [
     {
@@ -185,7 +195,11 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                       data: base64Image,
                     },
                   });
-                } else if (url.startsWith('gs://')) {
+                } else if (
+                  url.startsWith('gs://') ||
+                  url.startsWith('https://') ||
+                  url.startsWith('http://')
+                ) {
                   parts.push({
                     fileData: {
                       mimeType: getMimeType(url),
@@ -287,7 +301,15 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
+  max_completion_tokens: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
   stop: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
+  response_format: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },

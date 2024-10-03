@@ -40,6 +40,9 @@ import DeepbricksConfig from './deepbricks';
 import SiliconFlowConfig from './siliconflow';
 import HuggingfaceConfig from './huggingface';
 import { cerebrasProviderAPIConfig } from './cerebras';
+import { InferenceNetProviderConfigs } from './inference-net';
+import SambaNovaConfig from './sambanova';
+import { UpstageConfig } from './upstage';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -81,6 +84,9 @@ const Providers: { [key: string]: ProviderConfigs } = {
   deepbricks: DeepbricksConfig,
   siliconflow: SiliconFlowConfig,
   cerebras: cerebrasProviderAPIConfig,
+  'inference-net': InferenceNetProviderConfigs,
+  sambanova: SambaNovaConfig,
+  upstage: UpstageConfig,
 };
 
 export default Providers;

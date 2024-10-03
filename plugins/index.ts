@@ -9,6 +9,8 @@ import { handler as defaultvalidUrls } from './default/validUrls';
 import { handler as defaultwebhook } from './default/webhook';
 import { handler as defaultlog } from './default/log';
 import { handler as defaultcontainsCode } from './default/containsCode';
+import { handler as defaultalluppercase } from './default/alluppercase';
+import { handler as defaultendsWith } from './default/endsWith';
 import { handler as portkeymoderateContent } from './portkey/moderateContent';
 import { handler as portkeylanguage } from './portkey/language';
 import { handler as portkeypii } from './portkey/pii';
@@ -42,6 +44,8 @@ export const plugins = {
     webhook: defaultwebhook,
     log: defaultlog,
     containsCode: defaultcontainsCode,
+    alluppercase: defaultalluppercase,
+    endsWith: defaultendsWith,
   },
   portkey: {
     moderateContent: portkeymoderateContent,
