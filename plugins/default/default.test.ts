@@ -408,7 +408,7 @@ describe('jsonKeys handler', () => {
   });
 });
 
-describe.only('contains handler', () => {
+describe('contains handler', () => {
   it('should return true verdict and correct data for any word in response text', async () => {
     const context: PluginContext = {
       response: {
@@ -628,54 +628,112 @@ describe('validUrls handler', () => {
 });
 
 describe('sentenceCount handler', () => {
-  it('should return true verdict for sentence count within range in response text', async () => {
+  const mockEventType = 'afterRequestHook';
+
+  it('should return true verdict for sentence count within range', async () => {
     const context: PluginContext = {
       response: { text: 'This is a sentence. This is another sentence.' },
     };
-    const eventType = 'afterRequestHook';
-
     const parameters: PluginParameters = {
-      minSentences: 0,
-      maxSentences: 2,
-    };
-
-    const result = await sentenceCountHandler(context, parameters, eventType);
-
-    expect(result.error).toBe(null);
-    expect(result.verdict).toBe(true);
-  });
-
-  it('should return false verdict for sentence count outside range in response text', async () => {
-    const context: PluginContext = {
-      response: { text: 'This is a sentence. This is another sentence.' },
-    };
-    const eventType = 'afterRequestHook';
-
-    const parameters: PluginParameters = {
-      minSentences: 3,
+      minSentences: 1,
       maxSentences: 3,
     };
 
-    const result = await sentenceCountHandler(context, parameters, eventType);
+    const result = await sentenceCountHandler(context, parameters, mockEventType);
 
     expect(result.error).toBe(null);
-    expect(result.verdict).toBe(false);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toEqual({
+      sentenceCount: 2,
+      minCount: 1,
+      maxCount: 3,
+      verdict: true,
+      explanation: 'The sentence count (2) is within the specified range of 1 to 3.',
+      textExcerpt: 'This is a sentence. This is another sentence.',
+    });
   });
 
-  it('should return error for missing sentence count range in parameters', async () => {
+  it('should return false verdict for sentence count outside range', async () => {
     const context: PluginContext = {
       response: { text: 'This is a sentence. This is another sentence.' },
     };
-    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      minSentences: 3,
+      maxSentences: 4,
+    };
 
-    const parameters: PluginParameters = {};
+    const result = await sentenceCountHandler(context, parameters, mockEventType);
 
-    const result = await sentenceCountHandler(context, parameters, eventType);
-
-    expect(result.error).toBeInstanceOf(Error);
-    expect(result.error?.message).toBe('Missing sentence count range or text');
+    expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
-    expect(result.data).toBe(null);
+    expect(result.data).toEqual({
+      sentenceCount: 2,
+      minCount: 3,
+      maxCount: 4,
+      verdict: false,
+      explanation: 'The sentence count (2) is outside the specified range of 3 to 4.',
+      textExcerpt: 'This is a sentence. This is another sentence.',
+    });
+  });
+
+  it('should handle long text by truncating excerpt', async () => {
+    const longText = 'This is a sentence. '.repeat(20);
+    const context: PluginContext = {
+      response: { text: longText },
+    };
+    const parameters: PluginParameters = {
+      minSentences: 1,
+      maxSentences: 30,
+    };
+
+    const result = await sentenceCountHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data.textExcerpt.length).toBeLessThanOrEqual(103); // 100 characters + '...'
+    expect(result.data.textExcerpt.endsWith('...')).toBe(true);
+  });
+
+  it('should return error for missing sentence count range', async () => {
+    const context: PluginContext = {
+      response: { text: 'This is a sentence.' },
+    };
+    const parameters: PluginParameters = {};
+  
+    const result = await sentenceCountHandler(context, parameters, mockEventType);
+  
+    expect(result.error).toBeInstanceOf(Error);
+    expect(result.error?.message).toBe('Missing sentence count range');
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      explanation: 'An error occurred: Missing sentence count range',
+      minCount: undefined,
+      maxCount: undefined,
+      textExcerpt: 'This is a sentence.',
+    });
+  });
+
+  it('should handle empty text', async () => {
+    const context: PluginContext = {
+      response: { text: '' },
+    };
+    const parameters: PluginParameters = {
+      minSentences: 1,
+      maxSentences: 3,
+    };
+
+    const result = await sentenceCountHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      sentenceCount: 0,
+      minCount: 1,
+      maxCount: 3,
+      verdict: false,
+      explanation: 'The sentence count (0) is outside the specified range of 1 to 3.',
+      textExcerpt: '',
+    });
   });
 });
 
