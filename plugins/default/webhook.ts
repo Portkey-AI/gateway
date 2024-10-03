@@ -20,16 +20,16 @@ export const handler: PluginHandler = async (
   let data = null;
   try {
     let url = parameters.webhookURL;
-    
+
     let headers: Record<string, string> = parameters?.headers
       ? JSON.parse(parameters.headers)
       : {};
-    
-      // Remove metadata from context if sendMetadata is false
+
+    // Remove metadata from context if sendMetadata is false
     if (!parameters.sendMetadata) {
       delete context.metadata;
     }
-    
+
     ({ verdict, data } = await post(url, context, { headers }, 3000));
   } catch (e: any) {
     delete e.stack;
