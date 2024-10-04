@@ -5,7 +5,7 @@ export const LambdaAPIConfig: ProviderAPIConfig = {
   headers({ providerOptions }) {
     const { apiKey } = providerOptions;
     const headers = {
-      Authorization: apiKey,
+      Authorization: `Bearer ${apiKey}`,
     };
     return headers;
   },
