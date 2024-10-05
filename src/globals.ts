@@ -71,6 +71,7 @@ export const INFERENCENET: string = 'inference-net';
 export const SAMBANOVA: string = 'sambanova';
 export const UPSTAGE: string = 'upstage';
 export const LAMBDA: string = 'lambda';
+export const DASHSCOPE: string = 'dashscope';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -116,6 +117,7 @@ export const VALID_PROVIDERS = [
   SAMBANOVA,
   UPSTAGE,
   LAMBDA,
+  DASHSCOPE,
 ];
 
 export const CONTENT_TYPES = {
