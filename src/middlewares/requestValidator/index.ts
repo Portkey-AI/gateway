@@ -8,20 +8,36 @@ const providers = Object.keys(Providers);
 export const requestValidator = async (c: Context, next: any) => {
   const requestHeaders = Object.fromEntries(c.req.raw.headers);
   const clonedReq = c.req.raw.clone();
-  const originalBody = await clonedReq.text();
-  const modifiedBody = JSON.parse(originalBody);
-  const [provider, ...modelNames] = modifiedBody.model.split(':');
-  if (providers.includes(provider)) {
-    requestHeaders[`x-${POWERED_BY}-provider`] = provider;
-    modifiedBody.model = modelNames.join(':') || undefined;
-    const newHeaders = new Headers(requestHeaders);
-    const newRequest = new Request(c.req.raw.url, {
-      method: c.req.raw.method,
-      headers: newHeaders,
-      body: JSON.stringify(modifiedBody),
-    });
+  if (clonedReq.method === 'GET') {
+    const provider = new URLSearchParams(new URL(clonedReq.url).search).get(
+      'provider'
+    );
+    if (provider && providers.includes(provider)) {
+      requestHeaders[`x-${POWERED_BY}-provider`] = provider;
+      const newHeaders = new Headers(requestHeaders);
+      const newRequest = new Request(c.req.raw.url, {
+        method: c.req.raw.method,
+        headers: newHeaders,
+      });
 
-    c.req.raw = newRequest;
+      c.req.raw = newRequest;
+    }
+  } else {
+    const originalBody = await clonedReq.text();
+    const modifiedBody = JSON.parse(originalBody);
+    const [provider, ...modelNames] = modifiedBody.model.split(':');
+    if (providers.includes(provider)) {
+      requestHeaders[`x-${POWERED_BY}-provider`] = provider;
+      modifiedBody.model = modelNames.join(':') || undefined;
+      const newHeaders = new Headers(requestHeaders);
+      const newRequest = new Request(c.req.raw.url, {
+        method: c.req.raw.method,
+        headers: newHeaders,
+        body: JSON.stringify(modifiedBody),
+      });
+
+      c.req.raw = newRequest;
+    }
   }
 
   const contentType = requestHeaders['content-type'];
