@@ -15,7 +15,7 @@ export const TogetherAIChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
-    default: 'togethercomputer/RedPajama-INCITE-Chat-3B-v1',
+    default: 'meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo',
   },
   messages: {
     param: 'messages',

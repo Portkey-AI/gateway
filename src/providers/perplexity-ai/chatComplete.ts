@@ -184,5 +184,8 @@ export const PerplexityAIChatCompleteStreamChunkTransform: (
       ],
     })}` + '\n\n';
 
+  if (parsedChunk.choices[0]?.finish_reason)
+    return returnChunk + `data: [DONE]\n\n`;
+
   return returnChunk;
 };

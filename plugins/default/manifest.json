@@ -434,6 +434,34 @@
         }
       ],
       "parameters": {}
+    },
+    {
+      "name": "Ends With",
+      "id": "endsWith",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequest", "afterRequest"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Check if the content ends with a specified string."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "suffix": {
+            "type": "string",
+            "label": "Suffix",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enter the suffix to check for."
+              }
+            ]
+          }
+        },
+        "required": ["suffix"]
+      }
     }
   ]
 }
