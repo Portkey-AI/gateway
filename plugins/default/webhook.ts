@@ -20,7 +20,9 @@ export const handler: PluginHandler = async (
   let data = null;
   try {
     let url = parameters.webhookURL;
+
     const headers = parseHeaders(parameters.headers);
+
     ({ verdict, data } = await post(url, context, { headers }, 3000));
   } catch (e: any) {
     delete e.stack;

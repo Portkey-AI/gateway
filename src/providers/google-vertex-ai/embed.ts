@@ -84,7 +84,7 @@ export const GoogleEmbedResponseTransform: (
       model: '', // Todo: find a way to send the google embedding model name back
       usage: {
         prompt_tokens: tokenCount,
-        total_tokens: response.metadata.billableCharacterCount,
+        total_tokens: tokenCount,
       },
     };
   }

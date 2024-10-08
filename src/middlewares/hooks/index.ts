@@ -26,6 +26,7 @@ export class HookSpan {
 
   constructor(
     requestParams: Record<string, any>,
+    metadata: Record<string, string>,
     provider: string,
     isStreamingRequest: boolean,
     beforeRequestHooks: HookObject[],
@@ -35,6 +36,7 @@ export class HookSpan {
   ) {
     this.context = this.createContext(
       requestParams,
+      metadata,
       provider,
       isStreamingRequest,
       requestType
@@ -57,6 +59,7 @@ export class HookSpan {
 
   private createContext(
     requestParams: Record<string, any>,
+    metadata: Record<string, string>,
     provider: string,
     isStreamingRequest: boolean,
     requestType: string
@@ -75,6 +78,7 @@ export class HookSpan {
       },
       provider,
       requestType,
+      metadata,
     };
   }
 
@@ -175,6 +179,7 @@ export class HooksManager {
 
   public createSpan(
     requestParams: any,
+    metadata: Record<string, string>,
     provider: string,
     isStreamingRequest: boolean,
     beforeRequestHooks: HookObject[],
@@ -184,6 +189,7 @@ export class HooksManager {
   ): HookSpan {
     const span = new HookSpan(
       requestParams,
+      metadata,
       provider,
       isStreamingRequest,
       beforeRequestHooks,
