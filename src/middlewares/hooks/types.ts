@@ -42,6 +42,7 @@ export interface HookSpanContext {
   response: HookSpanContextResponse;
   provider: string;
   requestType: string;
+  metadata?: Record<string, string>;
 }
 
 export interface GuardrailFeedbackMetadata {
