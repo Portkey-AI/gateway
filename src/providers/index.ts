@@ -42,6 +42,7 @@ import HuggingfaceConfig from './huggingface';
 import { cerebrasProviderAPIConfig } from './cerebras';
 import { InferenceNetProviderConfigs } from './inference-net';
 import SambaNovaConfig from './sambanova';
+import LemonfoxAIConfig from './lemonfox-ai';
 import { UpstageConfig } from './upstage';
 import { LAMBDA } from '../globals';
 import { LambdaProviderConfig } from './lambda';
@@ -88,6 +89,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   cerebras: cerebrasProviderAPIConfig,
   'inference-net': InferenceNetProviderConfigs,
   sambanova: SambaNovaConfig,
+  'lemonfox-ai': LemonfoxAIConfig,
   upstage: UpstageConfig,
   [LAMBDA]: LambdaProviderConfig,
 };
