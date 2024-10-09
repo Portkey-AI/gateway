@@ -7,6 +7,7 @@
 import { Hono } from 'hono';
 import { prettyJSON } from 'hono/pretty-json';
 import { HTTPException } from 'hono/http-exception';
+import { upgradeWebSocket } from 'hono/cloudflare-workers';
 // import { env } from 'hono/adapter' // Have to set this up for multi-environment deployment
 
 import { completeHandler } from './handlers/completeHandler';
@@ -28,6 +29,7 @@ import conf from '../conf.json';
 import { createTranscriptionHandler } from './handlers/createTranscriptionHandler';
 import { createTranslationHandler } from './handlers/createTranslationHandler';
 import { modelsHandler, providersHandler } from './handlers/modelsHandler';
+import { realTimeHandler } from './handlers/realtimeHandler';
 
 // Create a new Hono server instance
 const app = new Hono();
@@ -38,8 +40,8 @@ const app = new Hono();
  * This check if its not any of the 2 and then applies the compress middleware to avoid double compression.
  */
 
+const runtime = getRuntimeKey();
 app.use('*', (c, next) => {
-  const runtime = getRuntimeKey();
   const runtimesThatDontNeedCompression = ['lagon', 'workerd', 'node'];
   if (runtimesThatDontNeedCompression.includes(runtime)) {
     return next();
@@ -169,6 +171,11 @@ app.post('/v1/prompts/*', requestValidator, (c) => {
 app.get('/v1/reference/models', modelsHandler);
 app.get('/v1/reference/providers', providersHandler);
 
+// WebSocket route
+if (runtime === 'workerd') {
+  app.get('/v1/realtime', realTimeHandler);
+}
+
 /**
  * @deprecated
  * Support the /v1 proxy endpoint
@@ -179,7 +186,7 @@ app.post('/v1/proxy/*', proxyHandler);
 app.post('/v1/*', requestValidator, proxyHandler);
 
 // Support the /v1 proxy endpoint after all defined endpoints so this does not interfere.
-app.get('/v1/*', requestValidator, proxyGetHandler);
+app.get('/v1/(?!realtime).*', requestValidator, proxyGetHandler);
 
 app.delete('/v1/*', requestValidator, proxyGetHandler);
 

@@ -1,7 +1,9 @@
 import { ProviderAPIConfig } from '../types';
 
 const OpenAIAPIConfig: ProviderAPIConfig = {
-  getBaseURL: () => 'https://api.openai.com/v1',
+  getBaseURL: ({ providerOptions }) => {
+    return 'https://api.openai.com/v1';
+  },
   headers: ({ providerOptions, fn }) => {
     const headersObj: Record<string, string> = {
       Authorization: `Bearer ${providerOptions.apiKey}`,
@@ -16,6 +18,10 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
 
     if (fn === 'createTranscription' || fn === 'createTranslation')
       headersObj['Content-Type'] = 'multipart/form-data';
+
+    if (providerOptions.openaiBeta) {
+      headersObj['OpenAI-Beta'] = providerOptions.openaiBeta;
+    }
 
     return headersObj;
   },
@@ -35,6 +41,8 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
         return '/audio/transcriptions';
       case 'createTranslation':
         return '/audio/translations';
+      case 'realtime':
+        return '/realtime?model=gpt-4o-realtime-preview-2024-10-01';
       default:
         return '';
     }

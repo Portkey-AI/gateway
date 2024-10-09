@@ -67,7 +67,8 @@ export type endpointStrings =
   | 'imageGenerate'
   | 'createSpeech'
   | 'createTranscription'
-  | 'createTranslation';
+  | 'createTranslation'
+  | 'realtime';
 
 /**
  * A collection of API configurations for multiple AI providers.
