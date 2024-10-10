@@ -11,11 +11,31 @@ Portkey natively integrates with the Vercel AI SDK to make your apps production-
 
 ## Getting Started
 
+
+Getting Started
+Follow these steps to get your Vercel app up and running:
+
+Install Dependencies
+Run the following command to install all necessary dependencies:
+Copynpm install
+
+Configure API Keys
+Add your API keys to the appropriate configuration file. This step is crucial for the app to function correctly.
+Start the App
+Once you've completed the above steps, your app will be running locally. You can access it at:
+Copyhttp://localhost:3000
+(Note: The port number might be different depending on your specific Vercel app configuration)
+
 ### 1. Installation
 
 ```sh
 npm install @portkey-ai/vercel-provider
+npm install
 ```
+
+### 3. Configure API Keys
+Add your API keys to the appropriate configuration file. This step is crucial for the app to function correctly.
+Start the App
 
 ### 2. Import & Configure Portkey Object
 
@@ -37,6 +57,13 @@ const portkey = createPortkey({
   config: portkeyConfig,
 });
 ```
+### 3. Configure API Keys
+Add your API keys to the appropriate configuration file. This step is crucial for the app to function correctly.
+
+
+### 4. Start the App
+Once you've completed the above steps use `npm run dev` to run your app locally. You can access it at:
+`http://localhost:3000`
 
 Portkey's configs are a powerful way to manage & govern your app's behaviour. Learn more about Configs [here](https://docs.portkey.ai).
 
