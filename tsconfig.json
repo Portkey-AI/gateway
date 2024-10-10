@@ -12,5 +12,5 @@
     "jsxImportSource": "hono/jsx",
     "resolveJsonModule": true
   },
-  "exclude": ["**/*.test.ts"]
+  "exclude": ["**/*.test.ts", "cookbook"]
 }
