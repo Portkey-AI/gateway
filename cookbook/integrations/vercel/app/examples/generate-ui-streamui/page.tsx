@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { ClientMessage } from "./action";
-import { useActions, useUIState } from "ai/rsc";
-import { nanoid } from "nanoid";
+import { useState } from 'react';
+import { ClientMessage } from './action';
+import { useActions, useUIState } from 'ai/rsc';
+import { nanoid } from 'nanoid';
 
 export default function Home() {
-  const [input, setInput] = useState<string>("");
+  const [input, setInput] = useState<string>('');
   const [conversation, setConversation] = useUIState();
   const { continueConversation } = useActions();
 
@@ -23,10 +23,10 @@ export default function Home() {
       <form
         onSubmit={async (e) => {
           e.preventDefault();
-          setInput("");
+          setInput('');
           setConversation((currentConversation: ClientMessage[]) => [
             ...currentConversation,
-            { id: nanoid(), role: "user", display: input },
+            { id: nanoid(), role: 'user', display: input },
           ]);
 
           const message = await continueConversation(input);

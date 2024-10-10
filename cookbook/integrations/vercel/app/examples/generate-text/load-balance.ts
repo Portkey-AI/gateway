@@ -1,43 +1,39 @@
-"use server";
+'use server';
 
-import { generateText } from "ai";
-import { createPortkey } from "@portkey-ai/vercel-provider";
+import { generateText } from 'ai';
+import { createPortkey } from '@portkey-ai/vercel-provider';
 
 export const generateTextAction = async () => {
-
-
-// Fallback config
+  // Fallback config
   const portkey_config = {
-    "strategy": {
-      "mode": "loadbalance"
+    strategy: {
+      mode: 'loadbalance',
     },
-    "targets": [
-      { 
-        "provider": "anthropic",
-        "api_key": "YOUR_ANTHROPIC_API_KEY",
-        "override_params": {
-          "model": "claude-3-5-sonnet-20240620"
+    targets: [
+      {
+        provider: 'anthropic',
+        api_key: 'YOUR_ANTHROPIC_API_KEY',
+        override_params: {
+          model: 'claude-3-5-sonnet-20240620',
         },
-        "weight": 0.25
+        weight: 0.25,
       },
       {
-        "provider": "openai",
-        "api_key": "YOUR_OPENAI_API_KEY",
-        "override_params": {
-          "model": "gpt-4o"
+        provider: 'openai',
+        api_key: 'YOUR_OPENAI_API_KEY',
+        override_params: {
+          model: 'gpt-4o',
         },
-        "weight": 0.75
-      }
-    ]
+        weight: 0.75,
+      },
+    ],
   };
 
-
-
   const llmClient = createPortkey({
-    apiKey: "PORTKEY_API_KEY",
-    config: portkey_config
-//Portkey's config allows you to use- loadbalance, fallback, retires, timeouts, semantic caching, conditional routing, guardrails,etc. Head over to portkey docs to learn more 
-//we are using API keys inside config, that's why no virtual keys needed
+    apiKey: 'PORTKEY_API_KEY',
+    config: portkey_config,
+    //Portkey's config allows you to use- loadbalance, fallback, retires, timeouts, semantic caching, conditional routing, guardrails,etc. Head over to portkey docs to learn more
+    //we are using API keys inside config, that's why no virtual keys needed
   });
 
   // Learn more at docs.portkey.ai

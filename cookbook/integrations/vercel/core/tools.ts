@@ -1,14 +1,14 @@
-import { openai } from "@ai-sdk/openai";
-import { generateText, streamText } from "ai";
-import dotenv from "dotenv";
-import { z } from "zod";
+import { openai } from '@ai-sdk/openai';
+import { generateText, streamText } from 'ai';
+import dotenv from 'dotenv';
+import { z } from 'zod';
 
 dotenv.config();
 
 async function main() {
-  const location = "London";
+  const location = 'London';
   const result = await generateText({
-    model: openai("gpt-4o"),
+    model: openai('gpt-4o'),
     prompt: `You are a funny chatbot. users location: ${location}`,
     tools: {
       weather: {
@@ -26,7 +26,7 @@ async function main() {
 
   if (result.toolResults && result.toolCalls) {
     const joke = await streamText({
-      model: openai("gpt-4o"),
+      model: openai('gpt-4o'),
       prompt: `Tell me a joke that incorporates ${location}
                and it's current temperature (${result.toolResults[0].result.temperature})`,
     });

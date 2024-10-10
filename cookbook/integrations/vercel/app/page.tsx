@@ -1,17 +1,19 @@
-import { Link } from "@/components/link";
+import { Link } from '@/components/link';
 
 export default function Page() {
   return (
     <main className="space-y-4">
-      <h1 className="text-xl font-semibold">Vercel AI SDK Fundamentals with Portkey AI</h1>
+      <h1 className="text-xl font-semibold">
+        Vercel AI SDK Fundamentals with Portkey AI
+      </h1>
       <p>
         The following examples aim to showcase the fundamentals behind the
-        Vercel AI SDK. The examples have minimal loading
-        states to remain as simple as possible.
+        Vercel AI SDK. The examples have minimal loading states to remain as
+        simple as possible.
       </p>
       <p>
-        The prompt for the first 2 examples (stream/generate text) is
-        `Tell me a joke`.
+        The prompt for the first 2 examples (stream/generate text) is `Tell me a
+        joke`.
       </p>
       <ul className="list-disc list-inside">
         <li>
