@@ -7,8 +7,12 @@ import {
 import { getText } from '../utils';
 import { PORTKEY_ENDPOINTS, fetchPortkey } from './globals';
 
-async function detectPII(text: string, credentials: any) {
-  const result = await fetchPortkey(PORTKEY_ENDPOINTS.PII, credentials, {
+async function detectPII(
+  text: string,
+  credentials: any,
+  env: Record<string, any>
+) {
+  const result = await fetchPortkey(env, PORTKEY_ENDPOINTS.PII, credentials, {
     input: text,
   });
 
@@ -36,7 +40,8 @@ async function detectPII(text: string, credentials: any) {
 export const handler: PluginHandler = async (
   context: PluginContext,
   parameters: PluginParameters,
-  eventType: HookEventType
+  eventType: HookEventType,
+  options
 ) => {
   let error = null;
   let verdict = false;
@@ -49,7 +54,8 @@ export const handler: PluginHandler = async (
 
     let { detectedPIICategories, PIIData } = await detectPII(
       text,
-      parameters.credentials
+      parameters.credentials,
+      options.env
     );
 
     // Filter the detected categories based on the categories to check
