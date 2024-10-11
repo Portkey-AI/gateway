@@ -1,4 +1,7 @@
-import { post } from '../utils';
+import { getRuntimeKey } from 'hono/adapter';
+import { post, postWithCloudflareServiceBinding } from '../utils';
+
+export const BASE_URL = 'https://api.portkey.ai/v1/execute-guardrails';
 
 export const PORTKEY_ENDPOINTS = {
   MODERATIONS: '/moderations',
@@ -8,15 +11,25 @@ export const PORTKEY_ENDPOINTS = {
 };
 
 export const fetchPortkey = async (
+  env: Record<string, any>,
   endpoint: string,
   credentials: any,
   data: any
 ) => {
   const options = {
     headers: {
-      Authorization: `Bearer ${credentials.apiKey}`,
+      'x-portkey-api-key': credentials.apiKey,
     },
   };
 
-  return post(`${credentials.baseURL}${endpoint}`, data, options);
+  if (getRuntimeKey() === 'workerd' && env.portkeyGuardrails) {
+    return postWithCloudflareServiceBinding(
+      `${BASE_URL}${endpoint}`,
+      data,
+      env.portkeyGuardrails,
+      options
+    );
+  }
+
+  return post(`${BASE_URL}${endpoint}`, data, options);
 };
