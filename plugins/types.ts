@@ -19,5 +19,8 @@ export type HookEventType = 'beforeRequestHook' | 'afterRequestHook';
 export type PluginHandler = (
   context: PluginContext,
   parameters: PluginParameters,
-  eventType: HookEventType
+  eventType: HookEventType,
+  options: {
+    env: Record<string, any>;
+  }
 ) => Promise<PluginHandlerResponse>;

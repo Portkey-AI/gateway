@@ -1328,9 +1328,11 @@ export async function beforeRequestHookHandler(
 ): Promise<any> {
   try {
     const hooksManager = c.get('hooksManager');
-    const hooksResult = await hooksManager.executeHooks(hookSpanId, [
-      'syncBeforeRequestHook',
-    ]);
+    const hooksResult = await hooksManager.executeHooks(
+      hookSpanId,
+      ['syncBeforeRequestHook'],
+      { env: env(c) }
+    );
 
     if (hooksResult.shouldDeny) {
       return new Response(
