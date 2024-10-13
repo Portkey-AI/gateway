@@ -462,6 +462,19 @@
         },
         "required": ["suffix"]
       }
+    },
+    {
+      "name": "Lowercase check",
+      "id": "alllowercase",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequest", "afterRequest"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks if content has all lowercase letters."
+        }
+      ],
+      "parameters": {}
     }
   ]
 }

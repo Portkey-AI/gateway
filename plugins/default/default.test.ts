@@ -9,6 +9,7 @@ import { handler as webhookHandler } from './webhook';
 import { handler as logHandler } from './log';
 import { handler as allUppercaseHandler } from './alluppercase';
 import { handler as endsWithHandler } from './endsWith';
+import { handler as allLowerCaseHandler } from './alllowercase';
 
 import { z } from 'zod';
 import { PluginContext, PluginParameters } from '../types';
@@ -752,5 +753,52 @@ describe('endsWith handler', () => {
     expect(result.error?.message).toBe('Missing suffix or text');
     expect(result.verdict).toBe(false);
     expect(result.data).toBe(null);
+  });
+});
+
+describe('allLowercase handler', () => {
+  it('should return true verdict for a sentence with all lowercase characters', async () => {
+    const context: PluginContext = {
+      response: { text: 'this is a sentence. this is another sentence' },
+    };
+    const eventType = 'afterRequestHook';
+
+    const result = await allLowerCaseHandler(context, {}, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+  });
+  it('should return false verdict for a sentence with not all lowercase characters', async () => {
+    const context: PluginContext = {
+      response: { text: 'THIS IS A SENTENCE. THIS IS ANOTHER SENTENCE.' },
+    };
+    const eventType = 'afterRequestHook';
+
+    const result = await allLowerCaseHandler(context, {}, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+  });
+  it('should return true verdict for a sentence with all lowercase characters', async () => {
+    const context: PluginContext = {
+      request: { text: 'this is a sentence. this is another sentence' },
+    };
+    const eventType = 'beforeRequestHook';
+
+    const result = await allLowerCaseHandler(context, {}, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+  });
+  it('should return false verdict for a sentence with not all lowercase characters', async () => {
+    const context: PluginContext = {
+      request: { text: 'THIS IS A SENTENCE. THIS IS ANOTHER SENTENCE.' },
+    };
+    const eventType = 'beforeRequestHook';
+
+    const result = await allLowerCaseHandler(context, {}, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
   });
 });
