@@ -15,6 +15,7 @@ import {
   handleTextResponse,
 } from './streamHandler';
 import { HookSpan } from '../middlewares/hooks';
+import { env } from 'hono/adapter';
 
 /**
  * Handles various types of responses based on the specified parameters
@@ -162,9 +163,11 @@ export async function afterRequestHookHandler(
       hooksManager.getSpan(hookSpanId).resetHookResult('afterRequestHook');
     }
 
-    let { shouldDeny, results } = await hooksManager.executeHooks(hookSpanId, [
-      'syncAfterRequestHook',
-    ]);
+    let { shouldDeny, results } = await hooksManager.executeHooks(
+      hookSpanId,
+      ['syncAfterRequestHook'],
+      { env: env(c) }
+    );
 
     if (!responseJSON) {
       return response;
