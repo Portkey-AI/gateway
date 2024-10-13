@@ -38,6 +38,13 @@ const transformGenerationConfig = (params: Params) => {
   if (params['stop']) {
     generationConfig['stopSequences'] = params['stop'];
   }
+  if (params?.response_format?.type === 'json_object') {
+    generationConfig['responseMimeType'] = 'application/json';
+  }
+  if (params?.response_format?.type === 'json_schema') {
+    generationConfig['responseMimeType'] = 'application/json';
+    generationConfig['responseSchema'] = params?.response_format.json_schema;
+  }
   return generationConfig;
 };
 
@@ -188,7 +195,11 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                       data: base64Image,
                     },
                   });
-                } else if (url.startsWith('gs://')) {
+                } else if (
+                  url.startsWith('gs://') ||
+                  url.startsWith('https://') ||
+                  url.startsWith('http://')
+                ) {
                   parts.push({
                     fileData: {
                       mimeType: getMimeType(url),
@@ -295,6 +306,10 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
     transform: (params: Params) => transformGenerationConfig(params),
   },
   stop: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
+  response_format: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
