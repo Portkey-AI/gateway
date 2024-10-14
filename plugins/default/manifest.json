@@ -462,6 +462,19 @@
         },
         "required": ["suffix"]
       }
+    },
+    {
+      "name": "Valid Number Range",
+      "id": "validnumberrange",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequest", "afterRequest"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks if  number is invalid  range"
+        }
+      ],
+      "parameters": {}
     }
   ]
 }
