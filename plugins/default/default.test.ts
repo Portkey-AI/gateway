@@ -9,6 +9,7 @@ import { handler as webhookHandler } from './webhook';
 import { handler as logHandler } from './log';
 import { handler as allUppercaseHandler } from './alluppercase';
 import { handler as endsWithHandler } from './endsWith';
+import { handler as validNumberRangeHandler } from './validNumberRange';
 
 import { z } from 'zod';
 import { PluginContext, PluginParameters } from '../types';
@@ -752,5 +753,57 @@ describe('endsWith handler', () => {
     expect(result.error?.message).toBe('Missing suffix or text');
     expect(result.verdict).toBe(false);
     expect(result.data).toBe(null);
+  });
+});
+
+describe('validNumberRange handler', () => {
+  it('should return true for a target is in given range', async () => {
+    const parameters: PluginParameters = {
+      target: 2,
+      lowerLimit: 1,
+      upperLimit: 3,
+    };
+    const eventType = 'afterRequestHook';
+    const result = await validNumberRangeHandler({}, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+  });
+  it('should return false for a target is not in given range', async () => {
+    const parameters: PluginParameters = {
+      target: 2,
+      lowerLimit: 4,
+      upperLimit: 5,
+    };
+    const eventType = 'afterRequestHook';
+    const result = await validNumberRangeHandler({}, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+  });
+
+  it('should return true for a target is in given range', async () => {
+    const parameters: PluginParameters = {
+      target: 2,
+      lowerLimit: 1,
+      upperLimit: 3,
+    };
+    const eventType = 'beforeRequestHook';
+    const result = await validNumberRangeHandler({}, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+  });
+  it('should return false for a target is not in given range', async () => {
+    const parameters: PluginParameters = {
+      target: 2,
+      lowerLimit: 4,
+      upperLimit: 5,
+    };
+    const eventType = 'beforeRequestHook';
+    const result = await validNumberRangeHandler({}, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
   });
 });
