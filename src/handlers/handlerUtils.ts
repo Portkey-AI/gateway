@@ -468,11 +468,19 @@ export async function tryPost(
     strictOpenAiCompliance = false;
   }
 
+  let metadata: Record<string, string>;
+  try {
+    metadata = JSON.parse(requestHeaders[HEADER_KEYS.METADATA]);
+  } catch (err) {
+    metadata = {};
+  }
+
   const provider: string = providerOption.provider ?? '';
 
   const hooksManager = c.get('hooksManager');
   const hookSpan = hooksManager.createSpan(
     params,
+    metadata,
     provider,
     isStreamingMode,
     providerOption.beforeRequestHooks || [],
@@ -1320,9 +1328,11 @@ export async function beforeRequestHookHandler(
 ): Promise<any> {
   try {
     const hooksManager = c.get('hooksManager');
-    const hooksResult = await hooksManager.executeHooks(hookSpanId, [
-      'syncBeforeRequestHook',
-    ]);
+    const hooksResult = await hooksManager.executeHooks(
+      hookSpanId,
+      ['syncBeforeRequestHook'],
+      { env: env(c) }
+    );
 
     if (hooksResult.shouldDeny) {
       return new Response(

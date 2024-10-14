@@ -129,3 +129,86 @@ export async function post<T = any>(
     throw error;
   }
 }
+
+/**
+ * Sends a POST request to the specified URL with the given data and timeout.
+ * @param url - The URL to send the POST request to.
+ * @param data - The data to be sent in the request body.
+ * @param options - Additional options for the fetch call.
+ * @param timeout - Timeout in milliseconds (default: 5 seconds).
+ * @returns A promise that resolves to the JSON response.
+ * @throws {HttpError} Throws an HttpError with detailed information if the request fails.
+ * @throws {Error} Throws a generic Error for network issues or timeouts.
+ */
+export async function postWithCloudflareServiceBinding<T = any>(
+  url: string,
+  data: any,
+  serviceBinding: any,
+  options: PostOptions = {},
+  timeout: number = 5000
+): Promise<T> {
+  const defaultOptions: PostOptions = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  };
+
+  const mergedOptions: PostOptions = { ...defaultOptions, ...options };
+
+  if (mergedOptions.headers) {
+    mergedOptions.headers = {
+      ...defaultOptions.headers,
+      ...mergedOptions.headers,
+    };
+  }
+
+  try {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+
+    const response: Response = await serviceBinding.fetch(url, {
+      ...mergedOptions,
+      signal: controller.signal,
+    });
+
+    clearTimeout(id);
+
+    if (!response.ok) {
+      let errorBody: string;
+      try {
+        errorBody = await response.text();
+      } catch (e) {
+        errorBody = 'Unable to retrieve response body';
+      }
+
+      const errorResponse: ErrorResponse = {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorBody,
+      };
+
+      throw new HttpError(
+        `HTTP error! status: ${response.status}`,
+        errorResponse
+      );
+    }
+
+    return (await response.json()) as T;
+  } catch (error: any) {
+    if (error instanceof HttpError) {
+      throw error;
+    }
+    if (error.name === 'AbortError') {
+      throw new TimeoutError(
+        `Request timed out after ${timeout}ms`,
+        url,
+        timeout,
+        mergedOptions.method || 'POST'
+      );
+    }
+    // console.error('Error in post request:', error);
+    throw error;
+  }
+}

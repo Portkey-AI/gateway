@@ -8,6 +8,7 @@ import {
   HookOnFailObject,
   HookOnSuccessObject,
   HookResult,
+  HandlerOptions,
 } from './types';
 import { plugins } from '../../../plugins';
 import { Context } from 'hono';
@@ -26,6 +27,7 @@ export class HookSpan {
 
   constructor(
     requestParams: Record<string, any>,
+    metadata: Record<string, string>,
     provider: string,
     isStreamingRequest: boolean,
     beforeRequestHooks: HookObject[],
@@ -35,6 +37,7 @@ export class HookSpan {
   ) {
     this.context = this.createContext(
       requestParams,
+      metadata,
       provider,
       isStreamingRequest,
       requestType
@@ -57,6 +60,7 @@ export class HookSpan {
 
   private createContext(
     requestParams: Record<string, any>,
+    metadata: Record<string, string>,
     provider: string,
     isStreamingRequest: boolean,
     requestType: string
@@ -75,6 +79,7 @@ export class HookSpan {
       },
       provider,
       requestType,
+      metadata,
     };
   }
 
@@ -175,6 +180,7 @@ export class HooksManager {
 
   public createSpan(
     requestParams: any,
+    metadata: Record<string, string>,
     provider: string,
     isStreamingRequest: boolean,
     beforeRequestHooks: HookObject[],
@@ -184,6 +190,7 @@ export class HooksManager {
   ): HookSpan {
     const span = new HookSpan(
       requestParams,
+      metadata,
       provider,
       isStreamingRequest,
       beforeRequestHooks,
@@ -207,7 +214,8 @@ export class HooksManager {
 
   public async executeHooks(
     spanId: string,
-    eventTypePresets: string[]
+    eventTypePresets: string[],
+    options: HandlerOptions
   ): Promise<{ results: HookResult[]; shouldDeny: boolean }> {
     const span = this.getSpan(spanId);
 
@@ -219,7 +227,9 @@ export class HooksManager {
 
     try {
       const results = await Promise.all(
-        hooksToExecute.map((hook) => this.executeEachHook(spanId, hook))
+        hooksToExecute.map((hook) =>
+          this.executeEachHook(spanId, hook, options)
+        )
       );
       const shouldDeny = results.some(
         (result, index) =>
@@ -241,7 +251,8 @@ export class HooksManager {
   private async executeFunction(
     context: HookSpanContext,
     check: Check,
-    eventType: EventType
+    eventType: EventType,
+    options: HandlerOptions
   ): Promise<GuardrailCheckResult> {
     const [source, fn] = check.id.split('.');
     const createdAt = new Date();
@@ -249,7 +260,8 @@ export class HooksManager {
       const result = await this.plugins[source][fn](
         context,
         check.parameters,
-        eventType
+        eventType,
+        options
       );
       return {
         ...result,
@@ -278,7 +290,8 @@ export class HooksManager {
 
   private async executeEachHook(
     spanId: string,
-    hook: HookObject
+    hook: HookObject,
+    options: HandlerOptions
   ): Promise<HookResult> {
     const span = this.getSpan(spanId);
     let hookResult: HookResult = { id: hook.id } as HookResult;
@@ -290,9 +303,16 @@ export class HooksManager {
 
     if (hook.type === 'guardrail' && hook.checks) {
       const checkResults = await Promise.all(
-        hook.checks.map((check: Check) =>
-          this.executeFunction(span.getContext(), check, hook.eventType)
-        )
+        hook.checks
+          .filter((check: Check) => check.is_enabled !== false)
+          .map((check: Check) =>
+            this.executeFunction(
+              span.getContext(),
+              check,
+              hook.eventType,
+              options
+            )
+          )
       );
 
       hookResult = {
