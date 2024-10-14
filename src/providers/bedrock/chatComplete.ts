@@ -57,13 +57,24 @@ const getMessageContent = (message: Message) => {
       text: message.content,
     });
   } else {
-    message.content
-      .filter((item) => item.type === 'text')
-      .forEach((item) => {
+    message.content.forEach((item) => {
+      if (item.type === 'text') {
         out.push({
           text: item.text || '',
         });
-      });
+      } else if (item.type === 'image_url' && item.image_url) {
+        const imageParts = item.image_url.url.split(';');
+        const imageFormat = imageParts[0].split('/')[1];
+        out.push({
+          image: {
+            source: {
+              bytes: imageParts[1].split(',')[1],
+            },
+            format: imageFormat,
+          },
+        });
+      }
+    });
   }
 
   // If message is an array of objects, handle text content, tool calls, tool results, this would be much cleaner if portkeys chat create object were a union type
@@ -87,13 +98,14 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
       required: true,
       transform: (params: BedrockChatCompletionsParams) => {
         if (!params.messages) return [];
-        return params.messages.map((msg) => {
-          if (msg.role === 'system') return;
-          return {
-            role: msg.role === 'assistant' ? 'assistant' : 'user',
-            content: getMessageContent(msg),
-          };
-        });
+        return params.messages
+          .filter((msg) => msg.role !== 'system')
+          .map((msg) => {
+            return {
+              role: msg.role === 'assistant' ? 'assistant' : 'user',
+              content: getMessageContent(msg),
+            };
+          });
       },
     },
     {
