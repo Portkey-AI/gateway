@@ -68,5 +68,27 @@ export const transformAdditionalModelRequestFields = (
   if (params['top_k']) {
     additionalModelRequestFields['topK'] = params['top_k'];
   }
+  // Backward compatibility
+  if (params['anthropic_version']) {
+    additionalModelRequestFields['anthropic_version'] =
+      params['anthropic_version'];
+  }
+  if (params['frequency_penalty']) {
+    additionalModelRequestFields['frequencyPenalty'] =
+      params['frequency_penalty'];
+  }
+  if (params['presence_penalty']) {
+    additionalModelRequestFields['presencePenalty'] =
+      params['presence_penalty'];
+  }
+  if (params['logit_bias']) {
+    additionalModelRequestFields['logitBias'] = params['logit_bias'];
+  }
+  if (params['n']) {
+    additionalModelRequestFields['n'] = params['n'];
+  }
+  if (params['countPenalty']) {
+    additionalModelRequestFields['countPenalty'] = params['countPenalty'];
+  }
   return additionalModelRequestFields;
 };

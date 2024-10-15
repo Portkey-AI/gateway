@@ -23,6 +23,8 @@ export interface BedrockChatCompletionsParams extends Params {
     guardrailVersion: string;
     trace?: string;
   };
+  anthropic_version?: string;
+  countPenalty?: number;
 }
 
 const getMessageTextContentArray = (message: Message): { text: string }[] => {
@@ -202,6 +204,41 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
       transformAdditionalModelRequestFields(params),
   },
   top_k: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockChatCompletionsParams) =>
+      transformAdditionalModelRequestFields(params),
+  },
+  anthropic_version: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockChatCompletionsParams) =>
+      transformAdditionalModelRequestFields(params),
+  },
+  frequency_penalty: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockChatCompletionsParams) =>
+      transformAdditionalModelRequestFields(params),
+  },
+  presence_penalty: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockChatCompletionsParams) =>
+      transformAdditionalModelRequestFields(params),
+  },
+  logit_bias: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockChatCompletionsParams) =>
+      transformAdditionalModelRequestFields(params),
+  },
+  n: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockChatCompletionsParams) =>
+      transformAdditionalModelRequestFields(params),
+  },
+  stream: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockChatCompletionsParams) =>
+      transformAdditionalModelRequestFields(params),
+  },
+  countPenalty: {
     param: 'additionalModelRequestFields',
     transform: (params: BedrockChatCompletionsParams) =>
       transformAdditionalModelRequestFields(params),
