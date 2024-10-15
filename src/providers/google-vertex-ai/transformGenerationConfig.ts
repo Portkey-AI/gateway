@@ -1,5 +1,5 @@
 import { Params } from '../../types/requestBody';
-
+import { derefer } from './utils';
 /**
  * @see https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/gemini#request_body
  */
@@ -28,7 +28,11 @@ export function transformGenerationConfig(params: Params) {
   }
   if (params?.response_format?.type === 'json_schema') {
     generationConfig['responseMimeType'] = 'application/json';
-    generationConfig['responseSchema'] = params?.response_format.json_schema;
+    const parsePydanticSchema = derefer(
+      params?.response_format?.json_schema?.schema ?? {}
+    );
+    delete parsePydanticSchema['$defs'];
+    generationConfig['responseSchema'] = parsePydanticSchema;
   }
 
   return generationConfig;
