@@ -1,3 +1,4 @@
+import { GatewayError } from '../../errors/GatewayError';
 import { AI21, ANTHROPIC, COHERE } from '../../globals';
 import { Params } from '../../types/requestBody';
 import { ProviderConfigs } from '../types';
@@ -40,7 +41,10 @@ import {
 const BedrockConfig: ProviderConfigs = {
   api: BedrockAPIConfig,
   getConfig: (params: Params) => {
-    const providerModel = params.model;
+    if (!params.model) {
+      throw new GatewayError('Bedrock model not found');
+    }
+    const providerModel = params.model.replace(/^(us\.|eu\.)/, '');
     const provider = providerModel?.split('.')[0];
     let config: ProviderConfigs = {};
     switch (provider) {

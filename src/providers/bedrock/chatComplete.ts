@@ -10,8 +10,12 @@ import {
   generateInvalidProviderResponseError,
 } from '../utils';
 import { BedrockErrorResponse } from './embed';
+import {
+  transformAdditionalModelRequestFields,
+  transformInferenceConfig,
+} from './utils';
 
-interface BedrockChatCompletionsParams extends Params {
+export interface BedrockChatCompletionsParams extends Params {
   additionalModelRequestFields?: Record<string, any>;
   additionalModelResponseFieldPaths?: string[];
   guardrailConfig?: {
@@ -125,27 +129,6 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
         return systemMessages;
       },
     },
-    {
-      param: 'inferenceConfig',
-      transform: (params: BedrockChatCompletionsParams) => {
-        return {
-          maxTokens: params.max_tokens || params.max_completion_tokens,
-          stopSequences:
-            typeof params.stop === 'string' ? [params.stop] : params.stop,
-          temperature: params.temperature,
-          topP: params.top_p,
-        };
-      },
-    },
-    {
-      param: 'additionalModelRequestFields',
-      transform: (params: BedrockChatCompletionsParams) => {
-        return {
-          topK: params.top_k,
-          ...params.additionalModelRequestFields,
-        };
-      },
-    },
   ],
   tools: {
     param: 'toolConfig',
@@ -192,6 +175,36 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
   additionalModelResponseFieldPaths: {
     param: 'additionalModelResponseFieldPaths',
     required: false,
+  },
+  max_tokens: {
+    param: 'inferenceConfig',
+    transform: (params: BedrockChatCompletionsParams) =>
+      transformInferenceConfig(params),
+  },
+  stop: {
+    param: 'inferenceConfig',
+    transform: (params: BedrockChatCompletionsParams) =>
+      transformInferenceConfig(params),
+  },
+  temperature: {
+    param: 'inferenceConfig',
+    transform: (params: BedrockChatCompletionsParams) =>
+      transformInferenceConfig(params),
+  },
+  top_p: {
+    param: 'inferenceConfig',
+    transform: (params: BedrockChatCompletionsParams) =>
+      transformInferenceConfig(params),
+  },
+  additionalModelRequestFields: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockChatCompletionsParams) =>
+      transformAdditionalModelRequestFields(params),
+  },
+  top_k: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockChatCompletionsParams) =>
+      transformAdditionalModelRequestFields(params),
   },
 };
 
@@ -266,16 +279,6 @@ export const BedrockChatCompleteResponseTransform: (
             content: response.output.message.content
               .filter((content) => content.text)
               .reduce((acc, content) => acc + content.text + '\n', ''),
-            tool_calls: response.output.message.content
-              .filter((content) => content.toolUse)
-              .map((content) => ({
-                id: content.toolUse.toolUseId,
-                type: 'function',
-                function: {
-                  name: content.toolUse.name,
-                  arguments: content.toolUse.input,
-                },
-              })),
           },
           finish_reason: response.stopReason,
         },
@@ -286,19 +289,18 @@ export const BedrockChatCompleteResponseTransform: (
         total_tokens: response.usage.totalTokens,
       },
     };
-    if (response.output.message.content[0].toolUse) {
-      const toolUse = response.output.message.content[0].toolUse;
-      responseObj.choices[0].message.tool_calls = [
-        {
-          id: toolUse.toolUseId,
-          type: 'function',
-          function: {
-            name: toolUse.name,
-            arguments: toolUse.input,
-          },
+    const toolCalls = response.output.message.content
+      .filter((content) => content.toolUse)
+      .map((content) => ({
+        id: content.toolUse.toolUseId,
+        type: 'function',
+        function: {
+          name: content.toolUse.name,
+          arguments: content.toolUse.input,
         },
-      ];
-    }
+      }));
+    if (toolCalls.length > 0)
+      responseObj.choices[0].message.tool_calls = toolCalls;
     return responseObj;
   }
 

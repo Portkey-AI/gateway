@@ -1,5 +1,6 @@
 import { SignatureV4 } from '@smithy/signature-v4';
 import { Sha256 } from '@aws-crypto/sha256-js';
+import { BedrockChatCompletionsParams } from './chatComplete';
 
 export const generateAWSHeaders = async (
   body: Record<string, any>,
@@ -37,4 +38,35 @@ export const generateAWSHeaders = async (
 
   const signed = await signer.sign(request);
   return signed.headers;
+};
+
+export const transformInferenceConfig = (
+  params: BedrockChatCompletionsParams
+) => {
+  const inferenceConfig: Record<string, any> = {};
+  if (params['max_tokens'] || params['max_completion_tokens']) {
+    inferenceConfig['maxTokens'] =
+      params['max_tokens'] || params['max_completion_tokens'];
+  }
+  if (params['stop']) {
+    inferenceConfig['stopSequences'] = params['stop'];
+  }
+  if (params['temperature']) {
+    inferenceConfig['temperature'] = params['temperature'];
+  }
+  if (params['top_p']) {
+    inferenceConfig['topP'] = params['top_p'];
+  }
+  return inferenceConfig;
+};
+
+export const transformAdditionalModelRequestFields = (
+  params: BedrockChatCompletionsParams
+) => {
+  const additionalModelRequestFields: Record<string, any> =
+    params.additionalModelRequestFields || {};
+  if (params['top_k']) {
+    additionalModelRequestFields['topK'] = params['top_k'];
+  }
+  return additionalModelRequestFields;
 };
