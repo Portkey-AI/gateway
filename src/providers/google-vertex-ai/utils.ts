@@ -199,7 +199,6 @@ const getRefParts = (spec: Record<string, any>, ref: string) => {
   return spec?.[ref];
 };
 
-
 export const derefer = (spec: Record<string, any>, defs = null) => {
   const original = { ...spec };
 
