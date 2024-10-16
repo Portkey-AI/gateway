@@ -28,11 +28,12 @@ export function transformGenerationConfig(params: Params) {
   }
   if (params?.response_format?.type === 'json_schema') {
     generationConfig['responseMimeType'] = 'application/json';
-    const parsePydanticSchema = derefer(
-      params?.response_format?.json_schema?.schema ?? {}
-    );
-    delete parsePydanticSchema['$defs'];
-    generationConfig['responseSchema'] = parsePydanticSchema;
+    let schema = params?.response_format?.json_schema?.schema ?? {};
+    if (Object.keys(schema).includes('$defs')) {
+      schema = derefer(params?.response_format?.json_schema?.schema ?? {});
+      delete schema['$defs'];
+    }
+    generationConfig['responseSchema'] = schema;
   }
 
   return generationConfig;
