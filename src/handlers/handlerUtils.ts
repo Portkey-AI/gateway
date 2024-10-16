@@ -1010,6 +1010,10 @@ export function constructConfigFromRequestHeaders(
     deploymentId: requestHeaders[`x-${POWERED_BY}-azure-deployment-id`],
     apiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
     azureModelName: requestHeaders[`x-${POWERED_BY}-azure-model-name`],
+    azureEntraClientId: requestHeaders[`x-${POWERED_BY}-azure-entra-client-id`],
+    azureEntraClientSecret:
+      requestHeaders[`x-${POWERED_BY}-azure-entra-client-secret`],
+    azureEntraTenantId: requestHeaders[`x-${POWERED_BY}-azure-entra-tenant-id`],
   };
 
   const azureAiInferenceConfig = {
@@ -1020,6 +1024,10 @@ export function constructConfigFromRequestHeaders(
       requestHeaders[`x-${POWERED_BY}-azure-deployment-type`],
     azureApiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
     azureEndpointName: requestHeaders[`x-${POWERED_BY}-azure-endpoint-name`],
+    azureEntraClientId: requestHeaders[`x-${POWERED_BY}-azure-entra-client-id`],
+    azureEntraClientSecret:
+      requestHeaders[`x-${POWERED_BY}-azure-entra-client-secret`],
+    azureEntraTenantId: requestHeaders[`x-${POWERED_BY}-azure-entra-tenant-id`],
   };
 
   const bedrockConfig = {

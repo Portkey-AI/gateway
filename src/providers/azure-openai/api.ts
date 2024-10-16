@@ -1,16 +1,29 @@
 import { ProviderAPIConfig } from '../types';
+import { getAccessTokenFromEntraId } from './utils';
 
 const AzureOpenAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
     const { resourceName, deploymentId } = providerOptions;
     return `https://${resourceName}.openai.azure.com/openai/deployments/${deploymentId}`;
   },
-  headers: ({ providerOptions, fn }) => {
+  headers: async ({ providerOptions, fn }) => {
     const headersObj: Record<string, string> = {
       'api-key': `${providerOptions.apiKey}`,
     };
     if (fn === 'createTranscription' || fn === 'createTranslation')
       headersObj['Content-Type'] = 'multipart/form-data';
+    const { azureEntraClientId, azureEntraClientSecret, azureEntraTenantId } =
+      providerOptions;
+    if (azureEntraClientId && azureEntraClientSecret && azureEntraTenantId) {
+      const accessToken = await getAccessTokenFromEntraId(
+        azureEntraTenantId,
+        azureEntraClientId,
+        azureEntraClientSecret,
+        'https://cognitiveservices.azure.com/decision/.default'
+      );
+      headersObj['Authorization'] = `Bearer ${accessToken}`;
+    }
+
     return headersObj;
   },
   getEndpoint: ({ providerOptions, fn }) => {
