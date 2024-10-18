@@ -17,27 +17,44 @@ export const handler: PluginHandler = async (
 ) => {
   let error = null;
   let verdict = false;
-  let data = null;
+  let data: any = null;
 
-  // The following code is an example of a plugin that uses regex to match a string in the response body.
-  // The plugin will return true if the regex matches the string, and false otherwise.
   try {
     const minCount = parameters.minSentences;
     const maxCount = parameters.maxSentences;
     let text = getText(context, eventType);
 
     if (
-      Number.isInteger(minCount) &&
-      Number.isInteger(maxCount) &&
-      text.length >= 0
+      typeof minCount !== 'number' ||
+      typeof maxCount !== 'number'
     ) {
-      let count = countSentences(text);
-      verdict = count >= minCount && count <= maxCount;
-    } else {
-      error = error || new Error('Missing sentence count range or text');
+      throw new Error('Missing sentence count range');
     }
-  } catch (e) {
-    error = e as Error;
+
+    // Treat empty string as valid input with 0 sentences
+    text = text || '';
+    let count = countSentences(text);
+    verdict = count >= minCount && count <= maxCount;
+    
+    data = {
+      sentenceCount: count,
+      minCount,
+      maxCount,
+      verdict,
+      explanation: verdict
+        ? `The sentence count (${count}) is within the specified range of ${minCount} to ${maxCount}.`
+        : `The sentence count (${count}) is outside the specified range of ${minCount} to ${maxCount}.`,
+      textExcerpt: text.length > 100 ? text.slice(0, 100) + '...' : text,
+    };
+  } catch (e: any) {
+    error = e;
+    let text = getText(context, eventType) || 'No text available';
+    data = {
+      explanation: `An error occurred: ${e.message}`,
+      minCount: parameters.minSentences,
+      maxCount: parameters.maxSentences,
+      textExcerpt: text.length > 100 ? text.slice(0, 100) + '...' : text
+    };
   }
 
   return { error, verdict, data };

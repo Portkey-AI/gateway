@@ -1,3 +1,4 @@
+import { handler as regexMatchHandler } from './regexMatch';
 import { handler as jsonSchemaHandler } from './jsonSchema';
 import { handler as jsonKeysHandler } from './jsonKeys';
 import { handler as containsHandler } from './contains';
@@ -13,6 +14,140 @@ import { handler as allLowerCaseHandler } from './alllowercase';
 
 import { z } from 'zod';
 import { PluginContext, PluginParameters } from '../types';
+
+describe('Regex Matcher Plugin', () => {
+  const mockContext: PluginContext = {
+    response: {
+      text: 'The quick brown fox jumps over the lazy dog.',
+    },
+  };
+
+  const mockEventType = 'afterRequestHook';
+
+  it('should match a simple regex pattern', async () => {
+    const parameters: PluginParameters = { rule: 'quick.*fox' };
+    const result = await regexMatchHandler(
+      mockContext,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.verdict).toBe(true);
+    expect(result.data.explanation).toContain('successfully matched');
+    expect(result.data.matchDetails.matchedText).toBe('quick brown fox');
+  });
+
+  it('should not match when pattern is not found', async () => {
+    const parameters: PluginParameters = { rule: 'zebra' };
+    const result = await regexMatchHandler(
+      mockContext,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.verdict).toBe(false);
+    expect(result.data.explanation).toContain('did not match');
+    expect(result.data.matchDetails).toBeNull();
+  });
+
+  it('should handle regex with capturing groups', async () => {
+    const parameters: PluginParameters = { rule: '(quick) (brown) (fox)' };
+    const result = await regexMatchHandler(
+      mockContext,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.verdict).toBe(true);
+    expect(result.data.matchDetails.captures).toEqual([
+      'quick',
+      'brown',
+      'fox',
+    ]);
+    expect(result.data.matchDetails.groups).toEqual({});
+  });
+
+  it('should handle regex with named capturing groups', async () => {
+    const parameters: PluginParameters = {
+      rule: '(?<adjective1>quick) (?<adjective2>brown) (?<animal>fox)',
+    };
+    const result = await regexMatchHandler(
+      mockContext,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.verdict).toBe(true);
+    expect(result.data.matchDetails.groups).toEqual({
+      adjective1: 'quick',
+      adjective2: 'brown',
+      animal: 'fox',
+    });
+  });
+
+  it('should provide text excerpt in data', async () => {
+    const parameters: PluginParameters = { rule: 'dog' };
+    const result = await regexMatchHandler(
+      mockContext,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.data.textExcerpt).toBe(
+      'The quick brown fox jumps over the lazy dog.'
+    );
+  });
+
+  it('should handle long text by truncating excerpt', async () => {
+    const longText = 'a'.repeat(200);
+    const longTextContext: PluginContext = { response: { text: longText } };
+    const parameters: PluginParameters = { rule: 'a' };
+    const result = await regexMatchHandler(
+      longTextContext,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.data.textExcerpt).toBe('a'.repeat(100) + '...');
+  });
+
+  it('should throw error for invalid regex', async () => {
+    const parameters: PluginParameters = { rule: '(' }; // Invalid regex
+    const result = await regexMatchHandler(
+      mockContext,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.error).not.toBeNull();
+    expect(result.data.explanation).toContain('An error occurred');
+  });
+
+  it('should handle missing regex pattern', async () => {
+    const parameters: PluginParameters = { rule: '' };
+    const result = await regexMatchHandler(
+      mockContext,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.error).not.toBeNull();
+    expect(result.data.explanation).toContain('Missing regex pattern');
+  });
+
+  it('should handle missing text to match', async () => {
+    const emptyContext: PluginContext = { response: { text: '' } };
+    const parameters: PluginParameters = { rule: 'test' };
+    const result = await regexMatchHandler(
+      emptyContext,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.error).not.toBeNull();
+    expect(result.data.explanation).toContain('Missing text to match');
+  });
+});
 
 describe('jsonSchema handler', () => {
   it('should validate JSON in response text', async () => {
@@ -275,7 +410,7 @@ describe('jsonKeys handler', () => {
 });
 
 describe('contains handler', () => {
-  it('should return true verdict for any word in response text', async () => {
+  it('should return true verdict and correct data for any word in response text', async () => {
     const context: PluginContext = {
       response: {
         text: 'adding some text before this word1 and adding some text after',
@@ -284,7 +419,7 @@ describe('contains handler', () => {
     const eventType = 'afterRequestHook';
 
     const parameters: PluginParameters = {
-      words: ['word1'],
+      words: ['word1', 'word2'],
       operator: 'any',
     };
 
@@ -292,9 +427,15 @@ describe('contains handler', () => {
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
+    expect(result.data).toEqual({
+      explanation: "Check passed for 'any' words. At least one word was found.",
+      foundWords: ['word1'],
+      missingWords: ['word2'],
+      operator: 'any',
+    });
   });
 
-  it('should return false verdict for all words in response text', async () => {
+  it('should return false verdict and correct data for all words in response text', async () => {
     const context: PluginContext = {
       response: {
         text: 'adding some text before this word1 and adding some text after',
@@ -311,9 +452,15 @@ describe('contains handler', () => {
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      explanation: "Check failed for 'all' words. Some words were missing.",
+      foundWords: ['word1'],
+      missingWords: ['word2'],
+      operator: 'all',
+    });
   });
 
-  it('should return true verdict for none of the words in response text', async () => {
+  it('should return true verdict and correct data for none of the words in response text', async () => {
     const context: PluginContext = {
       response: {
         text: 'adding some text before this word1 and adding some text after',
@@ -322,7 +469,7 @@ describe('contains handler', () => {
     const eventType = 'afterRequestHook';
 
     const parameters: PluginParameters = {
-      words: ['word2'],
+      words: ['word2', 'word3'],
       operator: 'none',
     };
 
@@ -330,6 +477,62 @@ describe('contains handler', () => {
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
+    expect(result.data).toEqual({
+      explanation: "Check passed for 'none' words. No words were found.",
+      foundWords: [],
+      missingWords: ['word2', 'word3'],
+      operator: 'none',
+    });
+  });
+
+  it('should handle empty word list', async () => {
+    const context: PluginContext = {
+      response: {
+        text: 'some text',
+      },
+    };
+    const eventType = 'afterRequestHook';
+
+    const parameters: PluginParameters = {
+      words: [],
+      operator: 'any',
+    };
+
+    const result = await containsHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      explanation: "Check failed for 'any' words. No words were found.",
+      foundWords: [],
+      missingWords: [],
+      operator: 'any',
+    });
+  });
+
+  it('should handle case sensitivity', async () => {
+    const context: PluginContext = {
+      response: {
+        text: 'Adding some TEXT before this Word1 and adding some text after',
+      },
+    };
+    const eventType = 'afterRequestHook';
+
+    const parameters: PluginParameters = {
+      words: ['text', 'word1'],
+      operator: 'all',
+    };
+
+    const result = await containsHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      explanation: "Check failed for 'all' words. Some words were missing.",
+      foundWords: ['text'],
+      missingWords: ['word1'],
+      operator: 'all',
+    });
   });
 });
 
@@ -426,54 +629,112 @@ describe('validUrls handler', () => {
 });
 
 describe('sentenceCount handler', () => {
-  it('should return true verdict for sentence count within range in response text', async () => {
+  const mockEventType = 'afterRequestHook';
+
+  it('should return true verdict for sentence count within range', async () => {
     const context: PluginContext = {
       response: { text: 'This is a sentence. This is another sentence.' },
     };
-    const eventType = 'afterRequestHook';
-
     const parameters: PluginParameters = {
-      minSentences: 0,
-      maxSentences: 2,
-    };
-
-    const result = await sentenceCountHandler(context, parameters, eventType);
-
-    expect(result.error).toBe(null);
-    expect(result.verdict).toBe(true);
-  });
-
-  it('should return false verdict for sentence count outside range in response text', async () => {
-    const context: PluginContext = {
-      response: { text: 'This is a sentence. This is another sentence.' },
-    };
-    const eventType = 'afterRequestHook';
-
-    const parameters: PluginParameters = {
-      minSentences: 3,
+      minSentences: 1,
       maxSentences: 3,
     };
 
-    const result = await sentenceCountHandler(context, parameters, eventType);
+    const result = await sentenceCountHandler(context, parameters, mockEventType);
 
     expect(result.error).toBe(null);
-    expect(result.verdict).toBe(false);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toEqual({
+      sentenceCount: 2,
+      minCount: 1,
+      maxCount: 3,
+      verdict: true,
+      explanation: 'The sentence count (2) is within the specified range of 1 to 3.',
+      textExcerpt: 'This is a sentence. This is another sentence.',
+    });
   });
 
-  it('should return error for missing sentence count range in parameters', async () => {
+  it('should return false verdict for sentence count outside range', async () => {
     const context: PluginContext = {
       response: { text: 'This is a sentence. This is another sentence.' },
     };
-    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      minSentences: 3,
+      maxSentences: 4,
+    };
 
-    const parameters: PluginParameters = {};
+    const result = await sentenceCountHandler(context, parameters, mockEventType);
 
-    const result = await sentenceCountHandler(context, parameters, eventType);
-
-    expect(result.error).toBeInstanceOf(Error);
-    expect(result.error?.message).toBe('Missing sentence count range or text');
+    expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
-    expect(result.data).toBe(null);
+    expect(result.data).toEqual({
+      sentenceCount: 2,
+      minCount: 3,
+      maxCount: 4,
+      verdict: false,
+      explanation: 'The sentence count (2) is outside the specified range of 3 to 4.',
+      textExcerpt: 'This is a sentence. This is another sentence.',
+    });
+  });
+
+  it('should handle long text by truncating excerpt', async () => {
+    const longText = 'This is a sentence. '.repeat(20);
+    const context: PluginContext = {
+      response: { text: longText },
+    };
+    const parameters: PluginParameters = {
+      minSentences: 1,
+      maxSentences: 30,
+    };
+
+    const result = await sentenceCountHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data.textExcerpt.length).toBeLessThanOrEqual(103); // 100 characters + '...'
+    expect(result.data.textExcerpt.endsWith('...')).toBe(true);
+  });
+
+  it('should return error for missing sentence count range', async () => {
+    const context: PluginContext = {
+      response: { text: 'This is a sentence.' },
+    };
+    const parameters: PluginParameters = {};
+  
+    const result = await sentenceCountHandler(context, parameters, mockEventType);
+  
+    expect(result.error).toBeInstanceOf(Error);
+    expect(result.error?.message).toBe('Missing sentence count range');
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      explanation: 'An error occurred: Missing sentence count range',
+      minCount: undefined,
+      maxCount: undefined,
+      textExcerpt: 'This is a sentence.',
+    });
+  });
+
+  it('should handle empty text', async () => {
+    const context: PluginContext = {
+      response: { text: '' },
+    };
+    const parameters: PluginParameters = {
+      minSentences: 1,
+      maxSentences: 3,
+    };
+
+    const result = await sentenceCountHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      sentenceCount: 0,
+      minCount: 1,
+      maxCount: 3,
+      verdict: false,
+      explanation: 'The sentence count (0) is outside the specified range of 1 to 3.',
+      textExcerpt: '',
+    });
   });
 });
 
