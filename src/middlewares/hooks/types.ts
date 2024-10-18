@@ -1,6 +1,7 @@
 export interface Check {
   id: string;
   parameters: object;
+  is_enabled?: boolean;
 }
 
 export interface HookOnFailObject {
@@ -42,6 +43,7 @@ export interface HookSpanContext {
   response: HookSpanContextResponse;
   provider: string;
   requestType: string;
+  metadata?: Record<string, string>;
 }
 
 export interface GuardrailFeedbackMetadata {
@@ -85,3 +87,7 @@ export interface GuardrailResult {
 export type HookResult = GuardrailResult;
 
 export type EventType = 'beforeRequestHook' | 'afterRequestHook';
+
+export interface HandlerOptions {
+  env: Record<string, any>;
+}
