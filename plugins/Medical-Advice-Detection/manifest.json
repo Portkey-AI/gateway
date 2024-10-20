@@ -1,0 +1,47 @@
+{
+    "id": "medical-advice-detection",
+    "description": "Detects Medical Advice in the generated response and flags a warning.",
+    "credentials": {
+      "type": "object",
+      "properties": {
+        "apiKey": {
+          "type": "string",
+          "label": "API Key",
+          "description": "API key for accessing the medical advice detection service",
+          "encrypted": true
+        }
+      },
+      "required": ["apiKey"]
+    },
+    "functions": [
+      {
+        "name": "Medical Advice Detection Guardrail",
+        "id": "medicalAdviceGuardrail",
+        "supportedHooks": ["afterRequestHook"],
+        "type": "guardrail",
+        "description": [
+          {
+            "type": "subHeading",
+            "text": "This guardrail checks the response for medical advice and flags a warning if detected."
+          }
+        ],
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "warningThreshold": {
+              "type": "number",
+              "label": "Warning Threshold",
+              "description": [
+                {
+                  "type": "subHeading",
+                  "text": "The confidence threshold for flagging medical advice (0 to 1 scale)."
+                }
+              ]
+            }
+          },
+          "required": ["warningThreshold"]
+        }
+      }
+    ]
+  }
+  
