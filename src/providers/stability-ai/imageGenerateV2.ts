@@ -61,7 +61,7 @@ interface StabilityAIIMageGenerateV2ErrorResponse {
   errors: string[];
 }
 
-export const StabilityAIIMageGenerateV2ResponseTransform: (
+export const StabilityAIImageGenerateV2ResponseTransform: (
   response:
     | StabilityAIIMageGenerateV2Response
     | StabilityAIIMageGenerateV2ErrorResponse,

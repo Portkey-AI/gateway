@@ -7,7 +7,7 @@ import {
 } from './imageGenerate';
 import {
   StabilityAIImageGenerateV2Config,
-  StabilityAIIMageGenerateV2ResponseTransform,
+  StabilityAIImageGenerateV2ResponseTransform,
 } from './imageGenerateV2';
 
 const StabilityAIConfig: ProviderConfigs = {
@@ -18,7 +18,7 @@ const StabilityAIConfig: ProviderConfigs = {
       return {
         imageGenerate: StabilityAIImageGenerateV2Config,
         responseTransforms: {
-          imageGenerate: StabilityAIIMageGenerateV2ResponseTransform,
+          imageGenerate: StabilityAIImageGenerateV2ResponseTransform,
         },
       };
     }
