@@ -135,10 +135,6 @@ export const CONTENT_TYPES = {
   GENERIC_IMAGE_PATTERN: 'image/',
 };
 
-export const ACCEPT_TYPES = {
-  APPLICATION_JSON: 'application/json',
-};
-
 export const MULTIPART_FORM_DATA_ENDPOINTS: endpointStrings[] = [
   'createTranscription',
   'createTranslation',

@@ -1,4 +1,4 @@
-import { ACCEPT_TYPES, CONTENT_TYPES } from '../../globals';
+import { CONTENT_TYPES } from '../../globals';
 import { ProviderAPIConfig } from '../types';
 import { STABILITY_V2_MODELS } from './constants';
 
@@ -10,7 +10,7 @@ const StabilityAIAPIConfig: ProviderAPIConfig = {
     };
     if (providerOptions.transformToFormData) {
       headers['Content-Type'] = CONTENT_TYPES.MULTIPART_FORM_DATA;
-      headers['Accept'] = ACCEPT_TYPES.APPLICATION_JSON;
+      headers['Accept'] = CONTENT_TYPES.APPLICATION_JSON;
     }
     return headers;
   },

@@ -34,8 +34,8 @@ export const MISTRAL_CONTROL_TOKENS = {
   MIDDLE: '[MIDDLE]',
   SUFFIX: '[SUFFIX]',
 };
-export const BEDROCK_STABILITY_V2_MODELS = [
-  'sd3-ultra-v1:0',
-  'stable-image-core-v1:0',
-  'sd3-large-v1:0',
+
+export const BEDROCK_STABILITY_V1_MODELS = [
+  'stable-diffusion-xl-v0',
+  'stable-diffusion-xl-v1',
 ];

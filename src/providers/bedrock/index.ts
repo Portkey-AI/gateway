@@ -42,7 +42,7 @@ import {
   BedrockTitanCompleteResponseTransform,
   BedrockTitanCompleteStreamChunkTransform,
 } from './complete';
-import { BEDROCK_STABILITY_V2_MODELS } from './constants';
+import { BEDROCK_STABILITY_V1_MODELS } from './constants';
 import {
   BedrockCohereEmbedConfig,
   BedrockCohereEmbedResponseTransform,
@@ -66,8 +66,9 @@ const BedrockConfig: ProviderConfigs = {
     // To remove the region in case its a cross-region inference profile ID
     // https://docs.aws.amazon.com/bedrock/latest/userguide/cross-region-inference-support.html
     const providerModel = params.model.replace(/^(us\.|eu\.)/, '');
-    const provider = providerModel?.split('.')[0];
-    const model = providerModel?.split('.')[1];
+    const providerModelArray = providerModel.split('.');
+    const provider = providerModelArray[0];
+    const model = providerModelArray.slice(1).join('.');
     switch (provider) {
       case ANTHROPIC:
         return {
@@ -151,20 +152,20 @@ const BedrockConfig: ProviderConfigs = {
           },
         };
       case 'stability':
-        if (model && BEDROCK_STABILITY_V2_MODELS.includes(model)) {
+        if (model && BEDROCK_STABILITY_V1_MODELS.includes(model)) {
           return {
-            imageGenerate: BedrockStabilityAIImageGenerateV2Config,
+            imageGenerate: BedrockStabilityAIImageGenerateV1Config,
             api: BedrockAPIConfig,
             responseTransforms: {
-              imageGenerate: BedrockStabilityAIImageGenerateV2ResponseTransform,
+              imageGenerate: BedrockStabilityAIImageGenerateV1ResponseTransform,
             },
           };
         }
         return {
-          imageGenerate: BedrockStabilityAIImageGenerateV1Config,
+          imageGenerate: BedrockStabilityAIImageGenerateV2Config,
           api: BedrockAPIConfig,
           responseTransforms: {
-            imageGenerate: BedrockStabilityAIImageGenerateV1ResponseTransform,
+            imageGenerate: BedrockStabilityAIImageGenerateV2ResponseTransform,
           },
         };
       default:
