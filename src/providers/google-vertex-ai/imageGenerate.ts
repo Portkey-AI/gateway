@@ -1,17 +1,9 @@
 import { GOOGLE_VERTEX_AI } from '../../globals';
-import { EmbedParams } from '../../types/embedRequestBody';
+import { Params } from '../../types/requestBody';
 import { ErrorResponse, ImageGenerateResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { GoogleErrorResponse } from './types';
 import { GoogleErrorResponseTransform } from './utils';
-
-interface GoogleImageGenParams {
-  prompt: string;
-  model: string;
-  n: number;
-  style: string;
-  user?: string;
-}
 
 interface GoogleImageGenInstanceData {
   prompt: string;
@@ -23,16 +15,50 @@ const transformParams = (params: Record<string, unknown>) => {
     config['sampleCount'] = params['n'];
   }
   if (params['quality']) {
+    let quality;
+    if (typeof params['quality'] === 'number') {
+      quality = params['quality'];
+    } else {
+      if (params['quality'] === 'hd') {
+        quality = 100;
+      } else {
+        quality = 75;
+      }
+    }
     if (config['outputOptions']) {
-      const quality = params['quality'] === 'hd' ? 100 : 75;
       (config['outputOptions'] as any)['compressionQuality'] = quality;
+    } else {
+      config['outputOptions'] = { compressionQuality: quality };
     }
   }
   if (params['style']) {
     config['sampleImageStyle'] = params['style'];
   }
-  if (params['size']) {
-    config['aspectRatio'] = params['size'] as string;
+
+  if (params['aspectRation']) {
+    config['aspectRation'] = params['aspectRation'];
+  }
+  if (params['seed']) {
+    config['seed'] = params['seed'];
+  }
+  if (params['negativePrompt']) {
+    config['negativePrompt'] = params['negativePrompt'];
+  }
+  if (params['personGeneration']) {
+    config['personGeneration'] = params['personGeneration'];
+  }
+  if (params['safetySetting']) {
+    config['safetySetting'] = params['safetySetting'];
+  }
+  if (params['addWatermark']) {
+    config['addWatermark'] = params['addWatermark'];
+  }
+  if (params['mimeType']) {
+    if (config['outputOptions']) {
+      (config['outputOptions'] as any)['mimeType'] = params['mimeType'];
+    } else {
+      config['outputOptions'] = { mimeType: params['mimeType'] };
+    }
   }
 
   return config;
@@ -42,9 +68,7 @@ export const GoogleImageGenConfig: ProviderConfig = {
   prompt: {
     param: 'instances',
     required: true,
-    transform: (
-      params: GoogleImageGenParams
-    ): Array<GoogleImageGenInstanceData> => {
+    transform: (params: Params): Array<GoogleImageGenInstanceData> => {
       const instances = Array<GoogleImageGenInstanceData>();
       if (Array.isArray(params.prompt)) {
         params.prompt.forEach((text) => {
@@ -54,7 +78,7 @@ export const GoogleImageGenConfig: ProviderConfig = {
         });
       } else {
         instances.push({
-          prompt: params.prompt,
+          prompt: params.prompt as string,
         });
       }
       return instances;
@@ -70,11 +94,35 @@ export const GoogleImageGenConfig: ProviderConfig = {
     param: 'parameters',
     transform: transformParams,
   },
-  size: {
+  style: {
     param: 'parameters',
     transform: transformParams,
   },
-  style: {
+  aspectRation: {
+    param: 'parameters',
+    transform: transformParams,
+  },
+  seed: {
+    param: 'parameters',
+    transform: transformParams,
+  },
+  negativePrompt: {
+    param: 'parameters',
+    transform: transformParams,
+  },
+  personGeneration: {
+    param: 'parameters',
+    transform: transformParams,
+  },
+  safetySetting: {
+    param: 'parameters',
+    transform: transformParams,
+  },
+  addWatermark: {
+    param: 'parameters',
+    transform: transformParams,
+  },
+  mimeType: {
     param: 'parameters',
     transform: transformParams,
   },
