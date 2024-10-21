@@ -1,4 +1,5 @@
 import { ANTHROPIC, OPEN_AI } from '../../globals';
+import { Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -89,6 +90,12 @@ export const OpenAIChatCompleteConfig: ProviderConfig = {
   },
   stream_options: {
     param: 'stream_options',
+    transform: (params: Params) => {
+      if (params.stream_options) return params.stream_options;
+      return {
+        include_usage: true,
+      };
+    },
   },
   service_tier: {
     param: 'service_tier',

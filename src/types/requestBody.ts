@@ -286,6 +286,9 @@ export interface Params {
   top_p?: number;
   n?: number;
   stream?: boolean;
+  stream_options?: {
+    include_usage: boolean;
+  };
   logprobs?: number;
   echo?: boolean;
   stop?: string | string[];
