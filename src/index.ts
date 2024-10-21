@@ -7,6 +7,7 @@
 import { Hono } from 'hono';
 import { prettyJSON } from 'hono/pretty-json';
 import { HTTPException } from 'hono/http-exception';
+import { streamSSE } from 'hono/streaming'
 // import { env } from 'hono/adapter' // Have to set this up for multi-environment deployment
 
 import { completeHandler } from './handlers/completeHandler';
@@ -19,6 +20,7 @@ import { completionsHandler } from './handlers/completionsHandler';
 import { embeddingsHandler } from './handlers/embeddingsHandler';
 import { requestValidator } from './middlewares/requestValidator';
 import { hooks } from './middlewares/hooks';
+import { logger } from './middlewares/log'
 import { compress } from 'hono/compress';
 import { getRuntimeKey } from 'hono/adapter';
 import { imageGenerationsHandler } from './handlers/imageGenerationsHandler';
@@ -49,6 +51,9 @@ app.get('/', (c) => c.text('AI Gateway says hey!'));
 
 // Use prettyJSON middleware for all routes
 app.use('*', prettyJSON());
+
+// Use logger middleware for all routes
+app.use(logger())
 
 // Use hooks middleware for all routes
 app.use('*', hooks);
@@ -151,6 +156,42 @@ app.post('/v1/*', requestValidator, proxyHandler);
 app.get('/v1/*', requestValidator, proxyGetHandler);
 
 app.delete('/v1/*', requestValidator, proxyGetHandler);
+
+app.get('/log/stream', (c) => {
+  const clientId = Date.now().toString()
+
+  // Set headers to prevent caching
+  c.header('Cache-Control', 'no-cache')
+  c.header('X-Accel-Buffering', 'no')
+
+  return streamSSE(c, async (stream) => {
+    const client = {
+      sendLog: (message:any) => stream.writeSSE(message)
+    }
+    // Add this client to the set of log clients
+    const addLogClient:any = c.get('addLogClient')
+    addLogClient(clientId, client)
+
+
+    
+    try {
+      // Send an initial connection event
+      await stream.writeSSE({ event: 'connected', data: clientId })
+
+      // Keep the connection open
+      while (true) {
+        await stream.sleep(10000)  // Heartbeat every 10 seconds
+        await stream.writeSSE({ event: 'heartbeat', data: 'pulse' })
+      }
+    } catch (error) {
+      console.error(`Error in log stream for client ${clientId}:`, error)
+    } finally {
+      // Remove this client when the connection is closed
+      const removeLogClient:any = c.get('removeLogClient')
+      removeLogClient(clientId)
+    }
+  })
+})
 
 // Export the app
 export default app;

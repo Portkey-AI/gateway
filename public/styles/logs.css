@@ -1,0 +1,150 @@
+/* Logs styles */
+.card.logs-card {
+  margin-top: 1rem;
+  max-width: 800px;
+}
+
+.logs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.logs-table-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  width: 100%;
+  max-width: 800px;
+}
+
+.logs-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.logs-table th,
+.logs-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+  cursor: default;
+}
+
+.logs-table th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
+
+.logs-table tr:hover {
+  background-color: #f3f4f6;
+}
+
+/* .logs-table td:last-child {
+  text-align: right;
+} */
+
+.loading-row {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.loading-row td {
+  padding: 0.25rem 0.75rem;
+}
+
+.loading-animation {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #6b7280;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+@keyframes spin {
+  to {
+      transform: rotate(360deg);
+  }
+}
+
+.new-row {
+  animation: fadeInSlideDown 0.2s ease-out;
+}
+@keyframes fadeInSlideDown {
+  from {
+      opacity: 0;
+      transform: translateY(-20px);
+  }
+  to {
+      opacity: 1;
+      transform: translateY(0);
+  }
+}
+
+.log-time {
+  font-family: monospace;
+  font-size: 0.875rem;
+}
+
+.log-method span {
+  padding: 0.3rem;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.log-status span.success {
+  padding: 0.3rem;
+  background-color: green;
+  border-radius: 4px;
+  color: white;
+  font-weight: 700;
+}
+
+.log-status span.error {
+  padding: 0.3rem;
+  background-color: red;
+  border-radius: 4px;
+  color: white;
+  font-weight: 700;
+}
+
+
+
+.btn-view-details {
+  padding: 0.25rem 0.5rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-view-details:hover {
+  background-color: #2563eb;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .logs-header {
+      flex-direction: column;
+      align-items: stretch;
+  }
+
+  .logs-search {
+      width: 100%;
+      margin-bottom: 1rem;
+  }
+}
