@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,json}\"",
+    "format:check": "prettier --check \"./**/*.{js,jsx,ts,tsx,json}\""
   },
   "dependencies": {
     "axios": "^1.0.0",
@@ -17,4 +19,3 @@
     "typescript": "^5.0.0"
   }
 }
-
