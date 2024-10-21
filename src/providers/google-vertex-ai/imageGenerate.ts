@@ -35,7 +35,7 @@ export const GoogleImageGenConfig: ProviderConfig = {
   },
   parameters: {
     param: 'parameters',
-    required: false,
+    required: true,
     default: { sampleCount: 1 },
   },
 };
