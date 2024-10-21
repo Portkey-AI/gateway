@@ -5,38 +5,78 @@ import { generateInvalidProviderResponseError } from '../utils';
 import { GoogleErrorResponse } from './types';
 import { GoogleErrorResponseTransform } from './utils';
 
-interface GoogleImageGenParams extends EmbedParams {}
+interface GoogleImageGenParams {
+  prompt: string;
+  model: string;
+  n: number;
+  style: string;
+  user?: string;
+}
 
 interface GoogleImageGenInstanceData {
   prompt: string;
 }
 
+const transformParams = (params: Record<string, unknown>) => {
+  const config: Record<string, unknown> = {};
+  if (params['n']) {
+    config['sampleCount'] = params['n'];
+  }
+  if (params['quality']) {
+    if (config['outputOptions']) {
+      const quality = params['quality'] === 'hd' ? 100 : 75;
+      (config['outputOptions'] as any)['compressionQuality'] = quality;
+    }
+  }
+  if (params['style']) {
+    config['sampleImageStyle'] = params['style'];
+  }
+  if (params['size']) {
+    config['aspectRatio'] = params['size'] as string;
+  }
+
+  return config;
+};
+
 export const GoogleImageGenConfig: ProviderConfig = {
-  input: {
+  prompt: {
     param: 'instances',
     required: true,
     transform: (
       params: GoogleImageGenParams
     ): Array<GoogleImageGenInstanceData> => {
       const instances = Array<GoogleImageGenInstanceData>();
-      if (Array.isArray(params.input)) {
-        params.input.forEach((text) => {
+      if (Array.isArray(params.prompt)) {
+        params.prompt.forEach((text) => {
           instances.push({
             prompt: text,
           });
         });
       } else {
         instances.push({
-          prompt: params.input,
+          prompt: params.prompt,
         });
       }
       return instances;
     },
   },
-  parameters: {
+  n: {
     param: 'parameters',
-    required: true,
-    default: { sampleCount: 1 },
+    min: 1,
+    max: 8,
+    transform: transformParams,
+  },
+  quality: {
+    param: 'parameters',
+    transform: transformParams,
+  },
+  size: {
+    param: 'parameters',
+    transform: transformParams,
+  },
+  style: {
+    param: 'parameters',
+    transform: transformParams,
   },
 };
 
