@@ -264,7 +264,7 @@ Make your AI app more <ins>reliable</ins> and <ins>forward compatible</ins>, whi
 ✅&nbsp; Secure Key Management - for role-based access control and tracking <br>
 ✅&nbsp; Simple & Semantic Caching - to serve repeat queries faster & save costs <br>
 ✅&nbsp; Access Control & Inbound Rules - to control which IPs and Geos can connect to your deployments <br>
-✅&nbsp; PII Redaction - to automatically remove sensitive data from your requests to prevent indavertent exposure <br>
+✅&nbsp; PII Redaction - to automatically remove sensitive data from your requests to prevent inadvertent exposure <br>
 ✅&nbsp; SOC2, ISO, HIPAA, GDPR Compliances - for best security practices <br>
 ✅&nbsp; Professional Support - along with feature prioritization <br>
 
