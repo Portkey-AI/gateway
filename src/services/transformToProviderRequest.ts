@@ -2,7 +2,7 @@ import { GatewayError } from '../errors/GatewayError';
 import { MULTIPART_FORM_DATA_ENDPOINTS } from '../globals';
 import ProviderConfigs from '../providers';
 import { endpointStrings } from '../providers/types';
-import { Params } from '../types/requestBody';
+import { Options, Params, Targets } from '../types/requestBody';
 
 /**
  * Helper function to set a nested property in an object.
@@ -22,6 +22,48 @@ function setNestedProperty(obj: any, path: string, value: any) {
   }
   current[parts[parts.length - 1]] = value;
 }
+
+const getValue = (configParam: string, params: Params, paramConfig: any) => {
+  let value = params[configParam as keyof typeof params];
+
+  // If a transformation is defined for this parameter, apply it
+  if (paramConfig.transform) {
+    value = paramConfig.transform(params);
+  }
+
+  if (
+    value === 'portkey-default' &&
+    paramConfig &&
+    paramConfig.default !== undefined
+  ) {
+    // Set the transformed parameter to the default value
+    value = paramConfig.default;
+  }
+
+  // If a minimum is defined for this parameter and the value is less than this, set the value to the minimum
+  // Also, we should only do this comparison if value is of type 'number'
+  if (
+    typeof value === 'number' &&
+    paramConfig &&
+    paramConfig.min !== undefined &&
+    value < paramConfig.min
+  ) {
+    value = paramConfig.min;
+  }
+
+  // If a maximum is defined for this parameter and the value is more than this, set the value to the maximum
+  // Also, we should only do this comparison if value is of type 'number'
+  else if (
+    typeof value === 'number' &&
+    paramConfig &&
+    paramConfig.max !== undefined &&
+    value > paramConfig.max
+  ) {
+    value = paramConfig.max;
+  }
+
+  return value;
+};
 
 /**
  * Transforms the request body to match the structure required by the AI provider.
@@ -68,43 +110,7 @@ const transformToProviderRequestJSON = (
       // If the parameter is present in the incoming request body
       if (configParam in params) {
         // Get the value for this parameter
-        let value = params[configParam as keyof typeof params];
-
-        // If a transformation is defined for this parameter, apply it
-        if (paramConfig.transform) {
-          value = paramConfig.transform(params);
-        }
-
-        if (
-          value === 'portkey-default' &&
-          paramConfig &&
-          paramConfig.default !== undefined
-        ) {
-          // Set the transformed parameter to the default value
-          value = paramConfig.default;
-        }
-
-        // If a minimum is defined for this parameter and the value is less than this, set the value to the minimum
-        // Also, we should only do this comparison if value is of type 'number'
-        if (
-          typeof value === 'number' &&
-          paramConfig &&
-          paramConfig.min !== undefined &&
-          value < paramConfig.min
-        ) {
-          value = paramConfig.min;
-        }
-
-        // If a maximum is defined for this parameter and the value is more than this, set the value to the maximum
-        // Also, we should only do this comparison if value is of type 'number'
-        else if (
-          typeof value === 'number' &&
-          paramConfig &&
-          paramConfig.max !== undefined &&
-          value > paramConfig.max
-        ) {
-          value = paramConfig.max;
-        }
+        const value = getValue(configParam, params, paramConfig);
 
         // Set the transformed parameter to the validated value
         setNestedProperty(
@@ -132,6 +138,40 @@ const transformToProviderRequestJSON = (
   return transformedRequest;
 };
 
+const transformToProviderRequestFormData = (
+  provider: string,
+  params: Params,
+  fn: string
+): FormData => {
+  let providerConfig = ProviderConfigs[provider];
+  if (providerConfig.getConfig) {
+    providerConfig = providerConfig.getConfig(params)[fn];
+  } else {
+    providerConfig = providerConfig[fn];
+  }
+  const formData = new FormData();
+  for (const configParam in providerConfig) {
+    let paramConfigs = providerConfig[configParam];
+    if (!Array.isArray(paramConfigs)) {
+      paramConfigs = [paramConfigs];
+    }
+    for (const paramConfig of paramConfigs) {
+      if (configParam in params) {
+        const value = getValue(configParam, params, paramConfig);
+
+        formData.append(paramConfig.param, value);
+      } else if (
+        paramConfig &&
+        paramConfig.required &&
+        paramConfig.default !== undefined
+      ) {
+        formData.append(paramConfig.param, paramConfig.default);
+      }
+    }
+  }
+  return formData;
+};
+
 /**
  * Transforms the request parameters to the format expected by the provider.
  *
@@ -147,9 +187,14 @@ export const transformToProviderRequest = (
   inputParams: Params | FormData,
   fn: endpointStrings
 ) => {
-  return MULTIPART_FORM_DATA_ENDPOINTS.includes(fn)
-    ? inputParams
-    : transformToProviderRequestJSON(provider, params as Params, fn);
+  if (MULTIPART_FORM_DATA_ENDPOINTS.includes(fn)) return inputParams;
+  const providerAPIConfig = ProviderConfigs[provider].api;
+  if (
+    providerAPIConfig.transformToFormData &&
+    providerAPIConfig.transformToFormData({ gatewayRequestBody: params })
+  )
+    return transformToProviderRequestFormData(provider, params as Params, fn);
+  return transformToProviderRequestJSON(provider, params as Params, fn);
 };
 
 export default transformToProviderRequest;

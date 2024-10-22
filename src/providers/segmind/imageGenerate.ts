@@ -142,7 +142,7 @@ export const SegmindImageGenerateResponseTransform: (
     let dataObj: object[] = imageArr.map((img) => ({ b64_json: img }));
 
     return {
-      created: `${new Date().getTime()}`, // Corrected method call
+      created: Math.floor(Date.now() / 1000), // Corrected method call
       data: dataObj,
       provider: SEGMIND,
     } as ImageGenerateResponse;

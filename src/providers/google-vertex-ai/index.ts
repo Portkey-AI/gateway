@@ -13,6 +13,10 @@ import {
 } from './chatComplete';
 import { getModelAndProvider } from './utils';
 import { GoogleEmbedConfig, GoogleEmbedResponseTransform } from './embed';
+import {
+  GoogleImageGenConfig,
+  GoogleImageGenResponseTransform,
+} from './imageGenerate';
 
 const VertexConfig: ProviderConfigs = {
   api: VertexApiConfig,
@@ -26,10 +30,12 @@ const VertexConfig: ProviderConfigs = {
           chatComplete: VertexGoogleChatCompleteConfig,
           api: GoogleApiConfig,
           embed: GoogleEmbedConfig,
+          imageGenerate: GoogleImageGenConfig,
           responseTransforms: {
             'stream-chatComplete': GoogleChatCompleteStreamChunkTransform,
             chatComplete: GoogleChatCompleteResponseTransform,
             embed: GoogleEmbedResponseTransform,
+            imageGenerate: GoogleImageGenResponseTransform,
           },
         };
       case 'anthropic':
