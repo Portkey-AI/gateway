@@ -1,1 +1,4 @@
-export const STABILITY_V2_MODELS = ['ultra', 'core', 'sd3'];
+export const STABILITY_V1_MODELS = [
+  'stable-diffusion-xl-1024-v1-0',
+  'stable-diffusion-v1-6',
+];

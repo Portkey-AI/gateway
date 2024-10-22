@@ -496,8 +496,7 @@ export async function tryPost(
     provider,
     params,
     inputParams,
-    fn,
-    providerOption
+    fn
   );
 
   const forwardHeaders =
@@ -525,6 +524,7 @@ export async function tryPost(
     fn,
     transformedRequestBody,
     transformedRequestUrl: url,
+    gatewayRequestBody: params,
   });
 
   // Construct the base object for the POST request

@@ -185,11 +185,14 @@ export const transformToProviderRequest = (
   provider: string,
   params: Params,
   inputParams: Params | FormData,
-  fn: endpointStrings,
-  providerOption: Options | Targets
+  fn: endpointStrings
 ) => {
   if (MULTIPART_FORM_DATA_ENDPOINTS.includes(fn)) return inputParams;
-  if (providerOption.transformToFormData)
+  const providerAPIConfig = ProviderConfigs[provider].api;
+  if (
+    providerAPIConfig.transformToFormData &&
+    providerAPIConfig.transformToFormData({ gatewayRequestBody: params })
+  )
     return transformToProviderRequestFormData(provider, params as Params, fn);
   return transformToProviderRequestJSON(provider, params as Params, fn);
 };
