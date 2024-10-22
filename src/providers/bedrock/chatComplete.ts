@@ -455,22 +455,22 @@ export const BedrockConverseAnthropicChatCompleteConfig: ProviderConfig = {
   ...BedrockConverseChatCompleteConfig,
   additionalModelRequestFields: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockChatCompletionsParams) =>
+    transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
       transformAnthropicAdditionalModelRequestFields(params),
   },
   top_k: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockChatCompletionsParams) =>
+    transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
       transformAnthropicAdditionalModelRequestFields(params),
   },
   anthropic_version: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockChatCompletionsParams) =>
+    transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
       transformAnthropicAdditionalModelRequestFields(params),
   },
   user: {
     param: 'user',
-    transform: (params: BedrockChatCompletionsParams) =>
+    transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
       transformAnthropicAdditionalModelRequestFields(params),
   },
 };
@@ -479,37 +479,37 @@ export const BedrockConverseCohereChatCompleteConfig: ProviderConfig = {
   ...BedrockConverseChatCompleteConfig,
   additionalModelRequestFields: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockChatCompletionsParams) =>
+    transform: (params: BedrockConverseCohereChatCompletionsParams) =>
       transformCohereAdditionalModelRequestFields(params),
   },
   top_k: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockChatCompletionsParams) =>
+    transform: (params: BedrockConverseCohereChatCompletionsParams) =>
       transformCohereAdditionalModelRequestFields(params),
   },
   frequency_penalty: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockChatCompletionsParams) =>
+    transform: (params: BedrockConverseCohereChatCompletionsParams) =>
       transformCohereAdditionalModelRequestFields(params),
   },
   presence_penalty: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockChatCompletionsParams) =>
+    transform: (params: BedrockConverseCohereChatCompletionsParams) =>
       transformCohereAdditionalModelRequestFields(params),
   },
   logit_bias: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockChatCompletionsParams) =>
+    transform: (params: BedrockConverseCohereChatCompletionsParams) =>
       transformCohereAdditionalModelRequestFields(params),
   },
   n: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockChatCompletionsParams) =>
+    transform: (params: BedrockConverseCohereChatCompletionsParams) =>
       transformCohereAdditionalModelRequestFields(params),
   },
   stream: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockChatCompletionsParams) =>
+    transform: (params: BedrockConverseCohereChatCompletionsParams) =>
       transformCohereAdditionalModelRequestFields(params),
   },
 };
@@ -518,37 +518,37 @@ export const BedrockConverseAI21ChatCompleteConfig: ProviderConfig = {
   ...BedrockConverseChatCompleteConfig,
   additionalModelRequestFields: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockChatCompletionsParams) =>
+    transform: (params: BedrockConverseAI21ChatCompletionsParams) =>
       transformAI21AdditionalModelRequestFields(params),
   },
   top_k: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockChatCompletionsParams) =>
+    transform: (params: BedrockConverseAI21ChatCompletionsParams) =>
       transformAI21AdditionalModelRequestFields(params),
   },
   frequency_penalty: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockChatCompletionsParams) =>
+    transform: (params: BedrockConverseAI21ChatCompletionsParams) =>
       transformAI21AdditionalModelRequestFields(params),
   },
   presence_penalty: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockChatCompletionsParams) =>
+    transform: (params: BedrockConverseAI21ChatCompletionsParams) =>
       transformAI21AdditionalModelRequestFields(params),
   },
   frequencyPenalty: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockChatCompletionsParams) =>
+    transform: (params: BedrockConverseAI21ChatCompletionsParams) =>
       transformAI21AdditionalModelRequestFields(params),
   },
   presencePenalty: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockChatCompletionsParams) =>
+    transform: (params: BedrockConverseAI21ChatCompletionsParams) =>
       transformAI21AdditionalModelRequestFields(params),
   },
   countPenalty: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockChatCompletionsParams) =>
+    transform: (params: BedrockConverseAI21ChatCompletionsParams) =>
       transformAI21AdditionalModelRequestFields(params),
   },
 };
