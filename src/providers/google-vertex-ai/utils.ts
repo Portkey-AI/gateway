@@ -130,12 +130,10 @@ export const getModelAndProvider = (modelString: string) => {
   const modelStringParts = modelString.split('.');
   if (
     modelStringParts.length > 1 &&
-    ['google', 'anthropic'].includes(modelStringParts[0])
+    ['google', 'anthropic', 'meta'].includes(modelStringParts[0])
   ) {
     provider = modelStringParts[0];
     model = modelStringParts.slice(1).join('.');
-  } else if (modelString.includes('llama')) {
-    provider = 'meta';
   }
 
   return { provider, model };
@@ -188,4 +186,40 @@ export const GoogleErrorResponseTransform: (
   }
 
   return undefined;
+};
+
+const getDefFromRef = (ref: string) => {
+  const refParts = ref.split('/');
+  return refParts.at(-1);
+};
+
+const getRefParts = (spec: Record<string, any>, ref: string) => {
+  return spec?.[ref];
+};
+
+export const derefer = (spec: Record<string, any>, defs = null) => {
+  const original = { ...spec };
+
+  const finalDefs = defs ?? original?.['$defs'];
+  const entries = Object.entries(original);
+
+  for (let [key, object] of entries) {
+    if (key === '$defs') {
+      continue;
+    }
+    if (typeof object === 'string' || Array.isArray(object)) {
+      continue;
+    }
+    const ref = object?.['$ref'];
+    if (ref) {
+      const def = getDefFromRef(ref);
+      const defData = getRefParts(finalDefs, def ?? '');
+      const newValue = derefer(defData, finalDefs);
+      original[key] = newValue;
+    } else {
+      const newValue = derefer(object, finalDefs);
+      original[key] = newValue;
+    }
+  }
+  return original;
 };
