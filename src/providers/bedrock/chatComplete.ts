@@ -469,7 +469,7 @@ export const BedrockConverseAnthropicChatCompleteConfig: ProviderConfig = {
       transformAnthropicAdditionalModelRequestFields(params),
   },
   user: {
-    param: 'user',
+    param: 'additionalModelRequestFields',
     transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
       transformAnthropicAdditionalModelRequestFields(params),
   },
