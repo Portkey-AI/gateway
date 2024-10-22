@@ -7,7 +7,7 @@ import {
   ToolCall,
   ToolChoice,
 } from '../../types/requestBody';
-import { getMimeType } from '../google-vertex-ai/utils';
+import { derefer, getMimeType } from '../google-vertex-ai/utils';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -43,7 +43,14 @@ const transformGenerationConfig = (params: Params) => {
   }
   if (params?.response_format?.type === 'json_schema') {
     generationConfig['responseMimeType'] = 'application/json';
-    generationConfig['responseSchema'] = params?.response_format.json_schema;
+    let schema =
+      params?.response_format?.json_schema?.schema ??
+      params?.response_format?.json_schema;
+    if (Object.keys(schema).includes('$defs')) {
+      schema = derefer(schema);
+      delete schema['$defs'];
+    }
+    generationConfig['responseSchema'] = schema;
   }
   return generationConfig;
 };
