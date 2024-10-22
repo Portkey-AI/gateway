@@ -35,8 +35,8 @@ const transformParams = (params: Record<string, unknown>) => {
     config['sampleImageStyle'] = params['style'];
   }
 
-  if (params['aspectRation']) {
-    config['aspectRation'] = params['aspectRation'];
+  if (params['aspectRatio']) {
+    config['aspectRatio'] = params['aspectRatio'];
   }
   if (params['seed']) {
     config['seed'] = params['seed'];
@@ -98,7 +98,7 @@ export const GoogleImageGenConfig: ProviderConfig = {
     param: 'parameters',
     transform: transformParams,
   },
-  aspectRation: {
+  aspectRatio: {
     param: 'parameters',
     transform: transformParams,
   },
