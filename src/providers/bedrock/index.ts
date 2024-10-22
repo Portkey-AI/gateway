@@ -42,6 +42,7 @@ import {
   BedrockTitanCompleteResponseTransform,
   BedrockTitanCompleteStreamChunkTransform,
 } from './complete';
+import { BEDROCK_STABILITY_V1_MODELS } from './constants';
 import {
   BedrockCohereEmbedConfig,
   BedrockCohereEmbedResponseTransform,
@@ -49,8 +50,10 @@ import {
   BedrockTitanEmbedResponseTransform,
 } from './embed';
 import {
-  BedrockStabilityAIImageGenerateConfig,
-  BedrockStabilityAIImageGenerateResponseTransform,
+  BedrockStabilityAIImageGenerateV1Config,
+  BedrockStabilityAIImageGenerateV1ResponseTransform,
+  BedrockStabilityAIImageGenerateV2Config,
+  BedrockStabilityAIImageGenerateV2ResponseTransform,
 } from './imageGenerate';
 
 const BedrockConfig: ProviderConfigs = {
@@ -63,8 +66,9 @@ const BedrockConfig: ProviderConfigs = {
     // To remove the region in case its a cross-region inference profile ID
     // https://docs.aws.amazon.com/bedrock/latest/userguide/cross-region-inference-support.html
     const providerModel = params.model.replace(/^(us\.|eu\.)/, '');
-    const provider = providerModel?.split('.')[0];
-    const model = providerModel?.split('.')[1];
+    const providerModelArray = providerModel.split('.');
+    const provider = providerModelArray[0];
+    const model = providerModelArray.slice(1).join('.');
     switch (provider) {
       case ANTHROPIC:
         return {
@@ -148,11 +152,20 @@ const BedrockConfig: ProviderConfigs = {
           },
         };
       case 'stability':
+        if (model && BEDROCK_STABILITY_V1_MODELS.includes(model)) {
+          return {
+            imageGenerate: BedrockStabilityAIImageGenerateV1Config,
+            api: BedrockAPIConfig,
+            responseTransforms: {
+              imageGenerate: BedrockStabilityAIImageGenerateV1ResponseTransform,
+            },
+          };
+        }
         return {
-          imageGenerate: BedrockStabilityAIImageGenerateConfig,
+          imageGenerate: BedrockStabilityAIImageGenerateV2Config,
           api: BedrockAPIConfig,
           responseTransforms: {
-            imageGenerate: BedrockStabilityAIImageGenerateResponseTransform,
+            imageGenerate: BedrockStabilityAIImageGenerateV2ResponseTransform,
           },
         };
       default:

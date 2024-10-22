@@ -1,10 +1,11 @@
 import { BEDROCK } from '../../globals';
+import { StabilityAIImageGenerateV2Config } from '../stability-ai/imageGenerateV2';
 import { ErrorResponse, ImageGenerateResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { BedrockErrorResponseTransform } from './chatComplete';
 import { BedrockErrorResponse } from './embed';
 
-export const BedrockStabilityAIImageGenerateConfig: ProviderConfig = {
+export const BedrockStabilityAIImageGenerateV1Config: ProviderConfig = {
   prompt: {
     param: 'text_prompts',
     required: true,
@@ -47,26 +48,57 @@ interface ImageArtifact {
   seed: number;
 }
 
-interface BedrockStabilityAIImageGenerateResponse {
+interface BedrockStabilityAIImageGenerateV1Response {
   result: string;
   artifacts: ImageArtifact[];
 }
 
-export const BedrockStabilityAIImageGenerateResponseTransform: (
-  response: BedrockStabilityAIImageGenerateResponse | BedrockErrorResponse,
+export const BedrockStabilityAIImageGenerateV1ResponseTransform: (
+  response: BedrockStabilityAIImageGenerateV1Response | BedrockErrorResponse,
   responseStatus: number
 ) => ImageGenerateResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    const errorResposne = BedrockErrorResponseTransform(
+    const errorResponse = BedrockErrorResponseTransform(
       response as BedrockErrorResponse
     );
-    if (errorResposne) return errorResposne;
+    if (errorResponse) return errorResponse;
   }
 
   if ('artifacts' in response) {
     return {
-      created: `${new Date().getTime()}`,
+      created: Math.floor(Date.now() / 1000),
       data: response.artifacts.map((art) => ({ b64_json: art.base64 })),
+      provider: BEDROCK,
+    };
+  }
+
+  return generateInvalidProviderResponseError(response, BEDROCK);
+};
+
+interface BedrockStabilityAIImageGenerateV2Response {
+  seeds: number[];
+  finish_reasons: string[];
+  images: string[];
+}
+
+export const BedrockStabilityAIImageGenerateV2Config =
+  StabilityAIImageGenerateV2Config;
+
+export const BedrockStabilityAIImageGenerateV2ResponseTransform: (
+  response: BedrockStabilityAIImageGenerateV2Response | BedrockErrorResponse,
+  responseStatus: number
+) => ImageGenerateResponse | ErrorResponse = (response, responseStatus) => {
+  if (responseStatus !== 200) {
+    const errorResponse = BedrockErrorResponseTransform(
+      response as BedrockErrorResponse
+    );
+    if (errorResponse) return errorResponse;
+  }
+
+  if ('images' in response) {
+    return {
+      created: Math.floor(Date.now() / 1000),
+      data: response.images.map((image) => ({ b64_json: image })),
       provider: BEDROCK,
     };
   }
