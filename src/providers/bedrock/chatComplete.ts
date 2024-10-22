@@ -202,6 +202,11 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
     transform: (params: BedrockChatCompletionsParams) =>
       transformInferenceConfig(params),
   },
+  max_completion_tokens: {
+    param: 'inferenceConfig',
+    transform: (params: BedrockChatCompletionsParams) =>
+      transformInferenceConfig(params),
+  },
   stop: {
     param: 'inferenceConfig',
     transform: (params: BedrockChatCompletionsParams) =>
