@@ -96,7 +96,7 @@ export const StabilityAIImageGenerateV1ResponseTransform: (
 
   if ('artifacts' in response) {
     return {
-      created: `${new Date().getTime()}`, // Corrected method call
+      created: Math.floor(Date.now() / 1000), // Corrected method call
       data: response.artifacts.map((art) => ({ b64_json: art.base64 })), // Corrected object creation within map
       provider: STABILITY_AI,
     };

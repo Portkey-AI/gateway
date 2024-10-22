@@ -66,7 +66,7 @@ export const BedrockStabilityAIImageGenerateV1ResponseTransform: (
 
   if ('artifacts' in response) {
     return {
-      created: `${new Date().getTime()}`,
+      created: Math.floor(Date.now() / 1000),
       data: response.artifacts.map((art) => ({ b64_json: art.base64 })),
       provider: BEDROCK,
     };
@@ -97,7 +97,7 @@ export const BedrockStabilityAIImageGenerateV2ResponseTransform: (
 
   if ('images' in response) {
     return {
-      created: `${new Date().getTime()}`,
+      created: Math.floor(Date.now() / 1000),
       data: response.images.map((image) => ({ b64_json: image })),
       provider: BEDROCK,
     };

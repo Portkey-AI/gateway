@@ -160,7 +160,7 @@ export interface ErrorResponse {
  * @interface
  */
 export interface ImageGenerateResponse {
-  created: string;
+  created: number;
   data: object[];
   provider: string;
 }

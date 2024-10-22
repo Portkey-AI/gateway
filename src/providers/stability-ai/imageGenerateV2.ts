@@ -81,7 +81,7 @@ export const StabilityAIImageGenerateV2ResponseTransform: (
 
   if ('image' in response) {
     return {
-      created: `${new Date().getTime()}`,
+      created: Math.floor(Date.now() / 1000),
       data: [
         {
           b64_json: response.image,
