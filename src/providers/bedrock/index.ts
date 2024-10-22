@@ -52,6 +52,9 @@ const BedrockConfig: ProviderConfigs = {
     if (!params.model) {
       throw new GatewayError('Bedrock model not found');
     }
+
+    // To remove the region in case its a cross-region inference profile ID
+    // https://docs.aws.amazon.com/bedrock/latest/userguide/cross-region-inference-support.html
     const providerModel = params.model.replace(/^(us\.|eu\.)/, '');
     const providerModelArray = providerModel.split('.');
     const provider = providerModelArray[0];
