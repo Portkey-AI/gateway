@@ -12,6 +12,9 @@ import {
   BedrockCohereChatCompleteResponseTransform,
   BedrockAI21ChatCompleteConfig,
   BedrockAI21ChatCompleteResponseTransform,
+  BedrockConverseAnthropicChatCompleteConfig,
+  BedrockConverseCohereChatCompleteConfig,
+  BedrockConverseAI21ChatCompleteConfig,
 } from './chatComplete';
 import {
   BedrockAI21CompleteConfig,
@@ -64,6 +67,7 @@ const BedrockConfig: ProviderConfigs = {
       case ANTHROPIC:
         config = {
           complete: BedrockAnthropicCompleteConfig,
+          chatComplete: BedrockConverseAnthropicChatCompleteConfig,
           api: BedrockAPIConfig,
           responseTransforms: {
             'stream-complete': BedrockAnthropicCompleteStreamChunkTransform,
@@ -74,6 +78,7 @@ const BedrockConfig: ProviderConfigs = {
       case COHERE:
         config = {
           complete: BedrockCohereCompleteConfig,
+          chatComplete: BedrockConverseCohereChatCompleteConfig,
           embed: BedrockCohereEmbedConfig,
           api: BedrockAPIConfig,
           responseTransforms: {
@@ -126,6 +131,7 @@ const BedrockConfig: ProviderConfigs = {
         config = {
           complete: BedrockAI21CompleteConfig,
           api: BedrockAPIConfig,
+          chatComplete: BedrockConverseAI21ChatCompleteConfig,
           responseTransforms: {
             complete: BedrockAI21CompleteResponseTransform,
           },
