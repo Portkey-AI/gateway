@@ -35,6 +35,12 @@ export const PredibaseChatCompleteConfig: ProviderConfig = {
     default: 4096,
     min: 0,
   },
+  max_completion_tokens: {
+    param: 'max_tokens',
+    required: false,
+    default: 4096,
+    min: 0,
+  },
   temperature: {
     param: 'temperature',
     required: false,

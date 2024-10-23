@@ -74,11 +74,18 @@ export interface Options {
   cache?: CacheSettings | string;
   metadata?: Record<string, string>;
   requestTimeout?: number;
+  /** This is used to determine if the request should be transformed to formData Example: Stability V2 */
+  transformToFormData?: boolean;
   /** AWS Bedrock specific */
   awsSecretAccessKey?: string;
   awsAccessKeyId?: string;
   awsSessionToken?: string;
   awsRegion?: string;
+
+  /** Stability AI specific */
+  stabilityClientId?: string;
+  stabilityClientUserId?: string;
+  stabilityClientVersion?: string;
 
   /** Hugging Face specific */
   huggingfaceBaseUrl?: string;
@@ -103,7 +110,8 @@ export interface Options {
 
   /** The parameter to determine if extra non-openai compliant fields should be returned in response */
   strictOpenAiCompliance?: boolean;
-
+  /** Parameter to determine if fim/completions endpoint is to be used */
+  mistralFimCompletion?: String;
   /** Anthropic specific headers */
   anthropicBeta?: string;
   anthropicVersion?: string;
@@ -139,6 +147,8 @@ export interface Targets {
   index?: number;
   cache?: CacheSettings | string;
   targets?: Targets[];
+  /** This is used to determine if the request should be transformed to formData Example: Stability V2 */
+  transformToFormData?: boolean;
 }
 
 /**
@@ -177,6 +187,14 @@ export interface ToolCall {
     name: string;
     arguments: string;
   };
+}
+
+export enum MESSAGE_ROLES {
+  SYSTEM = 'system',
+  USER = 'user',
+  ASSISTANT = 'assistant',
+  FUNCTION = 'function',
+  TOOL = 'tool',
 }
 
 export type OpenAIMessageRole =
@@ -275,6 +293,7 @@ export interface Params {
   functions?: Function[];
   function_call?: 'none' | 'auto' | { name: string };
   max_tokens?: number;
+  max_completion_tokens?: number;
   temperature?: number;
   top_p?: number;
   n?: number;
@@ -292,7 +311,10 @@ export interface Params {
   top_k?: number;
   tools?: Tool[];
   tool_choice?: ToolChoice;
-  response_format?: { type: 'json_object' | 'text' };
+  response_format?: {
+    type: 'json_object' | 'text' | 'json_schema';
+    json_schema?: any;
+  };
   // Google Vertex AI specific
   safety_settings?: any;
 }

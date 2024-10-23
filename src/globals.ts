@@ -13,6 +13,7 @@ export const HEADER_KEYS: Record<string, string> = {
   CUSTOM_HOST: `x-${POWERED_BY}-custom-host`,
   REQUEST_TIMEOUT: `x-${POWERED_BY}-request-timeout`,
   STRICT_OPEN_AI_COMPLIANCE: `x-${POWERED_BY}-strict-open-ai-compliance`,
+  CONTENT_TYPE: `Content-Type`,
 };
 
 export const RESPONSE_HEADER_KEYS: Record<string, string> = {
@@ -67,6 +68,12 @@ export const GITHUB: string = 'github';
 export const DEEPBRICKS: string = 'deepbricks';
 export const SILICONFLOW: string = 'siliconflow';
 export const CEREBRAS: string = 'cerebras';
+export const INFERENCENET: string = 'inference-net';
+export const SAMBANOVA: string = 'sambanova';
+export const LEMONFOX_AI: string = 'lemonfox-ai';
+export const UPSTAGE: string = 'upstage';
+export const LAMBDA: string = 'lambda';
+export const DASHSCOPE: string = 'dashscope';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -108,6 +115,12 @@ export const VALID_PROVIDERS = [
   SILICONFLOW,
   HUGGING_FACE,
   CEREBRAS,
+  INFERENCENET,
+  SAMBANOVA,
+  LEMONFOX_AI,
+  UPSTAGE,
+  LAMBDA,
+  DASHSCOPE,
 ];
 
 export const CONTENT_TYPES = {
