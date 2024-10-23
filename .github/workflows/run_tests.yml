@@ -13,8 +13,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
-      - name: checkout head
-        run: git checkout HEAD^
+      - name: Checkout current branch head
+        run: git checkout ${{ github.head_ref }}
       - name: Install dependencies
         run: npm ci
       - name: Run gateway tests
