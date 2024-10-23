@@ -1,11 +1,11 @@
-name: Run tests on PR approval
+name: Run Gateway tests
 
 on:
   pull_request:
     types: [opened, synchronize]
 
 jobs:
-  test:
+  gateway-tests:
     runs-on: ubuntu-latest
     environment: test
     steps:
@@ -15,3 +15,7 @@ jobs:
         run: npm ci
       - name: Run gateway tests
         run: npm run test:gateway
+
+env:
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
