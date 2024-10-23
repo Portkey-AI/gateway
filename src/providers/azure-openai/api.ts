@@ -1,5 +1,8 @@
 import { ProviderAPIConfig } from '../types';
-import { getAccessTokenFromEntraId, getAzureManagedIdentityToken } from './utils';
+import {
+  getAccessTokenFromEntraId,
+  getAzureManagedIdentityToken,
+} from './utils';
 
 const AzureOpenAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
