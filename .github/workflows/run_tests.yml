@@ -1,13 +1,16 @@
 name: Run tests on PR approval
+
 on:
-    workflow_dispatch:
+  workflow_dispatch:
+
 jobs:
-    test:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4    
-            - name: Install dependencies
-              run: npm ci
-            - name: Run gateway tests
-              run: npm run test:gateway
+  test:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: npm ci
+      - name: Run gateway tests
+        run: npm run test:gateway
