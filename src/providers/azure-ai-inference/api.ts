@@ -19,7 +19,7 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
 
     return `https://${azureEndpointName}.${azureRegion}.inference.ml.azure.com/score`;
   },
-  headers: async ({ providerOptions }) => {
+  headers: ({ providerOptions }) => {
     const { apiKey, azureDeploymentType, azureDeploymentName } =
       providerOptions;
     const headers: Record<string, string> = {

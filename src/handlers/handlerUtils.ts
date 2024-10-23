@@ -1011,7 +1011,6 @@ export function constructConfigFromRequestHeaders(
     resourceName: requestHeaders[`x-${POWERED_BY}-azure-resource-name`],
     deploymentId: requestHeaders[`x-${POWERED_BY}-azure-deployment-id`],
     apiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
-    azureAdToken: requestHeaders[`x-${POWERED_BY}-azure-ad-token`],
     azureAuthMode: requestHeaders[`x-${POWERED_BY}-azure-auth-mode`],
     azureManagedClientId:
       requestHeaders[`x-${POWERED_BY}-azure-managed-client-id`],
