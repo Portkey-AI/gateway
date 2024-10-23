@@ -1,0 +1,11 @@
+name: Run tests on PR approval
+on:
+    workflow_dispatch:
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4    
+            - name: Run gateway tests
+              run: npm run test:gateway
