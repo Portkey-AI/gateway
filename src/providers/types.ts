@@ -50,7 +50,7 @@ export interface ProviderAPIConfig {
     gatewayRequestBody: Params;
   }) => string;
   /** A function to determine if the request body should be transformed to form data */
-  transformToFormData: (args: { gatewayRequestBody: Params }) => boolean;
+  transformToFormData?: (args: { gatewayRequestBody: Params }) => boolean;
 }
 
 export type endpointStrings =
