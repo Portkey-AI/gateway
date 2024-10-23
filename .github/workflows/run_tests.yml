@@ -7,5 +7,7 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v4    
+            - name: Install dependencies
+              run: npm ci
             - name: Run gateway tests
               run: npm run test:gateway
