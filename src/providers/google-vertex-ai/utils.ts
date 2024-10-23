@@ -1,6 +1,6 @@
 import { GoogleErrorResponse } from './types';
 import { generateErrorResponse } from '../utils';
-import { GOOGLE_VERTEX_AI } from '../../globals';
+import { fileExtensionMimeTypeMap, GOOGLE_VERTEX_AI } from '../../globals';
 import { ErrorResponse } from '../types';
 
 /**
@@ -137,27 +137,6 @@ export const getModelAndProvider = (modelString: string) => {
   }
 
   return { provider, model };
-};
-
-const fileExtensionMimeTypeMap = {
-  mp4: 'video/mp4',
-  jpeg: 'image/jpeg',
-  jpg: 'image/jpeg',
-  png: 'image/png',
-  bmp: 'image/bmp',
-  tiff: 'image/tiff',
-  webp: 'image/webp',
-  pdf: 'application/pdf',
-  mp3: 'audio/mp3',
-  wav: 'audio/wav',
-  txt: 'text/plain',
-  mov: 'video/mov',
-  mpeg: 'video/mpeg',
-  mpg: 'video/mpg',
-  avi: 'video/avi',
-  wmv: 'video/wmv',
-  mpegps: 'video/mpegps',
-  flv: 'video/flv',
 };
 
 export const getMimeType = (url: string): string | undefined => {

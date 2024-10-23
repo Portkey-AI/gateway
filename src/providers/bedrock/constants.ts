@@ -39,3 +39,10 @@ export const BEDROCK_STABILITY_V1_MODELS = [
   'stable-diffusion-xl-v0',
   'stable-diffusion-xl-v1',
 ];
+
+export const bedrockInvokeModels = [
+  'cohere.command-light-text-v14',
+  'cohere.command-text-v14',
+  'ai21.j2-mid-v1',
+  'ai21.j2-ultra-v1',
+];
