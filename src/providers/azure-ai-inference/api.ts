@@ -1,5 +1,4 @@
 import { GITHUB } from '../../globals';
-import { getAccessTokenFromEntraId } from '../azure-openai/utils';
 import { ProviderAPIConfig } from '../types';
 
 const AzureAIInferenceAPI: ProviderAPIConfig = {
@@ -21,29 +20,14 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
     return `https://${azureEndpointName}.${azureRegion}.inference.ml.azure.com/score`;
   },
   headers: async ({ providerOptions }) => {
-    const {
-      apiKey,
-      azureDeploymentType,
-      azureDeploymentName,
-      azureEntraClientId,
-      azureEntraClientSecret,
-      azureEntraTenantId,
-    } = providerOptions;
+    const { apiKey, azureDeploymentType, azureDeploymentName } =
+      providerOptions;
     const headers: Record<string, string> = {
       Authorization: `Bearer ${apiKey}`,
       'extra-parameters': 'ignore',
     };
     if (azureDeploymentType === 'managed' && azureDeploymentName) {
       headers['azureml-model-deployment'] = azureDeploymentName;
-    }
-    if (azureEntraClientId && azureEntraClientSecret && azureEntraTenantId) {
-      const accessToken = await getAccessTokenFromEntraId(
-        azureEntraTenantId,
-        azureEntraClientId,
-        azureEntraClientSecret,
-        'https://cognitiveservices.azure.com/decision/.default'
-      );
-      headers['Authorization'] = `Bearer ${accessToken}`;
     }
     return headers;
   },

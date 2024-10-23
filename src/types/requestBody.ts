@@ -60,6 +60,8 @@ export interface Options {
   apiVersion?: string;
   adAuth?: string;
   azureModelName?: string;
+  azureAuthMode?: string; // can be entra or managed
+  azureManagedClientId?: string;
   azureEntraClientId?: string;
   azureEntraClientSecret?: string;
   azureEntraTenantId?: string;
@@ -143,6 +145,12 @@ export interface Targets {
   deploymentId?: string;
   apiVersion?: string;
   adAuth?: string;
+  azureAuthMode?: string;
+  azureManagedClientId?: string;
+  azureEntraClientId?: string;
+  azureEntraClientSecret?: string;
+  azureEntraTenantId?: string;
+  azureModelName?: string;
   /** provider option index picked based on weight in loadbalance mode */
   index?: number;
   cache?: CacheSettings | string;
@@ -353,6 +361,11 @@ export interface ShortConfig {
   azureModelName?: string;
   workersAiAccountId?: string;
   apiVersion?: string;
+  azureAuthMode?: string;
+  azureManagedClientId?: string;
+  azureEntraClientId?: string;
+  azureEntraClientSecret?: string;
+  azureEntraTenantId?: string;
   customHost?: string;
   // Google Vertex AI specific
   vertexRegion?: string;
