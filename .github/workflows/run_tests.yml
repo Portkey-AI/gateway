@@ -9,8 +9,12 @@ jobs:
     runs-on: ubuntu-latest
     environment: test
     steps:
-      - name: Checkout
+      - name: Checkout head
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: checkout head
+        run: git checkout HEAD^
       - name: Install dependencies
         run: npm ci
       - name: Run gateway tests
