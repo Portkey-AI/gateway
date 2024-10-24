@@ -161,27 +161,43 @@ export async function getAssumedRoleCredentials(
   c: Context,
   awsRoleArn: string,
   awsExternalId: string,
-  awsRegion: string
+  awsRegion: string,
+  creds?: {
+    accessKeyId: string;
+    secretAccessKey: string;
+    sessionToken?: string;
+  }
 ) {
   const cacheKey = `${awsRoleArn}/${awsExternalId}/${awsRegion}`;
   const getFromCacheByKey = c.get('getFromCacheByKey');
   const putInCacheWithValue = c.get('putInCacheWithValue');
 
-  const {
-    AWS_ASSUME_ROLE_ACCESS_KEY_ID,
-    AWS_ASSUME_ROLE_SECRET_ACCESS_KEY,
-    AWS_ASSUME_ROLE_REGION,
-  } = env(c);
   const resp = getFromCacheByKey
     ? await getFromCacheByKey(env(c), cacheKey)
     : null;
   if (resp) {
     return resp;
   }
-  // Long-term credentials to assume role, static values from ENV
-  const accessKeyId: string = AWS_ASSUME_ROLE_ACCESS_KEY_ID || '';
-  const secretAccessKey: string = AWS_ASSUME_ROLE_SECRET_ACCESS_KEY || '';
-  const region = awsRegion || AWS_ASSUME_ROLE_REGION || 'us-east-1';
+
+  // Determine which credentials to use
+  let accessKeyId: string;
+  let secretAccessKey: string;
+  let sessionToken: string | undefined;
+
+  if (creds) {
+    // Use provided credentials
+    accessKeyId = creds.accessKeyId;
+    secretAccessKey = creds.secretAccessKey;
+    sessionToken = creds.sessionToken;
+  } else {
+    // Use environment credentials
+    const { AWS_ASSUME_ROLE_ACCESS_KEY_ID, AWS_ASSUME_ROLE_SECRET_ACCESS_KEY } =
+      env(c);
+    accessKeyId = AWS_ASSUME_ROLE_ACCESS_KEY_ID || '';
+    secretAccessKey = AWS_ASSUME_ROLE_SECRET_ACCESS_KEY || '';
+  }
+
+  const region = awsRegion || 'us-east-1';
   const service = 'sts';
   const hostname = `sts.${region}.amazonaws.com`;
   const signer = new SignatureV4({
@@ -190,10 +206,13 @@ export async function getAssumedRoleCredentials(
     credentials: {
       accessKeyId,
       secretAccessKey,
+      sessionToken,
     },
     sha256: Sha256,
   });
-  const url = `https://${hostname}?Action=AssumeRole&Version=2011-06-15&RoleArn=${awsRoleArn}&ExternalId=${awsExternalId}&RoleSessionName=random`;
+  const date = new Date();
+  const sessionName = `${date.getFullYear()}${date.getMonth()}${date.getDay()}`;
+  const url = `https://${hostname}?Action=AssumeRole&Version=2011-06-15&RoleArn=${awsRoleArn}&RoleSessionName=${sessionName}${awsExternalId ? `&ExternalId=${awsExternalId}` : ''}`;
   const urlObj = new URL(url);
   const requestHeaders = { host: hostname };
   const options = {
@@ -227,7 +246,6 @@ export async function getAssumedRoleCredentials(
   } catch (error) {
     console.error({ message: `Error assuming role:, ${error}` });
   }
-
   return credentials;
 }
 
