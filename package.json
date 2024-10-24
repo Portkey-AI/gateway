@@ -34,7 +34,8 @@
     "start:node": "node build/start-server.js",
     "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,json}\"",
     "format:check": "prettier --check \"./**/*.{js,jsx,ts,tsx,json}\"",
-    "test": "ts-jest",
+    "test:gateway": "jest src/",
+    "test:plugins": "jest plugins/",
     "pre-push": "npm run build && node start-test.js",
     "prepare": "node -e \"if (process.env.NODE_ENV !== 'production'){process.exit(1)} \" || husky"
   },
