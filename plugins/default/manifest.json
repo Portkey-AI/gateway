@@ -475,6 +475,37 @@
         }
       ],
       "parameters": {}
+    },
+    {
+      "name": "Model whitelisting",
+      "id": "modelwhitelist",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Check if the model in the request is part of the allowed model list."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "models": {
+            "type": "array",
+            "label": "Model list",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enter the allowed models."
+              }
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["models"]
+      }
     }
   ]
 }

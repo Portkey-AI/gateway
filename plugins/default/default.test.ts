@@ -10,6 +10,7 @@ import { handler as logHandler } from './log';
 import { handler as allUppercaseHandler } from './alluppercase';
 import { handler as endsWithHandler } from './endsWith';
 import { handler as allLowerCaseHandler } from './alllowercase';
+import { handler as modelWhitelistHandler } from './modelWhitelist';
 
 import { z } from 'zod';
 import { PluginContext, PluginParameters } from '../types';
@@ -797,6 +798,39 @@ describe('allLowercase handler', () => {
     const eventType = 'beforeRequestHook';
 
     const result = await allLowerCaseHandler(context, {}, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+  });
+});
+
+describe('modelWhitelist handler', () => {
+  it('should return true verdict when the model requested is part of the whitelist', async () => {
+    const context: PluginContext = {
+      request: { json: { model: 'gemini-1.5-flash-001' } },
+    };
+
+    const parameters: PluginParameters = {
+      models: ['gemini-1.5-flash-001'],
+    };
+    const eventType = 'beforeRequestHook';
+
+    const result = await modelWhitelistHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+  });
+  it('should return false verdict when the model requested is not part of the whitelist', async () => {
+    const context: PluginContext = {
+      request: { json: { model: 'gemini-1.5-pro-001' } },
+    };
+
+    const parameters: PluginParameters = {
+      models: ['gemini-1.5-flash-001'],
+    };
+    const eventType = 'beforeRequestHook';
+
+    const result = await modelWhitelistHandler(context, parameters, eventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
