@@ -19,6 +19,7 @@ import { completionsHandler } from './handlers/completionsHandler';
 import { embeddingsHandler } from './handlers/embeddingsHandler';
 import { requestValidator } from './middlewares/requestValidator';
 import { hooks } from './middlewares/hooks';
+import { logger } from './middlewares/log';
 import { compress } from 'hono/compress';
 import { getRuntimeKey } from 'hono/adapter';
 import { imageGenerationsHandler } from './handlers/imageGenerationsHandler';
@@ -54,6 +55,9 @@ app.get('/', (c) => c.text('AI Gateway says hey!'));
 
 // Use prettyJSON middleware for all routes
 app.use('*', prettyJSON());
+
+// Use logger middleware for all routes
+app.use(logger());
 
 // Use hooks middleware for all routes
 app.use('*', hooks);
