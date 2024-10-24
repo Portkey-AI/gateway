@@ -1,0 +1,42 @@
+{
+  /*
+    1. steps to run wrangler debugger (https://blog.cloudflare.com/debugging-cloudflare-workers/)
+    - run `npm run dev` in a terminal
+    - in debug and run tab, select 'Wrangler debug' and run
+    - add a breakpoint and verify
+    
+    2. Steps tp run node debugger
+    - In debug tab select "Node debug" and run
+    - add a breakpoint and verify
+    */
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Wrangler debug",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "cwd": "/",
+      "resolveSourceMapLocations": null,
+      "attachExistingChildren": false,
+      "autoAttachChildProcesses": false
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Node debug",
+      "runtimeExecutable": "tsx",
+      "runtimeArgs": ["${workspaceFolder}/build/src/start-server.js"],
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/build/**/*.js"],
+      "sourceMapPathOverrides": {
+        "../src/*": "${workspaceFolder}/src/*"
+      },
+      "skipFiles": ["<node_internals>/**"],
+      "preLaunchTask": "npx tsc",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "postDebugTask": "cleanup build"
+    }
+  ]
+}

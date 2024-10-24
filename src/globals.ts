@@ -13,6 +13,7 @@ export const HEADER_KEYS: Record<string, string> = {
   CUSTOM_HOST: `x-${POWERED_BY}-custom-host`,
   REQUEST_TIMEOUT: `x-${POWERED_BY}-request-timeout`,
   STRICT_OPEN_AI_COMPLIANCE: `x-${POWERED_BY}-strict-open-ai-compliance`,
+  CONTENT_TYPE: `Content-Type`,
 };
 
 export const RESPONSE_HEADER_KEYS: Record<string, string> = {
@@ -69,6 +70,10 @@ export const SILICONFLOW: string = 'siliconflow';
 export const CEREBRAS: string = 'cerebras';
 export const INFERENCENET: string = 'inference-net';
 export const SAMBANOVA: string = 'sambanova';
+export const LEMONFOX_AI: string = 'lemonfox-ai';
+export const UPSTAGE: string = 'upstage';
+export const LAMBDA: string = 'lambda';
+export const DASHSCOPE: string = 'dashscope';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -112,6 +117,10 @@ export const VALID_PROVIDERS = [
   CEREBRAS,
   INFERENCENET,
   SAMBANOVA,
+  LEMONFOX_AI,
+  UPSTAGE,
+  LAMBDA,
+  DASHSCOPE,
 ];
 
 export const CONTENT_TYPES = {
@@ -129,4 +138,53 @@ export const CONTENT_TYPES = {
 export const MULTIPART_FORM_DATA_ENDPOINTS: endpointStrings[] = [
   'createTranscription',
   'createTranslation',
+];
+
+export const fileExtensionMimeTypeMap = {
+  mp4: 'video/mp4',
+  jpeg: 'image/jpeg',
+  jpg: 'image/jpeg',
+  png: 'image/png',
+  bmp: 'image/bmp',
+  tiff: 'image/tiff',
+  webp: 'image/webp',
+  pdf: 'application/pdf',
+  csv: 'text/csv',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xls: 'application/vnd.ms-excel',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  html: 'text/html',
+  md: 'text/markdown',
+  mp3: 'audio/mp3',
+  wav: 'audio/wav',
+  txt: 'text/plain',
+  mov: 'video/mov',
+  mpeg: 'video/mpeg',
+  mpg: 'video/mpg',
+  avi: 'video/avi',
+  wmv: 'video/wmv',
+  mpegps: 'video/mpegps',
+  flv: 'video/flv',
+};
+
+export const imagesMimeTypes = [
+  fileExtensionMimeTypeMap.jpeg,
+  fileExtensionMimeTypeMap.jpg,
+  fileExtensionMimeTypeMap.png,
+  fileExtensionMimeTypeMap.bmp,
+  fileExtensionMimeTypeMap.tiff,
+  fileExtensionMimeTypeMap.webp,
+];
+
+export const documentMimeTypes = [
+  fileExtensionMimeTypeMap.pdf,
+  fileExtensionMimeTypeMap.csv,
+  fileExtensionMimeTypeMap.doc,
+  fileExtensionMimeTypeMap.docx,
+  fileExtensionMimeTypeMap.xls,
+  fileExtensionMimeTypeMap.xlsx,
+  fileExtensionMimeTypeMap.html,
+  fileExtensionMimeTypeMap.md,
+  fileExtensionMimeTypeMap.txt,
 ];

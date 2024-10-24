@@ -10,7 +10,8 @@ import { PORTKEY_ENDPOINTS, fetchPortkey } from './globals';
 export const handler: PluginHandler = async (
   context: PluginContext,
   parameters: PluginParameters,
-  eventType: HookEventType
+  eventType: HookEventType,
+  options
 ) => {
   let error = null;
   let verdict = false;
@@ -23,6 +24,7 @@ export const handler: PluginHandler = async (
 
     // Find the language of the text
     const result: any = await fetchPortkey(
+      options.env,
       PORTKEY_ENDPOINTS.LANGUAGE,
       parameters.credentials,
       { input: text }

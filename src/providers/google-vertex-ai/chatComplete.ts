@@ -116,19 +116,27 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
                   });
 
                   return;
+                } else if (
+                  url.startsWith('gs://') ||
+                  url.startsWith('https://') ||
+                  url.startsWith('http://')
+                ) {
+                  parts.push({
+                    fileData: {
+                      mimeType: getMimeType(url),
+                      fileUri: url,
+                    },
+                  });
+                } else {
+                  // NOTE: This block is kept to maintain backward compatibility
+                  // Earlier we were assuming that all images will be base64 with image/jpeg mimeType
+                  parts.push({
+                    inlineData: {
+                      mimeType: 'image/jpeg',
+                      data: c.image_url?.url,
+                    },
+                  });
                 }
-
-                // This part is problematic because URLs are not supported in the current implementation.
-                // Two problems exist:
-                // 1. Only Google Cloud Storage URLs are supported.
-                // 2. MimeType is not supported in OpenAI API, but it is required in Google Vertex AI API.
-                // Google will return an error here if any other URL is provided.
-                parts.push({
-                  fileData: {
-                    mimeType: getMimeType(url),
-                    fileUri: url,
-                  },
-                });
               }
             });
           } else if (typeof message.content === 'string') {
@@ -210,6 +218,10 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
     transform: (params: Params) => transformGenerationConfig(params),
   },
   max_tokens: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
+  max_completion_tokens: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
@@ -509,6 +521,9 @@ export const VertexAnthropicChatCompleteConfig: ProviderConfig = {
     param: 'max_tokens',
     required: true,
   },
+  max_completion_tokens: {
+    param: 'max_tokens',
+  },
   temperature: {
     param: 'temperature',
     default: 1,
@@ -658,6 +673,12 @@ export const VertexLlamaChatCompleteConfig: ProviderConfig = {
     default: [],
   },
   max_tokens: {
+    param: 'max_tokens',
+    default: 512,
+    min: 1,
+    max: 2048,
+  },
+  max_completion_tokens: {
     param: 'max_tokens',
     default: 512,
     min: 1,

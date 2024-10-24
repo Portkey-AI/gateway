@@ -27,6 +27,11 @@ export const AzureOpenAIChatCompleteConfig: ProviderConfig = {
     default: 100,
     min: 0,
   },
+  max_completion_tokens: {
+    param: 'max_completion_tokens',
+    default: 100,
+    min: 0,
+  },
   temperature: {
     param: 'temperature',
     default: 1,
@@ -42,6 +47,13 @@ export const AzureOpenAIChatCompleteConfig: ProviderConfig = {
   n: {
     param: 'n',
     default: 1,
+  },
+  logprobs: {
+    param: 'logprobs',
+    default: false,
+  },
+  top_logprobs: {
+    param: 'top_logprobs',
   },
   stream: {
     param: 'stream',

@@ -1,3 +1,8 @@
+import { GoogleErrorResponse } from './types';
+import { generateErrorResponse } from '../utils';
+import { fileExtensionMimeTypeMap, GOOGLE_VERTEX_AI } from '../../globals';
+import { ErrorResponse } from '../types';
+
 /**
  * Encodes an object as a Base64 URL-encoded string.
  * @param obj The object to encode.
@@ -125,42 +130,75 @@ export const getModelAndProvider = (modelString: string) => {
   const modelStringParts = modelString.split('.');
   if (
     modelStringParts.length > 1 &&
-    ['google', 'anthropic'].includes(modelStringParts[0])
+    ['google', 'anthropic', 'meta'].includes(modelStringParts[0])
   ) {
     provider = modelStringParts[0];
     model = modelStringParts.slice(1).join('.');
-  } else if (modelString.includes('llama')) {
-    provider = 'meta';
   }
 
   return { provider, model };
 };
 
-const fileExtensionMimeTypeMap = {
-  mp4: 'video/mp4',
-  jpeg: 'image/jpeg',
-  jpg: 'image/jpeg',
-  png: 'image/png',
-  bmp: 'image/bmp',
-  tiff: 'image/tiff',
-  webp: 'image/webp',
-  pdf: 'application/pdf',
-  mp3: 'audio/mp3',
-  wav: 'audio/wav',
-  txt: 'text/plain',
-  mov: 'video/mov',
-  mpeg: 'video/mpeg',
-  mpg: 'video/mpg',
-  avi: 'video/avi',
-  wmv: 'video/wmv',
-  mpegps: 'video/mpegps',
-  flv: 'video/flv',
-};
-
-export const getMimeType = (url: string) => {
+export const getMimeType = (url: string): string | undefined => {
   const urlParts = url.split('.');
   const extension = urlParts[
     urlParts.length - 1
   ] as keyof typeof fileExtensionMimeTypeMap;
-  return fileExtensionMimeTypeMap[extension] || 'image/jpeg';
+  const mimeType = fileExtensionMimeTypeMap[extension];
+  return mimeType;
+};
+
+export const GoogleErrorResponseTransform: (
+  response: GoogleErrorResponse,
+  provider?: string
+) => ErrorResponse | undefined = (response, provider = GOOGLE_VERTEX_AI) => {
+  if ('error' in response) {
+    return generateErrorResponse(
+      {
+        message: response.error.message ?? '',
+        type: response.error.status ?? null,
+        param: null,
+        code: response.error.status ?? null,
+      },
+      provider
+    );
+  }
+
+  return undefined;
+};
+
+const getDefFromRef = (ref: string) => {
+  const refParts = ref.split('/');
+  return refParts.at(-1);
+};
+
+const getRefParts = (spec: Record<string, any>, ref: string) => {
+  return spec?.[ref];
+};
+
+export const derefer = (spec: Record<string, any>, defs = null) => {
+  const original = { ...spec };
+
+  const finalDefs = defs ?? original?.['$defs'];
+  const entries = Object.entries(original);
+
+  for (let [key, object] of entries) {
+    if (key === '$defs') {
+      continue;
+    }
+    if (typeof object === 'string' || Array.isArray(object)) {
+      continue;
+    }
+    const ref = object?.['$ref'];
+    if (ref) {
+      const def = getDefFromRef(ref);
+      const defData = getRefParts(finalDefs, def ?? '');
+      const newValue = derefer(defData, finalDefs);
+      original[key] = newValue;
+    } else {
+      const newValue = derefer(object, finalDefs);
+      original[key] = newValue;
+    }
+  }
+  return original;
 };

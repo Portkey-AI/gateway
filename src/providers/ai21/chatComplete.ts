@@ -49,6 +49,10 @@ export const AI21ChatCompleteConfig: ProviderConfig = {
     param: 'maxTokens',
     default: 16,
   },
+  max_completion_tokens: {
+    param: 'maxTokens',
+    default: 16,
+  },
   minTokens: {
     param: 'minTokens',
     default: 0,
