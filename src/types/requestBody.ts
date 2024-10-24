@@ -78,6 +78,9 @@ export interface Options {
   awsAccessKeyId?: string;
   awsSessionToken?: string;
   awsRegion?: string;
+  awsAuthType?: string;
+  awsRoleArn?: string;
+  awsExternalId?: string;
 
   /** Stability AI specific */
   stabilityClientId?: string;

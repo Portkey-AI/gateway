@@ -1,12 +1,13 @@
 import { GatewayError } from '../../errors/GatewayError';
 import { ProviderAPIConfig } from '../types';
 import { bedrockInvokeModels } from './constants';
-import { generateAWSHeaders } from './utils';
+import { generateAWSHeaders, getAssumedRoleCredentials } from './utils';
 
 const BedrockAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) =>
     `https://bedrock-runtime.${providerOptions.awsRegion || 'us-east-1'}.amazonaws.com`,
   headers: async ({
+    c,
     providerOptions,
     transformedRequestBody,
     transformedRequestUrl,
@@ -14,6 +15,19 @@ const BedrockAPIConfig: ProviderAPIConfig = {
     const headers = {
       'content-type': 'application/json',
     };
+
+    if (providerOptions.awsAuthType === 'assumedRole') {
+      const { accessKeyId, secretAccessKey, sessionToken } =
+        (await getAssumedRoleCredentials(
+          c,
+          providerOptions.awsRoleArn || '',
+          providerOptions.awsExternalId || '',
+          providerOptions.awsRegion || ''
+        )) || {};
+      providerOptions.awsAccessKeyId = accessKeyId;
+      providerOptions.awsSecretAccessKey = secretAccessKey;
+      providerOptions.awsSessionToken = sessionToken;
+    }
 
     return generateAWSHeaders(
       transformedRequestBody,
