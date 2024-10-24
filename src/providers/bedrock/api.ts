@@ -1,3 +1,4 @@
+import { env } from 'hono/adapter';
 import { GatewayError } from '../../errors/GatewayError';
 import { ProviderAPIConfig } from '../types';
 import { bedrockInvokeModels } from './constants';
@@ -17,16 +18,38 @@ const BedrockAPIConfig: ProviderAPIConfig = {
     };
 
     if (providerOptions.awsAuthType === 'assumedRole') {
-      const { accessKeyId, secretAccessKey, sessionToken } =
-        (await getAssumedRoleCredentials(
+      try {
+        // Assume the role in the source account
+        const sourceRoleCredentials = await getAssumedRoleCredentials(
           c,
-          providerOptions.awsRoleArn || '',
-          providerOptions.awsExternalId || '',
+          env(c).AWS_ASSUME_ROLE_SOURCE_ARN, // Role ARN in the source account
+          env(c).AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID || '', // External ID for source role (if needed)
           providerOptions.awsRegion || ''
-        )) || {};
-      providerOptions.awsAccessKeyId = accessKeyId;
-      providerOptions.awsSecretAccessKey = secretAccessKey;
-      providerOptions.awsSessionToken = sessionToken;
+        );
+
+        if (!sourceRoleCredentials) {
+          throw new Error('Server Error while assuming internal role');
+        }
+
+        // Assume role in destination account using temporary creds obtained in first step
+        const { accessKeyId, secretAccessKey, sessionToken } =
+          (await getAssumedRoleCredentials(
+            c,
+            providerOptions.awsRoleArn || '',
+            providerOptions.awsExternalId || '',
+            providerOptions.awsRegion || '',
+            {
+              accessKeyId: sourceRoleCredentials.accessKeyId,
+              secretAccessKey: sourceRoleCredentials.secretAccessKey,
+              sessionToken: sourceRoleCredentials.sessionToken,
+            }
+          )) || {};
+        providerOptions.awsAccessKeyId = accessKeyId;
+        providerOptions.awsSecretAccessKey = secretAccessKey;
+        providerOptions.awsSessionToken = sessionToken;
+      } catch (e) {
+        throw new GatewayError('Error while assuming bedrock role');
+      }
     }
 
     return generateAWSHeaders(
