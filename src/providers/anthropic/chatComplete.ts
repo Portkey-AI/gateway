@@ -108,6 +108,13 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
       required: true,
       transform: (params: Params) => {
         let messages: AnthropicMessage[] = [];
+        if (params.response_format) {
+          if (params.response_format.type === 'json_schema') {
+            messages.push({ role: 'system', content: `Here is the JSON Schema that defines the structure for this conversation. You must follow this schema strictly and only return the JSON object:\n\n${params.response_format.json_schema}` });
+          }
+
+        }
+
         // Transform the chat messages into a simple prompt
         if (!!params.messages) {
           params.messages.forEach((msg: Message & AnthropicPromptCache) => {
