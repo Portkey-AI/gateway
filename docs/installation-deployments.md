@@ -22,11 +22,8 @@ Check out the [API docs](https://portkey.ai/docs/welcome/make-your-first-request
 6. Deploy using [Docker Compose](#docker-compose)
 7. Deploy on [Replit](#replit)
 8. Deploy on [Zeabur](#zeabur)
-9. Deploy on [Vercel](#vercel)
+9. Deploy with [Supabase Functions](#supabase-functions)
 10. Deploy using [Fastly](#fastly)
-11. Deploy on [AWS Lambda](#aws-lambda)
-12. Deploy on [Lambda@edge](#lambda-edge)
-13. Deploy with [Supabase Functions](#supabase-functions)
 
 ---
 
@@ -248,23 +245,29 @@ For more details, refer to [Docker Compose official](https://docs.docker.com/com
 
 ---
 
-### Vercel
+### Supabase Functions
 
-1. Clone the Repository
+1. Clone the Repository:
    
 ```sh
 git clone https://github.com/portkey-ai/gateway
 ```
 
-2. Set up a new project in Vercel by linking the repository.
+2. Set up a Supabase Account and create a new project (in browser).
+3. Install the Supabase CLI, login using `supabase login
+` and Initialize, follow [guides](https://supabase.com/docs/guides/local-development)
+4. Write Your Supabase Function in:
+```sh
+supabase/functions/your-function-file/index.ts
+```
+5. Deploy the Function (for windows add `npx` in start):
+```sh
+supabase functions deploy your-function-file
+```
+6. Now, its ready to Test, Monitor and Manage Functions (Using url from supabase dashboard):
+   - Similar to `https://your-project-id.supabase.co/functions/v1/your-function-file`
 
-3. Configure environment variables in Vercel's dashboard, matching those in the `deployment.yaml` file (e.g., `PORTKEY_PROVIDER`, `PORTKEY_PROVIDER_AUTH_TOKEN`).
-
-4. Adjust the project to use Vercel’s serverless function framework if needed.
-
-5. Deploy your application.
-   
-For more details, refer to [Vercel's documentation](https://vercel.com/docs/deployments/git/vercel-for-github).
+Refer to [Supabase's official documentation](https://supabase.com/docs) for more details.
 
 <br>
 
@@ -272,7 +275,7 @@ For more details, refer to [Vercel's documentation](https://vercel.com/docs/depl
 
 ### Fastly
 
-1. Follow Fastly’s [Compute@Edge tutorial](https://www.fastly.com/documentation/guides/compute/).
+1. Create / login to your fastly account (in browser).
 
 2. Clone the Gateway Repository:
 
@@ -283,20 +286,44 @@ git clone https://github.com/portkey-ai/gateway
 3. Install Fastly’s CLI:
 
 ```sh
-npm install -g @fastly/cli
+npm install fastly-cli
 ```
 
-4. Create a new Fastly service and link it to your cloned Gateway repo.
+4. Log in to Fastly:
+```sh
+fastly login
+```
 
-5. Modify the `gateway` code to fit into Fastly's Compute@Edge runtime, considering its unique environment for handling edge requests.
+5. Create a New Fastly Service:
+```sh
+fastly compute init
+```
 
-6. Deploy the service using Fastly CLI:
+6. Write Your Edge Function Code in `src/main.rs` or `src/index.js`
 
+7. Set up the token locally (token is located on `Account > User(left bottom most) > API Token`)
+```sh
+fastly profile create
+```
+Then follow the steps there to add token.
+
+8. Deploy to Fastly
 ```sh
 fastly compute publish
 ```
+9. Now, its ready to Test, Monitor and Manage Functions (Using url from fastly dashboard):
+    - Similar to `your-new-project.edgecompute.app`
+   
+For more details, refer to [Fastly’s official](https://www.fastly.com/products/edge-compute).
 
-For more details, refer to [Fastly’s official](https://www.fastly.com/).
+<br>
+
+---
+
+### Vercel
+
+- Docs to be written, please help!
+- Make sure you've deployed and tested the same.
 
 <br>
 
@@ -304,22 +331,8 @@ For more details, refer to [Fastly’s official](https://www.fastly.com/).
 
 ### AWS Lambda
 
-1. Clone the Repository:
-```sh
-git clone https://github.com/portkey-ai/gateway
-```
-
-2. Create a new AWS Lambda function via the AWS Management Console.
-
-3. Use AWS Lambda Layers to include the necessary Node.js/Bun dependencies (e.g., `npm`).
-
-4. Zip the Gateway project (excluding `node_modules`) and upload it to your Lambda function.
-
-5. Configure environment variables for your Lambda function.
-
-6. Set up an API Gateway for HTTP requests and route them to your Lambda function.
-
-For more detailed steps, refer to the AWS Lambda [deployment documentation](https://docs.aws.amazon.com/lambda/).
+- Docs to be written, please help!
+- Make sure you've deployed and tested the same.
 
 <br>
 
@@ -327,45 +340,8 @@ For more detailed steps, refer to the AWS Lambda [deployment documentation](http
 
 ### Lambda edge
 
-1. Clone the Repository:
-   
-```sh
-git clone https://github.com/portkey-ai/gateway
-```
-
-2. Prepare the project for Lambda@Edge deployment by ensuring that request handling works within CloudFront constraints.
-
-3. Set up an AWS CloudFront distribution.
-
-4. Deploy the Lambda function to the edge using the `aws` CLI or AWS Console.
-
-5. Attach the Lambda@Edge function to the CloudFront distribution.
-
-More information is available in AWS’s official [Lambda@Edge documentation](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-at-the-edge.html).
-
-<br>
-
----
-
-### Supabase Functions
-
-1. Clone the Repository:
-   
-```sh
-git clone https://github.com/portkey-ai/gateway
-```
-
-2. Set up a Supabase project and create a new function.
-
-3. Modify the project to use Supabase’s environment.
-
-4. Deploy using the Supabase CLI:
-
-```sh
-supabase functions deploy your-function-name
-```
-
-Refer to [Supabase's official documentation](https://supabase.com/docs) for more details.
+- Docs to be written, please help!
+- Make sure you've deployed and tested the same.
 
 <br>
 
