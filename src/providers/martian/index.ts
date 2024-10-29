@@ -13,4 +13,6 @@ const MartianConfig: ProviderConfigs = {
   },
 };
 
+// Explicit export for MartianConfig
+export { MartianConfig };
 export default MartianConfig;

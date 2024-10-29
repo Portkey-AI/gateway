@@ -14,6 +14,7 @@ import {
   CONTENT_TYPES,
   HUGGING_FACE,
   STABILITY_AI,
+  MARTIAN,
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
@@ -1053,6 +1054,10 @@ export function constructConfigFromRequestHeaders(
     openaiProject: requestHeaders[`x-${POWERED_BY}-openai-project`],
   };
 
+  const martianConfig = {
+    openaiOrganization: requestHeaders[`x-${POWERED_BY}-martian-organization`],
+    openaiProject: requestHeaders[`x-${POWERED_BY}-martian-project`],
+  };
   const huggingfaceConfig = {
     huggingfaceBaseUrl: requestHeaders[`x-${POWERED_BY}-huggingface-base-url`],
   };
@@ -1149,6 +1154,12 @@ export function constructConfigFromRequestHeaders(
           ...stabilityAiConfig,
         };
       }
+      if (parsedConfigJson.provider === MARTIAN) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...openAiConfig,
+        };
+      }
     }
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
@@ -1173,6 +1184,8 @@ export function constructConfigFromRequestHeaders(
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === AZURE_AI_INFERENCE &&
       azureAiInferenceConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === OPEN_AI && openAiConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === MARTIAN &&
+      martianConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === ANTHROPIC &&
       anthropicConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === HUGGING_FACE &&

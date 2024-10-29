@@ -122,7 +122,7 @@ export const VALID_PROVIDERS = [
   UPSTAGE,
   LAMBDA,
   DASHSCOPE,
-  MARTIAN
+  MARTIAN,
 ];
 
 export const CONTENT_TYPES = {

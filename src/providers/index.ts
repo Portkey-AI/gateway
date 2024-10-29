@@ -47,7 +47,7 @@ import { UpstageConfig } from './upstage';
 import { LAMBDA } from '../globals';
 import { LambdaProviderConfig } from './lambda';
 import { DashScopeConfig } from './dashscope';
-import { MartianConfig } from './martian'
+import { MartianConfig } from './martian';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -95,7 +95,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   upstage: UpstageConfig,
   [LAMBDA]: LambdaProviderConfig,
   dashscope: DashScopeConfig,
-  martian: MartianConfig
+  martian: MartianConfig,
 };
 
 export default Providers;
