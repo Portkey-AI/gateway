@@ -1,10 +1,10 @@
-import { MARTIAN, ANTHROPIC } from '../../globals'
+import { MARTIAN, ANTHROPIC } from '../../globals';
 import {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
-} from '../../types'
-import { MartianErrorResponseTransform } from './utils'
+} from '../../types';
+import { MartianErrorResponseTransform } from './utils';
 
 export const MartianChatCompleteConfig: ProviderConfig = {
   model: {
@@ -59,10 +59,10 @@ export const MartianChatCompleteConfig: ProviderConfig = {
   extra: {
     param: 'extra',
   },
-}
+};
 
 export interface MartianChatCompleteResponse extends ChatCompletionResponse {
-  system_fingerprint: string
+  system_fingerprint: string;
 }
 
 export const MartianChatCompleteResponseTransform: (
@@ -70,11 +70,11 @@ export const MartianChatCompleteResponseTransform: (
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'error' in response) {
-    return MartianErrorResponseTransform(response, MARTIAN)
+    return MartianErrorResponseTransform(response, MARTIAN);
   }
 
-  return response
-}
+  return response;
+};
 
 /**
  * Transforms an Martian-format chat completions JSON response into an array of formatted Martian compatible text/event-stream chunks.
