@@ -94,15 +94,20 @@ const getProviderRequestJSON = (
     const config = providerConfig[param];
     const isConfigPresent: boolean = config != null;
     if (isConfigPresent) {
-      const isTransformFunctionPresent: boolean = config.transform != null;
-      if (isTransformFunctionPresent) {
-        transformedRequest[param] = config.transform(params);
+      const isAtleastOneTransformerPresent: boolean = config.length
+        ? config.some((c: any) => c.transform != null)
+        : config.transform != null;
+      if (isAtleastOneTransformerPresent) {
+        const transformers = config.length ? [...config] : [config];
+        for (const transformer of transformers) {
+          transformedRequest[transformer.param] = transformer.transform(params);
+        }
       } else {
         const setDefault: boolean = params[param] === 'default';
         if (setDefault) {
-          transformedRequest[param] = config.default;
+          transformedRequest[config.param] = config.default;
         } else {
-          transformedRequest[param] = params[param];
+          transformedRequest[config.param] = params[param];
         }
       }
     } else {
