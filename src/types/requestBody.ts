@@ -320,6 +320,7 @@ export interface Params {
   // Anthropic specific
   anthropic_beta?: string;
   anthropic_version?: string;
+  [key: string]: any;
 }
 
 interface Examples {

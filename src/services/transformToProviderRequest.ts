@@ -67,6 +67,60 @@ const getValue = (configParam: string, params: Params, paramConfig: any) => {
 
 /**
  * Transforms the request body to match the structure required by the AI provider.
+ *
+ * First, for each parameter in the request body:
+ *    - If a corresponding config is present for the parameter, the value is transformed using the transform function.
+ *    - If the value is 'default', the default value is set.
+ *    - Otherwise, the value is set to the value from the request body.
+ * Secondly, for each config in the provider's configuration:
+ *    - If the parameter is required and no value is provided, the parameter is set to the default value.
+ *
+ * Note: This ignores min and max.
+ *
+ * @param providerConfig - The configuration for the AI provider.
+ * @param params - The parameters for the request.
+ * @param fn - The function to call on the AI provider.
+ *
+ * @returns The transformed request body.
+ */
+const getProviderRequestJSON = (
+  providerConfig: any,
+  params: Params,
+  fn: string
+): { [key: string]: any } => {
+  const transformedRequest: { [key: string]: any } = {};
+  for (const param in params) {
+    transformedRequest[param] = null;
+    const config = providerConfig[param];
+    const isConfigPresent: boolean = config != null;
+    if (isConfigPresent) {
+      const isTransformFunctionPresent: boolean = config.transform != null;
+      if (isTransformFunctionPresent) {
+        transformedRequest[param] = config.transform(params);
+      } else {
+        const setDefault: boolean = params[param] === 'default';
+        if (setDefault) {
+          transformedRequest[param] = config.default;
+        } else {
+          transformedRequest[param] = params[param];
+        }
+      }
+    } else {
+      transformedRequest[param] = params[param];
+    }
+
+    // handle default values
+    for (const config of providerConfig) {
+      if (config.required && config.default !== undefined) {
+        transformedRequest[param] = config.default;
+      }
+    }
+  }
+  return transformedRequest;
+};
+
+/**
+ * Transforms the request body to match the structure required by the AI provider.
  * It also ensures the values for each parameter are within the minimum and maximum
  * constraints defined in the provider's configuration. If a required parameter is missing,
  * it assigns the default value from the provider's configuration.
@@ -96,46 +150,7 @@ const transformToProviderRequestJSON = (
     throw new GatewayError(`${fn} is not supported by ${provider}`);
   }
 
-  const transformedRequest: { [key: string]: any } = {};
-
-  // For each parameter in the provider's configuration
-  for (const configParam in providerConfig) {
-    // Get the config for this parameter
-    let paramConfigs = providerConfig[configParam];
-    if (!Array.isArray(paramConfigs)) {
-      paramConfigs = [paramConfigs];
-    }
-
-    for (const paramConfig of paramConfigs) {
-      // If the parameter is present in the incoming request body
-      if (configParam in params) {
-        // Get the value for this parameter
-        const value = getValue(configParam, params, paramConfig);
-
-        // Set the transformed parameter to the validated value
-        setNestedProperty(
-          transformedRequest,
-          paramConfig?.param as string,
-          value
-        );
-      }
-      // If the parameter is not present in the incoming request body but is required, set it to the default value
-      else if (
-        paramConfig &&
-        paramConfig.required &&
-        paramConfig.default !== undefined
-      ) {
-        // Set the transformed parameter to the default value
-        setNestedProperty(
-          transformedRequest,
-          paramConfig.param,
-          paramConfig.default
-        );
-      }
-    }
-  }
-
-  return transformedRequest;
+  return getProviderRequestJSON(providerConfig, params, fn);
 };
 
 const transformToProviderRequestFormData = (
