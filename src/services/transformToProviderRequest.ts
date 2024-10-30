@@ -108,12 +108,17 @@ const getProviderRequestJSON = (
     } else {
       transformedRequest[param] = params[param];
     }
-
-    // handle default values
-    for (const config of providerConfig) {
-      if (config.required && config.default !== undefined) {
-        transformedRequest[param] = config.default;
-      }
+  }
+  // handle default values
+  for (const configKey of Object.keys(providerConfig)) {
+    const configObject = providerConfig[configKey];
+    const isRequiredAndDefaultisKnown: boolean =
+      configObject &&
+      configObject.required &&
+      configObject.default !== undefined;
+    const isValueAlreadySet: boolean = transformedRequest[configKey] !== null;
+    if (isRequiredAndDefaultisKnown && !isValueAlreadySet) {
+      transformedRequest[configKey] = configObject.default;
     }
   }
   return transformedRequest;
