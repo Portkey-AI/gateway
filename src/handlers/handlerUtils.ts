@@ -11,9 +11,9 @@ import {
   OPEN_AI,
   AZURE_AI_INFERENCE,
   ANTHROPIC,
-  MULTIPART_FORM_DATA_ENDPOINTS,
   CONTENT_TYPES,
   HUGGING_FACE,
+  STABILITY_AI,
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
@@ -33,6 +33,7 @@ import { afterRequestHookHandler, responseHandler } from './responseHandlers';
 import { HookSpan, HooksManager } from '../middlewares/hooks';
 import { ConditionalRouter } from '../services/conditionalRouter';
 import { RouterError } from '../errors/RouterError';
+import { GatewayError } from '../errors/GatewayError';
 
 /**
  * Constructs the request options for the API call.
@@ -268,6 +269,7 @@ export async function tryPostProxy(
     : (providerOption.urlToFetch as string);
 
   const headers = await apiConfig.headers({
+    c,
     providerOptions: providerOption,
     fn,
     transformedRequestBody: params,
@@ -467,11 +469,19 @@ export async function tryPost(
     strictOpenAiCompliance = false;
   }
 
+  let metadata: Record<string, string>;
+  try {
+    metadata = JSON.parse(requestHeaders[HEADER_KEYS.METADATA]);
+  } catch (err) {
+    metadata = {};
+  }
+
   const provider: string = providerOption.provider ?? '';
 
   const hooksManager = c.get('hooksManager');
   const hookSpan = hooksManager.createSpan(
     params,
+    metadata,
     provider,
     isStreamingMode,
     providerOption.beforeRequestHooks || [],
@@ -511,10 +521,12 @@ export async function tryPost(
   const url = `${baseUrl}${endpoint}`;
 
   const headers = await apiConfig.headers({
+    c,
     providerOptions: providerOption,
     fn,
     transformedRequestBody,
     transformedRequestUrl: url,
+    gatewayRequestBody: params,
   });
 
   // Construct the base object for the POST request
@@ -526,9 +538,10 @@ export async function tryPost(
     requestHeaders
   );
 
-  fetchOptions.body = MULTIPART_FORM_DATA_ENDPOINTS.includes(fn)
-    ? (transformedRequestBody as FormData)
-    : JSON.stringify(transformedRequestBody);
+  fetchOptions.body =
+    headers[HEADER_KEYS.CONTENT_TYPE] === CONTENT_TYPES.MULTIPART_FORM_DATA
+      ? (transformedRequestBody as FormData)
+      : JSON.stringify(transformedRequestBody);
 
   providerOption.retry = {
     attempts: providerOption.retry?.attempts ?? 0,
@@ -821,6 +834,9 @@ export async function tryTargetsRecursively(
           `${currentJsonPath}.targets[${index}]`,
           currentInheritedConfig
         );
+        if (response?.headers.get('x-portkey-gateway-exception') === 'true') {
+          break;
+        }
         if (
           response?.ok &&
           !currentTarget.strategy?.onStatusCodes?.includes(response?.status)
@@ -913,7 +929,31 @@ export async function tryTargetsRecursively(
           currentJsonPath
         );
       } catch (error: any) {
-        response = error.response;
+        // tryPost always returns a Response.
+        // TypeError will check for all unhandled exceptions.
+        // GatewayError will check for all handled exceptions which cannot allow the request to proceed.
+        if (error instanceof TypeError || error instanceof GatewayError) {
+          const errorMessage =
+            error instanceof GatewayError
+              ? error.message
+              : 'Something went wrong';
+          response = new Response(
+            JSON.stringify({
+              status: 'failure',
+              message: errorMessage,
+            }),
+            {
+              status: 500,
+              headers: {
+                'content-type': 'application/json',
+                // Add this header so that the fallback loop can be interrupted if its an exception.
+                'x-portkey-gateway-exception': 'true',
+              },
+            }
+          );
+        } else {
+          response = error.response;
+        }
       }
       break;
   }
@@ -976,6 +1016,14 @@ export function constructConfigFromRequestHeaders(
     azureModelName: requestHeaders[`x-${POWERED_BY}-azure-model-name`],
   };
 
+  const stabilityAiConfig = {
+    stabilityClientId: requestHeaders[`x-${POWERED_BY}-stability-client-id`],
+    stabilityClientUserId:
+      requestHeaders[`x-${POWERED_BY}-stability-client-user-id`],
+    stabilityClientVersion:
+      requestHeaders[`x-${POWERED_BY}-stability-client-version`],
+  };
+
   const azureAiInferenceConfig = {
     azureDeploymentName:
       requestHeaders[`x-${POWERED_BY}-azure-deployment-name`],
@@ -991,6 +1039,9 @@ export function constructConfigFromRequestHeaders(
     awsSecretAccessKey: requestHeaders[`x-${POWERED_BY}-aws-secret-access-key`],
     awsSessionToken: requestHeaders[`x-${POWERED_BY}-aws-session-token`],
     awsRegion: requestHeaders[`x-${POWERED_BY}-aws-region`],
+    awsRoleArn: requestHeaders[`x-${POWERED_BY}-aws-role-arn`],
+    awsAuthType: requestHeaders[`x-${POWERED_BY}-aws-auth-type`],
+    awsExternalId: requestHeaders[`x-${POWERED_BY}-aws-external-id`],
   };
 
   const workersAiConfig = {
@@ -1092,6 +1143,12 @@ export function constructConfigFromRequestHeaders(
           ...anthropicConfig,
         };
       }
+      if (parsedConfigJson.provider === STABILITY_AI) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...stabilityAiConfig,
+        };
+      }
     }
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
@@ -1122,6 +1179,8 @@ export function constructConfigFromRequestHeaders(
       huggingfaceConfig),
     mistralFimCompletion:
       requestHeaders[`x-${POWERED_BY}-mistral-fim-completion`],
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === STABILITY_AI &&
+      stabilityAiConfig),
   };
 }
 
@@ -1292,9 +1351,11 @@ export async function beforeRequestHookHandler(
 ): Promise<any> {
   try {
     const hooksManager = c.get('hooksManager');
-    const hooksResult = await hooksManager.executeHooks(hookSpanId, [
-      'syncBeforeRequestHook',
-    ]);
+    const hooksResult = await hooksManager.executeHooks(
+      hookSpanId,
+      ['syncBeforeRequestHook'],
+      { env: env(c) }
+    );
 
     if (hooksResult.shouldDeny) {
       return new Response(

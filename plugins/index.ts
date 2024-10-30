@@ -10,6 +10,8 @@ import { handler as defaultwebhook } from './default/webhook';
 import { handler as defaultlog } from './default/log';
 import { handler as defaultcontainsCode } from './default/containsCode';
 import { handler as defaultalluppercase } from './default/alluppercase';
+import { handler as defaultalllowercase } from './default/alllowercase';
+import { handler as defaultendsWith } from './default/endsWith';
 import { handler as portkeymoderateContent } from './portkey/moderateContent';
 import { handler as portkeylanguage } from './portkey/language';
 import { handler as portkeypii } from './portkey/pii';
@@ -44,6 +46,8 @@ export const plugins = {
     log: defaultlog,
     containsCode: defaultcontainsCode,
     alluppercase: defaultalluppercase,
+    alllowercase: defaultalllowercase,
+    endsWith: defaultendsWith,
   },
   portkey: {
     moderateContent: portkeymoderateContent,

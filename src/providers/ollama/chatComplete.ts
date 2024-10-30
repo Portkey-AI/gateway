@@ -4,7 +4,10 @@ import {
   ProviderConfig,
 } from '../types';
 import { OLLAMA } from '../../globals';
-import { generateErrorResponse } from '../utils';
+import {
+  generateErrorResponse,
+  generateInvalidProviderResponseError,
+} from '../utils';
 
 export const OllamaChatCompleteConfig: ProviderConfig = {
   model: {
@@ -63,9 +66,7 @@ export const OllamaChatCompleteConfig: ProviderConfig = {
   },
 };
 
-export interface OllamaChatCompleteResponse
-  extends ChatCompletionResponse,
-    ErrorResponse {
+export interface OllamaChatCompleteResponse extends ChatCompletionResponse {
   system_fingerprint: string;
 }
 
@@ -86,10 +87,10 @@ export interface OllamaStreamChunk {
 }
 
 export const OllamaChatCompleteResponseTransform: (
-  response: OllamaChatCompleteResponse,
+  response: OllamaChatCompleteResponse | ErrorResponse,
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if (responseStatus !== 200) {
+  if (responseStatus !== 200 && 'error' in response) {
     return generateErrorResponse(
       {
         message: response.error?.message,
@@ -101,15 +102,19 @@ export const OllamaChatCompleteResponseTransform: (
     );
   }
 
-  return {
-    id: response.id,
-    object: response.object,
-    created: response.created,
-    model: response.model,
-    provider: OLLAMA,
-    choices: response.choices,
-    usage: response.usage,
-  };
+  if ('choices' in response) {
+    return {
+      id: response.id,
+      object: response.object,
+      created: response.created,
+      model: response.model,
+      provider: OLLAMA,
+      choices: response.choices,
+      usage: response.usage,
+    };
+  }
+
+  return generateInvalidProviderResponseError(response, OLLAMA);
 };
 
 export const OllamaChatCompleteStreamChunkTransform: (
