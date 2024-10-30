@@ -90,7 +90,6 @@ const getProviderRequestJSON = (
 ): { [key: string]: any } => {
   const transformedRequest: { [key: string]: any } = {};
   for (const param in params) {
-    transformedRequest[param] = null;
     const config = providerConfig[param];
     const isConfigPresent: boolean = config != null;
     if (isConfigPresent) {
