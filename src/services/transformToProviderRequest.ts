@@ -2,26 +2,7 @@ import { GatewayError } from '../errors/GatewayError';
 import { MULTIPART_FORM_DATA_ENDPOINTS } from '../globals';
 import ProviderConfigs from '../providers';
 import { endpointStrings, ProviderConfig } from '../providers/types';
-import { Options, Params, Targets } from '../types/requestBody';
-
-/**
- * Helper function to set a nested property in an object.
- *
- * @param obj - The object on which to set the property.
- * @param path - The dot-separated path to the property.
- * @param value - The value to set the property to.
- */
-function setNestedProperty(obj: any, path: string, value: any) {
-  const parts = path.split('.');
-  let current = obj;
-  for (let i = 0; i < parts.length - 1; i++) {
-    if (!current[parts[i]]) {
-      current[parts[i]] = {};
-    }
-    current = current[parts[i]];
-  }
-  current[parts[parts.length - 1]] = value;
-}
+import { Params } from '../types/requestBody';
 
 const getValue = (configParam: string, params: Params, paramConfig: any) => {
   let value = params[configParam as keyof typeof params];
@@ -104,7 +85,7 @@ const getProviderRequestJSON = (
         }
       } else {
         for (const transformer of transformers) {
-          const setDefault: boolean = params[param] === 'default';
+          const setDefault: boolean = params[param] === 'portkey-default';
           if (setDefault) {
             transformedRequest[transformer.param] = transformer.default;
           } else {
