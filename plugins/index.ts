@@ -49,7 +49,7 @@ export const plugins = {
     alluppercase: defaultalluppercase,
     alllowercase: defaultalllowercase,
     endsWith: defaultendsWith,
-    endpointReachability: defaultendpointReachability
+    endpointReachability: defaultendpointReachability,
   },
   portkey: {
     moderateContent: portkeymoderateContent,

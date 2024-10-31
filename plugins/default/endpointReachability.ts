@@ -2,7 +2,7 @@ import { PluginHandler } from '../types';
 import { getText } from '../utils';
 
 const endpointReachability = async (url: string): Promise<boolean> => {
-  if (!url) return false
+  if (!url) return false;
   try {
     // Making a HEAD request as its lightweight (gets headers and doesn't wait for response)
     const response = await fetch(url, { method: 'HEAD' });
