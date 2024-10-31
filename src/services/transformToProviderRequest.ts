@@ -1,7 +1,7 @@
 import { GatewayError } from '../errors/GatewayError';
 import { MULTIPART_FORM_DATA_ENDPOINTS } from '../globals';
 import ProviderConfigs from '../providers';
-import { endpointStrings } from '../providers/types';
+import { endpointStrings, ProviderConfig } from '../providers/types';
 import { Options, Params, Targets } from '../types/requestBody';
 
 /**
@@ -84,29 +84,32 @@ const getValue = (configParam: string, params: Params, paramConfig: any) => {
  * @returns The transformed request body.
  */
 const getProviderRequestJSON = (
-  providerConfig: any,
-  params: Params,
-  fn: string
+  providerConfig: ProviderConfig,
+  params: Params
 ): { [key: string]: any } => {
   const transformedRequest: { [key: string]: any } = {};
   for (const param in params) {
     const config = providerConfig[param];
-    const isConfigPresent: boolean = config != null;
+    const isConfigPresent: boolean = Boolean(config);
     if (isConfigPresent) {
-      const isAtleastOneTransformerPresent: boolean = config.length
-        ? config.some((c: any) => c.transform != null)
-        : config.transform != null;
+      const isAtleastOneTransformerPresent: boolean = Array.isArray(config)
+        ? config.some((c: any) => Boolean(c.transform))
+        : Boolean(config.transform);
+      const transformers = Array.isArray(config) ? [...config] : [config];
       if (isAtleastOneTransformerPresent) {
-        const transformers = config.length ? [...config] : [config];
         for (const transformer of transformers) {
-          transformedRequest[transformer.param] = transformer.transform(params);
+          if (transformer.transform)
+            transformedRequest[transformer.param] =
+              transformer.transform(params);
         }
       } else {
-        const setDefault: boolean = params[param] === 'default';
-        if (setDefault) {
-          transformedRequest[config.param] = config.default;
-        } else {
-          transformedRequest[config.param] = params[param];
+        for (const transformer of transformers) {
+          const setDefault: boolean = params[param] === 'default';
+          if (setDefault) {
+            transformedRequest[transformer.param] = transformer.default;
+          } else {
+            transformedRequest[transformer.param] = params[param];
+          }
         }
       }
     } else {
@@ -115,14 +118,16 @@ const getProviderRequestJSON = (
   }
   // handle default values
   for (const configKey of Object.keys(providerConfig)) {
-    const configObject = providerConfig[configKey];
-    const isRequiredAndDefaultisKnown: boolean =
-      configObject &&
-      configObject.required &&
-      configObject.default !== undefined;
-    const isValueAlreadySet: boolean = transformedRequest[configKey] !== null;
-    if (isRequiredAndDefaultisKnown && !isValueAlreadySet) {
-      transformedRequest[configKey] = configObject.default;
+    let configObject = providerConfig[configKey];
+    if (!Array.isArray(configObject)) configObject = [configObject];
+    for (const config of configObject) {
+      const isRequiredAndDefaultisKnown: boolean = Boolean(
+        configObject && config.required && config.default !== undefined
+      );
+      const isValueAlreadySet: boolean = transformedRequest[configKey];
+      if (isRequiredAndDefaultisKnown && !isValueAlreadySet) {
+        transformedRequest[configKey] = config.default;
+      }
     }
   }
   return transformedRequest;
@@ -159,7 +164,7 @@ const transformToProviderRequestJSON = (
     throw new GatewayError(`${fn} is not supported by ${provider}`);
   }
 
-  return getProviderRequestJSON(providerConfig, params, fn);
+  return getProviderRequestJSON(providerConfig, params);
 };
 
 const transformToProviderRequestFormData = (
