@@ -10,6 +10,8 @@ import { handler as logHandler } from './log';
 import { handler as allUppercaseHandler } from './alluppercase';
 import { handler as endsWithHandler } from './endsWith';
 import { handler as allLowerCaseHandler } from './alllowercase';
+import { handler as endpointReachabilityHandler } from './endpointReachability';
+
 
 import { z } from 'zod';
 import { PluginContext, PluginParameters } from '../types';
@@ -800,5 +802,79 @@ describe('allLowercase handler', () => {
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
+  });
+});
+
+describe('endpointReachability', () => {
+  it('should return true for a reachable endpoint', async () => {
+    const URL = 'https://example.com'
+    const context: PluginContext = {
+      request: { text: URL },
+    };
+    const eventType = 'beforeRequestHook';
+
+    // Mock fetch to return a successful response
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+      })
+    ) as jest.Mock;
+
+    const result = await endpointReachabilityHandler(context, {}, eventType, { env: {}});
+
+    expect(result.verdict).toBe(true);
+    expect(fetch).toHaveBeenCalledWith(URL, { method: 'HEAD' });
+  });
+
+  it('should return false for an unreachable endpoint', async () => {
+    const URL = 'https://sample-url.com'
+    const context: PluginContext = {
+      request: { text: URL },
+    };
+    const eventType = 'beforeRequestHook';
+
+    // Mock fetch to return an unsuccessful response
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: false,
+      })
+    ) as jest.Mock;
+
+    const result = await endpointReachabilityHandler(context, {}, eventType, { env: {}});
+
+    expect(result.verdict).toBe(false);
+    expect(fetch).toHaveBeenCalledWith(URL, { method: 'HEAD' });
+  });
+
+  it('should return false if there is a network error', async () => {
+    const URL = 'https://error-endpoint.com'
+    const context: PluginContext = {
+      request: { text: URL },
+    };
+    const eventType = 'beforeRequestHook';
+
+    // Mock fetch to simulate a network error
+    global.fetch = jest.fn(() => Promise.reject(new Error('Network error'))) as jest.Mock;
+
+    const result = await endpointReachabilityHandler(context, {}, eventType, { env: {}});
+
+    expect(result.verdict).toBe(false);
+    expect(fetch).toHaveBeenCalledWith(URL, { method: 'HEAD' });
+  });
+
+  it('should handle invalid URL formats gracefully', async () => {
+    const URL = 'https://invalid-url'
+    const context: PluginContext = {
+      request: { text: URL },
+    };
+    const eventType = 'beforeRequestHook';
+
+    // Mock fetch to simulate an error for an invalid URL
+    global.fetch = jest.fn(() => Promise.reject(new Error('Invalid URL'))) as jest.Mock;
+
+    const result = await endpointReachabilityHandler(context, {}, eventType, { env: {}});
+
+    expect(result.verdict).toBe(false);
+    expect(fetch).toHaveBeenCalledWith(URL, { method: 'HEAD' });
   });
 });
