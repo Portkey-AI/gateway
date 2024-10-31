@@ -1,11 +1,13 @@
 import { SignatureV4 } from '@smithy/signature-v4';
 import { Sha256 } from '@aws-crypto/sha256-js';
-import { ContentType, Message, MESSAGE_ROLES } from '../../types/requestBody';
 import {
-  LLAMA_2_SPECIAL_TOKENS,
-  LLAMA_3_SPECIAL_TOKENS,
-  MISTRAL_CONTROL_TOKENS,
-} from './constants';
+  BedrockConverseAI21ChatCompletionsParams,
+  BedrockConverseAnthropicChatCompletionsParams,
+  BedrockChatCompletionsParams,
+  BedrockConverseCohereChatCompletionsParams,
+} from './chatComplete';
+import { Context } from 'hono';
+import { env } from 'hono/adapter';
 
 export const generateAWSHeaders = async (
   body: Record<string, any>,
@@ -45,99 +47,225 @@ export const generateAWSHeaders = async (
   return signed.headers;
 };
 
-/*
-  Helper function to use inside reduce to convert ContentType array to string
-*/
-const convertContentTypesToString = (acc: string, curr: ContentType) => {
-  if (curr.type !== 'text') return acc;
-  acc += curr.text + '\n';
-  return acc;
-};
-
-/*
-  Handle messages of both string and ContentType array
-*/
-const getMessageContent = (message: Message) => {
-  if (message === undefined) return '';
-  if (typeof message.content === 'object') {
-    return message.content.reduce(convertContentTypesToString, '');
+export const transformInferenceConfig = (
+  params: BedrockChatCompletionsParams
+) => {
+  const inferenceConfig: Record<string, any> = {};
+  if (params['max_tokens'] || params['max_completion_tokens']) {
+    inferenceConfig['maxTokens'] =
+      params['max_tokens'] || params['max_completion_tokens'];
   }
-  return message.content || '';
+  if (params['stop']) {
+    inferenceConfig['stopSequences'] = params['stop'];
+  }
+  if (params['temperature']) {
+    inferenceConfig['temperature'] = params['temperature'];
+  }
+  if (params['top_p']) {
+    inferenceConfig['topP'] = params['top_p'];
+  }
+  return inferenceConfig;
 };
 
-/*
-  This function transforms the messages for the LLama 3.1 prompt.
-  It adds the special tokens to the beginning and end of the prompt.
-  refer: https://www.llama.com/docs/model-cards-and-prompt-formats/llama3_1
-  NOTE: Portkey does not restrict messages to alternate user and assistant roles, this is to support more flexible use cases.
-*/
-export const transformMessagesForLLama3Prompt = (messages: Message[]) => {
-  let prompt: string = '';
-  prompt += LLAMA_3_SPECIAL_TOKENS.PROMPT_START + '\n';
-  messages.forEach((msg, index) => {
-    prompt +=
-      LLAMA_3_SPECIAL_TOKENS.ROLE_START +
-      msg.role +
-      LLAMA_3_SPECIAL_TOKENS.ROLE_END +
-      '\n';
-    prompt += getMessageContent(msg) + LLAMA_3_SPECIAL_TOKENS.END_OF_TURN;
+export const transformAdditionalModelRequestFields = (
+  params: BedrockChatCompletionsParams
+) => {
+  const additionalModelRequestFields: Record<string, any> =
+    params.additionalModelRequestFields || {};
+  if (params['top_k']) {
+    additionalModelRequestFields['top_k'] = params['top_k'];
+  }
+  return additionalModelRequestFields;
+};
+
+export const transformAnthropicAdditionalModelRequestFields = (
+  params: BedrockConverseAnthropicChatCompletionsParams
+) => {
+  const additionalModelRequestFields: Record<string, any> =
+    params.additionalModelRequestFields || {};
+  if (params['top_k']) {
+    additionalModelRequestFields['top_k'] = params['top_k'];
+  }
+  if (params['anthropic_version']) {
+    additionalModelRequestFields['anthropic_version'] =
+      params['anthropic_version'];
+  }
+  if (params['user']) {
+    additionalModelRequestFields['metadata'] = {
+      user_id: params['user'],
+    };
+  }
+  return additionalModelRequestFields;
+};
+
+export const transformCohereAdditionalModelRequestFields = (
+  params: BedrockConverseCohereChatCompletionsParams
+) => {
+  const additionalModelRequestFields: Record<string, any> =
+    params.additionalModelRequestFields || {};
+  if (params['top_k']) {
+    additionalModelRequestFields['top_k'] = params['top_k'];
+  }
+  if (params['n']) {
+    additionalModelRequestFields['n'] = params['n'];
+  }
+  if (params['frequency_penalty']) {
+    additionalModelRequestFields['frequency_penalty'] =
+      params['frequency_penalty'];
+  }
+  if (params['presence_penalty']) {
+    additionalModelRequestFields['presence_penalty'] =
+      params['presence_penalty'];
+  }
+  if (params['logit_bias']) {
+    additionalModelRequestFields['logitBias'] = params['logit_bias'];
+  }
+  if (params['stream']) {
+    additionalModelRequestFields['stream'] = params['stream'];
+  }
+  return additionalModelRequestFields;
+};
+
+export const transformAI21AdditionalModelRequestFields = (
+  params: BedrockConverseAI21ChatCompletionsParams
+) => {
+  const additionalModelRequestFields: Record<string, any> =
+    params.additionalModelRequestFields || {};
+  if (params['top_k']) {
+    additionalModelRequestFields['top_k'] = params['top_k'];
+  }
+  if (params['frequency_penalty']) {
+    additionalModelRequestFields['frequencyPenalty'] = {
+      scale: params['frequency_penalty'],
+    };
+  }
+  if (params['presence_penalty']) {
+    additionalModelRequestFields['presencePenalty'] = {
+      scale: params['presence_penalty'],
+    };
+  }
+  if (params['frequencyPenalty']) {
+    additionalModelRequestFields['frequencyPenalty'] =
+      params['frequencyPenalty'];
+  }
+  if (params['presencePenalty']) {
+    additionalModelRequestFields['presencePenalty'] = params['presencePenalty'];
+  }
+  if (params['countPenalty']) {
+    additionalModelRequestFields['countPenalty'] = params['countPenalty'];
+  }
+  return additionalModelRequestFields;
+};
+
+export async function getAssumedRoleCredentials(
+  c: Context,
+  awsRoleArn: string,
+  awsExternalId: string,
+  awsRegion: string,
+  creds?: {
+    accessKeyId: string;
+    secretAccessKey: string;
+    sessionToken?: string;
+  }
+) {
+  const cacheKey = `${awsRoleArn}/${awsExternalId}/${awsRegion}`;
+  const getFromCacheByKey = c.get('getFromCacheByKey');
+  const putInCacheWithValue = c.get('putInCacheWithValue');
+
+  const resp = getFromCacheByKey
+    ? await getFromCacheByKey(env(c), cacheKey)
+    : null;
+  if (resp) {
+    return resp;
+  }
+
+  // Determine which credentials to use
+  let accessKeyId: string;
+  let secretAccessKey: string;
+  let sessionToken: string | undefined;
+
+  if (creds) {
+    // Use provided credentials
+    accessKeyId = creds.accessKeyId;
+    secretAccessKey = creds.secretAccessKey;
+    sessionToken = creds.sessionToken;
+  } else {
+    // Use environment credentials
+    const { AWS_ASSUME_ROLE_ACCESS_KEY_ID, AWS_ASSUME_ROLE_SECRET_ACCESS_KEY } =
+      env(c);
+    accessKeyId = AWS_ASSUME_ROLE_ACCESS_KEY_ID || '';
+    secretAccessKey = AWS_ASSUME_ROLE_SECRET_ACCESS_KEY || '';
+  }
+
+  const region = awsRegion || 'us-east-1';
+  const service = 'sts';
+  const hostname = `sts.${region}.amazonaws.com`;
+  const signer = new SignatureV4({
+    service,
+    region,
+    credentials: {
+      accessKeyId,
+      secretAccessKey,
+      sessionToken,
+    },
+    sha256: Sha256,
   });
-  prompt +=
-    LLAMA_3_SPECIAL_TOKENS.ROLE_START +
-    MESSAGE_ROLES.ASSISTANT +
-    LLAMA_3_SPECIAL_TOKENS.ROLE_END +
-    '\n';
-  return prompt;
-};
+  const date = new Date();
+  const sessionName = `${date.getFullYear()}${date.getMonth()}${date.getDay()}`;
+  const url = `https://${hostname}?Action=AssumeRole&Version=2011-06-15&RoleArn=${awsRoleArn}&RoleSessionName=${sessionName}${awsExternalId ? `&ExternalId=${awsExternalId}` : ''}`;
+  const urlObj = new URL(url);
+  const requestHeaders = { host: hostname };
+  const options = {
+    method: 'GET',
+    path: urlObj.pathname,
+    protocol: urlObj.protocol,
+    hostname: urlObj.hostname,
+    headers: requestHeaders,
+    query: Object.fromEntries(urlObj.searchParams),
+  };
+  const { headers } = await signer.sign(options);
 
-/*
-  This function transforms the messages for the LLama 2 prompt.
-  It combines the system message with the first user message,
-  and then attaches the message pairs.
-  Finally, it adds the last message to the prompt.
-  refer: https://github.com/meta-llama/llama/blob/main/llama/generation.py#L284-L395
-*/
-export const transformMessagesForLLama2Prompt = (messages: Message[]) => {
-  let finalPrompt: string = '';
-  // combine system message with first user message
-  if (messages.length > 0 && messages[0].role === MESSAGE_ROLES.SYSTEM) {
-    messages[0].content =
-      LLAMA_2_SPECIAL_TOKENS.SYSTEM_MESSAGE_START +
-      getMessageContent(messages[0]) +
-      LLAMA_2_SPECIAL_TOKENS.SYSTEM_MESSAGE_END +
-      getMessageContent(messages[1]);
-  }
-  messages = [messages[0], ...messages.slice(2)];
-  // attach message pairs
-  for (let i = 1; i < messages.length; i += 2) {
-    let prompt = getMessageContent(messages[i - 1]);
-    let answer = getMessageContent(messages[i]);
-    finalPrompt += `${LLAMA_2_SPECIAL_TOKENS.BEGINNING_OF_SENTENCE}${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_START} ${prompt} ${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_END} ${answer} ${LLAMA_2_SPECIAL_TOKENS.END_OF_SENTENCE}`;
-  }
-  if (messages.length % 2 === 1) {
-    finalPrompt += `${LLAMA_2_SPECIAL_TOKENS.BEGINNING_OF_SENTENCE}${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_START} ${getMessageContent(messages[messages.length - 1])} ${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_END}`;
-  }
-  return finalPrompt;
-};
+  let credentials: any;
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: headers,
+    });
 
-/*
-refer: https://docs.mistral.ai/guides/tokenization/
-refer: https://github.com/chujiezheng/chat_templates/blob/main/chat_templates/mistral-instruct.jinja
-*/
-export const transformMessagesForMistralPrompt = (messages: Message[]) => {
-  let finalPrompt: string = `${MISTRAL_CONTROL_TOKENS.BEGINNING_OF_SENTENCE}`;
-  // Mistral does not support system messages. (ref: https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3/discussions/14)
-  if (messages.length > 0 && messages[0].role === MESSAGE_ROLES.SYSTEM) {
-    messages[0].content =
-      getMessageContent(messages[0]) + '\n' + getMessageContent(messages[1]);
-    messages[0].role = MESSAGE_ROLES.USER;
-  }
-  for (const message of messages) {
-    if (message.role === MESSAGE_ROLES.USER) {
-      finalPrompt += `${MISTRAL_CONTROL_TOKENS.CONVERSATION_TURN_START} ${message.content} ${MISTRAL_CONTROL_TOKENS.CONVERSATION_TURN_END}`;
-    } else {
-      finalPrompt += ` ${message.content} ${MISTRAL_CONTROL_TOKENS.END_OF_SENTENCE}`;
+    if (!response.ok) {
+      const resp = await response.text();
+      console.error({ message: resp });
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    const xmlData = await response.text();
+    credentials = parseXml(xmlData);
+    if (putInCacheWithValue) {
+      putInCacheWithValue(env(c), cacheKey, credentials, 60); //1 minute
+    }
+  } catch (error) {
+    console.error({ message: `Error assuming role:, ${error}` });
   }
-  return finalPrompt;
-};
+  return credentials;
+}
+
+function parseXml(xml: string) {
+  // Simple XML parser for this specific use case
+  const getTagContent = (tag: string) => {
+    const regex = new RegExp(`<${tag}>(.*?)</${tag}>`, 's');
+    const match = xml.match(regex);
+    return match ? match[1] : null;
+  };
+
+  const credentials = getTagContent('Credentials');
+  if (!credentials) {
+    throw new Error('Failed to parse Credentials from XML response');
+  }
+
+  return {
+    accessKeyId: getTagContent('AccessKeyId'),
+    secretAccessKey: getTagContent('SecretAccessKey'),
+    sessionToken: getTagContent('SessionToken'),
+    expiration: getTagContent('Expiration'),
+  };
+}

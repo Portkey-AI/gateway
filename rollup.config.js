@@ -9,7 +9,7 @@ export default {
     format: 'es',
   },
   plugins: [
-    typescript({ exclude: ['**/*.test.ts', 'start-test.js'] }),
+    typescript({ exclude: ['**/*.test.ts', 'start-test.js', 'cookbook'] }),
     terser(),
     json(),
   ],

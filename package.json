@@ -1,6 +1,6 @@
 {
   "name": "@portkey-ai/gateway",
-  "version": "1.7.7",
+  "version": "1.8.0",
   "description": "A fast AI gateway by Portkey",
   "repository": {
     "type": "git",
@@ -55,8 +55,8 @@
     "@rollup/plugin-typescript": "^11.1.5",
     "@types/async-retry": "^1.4.5",
     "@types/jest": "^29.5.12",
-    "husky": "^9.1.4",
     "@types/node": "20.8.3",
+    "husky": "^9.1.4",
     "jest": "^29.7.0",
     "prettier": "3.2.5",
     "rollup": "^4.9.1",

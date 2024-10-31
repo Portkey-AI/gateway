@@ -29,7 +29,6 @@ export const PerplexityAIChatCompleteConfig: ProviderConfig = {
   },
   max_completion_tokens: {
     param: 'max_tokens',
-    required: true,
     min: 1,
   },
   temperature: {
@@ -184,6 +183,9 @@ export const PerplexityAIChatCompleteStreamChunkTransform: (
         },
       ],
     })}` + '\n\n';
+
+  if (parsedChunk.choices[0]?.finish_reason)
+    return returnChunk + `data: [DONE]\n\n`;
 
   return returnChunk;
 };

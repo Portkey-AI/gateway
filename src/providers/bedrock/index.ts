@@ -4,24 +4,17 @@ import { Params } from '../../types/requestBody';
 import { ProviderConfigs } from '../types';
 import BedrockAPIConfig from './api';
 import {
+  BedrockConverseChatCompleteConfig,
+  BedrockChatCompleteStreamChunkTransform,
+  BedrockChatCompleteResponseTransform,
+  BedrockCohereChatCompleteConfig,
+  BedrockCohereChatCompleteStreamChunkTransform,
+  BedrockCohereChatCompleteResponseTransform,
   BedrockAI21ChatCompleteConfig,
   BedrockAI21ChatCompleteResponseTransform,
-  BedrockAnthropicChatCompleteConfig,
-  BedrockAnthropicChatCompleteResponseTransform,
-  BedrockAnthropicChatCompleteStreamChunkTransform,
-  BedrockCohereChatCompleteConfig,
-  BedrockCohereChatCompleteResponseTransform,
-  BedrockCohereChatCompleteStreamChunkTransform,
-  BedrockLlamaChatCompleteResponseTransform,
-  BedrockLlamaChatCompleteStreamChunkTransform,
-  BedrockTitanChatCompleteResponseTransform,
-  BedrockTitanChatCompleteStreamChunkTransform,
-  BedrockTitanChatompleteConfig,
-  BedrockMistralChatCompleteConfig,
-  BedrockMistralChatCompleteResponseTransform,
-  BedrockMistralChatCompleteStreamChunkTransform,
-  BedrockLlama3ChatCompleteConfig,
-  BedrockLlama2ChatCompleteConfig,
+  BedrockConverseAnthropicChatCompleteConfig,
+  BedrockConverseCohereChatCompleteConfig,
+  BedrockConverseAI21ChatCompleteConfig,
 } from './chatComplete';
 import {
   BedrockAI21CompleteConfig,
@@ -42,6 +35,7 @@ import {
   BedrockTitanCompleteResponseTransform,
   BedrockTitanCompleteStreamChunkTransform,
 } from './complete';
+import { BEDROCK_STABILITY_V1_MODELS } from './constants';
 import {
   BedrockCohereEmbedConfig,
   BedrockCohereEmbedResponseTransform,
@@ -49,8 +43,10 @@ import {
   BedrockTitanEmbedResponseTransform,
 } from './embed';
 import {
-  BedrockStabilityAIImageGenerateConfig,
-  BedrockStabilityAIImageGenerateResponseTransform,
+  BedrockStabilityAIImageGenerateV1Config,
+  BedrockStabilityAIImageGenerateV1ResponseTransform,
+  BedrockStabilityAIImageGenerateV2Config,
+  BedrockStabilityAIImageGenerateV2ResponseTransform,
 } from './imageGenerate';
 
 const BedrockConfig: ProviderConfigs = {
@@ -63,101 +59,120 @@ const BedrockConfig: ProviderConfigs = {
     // To remove the region in case its a cross-region inference profile ID
     // https://docs.aws.amazon.com/bedrock/latest/userguide/cross-region-inference-support.html
     const providerModel = params.model.replace(/^(us\.|eu\.)/, '');
-    const provider = providerModel?.split('.')[0];
-    const model = providerModel?.split('.')[1];
+    const providerModelArray = providerModel.split('.');
+    const provider = providerModelArray[0];
+    const model = providerModelArray.slice(1).join('.');
+    let config: ProviderConfigs = {};
     switch (provider) {
       case ANTHROPIC:
-        return {
+        config = {
           complete: BedrockAnthropicCompleteConfig,
-          chatComplete: BedrockAnthropicChatCompleteConfig,
+          chatComplete: BedrockConverseAnthropicChatCompleteConfig,
           api: BedrockAPIConfig,
           responseTransforms: {
             'stream-complete': BedrockAnthropicCompleteStreamChunkTransform,
             complete: BedrockAnthropicCompleteResponseTransform,
-            'stream-chatComplete':
-              BedrockAnthropicChatCompleteStreamChunkTransform,
-            chatComplete: BedrockAnthropicChatCompleteResponseTransform,
           },
         };
+        break;
       case COHERE:
-        return {
+        config = {
           complete: BedrockCohereCompleteConfig,
-          chatComplete: BedrockCohereChatCompleteConfig,
+          chatComplete: BedrockConverseCohereChatCompleteConfig,
           embed: BedrockCohereEmbedConfig,
           api: BedrockAPIConfig,
           responseTransforms: {
             'stream-complete': BedrockCohereCompleteStreamChunkTransform,
             complete: BedrockCohereCompleteResponseTransform,
-            'stream-chatComplete':
-              BedrockCohereChatCompleteStreamChunkTransform,
-            chatComplete: BedrockCohereChatCompleteResponseTransform,
             embed: BedrockCohereEmbedResponseTransform,
           },
         };
+        if (['command-text-v14', 'command-light-text-v14'].includes(model)) {
+          config.chatComplete = BedrockCohereChatCompleteConfig;
+          config.responseTransforms['stream-chatComplete'] =
+            BedrockCohereChatCompleteStreamChunkTransform;
+          config.responseTransforms.chatComplete =
+            BedrockCohereChatCompleteResponseTransform;
+        }
+        break;
       case 'meta':
-        const chatCompleteConfig =
-          model?.search('llama3') === -1
-            ? BedrockLlama2ChatCompleteConfig
-            : BedrockLlama3ChatCompleteConfig;
-        return {
+        config = {
           complete: BedrockLLamaCompleteConfig,
-          chatComplete: chatCompleteConfig,
           api: BedrockAPIConfig,
           responseTransforms: {
             'stream-complete': BedrockLlamaCompleteStreamChunkTransform,
             complete: BedrockLlamaCompleteResponseTransform,
-            'stream-chatComplete': BedrockLlamaChatCompleteStreamChunkTransform,
-            chatComplete: BedrockLlamaChatCompleteResponseTransform,
           },
         };
+        break;
       case 'mistral':
-        return {
+        config = {
           complete: BedrockMistralCompleteConfig,
-          chatComplete: BedrockMistralChatCompleteConfig,
           api: BedrockAPIConfig,
           responseTransforms: {
             'stream-complete': BedrockMistralCompleteStreamChunkTransform,
             complete: BedrockMistralCompleteResponseTransform,
-            'stream-chatComplete':
-              BedrockMistralChatCompleteStreamChunkTransform,
-            chatComplete: BedrockMistralChatCompleteResponseTransform,
           },
         };
+        break;
       case 'amazon':
-        return {
+        config = {
           complete: BedrockTitanCompleteConfig,
-          chatComplete: BedrockTitanChatompleteConfig,
           embed: BedrockTitanEmbedConfig,
           api: BedrockAPIConfig,
           responseTransforms: {
             'stream-complete': BedrockTitanCompleteStreamChunkTransform,
             complete: BedrockTitanCompleteResponseTransform,
-            'stream-chatComplete': BedrockTitanChatCompleteStreamChunkTransform,
-            chatComplete: BedrockTitanChatCompleteResponseTransform,
             embed: BedrockTitanEmbedResponseTransform,
           },
         };
+        break;
       case AI21:
-        return {
+        config = {
           complete: BedrockAI21CompleteConfig,
-          chatComplete: BedrockAI21ChatCompleteConfig,
           api: BedrockAPIConfig,
+          chatComplete: BedrockConverseAI21ChatCompleteConfig,
           responseTransforms: {
             complete: BedrockAI21CompleteResponseTransform,
-            chatComplete: BedrockAI21ChatCompleteResponseTransform,
           },
         };
+        if (['j2-mid-v1', 'j2-ultra-v1'].includes(model)) {
+          config.chatComplete = BedrockAI21ChatCompleteConfig;
+          config.responseTransforms.chatComplete =
+            BedrockAI21ChatCompleteResponseTransform;
+        }
+        break;
       case 'stability':
+        if (model && BEDROCK_STABILITY_V1_MODELS.includes(model)) {
+          return {
+            imageGenerate: BedrockStabilityAIImageGenerateV1Config,
+            api: BedrockAPIConfig,
+            responseTransforms: {
+              imageGenerate: BedrockStabilityAIImageGenerateV1ResponseTransform,
+            },
+          };
+        }
         return {
-          imageGenerate: BedrockStabilityAIImageGenerateConfig,
+          imageGenerate: BedrockStabilityAIImageGenerateV2Config,
           api: BedrockAPIConfig,
           responseTransforms: {
-            imageGenerate: BedrockStabilityAIImageGenerateResponseTransform,
+            imageGenerate: BedrockStabilityAIImageGenerateV2ResponseTransform,
           },
         };
-      default:
-        throw new GatewayError('Invalid bedrock provider');
+        break;
     }
+    if (!config.chatComplete) {
+      config.chatComplete = BedrockConverseChatCompleteConfig;
+    }
+    if (!config.responseTransforms['stream-chatComplete']) {
+      config.responseTransforms['stream-chatComplete'] =
+        BedrockChatCompleteStreamChunkTransform;
+    }
+    if (!config.responseTransforms.chatComplete) {
+      config.responseTransforms.chatComplete =
+        BedrockChatCompleteResponseTransform;
+    }
+    return config;
   },
 };
 

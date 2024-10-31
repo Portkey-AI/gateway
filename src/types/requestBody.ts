@@ -71,11 +71,21 @@ export interface Options {
   cache?: CacheSettings | string;
   metadata?: Record<string, string>;
   requestTimeout?: number;
+  /** This is used to determine if the request should be transformed to formData Example: Stability V2 */
+  transformToFormData?: boolean;
   /** AWS Bedrock specific */
   awsSecretAccessKey?: string;
   awsAccessKeyId?: string;
   awsSessionToken?: string;
   awsRegion?: string;
+  awsAuthType?: string;
+  awsRoleArn?: string;
+  awsExternalId?: string;
+
+  /** Stability AI specific */
+  stabilityClientId?: string;
+  stabilityClientUserId?: string;
+  stabilityClientVersion?: string;
 
   /** Hugging Face specific */
   huggingfaceBaseUrl?: string;
@@ -137,6 +147,8 @@ export interface Targets {
   index?: number;
   cache?: CacheSettings | string;
   targets?: Targets[];
+  /** This is used to determine if the request should be transformed to formData Example: Stability V2 */
+  transformToFormData?: boolean;
 }
 
 /**
@@ -305,6 +317,9 @@ export interface Params {
   };
   // Google Vertex AI specific
   safety_settings?: any;
+  // Anthropic specific
+  anthropic_beta?: string;
+  anthropic_version?: string;
 }
 
 interface Examples {
