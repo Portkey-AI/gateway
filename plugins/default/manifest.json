@@ -475,6 +475,19 @@
         }
       ],
       "parameters": {}
+    },
+    {
+      "name": "Endpoint Reachability",
+      "id": "endpointReachability",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequest", "afterRequest"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks if endpoint is reachable or not."
+        }
+      ],
+      "parameters": {}
     }
   ]
 }
