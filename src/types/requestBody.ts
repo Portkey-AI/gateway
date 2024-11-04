@@ -299,6 +299,7 @@ export interface Params {
   n?: number;
   stream?: boolean;
   logprobs?: number;
+  top_logprobs?: boolean;
   echo?: boolean;
   stop?: string | string[];
   presence_penalty?: number;
@@ -315,6 +316,15 @@ export interface Params {
     type: 'json_object' | 'text' | 'json_schema';
     json_schema?: any;
   };
+  seed?: number;
+  store?: boolean;
+  metadata?: object;
+  modalities?: string[];
+  audio?: {
+    voice: string;
+    format: string;
+  };
+  service_tier?: string;
   // Google Vertex AI specific
   safety_settings?: any;
   // Anthropic specific
