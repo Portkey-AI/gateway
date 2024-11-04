@@ -87,6 +87,18 @@ export const AzureOpenAIChatCompleteConfig: ProviderConfig = {
   response_format: {
     param: 'response_format',
   },
+  store: {
+    param: 'store',
+  },
+  metadata: {
+    param: 'metadata',
+  },
+  modalities: {
+    param: 'modalities',
+  },
+  audio: {
+    param: 'audio',
+  },
 };
 
 interface AzureOpenAIChatCompleteResponse extends ChatCompletionResponse {}
