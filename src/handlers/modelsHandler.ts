@@ -9,19 +9,29 @@ import providers from '../data/providers.json';
  * @returns - The response
  */
 export async function modelsHandler(c: Context): Promise<Response> {
-  // If the request does not contain a provider query param, return all models
+  // If the request does not contain a provider query param, return all models. Add a count as well.
   const provider = c.req.query('provider');
   if (!provider) {
-    return c.json(models);
+    return c.json({
+      ...models,
+      count: models.data.length,
+    });
   } else {
     // Filter the models by the provider
     const filteredModels = models.data.filter(
-      (model) => model.provider.id === provider
+      (model: any) => model.provider.id === provider
     );
-    return c.json(filteredModels);
+    return c.json({
+      ...models,
+      data: filteredModels,
+      count: filteredModels.length,
+    });
   }
 }
 
 export async function providersHandler(c: Context): Promise<Response> {
-  return c.json(providers);
+  return c.json({
+    ...providers,
+    count: providers.data.length,
+  });
 }
