@@ -99,6 +99,9 @@ export const AzureOpenAIChatCompleteConfig: ProviderConfig = {
   audio: {
     param: 'audio',
   },
+  seed: {
+    param: 'seed',
+  },
 };
 
 interface AzureOpenAIChatCompleteResponse extends ChatCompletionResponse {}
