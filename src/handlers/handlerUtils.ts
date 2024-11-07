@@ -1013,6 +1013,13 @@ export function constructConfigFromRequestHeaders(
     resourceName: requestHeaders[`x-${POWERED_BY}-azure-resource-name`],
     deploymentId: requestHeaders[`x-${POWERED_BY}-azure-deployment-id`],
     apiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
+    azureAuthMode: requestHeaders[`x-${POWERED_BY}-azure-auth-mode`],
+    azureManagedClientId:
+      requestHeaders[`x-${POWERED_BY}-azure-managed-client-id`],
+    azureEntraClientId: requestHeaders[`x-${POWERED_BY}-azure-entra-client-id`],
+    azureEntraClientSecret:
+      requestHeaders[`x-${POWERED_BY}-azure-entra-client-secret`],
+    azureEntraTenantId: requestHeaders[`x-${POWERED_BY}-azure-entra-tenant-id`],
     azureModelName: requestHeaders[`x-${POWERED_BY}-azure-model-name`],
   };
 
