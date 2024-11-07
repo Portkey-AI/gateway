@@ -336,6 +336,15 @@ export interface Params {
     format: string;
   };
   service_tier?: string;
+  prediction?: {
+    type: string;
+    content:
+      | {
+          type: string;
+          text: string;
+        }[]
+      | string;
+  };
   // Google Vertex AI specific
   safety_settings?: any;
   // Anthropic specific

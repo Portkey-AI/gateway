@@ -111,6 +111,9 @@ export const OpenAIChatCompleteConfig: ProviderConfig = {
   audio: {
     param: 'audio',
   },
+  prediction: {
+    param: 'prediction',
+  },
 };
 
 export interface OpenAIChatCompleteResponse extends ChatCompletionResponse {

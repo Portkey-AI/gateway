@@ -102,6 +102,9 @@ export const AzureOpenAIChatCompleteConfig: ProviderConfig = {
   seed: {
     param: 'seed',
   },
+  prediction: {
+    param: 'prediction',
+  },
 };
 
 interface AzureOpenAIChatCompleteResponse extends ChatCompletionResponse {}
