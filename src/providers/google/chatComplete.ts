@@ -440,7 +440,7 @@ export const GoogleChatCompleteResponseTransform: (
       model: 'Unknown',
       provider: 'google',
       choices:
-        response.candidates?.map((generation) => {
+        response.candidates?.map((generation, idx) => {
           let message: Message = { role: 'assistant', content: '' };
           if (generation.content?.parts[0]?.text) {
             message = {
@@ -466,7 +466,7 @@ export const GoogleChatCompleteResponseTransform: (
           }
           return {
             message: message,
-            index: generation.index,
+            index: generation.index ?? idx,
             finish_reason: generation.finishReason,
           };
         }) ?? [],
@@ -512,7 +512,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
       model: '',
       provider: 'google',
       choices:
-        parsedChunk.candidates?.map((generation) => {
+        parsedChunk.candidates?.map((generation, index) => {
           let message: Message = { role: 'assistant', content: '' };
           if (generation.content.parts[0]?.text) {
             message = {
@@ -539,7 +539,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
           }
           return {
             delta: message,
-            index: generation.index,
+            index: generation.index ?? index,
             finish_reason: generation.finishReason,
           };
         }) ?? [],
