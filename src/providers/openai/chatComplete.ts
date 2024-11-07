@@ -99,6 +99,18 @@ export const OpenAIChatCompleteConfig: ProviderConfig = {
   max_completion_tokens: {
     param: 'max_completion_tokens',
   },
+  store: {
+    param: 'store',
+  },
+  metadata: {
+    param: 'metadata',
+  },
+  modalities: {
+    param: 'modalities',
+  },
+  audio: {
+    param: 'audio',
+  },
 };
 
 export interface OpenAIChatCompleteResponse extends ChatCompletionResponse {
