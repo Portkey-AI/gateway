@@ -7,8 +7,16 @@ import {
   VertexAnthropicChatCompleteResponseTransform,
   VertexAnthropicChatCompleteStreamChunkTransform,
   VertexGoogleChatCompleteConfig,
+  VertexLlamaChatCompleteConfig,
+  VertexLlamaChatCompleteResponseTransform,
+  VertexLlamaChatCompleteStreamChunkTransform,
 } from './chatComplete';
 import { getModelAndProvider } from './utils';
+import { GoogleEmbedConfig, GoogleEmbedResponseTransform } from './embed';
+import {
+  GoogleImageGenConfig,
+  GoogleImageGenResponseTransform,
+} from './imageGenerate';
 
 const VertexConfig: ProviderConfigs = {
   api: VertexApiConfig,
@@ -21,9 +29,13 @@ const VertexConfig: ProviderConfigs = {
         return {
           chatComplete: VertexGoogleChatCompleteConfig,
           api: GoogleApiConfig,
+          embed: GoogleEmbedConfig,
+          imageGenerate: GoogleImageGenConfig,
           responseTransforms: {
             'stream-chatComplete': GoogleChatCompleteStreamChunkTransform,
             chatComplete: GoogleChatCompleteResponseTransform,
+            embed: GoogleEmbedResponseTransform,
+            imageGenerate: GoogleImageGenResponseTransform,
           },
         };
       case 'anthropic':
@@ -34,6 +46,15 @@ const VertexConfig: ProviderConfigs = {
             'stream-chatComplete':
               VertexAnthropicChatCompleteStreamChunkTransform,
             chatComplete: VertexAnthropicChatCompleteResponseTransform,
+          },
+        };
+      case 'meta':
+        return {
+          chatComplete: VertexLlamaChatCompleteConfig,
+          api: GoogleApiConfig,
+          responseTransforms: {
+            chatComplete: VertexLlamaChatCompleteResponseTransform,
+            'stream-chatComplete': VertexLlamaChatCompleteStreamChunkTransform,
           },
         };
     }

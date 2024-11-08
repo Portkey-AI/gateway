@@ -1,5 +1,10 @@
 import { ANTHROPIC } from '../../globals';
-import { Params, Message, ContentType } from '../../types/requestBody';
+import {
+  Params,
+  Message,
+  ContentType,
+  AnthropicPromptCache,
+} from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -9,10 +14,11 @@ import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
+import { AnthropicStreamState } from './types';
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
-interface AnthropicTool {
+interface AnthropicTool extends AnthropicPromptCache {
   name: string;
   description: string;
   input_schema: {
@@ -36,7 +42,7 @@ interface AnthropicToolResultContentItem {
 
 type AnthropicMessageContentItem = AnthropicToolResultContentItem | ContentType;
 
-interface AnthropicMessage extends Message {
+interface AnthropicMessage extends Message, AnthropicPromptCache {
   content?: string | AnthropicMessageContentItem[];
 }
 
@@ -104,7 +110,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
         let messages: AnthropicMessage[] = [];
         // Transform the chat messages into a simple prompt
         if (!!params.messages) {
-          params.messages.forEach((msg) => {
+          params.messages.forEach((msg: Message & AnthropicPromptCache) => {
             if (msg.role === 'system') return;
 
             if (msg.role === 'assistant') {
@@ -123,6 +129,9 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                   transformedMessage.content.push({
                     type: item.type,
                     text: item.text,
+                    ...((item as any).cache_control && {
+                      cache_control: { type: 'ephemeral' },
+                    }),
                   });
                 } else if (
                   item.type === 'image_url' &&
@@ -143,6 +152,9 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                           media_type: mediaType,
                           data: base64Image,
                         },
+                        ...((item as any).cache_control && {
+                          cache_control: { type: 'ephemeral' },
+                        }),
                       });
                     }
                   }
@@ -168,26 +180,37 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
       param: 'system',
       required: false,
       transform: (params: Params) => {
-        let systemMessage: string = '';
+        let systemMessages: AnthropicMessageContentItem[] = [];
         // Transform the chat messages into a simple prompt
         if (!!params.messages) {
-          params.messages.forEach((msg) => {
+          params.messages.forEach((msg: Message & AnthropicPromptCache) => {
             if (
               msg.role === 'system' &&
               msg.content &&
               typeof msg.content === 'object' &&
               msg.content[0].text
             ) {
-              systemMessage = msg.content[0].text;
+              msg.content.forEach((_msg) => {
+                systemMessages.push({
+                  text: _msg.text,
+                  type: 'text',
+                  ...((_msg as any)?.cache_control && {
+                    cache_control: { type: 'ephemeral' },
+                  }),
+                });
+              });
             } else if (
               msg.role === 'system' &&
               typeof msg.content === 'string'
             ) {
-              systemMessage = msg.content;
+              systemMessages.push({
+                text: msg.content,
+                type: 'text',
+              });
             }
           });
         }
-        return systemMessage;
+        return systemMessages;
       },
     },
   ],
@@ -207,6 +230,9 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                 properties: tool.function.parameters?.properties || {},
                 required: tool.function.parameters?.required || [],
               },
+              ...(tool.cache_control && {
+                cache_control: { type: 'ephemeral' },
+              }),
             });
           }
         });
@@ -233,6 +259,9 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
   max_tokens: {
     param: 'max_tokens',
     required: true,
+  },
+  max_completion_tokens: {
+    param: 'max_tokens',
   },
   temperature: {
     param: 'temperature',
@@ -296,6 +325,8 @@ export interface AnthropicChatCompleteResponse {
   usage: {
     input_tokens: number;
     output_tokens: number;
+    cache_creation_input_tokens?: number;
+    cache_read_input_tokens?: number;
   };
 }
 
@@ -318,11 +349,15 @@ export interface AnthropicChatCompleteStreamResponse {
   usage?: {
     output_tokens?: number;
     input_tokens?: number;
+    cache_creation_input_tokens?: number;
+    cache_read_input_tokens?: number;
   };
   message?: {
     usage?: {
       output_tokens?: number;
       input_tokens?: number;
+      cache_creation_input_tokens?: number;
+      cache_read_input_tokens?: number;
     };
   };
 }
@@ -358,7 +393,15 @@ export const AnthropicChatCompleteResponseTransform: (
   }
 
   if ('content' in response) {
-    const { input_tokens = 0, output_tokens = 0 } = response?.usage;
+    const {
+      input_tokens = 0,
+      output_tokens = 0,
+      cache_creation_input_tokens,
+      cache_read_input_tokens,
+    } = response?.usage;
+
+    const shouldSendCacheUsage =
+      cache_creation_input_tokens || cache_read_input_tokens;
 
     let content = '';
     if (response.content.length && response.content[0].type === 'text') {
@@ -401,6 +444,10 @@ export const AnthropicChatCompleteResponseTransform: (
         prompt_tokens: input_tokens,
         completion_tokens: output_tokens,
         total_tokens: input_tokens + output_tokens,
+        ...(shouldSendCacheUsage && {
+          cache_read_input_tokens: cache_read_input_tokens,
+          cache_creation_input_tokens: cache_creation_input_tokens,
+        }),
       },
     };
   }
@@ -411,7 +458,7 @@ export const AnthropicChatCompleteResponseTransform: (
 export const AnthropicChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
-  streamState: Record<string, boolean>
+  streamState: AnthropicStreamState
 ) => string | undefined = (responseChunk, fallbackId, streamState) => {
   let chunk = responseChunk.trim();
   if (
@@ -433,7 +480,6 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   chunk = chunk.trim();
 
   const parsedChunk: AnthropicChatCompleteStreamResponse = JSON.parse(chunk);
-
   if (
     parsedChunk.type === 'content_block_start' &&
     parsedChunk.content_block?.type === 'text'
@@ -442,7 +488,20 @@ export const AnthropicChatCompleteStreamChunkTransform: (
     return;
   }
 
+  const shouldSendCacheUsage =
+    parsedChunk.message?.usage?.cache_read_input_tokens ||
+    parsedChunk.message?.usage?.cache_creation_input_tokens;
+
   if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
+    streamState.usage = {
+      prompt_tokens: parsedChunk.message?.usage?.input_tokens,
+      ...(shouldSendCacheUsage && {
+        cache_read_input_tokens:
+          parsedChunk.message?.usage?.cache_read_input_tokens,
+        cache_creation_input_tokens:
+          parsedChunk.message?.usage?.cache_creation_input_tokens,
+      }),
+    };
     return (
       `data: ${JSON.stringify({
         id: fallbackId,
@@ -460,9 +519,6 @@ export const AnthropicChatCompleteStreamChunkTransform: (
             finish_reason: null,
           },
         ],
-        usage: {
-          prompt_tokens: parsedChunk.message?.usage?.input_tokens,
-        },
       })}` + '\n\n'
     );
   }
@@ -484,6 +540,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
         ],
         usage: {
           completion_tokens: parsedChunk.usage?.output_tokens,
+          ...streamState.usage,
         },
       })}` + '\n\n'
     );

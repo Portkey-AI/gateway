@@ -34,7 +34,10 @@ import { transformGenerationConfig } from './transformGenerationConfig';
 import type {
   GoogleErrorResponse,
   GoogleGenerateContentResponse,
+  VertexLlamaChatCompleteStreamChunk,
+  VertexLLamaChatCompleteResponse,
 } from './types';
+import { getMimeType } from './utils';
 
 export const VertexGoogleChatCompleteConfig: ProviderConfig = {
   // https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning#gemini-model-versions
@@ -113,19 +116,27 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
                   });
 
                   return;
+                } else if (
+                  url.startsWith('gs://') ||
+                  url.startsWith('https://') ||
+                  url.startsWith('http://')
+                ) {
+                  parts.push({
+                    fileData: {
+                      mimeType: getMimeType(url),
+                      fileUri: url,
+                    },
+                  });
+                } else {
+                  // NOTE: This block is kept to maintain backward compatibility
+                  // Earlier we were assuming that all images will be base64 with image/jpeg mimeType
+                  parts.push({
+                    inlineData: {
+                      mimeType: 'image/jpeg',
+                      data: c.image_url?.url,
+                    },
+                  });
                 }
-
-                // This part is problematic because URLs are not supported in the current implementation.
-                // Two problems exist:
-                // 1. Only Google Cloud Storage URLs are supported.
-                // 2. MimeType is not supported in OpenAI API, but it is required in Google Vertex AI API.
-                // Google will return an error here if any other URL is provided.
-                parts.push({
-                  fileData: {
-                    mimeType: 'image/jpeg',
-                    fileUri: url,
-                  },
-                });
               }
             });
           } else if (typeof message.content === 'string') {
@@ -207,6 +218,10 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
     transform: (params: Params) => transformGenerationConfig(params),
   },
   max_tokens: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
+  max_completion_tokens: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
@@ -506,6 +521,9 @@ export const VertexAnthropicChatCompleteConfig: ProviderConfig = {
     param: 'max_tokens',
     required: true,
   },
+  max_completion_tokens: {
+    param: 'max_tokens',
+  },
   temperature: {
     param: 'temperature',
     default: 1,
@@ -641,6 +659,53 @@ export const GoogleChatCompleteResponseTransform: (
   }
 
   return generateInvalidProviderResponseError(response, GOOGLE_VERTEX_AI);
+};
+
+export const VertexLlamaChatCompleteConfig: ProviderConfig = {
+  model: {
+    param: 'model',
+    required: true,
+    default: 'meta/llama3-405b-instruct-maas',
+  },
+  messages: {
+    param: 'messages',
+    required: true,
+    default: [],
+  },
+  max_tokens: {
+    param: 'max_tokens',
+    default: 512,
+    min: 1,
+    max: 2048,
+  },
+  max_completion_tokens: {
+    param: 'max_tokens',
+    default: 512,
+    min: 1,
+    max: 2048,
+  },
+  temperature: {
+    param: 'temperature',
+    default: 0.5,
+    min: 0,
+    max: 1,
+  },
+  top_p: {
+    param: 'top_p',
+    default: 0.9,
+    min: 0,
+    max: 1,
+  },
+  top_k: {
+    param: 'top_k',
+    default: 0,
+    min: 0,
+    max: 2048,
+  },
+  stream: {
+    param: 'stream',
+    default: false,
+  },
 };
 
 export const GoogleChatCompleteStreamChunkTransform: (
@@ -934,4 +999,51 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
       ],
     })}` + '\n\n'
   );
+};
+
+export const VertexLlamaChatCompleteResponseTransform: (
+  response: VertexLLamaChatCompleteResponse | GoogleErrorResponse,
+  responseStatus: number
+) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+  if (
+    responseStatus !== 200 &&
+    Array.isArray(response) &&
+    response.length > 0 &&
+    'error' in response[0]
+  ) {
+    const { error } = response[0];
+
+    return generateErrorResponse(
+      {
+        message: error.message,
+        type: error.status,
+        param: null,
+        code: String(error.code),
+      },
+      GOOGLE_VERTEX_AI
+    );
+  }
+  if ('choices' in response) {
+    return {
+      id: crypto.randomUUID(),
+      created: Math.floor(Date.now() / 1000),
+      provider: GOOGLE_VERTEX_AI,
+      ...response,
+    };
+  }
+  return generateInvalidProviderResponseError(response, GOOGLE_VERTEX_AI);
+};
+
+export const VertexLlamaChatCompleteStreamChunkTransform: (
+  response: string,
+  fallbackId: string
+) => string = (responseChunk, fallbackId) => {
+  let chunk = responseChunk.trim();
+  chunk = chunk.replace(/^data: /, '');
+  chunk = chunk.trim();
+  const parsedChunk: VertexLlamaChatCompleteStreamChunk = JSON.parse(chunk);
+  parsedChunk.id = fallbackId;
+  parsedChunk.created = Math.floor(Date.now() / 1000);
+  parsedChunk.provider = GOOGLE_VERTEX_AI;
+  return `data: ${JSON.stringify(parsedChunk)}` + '\n\n';
 };

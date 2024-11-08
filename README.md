@@ -27,19 +27,33 @@ The [AI Gateway](https://portkey.ai/features/ai-gateway) streamlines requests to
 ✅&nbsp; **Multimodal** to support routing between Vision, TTS, STT, Image Gen, and more models <br>
 ✅&nbsp; **Plug-in** middleware as needed <br>
 ✅&nbsp; Battle tested over **480B tokens** <br>
-✅&nbsp; **Enterprise-ready** for enhanced security, scale, and custom deployments <br>
+✅&nbsp; **Enterprise-ready** for enhanced security, scale, and custom deployments <br><br>
+
+> [!TIP]
+>  ⭐️ **Star this repo** to get Github release notifications for new provider integrations and features.
+
+![star-2](https://github.com/user-attachments/assets/53597dce-6333-4ecc-a154-eb05532954e4)
+
+<details>
+  <summary><kbd>Star History</kbd></summary>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=portkey-ai%2Fgateway&theme=dark&type=Date">
+    <img width="100%" src="https://api.star-history.com/svg?repos=portkey-ai%2Fgateway&type=Date">
+  </picture>
+</details>
 <br>
+
 ## Setup & Installation
 Use the AI gateway through the **hosted API** or **self-host** the open-source or enterprise versions on your environment.
 <br>
 
-#### 👉 Hosted Gateway on portkey.ai (Fastest)
+### 👉 Hosted Gateway on portkey.ai (Fastest)
 The hosted API is the fastest way to setup an AI Gateway for your Gen AI application. We process **billions of tokens** daily and is in production with companies like Postman, Haptik, Turing, MultiOn, SiteGPT, and more.
 
 <a href="https://app.portkey.ai/signup"><img src="https://portkey.ai/blog/content/images/2024/08/Get-API-Key--3-.png" height=50 alt="Get API Key" /></a><br>
 <br>
 
-#### 👉 Self-hosting the OSS version ([MIT License](https://github.com/Portkey-AI/gateway?tab=MIT-1-ov-file#readme))
+### 👉 Self-hosting the OSS version ([MIT License](https://github.com/Portkey-AI/gateway?tab=MIT-1-ov-file#readme))
 
 To run the AI gateway locally, execute the following command in your terminal. (Needs npx installed) Or, explore deployment guides for [Cloudflare](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#cloudflare-workers), [Docker](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#docker), [Node.js](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#nodejs-server) and more [here](#deploying-the-ai-gateway).
 ```bash
@@ -48,23 +62,23 @@ npx @portkey-ai/gateway
 <sup>Your AI Gateway is now running on http://localhost:8787 🚀</sup>
 <br>
 
-#### 👉 Self-hosting the Enterprise Version
-The AI Gateway's enterprise version offers enterprise-ready capabilities for **org management**, **governance**, **security** and [more](https://docs.portkey.ai/docs/product/enterprise-offering) out of the box. Compare the open source, hosted and enterprise versions here.
+### 👉 Self-hosting the Enterprise Version
+The AI Gateway's enterprise version offers enterprise-ready capabilities for **org management**, **governance**, **security** and [more](https://docs.portkey.ai/docs/product/enterprise-offering) out of the box. Compare the open source, hosted and enterprise versions [here](https://docs.portkey.ai/docs/product/product-feature-comparison).
 
 The enterprise deployment architecture, supported platforms is available here - [**Enterprise Private Cloud Deployments**](https://docs.portkey.ai/docs/product/enterprise-offering/private-cloud-deployments)
 
-<a href="https://app.portkey.ai/signup"><img src="https://portkey.ai/blog/content/images/2024/08/Get-API-Key--5-.png" height=50 alt="Book an enterprise AI gateway demo" /></a><br>
+<a href="https://portkey.sh/demo-22"><img src="https://portkey.ai/blog/content/images/2024/08/Get-API-Key--5-.png" height=50 alt="Book an enterprise AI gateway demo" /></a><br>
 
 <br>
 
 ## Making requests through the AI gateway
 
-#### <img src="docs/images/openai.png" height=15 /> Compatible with OpenAI API & SDKs
+### <img src="docs/images/openai.png" height=15 /> Compatible with OpenAI API & SDKs
 
 The AI Gateway is compatible with the OpenAI API & SDKs, and extends them to call 200+ LLMs reliably.  To use the Gateway through OpenAI, **update the client** to include the gateway's URL and headers and make requests as usual. The AI gateway can translate requests written in the OpenAI format to the signature expected by the specified provider. [View examples](https://docs.portkey.ai/docs/guides/getting-started/getting-started-with-ai-gateway)
 <br><br>
 
-#### <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/1869px-Python-logo-notext.svg.png" height=15 /> Using the Python SDK &nbsp;&nbsp;<a href="https://colab.research.google.com/drive/1hLvoq_VdGlJ_92sPPiwTznSra5Py0FuW?usp=sharing"><img src="https://colab.research.google.com/assets/colab-badge.svg"></a>
+### <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/1869px-Python-logo-notext.svg.png" height=15 /> Using the Python SDK &nbsp;&nbsp;<a href="https://colab.research.google.com/drive/1hLvoq_VdGlJ_92sPPiwTznSra5Py0FuW?usp=sharing"><img src="https://colab.research.google.com/assets/colab-badge.svg"></a>
 [Portkey Python SDK](https://github.com/Portkey-AI/portkey-python-sdk) is a wrapper over the OpenAI Python SDK with added support for additional parameters across all other providers. **If you're building with Python, this is the recommended library** to connect to the Gateway.
 ```bash
 pip install -qU portkey-ai
@@ -72,7 +86,7 @@ pip install -qU portkey-ai
 <br>
 
 
-#### <img src="https://cdn-icons-png.flaticon.com/512/5968/5968322.png" height=15 /> Using the Node.JS SDK
+### <img src="https://cdn-icons-png.flaticon.com/512/5968/5968322.png" height=15 /> Using the Node.JS SDK
 [Portkey JS/TS SDK](https://www.npmjs.com/package/portkey-ai) is a wrapper over the OpenAI JS SDK with added support for additional parameters across all other providers. **If you're building with JS or TS, this is the recommended library** to connect to the Gateway.
 
 ```bash
@@ -81,11 +95,11 @@ npm install --save portkey-ai
 <br>
 
 
-#### <img src="https://www.svgrepo.com/show/305922/curl.svg" height=15 /> Using the REST APIs
+### <img src="https://www.svgrepo.com/show/305922/curl.svg" height=15 /> Using the REST APIs
 The AI gateway supports OpenAI compatible endpoints with added parameter support for all other providers and models. [View API Reference](https://docs.portkey.ai/docs/api-reference/introduction).
 <br><br>
 
-#### Other Integrations
+### Other Integrations
 
 | Language          | Supported SDKs                                                                                                                                                                                                                                                                                                  |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -101,16 +115,17 @@ The AI gateway supports OpenAI compatible endpoints with added parameter support
 
 ## Gateway Cookbooks
 
-### 📈 Trending Cookbooks
-* [Run Gateway on prompts from Langchain hub](/cookbook/use-cases/run-gateway-on-prompts-from-langchain-hub.md)
-* [Use Porkey Gateway with Vercel's AI SDK](/cookbook/integrations/vercel-ai.md)
-* [Set up fallback from SDXL to Dall-E-3](/cookbook/getting-started/fallback-from-stable-diffusion-to-dall-e.ipynb)
+### Trending Cookbooks
+- Use models from [Nvidia NIM](/cookbook/providers/nvidia.ipynb) with AI Gateway
+- Monitor [CrewAI Agents](/cookbook/monitoring-agents/CrewAI_with_Telemetry.ipynb) with Portkey!
+- Comparing [Top 10 LMSYS Models](./use-cases/LMSYS%20Series/comparing-top10-LMSYS-models-with-Portkey.ipynb) with AI Gateway.
 
-### ✨ Latest Cookbooks
-* [Comparing Top 10 LMSYS Models with Portkey](/cookbook/use-cases/LMSYS%20Series/comparing-top10-LMSYS-models-with-Portkey.ipynb)
-* [Fallback from OpenAI to Azure OpenAI](/cookbook/getting-started/fallback-from-openai-to-azure.ipynb)
-* [Set up automatic retries for failed requests](/cookbook/getting-started/automatic-retries-on-failures.md)
-* [Call Llama 3 on Groq](/cookbook/use-cases/llama-3-on-groq.ipynb)
+### Latest Cookbooks
+* [Create Synthetic Datasets using Nemotron](/cookbook/use-cases/Nemotron_GPT_Finetuning_Portkey.ipynb)
+* [Use Portkey Gateway with Vercel's AI SDK](/cookbook/integrations/vercel-ai.md)
+* [Monitor Llama Agents with Portkey](/cookbook/monitoring-agents/Llama_Agents_with_Telemetry.ipynb)
+
+
 
 ### [More Examples](https://github.com/Portkey-AI/gateway/tree/main/cookbook)
 
@@ -149,6 +164,7 @@ Gateway seamlessly integrates with popular agent frameworks. [Read the documenta
 |------------------------------|--------|-------------|---------|------|---------------|-------------------|
 | [Autogen](https://docs.portkey.ai/docs/welcome/agents/autogen)    | ✅     | ✅          | ✅      | ✅   | ✅            | ✅                |
 | [CrewAI](https://docs.portkey.ai/docs/welcome/agents/crewai)             | ✅     | ✅          | ✅      | ✅   | ✅            | ✅                |
+| [LangChain](https://docs.portkey.ai/docs/welcome/agents/langchain-agents)             | ✅     | ✅          | ✅      | ✅   | ✅            | ✅                |
 | [Phidata](https://docs.portkey.ai/docs/welcome/agents/phidata)             | ✅     | ✅          | ✅      | ✅   | ✅            | ✅                |
 | [Llama Index](https://docs.portkey.ai/docs/welcome/agents/llama-agents)             | ✅     | ✅          | ✅      | ✅   | ✅            | ✅                |
 | [Control Flow](https://docs.portkey.ai/docs/welcome/agents/control-flow) | ✅     | ✅          | ✅      | ✅   | ✅            | ✅                |
@@ -248,18 +264,18 @@ Make your AI app more <ins>reliable</ins> and <ins>forward compatible</ins>, whi
 ✅&nbsp; Secure Key Management - for role-based access control and tracking <br>
 ✅&nbsp; Simple & Semantic Caching - to serve repeat queries faster & save costs <br>
 ✅&nbsp; Access Control & Inbound Rules - to control which IPs and Geos can connect to your deployments <br>
-✅&nbsp; PII Redaction - to automatically remove sensitive data from your requests to prevent indavertent exposure <br>
+✅&nbsp; PII Redaction - to automatically remove sensitive data from your requests to prevent inadvertent exposure <br>
 ✅&nbsp; SOC2, ISO, HIPAA, GDPR Compliances - for best security practices <br>
 ✅&nbsp; Professional Support - along with feature prioritization <br>
 
-[Schedule a call to discuss enterprise deployments](https://calendly.com/rohit-portkey/noam)
+[Schedule a call to discuss enterprise deployments](https://portkey.sh/demo-22)
 
 <br>
 
 
 ## Contributing
 
-The easiest way to contribute is to pick an issue with the `good first issue` tag 💪. Read the contribution guidelines [here](/CONTRIBUTING.md).
+The easiest way to contribute is to pick an issue with the `good first issue` tag 💪. Read the contribution guidelines [here](/.github/CONTRIBUTING.md).
 
 Bug Report? [File here](https://github.com/Portkey-AI/gateway/issues) | Feature Request? [File here](https://github.com/Portkey-AI/gateway/issues)
 

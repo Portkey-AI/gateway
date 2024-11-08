@@ -13,17 +13,36 @@ export const handler: PluginHandler = async (
 ) => {
   let error = null;
   let verdict = false;
-  let data = null;
+  let data: any = null;
 
   try {
     const keys = parameters.keys;
     const operator = parameters.operator;
     let responseText = getText(context, eventType);
 
-    const jsonRegex = /{.*?}/g;
-    const jsonMatches = responseText.match(jsonRegex);
+    // Extract JSON from code blocks and general text
+    const extractJson = (text: string): string[] => {
+      const codeBlockRegex = /```+(?:json)?\s*([\s\S]*?)```+/g;
+      const jsonRegex = /{[\s\S]*?}/g;
+      const matches = [];
 
-    if (jsonMatches) {
+      // Extract from code blocks
+      let match;
+      while ((match = codeBlockRegex.exec(text)) !== null) {
+        matches.push(match[1].trim());
+      }
+
+      // Extract JSON-like structures
+      while ((match = jsonRegex.exec(text)) !== null) {
+        matches.push(match[0]);
+      }
+
+      return matches;
+    };
+
+    const jsonMatches = extractJson(responseText);
+
+    if (jsonMatches.length > 0) {
       for (const jsonMatch of jsonMatches) {
         let responseJson: any;
         try {
@@ -34,33 +53,56 @@ export const handler: PluginHandler = async (
 
         responseJson = responseJson || {};
 
+        const presentKeys = keys.filter((key: string) =>
+          responseJson.hasOwnProperty(key)
+        );
+        const missingKeys = keys.filter(
+          (key: string) => !responseJson.hasOwnProperty(key)
+        );
+
         // Check if the JSON contains any, all or none of the keys
         switch (operator) {
           case 'any':
-            verdict = keys.some((key: string) =>
-              responseJson.hasOwnProperty(key)
-            );
+            verdict = presentKeys.length > 0;
             break;
           case 'all':
-            verdict = keys.every((key: string) =>
-              responseJson.hasOwnProperty(key)
-            );
+            verdict = missingKeys.length === 0;
             break;
           case 'none':
-            verdict = keys.every(
-              (key: string) => !responseJson.hasOwnProperty(key)
-            );
+            verdict = presentKeys.length === 0;
             break;
         }
 
         if (verdict) {
-          data = responseJson;
+          data = {
+            matchedJson: responseJson,
+            explanation: `Successfully matched JSON with '${operator}' keys criteria.`,
+            presentKeys,
+            missingKeys,
+          };
           break;
+        } else {
+          data = {
+            matchedJson: responseJson,
+            explanation: `Failed to match JSON with '${operator}' keys criteria.`,
+            presentKeys,
+            missingKeys,
+          };
         }
       }
+    } else {
+      data = {
+        explanation: 'No valid JSON found in the response.',
+        requiredKeys: keys,
+        operator,
+      };
     }
-  } catch (e) {
-    error = e as Error;
+  } catch (e: any) {
+    error = e;
+    data = {
+      explanation: 'An error occurred while processing the JSON.',
+      error: e.message,
+    };
   }
 
   return { error, verdict, data };

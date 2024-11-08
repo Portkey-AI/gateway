@@ -7,6 +7,7 @@ import {
   ToolCall,
   ToolChoice,
 } from '../../types/requestBody';
+import { derefer, getMimeType } from '../google-vertex-ai/utils';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -31,8 +32,25 @@ const transformGenerationConfig = (params: Params) => {
   if (params['max_tokens']) {
     generationConfig['maxOutputTokens'] = params['max_tokens'];
   }
+  if (params['max_completion_tokens']) {
+    generationConfig['maxOutputTokens'] = params['max_completion_tokens'];
+  }
   if (params['stop']) {
     generationConfig['stopSequences'] = params['stop'];
+  }
+  if (params?.response_format?.type === 'json_object') {
+    generationConfig['responseMimeType'] = 'application/json';
+  }
+  if (params?.response_format?.type === 'json_schema') {
+    generationConfig['responseMimeType'] = 'application/json';
+    let schema =
+      params?.response_format?.json_schema?.schema ??
+      params?.response_format?.json_schema;
+    if (Object.keys(schema).includes('$defs')) {
+      schema = derefer(schema);
+      delete schema['$defs'];
+    }
+    generationConfig['responseSchema'] = schema;
   }
   return generationConfig;
 };
@@ -119,7 +137,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
-    default: 'gemini-pro',
+    default: 'gemini-1.5-pro',
   },
   messages: [
     {
@@ -170,12 +188,41 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                 });
               }
               if (c.type === 'image_url') {
-                parts.push({
-                  inlineData: {
-                    mimeType: 'image/jpeg',
-                    data: c.image_url?.url,
-                  },
-                });
+                const { url } = c.image_url || {};
+                if (!url) return;
+
+                if (url.startsWith('data:')) {
+                  const [mimeTypeWithPrefix, base64Image] =
+                    url.split(';base64,');
+                  const mimeType = mimeTypeWithPrefix.split(':')[1];
+
+                  parts.push({
+                    inlineData: {
+                      mimeType: mimeType,
+                      data: base64Image,
+                    },
+                  });
+                } else if (
+                  url.startsWith('gs://') ||
+                  url.startsWith('https://') ||
+                  url.startsWith('http://')
+                ) {
+                  parts.push({
+                    fileData: {
+                      mimeType: getMimeType(url),
+                      fileUri: url,
+                    },
+                  });
+                } else {
+                  // NOTE: This block is kept to maintain backward compatibility
+                  // Earlier we were assuming that all images will be base64 with image/jpeg mimeType
+                  parts.push({
+                    inlineData: {
+                      mimeType: 'image/jpeg',
+                      data: c.image_url?.url,
+                    },
+                  });
+                }
               }
             });
           } else if (typeof message.content === 'string') {
@@ -186,19 +233,17 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
 
           // @NOTE: This takes care of the "Please ensure that multiturn requests alternate between user and model."
           // error that occurs when we have multiple user messages in a row.
-          const shouldAppendEmptyModeChat =
-            lastRole === 'user' &&
-            role === 'user' &&
-            !params.model?.includes('vision');
+          const shouldCombineMessages =
+            lastRole === role && !params.model?.includes('vision');
 
-          if (shouldAppendEmptyModeChat) {
-            messages.push({ role: 'model', parts: [{ text: '' }] });
+          if (shouldCombineMessages) {
+            messages[messages.length - 1].parts.push(...parts);
+          } else {
+            messages.push({ role, parts });
           }
 
-          messages.push({ role, parts });
           lastRole = role;
         });
-
         return messages;
       },
     },
@@ -263,7 +308,15 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
+  max_completion_tokens: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
   stop: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
+  response_format: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
@@ -387,14 +440,14 @@ export const GoogleChatCompleteResponseTransform: (
       model: 'Unknown',
       provider: 'google',
       choices:
-        response.candidates?.map((generation, index) => {
+        response.candidates?.map((generation, idx) => {
           let message: Message = { role: 'assistant', content: '' };
-          if (generation.content.parts[0]?.text) {
+          if (generation.content?.parts[0]?.text) {
             message = {
               role: 'assistant',
               content: generation.content.parts[0]?.text,
             };
-          } else if (generation.content.parts[0]?.functionCall) {
+          } else if (generation.content?.parts[0]?.functionCall) {
             message = {
               role: 'assistant',
               tool_calls: generation.content.parts.map((part) => {
@@ -413,7 +466,7 @@ export const GoogleChatCompleteResponseTransform: (
           }
           return {
             message: message,
-            index: generation.index,
+            index: generation.index ?? idx,
             finish_reason: generation.finishReason,
           };
         }) ?? [],
@@ -486,7 +539,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
           }
           return {
             delta: message,
-            index: generation.index,
+            index: generation.index ?? index,
             finish_reason: generation.finishReason,
           };
         }) ?? [],

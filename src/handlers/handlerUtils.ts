@@ -9,6 +9,11 @@ import {
   RETRY_STATUS_CODES,
   GOOGLE_VERTEX_AI,
   OPEN_AI,
+  AZURE_AI_INFERENCE,
+  ANTHROPIC,
+  CONTENT_TYPES,
+  HUGGING_FACE,
+  STABILITY_AI,
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
@@ -18,14 +23,17 @@ import {
   Options,
   Params,
   ShortConfig,
+  StrategyModes,
   Targets,
 } from '../types/requestBody';
 import { convertKeysToCamelCase } from '../utils';
 import { retryRequest } from './retryHandler';
-import { env } from 'hono/adapter';
+import { env, getRuntimeKey } from 'hono/adapter';
 import { afterRequestHookHandler, responseHandler } from './responseHandlers';
-import { getRuntimeKey } from 'hono/adapter';
 import { HookSpan, HooksManager } from '../middlewares/hooks';
+import { ConditionalRouter } from '../services/conditionalRouter';
+import { RouterError } from '../errors/RouterError';
+import { GatewayError } from '../errors/GatewayError';
 
 /**
  * Constructs the request options for the API call.
@@ -68,9 +76,13 @@ export function constructRequest(
     method,
     headers,
   };
+  const contentType = headers['content-type'];
+  const isGetMethod = method === 'GET';
+  const isMultipartFormData = contentType === CONTENT_TYPES.MULTIPART_FORM_DATA;
+  const shouldDeleteContentTypeHeader =
+    (isGetMethod || isMultipartFormData) && fetchOptions.headers;
 
-  // If the method is GET, delete the content-type header
-  if (method === 'GET' && fetchOptions.headers) {
+  if (shouldDeleteContentTypeHeader) {
     let headers = fetchOptions.headers as Record<string, unknown>;
     delete headers['content-type'];
   }
@@ -257,6 +269,7 @@ export async function tryPostProxy(
     : (providerOption.urlToFetch as string);
 
   const headers = await apiConfig.headers({
+    c,
     providerOptions: providerOption,
     fn,
     transformedRequestBody: params,
@@ -440,7 +453,7 @@ export async function tryPostProxy(
 export async function tryPost(
   c: Context,
   providerOption: Options,
-  inputParams: Params,
+  inputParams: Params | FormData,
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
   currentIndex: number | string
@@ -456,11 +469,19 @@ export async function tryPost(
     strictOpenAiCompliance = false;
   }
 
+  let metadata: Record<string, string>;
+  try {
+    metadata = JSON.parse(requestHeaders[HEADER_KEYS.METADATA]);
+  } catch (err) {
+    metadata = {};
+  }
+
   const provider: string = providerOption.provider ?? '';
 
   const hooksManager = c.get('hooksManager');
   const hookSpan = hooksManager.createSpan(
     params,
+    metadata,
     provider,
     isStreamingMode,
     providerOption.beforeRequestHooks || [],
@@ -475,6 +496,7 @@ export async function tryPost(
   const transformedRequestBody = transformToProviderRequest(
     provider,
     params,
+    inputParams,
     fn
   );
 
@@ -499,10 +521,12 @@ export async function tryPost(
   const url = `${baseUrl}${endpoint}`;
 
   const headers = await apiConfig.headers({
+    c,
     providerOptions: providerOption,
     fn,
     transformedRequestBody,
     transformedRequestUrl: url,
+    gatewayRequestBody: params,
   });
 
   // Construct the base object for the POST request
@@ -514,7 +538,10 @@ export async function tryPost(
     requestHeaders
   );
 
-  fetchOptions.body = JSON.stringify(transformedRequestBody);
+  fetchOptions.body =
+    headers[HEADER_KEYS.CONTENT_TYPE] === CONTENT_TYPES.MULTIPART_FORM_DATA
+      ? (transformedRequestBody as FormData)
+      : JSON.stringify(transformedRequestBody);
 
   providerOption.retry = {
     attempts: providerOption.retry?.attempts ?? 0,
@@ -610,13 +637,13 @@ export async function tryPost(
     fn
   ));
   if (!!cacheResponse) {
-    return createResponse(cacheResponse, undefined, true);
+    return createResponse(cacheResponse, fn, true);
   }
 
   // Prerequest validator (For virtual key budgets)
   const preRequestValidator = c.get('preRequestValidator');
-  let preRequestValidatorResponse = preRequestValidator
-    ? preRequestValidator(providerOption, requestHeaders)
+  const preRequestValidatorResponse = preRequestValidator
+    ? await preRequestValidator(c, providerOption, requestHeaders, params)
     : undefined;
   if (!!preRequestValidatorResponse) {
     return createResponse(preRequestValidatorResponse, undefined, false);
@@ -702,7 +729,7 @@ export async function tryProvidersInSequence(
 export async function tryTargetsRecursively(
   c: Context,
   targetGroup: Targets,
-  request: Params,
+  request: Params | FormData,
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
   method: string,
@@ -795,7 +822,7 @@ export async function tryTargetsRecursively(
   let response;
 
   switch (strategyMode) {
-    case 'fallback':
+    case StrategyModes.FALLBACK:
       for (let [index, target] of currentTarget.targets.entries()) {
         response = await tryTargetsRecursively(
           c,
@@ -807,6 +834,9 @@ export async function tryTargetsRecursively(
           `${currentJsonPath}.targets[${index}]`,
           currentInheritedConfig
         );
+        if (response?.headers.get('x-portkey-gateway-exception') === 'true') {
+          break;
+        }
         if (
           response?.ok &&
           !currentTarget.strategy?.onStatusCodes?.includes(response?.status)
@@ -816,7 +846,7 @@ export async function tryTargetsRecursively(
       }
       break;
 
-    case 'loadbalance':
+    case StrategyModes.LOADBALANCE:
       currentTarget.targets.forEach((t: Options) => {
         if (t.weight === undefined) {
           t.weight = 1;
@@ -847,7 +877,35 @@ export async function tryTargetsRecursively(
       }
       break;
 
-    case 'single':
+    case StrategyModes.CONDITIONAL:
+      let metadata: Record<string, string>;
+      try {
+        metadata = JSON.parse(requestHeaders[HEADER_KEYS.METADATA]);
+      } catch (err) {
+        metadata = {};
+      }
+      let conditionalRouter: ConditionalRouter;
+      let finalTarget: Targets;
+      try {
+        conditionalRouter = new ConditionalRouter(currentTarget, { metadata });
+        finalTarget = conditionalRouter.resolveTarget();
+      } catch (conditionalRouter: any) {
+        throw new RouterError(conditionalRouter.message);
+      }
+
+      response = await tryTargetsRecursively(
+        c,
+        finalTarget,
+        request,
+        requestHeaders,
+        fn,
+        method,
+        `${currentJsonPath}.targets[${finalTarget.index}]`,
+        currentInheritedConfig
+      );
+      break;
+
+    case StrategyModes.SINGLE:
       response = await tryTargetsRecursively(
         c,
         currentTarget.targets[0],
@@ -871,7 +929,31 @@ export async function tryTargetsRecursively(
           currentJsonPath
         );
       } catch (error: any) {
-        response = error.response;
+        // tryPost always returns a Response.
+        // TypeError will check for all unhandled exceptions.
+        // GatewayError will check for all handled exceptions which cannot allow the request to proceed.
+        if (error instanceof TypeError || error instanceof GatewayError) {
+          const errorMessage =
+            error instanceof GatewayError
+              ? error.message
+              : 'Something went wrong';
+          response = new Response(
+            JSON.stringify({
+              status: 'failure',
+              message: errorMessage,
+            }),
+            {
+              status: 500,
+              headers: {
+                'content-type': 'application/json',
+                // Add this header so that the fallback loop can be interrupted if its an exception.
+                'x-portkey-gateway-exception': 'true',
+              },
+            }
+          );
+        } else {
+          response = error.response;
+        }
       }
       break;
   }
@@ -931,7 +1013,32 @@ export function constructConfigFromRequestHeaders(
     resourceName: requestHeaders[`x-${POWERED_BY}-azure-resource-name`],
     deploymentId: requestHeaders[`x-${POWERED_BY}-azure-deployment-id`],
     apiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
+    azureAuthMode: requestHeaders[`x-${POWERED_BY}-azure-auth-mode`],
+    azureManagedClientId:
+      requestHeaders[`x-${POWERED_BY}-azure-managed-client-id`],
+    azureEntraClientId: requestHeaders[`x-${POWERED_BY}-azure-entra-client-id`],
+    azureEntraClientSecret:
+      requestHeaders[`x-${POWERED_BY}-azure-entra-client-secret`],
+    azureEntraTenantId: requestHeaders[`x-${POWERED_BY}-azure-entra-tenant-id`],
     azureModelName: requestHeaders[`x-${POWERED_BY}-azure-model-name`],
+  };
+
+  const stabilityAiConfig = {
+    stabilityClientId: requestHeaders[`x-${POWERED_BY}-stability-client-id`],
+    stabilityClientUserId:
+      requestHeaders[`x-${POWERED_BY}-stability-client-user-id`],
+    stabilityClientVersion:
+      requestHeaders[`x-${POWERED_BY}-stability-client-version`],
+  };
+
+  const azureAiInferenceConfig = {
+    azureDeploymentName:
+      requestHeaders[`x-${POWERED_BY}-azure-deployment-name`],
+    azureRegion: requestHeaders[`x-${POWERED_BY}-azure-region`],
+    azureDeploymentType:
+      requestHeaders[`x-${POWERED_BY}-azure-deployment-type`],
+    azureApiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
+    azureEndpointName: requestHeaders[`x-${POWERED_BY}-azure-endpoint-name`],
   };
 
   const bedrockConfig = {
@@ -939,6 +1046,9 @@ export function constructConfigFromRequestHeaders(
     awsSecretAccessKey: requestHeaders[`x-${POWERED_BY}-aws-secret-access-key`],
     awsSessionToken: requestHeaders[`x-${POWERED_BY}-aws-session-token`],
     awsRegion: requestHeaders[`x-${POWERED_BY}-aws-region`],
+    awsRoleArn: requestHeaders[`x-${POWERED_BY}-aws-role-arn`],
+    awsAuthType: requestHeaders[`x-${POWERED_BY}-aws-auth-type`],
+    awsExternalId: requestHeaders[`x-${POWERED_BY}-aws-external-id`],
   };
 
   const workersAiConfig = {
@@ -950,9 +1060,18 @@ export function constructConfigFromRequestHeaders(
     openaiProject: requestHeaders[`x-${POWERED_BY}-openai-project`],
   };
 
+  const huggingfaceConfig = {
+    huggingfaceBaseUrl: requestHeaders[`x-${POWERED_BY}-huggingface-base-url`],
+  };
+
   const vertexConfig: Record<string, any> = {
     vertexProjectId: requestHeaders[`x-${POWERED_BY}-vertex-project-id`],
     vertexRegion: requestHeaders[`x-${POWERED_BY}-vertex-region`],
+  };
+
+  const anthropicConfig = {
+    anthropicBeta: requestHeaders[`x-${POWERED_BY}-anthropic-beta`],
+    anthropicVersion: requestHeaders[`x-${POWERED_BY}-anthropic-version`],
   };
 
   let vertexServiceAccountJson =
@@ -1005,10 +1124,36 @@ export function constructConfigFromRequestHeaders(
         };
       }
 
+      if (parsedConfigJson.provider === HUGGING_FACE) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...huggingfaceConfig,
+        };
+      }
+
       if (parsedConfigJson.provider === GOOGLE_VERTEX_AI) {
         parsedConfigJson = {
           ...parsedConfigJson,
           ...vertexConfig,
+        };
+      }
+
+      if (parsedConfigJson.provider === AZURE_AI_INFERENCE) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...azureAiInferenceConfig,
+        };
+      }
+      if (parsedConfigJson.provider === ANTHROPIC) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...anthropicConfig,
+        };
+      }
+      if (parsedConfigJson.provider === STABILITY_AI) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...stabilityAiConfig,
         };
       }
     }
@@ -1017,6 +1162,7 @@ export function constructConfigFromRequestHeaders(
       'params',
       'checks',
       'vertex_service_account_json',
+      'conditions',
     ]) as any;
   }
 
@@ -1031,7 +1177,17 @@ export function constructConfigFromRequestHeaders(
       workersAiConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === GOOGLE_VERTEX_AI &&
       vertexConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === AZURE_AI_INFERENCE &&
+      azureAiInferenceConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === OPEN_AI && openAiConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === ANTHROPIC &&
+      anthropicConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === HUGGING_FACE &&
+      huggingfaceConfig),
+    mistralFimCompletion:
+      requestHeaders[`x-${POWERED_BY}-mistral-fim-completion`],
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === STABILITY_AI &&
+      stabilityAiConfig),
   };
 }
 
@@ -1202,9 +1358,11 @@ export async function beforeRequestHookHandler(
 ): Promise<any> {
   try {
     const hooksManager = c.get('hooksManager');
-    const hooksResult = await hooksManager.executeHooks(hookSpanId, [
-      'syncBeforeRequestHook',
-    ]);
+    const hooksResult = await hooksManager.executeHooks(
+      hookSpanId,
+      ['syncBeforeRequestHook'],
+      { env: env(c) }
+    );
 
     if (hooksResult.shouldDeny) {
       return new Response(

@@ -1,5 +1,4 @@
 import { WORKERS_AI } from '../../globals';
-import { Params, Message } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -23,6 +22,9 @@ export const WorkersAiChatCompleteConfig: ProviderConfig = {
     param: 'raw',
   },
   max_tokens: {
+    param: 'max_tokens',
+  },
+  max_completion_tokens: {
     param: 'max_tokens',
   },
 };

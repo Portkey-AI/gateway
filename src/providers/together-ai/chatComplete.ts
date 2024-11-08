@@ -15,7 +15,7 @@ export const TogetherAIChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
-    default: 'togethercomputer/RedPajama-INCITE-Chat-3B-v1',
+    default: 'meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo',
   },
   messages: {
     param: 'messages',
@@ -25,6 +25,11 @@ export const TogetherAIChatCompleteConfig: ProviderConfig = {
   max_tokens: {
     param: 'max_tokens',
     required: true,
+    default: 128,
+    min: 1,
+  },
+  max_completion_tokens: {
+    param: 'max_tokens',
     default: 128,
     min: 1,
   },

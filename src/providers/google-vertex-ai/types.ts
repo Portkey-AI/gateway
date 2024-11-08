@@ -1,3 +1,5 @@
+import { ChatCompletionResponse } from '../types';
+
 export interface GoogleErrorResponse {
   error: {
     code: number;
@@ -40,5 +42,51 @@ export interface GoogleGenerateContentResponse {
     promptTokenCount: number;
     candidatesTokenCount: number;
     totalTokenCount: number;
+  };
+}
+
+export interface VertexLLamaChatCompleteResponse
+  extends Omit<ChatCompletionResponse, 'id' | 'created'> {}
+
+export interface VertexLlamaChatCompleteStreamChunk {
+  choices: {
+    delta: {
+      content: string;
+      role: string;
+    };
+    finish_reason?: string;
+    index: 0;
+  }[];
+  model: string;
+  object: string;
+  usage?: {
+    completion_tokens: number;
+    prompt_tokens: number;
+    total_tokens: number;
+  };
+  id?: string;
+  created?: number;
+  provider?: string;
+}
+
+export interface EmbedInstancesData {
+  task_type: string;
+  content: string;
+}
+
+interface EmbedPredictionsResponse {
+  embeddings: {
+    values: number[];
+    statistics: {
+      truncated: string;
+      token_count: number;
+    };
+  };
+}
+
+export interface GoogleEmbedResponse {
+  predictions: EmbedPredictionsResponse[];
+  metadata: {
+    billableCharacterCount: number;
   };
 }

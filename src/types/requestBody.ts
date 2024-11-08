@@ -16,9 +16,23 @@ interface CacheSettings {
   maxAge?: number;
 }
 
+export enum StrategyModes {
+  LOADBALANCE = 'loadbalance',
+  FALLBACK = 'fallback',
+  SINGLE = 'single',
+  CONDITIONAL = 'conditional',
+}
+
 interface Strategy {
-  mode: string;
+  mode: StrategyModes;
   onStatusCodes?: Array<number>;
+  conditions?: {
+    query: {
+      [key: string]: any;
+    };
+    then: string;
+  }[];
+  default?: string;
 }
 
 /**
@@ -46,6 +60,11 @@ export interface Options {
   apiVersion?: string;
   adAuth?: string;
   azureModelName?: string;
+  azureAuthMode?: string; // can be entra or managed
+  azureManagedClientId?: string;
+  azureEntraClientId?: string;
+  azureEntraClientSecret?: string;
+  azureEntraTenantId?: string;
   /** Workers AI specific */
   workersAiAccountId?: string;
   /** The parameter to set custom base url */
@@ -57,11 +76,24 @@ export interface Options {
   cache?: CacheSettings | string;
   metadata?: Record<string, string>;
   requestTimeout?: number;
+  /** This is used to determine if the request should be transformed to formData Example: Stability V2 */
+  transformToFormData?: boolean;
   /** AWS Bedrock specific */
   awsSecretAccessKey?: string;
   awsAccessKeyId?: string;
   awsSessionToken?: string;
   awsRegion?: string;
+  awsAuthType?: string;
+  awsRoleArn?: string;
+  awsExternalId?: string;
+
+  /** Stability AI specific */
+  stabilityClientId?: string;
+  stabilityClientUserId?: string;
+  stabilityClientVersion?: string;
+
+  /** Hugging Face specific */
+  huggingfaceBaseUrl?: string;
 
   /** Google Vertex AI specific */
   vertexRegion?: string;
@@ -74,8 +106,20 @@ export interface Options {
   openaiProject?: string;
   openaiOrganization?: string;
 
+  /** Azure Inference Specific */
+  azureRegion?: string;
+  azureDeploymentName?: string;
+  azureDeploymentType?: 'managed' | 'serverless';
+  azureEndpointName?: string;
+  azureApiVersion?: string;
+
   /** The parameter to determine if extra non-openai compliant fields should be returned in response */
   strictOpenAiCompliance?: boolean;
+  /** Parameter to determine if fim/completions endpoint is to be used */
+  mistralFimCompletion?: String;
+  /** Anthropic specific headers */
+  anthropicBeta?: string;
+  anthropicVersion?: string;
 }
 
 /**
@@ -83,6 +127,7 @@ export interface Options {
  * @interface
  */
 export interface Targets {
+  name?: string;
   strategy?: Strategy;
   /** The name of the provider. */
   provider?: string | undefined;
@@ -103,10 +148,18 @@ export interface Targets {
   deploymentId?: string;
   apiVersion?: string;
   adAuth?: string;
+  azureAuthMode?: string;
+  azureManagedClientId?: string;
+  azureEntraClientId?: string;
+  azureEntraClientSecret?: string;
+  azureEntraTenantId?: string;
+  azureModelName?: string;
   /** provider option index picked based on weight in loadbalance mode */
   index?: number;
   cache?: CacheSettings | string;
   targets?: Targets[];
+  /** This is used to determine if the request should be transformed to formData Example: Stability V2 */
+  transformToFormData?: boolean;
 }
 
 /**
@@ -134,6 +187,7 @@ export interface ContentType {
   text?: string;
   image_url?: {
     url: string;
+    detail?: string;
   };
 }
 
@@ -144,6 +198,14 @@ export interface ToolCall {
     name: string;
     arguments: string;
   };
+}
+
+export enum MESSAGE_ROLES {
+  SYSTEM = 'system',
+  USER = 'user',
+  ASSISTANT = 'assistant',
+  FUNCTION = 'function',
+  TOOL = 'tool',
 }
 
 export type OpenAIMessageRole =
@@ -169,6 +231,10 @@ export interface Message {
   tool_calls?: any;
   tool_call_id?: string;
   citationMetadata?: CitationMetadata;
+}
+
+export interface AnthropicPromptCache {
+  cache_control?: { type: 'ephemeral' };
 }
 
 export interface CitationMetadata {
@@ -215,9 +281,12 @@ export type ToolChoice = ToolChoiceObject | 'none' | 'auto' | 'required';
 
 /**
  * A tool in the conversation.
+ *
+ * `cache_control` is extended to support for prompt-cache
+ *
  * @interface
  */
-export interface Tool {
+export interface Tool extends AnthropicPromptCache {
   /** The name of the function. */
   type: string;
   /** A description of the function. */
@@ -235,11 +304,13 @@ export interface Params {
   functions?: Function[];
   function_call?: 'none' | 'auto' | { name: string };
   max_tokens?: number;
+  max_completion_tokens?: number;
   temperature?: number;
   top_p?: number;
   n?: number;
   stream?: boolean;
   logprobs?: number;
+  top_logprobs?: boolean;
   echo?: boolean;
   stop?: string | string[];
   presence_penalty?: number;
@@ -252,9 +323,33 @@ export interface Params {
   top_k?: number;
   tools?: Tool[];
   tool_choice?: ToolChoice;
-  response_format?: { type: 'json_object' | 'text' };
+  response_format?: {
+    type: 'json_object' | 'text' | 'json_schema';
+    json_schema?: any;
+  };
+  seed?: number;
+  store?: boolean;
+  metadata?: object;
+  modalities?: string[];
+  audio?: {
+    voice: string;
+    format: string;
+  };
+  service_tier?: string;
+  prediction?: {
+    type: string;
+    content:
+      | {
+          type: string;
+          text: string;
+        }[]
+      | string;
+  };
   // Google Vertex AI specific
   safety_settings?: any;
+  // Anthropic specific
+  anthropic_beta?: string;
+  anthropic_version?: string;
 }
 
 interface Examples {
@@ -291,6 +386,11 @@ export interface ShortConfig {
   azureModelName?: string;
   workersAiAccountId?: string;
   apiVersion?: string;
+  azureAuthMode?: string;
+  azureManagedClientId?: string;
+  azureEntraClientId?: string;
+  azureEntraClientSecret?: string;
+  azureEntraTenantId?: string;
   customHost?: string;
   // Google Vertex AI specific
   vertexRegion?: string;

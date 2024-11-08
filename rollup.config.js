@@ -8,5 +8,9 @@ export default {
     dir: 'build',
     format: 'es',
   },
-  plugins: [typescript({ exclude: ['**/*.test.ts'] }), terser(), json()],
+  plugins: [
+    typescript({ exclude: ['**/*.test.ts', 'start-test.js', 'cookbook'] }),
+    terser(),
+    json(),
+  ],
 };

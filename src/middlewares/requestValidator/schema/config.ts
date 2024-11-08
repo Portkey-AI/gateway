@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { OLLAMA, VALID_PROVIDERS, GOOGLE_VERTEX_AI } from '../../../globals';
+import {
+  OLLAMA,
+  VALID_PROVIDERS,
+  GOOGLE_VERTEX_AI,
+  TRITON,
+} from '../../../globals';
 
 export const configSchema: any = z
   .object({
@@ -8,13 +13,25 @@ export const configSchema: any = z
         mode: z
           .string()
           .refine(
-            (value) => ['single', 'loadbalance', 'fallback'].includes(value),
+            (value) =>
+              ['single', 'loadbalance', 'fallback', 'conditional'].includes(
+                value
+              ),
             {
               message:
-                "Invalid 'mode' value. Must be one of: single, loadbalance, fallback",
+                "Invalid 'mode' value. Must be one of: single, loadbalance, fallback, conditional",
             }
           ),
         on_status_codes: z.array(z.number()).optional(),
+        conditions: z
+          .array(
+            z.object({
+              query: z.object({}),
+              then: z.string(),
+            })
+          )
+          .optional(),
+        default: z.string().optional(),
       })
       .optional(),
     provider: z
@@ -79,6 +96,7 @@ export const configSchema: any = z
       const hasModeTargets =
         value.strategy !== undefined && value.targets !== undefined;
       const isOllamaProvider = value.provider === OLLAMA;
+      const isTritonProvider = value.provider === TRITON;
       const isVertexAIProvider =
         value.provider === GOOGLE_VERTEX_AI &&
         value.vertex_region &&
@@ -93,6 +111,7 @@ export const configSchema: any = z
         value.retry ||
         value.request_timeout ||
         isOllamaProvider ||
+        isTritonProvider ||
         hasAWSDetails ||
         isVertexAIProvider ||
         value.after_request_hooks ||

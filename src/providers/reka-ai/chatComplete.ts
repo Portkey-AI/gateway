@@ -1,5 +1,5 @@
 import { REKA_AI } from '../../globals';
-import { Message, Params } from '../../types/requestBody';
+import { Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -88,6 +88,9 @@ export const RekaAIChatCompleteConfig: ProviderConfig = {
   max_tokens: {
     param: 'request_output_len',
   },
+  max_completion_tokens: {
+    param: 'request_output_len',
+  },
   temperature: {
     param: 'temperature',
   },
@@ -145,7 +148,7 @@ export interface RekaAIErrorResponse {
 export const RekaAIChatCompleteResponseTransform: (
   response: RekaAIChatCompleteResponse | RekaAIErrorResponse,
   responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+) => ChatCompletionResponse | ErrorResponse = (response) => {
   if ('detail' in response) {
     return generateErrorResponse(
       {
