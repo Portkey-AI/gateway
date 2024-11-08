@@ -6,11 +6,11 @@ import { exec } from 'child_process';
 
 import app from './index';
 import { streamSSE } from 'hono/streaming';
+import { Context } from 'hono';
 
 // Extract the port number from the command line arguments
 const defaultPort = 8787;
 const args = process.argv.slice(2);
-console.log(args, process.argv);
 const portArg = args.find((arg) => arg.startsWith('--port='));
 const port = portArg ? parseInt(portArg.split('=')[1]) : defaultPort;
 
@@ -20,7 +20,7 @@ if (!isHeadless) {
   app.get('/public/*', serveStatic({ root: './' }));
   app.get('/public/logs', serveStatic({ path: './public/index.html' }));
 
-  app.get('/log/stream', (c) => {
+  app.get('/log/stream', (c: Context) => {
     const clientId = Date.now().toString();
 
     // Set headers to prevent caching
@@ -33,6 +33,7 @@ if (!isHeadless) {
       };
       // Add this client to the set of log clients
       const addLogClient: any = c.get('addLogClient');
+      const removeLogClient: any = c.get('removeLogClient');
       addLogClient(clientId, client);
 
       try {
@@ -46,9 +47,9 @@ if (!isHeadless) {
         }
       } catch (error) {
         console.error(`Error in log stream for client ${clientId}:`, error);
+        removeLogClient(clientId);
       } finally {
         // Remove this client when the connection is closed
-        const removeLogClient: any = c.get('removeLogClient');
         removeLogClient(clientId);
       }
     });
@@ -66,22 +67,30 @@ console.log(`Your AI Gateway is now running on ${url} 🚀`);
 // Function to open URL in the default browser
 function openBrowser(url: string) {
   let command: string;
-  switch (process.platform) {
-    case 'darwin':
-      command = `open ${url}`;
-      break;
-    case 'win32':
-      command = `start ${url}`;
-      break;
-    default:
-      command = `xdg-open ${url}`;
+  // In Docker container, just log the URL in a clickable format
+  if (process.env.DOCKER || process.env.CONTAINER) {
+    console.log('\n🔗 Access your AI Gateway at: \x1b[36m%s\x1b[0m\n', url);
+    command = ''; // No-op for Docker/containers
+  } else {
+    switch (process.platform) {
+      case 'darwin':
+        command = `open ${url}`;
+        break;
+      case 'win32':
+        command = `start ${url}`;
+        break;
+      default:
+        command = `xdg-open ${url}`;
+    }
   }
 
-  exec(command, (error) => {
-    if (error) {
-      console.error('Failed to open browser:', error);
-    }
-  });
+  if (command) {
+    exec(command, (error) => {
+      if (error) {
+        console.log('\n🔗 Access your AI Gateway at: \x1b[36m%s\x1b[0m\n', url);
+      }
+    });
+  }
 }
 
 // Open the browser only when --headless is not provided

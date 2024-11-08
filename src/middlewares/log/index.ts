@@ -3,7 +3,7 @@ import { Context } from 'hono';
 let logId = 0;
 
 // Map to store all connected log clients
-const logClients: any = new Map();
+const logClients: Map<string | number, any> = new Map();
 
 const addLogClient = (clientId: any, client: any) => {
   logClients.set(clientId, client);
@@ -28,19 +28,22 @@ const broadcastLog = async (log: any) => {
 
   const deadClients: any = [];
 
-  for (const [id, client] of logClients) {
-    try {
-      await Promise.race([
-        client.sendLog(message),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Send timeout')), 1000)
-        ),
-      ]);
-    } catch (error: any) {
-      console.error(`Failed to send log to client ${id}:`, error.message);
-      deadClients.push(id);
-    }
-  }
+  // Run all sends in parallel
+  await Promise.all(
+    Array.from(logClients.entries()).map(async ([id, client]) => {
+      try {
+        await Promise.race([
+          client.sendLog(message),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Send timeout')), 1000)
+          ),
+        ]);
+      } catch (error: any) {
+        console.error(`Failed to send log to client ${id}:`, error.message);
+        deadClients.push(id);
+      }
+    })
+  );
 
   // Remove dead clients after iteration
   deadClients.forEach((id: any) => {

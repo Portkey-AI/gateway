@@ -411,9 +411,11 @@ const closeModal = document.querySelector('.close');
 const clearLogsBtn = document.querySelector('.btn-clear-logs');
 
 // SSE for the logs
-const logSource = new EventSource('/log/stream');
+let logSource;
 
 function setupLogSource() {
+  logSource = new EventSource('/log/stream');
+
   logSource.addEventListener('connected', (event) => {
     console.log('Connected to log stream', event.data);
   });
@@ -435,13 +437,20 @@ function setupLogSource() {
   };
 }
 
+function cleanupLogSource() {
+  if (logSource) {
+    console.log('Closing log stream connection');
+    logSource.close();
+    logSource = null;
+  }
+}
+
 function reconnectLogSource() {
   if (logSource) {
       logSource.close();
   }
   console.log('Attempting to reconnect to log stream...');
   setTimeout(() => {
-      logSource = new EventSource('/log/stream');
       setupLogSource();
   }, 5000); // Wait 5 seconds before attempting to reconnect
 }
@@ -516,10 +525,9 @@ window.addEventListener('click', (event) => {
     }
 });
 
-window.addEventListener('beforeunload', () => {
-  console.log('Page is being unloaded');
-  logSource.close();
-});
+// Update event listeners for page unload
+window.addEventListener('beforeunload', cleanupLogSource);
+window.addEventListener('unload', cleanupLogSource);
 
 
 window.onload = function() {
