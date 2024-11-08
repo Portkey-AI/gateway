@@ -67,7 +67,7 @@ The AI Gateway's enterprise version offers enterprise-ready capabilities for **o
 
 The enterprise deployment architecture, supported platforms is available here - [**Enterprise Private Cloud Deployments**](https://docs.portkey.ai/docs/product/enterprise-offering/private-cloud-deployments)
 
-<a href="https://app.portkey.ai/signup"><img src="https://portkey.ai/blog/content/images/2024/08/Get-API-Key--5-.png" height=50 alt="Book an enterprise AI gateway demo" /></a><br>
+<a href="https://portkey.sh/demo-22"><img src="https://portkey.ai/blog/content/images/2024/08/Get-API-Key--5-.png" height=50 alt="Book an enterprise AI gateway demo" /></a><br>
 
 <br>
 
@@ -264,11 +264,11 @@ Make your AI app more <ins>reliable</ins> and <ins>forward compatible</ins>, whi
 ✅&nbsp; Secure Key Management - for role-based access control and tracking <br>
 ✅&nbsp; Simple & Semantic Caching - to serve repeat queries faster & save costs <br>
 ✅&nbsp; Access Control & Inbound Rules - to control which IPs and Geos can connect to your deployments <br>
-✅&nbsp; PII Redaction - to automatically remove sensitive data from your requests to prevent indavertent exposure <br>
+✅&nbsp; PII Redaction - to automatically remove sensitive data from your requests to prevent inadvertent exposure <br>
 ✅&nbsp; SOC2, ISO, HIPAA, GDPR Compliances - for best security practices <br>
 ✅&nbsp; Professional Support - along with feature prioritization <br>
 
-[Schedule a call to discuss enterprise deployments](https://calendly.com/rohit-portkey/noam)
+[Schedule a call to discuss enterprise deployments](https://portkey.sh/demo-22)
 
 <br>
 

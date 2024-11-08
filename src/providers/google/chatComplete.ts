@@ -7,7 +7,7 @@ import {
   ToolCall,
   ToolChoice,
 } from '../../types/requestBody';
-import { getMimeType } from '../google-vertex-ai/utils';
+import { derefer, getMimeType } from '../google-vertex-ai/utils';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -43,7 +43,14 @@ const transformGenerationConfig = (params: Params) => {
   }
   if (params?.response_format?.type === 'json_schema') {
     generationConfig['responseMimeType'] = 'application/json';
-    generationConfig['responseSchema'] = params?.response_format.json_schema;
+    let schema =
+      params?.response_format?.json_schema?.schema ??
+      params?.response_format?.json_schema;
+    if (Object.keys(schema).includes('$defs')) {
+      schema = derefer(schema);
+      delete schema['$defs'];
+    }
+    generationConfig['responseSchema'] = schema;
   }
   return generationConfig;
 };
@@ -433,7 +440,7 @@ export const GoogleChatCompleteResponseTransform: (
       model: 'Unknown',
       provider: 'google',
       choices:
-        response.candidates?.map((generation) => {
+        response.candidates?.map((generation, idx) => {
           let message: Message = { role: 'assistant', content: '' };
           if (generation.content?.parts[0]?.text) {
             message = {
@@ -459,7 +466,7 @@ export const GoogleChatCompleteResponseTransform: (
           }
           return {
             message: message,
-            index: generation.index,
+            index: generation.index ?? idx,
             finish_reason: generation.finishReason,
           };
         }) ?? [],
@@ -505,7 +512,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
       model: '',
       provider: 'google',
       choices:
-        parsedChunk.candidates?.map((generation) => {
+        parsedChunk.candidates?.map((generation, index) => {
           let message: Message = { role: 'assistant', content: '' };
           if (generation.content.parts[0]?.text) {
             message = {
@@ -532,7 +539,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
           }
           return {
             delta: message,
-            index: generation.index,
+            index: generation.index ?? index,
             finish_reason: generation.finishReason,
           };
         }) ?? [],
