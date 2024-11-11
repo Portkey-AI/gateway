@@ -8,16 +8,14 @@
 # AI Gateway
 #### Route to 250+ LLMs with 1 fast & friendly API
 
-<!-- We can add more quick links here - Docs, Enterprise, Demo, Hosted Gateway, Changelog, API Reference -->
+<img src="https://cfassets.portkey.ai/sdk.gif" height="300px" alt="Gateway Demo" style="margin-left:-35px">
 
-<img src="https://i.ibb.co/bKqkQ81/sdk.gif" height="300px" alt="Gateway Demo" style="margin-left:-35px">
-
-[Docs]() | [Enterprise]() | [Demo]() | [Hosted Gateway]() | [Changelog]() | [API Reference]()
+[Docs](https://portkey.ai/docs) | [Enterprise](https://portkey.ai/docs/product/enterprise-offering) | [Hosted Gateway](https://app.portkey.ai/) | [Changelog](https://new.portkey.ai) | [API Reference](https://portkey.ai/docs/api-reference/inference-api/introduction)
 
 
 [![License](https://img.shields.io/github/license/Ileriayo/markdown-badges)](./LICENSE)
 [![Discord](https://img.shields.io/discord/1143393887742861333)](https://portkey.ai/community)
-[![Twitter](https://img.shields.io/twitter/url/https/twitter/follow/portkeyai?style=social&label=Follow%20%40PortkeyAI)](https://twitter.com/portkeyai)
+[![Twitter](https://img.shields.io/twitter/url/https/twitter/follow/portkeyai?style=social&label=Follow%20%40PortkeyAI)](https://x.com/portkeyai)
 [![npm version](https://badge.fury.io/js/%40portkey-ai%2Fgateway.svg)](https://www.npmjs.com/package/@portkey-ai/gateway)
 [![Better Stack Badge](https://uptime.betterstack.com/status-badges/v1/monitor/q94g.svg)](https://status.portkey.ai/?utm_source=status_badge)
 </div>
@@ -52,34 +50,22 @@ The [**AI Gateway**](https://portkey.ai/features/ai-gateway) is designed for fas
 ## Quickstart (2 mins)
 
 ### 1. Setup your AI Gateway
-<!-- <br> -->
 
 ```bash
 # Run the gateway locally (needs Node.js and npm)
 npx @portkey-ai/gateway
 ```
 
-
-<!-- ![Deploy using](https://img.shields.io/badge/-Other_deployment_guides:-000?style=flat-square&logo=supported&logoColor=F7DF1E&color=white)
-[![Portkey](https://img.shields.io/badge/-Portkey_Cloud-000?style=flat-square&logo=data:image/svg%2bxml;base64,PHN2ZyB3aWR0aD0iNjgiIGhlaWdodD0iNjgiIHZpZXdCb3g9IjAgMCA2OCA2OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yNC41MDA0IDIuNDM1QzE4Ljg3OTIgMi40MzUgMTMuNzE1OCA1LjQ4Njc2IDEwLjkzNTIgMTAuMzkwMUwyLjA4MDc2IDI2LjAwMzZDLTAuNjgyMTU0IDMwLjg3NTYgLTAuNjk0MjU0IDM2Ljg2NTkgMi4wNDg3MyA0MS43NDkyTDEwLjkyNTggNTcuNTUzMkMxMy42OTc3IDYyLjQ4ODIgMTguODc4NSA2NS41NjUgMjQuNTIzIDY1LjU2NUg0MS45NjY0QzQ3LjU3MDYgNjUuNTY1IDUyLjcyMTIgNjIuNTMxNSA1NS41MDgxIDU3LjY1MTNMNjQuNTMyOSA0MS44NDc2QzY3LjM1MDIgMzYuOTE0MSA2Ny4zMzc5IDMwLjgyNzMgNjQuNTAwMiAyNS45MDU1TDU1LjQ5ODEgMTAuMjkxN0w1Mi45ODY0IDExLjczOThMNTUuNDk4MSAxMC4yOTE3QzUyLjcwMjggNS40NDM0NiA0Ny41Njk5IDIuNDM1IDQxLjk4OTEgMi40MzVIMjQuNTAwNFpNMTcuMDM2OCAxMy44NTAzQzE4LjU5MTkgMTEuMTA4MSAyMS40NDUzIDkuNDQ5NDQgMjQuNTAwNCA5LjQ0OTQ0SDQxLjk4OTFDNDUuMDIyNCA5LjQ0OTQ0IDQ3Ljg1ODQgMTEuMDg0NiA0OS40MjEzIDEzLjc5NTNMNTguNDIzNCAyOS40MDkxQzYwLjAxNTkgMzIuMTcxMiA2MC4wMjMgMzUuNiA1OC40NDE3IDM4LjM2OTJMNDkuNDE2OSA1NC4xNzI5QzQ3Ljg1ODUgNTYuOTAxOCA0NS4wMTI0IDU4LjU1MDYgNDEuOTY2NCA1OC41NTA2SDI0LjUyM0MyMS40NTUzIDU4LjU1MDYgMTguNTkxOSA1Ni44NzgzIDE3LjA0MTUgNTQuMTE4TDguMTY0NDQgMzguMzE0QzYuNjI0NjkgMzUuNTcyOCA2LjYzMTYxIDMyLjE5ODMgOC4xODIzNiAyOS40NjM4TDE3LjAzNjggMTMuODUwM1pNMzkuNTk0NiAxOS4yOTU5QzM4LjMyMiAxNy44MzU2IDM2LjEwNjYgMTcuNjgzNCAzNC42NDYzIDE4Ljk1NkMzMy4xODYgMjAuMjI4NSAzMy4wMzM4IDIyLjQ0NCAzNC4zMDYzIDIzLjkwNDNMNDMuMTA0MSAzNEwzNC4zMDYzIDQ0LjA5NTdDMzMuMDMzOCA0NS41NTYgMzMuMTg2IDQ3Ljc3MTUgMzQuNjQ2MyA0OS4wNDRDMzYuMTA2NiA1MC4zMTY2IDM4LjMyMiA1MC4xNjQ0IDM5LjU5NDYgNDguNzA0MUw0OS4zOTYzIDM3LjQ1NjNDNTEuMTIyNSAzNS40NzU0IDUxLjEyMjUgMzIuNTI0NiA0OS4zOTYzIDMwLjU0MzdMMzkuNTk0NiAxOS4yOTU5WiIgZmlsbD0idXJsKCNwYWludDBfbGluZWFyXzEwMzVfMTU1KSIvPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDBfbGluZWFyXzEwMzVfMTU1IiB4MT0iLTIzLjAwMzQiIHkxPSItMi44OTEyNSIgeDI9IjczIiB5Mj0iODEuOTM1IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIG9mZnNldD0iMC4yNTAwNjgiIHN0b3AtY29sb3I9IiMzOUFDRTYiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRkYwMDAwIi8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPC9zdmc+Cg==&logoColor=3776AB&color=white)](https://app.portkey.ai/signup)
-![Docker](https://img.shields.io/badge/-Docker-000?style=flat-square&logo=docker&logoColor=3776AB&color=white)
-![Node.js](https://img.shields.io/badge/-Node.js-000?style=flat-square&logo=node.js&logoColor=3776AB&color=white)
-![Cloudflare](https://img.shields.io/badge/-Cloudflare-000?style=flat-square&logo=cloudflare&logoColor=3776AB&color=white)
-![Replit](https://img.shields.io/badge/-Replit-000?style=flat-square&logo=replit&logoColor=3776AB&color=white)
-![F5](https://img.shields.io/badge/-F5_Nginx-000?style=flat-square&logo=nginx&logoColor=3776AB&color=white) -->
-
 <sup>
-Other deployment guides:
-&nbsp; <a href="https://docs.portkey.ai/docs/deploy/portkey-cloud"><img height="12" width="12" src="https://cfassets.portkey.ai/logo/dew-color.svg" /> Portkey Cloud (Recommended)</a>
-&nbsp; <a href="https://docs.portkey.ai/docs/deploy/docker"><img height="12" width="12" src="https://cdn.simpleicons.org/docker/3776AB" /> Docker</a>
-&nbsp; <a href="https://docs.portkey.ai/docs/deploy/nodejs"><img height="12" width="12" src="https://cdn.simpleicons.org/node.js/3776AB" /> Node.js</a>
-&nbsp; <a href="https://docs.portkey.ai/docs/deploy/cloudflare"><img height="12" width="12" src="https://cdn.simpleicons.org/cloudflare/3776AB" /> Cloudflare</a>
-&nbsp; <a href="https://docs.portkey.ai/docs/deploy/replit"><img height="12" width="12" src="https://cdn.simpleicons.org/replit/3776AB" /> Replit</a>
+Deployment guides:
+&nbsp; <a href="https://app.portkey.ai"><img height="12" width="12" src="https://cfassets.portkey.ai/logo/dew-color.svg" /> Portkey Cloud (Recommended)</a>
+&nbsp; <a href="./docs/installation-deployments.md#docker"><img height="12" width="12" src="https://cdn.simpleicons.org/docker/3776AB" /> Docker</a>
+&nbsp; <a href="./docs/installation-deployments.md#nodejs-server"><img height="12" width="12" src="https://cdn.simpleicons.org/node.js/3776AB" /> Node.js</a>
+&nbsp; <a href="./docs/installation-deployments.md#cloudflare-workers"><img height="12" width="12" src="https://cdn.simpleicons.org/cloudflare/3776AB" /> Cloudflare</a>
+&nbsp; <a href="./docs/installation-deployments.md#replit"><img height="12" width="12" src="https://cdn.simpleicons.org/replit/3776AB" /> Replit</a>
+&nbsp; <a href="./docs/installation-deployments.md"> Others...</a>
+
 </sup>
-
-<!-- You could also deploy using [Docker](), [Node.js](), [Cloudflare](), [Replit]() and [more](). -->
-
-<!-- <br> -->
 
 ### 2. Make your first request
 
@@ -102,88 +88,17 @@ client.chat.completions.create(
     model="gpt-4o-mini"
 )
 ```
-<!-- </pre> -->
-<!-- </details> -->
 
-<!-- <details>
-  <summary>JS Example</summary>
-  <pre lang="javascript">
-
-    // npm install --save portkey-ai
-
-    import { Portkey } from 'portkey-ai';
-
-    const client = new Portkey({
-        provider: "openai", // or 'anthropic', 'bedrock', 'groq', etc
-        Authorization: "sk-***" // the provider API key
-    });
-
-    client.chat.completions.create({
-        messages: [{ role: "user", content: "What's the weather like?" }],
-        model: "gpt-4o-mini"
-    });
-  </pre>
-</details>
-
-<details>
-  <summary>cURL Example</summary>
-  <pre lang="shell">
-
-    curl -X POST http://localhost:8787/v1/chat/completions \
-      -H "Content-Type: application/json" \
-      -H "x-portkey-provider: openai" \
-      -H "Authorization: sk-***" \
-      -d '{
-        "messages": [
-            { "role": "user", "content": "Hello, how are you?" },
-        ],
-        "model": "gpt-4o-mini"
-      }'
-  </pre>
-</details>
-
-<details>
-<summary>OpenAI SDK</summary>
-<pre lang="python">
-
-    from openai import OpenAI
-    from portkey_ai import createHeaders
-
-    client = OpenAI(
-      base_url='http://localhost:8787/v1',
-      default_headers=createHeaders(
-        provider="openai" # or 'anthropic', 'bedrock', 'groq', etc
-      )
-    )
-
-    client.chat.completions.create(
-      model="gpt-4o-mini",
-      messages=[{"role": "user", "content": "What is a fractal?"}],
-    )
-</pre>
-</details> -->
-
-<!-- ![JS](https://img.shields.io/badge/-Supported_Libraries:-000?style=flat-square&logo=supported&logoColor=3776AB&color=white)
-![JS](https://img.shields.io/badge/-JS-000?style=flat-square&logo=javascript&logoColor=3776AB&color=white)
-![Python](https://img.shields.io/badge/-Python-000?style=flat-square&logo=python&logoColor=3776AB&color=white)
-![REST](https://img.shields.io/badge/-REST-000?style=flat-square&logo=gnu-bash&logoColor=3776AB&color=white)
-![OpenAI](https://img.shields.io/badge/-OpenAI_SDKs-000?style=flat-square&logo=openai&logoColor=3776AB&color=white)
-![Langchain](https://img.shields.io/badge/-Langchain-000?style=flat-square&logo=langchain&logoColor=3776AB&color=white)
-![LlamaIndex](https://img.shields.io/badge/-LlamaIndex-000?style=flat-square&logo=llama&logoColor=3776AB&color=white)
-![Autogen](https://img.shields.io/badge/-Autogen-000?style=flat-square&logo=autogen&logoColor=3776AB&color=white)
-![CrewAI](https://img.shields.io/badge/-CrewAI-000?style=flat-square&logo=crewai&logoColor=3776AB&color=white)
-![More](https://img.shields.io/badge/-More..-000?style=flat-square&logo=More&logoColor=3776AB&color=white)
- -->
- <sup>Supported Libraries: 
-&nbsp; <img height="12" width="12" src="https://cdn.simpleicons.org/javascript/3776AB" /> JS 
-&nbsp; <img height="12" width="12" src="https://cdn.simpleicons.org/python/3776AB" /> Python
-&nbsp; <img height="12" width="12" src="https://cdn.simpleicons.org/gnubash/3776AB" /> REST
-&nbsp; <img height="12" width="12" src="https://cdn.simpleicons.org/openai/3776AB" /> OpenAI SDKs
-&nbsp; <img height="12" width="12" src="https://cdn.simpleicons.org/langchain/3776AB" /> Langchain
-&nbsp; LlamaIndex
-&nbsp; Autogen
-&nbsp; CrewAI
-&nbsp; More..
+<sup>Supported Libraries: 
+&nbsp; [<img height="12" width="12" src="https://cdn.simpleicons.org/javascript/3776AB" /> JS](https://www.npmjs.com/package/portkey-ai) 
+&nbsp; [<img height="12" width="12" src="https://cdn.simpleicons.org/python/3776AB" /> Python](https://github.com/Portkey-AI/portkey-python-sdk)
+&nbsp; [<img height="12" width="12" src="https://cdn.simpleicons.org/gnubash/3776AB" /> REST](https://portkey.ai/docs/api-reference/inference-api/introduction)
+&nbsp; [<img height="12" width="12" src="https://cdn.simpleicons.org/openai/3776AB" /> OpenAI SDKs](https://portkey.ai/docs/guides/getting-started/getting-started-with-ai-gateway#openai-chat-completion)
+&nbsp; [<img height="12" width="12" src="https://cdn.simpleicons.org/langchain/3776AB" /> Langchain](https://portkey.ai/docs/integrations/libraries/langchain-python)
+&nbsp; [<img height="12" width="12" src="https://cdn.simpleicons.org/llamaindex/3776AB" /> LlamaIndex](https://portkey.ai/docs/integrations/libraries/llama-index-python)
+&nbsp; [Autogen](https://portkey.ai/docs/integrations/agents/autogen)
+&nbsp; [CrewAI](https://portkey.ai/docs/integrations/agents/crewai)
+&nbsp; [More..](https://portkey.ai/docs/integrations/libraries)
 </sup>
 
 
@@ -209,6 +124,8 @@ client.chat.completions.create(
     model="gpt-4o-mini",
     messages=[{"role": "user", "content": "Reply randomly with Apple or Bat"}]
 )
+
+# This would always response with "Bat" as the guardrail denies all replies containing "Apple". The retry config would retry 5 times before giving up.
 ```
 <img src="https://portkey.ai/blog/content/images/size/w1600/2024/11/image-15.png" height=200 title="Request flow through Portkey's AI gateway with retries and guardrails" alt="Request flow through Portkey's AI gateway with retries and guardrails"/>
 
@@ -219,17 +136,24 @@ You can do a lot more stuff with configs in your AI gateway. [Jump to examples  
 
 ### Enterprise Version (Private deployments)
 <!-- Add badges for AWS, Azure, GCP, OpenShift, Kubernetes   -->
-![AWS](https://img.shields.io/badge/-AWS-000?style=flat-square&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9IiMzNzc2QUIiIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDEwMjQgMTAyNCIgY2xhc3M9Imljb24iPgogIDxwYXRoIGQ9Ik04MjUgNzY4LjljLTMuMy0uOS03LjMtLjQtMTEuOSAxLjMtNjEuNiAyOC4yLTEyMS41IDQ4LjMtMTc5LjcgNjAuMkM1MDcuNyA4NTYgMzg1LjIgODQyLjYgMjY2IDc5MC4zYy0zMy4xLTE0LjYtNzkuMS0zOS4yLTEzOC03NGE5LjM2IDkuMzYgMCAwIDAtNS4zLTJjLTItLjEtMy43LjEtNS4zLjktMS42LjgtMi44IDEuOC0zLjcgMy4xLS45IDEuMy0xLjEgMy4xLS40IDUuNC42IDIuMiAyLjEgNC43IDQuNiA3LjQgMTAuNCAxMi4yIDIzLjMgMjUuMiAzOC42IDM5czM1LjYgMjkuNCA2MC45IDQ2LjhjMjUuMyAxNy40IDUxLjggMzIuOSA3OS4zIDQ2LjQgMjcuNiAxMy41IDU5LjYgMjQuOSA5Ni4xIDM0LjFzNzMgMTMuOCAxMDkuNCAxMy44YzM2LjIgMCA3MS40LTMuNyAxMDUuNS0xMC45IDM0LjItNy4zIDYzLTE1LjkgODYuNS0yNS45IDIzLjQtOS45IDQ1LTIxIDY0LjgtMzMgMTkuOC0xMiAzNC40LTIyLjIgNDMuOS0zMC4zIDkuNS04LjIgMTYuMy0xNC42IDIwLjItMTkuNCA0LjYtNS43IDYuOS0xMC42IDYuOS0xNC45LjEtNC41LTEuNy03LjEtNS03Ljl6TTUyNy40IDM0OC4xYy0xNS4yIDEuMy0zMy41IDQuMS01NSA4LjMtMjEuNSA0LjEtNDEuNCA5LjMtNTkuOCAxNS40cy0zNy4yIDE0LjYtNTYuMyAyNS40Yy0xOS4yIDEwLjgtMzUuNSAyMy4yLTQ5IDM3cy0yNC41IDMxLjEtMzMuMSA1MmMtOC42IDIwLjgtMTIuOSA0My43LTEyLjkgNjguNyAwIDI3LjEgNC43IDUxLjIgMTQuMyA3Mi41IDkuNSAyMS4zIDIyLjIgMzggMzguMiA1MC40IDE1LjkgMTIuNCAzNCAyMi4xIDU0IDI5LjIgMjAgNy4xIDQxLjIgMTAuMyA2My4yIDkuNCAyMi0uOSA0My41LTQuMyA2NC40LTEwLjMgMjAuOC01LjkgNDAuNC0xNS40IDU4LjYtMjguMyAxOC4yLTEyLjkgMzMuMS0yOC4yIDQ0LjgtNDUuNyA0LjMgNi42IDguMSAxMS41IDExLjUgMTQuN2w4LjcgOC45YzUuOCA1LjkgMTQuNyAxNC42IDI2LjcgMjYuMSAxMS45IDExLjUgMjQuMSAyMi43IDM2LjMgMzMuN2wxMDQuNC05OS45LTYtNC45Yy00LjMtMy4zLTkuNC04LTE1LjItMTQuMy01LjgtNi4yLTExLjYtMTMuMS0xNy4yLTIwLjUtNS43LTcuNC0xMC42LTE2LjEtMTQuNy0yNS45LTQuMS05LjgtNi4yLTE5LjMtNi4yLTI4LjVWMjU4LjdjMC0xMC4xLTEuOS0yMS01LjctMzIuOC0zLjktMTEuNy0xMC43LTI0LjUtMjAuNy0zOC4zLTEwLTEzLjgtMjIuNC0yNi4yLTM3LjItMzctMTQuOS0xMC44LTM0LjctMjAtNTkuNi0yNy40LTI0LjgtNy40LTUyLjYtMTEuMS04My4yLTExLjEtMzEuMyAwLTYwLjQgMy43LTg3LjYgMTAuOS0yNy4xIDcuMy01MC4zIDE3LTY5LjcgMjkuMi0xOS4zIDEyLjItMzUuOSAyNi4zLTQ5LjcgNDIuNC0xMy44IDE2LjEtMjQuMSAzMi45LTMwLjggNTAuNC02LjcgMTcuNS0xMC4xIDM1LjItMTAuMSA1My4xTDQwOCAzMTBjNS41LTE2LjQgMTIuOS0zMC42IDIyLTQyLjggOS4yLTEyLjIgMTcuOS0yMSAyNS44LTI2LjUgOC01LjUgMTYuNi05LjkgMjUuNy0xMy4yIDkuMi0zLjMgMTUuNC01IDE4LjYtNS40IDMuMi0uMyA1LjctLjQgNy42LS40IDI2LjcgMCA0NS4yIDcuOSA1NS42IDIzLjYgNi41IDkuNSA5LjcgMjMuOSA5LjcgNDMuM3Y1Ni42Yy0xNS4yLjYtMzAuNCAxLjYtNDUuNiAyLjl6TTU3My4xIDUwMGMwIDE2LjYtMi4yIDMxLjctNi41IDQ1LTkuMiAyOS4xLTI2LjcgNDcuNC01Mi40IDU0LjgtMjIuNCA2LjYtNDMuNyAzLjMtNjMuOS05LjgtMjEuNS0xNC0zMi4yLTMzLjgtMzIuMi01OS4zIDAtMTkuOSA1LTM2LjkgMTUtNTEuMSAxMC0xNC4xIDIzLjMtMjQuNyA0MC0zMS43czMzLTEyIDQ5LTE0LjljMTUuOS0zIDMzLTQuOCA1MS01LjRWNTAwem0zMzUuMiAyMTguOWMtNC4zLTUuNC0xNS45LTguOS0zNC45LTEwLjctMTktMS44LTM1LjUtMS43LTQ5LjcuNC0xNS4zIDEuOC0zMS4xIDYuMi00Ny4zIDEzLjQtMTYuMyA3LjEtMjMuNCAxMy4xLTIxLjYgMTcuOGwuNyAxLjMuOS43IDEuNC4yaDQuNmMuOCAwIDEuOC0uMSAzLjItLjIgMS40LS4xIDIuNy0uMyAzLjktLjQgMS4yLS4xIDIuOS0uMyA1LjEtLjQgMi4xLS4xIDQuMS0uNCA2LS43LjMgMCAzLjctLjMgMTAuMy0uOSA2LjYtLjYgMTEuNC0xIDE0LjMtMS4zIDIuOS0uMyA3LjgtLjYgMTQuNS0uOSA2LjctLjMgMTIuMS0uMyAxNi4xIDAgNCAuMyA4LjUuNyAxMy42IDEuMSA1LjEuNCA5LjIgMS4zIDEyLjQgMi43IDMuMiAxLjMgNS42IDMgNy4xIDUuMSA1LjIgNi42IDQuMiAyMS4yLTMgNDMuOXMtMTQgNDAuOC0yMC40IDU0LjJjLTIuOCA1LjctMi44IDkuMiAwIDEwLjdzNi43LjEgMTEuOS00YzE1LjYtMTIuMiAyOC42LTMwLjYgMzkuMS01NS4zIDYuMS0xNC42IDEwLjUtMjkuOCAxMy4xLTQ1LjcgMi40LTE1LjkgMi0yNi4yLTEuMy0zMXoiLz4KPC9zdmc+&logoColor=3776AB&color=white)
-![Azure](https://img.shields.io/badge/Azure-%230072C6.svg?style=flat-square&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiB2aWV3Qm94PSIwIDAgOTYgOTYiPgogICAgPGRlZnM+CiAgICAgICAgPGxpbmVhckdyYWRpZW50IGlkPSJlMzk5YzE5Zi1iNjhmLTQyOWQtYjE3Ni0xOGMyMTE3ZmY3M2MiIHgxPSItMTAzMi4xNzIiIHgyPSItMTA1OS4yMTMiIHkxPSIxNDUuMzEyIiB5Mj0iNjUuNDI2IiBncmFkaWVudFRyYW5zZm9ybT0ibWF0cml4KDEgMCAwIC0xIDEwNzUgMTU4KSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgogICAgICAgICAgICA8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMxMTRhOGIiLz4KICAgICAgICAgICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDY2OWJjIi8+CiAgICAgICAgPC9saW5lYXJHcmFkaWVudD4KICAgICAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImFjMmE2ZmMyLWNhNDgtNDMyNy05YTNjLWQ0ZGNjMzI1NmUxNSIgeDE9Ii0xMDIzLjcyNSIgeDI9Ii0xMDI5Ljk4IiB5MT0iMTA4LjA4MyIgeTI9IjEwNS45NjgiIGdyYWRpZW50VHJhbnNmb3JtPSJtYXRyaXgoMSAwIDAgLTEgMTA3NSAxNTgpIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgICAgICAgIDxzdG9wIG9mZnNldD0iMCIgc3RvcC1vcGFjaXR5PSIuMyIvPgogICAgICAgICAgICA8c3RvcCBvZmZzZXQ9Ii4wNzEiIHN0b3Atb3BhY2l0eT0iLjIiLz4KICAgICAgICAgICAgPHN0b3Agb2Zmc2V0PSIuMzIxIiBzdG9wLW9wYWNpdHk9Ii4xIi8+CiAgICAgICAgICAgIDxzdG9wIG9mZnNldD0iLjYyMyIgc3RvcC1vcGFjaXR5PSIuMDUiLz4KICAgICAgICAgICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLW9wYWNpdHk9IjAiLz4KICAgICAgICA8L2xpbmVhckdyYWRpZW50PgogICAgICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYTdmZWU5NzAtYTc4NC00YmIxLWFmOGQtNjNkMThlNWY3ZGI5IiB4MT0iLTEwMjcuMTY1IiB4Mj0iLTk5Ny40ODIiIHkxPSIxNDcuNjQyIiB5Mj0iNjguNTYxIiBncmFkaWVudFRyYW5zZm9ybT0ibWF0cml4KDEgMCAwIC0xIDEwNzUgMTU4KSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgogICAgICAgICAgICA8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMzY2NiZjQiLz4KICAgICAgICAgICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMjg5MmRmIi8+CiAgICAgICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDwvZGVmcz4KICAgIDxwYXRoIGZpbGw9IiMzNzc2QUIiIGQ9Ik0zMy4zMzggNi41NDRoMjYuMDM4bC0yNy4wMyA4MC4wODdhNC4xNTIgNC4xNTIgMCAwIDEtMy45MzMgMi44MjRIOC4xNDlhNC4xNDUgNC4xNDUgMCAwIDEtMy45MjgtNS40N0wyOS40MDQgOS4zNjhhNC4xNTIgNC4xNTIgMCAwIDEgMy45MzQtMi44MjV6Ii8+CiAgICA8cGF0aCBmaWxsPSIjMzc3NkFCIiBkPSJNNzEuMTc1IDYwLjI2MWgtNDEuMjlhMS45MTEgMS45MTEgMCAwIDAtMS4zMDUgMy4zMDlsMjYuNTMyIDI0Ljc2NGE0LjE3MSA0LjE3MSAwIDAgMCAyLjg0NiAxLjEyMWgyMy4zOHoiLz4KICAgIDxwYXRoIGZpbGw9IiMzNzc2QUIiIGQ9Ik0zMy4zMzggNi41NDRhNC4xMTggNC4xMTggMCAwIDAtMy45NDMgMi44NzlMNC4yNTIgODMuOTE3YTQuMTQgNC4xNCAwIDAgMCAzLjkwOCA1LjUzOGgyMC43ODdhNC40NDMgNC40NDMgMCAwIDAgMy40MS0yLjlsNS4wMTQtMTQuNzc3IDE3LjkxIDE2LjcwNWE0LjIzNyA0LjIzNyAwIDAgMCAyLjY2Ni45NzJIODEuMjRMNzEuMDI0IDYwLjI2MWwtMjkuNzgxLjAwN0w1OS40NyA2LjU0NHoiLz4KICAgIDxwYXRoIGZpbGw9IiMzNzc2QUIiIGQ9Ik02Ni41OTUgOS4zNjRhNC4xNDUgNC4xNDUgMCAwIDAtMy45MjgtMi44MkgzMy42NDhhNC4xNDYgNC4xNDYgMCAwIDEgMy45MjggMi44MmwyNS4xODQgNzQuNjJhNC4xNDYgNC4xNDYgMCAwIDEtMy45MjggNS40NzJoMjkuMDJhNC4xNDYgNC4xNDYgMCAwIDAgMy45MjctNS40NzJ6Ii8+Cjwvc3ZnPg==&logoColor=3776AB&color=white)
-![GCP](https://img.shields.io/badge/-GCP-000?style=flat-square&logo=google-cloud&logoColor=3776AB&color=white)
-![OpenShift](https://img.shields.io/badge/-OpenShift-000?style=flat-square&logo=red-hat&logoColor=3776AB&color=white)
-![Kubernetes](https://img.shields.io/badge/-Kubernetes-000?style=flat-square&logo=kubernetes&logoColor=3776AB&color=white)
 
-The AI Gateway's [enterprise version](https://docs.portkey.ai/docs/product/enterprise-offering) offers advanced capabilities for **org management**, **governance**, **security** and [more](https://docs.portkey.ai/docs/product/enterprise-offering) out of the box. [View Feature Comparison →](https://docs.portkey.ai/docs/product/product-feature-comparison)
 
-The enterprise deployment architecture for supported platforms is available here - [**Enterprise Private Cloud Deployments**](https://docs.portkey.ai/docs/product/enterprise-offering/private-cloud-deployments)
+<!-- Change the badge approach to the image and link approach -->
+<sup>
 
-<a href="https://app.portkey.ai/signup"><img src="https://portkey.ai/blog/content/images/2024/08/Get-API-Key--5-.png" height=50 alt="Book an enterprise AI gateway demo" /></a><br/>
+[<img height="12" width="12" src="https://cfassets.portkey.ai/amazon-logo.svg" /> AWS](https://portkey.ai/docs/product/enterprise-offering/private-cloud-deployments/aws) 
+&nbsp; [<img height="12" width="12" src="https://cfassets.portkey.ai/azure-logo.svg" /> Azure](https://portkey.ai/docs/product/enterprise-offering/private-cloud-deployments/azure) 
+&nbsp; [<img height="12" width="12" src="https://cdn.simpleicons.org/googlecloud/3776AB" /> GCP](https://portkey.ai/docs/product/enterprise-offering/private-cloud-deployments/gcp) 
+&nbsp; [<img height="12" width="12" src="https://cdn.simpleicons.org/redhatopenshift/3776AB" /> OpenShift](https://github.com/Portkey-AI/helm-chart) 
+&nbsp; [<img height="12" width="12" src="https://cdn.simpleicons.org/kubernetes/3776AB" /> Kubernetes](https://github.com/Portkey-AI/helm-chart) 
+
+</sup>
+
+The AI Gateway's [enterprise version](https://portkey.ai/docs/product/enterprise-offering) offers advanced capabilities for **org management**, **governance**, **security** and [more](https://portkey.ai/docs/product/enterprise-offering) out of the box. [View Feature Comparison →](https://portkey.ai/docs/product/product-feature-comparison)
+
+The enterprise deployment architecture for supported platforms is available here - [**Enterprise Private Cloud Deployments**](https://portkey.ai/docs/product/enterprise-offering/private-cloud-deployments)
+
+<a href="https://portkey.sh/demo-13"><img src="https://portkey.ai/blog/content/images/2024/08/Get-API-Key--5-.png" height=50 alt="Book an enterprise AI gateway demo" /></a><br/>
 
 
 <br>
@@ -251,7 +175,7 @@ The enterprise deployment architecture for supported platforms is available here
 
 ## Supported Providers
 
-Explore Gateway integrations with [45+ providers](https://portkey.ai/docs/welcome/integration-guides) and [8+ frameworks](https://portkey.ai/docs/welcome/integration-guides).
+Explore Gateway integrations with [45+ providers](https://portkey.ai/docs/integrations/llms) and [8+ agent frameworks](https://portkey.ai/docs/integrations/agents).
 
 |                                                                                                                            | Provider                                                                                      | Support | Stream |
 | -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------- | ------ |
@@ -270,6 +194,7 @@ Explore Gateway integrations with [45+ providers](https://portkey.ai/docs/welcom
 | <img src="https://deepinfra.com/_next/static/media/logo.4a03fd3d.svg" width=35>                                            | [DeepInfra](https://portkey.ai/docs/welcome/integration-guides)                               | ✅       | ✅      |
 | <img src="https://ollama.com/public/ollama.png" width=35>                                                                  | [Ollama](https://portkey.ai/docs/welcome/integration-guides/ollama)                           | ✅       | ✅      |
 | <img src="https://novita.ai/favicon.ico" width=35>                                                                         | Novita AI                                                                                     | ✅       | ✅      | `/chat/completions`, `/completions` |
+
 
 > [View the complete list of 200+ supported models here](https://portkey.ai/docs/welcome/what-is-portkey#ai-providers-supported)
 <br>
@@ -292,7 +217,7 @@ Gateway seamlessly integrates with popular agent frameworks. [Read the documenta
 
 <br>
 
-*Only available on the [hosted app](https://portkey.ai). For detailed documentation [click here](https://docs.portkey.ai/docs/welcome/agents). 
+*Available on the [hosted app](https://portkey.ai). For detailed documentation [click here](https://docs.portkey.ai/docs/welcome/agents). 
 
 
 ## Features
@@ -388,7 +313,7 @@ Make your AI app more <ins>reliable</ins> and <ins>forward compatible</ins>, whi
 ✅&nbsp; SOC2, ISO, HIPAA, GDPR Compliances - for best security practices <br>
 ✅&nbsp; Professional Support - along with feature prioritization <br>
 
-[Schedule a call to discuss enterprise deployments](https://calendly.com/rohit-portkey/noam)
+[Schedule a call to discuss enterprise deployments](https://portkey.sh/demo-13)
 
 <br>
 
