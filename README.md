@@ -60,14 +60,22 @@ npx @portkey-ai/gateway
 ```
 
 
-![Deploy using](https://img.shields.io/badge/-Other_deployment_guides:-000?style=flat-square&logo=supported&logoColor=F7DF1E&color=white)
+<!-- ![Deploy using](https://img.shields.io/badge/-Other_deployment_guides:-000?style=flat-square&logo=supported&logoColor=F7DF1E&color=white)
 [![Portkey](https://img.shields.io/badge/-Portkey_Cloud-000?style=flat-square&logo=data:image/svg%2bxml;base64,PHN2ZyB3aWR0aD0iNjgiIGhlaWdodD0iNjgiIHZpZXdCb3g9IjAgMCA2OCA2OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yNC41MDA0IDIuNDM1QzE4Ljg3OTIgMi40MzUgMTMuNzE1OCA1LjQ4Njc2IDEwLjkzNTIgMTAuMzkwMUwyLjA4MDc2IDI2LjAwMzZDLTAuNjgyMTU0IDMwLjg3NTYgLTAuNjk0MjU0IDM2Ljg2NTkgMi4wNDg3MyA0MS43NDkyTDEwLjkyNTggNTcuNTUzMkMxMy42OTc3IDYyLjQ4ODIgMTguODc4NSA2NS41NjUgMjQuNTIzIDY1LjU2NUg0MS45NjY0QzQ3LjU3MDYgNjUuNTY1IDUyLjcyMTIgNjIuNTMxNSA1NS41MDgxIDU3LjY1MTNMNjQuNTMyOSA0MS44NDc2QzY3LjM1MDIgMzYuOTE0MSA2Ny4zMzc5IDMwLjgyNzMgNjQuNTAwMiAyNS45MDU1TDU1LjQ5ODEgMTAuMjkxN0w1Mi45ODY0IDExLjczOThMNTUuNDk4MSAxMC4yOTE3QzUyLjcwMjggNS40NDM0NiA0Ny41Njk5IDIuNDM1IDQxLjk4OTEgMi40MzVIMjQuNTAwNFpNMTcuMDM2OCAxMy44NTAzQzE4LjU5MTkgMTEuMTA4MSAyMS40NDUzIDkuNDQ5NDQgMjQuNTAwNCA5LjQ0OTQ0SDQxLjk4OTFDNDUuMDIyNCA5LjQ0OTQ0IDQ3Ljg1ODQgMTEuMDg0NiA0OS40MjEzIDEzLjc5NTNMNTguNDIzNCAyOS40MDkxQzYwLjAxNTkgMzIuMTcxMiA2MC4wMjMgMzUuNiA1OC40NDE3IDM4LjM2OTJMNDkuNDE2OSA1NC4xNzI5QzQ3Ljg1ODUgNTYuOTAxOCA0NS4wMTI0IDU4LjU1MDYgNDEuOTY2NCA1OC41NTA2SDI0LjUyM0MyMS40NTUzIDU4LjU1MDYgMTguNTkxOSA1Ni44NzgzIDE3LjA0MTUgNTQuMTE4TDguMTY0NDQgMzguMzE0QzYuNjI0NjkgMzUuNTcyOCA2LjYzMTYxIDMyLjE5ODMgOC4xODIzNiAyOS40NjM4TDE3LjAzNjggMTMuODUwM1pNMzkuNTk0NiAxOS4yOTU5QzM4LjMyMiAxNy44MzU2IDM2LjEwNjYgMTcuNjgzNCAzNC42NDYzIDE4Ljk1NkMzMy4xODYgMjAuMjI4NSAzMy4wMzM4IDIyLjQ0NCAzNC4zMDYzIDIzLjkwNDNMNDMuMTA0MSAzNEwzNC4zMDYzIDQ0LjA5NTdDMzMuMDMzOCA0NS41NTYgMzMuMTg2IDQ3Ljc3MTUgMzQuNjQ2MyA0OS4wNDRDMzYuMTA2NiA1MC4zMTY2IDM4LjMyMiA1MC4xNjQ0IDM5LjU5NDYgNDguNzA0MUw0OS4zOTYzIDM3LjQ1NjNDNTEuMTIyNSAzNS40NzU0IDUxLjEyMjUgMzIuNTI0NiA0OS4zOTYzIDMwLjU0MzdMMzkuNTk0NiAxOS4yOTU5WiIgZmlsbD0idXJsKCNwYWludDBfbGluZWFyXzEwMzVfMTU1KSIvPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDBfbGluZWFyXzEwMzVfMTU1IiB4MT0iLTIzLjAwMzQiIHkxPSItMi44OTEyNSIgeDI9IjczIiB5Mj0iODEuOTM1IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIG9mZnNldD0iMC4yNTAwNjgiIHN0b3AtY29sb3I9IiMzOUFDRTYiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRkYwMDAwIi8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPC9zdmc+Cg==&logoColor=3776AB&color=white)](https://app.portkey.ai/signup)
 ![Docker](https://img.shields.io/badge/-Docker-000?style=flat-square&logo=docker&logoColor=3776AB&color=white)
 ![Node.js](https://img.shields.io/badge/-Node.js-000?style=flat-square&logo=node.js&logoColor=3776AB&color=white)
 ![Cloudflare](https://img.shields.io/badge/-Cloudflare-000?style=flat-square&logo=cloudflare&logoColor=3776AB&color=white)
 ![Replit](https://img.shields.io/badge/-Replit-000?style=flat-square&logo=replit&logoColor=3776AB&color=white)
-![F5](https://img.shields.io/badge/-F5_Nginx-000?style=flat-square&logo=nginx&logoColor=3776AB&color=white)
+![F5](https://img.shields.io/badge/-F5_Nginx-000?style=flat-square&logo=nginx&logoColor=3776AB&color=white) -->
 
+<sup>
+Other deployment guides:
+&nbsp; <img height="12" width="12" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjgiIGhlaWdodD0iNjgiIHZpZXdCb3g9IjAgMCA2OCA2OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yNC41MDA0IDIuNDM1QzE4Ljg3OTIgMi40MzUgMTMuNzE1OCA1LjQ4Njc2IDEwLjkzNTIgMTAuMzkwMUwyLjA4MDc2IDI2LjAwMzZDLTAuNjgyMTU0IDMwLjg3NTYgLTAuNjk0MjU0IDM2Ljg2NTkgMi4wNDg3MyA0MS43NDkyTDEwLjkyNTggNTcuNTUzMkMxMy42OTc3IDYyLjQ4ODIgMTguODc4NSA2NS41NjUgMjQuNTIzIDY1LjU2NUg0MS45NjY0QzQ3LjU3MDYgNjUuNTY1IDUyLjcyMTIgNjIuNTMxNSA1NS41MDgxIDU3LjY1MTNMNjQuNTMyOSA0MS44NDc2QzY3LjM1MDIgMzYuOTE0MSA2Ny4zMzc5IDMwLjgyNzMgNjQuNTAwMiAyNS45MDU1TDU1LjQ5ODEgMTAuMjkxN0w1Mi45ODY0IDExLjczOThMNTUuNDk4MSAxMC4yOTE3QzUyLjcwMjggNS40NDM0NiA0Ny41Njk5IDIuNDM1IDQxLjk4OTEgMi40MzVIMjQuNTAwNFpNMTcuMDM2OCAxMy44NTAzQzE4LjU5MTkgMTEuMTA4MSAyMS40NDUzIDkuNDQ5NDQgMjQuNTAwNCA5LjQ0OTQ0SDQxLjk4OTFDNDUuMDIyNCA5LjQ0OTQ0IDQ3Ljg1ODQgMTEuMDg0NiA0OS40MjEzIDEzLjc5NTNMNTguNDIzNCAyOS40MDkxQzYwLjAxNTkgMzIuMTcxMiA2MC4wMjMgMzUuNiA1OC40NDE3IDM4LjM2OTJMNDkuNDE2OSA1NC4xNzI5QzQ3Ljg1ODUgNTYuOTAxOCA0NS4wMTI0IDU4LjU1MDYgNDEuOTY2NCA1OC41NTA2SDI0LjUyM0MyMS40NTUzIDU4LjU1MDYgMTguNTkxOSA1Ni44NzgzIDE3LjA0MTUgNTQuMTE4TDguMTY0NDQgMzguMzE0QzYuNjI0NjkgMzUuNTcyOCA2LjYzMTYxIDMyLjE5ODMgOC4xODIzNiAyOS40NjM4TDE3LjAzNjggMTMuODUwM1pNMzkuNTk0NiAxOS4yOTU5QzM4LjMyMiAxNy44MzU2IDM2LjEwNjYgMTcuNjgzNCAzNC42NDYzIDE4Ljk1NkMzMy4xODYgMjAuMjI4NSAzMy4wMzM4IDIyLjQ0NCAzNC4zMDYzIDIzLjkwNDNMNDMuMTA0MSAzNEwzNC4zMDYzIDQ0LjA5NTdDMzMuMDMzOCA0NS41NTYgMzMuMTg2IDQ3Ljc3MTUgMzQuNjQ2MyA0OS4wNDRDMzYuMTA2NiA1MC4zMTY2IDM4LjMyMiA1MC4xNjQ0IDM5LjU5NDYgNDguNzA0MUw0OS4zOTYzIDM3LjQ1NjNDNTEuMTIyNSAzNS40NzU0IDUxLjEyMjUgMzIuNTI0NiA0OS4zOTYzIDMwLjU0MzdMMzkuNTk0NiAxOS4yOTU5WiIgZmlsbD0idXJsKCNwYWludDBfbGluZWFyXzEwMzVfMTU1KSIvPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDBfbGluZWFyXzEwMzVfMTU1IiB4MT0iLTIzLjAwMzQiIHkxPSItMi44OTEyNSIgeDI9IjczIiB5Mj0iODEuOTM1IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIG9mZnNldD0iMC4yNTAwNjgiIHN0b3AtY29sb3I9IiMzOUFDRTYiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRkYwMDAwIi8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPC9zdmc+Cg==" /> Portkey Cloud (Recommended)
+&nbsp; <img height="12" width="12" src="https://cdn.simpleicons.org/docker/3776AB" /> Docker
+&nbsp; <img height="12" width="12" src="https://cdn.simpleicons.org/node.js/3776AB" /> Node.js
+&nbsp; <img height="12" width="12" src="https://cdn.simpleicons.org/cloudflare/3776AB" /> Cloudflare
+&nbsp; <img height="12" width="12" src="https://cdn.simpleicons.org/replit/3776AB" /> Replit
+</sup>
 
 <!-- You could also deploy using [Docker](), [Node.js](), [Cloudflare](), [Replit]() and [more](). -->
 
@@ -155,7 +163,7 @@ client.chat.completions.create(
 </pre>
 </details> -->
 
-![JS](https://img.shields.io/badge/-Supported_Libraries:-000?style=flat-square&logo=supported&logoColor=3776AB&color=white)
+<!-- ![JS](https://img.shields.io/badge/-Supported_Libraries:-000?style=flat-square&logo=supported&logoColor=3776AB&color=white)
 ![JS](https://img.shields.io/badge/-JS-000?style=flat-square&logo=javascript&logoColor=3776AB&color=white)
 ![Python](https://img.shields.io/badge/-Python-000?style=flat-square&logo=python&logoColor=3776AB&color=white)
 ![REST](https://img.shields.io/badge/-REST-000?style=flat-square&logo=gnu-bash&logoColor=3776AB&color=white)
@@ -165,26 +173,32 @@ client.chat.completions.create(
 ![Autogen](https://img.shields.io/badge/-Autogen-000?style=flat-square&logo=autogen&logoColor=3776AB&color=white)
 ![CrewAI](https://img.shields.io/badge/-CrewAI-000?style=flat-square&logo=crewai&logoColor=3776AB&color=white)
 ![More](https://img.shields.io/badge/-More..-000?style=flat-square&logo=More&logoColor=3776AB&color=white)
+ -->
+ <sup>Supported Libraries: 
+&nbsp; <img height="12" width="12" src="https://cdn.simpleicons.org/javascript/3776AB" /> JS 
+&nbsp; <img height="12" width="12" src="https://cdn.simpleicons.org/python/3776AB" /> Python
+&nbsp; <img height="12" width="12" src="https://cdn.simpleicons.org/gnubash/3776AB" /> REST
+&nbsp; <img height="12" width="12" src="https://cdn.simpleicons.org/openai/3776AB" /> OpenAI SDKs
+&nbsp; <img height="12" width="12" src="https://cdn.simpleicons.org/langchain/3776AB" /> Langchain
+&nbsp; LlamaIndex
+&nbsp; Autogen
+&nbsp; CrewAI
+&nbsp; More..
+</sup>
 
 
 ### 3. Explore Configs & Guardrails
 ```python
 # Config to retry on 446 status code and prevent all replies containing "Apple"
 config = {
-  # Routing strategy
-  "retry": {"attempts": 5, "on_status_codes": [446]},
   "provider":"openai",
   "api_key": "sk-***",
-  
-  # Guardrail to prevent all replies containing "Apple"
-  "after_request_hooks": [{
-    "type": "guardrail",
-    "id": "my_solid_guardrail",
-    "deny": True,
-    "checks": [{
-      "id": "default.contains",
-      "parameters": { "operator": "none", "words": ["Apple"] }
-    }]
+
+  "retry": {"attempts": 5, "on_status_codes": [446]},
+
+  "output_guardrails": [{
+    "default.contains": {"operator": "none", "words": ["Apple"]},
+    "deny": True
   }]
 }
 
