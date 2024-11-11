@@ -360,6 +360,7 @@ export interface AnthropicChatCompleteStreamResponse {
       cache_read_input_tokens?: number;
     };
   };
+  error?: AnthropicErrorObject;
 }
 
 export const AnthropicErrorResponseTransform: (
@@ -481,7 +482,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
 
   const parsedChunk: AnthropicChatCompleteStreamResponse = JSON.parse(chunk);
 
-  if (parsedChunk.type === 'error') {
+  if (parsedChunk.type === 'error' && parsedChunk.error) {
     return (
       `data: ${JSON.stringify({
         id: fallbackId,
@@ -491,7 +492,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
         provider: ANTHROPIC,
         choices: [
           {
-            finish_reason: 'error',
+            finish_reason: parsedChunk.error.type,
             delta: {
               content: '',
             },
