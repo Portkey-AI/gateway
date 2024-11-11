@@ -35,6 +35,9 @@ export function transformGenerationConfig(params: Params) {
       schema = derefer(schema);
       delete schema['$defs'];
     }
+    if (Object.hasOwn(schema, '$schema')) {
+      delete schema['$schema'];
+    }
     generationConfig['responseSchema'] = schema;
   }
 
