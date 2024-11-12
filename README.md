@@ -76,7 +76,7 @@ Deployment guides:
 
 from portkey_ai import Portkey
 
-# Instantiate the client similar to OpenAI's SDK
+# OpenAI compatible client
 client = Portkey(
     provider="openai", # or 'anthropic', 'bedrock', 'groq', etc
     Authorization="sk-***" # the provider API key
@@ -88,6 +88,8 @@ client.chat.completions.create(
     model="gpt-4o-mini"
 )
 ```
+
+
 
 <sup>Supported Libraries: 
 &nbsp; [<img height="12" width="12" src="https://cdn.simpleicons.org/javascript/3776AB" /> JS](https://www.npmjs.com/package/portkey-ai) 
@@ -101,15 +103,11 @@ client.chat.completions.create(
 &nbsp; [More..](https://portkey.ai/docs/integrations/libraries)
 </sup>
 
-
-### 3. Explore Configs & Guardrails
+### 3. Routing & Guardrails
+`Configs` in the LLM gateway allow you to create routing rules, add reliability and setup guardrails.
 ```python
-# Config to retry on 446 status code and prevent all replies containing "Apple"
 config = {
-  "provider":"openai",
-  "api_key": "sk-***",
-
-  "retry": {"attempts": 5, "on_status_codes": [446]},
+  "retry": {"attempts": 5},
 
   "output_guardrails": [{
     "default.contains": {"operator": "none", "words": ["Apple"]},
@@ -128,7 +126,7 @@ client.chat.completions.create(
 # This would always response with "Bat" as the guardrail denies all replies containing "Apple". The retry config would retry 5 times before giving up.
 ```
 <div align="center">
-<img src="https://portkey.ai/blog/content/images/size/w1600/2024/11/image-15.png" width=500 title="Request flow through Portkey's AI gateway with retries and guardrails" alt="Request flow through Portkey's AI gateway with retries and guardrails"/>
+<img src="https://portkey.ai/blog/content/images/size/w1600/2024/11/image-15.png" width=600 title="Request flow through Portkey's AI gateway with retries and guardrails" alt="Request flow through Portkey's AI gateway with retries and guardrails"/>
 </div>
 
 You can do a lot more stuff with configs in your AI gateway. [Jump to examples  →](https://portkey.ai/docs/product/ai-gateway/configs)
@@ -154,6 +152,37 @@ The enterprise deployment architecture for supported platforms is available here
 
 <a href="https://portkey.sh/demo-13"><img src="https://portkey.ai/blog/content/images/2024/08/Get-API-Key--5-.png" height=50 alt="Book an enterprise AI gateway demo" /></a><br/>
 
+
+<br>
+
+## Core Features
+### Reliable Routing
+- <a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/fallbacks">**Fallbacks**</a>: Fallback to another provider or model on failed requests. You can specify the errors on which to trigger the fallback. Improves reliability of your application.
+- <a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/automatic-retries">**Automatic Retries**</a>: Automatically retry failed requests up to 5 times. An exponential backoff strategy spaces out retry attempts to prevent network overload.
+- <a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/load-balancing">**Load Balancing**</a>: Distribute LLM requests across multiple API keys or AI providers with weights to ensure high availability and optimal performance.
+- <a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/request-timeouts">**Request Timeouts**</a>: Manage unruly LLMs & latencies by setting up granular request timeouts, allowing automatic termination of requests that exceed a specified duration.
+- <a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/multimodal-capabilities">**Multi-modal LLM Gateway**</a>: Call vision, audio (text-to-speech & speech-to-text), and image generation models from multiple providers  — all using the familiar OpenAI signature
+- <a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/realtime-apis">**Realtime APIs**</a>: Call realtime APIs launched by OpenAI through the integrate websockets server.
+
+### Security & Accuracy
+- <a href="https://portkey.ai/docs/product/guardrails">**Guardrails**</a>: Verify your LLM inputs and outputs to adhere to your specified checks. Choose from the 40+ pre-built guardrails to ensure compliance with security and accuracy standards. You can <a href="https://portkey.ai/docs/product/guardrails#bring-your-own-guardrails">bring your own guardrails</a> or choose from our <a href="https://portkey.ai/docs/product/guardrails/list-of-guardrail-checks#partner-guardrails">many partners</a>. 
+- [**Secure Key Management***](https://portkey.ai/docs/product/ai-gateway/virtual-keys): Use your own keys or generate virtual keys on the fly.
+- [**Role-based access control***](https://portkey.ai/docs/product/enterprise-offering/access-control-management): Granular access control for your users, workspaces and API keys.
+- <a href="https://portkey.ai/docs/product/enterprise-offering/security-portkey#compliance-and-data-privacy">**Compliance & Data Privacy**</a>: The AI gateway is SOC2, HIPAA, GDPR, and CCPA compliant.
+
+### Cost Management
+- [**Smart caching**](https://portkey.ai/docs/product/ai-gateway/cache-simple-and-semantic): Cache responses from LLMs to reduce costs and improve latency. Supports simple and semantic* caching.
+- [**Usage analytics***](https://portkey.ai/docs/product/observability/analytics): Monitor and analyze your AI and LLM usage, including request volume, latency, costs and error rates.
+- [**Provider optimization***](https://portkey.ai/docs/product/ai-gateway/conditional-routing): Automatically switch to the most cost-effective provider based on usage patterns and pricing models.
+
+### Collaboration & Workflows
+- <a href="https://portkey.ai/docs/integrations/agents">**Agents Support**</a>: Seamlessly integrate with popular agent frameworks to build complex AI applications. The gateway seamlessly integrates with [Autogen](https://docs.portkey.ai/docs/welcome/agents/autogen), [CrewAI](https://docs.portkey.ai/docs/welcome/agents/crewai), [LangChain](https://docs.portkey.ai/docs/welcome/agents/langchain-agents), [LlamaIndex](https://docs.portkey.ai/docs/welcome/agents/llama-agents), [Phidata](https://docs.portkey.ai/docs/welcome/agents/phidata), [Control Flow](https://docs.portkey.ai/docs/welcome/agents/control-flow), and even [Custom Agents](https://docs.portkey.ai/docs/welcome/agents/bring-your-own-agents).
+- [**Prompt Template Management***](https://portkey.ai/docs/product/prompt-library): Create, manage and version your prompt templates collaboratively through a universal prompt playground.
+<br/><br/>
+
+<sup>
+*&nbsp;Available in hosted and enterprise versions
+</sup>
 
 <br>
 
@@ -217,89 +246,6 @@ Gateway seamlessly integrates with popular agent frameworks. [Read the documenta
 <br>
 
 *Available on the [hosted app](https://portkey.ai). For detailed documentation [click here](https://docs.portkey.ai/docs/welcome/agents). 
-
-
-## Features
-
-<table width=100%>
-  <tr>
-    <td width="50%">
-      <strong><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/fallbacks">Fallbacks</a></strong><br/>
-      Fallback to another provider or model on failed requests. You can specify the errors on which to trigger the fallback. Improves reliability of your application
-      <br><br>
-      <!-- <img src="https://framerusercontent.com/images/gmlOW8yeKP2pGuIsObM6gKLzeMI.png" height=100 /> -->
-    </td>
-    <td width="50%">
-      <strong><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/automatic-retries">Automatic Retries</a></strong><br/>
-      Automatically retry failed requests up to 5 times. An exponential backoff strategy spaces out retry attempts to prevent network overload.
-      <br><br>
-      <!-- <img src="https://github.com/roh26it/Rubeus/assets/971978/8a6e653c-94b2-4ba7-95c7-93544ee476b1" height=100 /> -->
-    </td>
-  </tr>
-  
-</table>
-<table width="100%">
-  <tr>
-    <td width="50%"> 
-      <strong><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/load-balancing">Load Balancing</a></strong><br/>
-      Distribute LLM requests across multiple API keys or AI providers with weights to ensure high availability and optimal performance.
-      <br><br>
-      <!-- <img src="https://framerusercontent.com/images/6EWuq3FWhqrPe3kKLqVspevi4.png" height=100 /> -->
-    </td>
-    <td width="50%">
-      <strong><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/request-timeouts">Request Timeouts</a></strong></br>
-      Manage unruly LLMs & latencies by setting up granular request timeouts, allowing automatic termination of requests that exceed a specified duration.
-      <br><br>
-      <!-- <img src="https://github.com/vrushankportkey/gateway/assets/134934501/b23b98b2-6451-4747-8898-6847ad8baed4" height=100 /> -->
-    </td>
-  </tr>
-</table>
-
-</table>
-<table width="100%">
-  <tr>
-    <td width="50%"> 
-      <strong><a href="https://docs.portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/multimodal-capabilities">Multi-modal LLM Gateway</a></strong><br/>
-      Call vision, audio (text-to-speech & speech-to-text), and image generation models from multiple providers  — all using the familiar OpenAI signature
-      <br><br>
-      <!-- <img src="https://docs.portkey.ai/~gitbook/image?url=https%3A%2F%2F2878743244-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252Fy3MCfQqftZOnHqSmVV5x%252Fuploads%252FOVuOxN4uFdBp1BdXX4E6%252Fmultimodal-icon.png%3Falt%3Dmedia%26token%3Db8b7bd49-0194-4d2f-89d4-c6633a872372&width=768&dpr=2&quality=100&sign=f51129a9&sv=1" height=100 /> -->
-    </td>
-    <td width="50%">
-      <strong><a href="https://docs.portkey.ai/docs/product/guardrails">Guardrails</a></strong></br>
-      Verify your LLM inputs AND outputs to adhere to your specified checks. Build your own checks or choose from the 20+ pre-built guardrails.
-      <br><br>
-      <!-- <img src="https://docs.portkey.ai/~gitbook/image?url=https%3A%2F%2F2878743244-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252Fy3MCfQqftZOnHqSmVV5x%252Fuploads%252FDFkhZpqtBfQMIW9BhVum%252Fguardrails-icon.png%3Falt%3Dmedia%26token%3D91cfe226-5ce9-44b3-a0e8-be9f3ae3917f&width=768&dpr=2&quality=100&sign=73608afc&sv=1" height=100 /> -->
-    </td>
-  </tr>
-</table>
-
-**These features are configured through the Gateway Config added to the  `x-portkey-config` header or the `config` parameter in the SDKs.**
-
-Here's a sample config JSON showcasing the above features. All the features are optional
-
-```json
-{
-	"retry": { "attempts": 5 },
-	"request_timeout": 10000,
-	"strategy": { "mode": "fallback" }, // or 'loadbalance', etc
-	"targets": [{
-		"provider": "openai",
-		"api_key": "sk-***"
-	},{
-		"strategy": {"mode": "loadbalance"}, // Optional nesting
-		"targets": {...}
-	}]
-}
-```
-
-Then use the config in your API requests to the gateway.
-
-
-### Using Gateway Configs
-
-Here's a guide to [use the config object in your request](https://portkey.ai/docs/api-reference/config-object).
-
-<br>
 
 
 ## Gateway Enterprise Version
