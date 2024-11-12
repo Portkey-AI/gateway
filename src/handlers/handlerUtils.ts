@@ -222,28 +222,29 @@ export const fetchProviderOptionsFromConfig = (
   return providerOptions;
 };
 
-export function convertGuardrailsShorthand(guardrailsArr: any, type:string) {
-
-  return guardrailsArr.map((guardrails:any) => {
+export function convertGuardrailsShorthand(guardrailsArr: any, type: string) {
+  return guardrailsArr.map((guardrails: any) => {
     let hooksObject: any = {
-      "type": "guardrail",
-      "id": `${type}_guardrail_${Math.random().toString(36).substring(2, 5)}`,
+      type: 'guardrail',
+      id: `${type}_guardrail_${Math.random().toString(36).substring(2, 5)}`,
     };
-  
+
     // if the deny key is present (true or false), add it to hooksObject and remove it from guardrails
-    ['deny', 'on_fail', 'on_success', 'async', 'onFail', 'onSuccess'].forEach(key => {
-      if (guardrails.hasOwnProperty(key)) {
-        hooksObject[key] = guardrails[key];
-        delete guardrails[key];
+    ['deny', 'on_fail', 'on_success', 'async', 'onFail', 'onSuccess'].forEach(
+      (key) => {
+        if (guardrails.hasOwnProperty(key)) {
+          hooksObject[key] = guardrails[key];
+          delete guardrails[key];
+        }
       }
-    });
-  
+    );
+
     // Now, add all the checks to the checks array
     hooksObject.checks = Object.keys(guardrails).map((key) => ({
       id: key,
       parameters: guardrails[key],
     }));
-  
+
     return hooksObject;
   });
 }
@@ -811,13 +812,17 @@ export async function tryTargetsRecursively(
   }
 
   if (currentTarget.inputGuardrails) {
-    currentTarget.beforeRequestHooks = 
-      convertGuardrailsShorthand(currentTarget.inputGuardrails, "input");
+    currentTarget.beforeRequestHooks = [
+      ...(currentTarget.beforeRequestHooks || []),
+      ...convertGuardrailsShorthand(currentTarget.inputGuardrails, 'input'),
+    ];
   }
 
   if (currentTarget.outputGuardrails) {
-    currentTarget.afterRequestHooks = 
-      convertGuardrailsShorthand(currentTarget.outputGuardrails, "output");
+    currentTarget.afterRequestHooks = [
+      ...(currentTarget.afterRequestHooks || []),
+      ...convertGuardrailsShorthand(currentTarget.outputGuardrails, 'output'),
+    ];
   }
 
   if (currentTarget.afterRequestHooks) {
