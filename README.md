@@ -8,7 +8,7 @@
 # AI Gateway
 #### Route to 250+ LLMs with 1 fast & friendly API
 
-<img src="https://cfassets.portkey.ai/sdk.gif" height="300px" alt="Gateway Demo" style="margin-left:-35px">
+<img src="https://cfassets.portkey.ai/sdk.gif" width="550px" alt="Gateway Demo" style="margin-left:-35px">
 
 [Docs](https://portkey.ai/docs) | [Enterprise](https://portkey.ai/docs/product/enterprise-offering) | [Hosted Gateway](https://app.portkey.ai/) | [Changelog](https://new.portkey.ai) | [API Reference](https://portkey.ai/docs/api-reference/inference-api/introduction)
 
@@ -95,7 +95,7 @@ client.chat.completions.create(
 &nbsp; [<img height="12" width="12" src="https://cdn.simpleicons.org/gnubash/3776AB" /> REST](https://portkey.ai/docs/api-reference/inference-api/introduction)
 &nbsp; [<img height="12" width="12" src="https://cdn.simpleicons.org/openai/3776AB" /> OpenAI SDKs](https://portkey.ai/docs/guides/getting-started/getting-started-with-ai-gateway#openai-chat-completion)
 &nbsp; [<img height="12" width="12" src="https://cdn.simpleicons.org/langchain/3776AB" /> Langchain](https://portkey.ai/docs/integrations/libraries/langchain-python)
-&nbsp; [<img height="12" width="12" src="https://cdn.simpleicons.org/llamaindex/3776AB" /> LlamaIndex](https://portkey.ai/docs/integrations/libraries/llama-index-python)
+&nbsp; [LlamaIndex](https://portkey.ai/docs/integrations/libraries/llama-index-python)
 &nbsp; [Autogen](https://portkey.ai/docs/integrations/agents/autogen)
 &nbsp; [CrewAI](https://portkey.ai/docs/integrations/agents/crewai)
 &nbsp; [More..](https://portkey.ai/docs/integrations/libraries)
@@ -127,7 +127,9 @@ client.chat.completions.create(
 
 # This would always response with "Bat" as the guardrail denies all replies containing "Apple". The retry config would retry 5 times before giving up.
 ```
-<img src="https://portkey.ai/blog/content/images/size/w1600/2024/11/image-15.png" height=200 title="Request flow through Portkey's AI gateway with retries and guardrails" alt="Request flow through Portkey's AI gateway with retries and guardrails"/>
+<div align="center">
+<img src="https://portkey.ai/blog/content/images/size/w1600/2024/11/image-15.png" width=500 title="Request flow through Portkey's AI gateway with retries and guardrails" alt="Request flow through Portkey's AI gateway with retries and guardrails"/>
+</div>
 
 You can do a lot more stuff with configs in your AI gateway. [Jump to examples  →](https://portkey.ai/docs/product/ai-gateway/configs)
 
@@ -135,10 +137,7 @@ You can do a lot more stuff with configs in your AI gateway. [Jump to examples  
 
 
 ### Enterprise Version (Private deployments)
-<!-- Add badges for AWS, Azure, GCP, OpenShift, Kubernetes   -->
 
-
-<!-- Change the badge approach to the image and link approach -->
 <sup>
 
 [<img height="12" width="12" src="https://cfassets.portkey.ai/amazon-logo.svg" /> AWS](https://portkey.ai/docs/product/enterprise-offering/private-cloud-deployments/aws) 
@@ -228,13 +227,13 @@ Gateway seamlessly integrates with popular agent frameworks. [Read the documenta
       <strong><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/fallbacks">Fallbacks</a></strong><br/>
       Fallback to another provider or model on failed requests. You can specify the errors on which to trigger the fallback. Improves reliability of your application
       <br><br>
-      <img src="https://framerusercontent.com/images/gmlOW8yeKP2pGuIsObM6gKLzeMI.png" height=100 />
+      <!-- <img src="https://framerusercontent.com/images/gmlOW8yeKP2pGuIsObM6gKLzeMI.png" height=100 /> -->
     </td>
     <td width="50%">
       <strong><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/automatic-retries">Automatic Retries</a></strong><br/>
       Automatically retry failed requests up to 5 times. An exponential backoff strategy spaces out retry attempts to prevent network overload.
       <br><br>
-      <img src="https://github.com/roh26it/Rubeus/assets/971978/8a6e653c-94b2-4ba7-95c7-93544ee476b1" height=100 />
+      <!-- <img src="https://github.com/roh26it/Rubeus/assets/971978/8a6e653c-94b2-4ba7-95c7-93544ee476b1" height=100 /> -->
     </td>
   </tr>
   
@@ -245,13 +244,13 @@ Gateway seamlessly integrates with popular agent frameworks. [Read the documenta
       <strong><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/load-balancing">Load Balancing</a></strong><br/>
       Distribute LLM requests across multiple API keys or AI providers with weights to ensure high availability and optimal performance.
       <br><br>
-      <img src="https://framerusercontent.com/images/6EWuq3FWhqrPe3kKLqVspevi4.png" height=100 />
+      <!-- <img src="https://framerusercontent.com/images/6EWuq3FWhqrPe3kKLqVspevi4.png" height=100 /> -->
     </td>
     <td width="50%">
-      <strong><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/request-timeouts">Request Timeouts</a></strong></br><br/>
+      <strong><a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/request-timeouts">Request Timeouts</a></strong></br>
       Manage unruly LLMs & latencies by setting up granular request timeouts, allowing automatic termination of requests that exceed a specified duration.
       <br><br>
-      <img src="https://github.com/vrushankportkey/gateway/assets/134934501/b23b98b2-6451-4747-8898-6847ad8baed4" height=100 />
+      <!-- <img src="https://github.com/vrushankportkey/gateway/assets/134934501/b23b98b2-6451-4747-8898-6847ad8baed4" height=100 /> -->
     </td>
   </tr>
 </table>
@@ -263,13 +262,13 @@ Gateway seamlessly integrates with popular agent frameworks. [Read the documenta
       <strong><a href="https://docs.portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/multimodal-capabilities">Multi-modal LLM Gateway</a></strong><br/>
       Call vision, audio (text-to-speech & speech-to-text), and image generation models from multiple providers  — all using the familiar OpenAI signature
       <br><br>
-      <img src="https://docs.portkey.ai/~gitbook/image?url=https%3A%2F%2F2878743244-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252Fy3MCfQqftZOnHqSmVV5x%252Fuploads%252FOVuOxN4uFdBp1BdXX4E6%252Fmultimodal-icon.png%3Falt%3Dmedia%26token%3Db8b7bd49-0194-4d2f-89d4-c6633a872372&width=768&dpr=2&quality=100&sign=f51129a9&sv=1" height=100 />
+      <!-- <img src="https://docs.portkey.ai/~gitbook/image?url=https%3A%2F%2F2878743244-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252Fy3MCfQqftZOnHqSmVV5x%252Fuploads%252FOVuOxN4uFdBp1BdXX4E6%252Fmultimodal-icon.png%3Falt%3Dmedia%26token%3Db8b7bd49-0194-4d2f-89d4-c6633a872372&width=768&dpr=2&quality=100&sign=f51129a9&sv=1" height=100 /> -->
     </td>
     <td width="50%">
-      <strong><a href="https://docs.portkey.ai/docs/product/guardrails">Guardrails</a></strong></br><br/>
+      <strong><a href="https://docs.portkey.ai/docs/product/guardrails">Guardrails</a></strong></br>
       Verify your LLM inputs AND outputs to adhere to your specified checks. Build your own checks or choose from the 20+ pre-built guardrails.
       <br><br>
-      <img src="https://docs.portkey.ai/~gitbook/image?url=https%3A%2F%2F2878743244-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252Fy3MCfQqftZOnHqSmVV5x%252Fuploads%252FDFkhZpqtBfQMIW9BhVum%252Fguardrails-icon.png%3Falt%3Dmedia%26token%3D91cfe226-5ce9-44b3-a0e8-be9f3ae3917f&width=768&dpr=2&quality=100&sign=73608afc&sv=1" height=100 />
+      <!-- <img src="https://docs.portkey.ai/~gitbook/image?url=https%3A%2F%2F2878743244-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252Fy3MCfQqftZOnHqSmVV5x%252Fuploads%252FDFkhZpqtBfQMIW9BhVum%252Fguardrails-icon.png%3Falt%3Dmedia%26token%3D91cfe226-5ce9-44b3-a0e8-be9f3ae3917f&width=768&dpr=2&quality=100&sign=73608afc&sv=1" height=100 /> -->
     </td>
   </tr>
 </table>
