@@ -64,7 +64,7 @@ const BedrockAPIConfig: ProviderAPIConfig = {
       providerOptions.awsSessionToken || ''
     );
   },
-  getEndpoint: ({ fn, gatewayRequestBody }) => {
+  getEndpoint: ({ fn, gatewayRequestBodyJSON: gatewayRequestBody }) => {
     const { model, stream } = gatewayRequestBody;
     if (!model) throw new GatewayError('Model is required');
     let mappedFn = fn;

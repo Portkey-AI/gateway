@@ -261,8 +261,9 @@ export async function tryPostProxy(
   const endpoint = apiConfig.getEndpoint({
     providerOptions: providerOption,
     fn,
-    gatewayRequestBody: params,
-    gatewayRequestURL: c.req.url,
+    gatewayRequestBodyJSON: params,
+    gatewayRequestBody: inputParams,
+    requestPath: c.req.path,
   });
 
   const url = endpoint
@@ -457,7 +458,8 @@ export async function tryPost(
   inputParams: Params | FormData,
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
-  currentIndex: number | string
+  currentIndex: number | string,
+  method: string
 ): Promise<Response> {
   const overrideParams = providerOption?.overrideParams || {};
   const params: Params = { ...inputParams, ...overrideParams };
@@ -493,13 +495,20 @@ export async function tryPost(
 
   // Mapping providers to corresponding URLs
   const apiConfig: ProviderAPIConfig = Providers[provider].api;
+  // Get the endpoint
+  const endpoint = apiConfig.getEndpoint({
+    providerOptions: providerOption,
+    fn,
+    gatewayRequestBodyJSON: params,
+    gatewayRequestBody: inputParams,
+    requestPath: c.req.path,
+  });
+  
   // Attach the body of the request
-  const transformedRequestBody = transformToProviderRequest(
-    provider,
-    params,
-    inputParams,
-    fn
-  );
+  const transformedRequestBody =
+    method === 'POST'
+      ? transformToProviderRequest(provider, params, inputParams, fn)
+      : {};
 
   const forwardHeaders =
     requestHeaders[HEADER_KEYS.FORWARD_HEADERS]
@@ -514,12 +523,6 @@ export async function tryPost(
   const baseUrl =
     customHost || apiConfig.getBaseURL({ providerOptions: providerOption });
 
-  const endpoint = apiConfig.getEndpoint({
-    providerOptions: providerOption,
-    fn,
-    gatewayRequestBody: params,
-    gatewayRequestURL: c.req.url,
-  });
   const url = `${baseUrl}${endpoint}`;
 
   const headers = await apiConfig.headers({
@@ -535,15 +538,17 @@ export async function tryPost(
   const fetchOptions = constructRequest(
     headers,
     provider,
-    'POST',
+    method,
     forwardHeaders,
     requestHeaders
   );
 
-  fetchOptions.body =
-    headers[HEADER_KEYS.CONTENT_TYPE] === CONTENT_TYPES.MULTIPART_FORM_DATA
-      ? (transformedRequestBody as FormData)
-      : JSON.stringify(transformedRequestBody);
+  if (method === 'POST') {
+    fetchOptions.body =
+      headers[HEADER_KEYS.CONTENT_TYPE] === CONTENT_TYPES.MULTIPART_FORM_DATA
+        ? (transformedRequestBody as FormData)
+        : JSON.stringify(transformedRequestBody);
+  }
 
   providerOption.retry = {
     attempts: providerOption.retry?.attempts ?? 0,
@@ -713,7 +718,8 @@ export async function tryProvidersInSequence(
         params,
         requestHeaders,
         fn,
-        loadbalanceIndex ?? index
+        loadbalanceIndex ?? index,
+        method
       );
     } catch (error: any) {
       // Log and store the error
@@ -928,7 +934,8 @@ export async function tryTargetsRecursively(
           request,
           requestHeaders,
           fn,
-          currentJsonPath
+          currentJsonPath,
+          method
         );
       } catch (error: any) {
         // tryPost always returns a Response.

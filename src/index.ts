@@ -29,6 +29,7 @@ import { createTranscriptionHandler } from './handlers/createTranscriptionHandle
 import { createTranslationHandler } from './handlers/createTranslationHandler';
 import { modelsHandler, providersHandler } from './handlers/modelsHandler';
 import { realTimeHandler } from './handlers/realtimeHandler';
+import fileRouter from './routers/fileRouter';
 
 // Create a new Hono server instance
 const app = new Hono();
@@ -172,6 +173,8 @@ app.post(
  * Handles requests by passing them to the createTranslationHandler.
  */
 app.post('/v1/audio/translations', requestValidator, createTranslationHandler);
+
+app.route('/v1/files', fileRouter);
 
 /**
  * POST route for '/v1/prompts/:id/completions'.
