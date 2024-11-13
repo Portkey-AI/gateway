@@ -9,7 +9,7 @@ const PredibaseAPIConfig: ProviderAPIConfig = {
       Accept: 'application/json',
     };
   },
-  getEndpoint: ({ fn, gatewayRequestBody }) => {
+  getEndpoint: ({ fn, gatewayRequestBodyJSON: gatewayRequestBody }) => {
     const user = gatewayRequestBody?.user;
     const model = gatewayRequestBody?.model;
     const base_model = splitString(`${model}`, ':').before;

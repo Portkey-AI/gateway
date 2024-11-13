@@ -244,12 +244,10 @@ export async function tryPost(
   // Mapping providers to corresponding URLs
   const apiConfig: ProviderAPIConfig = Providers[provider].api;
   // Attach the body of the request
-  const transformedRequestBody = transformToProviderRequest(
-    provider,
-    params,
-    inputParams,
-    fn
-  );
+  const transformedRequestBody =
+    method === 'POST'
+      ? transformToProviderRequest(provider, params, inputParams, fn)
+      : {};
 
   const forwardHeaders =
     requestHeaders[HEADER_KEYS.FORWARD_HEADERS]
@@ -267,8 +265,9 @@ export async function tryPost(
   const endpoint = apiConfig.getEndpoint({
     providerOptions: providerOption,
     fn,
-    gatewayRequestBody: params,
-    gatewayRequestURL: c.req.url,
+    gatewayRequestBodyJSON: params,
+    gatewayRequestBody: inputParams,
+    requestURL: c.req.url,
   });
 
   let url: string;
@@ -303,11 +302,12 @@ export async function tryPost(
   const requestContentType =
     requestHeaders[HEADER_KEYS.CONTENT_TYPE.toLowerCase()]?.split(';')[0];
 
-  fetchOptions.body =
-    headerContentType === CONTENT_TYPES.MULTIPART_FORM_DATA ||
-    (fn == 'proxy' && requestContentType === CONTENT_TYPES.MULTIPART_FORM_DATA)
-      ? (transformedRequestBody as FormData)
-      : JSON.stringify(transformedRequestBody);
+    if (method === 'POST') {
+      fetchOptions.body =
+        headers[HEADER_KEYS.CONTENT_TYPE] === CONTENT_TYPES.MULTIPART_FORM_DATA
+          ? (transformedRequestBody as FormData)
+          : JSON.stringify(transformedRequestBody);
+    }
 
   if (['GET', 'DELETE'].includes(method)) {
     delete fetchOptions.body;

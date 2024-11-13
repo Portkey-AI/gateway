@@ -27,6 +27,7 @@ import { createTranscriptionHandler } from './handlers/createTranscriptionHandle
 import { createTranslationHandler } from './handlers/createTranslationHandler';
 import { modelsHandler, providersHandler } from './handlers/modelsHandler';
 import { realTimeHandler } from './handlers/realtimeHandler';
+import fileRouter from './routers/fileRouter';
 
 // Config
 import conf from '../conf.json';
@@ -152,6 +153,8 @@ app.post(
  * Handles requests by passing them to the createTranslationHandler.
  */
 app.post('/v1/audio/translations', requestValidator, createTranslationHandler);
+
+app.route('/v1/files', fileRouter);
 
 /**
  * POST route for '/v1/prompts/:id/completions'.

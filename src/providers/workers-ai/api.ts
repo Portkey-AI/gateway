@@ -9,7 +9,7 @@ const WorkersAiAPIConfig: ProviderAPIConfig = {
     const { apiKey } = providerOptions;
     return { Authorization: `Bearer ${apiKey}` };
   },
-  getEndpoint: ({ fn, gatewayRequestBody: params }) => {
+  getEndpoint: ({ fn, gatewayRequestBodyJSON: params }) => {
     const { model } = params;
     switch (fn) {
       case 'complete': {

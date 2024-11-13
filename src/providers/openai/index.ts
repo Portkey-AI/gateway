@@ -19,6 +19,13 @@ import {
 } from './createSpeech';
 import { OpenAICreateTranscriptionResponseTransform } from './createTranscription';
 import { OpenAICreateTranslationResponseTransform } from './createTranslation';
+import {
+  OpenAIUploadFileResponseTransform,
+  OpenAIFileUploadRequestTransform,
+} from './uploadFile';
+import { OpenAIGetFilesResponseTransform } from './getFiles';
+import { OpenAIDeleteFileResponseTransform } from './deleteFile';
+import { OpenAIGetFileContentResponseTransform } from './getFileContent';
 
 const OpenAIConfig: ProviderConfigs = {
   complete: OpenAICompleteConfig,
@@ -30,6 +37,9 @@ const OpenAIConfig: ProviderConfigs = {
   createTranscription: {},
   createTranslation: {},
   realtime: {},
+  requestTransforms: {
+    uploadFile: OpenAIFileUploadRequestTransform,
+  },
   responseTransforms: {
     complete: OpenAICompleteResponseTransform,
     // 'stream-complete': OpenAICompleteResponseTransform,
@@ -41,6 +51,11 @@ const OpenAIConfig: ProviderConfigs = {
     createTranscription: OpenAICreateTranscriptionResponseTransform,
     createTranslation: OpenAICreateTranslationResponseTransform,
     realtime: {},
+    uploadFile: OpenAIUploadFileResponseTransform,
+    getFiles: OpenAIGetFilesResponseTransform,
+    getFile: OpenAIGetFilesResponseTransform,
+    deleteFile: OpenAIDeleteFileResponseTransform,
+    getFileContent: OpenAIGetFileContentResponseTransform,
   },
 };
 

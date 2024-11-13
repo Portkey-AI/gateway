@@ -186,6 +186,9 @@ export const transformToProviderRequest = (
   inputParams: Params | FormData,
   fn: endpointStrings
 ) => {
+  if (fn === 'uploadFile') {
+    return ProviderConfigs[provider].requestTransforms[fn](inputParams);
+  }
   if (inputParams instanceof FormData) return inputParams;
 
   if (fn === 'proxy') {

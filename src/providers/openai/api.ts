@@ -14,7 +14,11 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
       headersObj['OpenAI-Project'] = providerOptions.openaiProject;
     }
 
-    if (fn === 'createTranscription' || fn === 'createTranslation')
+    if (
+      fn === 'createTranscription' ||
+      fn === 'createTranslation' ||
+      fn === 'uploadFile'
+    )
       headersObj['Content-Type'] = 'multipart/form-data';
 
     if (providerOptions.openaiBeta) {
@@ -23,7 +27,7 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
 
     return headersObj;
   },
-  getEndpoint: ({ fn, gatewayRequestURL }) => {
+  getEndpoint: ({ fn, requestURL }) => {
     switch (fn) {
       case 'complete':
         return '/completions';
@@ -40,8 +44,18 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
       case 'createTranslation':
         return '/audio/translations';
       case 'realtime':
-        const endpoint = gatewayRequestURL.split('/v1')[1];
+        const endpoint = requestURL.split('/v1')[1];
         return endpoint;
+      case 'uploadFile':
+        return '/files';
+      case 'getFile':
+        return requestURL.split('/v1')[1];
+      case 'getFiles':
+        return '/files';
+      case 'deleteFile':
+        return requestURL.split('/v1')[1];
+      case 'getFileContent':
+        return requestURL.split('/v1')[1];
       default:
         return '';
     }

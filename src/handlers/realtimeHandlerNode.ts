@@ -22,8 +22,8 @@ export async function realTimeHandlerNode(
     const endpoint = apiConfig.getEndpoint({
       providerOptions,
       fn: 'realtime',
-      gatewayRequestBody: {},
-      gatewayRequestURL: c.req.url,
+      gatewayRequestBodyJSON: {},
+      requestURL: c.req.url,
     });
     let url = `${baseUrl}${endpoint}`;
     url = url.replace('https://', 'wss://');

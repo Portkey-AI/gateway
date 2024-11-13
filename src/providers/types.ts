@@ -49,8 +49,9 @@ export interface ProviderAPIConfig {
   getEndpoint: (args: {
     providerOptions: Options;
     fn: string;
-    gatewayRequestBody: Params;
-    gatewayRequestURL: string;
+    gatewayRequestBodyJSON: Params;
+    gatewayRequestBody?: FormData | Params;
+    requestURL: string;
   }) => string;
   /** A function to determine if the request body should be transformed to form data */
   transformToFormData?: (args: { gatewayRequestBody: Params }) => boolean;
@@ -74,7 +75,12 @@ export type endpointStrings =
   | 'createSpeech'
   | 'createTranscription'
   | 'createTranslation'
-  | 'realtime';
+  | 'realtime'
+  | 'uploadFile'
+  | 'getFiles'
+  | 'getFile'
+  | 'deleteFile'
+  | 'getFileContent';
 
 /**
  * A collection of API configurations for multiple AI providers.
@@ -173,4 +179,58 @@ export interface ImageGenerateResponse {
   created: number;
   data: object[];
   provider: string;
+}
+
+/**
+ * The response body for uploading a file.
+ * @interface
+ */
+export interface UploadFileResponse extends File {}
+
+/**
+ * The response body for getting a file.
+ * @interface
+ */
+export interface GetFileResponse extends File {}
+
+/**
+ * The response body for getting a list of files.
+ * @interface
+ */
+export interface GetFilesResponse {
+  data: File[];
+  object: 'list';
+}
+
+/**
+ * File object
+ * @interface
+ */
+export interface File {
+  id: string;
+  object: string;
+  bytes: number;
+  created_at: number;
+  filename: string;
+  purpose:
+    | string
+    | 'assistants'
+    | 'assistants_output'
+    | 'batch'
+    | 'batch_output'
+    | 'fine-tune'
+    | 'fine-tune-results'
+    | 'vision';
+  status?: string | 'uploaded' | 'processed' | 'error';
+  status_details?: string;
+}
+
+/**
+ * The response body for deleting a file.
+ * @interface
+ */
+export interface DeleteFileResponse {
+  object: string;
+  deleted: boolean;
+  id: string;
 }
