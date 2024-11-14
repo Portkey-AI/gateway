@@ -60,6 +60,11 @@ export interface Options {
   apiVersion?: string;
   adAuth?: string;
   azureModelName?: string;
+  azureAuthMode?: string; // can be entra or managed
+  azureManagedClientId?: string;
+  azureEntraClientId?: string;
+  azureEntraClientSecret?: string;
+  azureEntraTenantId?: string;
   /** Workers AI specific */
   workersAiAccountId?: string;
   /** The parameter to set custom base url */
@@ -78,6 +83,9 @@ export interface Options {
   awsAccessKeyId?: string;
   awsSessionToken?: string;
   awsRegion?: string;
+  awsAuthType?: string;
+  awsRoleArn?: string;
+  awsExternalId?: string;
 
   /** Stability AI specific */
   stabilityClientId?: string;
@@ -140,6 +148,12 @@ export interface Targets {
   deploymentId?: string;
   apiVersion?: string;
   adAuth?: string;
+  azureAuthMode?: string;
+  azureManagedClientId?: string;
+  azureEntraClientId?: string;
+  azureEntraClientSecret?: string;
+  azureEntraTenantId?: string;
+  azureModelName?: string;
   /** provider option index picked based on weight in loadbalance mode */
   index?: number;
   cache?: CacheSettings | string;
@@ -296,6 +310,7 @@ export interface Params {
   n?: number;
   stream?: boolean;
   logprobs?: number;
+  top_logprobs?: boolean;
   echo?: boolean;
   stop?: string | string[];
   presence_penalty?: number;
@@ -312,8 +327,29 @@ export interface Params {
     type: 'json_object' | 'text' | 'json_schema';
     json_schema?: any;
   };
+  seed?: number;
+  store?: boolean;
+  metadata?: object;
+  modalities?: string[];
+  audio?: {
+    voice: string;
+    format: string;
+  };
+  service_tier?: string;
+  prediction?: {
+    type: string;
+    content:
+      | {
+          type: string;
+          text: string;
+        }[]
+      | string;
+  };
   // Google Vertex AI specific
   safety_settings?: any;
+  // Anthropic specific
+  anthropic_beta?: string;
+  anthropic_version?: string;
 }
 
 interface Examples {
@@ -350,6 +386,11 @@ export interface ShortConfig {
   azureModelName?: string;
   workersAiAccountId?: string;
   apiVersion?: string;
+  azureAuthMode?: string;
+  azureManagedClientId?: string;
+  azureEntraClientId?: string;
+  azureEntraClientSecret?: string;
+  azureEntraTenantId?: string;
   customHost?: string;
   // Google Vertex AI specific
   vertexRegion?: string;

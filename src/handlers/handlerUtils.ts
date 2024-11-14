@@ -269,6 +269,7 @@ export async function tryPostProxy(
     : (providerOption.urlToFetch as string);
 
   const headers = await apiConfig.headers({
+    c,
     providerOptions: providerOption,
     fn,
     transformedRequestBody: params,
@@ -520,6 +521,7 @@ export async function tryPost(
   const url = `${baseUrl}${endpoint}`;
 
   const headers = await apiConfig.headers({
+    c,
     providerOptions: providerOption,
     fn,
     transformedRequestBody,
@@ -640,8 +642,8 @@ export async function tryPost(
 
   // Prerequest validator (For virtual key budgets)
   const preRequestValidator = c.get('preRequestValidator');
-  let preRequestValidatorResponse = preRequestValidator
-    ? await preRequestValidator(env(c), providerOption, requestHeaders)
+  const preRequestValidatorResponse = preRequestValidator
+    ? await preRequestValidator(c, providerOption, requestHeaders, params)
     : undefined;
   if (!!preRequestValidatorResponse) {
     return createResponse(preRequestValidatorResponse, undefined, false);
@@ -1011,6 +1013,13 @@ export function constructConfigFromRequestHeaders(
     resourceName: requestHeaders[`x-${POWERED_BY}-azure-resource-name`],
     deploymentId: requestHeaders[`x-${POWERED_BY}-azure-deployment-id`],
     apiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
+    azureAuthMode: requestHeaders[`x-${POWERED_BY}-azure-auth-mode`],
+    azureManagedClientId:
+      requestHeaders[`x-${POWERED_BY}-azure-managed-client-id`],
+    azureEntraClientId: requestHeaders[`x-${POWERED_BY}-azure-entra-client-id`],
+    azureEntraClientSecret:
+      requestHeaders[`x-${POWERED_BY}-azure-entra-client-secret`],
+    azureEntraTenantId: requestHeaders[`x-${POWERED_BY}-azure-entra-tenant-id`],
     azureModelName: requestHeaders[`x-${POWERED_BY}-azure-model-name`],
   };
 
@@ -1037,6 +1046,9 @@ export function constructConfigFromRequestHeaders(
     awsSecretAccessKey: requestHeaders[`x-${POWERED_BY}-aws-secret-access-key`],
     awsSessionToken: requestHeaders[`x-${POWERED_BY}-aws-session-token`],
     awsRegion: requestHeaders[`x-${POWERED_BY}-aws-region`],
+    awsRoleArn: requestHeaders[`x-${POWERED_BY}-aws-role-arn`],
+    awsAuthType: requestHeaders[`x-${POWERED_BY}-aws-auth-type`],
+    awsExternalId: requestHeaders[`x-${POWERED_BY}-aws-external-id`],
   };
 
   const workersAiConfig = {

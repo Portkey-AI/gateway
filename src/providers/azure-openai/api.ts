@@ -1,13 +1,46 @@
 import { ProviderAPIConfig } from '../types';
+import {
+  getAccessTokenFromEntraId,
+  getAzureManagedIdentityToken,
+} from './utils';
 
 const AzureOpenAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
     const { resourceName, deploymentId } = providerOptions;
     return `https://${resourceName}.openai.azure.com/openai/deployments/${deploymentId}`;
   },
-  headers: ({ providerOptions, fn }) => {
+  headers: async ({ providerOptions, fn }) => {
+    const { apiKey, azureAuthMode } = providerOptions;
+
+    if (azureAuthMode === 'entra') {
+      const { azureEntraTenantId, azureEntraClientId, azureEntraClientSecret } =
+        providerOptions;
+      if (azureEntraTenantId && azureEntraClientId && azureEntraClientSecret) {
+        const scope = 'https://cognitiveservices.azure.com/.default';
+        const accessToken = await getAccessTokenFromEntraId(
+          azureEntraTenantId,
+          azureEntraClientId,
+          azureEntraClientSecret,
+          scope
+        );
+        return {
+          Authorization: `Bearer ${accessToken}`,
+        };
+      }
+    }
+    if (azureAuthMode === 'managed') {
+      const { azureManagedClientId } = providerOptions;
+      const resource = 'https://cognitiveservices.azure.com/';
+      const accessToken = await getAzureManagedIdentityToken(
+        resource,
+        azureManagedClientId
+      );
+      return {
+        Authorization: `Bearer ${accessToken}`,
+      };
+    }
     const headersObj: Record<string, string> = {
-      'api-key': `${providerOptions.apiKey}`,
+      'api-key': `${apiKey}`,
     };
     if (fn === 'createTranscription' || fn === 'createTranslation')
       headersObj['Content-Type'] = 'multipart/form-data';
