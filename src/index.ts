@@ -186,7 +186,7 @@ app.post('/v1/proxy/*', proxyHandler);
 app.post('/v1/*', requestValidator, proxyHandler);
 
 // Support the /v1 proxy endpoint after all defined endpoints so this does not interfere.
-app.get('/v1/(?!realtime).*', requestValidator, proxyGetHandler);
+app.get('/v1/:path{(?!realtime).*}', requestValidator, proxyGetHandler);
 
 app.delete('/v1/*', requestValidator, proxyGetHandler);
 
