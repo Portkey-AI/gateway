@@ -261,7 +261,8 @@ export class HooksManager {
         context,
         check.parameters,
         eventType,
-        options
+        options,
+        fn
       );
       return {
         ...result,

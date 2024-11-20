@@ -1,5 +1,7 @@
 export interface PluginContext {
   [key: string]: any;
+  requestType: 'complete' | 'chatComplete';
+  provider: string;
 }
 
 export interface PluginParameters {
@@ -22,5 +24,7 @@ export type PluginHandler = (
   eventType: HookEventType,
   options: {
     env: Record<string, any>;
-  }
+  },
+  // Handler function, useful in cases for a provider with multiple guardrails ex: mistral
+  fn: string
 ) => Promise<PluginHandlerResponse>;
