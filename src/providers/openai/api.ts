@@ -25,7 +25,7 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
 
     return headersObj;
   },
-  getEndpoint: ({ fn }) => {
+  getEndpoint: ({ fn, gatewayRequestURL }) => {
     switch (fn) {
       case 'complete':
         return '/completions';
@@ -42,7 +42,8 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
       case 'createTranslation':
         return '/audio/translations';
       case 'realtime':
-        return '/realtime?model=gpt-4o-realtime-preview-2024-10-01';
+        const endpoint = gatewayRequestURL.split('/v1')[1];
+        return endpoint;
       default:
         return '';
     }

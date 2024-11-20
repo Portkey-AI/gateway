@@ -262,6 +262,7 @@ export async function tryPostProxy(
     providerOptions: providerOption,
     fn,
     gatewayRequestBody: params,
+    gatewayRequestURL: c.req.url,
   });
 
   const url = endpoint
@@ -517,6 +518,7 @@ export async function tryPost(
     providerOptions: providerOption,
     fn,
     gatewayRequestBody: params,
+    gatewayRequestURL: c.req.url,
   });
   const url = `${baseUrl}${endpoint}`;
 

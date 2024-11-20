@@ -35,7 +35,11 @@ export async function realTimeHandler(c: Context): Promise<Response> {
   ) as Options;
   const provider = providerOptions.provider ?? '';
   const apiConfig: ProviderAPIConfig = Providers[provider].api;
-  const url = getURLForOutgoingConnection(apiConfig, providerOptions);
+  const url = getURLForOutgoingConnection(
+    apiConfig,
+    providerOptions,
+    c.req.url
+  );
   const options = await getOptionsForOutgoingConnection(
     apiConfig,
     providerOptions,
