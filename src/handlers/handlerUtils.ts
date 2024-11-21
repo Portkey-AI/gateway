@@ -282,6 +282,10 @@ export async function tryPost(
       ? (transformedRequestBody as FormData)
       : JSON.stringify(transformedRequestBody);
 
+  if (['GET', 'DELETE'].includes(method)) {
+    delete fetchOptions.body;
+  }
+
   providerOption.retry = {
     attempts: providerOption.retry?.attempts ?? 0,
     onStatusCodes: providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES,
