@@ -1006,6 +1006,7 @@ export function updateResponseHeaders(
   // Delete content-length header to avoid conflicts with hono compress middleware
   // workerd environment handles this authomatically
   response.headers.delete('content-length');
+  response.headers.delete('transfer-encoding');
 }
 
 export function constructConfigFromRequestHeaders(
@@ -1023,6 +1024,9 @@ export function constructConfigFromRequestHeaders(
       requestHeaders[`x-${POWERED_BY}-azure-entra-client-secret`],
     azureEntraTenantId: requestHeaders[`x-${POWERED_BY}-azure-entra-tenant-id`],
     azureModelName: requestHeaders[`x-${POWERED_BY}-azure-model-name`],
+    openaiBeta:
+      requestHeaders[`x-${POWERED_BY}-openai-beta`] ||
+      requestHeaders[`openai-beta`],
   };
 
   const stabilityAiConfig = {
@@ -1041,7 +1045,6 @@ export function constructConfigFromRequestHeaders(
       requestHeaders[`x-${POWERED_BY}-azure-deployment-type`],
     azureApiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
     azureEndpointName: requestHeaders[`x-${POWERED_BY}-azure-endpoint-name`],
-    openaiBeta: requestHeaders[`x-${POWERED_BY}-openai-beta`],
   };
 
   const bedrockConfig = {
@@ -1061,7 +1064,9 @@ export function constructConfigFromRequestHeaders(
   const openAiConfig = {
     openaiOrganization: requestHeaders[`x-${POWERED_BY}-openai-organization`],
     openaiProject: requestHeaders[`x-${POWERED_BY}-openai-project`],
-    openaiBeta: requestHeaders[`x-${POWERED_BY}-openai-beta`],
+    openaiBeta:
+      requestHeaders[`x-${POWERED_BY}-openai-beta`] ||
+      requestHeaders[`openai-beta`],
   };
 
   const huggingfaceConfig = {
