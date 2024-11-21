@@ -92,7 +92,7 @@ export async function responseHandler(
     return { response: streamingResponse, responseJson: null };
   }
 
-  if (streamingMode && response.status === 200) {
+  if (streamingMode && response.status === 200 && responseTransformerFunction) {
     return {
       response: handleStreamingMode(
         response,

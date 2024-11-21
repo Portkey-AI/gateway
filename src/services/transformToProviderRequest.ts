@@ -188,6 +188,11 @@ export const transformToProviderRequest = (
   fn: endpointStrings
 ) => {
   if (MULTIPART_FORM_DATA_ENDPOINTS.includes(fn)) return inputParams;
+
+  if (fn === "proxy") {
+    return params;
+  }
+
   const providerAPIConfig = ProviderConfigs[provider].api;
   if (
     providerAPIConfig.transformToFormData &&

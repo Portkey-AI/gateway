@@ -14,6 +14,8 @@ import {
   CONTENT_TYPES,
   HUGGING_FACE,
   STABILITY_AI,
+  OLLAMA,
+  TRITON,
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
@@ -88,6 +90,41 @@ export function constructRequest(
   }
 
   return fetchOptions;
+}
+
+function getProxyPath(
+  requestURL: string,
+  proxyProvider: string,
+  proxyEndpointPath: string,
+  customHost: string
+) {
+  let reqURL = new URL(requestURL);
+  let reqPath = reqURL.pathname;
+  const reqQuery = reqURL.search;
+  reqPath = reqPath.replace(proxyEndpointPath, '');
+
+  if (customHost) {
+    return `${customHost}${reqPath}${reqQuery}`;
+  }
+
+  const providerBasePath = Providers[proxyProvider].api.getBaseURL({
+    providerOptions: {},
+  });
+  if (proxyProvider === AZURE_OPEN_AI) {
+    return `https:/${reqPath}${reqQuery}`;
+  }
+
+  if (proxyProvider === OLLAMA || proxyProvider === TRITON) {
+    return `https:/${reqPath}`;
+  }
+  let proxyPath = `${providerBasePath}${reqPath}${reqQuery}`;
+
+  // Fix specific for Anthropic SDK calls. Is this needed? - Yes
+  if (proxyProvider === ANTHROPIC) {
+    proxyPath = proxyPath.replace('/v1/v1/', '/v1/');
+  }
+
+  return proxyPath;
 }
 
 /**
@@ -456,7 +493,8 @@ export async function tryPost(
   inputParams: Params | FormData,
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
-  currentIndex: number | string
+  currentIndex: number | string,
+  method: string = 'POST'
 ): Promise<Response> {
   const overrideParams = providerOption?.overrideParams || {};
   const params: Params = { ...inputParams, ...overrideParams };
@@ -518,7 +556,14 @@ export async function tryPost(
     fn,
     gatewayRequestBody: params,
   });
-  const url = `${baseUrl}${endpoint}`;
+
+  let url: string;
+  if (fn=="proxy") {
+    let proxyPath = c.req.url.indexOf('/v1/proxy') > -1 ? '/v1/proxy' : '/v1';
+    url = getProxyPath(c.req.url, provider, proxyPath, customHost);
+  } else {
+    url = `${baseUrl}${endpoint}`;
+  }
 
   const headers = await apiConfig.headers({
     c,
@@ -533,7 +578,7 @@ export async function tryPost(
   const fetchOptions = constructRequest(
     headers,
     provider,
-    'POST',
+    method,
     forwardHeaders,
     requestHeaders
   );
@@ -926,7 +971,8 @@ export async function tryTargetsRecursively(
           request,
           requestHeaders,
           fn,
-          currentJsonPath
+          currentJsonPath,
+          method
         );
       } catch (error: any) {
         // tryPost always returns a Response.
