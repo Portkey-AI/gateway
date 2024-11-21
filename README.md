@@ -1,7 +1,7 @@
 <div align="center">
 
 <p align="right">
-   <strong>English</strong> | <a href="./.github/README.cn.md">中文</a> 
+   <strong>English</strong> | <a href="./.github/README.cn.md">中文</a> | <a href="./.github/README.jp.md">日本語</a>
 </p>
 
 
@@ -289,6 +289,7 @@ Join our growing community around the world, for help, ideas, and discussions on
 - Chat with us on [Discord](https://portkey.ai/community)
 - Follow us on [Twitter](https://twitter.com/PortkeyAI)
 - Connect with us on [LinkedIn](https://www.linkedin.com/company/portkey-ai/)
+- Read the documentation in [Japanese](./.github/README.jp.md)
 <!-- - Visit us on [YouTube](https://www.youtube.com/channel/UCZph50gLNXAh1DpmeX8sBdw) -->
 <!-- - Join our [Dev community](https://dev.to/portkeyai) -->
 <!-- - Questions tagged #portkey on [Stack Overflow](https://stackoverflow.com/questions/tagged/portkey) -->
