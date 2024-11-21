@@ -4,6 +4,7 @@ import { serve } from '@hono/node-server';
 import { createNodeWebSocket } from '@hono/node-ws';
 import app from './index';
 import { realTimeHandlerNode } from './handlers/realtimeHandlerNode';
+import { requestValidator } from './middlewares/requestValidator';
 
 // Extract the port number from the command line arguments
 const defaultPort = 8787;
@@ -13,7 +14,11 @@ const port = portArg ? parseInt(portArg.split('=')[1]) : defaultPort;
 
 const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
 
-app.get('/v1/realtime', upgradeWebSocket(realTimeHandlerNode));
+app.get(
+  '/v1/realtime',
+  requestValidator,
+  upgradeWebSocket(realTimeHandlerNode)
+);
 
 const server = serve({
   fetch: app.fetch,
