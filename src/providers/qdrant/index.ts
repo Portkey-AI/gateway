@@ -3,9 +3,7 @@ import QdrantAPIConfig from './api';
 
 const QdrantConfig: ProviderConfigs = {
   api: QdrantAPIConfig,
-  responseTransforms: {
-    
-  },
+  responseTransforms: {},
 };
 
 export default QdrantConfig;
