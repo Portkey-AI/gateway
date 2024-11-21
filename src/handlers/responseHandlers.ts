@@ -91,8 +91,7 @@ export async function responseHandler(
     );
     return { response: streamingResponse, responseJson: null };
   }
-
-  if (streamingMode && response.status === 200 && responseTransformerFunction) {
+  if (streamingMode && response.status === 200) {
     return {
       response: handleStreamingMode(
         response,
