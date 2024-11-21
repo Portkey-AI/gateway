@@ -8,7 +8,6 @@ import {
 } from './chatComplete';
 import { Context } from 'hono';
 import { env } from 'hono/adapter';
-import fs from 'fs/promises';
 
 export const generateAWSHeaders = async (
   body: Record<string, any>,
@@ -194,52 +193,59 @@ async function getAssumedWebIdentityCredentials(
   const getFromCacheByKey = c.get('getFromCacheByKey');
   const putInCacheWithValue = c.get('putInCacheWithValue');
 
-  if (process.env.AWS_WEB_IDENTITY_TOKEN_FILE && process.env.AWS_ROLE_ARN) {
+  if (env(c).AWS_WEB_IDENTITY_TOKEN_FILE && env(c).AWS_ROLE_ARN) {
     try {
-      const roleArn = awsRoleArn || process.env.AWS_ROLE_ARN;
-      const cacheKey = `assumed-web-identity-${process.env.AWS_WEB_IDENTITY_TOKEN_FILE}-role-${roleArn}`;
+      const roleArn = awsRoleArn || env(c).AWS_ROLE_ARN;
+      const cacheKey = `assumed-web-identity-${env(c).AWS_WEB_IDENTITY_TOKEN_FILE}-role-${roleArn}`;
       const resp = getFromCacheByKey
         ? await getFromCacheByKey(env(c), cacheKey)
         : null;
       if (resp) {
         return resp;
       }
-      const token = await fs.readFile(
-        process.env.AWS_WEB_IDENTITY_TOKEN_FILE,
-        'utf8'
-      );
-      let credentials;
-      if (roleArn === process.env.AWS_ROLE_ARN) {
-        credentials = await assumeRoleWithWebIdentity(token, roleArn);
+      let token;
+      // for node
+      if (typeof process !== 'undefined' && process.versions?.node) {
+        const fs = await import('fs/promises');
+        token = await fs.readFile(env(c).AWS_WEB_IDENTITY_TOKEN_FILE, 'utf8');
       } else {
-        const tempCacheKey = `assumed-web-identity-${process.env.AWS_WEB_IDENTITY_TOKEN_FILE}-role-${process.env.AWS_ROLE_ARN}`;
-        let tempCredentials = getFromCacheByKey
-          ? await getFromCacheByKey(env(c), tempCacheKey)
-          : null;
-        if (!tempCredentials) {
-          tempCredentials = await assumeRoleWithWebIdentity(
-            token,
-            process.env.AWS_ROLE_ARN
-          );
-          if (putInCacheWithValue) {
-            putInCacheWithValue(env(c), tempCacheKey, tempCredentials, 300); //5 minutes
-          }
-        }
-        credentials = await getSTSAssumedCredentials(
-          c,
-          roleArn,
-          awsExternalId,
-          awsRegion,
-          tempCredentials.accessKeyId,
-          tempCredentials.secretAccessKey,
-          tempCredentials.sessionToken
-        );
+        // try to fetch it from env
+        token = env(c).AWS_WEB_TOKEN;
       }
-      if (credentials) {
-        if (putInCacheWithValue) {
-          putInCacheWithValue(env(c), cacheKey, credentials, 300); //5 minutes
+      if (token) {
+        let credentials;
+        if (roleArn === env(c).AWS_ROLE_ARN) {
+          credentials = await assumeRoleWithWebIdentity(token, roleArn);
+        } else {
+          const tempCacheKey = `assumed-web-identity-${env(c).AWS_WEB_IDENTITY_TOKEN_FILE}-role-${env(c).AWS_ROLE_ARN}`;
+          let tempCredentials = getFromCacheByKey
+            ? await getFromCacheByKey(env(c), tempCacheKey)
+            : null;
+          if (!tempCredentials) {
+            tempCredentials = await assumeRoleWithWebIdentity(
+              token,
+              env(c).AWS_ROLE_ARN
+            );
+            if (putInCacheWithValue) {
+              putInCacheWithValue(env(c), tempCacheKey, tempCredentials, 300); //5 minutes
+            }
+          }
+          credentials = await getSTSAssumedCredentials(
+            c,
+            roleArn,
+            awsExternalId,
+            awsRegion,
+            tempCredentials.accessKeyId,
+            tempCredentials.secretAccessKey,
+            tempCredentials.sessionToken
+          );
         }
-        return credentials;
+        if (credentials) {
+          if (putInCacheWithValue) {
+            putInCacheWithValue(env(c), cacheKey, credentials, 300); //5 minutes
+          }
+          return credentials;
+        }
       }
     } catch (error) {
       console.info({ message: error });
@@ -255,11 +261,15 @@ async function getIRSACredentials(
   awsRegion: string
 ) {
   // if present directly get it
-  if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+  if (
+    (!awsRoleArn || awsRoleArn === env(c).AWS_ROLE_ARN) &&
+    env(c).AWS_ACCESS_KEY_ID &&
+    env(c).AWS_SECRET_ACCESS_KEY
+  ) {
     return {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-      sessionToken: process.env.AWS_SESSION_TOKEN,
+      accessKeyId: env(c).AWS_ACCESS_KEY_ID,
+      secretAccessKey: env(c).AWS_SECRET_ACCESS_KEY,
+      sessionToken: env(c).AWS_SESSION_TOKEN,
       expiration: new Date(Date.now() + 3600000),
     };
   }
@@ -346,7 +356,7 @@ async function getIMDSAssumedCredentials(c: Context) {
   }
   let imdsv2Token;
   //use v2 by default
-  if (!process.env.AWS_IMDS_V1) {
+  if (!env(c).AWS_IMDS_V1) {
     // get token
     imdsv2Token = await getIMDSv2Token();
   }
@@ -384,10 +394,10 @@ async function getSTSAssumedCredentials(
   }
   // Long-term credentials to assume role, static values from ENV
   const accessKeyId: string =
-    accessKey || process.env.AWS_ASSUME_ROLE_ACCESS_KEY_ID || '';
+    accessKey || env(c).AWS_ASSUME_ROLE_ACCESS_KEY_ID || '';
   const secretAccessKey: string =
-    secretKey || process.env.AWS_ASSUME_ROLE_SECRET_ACCESS_KEY || '';
-  const region = awsRegion || process.env.AWS_ASSUME_ROLE_REGION || 'us-east-1';
+    secretKey || env(c).AWS_ASSUME_ROLE_SECRET_ACCESS_KEY || '';
+  const region = awsRegion || env(c).AWS_ASSUME_ROLE_REGION || 'us-east-1';
   const service = 'sts';
   const hostname = `sts.${region}.amazonaws.com`;
   const signer = new SignatureV4({
@@ -451,11 +461,9 @@ export async function getAssumedRoleCredentials(
   }
 ) {
   let accessKeyId: string =
-    creds?.accessKeyId || process.env.AWS_ASSUME_ROLE_ACCESS_KEY_ID || '';
+    creds?.accessKeyId || env(c).AWS_ASSUME_ROLE_ACCESS_KEY_ID || '';
   let secretAccessKey: string =
-    creds?.secretAccessKey ||
-    process.env.AWS_ASSUME_ROLE_SECRET_ACCESS_KEY ||
-    '';
+    creds?.secretAccessKey || env(c).AWS_ASSUME_ROLE_SECRET_ACCESS_KEY || '';
   let sessionToken;
   // if not passed get from IRSA>WebAssumed>IMDS
   if (!accessKeyId && !secretAccessKey) {
