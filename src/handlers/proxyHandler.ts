@@ -1,69 +1,13 @@
 import { Context } from 'hono';
-import { env } from 'hono/adapter';
 import {
-  ANTHROPIC,
-  AZURE_OPEN_AI,
   CONTENT_TYPES,
-  HEADER_KEYS,
-  MAX_RETRIES,
-  OLLAMA,
   POWERED_BY,
-  RETRY_STATUS_CODES,
-  TRITON,
 } from '../globals';
-import Providers from '../providers';
-import { Config, ShortConfig } from '../types/requestBody';
-import { convertKeysToCamelCase, getStreamingMode } from '../utils';
 import {
   constructConfigFromRequestHeaders,
-  fetchProviderOptionsFromConfig,
-  tryProvidersInSequence,
   tryTargetsRecursively,
-  updateResponseHeaders,
 } from './handlerUtils';
-import { retryRequest } from './retryHandler';
-import { responseHandler } from './responseHandlers';
 import { RouterError } from '../errors/RouterError';
-// Find the proxy provider
-function proxyProvider(proxyModeHeader: string, providerHeader: string) {
-  const proxyProvider = proxyModeHeader?.split(' ')[1] ?? providerHeader;
-  return proxyProvider;
-}
-
-function getProxyPath(
-  requestURL: string,
-  proxyProvider: string,
-  proxyEndpointPath: string,
-  customHost: string
-) {
-  let reqURL = new URL(requestURL);
-  let reqPath = reqURL.pathname;
-  const reqQuery = reqURL.search;
-  reqPath = reqPath.replace(proxyEndpointPath, '');
-
-  if (customHost) {
-    return `${customHost}${reqPath}${reqQuery}`;
-  }
-
-  const providerBasePath = Providers[proxyProvider].api.getBaseURL({
-    providerOptions: {},
-  });
-  if (proxyProvider === AZURE_OPEN_AI) {
-    return `https:/${reqPath}${reqQuery}`;
-  }
-
-  if (proxyProvider === OLLAMA || proxyProvider === TRITON) {
-    return `https:/${reqPath}`;
-  }
-  let proxyPath = `${providerBasePath}${reqPath}${reqQuery}`;
-
-  // Fix specific for Anthropic SDK calls. Is this needed? - Yes
-  if (proxyProvider === ANTHROPIC) {
-    proxyPath = proxyPath.replace('/v1/v1/', '/v1/');
-  }
-
-  return proxyPath;
-}
 
 async function getRequestData(request: Request, contentType: string) {
   let finalRequest: any;
