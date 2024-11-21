@@ -187,7 +187,7 @@ export const transformToProviderRequest = (
   inputParams: Params | FormData,
   fn: endpointStrings
 ) => {
-  if (MULTIPART_FORM_DATA_ENDPOINTS.includes(fn)) return inputParams;
+  if (inputParams instanceof FormData) return inputParams;
 
   if (fn === "proxy") {
     return params;

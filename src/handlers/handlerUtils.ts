@@ -50,7 +50,8 @@ export function constructRequest(
   provider: string,
   method: string,
   forwardHeaders: string[],
-  requestHeaders: Record<string, string>
+  requestHeaders: Record<string, string>,
+  fn: endpointStrings
 ) {
   let baseHeaders: any = {
     'content-type': 'application/json',
@@ -72,13 +73,18 @@ export function constructRequest(
   });
 
   // Add any headers that the model might need
-  headers = { ...baseHeaders, ...headers, ...forwardHeadersMap };
+  headers = {
+    ...baseHeaders,
+    ...headers,
+    ...forwardHeadersMap,
+    ...(fn === 'proxy' ? requestHeaders : {}),
+  };
 
   let fetchOptions: RequestInit = {
     method,
     headers,
   };
-  const contentType = headers['content-type'];
+  const contentType = headers['content-type']?.split(';')[0];
   const isGetMethod = method === 'GET';
   const isMultipartFormData = contentType === CONTENT_TYPES.MULTIPART_FORM_DATA;
   const shouldDeleteContentTypeHeader =
@@ -318,7 +324,8 @@ export async function tryPostProxy(
     provider,
     method,
     forwardHeaders,
-    requestHeaders
+    requestHeaders,
+    fn
   );
 
   if (method === 'POST') {
@@ -580,11 +587,15 @@ export async function tryPost(
     provider,
     method,
     forwardHeaders,
-    requestHeaders
+    requestHeaders,
+    fn
   );
 
+  const headerContentType = headers[HEADER_KEYS.CONTENT_TYPE];
+  const requestContentType = requestHeaders[HEADER_KEYS.CONTENT_TYPE.toLowerCase()]?.split(';')[0];
+
   fetchOptions.body =
-    headers[HEADER_KEYS.CONTENT_TYPE] === CONTENT_TYPES.MULTIPART_FORM_DATA
+    (headerContentType === CONTENT_TYPES.MULTIPART_FORM_DATA || (fn=="proxy" && requestContentType === CONTENT_TYPES.MULTIPART_FORM_DATA))
       ? (transformedRequestBody as FormData)
       : JSON.stringify(transformedRequestBody);
 

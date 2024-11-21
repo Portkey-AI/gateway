@@ -66,27 +66,20 @@ function getProxyPath(
 }
 
 async function getRequestData(request: Request, contentType: string) {
-  let requestJSON: Record<string, any> = {};
-  let requestFormData;
-  let requestBody = '';
-  let requestBinary: ArrayBuffer = new ArrayBuffer(0);
-
+  let finalRequest: any;
   if (contentType == CONTENT_TYPES.APPLICATION_JSON) {
     if (['GET', 'DELETE'].includes(request.method)) {
-      return { requestJSON, requestFormData };
+      finalRequest = {};
+    } else {
+      finalRequest = await request.json();
     }
-    requestBody = await request.text();
-    requestJSON = JSON.parse(requestBody);
   } else if (contentType == CONTENT_TYPES.MULTIPART_FORM_DATA) {
-    requestFormData = await request.formData();
-    requestFormData.forEach(function (value, key) {
-      requestJSON[key] = value;
-    });
+    finalRequest = await request.formData();
   } else if (contentType.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)) {
-    requestBinary = await request.arrayBuffer();
+    finalRequest = await request.arrayBuffer();
   }
 
-  return { requestJSON, requestFormData, requestBinary };
+  return finalRequest;
 }
 
 function headersToSend(
@@ -100,12 +93,6 @@ function headersToSend(
     ...customHeadersToIgnore,
     ...headersToAvoidForCloudflare,
   ];
-  if (
-    headersObj['content-type']?.split(';')[0] ===
-    CONTENT_TYPES.MULTIPART_FORM_DATA
-  ) {
-    headersToAvoid.push('content-type');
-  }
   headersToAvoid.push('content-length');
   Object.keys(headersObj).forEach((key: string) => {
     if (
@@ -125,15 +112,18 @@ function headersToSend(
 
 export async function proxyHandler(c: Context): Promise<Response> {
   try {
-    let request = await c.req.json();
     let requestHeaders = Object.fromEntries(c.req.raw.headers);
+    const requestContentType = requestHeaders['content-type'].split(';')[0];
+
+    const request = await getRequestData(c.req.raw, requestContentType);
+
     const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
 
     const tryTargetsResponse = await tryTargetsRecursively(
       c,
       camelCaseConfig,
       request,
-      requestHeaders,
+      headersToSend(requestHeaders, []),
       'proxy',
       c.req.method,
       'config'
