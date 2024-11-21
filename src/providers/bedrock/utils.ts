@@ -464,7 +464,7 @@ export async function getAssumedRoleCredentials(
     creds?.accessKeyId || env(c).AWS_ASSUME_ROLE_ACCESS_KEY_ID || '';
   let secretAccessKey: string =
     creds?.secretAccessKey || env(c).AWS_ASSUME_ROLE_SECRET_ACCESS_KEY || '';
-  let sessionToken;
+  let sessionToken = creds?.sessionToken;
   // if not passed get from IRSA>WebAssumed>IMDS
   if (!accessKeyId && !secretAccessKey) {
     try {
