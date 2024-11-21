@@ -6,7 +6,7 @@ import {
 
 const AzureOpenAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
-    const { resourceName, deploymentId } = providerOptions;
+    const { resourceName } = providerOptions;
     return `https://${resourceName}.openai.azure.com/openai`;
   },
   headers: async ({ providerOptions, fn }) => {
