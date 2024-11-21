@@ -19,7 +19,7 @@ async function getRequestData(request: Request, contentType: string) {
     }
   } else if (contentType == CONTENT_TYPES.MULTIPART_FORM_DATA) {
     finalRequest = await request.formData();
-  } else if (contentType.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)) {
+  } else if (contentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)) {
     finalRequest = await request.arrayBuffer();
   }
 
@@ -57,7 +57,7 @@ function headersToSend(
 export async function proxyHandler(c: Context): Promise<Response> {
   try {
     let requestHeaders = Object.fromEntries(c.req.raw.headers);
-    const requestContentType = requestHeaders['content-type'].split(';')[0];
+    const requestContentType = requestHeaders['content-type']?.split(';')[0];
 
     const request = await getRequestData(c.req.raw, requestContentType);
 
