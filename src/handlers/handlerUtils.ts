@@ -20,12 +20,7 @@ import {
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
 import transformToProviderRequest from '../services/transformToProviderRequest';
-import {
-  Options,
-  Params,
-  StrategyModes,
-  Targets,
-} from '../types/requestBody';
+import { Options, Params, StrategyModes, Targets } from '../types/requestBody';
 import { convertKeysToCamelCase } from '../utils';
 import { retryRequest } from './retryHandler';
 import { env, getRuntimeKey } from 'hono/adapter';
@@ -251,7 +246,7 @@ export async function tryPost(
   });
 
   let url: string;
-  if (fn=="proxy") {
+  if (fn == 'proxy') {
     let proxyPath = c.req.url.indexOf('/v1/proxy') > -1 ? '/v1/proxy' : '/v1';
     url = getProxyPath(c.req.url, provider, proxyPath, customHost);
   } else {
@@ -278,10 +273,12 @@ export async function tryPost(
   );
 
   const headerContentType = headers[HEADER_KEYS.CONTENT_TYPE];
-  const requestContentType = requestHeaders[HEADER_KEYS.CONTENT_TYPE.toLowerCase()]?.split(';')[0];
+  const requestContentType =
+    requestHeaders[HEADER_KEYS.CONTENT_TYPE.toLowerCase()]?.split(';')[0];
 
   fetchOptions.body =
-    (headerContentType === CONTENT_TYPES.MULTIPART_FORM_DATA || (fn=="proxy" && requestContentType === CONTENT_TYPES.MULTIPART_FORM_DATA))
+    headerContentType === CONTENT_TYPES.MULTIPART_FORM_DATA ||
+    (fn == 'proxy' && requestContentType === CONTENT_TYPES.MULTIPART_FORM_DATA)
       ? (transformedRequestBody as FormData)
       : JSON.stringify(transformedRequestBody);
 

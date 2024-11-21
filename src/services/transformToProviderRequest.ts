@@ -189,7 +189,7 @@ export const transformToProviderRequest = (
 ) => {
   if (inputParams instanceof FormData) return inputParams;
 
-  if (fn === "proxy") {
+  if (fn === 'proxy') {
     return params;
   }
 

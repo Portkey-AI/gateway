@@ -1,8 +1,5 @@
 import { Context } from 'hono';
-import {
-  CONTENT_TYPES,
-  POWERED_BY,
-} from '../globals';
+import { CONTENT_TYPES, POWERED_BY } from '../globals';
 import {
   constructConfigFromRequestHeaders,
   tryTargetsRecursively,
