@@ -1,6 +1,6 @@
 import { Context } from 'hono';
 
-export class RealTimeLLMEventParser {
+export class RealtimeLlmEventParser {
   private sessionState: any;
 
   constructor() {

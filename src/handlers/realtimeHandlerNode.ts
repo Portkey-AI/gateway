@@ -4,7 +4,7 @@ import WebSocket from 'ws';
 import { ProviderAPIConfig } from '../providers/types';
 import Providers from '../providers';
 import { Options } from '../types/requestBody';
-import { RealtimeLLMEventParser } from '../services/realtimeLLMEventParser';
+import { RealtimeLlmEventParser } from '../services/realtimeLlmEventParser';
 import { WSContext, WSEvents } from 'hono/ws';
 
 export async function realTimeHandlerNode(
@@ -49,7 +49,7 @@ export async function realTimeHandlerNode(
     const outgoingWebSocket = new WebSocket(url, {
       headers,
     });
-    const eventParser = new RealtimeLLMEventParser();
+    const eventParser = new RealtimeLlmEventParser();
 
     outgoingWebSocket.addEventListener('message', (event) => {
       incomingWebsocket?.send(event.data as string);

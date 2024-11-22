@@ -1,11 +1,11 @@
 import { Context } from 'hono';
 import { ProviderAPIConfig } from '../providers/types';
 import { Options } from '../types/requestBody';
-import { RealtimeLLMEventParser } from '../services/realtimeLLMEventParser';
+import { RealtimeLlmEventParser } from '../services/realtimeLlmEventParser';
 
 export const addListeners = (
   outgoingWebSocket: WebSocket,
-  eventParser: RealtimeLLMEventParser,
+  eventParser: RealtimeLlmEventParser,
   server: WebSocket,
   c: Context,
   sessionOptions: any
