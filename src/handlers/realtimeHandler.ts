@@ -8,7 +8,7 @@ import {
   getOptionsForOutgoingConnection,
   getURLForOutgoingConnection,
 } from './websocketUtils';
-import { RealTimeLLMEventParser } from '../services/realtimeLLMEventParser';
+import { RealtimeLLMEventParser } from '../services/realtimeLLMEventParser';
 
 const getOutgoingWebSocket = async (url: string, options: RequestInit) => {
   let outgoingWebSocket: WebSocket | null = null;
@@ -66,7 +66,7 @@ export async function realTimeHandler(c: Context): Promise<Response> {
     server.accept();
 
     let outgoingWebSocket: WebSocket = await getOutgoingWebSocket(url, options);
-    const eventParser = new RealTimeLLMEventParser();
+    const eventParser = new RealtimeLLMEventParser();
     addListeners(outgoingWebSocket, eventParser, server, c, sessionOptions);
 
     return new Response(null, {
