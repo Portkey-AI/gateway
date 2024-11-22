@@ -4,7 +4,7 @@
  * @module index
  */
 
-import { Hono } from 'hono';
+import { Context, Hono } from 'hono';
 import { prettyJSON } from 'hono/pretty-json';
 import { HTTPException } from 'hono/http-exception';
 import { upgradeWebSocket } from 'hono/cloudflare-workers';
@@ -48,6 +48,29 @@ app.use('*', (c, next) => {
   }
   return compress()(c, next);
 });
+
+if (runtime === 'node') {
+  app.use('*', async (c: Context, next) => {
+    if (!c.req.url.includes('/realtime')) {
+      return next();
+    }
+
+    await next();
+
+    if (
+      c.req.url.includes('/realtime') &&
+      c.req.header('upgrade') === 'websocket' &&
+      (c.res.status >= 400 || c.get('websocketError') === true)
+    ) {
+      const finalStatus = c.get('websocketError') === true ? 500 : c.res.status;
+      const socket = c.env.incoming.socket;
+      if (socket) {
+        socket.write(`HTTP/1.1 ${finalStatus} ${c.res.statusText}\r\n\r\n`);
+        socket.destroy();
+      }
+    }
+  });
+}
 
 /**
  * GET route for the root path.
