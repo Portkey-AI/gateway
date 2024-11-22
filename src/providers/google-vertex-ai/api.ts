@@ -86,8 +86,8 @@ export const GoogleApiConfig: ProviderAPIConfig = {
         return `${projectRoute}/endpoints/openapi/chat/completions`;
       }
 
-      case 'huggingface': {
-        return `${projectRoute}/endpoints/openapi/chat/completions`;
+      case 'endpoints': {
+        return `${projectRoute}/endpoints/${model}/chat/completions`;
       }
 
       default:
