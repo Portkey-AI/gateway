@@ -12,8 +12,12 @@ export const addListeners = (
 ) => {
   outgoingWebSocket.addEventListener('message', (event) => {
     server?.send(event.data as string);
-    const parsedData = JSON.parse(event.data as string);
-    eventParser.handleEvent(c, parsedData, sessionOptions);
+    try {
+      const parsedData = JSON.parse(event.data as string);
+      eventParser.handleEvent(c, parsedData, sessionOptions);
+    } catch (err) {
+      console.log('outgoingWebSocket message parse error', event);
+    }
   });
 
   outgoingWebSocket.addEventListener('close', (event) => {
