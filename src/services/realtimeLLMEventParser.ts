@@ -48,12 +48,14 @@ export class RealtimeLlmEventParser {
     this.sessionState.sessionDetails = { ...data.session };
     const realtimeEventParser = c.get('realtimeEventParser');
     if (realtimeEventParser) {
-      realtimeEventParser(
-        c,
-        sessionOptions,
-        {},
-        { ...data.session },
-        data.type
+      c.executionCtx.waitUntil(
+        realtimeEventParser(
+          c,
+          sessionOptions,
+          {},
+          { ...data.session },
+          data.type
+        )
       );
     }
   }
@@ -67,12 +69,14 @@ export class RealtimeLlmEventParser {
     this.sessionState.sessionDetails = { ...data.session };
     const realtimeEventParser = c.get('realtimeEventParser');
     if (realtimeEventParser) {
-      realtimeEventParser(
-        c,
-        sessionOptions,
-        {},
-        { ...data.session },
-        data.type
+      c.executionCtx.waitUntil(
+        realtimeEventParser(
+          c,
+          sessionOptions,
+          {},
+          { ...data.session },
+          data.type
+        )
       );
     }
   }
@@ -102,16 +106,21 @@ export class RealtimeLlmEventParser {
       const itemSequence = this.rebuildConversationSequence(
         this.sessionState.conversation.items
       );
-      realtimeEventParser(
-        c,
-        sessionOptions,
-        {
-          conversation: {
-            items: this.getOrderedConversationItems(itemSequence).slice(0, -1),
+      c.executionCtx.waitUntil(
+        realtimeEventParser(
+          c,
+          sessionOptions,
+          {
+            conversation: {
+              items: this.getOrderedConversationItems(itemSequence).slice(
+                0,
+                -1
+              ),
+            },
           },
-        },
-        data,
-        data.type
+          data,
+          data.type
+        )
       );
     }
   }
@@ -119,7 +128,9 @@ export class RealtimeLlmEventParser {
   private handleError(c: Context, data: any, sessionOptions: any): void {
     const realtimeEventParser = c.get('realtimeEventParser');
     if (realtimeEventParser) {
-      realtimeEventParser(c, sessionOptions, {}, data, data.type);
+      c.executionCtx.waitUntil(
+        realtimeEventParser(c, sessionOptions, {}, data, data.type)
+      );
     }
   }
 
