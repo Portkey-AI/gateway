@@ -28,48 +28,64 @@ const getOutgoingWebSocket = async (url: string, options: RequestInit) => {
 };
 
 export async function realTimeHandler(c: Context): Promise<Response> {
-  const requestHeaders = Object.fromEntries(c.req.raw.headers);
+  try {
+    const requestHeaders = Object.fromEntries(c.req.raw.headers);
 
-  const providerOptions = constructConfigFromRequestHeaders(
-    requestHeaders
-  ) as Options;
-  const provider = providerOptions.provider ?? '';
-  const apiConfig: ProviderAPIConfig = Providers[provider].api;
-  const url = getURLForOutgoingConnection(
-    apiConfig,
-    providerOptions,
-    c.req.url
-  );
-  const options = await getOptionsForOutgoingConnection(
-    apiConfig,
-    providerOptions,
-    url,
-    c
-  );
+    const providerOptions = constructConfigFromRequestHeaders(
+      requestHeaders
+    ) as Options;
+    const provider = providerOptions.provider ?? '';
+    const apiConfig: ProviderAPIConfig = Providers[provider].api;
+    const url = getURLForOutgoingConnection(
+      apiConfig,
+      providerOptions,
+      c.req.url
+    );
+    const options = await getOptionsForOutgoingConnection(
+      apiConfig,
+      providerOptions,
+      url,
+      c
+    );
 
-  const sessionOptions = {
-    id: crypto.randomUUID(),
-    providerOptions: {
-      ...providerOptions,
-      requestURL: url,
-      rubeusURL: 'realtime',
-    },
-    requestHeaders,
-    requestParams: {},
-  };
+    const sessionOptions = {
+      id: crypto.randomUUID(),
+      providerOptions: {
+        ...providerOptions,
+        requestURL: url,
+        rubeusURL: 'realtime',
+      },
+      requestHeaders,
+      requestParams: {},
+    };
 
-  const webSocketPair = new WebSocketPair();
-  const client = webSocketPair[0];
-  const server = webSocketPair[1];
+    const webSocketPair = new WebSocketPair();
+    const client = webSocketPair[0];
+    const server = webSocketPair[1];
 
-  server.accept();
+    server.accept();
 
-  let outgoingWebSocket: WebSocket = await getOutgoingWebSocket(url, options);
-  const eventParser = new RealTimeLLMEventParser();
-  addListeners(outgoingWebSocket, eventParser, server, c, sessionOptions);
+    let outgoingWebSocket: WebSocket = await getOutgoingWebSocket(url, options);
+    const eventParser = new RealTimeLLMEventParser();
+    addListeners(outgoingWebSocket, eventParser, server, c, sessionOptions);
 
-  return new Response(null, {
-    status: 101,
-    webSocket: client,
-  });
+    return new Response(null, {
+      status: 101,
+      webSocket: client,
+    });
+  } catch (err: any) {
+    console.log('realtimeHandler error', err.message);
+    return new Response(
+      JSON.stringify({
+        status: 'failure',
+        message: 'Something went wrong',
+      }),
+      {
+        status: 500,
+        headers: {
+          'content-type': 'application/json',
+        },
+      }
+    );
+  }
 }
