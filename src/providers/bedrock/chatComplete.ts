@@ -149,7 +149,7 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
       required: true,
       transform: (params: BedrockChatCompletionsParams) => {
         if (!params.messages) return [];
-        return params.messages
+        const transformedMessages = params.messages
           .filter((msg) => msg.role !== 'system')
           .map((msg) => {
             return {
@@ -157,6 +157,23 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
               content: getMessageContent(msg),
             };
           });
+        let prevRole = '';
+        // combine user messages in succession
+        const combinedMessages = transformedMessages.reduce(
+          (acc: typeof transformedMessages, msg) => {
+            if (msg.role === 'user' && prevRole === 'user') {
+              const lastMessage = acc[acc.length - 1];
+              const newContent = [...lastMessage.content, ...msg.content];
+              lastMessage.content = newContent as typeof lastMessage.content;
+            } else {
+              acc.push(msg);
+            }
+            prevRole = msg.role;
+            return acc;
+          },
+          []
+        );
+        return combinedMessages;
       },
     },
     {
