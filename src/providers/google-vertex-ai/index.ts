@@ -59,7 +59,7 @@ const VertexConfig: ProviderConfigs = {
             'stream-chatComplete': VertexLlamaChatCompleteStreamChunkTransform,
           },
         };
-      case 'huggingface':
+      case 'endpoints':
         return {
           chatComplete: chatCompleteParams([], {
             model: 'meta-llama-3-8b-instruct',
