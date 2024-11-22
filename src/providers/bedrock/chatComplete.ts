@@ -347,7 +347,8 @@ export const BedrockChatCompleteResponseTransform: (
             role: 'assistant',
             content: response.output.message.content
               .filter((content) => content.text)
-              .reduce((acc, content) => acc + content.text + '\n', ''),
+              .map((content) => content.text)
+              .join('\n'),
           },
           finish_reason: response.stopReason,
         },
