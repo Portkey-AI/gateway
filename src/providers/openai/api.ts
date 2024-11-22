@@ -1,7 +1,7 @@
 import { ProviderAPIConfig } from '../types';
 
 const OpenAIAPIConfig: ProviderAPIConfig = {
-  getBaseURL: ({ providerOptions }) => {
+  getBaseURL: () => {
     return 'https://api.openai.com/v1';
   },
   headers: ({ providerOptions, fn }) => {
