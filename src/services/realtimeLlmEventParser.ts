@@ -35,7 +35,7 @@ export class RealtimeLlmEventParser {
         this.handleError(c, event, sessionOptions);
         break;
       default:
-      // console.warn(`Unhandled event type: ${event.type}`);
+        break;
     }
   }
 
