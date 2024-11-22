@@ -61,8 +61,8 @@ export async function realTimeHandlerNode(
       }
     });
 
-    outgoingWebSocket.addEventListener('close', () => {
-      incomingWebsocket?.close();
+    outgoingWebSocket.addEventListener('close', (event) => {
+      incomingWebsocket?.close(event.code, event.reason);
     });
 
     outgoingWebSocket.addEventListener('error', (event) => {

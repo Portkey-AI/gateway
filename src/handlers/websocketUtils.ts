@@ -21,7 +21,7 @@ export const addListeners = (
   });
 
   outgoingWebSocket.addEventListener('close', (event) => {
-    server?.close();
+    server?.close(event.code, event.reason);
   });
 
   outgoingWebSocket.addEventListener('error', (event) => {
@@ -33,7 +33,7 @@ export const addListeners = (
     outgoingWebSocket?.send(event.data as string);
   });
 
-  server.addEventListener('close', (event) => {
+  server.addEventListener('close', () => {
     outgoingWebSocket?.close();
   });
 
