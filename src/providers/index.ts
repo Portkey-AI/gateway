@@ -47,7 +47,7 @@ import { UpstageConfig } from './upstage';
 import { LAMBDA } from '../globals';
 import { LambdaProviderConfig } from './lambda';
 import { DashScopeConfig } from './dashscope';
-import xAIConfig from './xAI';
+import XAIConfig from './x-ai';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -95,7 +95,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   upstage: UpstageConfig,
   [LAMBDA]: LambdaProviderConfig,
   dashscope: DashScopeConfig,
-  xai: xAIConfig,
+  'x-ai': XAIConfig,
 };
 
 export default Providers;
