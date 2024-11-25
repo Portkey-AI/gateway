@@ -15,6 +15,7 @@ const XAIConfig: ProviderConfigs = {
   api: XAIAPIConfig,
   responseTransforms: responseTransformers(X_AI, {
     chatComplete: true,
+    complete: true,
     embed: true,
   }),
 };
