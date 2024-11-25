@@ -83,6 +83,7 @@ export interface PerplexityAIChatCompleteResponse {
   model: string;
   object: string;
   created: number;
+  citations: string[];
   choices: PerplexityAIChatChoice[];
   usage: {
     prompt_tokens: number;
@@ -114,8 +115,15 @@ export interface PerplexityAIChatCompletionStreamChunk {
 
 export const PerplexityAIChatCompleteResponseTransform: (
   response: PerplexityAIChatCompleteResponse | PerplexityAIErrorResponse,
-  responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response) => {
+  responseStatus: number,
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean
+) => ChatCompletionResponse | ErrorResponse = (
+  response,
+  _responseStatus,
+  _responseHeaders,
+  strictOpenAiCompliance
+) => {
   if ('error' in response) {
     return generateErrorResponse(
       {
@@ -135,6 +143,9 @@ export const PerplexityAIChatCompleteResponseTransform: (
       created: response.created,
       model: response.model,
       provider: PERPLEXITY_AI,
+      ...(!strictOpenAiCompliance && {
+        citations: response.citations,
+      }),
       choices: [
         {
           message: {
