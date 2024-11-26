@@ -23,7 +23,7 @@ export async function realTimeHandlerNode(
       providerOptions,
       fn: 'realtime',
       gatewayRequestBodyJSON: {},
-      requestPath: c.req.path,
+      requestURL: c.req.url,
     });
     let url = `${baseUrl}${endpoint}`;
     url = url.replace('https://', 'wss://');

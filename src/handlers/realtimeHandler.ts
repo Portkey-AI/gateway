@@ -39,7 +39,7 @@ export async function realTimeHandler(c: Context): Promise<Response> {
     const url = getURLForOutgoingConnection(
       apiConfig,
       providerOptions,
-      c.req.path
+      c.req.url
     );
     const options = await getOptionsForOutgoingConnection(
       apiConfig,

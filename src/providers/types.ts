@@ -51,7 +51,7 @@ export interface ProviderAPIConfig {
     fn: string;
     gatewayRequestBodyJSON: Params;
     gatewayRequestBody?: FormData | Params;
-    requestPath: string;
+    requestURL: string;
   }) => string;
   /** A function to determine if the request body should be transformed to form data */
   transformToFormData?: (args: { gatewayRequestBody: Params }) => boolean;

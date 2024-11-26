@@ -263,7 +263,7 @@ export async function tryPostProxy(
     fn,
     gatewayRequestBodyJSON: params,
     gatewayRequestBody: inputParams,
-    requestPath: c.req.path,
+    requestURL: c.req.url,
   });
 
   const url = endpoint
@@ -501,7 +501,7 @@ export async function tryPost(
     fn,
     gatewayRequestBodyJSON: params,
     gatewayRequestBody: inputParams,
-    requestPath: c.req.path,
+    requestURL: c.req.url,
   });
 
   // Attach the body of the request

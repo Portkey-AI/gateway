@@ -27,7 +27,7 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
 
     return headersObj;
   },
-  getEndpoint: ({ fn, requestPath }) => {
+  getEndpoint: ({ fn, requestURL }) => {
     switch (fn) {
       case 'complete':
         return '/completions';
@@ -44,18 +44,18 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
       case 'createTranslation':
         return '/audio/translations';
       case 'realtime':
-        const endpoint = requestPath.split('/v1')[1];
+        const endpoint = requestURL.split('/v1')[1];
         return endpoint;
       case 'uploadFile':
         return '/files';
       case 'getFile':
-        return requestPath.replace('/v1', '');
+        return requestURL.split('/v1')[1];
       case 'getFiles':
         return '/files';
       case 'deleteFile':
-        return requestPath.replace('/v1', '');
+        return requestURL.split('/v1')[1];
       case 'getFileContent':
-        return requestPath.replace('/v1', '');
+        return requestURL.split('/v1')[1];
       default:
         return '';
     }

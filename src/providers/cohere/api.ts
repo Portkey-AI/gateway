@@ -12,7 +12,7 @@ const CohereAPIConfig: ProviderAPIConfig = {
     }
     return headers;
   },
-  getEndpoint: ({ fn, gatewayRequestBody, requestPath }) => {
+  getEndpoint: ({ fn, gatewayRequestBody, requestURL }) => {
     switch (fn) {
       case 'chatComplete':
         return '/chat';
@@ -31,9 +31,9 @@ const CohereAPIConfig: ProviderAPIConfig = {
       case 'getFiles':
         return '/datasets';
       case 'getFile':
-        return `/datasets/${requestPath.split('/').pop()}`;
+        return `/datasets/${requestURL.split('/').pop()}`;
       case 'deleteFile':
-        return `/datasets/${requestPath.split('/').pop()}`;
+        return `/datasets/${requestURL.split('/').pop()}`;
       default:
         return '';
     }

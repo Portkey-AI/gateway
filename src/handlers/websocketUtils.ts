@@ -68,14 +68,14 @@ export const getOptionsForOutgoingConnection = async (
 export const getURLForOutgoingConnection = (
   apiConfig: ProviderAPIConfig,
   providerOptions: Options,
-  requestPath: string
+  requestURL: string
 ) => {
   const baseUrl = apiConfig.getBaseURL({ providerOptions });
   const endpoint = apiConfig.getEndpoint({
     providerOptions,
     fn: 'realtime',
     gatewayRequestBodyJSON: {},
-    requestPath,
+    requestURL,
   });
   return `${baseUrl}${endpoint}`;
 };
