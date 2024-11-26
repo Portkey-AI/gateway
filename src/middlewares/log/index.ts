@@ -1,4 +1,5 @@
 import { Context } from 'hono';
+import { getRuntimeKey } from 'hono/adapter';
 
 let logId = 0;
 
@@ -51,6 +52,33 @@ const broadcastLog = async (log: any) => {
   });
 };
 
+async function processLog(c: Context, start: number) {
+  const ms = Date.now() - start;
+  if (!c.req.url.includes('/v1/')) return;
+
+  const requestOptionsArray = c.get('requestOptions');
+
+  if (requestOptionsArray[0].requestParams.stream) {
+    requestOptionsArray[0].response = {
+      message: 'The response was a stream.',
+    };
+  } else {
+    const response = await c.res.clone().json();
+    requestOptionsArray[0].response = response;
+  }
+
+  await broadcastLog(
+    JSON.stringify({
+      time: new Date().toLocaleString(),
+      method: c.req.method,
+      endpoint: c.req.url.split(':8787')[1],
+      status: c.res.status,
+      duration: ms,
+      requestOptions: requestOptionsArray,
+    })
+  );
+}
+
 export const logger = () => {
   return async (c: Context, next: any) => {
     c.set('addLogClient', addLogClient);
@@ -60,28 +88,12 @@ export const logger = () => {
 
     await next();
 
-    const ms = Date.now() - start;
-    if (!c.req.url.includes('/v1/')) return;
+    const runtime = getRuntimeKey();
 
-    const requestOptionsArray = c.get('requestOptions');
-    if (requestOptionsArray[0].requestParams.stream) {
-      requestOptionsArray[0].response = {
-        message: 'The response was a stream.',
-      };
-    } else {
-      const response = await c.res.clone().json();
-      requestOptionsArray[0].response = response;
+    if (runtime == 'workerd') {
+      c.executionCtx.waitUntil(processLog(c, start));
+    } else if (['node', 'bun', 'deno'].includes(runtime)) {
+      processLog(c, start).then().catch(console.error);
     }
-
-    await broadcastLog(
-      JSON.stringify({
-        time: new Date().toLocaleString(),
-        method: c.req.method,
-        endpoint: c.req.url.split(':8787')[1],
-        status: c.res.status,
-        duration: ms,
-        requestOptions: requestOptionsArray,
-      })
-    );
   };
 };
