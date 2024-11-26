@@ -11,7 +11,7 @@ import {
 const XAIConfig: ProviderConfigs = {
   chatComplete: chatCompleteParams([], { model: 'grok-beta' }),
   complete: completeParams([], { model: 'grok-beta' }),
-  embed: embedParams([], { model: 'text-embedding-v1' }),
+  embed: embedParams([], { model: 'v1' }),
   api: XAIAPIConfig,
   responseTransforms: responseTransformers(X_AI, {
     chatComplete: true,
