@@ -7,7 +7,7 @@ import {
   BedrockConverseCohereChatCompletionsParams,
 } from './chatComplete';
 import { Context } from 'hono';
-import { env } from 'hono/adapter';
+import { env, getRuntimeKey } from 'hono/adapter';
 
 export const generateAWSHeaders = async (
   body: Record<string, any>,
@@ -205,7 +205,7 @@ async function getAssumedWebIdentityCredentials(
       }
       let token;
       // for node
-      if (typeof process !== 'undefined' && process.versions?.node) {
+      if (getRuntimeKey() == 'node') {
         const fs = await import('fs/promises');
         token = await fs.readFile(env(c).AWS_WEB_IDENTITY_TOKEN_FILE, 'utf8');
       } else {
@@ -466,7 +466,7 @@ export async function getAssumedRoleCredentials(
     creds?.secretAccessKey || env(c).AWS_ASSUME_ROLE_SECRET_ACCESS_KEY || '';
   let sessionToken = creds?.sessionToken;
   // if not passed get from IRSA>WebAssumed>IMDS
-  if (!accessKeyId && !secretAccessKey) {
+  if (!accessKeyId && !secretAccessKey && getRuntimeKey() === 'node') {
     try {
       const irsaCredentials = await getIRSACredentials(
         c,
