@@ -64,7 +64,11 @@ async function processLog(c: Context, start: number) {
     };
   } else {
     const response = await c.res.clone().json();
-    requestOptionsArray[0].response = response;
+    const maxLength = 1000; // Set a reasonable limit for the response length
+    const responseString = JSON.stringify(response);
+    requestOptionsArray[0].response = responseString.length > maxLength 
+      ? JSON.parse(responseString.substring(0, maxLength) + '...') 
+      : response;
   }
 
   await broadcastLog(

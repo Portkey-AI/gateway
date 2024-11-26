@@ -478,6 +478,25 @@ function addLogEntry(time, method, endpoint, status, duration, requestOptions) {
         logsTableBody.appendChild(tr);
     }
 
+    // Ensure the log table does not exceed 100 rows
+    while (logsTableBody.children.length > 100) {
+        logsTableBody.removeChild(logsTableBody.lastChild);
+    }
+    
+    // Add a message to the last line of the table
+    if (logsTableBody.children.length === 100) {
+        let messageRow = logsTableBody.querySelector('.log-message-row');
+        if (!messageRow) {
+            messageRow = document.createElement('tr');
+            messageRow.classList.add('log-message-row');
+            const messageCell = document.createElement('td');
+            messageCell.colSpan = 6; // Assuming there are 6 columns in the table
+            messageCell.textContent = 'Only the latest 100 logs are being shown.';
+            messageRow.appendChild(messageCell);
+            logsTableBody.appendChild(messageRow);
+        }
+    }
+
     incrementLogCounter();
 
     setTimeout(() => {
