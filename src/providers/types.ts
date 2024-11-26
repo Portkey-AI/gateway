@@ -50,6 +50,7 @@ export interface ProviderAPIConfig {
     providerOptions: Options;
     fn: string;
     gatewayRequestBody: Params;
+    gatewayRequestURL: string;
   }) => string;
   /** A function to determine if the request body should be transformed to form data */
   transformToFormData?: (args: { gatewayRequestBody: Params }) => boolean;
@@ -67,7 +68,8 @@ export type endpointStrings =
   | 'imageGenerate'
   | 'createSpeech'
   | 'createTranscription'
-  | 'createTranslation';
+  | 'createTranslation'
+  | 'realtime';
 
 /**
  * A collection of API configurations for multiple AI providers.
