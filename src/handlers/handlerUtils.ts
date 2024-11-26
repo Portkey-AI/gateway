@@ -503,7 +503,7 @@ export async function tryPost(
     gatewayRequestBody: inputParams,
     requestPath: c.req.path,
   });
-  
+
   // Attach the body of the request
   const transformedRequestBody =
     method === 'POST'
