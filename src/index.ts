@@ -30,6 +30,7 @@ import { createTranslationHandler } from './handlers/createTranslationHandler';
 import { modelsHandler, providersHandler } from './handlers/modelsHandler';
 import { realTimeHandler } from './handlers/realtimeHandler';
 import fileRouter from './routers/fileRouter';
+import batchRouter from './routers/batchRouter';
 
 // Create a new Hono server instance
 const app = new Hono();
@@ -175,6 +176,9 @@ app.post(
 app.post('/v1/audio/translations', requestValidator, createTranslationHandler);
 
 app.route('/v1/files', fileRouter);
+
+// Batch routes
+app.route('/v1/batches', batchRouter);
 
 /**
  * POST route for '/v1/prompts/:id/completions'.

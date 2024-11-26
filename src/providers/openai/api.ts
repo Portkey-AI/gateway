@@ -56,6 +56,14 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
         return requestURL.split('/v1')[1];
       case 'getFileContent':
         return requestURL.split('/v1')[1];
+      case 'createBatch':
+        return '/batches';
+      case 'retrieveBatch':
+        return requestURL.split('/v1')[1];
+      case 'cancelBatch':
+        return requestURL.split('/v1')[1];
+      case 'listBatches':
+        return requestURL.split('/v1')[1];
       default:
         return '';
     }
