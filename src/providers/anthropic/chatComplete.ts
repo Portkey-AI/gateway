@@ -416,7 +416,7 @@ export const AnthropicChatCompleteResponseTransform: (
           type: 'function',
           function: {
             name: item.name,
-            arguments: JSON.stringify(item.input),
+            arguments: item.input,
           },
         });
       }
