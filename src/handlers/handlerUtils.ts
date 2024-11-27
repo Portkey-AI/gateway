@@ -14,8 +14,7 @@ import {
   CONTENT_TYPES,
   HUGGING_FACE,
   STABILITY_AI,
-  OLLAMA,
-  TRITON,
+  SAGEMAKER,
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
@@ -722,7 +721,7 @@ export function constructConfigFromRequestHeaders(
     azureEndpointName: requestHeaders[`x-${POWERED_BY}-azure-endpoint-name`],
   };
 
-  const bedrockConfig = {
+  const awsConfig = {
     awsAccessKeyId: requestHeaders[`x-${POWERED_BY}-aws-access-key-id`],
     awsSecretAccessKey: requestHeaders[`x-${POWERED_BY}-aws-secret-access-key`],
     awsSessionToken: requestHeaders[`x-${POWERED_BY}-aws-session-token`],
@@ -730,6 +729,27 @@ export function constructConfigFromRequestHeaders(
     awsRoleArn: requestHeaders[`x-${POWERED_BY}-aws-role-arn`],
     awsAuthType: requestHeaders[`x-${POWERED_BY}-aws-auth-type`],
     awsExternalId: requestHeaders[`x-${POWERED_BY}-aws-external-id`],
+  };
+
+  const sagemakerConfig = {
+    sagemakerCustomAttributes:
+      requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-custom-attributes`],
+    sagemakerTargetModel:
+      requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-target-model`],
+    sagemakerTargetVariant:
+      requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-target-variant`],
+    sagemakerTargetContainerHostname:
+      requestHeaders[
+        `x-${POWERED_BY}-amzn-sagemaker-target-container-hostname`
+      ],
+    sagemakerInferenceId:
+      requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-inference-id`],
+    sagemakerEnableExplanations:
+      requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-enable-explanations`],
+    sagemakerInferenceComponent:
+      requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-inference-component`],
+    sagemakerSessionId:
+      requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-session-id`],
   };
 
   const workersAiConfig = {
@@ -787,10 +807,20 @@ export function constructConfigFromRequestHeaders(
         };
       }
 
-      if (parsedConfigJson.provider === BEDROCK) {
+      if (
+        parsedConfigJson.provider === BEDROCK ||
+        parsedConfigJson.provider === SAGEMAKER
+      ) {
         parsedConfigJson = {
           ...parsedConfigJson,
-          ...bedrockConfig,
+          ...awsConfig,
+        };
+      }
+
+      if (parsedConfigJson.provider === SAGEMAKER) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...sagemakerConfig,
         };
       }
 
@@ -855,8 +885,11 @@ export function constructConfigFromRequestHeaders(
     apiKey: requestHeaders['authorization']?.replace('Bearer ', ''),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === AZURE_OPEN_AI &&
       azureConfig),
-    ...(requestHeaders[`x-${POWERED_BY}-provider`] === BEDROCK &&
-      bedrockConfig),
+    ...([BEDROCK, SAGEMAKER].includes(
+      requestHeaders[`x-${POWERED_BY}-provider`]
+    ) && awsConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === SAGEMAKER &&
+      sagemakerConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === WORKERS_AI &&
       workersAiConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === GOOGLE_VERTEX_AI &&
