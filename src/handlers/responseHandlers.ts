@@ -130,6 +130,13 @@ export async function responseHandler(
     return { response: textResponse, responseJson: null };
   }
 
+  if (!responseContentType && response.status === 204) {
+    return {
+      response: new Response(response.body, response),
+      responseJson: null,
+    };
+  }
+
   const nonStreamingResponse = await handleNonStreamingMode(
     response,
     responseTransformerFunction,
