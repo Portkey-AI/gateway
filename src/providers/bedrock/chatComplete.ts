@@ -366,7 +366,7 @@ export const BedrockChatCompleteResponseTransform: (
         type: 'function',
         function: {
           name: content.toolUse.name,
-          arguments: content.toolUse.input,
+          arguments: JSON.stringify(content.toolUse.input),
         },
       }));
     if (toolCalls.length > 0)
