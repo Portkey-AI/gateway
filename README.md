@@ -8,7 +8,7 @@
 # AI Gateway
 #### Route to 250+ LLMs with 1 fast & friendly API
 
-<img src="https://cfassets.portkey.ai/sdk.gif" width="550px" alt="Gateway Demo" style="margin-left:-35px">
+<img src="https://cfassets.portkey.ai/sdk.gif" width="550px" alt="Portkey AI Gateway Demo showing LLM routing capabilities" style="margin-left:-35px">
 
 [Docs](https://portkey.ai/docs) | [Enterprise](https://portkey.ai/docs/product/enterprise-offering) | [Hosted Gateway](https://app.portkey.ai/) | [Changelog](https://new.portkey.ai) | [API Reference](https://portkey.ai/docs/api-reference/inference-api/introduction)
 
@@ -146,7 +146,7 @@ You can do a lot more stuff with configs in your AI gateway. [Jump to examples  
 
 </sup>
 
-The AI Gateway's [enterprise version](https://portkey.ai/docs/product/enterprise-offering) offers advanced capabilities for **org management**, **governance**, **security** and [more](https://portkey.ai/docs/product/enterprise-offering) out of the box. [View Feature Comparison →](https://portkey.ai/docs/product/product-feature-comparison)
+The LLM Gateway's [enterprise version](https://portkey.ai/docs/product/enterprise-offering) offers advanced capabilities for **org management**, **governance**, **security** and [more](https://portkey.ai/docs/product/enterprise-offering) out of the box. [View Feature Comparison →](https://portkey.ai/docs/product/product-feature-comparison)
 
 The enterprise deployment architecture for supported platforms is available here - [**Enterprise Private Cloud Deployments**](https://portkey.ai/docs/product/enterprise-offering/private-cloud-deployments)
 
@@ -157,7 +157,7 @@ The enterprise deployment architecture for supported platforms is available here
 
 ## Core Features
 ### Reliable Routing
-- <a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/fallbacks">**Fallbacks**</a>: Fallback to another provider or model on failed requests. You can specify the errors on which to trigger the fallback. Improves reliability of your application.
+- <a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/fallbacks">**Fallbacks**</a>: Fallback to another provider or model on failed requests using the LLM gateway. You can specify the errors on which to trigger the fallback. Improves reliability of your application.
 - <a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/automatic-retries">**Automatic Retries**</a>: Automatically retry failed requests up to 5 times. An exponential backoff strategy spaces out retry attempts to prevent network overload.
 - <a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/load-balancing">**Load Balancing**</a>: Distribute LLM requests across multiple API keys or AI providers with weights to ensure high availability and optimal performance.
 - <a href="https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/request-timeouts">**Request Timeouts**</a>: Manage unruly LLMs & latencies by setting up granular request timeouts, allowing automatic termination of requests that exceed a specified duration.
@@ -195,8 +195,8 @@ The enterprise deployment architecture for supported platforms is available here
 
 ### 🚨 Latest
 * [Create Synthetic Datasets using Nemotron](/cookbook/use-cases/Nemotron_GPT_Finetuning_Portkey.ipynb)
-* [Use Portkey Gateway with Vercel's AI SDK](/cookbook/integrations/vercel-ai.md)
-* [Monitor Llama Agents with Portkey](/cookbook/monitoring-agents/Llama_Agents_with_Telemetry.ipynb)
+* [Use the LLM Gateway with Vercel's AI SDK](/cookbook/integrations/vercel-ai.md)
+* [Monitor Llama Agents with Portkey's LLM Gateway](/cookbook/monitoring-agents/Llama_Agents_with_Telemetry.ipynb)
 
 [View all cookbooks →](https://github.com/Portkey-AI/gateway/tree/main/cookbook)
 <br/><br/>
