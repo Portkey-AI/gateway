@@ -32,6 +32,7 @@ const AzureOpenAIConfig: ProviderConfigs = {
   createSpeech: AzureOpenAICreateSpeechConfig,
   createTranscription: {},
   createTranslation: {},
+  realtime: {},
   responseTransforms: {
     complete: AzureOpenAICompleteResponseTransform,
     chatComplete: AzureOpenAIChatCompleteResponseTransform,
@@ -40,6 +41,7 @@ const AzureOpenAIConfig: ProviderConfigs = {
     createSpeech: AzureOpenAICreateSpeechResponseTransform,
     createTranscription: AzureOpenAICreateTranscriptionResponseTransform,
     createTranslation: AzureOpenAICreateTranslationResponseTransform,
+    realtime: {},
   },
 };
 
