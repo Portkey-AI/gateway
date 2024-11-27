@@ -1,6 +1,6 @@
 
 <p align="right">
-   <strong>English</strong> | <a href="./.github/README.cn.md">中文</a> 
+   <strong>English</strong> | <a href="./.github/README.cn.md">中文</a> | <a href="./.github/README.jp.md">日本語</a>
 </p>
 
 <div align="center">
@@ -221,7 +221,7 @@ Explore Gateway integrations with [45+ providers](https://portkey.ai/docs/integr
 | <img src="https://platform.stability.ai/small-logo-purple.svg" width=35>                                                   | [Stability AI](https://portkey.ai/docs/welcome/integration-guides/stability-ai)               | ✅       | ✅      |
 | <img src="https://deepinfra.com/_next/static/media/logo.4a03fd3d.svg" width=35>                                            | [DeepInfra](https://portkey.ai/docs/welcome/integration-guides)                               | ✅       | ✅      |
 | <img src="https://ollama.com/public/ollama.png" width=35>                                                                  | [Ollama](https://portkey.ai/docs/welcome/integration-guides/ollama)                           | ✅       | ✅      |
-| <img src="https://novita.ai/favicon.ico" width=35>                                                                         | Novita AI                                                                                     | ✅       | ✅      | `/chat/completions`, `/completions` |
+| <img src="https://novita.ai/favicon.ico" width=35>                                                                         | [Novita AI](https://portkey.ai/docs/integrations/llms/novita-ai)                              | ✅       | ✅      | `/chat/completions`, `/completions` |
 
 
 > [View the complete list of 200+ supported models here](https://portkey.ai/docs/welcome/what-is-portkey#ai-providers-supported)
@@ -279,6 +279,7 @@ Join our growing community around the world, for help, ideas, and discussions on
 - Chat with us on [Discord](https://portkey.ai/community)
 - Follow us on [Twitter](https://twitter.com/PortkeyAI)
 - Connect with us on [LinkedIn](https://www.linkedin.com/company/portkey-ai/)
+- Read the documentation in [Japanese](./.github/README.jp.md)
 <!-- - Visit us on [YouTube](https://www.youtube.com/channel/UCZph50gLNXAh1DpmeX8sBdw) -->
 <!-- - Join our [Dev community](https://dev.to/portkeyai) -->
 <!-- - Questions tagged #portkey on [Stack Overflow](https://stackoverflow.com/questions/tagged/portkey) -->

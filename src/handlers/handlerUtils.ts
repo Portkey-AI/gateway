@@ -262,6 +262,7 @@ export async function tryPostProxy(
     providerOptions: providerOption,
     fn,
     gatewayRequestBody: params,
+    gatewayRequestURL: c.req.url,
   });
 
   const url = endpoint
@@ -517,6 +518,7 @@ export async function tryPost(
     providerOptions: providerOption,
     fn,
     gatewayRequestBody: params,
+    gatewayRequestURL: c.req.url,
   });
   const url = `${baseUrl}${endpoint}`;
 
@@ -1004,6 +1006,7 @@ export function updateResponseHeaders(
   // Delete content-length header to avoid conflicts with hono compress middleware
   // workerd environment handles this authomatically
   response.headers.delete('content-length');
+  response.headers.delete('transfer-encoding');
 }
 
 export function constructConfigFromRequestHeaders(
@@ -1021,6 +1024,9 @@ export function constructConfigFromRequestHeaders(
       requestHeaders[`x-${POWERED_BY}-azure-entra-client-secret`],
     azureEntraTenantId: requestHeaders[`x-${POWERED_BY}-azure-entra-tenant-id`],
     azureModelName: requestHeaders[`x-${POWERED_BY}-azure-model-name`],
+    openaiBeta:
+      requestHeaders[`x-${POWERED_BY}-openai-beta`] ||
+      requestHeaders[`openai-beta`],
   };
 
   const stabilityAiConfig = {
@@ -1058,6 +1064,9 @@ export function constructConfigFromRequestHeaders(
   const openAiConfig = {
     openaiOrganization: requestHeaders[`x-${POWERED_BY}-openai-organization`],
     openaiProject: requestHeaders[`x-${POWERED_BY}-openai-project`],
+    openaiBeta:
+      requestHeaders[`x-${POWERED_BY}-openai-beta`] ||
+      requestHeaders[`openai-beta`],
   };
 
   const huggingfaceConfig = {
