@@ -69,14 +69,16 @@ export const mistralGuardrailHandler: PluginHandler = async (
   const guardrailFunction = fn as GuardrailFunction;
 
   const text = getText(context, eventType);
-  const messages = context.request?.json?.messages;
+  const messages =
+    eventType === 'beforeRequestHook'
+      ? context.request?.json?.messages
+      : context.response?.json?.messages;
 
   // should contain text or should contain messages array
   if (
     (!text && !Array.isArray(messages)) ||
     (Array.isArray(messages) && messages.length === 0)
   ) {
-    console.log(!text, messages);
     return {
       error: 'Mistral: Invalid Request body',
       verdict: false,

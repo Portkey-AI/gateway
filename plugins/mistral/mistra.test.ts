@@ -8,7 +8,7 @@ function getParameters() {
   };
 }
 
-describe('validateProject handler', () => {
+describe('mistral guardrail handler', () => {
   it('should fail if the apiKey is invalid', async () => {
     const eventType = 'beforeRequestHook';
     const context = {
@@ -103,6 +103,80 @@ describe('validateProject handler', () => {
 
     expect(result).toBeDefined();
     expect(result.verdict).toBe(true);
+    expect(result.error).toBeNull();
+    expect(result.data).toBeNull();
+  });
+
+  it('should give error on invalid request body', async () => {
+    const eventType = 'beforeRequestHook';
+    const context = {
+      request: {},
+    };
+    const parameters = JSON.parse(JSON.stringify(getParameters()));
+
+    const result = await mistralGuardrailHandler(
+      context as unknown as PluginContext,
+      parameters,
+      eventType,
+      { env: {} },
+      'pii'
+    );
+
+    expect(result).toBeDefined();
+    expect(result.verdict).toBe(false);
+    expect(result.error).toBe('Mistral: Invalid Request body');
+    expect(result.data).toBeNull();
+  });
+
+  it('should work for afterRequestHook', async () => {
+    const eventType = 'afterRequestHook';
+    const context = {
+      response: { text: 'this text is safe text' },
+    };
+    const parameters = JSON.parse(JSON.stringify(getParameters()));
+
+    const result = await mistralGuardrailHandler(
+      context as unknown as PluginContext,
+      parameters,
+      eventType,
+      { env: {} },
+      'pii'
+    );
+
+    expect(result).toBeDefined();
+    expect(result.verdict).toBe(false);
+    expect(result.error).toBeNull();
+    expect(result.data).toBeNull();
+  });
+
+  it('should work for afterRequestHook with chatCompletion messages', async () => {
+    const eventType = 'afterRequestHook';
+    const context = {
+      requestType: 'chatComplete',
+      response: {
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content:
+                'Say Hi. My name is Jhon Doe and my email is user@example.com',
+            },
+          ],
+        },
+      },
+    };
+    const parameters = JSON.parse(JSON.stringify(getParameters()));
+
+    const result = await mistralGuardrailHandler(
+      context as unknown as PluginContext,
+      parameters,
+      eventType,
+      { env: {} },
+      'pii'
+    );
+
+    expect(result).toBeDefined();
+    expect(result.verdict).toBe(false);
     expect(result.error).toBeNull();
     expect(result.data).toBeNull();
   });
