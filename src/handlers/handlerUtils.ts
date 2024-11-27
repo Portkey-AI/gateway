@@ -95,28 +95,19 @@ function getProxyPath(
   requestURL: string,
   proxyProvider: string,
   proxyEndpointPath: string,
-  customHost: string
+  baseURL: string,
+  providerOptions: Options
 ) {
   let reqURL = new URL(requestURL);
   let reqPath = reqURL.pathname;
   const reqQuery = reqURL.search;
   reqPath = reqPath.replace(proxyEndpointPath, '');
 
-  if (customHost) {
-    return `${customHost}${reqPath}${reqQuery}`;
+  if (Providers[proxyProvider]?.api?.getProxyEndpoint) {
+    return `${baseURL}${Providers[proxyProvider].api.getProxyEndpoint({ reqPath, reqQuery, providerOptions })}`;
   }
 
-  const providerBasePath = Providers[proxyProvider].api.getBaseURL({
-    providerOptions: {},
-  });
-  if (proxyProvider === AZURE_OPEN_AI) {
-    return `https:/${reqPath}${reqQuery}`;
-  }
-
-  if (proxyProvider === OLLAMA || proxyProvider === TRITON) {
-    return `https:/${reqPath}`;
-  }
-  let proxyPath = `${providerBasePath}${reqPath}${reqQuery}`;
+  let proxyPath = `${baseURL}${reqPath}${reqQuery}`;
 
   // Fix specific for Anthropic SDK calls. Is this needed? - Yes
   if (proxyProvider === ANTHROPIC) {
@@ -249,7 +240,7 @@ export async function tryPost(
   let url: string;
   if (fn == 'proxy') {
     let proxyPath = c.req.url.indexOf('/v1/proxy') > -1 ? '/v1/proxy' : '/v1';
-    url = getProxyPath(c.req.url, provider, proxyPath, customHost);
+    url = getProxyPath(c.req.url, provider, proxyPath, baseUrl, providerOption);
   } else {
     url = `${baseUrl}${endpoint}`;
   }
