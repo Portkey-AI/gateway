@@ -100,6 +100,19 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
         return '';
     }
   },
+  getProxyEndpoint: ({ reqPath, reqQuery, providerOptions }) => {
+    const { apiVersion } = providerOptions;
+    if (!reqQuery.includes('api-version')) {
+      let _reqQuery = reqQuery;
+      if (!reqQuery) {
+        _reqQuery = `?api-version=${apiVersion}`;
+      } else {
+        _reqQuery += `&api-version=${apiVersion}`;
+      }
+      return `${reqPath}${_reqQuery}`;
+    }
+    return `${reqPath}${reqQuery}`;
+  },
 };
 
 export default AzureOpenAIAPIConfig;
