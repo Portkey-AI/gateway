@@ -5,6 +5,7 @@ import {
   tryTargetsRecursively,
 } from './handlerUtils';
 import { RouterError } from '../errors/RouterError';
+import { env } from 'hono/adapter';
 
 async function getRequestData(request: Request, contentType: string) {
   let finalRequest: any;
@@ -64,7 +65,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
       c,
       camelCaseConfig,
       request,
-      headersToSend(requestHeaders, []),
+      headersToSend(requestHeaders, env(c).CUSTOM_HEADERS_TO_IGNORE ?? []),
       'proxy',
       c.req.method,
       'config'
