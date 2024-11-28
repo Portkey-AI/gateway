@@ -1,8 +1,7 @@
 import { GatewayError } from '../errors/GatewayError';
-import { MULTIPART_FORM_DATA_ENDPOINTS } from '../globals';
 import ProviderConfigs from '../providers';
 import { endpointStrings } from '../providers/types';
-import { Options, Params, Targets } from '../types/requestBody';
+import { Params } from '../types/requestBody';
 
 /**
  * Helper function to set a nested property in an object.
