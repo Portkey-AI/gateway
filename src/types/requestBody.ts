@@ -88,14 +88,14 @@ export interface Options {
   awsExternalId?: string;
 
   /** Sagemaker specific */
-  sagemakerCustomAttributes?: string;
-  sagemakerTargetModel?: string;
-  sagemakerTargetVariant?: string;
-  sagemakerTargetContainerHostname?: string;
-  sagemakerInferenceId?: string;
-  sagemakerEnableExplanations?: string;
-  sagemakerInferenceComponent?: string;
-  sagemakerSessionId?: string;
+  amznSagemakerCustomAttributes?: string;
+  amznSagemakerTargetModel?: string;
+  amznSagemakerTargetVariant?: string;
+  amznSagemakerTargetContainerHostname?: string;
+  amznSagemakerInferenceId?: string;
+  amznSagemakerEnableExplanations?: string;
+  amznSagemakerInferenceComponent?: string;
+  amznSagemakerSessionId?: string;
 
   /** Stability AI specific */
   stabilityClientId?: string;

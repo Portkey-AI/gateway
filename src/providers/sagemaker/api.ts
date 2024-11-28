@@ -66,44 +66,44 @@ const SagemakerAPIConfig: ProviderAPIConfig = {
       providerOptions.awsSessionToken || ''
     );
 
-    if (providerOptions.sagemakerCustomAttributes) {
+    if (providerOptions.amznSagemakerCustomAttributes) {
       awsHeaders['x-amzn-sagemaker-custom-attributes'] =
-        providerOptions.sagemakerCustomAttributes;
+        providerOptions.amznSagemakerCustomAttributes;
     }
 
-    if (providerOptions.sagemakerTargetModel) {
+    if (providerOptions.amznSagemakerTargetModel) {
       awsHeaders['x-amzn-sagemaker-target-model'] =
-        providerOptions.sagemakerTargetModel;
+        providerOptions.amznSagemakerTargetModel;
     }
 
-    if (providerOptions.sagemakerTargetVariant) {
+    if (providerOptions.amznSagemakerTargetVariant) {
       awsHeaders['x-amzn-sagemaker-target-variant'] =
-        providerOptions.sagemakerTargetVariant;
+        providerOptions.amznSagemakerTargetVariant;
     }
 
-    if (providerOptions.sagemakerTargetContainerHostname) {
+    if (providerOptions.amznSagemakerTargetContainerHostname) {
       awsHeaders['x-amzn-sagemaker-target-container-hostname'] =
-        providerOptions.sagemakerTargetContainerHostname;
+        providerOptions.amznSagemakerTargetContainerHostname;
     }
 
-    if (providerOptions.sagemakerInferenceId) {
+    if (providerOptions.amznSagemakerInferenceId) {
       awsHeaders['x-amzn-sagemaker-inference-id'] =
-        providerOptions.sagemakerInferenceId;
+        providerOptions.amznSagemakerInferenceId;
     }
 
-    if (providerOptions.sagemakerEnableExplanations) {
+    if (providerOptions.amznSagemakerEnableExplanations) {
       awsHeaders['x-amzn-sagemaker-enable-explanations'] =
-        providerOptions.sagemakerEnableExplanations;
+        providerOptions.amznSagemakerEnableExplanations;
     }
 
-    if (providerOptions.sagemakerInferenceComponent) {
+    if (providerOptions.amznSagemakerInferenceComponent) {
       awsHeaders['x-amzn-sagemaker-inference-component'] =
-        providerOptions.sagemakerInferenceComponent;
+        providerOptions.amznSagemakerInferenceComponent;
     }
 
-    if (providerOptions.sagemakerSessionId) {
+    if (providerOptions.amznSagemakerSessionId) {
       awsHeaders['x-amzn-sagemaker-session-id'] =
-        providerOptions.sagemakerSessionId;
+        providerOptions.amznSagemakerSessionId;
     }
     return awsHeaders;
   },

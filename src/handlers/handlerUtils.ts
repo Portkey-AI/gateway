@@ -741,23 +741,23 @@ export function constructConfigFromRequestHeaders(
   };
 
   const sagemakerConfig = {
-    sagemakerCustomAttributes:
+    amznSagemakerCustomAttributes:
       requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-custom-attributes`],
-    sagemakerTargetModel:
+    amznSagemakerTargetModel:
       requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-target-model`],
-    sagemakerTargetVariant:
+    amznSagemakerTargetVariant:
       requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-target-variant`],
-    sagemakerTargetContainerHostname:
+    amznSagemakerTargetContainerHostname:
       requestHeaders[
         `x-${POWERED_BY}-amzn-sagemaker-target-container-hostname`
       ],
-    sagemakerInferenceId:
+    amznSagemakerInferenceId:
       requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-inference-id`],
-    sagemakerEnableExplanations:
+    amznSagemakerEnableExplanations:
       requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-enable-explanations`],
-    sagemakerInferenceComponent:
+    amznSagemakerInferenceComponent:
       requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-inference-component`],
-    sagemakerSessionId:
+    amznSagemakerSessionId:
       requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-session-id`],
   };
 
