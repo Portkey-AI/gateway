@@ -14,8 +14,6 @@ import {
   CONTENT_TYPES,
   HUGGING_FACE,
   STABILITY_AI,
-  OLLAMA,
-  TRITON,
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
