@@ -927,10 +927,11 @@ export async function recursiveAfterRequestHookHandler(
   const remainingRetryCount =
     (retry?.attempts || 0) - (retryCount || 0) - retryAttemptsMade;
 
-  if (
-    remainingRetryCount > 0 &&
-    retry?.onStatusCodes?.includes(arhResponse.status)
-  ) {
+  const isRetriableStatusCode = retry?.onStatusCodes?.includes(
+    arhResponse.status
+  );
+
+  if (remainingRetryCount > 0 && isRetriableStatusCode) {
     return recursiveAfterRequestHookHandler(
       c,
       url,
@@ -947,7 +948,7 @@ export async function recursiveAfterRequestHookHandler(
   }
 
   let lastAttempt = (retryCount || 0) + retryAttemptsMade;
-  if (lastAttempt === (retry?.attempts || 0)) {
+  if (lastAttempt === (retry?.attempts || 0) && isRetriableStatusCode) {
     lastAttempt = -1; // All retry attempts exhausted without success.
   }
 
