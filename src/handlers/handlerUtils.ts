@@ -18,14 +18,7 @@ import {
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
 import transformToProviderRequest from '../services/transformToProviderRequest';
-import {
-  Config,
-  Options,
-  Params,
-  ShortConfig,
-  StrategyModes,
-  Targets,
-} from '../types/requestBody';
+import { Options, Params, StrategyModes, Targets } from '../types/requestBody';
 import { convertKeysToCamelCase } from '../utils';
 import { retryRequest } from './retryHandler';
 import { env, getRuntimeKey } from 'hono/adapter';
@@ -48,7 +41,8 @@ export function constructRequest(
   provider: string,
   method: string,
   forwardHeaders: string[],
-  requestHeaders: Record<string, string>
+  requestHeaders: Record<string, string>,
+  fn: endpointStrings
 ) {
   let baseHeaders: any = {
     'content-type': 'application/json',
@@ -70,13 +64,18 @@ export function constructRequest(
   });
 
   // Add any headers that the model might need
-  headers = { ...baseHeaders, ...headers, ...forwardHeadersMap };
+  headers = {
+    ...baseHeaders,
+    ...headers,
+    ...forwardHeadersMap,
+    ...(fn === 'proxy' ? requestHeaders : {}),
+  };
 
   let fetchOptions: RequestInit = {
     method,
     headers,
   };
-  const contentType = headers['content-type'];
+  const contentType = headers['content-type']?.split(';')[0];
   const isGetMethod = method === 'GET';
   const isMultipartFormData = contentType === CONTENT_TYPES.MULTIPART_FORM_DATA;
   const shouldDeleteContentTypeHeader =
@@ -88,6 +87,41 @@ export function constructRequest(
   }
 
   return fetchOptions;
+}
+
+function getProxyPath(
+  requestURL: string,
+  proxyProvider: string,
+  proxyEndpointPath: string,
+  baseURL: string,
+  providerOptions: Options
+) {
+  let reqURL = new URL(requestURL);
+  let reqPath = reqURL.pathname;
+  const reqQuery = reqURL.search;
+  reqPath = reqPath.replace(proxyEndpointPath, '');
+
+  // NOTE: temporary support for the deprecated way of making azure requests
+  // where the endpoint was sent in request path of the incoming gateway url
+  if (
+    proxyProvider === AZURE_OPEN_AI &&
+    reqPath.includes('.openai.azure.com')
+  ) {
+    return `https:/${reqPath}${reqQuery}`;
+  }
+
+  if (Providers[proxyProvider]?.api?.getProxyEndpoint) {
+    return `${baseURL}${Providers[proxyProvider].api.getProxyEndpoint({ reqPath, reqQuery, providerOptions })}`;
+  }
+
+  let proxyPath = `${baseURL}${reqPath}${reqQuery}`;
+
+  // Fix specific for Anthropic SDK calls. Is this needed? - Yes
+  if (proxyProvider === ANTHROPIC) {
+    proxyPath = proxyPath.replace('/v1/v1/', '/v1/');
+  }
+
+  return proxyPath;
 }
 
 /**
@@ -129,318 +163,6 @@ export function selectProviderByWeight(providers: Options[]): Options {
 }
 
 /**
- * @deprecated
- * Gets the provider options based on the specified mode.
- * Modes can be "single" (uses the first provider), "loadbalance" (selects one provider based on weights),
- * or "fallback" (uses all providers in the given order). If the mode does not match these options, null is returned.
- *
- * @param {string} mode - The mode for selecting providers.
- * @param {any} config - The configuration for the providers.
- * @returns {(Options[]|null)} - The selected provider options.
- */
-export function getProviderOptionsByMode(
-  mode: string,
-  config: any
-): Options[] | null {
-  if (config.targets) {
-    config.options = config.targets;
-  }
-
-  if (config.options) {
-    // Inherit cache and retry from top level if not present on option level
-    config.options.forEach((configOption: any) => {
-      if (config.cache && !configOption.cache) {
-        configOption.cache = config.cache;
-      }
-      if (config.retry && !configOption.retry) {
-        configOption.retry = config.retry;
-      }
-    });
-  }
-
-  switch (mode) {
-    case 'single':
-      return [config.options[0]];
-    case 'loadbalance':
-      return [selectProviderByWeight(config.options)];
-    case 'fallback':
-      return config.options;
-    default:
-      return null;
-  }
-}
-
-/**
- * @deprecated
- */
-export const fetchProviderOptionsFromConfig = (
-  config: Config | ShortConfig
-): Options[] | null => {
-  let providerOptions: Options[] | null = null;
-  let mode: string;
-  const camelCaseConfig = convertKeysToCamelCase(config, [
-    'override_params',
-    'params',
-    'metadata',
-  ]) as Config | ShortConfig;
-
-  if ('provider' in camelCaseConfig) {
-    providerOptions = [
-      {
-        provider: camelCaseConfig.provider,
-        virtualKey: camelCaseConfig.virtualKey,
-        apiKey: camelCaseConfig.apiKey,
-        cache: camelCaseConfig.cache,
-        retry: camelCaseConfig.retry,
-        customHost: camelCaseConfig.customHost,
-      },
-    ];
-    if (camelCaseConfig.resourceName)
-      providerOptions[0].resourceName = camelCaseConfig.resourceName;
-    if (camelCaseConfig.deploymentId)
-      providerOptions[0].deploymentId = camelCaseConfig.deploymentId;
-    if (camelCaseConfig.apiVersion)
-      providerOptions[0].apiVersion = camelCaseConfig.apiVersion;
-    if (camelCaseConfig.azureModelName)
-      providerOptions[0].azureModelName = camelCaseConfig.azureModelName;
-    if (camelCaseConfig.apiVersion)
-      providerOptions[0].vertexProjectId = camelCaseConfig.vertexProjectId;
-    if (camelCaseConfig.apiVersion)
-      providerOptions[0].vertexRegion = camelCaseConfig.vertexRegion;
-    if (camelCaseConfig.workersAiAccountId)
-      providerOptions[0].workersAiAccountId =
-        camelCaseConfig.workersAiAccountId;
-    mode = 'single';
-  } else {
-    if (camelCaseConfig.strategy && camelCaseConfig.strategy.mode) {
-      mode = camelCaseConfig.strategy.mode;
-    } else {
-      mode = camelCaseConfig.mode;
-    }
-    providerOptions = getProviderOptionsByMode(mode, camelCaseConfig);
-  }
-  return providerOptions;
-};
-
-/**
- * @deprecated
- * Makes a request (GET or POST) to a provider and returns the response.
- * The request is constructed using the provider, apiKey, and requestBody parameters.
- * The fn parameter is the type of request being made (e.g., "complete", "chatComplete").
- *
- * @param {Options} providerOption - The provider options. This object follows the Options interface and may contain a RetrySettings object for retry configuration.
- * @param {RequestBody} requestBody - The request body.
- * @param {string} fn - The function for the request.
- * @param {string} method - The method for the request (GET, POST).
- * @returns {Promise<CompletionResponse>} - The response from the request.
- * @throws Will throw an error if the response is not ok or if all retry attempts fail.
- */
-export async function tryPostProxy(
-  c: Context,
-  providerOption: Options,
-  inputParams: Params,
-  requestHeaders: Record<string, string>,
-  fn: endpointStrings,
-  currentIndex: number,
-  method: string = 'POST'
-): Promise<Response> {
-  const overrideParams = providerOption?.overrideParams || {};
-  const params: Params = { ...inputParams, ...overrideParams };
-  const isStreamingMode = params.stream ? true : false;
-
-  const provider: string = providerOption.provider ?? '';
-
-  // Mapping providers to corresponding URLs
-  const apiConfig: ProviderAPIConfig = Providers[provider].api;
-
-  const forwardHeaders: string[] = [];
-  const customHost =
-    requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || '';
-  const baseUrl =
-    customHost || apiConfig.getBaseURL({ providerOptions: providerOption });
-  const endpoint = apiConfig.getEndpoint({
-    providerOptions: providerOption,
-    fn,
-    gatewayRequestBody: params,
-    gatewayRequestURL: c.req.url,
-  });
-
-  const url = endpoint
-    ? `${baseUrl}${endpoint}`
-    : (providerOption.urlToFetch as string);
-
-  const headers = await apiConfig.headers({
-    c,
-    providerOptions: providerOption,
-    fn,
-    transformedRequestBody: params,
-    transformedRequestUrl: url,
-  });
-
-  const fetchOptions = constructRequest(
-    headers,
-    provider,
-    method,
-    forwardHeaders,
-    requestHeaders
-  );
-
-  if (method === 'POST') {
-    fetchOptions.body = JSON.stringify(params);
-  }
-
-  let response: Response;
-  let retryCount: number | undefined;
-
-  if (providerOption.retry && typeof providerOption.retry === 'object') {
-    providerOption.retry = {
-      attempts: providerOption.retry?.attempts ?? 0,
-      onStatusCodes: providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES,
-    };
-  } else if (typeof providerOption.retry === 'number') {
-    providerOption.retry = {
-      attempts: providerOption.retry,
-      onStatusCodes: RETRY_STATUS_CODES,
-    };
-  } else {
-    providerOption.retry = {
-      attempts: 1,
-      onStatusCodes: [],
-    };
-  }
-
-  const getFromCacheFunction = c.get('getFromCache');
-  const cacheIdentifier = c.get('cacheIdentifier');
-  const requestOptions = c.get('requestOptions') ?? [];
-
-  let cacheResponse, cacheKey, cacheMode, cacheMaxAge;
-  let cacheStatus = 'DISABLED';
-
-  if (requestHeaders[HEADER_KEYS.CACHE]) {
-    cacheMode = requestHeaders[HEADER_KEYS.CACHE];
-  } else if (
-    providerOption?.cache &&
-    typeof providerOption.cache === 'object' &&
-    providerOption.cache.mode
-  ) {
-    cacheMode = providerOption.cache.mode;
-    cacheMaxAge = providerOption.cache.maxAge;
-  } else if (
-    providerOption?.cache &&
-    typeof providerOption.cache === 'string'
-  ) {
-    cacheMode = providerOption.cache;
-  }
-
-  if (getFromCacheFunction && cacheMode) {
-    [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(
-      env(c),
-      { ...requestHeaders, ...fetchOptions.headers },
-      params,
-      url,
-      cacheIdentifier,
-      cacheMode,
-      cacheMaxAge
-    );
-    if (cacheResponse) {
-      ({ response } = await responseHandler(
-        new Response(cacheResponse, {
-          headers: {
-            'content-type': 'application/json',
-          },
-        }),
-        false,
-        provider,
-        undefined,
-        url,
-        false,
-        params,
-        false
-      ));
-
-      c.set('requestOptions', [
-        ...requestOptions,
-        {
-          providerOptions: {
-            ...providerOption,
-            requestURL: url,
-            rubeusURL: fn,
-          },
-          requestParams: params,
-          response: response.clone(),
-          cacheStatus: cacheStatus,
-          lastUsedOptionIndex: currentIndex,
-          cacheKey: cacheKey,
-          cacheMode: cacheMode,
-          cacheMaxAge: cacheMaxAge,
-        },
-      ]);
-      updateResponseHeaders(
-        response,
-        currentIndex,
-        params,
-        cacheStatus,
-        0,
-        requestHeaders[HEADER_KEYS.TRACE_ID] ?? ''
-      );
-      return response;
-    }
-  }
-
-  [response, retryCount] = await retryRequest(
-    url,
-    fetchOptions,
-    providerOption.retry.attempts,
-    providerOption.retry.onStatusCodes,
-    null
-  );
-  const mappedResponse = await responseHandler(
-    response,
-    isStreamingMode,
-    provider,
-    undefined,
-    url,
-    false,
-    params,
-    false
-  );
-  updateResponseHeaders(
-    mappedResponse.response,
-    currentIndex,
-    params,
-    cacheStatus,
-    retryCount ?? 0,
-    requestHeaders[HEADER_KEYS.TRACE_ID] ?? ''
-  );
-
-  c.set('requestOptions', [
-    ...requestOptions,
-    {
-      providerOptions: {
-        ...providerOption,
-        requestURL: url,
-        rubeusURL: fn,
-      },
-      requestParams: params,
-      response: mappedResponse.response.clone(),
-      cacheStatus: cacheStatus,
-      lastUsedOptionIndex: currentIndex,
-      cacheKey: cacheKey,
-      cacheMode: cacheMode,
-    },
-  ]);
-  // If the response was not ok, throw an error
-  if (!response.ok) {
-    // Check if this request needs to be retried
-    const errorObj: any = new Error(await mappedResponse.response.text());
-    errorObj.status = mappedResponse.response.status;
-    throw errorObj;
-  }
-
-  return mappedResponse.response;
-}
-
-/**
  * Makes a POST request to a provider and returns the response.
  * The POST request is constructed using the provider, apiKey, and requestBody parameters.
  * The fn parameter is the type of request being made (e.g., "complete", "chatComplete").
@@ -457,7 +179,8 @@ export async function tryPost(
   inputParams: Params | FormData,
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
-  currentIndex: number | string
+  currentIndex: number | string,
+  method: string = 'POST'
 ): Promise<Response> {
   const overrideParams = providerOption?.overrideParams || {};
   const params: Params = { ...inputParams, ...overrideParams };
@@ -520,7 +243,14 @@ export async function tryPost(
     gatewayRequestBody: params,
     gatewayRequestURL: c.req.url,
   });
-  const url = `${baseUrl}${endpoint}`;
+
+  let url: string;
+  if (fn == 'proxy') {
+    let proxyPath = c.req.url.indexOf('/v1/proxy') > -1 ? '/v1/proxy' : '/v1';
+    url = getProxyPath(c.req.url, provider, proxyPath, baseUrl, providerOption);
+  } else {
+    url = `${baseUrl}${endpoint}`;
+  }
 
   const headers = await apiConfig.headers({
     c,
@@ -535,15 +265,25 @@ export async function tryPost(
   const fetchOptions = constructRequest(
     headers,
     provider,
-    'POST',
+    method,
     forwardHeaders,
-    requestHeaders
+    requestHeaders,
+    fn
   );
 
+  const headerContentType = headers[HEADER_KEYS.CONTENT_TYPE];
+  const requestContentType =
+    requestHeaders[HEADER_KEYS.CONTENT_TYPE.toLowerCase()]?.split(';')[0];
+
   fetchOptions.body =
-    headers[HEADER_KEYS.CONTENT_TYPE] === CONTENT_TYPES.MULTIPART_FORM_DATA
+    headerContentType === CONTENT_TYPES.MULTIPART_FORM_DATA ||
+    (fn == 'proxy' && requestContentType === CONTENT_TYPES.MULTIPART_FORM_DATA)
       ? (transformedRequestBody as FormData)
       : JSON.stringify(transformedRequestBody);
+
+  if (['GET', 'DELETE'].includes(method)) {
+    delete fetchOptions.body;
+  }
 
   providerOption.retry = {
     attempts: providerOption.retry?.attempts ?? 0,
@@ -667,65 +407,6 @@ export async function tryPost(
   );
 
   return createResponse(mappedResponse, undefined, false, true);
-}
-
-/**
- * @deprecated
- * Tries providers in sequence until a successful response is received.
- * The providers are attempted in the order they are given in the providers parameter.
- * If all providers fail, an error is thrown with the details of the errors from each provider.
- *
- * @param {Options[]} providers - The providers to try. Each object in the array follows the Options interface and may contain a RetrySettings object for retry configuration.
- * @param {RequestBody} request - The request body.
- * @param {endpointStrings} fn - The function for the request.
- * @param {String} method - The method to be used (GET, POST) for the request.
- * @returns {Promise<CompletionResponse>} - The response from the first successful provider.
- * @throws Will throw an error if all providers fail.
- */
-export async function tryProvidersInSequence(
-  c: Context,
-  providers: Options[],
-  params: Params,
-  requestHeaders: Record<string, string>,
-  fn: endpointStrings,
-  method: string = 'POST'
-): Promise<Response> {
-  let errors: any[] = [];
-  for (let [index, providerOption] of providers.entries()) {
-    try {
-      const loadbalanceIndex = !isNaN(Number(providerOption.index))
-        ? Number(providerOption.index)
-        : null;
-      if (fn === 'proxy') {
-        return await tryPostProxy(
-          c,
-          providerOption,
-          params,
-          requestHeaders,
-          fn,
-          loadbalanceIndex ?? index,
-          method
-        );
-      }
-      return await tryPost(
-        c,
-        providerOption,
-        params,
-        requestHeaders,
-        fn,
-        loadbalanceIndex ?? index
-      );
-    } catch (error: any) {
-      // Log and store the error
-      errors.push({
-        provider: providerOption.provider,
-        errorObj: error.message,
-        status: error.status,
-      });
-    }
-  }
-  // If we're here, all providers failed. Throw an error with the details.
-  throw new Error(JSON.stringify(errors));
 }
 
 export async function tryTargetsRecursively(
@@ -928,7 +609,8 @@ export async function tryTargetsRecursively(
           request,
           requestHeaders,
           fn,
-          currentJsonPath
+          currentJsonPath,
+          method
         );
       } catch (error: any) {
         // tryPost always returns a Response.
@@ -1252,10 +934,11 @@ export async function recursiveAfterRequestHookHandler(
   const remainingRetryCount =
     (retry?.attempts || 0) - (retryCount || 0) - retryAttemptsMade;
 
-  if (
-    remainingRetryCount > 0 &&
-    retry?.onStatusCodes?.includes(arhResponse.status)
-  ) {
+  const isRetriableStatusCode = retry?.onStatusCodes?.includes(
+    arhResponse.status
+  );
+
+  if (remainingRetryCount > 0 && isRetriableStatusCode) {
     return recursiveAfterRequestHookHandler(
       c,
       url,
@@ -1271,7 +954,12 @@ export async function recursiveAfterRequestHookHandler(
     );
   }
 
-  return [arhResponse, retryAttemptsMade];
+  let lastAttempt = (retryCount || 0) + retryAttemptsMade;
+  if (lastAttempt === (retry?.attempts || 0) && isRetriableStatusCode) {
+    lastAttempt = -1; // All retry attempts exhausted without success.
+  }
+
+  return [arhResponse, lastAttempt];
 }
 
 /**
