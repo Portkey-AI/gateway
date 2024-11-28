@@ -101,6 +101,15 @@ function getProxyPath(
   const reqQuery = reqURL.search;
   reqPath = reqPath.replace(proxyEndpointPath, '');
 
+  // NOTE: temporary support for the deprecated way of making azure requests
+  // where the endpoint was sent in request path of the incoming gateway url
+  if (
+    proxyProvider === AZURE_OPEN_AI &&
+    reqPath.includes('.openai.azure.com')
+  ) {
+    return `https:/${reqPath}${reqQuery}`;
+  }
+
   if (Providers[proxyProvider]?.api?.getProxyEndpoint) {
     return `${baseURL}${Providers[proxyProvider].api.getProxyEndpoint({ reqPath, reqQuery, providerOptions })}`;
   }
