@@ -75,6 +75,7 @@ export const UPSTAGE: string = 'upstage';
 export const LAMBDA: string = 'lambda';
 export const DASHSCOPE: string = 'dashscope';
 export const X_AI: string = 'x-ai';
+export const SAGEMAKER: string = 'sagemaker';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -123,6 +124,7 @@ export const VALID_PROVIDERS = [
   LAMBDA,
   DASHSCOPE,
   X_AI,
+  SAGEMAKER,
 ];
 
 export const CONTENT_TYPES = {

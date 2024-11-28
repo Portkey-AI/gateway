@@ -49,6 +49,7 @@ import { LambdaProviderConfig } from './lambda';
 import { DashScopeConfig } from './dashscope';
 import XAIConfig from './x-ai';
 import QdrantConfig from './qdrant';
+import SagemakerConfig from './sagemaker';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -98,6 +99,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   dashscope: DashScopeConfig,
   'x-ai': XAIConfig,
   qdrant: QdrantConfig,
+  sagemaker: SagemakerConfig,
 };
 
 export default Providers;
