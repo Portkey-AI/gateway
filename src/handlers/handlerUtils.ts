@@ -946,7 +946,12 @@ export async function recursiveAfterRequestHookHandler(
     );
   }
 
-  return [arhResponse, retryAttemptsMade];
+  let lastAttempt = (retryCount || 0) + retryAttemptsMade;
+  if (lastAttempt === (retry?.attempts || 0)) {
+    lastAttempt = -1; // All retry attempts exhausted without success.
+  }
+
+  return [arhResponse, lastAttempt];
 }
 
 /**
