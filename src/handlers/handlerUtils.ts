@@ -43,8 +43,34 @@ export function constructRequest(
   method: string,
   forwardHeaders: string[],
   requestHeaders: Record<string, string>,
-  fn: endpointStrings
+  fn: endpointStrings,
+  c: Context
 ) {
+  // Handle proxy headers
+  if (fn === 'proxy') {
+    const final = {} as Record<string, string>;
+    const poweredByHeadersPattern = `x-${POWERED_BY}-`;
+    const headersToAvoidForCloudflare = ['expect'];
+    const headersToIgnore = [
+      ...(env(c).CUSTOM_HEADERS_TO_IGNORE ?? []),
+      headersToAvoidForCloudflare,
+    ];
+    headersToIgnore.push('content-length');
+    Object.keys(requestHeaders).forEach((key: string) => {
+      if (
+        !headersToIgnore.includes(key) &&
+        !key.startsWith(poweredByHeadersPattern)
+      ) {
+        final[key] = requestHeaders[key];
+      }
+    });
+    // Remove brotli from accept-encoding because cloudflare has problems with it
+    if (final['accept-encoding']?.includes('br'))
+      final['accept-encoding'] = final['accept-encoding']?.replace('br', '');
+
+    return final;
+  }
+
   let baseHeaders: any = {
     'content-type': 'application/json',
   };
@@ -69,7 +95,6 @@ export function constructRequest(
     ...baseHeaders,
     ...headers,
     ...forwardHeadersMap,
-    ...(fn === 'proxy' ? requestHeaders : {}),
   };
 
   let fetchOptions: RequestInit = {
@@ -269,7 +294,8 @@ export async function tryPost(
     method,
     forwardHeaders,
     requestHeaders,
-    fn
+    fn,
+    c
   );
 
   const headerContentType = headers[HEADER_KEYS.CONTENT_TYPE];

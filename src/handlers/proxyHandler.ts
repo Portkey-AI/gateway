@@ -65,7 +65,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
       c,
       camelCaseConfig,
       request,
-      headersToSend(requestHeaders, env(c).CUSTOM_HEADERS_TO_IGNORE ?? []),
+      requestHeaders,
       'proxy',
       c.req.method,
       'config'
