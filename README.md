@@ -286,7 +286,7 @@ Join our weekly AI Engineering Hours every Friday (8 AM PT) to:
 - Share your experiences and get help
 - Stay updated with the latest development priorities
 
-[Join the next session →](https://lu.ma/portkey?tag=ai%20engineer)
+[Join the next session →](https://lu.ma/portkey?tag=ai%20engineer) | [Meeting notes](https://portkey.ai/docs/changelog/office-hour)
 
 <br>
 
