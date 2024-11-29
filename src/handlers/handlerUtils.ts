@@ -68,7 +68,7 @@ export function constructRequest(
     if (final['accept-encoding']?.includes('br'))
       final['accept-encoding'] = final['accept-encoding']?.replace('br', '');
 
-    return final;
+    return { headers: final, method };
   }
 
   let baseHeaders: any = {
