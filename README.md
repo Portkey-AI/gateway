@@ -133,7 +133,6 @@ You can do a lot more stuff with configs in your AI gateway. [Jump to examples  
 
 <br/>
 
-
 ### Enterprise Version (Private deployments)
 
 <sup>
@@ -154,6 +153,16 @@ The enterprise deployment architecture for supported platforms is available here
 
 
 <br>
+
+<hr>
+
+### AI Engineering Hours
+
+Join weekly community calls every Friday (8 AM PT) to kickstart your AI Gateway implementation! [Calendar Link](https://lu.ma/portkey?tag=ai%20engineer)
+
+Meetings of Minutes [published here](https://portkey.ai/docs/changelog/office-hour).
+
+<hr>
 
 ## Core Features
 ### Reliable Routing
@@ -268,6 +277,16 @@ Make your AI app more <ins>reliable</ins> and <ins>forward compatible</ins>, whi
 The easiest way to contribute is to pick an issue with the `good first issue` tag 💪. Read the contribution guidelines [here](/.github/CONTRIBUTING.md).
 
 Bug Report? [File here](https://github.com/Portkey-AI/gateway/issues) | Feature Request? [File here](https://github.com/Portkey-AI/gateway/issues)
+
+
+### Getting Started with the Community
+Join our weekly AI Engineering Hours every Friday (8 AM PT) to:
+- Meet other contributors and community members
+- Learn advanced Gateway features and implementation patterns
+- Share your experiences and get help
+- Stay updated with the latest development priorities
+
+[Join the next session →](https://lu.ma/portkey?tag=ai%20engineer)
 
 <br>
 
