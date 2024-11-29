@@ -53,7 +53,7 @@ export function constructRequest(
     const headersToAvoidForCloudflare = ['expect'];
     const headersToIgnore = [
       ...(env(c).CUSTOM_HEADERS_TO_IGNORE ?? []),
-      headersToAvoidForCloudflare,
+      ...headersToAvoidForCloudflare,
     ];
     headersToIgnore.push('content-length');
     Object.keys(requestHeaders).forEach((key: string) => {
