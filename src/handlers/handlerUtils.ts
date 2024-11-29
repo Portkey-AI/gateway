@@ -46,9 +46,9 @@ export function constructRequest(
   fn: endpointStrings,
   c: Context
 ) {
+  let proxyHeaders: Record<string, string> = {};
   // Handle proxy headers
   if (fn === 'proxy') {
-    const final = {} as Record<string, string>;
     const poweredByHeadersPattern = `x-${POWERED_BY}-`;
     const headersToAvoidForCloudflare = ['expect'];
     const headersToIgnore = [
@@ -61,14 +61,14 @@ export function constructRequest(
         !headersToIgnore.includes(key) &&
         !key.startsWith(poweredByHeadersPattern)
       ) {
-        final[key] = requestHeaders[key];
+        proxyHeaders[key] = requestHeaders[key];
       }
     });
     // Remove brotli from accept-encoding because cloudflare has problems with it
-    if (final['accept-encoding']?.includes('br'))
-      final['accept-encoding'] = final['accept-encoding']?.replace('br', '');
-
-    return { headers: final, method };
+    if (proxyHeaders['accept-encoding']?.includes('br'))
+      proxyHeaders['accept-encoding'] = proxyHeaders[
+        'accept-encoding'
+      ]?.replace('br', '');
   }
 
   let baseHeaders: any = {
@@ -95,6 +95,7 @@ export function constructRequest(
     ...baseHeaders,
     ...headers,
     ...forwardHeadersMap,
+    ...(fn === 'proxy' && proxyHeaders),
   };
 
   let fetchOptions: RequestInit = {
