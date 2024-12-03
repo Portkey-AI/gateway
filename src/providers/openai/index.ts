@@ -26,6 +26,13 @@ import {
 import { OpenAIGetFilesResponseTransform } from './getFiles';
 import { OpenAIDeleteFileResponseTransform } from './deleteFile';
 import { OpenAIGetFileContentResponseTransform } from './getFileContent';
+import {
+  OpenAICreateBatchConfig,
+  OpenAICreateBatchResponseTransform,
+} from './createBatch';
+import { OpenAIRetrieveBatchResponseTransform } from './retrieveBatch';
+import { OpenAICancelBatchResponseTransform } from './cancelBatch';
+import { OpenAIListBatchesResponseTransform } from './listBatch';
 
 const OpenAIConfig: ProviderConfigs = {
   complete: OpenAICompleteConfig,
@@ -37,6 +44,8 @@ const OpenAIConfig: ProviderConfigs = {
   createTranscription: {},
   createTranslation: {},
   realtime: {},
+  createBatch: OpenAICreateBatchConfig,
+  cancelBatch: {},
   requestTransforms: {
     uploadFile: OpenAIFileUploadRequestTransform,
   },
@@ -56,6 +65,10 @@ const OpenAIConfig: ProviderConfigs = {
     getFile: OpenAIGetFilesResponseTransform,
     deleteFile: OpenAIDeleteFileResponseTransform,
     getFileContent: OpenAIGetFileContentResponseTransform,
+    createBatch: OpenAICreateBatchResponseTransform,
+    retrieveBatch: OpenAIRetrieveBatchResponseTransform,
+    cancelBatch: OpenAICancelBatchResponseTransform,
+    listBatches: OpenAIListBatchesResponseTransform,
   },
 };
 
