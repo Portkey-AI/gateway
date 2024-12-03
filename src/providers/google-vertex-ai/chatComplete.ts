@@ -41,7 +41,7 @@ import type {
 } from './types';
 import { getMimeType } from './utils';
 
-const buildGoogleSearchRetrievalTool = (tool: Tool) => {
+export const buildGoogleSearchRetrievalTool = (tool: Tool) => {
   const googleSearchRetrievalTool: GoogleSearchRetrievalTool = {
     googleSearchRetrieval: {},
   };
