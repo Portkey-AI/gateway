@@ -302,12 +302,12 @@ export async function tryPost(
   const requestContentType =
     requestHeaders[HEADER_KEYS.CONTENT_TYPE.toLowerCase()]?.split(';')[0];
 
-    if (method === 'POST') {
-      fetchOptions.body =
-        headers[HEADER_KEYS.CONTENT_TYPE] === CONTENT_TYPES.MULTIPART_FORM_DATA
-          ? (transformedRequestBody as FormData)
-          : JSON.stringify(transformedRequestBody);
-    }
+  if (method === 'POST') {
+    fetchOptions.body =
+      headers[HEADER_KEYS.CONTENT_TYPE] === CONTENT_TYPES.MULTIPART_FORM_DATA
+        ? (transformedRequestBody as FormData)
+        : JSON.stringify(transformedRequestBody);
+  }
 
   if (['GET', 'DELETE'].includes(method)) {
     delete fetchOptions.body;
