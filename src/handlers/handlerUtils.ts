@@ -786,6 +786,8 @@ export function constructConfigFromRequestHeaders(
       requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-inference-component`],
     amznSagemakerSessionId:
       requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-session-id`],
+    amznSagemakerModelName:
+      requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-model-name`],
   };
 
   const workersAiConfig = {
