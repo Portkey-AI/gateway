@@ -520,8 +520,15 @@ export const GoogleChatCompleteResponseTransform: (
 
 export const GoogleChatCompleteStreamChunkTransform: (
   response: string,
-  fallbackId: string
-) => string = (responseChunk, fallbackId) => {
+  fallbackId: string,
+  streamState: any,
+  strictOpenAiCompliance: boolean
+) => string = (
+  responseChunk,
+  fallbackId,
+  _streamState,
+  strictOpenAiCompliance
+) => {
   let chunk = responseChunk.trim();
   if (chunk.startsWith('[')) {
     chunk = chunk.slice(1);
@@ -578,6 +585,9 @@ export const GoogleChatCompleteStreamChunkTransform: (
             delta: message,
             index: generation.index ?? index,
             finish_reason: generation.finishReason,
+            ...(!strictOpenAiCompliance && generation.groundingMetadata
+              ? { groundingMetadata: generation.groundingMetadata }
+              : {}),
           };
         }) ?? [],
       usage: {

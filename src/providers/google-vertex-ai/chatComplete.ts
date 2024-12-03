@@ -802,6 +802,9 @@ export const GoogleChatCompleteStreamChunkTransform: (
           ...(!strictOpenAiCompliance && {
             safetyRatings: generation.safetyRatings,
           }),
+          ...(!strictOpenAiCompliance && generation.groundingMetadata
+            ? { groundingMetadata: generation.groundingMetadata }
+            : {}),
         };
       }) ?? [],
     usage: usageMetadata,
