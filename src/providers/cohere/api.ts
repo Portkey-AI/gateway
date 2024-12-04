@@ -34,6 +34,8 @@ const CohereAPIConfig: ProviderAPIConfig = {
         return `/datasets/${requestURL.split('/').pop()}`;
       case 'deleteFile':
         return `/datasets/${requestURL.split('/').pop()}`;
+      case 'createBatch':
+        return '/embed-jobs';
       default:
         return '';
     }

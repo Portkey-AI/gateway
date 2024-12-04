@@ -10,6 +10,10 @@ import {
   CohereCompleteResponseTransform,
   CohereCompleteStreamChunkTransform,
 } from './complete';
+import {
+  CohereCreateBatchConfig,
+  CohereCreateBatchResponseTransform,
+} from './createBatch';
 import { CohereDeleteFileResponseTransform } from './deleteFile';
 import { CohereEmbedConfig, CohereEmbedResponseTransform } from './embed';
 import {
@@ -26,6 +30,7 @@ const CohereConfig: ProviderConfigs = {
   chatComplete: CohereChatCompleteConfig,
   embed: CohereEmbedConfig,
   api: CohereAPIConfig,
+  createBatch: CohereCreateBatchConfig,
   requestTransforms: {
     uploadFile: CohereUploadFileRequestTransform,
   },
@@ -39,6 +44,7 @@ const CohereConfig: ProviderConfigs = {
     getFile: CohereGetFileResponseTransform,
     getFiles: CohereGetFilesResponseTransform,
     deleteFile: CohereDeleteFileResponseTransform,
+    createBatch: CohereCreateBatchResponseTransform,
   },
 };
 

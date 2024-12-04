@@ -46,3 +46,26 @@ export interface CohereGetFileResponse {
 export interface CohereGetFilesResponse {
   datasets: CohereDataset[];
 }
+
+export interface CohereCreateBatchResponse {
+  job_id: string;
+  meta: {
+    api_version: {
+      version: string;
+      is_deprecated: boolean;
+      is_experimental: boolean;
+    };
+    billed_units: {
+      images: number;
+      input_tokens: number;
+      output_tokens: number;
+      search_units: number;
+      classifications: number;
+    };
+    tokens: {
+      input_tokens: number;
+      output_tokens: number;
+    };
+    warnings: string[];
+  };
+}
