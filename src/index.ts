@@ -4,30 +4,32 @@
  * @module index
  */
 
-import { Hono } from 'hono';
+import { Context, Hono } from 'hono';
 import { prettyJSON } from 'hono/pretty-json';
 import { HTTPException } from 'hono/http-exception';
+import { compress } from 'hono/compress';
+import { getRuntimeKey } from 'hono/adapter';
 // import { env } from 'hono/adapter' // Have to set this up for multi-environment deployment
 
-import { completeHandler } from './handlers/completeHandler';
-import { chatCompleteHandler } from './handlers/chatCompleteHandler';
-import { embedHandler } from './handlers/embedHandler';
+// Middlewares
+import { requestValidator } from './middlewares/requestValidator';
+import { hooks } from './middlewares/hooks';
+import { memoryCache } from './middlewares/cache';
+
+// Handlers
 import { proxyHandler } from './handlers/proxyHandler';
-import { proxyGetHandler } from './handlers/proxyGetHandler';
 import { chatCompletionsHandler } from './handlers/chatCompletionsHandler';
 import { completionsHandler } from './handlers/completionsHandler';
 import { embeddingsHandler } from './handlers/embeddingsHandler';
-import { requestValidator } from './middlewares/requestValidator';
-import { hooks } from './middlewares/hooks';
-import { compress } from 'hono/compress';
-import { getRuntimeKey } from 'hono/adapter';
 import { imageGenerationsHandler } from './handlers/imageGenerationsHandler';
-import { memoryCache } from './middlewares/cache';
 import { createSpeechHandler } from './handlers/createSpeechHandler';
-import conf from '../conf.json';
 import { createTranscriptionHandler } from './handlers/createTranscriptionHandler';
 import { createTranslationHandler } from './handlers/createTranslationHandler';
 import { modelsHandler, providersHandler } from './handlers/modelsHandler';
+import { realTimeHandler } from './handlers/realtimeHandler';
+
+// Config
+import conf from '../conf.json';
 
 // Create a new Hono server instance
 const app = new Hono();
@@ -38,14 +40,37 @@ const app = new Hono();
  * This check if its not any of the 2 and then applies the compress middleware to avoid double compression.
  */
 
+const runtime = getRuntimeKey();
 app.use('*', (c, next) => {
-  const runtime = getRuntimeKey();
   const runtimesThatDontNeedCompression = ['lagon', 'workerd', 'node'];
   if (runtimesThatDontNeedCompression.includes(runtime)) {
     return next();
   }
   return compress()(c, next);
 });
+
+if (runtime === 'node') {
+  app.use('*', async (c: Context, next) => {
+    if (!c.req.url.includes('/realtime')) {
+      return next();
+    }
+
+    await next();
+
+    if (
+      c.req.url.includes('/realtime') &&
+      c.req.header('upgrade') === 'websocket' &&
+      (c.res.status >= 400 || c.get('websocketError') === true)
+    ) {
+      const finalStatus = c.get('websocketError') === true ? 500 : c.res.status;
+      const socket = c.env.incoming.socket;
+      if (socket) {
+        socket.write(`HTTP/1.1 ${finalStatus} ${c.res.statusText}\r\n\r\n`);
+        socket.destroy();
+      }
+    }
+  });
+}
 
 /**
  * GET route for the root path.
@@ -81,27 +106,6 @@ app.onError((err, c) => {
   c.status(500);
   return c.json({ status: 'failure', message: err.message });
 });
-
-/**
- * @deprecated
- * POST route for '/v1/complete'.
- * Handles requests by passing them to the completeHandler.
- */
-app.post('/v1/complete', completeHandler);
-
-/**
- * @deprecated
- * POST route for '/v1/chatComplete'.
- * Handles requests by passing them to the chatCompleteHandler.
- */
-app.post('/v1/chatComplete', chatCompleteHandler);
-
-/**
- * @deprecated
- * POST route for '/v1/embed'.
- * Handles requests by passing them to the embedHandler.
- */
-app.post('/v1/embed', embedHandler);
 
 /**
  * POST route for '/v1/chat/completions'.
@@ -169,6 +173,11 @@ app.post('/v1/prompts/*', requestValidator, (c) => {
 app.get('/v1/reference/models', modelsHandler);
 app.get('/v1/reference/providers', providersHandler);
 
+// WebSocket route
+if (runtime === 'workerd') {
+  app.get('/v1/realtime', realTimeHandler);
+}
+
 /**
  * @deprecated
  * Support the /v1 proxy endpoint
@@ -179,9 +188,9 @@ app.post('/v1/proxy/*', proxyHandler);
 app.post('/v1/*', requestValidator, proxyHandler);
 
 // Support the /v1 proxy endpoint after all defined endpoints so this does not interfere.
-app.get('/v1/*', requestValidator, proxyGetHandler);
+app.get('/v1/:path{(?!realtime).*}', requestValidator, proxyHandler);
 
-app.delete('/v1/*', requestValidator, proxyGetHandler);
+app.delete('/v1/*', requestValidator, proxyHandler);
 
 // Export the app
 export default app;

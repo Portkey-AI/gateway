@@ -6,8 +6,8 @@ import {
 
 const AzureOpenAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
-    const { resourceName, deploymentId } = providerOptions;
-    return `https://${resourceName}.openai.azure.com/openai/deployments/${deploymentId}`;
+    const { resourceName } = providerOptions;
+    return `https://${resourceName}.openai.azure.com/openai`;
   },
   headers: async ({ providerOptions, fn }) => {
     const { apiKey, azureAuthMode } = providerOptions;
@@ -44,10 +44,13 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     };
     if (fn === 'createTranscription' || fn === 'createTranslation')
       headersObj['Content-Type'] = 'multipart/form-data';
+    if (providerOptions.openaiBeta) {
+      headersObj['OpenAI-Beta'] = providerOptions.openaiBeta;
+    }
     return headersObj;
   },
   getEndpoint: ({ providerOptions, fn }) => {
-    const { apiVersion, urlToFetch } = providerOptions;
+    const { apiVersion, urlToFetch, deploymentId } = providerOptions;
     let mappedFn = fn;
 
     if (fn === 'proxy' && urlToFetch) {
@@ -70,29 +73,46 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
 
     switch (mappedFn) {
       case 'complete': {
-        return `/completions?api-version=${apiVersion}`;
+        return `/deployments/${deploymentId}/completions?api-version=${apiVersion}`;
       }
       case 'chatComplete': {
-        return `/chat/completions?api-version=${apiVersion}`;
+        return `/deployments/${deploymentId}/chat/completions?api-version=${apiVersion}`;
       }
       case 'embed': {
-        return `/embeddings?api-version=${apiVersion}`;
+        return `/deployments/${deploymentId}/embeddings?api-version=${apiVersion}`;
       }
       case 'imageGenerate': {
-        return `/images/generations?api-version=${apiVersion}`;
+        return `/deployments/${deploymentId}/images/generations?api-version=${apiVersion}`;
       }
       case 'createSpeech': {
-        return `/audio/speech?api-version=${apiVersion}`;
+        return `/deployments/${deploymentId}/audio/speech?api-version=${apiVersion}`;
       }
       case 'createTranscription': {
-        return `/audio/transcriptions?api-version=${apiVersion}`;
+        return `/deployments/${deploymentId}/audio/transcriptions?api-version=${apiVersion}`;
       }
       case 'createTranslation': {
-        return `/audio/translations?api-version=${apiVersion}`;
+        return `/deployments/${deploymentId}/audio/translations?api-version=${apiVersion}`;
+      }
+      case 'realtime': {
+        return `/realtime?api-version=${apiVersion}&deployment=${providerOptions.deploymentId}`;
       }
       default:
         return '';
     }
+  },
+  getProxyEndpoint: ({ reqPath, reqQuery, providerOptions }) => {
+    const { apiVersion } = providerOptions;
+    if (!apiVersion) return `${reqPath}${reqQuery}`;
+    if (!reqQuery?.includes('api-version')) {
+      let _reqQuery = reqQuery;
+      if (!reqQuery) {
+        _reqQuery = `?api-version=${apiVersion}`;
+      } else {
+        _reqQuery += `&api-version=${apiVersion}`;
+      }
+      return `${reqPath}${_reqQuery}`;
+    }
+    return `${reqPath}${reqQuery}`;
   },
 };
 

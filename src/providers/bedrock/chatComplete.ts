@@ -149,7 +149,7 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
       required: true,
       transform: (params: BedrockChatCompletionsParams) => {
         if (!params.messages) return [];
-        return params.messages
+        const transformedMessages = params.messages
           .filter((msg) => msg.role !== 'system')
           .map((msg) => {
             return {
@@ -157,6 +157,23 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
               content: getMessageContent(msg),
             };
           });
+        let prevRole = '';
+        // combine user messages in succession
+        const combinedMessages = transformedMessages.reduce(
+          (acc: typeof transformedMessages, msg) => {
+            if (msg.role === 'user' && prevRole === 'user') {
+              const lastMessage = acc[acc.length - 1];
+              const newContent = [...lastMessage.content, ...msg.content];
+              lastMessage.content = newContent as typeof lastMessage.content;
+            } else {
+              acc.push(msg);
+            }
+            prevRole = msg.role;
+            return acc;
+          },
+          []
+        );
+        return combinedMessages;
       },
     },
     {
@@ -333,7 +350,8 @@ export const BedrockChatCompleteResponseTransform: (
             role: 'assistant',
             content: response.output.message.content
               .filter((content) => content.text)
-              .reduce((acc, content) => acc + content.text + '\n', ''),
+              .map((content) => content.text)
+              .join('\n'),
           },
           finish_reason: response.stopReason,
         },
@@ -351,7 +369,7 @@ export const BedrockChatCompleteResponseTransform: (
         type: 'function',
         function: {
           name: content.toolUse.name,
-          arguments: content.toolUse.input,
+          arguments: JSON.stringify(content.toolUse.input),
         },
       }));
     if (toolCalls.length > 0)

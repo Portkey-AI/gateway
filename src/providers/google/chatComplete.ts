@@ -377,7 +377,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
 
 export interface GoogleErrorResponse {
   error: {
-    code: number;
+    code: string;
     message: string;
     status: string;
     details: Array<Record<string, any>>;
@@ -427,7 +427,7 @@ export const GoogleErrorResponseTransform: (
         message: response.error.message ?? '',
         type: response.error.status ?? null,
         param: null,
-        code: response.error.status ?? null,
+        code: response.error.code ?? null,
       },
       provider
     );
@@ -441,10 +441,10 @@ export const GoogleChatCompleteResponseTransform: (
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    const errorResposne = GoogleErrorResponseTransform(
+    const errorResponse = GoogleErrorResponseTransform(
       response as GoogleErrorResponse
     );
-    if (errorResposne) return errorResposne;
+    if (errorResponse) return errorResponse;
   }
 
   if ('candidates' in response) {

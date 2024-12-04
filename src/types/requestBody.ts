@@ -78,7 +78,7 @@ export interface Options {
   requestTimeout?: number;
   /** This is used to determine if the request should be transformed to formData Example: Stability V2 */
   transformToFormData?: boolean;
-  /** AWS Bedrock specific */
+  /** AWS specific (used for Bedrock and Sagemaker) */
   awsSecretAccessKey?: string;
   awsAccessKeyId?: string;
   awsSessionToken?: string;
@@ -86,6 +86,16 @@ export interface Options {
   awsAuthType?: string;
   awsRoleArn?: string;
   awsExternalId?: string;
+
+  /** Sagemaker specific */
+  amznSagemakerCustomAttributes?: string;
+  amznSagemakerTargetModel?: string;
+  amznSagemakerTargetVariant?: string;
+  amznSagemakerTargetContainerHostname?: string;
+  amznSagemakerInferenceId?: string;
+  amznSagemakerEnableExplanations?: string;
+  amznSagemakerInferenceComponent?: string;
+  amznSagemakerSessionId?: string;
 
   /** Stability AI specific */
   stabilityClientId?: string;
@@ -105,6 +115,7 @@ export interface Options {
   /** OpenAI specific */
   openaiProject?: string;
   openaiOrganization?: string;
+  openaiBeta?: string;
 
   /** Azure Inference Specific */
   azureRegion?: string;
