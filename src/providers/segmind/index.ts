@@ -1,12 +1,12 @@
 import { ProviderConfigs } from '../types';
-import SegmindAPIConfig from './api';
+import SegmindAIAPIConfig from './api';
 import {
   SegmindImageGenerateConfig,
   SegmindImageGenerateResponseTransform,
 } from './imageGenerate';
 
 const SegmindConfig: ProviderConfigs = {
-  api: SegmindAPIConfig,
+  api: SegmindAIAPIConfig,
   imageGenerate: SegmindImageGenerateConfig,
   responseTransforms: {
     imageGenerate: SegmindImageGenerateResponseTransform,
