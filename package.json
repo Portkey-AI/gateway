@@ -48,6 +48,7 @@
     "@types/mustache": "^4.2.5",
     "async-retry": "^1.3.3",
     "hono": "^4.6.10",
+    "serialize-error": "^8.0.0",
     "ws": "^8.18.0",
     "zod": "^3.22.4"
   },

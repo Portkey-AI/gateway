@@ -367,6 +367,7 @@ export interface AnthropicChatCompleteStreamResponse {
       cache_read_input_tokens?: number;
     };
   };
+  error?: AnthropicErrorObject;
 }
 
 export const AnthropicErrorResponseTransform: (
@@ -494,6 +495,28 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   ) {
     streamState.containsChainOfThoughtMessage = true;
     return;
+  }
+
+  if (parsedChunk.type === 'error') {
+    return (
+      `data: ${JSON.stringify({
+        id: fallbackId,
+        object: 'chat.completion.chunk',
+        created: Math.floor(Date.now() / 1000),
+        model: '',
+        provider: ANTHROPIC,
+        choices: [
+          {
+            finish_reason: parsedChunk.error?.type,
+            delta: {
+              content: '',
+            },
+          },
+        ],
+      })}` +
+      '\n\n' +
+      'data: [DONE]\n\n'
+    );
   }
 
   const shouldSendCacheUsage =
