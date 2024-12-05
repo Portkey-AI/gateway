@@ -22,10 +22,19 @@ const CohereAPIConfig: ProviderAPIConfig = {
         return '/embed';
       case 'uploadFile':
         if (gatewayRequestBody && gatewayRequestBody instanceof FormData) {
-          // @ts-ignore (Hono type is incorrect)
-          const fileName = gatewayRequestBody.get('file')?.name;
-          const purpose = gatewayRequestBody.get('purpose');
-          return `/datasets?name=${fileName}&type=${purpose}`;
+          const url = new URL(requestURL);
+          const fileName =
+            url.searchParams.get('name') ||
+            // @ts-ignore (Hono type is incorrect)
+            gatewayRequestBody.get('file')?.name;
+          const purpose =
+            url.searchParams.get('type') || gatewayRequestBody.get('purpose');
+          const searchParams = Array.from(url.searchParams.entries())
+            .filter(([key]) => key !== 'name' && key !== 'type')
+            .map(([key, value]) => `${key}=${value}`)
+            .join('&');
+
+          return `/datasets?name=${fileName}&type=${purpose}${searchParams.length > 0 ? `&${searchParams}` : ''}`;
         }
         throw new GatewayError('File upload requires a file and purpose');
       case 'listFiles':
