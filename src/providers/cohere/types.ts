@@ -47,25 +47,51 @@ export interface CohereGetFilesResponse {
   datasets: CohereDataset[];
 }
 
+interface CohereBatchMeta {
+  api_version: {
+    version: string;
+    is_deprecated: boolean;
+    is_experimental: boolean;
+  };
+  billed_units: {
+    images: number;
+    input_tokens: number;
+    output_tokens: number;
+    search_units: number;
+    classifications: number;
+  };
+  tokens: {
+    input_tokens: number;
+    output_tokens: number;
+  };
+  warnings: string[];
+}
+
 export interface CohereCreateBatchResponse {
   job_id: string;
-  meta: {
-    api_version: {
-      version: string;
-      is_deprecated: boolean;
-      is_experimental: boolean;
-    };
-    billed_units: {
-      images: number;
-      input_tokens: number;
-      output_tokens: number;
-      search_units: number;
-      classifications: number;
-    };
-    tokens: {
-      input_tokens: number;
-      output_tokens: number;
-    };
-    warnings: string[];
-  };
+  meta: CohereBatchMeta;
 }
+
+export interface CohereBatch {
+  job_id: string;
+  status:
+    | string
+    | 'processing'
+    | 'complete'
+    | 'cancelling'
+    | 'cancelled'
+    | 'failed';
+  created_at: string;
+  input_dataset_id: string;
+  model: string;
+  truncate: string | 'START' | 'END';
+  name: string;
+  output_dataset_id: string;
+  meta: CohereBatchMeta;
+}
+
+export interface CohereListBatchResponse {
+  embed_jobs: CohereBatch[];
+}
+
+export interface CohereRetrieveBatchResponse extends CohereBatch {}

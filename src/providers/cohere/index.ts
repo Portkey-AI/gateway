@@ -20,6 +20,8 @@ import {
   CohereGetFileResponseTransform,
   CohereGetFilesResponseTransform,
 } from './getFiles';
+import { CohereListBatchResponseTransform } from './listBatch';
+import { CohereRetrieveBatchResponseTransform } from './retrieveBatch';
 import {
   CohereUploadFileRequestTransform,
   CohereUploadFileResponseTransform,
@@ -31,6 +33,7 @@ const CohereConfig: ProviderConfigs = {
   embed: CohereEmbedConfig,
   api: CohereAPIConfig,
   createBatch: CohereCreateBatchConfig,
+  cancelBatch: {},
   requestTransforms: {
     uploadFile: CohereUploadFileRequestTransform,
   },
@@ -45,6 +48,8 @@ const CohereConfig: ProviderConfigs = {
     getFiles: CohereGetFilesResponseTransform,
     deleteFile: CohereDeleteFileResponseTransform,
     createBatch: CohereCreateBatchResponseTransform,
+    listBatch: CohereListBatchResponseTransform,
+    retrieveBatch: CohereRetrieveBatchResponseTransform,
   },
 };
 
