@@ -7,7 +7,7 @@
       "token": {
         "type": "string",
         "label": "Pangea token",
-        "description": "Guard AI token. Get your token configured on Pangea User Console (https://pangea.cloud/docs/getting-started/configure-services/#configure-a-pangea-service).",
+        "description": "AI Guard token. Get your token configured on Pangea User Console (https://pangea.cloud/docs/getting-started/configure-services/#configure-a-pangea-service).",
         "encrypted": true
       },
       "domain": {
@@ -16,7 +16,7 @@
         "description": "Pangea domain, including cloud provider and zone."
       }
     },
-    "required": ["apiKey", "baseURL"]
+    "required": ["domain", "token"]
   },
   "functions": [
     {
