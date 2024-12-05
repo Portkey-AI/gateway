@@ -5,7 +5,8 @@
     "aporia",
     "sydelabs",
     "pillar",
-    "patronus"
+    "patronus",
+    "pangea"
   ],
   "credentials": {
     "portkey": {
