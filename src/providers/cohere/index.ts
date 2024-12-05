@@ -20,7 +20,7 @@ import {
   CohereGetFileResponseTransform,
   CohereGetFilesResponseTransform,
 } from './getFiles';
-import { CohereListBatchResponseTransform } from './listBatch';
+import { CohereListBatchResponseTransform } from './listBatches';
 import { CohereRetrieveBatchResponseTransform } from './retrieveBatch';
 import {
   CohereUploadFileRequestTransform,
@@ -44,8 +44,8 @@ const CohereConfig: ProviderConfigs = {
     'stream-chatComplete': CohereChatCompleteStreamChunkTransform,
     embed: CohereEmbedResponseTransform,
     uploadFile: CohereUploadFileResponseTransform,
-    getFile: CohereGetFileResponseTransform,
-    getFiles: CohereGetFilesResponseTransform,
+    retrieveFile: CohereGetFileResponseTransform,
+    listFiles: CohereGetFilesResponseTransform,
     deleteFile: CohereDeleteFileResponseTransform,
     createBatch: CohereCreateBatchResponseTransform,
     listBatch: CohereListBatchResponseTransform,

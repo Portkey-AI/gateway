@@ -41,11 +41,11 @@ function getHandler(endpoint: endpointStrings, method: string) {
   return handler;
 }
 
-const batchRouter = new Hono();
+const batchesRouter = new Hono();
 
-batchRouter.post('/', getHandler('createBatch', 'POST'));
-batchRouter.get('/:id', getHandler('retrieveBatch', 'GET'));
-batchRouter.post('/:id/cancel', getHandler('cancelBatch', 'POST'));
-batchRouter.get('/', getHandler('listBatches', 'GET'));
+batchesRouter.post('/', getHandler('createBatch', 'POST'));
+batchesRouter.get('/:id', getHandler('retrieveBatch', 'GET'));
+batchesRouter.post('/:id/cancel', getHandler('cancelBatch', 'POST'));
+batchesRouter.get('/', getHandler('listBatches', 'GET'));
 
-export default batchRouter;
+export default batchesRouter;

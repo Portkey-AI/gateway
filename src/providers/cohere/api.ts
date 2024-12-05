@@ -28,9 +28,9 @@ const CohereAPIConfig: ProviderAPIConfig = {
           return `/datasets?name=${fileName}&type=${purpose}`;
         }
         throw new GatewayError('File upload requires a file and purpose');
-      case 'getFiles':
+      case 'listFiles':
         return '/datasets';
-      case 'getFile':
+      case 'retrieveFile':
         return `/datasets/${requestURL.split('/').pop()}`;
       case 'deleteFile':
         return `/datasets/${requestURL.split('/').pop()}`;

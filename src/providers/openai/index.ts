@@ -23,16 +23,16 @@ import {
   OpenAIUploadFileResponseTransform,
   OpenAIFileUploadRequestTransform,
 } from './uploadFile';
-import { OpenAIGetFilesResponseTransform } from './getFiles';
+import { OpenAIGetFilesResponseTransform } from './listFiles';
 import { OpenAIDeleteFileResponseTransform } from './deleteFile';
-import { OpenAIGetFileContentResponseTransform } from './getFileContent';
+import { OpenAIGetFileContentResponseTransform } from './retrieveFileContent';
 import {
   OpenAICreateBatchConfig,
   OpenAICreateBatchResponseTransform,
 } from './createBatch';
 import { OpenAIRetrieveBatchResponseTransform } from './retrieveBatch';
 import { OpenAICancelBatchResponseTransform } from './cancelBatch';
-import { OpenAIListBatchesResponseTransform } from './listBatch';
+import { OpenAIListBatchesResponseTransform } from './listBatches';
 
 const OpenAIConfig: ProviderConfigs = {
   complete: OpenAICompleteConfig,
@@ -61,10 +61,10 @@ const OpenAIConfig: ProviderConfigs = {
     createTranslation: OpenAICreateTranslationResponseTransform,
     realtime: {},
     uploadFile: OpenAIUploadFileResponseTransform,
-    getFiles: OpenAIGetFilesResponseTransform,
-    getFile: OpenAIGetFilesResponseTransform,
+    listFiles: OpenAIGetFilesResponseTransform,
+    retrieveFile: OpenAIGetFilesResponseTransform,
     deleteFile: OpenAIDeleteFileResponseTransform,
-    getFileContent: OpenAIGetFileContentResponseTransform,
+    retrieveFileContent: OpenAIGetFileContentResponseTransform,
     createBatch: OpenAICreateBatchResponseTransform,
     retrieveBatch: OpenAIRetrieveBatchResponseTransform,
     cancelBatch: OpenAICancelBatchResponseTransform,

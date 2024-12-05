@@ -6,7 +6,7 @@ import {
 import { endpointStrings } from '../providers/types';
 import { requestValidator } from '../middlewares/requestValidator';
 
-const fileRouter = new Hono();
+const filesRouter = new Hono();
 
 function handler(endpoint: endpointStrings, method: 'POST' | 'GET' | 'DELETE') {
   async function handler(c: Context): Promise<Response> {
@@ -44,16 +44,16 @@ function handler(endpoint: endpointStrings, method: 'POST' | 'GET' | 'DELETE') {
   return handler;
 }
 
-fileRouter.get('/', requestValidator, handler('getFiles', 'GET'));
-fileRouter.get('/:id', requestValidator, handler('getFile', 'GET'));
-fileRouter.get(
+filesRouter.get('/', requestValidator, handler('listFiles', 'GET'));
+filesRouter.get('/:id', requestValidator, handler('retrieveFile', 'GET'));
+filesRouter.get(
   '/:id/content',
   requestValidator,
-  handler('getFileContent', 'GET')
+  handler('retrieveFileContent', 'GET')
 );
 
-fileRouter.post('/', requestValidator, handler('uploadFile', 'POST'));
+filesRouter.post('/', requestValidator, handler('uploadFile', 'POST'));
 
-fileRouter.delete('/:id', requestValidator, handler('deleteFile', 'DELETE'));
+filesRouter.delete('/:id', requestValidator, handler('deleteFile', 'DELETE'));
 
-export default fileRouter;
+export default filesRouter;

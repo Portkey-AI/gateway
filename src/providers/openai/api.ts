@@ -48,13 +48,13 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
         return endpoint;
       case 'uploadFile':
         return '/files';
-      case 'getFile':
+      case 'retrieveFile':
         return requestURL.split('/v1')[1];
-      case 'getFiles':
+      case 'listFiles':
         return '/files';
       case 'deleteFile':
         return requestURL.split('/v1')[1];
-      case 'getFileContent':
+      case 'retrieveFileContent':
         return requestURL.split('/v1')[1];
       case 'createBatch':
         return '/batches';
