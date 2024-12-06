@@ -13,7 +13,10 @@ function handler(endpoint: endpointStrings, method: 'POST' | 'GET' | 'DELETE') {
     try {
       let requestHeaders = Object.fromEntries(c.req.raw.headers);
       const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
-      const body = endpoint === 'uploadFile' ? await c.req.raw.formData() : {};
+      let body = {};
+      if (c.req.raw.body instanceof ReadableStream) {
+        body = c.req.raw.body;
+      }
       const tryTargetsResponse = await tryTargetsRecursively(
         c,
         camelCaseConfig ?? {},

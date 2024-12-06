@@ -183,13 +183,18 @@ const transformToProviderRequestFormData = (
 export const transformToProviderRequest = (
   provider: string,
   params: Params,
-  inputParams: Params | FormData,
-  fn: endpointStrings
+  requestBody: Params | FormData | ReadableStream,
+  fn: endpointStrings,
+  requestHeaders: Record<string, string>
 ) => {
+  // this returns a ReadableStream
   if (fn === 'uploadFile') {
-    return ProviderConfigs[provider].requestTransforms[fn](inputParams);
+    return ProviderConfigs[provider].requestTransforms[fn](
+      requestBody,
+      requestHeaders
+    );
   }
-  if (inputParams instanceof FormData) return inputParams;
+  if (requestBody instanceof FormData) return requestBody;
 
   if (fn === 'proxy') {
     return params;

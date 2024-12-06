@@ -21,22 +21,23 @@ const CohereAPIConfig: ProviderAPIConfig = {
       case 'embed':
         return '/embed';
       case 'uploadFile':
-        if (gatewayRequestBody && gatewayRequestBody instanceof FormData) {
-          const url = new URL(requestURL);
-          const fileName =
-            url.searchParams.get('name') ||
-            // @ts-ignore (Hono type is incorrect)
-            gatewayRequestBody.get('file')?.name;
-          const purpose =
-            url.searchParams.get('type') || gatewayRequestBody.get('purpose');
-          const searchParams = Array.from(url.searchParams.entries())
-            .filter(([key]) => key !== 'name' && key !== 'type')
-            .map(([key, value]) => `${key}=${value}`)
-            .join('&');
-
-          return `/datasets?name=${fileName}&type=${purpose}${searchParams.length > 0 ? `&${searchParams}` : ''}`;
-        }
-        throw new GatewayError('File upload requires a file and purpose');
+        return '/datasets?name=hug-file&type=embed-input';
+      // if (gatewayRequestBody && gatewayRequestBody instanceof FormData) {
+      // const url = new URL(requestURL);
+      // const fileName =
+      //   url.searchParams.get('name')
+      // @ts-ignore (Hono type is incorrect)
+      // gatewayRequestBody.get('file')?.name;
+      // const purpose =
+      //   url.searchParams.get('purpose');
+      // const searchParams = Array.from(url.searchParams.entries())
+      //   .filter(([key]) => key !== 'name' && key !== 'type')
+      //   .map(([key, value]) => `${key}=${value}`)
+      //   .join('&');
+      //   return `/datasets?name=${fileName}&type=${purpose}`;
+      // return `/datasets?name=${fileName}&type=${purpose}${searchParams.length > 0 ? `&${searchParams}` : ''}`;
+      // }
+      // throw new GatewayError('File upload requires a file and purpose');
       case 'listFiles':
         return '/datasets';
       case 'retrieveFile':
