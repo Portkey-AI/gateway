@@ -52,12 +52,15 @@ export const handler: PluginHandler = async (
     };
   } catch (e: any) {
     error = e;
+    let textExcerpt = getText(context, eventType);
+    textExcerpt =
+      textExcerpt?.length > 100
+        ? textExcerpt.slice(0, 100) + '...'
+        : textExcerpt;
     data = {
       explanation: `An error occurred while processing the regex: ${e.message}`,
       regexPattern: parameters.rule,
-      textExcerpt:
-        getText(context, eventType)?.slice(0, 100) + '...' ||
-        'No text available',
+      textExcerpt: textExcerpt || 'No text available',
     };
   }
 

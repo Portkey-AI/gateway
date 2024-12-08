@@ -641,7 +641,11 @@ describe('sentenceCount handler', () => {
       maxSentences: 3,
     };
 
-    const result = await sentenceCountHandler(context, parameters, mockEventType);
+    const result = await sentenceCountHandler(
+      context,
+      parameters,
+      mockEventType
+    );
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
@@ -650,7 +654,8 @@ describe('sentenceCount handler', () => {
       minCount: 1,
       maxCount: 3,
       verdict: true,
-      explanation: 'The sentence count (2) is within the specified range of 1 to 3.',
+      explanation:
+        'The sentence count (2) is within the specified range of 1 to 3.',
       textExcerpt: 'This is a sentence. This is another sentence.',
     });
   });
@@ -664,7 +669,11 @@ describe('sentenceCount handler', () => {
       maxSentences: 4,
     };
 
-    const result = await sentenceCountHandler(context, parameters, mockEventType);
+    const result = await sentenceCountHandler(
+      context,
+      parameters,
+      mockEventType
+    );
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
@@ -673,7 +682,8 @@ describe('sentenceCount handler', () => {
       minCount: 3,
       maxCount: 4,
       verdict: false,
-      explanation: 'The sentence count (2) is outside the specified range of 3 to 4.',
+      explanation:
+        'The sentence count (2) is outside the specified range of 3 to 4.',
       textExcerpt: 'This is a sentence. This is another sentence.',
     });
   });
@@ -688,7 +698,11 @@ describe('sentenceCount handler', () => {
       maxSentences: 30,
     };
 
-    const result = await sentenceCountHandler(context, parameters, mockEventType);
+    const result = await sentenceCountHandler(
+      context,
+      parameters,
+      mockEventType
+    );
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
@@ -701,9 +715,13 @@ describe('sentenceCount handler', () => {
       response: { text: 'This is a sentence.' },
     };
     const parameters: PluginParameters = {};
-  
-    const result = await sentenceCountHandler(context, parameters, mockEventType);
-  
+
+    const result = await sentenceCountHandler(
+      context,
+      parameters,
+      mockEventType
+    );
+
     expect(result.error).toBeInstanceOf(Error);
     expect(result.error?.message).toBe('Missing sentence count range');
     expect(result.verdict).toBe(false);
@@ -724,7 +742,11 @@ describe('sentenceCount handler', () => {
       maxSentences: 3,
     };
 
-    const result = await sentenceCountHandler(context, parameters, mockEventType);
+    const result = await sentenceCountHandler(
+      context,
+      parameters,
+      mockEventType
+    );
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
@@ -733,7 +755,8 @@ describe('sentenceCount handler', () => {
       minCount: 1,
       maxCount: 3,
       verdict: false,
-      explanation: 'The sentence count (0) is outside the specified range of 1 to 3.',
+      explanation:
+        'The sentence count (0) is outside the specified range of 1 to 3.',
       textExcerpt: '',
     });
   });
@@ -793,54 +816,139 @@ describe('containsCode handler', () => {
 });
 
 describe('wordCount handler', () => {
-  it('should return true verdict for word count within range in response text', async () => {
-    const context: PluginContext = {
-      response: { text: 'This is a sentence with 6 words.' },
-    };
-    const eventType = 'afterRequestHook';
+  const mockEventType = 'afterRequestHook';
 
+  it('should return true verdict and data for word count within range', async () => {
+    const context: PluginContext = {
+      response: { text: 'This is a sentence with 7 words.' },
+    };
     const parameters: PluginParameters = {
-      minWords: 6,
+      minWords: 5,
       maxWords: 8,
     };
 
-    const result = await wordCountHandler(context, parameters, eventType);
+    const result = await wordCountHandler(context, parameters, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
+    expect(result.data).toEqual({
+      wordCount: 7,
+      minWords: 5,
+      maxWords: 8,
+      verdict: true,
+      explanation:
+        'The text contains 7 words, which is within the specified range of 5-8 words.',
+      textExcerpt: 'This is a sentence with 7 words.',
+    });
   });
 
-  it('should return false verdict for word count outside range in response text', async () => {
+  it('should return false verdict and data for word count outside range', async () => {
     const context: PluginContext = {
-      response: { text: 'This is a sentence with 6 words.' },
+      response: { text: 'This is a sentence with 7 words.' },
     };
-    const eventType = 'afterRequestHook';
-
     const parameters: PluginParameters = {
-      minWords: 1,
-      maxWords: 3,
+      minWords: 10,
+      maxWords: 15,
     };
 
-    const result = await wordCountHandler(context, parameters, eventType);
+    const result = await wordCountHandler(context, parameters, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      wordCount: 7,
+      minWords: 10,
+      maxWords: 15,
+      verdict: false,
+      explanation:
+        'The text contains 7 words, which is outside the specified range of 10-15 words.',
+      textExcerpt: 'This is a sentence with 7 words.',
+    });
   });
 
-  it('should return error for missing word count range in parameters', async () => {
+  it('should handle long text by truncating excerpt', async () => {
+    const longText = 'word '.repeat(50); // 50 words
     const context: PluginContext = {
-      response: { text: 'This is a sentence with 6 words.' },
+      response: { text: longText },
     };
-    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      minWords: 40,
+      maxWords: 60,
+    };
 
+    const result = await wordCountHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data.textExcerpt.length).toBeLessThanOrEqual(103); // 100 chars + '...'
+    expect(result.data.textExcerpt.endsWith('...')).toBe(true);
+    expect(result.data.wordCount).toBe(50);
+  });
+
+  it('should handle missing text', async () => {
+    const context: PluginContext = {
+      response: { text: '' },
+    };
+    const parameters: PluginParameters = {
+      minWords: 1,
+      maxWords: 5,
+    };
+
+    const result = await wordCountHandler(context, parameters, mockEventType);
+
+    expect(result.error).not.toBe(null);
+    expect(result.error?.message).toBe('Missing text to analyze');
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      explanation:
+        'An error occurred while processing word count: Missing text to analyze',
+      minWords: 1,
+      maxWords: 5,
+      textExcerpt: 'No text available',
+    });
+  });
+
+  it('should handle invalid word count range', async () => {
+    const context: PluginContext = {
+      response: { text: 'This is a test.' },
+    };
+    const parameters: PluginParameters = {
+      minWords: 'invalid' as any,
+      maxWords: 5,
+    };
+
+    const result = await wordCountHandler(context, parameters, mockEventType);
+
+    expect(result.error).not.toBe(null);
+    expect(result.error?.message).toBe('Invalid or missing word count range');
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      explanation:
+        'An error occurred while processing word count: Invalid or missing word count range',
+      minWords: 'invalid',
+      maxWords: 5,
+      textExcerpt: 'This is a test.',
+    });
+  });
+
+  it('should handle missing word count parameters', async () => {
+    const context: PluginContext = {
+      response: { text: 'This is a test.' },
+    };
     const parameters: PluginParameters = {};
 
-    const result = await wordCountHandler(context, parameters, eventType);
+    const result = await wordCountHandler(context, parameters, mockEventType);
 
-    expect(result.error).toBeInstanceOf(Error);
-    expect(result.error?.message).toBe('Missing word count range or text');
+    expect(result.error).not.toBe(null);
+    expect(result.error?.message).toBe('Invalid or missing word count range');
     expect(result.verdict).toBe(false);
-    expect(result.data).toBe(null);
+    expect(result.data).toEqual({
+      explanation:
+        'An error occurred while processing word count: Invalid or missing word count range',
+      minWords: undefined,
+      maxWords: undefined,
+      textExcerpt: 'This is a test.',
+    });
   });
 });
 

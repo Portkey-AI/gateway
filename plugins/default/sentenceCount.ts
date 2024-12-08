@@ -24,10 +24,7 @@ export const handler: PluginHandler = async (
     const maxCount = parameters.maxSentences;
     let text = getText(context, eventType);
 
-    if (
-      typeof minCount !== 'number' ||
-      typeof maxCount !== 'number'
-    ) {
+    if (typeof minCount !== 'number' || typeof maxCount !== 'number') {
       throw new Error('Missing sentence count range');
     }
 
@@ -35,7 +32,7 @@ export const handler: PluginHandler = async (
     text = text || '';
     let count = countSentences(text);
     verdict = count >= minCount && count <= maxCount;
-    
+
     data = {
       sentenceCount: count,
       minCount,
@@ -53,7 +50,7 @@ export const handler: PluginHandler = async (
       explanation: `An error occurred: ${e.message}`,
       minCount: parameters.minSentences,
       maxCount: parameters.maxSentences,
-      textExcerpt: text.length > 100 ? text.slice(0, 100) + '...' : text
+      textExcerpt: text.length > 100 ? text.slice(0, 100) + '...' : text,
     };
   }
 
