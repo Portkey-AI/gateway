@@ -256,158 +256,194 @@ describe('jsonSchema handler', () => {
 });
 
 describe('jsonKeys handler', () => {
-  it('should validate JSON with "any" operator', async () => {
+  const mockEventType = 'afterRequestHook';
+
+  it('should validate JSON with "any" operator and find match', async () => {
     const context: PluginContext = {
-      response: {
-        text: '{"key1": "value1", "key2": "value2"}',
-      },
+      response: { text: '{"key1": "value1", "key2": "value2"}' },
     };
-    const eventType = 'afterRequestHook';
     const parameters: PluginParameters = {
       keys: ['key1', 'key3'],
       operator: 'any',
     };
 
-    const result = await jsonKeysHandler(context, parameters, eventType);
+    const result = await jsonKeysHandler(context, parameters, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
-    expect(result.data).toBeDefined();
-    expect(result.data.matchedJson).toEqual({ key1: 'value1', key2: 'value2' });
-    expect(result.data.explanation).toContain('Successfully matched');
-    expect(result.data.presentKeys).toContain('key1');
-    expect(result.data.missingKeys).toContain('key3');
+    expect(result.data).toEqual({
+      matchedJson: { key1: 'value1', key2: 'value2' },
+      verdict: true,
+      explanation:
+        'Successfully found at least one required key. Found keys: [key1].',
+      presentKeys: ['key1'],
+      missingKeys: ['key3'],
+      operator: 'any',
+      textExcerpt: '{"key1": "value1", "key2": "value2"}',
+    });
   });
 
-  it('should validate JSON with "all" operator', async () => {
+  it('should validate JSON with "all" operator and find all keys', async () => {
     const context: PluginContext = {
-      response: {
-        text: '{"key1": "value1", "key2": "value2"}',
-      },
+      response: { text: '{"key1": "value1", "key2": "value2"}' },
     };
-    const eventType = 'afterRequestHook';
     const parameters: PluginParameters = {
       keys: ['key1', 'key2'],
       operator: 'all',
     };
 
-    const result = await jsonKeysHandler(context, parameters, eventType);
+    const result = await jsonKeysHandler(context, parameters, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
-    expect(result.data).toBeDefined();
-    expect(result.data.matchedJson).toEqual({ key1: 'value1', key2: 'value2' });
-    expect(result.data.explanation).toContain('Successfully matched');
-    expect(result.data.presentKeys).toEqual(['key1', 'key2']);
-    expect(result.data.missingKeys).toEqual([]);
+    expect(result.data).toEqual({
+      matchedJson: { key1: 'value1', key2: 'value2' },
+      verdict: true,
+      explanation:
+        'Successfully found all required keys. Found keys: [key1, key2].',
+      presentKeys: ['key1', 'key2'],
+      missingKeys: [],
+      operator: 'all',
+      textExcerpt: '{"key1": "value1", "key2": "value2"}',
+    });
   });
 
-  it('should validate JSON with "none" operator', async () => {
+  it('should validate JSON with "none" operator and find no matches', async () => {
     const context: PluginContext = {
-      response: {
-        text: '{"key1": "value1", "key2": "value2"}',
-      },
+      response: { text: '{"key1": "value1", "key2": "value2"}' },
     };
-    const eventType = 'afterRequestHook';
     const parameters: PluginParameters = {
       keys: ['key3', 'key4'],
       operator: 'none',
     };
 
-    const result = await jsonKeysHandler(context, parameters, eventType);
+    const result = await jsonKeysHandler(context, parameters, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
-    expect(result.data).toBeDefined();
-    expect(result.data.matchedJson).toEqual({ key1: 'value1', key2: 'value2' });
-    expect(result.data.explanation).toContain('Successfully matched');
-    expect(result.data.presentKeys).toEqual([]);
-    expect(result.data.missingKeys).toEqual(['key3', 'key4']);
+    expect(result.data).toEqual({
+      matchedJson: { key1: 'value1', key2: 'value2' },
+      verdict: true,
+      explanation:
+        'Successfully verified no required keys are present. Missing keys: [key3, key4].',
+      presentKeys: [],
+      missingKeys: ['key3', 'key4'],
+      operator: 'none',
+      textExcerpt: '{"key1": "value1", "key2": "value2"}',
+    });
   });
 
   it('should handle JSON in code blocks', async () => {
     const context: PluginContext = {
-      response: {
-        text: '```json\n{"key1": "value1", "key2": "value2"}\n```',
-      },
+      response: { text: '```json\n{"key1": "value1", "key2": "value2"}\n```' },
     };
-    const eventType = 'afterRequestHook';
     const parameters: PluginParameters = {
-      keys: ['key1', 'key2'],
-      operator: 'all',
-    };
-
-    const result = await jsonKeysHandler(context, parameters, eventType);
-
-    expect(result.error).toBe(null);
-    expect(result.verdict).toBe(true);
-    expect(result.data).toBeDefined();
-    expect(result.data.matchedJson).toEqual({ key1: 'value1', key2: 'value2' });
-    expect(result.data.explanation).toContain('Successfully matched');
-  });
-
-  it('should return false verdict when keys are not found', async () => {
-    const context: PluginContext = {
-      response: {
-        text: '{"key1": "value1", "key2": "value2"}',
-      },
-    };
-    const eventType = 'afterRequestHook';
-    const parameters: PluginParameters = {
-      keys: ['key3', 'key4'],
+      keys: ['key1'],
       operator: 'any',
     };
 
-    const result = await jsonKeysHandler(context, parameters, eventType);
+    const result = await jsonKeysHandler(context, parameters, mockEventType);
 
     expect(result.error).toBe(null);
-    expect(result.verdict).toBe(false);
-    expect(result.data).toBeDefined();
-    expect(result.data.explanation).toContain('Failed to match');
-    expect(result.data.presentKeys).toEqual([]);
-    expect(result.data.missingKeys).toEqual(['key3', 'key4']);
+    expect(result.verdict).toBe(true);
+    expect(result.data.matchedJson).toEqual({ key1: 'value1', key2: 'value2' });
+    expect(result.data.presentKeys).toEqual(['key1']);
   });
 
-  it('should handle multiple JSON objects in text', async () => {
+  it('should handle multiple JSON objects and find best match', async () => {
     const context: PluginContext = {
       response: {
-        text: '{"key1": "value1"} Some text {"key2": "value2", "key3": "value3"}',
+        text: '{"key1": "value1"} {"key2": "value2", "key3": "value3"}',
       },
     };
-    const eventType = 'afterRequestHook';
     const parameters: PluginParameters = {
       keys: ['key2', 'key3'],
       operator: 'all',
     };
 
-    const result = await jsonKeysHandler(context, parameters, eventType);
+    const result = await jsonKeysHandler(context, parameters, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
-    expect(result.data).toBeDefined();
     expect(result.data.matchedJson).toEqual({ key2: 'value2', key3: 'value3' });
-    expect(result.data.explanation).toContain('Successfully matched');
+    expect(result.data.presentKeys).toEqual(['key2', 'key3']);
   });
 
-  it('should return explanation when no valid JSON is found', async () => {
+  it('should handle missing text', async () => {
     const context: PluginContext = {
-      response: {
-        text: 'This is just plain text with no JSON',
-      },
+      response: { text: '' },
     };
-    const eventType = 'afterRequestHook';
     const parameters: PluginParameters = {
-      keys: ['key1', 'key2'],
+      keys: ['key1'],
       operator: 'any',
     };
 
-    const result = await jsonKeysHandler(context, parameters, eventType);
+    const result = await jsonKeysHandler(context, parameters, mockEventType);
+
+    expect(result.error).not.toBe(null);
+    expect(result.error?.message).toBe('Missing text to analyze');
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      explanation:
+        'An error occurred while processing JSON: Missing text to analyze',
+      operator: 'any',
+      requiredKeys: ['key1'],
+      textExcerpt: 'No text available',
+    });
+  });
+
+  it('should handle missing keys array', async () => {
+    const context: PluginContext = {
+      response: { text: '{"key1": "value1"}' },
+    };
+    const parameters: PluginParameters = {
+      operator: 'any',
+    };
+
+    const result = await jsonKeysHandler(context, parameters, mockEventType);
+
+    expect(result.error).not.toBe(null);
+    expect(result.error?.message).toBe('Missing or invalid keys array');
+    expect(result.verdict).toBe(false);
+  });
+
+  it('should handle invalid operator', async () => {
+    const context: PluginContext = {
+      response: { text: '{"key1": "value1"}' },
+    };
+    const parameters: PluginParameters = {
+      keys: ['key1'],
+      operator: 'invalid' as any,
+    };
+
+    const result = await jsonKeysHandler(context, parameters, mockEventType);
+
+    expect(result.error).not.toBe(null);
+    expect(result.error?.message).toBe(
+      'Invalid or missing operator (must be "any", "all", or "none")'
+    );
+    expect(result.verdict).toBe(false);
+  });
+
+  it('should handle no valid JSON in text', async () => {
+    const context: PluginContext = {
+      response: { text: 'This is just plain text with no JSON' },
+    };
+    const parameters: PluginParameters = {
+      keys: ['key1'],
+      operator: 'any',
+    };
+
+    const result = await jsonKeysHandler(context, parameters, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
-    expect(result.data).toBeDefined();
-    expect(result.data.explanation).toContain('No valid JSON found');
-    expect(result.data.operator).toBe('any');
+    expect(result.data).toEqual({
+      explanation: 'No valid JSON found in the text.',
+      requiredKeys: ['key1'],
+      operator: 'any',
+      textExcerpt: 'This is just plain text with no JSON',
+    });
   });
 });
 
@@ -1413,6 +1449,148 @@ describe('characterCount handler', () => {
       explanation:
         'The text contains 8 characters, which is within the specified range of 1-10 characters.',
       textExcerpt: '   \n\t   ',
+    });
+  });
+});
+
+describe('endsWith handler', () => {
+  const mockEventType = 'afterRequestHook';
+
+  it('should return true verdict and data when text ends with suffix', async () => {
+    const context: PluginContext = {
+      response: { text: 'This is a test ending with HarryPortkey' },
+    };
+    const parameters: PluginParameters = {
+      suffix: 'HarryPortkey',
+    };
+
+    const result = await endsWithHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toEqual({
+      suffix: 'HarryPortkey',
+      verdict: true,
+      explanation: 'The text ends with "HarryPortkey".',
+      textExcerpt: 'This is a test ending with HarryPortkey',
+    });
+  });
+
+  it('should return true verdict and data when text ends with suffix and period', async () => {
+    const context: PluginContext = {
+      response: { text: 'This is a test ending with HarryPortkey.' },
+    };
+    const parameters: PluginParameters = {
+      suffix: 'HarryPortkey',
+    };
+
+    const result = await endsWithHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toEqual({
+      suffix: 'HarryPortkey',
+      verdict: true,
+      explanation:
+        'The text ends with "HarryPortkey" (including trailing period).',
+      textExcerpt: 'This is a test ending with HarryPortkey.',
+    });
+  });
+
+  it('should return false verdict and data when text does not end with suffix', async () => {
+    const context: PluginContext = {
+      response: { text: 'This is a test ending with something else' },
+    };
+    const parameters: PluginParameters = {
+      suffix: 'HarryPortkey',
+    };
+
+    const result = await endsWithHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      suffix: 'HarryPortkey',
+      verdict: false,
+      explanation: 'The text does not end with "HarryPortkey".',
+      textExcerpt: 'This is a test ending with something else',
+    });
+  });
+
+  it('should handle long text by truncating excerpt', async () => {
+    const longText = 'a'.repeat(150) + 'HarryPortkey';
+    const context: PluginContext = {
+      response: { text: longText },
+    };
+    const parameters: PluginParameters = {
+      suffix: 'HarryPortkey',
+    };
+
+    const result = await endsWithHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data.textExcerpt.length).toBeLessThanOrEqual(103);
+  });
+
+  it('should handle empty text', async () => {
+    const context: PluginContext = {
+      response: { text: '' },
+    };
+    const parameters: PluginParameters = {
+      suffix: 'test',
+    };
+
+    const result = await endsWithHandler(context, parameters, mockEventType);
+
+    expect(result.error).not.toBe(null);
+    expect(result.error?.message).toBe('Missing text to analyze');
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      explanation:
+        'An error occurred while checking suffix: Missing text to analyze',
+      suffix: 'test',
+      textExcerpt: 'No text available',
+    });
+  });
+
+  it('should handle missing suffix parameter', async () => {
+    const context: PluginContext = {
+      response: { text: 'This is a test.' },
+    };
+    const parameters: PluginParameters = {};
+
+    const result = await endsWithHandler(context, parameters, mockEventType);
+
+    expect(result.error).not.toBe(null);
+    expect(result.error?.message).toBe('Missing or empty suffix');
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      explanation:
+        'An error occurred while checking suffix: Missing or empty suffix',
+      suffix: undefined,
+      textExcerpt: 'This is a test.',
+    });
+  });
+
+  it('should handle empty suffix parameter', async () => {
+    const context: PluginContext = {
+      response: { text: 'This is a test.' },
+    };
+    const parameters: PluginParameters = {
+      suffix: '',
+    };
+
+    const result = await endsWithHandler(context, parameters, mockEventType);
+
+    expect(result.error).not.toBe(null);
+    expect(result.error?.message).toBe('Missing or empty suffix');
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      explanation:
+        'An error occurred while checking suffix: Missing or empty suffix',
+      suffix: '',
+      textExcerpt: 'This is a test.',
     });
   });
 });
