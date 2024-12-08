@@ -174,7 +174,7 @@ export class HooksManager {
   private spans: Record<string, HookSpan> = {};
   private plugins: any;
 
-  constructor() {
+  constructor(plugins?: any) {
     this.plugins = plugins;
   }
 
@@ -442,7 +442,7 @@ export class HooksManager {
 }
 
 export const hooks = (c: Context, next: any) => {
-  const hooksManager = new HooksManager();
+  const hooksManager = new HooksManager(plugins);
   c.set('hooksManager', hooksManager);
   c.set('executeHooks', hooksManager.executeHooks.bind(hooksManager));
   return next();
