@@ -57,44 +57,50 @@ export const handler: PluginHandler = async (
 
     const codeBlockRegex = /```(\w+)\n[\s\S]*?\n```/g;
     let matches = Array.from(responseText.matchAll(codeBlockRegex));
-    
+
     if (matches.length === 0) {
       data = {
         explanation: 'No code blocks found in the text',
         searchedFormat: format,
         foundFormats: [],
-        textExcerpt: responseText.length > 100 ? responseText.slice(0, 100) + '...' : responseText
+        textExcerpt:
+          responseText.length > 100
+            ? responseText.slice(0, 100) + '...'
+            : responseText,
       };
       return { error, verdict, data };
     }
 
-    const foundLanguages = matches.map(match => {
+    const foundLanguages = matches.map((match) => {
       const markdownLanguage = match[1].toLowerCase();
       return languageMap[markdownLanguage] || markdownLanguage;
     });
 
-    verdict = foundLanguages.some(lang => lang === format);
-    
+    verdict = foundLanguages.some((lang) => lang === format);
+
     data = {
-      explanation: verdict 
+      explanation: verdict
         ? `Found code block(s) in ${format} format`
         : `No code blocks in ${format} format found`,
       searchedFormat: format,
       foundFormats: foundLanguages,
-      textExcerpt: responseText.length > 100 ? responseText.slice(0, 100) + '...' : responseText
+      textExcerpt:
+        responseText.length > 100
+          ? responseText.slice(0, 100) + '...'
+          : responseText,
     };
-
   } catch (e: any) {
     error = e;
     let textExcerpt = getText(context, eventType);
-    textExcerpt = textExcerpt?.length > 100 
-      ? textExcerpt.slice(0, 100) + '...' 
-      : textExcerpt;
+    textExcerpt =
+      textExcerpt?.length > 100
+        ? textExcerpt.slice(0, 100) + '...'
+        : textExcerpt;
 
     data = {
       explanation: `Error while checking for code blocks: ${e.message}`,
       searchedFormat: parameters.format,
-      textExcerpt: textExcerpt || 'No text available'
+      textExcerpt: textExcerpt || 'No text available',
     };
   }
 

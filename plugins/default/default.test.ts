@@ -1129,13 +1129,17 @@ describe('containsCode handler', () => {
 
   it('should detect code blocks with matching format', async () => {
     const context: PluginContext = {
-      response: { text: '```py\nprint("Hello World")\n```' }
+      response: { text: '```py\nprint("Hello World")\n```' },
     };
     const parameters: PluginParameters = {
-      format: 'Python'
+      format: 'Python',
     };
 
-    const result = await containsCodeHandler(context, parameters, mockEventType);
+    const result = await containsCodeHandler(
+      context,
+      parameters,
+      mockEventType
+    );
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
@@ -1143,19 +1147,23 @@ describe('containsCode handler', () => {
       explanation: 'Found code block(s) in Python format',
       searchedFormat: 'Python',
       foundFormats: ['Python'],
-      textExcerpt: '```py\nprint("Hello World")\n```'
+      textExcerpt: '```py\nprint("Hello World")\n```',
     });
   });
 
   it('should return false for non-matching language', async () => {
     const context: PluginContext = {
-      response: { text: '```js\nconsole.log("Hello");\n```' }
+      response: { text: '```js\nconsole.log("Hello");\n```' },
     };
     const parameters: PluginParameters = {
-      format: 'Python'
+      format: 'Python',
     };
 
-    const result = await containsCodeHandler(context, parameters, mockEventType);
+    const result = await containsCodeHandler(
+      context,
+      parameters,
+      mockEventType
+    );
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
@@ -1163,19 +1171,23 @@ describe('containsCode handler', () => {
       explanation: 'No code blocks in Python format found',
       searchedFormat: 'Python',
       foundFormats: ['JavaScript'],
-      textExcerpt: '```js\nconsole.log("Hello");\n```'
+      textExcerpt: '```js\nconsole.log("Hello");\n```',
     });
   });
 
   it('should handle text without code blocks', async () => {
     const context: PluginContext = {
-      response: { text: 'This is just plain text' }
+      response: { text: 'This is just plain text' },
     };
     const parameters: PluginParameters = {
-      format: 'Python'
+      format: 'Python',
     };
 
-    const result = await containsCodeHandler(context, parameters, mockEventType);
+    const result = await containsCodeHandler(
+      context,
+      parameters,
+      mockEventType
+    );
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
@@ -1183,37 +1195,48 @@ describe('containsCode handler', () => {
       explanation: 'No code blocks found in the text',
       searchedFormat: 'Python',
       foundFormats: [],
-      textExcerpt: 'This is just plain text'
+      textExcerpt: 'This is just plain text',
     });
   });
 
   it('should handle missing format parameter', async () => {
     const context: PluginContext = {
-      response: { text: '```py\nprint("Hello")\n```' }
+      response: { text: '```py\nprint("Hello")\n```' },
     };
     const parameters: PluginParameters = {};
 
-    const result = await containsCodeHandler(context, parameters, mockEventType);
+    const result = await containsCodeHandler(
+      context,
+      parameters,
+      mockEventType
+    );
 
     expect(result.error).not.toBe(null);
     expect(result.error?.message).toBe('Missing required parameter: format');
     expect(result.verdict).toBe(false);
     expect(result.data).toEqual({
-      explanation: 'Error while checking for code blocks: Missing required parameter: format',
+      explanation:
+        'Error while checking for code blocks: Missing required parameter: format',
       searchedFormat: undefined,
-      textExcerpt: '```py\nprint("Hello")\n```'
+      textExcerpt: '```py\nprint("Hello")\n```',
     });
   });
 
   it('should handle multiple code blocks', async () => {
     const context: PluginContext = {
-      response: { text: '```py\nprint("Hello")\n```\n```js\nconsole.log("Hi");\n```' }
+      response: {
+        text: '```py\nprint("Hello")\n```\n```js\nconsole.log("Hi");\n```',
+      },
     };
     const parameters: PluginParameters = {
-      format: 'Python'
+      format: 'Python',
     };
 
-    const result = await containsCodeHandler(context, parameters, mockEventType);
+    const result = await containsCodeHandler(
+      context,
+      parameters,
+      mockEventType
+    );
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
@@ -1221,27 +1244,32 @@ describe('containsCode handler', () => {
       explanation: 'Found code block(s) in Python format',
       searchedFormat: 'Python',
       foundFormats: ['Python', 'JavaScript'],
-      textExcerpt: expect.stringContaining('```py\nprint("Hello")\n```')
+      textExcerpt: expect.stringContaining('```py\nprint("Hello")\n```'),
     });
   });
 
   it('should handle empty text', async () => {
     const context: PluginContext = {
-      response: { text: '' }
+      response: { text: '' },
     };
     const parameters: PluginParameters = {
-      format: 'Python'
+      format: 'Python',
     };
 
-    const result = await containsCodeHandler(context, parameters, mockEventType);
+    const result = await containsCodeHandler(
+      context,
+      parameters,
+      mockEventType
+    );
 
     expect(result.error).not.toBe(null);
     expect(result.error?.message).toBe('No text content to analyze');
     expect(result.verdict).toBe(false);
     expect(result.data).toEqual({
-      explanation: 'Error while checking for code blocks: No text content to analyze',
+      explanation:
+        'Error while checking for code blocks: No text content to analyze',
       searchedFormat: 'Python',
-      textExcerpt: 'No text available'
+      textExcerpt: 'No text available',
     });
   });
 });
@@ -1371,9 +1399,7 @@ describe('wordCount handler', () => {
     const result = await wordCountHandler(context, parameters, mockEventType);
 
     expect(result.error).not.toBe(null);
-    expect(result.error?.message).toBe(
-      'Invalid or missing word count range'
-    );
+    expect(result.error?.message).toBe('Invalid or missing word count range');
     expect(result.verdict).toBe(false);
     expect(result.data).toEqual({
       explanation:
