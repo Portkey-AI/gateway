@@ -12,6 +12,7 @@ import { handler as allUppercaseHandler } from './alluppercase';
 import { handler as endsWithHandler } from './endsWith';
 import { handler as allLowerCaseHandler } from './alllowercase';
 import { handler as modelWhitelistHandler } from './modelWhitelist';
+import { handler as characterCountHandler } from './characterCount';
 
 import { z } from 'zod';
 import { PluginContext, PluginParameters } from '../types';
@@ -1249,5 +1250,169 @@ describe('modelWhitelist handler', () => {
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
+  });
+});
+
+describe('characterCount handler', () => {
+  const mockEventType = 'afterRequestHook';
+
+  it('should return true verdict and data for character count within range', async () => {
+    const context: PluginContext = {
+      response: { text: 'This is a test.' },
+    };
+    const parameters: PluginParameters = {
+      minCharacters: 10,
+      maxCharacters: 20,
+    };
+
+    const result = await characterCountHandler(
+      context,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toEqual({
+      characterCount: 15,
+      minCharacters: 10,
+      maxCharacters: 20,
+      verdict: true,
+      explanation:
+        'The text contains 15 characters, which is within the specified range of 10-20 characters.',
+      textExcerpt: 'This is a test.',
+    });
+  });
+
+  it('should return false verdict and data for character count outside range', async () => {
+    const context: PluginContext = {
+      response: { text: 'This is a very long test that exceeds the limit.' },
+    };
+    const parameters: PluginParameters = {
+      minCharacters: 10,
+      maxCharacters: 20,
+    };
+
+    const result = await characterCountHandler(
+      context,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      characterCount: 48,
+      minCharacters: 10,
+      maxCharacters: 20,
+      verdict: false,
+      explanation:
+        'The text contains 48 characters, which is outside the specified range of 10-20 characters.',
+      textExcerpt: 'This is a very long test that exceeds the limit.',
+    });
+  });
+
+  it('should handle long text by truncating excerpt', async () => {
+    const longText = 'a'.repeat(150);
+    const context: PluginContext = {
+      response: { text: longText },
+    };
+    const parameters: PluginParameters = {
+      minCharacters: 100,
+      maxCharacters: 200,
+    };
+
+    const result = await characterCountHandler(
+      context,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data.textExcerpt.length).toBeLessThanOrEqual(103); // 100 chars + '...'
+    expect(result.data.textExcerpt.endsWith('...')).toBe(true);
+    expect(result.data.characterCount).toBe(150);
+  });
+
+  it('should handle empty text', async () => {
+    const context: PluginContext = {
+      response: { text: '' },
+    };
+    const parameters: PluginParameters = {
+      minCharacters: 1,
+      maxCharacters: 10,
+    };
+
+    const result = await characterCountHandler(
+      context,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.error).not.toBe(null);
+    expect(result.error?.message).toBe('Missing text to analyze');
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      explanation:
+        'An error occurred while counting characters: Missing text to analyze',
+      minCharacters: 1,
+      maxCharacters: 10,
+      textExcerpt: 'No text available',
+    });
+  });
+
+  it('should handle missing character count parameters', async () => {
+    const context: PluginContext = {
+      response: { text: 'This is a test.' },
+    };
+    const parameters: PluginParameters = {};
+
+    const result = await characterCountHandler(
+      context,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.error).not.toBe(null);
+    expect(result.error?.message).toBe(
+      'Invalid or missing character count range'
+    );
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      explanation:
+        'An error occurred while counting characters: Invalid or missing character count range',
+      minCharacters: undefined,
+      maxCharacters: undefined,
+      textExcerpt: 'This is a test.',
+    });
+  });
+
+  it('should handle text with only whitespace', async () => {
+    const context: PluginContext = {
+      response: { text: '   \n\t   ' },
+    };
+    const parameters: PluginParameters = {
+      minCharacters: 1,
+      maxCharacters: 10,
+    };
+
+    const result = await characterCountHandler(
+      context,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toEqual({
+      characterCount: 8,
+      minCharacters: 1,
+      maxCharacters: 10,
+      verdict: true,
+      explanation:
+        'The text contains 8 characters, which is within the specified range of 1-10 characters.',
+      textExcerpt: '   \n\t   ',
+    });
   });
 });
