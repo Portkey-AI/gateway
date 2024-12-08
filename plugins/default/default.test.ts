@@ -1097,78 +1097,143 @@ describe('wordCount handler', () => {
 });
 
 describe('webhook handler', () => {
-  it('should handle a postive result from a webhook', async () => {
-    const eventType = 'afterRequestHook';
-    const context: PluginContext = {
-      response: {
-        text: `adding some text before this \`\`\`json\n{"key1": "value"}\n\`\`\`\n and adding some text after {"key":"value"}`,
-      },
-    };
+  const mockContext: PluginContext = {
+    request: {
+      text: 'test request',
+      json: { key: 'value' },
+    },
+    response: {
+      text: 'test response',
+      json: { key: 'value' },
+    },
+  };
+  const mockEventType = 'afterRequestHook';
+
+  it('should handle a successful webhook call', async () => {
     const parameters: PluginParameters = {
       webhookURL: 'https://roh26it-blackplanarian.web.val.run/true',
+      headers: '{"Authorization": "Bearer test-token"}',
     };
 
-    const result = await webhookHandler(context, parameters, eventType);
+    const result = await webhookHandler(mockContext, parameters, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
-    expect(result.data).toEqual(context);
+    expect(result.data).toMatchObject({
+      verdict: true,
+      explanation: 'Webhook request succeeded',
+      webhookUrl: 'https://roh26it-blackplanarian.web.val.run/true',
+      requestContext: {
+        headers: {
+          Authorization: 'Bearer test-token',
+        },
+        timeout: 3000,
+      },
+    });
   });
 
-  it('should handle a negative result from a webhook', async () => {
-    const eventType = 'afterRequestHook';
-    const context: PluginContext = {
-      response: {
-        text: `adding some text before this \`\`\`json\n{"key1": "value"}\n\`\`\`\n and adding some text after {"key":"value"}`,
-      },
-    };
+  it('should handle a failed webhook call', async () => {
     const parameters: PluginParameters = {
       webhookURL: 'https://roh26it-blackplanarian.web.val.run/false',
+      headers: '{"Authorization": "Bearer test-token"}',
     };
 
-    const result = await webhookHandler(context, parameters, eventType);
+    const result = await webhookHandler(mockContext, parameters, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
-    expect(result.data).toEqual(context);
+    expect(result.data).toMatchObject({
+      verdict: false,
+      explanation: 'Webhook request failed',
+      webhookUrl: 'https://roh26it-blackplanarian.web.val.run/false',
+      requestContext: {
+        headers: {
+          Authorization: 'Bearer test-token',
+        },
+        timeout: 3000,
+      },
+    });
   });
 
-  it('should handle an error from a webhook', async () => {
-    const eventType = 'afterRequestHook';
-    const context: PluginContext = {
-      response: {
-        text: `adding some text before this \`\`\`json\n{"key1": "value"}\n\`\`\`\n and adding some text after {"key":"value"}`,
-      },
+  it('should handle missing webhook URL', async () => {
+    const parameters: PluginParameters = {
+      headers: '{"Authorization": "Bearer test-token"}',
     };
 
+    const result = await webhookHandler(mockContext, parameters, mockEventType);
+
+    expect(result.error).not.toBe(null);
+    expect(result.data.explanation).toContain('Missing webhook URL');
+    expect(result.verdict).toBe(false);
+    expect(result.data).toMatchObject({
+      explanation: 'Webhook error: Missing webhook URL',
+      webhookUrl: 'No URL provided',
+      requestContext: {
+        headers: parameters.headers,
+        timeout: 3000,
+      },
+    });
+  });
+
+  it('should handle invalid webhook URL format', async () => {
+    const parameters: PluginParameters = {
+      webhookURL: 'not-a-url',
+      headers: '{"Authorization": "Bearer test-token"}',
+    };
+
+    const result = await webhookHandler(mockContext, parameters, mockEventType);
+
+    expect(result.error).not.toBe(null);
+    expect(result.data.explanation).toContain('Invalid webhook URL format');
+    expect(result.verdict).toBe(false);
+    expect(result.data).toMatchObject({
+      explanation: 'Webhook error: Invalid webhook URL format',
+      webhookUrl: 'not-a-url',
+      requestContext: {
+        headers: parameters.headers,
+        timeout: 3000,
+      },
+    });
+  });
+
+  it('should handle invalid headers format', async () => {
+    const parameters: PluginParameters = {
+      webhookURL: 'https://roh26it-blackplanarian.web.val.run/true',
+      headers: '{invalid json}',
+    };
+
+    const result = await webhookHandler(mockContext, parameters, mockEventType);
+
+    console.log(result);
+
+    expect(result.error).not.toBe(null);
+    expect(result.error?.message).toContain(
+      'Failed to parse headers: Invalid headers format'
+    );
+    expect(result.verdict).toBe(false);
+    expect(result.data).toMatchObject({
+      explanation: expect.stringContaining(
+        'Webhook error: Failed to parse headers: Invalid headers format'
+      ),
+      webhookUrl: 'https://roh26it-blackplanarian.web.val.run/true',
+      requestContext: {
+        headers: {},
+        timeout: 3000,
+      },
+    });
+  });
+
+  it('should handle when the webhooks returns an error', async () => {
     const parameters: PluginParameters = {
       webhookURL: 'https://roh26it-blackplanarian.web.val.run/error',
+      headers: '{"Authorization": "Bearer test-token"}',
     };
 
-    const result = await webhookHandler(context, parameters, eventType);
+    const result = await webhookHandler(mockContext, parameters, mockEventType);
 
-    expect(result.error).toBeDefined();
+    expect(result.error).not.toBe(null);
+    expect(result.data.explanation).toContain('Webhook error');
     expect(result.verdict).toBe(false);
-    expect(result.data).toBe(null);
-  });
-
-  it('should handle a timeout from a webhook', async () => {
-    const eventType = 'afterRequestHook';
-    const context: PluginContext = {
-      response: {
-        text: `adding some text before this \`\`\`json\n{"key1": "value"}\n\`\`\`\n and adding some text after {"key":"value"}`,
-      },
-    };
-
-    const parameters: PluginParameters = {
-      webhookURL: 'https://roh26it-blackplanarian.web.val.run/timeout',
-    };
-
-    const result = await webhookHandler(context, parameters, eventType);
-
-    expect(result.error).toBeDefined();
-    expect(result.verdict).toBe(false);
-    expect(result.data).toBe(null);
   });
 });
 
