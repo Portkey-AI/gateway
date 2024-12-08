@@ -160,7 +160,13 @@ describe('jsonSchema handler', () => {
     };
     const eventType = 'afterRequestHook';
     const parameters: PluginParameters = {
-      schema: z.object({ key: z.string() }),
+      schema: {
+        type: 'object',
+        properties: {
+          key: { type: 'string' },
+        },
+        required: ['key'],
+      },
     };
 
     const result = await jsonSchemaHandler(context, parameters, eventType);
@@ -180,7 +186,14 @@ describe('jsonSchema handler', () => {
     };
     const eventType = 'afterRequestHook';
     const parameters: PluginParameters = {
-      schema: z.object({ title: z.string(), short_intro: z.string() }),
+      schema: {
+        type: 'object',
+        properties: {
+          title: { type: 'string' },
+          short_intro: { type: 'string' },
+        },
+        required: ['title', 'short_intro'],
+      },
     };
 
     const result = await jsonSchemaHandler(context, parameters, eventType);
@@ -201,7 +214,14 @@ describe('jsonSchema handler', () => {
     };
     const eventType = 'afterRequestHook';
     const parameters: PluginParameters = {
-      schema: z.object({ title: z.string(), short_intro: z.string() }),
+      schema: {
+        type: 'object',
+        properties: {
+          title: { type: 'string' },
+          short_intro: { type: 'string' },
+        },
+        required: ['title', 'short_intro'],
+      },
     };
 
     const result = await jsonSchemaHandler(context, parameters, eventType);
@@ -222,7 +242,13 @@ describe('jsonSchema handler', () => {
     };
     const eventType = 'afterRequestHook';
     const parameters: PluginParameters = {
-      schema: z.object({ key: z.string() }),
+      schema: {
+        type: 'object',
+        properties: {
+          key: { type: 'string' },
+        },
+        required: ['key'],
+      },
     };
 
     const result = await jsonSchemaHandler(context, parameters, eventType);
@@ -243,7 +269,13 @@ describe('jsonSchema handler', () => {
     };
     const eventType = 'afterRequestHook';
     const parameters: PluginParameters = {
-      schema: z.object({ key: z.string() }),
+      schema: {
+        type: 'object',
+        properties: {
+          key: { type: 'string' },
+        },
+        required: ['key'],
+      },
     };
 
     const result = await jsonSchemaHandler(context, parameters, eventType);
@@ -252,6 +284,192 @@ describe('jsonSchema handler', () => {
     expect(result.verdict).toBe(false);
     expect(result.data).toBeDefined();
     expect(result.data.explanation).toContain('No valid JSON found');
+  });
+
+  it('should validate nested JSON structures', async () => {
+    const context: PluginContext = {
+      response: {
+        text: `Here's a complex user profile:
+\`\`\`json
+{
+  "user": {
+    "name": "John Doe",
+    "contact": {
+      "email": "john@example.com",
+      "phone": {
+        "country": "+1",
+        "number": "555-0123"
+      }
+    },
+    "preferences": {
+      "theme": "dark",
+      "notifications": true
+    }
+  }
+}
+\`\`\`
+And that's all the user information we have.`,
+      },
+    };
+    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      schema: {
+        type: 'object',
+        properties: {
+          user: {
+            type: 'object',
+            required: ['name', 'contact', 'preferences'],
+            properties: {
+              name: { type: 'string' },
+              contact: {
+                type: 'object',
+                required: ['email', 'phone'],
+                properties: {
+                  email: { type: 'string', format: 'email' },
+                  phone: {
+                    type: 'object',
+                    required: ['country', 'number'],
+                    properties: {
+                      country: { type: 'string' },
+                      number: { type: 'string' },
+                    },
+                  },
+                },
+              },
+              preferences: {
+                type: 'object',
+                required: ['theme', 'notifications'],
+                properties: {
+                  theme: { type: 'string', enum: ['light', 'dark'] },
+                  notifications: { type: 'boolean' },
+                },
+              },
+            },
+          },
+        },
+        required: ['user'],
+      },
+    };
+
+    const result = await jsonSchemaHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toBeDefined();
+    expect(result.data.matchedJson).toEqual({
+      user: {
+        name: 'John Doe',
+        contact: {
+          email: 'john@example.com',
+          phone: {
+            country: '+1',
+            number: '555-0123',
+          },
+        },
+        preferences: {
+          theme: 'dark',
+          notifications: true,
+        },
+      },
+    });
+    expect(result.data.explanation).toContain('Successfully validated');
+  });
+
+  it('should fail validation for invalid nested JSON', async () => {
+    const context: PluginContext = {
+      response: {
+        text: `Let me show you the user profile with some invalid data:
+\`\`\`json
+{
+  "user": {
+    "name": "John Doe",
+    "contact": {
+      "email": "invalid-email",
+      "phone": {
+        "country": "+1"
+      }
+    },
+    "preferences": {
+      "theme": "invalid-theme",
+      "notifications": "not-a-boolean"
+    }
+  }
+}
+\`\`\`
+As you can see, there are several validation issues in this profile.`,
+      },
+    };
+    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      schema: {
+        type: 'object',
+        properties: {
+          user: {
+            type: 'object',
+            required: ['name', 'contact', 'preferences'],
+            properties: {
+              name: { type: 'string' },
+              contact: {
+                type: 'object',
+                required: ['email', 'phone'],
+                properties: {
+                  email: { type: 'string', format: 'email' },
+                  phone: {
+                    type: 'object',
+                    required: ['country', 'number'],
+                    properties: {
+                      country: { type: 'string' },
+                      number: { type: 'string' },
+                    },
+                  },
+                },
+              },
+              preferences: {
+                type: 'object',
+                required: ['theme', 'notifications'],
+                properties: {
+                  theme: { type: 'string', enum: ['light', 'dark'] },
+                  notifications: { type: 'boolean' },
+                },
+              },
+            },
+          },
+        },
+        required: ['user'],
+      },
+    };
+
+    const result = await jsonSchemaHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toBeDefined();
+    expect(result.data.explanation).toContain('Failed to validate');
+    expect(result.data.validationErrors).toBeDefined();
+    expect(Array.isArray(result.data.validationErrors)).toBe(true);
+
+    // Verify specific validation errors
+    const errors = result.data.validationErrors;
+    expect(errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          message: expect.stringContaining('email'), // email format error
+          path: '/user/contact/email',
+        }),
+        expect.objectContaining({
+          message: expect.stringContaining('number'), // missing phone.number
+          path: '/user/contact/phone',
+        }),
+        expect.objectContaining({
+          message: expect.stringContaining('allowed value'), // invalid theme
+          path: '/user/preferences/theme',
+        }),
+        expect.objectContaining({
+          message: expect.stringContaining('boolean'), // invalid notifications type
+          path: '/user/preferences/notifications',
+        }),
+      ])
+    );
   });
 });
 
@@ -1203,8 +1421,6 @@ describe('webhook handler', () => {
     };
 
     const result = await webhookHandler(mockContext, parameters, mockEventType);
-
-    console.log(result);
 
     expect(result.error).not.toBe(null);
     expect(result.error?.message).toContain(
