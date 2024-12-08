@@ -4,3 +4,10 @@ export const BedrockUploadFileRequestTransform = (
 ) => {
   return requestBody;
 };
+
+export const BedrockUploadFileResponseTransform = (
+  response: any,
+  responseStatus: number
+) => {
+  return response;
+};

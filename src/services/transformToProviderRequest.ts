@@ -171,6 +171,24 @@ const transformToProviderRequestFormData = (
   return formData;
 };
 
+const transformToProviderRequestReadableStream = (
+  provider: string,
+  requestBody: ReadableStream,
+  requestHeaders: Record<string, string>,
+  fn: string
+) => {
+  if (ProviderConfigs[provider].getConfig) {
+    return ProviderConfigs[provider]
+      .getConfig({}, fn)
+      .requestTransforms[fn](requestBody, requestHeaders);
+  } else {
+    return ProviderConfigs[provider].requestTransforms[fn](
+      requestBody,
+      requestHeaders
+    );
+  }
+};
+
 /**
  * Transforms the request parameters to the format expected by the provider.
  *
@@ -189,9 +207,11 @@ export const transformToProviderRequest = (
 ) => {
   // this returns a ReadableStream
   if (fn === 'uploadFile') {
-    return ProviderConfigs[provider].requestTransforms[fn](
-      requestBody,
-      requestHeaders
+    return transformToProviderRequestReadableStream(
+      provider,
+      requestBody as ReadableStream,
+      requestHeaders,
+      fn
     );
   }
   if (requestBody instanceof FormData) return requestBody;
