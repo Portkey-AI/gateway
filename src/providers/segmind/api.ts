@@ -5,7 +5,7 @@ const StabilityAIAPIConfig: ProviderAPIConfig = {
   headers: ({ providerOptions }) => {
     return { 'x-api-key': `${providerOptions.apiKey}` };
   },
-  getEndpoint: ({ gatewayRequestBody }) => {
+  getEndpoint: ({ gatewayRequestBodyJSON: gatewayRequestBody }) => {
     return `/${gatewayRequestBody.model}`;
   },
 };
