@@ -1113,7 +1113,8 @@ describe('allUppercase handler', () => {
     expect(result.error?.message).toBe('Missing text to analyze');
     expect(result.verdict).toBe(false);
     expect(result.data).toEqual({
-      explanation: 'An error occurred while checking uppercase: Missing text to analyze',
+      explanation:
+        'An error occurred while checking uppercase: Missing text to analyze',
       textExcerpt: 'No text available',
     });
   });
@@ -1195,7 +1196,8 @@ describe('allLowercase handler', () => {
     expect(result.error?.message).toBe('Missing text to analyze');
     expect(result.verdict).toBe(false);
     expect(result.data).toEqual({
-      explanation: 'An error occurred while checking lowercase: Missing text to analyze',
+      explanation:
+        'An error occurred while checking lowercase: Missing text to analyze',
       textExcerpt: 'No text available',
     });
   });

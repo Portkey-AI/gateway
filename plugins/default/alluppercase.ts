@@ -8,7 +8,10 @@ import { getText } from '../utils';
 
 function isAllUpperCase(str: string): boolean {
   // Remove non-letter characters and check if any lowercase letters exist
-  return str.replace(/[^a-zA-Z]/g, '') === str.replace(/[^a-zA-Z]/g, '').toUpperCase();
+  return (
+    str.replace(/[^a-zA-Z]/g, '') ===
+    str.replace(/[^a-zA-Z]/g, '').toUpperCase()
+  );
 }
 
 export const handler: PluginHandler = async (
@@ -22,7 +25,7 @@ export const handler: PluginHandler = async (
 
   try {
     let text = getText(context, eventType);
-    
+
     if (!text) {
       throw new Error('Missing text to analyze');
     }
@@ -35,15 +38,16 @@ export const handler: PluginHandler = async (
       explanation: verdict
         ? 'All alphabetic characters in the text are uppercase.'
         : 'The text contains lowercase characters.',
-      textExcerpt: text.length > 100 ? text.slice(0, 100) + '...' : text
+      textExcerpt: text.length > 100 ? text.slice(0, 100) + '...' : text,
     };
   } catch (e: any) {
     error = e;
     let textExcerpt = getText(context, eventType);
-    textExcerpt = textExcerpt?.length > 100 
-      ? textExcerpt.slice(0, 100) + '...' 
-      : textExcerpt;
-    
+    textExcerpt =
+      textExcerpt?.length > 100
+        ? textExcerpt.slice(0, 100) + '...'
+        : textExcerpt;
+
     data = {
       explanation: `An error occurred while checking uppercase: ${e.message}`,
       textExcerpt: textExcerpt || 'No text available',
