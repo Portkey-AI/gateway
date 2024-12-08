@@ -1257,35 +1257,102 @@ describe('allLowercase handler', () => {
 });
 
 describe('modelWhitelist handler', () => {
+  const mockEventType = 'beforeRequestHook';
+
   it('should return true verdict when the model requested is part of the whitelist', async () => {
     const context: PluginContext = {
       request: { json: { model: 'gemini-1.5-flash-001' } },
     };
-
     const parameters: PluginParameters = {
       models: ['gemini-1.5-flash-001'],
     };
-    const eventType = 'beforeRequestHook';
 
-    const result = await modelWhitelistHandler(context, parameters, eventType);
+    const result = await modelWhitelistHandler(
+      context,
+      parameters,
+      mockEventType
+    );
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
+    expect(result.data).toEqual({
+      verdict: true,
+      explanation: 'Model "gemini-1.5-flash-001" is allowed.',
+      requestedModel: 'gemini-1.5-flash-001',
+      allowedModels: ['gemini-1.5-flash-001'],
+    });
   });
+
   it('should return false verdict when the model requested is not part of the whitelist', async () => {
     const context: PluginContext = {
       request: { json: { model: 'gemini-1.5-pro-001' } },
     };
-
     const parameters: PluginParameters = {
       models: ['gemini-1.5-flash-001'],
     };
-    const eventType = 'beforeRequestHook';
 
-    const result = await modelWhitelistHandler(context, parameters, eventType);
+    const result = await modelWhitelistHandler(
+      context,
+      parameters,
+      mockEventType
+    );
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      verdict: false,
+      explanation: 'Model "gemini-1.5-pro-001" is not in the allowed list.',
+      requestedModel: 'gemini-1.5-pro-001',
+      allowedModels: ['gemini-1.5-flash-001'],
+    });
+  });
+
+  it('should handle missing model whitelist', async () => {
+    const context: PluginContext = {
+      request: { json: { model: 'gemini-1.5-pro-001' } },
+    };
+    const parameters: PluginParameters = {};
+
+    const result = await modelWhitelistHandler(
+      context,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.error).not.toBe(null);
+    expect(result.error?.message).toBe('Missing or invalid model whitelist');
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      explanation:
+        'An error occurred while checking model whitelist: Missing or invalid model whitelist',
+      requestedModel: 'gemini-1.5-pro-001',
+      allowedModels: [],
+    });
+  });
+
+  it('should handle missing model in request', async () => {
+    const context: PluginContext = {
+      request: { json: {} },
+    };
+    const parameters: PluginParameters = {
+      models: ['gemini-1.5-flash-001'],
+    };
+
+    const result = await modelWhitelistHandler(
+      context,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.error).not.toBe(null);
+    expect(result.error?.message).toBe('Missing model in request');
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      explanation:
+        'An error occurred while checking model whitelist: Missing model in request',
+      requestedModel: 'No model specified',
+      allowedModels: ['gemini-1.5-flash-001'],
+    });
   });
 });
 
