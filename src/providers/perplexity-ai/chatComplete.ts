@@ -41,6 +41,10 @@ export const PerplexityAIChatCompleteConfig: ProviderConfig = {
     min: 0,
     max: 1,
   },
+  search_domain_filter: {
+    param: 'search_domain_filter',
+    required: false,
+  },
   top_k: {
     param: 'top_k',
     min: 0,
@@ -83,6 +87,7 @@ export interface PerplexityAIChatCompleteResponse {
   model: string;
   object: string;
   created: number;
+  citations: string[];
   choices: PerplexityAIChatChoice[];
   usage: {
     prompt_tokens: number;
@@ -104,6 +109,7 @@ export interface PerplexityAIChatCompletionStreamChunk {
   model: string;
   object: string;
   created: number;
+  citations?: string[];
   usage: {
     prompt_tokens: number;
     completion_tokens: number;
@@ -114,8 +120,15 @@ export interface PerplexityAIChatCompletionStreamChunk {
 
 export const PerplexityAIChatCompleteResponseTransform: (
   response: PerplexityAIChatCompleteResponse | PerplexityAIErrorResponse,
-  responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response) => {
+  responseStatus: number,
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean
+) => ChatCompletionResponse | ErrorResponse = (
+  response,
+  _responseStatus,
+  _responseHeaders,
+  strictOpenAiCompliance
+) => {
   if ('error' in response) {
     return generateErrorResponse(
       {
@@ -135,6 +148,9 @@ export const PerplexityAIChatCompleteResponseTransform: (
       created: response.created,
       model: response.model,
       provider: PERPLEXITY_AI,
+      ...(!strictOpenAiCompliance && {
+        citations: response.citations,
+      }),
       choices: [
         {
           message: {
@@ -158,8 +174,16 @@ export const PerplexityAIChatCompleteResponseTransform: (
 };
 
 export const PerplexityAIChatCompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+  response: string,
+  fallbackId: string,
+  streamState: any,
+  strictOpenAiCompliance: boolean
+) => string = (
+  responseChunk,
+  fallbackId,
+  _streamState,
+  strictOpenAiCompliance
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
@@ -172,6 +196,9 @@ export const PerplexityAIChatCompleteStreamChunkTransform: (
       created: Math.floor(Date.now() / 1000),
       model: parsedChunk.model,
       provider: PERPLEXITY_AI,
+      ...(!strictOpenAiCompliance && {
+        citations: parsedChunk.citations,
+      }),
       choices: [
         {
           delta: {

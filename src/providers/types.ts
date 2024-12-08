@@ -1,3 +1,4 @@
+import { Context } from 'hono';
 import { Message, Options, Params } from '../types/requestBody';
 
 /**
@@ -35,10 +36,12 @@ export interface ProviderConfig {
 export interface ProviderAPIConfig {
   /** A function to generate the headers for the API request. */
   headers: (args: {
+    c: Context;
     providerOptions: Options;
     fn: string;
     transformedRequestBody: Record<string, any>;
     transformedRequestUrl: string;
+    gatewayRequestBody?: Params;
   }) => Promise<Record<string, any>> | Record<string, any>;
   /** A function to generate the baseURL based on parameters */
   getBaseURL: (args: { providerOptions: Options }) => string;
@@ -47,6 +50,14 @@ export interface ProviderAPIConfig {
     providerOptions: Options;
     fn: string;
     gatewayRequestBody: Params;
+    gatewayRequestURL: string;
+  }) => string;
+  /** A function to determine if the request body should be transformed to form data */
+  transformToFormData?: (args: { gatewayRequestBody: Params }) => boolean;
+  getProxyEndpoint?: (args: {
+    providerOptions: Options;
+    reqPath: string;
+    reqQuery: string;
   }) => string;
 }
 
@@ -62,7 +73,8 @@ export type endpointStrings =
   | 'imageGenerate'
   | 'createSpeech'
   | 'createTranscription'
-  | 'createTranslation';
+  | 'createTranslation'
+  | 'realtime';
 
 /**
  * A collection of API configurations for multiple AI providers.
@@ -136,6 +148,7 @@ export interface ChatChoice {
  */
 export interface ChatCompletionResponse extends CResponse {
   choices: ChatChoice[];
+  provider?: string;
 }
 
 /**
@@ -157,7 +170,7 @@ export interface ErrorResponse {
  * @interface
  */
 export interface ImageGenerateResponse {
-  created: string;
+  created: number;
   data: object[];
   provider: string;
 }
