@@ -575,94 +575,201 @@ describe('contains handler', () => {
 });
 
 describe('validUrls handler', () => {
+  const mockEventType = 'afterRequestHook';
+
   it('should return true verdict for valid URLs in response text', async () => {
     const context: PluginContext = {
       response: {
-        text: 'adding some text before this https://example.com and adding some text after',
+        text: 'Check out https://example.com and https://google.com',
       },
     };
-    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      onlyDNS: true,
+    };
 
+    const result = await validUrlsHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toMatchObject({
+      verdict: true,
+      validationMethod: 'DNS lookup',
+      validUrls: expect.arrayContaining([
+        'https://example.com',
+        'https://google.com',
+      ]),
+      invalidUrls: [],
+    });
+  });
+
+  it('should return false verdict for invalid URLs', async () => {
+    const context: PluginContext = {
+      response: {
+        text: 'Check out https://invalid-domain-123456.com',
+      },
+    };
+    const parameters: PluginParameters = {
+      onlyDNS: true,
+    };
+
+    const result = await validUrlsHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toMatchObject({
+      verdict: false,
+      validationMethod: 'DNS lookup',
+      validUrls: [],
+      invalidUrls: ['https://invalid-domain-123456.com'],
+    });
+  });
+
+  it('should handle text with no URLs', async () => {
+    const context: PluginContext = {
+      response: {
+        text: 'This text contains no URLs',
+      },
+    };
     const parameters: PluginParameters = {
       onlyDNS: false,
     };
 
-    const result = await validUrlsHandler(context, parameters, eventType);
+    const result = await validUrlsHandler(context, parameters, mockEventType);
 
     expect(result.error).toBe(null);
-    expect(result.verdict).toBe(true);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toMatchObject({
+      explanation: 'No URLs found in the text.',
+      urls: [],
+      validationMethod: 'HTTP request',
+    });
   });
 
-  it('should return false verdict for invalid URLs in response text', async () => {
+  it('should handle empty text', async () => {
     const context: PluginContext = {
-      response: {
-        text: 'adding some text before this https://invalidurl.cm and adding some text after',
-      },
+      response: { text: '' },
     };
-    const eventType = 'afterRequestHook';
-
     const parameters: PluginParameters = {
       onlyDNS: false,
     };
 
-    const result = await validUrlsHandler(context, parameters, eventType);
+    const result = await validUrlsHandler(context, parameters, mockEventType);
 
-    expect(result.error).toBe(null);
+    expect(result.error).not.toBe(null);
+    expect(result.error?.message).toBe('Missing text to analyze');
     expect(result.verdict).toBe(false);
+    expect(result.data).toMatchObject({
+      explanation:
+        'An error occurred while validating URLs: Missing text to analyze',
+      validationMethod: 'HTTP request',
+      textExcerpt: 'No text available',
+    });
   });
 
-  it('should return true verdict for URLs with valid DNS in response text', async () => {
+  it('should handle malformed URLs', async () => {
     const context: PluginContext = {
       response: {
-        text: 'adding some text before this https://portkey.ai and adding some text after',
+        text: 'Check out https://malformed.123 and http://this-is-definitely-invalid-12345.com/path?invalid=true#bad',
       },
     };
-    const eventType = 'afterRequestHook';
-
     const parameters: PluginParameters = {
       onlyDNS: true,
     };
 
-    const result = await validUrlsHandler(context, parameters, eventType);
+    const result = await validUrlsHandler(context, parameters, mockEventType);
 
     expect(result.error).toBe(null);
-    expect(result.verdict).toBe(true);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toMatchObject({
+      verdict: false,
+      validationMethod: 'DNS lookup',
+      validUrls: [],
+      invalidUrls: expect.arrayContaining([
+        'https://malformed.123',
+        'http://this-is-definitely-invalid-12345.com/path?invalid=true#bad',
+      ]),
+      explanation: 'Some URLs are invalid (2 of 2 failed).',
+    });
   });
 
-  it('should return false verdict for URLs with invalid DNS in response text', async () => {
+  it('should handle URLs with query parameters and fragments', async () => {
     const context: PluginContext = {
       response: {
-        text: 'adding some text before this https://invalidurl.com and adding some text after',
+        text: 'Check out https://example.com/path?param=1#section',
       },
     };
-    const eventType = 'afterRequestHook';
-
     const parameters: PluginParameters = {
       onlyDNS: true,
     };
 
-    const result = await validUrlsHandler(context, parameters, eventType);
+    const result = await validUrlsHandler(context, parameters, mockEventType);
 
     expect(result.error).toBe(null);
-    expect(result.verdict).toBe(false);
+    expect(result.data).toMatchObject({
+      validationMethod: 'DNS lookup',
+      validUrls: ['https://example.com/path?param=1#section'],
+    });
   });
 
-  it('should return true verdict for URLs with valid DNS and invalid URL in response text', async () => {
+  it('should handle multiple URLs with mixed validity', async () => {
     const context: PluginContext = {
       response: {
-        text: 'adding some text before this https://example.com and adding some text after https://invalidurl.com',
+        text: 'Valid: https://example.com Invalid: https://invalid-domain-123456.com',
       },
     };
-    const eventType = 'afterRequestHook';
-
     const parameters: PluginParameters = {
       onlyDNS: true,
     };
 
-    const result = await validUrlsHandler(context, parameters, eventType);
+    const result = await validUrlsHandler(context, parameters, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
+    expect(result.data).toMatchObject({
+      verdict: false,
+      validationMethod: 'DNS lookup',
+      validUrls: ['https://example.com'],
+      invalidUrls: ['https://invalid-domain-123456.com'],
+      explanation: 'Some URLs are invalid (1 of 2 failed).',
+    });
+  });
+
+  it('should handle HTTP validation mode', async () => {
+    const context: PluginContext = {
+      response: {
+        text: 'Check out https://example.com',
+      },
+    };
+    const parameters: PluginParameters = {
+      onlyDNS: false,
+    };
+
+    const result = await validUrlsHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.data).toMatchObject({
+      validationMethod: 'HTTP request',
+      textExcerpt: 'Check out https://example.com',
+    });
+  });
+
+  it('should handle very long text with URLs', async () => {
+    const longText = `Here's a very long text ${'-'.repeat(200)} with a URL https://example.com in the middle ${'-'.repeat(200)}`;
+    const context: PluginContext = {
+      response: {
+        text: longText,
+      },
+    };
+    const parameters: PluginParameters = {
+      onlyDNS: true,
+    };
+
+    const result = await validUrlsHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.data.textExcerpt.length).toBeLessThanOrEqual(103); // 100 chars + '...'
+    expect(result.data.textExcerpt.endsWith('...')).toBe(true);
+    expect(result.data.validUrls).toContain('https://example.com');
   });
 });
 
