@@ -1054,122 +1054,166 @@ describe('log handler', () => {
 });
 
 describe('allUppercase handler', () => {
-  it('should return true verdict for a sentence with all uppercase characters', async () => {
-    const context: PluginContext = {
-      response: { text: 'THIS IS A SENTENCE. THIS IS ANOTHER SENTENCE.' },
-    };
-    const eventType = 'afterRequestHook';
+  const mockEventType = 'afterRequestHook';
 
-    const result = await allUppercaseHandler(context, {}, eventType);
+  it('should return true verdict and data for all uppercase text', async () => {
+    const context: PluginContext = {
+      response: { text: 'THIS IS ALL UPPERCASE TEXT!' },
+    };
+
+    const result = await allUppercaseHandler(context, {}, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
+    expect(result.data).toEqual({
+      verdict: true,
+      explanation: 'All alphabetic characters in the text are uppercase.',
+      textExcerpt: 'THIS IS ALL UPPERCASE TEXT!',
+    });
   });
-  it('should return false verdict for a sentence with not all uppercase characters', async () => {
-    const context: PluginContext = {
-      response: { text: 'This is a sentence. This is another sentence' },
-    };
-    const eventType = 'afterRequestHook';
 
-    const result = await allUppercaseHandler(context, {}, eventType);
+  it('should return false verdict and data for mixed case text', async () => {
+    const context: PluginContext = {
+      response: { text: 'This Has Mixed Case.' },
+    };
+
+    const result = await allUppercaseHandler(context, {}, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      verdict: false,
+      explanation: 'The text contains lowercase characters.',
+      textExcerpt: 'This Has Mixed Case.',
+    });
   });
-});
-describe('endsWith handler', () => {
-  it('should return true verdict if response ends with provided suffix', async () => {
-    const eventType = 'afterRequestHook';
+
+  it('should handle long text by truncating excerpt', async () => {
+    const longText = 'A'.repeat(150);
     const context: PluginContext = {
-      response: {
-        text: 'This is a sentence that ends with the expected word i.e. HarryPortkey.',
-      },
+      response: { text: longText },
     };
-    const parameters: PluginParameters = {
-      suffix: 'HarryPortkey',
-    };
-    const result = await endsWithHandler(context, parameters, eventType);
+
+    const result = await allUppercaseHandler(context, {}, mockEventType);
+
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
+    expect(result.data.textExcerpt.length).toBeLessThanOrEqual(103);
+    expect(result.data.textExcerpt.endsWith('...')).toBe(true);
   });
-  it('should return false verdict if response not ending with provided suffix', async () => {
+
+  it('should handle empty text', async () => {
     const context: PluginContext = {
-      response: {
-        text: 'This is a sentence ending with wrong word i.e. MalfoyPortkey.',
-      },
-    };
-    const eventType = 'afterRequestHook';
-
-    const parameters: PluginParameters = {
-      suffix: 'HarryPortkey',
+      response: { text: '' },
     };
 
-    const result = await endsWithHandler(context, parameters, eventType);
+    const result = await allUppercaseHandler(context, {}, mockEventType);
+
+    expect(result.error).not.toBe(null);
+    expect(result.error?.message).toBe('Missing text to analyze');
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      explanation: 'An error occurred while checking uppercase: Missing text to analyze',
+      textExcerpt: 'No text available',
+    });
+  });
+
+  it('should handle text with only non-letter characters', async () => {
+    const context: PluginContext = {
+      response: { text: '123 !@#$%' },
+    };
+
+    const result = await allUppercaseHandler(context, {}, mockEventType);
+
     expect(result.error).toBe(null);
-    expect(result.verdict).toBe(false);
-  });
-
-  it('should return error for missing suffix in parameters', async () => {
-    const context: PluginContext = {
-      response: { text: 'This is a sentence which ends with Portkey.' },
-    };
-    const eventType = 'afterRequestHook';
-
-    const parameters: PluginParameters = {};
-
-    const result = await endsWithHandler(context, parameters, eventType);
-
-    expect(result.error).toBeInstanceOf(Error);
-    expect(result.error?.message).toBe('Missing suffix or text');
-    expect(result.verdict).toBe(false);
-    expect(result.data).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toEqual({
+      verdict: true,
+      explanation: 'All alphabetic characters in the text are uppercase.',
+      textExcerpt: '123 !@#$%',
+    });
   });
 });
 
 describe('allLowercase handler', () => {
-  it('should return true verdict for a sentence with all lowercase characters', async () => {
-    const context: PluginContext = {
-      response: { text: 'this is a sentence. this is another sentence' },
-    };
-    const eventType = 'afterRequestHook';
+  const mockEventType = 'afterRequestHook';
 
-    const result = await allLowerCaseHandler(context, {}, eventType);
+  it('should return true verdict and data for all lowercase text', async () => {
+    const context: PluginContext = {
+      response: { text: 'this is all lowercase text!' },
+    };
+
+    const result = await allLowerCaseHandler(context, {}, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
+    expect(result.data).toEqual({
+      verdict: true,
+      explanation: 'All alphabetic characters in the text are lowercase.',
+      textExcerpt: 'this is all lowercase text!',
+    });
   });
-  it('should return false verdict for a sentence with not all lowercase characters', async () => {
-    const context: PluginContext = {
-      response: { text: 'THIS IS A SENTENCE. THIS IS ANOTHER SENTENCE.' },
-    };
-    const eventType = 'afterRequestHook';
 
-    const result = await allLowerCaseHandler(context, {}, eventType);
+  it('should return false verdict and data for mixed case text', async () => {
+    const context: PluginContext = {
+      response: { text: 'This Has Mixed Case.' },
+    };
+
+    const result = await allLowerCaseHandler(context, {}, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      verdict: false,
+      explanation: 'The text contains uppercase characters.',
+      textExcerpt: 'This Has Mixed Case.',
+    });
   });
-  it('should return true verdict for a sentence with all lowercase characters', async () => {
-    const context: PluginContext = {
-      request: { text: 'this is a sentence. this is another sentence' },
-    };
-    const eventType = 'beforeRequestHook';
 
-    const result = await allLowerCaseHandler(context, {}, eventType);
+  it('should handle long text by truncating excerpt', async () => {
+    const longText = 'a'.repeat(150);
+    const context: PluginContext = {
+      response: { text: longText },
+    };
+
+    const result = await allLowerCaseHandler(context, {}, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
+    expect(result.data.textExcerpt.length).toBeLessThanOrEqual(103);
+    expect(result.data.textExcerpt.endsWith('...')).toBe(true);
   });
-  it('should return false verdict for a sentence with not all lowercase characters', async () => {
-    const context: PluginContext = {
-      request: { text: 'THIS IS A SENTENCE. THIS IS ANOTHER SENTENCE.' },
-    };
-    const eventType = 'beforeRequestHook';
 
-    const result = await allLowerCaseHandler(context, {}, eventType);
+  it('should handle empty text', async () => {
+    const context: PluginContext = {
+      response: { text: '' },
+    };
+
+    const result = await allLowerCaseHandler(context, {}, mockEventType);
+
+    expect(result.error).not.toBe(null);
+    expect(result.error?.message).toBe('Missing text to analyze');
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      explanation: 'An error occurred while checking lowercase: Missing text to analyze',
+      textExcerpt: 'No text available',
+    });
+  });
+
+  it('should handle text with only non-letter characters', async () => {
+    const context: PluginContext = {
+      response: { text: '123 !@#$%' },
+    };
+
+    const result = await allLowerCaseHandler(context, {}, mockEventType);
 
     expect(result.error).toBe(null);
-    expect(result.verdict).toBe(false);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toEqual({
+      verdict: true,
+      explanation: 'All alphabetic characters in the text are lowercase.',
+      textExcerpt: '123 !@#$%',
+    });
   });
 });
 
