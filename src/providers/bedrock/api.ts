@@ -2,17 +2,45 @@ import { env } from 'hono/adapter';
 import { GatewayError } from '../../errors/GatewayError';
 import { ProviderAPIConfig } from '../types';
 import { bedrockInvokeModels } from './constants';
-import { generateAWSHeaders, getAssumedRoleCredentials } from './utils';
+import {
+  generateAWSHeaders,
+  generatePresignedUrl,
+  getAssumedRoleCredentials,
+} from './utils';
 
 const BedrockAPIConfig: ProviderAPIConfig = {
-  getBaseURL: ({ providerOptions }) =>
-    `https://bedrock-runtime.${providerOptions.awsRegion || 'us-east-1'}.amazonaws.com`,
+  getMethod: ({ fn, requestMethod }) => {
+    if (fn === 'uploadFile') return 'PUT';
+    return requestMethod;
+  },
+  getBaseURL: async ({ providerOptions, fn }) => {
+    if (fn === 'uploadFile') {
+      const url = `https://${providerOptions.awsS3Bucket}.s3.${providerOptions.awsRegion}.amazonaws.com/${providerOptions.awsS3ObjectKey}`;
+      return await generatePresignedUrl(
+        url,
+        's3',
+        providerOptions.awsRegion,
+        providerOptions.awsAccessKeyId,
+        providerOptions.awsSecretAccessKey
+      );
+    }
+    return `https://bedrock-runtime.${providerOptions.awsRegion || 'us-east-1'}.amazonaws.com`;
+  },
   headers: async ({
     c,
+    fn,
     providerOptions,
     transformedRequestBody,
     transformedRequestUrl,
   }) => {
+    if (fn === 'uploadFile') {
+      const requestHeaders = Object.fromEntries(c.req.raw.headers);
+      return {
+        'content-type': 'application/octet-stream',
+        'content-length': requestHeaders['content-length'],
+      };
+    }
+
     const headers = {
       'content-type': 'application/json',
     };
@@ -65,6 +93,8 @@ const BedrockAPIConfig: ProviderAPIConfig = {
     );
   },
   getEndpoint: ({ fn, gatewayRequestBodyJSON: gatewayRequestBody }) => {
+    if (fn === 'uploadFile') return '';
+
     const { model, stream } = gatewayRequestBody;
     if (!model) throw new GatewayError('Model is required');
     let mappedFn = fn;

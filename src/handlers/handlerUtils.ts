@@ -272,7 +272,8 @@ export async function tryPost(
     requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || '';
 
   const baseUrl =
-    customHost || apiConfig.getBaseURL({ providerOptions: providerOption });
+    customHost ||
+    (await apiConfig.getBaseURL({ providerOptions: providerOption, fn }));
 
   const endpoint = apiConfig.getEndpoint({
     providerOptions: providerOption,
@@ -303,7 +304,7 @@ export async function tryPost(
   const fetchOptions = constructRequest(
     headers,
     provider,
-    method,
+    apiConfig.getMethod?.({ fn, requestMethod: method }) || method,
     forwardHeaders,
     requestHeaders,
     fn,
@@ -781,6 +782,8 @@ export function constructConfigFromRequestHeaders(
     awsRoleArn: requestHeaders[`x-${POWERED_BY}-aws-role-arn`],
     awsAuthType: requestHeaders[`x-${POWERED_BY}-aws-auth-type`],
     awsExternalId: requestHeaders[`x-${POWERED_BY}-aws-external-id`],
+    awsS3Bucket: requestHeaders[`x-${POWERED_BY}-aws-s3-bucket`],
+    awsS3ObjectKey: requestHeaders[`x-${POWERED_BY}-aws-s3-object-key`],
   };
 
   const sagemakerConfig = {

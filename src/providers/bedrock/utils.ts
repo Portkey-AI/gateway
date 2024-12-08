@@ -8,6 +8,48 @@ import {
 } from './chatComplete';
 import { Context } from 'hono';
 import { env } from 'hono/adapter';
+import * as crypto from 'crypto';
+
+export const generatePresignedUrl = async (
+  url: string,
+  awsService: string = 's3',
+  awsRegion: string = '',
+  awsAccessKeyID: string = '',
+  awsSecretAccessKey: string = '',
+  awsSessionToken?: string | undefined
+) => {
+  const signer = new SignatureV4({
+    service: awsService,
+    region: awsRegion,
+    credentials: {
+      accessKeyId: awsAccessKeyID,
+      secretAccessKey: awsSecretAccessKey,
+      ...(awsSessionToken && { sessionToken: awsSessionToken }),
+    },
+    sha256: Sha256,
+  });
+  const urlObj = new URL(url);
+  const hostname = urlObj.hostname;
+  const headers: Record<string, string> = {
+    'X-Amz-Content-Sha256': 'UNSIGNED-PAYLOAD',
+    host: hostname,
+  };
+  const request = {
+    method: 'PUT',
+    path: urlObj.pathname,
+    protocol: 'https',
+    hostname: urlObj.hostname,
+    headers: headers,
+  };
+  const signed = await signer.presign(request, {
+    expiresIn: 300, // 5 minutes
+  });
+  let signedURL = `https://${signed.hostname}${signed.path}?`;
+  signedURL += Object.entries(signed.query || {})
+    .map(([key, value]) => `${key}=${value}`)
+    .join('&');
+  return signedURL;
+};
 
 export const generateAWSHeaders = async (
   body: Record<string, any>,

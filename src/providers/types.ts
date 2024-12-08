@@ -44,7 +44,11 @@ export interface ProviderAPIConfig {
     gatewayRequestBody?: Params;
   }) => Promise<Record<string, any>> | Record<string, any>;
   /** A function to generate the baseURL based on parameters */
-  getBaseURL: (args: { providerOptions: Options }) => string;
+  getBaseURL: (args: {
+    providerOptions: Options;
+    fn?: endpointStrings;
+    requestHeaders?: Record<string, string>;
+  }) => Promise<string> | string;
   /** A function to generate the endpoint based on parameters */
   getEndpoint: (args: {
     providerOptions: Options;
@@ -60,6 +64,8 @@ export interface ProviderAPIConfig {
     reqPath: string;
     reqQuery: string;
   }) => string;
+  /** A function that returns the HTTP method for the API request */
+  getMethod?: (args: { fn: string; requestMethod: string }) => string;
 }
 
 export type endpointStrings =
