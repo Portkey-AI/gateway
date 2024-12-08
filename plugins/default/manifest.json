@@ -36,7 +36,7 @@
       "name": "Sentence Count",
       "id": "sentenceCount",
       "type": "guardrail",
-      "supportedHooks": ["beforeRequest", "afterRequest"],
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
       "description": [
         {
           "type": "subHeading",
@@ -75,7 +75,7 @@
       "name": "Word Count",
       "id": "wordCount",
       "type": "guardrail",
-      "supportedHooks": ["beforeRequest", "afterRequest"],
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
       "description": [
         {
           "type": "subHeading",
@@ -114,7 +114,7 @@
       "name": "Character Count",
       "id": "characterCount",
       "type": "guardrail",
-      "supportedHooks": ["beforeRequest", "afterRequest"],
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
       "description": [
         {
           "type": "subHeading",
@@ -153,7 +153,7 @@
       "name": "JSON Schema",
       "id": "jsonSchema",
       "type": "guardrail",
-      "supportedHooks": ["afterRequest"],
+      "supportedHooks": ["afterRequestHook"],
       "description": [
         {
           "type": "subHeading",
@@ -181,7 +181,7 @@
       "name": "JSON Keys",
       "id": "jsonKeys",
       "type": "guardrail",
-      "supportedHooks": ["afterRequest"],
+      "supportedHooks": ["afterRequestHook"],
       "description": [
         {
           "type": "subHeading",
@@ -224,7 +224,7 @@
       "name": "Contains",
       "id": "contains",
       "type": "guardrail",
-      "supportedHooks": ["afterRequest"],
+      "supportedHooks": ["afterRequestHook"],
       "description": [
         {
           "type": "subHeading",
@@ -267,7 +267,7 @@
       "name": "Valid URLs",
       "id": "validUrls",
       "type": "guardrail",
-      "supportedHooks": ["afterRequest"],
+      "supportedHooks": ["afterRequestHook"],
       "description": [
         {
           "type": "subHeading",
@@ -324,9 +324,9 @@
                 "text": "Enter the headers to send with the request."
               }
             ]
-          },
-          "required": ["webhookURL"]
-        }
+          }
+        },
+        "required": ["webhookURL"]
       }
     },
     {
@@ -362,16 +362,16 @@
                 "text": "Enter the headers to send with the request."
               }
             ]
-          },
-          "required": ["logURL"]
-        }
+          }
+        },
+        "required": ["logURL"]
       }
     },
     {
       "name": "Contains Code",
       "id": "containsCode",
       "type": "guardrail",
-      "supportedHooks": ["afterRequest"],
+      "supportedHooks": ["afterRequestHook"],
       "description": [
         {
           "type": "subHeading",
