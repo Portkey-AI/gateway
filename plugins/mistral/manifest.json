@@ -1,0 +1,135 @@
+{
+  "id": "mistral",
+  "description": "Mistral Content Moderation classifier leverages the most relevant policy categories for effective guardrails and introduces a pragmatic approach to LLM safety by addressing model-generated harms such as unqualified advice and PII",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "Find your API key in the Mistral la-plateforme",
+        "encrypted": true
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Detect PII",
+      "id": "pii",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Content that requests, shares, or attempts to elicit personal identifying information such as full names, addresses, phone numbers, social security numbers, or financial account details."
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Detect Sexual Content",
+      "id": "sexual",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Material that explicitly depicts, describes, or promotes sexual activities, nudity, or sexual services. This includes pornographic content, graphic descriptions of sexual acts, and solicitation for sexual purposes. Educational or medical content about sexual health presented in a non-explicit, informational context is generally exempted."
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Detect Hate & Discrimination",
+      "id": "hate_and_discrimination",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Content that expresses prejudice, hostility, or advocates discrimination against individuals or groups based on protected characteristics such as race, ethnicity, religion, gender, sexual orientation, or disability. This includes slurs, dehumanizing language, calls for exclusion or harm targeted at specific groups, and persistent harassment or bullying of individuals based on these characteristics."
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Detect Violent & Thereat",
+      "id": "violence_and_threats",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Content that describes, glorifies, incites, or threatens physical violence against individuals or groups. This includes graphic depictions of injury or death, explicit threats of harm, and instructions for carrying out violent acts. This category covers both targeted threats and general promotion or glorification of violence."
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Detect Dangerous & Criminal Content",
+      "id": "dangerous_and_criminal_content",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Content that promotes or provides instructions for illegal activities or extremely hazardous behaviors that pose a significant risk of physical harm, death, or legal consequences. This includes guidance on creating weapons or explosives, encouragement of extreme risk-taking behaviors, and promotion of non-violent crimes such as fraud, theft, or drug trafficking."
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Detect Selfharm",
+      "id": "selfharm",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Content that promotes, instructs, plans, or encourages deliberate self-injury, suicide, eating disorders, or other self-destructive behaviors. This includes detailed methods, glorification, statements of intent, dangerous challenges, and related slang terms"
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Detect Health",
+      "id": "health",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Content that contains or tries to elicit detailed or tailored medical advice."
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Detect Finance",
+      "id": "financial",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Content that contains or tries to elicit detailed or tailored financial advice."
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Detect Law",
+      "id": "law",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Content that contains or tries to elicit detailed or tailored legal advice."
+        }
+      ],
+      "parameters": {}
+    }
+  ]
+}
