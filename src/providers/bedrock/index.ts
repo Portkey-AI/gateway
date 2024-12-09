@@ -37,6 +37,10 @@ import {
 } from './complete';
 import { BEDROCK_STABILITY_V1_MODELS } from './constants';
 import {
+  BedrockCreateBatchConfig,
+  BedrockCreateBatchResponseTransform,
+} from './createBatch';
+import {
   BedrockCohereEmbedConfig,
   BedrockCohereEmbedResponseTransform,
   BedrockTitanEmbedConfig,
@@ -182,8 +186,10 @@ const BedrockConfig: ProviderConfigs = {
     if (!config.responseTransforms) {
       config.responseTransforms = {
         uploadFile: BedrockUploadFileResponseTransform,
+        createBatch: BedrockCreateBatchResponseTransform,
       };
     }
+    config.createBatch = BedrockCreateBatchConfig;
     return config;
   },
 };

@@ -1,0 +1,3 @@
+interface BedrockCreateBatchResponse {
+  jobArn: string;
+}

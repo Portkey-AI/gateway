@@ -24,7 +24,8 @@ const BedrockAPIConfig: ProviderAPIConfig = {
         providerOptions.awsSecretAccessKey
       );
     }
-    return `https://bedrock-runtime.${providerOptions.awsRegion || 'us-east-1'}.amazonaws.com`;
+    const isAWSControlPlaneEndpoint = fn === 'createBatch';
+    return `https://${isAWSControlPlaneEndpoint ? 'bedrock' : 'bedrock-runtime'}.${providerOptions.awsRegion || 'us-east-1'}.amazonaws.com`;
   },
   headers: async ({
     c,
@@ -128,6 +129,9 @@ const BedrockAPIConfig: ProviderAPIConfig = {
       }
       case 'imageGenerate': {
         return endpoint;
+      }
+      case 'createBatch': {
+        return '/model-invocation-job';
       }
       default:
         return '';
