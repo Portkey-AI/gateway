@@ -67,6 +67,17 @@
                 "violence/graphic"
               ]
             }
+          },
+          "not": {
+            "type": "boolean",
+            "label": "Invert Result",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the verdict will be inverted"
+              }
+            ],
+            "default": false
           }
         },
         "required": ["categories"]
@@ -199,6 +210,17 @@
               "Persian",
               "Vietnamese"
             ]
+          },
+          "not": {
+            "type": "boolean",
+            "label": "Invert Result",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the verdict will be inverted"
+              }
+            ],
+            "default": false
           }
         }
       }
@@ -247,6 +269,17 @@
                 "SSN"
               ]
             }
+          },
+          "not": {
+            "type": "boolean",
+            "label": "Invert Result",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the verdict will be inverted"
+              }
+            ],
+            "default": false
           }
         },
         "required": ["categories"]
@@ -265,7 +298,19 @@
       ],
       "parameters": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "not": {
+            "type": "boolean",
+            "label": "Invert Result",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the verdict will be inverted"
+              }
+            ],
+            "default": false
+          }
+        }
       }
     }
   ]
