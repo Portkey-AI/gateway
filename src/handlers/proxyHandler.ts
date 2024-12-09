@@ -1,11 +1,10 @@
 import { Context } from 'hono';
-import { CONTENT_TYPES, POWERED_BY } from '../globals';
+import { CONTENT_TYPES } from '../globals';
 import {
   constructConfigFromRequestHeaders,
   tryTargetsRecursively,
 } from './handlerUtils';
 import { RouterError } from '../errors/RouterError';
-import { env } from 'hono/adapter';
 
 async function getRequestData(request: Request, contentType: string) {
   let finalRequest: any;
@@ -24,34 +23,6 @@ async function getRequestData(request: Request, contentType: string) {
   return finalRequest;
 }
 
-function headersToSend(
-  headersObj: Record<string, string>,
-  customHeadersToIgnore: Array<string>
-): Record<string, string> {
-  let final: Record<string, string> = {};
-  const poweredByHeadersPattern = `x-${POWERED_BY}-`;
-  const headersToAvoidForCloudflare = ['expect'];
-  const headersToAvoid = [
-    ...customHeadersToIgnore,
-    ...headersToAvoidForCloudflare,
-  ];
-  headersToAvoid.push('content-length');
-  Object.keys(headersObj).forEach((key: string) => {
-    if (
-      !headersToAvoid.includes(key) &&
-      !key.startsWith(poweredByHeadersPattern)
-    ) {
-      final[key] = headersObj[key];
-    }
-  });
-
-  // Remove brotli from accept-encoding because cloudflare has problems with it
-  if (final['accept-encoding']?.includes('br'))
-    final['accept-encoding'] = final['accept-encoding']?.replace('br', '');
-
-  return final;
-}
-
 export async function proxyHandler(c: Context): Promise<Response> {
   try {
     let requestHeaders = Object.fromEntries(c.req.raw.headers);
@@ -65,7 +36,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
       c,
       camelCaseConfig,
       request,
-      headersToSend(requestHeaders, env(c).CUSTOM_HEADERS_TO_IGNORE ?? []),
+      requestHeaders,
       'proxy',
       c.req.method,
       'config'
