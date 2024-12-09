@@ -20,7 +20,7 @@ export type PluginHandler = (
   context: PluginContext,
   parameters: PluginParameters,
   eventType: HookEventType,
-  options: {
+  options?: {
     env: Record<string, any>;
   }
 ) => Promise<PluginHandlerResponse>;

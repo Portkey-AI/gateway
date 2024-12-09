@@ -15,31 +15,52 @@ export const handler: PluginHandler = async (
 ) => {
   let error = null;
   let verdict = false;
-  let data = null;
+  let data: any = null;
 
   try {
-    // Get the text from the request or response
     const text = getText(context, eventType);
     const languages = parameters.language;
+    const not = parameters.not || false;
 
-    // Find the language of the text
     const result: any = await fetchPortkey(
-      options.env,
+      options?.env || {},
       PORTKEY_ENDPOINTS.LANGUAGE,
       parameters.credentials,
       { input: text }
     );
-    const predictedLanguage = result[0][0].label;
 
-    // Check if the predicted language matches the language set in the parameters
-    if (languages.includes(predictedLanguage)) {
-      verdict = true;
-    } else {
-      verdict = false;
-    }
-    data = result[0];
+    const predictedLanguage = result[0][0].label;
+    const inLanguageList = languages.includes(predictedLanguage);
+    verdict = not ? !inLanguageList : inLanguageList;
+
+    data = {
+      verdict,
+      not,
+      explanation: verdict
+        ? not
+          ? `The text is not in any of the specified languages (${languages.join(', ')}) as expected.`
+          : `The text is in one of the specified languages (detected: ${predictedLanguage}).`
+        : not
+          ? `The text is in one of the specified languages (${languages.join(', ')}) when it should not be.`
+          : `The text is not in any of the specified languages (detected: ${predictedLanguage}).`,
+      analysis: result[0],
+      detectedLanguage: predictedLanguage,
+      allowedLanguages: languages,
+      textExcerpt: text.length > 100 ? text.slice(0, 100) + '...' : text,
+    };
   } catch (e) {
     error = e as Error;
+    const text = getText(context, eventType);
+    data = {
+      explanation: `An error occurred while checking language: ${error.message}`,
+      not: parameters.not || false,
+      allowedLanguages: parameters.language || [],
+      textExcerpt: text
+        ? text.length > 100
+          ? text.slice(0, 100) + '...'
+          : text
+        : 'No text available',
+    };
   }
 
   return { error, verdict, data };

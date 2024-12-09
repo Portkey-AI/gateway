@@ -2,13 +2,22 @@ import { PluginContext, PluginHandler, PluginParameters } from '../types';
 import { post } from '../utils';
 
 function parseHeaders(headers: unknown): Record<string, string> {
-  if (typeof headers === 'object' && headers !== null) {
-    return headers as Record<string, string>;
+  try {
+    if (typeof headers === 'object' && headers !== null) {
+      return headers as Record<string, string>;
+    }
+    if (typeof headers === 'string') {
+      try {
+        const parsed = JSON.parse(headers as string);
+        return parsed;
+      } catch {
+        throw new Error('Invalid headers format');
+      }
+    }
+    return {};
+  } catch (error: any) {
+    throw error;
   }
-  if (typeof headers === 'string') {
-    return JSON.parse(headers);
-  }
-  return {};
 }
 
 export const handler: PluginHandler = async (
@@ -17,16 +26,56 @@ export const handler: PluginHandler = async (
 ) => {
   let error = null;
   let verdict = false;
-  let data = null;
+  let data: any = null;
+
   try {
-    let url = parameters.webhookURL;
+    const url = parameters.webhookURL;
 
-    const headers = parseHeaders(parameters.headers);
+    if (!url) {
+      throw new Error('Missing webhook URL');
+    }
 
-    ({ verdict, data } = await post(url, context, { headers }, 3000));
+    // Validate URL format
+    try {
+      new URL(url);
+    } catch {
+      throw new Error('Invalid webhook URL format');
+    }
+
+    let headers: Record<string, string>;
+    try {
+      headers = parseHeaders(parameters.headers);
+    } catch (e: any) {
+      throw new Error(`Failed to parse headers: ${e.message}`);
+    }
+
+    const response = await post(url, context, { headers }, 3000);
+    verdict = response.verdict;
+
+    data = {
+      verdict,
+      explanation: verdict
+        ? 'Webhook request succeeded'
+        : 'Webhook request failed',
+      webhookUrl: url,
+      responseData: response.data,
+      requestContext: {
+        headers,
+        timeout: 3000,
+      },
+    };
   } catch (e: any) {
-    delete e.stack;
     error = e;
+    delete error.stack;
+
+    data = {
+      explanation: `Webhook error: ${e.message}`,
+      webhookUrl: parameters.webhookURL || 'No URL provided',
+      requestContext: {
+        headers: parameters.headers || {},
+        timeout: 3000,
+      },
+    };
   }
 
   return { error, verdict, data };

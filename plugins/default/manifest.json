@@ -27,6 +27,17 @@
                 "text": "Enter the regex pattern"
               }
             ]
+          },
+          "not": {
+            "type": "boolean",
+            "label": "Invert Match",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the verdict will be inverted"
+              }
+            ],
+            "default": false
           }
         },
         "required": ["rule"]
@@ -36,7 +47,7 @@
       "name": "Sentence Count",
       "id": "sentenceCount",
       "type": "guardrail",
-      "supportedHooks": ["beforeRequest", "afterRequest"],
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
       "description": [
         {
           "type": "subHeading",
@@ -67,6 +78,17 @@
               }
             ],
             "default": 99999
+          },
+          "not": {
+            "type": "boolean",
+            "label": "Invert Range Check",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the verdict will be true when count is outside the range"
+              }
+            ],
+            "default": false
           }
         }
       }
@@ -75,7 +97,7 @@
       "name": "Word Count",
       "id": "wordCount",
       "type": "guardrail",
-      "supportedHooks": ["beforeRequest", "afterRequest"],
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
       "description": [
         {
           "type": "subHeading",
@@ -106,6 +128,17 @@
               }
             ],
             "default": 99999
+          },
+          "not": {
+            "type": "boolean",
+            "label": "Invert Range Check",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the verdict will be true when count is outside the range"
+              }
+            ],
+            "default": false
           }
         }
       }
@@ -114,7 +147,7 @@
       "name": "Character Count",
       "id": "characterCount",
       "type": "guardrail",
-      "supportedHooks": ["beforeRequest", "afterRequest"],
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
       "description": [
         {
           "type": "subHeading",
@@ -145,6 +178,17 @@
               }
             ],
             "default": 9999999
+          },
+          "not": {
+            "type": "boolean",
+            "label": "Invert Range Check",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the verdict will be true when count is outside the range"
+              }
+            ],
+            "default": false
           }
         }
       }
@@ -153,7 +197,7 @@
       "name": "JSON Schema",
       "id": "jsonSchema",
       "type": "guardrail",
-      "supportedHooks": ["afterRequest"],
+      "supportedHooks": ["afterRequestHook"],
       "description": [
         {
           "type": "subHeading",
@@ -172,6 +216,17 @@
                 "text": "Enter the JSON schema to validate against."
               }
             ]
+          },
+          "not": {
+            "type": "boolean",
+            "label": "Invert Schema Match",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the verdict will be true when schema does not match"
+              }
+            ],
+            "default": false
           }
         },
         "required": ["schema"]
@@ -181,7 +236,7 @@
       "name": "JSON Keys",
       "id": "jsonKeys",
       "type": "guardrail",
-      "supportedHooks": ["afterRequest"],
+      "supportedHooks": ["afterRequestHook"],
       "description": [
         {
           "type": "subHeading",
@@ -224,7 +279,7 @@
       "name": "Contains",
       "id": "contains",
       "type": "guardrail",
-      "supportedHooks": ["afterRequest"],
+      "supportedHooks": ["afterRequestHook"],
       "description": [
         {
           "type": "subHeading",
@@ -267,7 +322,7 @@
       "name": "Valid URLs",
       "id": "validUrls",
       "type": "guardrail",
-      "supportedHooks": ["afterRequest"],
+      "supportedHooks": ["afterRequestHook"],
       "description": [
         {
           "type": "subHeading",
@@ -284,6 +339,17 @@
               {
                 "type": "subHeading",
                 "text": "Only check if all URL domains resolve."
+              }
+            ],
+            "default": false
+          },
+          "not": {
+            "type": "boolean",
+            "label": "Invert URL Validation",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the verdict will be true when URLs are invalid"
               }
             ],
             "default": false
@@ -324,9 +390,9 @@
                 "text": "Enter the headers to send with the request."
               }
             ]
-          },
-          "required": ["webhookURL"]
-        }
+          }
+        },
+        "required": ["webhookURL"]
       }
     },
     {
@@ -362,16 +428,16 @@
                 "text": "Enter the headers to send with the request."
               }
             ]
-          },
-          "required": ["logURL"]
-        }
+          }
+        },
+        "required": ["logURL"]
       }
     },
     {
       "name": "Contains Code",
       "id": "containsCode",
       "type": "guardrail",
-      "supportedHooks": ["afterRequest"],
+      "supportedHooks": ["afterRequestHook"],
       "description": [
         {
           "type": "subHeading",
@@ -417,6 +483,17 @@
               "Markdown",
               "Dockerfile"
             ]
+          },
+          "not": {
+            "type": "boolean",
+            "label": "Invert Code Check",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the verdict will be true when code is not found"
+              }
+            ],
+            "default": false
           }
         },
         "required": ["format"]
@@ -433,7 +510,22 @@
           "text": "Checks if content has all uppercase letters."
         }
       ],
-      "parameters": {}
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "not": {
+            "type": "boolean",
+            "label": "Invert Case Check",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the verdict will be true when text is not all uppercase"
+              }
+            ],
+            "default": false
+          }
+        }
+      }
     },
     {
       "name": "Ends With",
@@ -458,6 +550,17 @@
                 "text": "Enter the suffix to check for."
               }
             ]
+          },
+          "not": {
+            "type": "boolean",
+            "label": "Invert Suffix Check",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the verdict will be true when text does not end with suffix"
+              }
+            ],
+            "default": false
           }
         },
         "required": ["suffix"]
@@ -474,7 +577,22 @@
           "text": "Checks if content has all lowercase letters."
         }
       ],
-      "parameters": {}
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "not": {
+            "type": "boolean",
+            "label": "Invert Case Check",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the verdict will be true when text is not all lowercase"
+              }
+            ],
+            "default": false
+          }
+        }
+      }
     },
     {
       "name": "Model whitelisting",
@@ -502,6 +620,17 @@
             "items": {
               "type": "string"
             }
+          },
+          "not": {
+            "type": "boolean",
+            "label": "Invert Model Check",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the verdict will be true when model is not in the list"
+              }
+            ],
+            "default": false
           }
         },
         "required": ["models"]

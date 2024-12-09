@@ -15,39 +15,60 @@ export const handler: PluginHandler = async (
 ) => {
   let error = null;
   let verdict = false;
-  let data = null;
+  let data: any = null;
 
   try {
-    // Get the text from the request or response
     const text = getText(context, eventType);
     const categories = parameters.categories;
+    const not = parameters.not || false;
 
-    // Get data from the relevant tool
     const result: any = await fetchPortkey(
-      options.env,
+      options?.env || {},
       PORTKEY_ENDPOINTS.MODERATIONS,
       parameters.credentials,
       { input: text }
     );
 
-    // Check if the text is flagged and parameters.categories matches any of the categories set to true in the result
     const categoriesFlagged = Object.keys(result.results[0].categories).filter(
       (category) => result.results[0].categories[category]
     );
 
-    // Find the intersection of the categoriesFlagged and the categories to check
     const intersection = categoriesFlagged.filter((category) =>
       categories.includes(category)
     );
 
-    if (intersection.length > 0) {
-      verdict = false;
-      data = { flagged_categories: intersection };
-    } else {
-      verdict = true;
-    }
+    const hasRestrictedContent = intersection.length > 0;
+    verdict = not ? hasRestrictedContent : !hasRestrictedContent;
+
+    data = {
+      verdict,
+      not,
+      explanation: verdict
+        ? not
+          ? 'Found restricted content categories as expected.'
+          : 'No restricted content categories were found.'
+        : not
+          ? 'No restricted content categories were found when they should have been.'
+          : `Found restricted content categories: ${intersection.join(', ')}`,
+      flaggedCategories: intersection,
+      restrictedCategories: categories,
+      allFlaggedCategories: categoriesFlagged,
+      moderationResults: result.results[0],
+      textExcerpt: text.length > 100 ? text.slice(0, 100) + '...' : text,
+    };
   } catch (e) {
     error = e as Error;
+    const text = getText(context, eventType);
+    data = {
+      explanation: `An error occurred during content moderation: ${error.message}`,
+      not: parameters.not || false,
+      restrictedCategories: parameters.categories || [],
+      textExcerpt: text
+        ? text.length > 100
+          ? text.slice(0, 100) + '...'
+          : text
+        : 'No text available',
+    };
   }
 
   return { error, verdict, data };
