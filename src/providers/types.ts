@@ -219,7 +219,7 @@ export interface GetFilesResponse {
 export interface File {
   id: string;
   object: string;
-  bytes: number;
+  bytes?: number;
   created_at: number;
   filename: string;
   purpose:

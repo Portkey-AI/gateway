@@ -1,5 +1,5 @@
 import { COHERE } from '../../globals';
-import { transformStream } from '../../handlers/streamHandlerUtils';
+import { getStreamTransformer } from '../../handlers/streamHandlerUtils';
 import { ErrorResponse, UploadFileResponse } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { CohereErrorResponse } from './types';
@@ -13,7 +13,7 @@ const CohereFileUploadFieldsMapping = {
   file: 'file',
 };
 
-const CohereBatchRequestRowTransform = (row: Record<string, any>) => {
+export const CohereBatchRequestRowTransform = (row: Record<string, any>) => {
   return { text: row.body.input };
 };
 
@@ -21,12 +21,12 @@ export const CohereUploadFileRequestTransform = (
   requestBody: ReadableStream,
   requestHeaders: Record<string, string>
 ) => {
-  const streamTransformer = transformStream(
+  const transformStream = getStreamTransformer(
     requestHeaders,
-    CohereFileUploadFieldsMapping,
-    CohereBatchRequestRowTransform
+    CohereBatchRequestRowTransform,
+    CohereFileUploadFieldsMapping
   );
-  return requestBody.pipeThrough(streamTransformer);
+  return requestBody.pipeThrough(transformStream);
 };
 
 export const CohereUploadFileResponseTransform: (
@@ -39,7 +39,6 @@ export const CohereUploadFileResponseTransform: (
     return {
       id: response.id,
       object: 'file',
-      bytes: 0,
       created_at: Math.floor(Date.now() / 1000),
       filename: '',
       purpose: '',

@@ -11,51 +11,37 @@ const getBoundaryFromContentType = (contentType: string | null): string => {
 };
 
 /**
- * Updates the content-type header of the original request to use the new boundary.
- * @param requestHeaders - The headers of the original request.
- * @param newBoundary - The new boundary string to be used in the multipart/form-data request body.
- */
-const updateContentType = (
-  requestHeaders: Record<string, string>,
-  newBoundary: string
-) => {
-  requestHeaders['content-type'] =
-    `multipart/form-data; boundary=${newBoundary.slice(2)}`;
-};
-
-/**
  * Transforms the key of the current field in the multipart/form-data request body using the fieldsMapping.
- * @param currentHeaders - The headers of the current multipart/form-data field.
- * @param fieldsMapping - The mapping of the fields to be transformed.
+ * @param headers - The headers of the current multipart/form-data field.
+ * @param fieldsMapping - The mapping of the fields.
  * @returns The transformed headers.
  */
 const transformHeaders = (
-  currentHeaders: string,
+  headers: string,
   fieldsMapping: Record<string, string>
 ) => {
   const field = Object.keys(fieldsMapping).find((key) =>
-    currentHeaders.includes(`name="${key}"`)
+    headers.includes(`name="${key}"`)
   );
-  if (!field) return currentHeaders;
-  return currentHeaders.replace(
-    `name="${field}"`,
-    `name="${fieldsMapping[field]}"`
-  );
+  if (!field) return headers;
+  return headers.replace(`name="${field}"`, `name="${fieldsMapping[field]}"`);
 };
 
 /**
- * Checks if the current field in the multipart/form-data request body include any of the fields in the fieldsMapping.
- * @param currentHeaders - The headers of the current multipart/form-data field.
- * @param fieldsMapping - The mapping of the fields to be transformed.
- * @returns A boolean indicating if the current headers include any of the fields in the fieldsMapping.
+ * Enqueues the value of the current field in the multipart/form-data request body.
+ * (This currently does not transform the value)
+ * @param chunk - The current chunk of the multipart/form-data body.
+ * @param controller - The controller for the TransformStream.
+ * @param buffer - The buffer to be updated.
+ * @returns The updated buffer.
  */
-const checkIfFieldIsValid = (
-  currentHeaders: string,
-  fieldsMapping: Record<string, string>
+const enqueueFieldValueAndUpdateBuffer = (
+  chunk: string,
+  controller: TransformStreamDefaultController,
+  buffer: string
 ) => {
-  return Object.keys(fieldsMapping).some((key) =>
-    currentHeaders.includes(`name="${key}"`)
-  );
+  controller.enqueue(new TextEncoder().encode(chunk));
+  return buffer.slice(chunk.length);
 };
 
 /**
@@ -63,7 +49,7 @@ const checkIfFieldIsValid = (
  * @param chunk - The current chunk of the multipart/form-data body.
  * @param controller - The controller for the TransformStream.
  * @param buffer - The buffer to be updated.
- * @param rowTransform - The transformation function for each jsonl row in the multipart/form-data body.
+ * @param rowTransform - The function used to transform the row.
  * @returns The updated buffer.
  */
 const enqueueFileContentAndUpdateBuffer = (
@@ -94,40 +80,23 @@ const enqueueFileContentAndUpdateBuffer = (
 };
 
 /**
- * Enqueues the value of the current field in the multipart/form-data request body.
- * (This currently does not transform the value)
- * @param chunk - The current chunk of the multipart/form-data body.
- * @param controller - The controller for the TransformStream.
- * @param buffer - The buffer to be updated.
- * @returns The updated buffer.
- */
-const enqueueFieldValueAndUpdateBuffer = (
-  chunk: string,
-  controller: TransformStreamDefaultController,
-  buffer: string
-) => {
-  controller.enqueue(new TextEncoder().encode(chunk));
-  return buffer.slice(chunk.length);
-};
-
-/**
  * Returns an instance of TransformStream used for transforming a multipart/form-data
  * @param requestHeaders - The headers of the original request.
- * @param fieldsMapping - The mapping of the fields to be transformed. (Used to tranform field key, not value)
- * @param rowTransform - The transformation function for each jsonl row in the multipart/form-data body.
+ * @param rowTransform - The function used to transform the row.
  * @returns An instance of TransformStream.
  */
-export const transformStream = (
+export const getStreamTransformer = (
   requestHeaders: Record<string, string>,
-  fieldsMapping: Record<string, string>,
-  rowTransform: (row: Record<string, any>) => Record<string, any>
+  rowTransform: (row: Record<string, any>) => Record<string, any>,
+  fieldsMapping: Record<string, string>
 ) => {
-  const newBoundary =
-    '------FormBoundary' + Math.random().toString(36).slice(2);
-  updateContentType(requestHeaders, newBoundary);
   const decoder = new TextDecoder();
   const boundary =
     '--' + getBoundaryFromContentType(requestHeaders['content-type']);
+  const newBoundary =
+    '------FormBoundary' + Math.random().toString(36).slice(2);
+  requestHeaders['content-type'] =
+    `multipart/form-data; boundary=${newBoundary.slice(2)}`;
   let buffer = '';
   let isParsingHeaders = true;
   let currentHeaders = '';
@@ -135,7 +104,7 @@ export const transformStream = (
   const encoder = new TextEncoder();
   let isValidField = true;
 
-  return new TransformStream({
+  const transformStream = new TransformStream({
     transform(chunk, controller) {
       buffer += decoder.decode(chunk, { stream: true });
 
@@ -150,7 +119,9 @@ export const transformStream = (
             'Content-Disposition: form-data; name="file"'
           );
           // this will be specific to provider supported fields
-          isValidField = checkIfFieldIsValid(currentHeaders, fieldsMapping);
+          isValidField = currentHeaders.includes(
+            'Content-Disposition: form-data; name="file"'
+          );
           if (isValidField) {
             const transformedHeaders = transformHeaders(
               currentHeaders,
@@ -199,4 +170,5 @@ export const transformStream = (
       }
     },
   });
+  return transformStream;
 };
