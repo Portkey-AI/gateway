@@ -25,6 +25,7 @@ export const handler: PluginHandler = async (
 
   try {
     const schema = parameters.schema;
+    const not = parameters.not || false;
     if (!schema || typeof schema !== 'object') {
       throw new Error('Missing or invalid JSON schema');
     }
@@ -90,12 +91,17 @@ export const handler: PluginHandler = async (
       }
 
       if (bestMatch.json) {
-        verdict = bestMatch.isValid;
+        verdict = not ? !bestMatch.isValid : bestMatch.isValid;
         data = {
           matchedJson: bestMatch.json,
-          explanation: bestMatch.isValid
-            ? `Successfully validated JSON against the provided schema.`
-            : `Failed to validate JSON against the provided schema.`,
+          not,
+          explanation: verdict
+            ? not
+              ? `Successfully validated JSON does not match the schema as expected.`
+              : `Successfully validated JSON against the provided schema.`
+            : not
+              ? `JSON matches the schema when it should not.`
+              : `Failed to validate JSON against the provided schema.`,
           validationErrors: bestMatch.errors.map((err) => ({
             path: err.instancePath || '',
             message: err.message || '',
@@ -105,6 +111,7 @@ export const handler: PluginHandler = async (
     } else {
       data = {
         explanation: 'No valid JSON found in the response.',
+        not,
       };
     }
   } catch (e: any) {
@@ -112,6 +119,7 @@ export const handler: PluginHandler = async (
     data = {
       explanation: 'An error occurred while processing the JSON.',
       error: e.message || e.toString(),
+      not: parameters.not || false,
     };
   }
 

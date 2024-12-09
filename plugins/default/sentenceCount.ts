@@ -22,6 +22,7 @@ export const handler: PluginHandler = async (
   try {
     const minCount = parameters.minSentences;
     const maxCount = parameters.maxSentences;
+    const not = parameters.not || false;
     let text = getText(context, eventType);
 
     if (typeof minCount !== 'number' || typeof maxCount !== 'number') {
@@ -31,16 +32,22 @@ export const handler: PluginHandler = async (
     // Treat empty string as valid input with 0 sentences
     text = text || '';
     let count = countSentences(text);
-    verdict = count >= minCount && count <= maxCount;
+    const inRange = count >= minCount && count <= maxCount;
+    verdict = not ? !inRange : inRange;
 
     data = {
       sentenceCount: count,
       minCount,
       maxCount,
+      not,
       verdict,
       explanation: verdict
-        ? `The sentence count (${count}) is within the specified range of ${minCount} to ${maxCount}.`
-        : `The sentence count (${count}) is outside the specified range of ${minCount} to ${maxCount}.`,
+        ? not
+          ? `The sentence count (${count}) is outside the specified range of ${minCount} to ${maxCount} as expected.`
+          : `The sentence count (${count}) is within the specified range of ${minCount} to ${maxCount}.`
+        : not
+          ? `The sentence count (${count}) is within the specified range of ${minCount} to ${maxCount} when it should not be.`
+          : `The sentence count (${count}) is outside the specified range of ${minCount} to ${maxCount}.`,
       textExcerpt: text.length > 100 ? text.slice(0, 100) + '...' : text,
     };
   } catch (e: any) {
@@ -50,6 +57,7 @@ export const handler: PluginHandler = async (
       explanation: `An error occurred: ${e.message}`,
       minCount: parameters.minSentences,
       maxCount: parameters.maxSentences,
+      not: parameters.not || false,
       textExcerpt: text.length > 100 ? text.slice(0, 100) + '...' : text,
     };
   }

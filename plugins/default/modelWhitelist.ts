@@ -16,6 +16,7 @@ export const handler: PluginHandler = async (
 
   try {
     const modelList = parameters.models;
+    const not = parameters.not || false;
     let requestModel = context.request?.json.model;
 
     if (!modelList || !Array.isArray(modelList)) {
@@ -26,13 +27,19 @@ export const handler: PluginHandler = async (
       throw new Error('Missing model in request');
     }
 
-    verdict = modelList.includes(requestModel);
+    const inList = modelList.includes(requestModel);
+    verdict = not ? !inList : inList;
 
     data = {
       verdict,
+      not,
       explanation: verdict
-        ? `Model "${requestModel}" is allowed.`
-        : `Model "${requestModel}" is not in the allowed list.`,
+        ? not
+          ? `Model "${requestModel}" is not in the allowed list as expected.`
+          : `Model "${requestModel}" is allowed.`
+        : not
+          ? `Model "${requestModel}" is in the allowed list when it should not be.`
+          : `Model "${requestModel}" is not in the allowed list.`,
       requestedModel: requestModel,
       allowedModels: modelList,
     };
@@ -41,6 +48,7 @@ export const handler: PluginHandler = async (
     data = {
       explanation: `An error occurred while checking model whitelist: ${e.message}`,
       requestedModel: context.request?.json.model || 'No model specified',
+      not: parameters.not || false,
       allowedModels: parameters.models || [],
     };
   }

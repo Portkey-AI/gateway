@@ -22,6 +22,7 @@ export const handler: PluginHandler = async (
   try {
     const minCount = parameters.minCharacters;
     const maxCount = parameters.maxCharacters;
+    const not = parameters.not || false;
     let text = getText(context, eventType);
 
     if (!text) {
@@ -33,16 +34,22 @@ export const handler: PluginHandler = async (
     }
 
     const count = countCharacters(text);
-    verdict = count >= minCount && count <= maxCount;
+    const inRange = count >= minCount && count <= maxCount;
+    verdict = not ? !inRange : inRange;
 
     data = {
       characterCount: count,
       minCharacters: minCount,
       maxCharacters: maxCount,
+      not,
       verdict,
       explanation: verdict
-        ? `The text contains ${count} characters, which is within the specified range of ${minCount}-${maxCount} characters.`
-        : `The text contains ${count} characters, which is outside the specified range of ${minCount}-${maxCount} characters.`,
+        ? not
+          ? `The text contains ${count} characters, which is outside the specified range of ${minCount}-${maxCount} characters as expected.`
+          : `The text contains ${count} characters, which is within the specified range of ${minCount}-${maxCount} characters.`
+        : not
+          ? `The text contains ${count} characters, which is within the specified range of ${minCount}-${maxCount} characters when it should not be.`
+          : `The text contains ${count} characters, which is outside the specified range of ${minCount}-${maxCount} characters.`,
       textExcerpt: text.length > 100 ? text.slice(0, 100) + '...' : text,
     };
   } catch (e: any) {
@@ -57,6 +64,7 @@ export const handler: PluginHandler = async (
       explanation: `An error occurred while counting characters: ${e.message}`,
       minCharacters: parameters.minCharacters,
       maxCharacters: parameters.maxCharacters,
+      not: parameters.not || false,
       textExcerpt: textExcerpt || 'No text available',
     };
   }

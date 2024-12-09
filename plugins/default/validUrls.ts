@@ -18,6 +18,7 @@ export const handler: PluginHandler = async (
 
   try {
     let content = getText(context, eventType);
+    const not = parameters.not || false;
 
     if (!content) {
       throw new Error('Missing text to analyze');
@@ -32,6 +33,7 @@ export const handler: PluginHandler = async (
         explanation: 'No URLs found in the text.',
         urls: [],
         validationMethod: onlyDNS ? 'DNS lookup' : 'HTTP request',
+        not,
         textExcerpt:
           content.length > 100 ? content.slice(0, 100) + '...' : content,
       };
@@ -48,7 +50,8 @@ export const handler: PluginHandler = async (
         }))
       );
       validationResults = results;
-      verdict = results.every((result) => result.isValid);
+      const allValid = results.every((result) => result.isValid);
+      verdict = not ? !allValid : allValid;
     } else {
       const results = await Promise.all(
         urls.map(async (url) => ({
@@ -57,7 +60,8 @@ export const handler: PluginHandler = async (
         }))
       );
       validationResults = results;
-      verdict = results.every((result) => result.isValid);
+      const allValid = results.every((result) => result.isValid);
+      verdict = not ? !allValid : allValid;
     }
 
     const invalidUrls = validationResults
@@ -69,9 +73,14 @@ export const handler: PluginHandler = async (
 
     data = {
       verdict,
+      not,
       explanation: verdict
-        ? `All URLs are valid (${validUrls.length} found).`
-        : `Some URLs are invalid (${invalidUrls.length} of ${urls.length} failed).`,
+        ? not
+          ? `All URLs are invalid as expected (${invalidUrls.length} of ${urls.length}).`
+          : `All URLs are valid (${validUrls.length} found).`
+        : not
+          ? `Some URLs are valid when they should all be invalid (${validUrls.length} of ${urls.length}).`
+          : `Some URLs are invalid (${invalidUrls.length} of ${urls.length} failed).`,
       validUrls,
       invalidUrls,
       validationMethod: onlyDNS ? 'DNS lookup' : 'HTTP request',
@@ -84,6 +93,7 @@ export const handler: PluginHandler = async (
     data = {
       explanation: `An error occurred while validating URLs: ${e.message}`,
       validationMethod: parameters.onlyDNS ? 'DNS lookup' : 'HTTP request',
+      not: parameters.not || false,
       textExcerpt: content
         ? content.length > 100
           ? content.slice(0, 100) + '...'

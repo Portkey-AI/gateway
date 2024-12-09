@@ -25,19 +25,25 @@ export const handler: PluginHandler = async (
 
   try {
     let text = getText(context, eventType);
+    const not = parameters.not || false;
 
     if (!text) {
       throw new Error('Missing text to analyze');
     }
 
-    verdict = isAllLowerCase(text);
-    const lettersOnly = text.replace(/[^a-zA-Z]/g, '');
+    const isLower = isAllLowerCase(text);
+    verdict = not ? !isLower : isLower;
 
     data = {
       verdict,
+      not,
       explanation: verdict
-        ? 'All alphabetic characters in the text are lowercase.'
-        : 'The text contains uppercase characters.',
+        ? not
+          ? 'The text contains uppercase characters as expected.'
+          : 'All alphabetic characters in the text are lowercase.'
+        : not
+          ? 'All alphabetic characters in the text are lowercase when they should not be.'
+          : 'The text contains uppercase characters.',
       textExcerpt: text.length > 100 ? text.slice(0, 100) + '...' : text,
     };
   } catch (e: any) {
@@ -50,6 +56,7 @@ export const handler: PluginHandler = async (
 
     data = {
       explanation: `An error occurred while checking lowercase: ${e.message}`,
+      not: parameters.not || false,
       textExcerpt: textExcerpt || 'No text available',
     };
   }

@@ -17,6 +17,7 @@ export const handler: PluginHandler = async (
 
   try {
     const suffix = parameters.suffix;
+    const not = parameters.not || false;
     let text = getText(context, eventType);
 
     if (!text) {
@@ -27,14 +28,20 @@ export const handler: PluginHandler = async (
       throw new Error('Missing or empty suffix');
     }
 
-    verdict = text.endsWith(suffix) || text.endsWith(`${suffix}.`);
+    const endsWith = text.endsWith(suffix) || text.endsWith(`${suffix}.`);
+    verdict = not ? !endsWith : endsWith;
 
     data = {
       suffix,
+      not,
       verdict,
       explanation: verdict
-        ? `The text ends with "${suffix}"${text.endsWith(`${suffix}.`) ? ' (including trailing period)' : ''}.`
-        : `The text does not end with "${suffix}".`,
+        ? not
+          ? `The text does not end with "${suffix}" as expected.`
+          : `The text ends with "${suffix}"${text.endsWith(`${suffix}.`) ? ' (including trailing period)' : ''}.`
+        : not
+          ? `The text ends with "${suffix}" when it should not.`
+          : `The text does not end with "${suffix}".`,
       textExcerpt: text.length > 100 ? text.slice(0, 100) + '...' : text,
     };
   } catch (e: any) {
@@ -48,6 +55,7 @@ export const handler: PluginHandler = async (
     data = {
       explanation: `An error occurred while checking suffix: ${e.message}`,
       suffix: parameters.suffix,
+      not: parameters.not || false,
       textExcerpt: textExcerpt || 'No text available',
     };
   }

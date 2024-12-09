@@ -46,6 +46,7 @@ export const handler: PluginHandler = async (
 
   try {
     const format = parameters.format;
+    const not = parameters.not || false;
     if (!format) {
       throw new Error('Missing required parameter: format');
     }
@@ -62,12 +63,14 @@ export const handler: PluginHandler = async (
       data = {
         explanation: 'No code blocks found in the text',
         searchedFormat: format,
+        not,
         foundFormats: [],
         textExcerpt:
           responseText.length > 100
             ? responseText.slice(0, 100) + '...'
             : responseText,
       };
+      verdict = not;
       return { error, verdict, data };
     }
 
@@ -76,13 +79,19 @@ export const handler: PluginHandler = async (
       return languageMap[markdownLanguage] || markdownLanguage;
     });
 
-    verdict = foundLanguages.some((lang) => lang === format);
+    const hasFormat = foundLanguages.some((lang) => lang === format);
+    verdict = not ? !hasFormat : hasFormat;
 
     data = {
       explanation: verdict
-        ? `Found code block(s) in ${format} format`
-        : `No code blocks in ${format} format found`,
+        ? not
+          ? `No code blocks in ${format} format found as expected`
+          : `Found code block(s) in ${format} format`
+        : not
+          ? `Found code block(s) in ${format} format when none were expected`
+          : `No code blocks in ${format} format found`,
       searchedFormat: format,
+      not,
       foundFormats: foundLanguages,
       textExcerpt:
         responseText.length > 100
@@ -100,6 +109,7 @@ export const handler: PluginHandler = async (
     data = {
       explanation: `Error while checking for code blocks: ${e.message}`,
       searchedFormat: parameters.format,
+      not: parameters.not || false,
       textExcerpt: textExcerpt || 'No text available',
     };
   }

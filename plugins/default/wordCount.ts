@@ -22,6 +22,7 @@ export const handler: PluginHandler = async (
   try {
     const minCount = parameters.minWords;
     const maxCount = parameters.maxWords;
+    const not = parameters.not || false;
     let text = getText(context, eventType).trim();
 
     if (!text) {
@@ -33,16 +34,22 @@ export const handler: PluginHandler = async (
     }
 
     const count = countWords(text);
-    verdict = count >= minCount && count <= maxCount;
+    const inRange = count >= minCount && count <= maxCount;
+    verdict = not ? !inRange : inRange;
 
     data = {
       wordCount: count,
       minWords: minCount,
       maxWords: maxCount,
+      not,
       verdict,
       explanation: verdict
-        ? `The text contains ${count} words, which is within the specified range of ${minCount}-${maxCount} words.`
-        : `The text contains ${count} words, which is outside the specified range of ${minCount}-${maxCount} words.`,
+        ? not
+          ? `The text contains ${count} words, which is outside the specified range of ${minCount}-${maxCount} words as expected.`
+          : `The text contains ${count} words, which is within the specified range of ${minCount}-${maxCount} words.`
+        : not
+          ? `The text contains ${count} words, which is within the specified range of ${minCount}-${maxCount} words when it should not be.`
+          : `The text contains ${count} words, which is outside the specified range of ${minCount}-${maxCount} words.`,
       textExcerpt: text.length > 100 ? text.slice(0, 100) + '...' : text,
     };
   } catch (e: any) {
@@ -56,6 +63,7 @@ export const handler: PluginHandler = async (
       explanation: `An error occurred while processing word count: ${e.message}`,
       minWords: parameters.minWords,
       maxWords: parameters.maxWords,
+      not: parameters.not || false,
       textExcerpt: textExcerpt || 'No text available',
     };
   }

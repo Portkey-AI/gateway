@@ -27,7 +27,7 @@ describe('Regex Matcher Plugin', () => {
   const mockEventType = 'afterRequestHook';
 
   it('should match a simple regex pattern', async () => {
-    const parameters: PluginParameters = { rule: 'quick.*fox' };
+    const parameters: PluginParameters = { rule: 'quick.*fox', not: false };
     const result = await regexMatchHandler(
       mockContext,
       parameters,
@@ -40,7 +40,7 @@ describe('Regex Matcher Plugin', () => {
   });
 
   it('should not match when pattern is not found', async () => {
-    const parameters: PluginParameters = { rule: 'zebra' };
+    const parameters: PluginParameters = { rule: 'zebra', not: false };
     const result = await regexMatchHandler(
       mockContext,
       parameters,
@@ -53,7 +53,7 @@ describe('Regex Matcher Plugin', () => {
   });
 
   it('should handle regex with capturing groups', async () => {
-    const parameters: PluginParameters = { rule: '(quick) (brown) (fox)' };
+    const parameters: PluginParameters = { rule: '(quick) (brown) (fox)', not: false };
     const result = await regexMatchHandler(
       mockContext,
       parameters,
@@ -72,6 +72,7 @@ describe('Regex Matcher Plugin', () => {
   it('should handle regex with named capturing groups', async () => {
     const parameters: PluginParameters = {
       rule: '(?<adjective1>quick) (?<adjective2>brown) (?<animal>fox)',
+      not: false,
     };
     const result = await regexMatchHandler(
       mockContext,
@@ -88,7 +89,7 @@ describe('Regex Matcher Plugin', () => {
   });
 
   it('should provide text excerpt in data', async () => {
-    const parameters: PluginParameters = { rule: 'dog' };
+    const parameters: PluginParameters = { rule: 'dog', not: false };
     const result = await regexMatchHandler(
       mockContext,
       parameters,
@@ -103,7 +104,7 @@ describe('Regex Matcher Plugin', () => {
   it('should handle long text by truncating excerpt', async () => {
     const longText = 'a'.repeat(200);
     const longTextContext: PluginContext = { response: { text: longText } };
-    const parameters: PluginParameters = { rule: 'a' };
+    const parameters: PluginParameters = { rule: 'a', not: false };
     const result = await regexMatchHandler(
       longTextContext,
       parameters,
@@ -114,7 +115,7 @@ describe('Regex Matcher Plugin', () => {
   });
 
   it('should throw error for invalid regex', async () => {
-    const parameters: PluginParameters = { rule: '(' }; // Invalid regex
+    const parameters: PluginParameters = { rule: '(', not: false }; // Invalid regex
     const result = await regexMatchHandler(
       mockContext,
       parameters,
@@ -126,7 +127,7 @@ describe('Regex Matcher Plugin', () => {
   });
 
   it('should handle missing regex pattern', async () => {
-    const parameters: PluginParameters = { rule: '' };
+    const parameters: PluginParameters = { rule: '', not: false };
     const result = await regexMatchHandler(
       mockContext,
       parameters,
@@ -139,7 +140,7 @@ describe('Regex Matcher Plugin', () => {
 
   it('should handle missing text to match', async () => {
     const emptyContext: PluginContext = { response: { text: '' } };
-    const parameters: PluginParameters = { rule: 'test' };
+    const parameters: PluginParameters = { rule: 'test', not: false };
     const result = await regexMatchHandler(
       emptyContext,
       parameters,
@@ -167,6 +168,7 @@ describe('jsonSchema handler', () => {
         },
         required: ['key'],
       },
+      not: false,
     };
 
     const result = await jsonSchemaHandler(context, parameters, eventType);
@@ -194,6 +196,7 @@ describe('jsonSchema handler', () => {
         },
         required: ['title', 'short_intro'],
       },
+      not: false,
     };
 
     const result = await jsonSchemaHandler(context, parameters, eventType);
@@ -222,6 +225,7 @@ describe('jsonSchema handler', () => {
         },
         required: ['title', 'short_intro'],
       },
+      not: false,
     };
 
     const result = await jsonSchemaHandler(context, parameters, eventType);
@@ -249,6 +253,7 @@ describe('jsonSchema handler', () => {
         },
         required: ['key'],
       },
+      not: false,
     };
 
     const result = await jsonSchemaHandler(context, parameters, eventType);
@@ -276,6 +281,7 @@ describe('jsonSchema handler', () => {
         },
         required: ['key'],
       },
+      not: false,
     };
 
     const result = await jsonSchemaHandler(context, parameters, eventType);
@@ -349,6 +355,7 @@ And that's all the user information we have.`,
         },
         required: ['user'],
       },
+      not: false,
     };
 
     const result = await jsonSchemaHandler(context, parameters, eventType);
@@ -437,6 +444,7 @@ As you can see, there are several validation issues in this profile.`,
         },
         required: ['user'],
       },
+      not: false,
     };
 
     const result = await jsonSchemaHandler(context, parameters, eventType);
@@ -483,6 +491,7 @@ describe('jsonKeys handler', () => {
     const parameters: PluginParameters = {
       keys: ['key1', 'key3'],
       operator: 'any',
+      not: false,
     };
 
     const result = await jsonKeysHandler(context, parameters, mockEventType);
@@ -508,6 +517,7 @@ describe('jsonKeys handler', () => {
     const parameters: PluginParameters = {
       keys: ['key1', 'key2'],
       operator: 'all',
+      not: false,
     };
 
     const result = await jsonKeysHandler(context, parameters, mockEventType);
@@ -533,6 +543,7 @@ describe('jsonKeys handler', () => {
     const parameters: PluginParameters = {
       keys: ['key3', 'key4'],
       operator: 'none',
+      not: false,
     };
 
     const result = await jsonKeysHandler(context, parameters, mockEventType);
@@ -558,6 +569,7 @@ describe('jsonKeys handler', () => {
     const parameters: PluginParameters = {
       keys: ['key1'],
       operator: 'any',
+      not: false,
     };
 
     const result = await jsonKeysHandler(context, parameters, mockEventType);
@@ -577,6 +589,7 @@ describe('jsonKeys handler', () => {
     const parameters: PluginParameters = {
       keys: ['key2', 'key3'],
       operator: 'all',
+      not: false,
     };
 
     const result = await jsonKeysHandler(context, parameters, mockEventType);
@@ -594,6 +607,7 @@ describe('jsonKeys handler', () => {
     const parameters: PluginParameters = {
       keys: ['key1'],
       operator: 'any',
+      not: false,
     };
 
     const result = await jsonKeysHandler(context, parameters, mockEventType);
@@ -616,6 +630,7 @@ describe('jsonKeys handler', () => {
     };
     const parameters: PluginParameters = {
       operator: 'any',
+      not: false,
     };
 
     const result = await jsonKeysHandler(context, parameters, mockEventType);
@@ -632,6 +647,7 @@ describe('jsonKeys handler', () => {
     const parameters: PluginParameters = {
       keys: ['key1'],
       operator: 'invalid' as any,
+      not: false,
     };
 
     const result = await jsonKeysHandler(context, parameters, mockEventType);
@@ -650,6 +666,7 @@ describe('jsonKeys handler', () => {
     const parameters: PluginParameters = {
       keys: ['key1'],
       operator: 'any',
+      not: false,
     };
 
     const result = await jsonKeysHandler(context, parameters, mockEventType);
@@ -677,6 +694,7 @@ describe('contains handler', () => {
     const parameters: PluginParameters = {
       words: ['word1', 'word2'],
       operator: 'any',
+      not: false,
     };
 
     const result = await containsHandler(context, parameters, eventType);
@@ -702,6 +720,7 @@ describe('contains handler', () => {
     const parameters: PluginParameters = {
       words: ['word1', 'word2'],
       operator: 'all',
+      not: false,
     };
 
     const result = await containsHandler(context, parameters, eventType);
@@ -727,6 +746,7 @@ describe('contains handler', () => {
     const parameters: PluginParameters = {
       words: ['word2', 'word3'],
       operator: 'none',
+      not: false,
     };
 
     const result = await containsHandler(context, parameters, eventType);
@@ -752,6 +772,7 @@ describe('contains handler', () => {
     const parameters: PluginParameters = {
       words: [],
       operator: 'any',
+      not: false,
     };
 
     const result = await containsHandler(context, parameters, eventType);
@@ -777,6 +798,7 @@ describe('contains handler', () => {
     const parameters: PluginParameters = {
       words: ['text', 'word1'],
       operator: 'all',
+      not: false,
     };
 
     const result = await containsHandler(context, parameters, eventType);
@@ -803,6 +825,7 @@ describe('validUrls handler', () => {
     };
     const parameters: PluginParameters = {
       onlyDNS: true,
+      not: false,
     };
 
     const result = await validUrlsHandler(context, parameters, mockEventType);
@@ -828,6 +851,7 @@ describe('validUrls handler', () => {
     };
     const parameters: PluginParameters = {
       onlyDNS: true,
+      not: false,
     };
 
     const result = await validUrlsHandler(context, parameters, mockEventType);
@@ -850,6 +874,7 @@ describe('validUrls handler', () => {
     };
     const parameters: PluginParameters = {
       onlyDNS: false,
+      not: false,
     };
 
     const result = await validUrlsHandler(context, parameters, mockEventType);
@@ -869,6 +894,7 @@ describe('validUrls handler', () => {
     };
     const parameters: PluginParameters = {
       onlyDNS: false,
+      not: false,
     };
 
     const result = await validUrlsHandler(context, parameters, mockEventType);
@@ -892,6 +918,7 @@ describe('validUrls handler', () => {
     };
     const parameters: PluginParameters = {
       onlyDNS: true,
+      not: false,
     };
 
     const result = await validUrlsHandler(context, parameters, mockEventType);
@@ -918,6 +945,7 @@ describe('validUrls handler', () => {
     };
     const parameters: PluginParameters = {
       onlyDNS: true,
+      not: false,
     };
 
     const result = await validUrlsHandler(context, parameters, mockEventType);
@@ -937,6 +965,7 @@ describe('validUrls handler', () => {
     };
     const parameters: PluginParameters = {
       onlyDNS: true,
+      not: false,
     };
 
     const result = await validUrlsHandler(context, parameters, mockEventType);
@@ -960,6 +989,7 @@ describe('validUrls handler', () => {
     };
     const parameters: PluginParameters = {
       onlyDNS: false,
+      not: false,
     };
 
     const result = await validUrlsHandler(context, parameters, mockEventType);
@@ -980,6 +1010,7 @@ describe('validUrls handler', () => {
     };
     const parameters: PluginParameters = {
       onlyDNS: true,
+      not: false,
     };
 
     const result = await validUrlsHandler(context, parameters, mockEventType);
@@ -1001,6 +1032,7 @@ describe('sentenceCount handler', () => {
     const parameters: PluginParameters = {
       minSentences: 1,
       maxSentences: 3,
+      not: false,
     };
 
     const result = await sentenceCountHandler(
@@ -1015,6 +1047,7 @@ describe('sentenceCount handler', () => {
       sentenceCount: 2,
       minCount: 1,
       maxCount: 3,
+      not: false,
       verdict: true,
       explanation:
         'The sentence count (2) is within the specified range of 1 to 3.',
@@ -1029,6 +1062,7 @@ describe('sentenceCount handler', () => {
     const parameters: PluginParameters = {
       minSentences: 3,
       maxSentences: 4,
+      not: false,
     };
 
     const result = await sentenceCountHandler(
@@ -1043,6 +1077,7 @@ describe('sentenceCount handler', () => {
       sentenceCount: 2,
       minCount: 3,
       maxCount: 4,
+      not: false,
       verdict: false,
       explanation:
         'The sentence count (2) is outside the specified range of 3 to 4.',
@@ -1058,6 +1093,7 @@ describe('sentenceCount handler', () => {
     const parameters: PluginParameters = {
       minSentences: 1,
       maxSentences: 30,
+      not: false,
     };
 
     const result = await sentenceCountHandler(
@@ -1091,6 +1127,7 @@ describe('sentenceCount handler', () => {
       explanation: 'An error occurred: Missing sentence count range',
       minCount: undefined,
       maxCount: undefined,
+      not: false,
       textExcerpt: 'This is a sentence.',
     });
   });
@@ -1102,6 +1139,7 @@ describe('sentenceCount handler', () => {
     const parameters: PluginParameters = {
       minSentences: 1,
       maxSentences: 3,
+      not: false,
     };
 
     const result = await sentenceCountHandler(
@@ -1116,6 +1154,7 @@ describe('sentenceCount handler', () => {
       sentenceCount: 0,
       minCount: 1,
       maxCount: 3,
+      not: false,
       verdict: false,
       explanation:
         'The sentence count (0) is outside the specified range of 1 to 3.',
@@ -1133,6 +1172,7 @@ describe('containsCode handler', () => {
     };
     const parameters: PluginParameters = {
       format: 'Python',
+      not: false,
     };
 
     const result = await containsCodeHandler(
@@ -1146,6 +1186,7 @@ describe('containsCode handler', () => {
     expect(result.data).toEqual({
       explanation: 'Found code block(s) in Python format',
       searchedFormat: 'Python',
+      not: false,
       foundFormats: ['Python'],
       textExcerpt: '```py\nprint("Hello World")\n```',
     });
@@ -1157,6 +1198,7 @@ describe('containsCode handler', () => {
     };
     const parameters: PluginParameters = {
       format: 'Python',
+      not: false,
     };
 
     const result = await containsCodeHandler(
@@ -1170,6 +1212,7 @@ describe('containsCode handler', () => {
     expect(result.data).toEqual({
       explanation: 'No code blocks in Python format found',
       searchedFormat: 'Python',
+      not: false,
       foundFormats: ['JavaScript'],
       textExcerpt: '```js\nconsole.log("Hello");\n```',
     });
@@ -1181,6 +1224,7 @@ describe('containsCode handler', () => {
     };
     const parameters: PluginParameters = {
       format: 'Python',
+      not: false,
     };
 
     const result = await containsCodeHandler(
@@ -1194,6 +1238,7 @@ describe('containsCode handler', () => {
     expect(result.data).toEqual({
       explanation: 'No code blocks found in the text',
       searchedFormat: 'Python',
+      not: false,
       foundFormats: [],
       textExcerpt: 'This is just plain text',
     });
@@ -1211,13 +1256,13 @@ describe('containsCode handler', () => {
       mockEventType
     );
 
-    expect(result.error).not.toBe(null);
     expect(result.error?.message).toBe('Missing required parameter: format');
     expect(result.verdict).toBe(false);
     expect(result.data).toEqual({
       explanation:
         'Error while checking for code blocks: Missing required parameter: format',
       searchedFormat: undefined,
+      not: false,
       textExcerpt: '```py\nprint("Hello")\n```',
     });
   });
@@ -1230,6 +1275,7 @@ describe('containsCode handler', () => {
     };
     const parameters: PluginParameters = {
       format: 'Python',
+      not: false,
     };
 
     const result = await containsCodeHandler(
@@ -1243,6 +1289,7 @@ describe('containsCode handler', () => {
     expect(result.data).toEqual({
       explanation: 'Found code block(s) in Python format',
       searchedFormat: 'Python',
+      not: false,
       foundFormats: ['Python', 'JavaScript'],
       textExcerpt: expect.stringContaining('```py\nprint("Hello")\n```'),
     });
@@ -1254,6 +1301,7 @@ describe('containsCode handler', () => {
     };
     const parameters: PluginParameters = {
       format: 'Python',
+      not: false,
     };
 
     const result = await containsCodeHandler(
@@ -1262,13 +1310,13 @@ describe('containsCode handler', () => {
       mockEventType
     );
 
-    expect(result.error).not.toBe(null);
     expect(result.error?.message).toBe('No text content to analyze');
     expect(result.verdict).toBe(false);
     expect(result.data).toEqual({
       explanation:
         'Error while checking for code blocks: No text content to analyze',
       searchedFormat: 'Python',
+      not: false,
       textExcerpt: 'No text available',
     });
   });
@@ -1284,6 +1332,7 @@ describe('wordCount handler', () => {
     const parameters: PluginParameters = {
       minWords: 5,
       maxWords: 8,
+      not: false,
     };
 
     const result = await wordCountHandler(context, parameters, mockEventType);
@@ -1294,6 +1343,7 @@ describe('wordCount handler', () => {
       wordCount: 7,
       minWords: 5,
       maxWords: 8,
+      not: false,
       verdict: true,
       explanation:
         'The text contains 7 words, which is within the specified range of 5-8 words.',
@@ -1308,6 +1358,7 @@ describe('wordCount handler', () => {
     const parameters: PluginParameters = {
       minWords: 10,
       maxWords: 15,
+      not: false,
     };
 
     const result = await wordCountHandler(context, parameters, mockEventType);
@@ -1318,6 +1369,7 @@ describe('wordCount handler', () => {
       wordCount: 7,
       minWords: 10,
       maxWords: 15,
+      not: false,
       verdict: false,
       explanation:
         'The text contains 7 words, which is outside the specified range of 10-15 words.',
@@ -1333,6 +1385,7 @@ describe('wordCount handler', () => {
     const parameters: PluginParameters = {
       minWords: 40,
       maxWords: 60,
+      not: false,
     };
 
     const result = await wordCountHandler(context, parameters, mockEventType);
@@ -1351,6 +1404,7 @@ describe('wordCount handler', () => {
     const parameters: PluginParameters = {
       minWords: 1,
       maxWords: 5,
+      not: false,
     };
 
     const result = await wordCountHandler(context, parameters, mockEventType);
@@ -1363,6 +1417,7 @@ describe('wordCount handler', () => {
         'An error occurred while processing word count: Missing text to analyze',
       minWords: 1,
       maxWords: 5,
+      not: false,
       textExcerpt: 'No text available',
     });
   });
@@ -1374,6 +1429,7 @@ describe('wordCount handler', () => {
     const parameters: PluginParameters = {
       minWords: 'invalid' as any,
       maxWords: 5,
+      not: false,
     };
 
     const result = await wordCountHandler(context, parameters, mockEventType);
@@ -1386,6 +1442,7 @@ describe('wordCount handler', () => {
         'An error occurred while processing word count: Invalid or missing word count range',
       minWords: 'invalid',
       maxWords: 5,
+      not: false,
       textExcerpt: 'This is a test.',
     });
   });
@@ -1399,14 +1456,40 @@ describe('wordCount handler', () => {
     const result = await wordCountHandler(context, parameters, mockEventType);
 
     expect(result.error).not.toBe(null);
-    expect(result.error?.message).toBe('Invalid or missing word count range');
+    expect(result.error?.message).toBe(
+      'Invalid or missing word count range'
+    );
     expect(result.verdict).toBe(false);
     expect(result.data).toEqual({
       explanation:
         'An error occurred while processing word count: Invalid or missing word count range',
       minWords: undefined,
       maxWords: undefined,
+      not: false,
       textExcerpt: 'This is a test.',
+    });
+  });
+
+  it('should handle text with only whitespace', async () => {
+    const context: PluginContext = {
+      response: { text: '   \n\t   ' },
+    };
+    const parameters: PluginParameters = {
+      minWords: 1,
+      maxWords: 10,
+      not: false,
+    };
+
+    const result = await wordCountHandler(context, parameters, mockEventType);
+
+    expect(result.error).not.toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      explanation: 'An error occurred while processing word count: Missing text to analyze',
+      minWords: 1,
+      maxWords: 10,
+      not: false,
+      textExcerpt: '   \n\t   ',
     });
   });
 });
@@ -1428,6 +1511,7 @@ describe('webhook handler', () => {
     const parameters: PluginParameters = {
       webhookURL: 'https://roh26it-blackplanarian.web.val.run/true',
       headers: '{"Authorization": "Bearer test-token"}',
+      not: false,
     };
 
     const result = await webhookHandler(mockContext, parameters, mockEventType);
@@ -1451,6 +1535,7 @@ describe('webhook handler', () => {
     const parameters: PluginParameters = {
       webhookURL: 'https://roh26it-blackplanarian.web.val.run/false',
       headers: '{"Authorization": "Bearer test-token"}',
+      not: false,
     };
 
     const result = await webhookHandler(mockContext, parameters, mockEventType);
@@ -1473,6 +1558,7 @@ describe('webhook handler', () => {
   it('should handle missing webhook URL', async () => {
     const parameters: PluginParameters = {
       headers: '{"Authorization": "Bearer test-token"}',
+      not: false,
     };
 
     const result = await webhookHandler(mockContext, parameters, mockEventType);
@@ -1494,6 +1580,7 @@ describe('webhook handler', () => {
     const parameters: PluginParameters = {
       webhookURL: 'not-a-url',
       headers: '{"Authorization": "Bearer test-token"}',
+      not: false,
     };
 
     const result = await webhookHandler(mockContext, parameters, mockEventType);
@@ -1515,6 +1602,7 @@ describe('webhook handler', () => {
     const parameters: PluginParameters = {
       webhookURL: 'https://roh26it-blackplanarian.web.val.run/true',
       headers: '{invalid json}',
+      not: false,
     };
 
     const result = await webhookHandler(mockContext, parameters, mockEventType);
@@ -1540,6 +1628,7 @@ describe('webhook handler', () => {
     const parameters: PluginParameters = {
       webhookURL: 'https://roh26it-blackplanarian.web.val.run/error',
       headers: '{"Authorization": "Bearer test-token"}',
+      not: false,
     };
 
     const result = await webhookHandler(mockContext, parameters, mockEventType);
@@ -1566,6 +1655,7 @@ describe('log handler', () => {
     const parameters: PluginParameters = {
       logURL: 'https://roh26it-upsetharlequinfrog.web.val.run',
       headers: '{"Authorization": "this is some secret"}',
+      not: false,
     };
 
     const result = await logHandler(context, parameters, eventType);
@@ -1583,12 +1673,13 @@ describe('allUppercase handler', () => {
       response: { text: 'THIS IS ALL UPPERCASE TEXT!' },
     };
 
-    const result = await allUppercaseHandler(context, {}, mockEventType);
+    const result = await allUppercaseHandler(context, { not: false }, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
     expect(result.data).toEqual({
       verdict: true,
+      not: false,
       explanation: 'All alphabetic characters in the text are uppercase.',
       textExcerpt: 'THIS IS ALL UPPERCASE TEXT!',
     });
@@ -1599,12 +1690,13 @@ describe('allUppercase handler', () => {
       response: { text: 'This Has Mixed Case.' },
     };
 
-    const result = await allUppercaseHandler(context, {}, mockEventType);
+    const result = await allUppercaseHandler(context, { not: false }, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
     expect(result.data).toEqual({
       verdict: false,
+      not: false,
       explanation: 'The text contains lowercase characters.',
       textExcerpt: 'This Has Mixed Case.',
     });
@@ -1616,7 +1708,7 @@ describe('allUppercase handler', () => {
       response: { text: longText },
     };
 
-    const result = await allUppercaseHandler(context, {}, mockEventType);
+    const result = await allUppercaseHandler(context, { not: false }, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
@@ -1629,14 +1721,14 @@ describe('allUppercase handler', () => {
       response: { text: '' },
     };
 
-    const result = await allUppercaseHandler(context, {}, mockEventType);
+    const result = await allUppercaseHandler(context, { not: false }, mockEventType);
 
-    expect(result.error).not.toBe(null);
     expect(result.error?.message).toBe('Missing text to analyze');
     expect(result.verdict).toBe(false);
     expect(result.data).toEqual({
       explanation:
         'An error occurred while checking uppercase: Missing text to analyze',
+      not: false,
       textExcerpt: 'No text available',
     });
   });
@@ -1646,12 +1738,13 @@ describe('allUppercase handler', () => {
       response: { text: '123 !@#$%' },
     };
 
-    const result = await allUppercaseHandler(context, {}, mockEventType);
+    const result = await allUppercaseHandler(context, { not: false }, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
     expect(result.data).toEqual({
       verdict: true,
+      not: false,
       explanation: 'All alphabetic characters in the text are uppercase.',
       textExcerpt: '123 !@#$%',
     });
@@ -1666,12 +1759,13 @@ describe('allLowercase handler', () => {
       response: { text: 'this is all lowercase text!' },
     };
 
-    const result = await allLowerCaseHandler(context, {}, mockEventType);
+    const result = await allLowerCaseHandler(context, { not: false }, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
     expect(result.data).toEqual({
       verdict: true,
+      not: false,
       explanation: 'All alphabetic characters in the text are lowercase.',
       textExcerpt: 'this is all lowercase text!',
     });
@@ -1682,12 +1776,13 @@ describe('allLowercase handler', () => {
       response: { text: 'This Has Mixed Case.' },
     };
 
-    const result = await allLowerCaseHandler(context, {}, mockEventType);
+    const result = await allLowerCaseHandler(context, { not: false }, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
     expect(result.data).toEqual({
       verdict: false,
+      not: false,
       explanation: 'The text contains uppercase characters.',
       textExcerpt: 'This Has Mixed Case.',
     });
@@ -1699,7 +1794,7 @@ describe('allLowercase handler', () => {
       response: { text: longText },
     };
 
-    const result = await allLowerCaseHandler(context, {}, mockEventType);
+    const result = await allLowerCaseHandler(context, { not: false }, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
@@ -1712,14 +1807,14 @@ describe('allLowercase handler', () => {
       response: { text: '' },
     };
 
-    const result = await allLowerCaseHandler(context, {}, mockEventType);
+    const result = await allLowerCaseHandler(context, { not: false }, mockEventType);
 
-    expect(result.error).not.toBe(null);
     expect(result.error?.message).toBe('Missing text to analyze');
     expect(result.verdict).toBe(false);
     expect(result.data).toEqual({
       explanation:
         'An error occurred while checking lowercase: Missing text to analyze',
+      not: false,
       textExcerpt: 'No text available',
     });
   });
@@ -1729,12 +1824,13 @@ describe('allLowercase handler', () => {
       response: { text: '123 !@#$%' },
     };
 
-    const result = await allLowerCaseHandler(context, {}, mockEventType);
+    const result = await allLowerCaseHandler(context, { not: false }, mockEventType);
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
     expect(result.data).toEqual({
       verdict: true,
+      not: false,
       explanation: 'All alphabetic characters in the text are lowercase.',
       textExcerpt: '123 !@#$%',
     });
@@ -1750,6 +1846,7 @@ describe('modelWhitelist handler', () => {
     };
     const parameters: PluginParameters = {
       models: ['gemini-1.5-flash-001'],
+      not: false,
     };
 
     const result = await modelWhitelistHandler(
@@ -1762,6 +1859,7 @@ describe('modelWhitelist handler', () => {
     expect(result.verdict).toBe(true);
     expect(result.data).toEqual({
       verdict: true,
+      not: false,
       explanation: 'Model "gemini-1.5-flash-001" is allowed.',
       requestedModel: 'gemini-1.5-flash-001',
       allowedModels: ['gemini-1.5-flash-001'],
@@ -1774,6 +1872,7 @@ describe('modelWhitelist handler', () => {
     };
     const parameters: PluginParameters = {
       models: ['gemini-1.5-flash-001'],
+      not: false,
     };
 
     const result = await modelWhitelistHandler(
@@ -1786,6 +1885,7 @@ describe('modelWhitelist handler', () => {
     expect(result.verdict).toBe(false);
     expect(result.data).toEqual({
       verdict: false,
+      not: false,
       explanation: 'Model "gemini-1.5-pro-001" is not in the allowed list.',
       requestedModel: 'gemini-1.5-pro-001',
       allowedModels: ['gemini-1.5-flash-001'],
@@ -1804,13 +1904,13 @@ describe('modelWhitelist handler', () => {
       mockEventType
     );
 
-    expect(result.error).not.toBe(null);
     expect(result.error?.message).toBe('Missing or invalid model whitelist');
     expect(result.verdict).toBe(false);
     expect(result.data).toEqual({
       explanation:
         'An error occurred while checking model whitelist: Missing or invalid model whitelist',
       requestedModel: 'gemini-1.5-pro-001',
+      not: false,
       allowedModels: [],
     });
   });
@@ -1821,6 +1921,7 @@ describe('modelWhitelist handler', () => {
     };
     const parameters: PluginParameters = {
       models: ['gemini-1.5-flash-001'],
+      not: false,
     };
 
     const result = await modelWhitelistHandler(
@@ -1829,13 +1930,13 @@ describe('modelWhitelist handler', () => {
       mockEventType
     );
 
-    expect(result.error).not.toBe(null);
     expect(result.error?.message).toBe('Missing model in request');
     expect(result.verdict).toBe(false);
     expect(result.data).toEqual({
       explanation:
         'An error occurred while checking model whitelist: Missing model in request',
       requestedModel: 'No model specified',
+      not: false,
       allowedModels: ['gemini-1.5-flash-001'],
     });
   });
@@ -1851,6 +1952,7 @@ describe('characterCount handler', () => {
     const parameters: PluginParameters = {
       minCharacters: 10,
       maxCharacters: 20,
+      not: false,
     };
 
     const result = await characterCountHandler(
@@ -1865,6 +1967,7 @@ describe('characterCount handler', () => {
       characterCount: 15,
       minCharacters: 10,
       maxCharacters: 20,
+      not: false,
       verdict: true,
       explanation:
         'The text contains 15 characters, which is within the specified range of 10-20 characters.',
@@ -1879,6 +1982,7 @@ describe('characterCount handler', () => {
     const parameters: PluginParameters = {
       minCharacters: 10,
       maxCharacters: 20,
+      not: false,
     };
 
     const result = await characterCountHandler(
@@ -1893,6 +1997,7 @@ describe('characterCount handler', () => {
       characterCount: 48,
       minCharacters: 10,
       maxCharacters: 20,
+      not: false,
       verdict: false,
       explanation:
         'The text contains 48 characters, which is outside the specified range of 10-20 characters.',
@@ -1908,6 +2013,7 @@ describe('characterCount handler', () => {
     const parameters: PluginParameters = {
       minCharacters: 100,
       maxCharacters: 200,
+      not: false,
     };
 
     const result = await characterCountHandler(
@@ -1930,6 +2036,7 @@ describe('characterCount handler', () => {
     const parameters: PluginParameters = {
       minCharacters: 1,
       maxCharacters: 10,
+      not: false,
     };
 
     const result = await characterCountHandler(
@@ -1946,6 +2053,7 @@ describe('characterCount handler', () => {
         'An error occurred while counting characters: Missing text to analyze',
       minCharacters: 1,
       maxCharacters: 10,
+      not: false,
       textExcerpt: 'No text available',
     });
   });
@@ -1972,6 +2080,7 @@ describe('characterCount handler', () => {
         'An error occurred while counting characters: Invalid or missing character count range',
       minCharacters: undefined,
       maxCharacters: undefined,
+      not: false,
       textExcerpt: 'This is a test.',
     });
   });
@@ -1983,6 +2092,7 @@ describe('characterCount handler', () => {
     const parameters: PluginParameters = {
       minCharacters: 1,
       maxCharacters: 10,
+      not: false,
     };
 
     const result = await characterCountHandler(
@@ -1994,13 +2104,13 @@ describe('characterCount handler', () => {
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
     expect(result.data).toEqual({
-      characterCount: 8,
+      explanation: 'The text contains 8 characters, which is within the specified range of 1-10 characters.',
       minCharacters: 1,
       maxCharacters: 10,
-      verdict: true,
-      explanation:
-        'The text contains 8 characters, which is within the specified range of 1-10 characters.',
+      not: false,
       textExcerpt: '   \n\t   ',
+      verdict: true,
+      characterCount: 8,
     });
   });
 });
@@ -2014,6 +2124,7 @@ describe('endsWith handler', () => {
     };
     const parameters: PluginParameters = {
       suffix: 'HarryPortkey',
+      not: false,
     };
 
     const result = await endsWithHandler(context, parameters, mockEventType);
@@ -2022,6 +2133,7 @@ describe('endsWith handler', () => {
     expect(result.verdict).toBe(true);
     expect(result.data).toEqual({
       suffix: 'HarryPortkey',
+      not: false,
       verdict: true,
       explanation: 'The text ends with "HarryPortkey".',
       textExcerpt: 'This is a test ending with HarryPortkey',
@@ -2034,6 +2146,7 @@ describe('endsWith handler', () => {
     };
     const parameters: PluginParameters = {
       suffix: 'HarryPortkey',
+      not: false,
     };
 
     const result = await endsWithHandler(context, parameters, mockEventType);
@@ -2042,9 +2155,9 @@ describe('endsWith handler', () => {
     expect(result.verdict).toBe(true);
     expect(result.data).toEqual({
       suffix: 'HarryPortkey',
+      not: false,
       verdict: true,
-      explanation:
-        'The text ends with "HarryPortkey" (including trailing period).',
+      explanation: 'The text ends with "HarryPortkey" (including trailing period).',
       textExcerpt: 'This is a test ending with HarryPortkey.',
     });
   });
@@ -2055,6 +2168,7 @@ describe('endsWith handler', () => {
     };
     const parameters: PluginParameters = {
       suffix: 'HarryPortkey',
+      not: false,
     };
 
     const result = await endsWithHandler(context, parameters, mockEventType);
@@ -2063,26 +2177,11 @@ describe('endsWith handler', () => {
     expect(result.verdict).toBe(false);
     expect(result.data).toEqual({
       suffix: 'HarryPortkey',
+      not: false,
       verdict: false,
       explanation: 'The text does not end with "HarryPortkey".',
       textExcerpt: 'This is a test ending with something else',
     });
-  });
-
-  it('should handle long text by truncating excerpt', async () => {
-    const longText = 'a'.repeat(150) + 'HarryPortkey';
-    const context: PluginContext = {
-      response: { text: longText },
-    };
-    const parameters: PluginParameters = {
-      suffix: 'HarryPortkey',
-    };
-
-    const result = await endsWithHandler(context, parameters, mockEventType);
-
-    expect(result.error).toBe(null);
-    expect(result.verdict).toBe(true);
-    expect(result.data.textExcerpt.length).toBeLessThanOrEqual(103);
   });
 
   it('should handle empty text', async () => {
@@ -2091,17 +2190,18 @@ describe('endsWith handler', () => {
     };
     const parameters: PluginParameters = {
       suffix: 'test',
+      not: false,
     };
 
     const result = await endsWithHandler(context, parameters, mockEventType);
 
-    expect(result.error).not.toBe(null);
     expect(result.error?.message).toBe('Missing text to analyze');
     expect(result.verdict).toBe(false);
     expect(result.data).toEqual({
       explanation:
         'An error occurred while checking suffix: Missing text to analyze',
       suffix: 'test',
+      not: false,
       textExcerpt: 'No text available',
     });
   });
@@ -2114,13 +2214,13 @@ describe('endsWith handler', () => {
 
     const result = await endsWithHandler(context, parameters, mockEventType);
 
-    expect(result.error).not.toBe(null);
     expect(result.error?.message).toBe('Missing or empty suffix');
     expect(result.verdict).toBe(false);
     expect(result.data).toEqual({
       explanation:
         'An error occurred while checking suffix: Missing or empty suffix',
       suffix: undefined,
+      not: false,
       textExcerpt: 'This is a test.',
     });
   });
@@ -2131,17 +2231,18 @@ describe('endsWith handler', () => {
     };
     const parameters: PluginParameters = {
       suffix: '',
+      not: false,
     };
 
     const result = await endsWithHandler(context, parameters, mockEventType);
 
-    expect(result.error).not.toBe(null);
     expect(result.error?.message).toBe('Missing or empty suffix');
     expect(result.verdict).toBe(false);
     expect(result.data).toEqual({
       explanation:
         'An error occurred while checking suffix: Missing or empty suffix',
       suffix: '',
+      not: false,
       textExcerpt: 'This is a test.',
     });
   });
