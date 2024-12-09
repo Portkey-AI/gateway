@@ -29,7 +29,7 @@ export const handler: PluginHandler = async (
 
     const regex = new RegExp(regexPattern);
     const match = regex.exec(textToMatch);
-    
+
     // Determine verdict based on not parameter
     const matches = match !== null;
     verdict = not ? !matches : matches;
@@ -39,7 +39,7 @@ export const handler: PluginHandler = async (
       not,
       verdict,
       explanation: verdict
-        ? not 
+        ? not
           ? `The regex pattern '${regexPattern}' did not match the text as expected.`
           : `The regex pattern '${regexPattern}' successfully matched the text.`
         : not

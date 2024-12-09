@@ -53,7 +53,10 @@ describe('Regex Matcher Plugin', () => {
   });
 
   it('should handle regex with capturing groups', async () => {
-    const parameters: PluginParameters = { rule: '(quick) (brown) (fox)', not: false };
+    const parameters: PluginParameters = {
+      rule: '(quick) (brown) (fox)',
+      not: false,
+    };
     const result = await regexMatchHandler(
       mockContext,
       parameters,
@@ -1456,9 +1459,7 @@ describe('wordCount handler', () => {
     const result = await wordCountHandler(context, parameters, mockEventType);
 
     expect(result.error).not.toBe(null);
-    expect(result.error?.message).toBe(
-      'Invalid or missing word count range'
-    );
+    expect(result.error?.message).toBe('Invalid or missing word count range');
     expect(result.verdict).toBe(false);
     expect(result.data).toEqual({
       explanation:
@@ -1485,7 +1486,8 @@ describe('wordCount handler', () => {
     expect(result.error).not.toBe(null);
     expect(result.verdict).toBe(false);
     expect(result.data).toEqual({
-      explanation: 'An error occurred while processing word count: Missing text to analyze',
+      explanation:
+        'An error occurred while processing word count: Missing text to analyze',
       minWords: 1,
       maxWords: 10,
       not: false,
@@ -1673,7 +1675,11 @@ describe('allUppercase handler', () => {
       response: { text: 'THIS IS ALL UPPERCASE TEXT!' },
     };
 
-    const result = await allUppercaseHandler(context, { not: false }, mockEventType);
+    const result = await allUppercaseHandler(
+      context,
+      { not: false },
+      mockEventType
+    );
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
@@ -1690,7 +1696,11 @@ describe('allUppercase handler', () => {
       response: { text: 'This Has Mixed Case.' },
     };
 
-    const result = await allUppercaseHandler(context, { not: false }, mockEventType);
+    const result = await allUppercaseHandler(
+      context,
+      { not: false },
+      mockEventType
+    );
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
@@ -1708,7 +1718,11 @@ describe('allUppercase handler', () => {
       response: { text: longText },
     };
 
-    const result = await allUppercaseHandler(context, { not: false }, mockEventType);
+    const result = await allUppercaseHandler(
+      context,
+      { not: false },
+      mockEventType
+    );
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
@@ -1721,7 +1735,11 @@ describe('allUppercase handler', () => {
       response: { text: '' },
     };
 
-    const result = await allUppercaseHandler(context, { not: false }, mockEventType);
+    const result = await allUppercaseHandler(
+      context,
+      { not: false },
+      mockEventType
+    );
 
     expect(result.error?.message).toBe('Missing text to analyze');
     expect(result.verdict).toBe(false);
@@ -1738,7 +1756,11 @@ describe('allUppercase handler', () => {
       response: { text: '123 !@#$%' },
     };
 
-    const result = await allUppercaseHandler(context, { not: false }, mockEventType);
+    const result = await allUppercaseHandler(
+      context,
+      { not: false },
+      mockEventType
+    );
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
@@ -1759,7 +1781,11 @@ describe('allLowercase handler', () => {
       response: { text: 'this is all lowercase text!' },
     };
 
-    const result = await allLowerCaseHandler(context, { not: false }, mockEventType);
+    const result = await allLowerCaseHandler(
+      context,
+      { not: false },
+      mockEventType
+    );
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
@@ -1776,7 +1802,11 @@ describe('allLowercase handler', () => {
       response: { text: 'This Has Mixed Case.' },
     };
 
-    const result = await allLowerCaseHandler(context, { not: false }, mockEventType);
+    const result = await allLowerCaseHandler(
+      context,
+      { not: false },
+      mockEventType
+    );
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
@@ -1794,7 +1824,11 @@ describe('allLowercase handler', () => {
       response: { text: longText },
     };
 
-    const result = await allLowerCaseHandler(context, { not: false }, mockEventType);
+    const result = await allLowerCaseHandler(
+      context,
+      { not: false },
+      mockEventType
+    );
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
@@ -1807,7 +1841,11 @@ describe('allLowercase handler', () => {
       response: { text: '' },
     };
 
-    const result = await allLowerCaseHandler(context, { not: false }, mockEventType);
+    const result = await allLowerCaseHandler(
+      context,
+      { not: false },
+      mockEventType
+    );
 
     expect(result.error?.message).toBe('Missing text to analyze');
     expect(result.verdict).toBe(false);
@@ -1824,7 +1862,11 @@ describe('allLowercase handler', () => {
       response: { text: '123 !@#$%' },
     };
 
-    const result = await allLowerCaseHandler(context, { not: false }, mockEventType);
+    const result = await allLowerCaseHandler(
+      context,
+      { not: false },
+      mockEventType
+    );
 
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
@@ -2104,7 +2146,8 @@ describe('characterCount handler', () => {
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(true);
     expect(result.data).toEqual({
-      explanation: 'The text contains 8 characters, which is within the specified range of 1-10 characters.',
+      explanation:
+        'The text contains 8 characters, which is within the specified range of 1-10 characters.',
       minCharacters: 1,
       maxCharacters: 10,
       not: false,
@@ -2157,7 +2200,8 @@ describe('endsWith handler', () => {
       suffix: 'HarryPortkey',
       not: false,
       verdict: true,
-      explanation: 'The text ends with "HarryPortkey" (including trailing period).',
+      explanation:
+        'The text ends with "HarryPortkey" (including trailing period).',
       textExcerpt: 'This is a test ending with HarryPortkey.',
     });
   });
