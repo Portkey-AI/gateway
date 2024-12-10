@@ -32,6 +32,20 @@ import { handler as patronusnoRacialBias } from './patronus/noRacialBias';
 import { handler as patronusretrievalAnswerRelevance } from './patronus/retrievalAnswerRelevance';
 import { handler as patronustoxicity } from './patronus/toxicity';
 import { handler as patronuscustom } from './patronus/custom';
+import { mistralGuardrailHandler } from './mistral';
+import { PluginHandler } from './types';
+
+const mistralGuardCategories = [
+  'sexual',
+  'hate_and_discrimination',
+  'violence_and_threats',
+  'dangerous_and_criminal_content',
+  'selfharm',
+  'health',
+  'financial',
+  'law',
+  'pii',
+];
 
 export const plugins = {
   default: {
@@ -80,4 +94,11 @@ export const plugins = {
     toxicity: patronustoxicity,
     custom: patronuscustom,
   },
+  mistral: mistralGuardCategories.reduce(
+    (config, category) => {
+      config[category] = mistralGuardrailHandler;
+      return config;
+    },
+    {} as Record<string, PluginHandler>
+  ),
 };
