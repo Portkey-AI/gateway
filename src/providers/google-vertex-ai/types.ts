@@ -28,6 +28,24 @@ export interface GoogleGenerateContentResponse {
       category: string;
       probability: string;
     }[];
+    groundingMetadata?: {
+      webSearchQueries?: string[];
+      searchEntryPoint?: {
+        renderedContent: string;
+      };
+      groundingSupports?: Array<{
+        segment: {
+          startIndex: number;
+          endIndex: number;
+          text: string;
+        };
+        groundingChunkIndices: number[];
+        confidenceScores: number[];
+      }>;
+      retrievalMetadata?: {
+        webDynamicRetrievalScore: number;
+      };
+    };
   }[];
   promptFeedback: {
     safetyRatings: {
@@ -88,5 +106,14 @@ export interface GoogleEmbedResponse {
   predictions: EmbedPredictionsResponse[];
   metadata: {
     billableCharacterCount: number;
+  };
+}
+
+export interface GoogleSearchRetrievalTool {
+  googleSearchRetrieval: {
+    dynamicRetrievalConfig?: {
+      mode: string;
+      dynamicThreshold?: string;
+    };
   };
 }
