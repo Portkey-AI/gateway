@@ -8,7 +8,7 @@ const AI21APIConfig: ProviderAPIConfig = {
     };
     return headers;
   },
-  getEndpoint: ({ fn, gatewayRequestBody }) => {
+  getEndpoint: ({ fn, gatewayRequestBodyJSON: gatewayRequestBody }) => {
     const { model } = gatewayRequestBody;
     switch (fn) {
       case 'complete': {
