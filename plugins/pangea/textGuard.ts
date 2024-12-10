@@ -17,16 +17,27 @@ export const handler: PluginHandler = async (
   let verdict = false;
   let data = null;
   try {
-    const text = getText(context, eventType);
+    if (!parameters.credentials?.domain) {
+      throw Error(`'parameters.credentials.domain' must be set`);
+    }
+
+    if (!parameters.credentials?.apiKey) {
+      throw Error(`'parameters.credentials.apiKey' must be set`);
+    }
 
     // TODO: Update to v1 once released
-    const url = `https://ai-guard.${parameters.credentials?.domain}/v1beta/text/guard`;
+    const url = `https://ai-guard.${parameters.credentials.domain}/v1beta/text/guard`;
+
+    const text = getText(context, eventType);
+    if (!text) {
+      throw Error(`request or response text is empty`);
+    }
 
     const requestOptions = {
       headers: {
         'Content-Type': 'application/json',
         'User-Agent': 'portkey-ai-plugin/' + VERSION,
-        Authorization: `Bearer ${parameters.credentials?.token}`,
+        Authorization: `Bearer ${parameters.credentials.apiKey}`,
       },
     };
     const request = {

@@ -10,10 +10,10 @@ describe('textGuardContentHandler', () => {
     const context = {};
     const eventType = 'unsupported';
     const parameters = {};
-    // @ts-ignore
     const result = await textGuardContentHandler(
       context,
       parameters,
+      // @ts-ignore
       eventType,
       options
     );
@@ -26,6 +26,36 @@ describe('textGuardContentHandler', () => {
     const context = {};
     const eventType = 'beforeRequestHook';
     const parameters = { token: 'test', domain: testCreds.domain };
+    const result = await textGuardContentHandler(
+      context,
+      parameters,
+      eventType,
+      options
+    );
+    expect(result.error).toBeDefined();
+    expect(result.verdict).toBeFalsy();
+    expect(result.data).toBeNull();
+  });
+
+  it('should return an error if no apiKey', async () => {
+    const context = {};
+    const eventType = 'beforeRequestHook';
+    const parameters = { domain: testCreds.domain };
+    const result = await textGuardContentHandler(
+      context,
+      parameters,
+      eventType,
+      options
+    );
+    expect(result.error).toBeDefined();
+    expect(result.verdict).toBeFalsy();
+    expect(result.data).toBeNull();
+  });
+
+  it('should return an error if no domain', async () => {
+    const context = {};
+    const eventType = 'beforeRequestHook';
+    const parameters = { apiKey: testCreds.apiKey };
     const result = await textGuardContentHandler(
       context,
       parameters,

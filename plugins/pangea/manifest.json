@@ -4,7 +4,7 @@
   "credentials": {
     "type": "object",
     "properties": {
-      "token": {
+      "apiKey": {
         "type": "string",
         "label": "Pangea token",
         "description": "AI Guard token. Get your token configured on Pangea User Console (https://pangea.cloud/docs/getting-started/configure-services/#configure-a-pangea-service).",
@@ -16,7 +16,7 @@
         "description": "Pangea domain, including cloud provider and zone."
       }
     },
-    "required": ["domain", "token"]
+    "required": ["domain", "apiKey"]
   },
   "functions": [
     {
