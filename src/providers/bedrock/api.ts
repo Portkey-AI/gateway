@@ -2,17 +2,46 @@ import { env } from 'hono/adapter';
 import { GatewayError } from '../../errors/GatewayError';
 import { ProviderAPIConfig } from '../types';
 import { bedrockInvokeModels } from './constants';
-import { generateAWSHeaders, getAssumedRoleCredentials } from './utils';
+import {
+  generateAWSHeaders,
+  generatePresignedUrl,
+  getAssumedRoleCredentials,
+} from './utils';
 
 const BedrockAPIConfig: ProviderAPIConfig = {
-  getBaseURL: ({ providerOptions }) =>
-    `https://bedrock-runtime.${providerOptions.awsRegion || 'us-east-1'}.amazonaws.com`,
+  getMethod: ({ fn, requestMethod }) => {
+    if (fn === 'uploadFile') return 'PUT';
+    return requestMethod;
+  },
+  getBaseURL: async ({ providerOptions, fn }) => {
+    if (fn === 'uploadFile') {
+      const url = `https://${providerOptions.awsS3Bucket}.s3.${providerOptions.awsRegion}.amazonaws.com/${providerOptions.awsS3ObjectKey}`;
+      return await generatePresignedUrl(
+        url,
+        's3',
+        providerOptions.awsRegion,
+        providerOptions.awsAccessKeyId,
+        providerOptions.awsSecretAccessKey
+      );
+    }
+    const isAWSControlPlaneEndpoint = fn === 'createBatch';
+    return `https://${isAWSControlPlaneEndpoint ? 'bedrock' : 'bedrock-runtime'}.${providerOptions.awsRegion || 'us-east-1'}.amazonaws.com`;
+  },
   headers: async ({
     c,
+    fn,
     providerOptions,
     transformedRequestBody,
     transformedRequestUrl,
   }) => {
+    if (fn === 'uploadFile') {
+      const requestHeaders = Object.fromEntries(c.req.raw.headers);
+      return {
+        'content-type': 'application/octet-stream',
+        'content-length': requestHeaders['content-length'],
+      };
+    }
+
     const headers = {
       'content-type': 'application/json',
     };
@@ -64,7 +93,13 @@ const BedrockAPIConfig: ProviderAPIConfig = {
       providerOptions.awsSessionToken || ''
     );
   },
-  getEndpoint: ({ fn, gatewayRequestBody }) => {
+  getEndpoint: ({
+    fn,
+    gatewayRequestBodyJSON: gatewayRequestBody,
+    requestURL,
+  }) => {
+    if (fn === 'uploadFile') return '';
+
     const { model, stream } = gatewayRequestBody;
     if (!model) throw new GatewayError('Model is required');
     let mappedFn = fn;
@@ -98,6 +133,15 @@ const BedrockAPIConfig: ProviderAPIConfig = {
       }
       case 'imageGenerate': {
         return endpoint;
+      }
+      case 'createBatch': {
+        return '/model-invocation-job';
+      }
+      case 'cancelBatch': {
+        return `/model-invocation-job/${requestURL.split('/').pop()}/stop`;
+      }
+      case 'getBatch': {
+        return `/model-invocation-job/${requestURL.split('/').pop()}`;
       }
       default:
         return '';
