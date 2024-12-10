@@ -3,6 +3,7 @@ import { AI21, ANTHROPIC, COHERE } from '../../globals';
 import { Params } from '../../types/requestBody';
 import { endpointStrings, ProviderConfigs } from '../types';
 import BedrockAPIConfig from './api';
+import { BedrockCancelBatchResponseTransform } from './cancelBatch';
 import {
   BedrockConverseChatCompleteConfig,
   BedrockChatCompleteStreamChunkTransform,
@@ -52,6 +53,7 @@ import {
   BedrockStabilityAIImageGenerateV2Config,
   BedrockStabilityAIImageGenerateV2ResponseTransform,
 } from './imageGenerate';
+import { BedrockRetrieveBatchResponseTransform } from './retrieveBatch';
 import {
   BedrockUploadFileRequestTransform,
   BedrockUploadFileResponseTransform,
@@ -187,6 +189,8 @@ const BedrockConfig: ProviderConfigs = {
       config.responseTransforms = {
         uploadFile: BedrockUploadFileResponseTransform,
         createBatch: BedrockCreateBatchResponseTransform,
+        cancelBatch: BedrockCancelBatchResponseTransform,
+        retrieveBatch: BedrockRetrieveBatchResponseTransform,
       };
     }
     config.createBatch = BedrockCreateBatchConfig;

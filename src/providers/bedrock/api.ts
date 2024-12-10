@@ -93,7 +93,11 @@ const BedrockAPIConfig: ProviderAPIConfig = {
       providerOptions.awsSessionToken || ''
     );
   },
-  getEndpoint: ({ fn, gatewayRequestBodyJSON: gatewayRequestBody }) => {
+  getEndpoint: ({
+    fn,
+    gatewayRequestBodyJSON: gatewayRequestBody,
+    requestURL,
+  }) => {
     if (fn === 'uploadFile') return '';
 
     const { model, stream } = gatewayRequestBody;
@@ -132,6 +136,12 @@ const BedrockAPIConfig: ProviderAPIConfig = {
       }
       case 'createBatch': {
         return '/model-invocation-job';
+      }
+      case 'cancelBatch': {
+        return `/model-invocation-job/${requestURL.split('/').pop()}/stop`;
+      }
+      case 'getBatch': {
+        return `/model-invocation-job/${requestURL.split('/').pop()}`;
       }
       default:
         return '';

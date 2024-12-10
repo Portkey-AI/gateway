@@ -1,5 +1,6 @@
 import { ProviderConfigs } from '../types';
 import CohereAPIConfig from './api';
+import { CohereCancelBatchResponseTransform } from './cancelBatch';
 import {
   CohereChatCompleteConfig,
   CohereChatCompleteResponseTransform,
@@ -50,6 +51,7 @@ const CohereConfig: ProviderConfigs = {
     createBatch: CohereCreateBatchResponseTransform,
     listBatch: CohereListBatchResponseTransform,
     retrieveBatch: CohereRetrieveBatchResponseTransform,
+    cancelBatch: CohereCancelBatchResponseTransform,
   },
 };
 
