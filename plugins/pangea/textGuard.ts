@@ -30,7 +30,11 @@ export const handler: PluginHandler = async (
 
     const text = getText(context, eventType);
     if (!text) {
-      throw Error(`request or response text is empty`);
+      return {
+        error: Error(`request or response text is empty`),
+        verdict: true,
+        data,
+      };
     }
 
     const requestOptions = {
