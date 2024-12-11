@@ -64,8 +64,6 @@ export interface ProviderAPIConfig {
     reqPath: string;
     reqQuery: string;
   }) => string;
-  /** A function that returns the HTTP method for the API request */
-  getMethod?: (args: { fn: string; requestMethod: string }) => string;
 }
 
 export type endpointStrings =

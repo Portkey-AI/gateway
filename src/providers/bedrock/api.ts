@@ -1,6 +1,6 @@
 import { env } from 'hono/adapter';
 import { GatewayError } from '../../errors/GatewayError';
-import { ProviderAPIConfig } from '../types';
+import { endpointStrings, ProviderAPIConfig } from '../types';
 import { bedrockInvokeModels } from './constants';
 import {
   generateAWSHeaders,
@@ -8,23 +8,16 @@ import {
   getAssumedRoleCredentials,
 } from './utils';
 
+const AWS_CONTROL_PLANE_ENDPOINTS: endpointStrings[] = [
+  'retrieveBatch',
+  'cancelBatch',
+  'listBatches',
+];
+
 const BedrockAPIConfig: ProviderAPIConfig = {
-  getMethod: ({ fn, requestMethod }) => {
-    if (fn === 'uploadFile') return 'PUT';
-    return requestMethod;
-  },
   getBaseURL: async ({ providerOptions, fn }) => {
-    if (fn === 'uploadFile') {
-      const url = `https://${providerOptions.awsS3Bucket}.s3.${providerOptions.awsRegion}.amazonaws.com/${providerOptions.awsS3ObjectKey}`;
-      return await generatePresignedUrl(
-        url,
-        's3',
-        providerOptions.awsRegion,
-        providerOptions.awsAccessKeyId,
-        providerOptions.awsSecretAccessKey
-      );
-    }
-    const isAWSControlPlaneEndpoint = fn === 'createBatch';
+    const isAWSControlPlaneEndpoint =
+      fn && AWS_CONTROL_PLANE_ENDPOINTS.includes(fn);
     return `https://${isAWSControlPlaneEndpoint ? 'bedrock' : 'bedrock-runtime'}.${providerOptions.awsRegion || 'us-east-1'}.amazonaws.com`;
   },
   headers: async ({
@@ -101,7 +94,6 @@ const BedrockAPIConfig: ProviderAPIConfig = {
     if (fn === 'uploadFile') return '';
 
     const { model, stream } = gatewayRequestBody;
-    if (!model) throw new GatewayError('Model is required');
     let mappedFn = fn;
     if (stream) {
       mappedFn = `stream-${fn}`;
@@ -110,6 +102,7 @@ const BedrockAPIConfig: ProviderAPIConfig = {
     let streamEndpoint = `/model/${model}/invoke-with-response-stream`;
     if (
       (mappedFn === 'chatComplete' || mappedFn === 'stream-chatComplete') &&
+      model &&
       !bedrockInvokeModels.includes(model)
     ) {
       endpoint = `/model/${model}/converse`;
@@ -140,8 +133,8 @@ const BedrockAPIConfig: ProviderAPIConfig = {
       case 'cancelBatch': {
         return `/model-invocation-job/${requestURL.split('/').pop()}/stop`;
       }
-      case 'getBatch': {
-        return `/model-invocation-job/${requestURL.split('/').pop()}`;
+      case 'retrieveBatch': {
+        return `/model-invocation-job/${requestURL.split('/v1/batches/')[1]}`;
       }
       default:
         return '';

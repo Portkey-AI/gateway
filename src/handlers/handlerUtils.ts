@@ -316,7 +316,7 @@ export async function tryPost(
   const fetchOptions = constructRequest(
     headers,
     provider,
-    apiConfig.getMethod?.({ fn, requestMethod: method }) || method,
+    method,
     forwardHeaders,
     requestHeaders,
     fn,

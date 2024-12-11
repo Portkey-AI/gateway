@@ -27,8 +27,8 @@ import { createTranscriptionHandler } from './handlers/createTranscriptionHandle
 import { createTranslationHandler } from './handlers/createTranslationHandler';
 import { modelsHandler, providersHandler } from './handlers/modelsHandler';
 import { realTimeHandler } from './handlers/realtimeHandler';
-import getBatchesHandler from './handlers/batchesRouter';
-import getFilesHandler from './handlers/filesRouter';
+import getBatchesHandler from './handlers/batchesHandler';
+import getFilesHandler from './handlers/filesHandler';
 
 // Config
 import conf from '../conf.json';
@@ -177,10 +177,26 @@ app.delete(
 );
 
 // Batch routes
-app.post('/v1/batches', getBatchesHandler('createBatch', 'POST'));
-app.get('/v1/batches/:id', getBatchesHandler('retrieveBatch', 'GET'));
-app.post('/v1/batches/:id/cancel', getBatchesHandler('cancelBatch', 'POST'));
-app.get('/v1/batches', getBatchesHandler('listBatches', 'GET'));
+app.post(
+  '/v1/batches',
+  requestValidator,
+  getBatchesHandler('createBatch', 'POST')
+);
+app.get(
+  '/v1/batches/*',
+  requestValidator,
+  getBatchesHandler('retrieveBatch', 'GET')
+);
+app.post(
+  '/v1/batches/:id/cancel',
+  requestValidator,
+  getBatchesHandler('cancelBatch', 'POST')
+);
+app.get(
+  '/v1/batches',
+  requestValidator,
+  getBatchesHandler('listBatches', 'GET')
+);
 
 /**
  * POST route for '/v1/prompts/:id/completions'.
