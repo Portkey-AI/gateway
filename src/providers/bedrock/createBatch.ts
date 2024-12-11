@@ -14,7 +14,9 @@ export const BedrockCreateBatchConfig: ProviderConfig = {
     required: true,
     transform: (params: CreateBatchResponse) => {
       return {
-        s3Uri: params.input_file_id,
+        s3InputDataConfig: {
+          s3Uri: params.input_file_id,
+        },
       };
     },
   },
@@ -23,6 +25,8 @@ export const BedrockCreateBatchConfig: ProviderConfig = {
     transform: (params: CreateBatchResponse) => {
       return 'portkey-batch-job-' + crypto.randomUUID();
     },
+    required: true,
+    default: 'portkey-batch-job',
   },
   outputDataConfig: {
     param: 'outputDataConfig',

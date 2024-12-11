@@ -28,6 +28,7 @@ import { HookSpan, HooksManager } from '../middlewares/hooks';
 import { ConditionalRouter } from '../services/conditionalRouter';
 import { RouterError } from '../errors/RouterError';
 import { GatewayError } from '../errors/GatewayError';
+import { awsMultipartUploadHandler } from './awsMultipartUploadHandler';
 
 /**
  * Constructs the request options for the API call.
@@ -234,6 +235,17 @@ export async function tryPost(
   }
 
   const provider: string = providerOption.provider ?? '';
+
+  if (provider === BEDROCK && fn === 'uploadFile') {
+    return awsMultipartUploadHandler(
+      c,
+      providerOption,
+      requestBody,
+      requestHeaders,
+      fn,
+      method
+    );
+  }
 
   const hooksManager = c.get('hooksManager');
   const hookSpan = hooksManager.createSpan(
@@ -784,6 +796,7 @@ export function constructConfigFromRequestHeaders(
     awsExternalId: requestHeaders[`x-${POWERED_BY}-aws-external-id`],
     awsS3Bucket: requestHeaders[`x-${POWERED_BY}-aws-s3-bucket`],
     awsS3ObjectKey: requestHeaders[`x-${POWERED_BY}-aws-s3-object-key`],
+    awsBedrockModel: requestHeaders[`x-${POWERED_BY}-aws-bedrock-model`],
   };
 
   const sagemakerConfig = {

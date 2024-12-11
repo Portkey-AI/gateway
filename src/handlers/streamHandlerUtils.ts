@@ -4,7 +4,9 @@
  * @returns The boundary string.
  * @throws {Error} Throws an error if no boundary is found in the content-type header.
  */
-const getBoundaryFromContentType = (contentType: string | null): string => {
+export const getBoundaryFromContentType = (
+  contentType: string | null
+): string => {
   const match = contentType?.match(/boundary=(?:"([^"]+)"|([^;]+))/i);
   if (!match) throw new Error('No boundary in content-type');
   return match[1] || match[2];
