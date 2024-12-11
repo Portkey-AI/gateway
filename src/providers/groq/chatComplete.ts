@@ -72,6 +72,7 @@ export interface GroqStreamChunk {
   choices: {
     delta: {
       content?: string;
+      tool_calls?: object[];
     };
     index: number;
     finish_reason: string | null;
@@ -175,6 +176,7 @@ export const GroqChatCompleteStreamChunkTransform: (
         delta: {
           role: 'assistant',
           content: parsedChunk.choices[0].delta.content,
+          tool_calls: parsedChunk.choices[0].delta?.tool_calls,
         },
         logprobs: null,
         finish_reason: parsedChunk.choices[0].finish_reason || null,
