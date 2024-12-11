@@ -126,7 +126,7 @@ export const VALID_PROVIDERS = [
   DASHSCOPE,
   X_AI,
   SAGEMAKER,
-  NEBIUS
+  NEBIUS,
 ];
 
 export const CONTENT_TYPES = {
