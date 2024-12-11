@@ -1,20 +1,26 @@
-import { Context, Hono } from 'hono';
+import { Context } from 'hono';
 import {
   constructConfigFromRequestHeaders,
   tryTargetsRecursively,
-} from '../handlers/handlerUtils';
+} from './handlerUtils';
 import { endpointStrings } from '../providers/types';
 
-function getHandler(endpoint: endpointStrings, method: string) {
+function getFilesHandler(
+  endpoint: endpointStrings,
+  method: 'POST' | 'GET' | 'DELETE'
+) {
   async function handler(c: Context): Promise<Response> {
     try {
       let requestHeaders = Object.fromEntries(c.req.raw.headers);
-      let request = endpoint === 'createBatch' ? await c.req.json() : {};
       const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
+      let body = {};
+      if (c.req.raw.body instanceof ReadableStream) {
+        body = c.req.raw.body;
+      }
       const tryTargetsResponse = await tryTargetsRecursively(
         c,
         camelCaseConfig ?? {},
-        request,
+        body,
         requestHeaders,
         endpoint,
         method,
@@ -41,11 +47,4 @@ function getHandler(endpoint: endpointStrings, method: string) {
   return handler;
 }
 
-const batchesRouter = new Hono();
-
-batchesRouter.post('/', getHandler('createBatch', 'POST'));
-batchesRouter.get('/:id', getHandler('retrieveBatch', 'GET'));
-batchesRouter.post('/:id/cancel', getHandler('cancelBatch', 'POST'));
-batchesRouter.get('/', getHandler('listBatches', 'GET'));
-
-export default batchesRouter;
+export default getFilesHandler;

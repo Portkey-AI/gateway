@@ -24,7 +24,6 @@ const unableToParseJsonResponse = () =>
   );
 
 class AwsMultipartUploadHandler {
-  private signer: SignatureV4;
   private bucket: string;
   private objectKey: string;
   private region: string;
@@ -49,15 +48,6 @@ class AwsMultipartUploadHandler {
     this.url = new URL(
       `https://${bucket}.s3.${region}.amazonaws.com/${objectKey}?uploads`
     );
-    this.signer = new SignatureV4({
-      service: 's3',
-      region: region,
-      credentials: {
-        accessKeyId: accessKeyId,
-        secretAccessKey: secretAccessKey,
-      },
-      sha256: Sha256,
-    });
   }
 
   // Helper to create HMAC
