@@ -47,7 +47,10 @@ import {
   BedrockTitanEmbedConfig,
   BedrockTitanEmbedResponseTransform,
 } from './embed';
-import { BedrockGetBatchOutputRequestHandler } from './getBatchOutput';
+import {
+  BedrockGetBatchOutputRequestHandler,
+  BedrockGetBatchOutputResponseTransform,
+} from './getBatchOutput';
 import {
   BedrockStabilityAIImageGenerateV1Config,
   BedrockStabilityAIImageGenerateV1ResponseTransform,
@@ -195,6 +198,7 @@ const BedrockConfig: ProviderConfigs = {
         cancelBatch: BedrockCancelBatchResponseTransform,
         retrieveBatch: BedrockRetrieveBatchResponseTransform,
         listBatches: BedrockListBatchesResponseTransform,
+        getBatchOutput: BedrockGetBatchOutputResponseTransform,
       };
     }
     config.createBatch = BedrockCreateBatchConfig;

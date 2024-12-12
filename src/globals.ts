@@ -134,6 +134,7 @@ export const CONTENT_TYPES = {
   EVENT_STREAM: 'text/event-stream',
   AUDIO_MPEG: 'audio/mpeg',
   APPLICATION_OCTET_STREAM: 'application/octet-stream',
+  BINARY_OCTET_STREAM: 'binary/octet-stream',
   GENERIC_AUDIO_PATTERN: 'audio',
   PLAIN_TEXT: 'text/plain',
   HTML: 'text/html',

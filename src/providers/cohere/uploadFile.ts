@@ -1,5 +1,5 @@
 import { COHERE } from '../../globals';
-import { getStreamTransformer } from '../../handlers/streamHandlerUtils';
+import { getFormdataToFormdataStreamTransformer } from '../../handlers/streamHandlerUtils';
 import { ErrorResponse, UploadFileResponse } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { CohereErrorResponse } from './types';
@@ -21,7 +21,7 @@ export const CohereUploadFileRequestTransform = (
   requestBody: ReadableStream,
   requestHeaders: Record<string, string>
 ) => {
-  const transformStream = getStreamTransformer(
+  const transformStream = getFormdataToFormdataStreamTransformer(
     requestHeaders,
     CohereBatchRequestRowTransform,
     CohereFileUploadFieldsMapping

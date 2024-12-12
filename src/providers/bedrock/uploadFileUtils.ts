@@ -1,15 +1,36 @@
+import { BEDROCK } from '../../globals';
 import {
   ContentType,
   Message,
   MESSAGE_ROLES,
   Params,
 } from '../../types/requestBody';
-import { ProviderConfig } from '../types';
+import {
+  ChatCompletionResponse,
+  ErrorResponse,
+  ProviderConfig,
+} from '../types';
+import {
+  generateErrorResponse,
+  generateInvalidProviderResponseError,
+} from '../utils';
+import {
+  BedrockAI21CompleteResponse,
+  BedrockCohereCompleteResponse,
+  BedrockCohereStreamChunk,
+  BedrockLlamaCompleteResponse,
+  BedrockLlamaStreamChunk,
+  BedrockMistralCompleteResponse,
+  BedrockTitanCompleteResponse,
+  BedrockTitanStreamChunk,
+  BedrocMistralStreamChunk,
+} from './complete';
 import {
   LLAMA_2_SPECIAL_TOKENS,
   LLAMA_3_SPECIAL_TOKENS,
   MISTRAL_CONTROL_TOKENS,
 } from './constants';
+import { BedrockErrorResponse } from './embed';
 
 interface AnthropicTool {
   name: string;
@@ -698,6 +719,234 @@ const BedrockAI21ChatCompleteConfig: ProviderConfig = {
   },
 };
 
+export const BedrockErrorResponseTransform: (
+  response: BedrockErrorResponse
+) => ErrorResponse | undefined = (response) => {
+  if ('message' in response) {
+    return generateErrorResponse(
+      { message: response.message, type: null, param: null, code: null },
+      BEDROCK
+    );
+  }
+
+  return undefined;
+};
+
+export const BedrockLlamaChatCompleteResponseTransform: (
+  response: BedrockLlamaCompleteResponse | BedrockErrorResponse
+) => ChatCompletionResponse | ErrorResponse = (response) => {
+  if ('generation' in response) {
+    return {
+      id: Date.now().toString(),
+      object: 'chat.completion',
+      created: Math.floor(Date.now() / 1000),
+      model: '',
+      provider: BEDROCK,
+      choices: [
+        {
+          index: 0,
+          message: {
+            role: 'assistant',
+            content: response.generation,
+          },
+          finish_reason: response.stop_reason,
+        },
+      ],
+      usage: {
+        prompt_tokens: response.prompt_token_count,
+        completion_tokens: response.generation_token_count,
+        total_tokens:
+          response.prompt_token_count + response.generation_token_count,
+      },
+    };
+  }
+
+  return generateInvalidProviderResponseError(response, BEDROCK);
+};
+
+export const BedrockTitanChatCompleteResponseTransform: (
+  response: BedrockTitanCompleteResponse | BedrockErrorResponse
+) => ChatCompletionResponse | ErrorResponse = (response) => {
+  if ('results' in response) {
+    const completionTokens = response.results
+      .map((r) => r.tokenCount)
+      .reduce((partialSum, a) => partialSum + a, 0);
+    return {
+      id: Date.now().toString(),
+      object: 'chat.completion',
+      created: Math.floor(Date.now() / 1000),
+      model: '',
+      provider: BEDROCK,
+      choices: response.results.map((generation, index) => ({
+        index: index,
+        message: {
+          role: 'assistant',
+          content: generation.outputText,
+        },
+        finish_reason: generation.completionReason,
+      })),
+      usage: {
+        prompt_tokens: response.inputTextTokenCount,
+        completion_tokens: completionTokens,
+        total_tokens: response.inputTextTokenCount + completionTokens,
+      },
+    };
+  }
+
+  return generateInvalidProviderResponseError(response, BEDROCK);
+};
+
+export const BedrockAI21ChatCompleteResponseTransform: (
+  response: BedrockAI21CompleteResponse | BedrockErrorResponse
+) => ChatCompletionResponse | ErrorResponse = (response) => {
+  if ('completions' in response) {
+    return {
+      id: response.id.toString(),
+      object: 'chat.completion',
+      created: Math.floor(Date.now() / 1000),
+      model: '',
+      provider: BEDROCK,
+      choices: response.completions.map((completion, index) => ({
+        index: index,
+        message: {
+          role: 'assistant',
+          content: completion.data.text,
+        },
+        finish_reason: completion.finishReason?.reason,
+      })),
+      usage: {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        total_tokens: 0,
+      },
+    };
+  }
+
+  return generateInvalidProviderResponseError(response, BEDROCK);
+};
+
+interface BedrockAnthropicChatCompleteResponse {
+  id: string;
+  type: string;
+  role: string;
+  content: AnthropicContentItem[];
+  stop_reason: string;
+  model: string;
+  stop_sequence: null | string;
+}
+
+export const BedrockAnthropicChatCompleteResponseTransform: (
+  response: BedrockAnthropicChatCompleteResponse | BedrockErrorResponse
+) => ChatCompletionResponse | ErrorResponse = (response) => {
+  if ('content' in response) {
+    let content = '';
+    if (response.content.length && response.content[0].type === 'text') {
+      content = response.content[0].text;
+    }
+
+    let toolCalls: any = [];
+    response.content.forEach((item) => {
+      if (item.type === 'tool_use') {
+        toolCalls.push({
+          id: item.id,
+          type: 'function',
+          function: {
+            name: item.name,
+            arguments: JSON.stringify(item.input),
+          },
+        });
+      }
+    });
+
+    return {
+      id: response.id,
+      object: 'chat.completion',
+      created: Math.floor(Date.now() / 1000),
+      model: response.model,
+      provider: BEDROCK,
+      choices: [
+        {
+          message: {
+            role: 'assistant',
+            content,
+            tool_calls: toolCalls.length ? toolCalls : undefined,
+          },
+          index: 0,
+          logprobs: null,
+          finish_reason: response.stop_reason,
+        },
+      ],
+      usage: {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        total_tokens: 0,
+      },
+    };
+  }
+
+  return generateInvalidProviderResponseError(response, BEDROCK);
+};
+
+export const BedrockCohereChatCompleteResponseTransform: (
+  response: BedrockCohereCompleteResponse | BedrockErrorResponse
+) => ChatCompletionResponse | ErrorResponse = (response) => {
+  if ('generations' in response) {
+    return {
+      id: Date.now().toString(),
+      object: 'chat.completion',
+      created: Math.floor(Date.now() / 1000),
+      model: '',
+      provider: BEDROCK,
+      choices: response.generations.map((generation, index) => ({
+        index: index,
+        message: {
+          role: 'assistant',
+          content: generation.text,
+        },
+        finish_reason: generation.finish_reason,
+      })),
+      usage: {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        total_tokens: 0,
+      },
+    };
+  }
+
+  return generateInvalidProviderResponseError(response, BEDROCK);
+};
+
+export const BedrockMistralChatCompleteResponseTransform: (
+  response: BedrockMistralCompleteResponse | BedrockErrorResponse
+) => ChatCompletionResponse | ErrorResponse = (response) => {
+  if ('outputs' in response) {
+    return {
+      id: Date.now().toString(),
+      object: 'chat.completion',
+      created: Math.floor(Date.now() / 1000),
+      model: '',
+      provider: BEDROCK,
+      choices: [
+        {
+          index: 0,
+          message: {
+            role: 'assistant',
+            content: response.outputs[0].text,
+          },
+          finish_reason: response.outputs[0].stop_reason,
+        },
+      ],
+      usage: {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        total_tokens: 0,
+      },
+    };
+  }
+
+  return generateInvalidProviderResponseError(response, BEDROCK);
+};
+
 export const BedrockUploadFileConfig: Record<string, ProviderConfig> = {
   anthropic: BedrockAnthropicChatCompleteConfig,
   cohere: BedrockCohereChatCompleteConfig,
@@ -706,4 +955,14 @@ export const BedrockUploadFileConfig: Record<string, ProviderConfig> = {
   ai21: BedrockAI21ChatCompleteConfig,
   llama2: BedrockLlama2ChatCompleteConfig,
   llama3: BedrockLlama3ChatCompleteConfig,
+};
+
+export const BedrockUploadFileResponseTransforms: Record<string, any> = {
+  anthropic: BedrockAnthropicChatCompleteResponseTransform,
+  cohere: BedrockCohereChatCompleteResponseTransform,
+  mistral: BedrockMistralChatCompleteResponseTransform,
+  titan: BedrockTitanChatCompleteResponseTransform,
+  ai21: BedrockAI21ChatCompleteResponseTransform,
+  llama2: BedrockLlamaChatCompleteResponseTransform,
+  llama3: BedrockLlamaChatCompleteResponseTransform,
 };

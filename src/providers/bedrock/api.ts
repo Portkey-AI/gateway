@@ -13,12 +13,24 @@ const AWS_CONTROL_PLANE_ENDPOINTS: endpointStrings[] = [
   'retrieveBatch',
   'cancelBatch',
   'listBatches',
+  'retrieveFileContent',
+  'getBatchOutput',
 ];
 
-const AWS_GET_METHODS: endpointStrings[] = ['listBatches', 'retrieveBatch'];
+const AWS_GET_METHODS: endpointStrings[] = [
+  'listBatches',
+  'retrieveBatch',
+  'retrieveFileContent',
+  'getBatchOutput',
+];
+
+const S3_ENDPOINTS: endpointStrings[] = [
+  'retrieveFileContent',
+  'getBatchOutput',
+];
 
 const BedrockAPIConfig: ProviderAPIConfig = {
-  getBaseURL: async ({ providerOptions, fn }) => {
+  getBaseURL: ({ providerOptions, fn }) => {
     const isAWSControlPlaneEndpoint =
       fn && AWS_CONTROL_PLANE_ENDPOINTS.includes(fn);
     return `https://${isAWSControlPlaneEndpoint ? 'bedrock' : 'bedrock-runtime'}.${providerOptions.awsRegion || 'us-east-1'}.amazonaws.com`;
@@ -85,12 +97,16 @@ const BedrockAPIConfig: ProviderAPIConfig = {
       ? 'GET'
       : 'POST';
 
+    const service = S3_ENDPOINTS.includes(fn as endpointStrings)
+      ? 's3'
+      : 'bedrock';
+
     return generateAWSHeaders(
       transformedRequestBody,
       headers,
       transformedRequestUrl,
       method,
-      'bedrock',
+      service,
       providerOptions.awsRegion || '',
       providerOptions.awsAccessKeyId || '',
       providerOptions.awsSecretAccessKey || '',

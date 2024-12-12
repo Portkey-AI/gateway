@@ -82,12 +82,46 @@ const enqueueFileContentAndUpdateBuffer = (
 };
 
 /**
+ * Enqueues the file content and updates the buffer for each jsonl row in the multipart/form-data body.
+ * @param chunk - The current chunk of the multipart/form-data body.
+ * @param controller - The controller for the TransformStream.
+ * @param buffer - The buffer to be updated.
+ * @param rowTransform - The function used to transform the row.
+ * @returns The updated buffer.
+ */
+const enqueueFileContentAndUpdateBufferOctetStream = (
+  controller: TransformStreamDefaultController,
+  buffer: string,
+  rowTransform: (row: Record<string, any>) => Record<string, any>
+) => {
+  const jsonLines = buffer.split('\n');
+  for (const line of jsonLines) {
+    if (line === '\r') {
+      buffer = buffer.slice(line.length + 1);
+      continue;
+    }
+    try {
+      const json = JSON.parse(line);
+      const transformedLine = rowTransform(json);
+      controller.enqueue(
+        new Uint8Array(Buffer.from(JSON.stringify(transformedLine)))
+      );
+      controller.enqueue(new Uint8Array(Buffer.from('\r\n')));
+      buffer = buffer.slice(line.length + 1);
+    } catch (error) {
+      // this is not a valid json line, so we don't update the buffer
+    }
+  }
+  return buffer;
+};
+
+/**
  * Returns an instance of TransformStream used for transforming a multipart/form-data
  * @param requestHeaders - The headers of the original request.
  * @param rowTransform - The function used to transform the row.
  * @returns An instance of TransformStream.
  */
-export const getStreamTransformer = (
+export const getFormdataToFormdataStreamTransformer = (
   requestHeaders: Record<string, string>,
   rowTransform: (row: Record<string, any>) => Record<string, any>,
   fieldsMapping: Record<string, string>
@@ -169,6 +203,33 @@ export const getStreamTransformer = (
         } else {
           break;
         }
+      }
+    },
+  });
+  return transformStream;
+};
+
+/**
+ * Returns an instance of TransformStream used for transforming a binary/octet-stream
+ * @param rowTransform - The function used to transform the row.
+ * @returns An instance of TransformStream.
+ */
+export const getOctetStreamToOctetStreamTransformer = (
+  rowTransform: (row: Record<string, any>) => Record<string, any>
+) => {
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  const transformStream = new TransformStream({
+    transform(chunk, controller) {
+      buffer += decoder.decode(new Uint8Array(chunk), { stream: true });
+
+      while (buffer.length > 0) {
+        buffer = enqueueFileContentAndUpdateBufferOctetStream(
+          controller,
+          buffer,
+          rowTransform
+        );
       }
     },
   });
