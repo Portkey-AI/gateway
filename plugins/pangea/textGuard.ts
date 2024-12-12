@@ -18,11 +18,19 @@ export const handler: PluginHandler = async (
   let data = null;
   try {
     if (!parameters.credentials?.domain) {
-      throw Error(`'parameters.credentials.domain' must be set`);
+      return {
+        error: `'parameters.credentials.domain' must be set`,
+        verdict: true,
+        data,
+      };
     }
 
     if (!parameters.credentials?.apiKey) {
-      throw Error(`'parameters.credentials.apiKey' must be set`);
+      return {
+        error: `'parameters.credentials.apiKey' must be set`,
+        verdict: true,
+        data,
+      };
     }
 
     // TODO: Update to v1 once released

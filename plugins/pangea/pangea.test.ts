@@ -7,7 +7,9 @@ const options = {
 
 describe('textGuardContentHandler', () => {
   it('should return an error if hook type is not supported', async () => {
-    const context = {};
+    const context = {
+      request: { text: 'this is a test string for moderations' },
+    };
     const eventType = 'unsupported';
     const parameters = {};
     const result = await textGuardContentHandler(
@@ -18,14 +20,18 @@ describe('textGuardContentHandler', () => {
       options
     );
     expect(result.error).toBeDefined();
-    expect(result.verdict).toBe(false);
+    expect(result.verdict).toBe(true);
     expect(result.data).toBeNull();
   });
 
   it('should return an error if fetch request fails', async () => {
-    const context = {};
+    const context = {
+      request: { text: 'this is a test string for moderations' },
+    };
     const eventType = 'beforeRequestHook';
-    const parameters = { token: 'test', domain: testCreds.domain };
+    const parameters = {
+      credentials: { apiKey: 'test', domain: testCreds.domain },
+    };
     const result = await textGuardContentHandler(
       context,
       parameters,
@@ -33,14 +39,16 @@ describe('textGuardContentHandler', () => {
       options
     );
     expect(result.error).toBeDefined();
-    expect(result.verdict).toBeFalsy();
+    expect(result.verdict).toBe(false);
     expect(result.data).toBeNull();
   });
 
   it('should return an error if no apiKey', async () => {
-    const context = {};
+    const context = {
+      request: { text: 'this is a test string for moderations' },
+    };
     const eventType = 'beforeRequestHook';
-    const parameters = { domain: testCreds.domain };
+    const parameters = { credentials: { domain: testCreds.domain } };
     const result = await textGuardContentHandler(
       context,
       parameters,
@@ -48,14 +56,16 @@ describe('textGuardContentHandler', () => {
       options
     );
     expect(result.error).toBeDefined();
-    expect(result.verdict).toBeFalsy();
+    expect(result.verdict).toBe(true);
     expect(result.data).toBeNull();
   });
 
   it('should return an error if no domain', async () => {
-    const context = {};
+    const context = {
+      request: { text: 'this is a test string for moderations' },
+    };
     const eventType = 'beforeRequestHook';
-    const parameters = { apiKey: testCreds.apiKey };
+    const parameters = { credentials: { apiKey: testCreds.apiKey } };
     const result = await textGuardContentHandler(
       context,
       parameters,
@@ -63,7 +73,7 @@ describe('textGuardContentHandler', () => {
       options
     );
     expect(result.error).toBeDefined();
-    expect(result.verdict).toBeFalsy();
+    expect(result.verdict).toBe(true);
     expect(result.data).toBeNull();
   });
 
@@ -83,7 +93,7 @@ describe('textGuardContentHandler', () => {
     );
     expect(result.error).toBeNull();
     expect(result.verdict).toBeDefined();
-    expect(result.verdict).toBeTruthy();
+    expect(result.verdict).toBe(true);
     expect(result.data).toBeDefined();
   });
 
@@ -104,7 +114,27 @@ describe('textGuardContentHandler', () => {
       options
     );
     expect(result.error).toBeNull();
-    expect(result.verdict).toBeFalsy();
+    expect(result.verdict).toBe(false);
     expect(result.data).toBeDefined();
+  });
+
+  it('should return true verdict and error if no text', async () => {
+    const context = {
+      request: { text: '' },
+    };
+    const eventType = 'beforeRequestHook';
+    const parameters = {
+      credentials: testCreds,
+    };
+    const result = await textGuardContentHandler(
+      context,
+      parameters,
+      eventType,
+      options
+    );
+    expect(result.error).toBeDefined();
+    expect(result.verdict).toBeDefined();
+    expect(result.verdict).toBe(true);
+    expect(result.data).toBeNull();
   });
 });
