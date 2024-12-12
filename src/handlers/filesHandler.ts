@@ -5,7 +5,7 @@ import {
 } from './handlerUtils';
 import { endpointStrings } from '../providers/types';
 
-function getFilesHandler(
+function filesHandler(
   endpoint: endpointStrings,
   method: 'POST' | 'GET' | 'DELETE'
 ) {
@@ -47,4 +47,4 @@ function getFilesHandler(
   return handler;
 }
 
-export default getFilesHandler;
+export default filesHandler;

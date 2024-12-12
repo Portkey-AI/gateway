@@ -22,9 +22,6 @@ export const BedrockCreateBatchConfig: ProviderConfig = {
   },
   jobName: {
     param: 'jobName',
-    transform: (params: CreateBatchResponse) => {
-      return 'portkey-batch-job-' + crypto.randomUUID();
-    },
     required: true,
     default: 'portkey-batch-job',
   },

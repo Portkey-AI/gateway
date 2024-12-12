@@ -28,7 +28,6 @@ import { HookSpan, HooksManager } from '../middlewares/hooks';
 import { ConditionalRouter } from '../services/conditionalRouter';
 import { RouterError } from '../errors/RouterError';
 import { GatewayError } from '../errors/GatewayError';
-import { awsMultipartUploadHandler } from './awsMultipartUploadHandler';
 
 /**
  * Constructs the request options for the API call.
@@ -236,17 +235,6 @@ export async function tryPost(
 
   const provider: string = providerOption.provider ?? '';
 
-  if (provider === BEDROCK && fn === 'uploadFile') {
-    return awsMultipartUploadHandler(
-      c,
-      providerOption,
-      requestBody,
-      requestHeaders,
-      fn,
-      method
-    );
-  }
-
   const hooksManager = c.get('hooksManager');
   const hookSpan = hooksManager.createSpan(
     params,
@@ -260,18 +248,22 @@ export async function tryPost(
   );
 
   // Mapping providers to corresponding URLs
-  const apiConfig: ProviderAPIConfig = Providers[provider].api;
+  const providerConfig = Providers[provider];
+  const apiConfig: ProviderAPIConfig = providerConfig.api;
   // Attach the body of the request
-  const transformedRequestBody =
-    method === 'POST'
-      ? transformToProviderRequest(
-          provider,
-          params,
-          requestBody,
-          fn,
-          requestHeaders
-        )
-      : {};
+  let transformedRequestBody: ReadableStream | FormData | Params = {};
+  if (!providerConfig?.requestHandlers?.[fn]) {
+    transformedRequestBody =
+      method === 'POST'
+        ? transformToProviderRequest(
+            provider,
+            params,
+            requestBody,
+            fn,
+            requestHeaders
+          )
+        : {};
+  }
 
   const forwardHeaders =
     requestHeaders[HEADER_KEYS.FORWARD_HEADERS]
@@ -460,7 +452,8 @@ export async function tryPost(
     fn,
     requestHeaders,
     hookSpan.id,
-    strictOpenAiCompliance
+    strictOpenAiCompliance,
+    requestBody
   );
 
   return createResponse(mappedResponse, undefined, false, true);
@@ -987,7 +980,8 @@ export async function recursiveAfterRequestHookHandler(
   fn: any,
   requestHeaders: Record<string, string>,
   hookSpanId: string,
-  strictOpenAiCompliance: boolean
+  strictOpenAiCompliance: boolean,
+  requestBody?: ReadableStream | FormData | Params
 ): Promise<[Response, number]> {
   let response, retryCount;
   const requestTimeout =
@@ -997,12 +991,28 @@ export async function recursiveAfterRequestHookHandler(
 
   const { retry } = providerOption;
 
+  const provider = providerOption.provider ?? '';
+  const providerConfig = Providers[provider];
+  const requestHandlers = providerConfig.requestHandlers;
+  let requestHandler;
+  if (requestHandlers && requestHandlers[fn]) {
+    requestHandler = () =>
+      requestHandlers[fn]({
+        c,
+        providerOptions: providerOption,
+        requestURL: c.req.url,
+        requestHeaders,
+        requestBody,
+      });
+  }
+
   [response, retryCount] = await retryRequest(
     url,
     options,
     retry?.attempts || 0,
     retry?.onStatusCodes || [],
-    requestTimeout || null
+    requestTimeout || null,
+    requestHandler
   );
 
   const { response: mappedResponse, responseJson: mappedResponseJson } =

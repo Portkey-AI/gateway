@@ -61,7 +61,8 @@ export const retryRequest = async (
   options: RequestInit,
   retryCount: number,
   statusCodesToRetry: number[],
-  timeout: number | null
+  timeout: number | null,
+  requestHandler?: () => Promise<Response>
 ): Promise<[Response, number | undefined]> => {
   let lastError: any | undefined;
   let lastResponse: Response | undefined;
@@ -70,9 +71,14 @@ export const retryRequest = async (
     await retry(
       async (bail: any, attempt: number) => {
         try {
-          const response: Response = timeout
-            ? await fetchWithTimeout(url, options, timeout)
-            : await fetch(url, options);
+          let response: Response;
+          if (requestHandler) {
+            response = await requestHandler();
+          } else {
+            response = timeout
+              ? await fetchWithTimeout(url, options, timeout)
+              : await fetch(url, options);
+          }
           if (statusCodesToRetry.includes(response.status)) {
             const errorObj: any = new Error(await response.text());
             errorObj.status = response.status;

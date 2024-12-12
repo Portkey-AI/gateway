@@ -5,7 +5,7 @@ import {
 } from './handlerUtils';
 import { endpointStrings } from '../providers/types';
 
-function getBatchesHandler(endpoint: endpointStrings, method: string) {
+function batchesHandler(endpoint: endpointStrings, method: string) {
   async function handler(c: Context): Promise<Response> {
     try {
       let requestHeaders = Object.fromEntries(c.req.raw.headers);
@@ -41,4 +41,4 @@ function getBatchesHandler(endpoint: endpointStrings, method: string) {
   return handler;
 }
 
-export default getBatchesHandler;
+export default batchesHandler;

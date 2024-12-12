@@ -33,6 +33,10 @@ import {
 import { OpenAIRetrieveBatchResponseTransform } from './retrieveBatch';
 import { OpenAICancelBatchResponseTransform } from './cancelBatch';
 import { OpenAIListBatchesResponseTransform } from './listBatches';
+import {
+  BatchOutputResponseTransform,
+  OpenAIGetBatchOutputRequestHandler,
+} from './getBatchOutput';
 
 const OpenAIConfig: ProviderConfigs = {
   complete: OpenAICompleteConfig,
@@ -46,6 +50,9 @@ const OpenAIConfig: ProviderConfigs = {
   realtime: {},
   createBatch: OpenAICreateBatchConfig,
   cancelBatch: {},
+  requestHandlers: {
+    getBatchOutput: OpenAIGetBatchOutputRequestHandler,
+  },
   requestTransforms: {
     uploadFile: OpenAIFileUploadRequestTransform,
   },
@@ -69,6 +76,7 @@ const OpenAIConfig: ProviderConfigs = {
     retrieveBatch: OpenAIRetrieveBatchResponseTransform,
     cancelBatch: OpenAICancelBatchResponseTransform,
     listBatches: OpenAIListBatchesResponseTransform,
+    getBatchOutput: BatchOutputResponseTransform,
   },
 };
 

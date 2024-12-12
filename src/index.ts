@@ -27,8 +27,8 @@ import { createTranscriptionHandler } from './handlers/createTranscriptionHandle
 import { createTranslationHandler } from './handlers/createTranslationHandler';
 import { modelsHandler, providersHandler } from './handlers/modelsHandler';
 import { realTimeHandler } from './handlers/realtimeHandler';
-import getBatchesHandler from './handlers/batchesHandler';
-import getFilesHandler from './handlers/filesHandler';
+import batchesHandler from './handlers/batchesHandler';
+import filesHandler from './handlers/filesHandler';
 
 // Config
 import conf from '../conf.json';
@@ -156,47 +156,44 @@ app.post(
 app.post('/v1/audio/translations', requestValidator, createTranslationHandler);
 
 // Files routes
-app.get('/v1/files', requestValidator, getFilesHandler('listFiles', 'GET'));
-app.get(
-  '/v1/files/:id',
-  requestValidator,
-  getFilesHandler('retrieveFile', 'GET')
-);
+app.get('/v1/files', requestValidator, filesHandler('listFiles', 'GET'));
+app.get('/v1/files/:id', requestValidator, filesHandler('retrieveFile', 'GET'));
 app.get(
   '/v1/files/:id/content',
   requestValidator,
-  getFilesHandler('retrieveFileContent', 'GET')
+  filesHandler('retrieveFileContent', 'GET')
 );
 
-app.post('/v1/files', requestValidator, getFilesHandler('uploadFile', 'POST'));
+app.post('/v1/files', requestValidator, filesHandler('uploadFile', 'POST'));
 
 app.delete(
   '/v1/files/:id',
   requestValidator,
-  getFilesHandler('deleteFile', 'DELETE')
+  filesHandler('deleteFile', 'DELETE')
 );
 
 // Batch routes
 app.post(
   '/v1/batches',
   requestValidator,
-  getBatchesHandler('createBatch', 'POST')
+  batchesHandler('createBatch', 'POST')
+);
+app.get(
+  '/v1/batches/*/output',
+  requestValidator,
+  batchesHandler('getBatchOutput', 'GET')
 );
 app.get(
   '/v1/batches/*',
   requestValidator,
-  getBatchesHandler('retrieveBatch', 'GET')
+  batchesHandler('retrieveBatch', 'GET')
 );
 app.post(
   '/v1/batches/:id/cancel',
   requestValidator,
-  getBatchesHandler('cancelBatch', 'POST')
+  batchesHandler('cancelBatch', 'POST')
 );
-app.get(
-  '/v1/batches',
-  requestValidator,
-  getBatchesHandler('listBatches', 'GET')
-);
+app.get('/v1/batches', requestValidator, batchesHandler('listBatches', 'GET'));
 
 /**
  * POST route for '/v1/prompts/:id/completions'.

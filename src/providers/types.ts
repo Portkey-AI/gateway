@@ -88,7 +88,8 @@ export type endpointStrings =
   | 'createBatch'
   | 'retrieveBatch'
   | 'cancelBatch'
-  | 'listBatches';
+  | 'listBatches'
+  | 'getBatchOutput';
 
 /**
  * A collection of API configurations for multiple AI providers.

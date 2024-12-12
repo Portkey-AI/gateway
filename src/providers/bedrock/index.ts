@@ -55,12 +55,15 @@ import {
 } from './imageGenerate';
 import { BedrockRetrieveBatchResponseTransform } from './retrieveBatch';
 import {
-  BedrockUploadFileRequestTransform,
+  BedrockUploadFileRequestHandler,
   BedrockUploadFileResponseTransform,
 } from './uploadFile';
 
 const BedrockConfig: ProviderConfigs = {
   api: BedrockAPIConfig,
+  requestHandlers: {
+    uploadFile: BedrockUploadFileRequestHandler,
+  },
   getConfig: (params: Params, fn: endpointStrings) => {
     // To remove the region in case its a cross-region inference profile ID
     // https://docs.aws.amazon.com/bedrock/latest/userguide/cross-region-inference-support.html
@@ -182,9 +185,6 @@ const BedrockConfig: ProviderConfigs = {
       }
     }
 
-    config.requestTransforms = {
-      uploadFile: BedrockUploadFileRequestTransform,
-    };
     if (!config.responseTransforms) {
       config.responseTransforms = {
         uploadFile: BedrockUploadFileResponseTransform,
