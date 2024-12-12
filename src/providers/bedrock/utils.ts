@@ -76,13 +76,15 @@ export const generateAWSHeaders = async (
   const urlObj = new URL(url);
   const hostname = urlObj.hostname;
   headers['host'] = hostname;
+  const requestBody = method === 'GET' ? undefined : JSON.stringify(body);
+
   const request = {
     method: method,
     path: urlObj.pathname,
     protocol: 'https',
     hostname: urlObj.hostname,
     headers: headers,
-    body: JSON.stringify(body),
+    body: requestBody,
   };
 
   const signed = await signer.sign(request);

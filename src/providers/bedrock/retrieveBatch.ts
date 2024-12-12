@@ -22,8 +22,8 @@ export const BedrockRetrieveBatchResponseTransform = (
       object: 'batch',
       created_at: new Date(response.submitTime).getTime(),
       status: response.status,
-      input_file_id: response.inputDataConfig.s3Uri,
-      output_file_id: response.outputDataConfig.s3Uri,
+      input_file_id: response.inputDataConfig.s3InputDataConfig.s3Uri,
+      output_file_id: response.outputDataConfig.s3OutputDataConfig.s3Uri,
       finalizing_at: new Date(response.endTime).getTime(),
       expires_at: new Date(response.jobExpirationTime).getTime(),
     };

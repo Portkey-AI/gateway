@@ -178,6 +178,7 @@ app.post(
   requestValidator,
   batchesHandler('createBatch', 'POST')
 );
+app.get('/v1/batches', requestValidator, batchesHandler('listBatches', 'GET'));
 app.get(
   '/v1/batches/*/output',
   requestValidator,
@@ -193,7 +194,6 @@ app.post(
   requestValidator,
   batchesHandler('cancelBatch', 'POST')
 );
-app.get('/v1/batches', requestValidator, batchesHandler('listBatches', 'GET'));
 
 /**
  * POST route for '/v1/prompts/:id/completions'.

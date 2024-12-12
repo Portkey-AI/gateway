@@ -47,12 +47,14 @@ import {
   BedrockTitanEmbedConfig,
   BedrockTitanEmbedResponseTransform,
 } from './embed';
+import { BedrockGetBatchOutputRequestHandler } from './getBatchOutput';
 import {
   BedrockStabilityAIImageGenerateV1Config,
   BedrockStabilityAIImageGenerateV1ResponseTransform,
   BedrockStabilityAIImageGenerateV2Config,
   BedrockStabilityAIImageGenerateV2ResponseTransform,
 } from './imageGenerate';
+import { BedrockListBatchesResponseTransform } from './listBatches';
 import { BedrockRetrieveBatchResponseTransform } from './retrieveBatch';
 import {
   BedrockUploadFileRequestHandler,
@@ -63,6 +65,7 @@ const BedrockConfig: ProviderConfigs = {
   api: BedrockAPIConfig,
   requestHandlers: {
     uploadFile: BedrockUploadFileRequestHandler,
+    getBatchOutput: BedrockGetBatchOutputRequestHandler,
   },
   getConfig: (params: Params, fn: endpointStrings) => {
     // To remove the region in case its a cross-region inference profile ID
@@ -191,6 +194,7 @@ const BedrockConfig: ProviderConfigs = {
         createBatch: BedrockCreateBatchResponseTransform,
         cancelBatch: BedrockCancelBatchResponseTransform,
         retrieveBatch: BedrockRetrieveBatchResponseTransform,
+        listBatches: BedrockListBatchesResponseTransform,
       };
     }
     config.createBatch = BedrockCreateBatchConfig;

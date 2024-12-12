@@ -9,10 +9,13 @@ import {
 } from './utils';
 
 const AWS_CONTROL_PLANE_ENDPOINTS: endpointStrings[] = [
+  'createBatch',
   'retrieveBatch',
   'cancelBatch',
   'listBatches',
 ];
+
+const AWS_GET_METHODS: endpointStrings[] = ['listBatches', 'retrieveBatch'];
 
 const BedrockAPIConfig: ProviderAPIConfig = {
   getBaseURL: async ({ providerOptions, fn }) => {
@@ -35,9 +38,13 @@ const BedrockAPIConfig: ProviderAPIConfig = {
       };
     }
 
-    const headers = {
+    const headers: Record<string, string> = {
       'content-type': 'application/json',
     };
+
+    if (AWS_GET_METHODS.includes(fn as endpointStrings)) {
+      delete headers['content-type'];
+    }
 
     if (providerOptions.awsAuthType === 'assumedRole') {
       try {
@@ -74,11 +81,15 @@ const BedrockAPIConfig: ProviderAPIConfig = {
       }
     }
 
+    const method = AWS_GET_METHODS.includes(fn as endpointStrings)
+      ? 'GET'
+      : 'POST';
+
     return generateAWSHeaders(
       transformedRequestBody,
       headers,
       transformedRequestUrl,
-      'POST',
+      method,
       'bedrock',
       providerOptions.awsRegion || '',
       providerOptions.awsAccessKeyId || '',
@@ -134,7 +145,10 @@ const BedrockAPIConfig: ProviderAPIConfig = {
         return `/model-invocation-job/${requestURL.split('/').pop()}/stop`;
       }
       case 'retrieveBatch': {
-        return `/model-invocation-job/${requestURL.split('/v1/batches/')[1]}`;
+        return `/model-invocation-job/${encodeURIComponent(requestURL.split('/v1/batches/')[1])}`;
+      }
+      case 'listBatches': {
+        return '/model-invocation-jobs';
       }
       default:
         return '';

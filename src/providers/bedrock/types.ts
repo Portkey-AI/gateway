@@ -1,13 +1,15 @@
 interface BedrockCreateBatchResponse {
   jobArn: string;
 }
-
-export interface BedrockGetBatchResponse {
+interface BedrockBatch {
   clientRequestToken: string;
   endTime: string;
   inputDataConfig: {
-    s3Uri: string;
-    s3KeyPrefix: string;
+    s3InputDataConfig: {
+      s3Uri: string;
+      s3BucketOwner: string;
+      s3InputFormat: string;
+    };
   };
   jobArn: string;
   jobExpirationTime: string;
@@ -16,8 +18,11 @@ export interface BedrockGetBatchResponse {
   message: string;
   modelId: string;
   outputDataConfig: {
-    s3Uri: string;
-    s3KeyPrefix: string;
+    s3OutputDataConfig: {
+      s3Uri: string;
+      s3BucketOwner: string;
+      s3EncryptionKeyId: string;
+    };
   };
   roleArn: string;
   status: string;
@@ -27,4 +32,11 @@ export interface BedrockGetBatchResponse {
     securityGroupIds: string[];
     subnetIds: string[];
   };
+}
+
+export interface BedrockGetBatchResponse extends BedrockBatch {}
+
+export interface BedrockListBatchesResponse {
+  invocationJobSummaries: BedrockBatch[];
+  nextToken: string;
 }
