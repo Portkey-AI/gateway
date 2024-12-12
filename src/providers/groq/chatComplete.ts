@@ -54,6 +54,10 @@ export const GroqChatCompleteConfig: ProviderConfig = {
     max: 1,
     min: 1,
   },
+  tools: {
+    param: 'tools',
+    required: false,
+  },
 };
 
 export interface GroqChatCompleteResponse extends ChatCompletionResponse {}
