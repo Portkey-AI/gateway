@@ -161,7 +161,7 @@ const BedrockAPIConfig: ProviderAPIConfig = {
         return `/model-invocation-job/${requestURL.split('/').pop()}/stop`;
       }
       case 'retrieveBatch': {
-        return `/model-invocation-job/${encodeURIComponent(requestURL.split('/v1/batches/')[1])}`;
+        return `/model-invocation-job/${requestURL.split('/v1/batches/')[1]}`;
       }
       case 'listBatches': {
         return '/model-invocation-jobs';

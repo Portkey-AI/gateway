@@ -27,7 +27,7 @@ export const BedrockGetBatchOutputRequestHandler = async ({
     fn: 'retrieveBatch',
   });
   const batchId = requestURL.split('/v1/batches/')[1].replace('/output', '');
-  const retrieveBatchURL = `${baseUrl}/batches/${batchId}`;
+  const retrieveBatchURL = `${baseUrl}/model-invocation-job/${batchId}`;
   const retrieveBatchesHeaders = await BedrockAPIConfig.headers({
     c,
     providerOptions,
@@ -68,7 +68,11 @@ export const BedrockGetBatchOutputRequestHandler = async ({
     headers: s3FileHeaders,
   });
   let responseStream: ReadableStream;
-  if (s3FileResponse?.body) {
+  console.log(s3FileResponse.headers);
+  if (
+    s3FileResponse.headers.get('content-type')?.includes('octet-stream') &&
+    s3FileResponse?.body
+  ) {
     responseStream = s3FileResponse?.body?.pipeThrough(
       getOctetStreamToOctetStreamTransformer(getRowTransform(awsModelProvider))
     );
