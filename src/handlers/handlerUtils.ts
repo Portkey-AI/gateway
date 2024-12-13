@@ -203,7 +203,7 @@ export function selectProviderByWeight(providers: Options[]): Options {
 export async function tryPost(
   c: Context,
   providerOption: Options,
-  inputParams: Params | FormData,
+  inputParams: Params | FormData | ArrayBuffer,
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
   currentIndex: number | string,
@@ -303,11 +303,19 @@ export async function tryPost(
   const requestContentType =
     requestHeaders[HEADER_KEYS.CONTENT_TYPE.toLowerCase()]?.split(';')[0];
 
-  fetchOptions.body =
+  if (
     headerContentType === CONTENT_TYPES.MULTIPART_FORM_DATA ||
     (fn == 'proxy' && requestContentType === CONTENT_TYPES.MULTIPART_FORM_DATA)
-      ? (transformedRequestBody as FormData)
-      : JSON.stringify(transformedRequestBody);
+  ) {
+    fetchOptions.body = transformedRequestBody as FormData;
+  } else if (
+    fn == 'proxy' &&
+    requestContentType.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
+  ) {
+    fetchOptions.body = transformedRequestBody as ArrayBuffer;
+  } else {
+    fetchOptions.body = JSON.stringify(transformedRequestBody);
+  }
 
   if (['GET', 'DELETE'].includes(method)) {
     delete fetchOptions.body;
