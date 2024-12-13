@@ -52,8 +52,8 @@ export const BedrockGetBatchOutputRequestHandler = async ({
     .split('/')
     .slice(1)
     .join('/');
-  // const awsS3Bucket = 'generations-raw'
-  // const awsS3ObjectKey = 'second-file.jsonl'
+  const awsModelProvider = batchDetails.modelId.split('/')[1].split('.')[0];
+
   const s3FileURL = `https://${awsS3Bucket}.s3.${awsRegion}.amazonaws.com/${encodeURIComponent(awsS3ObjectKey)}`;
   const s3FileHeaders = await BedrockAPIConfig.headers({
     c,
@@ -70,7 +70,7 @@ export const BedrockGetBatchOutputRequestHandler = async ({
   let responseStream: ReadableStream;
   if (s3FileResponse?.body) {
     responseStream = s3FileResponse?.body?.pipeThrough(
-      getOctetStreamToOctetStreamTransformer(getRowTransform('anthropic'))
+      getOctetStreamToOctetStreamTransformer(getRowTransform(awsModelProvider))
     );
   } else {
     responseStream = new ReadableStream();
