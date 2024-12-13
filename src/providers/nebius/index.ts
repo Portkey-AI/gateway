@@ -8,7 +8,7 @@ import {
 import { ProviderConfigs } from '../types';
 import { nebiusAPIConfig } from './api';
 
-export const NebiusConfig: ProviderConfigs = {
+const NebiusConfig: ProviderConfigs = {
   chatComplete: chatCompleteParams([], {
     model: 'Qwen/Qwen2.5-72B-Instruct-fast',
   }),
@@ -21,3 +21,5 @@ export const NebiusConfig: ProviderConfigs = {
     complete: true,
   }),
 };
+
+export default NebiusConfig;
