@@ -1,7 +1,7 @@
 import { ProviderAPIConfig } from '../types';
 
 const SiliconFlowAPIConfig: ProviderAPIConfig = {
-  getBaseURL: () => 'https://api.siliconflow.cn/v1',
+  getBaseURL: () => 'https://api.siliconflow.cn',
   headers: ({ providerOptions }) => {
     return {
       Authorization: `Bearer ${providerOptions.apiKey}`,
@@ -11,11 +11,11 @@ const SiliconFlowAPIConfig: ProviderAPIConfig = {
     const { model = 'ByteDance/SDXL-Lightning' } = gatewayRequestBody;
     switch (fn) {
       case 'chatComplete':
-        return '/chat/completions';
+        return '/v1/chat/completions';
       case 'embed':
-        return '/embeddings';
+        return '/v1/embeddings';
       case 'imageGenerate':
-        return `/${model}/text-to-image`;
+        return `/v1/${model}/text-to-image`;
       default:
         return '';
     }
