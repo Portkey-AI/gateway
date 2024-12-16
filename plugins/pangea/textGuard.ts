@@ -10,8 +10,7 @@ import { VERSION } from './version';
 export const handler: PluginHandler = async (
   context: PluginContext,
   parameters: PluginParameters,
-  eventType: HookEventType,
-  options: {}
+  eventType: HookEventType
 ) => {
   let error = null;
   let verdict = false;
