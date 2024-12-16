@@ -91,7 +91,6 @@ export async function responseHandler(
     );
     return { response: streamingResponse, responseJson: null };
   }
-
   if (streamingMode && response.status === 200) {
     return {
       response: handleStreamingMode(
@@ -129,6 +128,13 @@ export async function responseHandler(
       responseTransformerFunction
     );
     return { response: textResponse, responseJson: null };
+  }
+
+  if (!responseContentType && response.status === 204) {
+    return {
+      response: new Response(response.body, response),
+      responseJson: null,
+    };
   }
 
   const nonStreamingResponse = await handleNonStreamingMode(
