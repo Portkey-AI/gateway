@@ -183,6 +183,30 @@ describe('jsonSchema handler', () => {
     expect(result.data.explanation).toContain('Successfully validated');
   });
 
+  it('should return a false verdict when schema does not match', async () => {
+    const context: PluginContext = {
+      response: {
+        text: '{"key": "value"}',
+      },
+    };
+    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      schema: {
+        type: 'object',
+        properties: { key2: { type: 'string' } },
+        required: ['key2'],
+      },
+      not: false,
+    };
+
+    const result = await jsonSchemaHandler(context, parameters, eventType);
+
+    console.log(JSON.stringify(result, null, 2));
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+  });
+
   it('should validate JSON in response text - complex', async () => {
     const context: PluginContext = {
       response: {
