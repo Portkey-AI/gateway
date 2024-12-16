@@ -74,6 +74,9 @@ export const LEMONFOX_AI: string = 'lemonfox-ai';
 export const UPSTAGE: string = 'upstage';
 export const LAMBDA: string = 'lambda';
 export const DASHSCOPE: string = 'dashscope';
+export const X_AI: string = 'x-ai';
+export const SAGEMAKER: string = 'sagemaker';
+export const NEBIUS: string = 'nebius';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -121,6 +124,9 @@ export const VALID_PROVIDERS = [
   UPSTAGE,
   LAMBDA,
   DASHSCOPE,
+  X_AI,
+  SAGEMAKER,
+  NEBIUS,
 ];
 
 export const CONTENT_TYPES = {
