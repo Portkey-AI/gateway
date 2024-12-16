@@ -7,6 +7,9 @@ import { exec } from 'child_process';
 import app from './index';
 import { streamSSE } from 'hono/streaming';
 import { Context } from 'hono';
+import { createNodeWebSocket } from '@hono/node-ws';
+import { realTimeHandlerNode } from './handlers/realtimeHandlerNode';
+import { requestValidator } from './middlewares/requestValidator';
 
 // Extract the port number from the command line arguments
 const defaultPort = 8787;
@@ -62,13 +65,20 @@ if (
   });
 }
 
-serve({
+const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
+
+app.get(
+  '/v1/realtime',
+  requestValidator,
+  upgradeWebSocket(realTimeHandlerNode)
+);
+
+const server = serve({
   fetch: app.fetch,
   port: port,
 });
 
 const url = `http://localhost:${port}`;
-console.log(`Your AI Gateway is now running on ${url} 🚀`);
 
 // Function to open URL in the default browser
 function openBrowser(url: string) {
@@ -103,3 +113,5 @@ function openBrowser(url: string) {
 if (!isHeadless) {
   openBrowser(`${url}/public/`);
 }
+injectWebSocket(server);
+console.log(`Your AI Gateway is now running on http://localhost:${port} 🚀`);

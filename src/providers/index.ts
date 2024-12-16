@@ -47,6 +47,10 @@ import { UpstageConfig } from './upstage';
 import { LAMBDA } from '../globals';
 import { LambdaProviderConfig } from './lambda';
 import { DashScopeConfig } from './dashscope';
+import XAIConfig from './x-ai';
+import QdrantConfig from './qdrant';
+import SagemakerConfig from './sagemaker';
+import NebiusConfig from './nebius';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -94,6 +98,10 @@ const Providers: { [key: string]: ProviderConfigs } = {
   upstage: UpstageConfig,
   [LAMBDA]: LambdaProviderConfig,
   dashscope: DashScopeConfig,
+  'x-ai': XAIConfig,
+  qdrant: QdrantConfig,
+  sagemaker: SagemakerConfig,
+  nebius: NebiusConfig,
 };
 
 export default Providers;
