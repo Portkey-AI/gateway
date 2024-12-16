@@ -189,6 +189,33 @@ export function selectProviderByWeight(providers: Options[]): Options {
   throw new Error('No provider selected, please check the weights');
 }
 
+export function convertGuardrailsShorthand(guardrailsArr: any, type: string) {
+  return guardrailsArr.map((guardrails: any) => {
+    let hooksObject: any = {
+      type: 'guardrail',
+      id: `${type}_guardrail_${Math.random().toString(36).substring(2, 5)}`,
+    };
+
+    // if the deny key is present (true or false), add it to hooksObject and remove it from guardrails
+    ['deny', 'on_fail', 'on_success', 'async', 'onFail', 'onSuccess'].forEach(
+      (key) => {
+        if (guardrails.hasOwnProperty(key)) {
+          hooksObject[key] = guardrails[key];
+          delete guardrails[key];
+        }
+      }
+    );
+
+    // Now, add all the checks to the checks array
+    hooksObject.checks = Object.keys(guardrails).map((key) => ({
+      id: key,
+      parameters: guardrails[key],
+    }));
+
+    return hooksObject;
+  });
+}
+
 /**
  * Makes a POST request to a provider and returns the response.
  * The POST request is constructed using the provider, apiKey, and requestBody parameters.
@@ -501,6 +528,20 @@ export async function tryTargetsRecursively(
   } else if (inheritedConfig.requestTimeout) {
     currentInheritedConfig.requestTimeout = inheritedConfig.requestTimeout;
     currentTarget.requestTimeout = inheritedConfig.requestTimeout;
+  }
+
+  if (currentTarget.inputGuardrails) {
+    currentTarget.beforeRequestHooks = [
+      ...(currentTarget.beforeRequestHooks || []),
+      ...convertGuardrailsShorthand(currentTarget.inputGuardrails, 'input'),
+    ];
+  }
+
+  if (currentTarget.outputGuardrails) {
+    currentTarget.afterRequestHooks = [
+      ...(currentTarget.afterRequestHooks || []),
+      ...convertGuardrailsShorthand(currentTarget.outputGuardrails, 'output'),
+    ];
   }
 
   if (currentTarget.afterRequestHooks) {
