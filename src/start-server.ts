@@ -16,7 +16,13 @@ const port = portArg ? parseInt(portArg.split('=')[1]) : defaultPort;
 
 const isHeadless = args.includes('--headless');
 
-if (!isHeadless && process.env.NODE_ENV !== 'production') {
+if (
+  !isHeadless &&
+  !(
+    process.env.NODE_ENV === 'production' ||
+    process.env.ENVIRONMENT === 'production'
+  )
+) {
   app.get('/public/*', serveStatic({ root: './' }));
   app.get('/public/logs', serveStatic({ path: './public/index.html' }));
 
