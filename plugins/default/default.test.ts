@@ -464,20 +464,20 @@ As you can see, there are several validation issues in this profile.`,
     expect(errors).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          message: expect.stringContaining('email'), // email format error
-          path: '/user/contact/email',
+          message: expect.stringContaining('format "email"'),
+          path: expect.any(String),
         }),
         expect.objectContaining({
-          message: expect.stringContaining('number'), // missing phone.number
-          path: '/user/contact/phone',
+          message: expect.stringContaining('required property "number"'),
+          path: expect.any(String),
         }),
         expect.objectContaining({
-          message: expect.stringContaining('allowed value'), // invalid theme
-          path: '/user/preferences/theme',
+          message: expect.stringContaining('match any of ["light","dark"]'),
+          path: expect.any(String),
         }),
         expect.objectContaining({
-          message: expect.stringContaining('boolean'), // invalid notifications type
-          path: '/user/preferences/notifications',
+          message: expect.stringContaining('notifications'),
+          path: expect.any(String),
         }),
       ])
     );

@@ -4,15 +4,8 @@ import {
   PluginHandler,
   PluginParameters,
 } from '../types';
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
+import { Validator } from '@cfworker/json-schema';
 import { getText } from '../utils';
-
-const ajv = new Ajv({
-  allErrors: true,
-  verbose: true,
-});
-addFormats(ajv);
 
 export const handler: PluginHandler = async (
   context: PluginContext,
@@ -30,6 +23,8 @@ export const handler: PluginHandler = async (
       throw new Error('Missing or invalid JSON schema');
     }
 
+    // Create validator with the provided schema
+    const validator = new Validator(schema, '2020-12', false); // Using latest draft, with shortCircuit=false to get all errors
     let responseText = getText(context, eventType);
 
     // Extract JSON from code blocks and general text
@@ -55,7 +50,6 @@ export const handler: PluginHandler = async (
     };
 
     const jsonMatches = extractJson(responseText);
-    const validate = ajv.compile(schema);
 
     // We will find if there's at least one valid JSON object in the response
     if (jsonMatches.length > 0) {
@@ -73,13 +67,14 @@ export const handler: PluginHandler = async (
           continue;
         }
 
-        const isValid = validate(responseJson);
+        const result = validator.validate(responseJson);
+        const isValid = result.valid;
 
         // Store this result if it's valid or if it's the first one we've processed
         if (isValid || bestMatch.json === null) {
           bestMatch = {
             json: responseJson,
-            errors: validate.errors || [],
+            errors: result.errors || [],
             isValid,
           };
         }
@@ -102,10 +97,20 @@ export const handler: PluginHandler = async (
             : not
               ? `JSON matches the schema when it should not.`
               : `Failed to validate JSON against the provided schema.`,
-          validationErrors: bestMatch.errors.map((err) => ({
-            path: err.instancePath || '',
-            message: err.message || '',
-          })),
+          validationErrors: bestMatch.errors.map((err) => {
+            // Convert the error location array to a JSON path string
+            const path = err.location
+              ? '/' + err.location.join('/')
+              : err.instancePath || '';
+              
+            // Get a clean error message without the path information
+            const message = err.error.replace(/^\/[^ ]+ /, '');
+
+            return {
+              path,
+              message,
+            };
+          }),
         };
       }
     } else {
