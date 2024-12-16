@@ -57,7 +57,9 @@ app.get('/', (c) => c.text('AI Gateway says hey!'));
 app.use('*', prettyJSON());
 
 // Use logger middleware for all routes
-app.use(logger());
+if (getRuntimeKey() === 'node') {
+  app.use(logger());
+}
 
 // Use hooks middleware for all routes
 app.use('*', hooks);
