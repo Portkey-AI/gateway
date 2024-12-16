@@ -102,7 +102,7 @@ export const handler: PluginHandler = async (
             const path = err.location
               ? '/' + err.location.join('/')
               : err.instancePath || '';
-              
+
             // Get a clean error message without the path information
             const message = err.error.replace(/^\/[^ ]+ /, '');
 
