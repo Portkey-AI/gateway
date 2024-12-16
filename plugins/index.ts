@@ -12,6 +12,7 @@ import { handler as defaultcontainsCode } from './default/containsCode';
 import { handler as defaultalluppercase } from './default/alluppercase';
 import { handler as defaultalllowercase } from './default/alllowercase';
 import { handler as defaultendsWith } from './default/endsWith';
+import { handler as defaultmodelWhitelist } from './default/modelWhitelist';
 import { handler as portkeymoderateContent } from './portkey/moderateContent';
 import { handler as portkeylanguage } from './portkey/language';
 import { handler as portkeypii } from './portkey/pii';
@@ -31,6 +32,7 @@ import { handler as patronusnoRacialBias } from './patronus/noRacialBias';
 import { handler as patronusretrievalAnswerRelevance } from './patronus/retrievalAnswerRelevance';
 import { handler as patronustoxicity } from './patronus/toxicity';
 import { handler as patronuscustom } from './patronus/custom';
+import { handler as pangeatextGuard } from './pangea/textGuard';
 
 export const plugins = {
   default: {
@@ -48,6 +50,7 @@ export const plugins = {
     alluppercase: defaultalluppercase,
     alllowercase: defaultalllowercase,
     endsWith: defaultendsWith,
+    modelWhitelist: defaultmodelWhitelist,
   },
   portkey: {
     moderateContent: portkeymoderateContent,
@@ -77,5 +80,8 @@ export const plugins = {
     retrievalAnswerRelevance: patronusretrievalAnswerRelevance,
     toxicity: patronustoxicity,
     custom: patronuscustom,
+  },
+  pangea: {
+    textGuard: pangeatextGuard,
   },
 };

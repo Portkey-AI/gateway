@@ -6,6 +6,8 @@ import {
   BedrockChatCompletionsParams,
   BedrockConverseCohereChatCompletionsParams,
 } from './chatComplete';
+import { Context } from 'hono';
+import { env } from 'hono/adapter';
 
 export const generateAWSHeaders = async (
   body: Record<string, any>,
@@ -154,3 +156,116 @@ export const transformAI21AdditionalModelRequestFields = (
   }
   return additionalModelRequestFields;
 };
+
+export async function getAssumedRoleCredentials(
+  c: Context,
+  awsRoleArn: string,
+  awsExternalId: string,
+  awsRegion: string,
+  creds?: {
+    accessKeyId: string;
+    secretAccessKey: string;
+    sessionToken?: string;
+  }
+) {
+  const cacheKey = `${awsRoleArn}/${awsExternalId}/${awsRegion}`;
+  const getFromCacheByKey = c.get('getFromCacheByKey');
+  const putInCacheWithValue = c.get('putInCacheWithValue');
+
+  const resp = getFromCacheByKey
+    ? await getFromCacheByKey(env(c), cacheKey)
+    : null;
+  if (resp) {
+    return resp;
+  }
+
+  // Determine which credentials to use
+  let accessKeyId: string;
+  let secretAccessKey: string;
+  let sessionToken: string | undefined;
+
+  if (creds) {
+    // Use provided credentials
+    accessKeyId = creds.accessKeyId;
+    secretAccessKey = creds.secretAccessKey;
+    sessionToken = creds.sessionToken;
+  } else {
+    // Use environment credentials
+    const { AWS_ASSUME_ROLE_ACCESS_KEY_ID, AWS_ASSUME_ROLE_SECRET_ACCESS_KEY } =
+      env(c);
+    accessKeyId = AWS_ASSUME_ROLE_ACCESS_KEY_ID || '';
+    secretAccessKey = AWS_ASSUME_ROLE_SECRET_ACCESS_KEY || '';
+  }
+
+  const region = awsRegion || 'us-east-1';
+  const service = 'sts';
+  const hostname = `sts.${region}.amazonaws.com`;
+  const signer = new SignatureV4({
+    service,
+    region,
+    credentials: {
+      accessKeyId,
+      secretAccessKey,
+      sessionToken,
+    },
+    sha256: Sha256,
+  });
+  const date = new Date();
+  const sessionName = `${date.getFullYear()}${date.getMonth()}${date.getDay()}`;
+  const url = `https://${hostname}?Action=AssumeRole&Version=2011-06-15&RoleArn=${awsRoleArn}&RoleSessionName=${sessionName}${awsExternalId ? `&ExternalId=${awsExternalId}` : ''}`;
+  const urlObj = new URL(url);
+  const requestHeaders = { host: hostname };
+  const options = {
+    method: 'GET',
+    path: urlObj.pathname,
+    protocol: urlObj.protocol,
+    hostname: urlObj.hostname,
+    headers: requestHeaders,
+    query: Object.fromEntries(urlObj.searchParams),
+  };
+  const { headers } = await signer.sign(options);
+
+  let credentials: any;
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: headers,
+    });
+
+    if (!response.ok) {
+      const resp = await response.text();
+      console.error({ message: resp });
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const xmlData = await response.text();
+    credentials = parseXml(xmlData);
+    if (putInCacheWithValue) {
+      putInCacheWithValue(env(c), cacheKey, credentials, 60); //1 minute
+    }
+  } catch (error) {
+    console.error({ message: `Error assuming role:, ${error}` });
+  }
+  return credentials;
+}
+
+function parseXml(xml: string) {
+  // Simple XML parser for this specific use case
+  const getTagContent = (tag: string) => {
+    const regex = new RegExp(`<${tag}>(.*?)</${tag}>`, 's');
+    const match = xml.match(regex);
+    return match ? match[1] : null;
+  };
+
+  const credentials = getTagContent('Credentials');
+  if (!credentials) {
+    throw new Error('Failed to parse Credentials from XML response');
+  }
+
+  return {
+    accessKeyId: getTagContent('AccessKeyId'),
+    secretAccessKey: getTagContent('SecretAccessKey'),
+    sessionToken: getTagContent('SessionToken'),
+    expiration: getTagContent('Expiration'),
+  };
+}

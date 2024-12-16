@@ -60,6 +60,11 @@ export interface Options {
   apiVersion?: string;
   adAuth?: string;
   azureModelName?: string;
+  azureAuthMode?: string; // can be entra or managed
+  azureManagedClientId?: string;
+  azureEntraClientId?: string;
+  azureEntraClientSecret?: string;
+  azureEntraTenantId?: string;
   /** Workers AI specific */
   workersAiAccountId?: string;
   /** The parameter to set custom base url */
@@ -73,11 +78,24 @@ export interface Options {
   requestTimeout?: number;
   /** This is used to determine if the request should be transformed to formData Example: Stability V2 */
   transformToFormData?: boolean;
-  /** AWS Bedrock specific */
+  /** AWS specific (used for Bedrock and Sagemaker) */
   awsSecretAccessKey?: string;
   awsAccessKeyId?: string;
   awsSessionToken?: string;
   awsRegion?: string;
+  awsAuthType?: string;
+  awsRoleArn?: string;
+  awsExternalId?: string;
+
+  /** Sagemaker specific */
+  amznSagemakerCustomAttributes?: string;
+  amznSagemakerTargetModel?: string;
+  amznSagemakerTargetVariant?: string;
+  amznSagemakerTargetContainerHostname?: string;
+  amznSagemakerInferenceId?: string;
+  amznSagemakerEnableExplanations?: string;
+  amznSagemakerInferenceComponent?: string;
+  amznSagemakerSessionId?: string;
 
   /** Stability AI specific */
   stabilityClientId?: string;
@@ -97,6 +115,7 @@ export interface Options {
   /** OpenAI specific */
   openaiProject?: string;
   openaiOrganization?: string;
+  openaiBeta?: string;
 
   /** Azure Inference Specific */
   azureRegion?: string;
@@ -140,6 +159,12 @@ export interface Targets {
   deploymentId?: string;
   apiVersion?: string;
   adAuth?: string;
+  azureAuthMode?: string;
+  azureManagedClientId?: string;
+  azureEntraClientId?: string;
+  azureEntraClientSecret?: string;
+  azureEntraTenantId?: string;
+  azureModelName?: string;
   /** provider option index picked based on weight in loadbalance mode */
   index?: number;
   cache?: CacheSettings | string;
@@ -276,7 +301,7 @@ export interface Tool extends AnthropicPromptCache {
   /** The name of the function. */
   type: string;
   /** A description of the function. */
-  function?: Function;
+  function: Function;
 }
 
 /**
@@ -296,6 +321,7 @@ export interface Params {
   n?: number;
   stream?: boolean;
   logprobs?: number;
+  top_logprobs?: boolean;
   echo?: boolean;
   stop?: string | string[];
   presence_penalty?: number;
@@ -312,8 +338,29 @@ export interface Params {
     type: 'json_object' | 'text' | 'json_schema';
     json_schema?: any;
   };
+  seed?: number;
+  store?: boolean;
+  metadata?: object;
+  modalities?: string[];
+  audio?: {
+    voice: string;
+    format: string;
+  };
+  service_tier?: string;
+  prediction?: {
+    type: string;
+    content:
+      | {
+          type: string;
+          text: string;
+        }[]
+      | string;
+  };
   // Google Vertex AI specific
   safety_settings?: any;
+  // Anthropic specific
+  anthropic_beta?: string;
+  anthropic_version?: string;
 }
 
 interface Examples {
@@ -350,6 +397,11 @@ export interface ShortConfig {
   azureModelName?: string;
   workersAiAccountId?: string;
   apiVersion?: string;
+  azureAuthMode?: string;
+  azureManagedClientId?: string;
+  azureEntraClientId?: string;
+  azureEntraClientSecret?: string;
+  azureEntraTenantId?: string;
   customHost?: string;
   // Google Vertex AI specific
   vertexRegion?: string;

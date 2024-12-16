@@ -1,0 +1,75 @@
+name: Gateway Tests
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  gateway-tests:
+    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'run tests') }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Start gateway and run tests
+        id: run-tests
+        continue-on-error: true
+        run: |
+          npm run build/start-server.js &
+          echo "Waiting for gateway to start..."
+          while ! curl -s http://localhost:8787 > /dev/null; do
+            sleep 1
+          done
+          echo "Gateway is ready. Running tests..."
+          npm run test:gateway
+
+      - name: Update PR Check
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            
+            try {
+              const { data: pull_request } = await github.rest.pulls.get({
+                owner,
+                repo,
+                pull_number: issue_number,
+              });
+              
+              const sha = pull_request.head.sha;
+              
+              await github.rest.checks.create({
+                owner,
+                repo,
+                name: 'Gateway Tests (Comment Triggered)',
+                head_sha: sha,
+                status: 'completed',
+                conclusion: '${{ steps.run-tests.outcome }}',
+                output: {
+                  title: 'Gateway Test Results',
+                  summary: 'Gateway tests have completed.',
+                  text: 'These tests were triggered by a comment on the PR.'
+                },
+              });
+              
+              console.log('Check run created successfully');
+            } catch (error) {
+              console.error('Error creating check run:', error);
+              core.setFailed(`Action failed with error: ${error}`);
+            }
+
+env:
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
