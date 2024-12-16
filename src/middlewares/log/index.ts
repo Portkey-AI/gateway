@@ -57,6 +57,9 @@ async function processLog(c: Context, start: number) {
   if (!c.req.url.includes('/v1/')) return;
 
   const requestOptionsArray = c.get('requestOptions');
+  if (!requestOptionsArray?.length) {
+    return;
+  }
 
   if (requestOptionsArray[0].requestParams.stream) {
     requestOptionsArray[0].response = {
@@ -66,9 +69,10 @@ async function processLog(c: Context, start: number) {
     const response = await c.res.clone().json();
     const maxLength = 1000; // Set a reasonable limit for the response length
     const responseString = JSON.stringify(response);
-    requestOptionsArray[0].response = responseString.length > maxLength 
-      ? JSON.parse(responseString.substring(0, maxLength) + '...') 
-      : response;
+    requestOptionsArray[0].response =
+      responseString.length > maxLength
+        ? JSON.parse(responseString.substring(0, maxLength) + '...')
+        : response;
   }
 
   await broadcastLog(
