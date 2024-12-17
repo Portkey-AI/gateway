@@ -13,6 +13,14 @@
   <link rel="stylesheet" href="styles/interative-code.css">
   <link rel="stylesheet" href="styles/style.css">
 
+  <!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-KX3PMNVR');</script>
+  <!-- End Google Tag Manager -->
+
   <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css"> -->
   <link rel="stylesheet" href="https://unpkg.com/highlightjs@9.16.2/styles/atom-one-light.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -20,6 +28,10 @@
 </head>
 
 <body>
+  <!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KX3PMNVR"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
   <header>
     <div class="container">
       <div class="logo">
@@ -72,6 +84,8 @@
             <pre><code id="pythonCommand" class="language-python"></code></pre>
           </div>
         </div>
+        <!-- Add docs links based on the provider selected -->
+        <div class="docs-link"></div>
         <button class="btn" id="testRequestBtn">
           <span class="btn-text">Test Request</span>
         </button>
@@ -257,6 +271,11 @@
             <option value="groq">Groq</option>
             <option value="bedrock">Bedrock</option>
             <option value="azure-openai">Azure OpenAI</option>
+            <option value="cohere">Cohere</option>
+            <option value="together-ai">Together AI</option>
+            <option value="perplexity-ai">Perplexity AI</option>
+            <option value="mistral-ai">Mistral AI</option>
+            <option value="others">Others</option>
           </select>
         </div>
       </div>
