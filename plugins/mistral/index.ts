@@ -44,7 +44,7 @@ export const mistralGuardrailHandler: PluginHandler = async (
   parameters: PluginParameters,
   eventType: HookEventType,
   _options,
-  fn: string
+  fn?: string
 ) => {
   let error = null;
   let verdict = true;

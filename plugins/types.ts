@@ -26,5 +26,5 @@ export type PluginHandler = (
     env: Record<string, any>;
   },
   // Handler function, useful in cases for a provider with multiple guardrails ex: mistral
-  fn: string
+  fn?: string
 ) => Promise<PluginHandlerResponse>;
