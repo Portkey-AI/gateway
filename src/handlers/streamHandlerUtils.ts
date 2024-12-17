@@ -89,7 +89,7 @@ const enqueueFileContentAndUpdateBuffer = (
  * @param rowTransform - The function used to transform the row.
  * @returns The updated buffer.
  */
-const enqueueFileContentAndUpdateBufferOctetStream = (
+const enqueueFileContentAndUpdateOctetStreamBuffer = (
   controller: TransformStreamDefaultController,
   buffer: string,
   rowTransform: (row: Record<string, any>) => Record<string, any>
@@ -225,7 +225,7 @@ export const getOctetStreamToOctetStreamTransformer = (
       buffer += decoder.decode(new Uint8Array(chunk), { stream: true });
 
       while (buffer.length > 0) {
-        buffer = enqueueFileContentAndUpdateBufferOctetStream(
+        buffer = enqueueFileContentAndUpdateOctetStreamBuffer(
           controller,
           buffer,
           rowTransform

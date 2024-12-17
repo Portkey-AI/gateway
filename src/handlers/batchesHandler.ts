@@ -5,7 +5,7 @@ import {
 } from './handlerUtils';
 import { endpointStrings } from '../providers/types';
 
-function batchesHandler(endpoint: endpointStrings, method: string) {
+function batchesHandler(endpoint: endpointStrings, method: 'POST' | 'GET') {
   async function handler(c: Context): Promise<Response> {
     try {
       let requestHeaders = Object.fromEntries(c.req.raw.headers);

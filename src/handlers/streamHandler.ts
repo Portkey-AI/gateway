@@ -231,15 +231,7 @@ export async function handleNonStreamingMode(
     return { response, json: await response.clone().json() };
   }
 
-  let originalResponseBodyJson: Record<string, any>;
-
-  try {
-    originalResponseBodyJson = await response.json();
-  } catch (e) {
-    // handle empty response in case of PUT requests etc
-    originalResponseBodyJson = {};
-  }
-
+  const originalResponseBodyJson: Record<string, any> = await response.json();
   let responseBodyJson = originalResponseBodyJson;
   if (responseTransformer) {
     responseBodyJson = responseTransformer(

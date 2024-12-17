@@ -54,7 +54,7 @@ export interface ProviderAPIConfig {
     providerOptions: Options;
     fn: string;
     gatewayRequestBodyJSON: Params;
-    gatewayRequestBody?: FormData | Params | ReadableStream;
+    gatewayRequestBody?: FormData | Params | ArrayBuffer | ReadableStream;
     requestURL: string;
   }) => string;
   /** A function to determine if the request body should be transformed to form data */

@@ -3,7 +3,8 @@ import retry from 'async-retry';
 async function fetchWithTimeout(
   url: string,
   options: RequestInit,
-  timeout: number
+  timeout: number,
+  requestHandler?: () => Promise<Response>
 ) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -15,7 +16,11 @@ async function fetchWithTimeout(
   let response;
 
   try {
-    response = await fetch(url, timeoutRequestOptions);
+    if (requestHandler) {
+      response = await requestHandler();
+    } else {
+      response = await fetch(url, timeoutRequestOptions);
+    }
     clearTimeout(timeoutId);
   } catch (err: any) {
     if (err.name === 'AbortError') {
@@ -68,7 +73,6 @@ export const retryRequest = async (
   attempt: number | undefined;
   createdAt: Date;
 }> => {
-  let lastError: any | undefined;
   let lastResponse: Response | undefined;
   let lastAttempt: number | undefined;
   const start = new Date();
@@ -77,12 +81,17 @@ export const retryRequest = async (
       async (bail: any, attempt: number) => {
         try {
           let response: Response;
-          if (requestHandler) {
+          if (timeout) {
+            response = await fetchWithTimeout(
+              url,
+              options,
+              timeout,
+              requestHandler
+            );
+          } else if (requestHandler) {
             response = await requestHandler();
           } else {
-            response = timeout
-              ? await fetchWithTimeout(url, options, timeout)
-              : await fetch(url, options);
+            response = await fetch(url, options);
           }
           if (statusCodesToRetry.includes(response.status)) {
             const errorObj: any = new Error(await response.text());

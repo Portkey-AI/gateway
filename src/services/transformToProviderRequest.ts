@@ -208,7 +208,7 @@ const transformToProviderRequestReadableStream = (
 export const transformToProviderRequest = (
   provider: string,
   params: Params,
-  requestBody: Params | FormData | ReadableStream,
+  requestBody: Params | FormData | ArrayBuffer | ReadableStream,
   fn: endpointStrings,
   requestHeaders: Record<string, string>
 ) => {

@@ -233,7 +233,7 @@ export function convertGuardrailsShorthand(guardrailsArr: any, type: string) {
 export async function tryPost(
   c: Context,
   providerOption: Options,
-  requestBody: Params | FormData | ReadableStream,
+  requestBody: Params | FormData | ArrayBuffer | ReadableStream,
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
   currentIndex: number | string,
@@ -506,7 +506,8 @@ export async function tryPost(
       fn,
       requestHeaders,
       hookSpan.id,
-      strictOpenAiCompliance
+      strictOpenAiCompliance,
+      requestBody
     ));
 
   return createResponse(mappedResponse, undefined, false, true);
@@ -1050,7 +1051,7 @@ export async function recursiveAfterRequestHookHandler(
   requestHeaders: Record<string, string>,
   hookSpanId: string,
   strictOpenAiCompliance: boolean,
-  requestBody?: ReadableStream | FormData | Params
+  requestBody?: ReadableStream | FormData | Params | ArrayBuffer
 ): Promise<{
   mappedResponse: Response;
   retryCount: number;
