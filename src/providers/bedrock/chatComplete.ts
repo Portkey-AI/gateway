@@ -387,6 +387,13 @@ export interface BedrockChatCompleteStreamChunk {
       input: object;
     };
   };
+  start?: {
+    toolUse: {
+      toolUseId: string;
+      name: string;
+      input?: object;
+    };
+  };
   stopReason?: string;
   metrics?: {
     latencyMs: number;
@@ -400,6 +407,7 @@ export interface BedrockChatCompleteStreamChunk {
 
 interface BedrockStreamState {
   stopReason?: string;
+  currentToolCallIndex?: number;
 }
 
 // refer: https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStream.html
@@ -411,6 +419,9 @@ export const BedrockChatCompleteStreamChunkTransform: (
   const parsedChunk: BedrockChatCompleteStreamChunk = JSON.parse(responseChunk);
   if (parsedChunk.stopReason) {
     streamState.stopReason = parsedChunk.stopReason;
+  }
+  if (streamState.currentToolCallIndex === undefined) {
+    streamState.currentToolCallIndex = -1;
   }
 
   if (parsedChunk.usage) {
@@ -439,8 +450,20 @@ export const BedrockChatCompleteStreamChunkTransform: (
   }
 
   const toolCalls = [];
-  if (parsedChunk.delta?.toolUse) {
+  if (parsedChunk.start?.toolUse) {
+    streamState.currentToolCallIndex = streamState.currentToolCallIndex + 1;
     toolCalls.push({
+      index: streamState.currentToolCallIndex,
+      id: parsedChunk.start.toolUse.toolUseId,
+      type: 'function',
+      function: {
+        name: parsedChunk.start.toolUse.name,
+        arguments: parsedChunk.start.toolUse.input,
+      },
+    });
+  } else if (parsedChunk.delta?.toolUse) {
+    toolCalls.push({
+      index: streamState.currentToolCallIndex,
       id: parsedChunk.delta.toolUse.toolUseId,
       type: 'function',
       function: {
@@ -458,11 +481,11 @@ export const BedrockChatCompleteStreamChunkTransform: (
     provider: BEDROCK,
     choices: [
       {
-        index: parsedChunk.contentBlockIndex ?? 0,
+        index: 0,
         delta: {
           role: 'assistant',
           content: parsedChunk.delta?.text,
-          tool_calls: toolCalls,
+          tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
         },
       },
     ],
