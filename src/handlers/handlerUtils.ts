@@ -349,10 +349,11 @@ export async function tryPost(
   if (method === 'POST') {
     if (
       headerContentType === CONTENT_TYPES.MULTIPART_FORM_DATA ||
-      (fn == 'proxy' && requestContentType === CONTENT_TYPES.MULTIPART_FORM_DATA)
+      (fn == 'proxy' &&
+        requestContentType === CONTENT_TYPES.MULTIPART_FORM_DATA)
     ) {
       fetchOptions.body = transformedRequestBody as FormData;
-    } else if(transformedRequestBody instanceof ReadableStream) {
+    } else if (transformedRequestBody instanceof ReadableStream) {
       fetchOptions.body = transformedRequestBody;
     } else if (
       fn == 'proxy' &&
@@ -1050,7 +1051,7 @@ export async function recursiveAfterRequestHookHandler(
   hookSpanId: string,
   strictOpenAiCompliance: boolean,
   requestBody?: ReadableStream | FormData | Params
-):Promise<{
+): Promise<{
   mappedResponse: Response;
   retryCount: number;
   createdAt: Date;
