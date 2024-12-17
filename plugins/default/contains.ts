@@ -13,7 +13,7 @@ export const handler: PluginHandler = async (
 ) => {
   let error = null;
   let verdict = false;
-  let data = null;
+  let data: any = null;
 
   try {
     const words = parameters.words;
@@ -21,20 +21,64 @@ export const handler: PluginHandler = async (
 
     let responseText = getText(context, eventType);
 
+    const foundWords = words.filter((word: string) =>
+      responseText.includes(word)
+    );
+    const missingWords = words.filter(
+      (word: string) => !responseText.includes(word)
+    );
+
     switch (operator) {
       case 'any':
-        verdict = words.some((word: string) => responseText.includes(word));
+        verdict = foundWords.length > 0;
         break;
       case 'all':
-        verdict = words.every((word: string) => responseText.includes(word));
+        verdict = missingWords.length === 0;
         break;
       case 'none':
-        verdict = words.every((word: string) => !responseText.includes(word));
+        verdict = foundWords.length === 0;
         break;
     }
-  } catch (e) {
-    error = e as Error;
+
+    data = {
+      explanation: `Check ${verdict ? 'passed' : 'failed'} for '${operator}' words.`,
+      foundWords,
+      missingWords,
+      operator,
+    };
+
+    if (verdict) {
+      switch (operator) {
+        case 'any':
+          data.explanation += ` At least one word was found.`;
+          break;
+        case 'all':
+          data.explanation += ` All words were found.`;
+          break;
+        case 'none':
+          data.explanation += ` No words were found.`;
+          break;
+      }
+    } else {
+      switch (operator) {
+        case 'any':
+          data.explanation += ` No words were found.`;
+          break;
+        case 'all':
+          data.explanation += ` Some words were missing.`;
+          break;
+        case 'none':
+          data.explanation += ` Some words were found.`;
+          break;
+      }
+    }
+  } catch (e: any) {
+    error = e;
+    data = {
+      explanation: 'An error occurred while processing the text.',
+      error: e.message,
+    };
   }
 
-  return { error, verdict };
+  return { error, verdict, data };
 };

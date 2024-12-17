@@ -214,7 +214,11 @@ export async function handleNonStreamingMode(
   response: Response,
   responseTransformer: Function | undefined,
   strictOpenAiCompliance: boolean
-) {
+): Promise<{
+  response: Response;
+  json: Record<string, any>;
+  originalResponseBodyJson?: Record<string, any>;
+}> {
   // 408 is thrown whenever a request takes more than request_timeout to respond.
   // In that case, response thrown by gateway is already in OpenAI format.
   // So no need to transform it again.
@@ -227,15 +231,16 @@ export async function handleNonStreamingMode(
     return { response, json: await response.clone().json() };
   }
 
-  let responseBodyJson;
+  let originalResponseBodyJson: Record<string, any>;
 
   try {
-    responseBodyJson = await response.json();
+    originalResponseBodyJson = await response.json();
   } catch (e) {
     // handle empty response in case of PUT requests etc
-    responseBodyJson = {};
+    originalResponseBodyJson = {};
   }
 
+  let responseBodyJson = originalResponseBodyJson;
   if (responseTransformer) {
     responseBodyJson = responseTransformer(
       responseBodyJson,
@@ -247,7 +252,9 @@ export async function handleNonStreamingMode(
 
   return {
     response: new Response(JSON.stringify(responseBodyJson), response),
-    json: responseBodyJson,
+    json: responseBodyJson as Record<string, any>,
+    // Send original response if transformer exists
+    ...(responseTransformer && { originalResponseBodyJson }),
   };
 }
 

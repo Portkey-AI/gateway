@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 
 console.log('Starting the application...');
 
-const app = spawn('node', ['build/start-server.js'], {
+const app = spawn('node', ['build/start-server.js', '--headless'], {
   stdio: 'inherit',
 });
 

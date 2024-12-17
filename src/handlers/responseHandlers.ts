@@ -41,7 +41,11 @@ export async function responseHandler(
   isCacheHit: boolean = false,
   gatewayRequest: Params,
   strictOpenAiCompliance: boolean
-): Promise<{ response: Response; responseJson: any }> {
+): Promise<{
+  response: Response;
+  responseJson: Record<string, any> | null;
+  originalResponseJson?: Record<string, any>;
+}> {
   let responseTransformerFunction: Function | undefined;
   let providerOption: Options | undefined;
   const responseContentType = response.headers?.get('content-type');
@@ -149,6 +153,7 @@ export async function responseHandler(
   return {
     response: nonStreamingResponse.response,
     responseJson: nonStreamingResponse.json,
+    originalResponseJson: nonStreamingResponse.originalResponseBodyJson,
   };
 }
 

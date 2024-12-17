@@ -304,7 +304,7 @@ export interface Tool extends AnthropicPromptCache {
   /** The name of the function. */
   type: string;
   /** A description of the function. */
-  function?: Function;
+  function: Function;
 }
 
 /**

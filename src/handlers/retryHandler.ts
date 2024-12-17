@@ -63,10 +63,15 @@ export const retryRequest = async (
   statusCodesToRetry: number[],
   timeout: number | null,
   requestHandler?: () => Promise<Response>
-): Promise<[Response, number | undefined]> => {
+): Promise<{
+  response: Response;
+  attempt: number | undefined;
+  createdAt: Date;
+}> => {
   let lastError: any | undefined;
   let lastResponse: Response | undefined;
   let lastAttempt: number | undefined;
+  const start = new Date();
   try {
     await retry(
       async (bail: any, attempt: number) => {
@@ -85,11 +90,7 @@ export const retryRequest = async (
             errorObj.headers = Object.fromEntries(response.headers);
             throw errorObj;
           } else if (response.status >= 200 && response.status <= 204) {
-            // console.log(
-            //   `Returned in Retry Attempt ${attempt}. Status:`,
-            //   response.ok,
-            //   response.status
-            // );
+            // do nothing
           } else {
             // All error codes that aren't retried need to be propogated up
             const errorObj: any = new Error(await response.clone().text());
@@ -100,7 +101,6 @@ export const retryRequest = async (
           }
           lastResponse = response;
         } catch (error: any) {
-          lastError = error;
           if (attempt >= retryCount + 1) {
             bail(error);
             return;
@@ -144,5 +144,9 @@ export const retryRequest = async (
       `Tried ${lastAttempt ?? 1} time(s) but failed. Error: ${JSON.stringify(error)}`
     );
   }
-  return [lastResponse as Response, lastAttempt];
+  return {
+    response: lastResponse as Response,
+    attempt: lastAttempt,
+    createdAt: start,
+  };
 };
