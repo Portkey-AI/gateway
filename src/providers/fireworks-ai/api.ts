@@ -8,7 +8,7 @@ const FireworksAIAPIConfig: ProviderAPIConfig = {
       Accept: 'application/json',
     };
   },
-  getEndpoint: ({ fn, gatewayRequestBody }) => {
+  getEndpoint: ({ fn, gatewayRequestBodyJSON: gatewayRequestBody }) => {
     const model = gatewayRequestBody?.model;
     switch (fn) {
       case 'complete':

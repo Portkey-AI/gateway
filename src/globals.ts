@@ -6,6 +6,7 @@ export const HEADER_KEYS: Record<string, string> = {
   MODE: `x-${POWERED_BY}-mode`,
   RETRIES: `x-${POWERED_BY}-retry-count`,
   PROVIDER: `x-${POWERED_BY}-provider`,
+  CONFIG: `x-${POWERED_BY}-config`,
   TRACE_ID: `x-${POWERED_BY}-trace-id`,
   CACHE: `x-${POWERED_BY}-cache`,
   METADATA: `x-${POWERED_BY}-metadata`,
@@ -135,6 +136,7 @@ export const CONTENT_TYPES = {
   EVENT_STREAM: 'text/event-stream',
   AUDIO_MPEG: 'audio/mpeg',
   APPLICATION_OCTET_STREAM: 'application/octet-stream',
+  BINARY_OCTET_STREAM: 'binary/octet-stream',
   GENERIC_AUDIO_PATTERN: 'audio',
   PLAIN_TEXT: 'text/plain',
   HTML: 'text/html',
@@ -144,6 +146,7 @@ export const CONTENT_TYPES = {
 export const MULTIPART_FORM_DATA_ENDPOINTS: endpointStrings[] = [
   'createTranscription',
   'createTranslation',
+  'uploadFile',
 ];
 
 export const fileExtensionMimeTypeMap = {

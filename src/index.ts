@@ -28,6 +28,8 @@ import { createTranscriptionHandler } from './handlers/createTranscriptionHandle
 import { createTranslationHandler } from './handlers/createTranslationHandler';
 import { modelsHandler, providersHandler } from './handlers/modelsHandler';
 import { realTimeHandler } from './handlers/realtimeHandler';
+import batchesHandler from './handlers/batchesHandler';
+import filesHandler from './handlers/filesHandler';
 
 // Config
 import conf from '../conf.json';
@@ -158,6 +160,46 @@ app.post(
  * Handles requests by passing them to the createTranslationHandler.
  */
 app.post('/v1/audio/translations', requestValidator, createTranslationHandler);
+
+// Files routes
+app.get('/v1/files', requestValidator, filesHandler('listFiles', 'GET'));
+app.get('/v1/files/:id', requestValidator, filesHandler('retrieveFile', 'GET'));
+app.get(
+  '/v1/files/:id/content',
+  requestValidator,
+  filesHandler('retrieveFileContent', 'GET')
+);
+
+app.post('/v1/files', requestValidator, filesHandler('uploadFile', 'POST'));
+
+app.delete(
+  '/v1/files/:id',
+  requestValidator,
+  filesHandler('deleteFile', 'DELETE')
+);
+
+// Batch routes
+app.post(
+  '/v1/batches',
+  requestValidator,
+  batchesHandler('createBatch', 'POST')
+);
+app.get('/v1/batches', requestValidator, batchesHandler('listBatches', 'GET'));
+app.get(
+  '/v1/batches/*/output',
+  requestValidator,
+  batchesHandler('getBatchOutput', 'GET')
+);
+app.get(
+  '/v1/batches/*',
+  requestValidator,
+  batchesHandler('retrieveBatch', 'GET')
+);
+app.post(
+  '/v1/batches/:id/cancel',
+  requestValidator,
+  batchesHandler('cancelBatch', 'POST')
+);
 
 /**
  * POST route for '/v1/prompts/:id/completions'.

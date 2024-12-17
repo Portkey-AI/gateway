@@ -3,7 +3,8 @@ import retry from 'async-retry';
 async function fetchWithTimeout(
   url: string,
   options: RequestInit,
-  timeout: number
+  timeout: number,
+  requestHandler?: () => Promise<Response>
 ) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -15,7 +16,11 @@ async function fetchWithTimeout(
   let response;
 
   try {
-    response = await fetch(url, timeoutRequestOptions);
+    if (requestHandler) {
+      response = await requestHandler();
+    } else {
+      response = await fetch(url, timeoutRequestOptions);
+    }
     clearTimeout(timeoutId);
   } catch (err: any) {
     if (err.name === 'AbortError') {
@@ -61,7 +66,8 @@ export const retryRequest = async (
   options: RequestInit,
   retryCount: number,
   statusCodesToRetry: number[],
-  timeout: number | null
+  timeout: number | null,
+  requestHandler?: () => Promise<Response>
 ): Promise<{
   response: Response;
   attempt: number | undefined;
@@ -74,9 +80,19 @@ export const retryRequest = async (
     await retry(
       async (bail: any, attempt: number) => {
         try {
-          const response: Response = timeout
-            ? await fetchWithTimeout(url, options, timeout)
-            : await fetch(url, options);
+          let response: Response;
+          if (timeout) {
+            response = await fetchWithTimeout(
+              url,
+              options,
+              timeout,
+              requestHandler
+            );
+          } else if (requestHandler) {
+            response = await requestHandler();
+          } else {
+            response = await fetch(url, options);
+          }
           if (statusCodesToRetry.includes(response.status)) {
             const errorObj: any = new Error(await response.text());
             errorObj.status = response.status;

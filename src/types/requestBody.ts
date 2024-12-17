@@ -86,6 +86,9 @@ export interface Options {
   awsAuthType?: string;
   awsRoleArn?: string;
   awsExternalId?: string;
+  awsS3Bucket?: string;
+  awsS3ObjectKey?: string;
+  awsBedrockModel?: string;
 
   /** Sagemaker specific */
   amznSagemakerCustomAttributes?: string;
