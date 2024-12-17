@@ -689,7 +689,13 @@ export const VertexLlamaChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
-    default: 'meta/llama3-405b-instruct-maas',
+    default: 'meta/llama-3.1-405b-instruct-maas',
+    transform: (params: Params) => {
+      return (
+        params.model?.replace('meta.', 'meta/') ||
+        'meta/llama-3.1-405b-instruct-maas'
+      );
+    },
   },
   messages: {
     param: 'messages',
