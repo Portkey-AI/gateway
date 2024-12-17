@@ -1,21 +1,180 @@
+// function bedrockConfigNode(vars) {
+//   return `,
+//   <span class="hljs-attr">awsAccessKeyId</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.awsAccessKeyId ? 'filled' : 'empty'}" id="awsAccessKeyIdValue">${vars.providerDetails?.awsAccessKeyId || '[Click to edit]'}</span>"</span>,
+//   <span class="hljs-attr">awsSecretAccessKey</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.awsSecretAccessKey ? 'filled' : 'empty'}" id="awsSecretAccessKeyValue">${vars.providerDetails?.awsSecretAccessKey || '[Click to edit]'}</span>"</span>,
+//   <span class="hljs-attr">awsRegion</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.awsRegion ? 'filled' : 'empty'}" id="awsRegionValue">${vars.providerDetails?.awsRegion || '[Click to edit]'}</span>"</span>${vars.providerDetails?.awsSessionToken ? `,
+//   <span class="hljs-attr">awsSessionToken</span>: <span class="hljs-string">"<span class="highlighted-value filled" id="awsSessionTokenValue">${vars.providerDetails.awsSessionToken}</span>"</span>` : ''}`;
+// }
+
+// function bedrockConfigPython(vars) {
+//   return `,
+//     <span class="hljs-attr">aws_access_key_id</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.awsAccessKeyId ? 'filled' : 'empty'}" id="awsAccessKeyIdValue">${vars.providerDetails?.awsAccessKeyId || '[Click to edit]'}</span>"</span>,
+//     <span class="hljs-attr">aws_secret_access_key</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.awsSecretAccessKey ? 'filled' : 'empty'}" id="awsSecretAccessKeyValue">${vars.providerDetails?.awsSecretAccessKey || '[Click to edit]'}</span>"</span>,
+//     <span class="hljs-attr">aws_region</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.awsRegion ? 'filled' : 'empty'}" id="awsRegionValue">${vars.providerDetails?.awsRegion || '[Click to edit]'}</span>"</span>${vars.providerDetails?.awsSessionToken ? `,
+//     <span class="hljs-attr">aws_session_token</span>=<span class="hljs-string">"<span class="highlighted-value filled" id="awsSessionTokenValue">${vars.providerDetails.awsSessionToken}</span>"</span>` : ''}`;
+// }
+
+// function bedrockConfigCurl(vars) {
+//   return `\n-H <span class="hljs-string">"x-portkey-aws-access-key-id: <span class="highlighted-value ${vars.providerDetails?.awsAccessKeyId ? 'filled' : 'empty'}" id="awsAccessKeyIdValue">${vars.providerDetails?.awsAccessKeyId || '[Click to edit]'}</span>"</span> \\
+// -H <span class="hljs-string">"x-portkey-aws-secret-access-key: <span class="highlighted-value ${vars.providerDetails?.awsSecretAccessKey ? 'filled' : 'empty'}" id="awsSecretAccessKeyValue">${vars.providerDetails?.awsSecretAccessKey || '[Click to edit]'}</span>"</span> \\
+// -H <span class="hljs-string">"x-portkey-aws-region: <span class="highlighted-value ${vars.providerDetails?.awsRegion ? 'filled' : 'empty'}" id="awsRegionValue">${vars.providerDetails?.awsRegion || '[Click to edit]'}</span>"</span> \\${vars.providerDetails?.awsSessionToken ? `\n-H <span class="hljs-string">"x-portkey-aws-session-token: <span class="highlighted-value filled" id="awsSessionTokenValue">${vars.providerDetails.awsSessionToken}</span>"</span> \\` : ''}`;
+// }
+
+// function azureConfigCurl(vars) {
+//   return `\n-H <span class="hljs-string">"x-portkey-azure-resource-name: <span class="highlighted-value ${vars.providerDetails?.azureResourceName ? 'filled' : 'empty'}" id="azureResourceNameValue">${vars.providerDetails?.azureResourceName || '[Click to edit]'}</span>"</span> \\
+// -H <span class="hljs-string">"x-portkey-azure-deployment-id: <span class="highlighted-value ${vars.providerDetails?.azureDeploymentId ? 'filled' : 'empty'}" id="azureDeploymentIdValue">${vars.providerDetails?.azureDeploymentId || '[Click to edit]'}</span>"</span> \\
+// -H <span class="hljs-string">"x-portkey-azure-api-version: <span class="highlighted-value ${vars.providerDetails?.azureApiVersion ? 'filled' : 'empty'}" id="azureApiVersionValue">${vars.providerDetails?.azureApiVersion || '[Click to edit]'}</span>"</span> \\
+// -H <span class="hljs-string">"x-portkey-azure-model-name: <span class="highlighted-value ${vars.providerDetails?.azureModelName ? 'filled' : 'empty'}" id="azureModelNameValue">${vars.providerDetails?.azureModelName || '[Click to edit]'}</span>"</span> \\`;
+// }
+
+// function azureConfigNode(vars) {
+//   return `,
+//   <span class="hljs-attr">azureResourceName</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureResourceName ? 'filled' : 'empty'}" id="azureResourceNameValue">${vars.providerDetails?.azureResourceName || '[Click to edit]'}</span>"</span>,
+//   <span class="hljs-attr">azureDeploymentId</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureDeploymentId ? 'filled' : 'empty'}" id="azureDeploymentIdValue">${vars.providerDetails?.azureDeploymentId || '[Click to edit]'}</span>"</span>,
+//   <span class="hljs-attr">azureApiVersion</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureApiVersion ? 'filled' : 'empty'}" id="azureApiVersionValue">${vars.providerDetails?.azureApiVersion || '[Click to edit]'}</span>"</span>,
+//   <span class="hljs-attr">azureModelName</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureModelName ? 'filled' : 'empty'}" id="azureModelNameValue">${vars.providerDetails?.azureModelName || '[Click to edit]'}</span>"</span>`;
+// }
+
+// function azureConfigPython(vars) {
+//   return `,
+//   <span class="hljs-attr">azure_resource_name</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureResourceName ? 'filled' : 'empty'}" id="azureResourceNameValue">${vars.providerDetails?.azureResourceName || '[Click to edit]'}</span>"</span>,
+//   <span class="hljs-attr">azure_deployment_id</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureDeploymentId ? 'filled' : 'empty'}" id="azureDeploymentIdValue">${vars.providerDetails?.azureDeploymentId || '[Click to edit]'}</span>"</span>,
+//   <span class="hljs-attr">azure_api_version</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureApiVersion ? 'filled' : 'empty'}" id="azureApiVersionValue">${vars.providerDetails?.azureApiVersion || '[Click to edit]'}</span>"</span>,
+//   <span class="hljs-attr">azure_model_name</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureModelName ? 'filled' : 'empty'}" id="azureModelNameValue">${vars.providerDetails?.azureModelName || '[Click to edit]'}</span>"</span>`;
+// }
+
+// Case conversion utilities
+function toCamelCase(str) {
+  return str.replace(/([-_][a-z])/g, group => 
+    group.toUpperCase()
+      .replace('-', '')
+      .replace('_', '')
+  );
+}
+
+function toSnakeCase(str) {
+  return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+}
+
+function toKebabCase(str) {
+  return str.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
+}
+
+// Base configuration fields for each provider
+const providerConfigs = {
+  bedrock: {
+    fields: [
+      'awsAccessKeyId',
+      'awsSecretAccessKey', 
+      'awsRegion',
+      'awsSessionToken'
+    ]
+  },
+  azure: {
+    fields: [
+      'azureResourceName',
+      'azureDeploymentId',
+      'azureApiVersion',
+      'azureModelName'
+    ]
+  }
+};
+
+const modelMap = {
+  "openai": "gpt-4o-mini",
+  "anthropic": "claude-3-5-sonnet-20240620",
+  "groq": "llama3-70b-8192",
+  "bedrock": "anthropic.claude-3-sonnet-20240229-v1:0",
+  "azure-openai": "gpt-4o-mini",
+  "cohere": "command-r-plus",
+  "together-ai": "llama-3.1-8b-instruct",
+  "perplexity-ai": "pplx-7b-online",
+  "mistral-ai": "mistral-small-latest",
+  "others": "gpt-4o-mini"
+}
+
+const docsMap = {
+  "openai": "https://portkey.ai/docs/integrations/llms/openai",
+  "anthropic": "https://portkey.ai/docs/integrations/llms/anthropic",
+  "groq": "https://portkey.ai/docs/integrations/llms/groq",
+  "bedrock": "https://portkey.ai/docs/integrations/llms/aws-bedrock",
+  "azure-openai": "https://portkey.ai/docs/integrations/llms/azure-openai",
+  "cohere": "https://portkey.ai/docs/integrations/llms/cohere",
+  "together-ai": "https://portkey.ai/docs/integrations/llms/together-ai",
+  "perplexity-ai": "https://portkey.ai/docs/integrations/llms/perplexity-ai",
+  "mistral-ai": "https://portkey.ai/docs/integrations/llms/mistral-ai",
+  "others": "https://portkey.ai/docs/integrations/llms"
+}
+
+// Format generators for different styles
+const formatGenerators = {
+  node: {
+    formatKey: fieldName => fieldName,
+    separator: ':',
+    indent: '  ',
+    template: (key, separator, value) => 
+      `  <span class="hljs-attr">${key}</span>${separator}<span class="hljs-string">"${value}"</span>`,
+    joinWith: ',\n',
+    prefix: ',\n',
+  },
+  python: {
+    formatKey: fieldName => toSnakeCase(fieldName),
+    separator: '=',
+    indent: '    ',
+    template: (key, separator, value) => 
+      `    <span class="hljs-attr">${key}</span>${separator}<span class="hljs-string">"${value}"</span>`,
+    joinWith: ',\n',
+    prefix: ',\n',
+  },
+  curl: {
+    formatKey: fieldName => `x-portkey-${toKebabCase(fieldName)}`,
+    separator: ':',
+    indent: '',
+    template: (key, separator, value) => 
+      `-H <span class="hljs-string">"${key}${separator} ${value}"</span> \\`,
+    joinWith: '\n',
+    prefix: '\n',
+  }
+};
+
+// Helper function to generate highlighted value span
+function generateHighlightedValue(value, id) {
+  const isEmpty = !value;
+  const displayValue = value || '[Click to edit]';
+  return `<span class="highlighted-value ${isEmpty ? 'empty' : 'filled'}" id="${id}Value">${displayValue}</span>`;
+}
+
+// Generic config generator function
+function generateConfig(provider, format, vars) {
+  const { fields } = providerConfigs[provider];
+  const formatter = formatGenerators[format];
+  const details = vars.providerDetails || {};
+  
+  const configLines = fields
+    .map(fieldName => {
+      // Skip session token if not provided (for Bedrock)
+      if (fieldName === 'awsSessionToken' && !details[fieldName]) return null;
+      
+      const key = formatter.formatKey(fieldName);
+      const value = generateHighlightedValue(details[fieldName], fieldName);
+      return formatter.template(key, formatter.separator, value);
+    })
+    .filter(Boolean)
+    .join(formatter.joinWith);
+
+  return formatter.prefix + configLines;
+}
+
+
 function getTestRequestCodeBlock(language, vars) {
   switch (language) {
     case 'nodejs':
-      case 'nodejs':
       return `
 <span class="hljs-keyword">import</span> Portkey <span class="hljs-keyword">from</span> <span class="hljs-string">'portkey-ai'</span>
 
 <span class="hljs-keyword">const</span> portkey = <span class="hljs-keyword">new</span> Portkey({
   <span class="hljs-attr">provider</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.provider ? 'filled' : 'empty'}" id="providerValue">${vars.provider || '[Click to edit]'}</span>"</span>${vars.provider != 'bedrock' ? `,
-  <span class="hljs-attr">Authorization</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.apiKey ? 'filled' : 'empty'}" id="apiKeyValue">${vars.providerDetails?.apiKey || '[Click to edit]'}</span>"</span>`: ''}${vars.provider === 'azure-openai' ? `,
-  <span class="hljs-attr">azureResourceName</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureResourceName ? 'filled' : 'empty'}" id="azureResourceNameValue">${vars.providerDetails?.azureResourceName || '[Click to edit]'}</span>"</span>,
-  <span class="hljs-attr">azureDeploymentId</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureDeploymentId ? 'filled' : 'empty'}" id="azureDeploymentIdValue">${vars.providerDetails?.azureDeploymentId || '[Click to edit]'}</span>"</span>,
-  <span class="hljs-attr">azureApiVersion</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureApiVersion ? 'filled' : 'empty'}" id="azureApiVersionValue">${vars.providerDetails?.azureApiVersion || '[Click to edit]'}</span>"</span>,
-  <span class="hljs-attr">azureModelName</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureModelName ? 'filled' : 'empty'}" id="azureModelNameValue">${vars.providerDetails?.azureModelName || '[Click to edit]'}</span>"</span>` : ''}${vars.provider === 'bedrock' ? `,
-  <span class="hljs-attr">awsAccessKeyId</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.awsAccessKeyId ? 'filled' : 'empty'}" id="awsAccessKeyIdValue">${vars.providerDetails?.awsAccessKeyId || '[Click to edit]'}</span>"</span>,
-  <span class="hljs-attr">awsSecretAccessKey</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.awsSecretAccessKey ? 'filled' : 'empty'}" id="awsSecretAccessKeyValue">${vars.providerDetails?.awsSecretAccessKey || '[Click to edit]'}</span>"</span>,
-  <span class="hljs-attr">awsRegion</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.awsRegion ? 'filled' : 'empty'}" id="awsRegionValue">${vars.providerDetails?.awsRegion || '[Click to edit]'}</span>"</span>${vars.providerDetails?.awsSessionToken ? `,
-  <span class="hljs-attr">awsSessionToken</span>: <span class="hljs-string">"<span class="highlighted-value filled" id="awsSessionTokenValue">${vars.providerDetails.awsSessionToken}</span>"</span>` : ''}` : ''}
+  <span class="hljs-attr">Authorization</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.apiKey ? 'filled' : 'empty'}" id="apiKeyValue">${vars.providerDetails?.apiKey || '[Click to edit]'}</span>"</span>`: ''}${vars.provider === 'azure-openai' ? `${generateConfig('azure', 'node', vars)}` : ''}${vars.provider === 'bedrock' ? `${generateConfig('bedrock', 'node', vars)}` : ''}
 })
 
 <span class="hljs-comment">// Example: Send a chat completion request</span>
@@ -32,15 +191,7 @@ const response = <span class="hljs-keyword">await</span> portkey.chat.completion
 
 client = Portkey(
     <span class="hljs-attr">provider</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.provider ? 'filled' : 'empty'}" id="providerValue">${vars.provider || '[Click to edit]'}</span>"</span>${vars.provider != 'bedrock' ? `,
-    <span class="hljs-attr">Authorization</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.apiKey ? 'filled' : 'empty'}" id="apiKeyValue">${vars.providerDetails?.apiKey || '[Click to edit]'}</span>"</span>`: ''}${vars.provider === 'azure-openai' ? `,
-    <span class="hljs-attr">azure_resource_name</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureResourceName ? 'filled' : 'empty'}" id="azureResourceNameValue">${vars.providerDetails?.azureResourceName || '[Click to edit]'}</span>"</span>,
-    <span class="hljs-attr">azure_deployment_id</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureDeploymentId ? 'filled' : 'empty'}" id="azureDeploymentIdValue">${vars.providerDetails?.azureDeploymentId || '[Click to edit]'}</span>"</span>,
-    <span class="hljs-attr">azure_api_version</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureApiVersion ? 'filled' : 'empty'}" id="azureApiVersionValue">${vars.providerDetails?.azureApiVersion || '[Click to edit]'}</span>"</span>,
-    <span class="hljs-attr">azure_model_name</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureModelName ? 'filled' : 'empty'}" id="azureModelNameValue">${vars.providerDetails?.azureModelName || '[Click to edit]'}</span>"</span>` : ''}${vars.provider === 'bedrock' ? `,
-    <span class="hljs-attr">aws_access_key_id</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.awsAccessKeyId ? 'filled' : 'empty'}" id="awsAccessKeyIdValue">${vars.providerDetails?.awsAccessKeyId || '[Click to edit]'}</span>"</span>,
-    <span class="hljs-attr">aws_secret_access_key</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.awsSecretAccessKey ? 'filled' : 'empty'}" id="awsSecretAccessKeyValue">${vars.providerDetails?.awsSecretAccessKey || '[Click to edit]'}</span>"</span>,
-    <span class="hljs-attr">aws_region</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.awsRegion ? 'filled' : 'empty'}" id="awsRegionValue">${vars.providerDetails?.awsRegion || '[Click to edit]'}</span>"</span>${vars.providerDetails?.awsSessionToken ? `,
-    <span class="hljs-attr">aws_session_token</span>=<span class="hljs-string">"<span class="highlighted-value filled" id="awsSessionTokenValue">${vars.providerDetails.awsSessionToken}</span>"</span>` : ''}` : ''}
+    <span class="hljs-attr">Authorization</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.apiKey ? 'filled' : 'empty'}" id="apiKeyValue">${vars.providerDetails?.apiKey || '[Click to edit]'}</span>"</span>`: ''}${vars.provider === 'azure-openai' ? `${generateConfig('azure', 'python', vars)}` : ''}${vars.provider === 'bedrock' ? `${generateConfig('bedrock', 'python', vars)}` : ''}
 )
 
 <span class="hljs-comment"># Example: Send a chat completion request</span>
@@ -55,12 +206,7 @@ response = client.chat.completion.create(
 https://api.portkey.ai/v1/chat/completions \\
 -H <span class="hljs-string">"Content-Type: application/json"</span> \\
 -H <span class="hljs-string">"x-portkey-provider: <span class="highlighted-value ${vars.provider ? 'filled' : 'empty'}" id="providerValue">${vars.provider || '[Click to edit]'}</span>"</span> \\${vars.provider != 'bedrock' ? `
--H <span class="hljs-string">"Authorization: <span class="highlighted-value ${vars.providerDetails?.apiKey ? 'filled' : 'empty'}" id="apiKeyValue">${vars.providerDetails?.apiKey || '[Click to edit]'}</span>"</span> \\`: '' }${vars.provider === 'azure-openai' ? `\n-H <span class="hljs-string">"x-portkey-azure-resource-name: <span class="highlighted-value ${vars.providerDetails?.azureResourceName ? 'filled' : 'empty'}" id="azureResourceNameValue">${vars.providerDetails?.azureResourceName || '[Click to edit]'}</span>"</span> \\
--H <span class="hljs-string">"x-portkey-azure-deployment-id: <span class="highlighted-value ${vars.providerDetails?.azureDeploymentId ? 'filled' : 'empty'}" id="azureDeploymentIdValue">${vars.providerDetails?.azureDeploymentId || '[Click to edit]'}</span>"</span> \\
--H <span class="hljs-string">"x-portkey-azure-api-version: <span class="highlighted-value ${vars.providerDetails?.azureApiVersion ? 'filled' : 'empty'}" id="azureApiVersionValue">${vars.providerDetails?.azureApiVersion || '[Click to edit]'}</span>"</span> \\
--H <span class="hljs-string">"x-portkey-azure-model-name: <span class="highlighted-value ${vars.providerDetails?.azureModelName ? 'filled' : 'empty'}" id="azureModelNameValue">${vars.providerDetails?.azureModelName || '[Click to edit]'}</span>"</span> \\` : ''}${vars.provider === 'bedrock' ? `\n-H <span class="hljs-string">"x-portkey-aws-access-key-id: <span class="highlighted-value ${vars.providerDetails?.awsAccessKeyId ? 'filled' : 'empty'}" id="awsAccessKeyIdValue">${vars.providerDetails?.awsAccessKeyId || '[Click to edit]'}</span>"</span> \\
--H <span class="hljs-string">"x-portkey-aws-secret-access-key: <span class="highlighted-value ${vars.providerDetails?.awsSecretAccessKey ? 'filled' : 'empty'}" id="awsSecretAccessKeyValue">${vars.providerDetails?.awsSecretAccessKey || '[Click to edit]'}</span>"</span> \\
--H <span class="hljs-string">"x-portkey-aws-region: <span class="highlighted-value ${vars.providerDetails?.awsRegion ? 'filled' : 'empty'}" id="awsRegionValue">${vars.providerDetails?.awsRegion || '[Click to edit]'}</span>"</span> \\${vars.providerDetails?.awsSessionToken ? `\n-H <span class="hljs-string">"x-portkey-aws-session-token: <span class="highlighted-value filled" id="awsSessionTokenValue">${vars.providerDetails.awsSessionToken}</span>"</span> \\` : ''}` : ''}
+-H <span class="hljs-string">"Authorization: <span class="highlighted-value ${vars.providerDetails?.apiKey ? 'filled' : 'empty'}" id="apiKeyValue">${vars.providerDetails?.apiKey || '[Click to edit]'}</span>"</span> \\`: '' }${vars.provider === 'azure-openai' ? `${generateConfig('azure', 'curl', vars)}` : ''}${vars.provider === 'bedrock' ? `${generateConfig('bedrock', 'curl', vars)}` : ''}
 <span class="hljs-string">-d '{
   "messages": [
       { "role": "user", "content": "Hello, how are you?" },
@@ -77,14 +223,6 @@ function getRoutingConfigCodeBlock(language, type) {
 
 // Needed for highlight.js
 const lngMap = {"nodejs": "js", "python": "py", "curl": "sh"}
-
-const modelMap = {
-  "openai": "gpt-4o-mini",
-  "anthropic": "claude-3-5-sonnet-20240620",
-  "groq": "llama3-70b-8192",
-  "bedrock": "anthropic.claude-3-sonnet-20240229-v1:0",
-  "azure-openai": "gpt-4o-mini"
-}
 
 // Initialize Lucide icons
 lucide.createIcons();
@@ -193,6 +331,11 @@ function updateAllCommands() {
     const command = document.getElementById(`${language}Command`);
     const code = getTestRequestCodeBlock(language, {provider, providerDetails});
     command.innerHTML = code;
+    if (provider) {
+      const docsLink = document.querySelector('.docs-link');
+      docsLink.innerHTML = `<a href="${docsMap[provider] || 'https://portkey.ai/docs/integrations/llms'}" target="_blank">View detailed docs for <b>${provider == "others" ? "all providers" : provider}</b> <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>`;
+      docsLink.style.display = 'inline-block';
+    }
   });
   addClickListeners();
 }
@@ -552,8 +695,10 @@ window.addEventListener('unload', cleanupLogSource);
 window.onload = function() {
   // Run the confetti function only once by storing the state in localStorage
   if(!localStorage.getItem('confettiRun')) {
-    confetti();
-    localStorage.setItem('confettiRun', 'true');
+    setTimeout(() => {  
+      confetti();
+      localStorage.setItem('confettiRun', 'true');
+    }, 1000);
   }
   // confetti({
   //     particleCount: 100,

@@ -218,3 +218,13 @@ h2 {
   /* red color that looks good on dark background */
   color: #ff7f7f;
 }
+
+.docs-link {
+  display: none;
+  float: right;
+  margin: 5px 0;
+}
+
+.docs-link a {
+  color: #3b82f6;
+}
