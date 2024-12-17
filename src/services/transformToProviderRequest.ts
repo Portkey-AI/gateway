@@ -1,8 +1,7 @@
 import { GatewayError } from '../errors/GatewayError';
-import { MULTIPART_FORM_DATA_ENDPOINTS } from '../globals';
 import ProviderConfigs from '../providers';
 import { endpointStrings } from '../providers/types';
-import { Options, Params, Targets } from '../types/requestBody';
+import { Params } from '../types/requestBody';
 
 /**
  * Helper function to set a nested property in an object.
@@ -187,7 +186,12 @@ export const transformToProviderRequest = (
   inputParams: Params | FormData,
   fn: endpointStrings
 ) => {
-  if (MULTIPART_FORM_DATA_ENDPOINTS.includes(fn)) return inputParams;
+  if (inputParams instanceof FormData) return inputParams;
+
+  if (fn === 'proxy') {
+    return params;
+  }
+
   const providerAPIConfig = ProviderConfigs[provider].api;
   if (
     providerAPIConfig.transformToFormData &&
