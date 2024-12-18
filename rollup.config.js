@@ -14,7 +14,7 @@ export default {
     terser(),
     json(),
     copy({
-      targets: [{ src: 'public/*', dest: 'build/public' }],
+      targets: [{ src: 'src/public/*', dest: 'build/public' }],
     }),
   ],
 };

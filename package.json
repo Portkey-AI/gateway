@@ -20,7 +20,8 @@
     "README.md",
     "SECURITY.md",
     "LICENSE",
-    "docs"
+    "docs",
+    "build/public"
   ],
   "scripts": {
     "dev": "wrangler dev src/index.ts",
