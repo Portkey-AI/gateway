@@ -217,7 +217,10 @@ export enum MESSAGE_ROLES {
   ASSISTANT = 'assistant',
   FUNCTION = 'function',
   TOOL = 'tool',
+  DEVELOPER = 'developer',
 }
+
+export const SYSTEM_MESSAGE_ROLES = ['system', 'developer'];
 
 export type OpenAIMessageRole =
   | 'system'
