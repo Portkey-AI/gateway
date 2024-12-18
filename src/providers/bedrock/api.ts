@@ -2,11 +2,7 @@ import { env } from 'hono/adapter';
 import { GatewayError } from '../../errors/GatewayError';
 import { endpointStrings, ProviderAPIConfig } from '../types';
 import { bedrockInvokeModels } from './constants';
-import {
-  generateAWSHeaders,
-  generatePresignedUrl,
-  getAssumedRoleCredentials,
-} from './utils';
+import { generateAWSHeaders, getAssumedRoleCredentials } from './utils';
 
 const AWS_CONTROL_PLANE_ENDPOINTS: endpointStrings[] = [
   'createBatch',

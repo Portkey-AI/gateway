@@ -8,7 +8,6 @@ import {
 } from './chatComplete';
 import { Context } from 'hono';
 import { env } from 'hono/adapter';
-import * as crypto from 'crypto';
 
 export const generatePresignedUrl = async (
   url: string,

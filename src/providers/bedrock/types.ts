@@ -1,6 +1,3 @@
-interface BedrockCreateBatchResponse {
-  jobArn: string;
-}
 interface BedrockBatch {
   clientRequestToken: string;
   endTime: string;
