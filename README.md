@@ -160,7 +160,7 @@ The enterprise deployment architecture for supported platforms is available here
 
 Join weekly community calls every Friday (8 AM PT) to kickstart your AI Gateway implementation! [Calendar Link](https://portkey.wiki/gh-35)
 
-Meetings of Minutes [published here](https://portkey.wiki/gh-36).
+Minutes of Meetings [published here](https://portkey.wiki/gh-36).
 
 <hr>
 
