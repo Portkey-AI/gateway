@@ -4,153 +4,348 @@ import { handler as languageHandler } from './language';
 import { handler as gibberishHandler } from './gibberish';
 import testCreds from './.creds.json';
 
-describe.skip('moderateContentHandler', () => {
-  it('should return an error if hook type is not supported', async () => {
-    const context = {};
-    const eventType = 'unsupported';
-    const parameters = {};
-    // @ts-ignore
-    const result = await moderateContentHandler(context, parameters, eventType);
-    expect(result.error).toBeDefined();
-    expect(result.verdict).toBe(false);
-    expect(result.data).toBeNull();
-  });
+describe('moderateContentHandler', () => {
+  const mockOptions = { env: {} };
 
-  it('should return an error if fetch request fails', async () => {
-    const context = {};
-    const eventType = 'beforeRequestHook';
-    const parameters = { PORTKEY_API_KEY: 'test' };
-    const result = await moderateContentHandler(context, parameters, eventType);
-    expect(result.error).toBeDefined();
-    expect(result.verdict).toBe(false);
-    expect(result.data).toBeNull();
-  });
-
-  it('should return verdict and data if fetch request succeeds', async () => {
-    const context = {
-      request: { text: 'this is a test string for moderations' },
-    };
-    const eventType = 'beforeRequestHook';
-    const parameters = {
-      credentials: testCreds,
-      categories: ['violence'],
-    };
-    const result = await moderateContentHandler(context, parameters, eventType);
-    expect(result.error).toBeNull();
-    expect(result.verdict).toBeDefined();
-    expect(result.data).toBeDefined();
-  });
-
-  it('should return verdict as false if text is flagged', async () => {
+  it('should detect violent content', async () => {
     const context = {
       request: { text: 'I really want to murder him brutally.' },
     };
-    const eventType = 'beforeRequestHook';
     const parameters = {
       credentials: testCreds,
       categories: ['violence'],
+      not: false,
     };
-    const result = await moderateContentHandler(context, parameters, eventType);
+
+    const result = await moderateContentHandler(
+      context,
+      parameters,
+      'beforeRequestHook',
+      mockOptions
+    );
+
     expect(result.error).toBeNull();
     expect(result.verdict).toBe(false);
-    expect(result.data).toBeDefined();
+    expect(result.data).toMatchObject({
+      verdict: false,
+      not: false,
+      explanation: expect.stringContaining(
+        'Found restricted content categories: violence'
+      ),
+      flaggedCategories: ['violence'],
+      restrictedCategories: ['violence'],
+    });
+  });
+
+  it('should pass clean content', async () => {
+    const context = {
+      request: {
+        text: 'This is a perfectly clean text about flowers and sunshine.',
+      },
+    };
+    const parameters = {
+      credentials: testCreds,
+      categories: ['violence', 'hate'],
+      not: false,
+    };
+
+    const result = await moderateContentHandler(
+      context,
+      parameters,
+      'beforeRequestHook',
+      mockOptions
+    );
+
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(true);
+    expect(result.data).toMatchObject({
+      verdict: true,
+      not: false,
+      explanation: 'No restricted content categories were found.',
+      flaggedCategories: [],
+      restrictedCategories: ['violence', 'hate'],
+    });
+  });
+
+  it('should handle inverted results with not=true', async () => {
+    const context = {
+      request: { text: 'I really want to murder him brutally.' },
+    };
+    const parameters = {
+      credentials: testCreds,
+      categories: ['violence'],
+      not: true,
+    };
+
+    const result = await moderateContentHandler(
+      context,
+      parameters,
+      'beforeRequestHook',
+      mockOptions
+    );
+
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(true);
+    expect(result.data).toMatchObject({
+      verdict: true,
+      not: true,
+      explanation: 'Found restricted content categories as expected.',
+    });
   });
 });
 
 describe('piiHandler', () => {
-  it('should fail when the request text contains PII', async () => {
+  const mockOptions = { env: {} };
+
+  it('should detect PII in text', async () => {
     const context = {
       request: {
         text: 'My credit card number is 0123 0123 0123 0123, and I live in Wilmington, Delaware',
       },
     };
-    const eventType = 'beforeRequestHook';
     const parameters = {
-      categories: [
-        'EMAIL_ADDRESS',
-        'PHONE_NUMBER',
-        'LOCATION_ADDRESS',
-        'NAME',
-        'IP_ADDRESS',
-        'CREDIT_CARD',
-        'SSN',
-      ],
+      categories: ['CREDIT_CARD', 'LOCATION_ADDRESS'],
       credentials: testCreds,
+      not: false,
     };
 
-    const result = await piiHandler(context, parameters, eventType);
+    const result = await piiHandler(
+      context,
+      parameters,
+      'beforeRequestHook',
+      mockOptions
+    );
 
     expect(result.error).toBeNull();
     expect(result.verdict).toBe(false);
-    expect(result.data).toBeDefined();
+    expect(result.data).toMatchObject({
+      verdict: false,
+      not: false,
+      explanation: expect.stringContaining('Found restricted PII'),
+      restrictedCategories: ['CREDIT_CARD', 'LOCATION_ADDRESS'],
+    });
+  });
+
+  it('should pass text without PII', async () => {
+    const context = {
+      request: { text: 'This is a text without any personal information.' },
+    };
+    const parameters = {
+      categories: ['CREDIT_CARD', 'LOCATION_ADDRESS'],
+      credentials: testCreds,
+      not: false,
+    };
+
+    const result = await piiHandler(
+      context,
+      parameters,
+      'beforeRequestHook',
+      mockOptions
+    );
+
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(true);
+    expect(result.data).toMatchObject({
+      verdict: true,
+      not: false,
+      explanation: 'No restricted PII was found in the text.',
+    });
+  });
+
+  it('should handle inverted results with not=true', async () => {
+    const context = {
+      request: {
+        text: 'My credit card number is 0123 0123 0123 0123',
+      },
+    };
+    const parameters = {
+      categories: ['CREDIT_CARD'],
+      credentials: testCreds,
+      not: true,
+    };
+
+    const result = await piiHandler(
+      context,
+      parameters,
+      'beforeRequestHook',
+      mockOptions
+    );
+
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(true);
+    expect(result.data).toMatchObject({
+      verdict: true,
+      not: true,
+      explanation: 'PII was found in the text as expected.',
+    });
   });
 });
 
 describe('languageHandler', () => {
-  it('should return positive verdict if the language of the text matches the input', async () => {
+  const mockOptions = { env: {} };
+
+  it('should detect correct language', async () => {
     const context = {
       request: { text: 'hola mundo' },
-      response: { text: 'hola mundo' },
     };
-    const eventType = 'afterRequestHook';
     const parameters = {
-      language: ['spa_Latn', 'por_Latn'],
+      language: ['spa_Latn'],
       credentials: testCreds,
+      not: false,
     };
 
-    const result = await languageHandler(context, parameters, eventType);
+    const result = await languageHandler(
+      context,
+      parameters,
+      'beforeRequestHook',
+      mockOptions
+    );
 
     expect(result.error).toBeNull();
     expect(result.verdict).toBe(true);
-    expect(result.data).toBeDefined();
+    expect(result.data).toMatchObject({
+      verdict: true,
+      not: false,
+      explanation: expect.stringContaining(
+        'is in one of the specified languages'
+      ),
+      detectedLanguage: 'spa_Latn',
+      allowedLanguages: ['spa_Latn'],
+    });
   });
 
-  it('should return false verdict if the language of the text does not match the input', async () => {
+  it('should detect incorrect language', async () => {
     const context = {
       request: { text: 'hola mundo' },
-      response: { text: 'hola mundo' },
     };
-    const eventType = 'afterRequestHook';
     const parameters = {
-      language: ['jpn_Jpan'],
+      language: ['eng_Latn'],
       credentials: testCreds,
+      not: false,
     };
 
-    const result = await languageHandler(context, parameters, eventType);
+    const result = await languageHandler(
+      context,
+      parameters,
+      'beforeRequestHook',
+      mockOptions
+    );
 
     expect(result.error).toBeNull();
     expect(result.verdict).toBe(false);
-    expect(result.data).toBeDefined();
+    expect(result.data).toMatchObject({
+      verdict: false,
+      not: false,
+      explanation: expect.stringContaining(
+        'is not in any of the specified languages'
+      ),
+    });
+  });
+
+  it('should handle inverted results with not=true', async () => {
+    const context = {
+      request: { text: 'hola mundo' },
+    };
+    const parameters = {
+      language: ['eng_Latn'],
+      credentials: testCreds,
+      not: true,
+    };
+
+    const result = await languageHandler(
+      context,
+      parameters,
+      'beforeRequestHook',
+      mockOptions
+    );
+
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(true);
+    expect(result.data).toMatchObject({
+      verdict: true,
+      not: true,
+      explanation: expect.stringContaining(
+        'is not in any of the specified languages'
+      ),
+    });
   });
 });
 
 describe('gibberishHandler', () => {
-  it('should return positive verdict if the text is not gibberish', async () => {
-    const context = {
-      request: { text: 'this is a test string' },
-      response: { text: 'this is a test string' },
-    };
-    const eventType = 'afterRequestHook';
-    const parameters = { credentials: testCreds };
+  const mockOptions = { env: {} };
 
-    const result = await gibberishHandler(context, parameters, eventType);
+  it('should detect clean text', async () => {
+    const context = {
+      request: { text: 'This is a perfectly normal English sentence.' },
+    };
+    const parameters = {
+      credentials: testCreds,
+      not: false,
+    };
+
+    const result = await gibberishHandler(
+      context,
+      parameters,
+      'beforeRequestHook',
+      mockOptions
+    );
 
     expect(result.error).toBeNull();
     expect(result.verdict).toBe(true);
-    expect(result.data).toBeDefined();
+    expect(result.data).toMatchObject({
+      verdict: true,
+      not: false,
+      explanation: 'The text is not gibberish.',
+    });
   });
 
-  it('should return false verdict if the text is gibberish', async () => {
+  it('should detect gibberish text', async () => {
     const context = {
-      request: { text: 'asdlkf shjdfkksdf skjdhfkjhsf028934oijfdlskj' },
+      request: { text: 'asdf jkl; qwer uiop zxcv bnm,' },
+    };
+    const parameters = {
+      credentials: testCreds,
+      not: false,
     };
 
-    const eventType = 'beforeRequestHook';
-    const parameters = { credentials: testCreds };
+    const result = await gibberishHandler(
+      context,
+      parameters,
+      'beforeRequestHook',
+      mockOptions
+    );
 
-    const result = await gibberishHandler(context, parameters, eventType);
     expect(result.error).toBeNull();
     expect(result.verdict).toBe(false);
-    expect(result.data).toBeDefined();
+    expect(result.data).toMatchObject({
+      verdict: false,
+      not: false,
+      explanation: 'The text appears to be gibberish.',
+    });
+  });
+
+  it('should handle inverted results with not=true', async () => {
+    const context = {
+      request: { text: 'asdf jkl; qwer uiop zxcv bnm,' },
+    };
+    const parameters = {
+      credentials: testCreds,
+      not: true,
+    };
+
+    const result = await gibberishHandler(
+      context,
+      parameters,
+      'beforeRequestHook',
+      mockOptions
+    );
+
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(true);
+    expect(result.data).toMatchObject({
+      verdict: true,
+      not: true,
+      explanation: 'The text is gibberish as expected.',
+    });
   });
 });

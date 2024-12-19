@@ -6,6 +6,7 @@ import {
   ContentType,
   Message,
   Params,
+  Tool,
   ToolCall,
 } from '../../types/requestBody';
 import {
@@ -36,8 +37,20 @@ import type {
   GoogleGenerateContentResponse,
   VertexLlamaChatCompleteStreamChunk,
   VertexLLamaChatCompleteResponse,
+  GoogleSearchRetrievalTool,
 } from './types';
 import { getMimeType } from './utils';
+
+export const buildGoogleSearchRetrievalTool = (tool: Tool) => {
+  const googleSearchRetrievalTool: GoogleSearchRetrievalTool = {
+    googleSearchRetrieval: {},
+  };
+  if (tool.function.parameters?.dynamicRetrievalConfig) {
+    googleSearchRetrievalTool.googleSearchRetrieval.dynamicRetrievalConfig =
+      tool.function.parameters.dynamicRetrievalConfig;
+  }
+  return googleSearchRetrievalTool;
+};
 
 export const VertexGoogleChatCompleteConfig: ProviderConfig = {
   // https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning#gemini-model-versions
@@ -253,12 +266,20 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
     default: '',
     transform: (params: Params) => {
       const functionDeclarations: any = [];
+      const tools: any = [];
       params.tools?.forEach((tool) => {
         if (tool.type === 'function') {
-          functionDeclarations.push(tool.function);
+          if (tool.function.name === 'googleSearchRetrieval') {
+            tools.push(buildGoogleSearchRetrievalTool(tool));
+          } else {
+            functionDeclarations.push(tool.function);
+          }
         }
       });
-      return { functionDeclarations };
+      if (functionDeclarations.length) {
+        tools.push({ functionDeclarations });
+      }
+      return tools;
     },
   },
   tool_choice: {
@@ -648,6 +669,9 @@ export const GoogleChatCompleteResponseTransform: (
             ...(!strictOpenAiCompliance && {
               safetyRatings: generation.safetyRatings,
             }),
+            ...(!strictOpenAiCompliance && generation.groundingMetadata
+              ? { groundingMetadata: generation.groundingMetadata }
+              : {}),
           };
         }) ?? [],
       usage: {
@@ -665,7 +689,13 @@ export const VertexLlamaChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
-    default: 'meta/llama3-405b-instruct-maas',
+    default: 'meta/llama-3.1-405b-instruct-maas',
+    transform: (params: Params) => {
+      return (
+        params.model?.replace('meta.', 'meta/') ||
+        'meta/llama-3.1-405b-instruct-maas'
+      );
+    },
   },
   messages: {
     param: 'messages',
@@ -778,6 +808,9 @@ export const GoogleChatCompleteStreamChunkTransform: (
           ...(!strictOpenAiCompliance && {
             safetyRatings: generation.safetyRatings,
           }),
+          ...(!strictOpenAiCompliance && generation.groundingMetadata
+            ? { groundingMetadata: generation.groundingMetadata }
+            : {}),
         };
       }) ?? [],
     usage: usageMetadata,

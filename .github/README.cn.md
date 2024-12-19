@@ -2,7 +2,7 @@
 <img src="/docs/images/gateway-border.png" width=350>
 
 <p align="right">
-<a href="./README.md">English</a>|<strong>中文</strong> 
+<a href="../README.md">English</a> | <strong>中文</strong> | <a href="./README.jp.md">日本語</a>
 </p>
 
 # AI Gateway
@@ -213,6 +213,7 @@ const client = new OpenAI({
 - 在 [Discord](https://portkey.ai/community) 上与我们实时交流
 - 在 [Twitter](https://twitter.com/PortkeyAI) 上关注我们
 - 在 [LinkedIn](https://www.linkedin.com/company/portkey-ai/) 上与我们建立联系
+- 阅读日文版文档 [日本語](./README.jp.md)
 
 <!-- - 在 [YouTube](https://www.youtube.com/channel/UCZph50gLNXAh1DpmeX8sBdw) 上访问我们 --> <!-- - 加入我们的 [Dev 社区](https://dev.to/portkeyai) --> <!-- - 在 [Stack Overflow](https://stackoverflow.com/questions/tagged/portkey) 上查看标记为 #portkey 的问题 -->
 

@@ -1,60 +1,9 @@
 import { GROQ } from '../../globals';
-import {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
+import { ChatCompletionResponse, ErrorResponse } from '../types';
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
-
-export const GroqChatCompleteConfig: ProviderConfig = {
-  model: {
-    param: 'model',
-    required: true,
-    default: 'mixtral-8x7b-32768',
-  },
-  messages: {
-    param: 'messages',
-    default: '',
-  },
-  max_tokens: {
-    param: 'max_tokens',
-    default: 100,
-    min: 0,
-  },
-  max_completion_tokens: {
-    param: 'max_tokens',
-    default: 100,
-    min: 0,
-  },
-  temperature: {
-    param: 'temperature',
-    default: 1,
-    min: 0,
-    max: 2,
-  },
-  top_p: {
-    param: 'top_p',
-    default: 1,
-    min: 0,
-    max: 1,
-  },
-  stream: {
-    param: 'stream',
-    default: false,
-  },
-  stop: {
-    param: 'stop',
-  },
-  n: {
-    param: 'n',
-    default: 1,
-    max: 1,
-    min: 1,
-  },
-};
 
 export interface GroqChatCompleteResponse extends ChatCompletionResponse {}
 
@@ -68,6 +17,7 @@ export interface GroqStreamChunk {
   choices: {
     delta: {
       content?: string;
+      tool_calls?: object[];
     };
     index: number;
     finish_reason: string | null;
@@ -149,7 +99,7 @@ export const GroqChatCompleteStreamChunkTransform: (
           index: parsedChunk.choices[0].index || 0,
           delta: {},
           logprobs: null,
-          finish_reason: parsedChunk.choices[0].index,
+          finish_reason: parsedChunk.choices[0].finish_reason,
         },
       ],
       usage: {
@@ -171,6 +121,7 @@ export const GroqChatCompleteStreamChunkTransform: (
         delta: {
           role: 'assistant',
           content: parsedChunk.choices[0].delta.content,
+          tool_calls: parsedChunk.choices[0].delta?.tool_calls,
         },
         logprobs: null,
         finish_reason: parsedChunk.choices[0].finish_reason || null,

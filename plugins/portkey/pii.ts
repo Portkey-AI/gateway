@@ -45,34 +45,54 @@ export const handler: PluginHandler = async (
 ) => {
   let error = null;
   let verdict = false;
-  let data = null;
+  let data: any = null;
 
   try {
-    // Get the text from the request or response
     const text = getText(context, eventType);
     const categoriesToCheck = parameters.categories;
+    const not = parameters.not || false;
 
     let { detectedPIICategories, PIIData } = await detectPII(
       text,
       parameters.credentials,
-      options.env
+      options?.env || {}
     );
 
-    // Filter the detected categories based on the categories to check
-    let filteredCategories = detectedPIICategories.filter(
-      (category: string) => {
-        return categoriesToCheck.includes(category);
-      }
+    let filteredCategories = detectedPIICategories.filter((category: string) =>
+      categoriesToCheck.includes(category)
     );
 
-    if (filteredCategories.length > 0) {
-      verdict = false;
-      data = PIIData;
-    } else {
-      verdict = true;
-    }
+    const hasPII = filteredCategories.length > 0;
+    verdict = not ? !hasPII : !hasPII;
+
+    data = {
+      verdict,
+      not,
+      explanation: verdict
+        ? not
+          ? 'PII was found in the text as expected.'
+          : 'No restricted PII was found in the text.'
+        : not
+          ? 'No PII was found in the text when it should have been.'
+          : `Found restricted PII in the text: ${filteredCategories.join(', ')}`,
+      detectedPII: PIIData,
+      restrictedCategories: categoriesToCheck,
+      detectedCategories: detectedPIICategories,
+      textExcerpt: text.length > 100 ? text.slice(0, 100) + '...' : text,
+    };
   } catch (e) {
     error = e as Error;
+    const text = getText(context, eventType);
+    data = {
+      explanation: `An error occurred while checking for PII: ${error.message}`,
+      not: parameters.not || false,
+      restrictedCategories: parameters.categories || [],
+      textExcerpt: text
+        ? text.length > 100
+          ? text.slice(0, 100) + '...'
+          : text
+        : 'No text available',
+    };
   }
 
   return { error, verdict, data };

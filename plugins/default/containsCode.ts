@@ -13,7 +13,7 @@ export const handler: PluginHandler = async (
 ) => {
   let error = null;
   let verdict = false;
-  let data = null;
+  let data: any = null;
 
   const languageMap: { [key: string]: string } = {
     sql: 'SQL',
@@ -46,24 +46,72 @@ export const handler: PluginHandler = async (
 
   try {
     const format = parameters.format;
+    const not = parameters.not || false;
+    if (!format) {
+      throw new Error('Missing required parameter: format');
+    }
 
     let responseText = getText(context, eventType);
+    if (!responseText) {
+      throw new Error('No text content to analyze');
+    }
 
     const codeBlockRegex = /```(\w+)\n[\s\S]*?\n```/g;
-    let match;
-    while ((match = codeBlockRegex.exec(responseText)) !== null) {
-      const markdownLanguage = match[1].toLowerCase();
-      if (languageMap[markdownLanguage] === format) {
-        verdict = true;
-        break;
-      }
+    let matches = Array.from(responseText.matchAll(codeBlockRegex));
+
+    if (matches.length === 0) {
+      data = {
+        explanation: 'No code blocks found in the text',
+        searchedFormat: format,
+        not,
+        foundFormats: [],
+        textExcerpt:
+          responseText.length > 100
+            ? responseText.slice(0, 100) + '...'
+            : responseText,
+      };
+      verdict = not;
+      return { error, verdict, data };
     }
 
-    if (match === null) {
-      data = { message: 'No code block found in the response text.' };
-    }
-  } catch (e) {
-    error = e as Error;
+    const foundLanguages = matches.map((match) => {
+      const markdownLanguage = match[1].toLowerCase();
+      return languageMap[markdownLanguage] || markdownLanguage;
+    });
+
+    const hasFormat = foundLanguages.some((lang) => lang === format);
+    verdict = not ? !hasFormat : hasFormat;
+
+    data = {
+      explanation: verdict
+        ? not
+          ? `No code blocks in ${format} format found as expected`
+          : `Found code block(s) in ${format} format`
+        : not
+          ? `Found code block(s) in ${format} format when none were expected`
+          : `No code blocks in ${format} format found`,
+      searchedFormat: format,
+      not,
+      foundFormats: foundLanguages,
+      textExcerpt:
+        responseText.length > 100
+          ? responseText.slice(0, 100) + '...'
+          : responseText,
+    };
+  } catch (e: any) {
+    error = e;
+    let textExcerpt = getText(context, eventType);
+    textExcerpt =
+      textExcerpt?.length > 100
+        ? textExcerpt.slice(0, 100) + '...'
+        : textExcerpt;
+
+    data = {
+      explanation: `Error while checking for code blocks: ${e.message}`,
+      searchedFormat: parameters.format,
+      not: parameters.not || false,
+      textExcerpt: textExcerpt || 'No text available',
+    };
   }
 
   return { error, verdict, data };

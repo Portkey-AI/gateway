@@ -29,6 +29,7 @@ const OpenAIConfig: ProviderConfigs = {
   createSpeech: OpenAICreateSpeechConfig,
   createTranscription: {},
   createTranslation: {},
+  realtime: {},
   responseTransforms: {
     complete: OpenAICompleteResponseTransform,
     // 'stream-complete': OpenAICompleteResponseTransform,
@@ -39,6 +40,7 @@ const OpenAIConfig: ProviderConfigs = {
     createSpeech: OpenAICreateSpeechResponseTransform,
     createTranscription: OpenAICreateTranscriptionResponseTransform,
     createTranslation: OpenAICreateTranslationResponseTransform,
+    realtime: {},
   },
 };
 

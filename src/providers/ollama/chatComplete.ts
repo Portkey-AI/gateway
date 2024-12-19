@@ -64,6 +64,9 @@ export const OllamaChatCompleteConfig: ProviderConfig = {
     default: 100,
     min: 0,
   },
+  tools: {
+    param: 'tools',
+  },
 };
 
 export interface OllamaChatCompleteResponse extends ChatCompletionResponse {

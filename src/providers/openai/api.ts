@@ -17,9 +17,13 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
     if (fn === 'createTranscription' || fn === 'createTranslation')
       headersObj['Content-Type'] = 'multipart/form-data';
 
+    if (providerOptions.openaiBeta) {
+      headersObj['OpenAI-Beta'] = providerOptions.openaiBeta;
+    }
+
     return headersObj;
   },
-  getEndpoint: ({ fn }) => {
+  getEndpoint: ({ fn, gatewayRequestURL }) => {
     switch (fn) {
       case 'complete':
         return '/completions';
@@ -35,6 +39,9 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
         return '/audio/transcriptions';
       case 'createTranslation':
         return '/audio/translations';
+      case 'realtime':
+        const endpoint = gatewayRequestURL.split('/v1')[1];
+        return endpoint;
       default:
         return '';
     }
