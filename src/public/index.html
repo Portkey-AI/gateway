@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portkey AI Gateway</title>
+  <link rel="stylesheet" href="styles/header.css">
+  <link rel="stylesheet" href="styles/tabs.css">
+  <link rel="stylesheet" href="styles/buttons.css">
+  <link rel="stylesheet" href="styles/modal.css">
+  <link rel="stylesheet" href="styles/logs.css">
+  <link rel="stylesheet" href="styles/interative-code.css">
+  <link rel="stylesheet" href="styles/style.css">
+
+  <!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-KX3PMNVR');</script>
+  <!-- End Google Tag Manager -->
+
+  <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css"> -->
+  <link rel="stylesheet" href="https://unpkg.com/highlightjs@9.16.2/styles/atom-one-light.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+</head>
+
+<body>
+  <!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KX3PMNVR"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+  <header>
+    <div class="container">
+      <div class="logo">
+        <img
+          src="https://media.dev.to/dynamic/image/width=320,height=320,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.amazonaws.com%2Fuploads%2Forganization%2Fprofile_image%2F8056%2F39f656e2-eff4-4755-b84b-44d61d7c98b5.jpg"
+          alt="Portkey AI Gateway" class="logo-image">
+          <div class="header-links">
+            <a href="#">Docs</a>
+          </div>
+      </div>
+      <nav class="tabs-container">
+        <button class="tab-button active" data-tab="main" id="main-tab-button">Gateway</button>
+        <button class="tab-button" data-tab="logs" id="logs-tab-button">Logs<span class="badge">1</span></button>
+      </nav>
+      <a class="github-button" href="https://github.com/portkey-ai/gateway"
+              data-color-scheme="no-preference: light; light: light; dark: dark;" data-icon="octicon-star" data-size="large"
+              data-show-count="true" aria-label="Star portkey-ai/gateway on GitHub">Star</a>
+      
+    </div>
+  </header>
+
+  <div class="main-content">
+    <div class="logo card">
+      <span>
+        <div class="status-dot"></div>
+        &nbsp;&nbsp;Your AI Gateway is now running
+      </span>
+    </div>
+    <div id="main-tab" class="main-tab-content">
+      <div class="card curl-command">
+        <h2>1. Let's make a test request</h2>
+        <div class="card-subtitle">The gateway supports 250+ models across 36 AI providers. Choose your provider and API
+          key below.</div>
+        <div class="tabs test-request-tabs">
+          <div class="tab" data-tab="python">🐍 Python</div>
+          <div class="tab" data-tab="nodejs">📦 Node.js</div>
+          <div class="tab active" data-tab="curl">🌀 cURL</div>
+        </div>
+        <div class="relative">
+          <button class="copy-btn" id="copyBtn" title="Copy to clipboard">
+            <i data-lucide="copy"></i>
+          </button>
+          <div class="tab-content" id="curlContent">
+            <pre><code id="curlCommand" class="language-bash"></code></pre>
+          </div>
+          <div class="tab-content" id="nodejsContent">
+            <pre><code id="nodejsCommand" class="language-javascript"></code></pre>
+          </div>
+          <div class="tab-content active" id="pythonContent">
+            <pre><code id="pythonCommand" class="language-python"></code></pre>
+          </div>
+        </div>
+        <!-- Add docs links based on the provider selected -->
+        <div class="docs-link"></div>
+        <button class="btn" id="testRequestBtn">
+          <span class="btn-text">Test Request</span>
+        </button>
+        <div id="testRequestResponse"></div>
+      </div>
+
+      <div class="card routing-config">
+        <h2>2. Create a routing config</h2>
+        <div class="card-subtitle">Gateway configs allow you to route requests to different providers and models. You can load balance, set fallbacks, and configure automatic retries & timeouts. <a href="#">Learn more</a></div>
+        <div class="tabs routing-config-tabs">
+          <div class="tab active" data-tab="simple">Simple Config</div>
+          <div class="tab" data-tab="loadBalancing">Load Balancing</div>
+          <div class="tab" data-tab="fallbacks">Fallbacks</div>
+          <div class="tab" data-tab="autoRetries">Retries & Timeouts</div>
+        </div>
+        <div class="relative">
+          <div class="config-content-header relative">
+            <button class="copy-btn" id="copyConfigBtn" title="Copy to clipboard">
+              <i data-lucide="copy"></i>
+            </button>
+            <div class="language-select-wrapper">
+              <select id="languageSelect" class="select">
+                <option value="python">🐍 Python</option>
+                <option value="nodejs">📦 Node.js</option>
+                <option value="curl">🌀 cURL</option>
+              </select>
+            </div>
+          </div>
+          <div class="tab-content active" id="simpleContent">
+            <pre><code id="simpleCode"></code></pre>
+          </div>
+          <div class="tab-content" id="loadBalancingContent">
+            <pre><code id="loadBalancingCode"></code></pre>
+          </div>
+          <div class="tab-content" id="fallbacksContent">
+            <pre><code id="fallbacksCode"></code></pre>
+          </div>
+          <div class="tab-content" id="autoRetriesContent">
+            <pre><code id="autoRetriesCode"></code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="card features-to-explore">
+        <h2>3. More Features to Explore</h2>
+        <div class="card-subtitle">Discover advanced capabilities of the Portkey AI Gateway.</div>
+        <div class="features-grid">
+          <a class="feature-item" href="https://portkey.ai/docs/integrations/agents">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <h3>Agents</h3>
+            <p>Seamlessly integrate with popular agent frameworks like Autogen, CrewAI, and LangChain.</p>
+          </a>
+          <a class="feature-item" href="https://portkey.ai/docs/product/ai-gateway/multimodal-capabilities">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+            <h3>Multi-modal AI</h3>
+            <p>Handle vision, audio, and image generation requests across multiple providers.</p>
+          </a>
+          <a class="feature-item" href="https://portkey.ai/docs/product/guardrails">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <h3>Guardrails</h3>
+            <p>Verify LLM inputs and outputs with 20+ pre-built checks or build your own.</p>
+          </a>
+          <a class="feature-item" href="https://portkey.ai/docs/integrations/llms">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+              <path d="M20 7h-9"></path>
+              <path d="M14 17H5"></path>
+              <circle cx="17" cy="17" r="3"></circle>
+              <circle cx="7" cy="7" r="3"></circle>
+            </svg>
+            <h3>Supported Providers</h3>
+            <p>Access 250+ models from 35+ providers including OpenAI, Anthropic, and Google.</p>
+          </a>
+        </div>
+      </div>
+
+      <div class="card next-steps">
+        <!-- <h2>Next Steps</h2> -->
+        <!-- <div class="card-subtitle">Explore more features and connect with the Portkey community.</div> -->
+        <div class="next-steps-grid">
+          <div class="next-step-item">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+              <path
+                d="M15.05 5A5 5 0 0 1 19 8.95M15.05 1A9 9 0 0 1 23 8.94m-1 7.98v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+              </path>
+            </svg>
+            <h3>Setup a Call</h3>
+            <p>Get personalized support and learn how Portkey can be tailored to your needs.</p>
+            <a href="https://calendly.com/portkey-ai/quick-meeting?utm_source=oss" class="btn">Schedule Consultation</a>
+          </div>
+          <div class="next-step-item">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+              <line x1="18" y1="20" x2="18" y2="10"></line>
+              <line x1="12" y1="20" x2="12" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            <h3>Enterprise Features</h3>
+            <p>Explore advanced features and see how Portkey can scale with your business.</p>
+            <a href="https://portkey.ai/docs/product/enterprise-offering" class="btn">View Enterprise Plan</a>
+          </div>
+          <div class="next-step-item">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+              <path
+                d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+              </path>
+            </svg>
+            <h3>Join Our Community</h3>
+            <p>Connect with other developers, share ideas, and get help from the Portkey team.</p>
+            <a href="https://portkey.ai/community" class="btn">Join Discord</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="logs-tab" class="main-tab-content">
+      <div class="card logs-card">
+        <h2>Real-time Logs</h2>
+        <div class="logs-header">
+          <!-- <input type="text" class="logs-search" placeholder="Search logs..."> -->
+          <!-- <button class="btn btn-clear-logs">Clear Logs</button> -->
+        </div>
+        <div class="logs-table-container">
+          <table class="logs-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Method</th>
+                <th>Endpoint</th>
+                <th>Status</th>
+                <th>Duration</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="logsTableBody">
+              <!-- First row should be a spinner with text saying "Listening for logs..."-->
+              <tr class="loading-row">
+                <td colspan="6">
+                    <div class="loading-animation"></div>
+                    Listening for logs...
+                </td>
+            </tr>
+              <!-- Log entries will be dynamically added here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="logDetailsModal">
+      <div class="modal-content">
+          <span class="close">&times;</span>
+          <h2>Log Details</h2>
+          <div id="logDetailsContent"></div>
+      </div>
+  </div>
+
+    <div class="dialog-overlay" id="providerDialog" style="display: none;">
+      <div class="dialog">
+        <h3>Select Provider</h3>
+        <p>Choose the AI provider you want to use for this request.</p>
+        <div class="select-wrapper">
+          <select id="providerSelect" class="select">
+            <option value="">Select a provider</option>
+            <option value="openai">OpenAI</option>
+            <option value="anthropic">Anthropic</option>
+            <option value="groq">Groq</option>
+            <option value="bedrock">Bedrock</option>
+            <option value="azure-openai">Azure OpenAI</option>
+            <option value="cohere">Cohere</option>
+            <option value="together-ai">Together AI</option>
+            <option value="perplexity-ai">Perplexity AI</option>
+            <option value="mistral-ai">Mistral AI</option>
+            <option value="others">Others</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="dialog-overlay" id="apiKeyDialog" style="display: none;">
+      <div class="dialog">
+        <h3>Enter Authentication Details</h3>
+        <p>Enter the required details for the selected provider.</p>
+        <form id="apiDetailsForm">
+          <!-- Dynamic form fields will be inserted here -->
+        </form>
+        <button class="btn" id="saveApiDetailsBtn">Save</button>
+      </div>
+      <!-- <div class="dialog">
+        <h3>Enter API Key</h3>
+        <p>Enter your API key for the selected provider. This key is used to authenticate your request.</p>
+        <input type="password" id="apiKeyInput" class="input" placeholder="Enter your API key">
+        <button class="btn btn-outline" id="saveApiKeyBtn">Save</button>
+      </div> -->
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <script src="snippets.js"></script>
+    <script src="main.js"></script>
+</body>
+
+</html>
