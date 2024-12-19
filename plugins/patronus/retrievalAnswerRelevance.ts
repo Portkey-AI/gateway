@@ -15,7 +15,7 @@ export const handler: PluginHandler = async (
   let verdict = false;
   let data = null;
 
-  const evaluator = 'retrieval-answer-relevance';
+  const evaluator = 'answer-relevance';
 
   if (eventType !== 'afterRequestHook') {
     return {

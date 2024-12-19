@@ -237,7 +237,10 @@ describe('custom handler (is-concise)', () => {
       },
     };
 
-    const parameters = { credentials: testCreds, profile: 'system:is-concise' };
+    const parameters = {
+      credentials: testCreds,
+      criteria: 'patronus:is-concise',
+    };
 
     const result = await customHandler(context, parameters, eventType);
     console.log(result);
@@ -256,7 +259,10 @@ describe('custom handler (is-concise)', () => {
       },
     };
 
-    const parameters = { credentials: testCreds, profile: 'system:is-concise' };
+    const parameters = {
+      credentials: testCreds,
+      criteria: 'patronus:is-concise',
+    };
 
     const result = await customHandler(context, parameters, eventType);
     console.log(result);

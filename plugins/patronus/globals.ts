@@ -6,7 +6,7 @@ export const postPatronus = async (
   evaluator: string,
   credentials: any,
   data: any,
-  profile: string | null = null
+  criteria: string | null = null
 ) => {
   const options = {
     headers: {
@@ -19,7 +19,7 @@ export const postPatronus = async (
       {
         evaluator: evaluator,
         explain_strategy: 'always',
-        ...(profile && { profile_name: profile }),
+        ...(criteria && { criteria: criteria }),
       },
     ],
     evaluated_model_input: data.input,
