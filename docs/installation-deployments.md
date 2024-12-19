@@ -192,7 +192,7 @@ node build/start-server.js
 **Run through the latest Docker Hub image:**
 
 ```sh
-docker run -d -p 8787:8787 portkeyai/gateway:latest
+docker run --rm  -p 8787:8787 portkeyai/gateway:latest
 ```
 
 For more information on the Docker image, check [here](https://hub.docker.com/r/portkeyai/gateway)
