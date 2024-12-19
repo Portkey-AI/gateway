@@ -178,7 +178,7 @@ function getTestRequestCodeBlock(language, vars) {
 })
 
 <span class="hljs-comment">// Example: Send a chat completion request</span>
-const response = <span class="hljs-keyword">await</span> portkey.chat.completion.<span class="hljs-title function_">create</span>({
+const response = <span class="hljs-keyword">await</span> portkey.chat.completions.<span class="hljs-title function_">create</span>({
   <span class="hljs-attr">messages</span>: [{ <span class="hljs-attr">role</span>: <span class="hljs-string">'user'</span>, <span class="hljs-attr">content</span>: <span class="hljs-string">'Hello, how are you?'</span> }],
   <span class="hljs-attr">model</span>: <span class="hljs-string">"${modelMap[vars.provider] || ''}"</span>${vars.provider=="anthropic"?`,
   <span class="hljs-attr">max_tokens</span>: <span class="hljs-number">40</span>`:''}
@@ -195,7 +195,7 @@ client = Portkey(
 )
 
 <span class="hljs-comment"># Example: Send a chat completion request</span>
-response = client.chat.completion.create(
+response = client.chat.completions.create(
     messages=[{<span class="hljs-string">"role"</span>: <span class="hljs-string">"user"</span>, <span class="hljs-string">"content"</span>: <span class="hljs-string">"Hello, how are you?"</span>}],
     model=<span class="hljs-string">"${modelMap[vars.provider] || ''}"</span>
 )
