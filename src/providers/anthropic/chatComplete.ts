@@ -1,4 +1,4 @@
-import { ANTHROPIC } from '../../globals';
+import { ANTHROPIC, fileExtensionMimeTypeMap } from '../../globals';
 import {
   Params,
   Message,
@@ -146,7 +146,10 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                     if (mediaTypeParts.length === 2 && base64Image) {
                       const mediaType = mediaTypeParts[1];
                       transformedMessage.content.push({
-                        type: 'image',
+                        type:
+                          mediaType === fileExtensionMimeTypeMap.pdf
+                            ? 'document'
+                            : 'image',
                         source: {
                           type: 'base64',
                           media_type: mediaType,
