@@ -130,7 +130,7 @@ export const getModelAndProvider = (modelString: string) => {
   const modelStringParts = modelString.split('.');
   if (
     modelStringParts.length > 1 &&
-    ['google', 'anthropic', 'meta'].includes(modelStringParts[0])
+    ['google', 'anthropic', 'meta', 'endpoints'].includes(modelStringParts[0])
   ) {
     provider = modelStringParts[0];
     model = modelStringParts.slice(1).join('.');
