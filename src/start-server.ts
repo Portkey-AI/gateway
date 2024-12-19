@@ -43,8 +43,12 @@ if (
 
     // Set up routes
     app.get('/public/logs', serveIndex);
-    app.get('/public', serveIndex);
     app.get('/public/', serveIndex);
+
+    // Redirect `/public` to `/public/`
+    app.get('/public', (c: Context) => {
+      return c.redirect('/public/');
+    });
 
     // Serve other static files
     app.use(
