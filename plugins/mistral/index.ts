@@ -43,8 +43,7 @@ export const mistralGuardrailHandler: PluginHandler = async (
   context: PluginContext,
   parameters: PluginParameters,
   eventType: HookEventType,
-  _options,
-  fn?: string
+  _options
 ) => {
   let error = null;
   let verdict = true;
@@ -66,7 +65,7 @@ export const mistralGuardrailHandler: PluginHandler = async (
     model = parameters.model;
   }
 
-  const guardrailFunction = fn as GuardrailFunction;
+  const checks = parameters.categories as GuardrailFunction[];
 
   const text = getText(context, eventType);
   const messages =
@@ -109,10 +108,27 @@ export const mistralGuardrailHandler: PluginHandler = async (
       }
     );
 
-    verdict = request.results?.[0]?.categories[guardrailFunction];
-  } catch (error) {
-    error = error;
-    verdict = false;
+    const categories: Record<GuardrailFunction, boolean> =
+      request.results[0]?.categories ?? {};
+    const categoriesFlagged = Object.keys(categories).filter((category) => {
+      if (
+        checks.includes(category as GuardrailFunction) &&
+        !!categories[category as GuardrailFunction]
+      ) {
+        return true;
+      }
+      return false;
+    });
+
+    if (categoriesFlagged.length > 0) {
+      verdict = false;
+      data = { flagged_categories: categoriesFlagged };
+    }
+    // Success
+    verdict = true;
+  } catch (err) {
+    error = err;
+    verdict = true;
   }
 
   return { error, verdict, data };
