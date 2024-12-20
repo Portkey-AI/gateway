@@ -227,8 +227,8 @@ export type OpenAIMessageRole =
   | 'user'
   | 'assistant'
   | 'function'
-  | 'tool';
-
+  | 'tool'
+  | 'developer';
 /**
  * A message in the conversation.
  * @interface

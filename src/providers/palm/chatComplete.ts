@@ -26,7 +26,7 @@ export const PalmChatCompleteConfig: ProviderConfig = {
     transform: (params: Params) => {
       const { examples, context, messages } = params;
       const palmMessages = messages?.map((message) => ({
-        author: message.role,
+        author: message.role === 'developer' ? 'system' : message.role,
         content: message.content,
       }));
       const prompt = {
