@@ -42,56 +42,6 @@ export const RecraftAIImageGenerateConfig: ProviderConfig = {
   },
 };
 
-// const validateStyleParams = (
-//   style: string | undefined,
-//   style_id: string | undefined
-// ) => {
-//   if (style && style_id) {
-//     throw new Error(
-//       "Parameters 'style' and 'style_id' are mutually exclusive. Please provide only one."
-//     );
-//   }
-// };
-
-// const determineStyleParams = (
-//   style: string | undefined,
-//   style_id: string | undefined
-// ): string | null => {
-//   validateStyleParams(style, style_id);
-
-//   if (!style && !style_id) {
-//     return 'realistic_image';
-//   }
-
-//   if (style) {
-//     return style;
-//   }
-
-//   return null;
-// };
-
-// export const generateImageRequest = (
-//   prompt: string,
-//   style?: string,
-//   style_id?: string,
-//   n: number = 1,
-//   size: string = '1024x1024',
-//   controls?: any
-// ) => {
-//   const finalStyle = determineStyleParams(style, style_id);
-
-//   const payload = {
-//     prompt,
-//     style: finalStyle,
-//     style_id,
-//     n,
-//     size,
-//     controls,
-//   };
-
-//   return payload;
-// };
-
 export const RecraftAIImageGenerateResponseTransform: (
   response: RecraftAIImageGenerateResponse | ErrorResponse,
   responseStatus: number
