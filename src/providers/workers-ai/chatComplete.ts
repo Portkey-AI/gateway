@@ -1,4 +1,5 @@
 import { WORKERS_AI } from '../../globals';
+import { Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -13,6 +14,12 @@ export const WorkersAiChatCompleteConfig: ProviderConfig = {
   messages: {
     param: 'messages',
     default: '',
+    transform: (params: Params) => {
+      return params.messages?.map((message) => {
+        if (message.role === 'developer') return { ...message, role: 'system' };
+        return message;
+      });
+    },
   },
   stream: {
     param: 'stream',

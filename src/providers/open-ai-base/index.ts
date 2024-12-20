@@ -1,5 +1,6 @@
 import { OPEN_AI } from '../../globals';
 import { EmbedResponse } from '../../types/embedRequestBody';
+import { Params } from '../../types/requestBody';
 import { OpenAIChatCompleteResponse } from '../openai/chatComplete';
 import { OpenAICompleteResponse } from '../openai/complete';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
@@ -51,6 +52,13 @@ export const chatCompleteParams = (
     messages: {
       param: 'messages',
       default: '',
+      transform: (params: Params) => {
+        return params.messages?.map((message) => {
+          if (message.role === 'developer')
+            return { ...message, role: 'system' };
+          return message;
+        });
+      },
     },
     functions: {
       param: 'functions',
