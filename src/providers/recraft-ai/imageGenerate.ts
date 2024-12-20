@@ -1,5 +1,15 @@
 import { RECRAFTAI } from '../../globals';
 import { ErrorResponse, ImageGenerateResponse, ProviderConfig } from '../types';
+import { generateErrorResponse } from '../utils';
+
+interface RecraftAIImageObject {
+  b64_json?: string;
+  url?: string;
+}
+
+interface RecraftAIImageGenerateResponse extends ImageGenerateResponse {
+  data: RecraftAIImageObject[];
+}
 
 export const RecraftAIImageGenerateConfig: ProviderConfig = {
   prompt: {
@@ -8,77 +18,104 @@ export const RecraftAIImageGenerateConfig: ProviderConfig = {
   },
   style: {
     param: 'style',
-    default: 'digital_illustration',
+    default: 'realistic_image',
   },
-  width: {
-    param: 'width',
-    default: 1024,
-    min: 256,
-    max: 2048,
+  style_id: {
+    param: 'style_id',
   },
-  height: {
-    param: 'height',
-    default: 1024,
-    min: 256,
-    max: 2048,
-  },
-  num_images: {
-    param: 'num_images',
+  n: {
+    param: 'n',
     default: 1,
     min: 1,
-    max: 4,
+    max: 2,
+  },
+  size: {
+    param: 'size',
+    default: '1024x1024',
+  },
+  response_format: {
+    param: 'response_format',
+    default: 'url',
+  },
+  controls: {
+    param: 'controls',
   },
 };
 
-interface RecraftApiResponse {
-  created: number;
-  data: { url: string }[];
-  error?: {
-    message: string;
-    type?: string;
-    param?: string;
-    code?: string;
-  };
-}
+// const validateStyleParams = (
+//   style: string | undefined,
+//   style_id: string | undefined
+// ) => {
+//   if (style && style_id) {
+//     throw new Error(
+//       "Parameters 'style' and 'style_id' are mutually exclusive. Please provide only one."
+//     );
+//   }
+// };
 
-export const RecraftAIImageGenerateResponseTransform = (
-  response: RecraftApiResponse,
+// const determineStyleParams = (
+//   style: string | undefined,
+//   style_id: string | undefined
+// ): string | null => {
+//   validateStyleParams(style, style_id);
+
+//   if (!style && !style_id) {
+//     return 'realistic_image';
+//   }
+
+//   if (style) {
+//     return style;
+//   }
+
+//   return null;
+// };
+
+// export const generateImageRequest = (
+//   prompt: string,
+//   style?: string,
+//   style_id?: string,
+//   n: number = 1,
+//   size: string = '1024x1024',
+//   controls?: any
+// ) => {
+//   const finalStyle = determineStyleParams(style, style_id);
+
+//   const payload = {
+//     prompt,
+//     style: finalStyle,
+//     style_id,
+//     n,
+//     size,
+//     controls,
+//   };
+
+//   return payload;
+// };
+
+export const RecraftAIImageGenerateResponseTransform: (
+  response: RecraftAIImageGenerateResponse | ErrorResponse,
   responseStatus: number
-): ImageGenerateResponse | ErrorResponse => {
-  if (responseStatus !== 200 || response.error) {
-    const error = response.error || {
-      message: 'Unknown error occurred',
-      type: null,
-      param: null,
-      code: null,
-    };
-
-    return {
-      error: {
-        message: error.message,
-        type: error.type || null,
-        param: error.param || null,
-        code: error.code || null,
-      },
-      provider: RECRAFTAI,
-    };
+) => ImageGenerateResponse | ErrorResponse = (response, responseStatus) => {
+  if (responseStatus !== 200 || 'error' in response) {
+    return RecraftAIErrorResponseTransform(
+      response as ErrorResponse,
+      RECRAFTAI
+    );
   }
+  return response;
+};
 
-  if (!response.data || !Array.isArray(response.data)) {
-    return {
-      error: {
-        message: 'Invalid response format from Recraft API',
-        type: 'invalid_response',
-        param: null,
-        code: null,
-      },
-      provider: RECRAFTAI,
-    };
-  }
-
-  return {
-    created: response.created,
-    data: response.data,
-    provider: RECRAFTAI,
-  };
+export const RecraftAIErrorResponseTransform: (
+  response: ErrorResponse,
+  provider: string
+) => ErrorResponse = (response, provider) => {
+  return generateErrorResponse(
+    {
+      message: response.error?.message || 'Unknown error occurred',
+      type: response.error?.type || null,
+      param: response.error?.param || null,
+      code: response.error?.code || null,
+    },
+    provider
+  );
 };
