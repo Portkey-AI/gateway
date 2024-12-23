@@ -407,6 +407,9 @@ export const BedrockUploadFileRequestHandler = async ({
 
     currentChunk += decoder.decode(value, { stream: true });
 
+    // 25kb chunk size
+    if (currentChunk.length < 25000 && !done) continue;
+
     while (currentChunk.length > 0) {
       if (isParsingHeaders) {
         const headersEndIndex = currentChunk.indexOf('\r\n\r\n');
