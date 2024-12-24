@@ -4,6 +4,7 @@ import {
   Message,
   ContentType,
   AnthropicPromptCache,
+  SYSTEM_MESSAGE_ROLES,
 } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
@@ -111,7 +112,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
         // Transform the chat messages into a simple prompt
         if (!!params.messages) {
           params.messages.forEach((msg: Message & AnthropicPromptCache) => {
-            if (msg.role === 'system') return;
+            if (SYSTEM_MESSAGE_ROLES.includes(msg.role)) return;
 
             if (msg.role === 'assistant') {
               messages.push(transformAssistantMessage(msg));
@@ -188,7 +189,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
         if (!!params.messages) {
           params.messages.forEach((msg: Message & AnthropicPromptCache) => {
             if (
-              msg.role === 'system' &&
+              SYSTEM_MESSAGE_ROLES.includes(msg.role) &&
               msg.content &&
               typeof msg.content === 'object' &&
               msg.content[0].text
@@ -203,7 +204,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                 });
               });
             } else if (
-              msg.role === 'system' &&
+              SYSTEM_MESSAGE_ROLES.includes(msg.role) &&
               typeof msg.content === 'string'
             ) {
               systemMessages.push({

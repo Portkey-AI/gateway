@@ -1,4 +1,5 @@
 import { DEEPINFRA } from '../../globals';
+import { Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -22,6 +23,12 @@ export const DeepInfraChatCompleteConfig: ProviderConfig = {
     param: 'messages',
     required: true,
     default: [],
+    transform: (params: Params) => {
+      return params.messages?.map((message) => {
+        if (message.role === 'developer') return { ...message, role: 'system' };
+        return message;
+      });
+    },
   },
   frequency_penalty: {
     param: 'frequency_penalty',

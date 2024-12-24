@@ -8,6 +8,7 @@ import {
   Params,
   Tool,
   ToolCall,
+  SYSTEM_MESSAGE_ROLES,
 } from '../../types/requestBody';
 import {
   AnthropicChatCompleteResponse,
@@ -71,7 +72,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
           // From gemini-1.5 onwards, systemInstruction is supported
           // Skipping system message and sending it in systemInstruction for gemini 1.5 models
           if (
-            message.role === 'system' &&
+            SYSTEM_MESSAGE_ROLES.includes(message.role) &&
             !SYSTEM_INSTRUCTION_DISABLED_MODELS.includes(params.model as string)
           )
             return;
@@ -186,7 +187,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
         if (!firstMessage) return;
 
         if (
-          firstMessage.role === 'system' &&
+          SYSTEM_MESSAGE_ROLES.includes(firstMessage.role) &&
           typeof firstMessage.content === 'string'
         ) {
           return {
@@ -200,7 +201,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
         }
 
         if (
-          firstMessage.role === 'system' &&
+          SYSTEM_MESSAGE_ROLES.includes(firstMessage.role) &&
           typeof firstMessage.content === 'object' &&
           firstMessage.content?.[0]?.text
         ) {
@@ -413,7 +414,7 @@ export const VertexAnthropicChatCompleteConfig: ProviderConfig = {
         // Transform the chat messages into a simple prompt
         if (!!params.messages) {
           params.messages.forEach((msg) => {
-            if (msg.role === 'system') return;
+            if (SYSTEM_MESSAGE_ROLES.includes(msg.role)) return;
 
             if (msg.role === 'assistant') {
               messages.push(transformAssistantMessageForAnthropic(msg));
@@ -481,14 +482,14 @@ export const VertexAnthropicChatCompleteConfig: ProviderConfig = {
         if (!!params.messages) {
           params.messages.forEach((msg) => {
             if (
-              msg.role === 'system' &&
+              SYSTEM_MESSAGE_ROLES.includes(msg.role) &&
               msg.content &&
               typeof msg.content === 'object' &&
               msg.content[0].text
             ) {
               systemMessage = msg.content[0].text;
             } else if (
-              msg.role === 'system' &&
+              SYSTEM_MESSAGE_ROLES.includes(msg.role) &&
               typeof msg.content === 'string'
             ) {
               systemMessage = msg.content;
