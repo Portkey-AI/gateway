@@ -40,6 +40,15 @@ export const RecraftAIImageGenerateConfig: ProviderConfig = {
   controls: {
     param: 'controls',
   },
+  model: {
+    param: 'model',
+  },
+  artistic_level: {
+    param: 'artistic_level',
+  },
+  substyle: {
+    param: 'substyle',
+  },
 };
 
 export const RecraftAIImageGenerateResponseTransform: (
