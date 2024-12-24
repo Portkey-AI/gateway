@@ -20,7 +20,6 @@
     "README.md",
     "SECURITY.md",
     "LICENSE",
-    "docs",
     "build/public"
   ],
   "scripts": {
