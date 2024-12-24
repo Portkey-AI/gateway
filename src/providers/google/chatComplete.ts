@@ -329,6 +329,10 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
       const tools: any = [];
       params.tools?.forEach((tool) => {
         if (tool.type === 'function') {
+          // these are not supported by google
+          delete tool.function?.parameters?.properties?.additional_properties;
+          delete tool.function?.strict;
+
           if (tool.function.name === 'googleSearchRetrieval') {
             tools.push(buildGoogleSearchRetrievalTool(tool));
           } else {
