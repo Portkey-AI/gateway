@@ -10,11 +10,13 @@ export default {
     format: 'es',
   },
   plugins: [
-    typescript({ exclude: ['**/*.test.ts', 'start-test.js', 'cookbook'] }),
+    typescript({
+      exclude: ['**/*.test.ts', 'start-test.js', 'cookbook', 'docs'],
+    }),
     terser(),
     json(),
     copy({
-      targets: [{ src: 'public/*', dest: 'build/public' }],
+      targets: [{ src: 'src/public/*', dest: 'build/public' }],
     }),
   ],
 };
