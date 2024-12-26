@@ -553,11 +553,6 @@ export const BedrockConverseCohereChatCompleteConfig: ProviderConfig = {
     transform: (params: BedrockConverseCohereChatCompletionsParams) =>
       transformCohereAdditionalModelRequestFields(params),
   },
-  stream: {
-    param: 'additionalModelRequestFields',
-    transform: (params: BedrockConverseCohereChatCompletionsParams) =>
-      transformCohereAdditionalModelRequestFields(params),
-  },
 };
 
 export const BedrockConverseAI21ChatCompleteConfig: ProviderConfig = {
