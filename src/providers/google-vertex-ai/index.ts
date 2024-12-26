@@ -17,6 +17,8 @@ import {
   GoogleImageGenConfig,
   GoogleImageGenResponseTransform,
 } from './imageGenerate';
+import { chatCompleteParams, responseTransformers } from '../open-ai-base';
+import { GOOGLE_VERTEX_AI } from '../../globals';
 
 const VertexConfig: ProviderConfigs = {
   api: VertexApiConfig,
@@ -56,6 +58,16 @@ const VertexConfig: ProviderConfigs = {
             chatComplete: VertexLlamaChatCompleteResponseTransform,
             'stream-chatComplete': VertexLlamaChatCompleteStreamChunkTransform,
           },
+        };
+      case 'endpoints':
+        return {
+          chatComplete: chatCompleteParams([], {
+            model: 'meta-llama-3-8b-instruct',
+          }),
+          api: GoogleApiConfig,
+          responseTransforms: responseTransformers(GOOGLE_VERTEX_AI, {
+            chatComplete: true,
+          }),
         };
     }
   },
