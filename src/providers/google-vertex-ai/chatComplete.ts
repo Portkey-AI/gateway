@@ -644,7 +644,12 @@ export const GoogleChatCompleteResponseTransform: (
           if (generation.content?.parts[0]?.text) {
             message = {
               role: 'assistant',
-              content: generation.content.parts[0]?.text,
+              content: generation.content.parts.reduce((acc, part) => {
+                if (part.text) {
+                  acc += part.text;
+                }
+                return acc;
+              }, ''),
             };
           } else if (generation.content?.parts[0]?.functionCall) {
             message = {
