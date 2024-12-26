@@ -51,12 +51,10 @@
                 "pii"
               ],
               "default": [
-                "hate/threatening",
-                "harassment/threatening",
-                "self-harm/intent",
-                "self-harm/instructions",
-                "sexual/minors",
-                "violence/graphic"
+                "selfharm",
+                "pii",
+                "sexual",
+                "hate_and_discrimination"
               ]
             }
           }
