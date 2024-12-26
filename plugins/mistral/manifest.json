@@ -18,7 +18,7 @@
       "name": "Moderate Content",
       "id": "moderateContent",
       "type": "guardrail",
-      "supportedHooks": ["beforeRequestHook"],
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
       "description": [
         {
           "type": "subHeading",
