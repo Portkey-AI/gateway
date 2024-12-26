@@ -1,5 +1,7 @@
 export interface PluginContext {
   [key: string]: any;
+  requestType: 'complete' | 'chatComplete';
+  provider: string;
 }
 
 export interface PluginParameters {
