@@ -120,9 +120,6 @@ export const transformCohereAdditionalModelRequestFields = (
   if (params['logit_bias']) {
     additionalModelRequestFields['logitBias'] = params['logit_bias'];
   }
-  if (params['stream']) {
-    additionalModelRequestFields['stream'] = params['stream'];
-  }
   return additionalModelRequestFields;
 };
 
