@@ -76,6 +76,8 @@ export const LAMBDA: string = 'lambda';
 export const DASHSCOPE: string = 'dashscope';
 export const X_AI: string = 'x-ai';
 export const SAGEMAKER: string = 'sagemaker';
+export const NEBIUS: string = 'nebius';
+export const RECRAFTAI: string = 'recraft-ai';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -125,6 +127,8 @@ export const VALID_PROVIDERS = [
   DASHSCOPE,
   X_AI,
   SAGEMAKER,
+  NEBIUS,
+  RECRAFTAI,
 ];
 
 export const CONTENT_TYPES = {

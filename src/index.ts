@@ -21,6 +21,7 @@ import { proxyHandler } from './handlers/proxyHandler';
 import { chatCompletionsHandler } from './handlers/chatCompletionsHandler';
 import { completionsHandler } from './handlers/completionsHandler';
 import { embeddingsHandler } from './handlers/embeddingsHandler';
+import { logger } from './middlewares/log';
 import { imageGenerationsHandler } from './handlers/imageGenerationsHandler';
 import { createSpeechHandler } from './handlers/createSpeechHandler';
 import { createTranscriptionHandler } from './handlers/createTranscriptionHandler';
@@ -80,6 +81,11 @@ app.get('/', (c) => c.text('AI Gateway says hey!'));
 
 // Use prettyJSON middleware for all routes
 app.use('*', prettyJSON());
+
+// Use logger middleware for all routes
+if (getRuntimeKey() === 'node') {
+  app.use(logger());
+}
 
 // Use hooks middleware for all routes
 app.use('*', hooks);

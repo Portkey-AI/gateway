@@ -46,6 +46,7 @@ const mistralGuardCategories = [
   'law',
   'pii',
 ];
+import { handler as pangeatextGuard } from './pangea/textGuard';
 
 export const plugins = {
   default: {
@@ -101,4 +102,7 @@ export const plugins = {
     },
     {} as Record<string, PluginHandler>
   ),
+  pangea: {
+    textGuard: pangeatextGuard,
+  },
 };

@@ -55,6 +55,9 @@ The [**AI Gateway**](https://portkey.wiki/gh-10) is designed for fast, reliable 
 # Run the gateway locally (needs Node.js and npm)
 npx @portkey-ai/gateway
 ```
+> The Gateway is running on `http://localhost:8787/v1`
+> 
+> The Gateway Console is running on `http://localhost:8787/public/`
 
 <sup>
 Deployment guides:
@@ -102,6 +105,11 @@ client.chat.completions.create(
 &nbsp; [CrewAI](https://portkey.wiki/gh-25)
 &nbsp; [More..](https://portkey.wiki/gh-26)
 </sup>
+
+On the Gateway Console (`http://localhost:8787/public/`) you can see all of your local logs in one place.
+
+<img src="https://github.com/user-attachments/assets/362bc916-0fc9-43f1-a39e-4bd71aac4a3a" width="400" />
+
 
 ### 3. Routing & Guardrails
 `Configs` in the LLM gateway allow you to create routing rules, add reliability and setup guardrails.
@@ -158,9 +166,11 @@ The enterprise deployment architecture for supported platforms is available here
 
 ### AI Engineering Hours
 
-Join weekly community calls every Friday (8 AM PT) to kickstart your AI Gateway implementation! [Calendar Link](https://portkey.wiki/gh-35)
+Join weekly community calls every Friday (8 AM PT) to kickstart your AI Gateway implementation! [Happening every Friday](https://portkey.wiki/gh-35)
 
-Meetings of Minutes [published here](https://portkey.wiki/gh-36).
+<a href="https://portkey.wiki/gh-35"><img width="500" src="https://github.com/user-attachments/assets/c2885699-f197-4289-b819-21eb839fbae1" /></a>
+
+Minutes of Meetings [published here](https://portkey.wiki/gh-36).
 
 <hr>
 

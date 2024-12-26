@@ -15,8 +15,8 @@ export const handler: PluginHandler = async (
   let verdict = false;
   let data = null;
 
-  const evaluator = 'custom';
-  const profile = 'system:is-helpful';
+  const evaluator = 'judge';
+  const criteria = 'patronus:is-helpful';
 
   if (eventType !== 'afterRequestHook') {
     return {
@@ -39,7 +39,7 @@ export const handler: PluginHandler = async (
       evaluator,
       parameters.credentials,
       evaluationBody,
-      profile
+      criteria
     );
 
     const evalResult = result.results[0];
