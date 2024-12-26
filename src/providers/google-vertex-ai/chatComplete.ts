@@ -270,7 +270,10 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
       params.tools?.forEach((tool) => {
         if (tool.type === 'function') {
           // these are not supported by google
+          delete tool.function?.parameters?.additional_properties;
+          delete tool.function?.parameters?.additionalProperties;
           delete tool.function?.parameters?.properties?.additional_properties;
+          delete tool.function?.parameters?.properties?.additionalProperties;
           delete tool.function?.strict;
 
           if (tool.function.name === 'googleSearchRetrieval') {
