@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import { serve } from '@hono/node-server';
-import { serveStatic } from '@hono/node-server/serve-static';
 
 import app from './index';
 import { streamSSE } from 'hono/streaming';
@@ -49,17 +48,6 @@ if (
     app.get('/public', (c: Context) => {
       return c.redirect('/public/');
     });
-
-    // Serve other static files
-    app.use(
-      '/public/*',
-      serveStatic({
-        root: '.',
-        rewriteRequestPath: (path) => {
-          return join(scriptDir, path).replace(process.cwd(), '');
-        },
-      })
-    );
   };
 
   // Initialize static file serving
