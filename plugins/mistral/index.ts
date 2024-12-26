@@ -124,8 +124,6 @@ export const mistralGuardrailHandler: PluginHandler = async (
       verdict = false;
       data = { flagged_categories: categoriesFlagged };
     }
-    // Success
-    verdict = true;
   } catch (err) {
     error = err;
     verdict = true;
