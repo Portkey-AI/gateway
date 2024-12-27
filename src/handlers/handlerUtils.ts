@@ -197,14 +197,22 @@ export function convertGuardrailsShorthand(guardrailsArr: any, type: string) {
     };
 
     // if the deny key is present (true or false), add it to hooksObject and remove it from guardrails
-    ['deny', 'on_fail', 'on_success', 'async', 'onFail', 'onSuccess'].forEach(
-      (key) => {
-        if (guardrails.hasOwnProperty(key)) {
-          hooksObject[key] = guardrails[key];
-          delete guardrails[key];
-        }
+    [
+      'deny',
+      'on_fail',
+      'on_success',
+      'async',
+      'onFail',
+      'onSuccess',
+      'id',
+      'type',
+      'guardrailVersionId',
+    ].forEach((key) => {
+      if (guardrails.hasOwnProperty(key)) {
+        hooksObject[key] = guardrails[key];
+        delete guardrails[key];
       }
-    );
+    });
 
     // Now, add all the checks to the checks array
     hooksObject.checks = Object.keys(guardrails).map((key) => ({
