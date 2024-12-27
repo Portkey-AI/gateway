@@ -79,8 +79,28 @@ export const configSchema: any = z
     // Google Vertex AI specific
     vertex_project_id: z.string().optional(),
     vertex_region: z.string().optional(),
-    after_request_hooks: z.any().optional(),
-    before_request_hooks: z.any().optional(),
+    after_request_hooks: z
+      .array(z.object({}).catchall(z.any())) // Allows any object structure
+      .optional(),
+    before_request_hooks: z
+      .array(z.object({}).catchall(z.any())) // Allows any object structure
+      .optional(),
+    input_guardrails: z
+      .union([
+        z.array(z.string()),
+        z.array(
+          z.object({}).catchall(z.any()) // Allows any object structure
+        ),
+      ])
+      .optional(),
+    output_guardrails: z
+      .union([
+        z.array(z.string()),
+        z.array(
+          z.object({}).catchall(z.any()) // Allows any object structure
+        ),
+      ])
+      .optional(),
     vertex_service_account_json: z.object({}).catchall(z.string()).optional(),
     // OpenAI specific
     openai_project: z.string().optional(),
@@ -115,7 +135,9 @@ export const configSchema: any = z
         hasAWSDetails ||
         isVertexAIProvider ||
         value.after_request_hooks ||
-        value.before_request_hooks
+        value.before_request_hooks ||
+        value.input_guardrails ||
+        value.output_guardrails
       );
     },
     {

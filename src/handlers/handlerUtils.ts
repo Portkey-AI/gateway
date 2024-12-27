@@ -197,18 +197,26 @@ export function convertGuardrailsShorthand(guardrailsArr: any, type: string) {
     };
 
     // if the deny key is present (true or false), add it to hooksObject and remove it from guardrails
-    ['deny', 'on_fail', 'on_success', 'async', 'onFail', 'onSuccess'].forEach(
-      (key) => {
-        if (guardrails.hasOwnProperty(key)) {
-          hooksObject[key] = guardrails[key];
-          delete guardrails[key];
-        }
+    [
+      'deny',
+      'on_fail',
+      'on_success',
+      'async',
+      'id',
+      'type',
+      'guardrail_version_id',
+    ].forEach((key) => {
+      if (guardrails.hasOwnProperty(key)) {
+        hooksObject[key] = guardrails[key];
+        delete guardrails[key];
       }
-    );
+    });
+
+    hooksObject = convertKeysToCamelCase(hooksObject);
 
     // Now, add all the checks to the checks array
     hooksObject.checks = Object.keys(guardrails).map((key) => ({
-      id: key,
+      id: key.includes('.') ? key : `default.${key}`,
       parameters: guardrails[key],
     }));
 
@@ -983,6 +991,8 @@ export function constructConfigFromRequestHeaders(
       'checks',
       'vertex_service_account_json',
       'conditions',
+      'input_guardrails',
+      'output_guardrails',
     ]) as any;
   }
 
