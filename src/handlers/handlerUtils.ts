@@ -214,9 +214,11 @@ export function convertGuardrailsShorthand(guardrailsArr: any, type: string) {
       }
     });
 
+    hooksObject = convertKeysToCamelCase(hooksObject);
+
     // Now, add all the checks to the checks array
     hooksObject.checks = Object.keys(guardrails).map((key) => ({
-      id: key,
+      id: key.includes('.') ? key : `default.${key}`,
       parameters: guardrails[key],
     }));
 
@@ -991,6 +993,8 @@ export function constructConfigFromRequestHeaders(
       'checks',
       'vertex_service_account_json',
       'conditions',
+      'input_guardrails',
+      'output_guardrails',
     ]) as any;
   }
 
