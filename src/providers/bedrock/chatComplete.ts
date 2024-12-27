@@ -1,5 +1,10 @@
 import { BEDROCK, documentMimeTypes, imagesMimeTypes } from '../../globals';
-import { Message, Params, ToolCall } from '../../types/requestBody';
+import {
+  Message,
+  Params,
+  ToolCall,
+  SYSTEM_MESSAGE_ROLES,
+} from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -149,14 +154,31 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
       required: true,
       transform: (params: BedrockChatCompletionsParams) => {
         if (!params.messages) return [];
-        return params.messages
-          .filter((msg) => msg.role !== 'system')
+        const transformedMessages = params.messages
+          .filter((msg) => !SYSTEM_MESSAGE_ROLES.includes(msg.role))
           .map((msg) => {
             return {
               role: msg.role === 'assistant' ? 'assistant' : 'user',
               content: getMessageContent(msg),
             };
           });
+        let prevRole = '';
+        // combine user messages in succession
+        const combinedMessages = transformedMessages.reduce(
+          (acc: typeof transformedMessages, msg) => {
+            if (msg.role === 'user' && prevRole === 'user') {
+              const lastMessage = acc[acc.length - 1];
+              const newContent = [...lastMessage.content, ...msg.content];
+              lastMessage.content = newContent as typeof lastMessage.content;
+            } else {
+              acc.push(msg);
+            }
+            prevRole = msg.role;
+            return acc;
+          },
+          []
+        );
+        return combinedMessages;
       },
     },
     {
@@ -166,7 +188,7 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
         if (!params.messages) return;
         const systemMessages = params.messages.reduce(
           (acc: { text: string }[], msg) => {
-            if (msg.role === 'system')
+            if (SYSTEM_MESSAGE_ROLES.includes(msg.role))
               return acc.concat(...getMessageTextContentArray(msg));
             return acc;
           },
@@ -330,7 +352,8 @@ export const BedrockChatCompleteResponseTransform: (
             role: 'assistant',
             content: response.output.message.content
               .filter((content) => content.text)
-              .reduce((acc, content) => acc + content.text + '\n', ''),
+              .map((content) => content.text)
+              .join('\n'),
           },
           finish_reason: response.stopReason,
         },
@@ -348,7 +371,7 @@ export const BedrockChatCompleteResponseTransform: (
         type: 'function',
         function: {
           name: content.toolUse.name,
-          arguments: content.toolUse.input,
+          arguments: JSON.stringify(content.toolUse.input),
         },
       }));
     if (toolCalls.length > 0)
@@ -369,6 +392,13 @@ export interface BedrockChatCompleteStreamChunk {
       input: object;
     };
   };
+  start?: {
+    toolUse: {
+      toolUseId: string;
+      name: string;
+      input?: object;
+    };
+  };
   stopReason?: string;
   metrics?: {
     latencyMs: number;
@@ -382,6 +412,7 @@ export interface BedrockChatCompleteStreamChunk {
 
 interface BedrockStreamState {
   stopReason?: string;
+  currentToolCallIndex?: number;
 }
 
 // refer: https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStream.html
@@ -393,6 +424,9 @@ export const BedrockChatCompleteStreamChunkTransform: (
   const parsedChunk: BedrockChatCompleteStreamChunk = JSON.parse(responseChunk);
   if (parsedChunk.stopReason) {
     streamState.stopReason = parsedChunk.stopReason;
+  }
+  if (streamState.currentToolCallIndex === undefined) {
+    streamState.currentToolCallIndex = -1;
   }
 
   if (parsedChunk.usage) {
@@ -421,8 +455,20 @@ export const BedrockChatCompleteStreamChunkTransform: (
   }
 
   const toolCalls = [];
-  if (parsedChunk.delta?.toolUse) {
+  if (parsedChunk.start?.toolUse) {
+    streamState.currentToolCallIndex = streamState.currentToolCallIndex + 1;
     toolCalls.push({
+      index: streamState.currentToolCallIndex,
+      id: parsedChunk.start.toolUse.toolUseId,
+      type: 'function',
+      function: {
+        name: parsedChunk.start.toolUse.name,
+        arguments: parsedChunk.start.toolUse.input,
+      },
+    });
+  } else if (parsedChunk.delta?.toolUse) {
+    toolCalls.push({
+      index: streamState.currentToolCallIndex,
       id: parsedChunk.delta.toolUse.toolUseId,
       type: 'function',
       function: {
@@ -440,11 +486,11 @@ export const BedrockChatCompleteStreamChunkTransform: (
     provider: BEDROCK,
     choices: [
       {
-        index: parsedChunk.contentBlockIndex ?? 0,
+        index: 0,
         delta: {
           role: 'assistant',
           content: parsedChunk.delta?.text,
-          tool_calls: toolCalls,
+          tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
         },
       },
     ],
@@ -507,11 +553,6 @@ export const BedrockConverseCohereChatCompleteConfig: ProviderConfig = {
     transform: (params: BedrockConverseCohereChatCompletionsParams) =>
       transformCohereAdditionalModelRequestFields(params),
   },
-  stream: {
-    param: 'additionalModelRequestFields',
-    transform: (params: BedrockConverseCohereChatCompletionsParams) =>
-      transformCohereAdditionalModelRequestFields(params),
-  },
 };
 
 export const BedrockConverseAI21ChatCompleteConfig: ProviderConfig = {
@@ -562,7 +603,7 @@ export const BedrockCohereChatCompleteConfig: ProviderConfig = {
       if (!!params.messages) {
         let messages: Message[] = params.messages;
         messages.forEach((msg, index) => {
-          if (index === 0 && msg.role === 'system') {
+          if (index === 0 && SYSTEM_MESSAGE_ROLES.includes(msg.role)) {
             prompt += `system: ${messages}\n`;
           } else if (msg.role == 'user') {
             prompt += `user: ${msg.content}\n`;
@@ -746,7 +787,7 @@ export const BedrockAI21ChatCompleteConfig: ProviderConfig = {
       if (!!params.messages) {
         let messages: Message[] = params.messages;
         messages.forEach((msg, index) => {
-          if (index === 0 && msg.role === 'system') {
+          if (index === 0 && SYSTEM_MESSAGE_ROLES.includes(msg.role)) {
             prompt += `system: ${messages}\n`;
           } else if (msg.role == 'user') {
             prompt += `user: ${msg.content}\n`;

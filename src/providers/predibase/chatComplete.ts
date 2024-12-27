@@ -1,4 +1,5 @@
 import { PREDIBASE } from '../../globals';
+import { Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -28,6 +29,12 @@ export const PredibaseChatCompleteConfig: ProviderConfig = {
     param: 'messages',
     required: true,
     default: [],
+    transform: (params: Params) => {
+      return params.messages?.map((message) => {
+        if (message.role === 'developer') return { ...message, role: 'system' };
+        return message;
+      });
+    },
   },
   max_tokens: {
     param: 'max_tokens',

@@ -1,5 +1,7 @@
 export interface PluginContext {
   [key: string]: any;
+  requestType: 'complete' | 'chatComplete';
+  provider: string;
 }
 
 export interface PluginParameters {
@@ -20,7 +22,7 @@ export type PluginHandler = (
   context: PluginContext,
   parameters: PluginParameters,
   eventType: HookEventType,
-  options: {
+  options?: {
     env: Record<string, any>;
   }
 ) => Promise<PluginHandlerResponse>;

@@ -1,0 +1,2087 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portkey AI Gateway</title>
+  <style>
+    /* buttons.css */
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      background-color: rgb(24, 24, 27);
+      color: white;
+      border: 0px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn:hover {
+      background-color: rgba(24, 24, 27,0.9)
+    }
+
+    .btn-outline {
+      border: 1px solid #b8bcc2;
+      background-color: white;
+      color: rgb(24, 24, 27);
+    }
+
+    .btn-outline:hover {
+      background-color: #f3f4f6;
+    }
+
+    /* Loading state */
+    .btn.loading {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .btn.loading::after {
+      content: '';
+      position: absolute;
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .btn.loading .btn-text {
+      visibility: hidden;
+    }
+
+    .btn-outline.loading::after {
+      border-color: rgba(24, 24, 27, 0.3);
+      border-top-color: rgb(24, 24, 27);
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* header.css */
+    /* Header styles */
+    header {
+      background-color: white;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+      padding: 0.75rem 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 1rem; 
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo img {
+      margin-right: 0.5rem;
+      max-height: 2rem;
+    }
+
+    .logo span {
+      font-size: 0.875rem;
+      font-weight: normal;
+      display: flex;
+      align-items: center;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #22c55e;
+      margin-left: 8px;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0% { opacity: 0; }
+      50% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    .header-links {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .header-links a {
+      color: #2563eb;
+      text-decoration: none;
+      font-size: 0.875rem;
+    }
+
+    .header-links a:hover {
+      color: #1d4ed8;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .container {
+          flex-direction: column;
+          align-items: flex-start;
+      }
+
+      .logo {
+          margin-bottom: 0.5rem;
+      }
+
+      .tabs-container {
+          margin-bottom: 0.5rem;
+      }
+
+      .header-links {
+          width: 100%;
+          justify-content: space-between;
+      }
+    }
+
+    header .badge {
+      background-color: rgb(239, 68, 68);
+      color: white;
+      padding: 0.25rem 0.25rem;
+      border-radius: 100px;
+      font-size: 0.65rem;
+      font-weight: normal;
+      margin-left: 5px;
+      min-width: 13px;
+      /* display: inline-block; */
+      text-align: center;
+      display: none;
+    }
+
+    /* interactive-code.css */
+    pre {
+      background-color: #f3f4f6;
+      padding: 0.75rem;
+      border-radius: 0.375rem;
+      overflow-x: auto;
+      font-size: 0.875rem;
+      position: relative;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      padding: 0.25rem;
+      background-color: white;
+      border: 1px solid #d1d5db;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      z-index: 10;
+      height: 28px;
+    }
+
+    .copy-btn svg {
+      width: 20px;
+      height: 18px;
+      color: #393d45;
+    }
+
+    /* Highlighted values */
+    .highlighted-value {
+      display: inline-block;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.2s;
+      padding: 0 0.25rem;
+      margin: 2px 0;
+    }
+
+    .highlighted-value.filled {
+      font-weight: bold;
+    }
+
+    .highlighted-value:hover {
+      transform: scale(1.05);
+    }
+
+    .highlighted-value::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 0.25rem;
+      transition: all 0.2s;
+    }
+
+    .highlighted-value.empty::before {
+      background-color: rgba(252, 165, 165, 0.3);
+      border: 1px solid rgba(248, 113, 113, 0.5);
+    }
+
+    .highlighted-value.filled::before {
+      background-color: rgba(134, 239, 172, 0.2);
+      border: 1px solid rgba(74, 222, 128, 0.5);
+    }
+
+    .highlighted-value:hover::before {
+      opacity: 0.4;
+    }
+
+    .highlighted-value span {
+      position: relative;
+      z-index: 10;
+    }
+
+    .highlighted-value.empty span {
+      color: #dc2626;
+    }
+
+    .highlighted-value.filled span {
+      color: #16a34a;
+    }
+
+    @keyframes highlight {
+      0% { 
+          background-color: rgba(253, 224, 71, 0.2);
+          transform: scale(1);
+      }
+      20% { 
+          background-color: rgba(253, 224, 71, 1); 
+          transform: scale(1.05);
+      }
+      100% { 
+          background-color: rgba(253, 224, 71, 0.2);
+          transform: scale(1);
+      }
+    }
+
+    /* Dialog styles */
+    .dialog-overlay {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 50;
+    }
+
+    .dialog {
+      background-color: white;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      width: 90%;
+      max-width: 500px;
+    }
+
+    .dialog h3 {
+      font-size: 1.25rem;
+      font-weight: bold;
+      margin-bottom: 0;
+      margin-top: 0;
+    }
+
+    .dialog p {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-bottom: 1rem;
+      margin-top: 0;
+    }
+
+    .select-wrapper {
+      position: relative;
+    }
+
+    .select {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 0.5rem center;
+      background-repeat: no-repeat;
+      background-size: 1.5em 1.5em;
+      font-size: 0.75rem;
+    }
+
+    .input {
+      width: 90%;
+      padding: 0.5rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .dialog label {
+      font-size: 0.75rem;
+      font-weight: bold;
+      display: inline-block;
+      padding: 0.25rem;
+    }
+
+    .dialog .btn {
+      margin-top: 0.5rem;
+    }
+
+    .animate-highlight {
+      animation: highlight 1s ease-out;
+    }
+
+    .language-select-wrapper {
+      width: 100px;
+      display: inline-block;
+        position: absolute;
+        z-index: 2;
+        right: 45px;
+        top: 0.5rem;
+        font-size: 12px;
+    }
+
+    /* logs.css */
+    /* Logs styles */
+    .card.logs-card {
+      margin-top: 1rem;
+      max-width: 800px;
+    }
+
+    .logs-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .logs-table-container {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+      width: 100%;
+      max-width: 800px;
+    }
+
+    .logs-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .logs-table th,
+    .logs-table td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+      cursor: default;
+    }
+
+    .logs-table th {
+      background-color: #f3f4f6;
+      font-weight: 600;
+      color: #374151;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+    }
+
+    .logs-table tr:hover {
+      background-color: #f3f4f6;
+    }
+
+    /* .logs-table td:last-child {
+      text-align: right;
+    } */
+
+    .loading-row {
+      background-color: #f3f4f6;
+      color: #6b7280;
+      font-style: italic;
+    }
+
+    .loading-row td {
+      padding: 0.25rem 0.75rem;
+    }
+
+    .loading-animation {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #6b7280;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    @keyframes spin {
+      to {
+          transform: rotate(360deg);
+      }
+    }
+
+    .new-row {
+      animation: fadeInSlideDown 0.2s ease-out;
+    }
+    @keyframes fadeInSlideDown {
+      from {
+          opacity: 0;
+          transform: translateY(-20px);
+      }
+      to {
+          opacity: 1;
+          transform: translateY(0);
+      }
+    }
+
+    .log-time {
+      font-family: monospace;
+      font-size: 0.875rem;
+    }
+
+    .log-method span {
+      padding: 0.3rem;
+      background-color: rgba(0, 0, 0, 0.1);
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .log-status span.success {
+      padding: 0.3rem;
+      background-color: green;
+      border-radius: 4px;
+      color: white;
+      font-weight: 700;
+    }
+
+    .log-status span.error {
+      padding: 0.3rem;
+      background-color: red;
+      border-radius: 4px;
+      color: white;
+      font-weight: 700;
+    }
+
+
+
+    .btn-view-details {
+      padding: 0.25rem 0.5rem;
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-view-details:hover {
+      background-color: #2563eb;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .logs-header {
+          flex-direction: column;
+          align-items: stretch;
+      }
+
+      .logs-search {
+          width: 100%;
+          margin-bottom: 1rem;
+      }
+    }
+
+    /* modal.css */
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+      background-color: white;
+      margin: 0 0 0 auto;
+      padding: 2rem;
+      border-radius: 0rem;
+      width: 80%;
+      max-width: 500px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .close:hover {
+      color: #000;
+    }
+
+    /* style.css */
+    /* Base styles */
+    body {
+      font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+      font-weight: 400;
+      font-size: 14px;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background-color: #f3f4f6;
+      color: #213547;
+      margin-top: 4rem;
+    }
+
+    a {
+      color: rgb(24, 24, 27);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .relative {
+      position: relative;
+    }
+
+    /* Main content styles */
+    .main-content {
+      max-width: 1200px;
+      margin: 1rem auto;
+      padding: 0 1rem;
+    }
+
+    /* Main content styles */
+    .main-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem;
+      transition: margin-bottom 0.3s ease;
+    }
+
+    .left-column {
+      width: 65%;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .right-column {
+      width: 35%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card {
+      background-color: white;
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      padding: 1.5rem;
+      max-width: 600px;
+        margin: 0rem auto 2rem auto;
+    }
+
+    .left-column .card {
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 1024px) {
+      .main-content {
+        flex-direction: column;
+      }
+
+      .left-column,
+      .right-column {
+        width: 100%;
+      }
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    h2 {
+      font-size: 1.125rem;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    .card-subtitle {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-bottom: 1rem;
+    }
+
+    /* Features to Explore Card Styles */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .feature-item {
+      background-color: #f9fafb;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .feature-item:hover {
+      box-shadow: 0px 0px 3px 1px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .feature-item .icon {
+      width: 2rem;
+      height: 2rem;
+      color: #3b82f6;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-item h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-item p {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+
+    /* Next Steps Card Styles */
+    .card.next-steps {
+      margin-top: 1rem;
+      background-color: transparent;
+      /* border-top: 1px solid #ccc; */
+      padding-top: 2rem;
+      box-shadow: none;
+      border-radius: 0;
+      width: 90%;
+      max-width: 700px;
+    }
+
+    .next-steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .next-step-item {
+      border: 1px solid #babcc0;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0px 5px 3px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .next-step-item .icon {
+      width: 2rem;
+      height: 2rem;
+      color: #3b82f6;
+      margin-bottom: 0.5rem;
+    }
+
+    .next-step-item h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .next-step-item p {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-bottom: 1rem;
+    }
+
+    .next-step-item .btn {
+      margin-top: auto;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .features-grid,
+      .next-steps-grid {
+          grid-template-columns: 1fr;
+      }
+    }
+
+    #testRequestResponse {
+      margin-top: 0.5rem;
+      border-radius: 4px;
+      font-family: monospace;
+      /* dark background color */
+      background-color: #213547;
+      color: #f9fafb;
+      padding: 0.5rem;
+      display: none;
+    }
+
+    #testRequestResponse .error {
+      /* red color that looks good on dark background */
+      color: #ff7f7f;
+    }
+
+    .docs-link {
+      display: none;
+      float: right;
+      margin: 5px 0;
+    }
+
+    .docs-link a {
+      color: #3b82f6;
+    }
+
+    /* tabs.css */
+    /* Tabs styles */
+    .tabs-container {
+      display: flex;
+      background-color: #f4f4f5;
+      padding: 0.25rem;
+      border-radius: 6px;
+      color: rgb(113, 113, 122);
+    }
+
+    .tab-button:hover {
+      color: rgb(9, 9, 11);
+    }
+
+    .tab-button.active {
+      color: rgb(9, 9, 11);
+      /* border-bottom-color: #3b82f6; */
+      background-color: white;
+      font-weight: 500;
+      box-shadow: rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
+    }
+
+    .tabs-container .tab-button {
+      min-width: 100px;
+      padding: 0.3rem 0.875rem;
+    }
+
+    /* Tab content styles */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .main-tab-content {
+      display: none;
+    }
+
+    .main-tab-content.active {
+      display: block;
+    }
+
+    .tab-button {
+      padding: 0.5rem 1rem;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #6b7280;
+      transition: all 0.3s ease;
+      border-radius: 0.375rem;
+      /* margin-right: 0.5rem; */
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #d1d5db;
+      margin-bottom: 1rem;
+    }
+
+    .tab {
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+
+    .tab.active {
+      border-bottom-color: #3b82f6;
+      font-weight: bold;
+    }
+  </style>
+
+  <!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-KX3PMNVR');</script>
+  <!-- End Google Tag Manager -->
+
+  <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css"> -->
+  <link rel="stylesheet" href="https://unpkg.com/highlightjs@9.16.2/styles/atom-one-light.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+</head>
+
+<body>
+  <!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KX3PMNVR"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+  <header>
+    <div class="container">
+      <div class="logo">
+        <img
+          src="https://media.dev.to/dynamic/image/width=320,height=320,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.amazonaws.com%2Fuploads%2Forganization%2Fprofile_image%2F8056%2F39f656e2-eff4-4755-b84b-44d61d7c98b5.jpg"
+          alt="Portkey AI Gateway" class="logo-image">
+          <div class="header-links">
+            <a href="https://portkey.ai/docs">Docs</a>
+          </div>
+      </div>
+      <nav class="tabs-container">
+        <button class="tab-button active" data-tab="main" id="main-tab-button">Gateway</button>
+        <button class="tab-button" data-tab="logs" id="logs-tab-button">Logs<span class="badge">1</span></button>
+      </nav>
+      <a class="github-button" href="https://github.com/portkey-ai/gateway"
+              data-color-scheme="no-preference: light; light: light; dark: dark;" data-icon="octicon-star" data-size="large"
+              data-show-count="true" aria-label="Star portkey-ai/gateway on GitHub">Star</a>
+      
+    </div>
+  </header>
+
+  <div class="main-content">
+    <div class="logo card">
+      <span>
+        <div class="status-dot"></div>
+        &nbsp;&nbsp;Your AI Gateway is now running
+      </span>
+    </div>
+    <div id="main-tab" class="main-tab-content">
+      <div class="card curl-command">
+        <h2>1. Let's make a test request</h2>
+        <div class="card-subtitle">The gateway supports 250+ models across 36 AI providers. Choose your provider and API
+          key below.</div>
+        <div class="tabs test-request-tabs">
+          <div class="tab" data-tab="python">🐍 Python</div>
+          <div class="tab" data-tab="nodejs">📦 Node.js</div>
+          <div class="tab active" data-tab="curl">🌀 cURL</div>
+        </div>
+        <div class="relative">
+          <button class="copy-btn" id="copyBtn" title="Copy to clipboard">
+            <i data-lucide="copy"></i>
+          </button>
+          <div class="tab-content" id="curlContent">
+            <pre><code id="curlCommand" class="language-bash"></code></pre>
+          </div>
+          <div class="tab-content" id="nodejsContent">
+            <pre><code id="nodejsCommand" class="language-javascript"></code></pre>
+          </div>
+          <div class="tab-content active" id="pythonContent">
+            <pre><code id="pythonCommand" class="language-python"></code></pre>
+          </div>
+        </div>
+        <!-- Add docs links based on the provider selected -->
+        <div class="docs-link"></div>
+        <button class="btn" id="testRequestBtn">
+          <span class="btn-text">Test Request</span>
+        </button>
+        <div id="testRequestResponse"></div>
+      </div>
+
+      <div class="card routing-config">
+        <h2>2. Create a routing config</h2>
+        <div class="card-subtitle">Gateway configs allow you to route requests to different providers and models. You can load balance, set fallbacks, and configure automatic retries & timeouts. <a href="#">Learn more</a></div>
+        <div class="tabs routing-config-tabs">
+          <div class="tab active" data-tab="simple">Simple Config</div>
+          <div class="tab" data-tab="loadBalancing">Load Balancing</div>
+          <div class="tab" data-tab="fallbacks">Fallbacks</div>
+          <div class="tab" data-tab="autoRetries">Retries & Timeouts</div>
+        </div>
+        <div class="relative">
+          <div class="config-content-header relative">
+            <button class="copy-btn" id="copyConfigBtn" title="Copy to clipboard">
+              <i data-lucide="copy"></i>
+            </button>
+            <div class="language-select-wrapper">
+              <select id="languageSelect" class="select">
+                <option value="python">🐍 Python</option>
+                <option value="nodejs">📦 Node.js</option>
+                <option value="curl">🌀 cURL</option>
+              </select>
+            </div>
+          </div>
+          <div class="tab-content active" id="simpleContent">
+            <pre><code id="simpleCode"></code></pre>
+          </div>
+          <div class="tab-content" id="loadBalancingContent">
+            <pre><code id="loadBalancingCode"></code></pre>
+          </div>
+          <div class="tab-content" id="fallbacksContent">
+            <pre><code id="fallbacksCode"></code></pre>
+          </div>
+          <div class="tab-content" id="autoRetriesContent">
+            <pre><code id="autoRetriesCode"></code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="card features-to-explore">
+        <h2>3. More Features to Explore</h2>
+        <div class="card-subtitle">Discover advanced capabilities of the Portkey AI Gateway.</div>
+        <div class="features-grid">
+          <a class="feature-item" href="https://portkey.ai/docs/integrations/agents">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <h3>Agents</h3>
+            <p>Seamlessly integrate with popular agent frameworks like Autogen, CrewAI, and LangChain.</p>
+          </a>
+          <a class="feature-item" href="https://portkey.ai/docs/product/ai-gateway/multimodal-capabilities">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+            <h3>Multi-modal AI</h3>
+            <p>Handle vision, audio, and image generation requests across multiple providers.</p>
+          </a>
+          <a class="feature-item" href="https://portkey.ai/docs/product/guardrails">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <h3>Guardrails</h3>
+            <p>Verify LLM inputs and outputs with 20+ pre-built checks or build your own.</p>
+          </a>
+          <a class="feature-item" href="https://portkey.ai/docs/integrations/llms">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+              <path d="M20 7h-9"></path>
+              <path d="M14 17H5"></path>
+              <circle cx="17" cy="17" r="3"></circle>
+              <circle cx="7" cy="7" r="3"></circle>
+            </svg>
+            <h3>Supported Providers</h3>
+            <p>Access 250+ models from 35+ providers including OpenAI, Anthropic, and Google.</p>
+          </a>
+        </div>
+      </div>
+
+      <div class="card next-steps">
+        <!-- <h2>Next Steps</h2> -->
+        <!-- <div class="card-subtitle">Explore more features and connect with the Portkey community.</div> -->
+        <div class="next-steps-grid">
+          <div class="next-step-item">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+              <path
+                d="M15.05 5A5 5 0 0 1 19 8.95M15.05 1A9 9 0 0 1 23 8.94m-1 7.98v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+              </path>
+            </svg>
+            <h3>Setup a Call</h3>
+            <p>Get personalized support and learn how Portkey can be tailored to your needs.</p>
+            <a href="https://calendly.com/portkey-ai/quick-meeting?utm_source=oss" class="btn">Schedule Consultation</a>
+          </div>
+          <div class="next-step-item">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+              <line x1="18" y1="20" x2="18" y2="10"></line>
+              <line x1="12" y1="20" x2="12" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            <h3>Enterprise Features</h3>
+            <p>Explore advanced features and see how Portkey can scale with your business.</p>
+            <a href="https://portkey.ai/docs/product/enterprise-offering" class="btn">View Enterprise Plan</a>
+          </div>
+          <div class="next-step-item">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+              <path
+                d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+              </path>
+            </svg>
+            <h3>Join Our Community</h3>
+            <p>Connect with other developers, share ideas, and get help from the Portkey team.</p>
+            <a href="https://portkey.ai/community" class="btn">Join Discord</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="logs-tab" class="main-tab-content">
+      <div class="card logs-card">
+        <h2>Real-time Logs</h2>
+        <div class="logs-header">
+          <!-- <input type="text" class="logs-search" placeholder="Search logs..."> -->
+          <!-- <button class="btn btn-clear-logs">Clear Logs</button> -->
+        </div>
+        <div class="logs-table-container">
+          <table class="logs-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Method</th>
+                <th>Endpoint</th>
+                <th>Status</th>
+                <th>Duration</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="logsTableBody">
+              <!-- First row should be a spinner with text saying "Listening for logs..."-->
+              <tr class="loading-row">
+                <td colspan="6">
+                    <div class="loading-animation"></div>
+                    Listening for logs...
+                </td>
+            </tr>
+              <!-- Log entries will be dynamically added here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="logDetailsModal">
+      <div class="modal-content">
+          <span class="close">&times;</span>
+          <h2>Log Details</h2>
+          <div id="logDetailsContent"></div>
+      </div>
+  </div>
+
+    <div class="dialog-overlay" id="providerDialog" style="display: none;">
+      <div class="dialog">
+        <h3>Select Provider</h3>
+        <p>Choose the AI provider you want to use for this request.</p>
+        <div class="select-wrapper">
+          <select id="providerSelect" class="select">
+            <option value="">Select a provider</option>
+            <option value="openai">OpenAI</option>
+            <option value="anthropic">Anthropic</option>
+            <option value="groq">Groq</option>
+            <option value="bedrock">Bedrock</option>
+            <option value="azure-openai">Azure OpenAI</option>
+            <option value="cohere">Cohere</option>
+            <option value="together-ai">Together AI</option>
+            <option value="perplexity-ai">Perplexity AI</option>
+            <option value="mistral-ai">Mistral AI</option>
+            <option value="others">Others</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="dialog-overlay" id="apiKeyDialog" style="display: none;">
+      <div class="dialog">
+        <h3>Enter Authentication Details</h3>
+        <p>Enter the required details for the selected provider.</p>
+        <form id="apiDetailsForm">
+          <!-- Dynamic form fields will be inserted here -->
+        </form>
+        <button class="btn" id="saveApiDetailsBtn">Save</button>
+      </div>
+      <!-- <div class="dialog">
+        <h3>Enter API Key</h3>
+        <p>Enter your API key for the selected provider. This key is used to authenticate your request.</p>
+        <input type="password" id="apiKeyInput" class="input" placeholder="Enter your API key">
+        <button class="btn btn-outline" id="saveApiKeyBtn">Save</button>
+      </div> -->
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <script>
+      const configs = {"nodejs": {}, "python": {}, "curl": {}}
+
+      // Node.js - Simple
+      configs["nodejs"]["simple"] = `
+      // 1. Create config with provider and API key
+      const config = {
+        "provider": 'openai',
+        "api_key": 'Your OpenAI API key',
+      };
+
+      // 2. Add this config to the client
+      const client = new Portkey({config});
+
+      // 3. Use the client in completion requests
+      await client.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [{ role: 'user', content: 'Hello, world!' }],
+      });`
+
+      // Node.js - Load Balancing
+      configs["nodejs"]["loadBalancing"] = `
+      // 1. Create the load-balanced config
+      const lbConfig = {
+        "strategy": { "mode": "loadbalance" },
+        "targets": [{ 
+          "provider": 'openai', 
+          "api_key": 'Your OpenAI API key', 
+          "weight": 0.7 
+        },{ 
+          "provider": 'anthropic', 
+          "api_key": 'Your Anthropic API key', 
+          "weight": 0.3,
+          "override_params": {
+            "model": 'claude-3-opus-20240229' // Any params you want to override
+          },
+        }],
+      };
+
+      // 2. Use the config in completion requests
+      await client.chat.completions.create({
+        model: 'gpt-4o', // The model will be replaced with the one specified in the config
+        messages: [{ role: 'user', content: 'Hello, world!' }],
+      }, {config: lbConfig});`
+
+      // Node.js - Fallbacks
+      configs["nodejs"]["fallbacks"] = `
+      // 1. Create the fallback config
+      const fallbackConfig = {
+        "strategy": { "mode": "fallback" },
+        "targets": [{ // The primary target
+          "provider": 'openai', 
+          "api_key": 'Your OpenAI API key', 
+        },{ // The fallback target
+          "provider": 'anthropic', 
+          "api_key": 'Your Anthropic API key', 
+        }],
+      };
+
+      // 2. Use the config in completion requests
+      await client.chat.completions.create({
+        model: 'gpt-4o', // The model will be replaced with the one specified in the config
+        messages: [{ role: 'user', content: 'Hello, world!' }],
+      }, {config: fallbackConfig});`
+
+      // Node.js - Retries & Timeouts
+      configs["nodejs"]["autoRetries"] = `
+      // 1. Create the retry and timeout config
+      const retryTimeoutConfig = {
+        "retry": { 
+          "attempts": 3,
+          "on_status_codes": [429, 502, 503, 504] // Optional
+        },
+        "request_timeout": 10000,
+        "provider": 'openai', 
+        "api_key": 'Your OpenAI API key'
+      };
+
+      // 2. Use the config in completion requests
+      await client.chat.completions.create({
+        model: 'gpt-4o', // The model will be replaced with the one specified in the config
+        messages: [{ role: 'user', content: 'Hello, world!' }],
+      }, {config: retryTimeoutConfig});`
+
+      // Python - Simple
+      configs["python"]["simple"] = `
+      # 1. Create config with provider and API key
+      config = {
+        "provider": 'openai',
+        "api_key": 'Your OpenAI API key',
+      }
+
+      # 2. Add this config to the client
+      client = Portkey(config=config)
+
+      # 3. Use the client in completion requests
+      client.chat.completions.create(
+        model = 'gpt-4o',
+        messages = [{ role: 'user', content: 'Hello, world!' }],
+      )`
+
+      // Python - Load Balancing
+      configs["python"]["loadBalancing"] = `
+      # 1. Create the load-balanced config
+      lb_config = {
+        "strategy": { "mode": "loadbalance" },
+        "targets": [{ 
+          "provider": 'openai', 
+          "api_key": 'Your OpenAI API key', 
+          "weight": 0.7 
+        },{ 
+          "provider": 'anthropic', 
+          "api_key": 'Your Anthropic API key', 
+          "weight": 0.3,
+          "override_params": {
+            "model": 'claude-3-opus-20240229' # Any params you want to override
+          },
+        }],
+      }
+
+      # 2. Use the config in completion requests
+      client.with_options(config=lb_config).chat.completions.create(
+        model = 'gpt-4o',
+        messages = [{ role: 'user', content: 'Hello, world!' }],
+      )`
+
+      // Python - Fallbacks
+      configs["python"]["fallbacks"] = `
+      # 1. Create the fallback config
+      fallback_config = {
+        "strategy": { "mode": "fallback" },
+        "targets": [{ # The primary target
+          "provider": 'openai', 
+          "api_key": 'Your OpenAI API key', 
+        },{ # The fallback target
+          "provider": 'anthropic', 
+          "api_key": 'Your Anthropic API key', 
+          "override_params": {
+            "model": 'claude-3-opus-20240229' # Any params you want to override
+          },
+        }],
+      }
+
+      # 2. Use the config in completion requests
+      client.with_options(config=fallback_config).chat.completions.create(
+        model = 'gpt-4o',
+        messages = [{ role: 'user', content: 'Hello, world!' }],
+      )`
+
+      // Python - Retries & Timeouts
+      configs["python"]["autoRetries"] = `
+      # 1. Create the retry and timeout config
+      retry_timeout_config = {
+        "retry": { 
+          "attempts": 3,
+          "on_status_codes": [429, 502, 503, 504] # Optional
+        },
+        "request_timeout": 10000,
+        "provider": 'openai', 
+        "api_key": 'Your OpenAI API key'
+      }
+
+      # 2. Use the config in completion requests
+      client.with_options(config=retry_timeout_config).chat.completions.create(
+        model = 'gpt-4o',
+        messages = [{ role: 'user', content: 'Hello, world!' }],
+      )`
+
+      // Curl - Simple
+      configs["curl"]["simple"] = `
+      # Store the config in a variable
+      simple_config='{"provider":"openai","api_key":"Your OpenAI API Key"}'
+
+      # Use the config in completion requests
+      curl http://localhost:8787/v1/chat/completions \
+      \n-H "Content-Type: application/json" \
+      \n-H "x-portkey-config: $simple_config" \
+      \n-d '{
+        "model": "gpt-4o",
+        "messages": [
+          { "role": "user", "content": "Hello!" }
+        ]
+      }'`
+
+      // Curl - Load Balancing
+      configs["curl"]["loadBalancing"] = `
+      # Store the config in a variable
+      lb_config='{"strategy":{"mode":"loadbalance"},"targets":[{"provider":"openai","api_key":"Your OpenAI API key","weight": 0.7 },{"provider":"anthropic","api_key":"Your Anthropic API key","weight": 0.3,"override_params":{"model":"claude-3-opus-20240229"}}]}'
+
+      # Use the config in completion requests
+      curl http://localhost:8787/v1/chat/completions \
+      \n-H "Content-Type: application/json" \
+      \n-H "x-portkey-config: $lb_config" \
+      \n-d '{
+        "model": "gpt-4o",
+        "messages": [
+          { "role": "user", "content": "Hello!" }
+        ]
+      }'`
+
+      // Curl - Fallbacks
+      configs["curl"]["fallbacks"] = `
+      # Store the config in a variable
+      fb_config='{"strategy":{"mode":"fallback"},"targets":[{"provider":"openai","api_key":"Your OpenAI API key"},{"provider":"anthropic","api_key":"Your Anthropic API key","override_params":{"model":"claude-3-opus-20240229"}}]}'
+
+      # Use the config in completion requests
+      curl http://localhost:8787/v1/chat/completions \
+      \n-H "Content-Type: application/json" \
+      \n-H "x-portkey-config: $fb_config" \
+      \n-d '{
+        "model": "gpt-4o",
+        "messages": [
+          { "role": "user", "content": "Hello!" }
+        ]
+      }'`
+
+      // Curl - Retries & Timeouts
+      configs["curl"]["autoRetries"] = `
+      # Store the config in a variable
+      rt_config='{"retry":{"attempts": 3,"on_status_codes": [429, 502, 503, 504]},"request_timeout": 10000, "provider": "openai", "api_key": "Your OpenAI API key"}'
+
+      # Use the config in completion requests
+      curl http://localhost:8787/v1/chat/completions \
+      \n-H "Content-Type: application/json" \
+      \n-H "x-portkey-config: $rt_config" \
+      \n-d '{
+        "model": "gpt-4o",
+        "messages": [
+          { "role": "user", "content": "Hello!" }
+        ]
+      }'`
+    </script>
+    <script>
+      // function bedrockConfigNode(vars) {
+      //   return `,
+      //   <span class="hljs-attr">awsAccessKeyId</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.awsAccessKeyId ? 'filled' : 'empty'}" id="awsAccessKeyIdValue">${vars.providerDetails?.awsAccessKeyId || '[Click to edit]'}</span>"</span>,
+      //   <span class="hljs-attr">awsSecretAccessKey</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.awsSecretAccessKey ? 'filled' : 'empty'}" id="awsSecretAccessKeyValue">${vars.providerDetails?.awsSecretAccessKey || '[Click to edit]'}</span>"</span>,
+      //   <span class="hljs-attr">awsRegion</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.awsRegion ? 'filled' : 'empty'}" id="awsRegionValue">${vars.providerDetails?.awsRegion || '[Click to edit]'}</span>"</span>${vars.providerDetails?.awsSessionToken ? `,
+      //   <span class="hljs-attr">awsSessionToken</span>: <span class="hljs-string">"<span class="highlighted-value filled" id="awsSessionTokenValue">${vars.providerDetails.awsSessionToken}</span>"</span>` : ''}`;
+      // }
+
+      // function bedrockConfigPython(vars) {
+      //   return `,
+      //     <span class="hljs-attr">aws_access_key_id</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.awsAccessKeyId ? 'filled' : 'empty'}" id="awsAccessKeyIdValue">${vars.providerDetails?.awsAccessKeyId || '[Click to edit]'}</span>"</span>,
+      //     <span class="hljs-attr">aws_secret_access_key</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.awsSecretAccessKey ? 'filled' : 'empty'}" id="awsSecretAccessKeyValue">${vars.providerDetails?.awsSecretAccessKey || '[Click to edit]'}</span>"</span>,
+      //     <span class="hljs-attr">aws_region</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.awsRegion ? 'filled' : 'empty'}" id="awsRegionValue">${vars.providerDetails?.awsRegion || '[Click to edit]'}</span>"</span>${vars.providerDetails?.awsSessionToken ? `,
+      //     <span class="hljs-attr">aws_session_token</span>=<span class="hljs-string">"<span class="highlighted-value filled" id="awsSessionTokenValue">${vars.providerDetails.awsSessionToken}</span>"</span>` : ''}`;
+      // }
+
+      // function bedrockConfigCurl(vars) {
+      //   return `\n-H <span class="hljs-string">"x-portkey-aws-access-key-id: <span class="highlighted-value ${vars.providerDetails?.awsAccessKeyId ? 'filled' : 'empty'}" id="awsAccessKeyIdValue">${vars.providerDetails?.awsAccessKeyId || '[Click to edit]'}</span>"</span> \\
+      // -H <span class="hljs-string">"x-portkey-aws-secret-access-key: <span class="highlighted-value ${vars.providerDetails?.awsSecretAccessKey ? 'filled' : 'empty'}" id="awsSecretAccessKeyValue">${vars.providerDetails?.awsSecretAccessKey || '[Click to edit]'}</span>"</span> \\
+      // -H <span class="hljs-string">"x-portkey-aws-region: <span class="highlighted-value ${vars.providerDetails?.awsRegion ? 'filled' : 'empty'}" id="awsRegionValue">${vars.providerDetails?.awsRegion || '[Click to edit]'}</span>"</span> \\${vars.providerDetails?.awsSessionToken ? `\n-H <span class="hljs-string">"x-portkey-aws-session-token: <span class="highlighted-value filled" id="awsSessionTokenValue">${vars.providerDetails.awsSessionToken}</span>"</span> \\` : ''}`;
+      // }
+
+      // function azureConfigCurl(vars) {
+      //   return `\n-H <span class="hljs-string">"x-portkey-azure-resource-name: <span class="highlighted-value ${vars.providerDetails?.azureResourceName ? 'filled' : 'empty'}" id="azureResourceNameValue">${vars.providerDetails?.azureResourceName || '[Click to edit]'}</span>"</span> \\
+      // -H <span class="hljs-string">"x-portkey-azure-deployment-id: <span class="highlighted-value ${vars.providerDetails?.azureDeploymentId ? 'filled' : 'empty'}" id="azureDeploymentIdValue">${vars.providerDetails?.azureDeploymentId || '[Click to edit]'}</span>"</span> \\
+      // -H <span class="hljs-string">"x-portkey-azure-api-version: <span class="highlighted-value ${vars.providerDetails?.azureApiVersion ? 'filled' : 'empty'}" id="azureApiVersionValue">${vars.providerDetails?.azureApiVersion || '[Click to edit]'}</span>"</span> \\
+      // -H <span class="hljs-string">"x-portkey-azure-model-name: <span class="highlighted-value ${vars.providerDetails?.azureModelName ? 'filled' : 'empty'}" id="azureModelNameValue">${vars.providerDetails?.azureModelName || '[Click to edit]'}</span>"</span> \\`;
+      // }
+
+      // function azureConfigNode(vars) {
+      //   return `,
+      //   <span class="hljs-attr">azureResourceName</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureResourceName ? 'filled' : 'empty'}" id="azureResourceNameValue">${vars.providerDetails?.azureResourceName || '[Click to edit]'}</span>"</span>,
+      //   <span class="hljs-attr">azureDeploymentId</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureDeploymentId ? 'filled' : 'empty'}" id="azureDeploymentIdValue">${vars.providerDetails?.azureDeploymentId || '[Click to edit]'}</span>"</span>,
+      //   <span class="hljs-attr">azureApiVersion</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureApiVersion ? 'filled' : 'empty'}" id="azureApiVersionValue">${vars.providerDetails?.azureApiVersion || '[Click to edit]'}</span>"</span>,
+      //   <span class="hljs-attr">azureModelName</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureModelName ? 'filled' : 'empty'}" id="azureModelNameValue">${vars.providerDetails?.azureModelName || '[Click to edit]'}</span>"</span>`;
+      // }
+
+      // function azureConfigPython(vars) {
+      //   return `,
+      //   <span class="hljs-attr">azure_resource_name</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureResourceName ? 'filled' : 'empty'}" id="azureResourceNameValue">${vars.providerDetails?.azureResourceName || '[Click to edit]'}</span>"</span>,
+      //   <span class="hljs-attr">azure_deployment_id</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureDeploymentId ? 'filled' : 'empty'}" id="azureDeploymentIdValue">${vars.providerDetails?.azureDeploymentId || '[Click to edit]'}</span>"</span>,
+      //   <span class="hljs-attr">azure_api_version</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureApiVersion ? 'filled' : 'empty'}" id="azureApiVersionValue">${vars.providerDetails?.azureApiVersion || '[Click to edit]'}</span>"</span>,
+      //   <span class="hljs-attr">azure_model_name</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.azureModelName ? 'filled' : 'empty'}" id="azureModelNameValue">${vars.providerDetails?.azureModelName || '[Click to edit]'}</span>"</span>`;
+      // }
+
+      // Case conversion utilities
+      function toCamelCase(str) {
+        return str.replace(/([-_][a-z])/g, group => 
+          group.toUpperCase()
+            .replace('-', '')
+            .replace('_', '')
+        );
+      }
+
+      function toSnakeCase(str) {
+        return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+      }
+
+      function toKebabCase(str) {
+        return str.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
+      }
+
+      // Base configuration fields for each provider
+      const providerConfigs = {
+        bedrock: {
+          fields: [
+            'awsAccessKeyId',
+            'awsSecretAccessKey', 
+            'awsRegion',
+            'awsSessionToken'
+          ]
+        },
+        azure: {
+          fields: [
+            'azureResourceName',
+            'azureDeploymentId',
+            'azureApiVersion',
+            'azureModelName'
+          ]
+        }
+      };
+
+      const modelMap = {
+        "openai": "gpt-4o-mini",
+        "anthropic": "claude-3-5-sonnet-20240620",
+        "groq": "llama3-70b-8192",
+        "bedrock": "anthropic.claude-3-sonnet-20240229-v1:0",
+        "azure-openai": "gpt-4o-mini",
+        "cohere": "command-r-plus",
+        "together-ai": "llama-3.1-8b-instruct",
+        "perplexity-ai": "pplx-7b-online",
+        "mistral-ai": "mistral-small-latest",
+        "others": "gpt-4o-mini"
+      }
+
+      const docsMap = {
+        "openai": "https://portkey.ai/docs/integrations/llms/openai",
+        "anthropic": "https://portkey.ai/docs/integrations/llms/anthropic",
+        "groq": "https://portkey.ai/docs/integrations/llms/groq",
+        "bedrock": "https://portkey.ai/docs/integrations/llms/aws-bedrock",
+        "azure-openai": "https://portkey.ai/docs/integrations/llms/azure-openai",
+        "cohere": "https://portkey.ai/docs/integrations/llms/cohere",
+        "together-ai": "https://portkey.ai/docs/integrations/llms/together-ai",
+        "perplexity-ai": "https://portkey.ai/docs/integrations/llms/perplexity-ai",
+        "mistral-ai": "https://portkey.ai/docs/integrations/llms/mistral-ai",
+        "others": "https://portkey.ai/docs/integrations/llms"
+      }
+
+      // Format generators for different styles
+      const formatGenerators = {
+        node: {
+          formatKey: fieldName => fieldName,
+          separator: ':',
+          indent: '  ',
+          template: (key, separator, value) => 
+            `  <span class="hljs-attr">${key}</span>${separator}<span class="hljs-string">"${value}"</span>`,
+          joinWith: ',\n',
+          prefix: ',\n',
+        },
+        python: {
+          formatKey: fieldName => toSnakeCase(fieldName),
+          separator: '=',
+          indent: '    ',
+          template: (key, separator, value) => 
+            `    <span class="hljs-attr">${key}</span>${separator}<span class="hljs-string">"${value}"</span>`,
+          joinWith: ',\n',
+          prefix: ',\n',
+        },
+        curl: {
+          formatKey: fieldName => `x-portkey-${toKebabCase(fieldName)}`,
+          separator: ':',
+          indent: '',
+          template: (key, separator, value) => 
+            `-H <span class="hljs-string">"${key}${separator} ${value}"</span> \\`,
+          joinWith: '\n',
+          prefix: '\n',
+        }
+      };
+
+      // Helper function to generate highlighted value span
+      function generateHighlightedValue(value, id) {
+        const isEmpty = !value;
+        const displayValue = value || '[Click to edit]';
+        return `<span class="highlighted-value ${isEmpty ? 'empty' : 'filled'}" id="${id}Value">${displayValue}</span>`;
+      }
+
+      // Generic config generator function
+      function generateConfig(provider, format, vars) {
+        const { fields } = providerConfigs[provider];
+        const formatter = formatGenerators[format];
+        const details = vars.providerDetails || {};
+        
+        const configLines = fields
+          .map(fieldName => {
+            // Skip session token if not provided (for Bedrock)
+            if (fieldName === 'awsSessionToken' && !details[fieldName]) return null;
+            
+            const key = formatter.formatKey(fieldName);
+            const value = generateHighlightedValue(details[fieldName], fieldName);
+            return formatter.template(key, formatter.separator, value);
+          })
+          .filter(Boolean)
+          .join(formatter.joinWith);
+
+        return formatter.prefix + configLines;
+      }
+
+
+      function getTestRequestCodeBlock(language, vars) {
+        switch (language) {
+          case 'nodejs':
+            return `
+      <span class="hljs-keyword">import</span> Portkey <span class="hljs-keyword">from</span> <span class="hljs-string">'portkey-ai'</span>
+
+      <span class="hljs-keyword">const</span> portkey = <span class="hljs-keyword">new</span> Portkey({
+        <span class="hljs-attr">provider</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.provider ? 'filled' : 'empty'}" id="providerValue">${vars.provider || '[Click to edit]'}</span>"</span>${vars.provider != 'bedrock' ? `,
+        <span class="hljs-attr">Authorization</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.apiKey ? 'filled' : 'empty'}" id="apiKeyValue">${vars.providerDetails?.apiKey || '[Click to edit]'}</span>"</span>`: ''}${vars.provider === 'azure-openai' ? `${generateConfig('azure', 'node', vars)}` : ''}${vars.provider === 'bedrock' ? `${generateConfig('bedrock', 'node', vars)}` : ''}
+      })
+
+      <span class="hljs-comment">// Example: Send a chat completion request</span>
+      const response = <span class="hljs-keyword">await</span> portkey.chat.completions.<span class="hljs-title function_">create</span>({
+        <span class="hljs-attr">messages</span>: [{ <span class="hljs-attr">role</span>: <span class="hljs-string">'user'</span>, <span class="hljs-attr">content</span>: <span class="hljs-string">'Hello, how are you?'</span> }],
+        <span class="hljs-attr">model</span>: <span class="hljs-string">"${modelMap[vars.provider] || ''}"</span>${vars.provider=="anthropic"?`,
+        <span class="hljs-attr">max_tokens</span>: <span class="hljs-number">40</span>`:''}
+      })
+      <span class="hljs-built_in">console</span>.<span class="hljs-title function_">log</span>(response.choices[<span class="hljs-number">0</span>].message.content)`.trim();
+
+          case 'python':
+            return `
+      <span class="hljs-keyword">from</span> portkey_ai <span class="hljs-keyword">import</span> Portkey
+
+      client = Portkey(
+          <span class="hljs-attr">provider</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.provider ? 'filled' : 'empty'}" id="providerValue">${vars.provider || '[Click to edit]'}</span>"</span>${vars.provider != 'bedrock' ? `,
+          <span class="hljs-attr">Authorization</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.apiKey ? 'filled' : 'empty'}" id="apiKeyValue">${vars.providerDetails?.apiKey || '[Click to edit]'}</span>"</span>`: ''}${vars.provider === 'azure-openai' ? `${generateConfig('azure', 'python', vars)}` : ''}${vars.provider === 'bedrock' ? `${generateConfig('bedrock', 'python', vars)}` : ''}
+      )
+
+      <span class="hljs-comment"># Example: Send a chat completion request</span>
+      response = client.chat.completions.create(
+          messages=[{<span class="hljs-string">"role"</span>: <span class="hljs-string">"user"</span>, <span class="hljs-string">"content"</span>: <span class="hljs-string">"Hello, how are you?"</span>}],
+          model=<span class="hljs-string">"${modelMap[vars.provider] || ''}"</span>
+      )
+      <span class="hljs-built_in">print</span>(response.choices[<span class="hljs-number">0</span>].message.content)`.trim();
+
+          case 'curl':
+            return `curl -X POST \\
+      https://api.portkey.ai/v1/chat/completions \\
+      -H <span class="hljs-string">"Content-Type: application/json"</span> \\
+      -H <span class="hljs-string">"x-portkey-provider: <span class="highlighted-value ${vars.provider ? 'filled' : 'empty'}" id="providerValue">${vars.provider || '[Click to edit]'}</span>"</span> \\${vars.provider != 'bedrock' ? `
+      -H <span class="hljs-string">"Authorization: <span class="highlighted-value ${vars.providerDetails?.apiKey ? 'filled' : 'empty'}" id="apiKeyValue">${vars.providerDetails?.apiKey || '[Click to edit]'}</span>"</span> \\`: '' }${vars.provider === 'azure-openai' ? `${generateConfig('azure', 'curl', vars)}` : ''}${vars.provider === 'bedrock' ? `${generateConfig('bedrock', 'curl', vars)}` : ''}
+      <span class="hljs-string">-d '{
+        "messages": [
+            { "role": "user", "content": "Hello, how are you?" },
+        ],
+        "model": "<span class="hljs-string">"${modelMap[vars.provider] || ''}"</span>"
+      }'</span>`.trim();
+        }
+      }
+
+
+      function getRoutingConfigCodeBlock(language, type) {
+        return configs[language][type];
+      }
+
+      // Needed for highlight.js
+      const lngMap = {"nodejs": "js", "python": "py", "curl": "sh"}
+
+      // Initialize Lucide icons
+      lucide.createIcons();
+
+      // Variables
+      let provider = '';
+      let apiKey = '';
+      let providerDetails = {};
+      let logCounter = 0;
+
+      // DOM Elements
+      const providerValue = document.getElementById('providerValue');
+      const apiKeyValue = document.getElementById('apiKeyValue');
+      const copyBtn = document.getElementById('copyBtn');
+      const testRequestBtn = document.getElementById('testRequestBtn');
+      const logsContent = document.getElementById('logsContent');
+      const providerDialog = document.getElementById('providerDialog');
+      const apiKeyDialog = document.getElementById('apiKeyDialog');
+      const providerSelect = document.getElementById('providerSelect');
+      const apiKeyInput = document.getElementById('apiKeyInput');
+      const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+      const saveApiDetailsBtn = document.getElementById('saveApiDetailsBtn');
+      const languageSelect = document.getElementById('languageSelect');
+      const copyConfigBtn = document.getElementById('copyConfigBtn');
+
+      const camelToSnakeCase = str => str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+      const camelToKebabCase = str => str.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
+
+      // Dummy function for test request
+      function dummyTestRequest() {
+          // Make an API request to the Portkey API
+          // Use the provider and providerDetails to make the request
+          const myHeaders = new Headers();
+          Object.keys(providerDetails).forEach(key => {
+            if (key === 'apiKey') { 
+              myHeaders.append("Authorization", providerDetails[key]);
+            } else { 
+              myHeaders.append("x-portkey-" + camelToKebabCase(key), providerDetails[key]);
+            }
+          })
+          myHeaders.append("Content-Type", "application/json");
+          myHeaders.append("x-portkey-provider", provider);
+
+          const raw = JSON.stringify({
+            "messages": [{"role": "user","content": "How are you?"}],
+            "model": modelMap[provider],
+            "max_tokens": 40
+          });
+
+          const requestOptions = {method: "POST", headers: myHeaders, body: raw};
+
+          // Add loading class to testRequestBtn
+          testRequestBtn.classList.add('loading');
+
+          fetch("/v1/chat/completions", requestOptions)
+            .then((response) => {
+              if (!response.ok) {
+                return response.json().then(error => {
+                  const responseDiv = document.getElementById('testRequestResponse');
+                  responseDiv.innerHTML = `<span class="error">[${response.status} ${response.statusText}]</span>: ${error.message || error.error.message}`;
+                  responseDiv.style.display = 'block';
+                  throw new Error(error);
+                });
+              }
+              return response.json();
+            })
+            .then((result) => {
+              const responseDiv = document.getElementById('testRequestResponse');
+              responseDiv.innerHTML = `${result.choices[0].message.content}`;
+              responseDiv.style.display = 'block';
+              responseDiv.classList.remove('error');
+            })
+            .catch((error) => {
+              console.error('Error:', error);
+            })
+            .finally(() => {
+              // Remove loading class from testRequestBtn
+              testRequestBtn.classList.remove('loading');
+            });
+      }
+
+      // Functions
+
+      function switchTab(tabsContainer, tabName, updateRoutingConfigFlag = true) {
+        const tabs = tabsContainer.querySelectorAll('.tab');
+        const tabContents = tabsContainer.closest('.card').querySelectorAll('.tab-content');
+        
+        tabs.forEach(tab => tab.classList.remove('active'));
+        tabContents.forEach(content => content.classList.remove('active'));
+        
+        tabsContainer.querySelector(`.tab[data-tab="${tabName}"]`).classList.add('active');
+        tabsContainer.closest('.card').querySelector(`#${tabName}Content`).classList.add('active');
+
+        if (tabsContainer.classList.contains('test-request-tabs')) {
+            updateAllCommands();
+            // Update the language select with the active tab
+            languageSelect.value = tabName;
+            updateRoutingConfigFlag ? updateRoutingConfig() : null;
+        } else if (tabsContainer.classList.contains('routing-config-tabs')) {
+            updateRoutingConfig();
+        }
+      }
+
+      function updateAllCommands() {
+        ["nodejs", "python", "curl"].forEach(language => {
+          const command = document.getElementById(`${language}Command`);
+          const code = getTestRequestCodeBlock(language, {provider, providerDetails});
+          command.innerHTML = code;
+          if (provider) {
+            const docsLink = document.querySelector('.docs-link');
+            docsLink.innerHTML = `<a href="${docsMap[provider] || 'https://portkey.ai/docs/integrations/llms'}" target="_blank">View detailed docs for <b>${provider == "others" ? "all providers" : provider}</b> <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>`;
+            docsLink.style.display = 'inline-block';
+          }
+        });
+        addClickListeners();
+      }
+
+      function highlightElement(element) {
+          element.classList.add('animate-highlight');
+          setTimeout(() => element.classList.remove('animate-highlight'), 1000);
+      }
+
+      function showProviderDialog() {
+          providerDialog.style.display = 'flex';
+      }
+
+      function getProviderFields(provider) {
+        switch(provider) {
+            case 'openai':
+            case 'anthropic':
+            case 'groq':
+                return [{ id: 'apiKey', placeholder: 'Enter your API key' }];
+            case 'azure-openai':
+                return [
+                    { id: 'apiKey', placeholder: 'Enter your API key' },
+                    { id: 'azureResourceName', placeholder: 'Azure Resource Name' },
+                    { id: 'azureDeploymentId', placeholder: 'Azure Deployment ID' },
+                    { id: 'azureApiVersion', placeholder: 'Azure API Version' },
+                    { id: 'azureModelName', placeholder: 'Azure Model Name' }
+                ];
+            case 'bedrock':
+                return [
+                    { id: 'awsAccessKeyId', placeholder: 'AWS Access Key ID' },
+                    { id: 'awsSecretAccessKey', placeholder: 'AWS Secret Access Key' },
+                    { id: 'awsRegion', placeholder: 'AWS Region' },
+                    { id: 'awsSessionToken', placeholder: 'AWS Session Token (optional)' }
+                ];
+            default:
+                return [{ id: 'apiKey', placeholder: 'Enter your API key' }];
+        }
+      }
+
+      function showApiKeyDialog() {
+          // apiKeyDialog.style.display = 'flex';
+          const form = document.getElementById('apiDetailsForm');
+          form.innerHTML = ''; // Clear existing fields
+
+          const fields = getProviderFields(provider);
+          fields.forEach(field => {
+              const label = document.createElement('label');
+              label.textContent = field.placeholder;
+              label.for = field.id;
+              form.appendChild(label);
+              const input = document.createElement('input');
+              // input.type = 'password';
+              input.id = field.id;
+              input.className = 'input';
+              // input.placeholder = field.placeholder;
+              input.value = providerDetails[field.id] || "";
+              form.appendChild(input);
+          });
+
+          apiKeyDialog.style.display = 'flex';
+      }
+
+      function updateRoutingConfig() {
+          const language = languageSelect.value;
+          const activeTab = document.querySelector('.routing-config-tabs .tab.active').dataset.tab;
+          const codeElement = document.getElementById(`${activeTab}Code`);
+
+          // Also change the tabs for test request
+          switchTab(document.querySelector('.test-request-tabs'), language, false);
+
+          const code = getRoutingConfigCodeBlock(language, activeTab);
+          codeElement.innerHTML = hljs.highlight(code, {language: lngMap[language]}).value;
+      }
+
+      function addClickListeners() {
+        const providerValueSpans = document.querySelectorAll('.highlighted-value:not(#providerValue)');
+        const providerValues = document.querySelectorAll('[id^="providerValue"]');
+        // const apiKeyValues = document.querySelectorAll('[id^="apiKeyValue"]');
+
+        providerValues.forEach(el => el.addEventListener('click', showProviderDialog));
+        // apiKeyValues.forEach(el => el.addEventListener('click', showApiKeyDialog));
+        providerValueSpans.forEach(el => el.addEventListener('click', showApiKeyDialog));
+      }
+
+
+      // Event Listeners
+      testRequestBtn.addEventListener('click', dummyTestRequest);
+
+      document.querySelectorAll('.tabs').forEach(tabsContainer => {
+          tabsContainer.querySelectorAll('.tab').forEach(tab => {
+              tab.addEventListener('click', () => switchTab(tabsContainer, tab.dataset.tab));
+          });
+      });
+
+      copyBtn.addEventListener('click', () => {
+          const activeContent = document.querySelector('.curl-command .tab-content.active code');
+          navigator.clipboard.writeText(activeContent.innerText);
+          copyBtn.innerHTML = '<i data-lucide="check" class="h-4 w-4"></i>';
+          lucide.createIcons();
+          setTimeout(() => {
+              copyBtn.innerHTML = '<i data-lucide="copy" class="h-4 w-4"></i>';
+              lucide.createIcons();
+          }, 2000);
+          // addLog('Code example copied to clipboard');
+      });
+
+      copyConfigBtn.addEventListener('click', () => {
+          const activeContent = document.querySelector('.routing-config .tab-content.active code');
+          navigator.clipboard.writeText(activeContent.textContent);
+          copyConfigBtn.innerHTML = '<i data-lucide="check" class="h-4 w-4"></i>';
+          lucide.createIcons();
+          setTimeout(() => {
+              copyConfigBtn.innerHTML = '<i data-lucide="copy" class="h-4 w-4"></i>';
+              lucide.createIcons();
+          }, 2000);
+          // addLog('Routing config copied to clipboard');
+      });
+
+      // Modify existing event listeners
+      providerSelect.addEventListener('change', (e) => {
+          provider = e.target.value;
+          updateAllCommands();
+          providerDialog.style.display = 'none';
+          highlightElement(document.getElementById('providerValue'));
+          // Find if there are any provider details in localStorage for this provider
+          let localDetails = localStorage.getItem(`providerDetails-${provider}`);
+          if(localDetails) {
+            console.log('Provider details found in localStorage', localDetails);
+            providerDetails = JSON.parse(localDetails);
+            updateAllCommands();
+            highlightElement(document.getElementById('apiKeyValue'));
+          }
+          // addLog(`Provider set to ${provider}`);
+      });
+
+      saveApiDetailsBtn.addEventListener('click', () => {
+          const fields = getProviderFields(provider);
+          providerDetails = {};
+          fields.forEach(field => {
+              const input = document.getElementById(field.id);
+              providerDetails[field.id] = input.value;
+          });
+          // Save all provider details in localStorage for this provider
+          localStorage.setItem(`providerDetails-${provider}`, JSON.stringify(providerDetails));
+          updateAllCommands();
+          apiKeyDialog.style.display = 'none';
+          highlightElement(document.getElementById('apiKeyValue'));
+      });
+
+      languageSelect.addEventListener('change', updateRoutingConfig);
+
+      // Initialize
+      updateAllCommands();
+      updateRoutingConfig();
+
+      // Close dialogs when clicking outside
+      window.addEventListener('click', (e) => {
+          if (e.target.classList.contains('dialog-overlay')) {
+              e.target.style.display = 'none';
+          }
+      });
+
+      // Close dialogs when hitting escape
+      window.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+              providerDialog.style.display = 'none';
+              apiKeyDialog.style.display = 'none';
+              logDetailsModal.style.display = 'none';
+          }
+      });
+
+      // Tab functionality
+      const tabButtons = document.querySelectorAll('.tab-button');
+      const tabContents = document.querySelectorAll('.main-tab-content');
+
+      function mainTabFocus(tabName) {
+        if(tabName === 'logs') {
+          resetLogCounter();
+        }
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        tabContents.forEach(content => content.classList.remove('active'));
+            
+        document.getElementById(`${tabName}-tab-button`).classList.add('active');
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+      }
+
+      tabButtons.forEach(button => {
+          button.addEventListener('click', (e) => {
+            e.preventDefault();
+            let tabName = button.getAttribute('data-tab');
+            const href = tabName === 'logs' ? '/public/logs' : '/public/';
+            history.pushState(null, '', href);
+            mainTabFocus(tabName);
+          });
+      });
+
+      function managePage() {
+        if(window.location.pathname === '/public/logs') {
+          mainTabFocus('logs');
+        } else {
+          mainTabFocus('main');
+        }
+      }
+
+      window.addEventListener('popstate', () => {
+        managePage()
+      });
+
+      managePage()
+
+      // Logs functionality
+      const logsTableBody = document.getElementById('logsTableBody');
+      const logDetailsModal = document.getElementById('logDetailsModal');
+      const logDetailsContent = document.getElementById('logDetailsContent');
+      const closeModal = document.querySelector('.close');
+      const clearLogsBtn = document.querySelector('.btn-clear-logs');
+
+      // SSE for the logs
+      let logSource;
+
+      function setupLogSource() {
+        logSource = new EventSource('/log/stream');
+
+        logSource.addEventListener('connected', (event) => {
+          console.log('Connected to log stream', event.data);
+        });
+        
+        logSource.addEventListener('log', (event) => {
+          const entry = JSON.parse(event.data);
+          console.log('Received log entry', entry);
+          addLogEntry(entry.time, entry.method, entry.endpoint, entry.status, entry.duration, entry.requestOptions);
+        });
+        
+        // Handle heartbeat to keep connection alive
+        logSource.addEventListener('heartbeat', (event) => {
+          console.log('Received heartbeat');
+        });
+        
+        logSource.onerror = (error) => {
+          console.error('SSE error (logs):', error);
+          reconnectLogSource();
+        };
+      }
+
+      function cleanupLogSource() {
+        if (logSource) {
+          console.log('Closing log stream connection');
+          logSource.close();
+          logSource = null;
+        }
+      }
+
+      function reconnectLogSource() {
+        if (logSource) {
+            logSource.close();
+        }
+        console.log('Attempting to reconnect to log stream...');
+        setTimeout(() => {
+            setupLogSource();
+        }, 5000); // Wait 5 seconds before attempting to reconnect
+      }
+
+      setupLogSource();
+
+      function addLogEntry(time, method, endpoint, status, duration, requestOptions) {
+          const tr = document.createElement('tr');
+          tr.classList.add('new-row');
+          tr.innerHTML = `
+              <td class="log-time">${time}</td>
+              <td class="log-method"><span class="log-method-value">${method}</span></td>
+              <td class="log-endpoint">${endpoint}</td>
+              <td class="log-status"><span class="${status>=200 && status<300 ? 'success' : 'error'}">${status}</span></td>
+              <td class="log-duration">${duration}ms</td>
+              <td><button class="btn-view-details">View Details</button></td>
+          `;
+          
+          const viewDetailsBtn = tr.querySelector('.btn-view-details');
+          viewDetailsBtn.addEventListener('click', () => showLogDetails(time, method, endpoint, status, duration, requestOptions));
+          
+          if (logsTableBody.children.length > 1) {
+              logsTableBody.insertBefore(tr, logsTableBody.children[1]);
+          } else {
+              logsTableBody.appendChild(tr);
+          }
+
+          // Ensure the log table does not exceed 100 rows
+          while (logsTableBody.children.length > 100) {
+              logsTableBody.removeChild(logsTableBody.lastChild);
+          }
+          
+          // Add a message to the last line of the table
+          if (logsTableBody.children.length === 100) {
+              let messageRow = logsTableBody.querySelector('.log-message-row');
+              if (!messageRow) {
+                  messageRow = document.createElement('tr');
+                  messageRow.classList.add('log-message-row');
+                  const messageCell = document.createElement('td');
+                  messageCell.colSpan = 6; // Assuming there are 6 columns in the table
+                  messageCell.textContent = 'Only the latest 100 logs are being shown.';
+                  messageRow.appendChild(messageCell);
+                  logsTableBody.appendChild(messageRow);
+              }
+          }
+
+          incrementLogCounter();
+
+          setTimeout(() => {
+            tr.className = '';
+          }, 500);
+      }
+
+      function showLogDetails(time, method, endpoint, status, duration, requestOptions) {
+          logDetailsContent.innerHTML = `
+              <h3>Request Details</h3>
+              <p><strong>Time:</strong> ${time}</p>
+              <p><strong>Method:</strong> ${method}</p>
+              <p><strong>Endpoint:</strong> ${endpoint}</p>
+              <p><strong>Status:</strong> ${status}</p>
+              <p><strong>Duration:</strong> ${duration}ms</p>
+              <p><strong>Request:</strong> <pre>${JSON.stringify(requestOptions[0].requestParams, null, 2)}</pre></p>
+              <p><strong>Response:</strong> <pre>${JSON.stringify(requestOptions[0].response, null, 2)}</pre></p>
+          `;
+          logDetailsModal.style.display = 'block';
+      }
+
+      function incrementLogCounter() {
+        if(window.location.pathname != '/public/logs') {
+          logCounter++;
+          const badge = document.querySelector('header .badge');
+          badge.textContent = logCounter;
+          badge.style.display = 'inline-block';
+        }
+      }
+
+      function resetLogCounter() {
+        logCounter = 0;
+        const badge = document.querySelector('header .badge');
+        badge.textContent = logCounter;
+        badge.style.display = 'none';
+      }
+
+      closeModal.addEventListener('click', () => {
+          logDetailsModal.style.display = 'none';
+      });
+
+      window.addEventListener('click', (event) => {
+          if (event.target === logDetailsModal) {
+              logDetailsModal.style.display = 'none';
+          }
+      });
+
+      // Update event listeners for page unload
+      window.addEventListener('beforeunload', cleanupLogSource);
+      window.addEventListener('unload', cleanupLogSource);
+
+
+      window.onload = function() {
+        // Run the confetti function only once by storing the state in localStorage
+        if(!localStorage.getItem('confettiRun')) {
+          setTimeout(() => {  
+            confetti();
+            localStorage.setItem('confettiRun', 'true');
+          }, 1000);
+        }
+        // confetti({
+        //     particleCount: 100,
+        //     spread: 70,
+        //     origin: { y: 0.6 }
+        // });
+      };
+    </script>
+</body>
+
+</html>

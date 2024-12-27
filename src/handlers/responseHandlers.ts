@@ -41,7 +41,11 @@ export async function responseHandler(
   isCacheHit: boolean = false,
   gatewayRequest: Params,
   strictOpenAiCompliance: boolean
-): Promise<{ response: Response; responseJson: any }> {
+): Promise<{
+  response: Response;
+  responseJson: Record<string, any> | null;
+  originalResponseJson?: Record<string, any>;
+}> {
   let responseTransformerFunction: Function | undefined;
   let providerOption: Options | undefined;
   const responseContentType = response.headers?.get('content-type');
@@ -91,7 +95,6 @@ export async function responseHandler(
     );
     return { response: streamingResponse, responseJson: null };
   }
-
   if (streamingMode && response.status === 200) {
     return {
       response: handleStreamingMode(
@@ -131,6 +134,13 @@ export async function responseHandler(
     return { response: textResponse, responseJson: null };
   }
 
+  if (!responseContentType && response.status === 204) {
+    return {
+      response: new Response(response.body, response),
+      responseJson: null,
+    };
+  }
+
   const nonStreamingResponse = await handleNonStreamingMode(
     response,
     responseTransformerFunction,
@@ -140,6 +150,7 @@ export async function responseHandler(
   return {
     response: nonStreamingResponse.response,
     responseJson: nonStreamingResponse.json,
+    originalResponseJson: nonStreamingResponse.originalResponseBodyJson,
   };
 }
 
