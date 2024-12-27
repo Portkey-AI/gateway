@@ -202,11 +202,9 @@ export function convertGuardrailsShorthand(guardrailsArr: any, type: string) {
       'on_fail',
       'on_success',
       'async',
-      'onFail',
-      'onSuccess',
       'id',
       'type',
-      'guardrailVersionId',
+      'guardrail_version_id',
     ].forEach((key) => {
       if (guardrails.hasOwnProperty(key)) {
         hooksObject[key] = guardrails[key];
