@@ -1,5 +1,5 @@
-# Use an official Node.js runtime as a parent image
-FROM node:20-alpine
+# Use the official Node.js runtime as a parent image
+FROM node:20-alpine AS build
 
 # Set the working directory in the container
 WORKDIR /app
@@ -10,19 +10,27 @@ COPY package*.json ./
 # Install app dependencies
 RUN npm install
 
-COPY ./ ./
-
-RUN npm run build \
-&& rm -rf node_modules \
-&& npm install --production
-
-# Bundle app source
+# Copy the rest of the application code
 COPY . .
 
-# Expose the port your app runs on
+# Build the application and clean up
+RUN npm run build \
+&& rm -rf node_modules \
+&& npm install --omit=dev
+
+# Use the official Node.js runtime as a parent image
+FROM node:20-alpine
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the build directory, node_modules, and package.json to the working directory
+COPY --from=build /app/build /app/build
+COPY --from=build /app/node_modules /app/node_modules
+COPY --from=build /app/package.json /app/package.json
+
+# Expose port 8787
 EXPOSE 8787
 
 ENTRYPOINT ["npm"]
-
-# Define the command to run your app
 CMD ["run", "start:node"]

@@ -8,6 +8,7 @@ import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
+import { Params } from '../../types/requestBody';
 
 export const OllamaChatCompleteConfig: ProviderConfig = {
   model: {
@@ -18,6 +19,12 @@ export const OllamaChatCompleteConfig: ProviderConfig = {
   messages: {
     param: 'messages',
     default: '',
+    transform: (params: Params) => {
+      return params.messages?.map((message) => {
+        if (message.role === 'developer') return { ...message, role: 'system' };
+        return message;
+      });
+    },
   },
   frequency_penalty: {
     param: 'frequency_penalty',
@@ -63,6 +70,9 @@ export const OllamaChatCompleteConfig: ProviderConfig = {
     param: 'max_tokens',
     default: 100,
     min: 0,
+  },
+  tools: {
+    param: 'tools',
   },
 };
 

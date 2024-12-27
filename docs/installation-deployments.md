@@ -8,20 +8,20 @@
 
 Portkey runs this same Gateway on our API and processes **billions of tokens** daily. Portkey's API is in production with companies like Postman, Haptik, Turing, MultiOn, SiteGPT, and more.
 
-Sign up for the free developer plan (10K request/month) [here](https://app.portkey.ai/) or [discuss here](https://calendly.com/rohit-portkey/noam) for enterprise deployments.
+Sign up for the free developer plan [here](https://app.portkey.ai/) or [discuss here](https://calendly.com/portkey-ai/quick-meeting?utm_source=github&utm_campaign=install_page) for enterprise deployments.
 
 Check out the [API docs](https://portkey.ai/docs/welcome/make-your-first-request) here.
 
 ## Local Deployment
 
-1. Do [NPM](#node) or [Bun](#bun) Install
-2. Run a [Node.js Server](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#run-a-nodejs-server)
-3. Deploy on [App Stack](#deploy-to-app-stack)
-4. Deploy on [Cloudflare Workers](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-to-cloudflare-workers)
-5. Deploy using [Docker](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-using-docker)
-6. Deploy using [Docker Compose](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-using-docker-compose)
+1. Run through [NPX](#node) or [BunX](#bun) Install
+2. Run a [Node.js Server](#nodejs-server)
+3. Deploy using [Docker](#docker)
+4. Deploy using [Docker Compose](#docker-compose)
+5. Deploy on [Cloudflare Workers](#cloudflare-workers)
+6. Deploy on [App Stack](#deploy-to-app-stack)
 7. Deploy on [Replit](#replit)
-8. Deploy on [Zeabur](https://github.com/Portkey-AI/gateway/blob/main/docs/installation-deployments.md#deploy-to-zeabur)
+8. Deploy on [Zeabur](#zeabur)
 
 ### Node
 
@@ -39,7 +39,7 @@ $ bunx @portkey-ai/gateway
 
 <br>
 
-# Deploy to App Stack  
+### Deploy to App Stack  
 F5 Distributed Cloud
 1. [Create an App Stack Site](https://docs.cloud.f5.com/docs/how-to/site-management/create-voltstack-site)
 
@@ -189,10 +189,10 @@ node build/start-server.js
 
 ### Docker
 
-**Run using Docker directly:**
+**Run through the latest Docker Hub image:**
 
 ```sh
-docker run -d -p 8787:8787 portkeyai/gateway:latest
+docker run --rm  -p 8787:8787 portkeyai/gateway:latest
 ```
 
 For more information on the Docker image, check [here](https://hub.docker.com/r/portkeyai/gateway)
@@ -268,6 +268,6 @@ Make your AI app more <ins>reliable</ins> and <ins>forward compatible</ins>, whi
 ✅&nbsp; SOC2, ISO, HIPAA, GDPR Compliances - for best security practices <br>
 ✅&nbsp; Professional Support - along with feature prioritization <br>
 
-[Schedule a call to discuss enterprise deployments](https://calendly.com/rohit-portkey/noam)
+[Schedule a call to discuss enterprise deployments](https://calendly.com/portkey-ai/quick-meeting?utm_source=github&utm_campaign=install_page)
 
 <br>

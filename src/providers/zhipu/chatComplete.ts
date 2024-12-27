@@ -1,4 +1,5 @@
 import { ZHIPU } from '../../globals';
+import { Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -18,6 +19,12 @@ export const ZhipuChatCompleteConfig: ProviderConfig = {
   messages: {
     param: 'messages',
     default: '',
+    transform: (params: Params) => {
+      return params.messages?.map((message) => {
+        if (message.role === 'developer') return { ...message, role: 'system' };
+        return message;
+      });
+    },
   },
   max_tokens: {
     param: 'max_tokens',
