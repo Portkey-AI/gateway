@@ -25,7 +25,11 @@ export const handler: PluginHandler = async (
     }
 
     // Find all URLs in the content, they may or may not start with http(s)
-    const urls = content.match(/https?:\/\/[^\s]*/g) || [];
+    // Regex explanation: https?:\/\/[^\s,"'{}\[\]]+
+    // https?:\/\/ - matches http or https
+    // [^\s,"'{}\[\]]+ - matches any characters that are not whitespace, comma, single quote, curly brace, or square bracket
+    const urls = content.match(/https?:\/\/[^\s,"'{}\[\]]+/g) || [];
+    console.log('urls', urls);
     const onlyDNS = parameters.onlyDNS || false;
 
     if (urls.length === 0) {
