@@ -4,7 +4,6 @@ import {
   PluginHandler,
   PluginParameters,
 } from '../types';
-import dns from 'dns';
 import { getText } from '../utils';
 
 export const handler: PluginHandler = async (
@@ -148,11 +147,18 @@ async function checkUrl(target: string): Promise<boolean> {
 async function checkDNS(target: string): Promise<boolean> {
   try {
     const parsedUrl = new URL(target);
-    return new Promise((resolve) => {
-      dns.lookup(parsedUrl.hostname, (err) => {
-        resolve(err === null);
-      });
-    });
+    const response = await fetch(
+      // Using DNS over HTTPS (DoH) for cross-runtime compatibility (works in both Edge and Node.js)
+      // https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/make-api-requests/
+      `https://1.1.1.1/dns-query?name=${parsedUrl.hostname}`,
+      {
+        headers: {
+          accept: 'application/dns-json',
+        },
+      }
+    );
+    const data: Record<string, any> = await response.json();
+    return data.Status === 0 && data.Answer && data.Answer.length > 0;
   } catch (error) {
     return false;
   }
