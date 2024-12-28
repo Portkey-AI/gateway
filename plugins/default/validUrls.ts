@@ -29,7 +29,7 @@ export const handler: PluginHandler = async (
     // https?:\/\/ - matches http or https
     // [^\s,"'{}\[\]]+ - matches any characters that are not whitespace, comma, single quote, curly brace, or square bracket
     const urls = content.match(/https?:\/\/[^\s,"'{}\[\]]+/g) || [];
-    console.log('urls', urls);
+
     const onlyDNS = parameters.onlyDNS || false;
 
     if (urls.length === 0) {
