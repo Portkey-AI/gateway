@@ -202,3 +202,21 @@ export const derefer = (spec: Record<string, any>, defs = null) => {
   }
   return original;
 };
+
+// Vertex AI does not support additionalProperties in JSON Schema
+// https://cloud.google.com/vertex-ai/docs/reference/rest/v1/Schema
+export const recursivelyDeleteUnsupportedParameters = (obj: any) => {
+  if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) return;
+  delete obj.additional_properties;
+  delete obj.additionalProperties;
+  for (const key in obj) {
+    if (obj[key] !== null && typeof obj[key] === 'object') {
+      recursivelyDeleteUnsupportedParameters(obj[key]);
+    }
+    if (key == 'anyOf' && Array.isArray(obj[key])) {
+      obj[key].forEach((item: any) => {
+        recursivelyDeleteUnsupportedParameters(item);
+      });
+    }
+  }
+};

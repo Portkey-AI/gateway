@@ -40,7 +40,7 @@ import type {
   VertexLLamaChatCompleteResponse,
   GoogleSearchRetrievalTool,
 } from './types';
-import { getMimeType } from './utils';
+import { getMimeType, recursivelyDeleteUnsupportedParameters } from './utils';
 
 export const buildGoogleSearchRetrievalTool = (tool: Tool) => {
   const googleSearchRetrievalTool: GoogleSearchRetrievalTool = {
@@ -270,6 +270,10 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
       const tools: any = [];
       params.tools?.forEach((tool) => {
         if (tool.type === 'function') {
+          // these are not supported by google
+          recursivelyDeleteUnsupportedParameters(tool.function?.parameters);
+          delete tool.function?.strict;
+
           if (tool.function.name === 'googleSearchRetrieval') {
             tools.push(buildGoogleSearchRetrievalTool(tool));
           } else {
