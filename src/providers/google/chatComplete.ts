@@ -8,7 +8,11 @@ import {
   ToolChoice,
 } from '../../types/requestBody';
 import { buildGoogleSearchRetrievalTool } from '../google-vertex-ai/chatComplete';
-import { derefer, getMimeType } from '../google-vertex-ai/utils';
+import {
+  derefer,
+  getMimeType,
+  recursivelyDeleteUnsupportedParameters,
+} from '../google-vertex-ai/utils';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -44,6 +48,9 @@ const transformGenerationConfig = (params: Params) => {
   }
   if (params?.response_format?.type === 'json_schema') {
     generationConfig['responseMimeType'] = 'application/json';
+    recursivelyDeleteUnsupportedParameters(
+      params?.response_format?.json_schema?.schema
+    );
     let schema =
       params?.response_format?.json_schema?.schema ??
       params?.response_format?.json_schema;
@@ -330,10 +337,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
       params.tools?.forEach((tool) => {
         if (tool.type === 'function') {
           // these are not supported by google
-          delete tool.function?.parameters?.additional_properties;
-          delete tool.function?.parameters?.additionalProperties;
-          delete tool.function?.parameters?.properties?.additional_properties;
-          delete tool.function?.parameters?.properties?.additionalProperties;
+          recursivelyDeleteUnsupportedParameters(tool.function?.parameters);
           delete tool.function?.strict;
 
           if (tool.function.name === 'googleSearchRetrieval') {
