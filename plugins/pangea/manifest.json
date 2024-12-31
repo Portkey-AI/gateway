@@ -1,6 +1,6 @@
 {
   "id": "pangea",
-  "description": "Pangea Text Guard for scanning LLM inputs and outputs",
+  "description": "Pangea AI Guard for scanning LLM inputs and outputs",
   "credentials": {
     "type": "object",
     "properties": {
@@ -20,7 +20,7 @@
   },
   "functions": [
     {
-      "name": "Text Guard for scanning LLM inputs and outputs",
+      "name": "AI Guard for scanning LLM inputs and outputs",
       "id": "textGuard",
       "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
       "type": "guardrail",
