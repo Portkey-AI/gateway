@@ -104,10 +104,10 @@ const enqueueFileContentAndUpdateOctetStreamBuffer = (
       const json = JSON.parse(line);
       const transformedLine = rowTransform(json);
       controller.enqueue(
-        new Uint8Array(Buffer.from(JSON.stringify(transformedLine)))
+        new TextEncoder().encode(JSON.stringify(transformedLine))
       );
       controller.enqueue(new Uint8Array(Buffer.from('\r\n')));
-      buffer = buffer.slice(line.length + 1);
+      buffer = buffer.slice(line.length + 1)[0];
     } catch (error) {
       // this is not a valid json line, so we don't update the buffer
     }
@@ -224,13 +224,11 @@ export const getOctetStreamToOctetStreamTransformer = (
     transform(chunk, controller) {
       buffer += decoder.decode(new Uint8Array(chunk), { stream: true });
 
-      while (buffer.length > 0) {
-        buffer = enqueueFileContentAndUpdateOctetStreamBuffer(
-          controller,
-          buffer,
-          rowTransform
-        );
-      }
+      buffer = enqueueFileContentAndUpdateOctetStreamBuffer(
+        controller,
+        buffer,
+        rowTransform
+      );
     },
   });
   return transformStream;

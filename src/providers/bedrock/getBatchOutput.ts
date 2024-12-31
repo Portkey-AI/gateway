@@ -7,7 +7,7 @@ import { BedrockUploadFileResponseTransforms } from './uploadFileUtils';
 
 const getRowTransform = (provider: string) => {
   return (row: Record<string, any>) =>
-    BedrockUploadFileResponseTransforms[provider](row.modelInput);
+    BedrockUploadFileResponseTransforms[provider](row.modelOutput);
 };
 
 export const BedrockGetBatchOutputRequestHandler = async ({
@@ -47,14 +47,14 @@ export const BedrockGetBatchOutputRequestHandler = async ({
 
   const { awsRegion } = providerOptions;
   const awsS3Bucket = outputFileId.replace('s3://', '').split('/')[0];
-  const awsS3ObjectKey = outputFileId
-    .replace('s3://', '')
-    .split('/')
-    .slice(1)
-    .join('/');
+  const jobId = batchDetails.jobArn.split('/')[1];
+  const inputS3URIParts =
+    batchDetails.inputDataConfig.s3InputDataConfig.s3Uri.split('/');
+
+  const awsS3ObjectKey = `${jobId}/${inputS3URIParts[inputS3URIParts.length - 1]}.out`;
   const awsModelProvider = batchDetails.modelId.split('/')[1].split('.')[0];
 
-  const s3FileURL = `https://${awsS3Bucket}.s3.${awsRegion}.amazonaws.com/${encodeURIComponent(awsS3ObjectKey)}`;
+  const s3FileURL = `https://${awsS3Bucket}.s3.${awsRegion}.amazonaws.com/${awsS3ObjectKey}`;
   const s3FileHeaders = await BedrockAPIConfig.headers({
     c,
     providerOptions,
