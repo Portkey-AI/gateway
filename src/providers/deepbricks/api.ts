@@ -1,7 +1,7 @@
 import { ProviderAPIConfig } from '../types';
 
 const DeepbricksAPIConfig: ProviderAPIConfig = {
-  getBaseURL: () => 'https://api.deepbricks.ai/v1',
+  getBaseURL: () => 'https://api.deepbricks.ai',
   headers: ({ providerOptions }) => {
     const headersObj: Record<string, string> = {
       Authorization: `Bearer ${providerOptions.apiKey}`,
@@ -20,9 +20,9 @@ const DeepbricksAPIConfig: ProviderAPIConfig = {
   getEndpoint: ({ fn }) => {
     switch (fn) {
       case 'chatComplete':
-        return '/chat/completions';
+        return '/v1/chat/completions';
       case 'imageGenerate':
-        return '/images/generations';
+        return '/v1/images/generations';
       default:
         return '';
     }
