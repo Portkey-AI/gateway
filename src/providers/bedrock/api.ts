@@ -18,15 +18,19 @@ const AWS_GET_METHODS: endpointStrings[] = [
   'retrieveBatch',
   'retrieveFileContent',
   'getBatchOutput',
+  'retrieveFile',
 ];
 
 const S3_ENDPOINTS: endpointStrings[] = [
   'retrieveFileContent',
   'getBatchOutput',
+  'retrieveFile',
 ];
 
 const BedrockAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions, fn }) => {
+    if (fn === 'retrieveFile')
+      return `https://${providerOptions.awsS3Bucket}.s3.${providerOptions.awsRegion || 'us-east-1'}.amazonaws.com`;
     const isAWSControlPlaneEndpoint =
       fn && AWS_CONTROL_PLANE_ENDPOINTS.includes(fn);
     return `https://${isAWSControlPlaneEndpoint ? 'bedrock' : 'bedrock-runtime'}.${providerOptions.awsRegion || 'us-east-1'}.amazonaws.com`;
@@ -52,6 +56,10 @@ const BedrockAPIConfig: ProviderAPIConfig = {
 
     if (AWS_GET_METHODS.includes(fn as endpointStrings)) {
       delete headers['content-type'];
+    }
+
+    if (fn === 'retrieveFile') {
+      headers['x-amz-object-attributes'] = 'ObjectSize';
     }
 
     if (providerOptions.awsAuthType === 'assumedRole') {

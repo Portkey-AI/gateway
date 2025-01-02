@@ -5,6 +5,7 @@ import { getBoundaryFromContentType } from '../../handlers/streamHandlerUtils';
 import { BedrockUploadFileConfig } from './uploadFileUtils';
 import { transformUsingProviderConfig } from '../../services/transformToProviderRequest';
 import { ProviderConfig } from '../../providers/types';
+import { awsSignerUtil, generateAWSHeaders } from './utils';
 
 const unableToParseJsonResponse = () =>
   new Response(
@@ -71,64 +72,26 @@ class AwsMultipartUploadHandler {
 
   async initiateMultipartUpload() {
     const method = 'POST';
-    const now = new Date();
-    const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, ''); // e.g., 20231210T000000Z
-    const dateStamp = amzDate.slice(0, 8); // e.g., 20231210
-
-    const headers: Record<string, string> = {
-      Host: this.url.hostname,
-      'x-amz-date': amzDate,
-      'x-amz-content-sha256': 'UNSIGNED-PAYLOAD', // Required for S3
-    };
-
-    // Step 1: Create Canonical Request
-    const canonicalUri = `/${this.objectKey}`;
-    const canonicalQueryString = 'uploads=';
-    const signedHeaders = Object.keys(headers)
-      .map((key) => key.toLowerCase())
-      .sort()
-      .join(';');
-    const canonicalHeaders = Object.entries(headers)
-      .map(([key, value]) => `${key.toLowerCase()}:${value.trim()}\n`)
-      .sort()
-      .join('');
-    const payloadHash = 'UNSIGNED-PAYLOAD';
-
-    const canonicalRequest = [
-      method,
-      canonicalUri,
-      canonicalQueryString,
-      canonicalHeaders,
-      signedHeaders,
-      payloadHash,
-    ].join('\n');
-
-    // Step 2: Create String to Sign
-    const credentialScope = `${dateStamp}/${this.region}/s3/aws4_request`;
-    const stringToSign = [
-      'AWS4-HMAC-SHA256',
-      amzDate,
-      credentialScope,
-      this.sha256(canonicalRequest),
-    ].join('\n');
-
-    // Step 3: Calculate Signature
-    const signingKey = this.getSignatureKey(
+    // const headers = generateAWSHeaders(
+    //   'UNSIGNED-PAYLOAD',
+    //   {},
+    //   this.url.toString(),
+    //   'POST',
+    //   's3',
+    //   this.region,
+    //   this.accessKeyId,
+    //   this.secretAccessKey,
+    //   undefined
+    // );
+    const headers = awsSignerUtil(
+      this.accessKeyId,
       this.secretAccessKey,
-      dateStamp,
+      method,
+      this.url.toString(),
       this.region,
       's3'
     );
-    const signature = this.hmac(signingKey, stringToSign).toString('hex');
 
-    // Step 4: Add Authorization Header
-    headers['Authorization'] = [
-      `AWS4-HMAC-SHA256 Credential=${this.accessKeyId}/${credentialScope}`,
-      `SignedHeaders=${signedHeaders}`,
-      `Signature=${signature}`,
-    ].join(', ');
-
-    // Step 5: Send Request
     const response = await fetch(this.url.toString(), { method, headers });
     if (!response.ok) {
       const errorText = await response.text();

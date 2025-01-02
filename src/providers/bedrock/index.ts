@@ -59,6 +59,7 @@ import {
 } from './imageGenerate';
 import { BedrockListBatchesResponseTransform } from './listBatches';
 import { BedrockRetrieveBatchResponseTransform } from './retrieveBatch';
+import { BedrockRetrieveFileRequestHandler } from './retrieveFile';
 import {
   BedrockUploadFileRequestHandler,
   BedrockUploadFileResponseTransform,
@@ -68,6 +69,7 @@ const BedrockConfig: ProviderConfigs = {
   api: BedrockAPIConfig,
   requestHandlers: {
     uploadFile: BedrockUploadFileRequestHandler,
+    retrieveFile: BedrockRetrieveFileRequestHandler,
     getBatchOutput: BedrockGetBatchOutputRequestHandler,
   },
   getConfig: (params: Params, fn: endpointStrings) => {
