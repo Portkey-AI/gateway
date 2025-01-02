@@ -106,8 +106,8 @@ const enqueueFileContentAndUpdateOctetStreamBuffer = (
       controller.enqueue(
         new TextEncoder().encode(JSON.stringify(transformedLine))
       );
-      controller.enqueue(new Uint8Array(Buffer.from('\r\n')));
-      buffer = buffer.slice(line.length + 1)[0];
+      controller.enqueue(new TextEncoder().encode('\r\n'));
+      buffer = buffer.slice(line.length + 1);
     } catch (error) {
       // this is not a valid json line, so we don't update the buffer
     }
