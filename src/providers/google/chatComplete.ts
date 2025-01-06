@@ -6,7 +6,6 @@ import {
   Params,
   ToolCall,
   ToolChoice,
-  SYSTEM_MESSAGE_ROLES,
 } from '../../types/requestBody';
 import { buildGoogleSearchRetrievalTool } from '../google-vertex-ai/chatComplete';
 import { derefer, getMimeType } from '../google-vertex-ai/utils';
@@ -95,7 +94,12 @@ export const SYSTEM_INSTRUCTION_DISABLED_MODELS = [
   'gemini-pro-vision',
 ];
 
-export type GoogleMessageRole = 'user' | 'model' | 'system' | 'function';
+export type GoogleMessageRole =
+  | 'user'
+  | 'model'
+  | 'system'
+  | 'function'
+  | 'developer';
 
 interface GoogleFunctionCallMessagePart {
   functionCall: GoogleGenerateFunctionCall;
