@@ -6,7 +6,9 @@ import {
   Params,
   ToolCall,
   ToolChoice,
+  SYSTEM_MESSAGE_ROLES,
 } from '../../types/requestBody';
+import { buildGoogleSearchRetrievalTool } from '../google-vertex-ai/chatComplete';
 import { derefer, getMimeType } from '../google-vertex-ai/utils';
 import {
   ChatCompletionResponse,
@@ -340,12 +342,20 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
     default: '',
     transform: (params: Params) => {
       const functionDeclarations: any = [];
+      const tools: any = [];
       params.tools?.forEach((tool) => {
         if (tool.type === 'function') {
-          functionDeclarations.push(tool.function);
+          if (tool.function.name === 'googleSearchRetrieval') {
+            tools.push(buildGoogleSearchRetrievalTool(tool));
+          } else {
+            functionDeclarations.push(tool.function);
+          }
         }
       });
-      return { functionDeclarations };
+      if (functionDeclarations.length) {
+        tools.push({ functionDeclarations });
+      }
+      return tools;
     },
   },
   tool_choice: {
@@ -403,6 +413,24 @@ interface GoogleGenerateContentResponse {
       category: string;
       probability: string;
     }[];
+    groundingMetadata?: {
+      webSearchQueries?: string[];
+      searchEntryPoint?: {
+        renderedContent: string;
+      };
+      groundingSupports?: Array<{
+        segment: {
+          startIndex: number;
+          endIndex: number;
+          text: string;
+        };
+        groundingChunkIndices: number[];
+        confidenceScores: number[];
+      }>;
+      retrievalMetadata?: {
+        webDynamicRetrievalScore: number;
+      };
+    };
   }[];
   promptFeedback: {
     safetyRatings: {
@@ -438,8 +466,15 @@ export const GoogleErrorResponseTransform: (
 
 export const GoogleChatCompleteResponseTransform: (
   response: GoogleGenerateContentResponse | GoogleErrorResponse,
-  responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean
+) => ChatCompletionResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  strictOpenAiCompliance
+) => {
   if (responseStatus !== 200) {
     const errorResponse = GoogleErrorResponseTransform(
       response as GoogleErrorResponse
@@ -483,6 +518,9 @@ export const GoogleChatCompleteResponseTransform: (
             message: message,
             index: generation.index ?? idx,
             finish_reason: generation.finishReason,
+            ...(!strictOpenAiCompliance && generation.groundingMetadata
+              ? { groundingMetadata: generation.groundingMetadata }
+              : {}),
           };
         }) ?? [],
       usage: {
@@ -498,8 +536,15 @@ export const GoogleChatCompleteResponseTransform: (
 
 export const GoogleChatCompleteStreamChunkTransform: (
   response: string,
-  fallbackId: string
-) => string = (responseChunk, fallbackId) => {
+  fallbackId: string,
+  streamState: any,
+  strictOpenAiCompliance: boolean
+) => string = (
+  responseChunk,
+  fallbackId,
+  _streamState,
+  strictOpenAiCompliance
+) => {
   let chunk = responseChunk.trim();
   if (chunk.startsWith('[')) {
     chunk = chunk.slice(1);
@@ -556,6 +601,9 @@ export const GoogleChatCompleteStreamChunkTransform: (
             delta: message,
             index: generation.index ?? index,
             finish_reason: generation.finishReason,
+            ...(!strictOpenAiCompliance && generation.groundingMetadata
+              ? { groundingMetadata: generation.groundingMetadata }
+              : {}),
           };
         }) ?? [],
       usage: {

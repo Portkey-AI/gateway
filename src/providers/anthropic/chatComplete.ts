@@ -1,9 +1,10 @@
-import { ANTHROPIC } from '../../globals';
+import { ANTHROPIC, fileExtensionMimeTypeMap } from '../../globals';
 import {
   Params,
   Message,
   ContentType,
   AnthropicPromptCache,
+  SYSTEM_MESSAGE_ROLES,
 } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
@@ -110,15 +111,17 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
         let messages: AnthropicMessage[] = [];
         if (params.response_format) {
           if (params.response_format.type === 'json_schema') {
-            messages.push({ role: 'system', content: `Here is the JSON Schema that defines the structure for this conversation. You must follow this schema strictly and only return the JSON object:\n\n${params.response_format.json_schema}` });
+            messages.push({
+              role: 'system',
+              content: `Here is the JSON Schema that defines the structure for this conversation. You must follow this schema strictly and only return the JSON object:\n\n${params.response_format.json_schema}`,
+            });
           }
-
         }
 
         // Transform the chat messages into a simple prompt
         if (!!params.messages) {
           params.messages.forEach((msg: Message & AnthropicPromptCache) => {
-            if (msg.role === 'system') return;
+            if (SYSTEM_MESSAGE_ROLES.includes(msg.role)) return;
 
             if (msg.role === 'assistant') {
               messages.push(transformAssistantMessage(msg));
@@ -153,7 +156,10 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                     if (mediaTypeParts.length === 2 && base64Image) {
                       const mediaType = mediaTypeParts[1];
                       transformedMessage.content.push({
-                        type: 'image',
+                        type:
+                          mediaType === fileExtensionMimeTypeMap.pdf
+                            ? 'document'
+                            : 'image',
                         source: {
                           type: 'base64',
                           media_type: mediaType,
@@ -192,7 +198,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
         if (!!params.messages) {
           params.messages.forEach((msg: Message & AnthropicPromptCache) => {
             if (
-              msg.role === 'system' &&
+              SYSTEM_MESSAGE_ROLES.includes(msg.role) &&
               msg.content &&
               typeof msg.content === 'object' &&
               msg.content[0].text
@@ -207,7 +213,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                 });
               });
             } else if (
-              msg.role === 'system' &&
+              SYSTEM_MESSAGE_ROLES.includes(msg.role) &&
               typeof msg.content === 'string'
             ) {
               systemMessages.push({

@@ -217,15 +217,18 @@ export enum MESSAGE_ROLES {
   ASSISTANT = 'assistant',
   FUNCTION = 'function',
   TOOL = 'tool',
+  DEVELOPER = 'developer',
 }
+
+export const SYSTEM_MESSAGE_ROLES = ['system', 'developer'];
 
 export type OpenAIMessageRole =
   | 'system'
   | 'user'
   | 'assistant'
   | 'function'
-  | 'tool';
-
+  | 'tool'
+  | 'developer';
 /**
  * A message in the conversation.
  * @interface
@@ -301,7 +304,7 @@ export interface Tool extends AnthropicPromptCache {
   /** The name of the function. */
   type: string;
   /** A description of the function. */
-  function?: Function;
+  function: Function;
 }
 
 /**

@@ -6,7 +6,9 @@ import {
   ContentType,
   Message,
   Params,
+  Tool,
   ToolCall,
+  SYSTEM_MESSAGE_ROLES,
 } from '../../types/requestBody';
 import {
   AnthropicChatCompleteResponse,
@@ -36,8 +38,20 @@ import type {
   GoogleGenerateContentResponse,
   VertexLlamaChatCompleteStreamChunk,
   VertexLLamaChatCompleteResponse,
+  GoogleSearchRetrievalTool,
 } from './types';
 import { getMimeType } from './utils';
+
+export const buildGoogleSearchRetrievalTool = (tool: Tool) => {
+  const googleSearchRetrievalTool: GoogleSearchRetrievalTool = {
+    googleSearchRetrieval: {},
+  };
+  if (tool.function.parameters?.dynamicRetrievalConfig) {
+    googleSearchRetrievalTool.googleSearchRetrieval.dynamicRetrievalConfig =
+      tool.function.parameters.dynamicRetrievalConfig;
+  }
+  return googleSearchRetrievalTool;
+};
 
 export const VertexGoogleChatCompleteConfig: ProviderConfig = {
   // https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning#gemini-model-versions
@@ -58,7 +72,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
           // From gemini-1.5 onwards, systemInstruction is supported
           // Skipping system message and sending it in systemInstruction for gemini 1.5 models
           if (
-            message.role === 'system' &&
+            SYSTEM_MESSAGE_ROLES.includes(message.role) &&
             !SYSTEM_INSTRUCTION_DISABLED_MODELS.includes(params.model as string)
           )
             return;
@@ -173,7 +187,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
         if (!firstMessage) return;
 
         if (
-          firstMessage.role === 'system' &&
+          SYSTEM_MESSAGE_ROLES.includes(firstMessage.role) &&
           typeof firstMessage.content === 'string'
         ) {
           return {
@@ -187,7 +201,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
         }
 
         if (
-          firstMessage.role === 'system' &&
+          SYSTEM_MESSAGE_ROLES.includes(firstMessage.role) &&
           typeof firstMessage.content === 'object' &&
           firstMessage.content?.[0]?.text
         ) {
@@ -253,12 +267,20 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
     default: '',
     transform: (params: Params) => {
       const functionDeclarations: any = [];
+      const tools: any = [];
       params.tools?.forEach((tool) => {
         if (tool.type === 'function') {
-          functionDeclarations.push(tool.function);
+          if (tool.function.name === 'googleSearchRetrieval') {
+            tools.push(buildGoogleSearchRetrievalTool(tool));
+          } else {
+            functionDeclarations.push(tool.function);
+          }
         }
       });
-      return { functionDeclarations };
+      if (functionDeclarations.length) {
+        tools.push({ functionDeclarations });
+      }
+      return tools;
     },
   },
   tool_choice: {
@@ -392,7 +414,7 @@ export const VertexAnthropicChatCompleteConfig: ProviderConfig = {
         // Transform the chat messages into a simple prompt
         if (!!params.messages) {
           params.messages.forEach((msg) => {
-            if (msg.role === 'system') return;
+            if (SYSTEM_MESSAGE_ROLES.includes(msg.role)) return;
 
             if (msg.role === 'assistant') {
               messages.push(transformAssistantMessageForAnthropic(msg));
@@ -460,14 +482,14 @@ export const VertexAnthropicChatCompleteConfig: ProviderConfig = {
         if (!!params.messages) {
           params.messages.forEach((msg) => {
             if (
-              msg.role === 'system' &&
+              SYSTEM_MESSAGE_ROLES.includes(msg.role) &&
               msg.content &&
               typeof msg.content === 'object' &&
               msg.content[0].text
             ) {
               systemMessage = msg.content[0].text;
             } else if (
-              msg.role === 'system' &&
+              SYSTEM_MESSAGE_ROLES.includes(msg.role) &&
               typeof msg.content === 'string'
             ) {
               systemMessage = msg.content;
@@ -648,6 +670,9 @@ export const GoogleChatCompleteResponseTransform: (
             ...(!strictOpenAiCompliance && {
               safetyRatings: generation.safetyRatings,
             }),
+            ...(!strictOpenAiCompliance && generation.groundingMetadata
+              ? { groundingMetadata: generation.groundingMetadata }
+              : {}),
           };
         }) ?? [],
       usage: {
@@ -665,7 +690,13 @@ export const VertexLlamaChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
-    default: 'meta/llama3-405b-instruct-maas',
+    default: 'meta/llama-3.1-405b-instruct-maas',
+    transform: (params: Params) => {
+      return (
+        params.model?.replace('meta.', 'meta/') ||
+        'meta/llama-3.1-405b-instruct-maas'
+      );
+    },
   },
   messages: {
     param: 'messages',
@@ -778,6 +809,9 @@ export const GoogleChatCompleteStreamChunkTransform: (
           ...(!strictOpenAiCompliance && {
             safetyRatings: generation.safetyRatings,
           }),
+          ...(!strictOpenAiCompliance && generation.groundingMetadata
+            ? { groundingMetadata: generation.groundingMetadata }
+            : {}),
         };
       }) ?? [],
     usage: usageMetadata,

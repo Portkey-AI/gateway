@@ -32,6 +32,8 @@ import { handler as patronusnoRacialBias } from './patronus/noRacialBias';
 import { handler as patronusretrievalAnswerRelevance } from './patronus/retrievalAnswerRelevance';
 import { handler as patronustoxicity } from './patronus/toxicity';
 import { handler as patronuscustom } from './patronus/custom';
+import { mistralGuardrailHandler } from './mistral';
+import { handler as pangeatextGuard } from './pangea/textGuard';
 
 export const plugins = {
   default: {
@@ -79,5 +81,11 @@ export const plugins = {
     retrievalAnswerRelevance: patronusretrievalAnswerRelevance,
     toxicity: patronustoxicity,
     custom: patronuscustom,
+  },
+  mistral: {
+    moderateContent: mistralGuardrailHandler,
+  },
+  pangea: {
+    textGuard: pangeatextGuard,
   },
 };

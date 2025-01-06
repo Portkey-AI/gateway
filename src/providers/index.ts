@@ -50,6 +50,8 @@ import { DashScopeConfig } from './dashscope';
 import XAIConfig from './x-ai';
 import QdrantConfig from './qdrant';
 import SagemakerConfig from './sagemaker';
+import NebiusConfig from './nebius';
+import RecraftAIConfig from './recraft-ai';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -100,6 +102,8 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'x-ai': XAIConfig,
   qdrant: QdrantConfig,
   sagemaker: SagemakerConfig,
+  nebius: NebiusConfig,
+  'recraft-ai': RecraftAIConfig,
 };
 
 export default Providers;

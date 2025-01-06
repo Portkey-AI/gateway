@@ -183,10 +183,11 @@ const transformToProviderRequestFormData = (
 export const transformToProviderRequest = (
   provider: string,
   params: Params,
-  inputParams: Params | FormData,
+  inputParams: Params | FormData | ArrayBuffer,
   fn: endpointStrings
 ) => {
-  if (inputParams instanceof FormData) return inputParams;
+  if (inputParams instanceof FormData || inputParams instanceof ArrayBuffer)
+    return inputParams;
 
   if (fn === 'proxy') {
     return params;
