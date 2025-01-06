@@ -1,21 +1,75 @@
 import { env } from 'hono/adapter';
 import { GatewayError } from '../../errors/GatewayError';
-import { ProviderAPIConfig } from '../types';
+import { endpointStrings, ProviderAPIConfig } from '../types';
 import { bedrockInvokeModels } from './constants';
 import { generateAWSHeaders, getAssumedRoleCredentials } from './utils';
 
+const AWS_CONTROL_PLANE_ENDPOINTS: endpointStrings[] = [
+  'createBatch',
+  'retrieveBatch',
+  'cancelBatch',
+  'listBatches',
+  'retrieveFileContent',
+  'getBatchOutput',
+  'cancelBatch',
+];
+
+const AWS_GET_METHODS: endpointStrings[] = [
+  'listBatches',
+  'retrieveBatch',
+  'retrieveFileContent',
+  'getBatchOutput',
+  'retrieveFile',
+  'retrieveFileContent',
+];
+
+const S3_ENDPOINTS: endpointStrings[] = [
+  'retrieveFileContent',
+  'getBatchOutput',
+  'retrieveFile',
+  'retrieveFileContent',
+];
+
 const BedrockAPIConfig: ProviderAPIConfig = {
-  getBaseURL: ({ providerOptions }) =>
-    `https://bedrock-runtime.${providerOptions.awsRegion || 'us-east-1'}.amazonaws.com`,
+  getBaseURL: ({ providerOptions, fn }) => {
+    if (fn === 'retrieveFile' || fn === 'retrieveFileContent')
+      return `https://${providerOptions.awsS3Bucket}.s3.${providerOptions.awsRegion || 'us-east-1'}.amazonaws.com`;
+    const isAWSControlPlaneEndpoint =
+      fn && AWS_CONTROL_PLANE_ENDPOINTS.includes(fn);
+    return `https://${isAWSControlPlaneEndpoint ? 'bedrock' : 'bedrock-runtime'}.${providerOptions.awsRegion || 'us-east-1'}.amazonaws.com`;
+  },
   headers: async ({
     c,
+    fn,
     providerOptions,
     transformedRequestBody,
     transformedRequestUrl,
   }) => {
-    const headers = {
+    if (fn === 'uploadFile') {
+      const requestHeaders = Object.fromEntries(c.req.raw.headers);
+      return {
+        'content-type': 'application/octet-stream',
+        'content-length': requestHeaders['content-length'],
+      };
+    }
+    const headers: Record<string, string> = {
       'content-type': 'application/json',
     };
+
+    if (AWS_GET_METHODS.includes(fn as endpointStrings)) {
+      delete headers['content-type'];
+    }
+    if (fn === 'retrieveFile') {
+      headers['x-amz-object-attributes'] = 'ObjectSize';
+    }
+
+    const method = AWS_GET_METHODS.includes(fn as endpointStrings)
+      ? 'GET'
+      : 'POST';
+
+    const service = S3_ENDPOINTS.includes(fn as endpointStrings)
+      ? 's3'
+      : 'bedrock';
 
     if (providerOptions.awsAuthType === 'assumedRole') {
       try {
@@ -56,18 +110,30 @@ const BedrockAPIConfig: ProviderAPIConfig = {
       transformedRequestBody,
       headers,
       transformedRequestUrl,
-      'POST',
-      'bedrock',
+      method,
+      service,
       providerOptions.awsRegion || '',
       providerOptions.awsAccessKeyId || '',
       providerOptions.awsSecretAccessKey || '',
       providerOptions.awsSessionToken || ''
     );
   },
-  getEndpoint: ({ fn, gatewayRequestBody }) => {
+  getEndpoint: ({
+    fn,
+    gatewayRequestBodyJSON: gatewayRequestBody,
+    gatewayRequestURL,
+  }) => {
+    if (fn === 'uploadFile') return '';
+    if (fn === 'retrieveFileContent') {
+      const objectName = gatewayRequestURL.split('/v1/files/')[1].split('/')[0];
+      return `/${objectName}`;
+    }
+    if (fn === 'cancelBatch') {
+      const batchId = gatewayRequestURL.split('/v1/batches/')[1].split('/')[0];
+      return `/model-invocation-job/${batchId}/stop`;
+    }
     const { model, stream } = gatewayRequestBody;
-    if (!model) throw new GatewayError('Model is required');
-    let mappedFn = fn;
+    let mappedFn: string = fn;
     if (stream) {
       mappedFn = `stream-${fn}`;
     }
@@ -75,6 +141,7 @@ const BedrockAPIConfig: ProviderAPIConfig = {
     let streamEndpoint = `/model/${model}/invoke-with-response-stream`;
     if (
       (mappedFn === 'chatComplete' || mappedFn === 'stream-chatComplete') &&
+      model &&
       !bedrockInvokeModels.includes(model)
     ) {
       endpoint = `/model/${model}/converse`;
@@ -98,6 +165,18 @@ const BedrockAPIConfig: ProviderAPIConfig = {
       }
       case 'imageGenerate': {
         return endpoint;
+      }
+      case 'createBatch': {
+        return '/model-invocation-job';
+      }
+      case 'cancelBatch': {
+        return `/model-invocation-job/${gatewayRequestURL.split('/').pop()}/stop`;
+      }
+      case 'retrieveBatch': {
+        return `/model-invocation-job/${gatewayRequestURL.split('/v1/batches/')[1]}`;
+      }
+      case 'listBatches': {
+        return '/model-invocation-jobs';
       }
       default:
         return '';

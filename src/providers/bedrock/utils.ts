@@ -34,13 +34,18 @@ export const generateAWSHeaders = async (
   const urlObj = new URL(url);
   const hostname = urlObj.hostname;
   headers['host'] = hostname;
+  let requestBody;
+  if (method !== 'GET' && body) {
+    requestBody = JSON.stringify(body);
+  }
+  const queryParams = Object.fromEntries(urlObj.searchParams.entries());
   const request = {
     method: method,
     path: urlObj.pathname,
     protocol: 'https',
     hostname: urlObj.hostname,
     headers: headers,
-    body: JSON.stringify(body),
+    ...(requestBody && { body: requestBody }),
   };
 
   const signed = await signer.sign(request);

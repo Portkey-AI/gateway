@@ -13,7 +13,11 @@ const StabilityAIAPIConfig: ProviderAPIConfig = {
     headers['Accept'] = CONTENT_TYPES.APPLICATION_JSON;
     return headers;
   },
-  getEndpoint: ({ fn, gatewayRequestBody, providerOptions }) => {
+  getEndpoint: ({
+    fn,
+    gatewayRequestBodyJSON: gatewayRequestBody,
+    providerOptions,
+  }) => {
     let mappedFn = fn;
     const { urlToFetch } = providerOptions;
     if (
