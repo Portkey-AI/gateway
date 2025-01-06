@@ -640,10 +640,15 @@ export const GoogleChatCompleteResponseTransform: (
       provider: GOOGLE_VERTEX_AI,
       choices:
         response.candidates?.map((generation, index) => {
+          const containsChainOfThoughtMessage =
+            generation.content?.parts.length > 1;
           let message: Message = { role: 'assistant', content: '' };
           if (generation.content?.parts[0]?.text) {
             let content: string = generation.content.parts[0]?.text;
-            if (generation.content.parts[1]?.text) {
+            if (
+              containsChainOfThoughtMessage &&
+              generation.content.parts[1]?.text
+            ) {
               if (strictOpenAiCompliance)
                 content = generation.content.parts[1]?.text;
               else
@@ -788,15 +793,10 @@ export const GoogleChatCompleteStreamChunkTransform: (
     provider: GOOGLE_VERTEX_AI,
     choices:
       parsedChunk.candidates?.map((generation, index) => {
-        const containsChainOfThoughtMessage =
-          generation.content?.parts.length > 1;
         let message: Message = { role: 'assistant', content: '' };
         if (generation.content?.parts[0]?.text) {
           let content: string = generation.content.parts[0]?.text;
-          if (
-            containsChainOfThoughtMessage &&
-            generation.content.parts[1]?.text
-          ) {
+          if (generation.content.parts[1]?.text) {
             content =
               generation.content.parts[0]?.text +
               ' ' +
