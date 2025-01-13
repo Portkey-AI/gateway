@@ -40,7 +40,8 @@ const PortkeyAPIConfig: ProviderAPIConfig = {
         [PORTKEY_HEADER_KEYS.CONFIG]: headers[PORTKEY_HEADER_KEYS.CONFIG],
       }),
       ...(headers[PORTKEY_HEADER_KEYS.VIRTUAL_KEY] && {
-        [PORTKEY_HEADER_KEYS.VIRTUAL_KEY]: headers[PORTKEY_HEADER_KEYS.VIRTUAL_KEY],
+        [PORTKEY_HEADER_KEYS.VIRTUAL_KEY]:
+          headers[PORTKEY_HEADER_KEYS.VIRTUAL_KEY],
       }),
       ...(fn === 'uploadFile' && {
         'Content-Type': headers['content-type'],
