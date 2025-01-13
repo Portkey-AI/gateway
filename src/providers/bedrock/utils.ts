@@ -8,7 +8,7 @@ import {
 } from './chatComplete';
 import { Context } from 'hono';
 import { env } from 'hono/adapter';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 
 const hmac = (key: Buffer | string, data: string) => {
   return crypto.createHmac('sha256', key).update(data).digest();

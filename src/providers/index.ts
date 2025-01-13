@@ -52,6 +52,7 @@ import QdrantConfig from './qdrant';
 import SagemakerConfig from './sagemaker';
 import NebiusConfig from './nebius';
 import RecraftAIConfig from './recraft-ai';
+import PortkeyConfig from './portkey';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -104,6 +105,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   sagemaker: SagemakerConfig,
   nebius: NebiusConfig,
   'recraft-ai': RecraftAIConfig,
+  portkey: PortkeyConfig,
 };
 
 export default Providers;

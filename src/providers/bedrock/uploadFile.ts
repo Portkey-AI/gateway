@@ -1,6 +1,6 @@
 import { Options } from '../../types/requestBody';
 
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import { getBoundaryFromContentType } from '../../handlers/streamHandlerUtils';
 import { BedrockUploadFileConfig } from './uploadFileUtils';
 import { transformUsingProviderConfig } from '../../services/transformToProviderRequest';
