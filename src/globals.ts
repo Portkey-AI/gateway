@@ -78,7 +78,7 @@ export const X_AI: string = 'x-ai';
 export const SAGEMAKER: string = 'sagemaker';
 export const NEBIUS: string = 'nebius';
 export const RECRAFTAI: string = 'recraft-ai';
-
+export const MILVUS: string = 'milvus';
 export const VALID_PROVIDERS = [
   ANTHROPIC,
   ANYSCALE,
@@ -129,6 +129,7 @@ export const VALID_PROVIDERS = [
   SAGEMAKER,
   NEBIUS,
   RECRAFTAI,
+  MILVUS,
 ];
 
 export const CONTENT_TYPES = {

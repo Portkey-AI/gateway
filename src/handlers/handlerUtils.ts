@@ -93,9 +93,9 @@ export function constructRequest(
   // Add any headers that the model might need
   headers = {
     ...baseHeaders,
+    ...(fn === 'proxy' && proxyHeaders),
     ...headers,
     ...forwardHeadersMap,
-    ...(fn === 'proxy' && proxyHeaders),
   };
 
   let fetchOptions: RequestInit = {
@@ -345,7 +345,7 @@ export async function tryPost(
     fetchOptions.body = transformedRequestBody as FormData;
   } else if (
     fn == 'proxy' &&
-    requestContentType.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
+    requestContentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
   ) {
     fetchOptions.body = transformedRequestBody as ArrayBuffer;
   } else {
