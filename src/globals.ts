@@ -79,6 +79,7 @@ export const SAGEMAKER: string = 'sagemaker';
 export const NEBIUS: string = 'nebius';
 export const RECRAFTAI: string = 'recraft-ai';
 export const MILVUS: string = 'milvus';
+
 export const VALID_PROVIDERS = [
   ANTHROPIC,
   ANYSCALE,
