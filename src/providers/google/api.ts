@@ -5,13 +5,9 @@ export const GoogleApiConfig: ProviderAPIConfig = {
   headers: () => {
     return { 'Content-Type': 'application/json' };
   },
-  getEndpoint: ({
-    fn,
-    providerOptions,
-    gatewayRequestBodyJSON: gatewayRequestBody,
-  }) => {
+  getEndpoint: ({ fn, providerOptions, gatewayRequestBodyJSON }) => {
     let mappedFn = fn;
-    const { model, stream } = gatewayRequestBody;
+    const { model, stream } = gatewayRequestBodyJSON;
     const { apiKey } = providerOptions;
     if (stream) {
       mappedFn = `stream-${fn}`;

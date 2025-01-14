@@ -41,13 +41,9 @@ export const GoogleApiConfig: ProviderAPIConfig = {
       Authorization: `Bearer ${authToken}`,
     };
   },
-  getEndpoint: ({
-    fn,
-    gatewayRequestBodyJSON: gatewayRequestBody,
-    providerOptions,
-  }) => {
+  getEndpoint: ({ fn, gatewayRequestBodyJSON, providerOptions }) => {
     let mappedFn = fn;
-    const { model: inputModel, stream } = gatewayRequestBody;
+    const { model: inputModel, stream } = gatewayRequestBodyJSON;
     if (stream) {
       mappedFn = `stream-${fn}`;
     }

@@ -118,11 +118,7 @@ const BedrockAPIConfig: ProviderAPIConfig = {
       providerOptions.awsSessionToken || ''
     );
   },
-  getEndpoint: ({
-    fn,
-    gatewayRequestBodyJSON: gatewayRequestBody,
-    gatewayRequestURL,
-  }) => {
+  getEndpoint: ({ fn, gatewayRequestBodyJSON, gatewayRequestURL }) => {
     if (fn === 'uploadFile') return '';
     if (fn === 'retrieveFileContent') {
       const objectName = gatewayRequestURL.split('/v1/files/')[1].split('/')[0];
@@ -132,7 +128,7 @@ const BedrockAPIConfig: ProviderAPIConfig = {
       const batchId = gatewayRequestURL.split('/v1/batches/')[1].split('/')[0];
       return `/model-invocation-job/${batchId}/stop`;
     }
-    const { model, stream } = gatewayRequestBody;
+    const { model, stream } = gatewayRequestBodyJSON;
     let mappedFn: string = fn;
     if (stream) {
       mappedFn = `stream-${fn}`;
