@@ -11,8 +11,7 @@ import { GuardResult, PromptfooResult } from './types';
 export const handler: PluginHandler = async (
   context: PluginContext,
   parameters: PluginParameters,
-  eventType: HookEventType,
-  options: { env: Record<string, any> }
+  eventType: HookEventType
 ) => {
   let error = null;
   let verdict = true;

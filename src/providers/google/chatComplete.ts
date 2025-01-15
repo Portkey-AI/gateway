@@ -108,6 +108,8 @@ export const transformOpenAIRoleToGoogleRole = (
       return 'model';
     case 'tool':
       return 'function';
+    case 'developer':
+      return 'system';
     default:
       return role;
   }
