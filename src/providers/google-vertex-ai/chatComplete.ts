@@ -765,6 +765,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
   _streamState,
   strictOpenAiCompliance
 ) => {
+  let containsChainOfThoughtMessage: boolean = false;
   const chunk = responseChunk
     .trim()
     .replace(/^data: /, '')
@@ -795,12 +796,18 @@ export const GoogleChatCompleteStreamChunkTransform: (
       parsedChunk.candidates?.map((generation, index) => {
         let message: Message = { role: 'assistant', content: '' };
         if (generation.content?.parts[0]?.text) {
+          if (generation.content.parts[0].thought)
+            containsChainOfThoughtMessage = true;
           let content: string = generation.content.parts[0]?.text;
           if (generation.content.parts[1]?.text) {
-            content =
-              generation.content.parts[0]?.text +
-              ' ' +
-              generation.content.parts[1]?.text;
+            content += '\r\n\r\n' + generation.content.parts[1]?.text;
+            containsChainOfThoughtMessage = false;
+          } else if (
+            containsChainOfThoughtMessage &&
+            !generation.content.parts[0]?.thought
+          ) {
+            content = '\r\n\r\n' + content;
+            containsChainOfThoughtMessage = false;
           }
           message = {
             role: 'assistant',

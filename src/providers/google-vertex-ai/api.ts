@@ -2,6 +2,15 @@ import { Options } from '../../types/requestBody';
 import { ProviderAPIConfig } from '../types';
 import { getModelAndProvider, getAccessToken } from './utils';
 
+const shouldUseBeta1Version = (provider: string, inputModel: string) => {
+  if (
+    provider === 'meta' ||
+    inputModel.includes('gemini-2.0-flash-thinking-exp')
+  )
+    return true;
+  return false;
+};
+
 const getProjectRoute = (
   providerOptions: Options,
   inputModel: string
@@ -17,7 +26,10 @@ const getProjectRoute = (
   }
 
   const { provider } = getModelAndProvider(inputModel as string);
-  const routeVersion = provider === 'meta' ? 'v1beta1' : 'v1';
+  let routeVersion = provider === 'meta' ? 'v1beta1' : 'v1';
+  if (shouldUseBeta1Version(provider, inputModel)) {
+    routeVersion = 'v1beta1';
+  }
   return `/${routeVersion}/projects/${projectId}/locations/${vertexRegion}`;
 };
 

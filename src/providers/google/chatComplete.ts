@@ -391,6 +391,7 @@ interface GoogleGenerateContentResponse {
     content: {
       parts: {
         text?: string;
+        thought?: string; // for models like gemini-2.0-flash-thinking-exp refer: https://ai.google.dev/gemini-api/docs/thinking-mode#streaming_model_thinking
         functionCall?: GoogleGenerateFunctionCall;
       }[];
     };
@@ -547,6 +548,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
   _streamState,
   strictOpenAiCompliance
 ) => {
+  let containsChainOfThoughtMessage: boolean = false;
   let chunk = responseChunk.trim();
   if (chunk.startsWith('[')) {
     chunk = chunk.slice(1);
@@ -577,12 +579,18 @@ export const GoogleChatCompleteStreamChunkTransform: (
         parsedChunk.candidates?.map((generation, index) => {
           let message: Message = { role: 'assistant', content: '' };
           if (generation.content?.parts[0]?.text) {
+            if (generation.content.parts[0].thought)
+              containsChainOfThoughtMessage = true;
             let content: string = generation.content.parts[0]?.text;
             if (generation.content.parts[1]?.text) {
-              content =
-                generation.content.parts[0]?.text +
-                ' ' +
-                generation.content.parts[1]?.text;
+              content += '\r\n\r\n' + generation.content.parts[1]?.text;
+              containsChainOfThoughtMessage = false;
+            } else if (
+              containsChainOfThoughtMessage &&
+              !generation.content.parts[0]?.thought
+            ) {
+              content = '\r\n\r\n' + content;
+              containsChainOfThoughtMessage = false;
             }
             message = {
               role: 'assistant',
