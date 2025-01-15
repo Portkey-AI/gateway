@@ -581,15 +581,23 @@ export const GoogleChatCompleteStreamChunkTransform: (
           if (generation.content?.parts[0]?.text) {
             if (generation.content.parts[0].thought)
               containsChainOfThoughtMessage = true;
-            let content: string = generation.content.parts[0]?.text;
+
+            let content: string =
+              strictOpenAiCompliance && containsChainOfThoughtMessage
+                ? ''
+                : generation.content.parts[0]?.text;
             if (generation.content.parts[1]?.text) {
-              content += '\r\n\r\n' + generation.content.parts[1]?.text;
+              if (strictOpenAiCompliance)
+                content = generation.content.parts[1].text;
+              else content += '\r\n\r\n' + generation.content.parts[1]?.text;
               containsChainOfThoughtMessage = false;
             } else if (
               containsChainOfThoughtMessage &&
               !generation.content.parts[0]?.thought
             ) {
-              content = '\r\n\r\n' + content;
+              if (strictOpenAiCompliance)
+                content = generation.content.parts[0].text;
+              else content = '\r\n\r\n' + content;
               containsChainOfThoughtMessage = false;
             }
             message = {
