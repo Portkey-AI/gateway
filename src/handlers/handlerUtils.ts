@@ -265,15 +265,12 @@ export async function tryPost(
     strictOpenAiCompliance = false;
   }
 
-  let metadata: Record<string, string>;
+  let metadata: Record<string, string> = {};
   try {
     metadata = JSON.parse(requestHeaders[HEADER_KEYS.METADATA]);
-  } catch (err) {
-    metadata = {};
-  }
+  } catch {}
 
   const provider: string = providerOption.provider ?? '';
-
   const hooksManager = c.get('hooksManager');
   const hookSpan = hooksManager.createSpan(
     params,
@@ -289,26 +286,42 @@ export async function tryPost(
   // Mapping providers to corresponding URLs
   const providerConfig = Providers[provider];
   const apiConfig: ProviderAPIConfig = providerConfig.api;
+
   let brhResponse: Response | undefined;
-  let createdAt: Date;
   let transformedBody: any;
-  // BeforeHooksHandler
+  let createdAt: Date;
+
+  let url: string;
+  let mappedResponse: Response;
+  let retryCount: number | undefined;
+  let originalResponseJson: Record<string, any> | undefined;
+
+  let cacheKey: string | undefined;
+  let { cacheMode, cacheMaxAge, cacheStatus } = getCacheOptions(
+    providerOption.cache
+  );
+  let cacheResponse: Response | undefined;
+
+  const requestOptions = c.get('requestOptions') ?? [];
+  let transformedRequestBody: ReadableStream | FormData | Params = {};
+  let fetchOptions: RequestInit = {};
+
+  // before_request_hooks handler
   ({
     response: brhResponse,
     createdAt,
     transformedBody,
   } = await beforeRequestHookHandler(c, hookSpan.id));
 
-  if (!!brhResponse) {
-    // If before requestHandler returns a response, return it
+  if (brhResponse) {
     return createResponse(brhResponse, undefined, false, false);
   }
 
   if (transformedBody) {
     params = hookSpan.getContext().request.json;
   }
+
   // Attach the body of the request
-  let transformedRequestBody: ReadableStream | FormData | Params = {};
   if (!providerConfig?.requestHandlers?.[fn]) {
     transformedRequestBody =
       method === 'POST'
@@ -331,7 +344,6 @@ export async function tryPost(
 
   const customHost =
     requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || '';
-
   const baseUrl =
     customHost ||
     (await apiConfig.getBaseURL({
@@ -339,7 +351,6 @@ export async function tryPost(
       fn,
       c,
     }));
-
   const endpoint = apiConfig.getEndpoint({
     c,
     providerOptions: providerOption,
@@ -349,13 +360,16 @@ export async function tryPost(
     gatewayRequestURL: c.req.url,
   });
 
-  let url: string;
-  if (fn == 'proxy') {
-    let proxyPath = c.req.url.indexOf('/v1/proxy') > -1 ? '/v1/proxy' : '/v1';
-    url = getProxyPath(c.req.url, provider, proxyPath, baseUrl, providerOption);
-  } else {
-    url = `${baseUrl}${endpoint}`;
-  }
+  url =
+    fn === 'proxy'
+      ? getProxyPath(
+          c.req.url,
+          provider,
+          c.req.url.indexOf('/v1/proxy') > -1 ? '/v1/proxy' : '/v1',
+          baseUrl,
+          providerOption
+        )
+      : `${baseUrl}${endpoint}`;
 
   const headers = await apiConfig.headers({
     c,
@@ -367,7 +381,7 @@ export async function tryPost(
   });
 
   // Construct the base object for the POST request
-  const fetchOptions = constructRequest(
+  fetchOptions = constructRequest(
     headers,
     provider,
     method,
@@ -390,7 +404,7 @@ export async function tryPost(
     fetchOptions.body = transformedRequestBody;
   } else if (
     fn == 'proxy' &&
-    requestContentType.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
+    requestContentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
   ) {
     fetchOptions.body = transformedRequestBody as ArrayBuffer;
   } else {
@@ -405,18 +419,6 @@ export async function tryPost(
     attempts: providerOption.retry?.attempts ?? 0,
     onStatusCodes: providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES,
   };
-
-  const requestOptions = c.get('requestOptions') ?? [];
-
-  let mappedResponse: Response,
-    retryCount: number | undefined,
-    originalResponseJson: Record<string, any> | undefined;
-
-  let cacheKey: string | undefined;
-  let { cacheMode, cacheMaxAge, cacheStatus } = getCacheOptions(
-    providerOption.cache
-  );
-  let cacheResponse: Response | undefined;
 
   async function createResponse(
     response: Response,
@@ -500,7 +502,7 @@ export async function tryPost(
     hookSpan.id,
     fn
   ));
-  if (!!cacheResponse) {
+  if (cacheResponse) {
     return createResponse(cacheResponse, fn, true);
   }
 
@@ -509,7 +511,7 @@ export async function tryPost(
   const preRequestValidatorResponse = preRequestValidator
     ? await preRequestValidator(c, providerOption, requestHeaders, params)
     : undefined;
-  if (!!preRequestValidatorResponse) {
+  if (preRequestValidatorResponse) {
     return createResponse(preRequestValidatorResponse, undefined, false);
   }
 
