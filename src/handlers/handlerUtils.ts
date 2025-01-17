@@ -245,7 +245,7 @@ export async function tryPost(
   method: string = 'POST'
 ): Promise<Response> {
   const overrideParams = providerOption?.overrideParams || {};
-  const params: Params = { ...inputParams, ...overrideParams };
+  let params: Params = { ...inputParams, ...overrideParams };
   const isStreamingMode = params.stream ? true : false;
   let strictOpenAiCompliance = true;
 
@@ -278,6 +278,24 @@ export async function tryPost(
 
   // Mapping providers to corresponding URLs
   const apiConfig: ProviderAPIConfig = Providers[provider].api;
+  let brhResponse: Response | undefined;
+  let createdAt: Date;
+  let transformedBody: any;
+  // BeforeHooksHandler
+  ({
+    response: brhResponse,
+    createdAt,
+    transformedBody,
+  } = await beforeRequestHookHandler(c, hookSpan.id));
+
+  if (!!brhResponse) {
+    // If before requestHandler returns a response, return it
+    return createResponse(brhResponse, undefined, false, false);
+  }
+
+  if (transformedBody) {
+    params = hookSpan.getContext().request.json;
+  }
   // Attach the body of the request
   const transformedRequestBody = transformToProviderRequest(
     provider,
@@ -365,7 +383,6 @@ export async function tryPost(
 
   let mappedResponse: Response,
     retryCount: number | undefined,
-    createdAt: Date,
     originalResponseJson: Record<string, any> | undefined;
 
   let cacheKey: string | undefined;
@@ -373,8 +390,6 @@ export async function tryPost(
     providerOption.cache
   );
   let cacheResponse: Response | undefined;
-
-  let brhResponse: Response | undefined;
 
   async function createResponse(
     response: Response,
@@ -444,17 +459,6 @@ export async function tryPost(
     }
 
     return mappedResponse;
-  }
-
-  // BeforeHooksHandler
-  ({ response: brhResponse, createdAt } = await beforeRequestHookHandler(
-    c,
-    hookSpan.id
-  ));
-
-  if (!!brhResponse) {
-    // If before requestHandler returns a response, return it
-    return createResponse(brhResponse, undefined, false, false);
   }
 
   // Cache Handler
@@ -1213,6 +1217,8 @@ export async function beforeRequestHookHandler(
   c: Context,
   hookSpanId: string
 ): Promise<any> {
+  let span: HookSpan;
+  let isTransformed = false;
   try {
     const start = new Date();
     const hooksManager = c.get('hooksManager');
@@ -1221,6 +1227,9 @@ export async function beforeRequestHookHandler(
       ['syncBeforeRequestHook'],
       { env: env(c) }
     );
+
+    span = hooksManager.getSpan(hookSpanId) as HookSpan;
+    isTransformed = span.getContext().request.isTransformed;
 
     if (hooksResult.shouldDeny) {
       return {
@@ -1244,12 +1253,14 @@ export async function beforeRequestHookHandler(
           }
         ),
         createdAt: start,
+        transformedBody: isTransformed ? span.getContext().request.json : null,
       };
     }
   } catch (err) {
     console.log(err);
     return { error: err };
-    // TODO: Handle this error!!!
   }
-  return {};
+  return {
+    transformedBody: isTransformed ? span.getContext().request.json : null,
+  };
 }
