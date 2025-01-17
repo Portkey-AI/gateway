@@ -1,5 +1,5 @@
 import { Options } from '../../types/requestBody';
-import { ProviderAPIConfig } from '../types';
+import { endpointStrings, ProviderAPIConfig } from '../types';
 import { getModelAndProvider, getAccessToken } from './utils';
 
 const getProjectRoute = (
@@ -45,7 +45,7 @@ export const GoogleApiConfig: ProviderAPIConfig = {
     let mappedFn = fn;
     const { model: inputModel, stream } = gatewayRequestBodyJSON;
     if (stream) {
-      mappedFn = `stream-${fn}`;
+      mappedFn = `stream-${fn}` as endpointStrings;
     }
 
     const { provider, model } = getModelAndProvider(inputModel as string);
