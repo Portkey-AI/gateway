@@ -1,7 +1,7 @@
 name = "rubeus"
-compatibility_date = "2023-01-01"
+compatibility_date = "2024-12-05"
 main = "src/index.ts"
-node_compat = true
+compatibility_flags = [ "nodejs_compat" ]
 
 [vars]
 ENVIRONMENT = 'dev'
