@@ -7,34 +7,49 @@ import {
 import { getText } from '../utils';
 import { PORTKEY_ENDPOINTS, fetchPortkey } from './globals';
 
-async function detectPII(
-  text: string,
+export async function detectPII(
+  textArray: Array<string> | string,
   credentials: any,
   env: Record<string, any>
-) {
+): Promise<
+  Array<{
+    detectedPIICategories: Array<string>;
+    PIIData: Array<any>;
+    redactedText: string;
+  }>
+> {
   const result = await fetchPortkey(env, PORTKEY_ENDPOINTS.PII, credentials, {
-    input: text,
+    input: textArray,
   });
+  const mappedResult: Array<any> = [];
 
-  // Identify all the PII categories in the text
-  let detectedPIICategories = result[0].entities
-    .map((entity: any) => {
-      return Object.keys(entity.labels);
-    })
-    .flat()
-    .filter((value: any, index: any, self: string | any[]) => {
-      return self.indexOf(value) === index;
+  result.forEach((item: any) => {
+    // Identify all the PII categories in the text
+    let detectedPIICategories = item.entities
+      .map((entity: any) => {
+        return Object.keys(entity.labels);
+      })
+      .flat()
+      .filter((value: any, index: any, self: string | any[]) => {
+        return self.indexOf(value) === index;
+      });
+
+    // Generate the detailed data to be sent along with detectedPIICategories
+    let detailedData = item.entities.map((entity: any) => {
+      return {
+        text: entity.text,
+        labels: entity.labels,
+      };
     });
 
-  // Generate the detailed data to be sent along with detectedPIICategories
-  let detailedData = result[0].entities.map((entity: any) => {
-    return {
-      text: entity.text,
-      labels: entity.labels,
-    };
+    mappedResult.push({
+      detectedPIICategories,
+      PIIData: detailedData,
+      redactedText: item.processed_text,
+    });
   });
 
-  return { detectedPIICategories, PIIData: detailedData };
+  return mappedResult;
 }
 
 export const handler: PluginHandler = async (
@@ -52,11 +67,10 @@ export const handler: PluginHandler = async (
     const categoriesToCheck = parameters.categories;
     const not = parameters.not || false;
 
-    let { detectedPIICategories, PIIData } = await detectPII(
-      text,
-      parameters.credentials,
-      options?.env || {}
-    );
+    let { detectedPIICategories, PIIData } =
+      (
+        await detectPII(text, parameters.credentials, options?.env || {})
+      )?.[0] || {};
 
     let filteredCategories = detectedPIICategories.filter((category: string) =>
       categoriesToCheck.includes(category)
