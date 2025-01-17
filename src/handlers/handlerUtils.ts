@@ -192,10 +192,14 @@ export function selectProviderByWeight(providers: Options[]): Options {
   throw new Error('No provider selected, please check the weights');
 }
 
-export function convertGuardrailsShorthand(guardrailsArr: any, type: string) {
-  return guardrailsArr.map((guardrails: any) => {
+export function convertHooksShorthand(
+  hooksArr: any,
+  type: string,
+  hookType: string
+) {
+  return hooksArr.map((hook: any) => {
     let hooksObject: any = {
-      type: 'guardrail',
+      type: hookType,
       id: `${type}_guardrail_${Math.random().toString(36).substring(2, 5)}`,
     };
 
@@ -209,18 +213,18 @@ export function convertGuardrailsShorthand(guardrailsArr: any, type: string) {
       'type',
       'guardrail_version_id',
     ].forEach((key) => {
-      if (guardrails.hasOwnProperty(key)) {
-        hooksObject[key] = guardrails[key];
-        delete guardrails[key];
+      if (hook.hasOwnProperty(key)) {
+        hooksObject[key] = hook[key];
+        delete hook[key];
       }
     });
 
     hooksObject = convertKeysToCamelCase(hooksObject);
 
     // Now, add all the checks to the checks array
-    hooksObject.checks = Object.keys(guardrails).map((key) => ({
+    hooksObject.checks = Object.keys(hook).map((key) => ({
       id: key.includes('.') ? key : `default.${key}`,
-      parameters: guardrails[key],
+      parameters: hook[key],
     }));
 
     return hooksObject;
@@ -590,14 +594,40 @@ export async function tryTargetsRecursively(
   if (currentTarget.inputGuardrails) {
     currentTarget.beforeRequestHooks = [
       ...(currentTarget.beforeRequestHooks || []),
-      ...convertGuardrailsShorthand(currentTarget.inputGuardrails, 'input'),
+      ...convertHooksShorthand(
+        currentTarget.inputGuardrails,
+        'input',
+        'guardrail'
+      ),
     ];
   }
 
   if (currentTarget.outputGuardrails) {
     currentTarget.afterRequestHooks = [
       ...(currentTarget.afterRequestHooks || []),
-      ...convertGuardrailsShorthand(currentTarget.outputGuardrails, 'output'),
+      ...convertHooksShorthand(
+        currentTarget.outputGuardrails,
+        'output',
+        'guardrail'
+      ),
+    ];
+  }
+
+  if (currentTarget.inputMutators) {
+    currentTarget.beforeRequestHooks = [
+      ...(currentTarget.beforeRequestHooks || []),
+      ...convertHooksShorthand(currentTarget.inputMutators, 'input', 'mutator'),
+    ];
+  }
+
+  if (currentTarget.outputMutators) {
+    currentTarget.afterRequestHooks = [
+      ...(currentTarget.afterRequestHooks || []),
+      ...convertHooksShorthand(
+        currentTarget.outputMutators,
+        'output',
+        'mutator'
+      ),
     ];
   }
 
