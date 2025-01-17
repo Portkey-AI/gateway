@@ -119,16 +119,41 @@ const BedrockAPIConfig: ProviderAPIConfig = {
     );
   },
   getEndpoint: ({ fn, gatewayRequestBodyJSON, gatewayRequestURL }) => {
-    if (fn === 'uploadFile') return '';
-    if (fn === 'retrieveFileContent') {
-      const objectName = gatewayRequestURL.split('/v1/files/')[1].split('/')[0];
-      return `/${objectName}`;
+    switch (fn) {
+      case 'uploadFile':
+        return '';
+      case 'retrieveFile':
+        return '';
+      case 'listFiles':
+        return '';
+      case 'deleteFile':
+        return '';
+      case 'retrieveFileContent': {
+        const objectName = gatewayRequestURL
+          .split('/v1/files/')[1]
+          .split('/')[0];
+        return `/${objectName}`;
+      }
+      case 'getBatchOutput':
+        return '';
+      case 'createBatch': {
+        return '/model-invocation-job';
+      }
+      case 'cancelBatch': {
+        return `/model-invocation-job/${gatewayRequestURL.split('/v1/batches/')[1].split('/')[0]}/stop`;
+      }
+      case 'retrieveBatch': {
+        return `/model-invocation-job/${gatewayRequestURL.split('/v1/batches/')[1]}`;
+      }
+      case 'listBatches': {
+        return '/model-invocation-jobs';
+      }
+      default:
+        break;
     }
-    if (fn === 'cancelBatch') {
-      const batchId = gatewayRequestURL.split('/v1/batches/')[1].split('/')[0];
-      return `/model-invocation-job/${batchId}/stop`;
-    }
+
     const { model, stream } = gatewayRequestBodyJSON;
+    if (!model) throw new GatewayError('Model is required');
     let mappedFn: string = fn;
     if (stream) {
       mappedFn = `stream-${fn}`;
@@ -143,6 +168,7 @@ const BedrockAPIConfig: ProviderAPIConfig = {
       endpoint = `/model/${model}/converse`;
       streamEndpoint = `/model/${model}/converse-stream`;
     }
+
     switch (mappedFn) {
       case 'chatComplete': {
         return endpoint;
@@ -161,18 +187,6 @@ const BedrockAPIConfig: ProviderAPIConfig = {
       }
       case 'imageGenerate': {
         return endpoint;
-      }
-      case 'createBatch': {
-        return '/model-invocation-job';
-      }
-      case 'cancelBatch': {
-        return `/model-invocation-job/${gatewayRequestURL.split('/').pop()}/stop`;
-      }
-      case 'retrieveBatch': {
-        return `/model-invocation-job/${gatewayRequestURL.split('/v1/batches/')[1]}`;
-      }
-      case 'listBatches': {
-        return '/model-invocation-jobs';
       }
       default:
         return '';
