@@ -220,7 +220,12 @@ export async function afterRequestHookHandler(
 
     if (failedBeforeRequestHooks.length || failedAfterRequestHooks.length) {
       response = new Response(
-        JSON.stringify({ ...responseJSON, hook_results: hooksResult }),
+        JSON.stringify({
+          ...(span.getContext().response.isTransformed
+            ? span.getContext().response.json
+            : responseJSON),
+          hook_results: hooksResult,
+        }),
         {
           status: 246,
           statusText: 'Hooks failed',
@@ -231,7 +236,9 @@ export async function afterRequestHookHandler(
 
     return new Response(
       JSON.stringify({
-        ...responseJSON,
+        ...(span.getContext().response.isTransformed
+          ? span.getContext().response.json
+          : responseJSON),
         ...((hooksResult.beforeRequestHooksResult?.length ||
           hooksResult.afterRequestHooksResult?.length) && {
           hook_results: {
