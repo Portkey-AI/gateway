@@ -7,8 +7,8 @@ const SiliconFlowAPIConfig: ProviderAPIConfig = {
       Authorization: `Bearer ${providerOptions.apiKey}`,
     };
   },
-  getEndpoint: ({ fn, gatewayRequestBody }) => {
-    const { model = 'ByteDance/SDXL-Lightning' } = gatewayRequestBody;
+  getEndpoint: ({ fn, gatewayRequestBodyJSON }) => {
+    const { model = 'ByteDance/SDXL-Lightning' } = gatewayRequestBodyJSON;
     switch (fn) {
       case 'chatComplete':
         return '/chat/completions';

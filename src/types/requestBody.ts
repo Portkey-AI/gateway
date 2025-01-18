@@ -86,6 +86,9 @@ export interface Options {
   awsAuthType?: string;
   awsRoleArn?: string;
   awsExternalId?: string;
+  awsS3Bucket?: string;
+  awsS3ObjectKey?: string;
+  awsBedrockModel?: string;
 
   /** Sagemaker specific */
   amznSagemakerCustomAttributes?: string;
@@ -282,6 +285,8 @@ export interface Function {
   description?: string;
   /** The parameters for the function. */
   parameters?: JsonSchema;
+  /** Whether to enable strict schema adherence when generating the function call. If set to true, the model will follow the exact schema defined in the parameters field. Only a subset of JSON Schema is supported when strict is true */
+  strict?: boolean;
 }
 
 export interface ToolChoiceObject {

@@ -1,6 +1,6 @@
 import { GatewayError } from '../errors/GatewayError';
 import ProviderConfigs from '../providers';
-import { endpointStrings } from '../providers/types';
+import { endpointStrings, ProviderConfig } from '../providers/types';
 import { Params } from '../types/requestBody';
 
 /**
@@ -64,37 +64,10 @@ const getValue = (configParam: string, params: Params, paramConfig: any) => {
   return value;
 };
 
-/**
- * Transforms the request body to match the structure required by the AI provider.
- * It also ensures the values for each parameter are within the minimum and maximum
- * constraints defined in the provider's configuration. If a required parameter is missing,
- * it assigns the default value from the provider's configuration.
- *
- * @param provider - The name of the AI provider.
- * @param params - The parameters for the request.
- * @param fn - The function to call on the AI provider.
- *
- * @returns The transformed request body.
- *
- * @throws {Error} If the provider is not supported.
- */
-const transformToProviderRequestJSON = (
-  provider: string,
-  params: Params,
-  fn: string
-): { [key: string]: any } => {
-  // Get the configuration for the specified provider
-  let providerConfig = ProviderConfigs[provider];
-  if (providerConfig.getConfig) {
-    providerConfig = providerConfig.getConfig(params)[fn];
-  } else {
-    providerConfig = providerConfig[fn];
-  }
-
-  if (!providerConfig) {
-    throw new GatewayError(`${fn} is not supported by ${provider}`);
-  }
-
+export const transformUsingProviderConfig = (
+  providerConfig: ProviderConfig,
+  params: Params
+) => {
   const transformedRequest: { [key: string]: any } = {};
 
   // For each parameter in the provider's configuration
@@ -137,6 +110,40 @@ const transformToProviderRequestJSON = (
   return transformedRequest;
 };
 
+/**
+ * Transforms the request body to match the structure required by the AI provider.
+ * It also ensures the values for each parameter are within the minimum and maximum
+ * constraints defined in the provider's configuration. If a required parameter is missing,
+ * it assigns the default value from the provider's configuration.
+ *
+ * @param provider - The name of the AI provider.
+ * @param params - The parameters for the request.
+ * @param fn - The function to call on the AI provider.
+ *
+ * @returns The transformed request body.
+ *
+ * @throws {Error} If the provider is not supported.
+ */
+const transformToProviderRequestJSON = (
+  provider: string,
+  params: Params,
+  fn: string
+): { [key: string]: any } => {
+  // Get the configuration for the specified provider
+  let providerConfig = ProviderConfigs[provider];
+  if (providerConfig.getConfig) {
+    providerConfig = providerConfig.getConfig(params)[fn];
+  } else {
+    providerConfig = providerConfig[fn];
+  }
+
+  if (!providerConfig) {
+    throw new GatewayError(`${fn} is not supported by ${provider}`);
+  }
+
+  return transformUsingProviderConfig(providerConfig, params);
+};
+
 const transformToProviderRequestFormData = (
   provider: string,
   params: Params,
@@ -171,6 +178,24 @@ const transformToProviderRequestFormData = (
   return formData;
 };
 
+const transformToProviderRequestReadableStream = (
+  provider: string,
+  requestBody: ReadableStream,
+  requestHeaders: Record<string, string>,
+  fn: string
+) => {
+  if (ProviderConfigs[provider].getConfig) {
+    return ProviderConfigs[provider]
+      .getConfig({}, fn)
+      .requestTransforms[fn](requestBody, requestHeaders);
+  } else {
+    return ProviderConfigs[provider].requestTransforms[fn](
+      requestBody,
+      requestHeaders
+    );
+  }
+};
+
 /**
  * Transforms the request parameters to the format expected by the provider.
  *
@@ -183,11 +208,21 @@ const transformToProviderRequestFormData = (
 export const transformToProviderRequest = (
   provider: string,
   params: Params,
-  inputParams: Params | FormData | ArrayBuffer,
-  fn: endpointStrings
+  requestBody: Params | FormData | ArrayBuffer | ReadableStream | ArrayBuffer,
+  fn: endpointStrings,
+  requestHeaders: Record<string, string>
 ) => {
-  if (inputParams instanceof FormData || inputParams instanceof ArrayBuffer)
-    return inputParams;
+  // this returns a ReadableStream
+  if (fn === 'uploadFile') {
+    return transformToProviderRequestReadableStream(
+      provider,
+      requestBody as ReadableStream,
+      requestHeaders,
+      fn
+    );
+  }
+  if (requestBody instanceof FormData || params instanceof ArrayBuffer)
+    return requestBody;
 
   if (fn === 'proxy') {
     return params;

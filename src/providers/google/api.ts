@@ -5,23 +5,20 @@ export const GoogleApiConfig: ProviderAPIConfig = {
   headers: () => {
     return { 'Content-Type': 'application/json' };
   },
-  getEndpoint: ({ fn, providerOptions, gatewayRequestBody }) => {
+  getEndpoint: ({ fn, providerOptions, gatewayRequestBodyJSON }) => {
     let routeVersion = 'v1beta';
     let mappedFn = fn;
-    const { model, stream } = gatewayRequestBody;
+    const { model, stream } = gatewayRequestBodyJSON;
     if (model?.includes('gemini-2.0-flash-thinking-exp')) {
       routeVersion = 'v1alpha';
     }
     const { apiKey } = providerOptions;
-    if (stream) {
-      mappedFn = `stream-${fn}`;
+    if (stream && fn === 'chatComplete') {
+      return `/models/${model}:streamGenerateContent?key=${apiKey}`;
     }
     switch (mappedFn) {
       case 'chatComplete': {
         return `/${routeVersion}/models/${model}:generateContent?key=${apiKey}`;
-      }
-      case 'stream-chatComplete': {
-        return `/${routeVersion}/models/${model}:streamGenerateContent?key=${apiKey}`;
       }
       case 'embed': {
         return `/${routeVersion}/models/${model}:embedContent?key=${apiKey}`;

@@ -44,12 +44,19 @@ export interface ProviderAPIConfig {
     gatewayRequestBody?: Params;
   }) => Promise<Record<string, any>> | Record<string, any>;
   /** A function to generate the baseURL based on parameters */
-  getBaseURL: (args: { providerOptions: Options }) => string;
+  getBaseURL: (args: {
+    providerOptions: Options;
+    fn?: endpointStrings;
+    requestHeaders?: Record<string, string>;
+    c: Context;
+  }) => Promise<string> | string;
   /** A function to generate the endpoint based on parameters */
   getEndpoint: (args: {
+    c: Context;
     providerOptions: Options;
-    fn: string;
-    gatewayRequestBody: Params;
+    fn: endpointStrings;
+    gatewayRequestBodyJSON: Params;
+    gatewayRequestBody?: FormData | Params | ArrayBuffer | ReadableStream;
     gatewayRequestURL: string;
   }) => string;
   /** A function to determine if the request body should be transformed to form data */
@@ -74,8 +81,17 @@ export type endpointStrings =
   | 'createSpeech'
   | 'createTranscription'
   | 'createTranslation'
-  | 'realtime';
-
+  | 'realtime'
+  | 'uploadFile'
+  | 'listFiles'
+  | 'retrieveFile'
+  | 'deleteFile'
+  | 'retrieveFileContent'
+  | 'createBatch'
+  | 'retrieveBatch'
+  | 'cancelBatch'
+  | 'listBatches'
+  | 'getBatchOutput';
 /**
  * A collection of API configurations for multiple AI providers.
  * @interface
@@ -173,4 +189,101 @@ export interface ImageGenerateResponse {
   created: number;
   data: object[];
   provider: string;
+}
+
+/**
+ * The response body for uploading a file.
+ * @interface
+ */
+export interface UploadFileResponse extends File {}
+
+/**
+ * The response body for getting a file.
+ * @interface
+ */
+export interface GetFileResponse extends File {}
+
+/**
+ * The response body for getting a list of files.
+ * @interface
+ */
+export interface GetFilesResponse {
+  data: File[];
+  object: 'list';
+}
+
+/**
+ * File object
+ * @interface
+ */
+export interface File {
+  id: string;
+  object: string;
+  bytes?: number;
+  created_at: number;
+  filename: string;
+  purpose:
+    | string
+    | 'assistants'
+    | 'assistants_output'
+    | 'batch'
+    | 'batch_output'
+    | 'fine-tune'
+    | 'fine-tune-results'
+    | 'vision';
+  status?: string | 'uploaded' | 'processed' | 'error';
+  status_details?: string;
+}
+
+/**
+ * The response body for deleting a file.
+ * @interface
+ */
+export interface DeleteFileResponse {
+  object: string;
+  deleted: boolean;
+  id: string;
+}
+
+interface Batch {
+  id: string;
+  object: string;
+  endpoint?: string | 'batch';
+  errors?: {
+    object: string | 'list';
+    data: {
+      code: string;
+      message: string;
+      param?: string;
+      line?: number;
+    }[];
+  };
+  input_file_id?: string;
+  completion_window?: string;
+  status?: string;
+  output_file_id?: string;
+  error_file_id?: string;
+  created_at?: number;
+  in_progress_at?: number;
+  expires_at?: number;
+  finalizing_at?: number;
+  completed_at?: number;
+  failed_at?: number;
+  expired_at?: number;
+  cancelling_at?: number;
+  cancelled_at?: number;
+  request_counts?: {
+    total: number;
+    completed: number;
+    failed: number;
+  };
+  metadata?: Record<string, any>;
+}
+
+export interface CreateBatchResponse extends Batch {}
+export interface RetrieveBatchResponse extends Batch {}
+export interface CancelBatchResponse extends Batch {}
+export interface ListBatchesResponse {
+  object: string | 'list';
+  data: Batch[];
 }

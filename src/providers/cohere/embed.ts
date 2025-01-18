@@ -3,6 +3,29 @@ import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
 import { generateErrorResponse } from '../utils';
 import { COHERE } from '../../globals';
 
+interface CohereEmbedResponseBatch {
+  custom_id: string;
+  id: string;
+  text: string;
+  embeddings: {
+    float?: {
+      array: number[];
+    };
+    int8?: {
+      array: number[];
+    };
+    uint8?: {
+      array: number[];
+    };
+    binary?: {
+      array: number[];
+    };
+    ubinary?: {
+      array: number[];
+    };
+  };
+}
+
 export const CohereEmbedConfig: ProviderConfig = {
   input: {
     param: 'texts',
@@ -98,6 +121,34 @@ export const CohereEmbedResponseTransform: (
     usage: {
       prompt_tokens: -1,
       total_tokens: -1,
+    },
+  };
+};
+
+export const CohereEmbedResponseTransformBatch = (
+  response: CohereEmbedResponseBatch
+) => {
+  return {
+    id: response.id,
+    custom_id: response.custom_id,
+    response: {
+      status_code: 200,
+      request_id: response.id,
+      body: {
+        object: 'list',
+        data: [
+          {
+            object: 'embedding',
+            index: 0,
+            embedding: response.embeddings.float?.array,
+          },
+        ],
+        model: '',
+        usage: {
+          prompt_tokens: 0,
+          total_tokens: 0,
+        },
+      },
     },
   };
 };
