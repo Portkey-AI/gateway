@@ -593,7 +593,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
               else content += '\r\n\r\n' + generation.content.parts[1]?.text;
               streamState.containsChainOfThoughtMessage = false;
             } else if (
-              containsChainOfThoughtMessage &&
+              streamState.containsChainOfThoughtMessage &&
               !generation.content.parts[0]?.thought
             ) {
               if (strictOpenAiCompliance)
