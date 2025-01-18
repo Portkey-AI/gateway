@@ -292,6 +292,42 @@ export async function tryPost(
   let createdAt: Date;
 
   let url: string;
+  const forwardHeaders =
+    requestHeaders[HEADER_KEYS.FORWARD_HEADERS]
+      ?.split(',')
+      .map((h) => h.trim()) ||
+    providerOption.forwardHeaders ||
+    [];
+
+  const customHost =
+    requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || '';
+  const baseUrl =
+    customHost ||
+    (await apiConfig.getBaseURL({
+      providerOptions: providerOption,
+      fn,
+      c,
+    }));
+  const endpoint = apiConfig.getEndpoint({
+    c,
+    providerOptions: providerOption,
+    fn,
+    gatewayRequestBodyJSON: params,
+    gatewayRequestBody: requestBody,
+    gatewayRequestURL: c.req.url,
+  });
+
+  url =
+    fn === 'proxy'
+      ? getProxyPath(
+          c.req.url,
+          provider,
+          c.req.url.indexOf('/v1/proxy') > -1 ? '/v1/proxy' : '/v1',
+          baseUrl,
+          providerOption
+        )
+      : `${baseUrl}${endpoint}`;
+
   let mappedResponse: Response;
   let retryCount: number | undefined;
   let originalResponseJson: Record<string, any> | undefined;
@@ -334,42 +370,6 @@ export async function tryPost(
           )
         : requestBody;
   }
-
-  const forwardHeaders =
-    requestHeaders[HEADER_KEYS.FORWARD_HEADERS]
-      ?.split(',')
-      .map((h) => h.trim()) ||
-    providerOption.forwardHeaders ||
-    [];
-
-  const customHost =
-    requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || '';
-  const baseUrl =
-    customHost ||
-    (await apiConfig.getBaseURL({
-      providerOptions: providerOption,
-      fn,
-      c,
-    }));
-  const endpoint = apiConfig.getEndpoint({
-    c,
-    providerOptions: providerOption,
-    fn,
-    gatewayRequestBodyJSON: params,
-    gatewayRequestBody: requestBody,
-    gatewayRequestURL: c.req.url,
-  });
-
-  url =
-    fn === 'proxy'
-      ? getProxyPath(
-          c.req.url,
-          provider,
-          c.req.url.indexOf('/v1/proxy') > -1 ? '/v1/proxy' : '/v1',
-          baseUrl,
-          providerOption
-        )
-      : `${baseUrl}${endpoint}`;
 
   const headers = await apiConfig.headers({
     c,
