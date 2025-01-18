@@ -40,7 +40,7 @@ import type {
   VertexLLamaChatCompleteResponse,
   GoogleSearchRetrievalTool,
 } from './types';
-import { getMimeType } from './utils';
+import { getMimeType, recursivelyDeleteUnsupportedParameters } from './utils';
 
 export const buildGoogleSearchRetrievalTool = (tool: Tool) => {
   const googleSearchRetrievalTool: GoogleSearchRetrievalTool = {
@@ -270,6 +270,10 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
       const tools: any = [];
       params.tools?.forEach((tool) => {
         if (tool.type === 'function') {
+          // these are not supported by google
+          recursivelyDeleteUnsupportedParameters(tool.function?.parameters);
+          delete tool.function?.strict;
+
           if (tool.function.name === 'googleSearchRetrieval') {
             tools.push(buildGoogleSearchRetrievalTool(tool));
           } else {
@@ -640,11 +644,26 @@ export const GoogleChatCompleteResponseTransform: (
       provider: GOOGLE_VERTEX_AI,
       choices:
         response.candidates?.map((generation, index) => {
+          const containsChainOfThoughtMessage =
+            generation.content?.parts.length > 1;
           let message: Message = { role: 'assistant', content: '' };
           if (generation.content?.parts[0]?.text) {
+            let content: string = generation.content.parts[0]?.text;
+            if (
+              containsChainOfThoughtMessage &&
+              generation.content.parts[1]?.text
+            ) {
+              if (strictOpenAiCompliance)
+                content = generation.content.parts[1]?.text;
+              else
+                content =
+                  generation.content.parts[0]?.text +
+                  '\r\n\r\n' +
+                  generation.content.parts[1]?.text;
+            }
             message = {
               role: 'assistant',
-              content: generation.content.parts[0]?.text,
+              content,
             };
           } else if (generation.content?.parts[0]?.functionCall) {
             message = {
@@ -747,9 +766,11 @@ export const GoogleChatCompleteStreamChunkTransform: (
 ) => string = (
   responseChunk,
   fallbackId,
-  _streamState,
+  streamState,
   strictOpenAiCompliance
 ) => {
+  streamState.containsChainOfThoughtMessage =
+    streamState?.containsChainOfThoughtMessage ?? false;
   const chunk = responseChunk
     .trim()
     .replace(/^data: /, '')
@@ -780,9 +801,30 @@ export const GoogleChatCompleteStreamChunkTransform: (
       parsedChunk.candidates?.map((generation, index) => {
         let message: Message = { role: 'assistant', content: '' };
         if (generation.content?.parts[0]?.text) {
+          if (generation.content.parts[0].thought)
+            streamState.containsChainOfThoughtMessage = true;
+
+          let content: string =
+            strictOpenAiCompliance && streamState.containsChainOfThoughtMessage
+              ? ''
+              : generation.content.parts[0]?.text;
+          if (generation.content.parts[1]?.text) {
+            if (strictOpenAiCompliance)
+              content = generation.content.parts[1].text;
+            else content += '\r\n\r\n' + generation.content.parts[1]?.text;
+            streamState.containsChainOfThoughtMessage = false;
+          } else if (
+            streamState.containsChainOfThoughtMessage &&
+            !generation.content.parts[0]?.thought
+          ) {
+            if (strictOpenAiCompliance)
+              content = generation.content.parts[0].text;
+            else content = '\r\n\r\n' + content;
+            streamState.containsChainOfThoughtMessage = false;
+          }
           message = {
             role: 'assistant',
-            content: generation.content.parts[0]?.text,
+            content,
           };
         } else if (generation.content?.parts[0]?.functionCall) {
           message = {
@@ -927,6 +969,28 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
   chunk = chunk.trim();
 
   const parsedChunk: AnthropicChatCompleteStreamResponse = JSON.parse(chunk);
+
+  if (parsedChunk.type === 'error' && parsedChunk.error) {
+    return (
+      `data: ${JSON.stringify({
+        id: fallbackId,
+        object: 'chat.completion.chunk',
+        created: Math.floor(Date.now() / 1000),
+        model: '',
+        provider: GOOGLE_VERTEX_AI,
+        choices: [
+          {
+            finish_reason: parsedChunk.error.type,
+            delta: {
+              content: '',
+            },
+          },
+        ],
+      })}` +
+      '\n\n' +
+      'data: [DONE]\n\n'
+    );
+  }
 
   if (
     parsedChunk.type === 'content_block_start' &&
