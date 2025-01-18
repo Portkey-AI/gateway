@@ -93,9 +93,9 @@ export function constructRequest(
   // Add any headers that the model might need
   headers = {
     ...baseHeaders,
-    ...(fn === 'proxy' && proxyHeaders),
     ...headers,
     ...forwardHeadersMap,
+    ...(fn === 'proxy' && proxyHeaders),
   };
 
   let fetchOptions: RequestInit = {
