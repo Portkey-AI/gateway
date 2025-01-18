@@ -213,7 +213,8 @@ export async function handleTextResponse(
 export async function handleNonStreamingMode(
   response: Response,
   responseTransformer: Function | undefined,
-  strictOpenAiCompliance: boolean
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string
 ): Promise<{
   response: Response;
   json: Record<string, any>;
@@ -238,7 +239,8 @@ export async function handleNonStreamingMode(
       responseBodyJson,
       response.status,
       response.headers,
-      strictOpenAiCompliance
+      strictOpenAiCompliance,
+      gatewayRequestUrl
     );
   }
 

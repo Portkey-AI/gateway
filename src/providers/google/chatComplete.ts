@@ -6,6 +6,7 @@ import {
   Params,
   ToolCall,
   ToolChoice,
+  SYSTEM_MESSAGE_ROLES,
 } from '../../types/requestBody';
 import { buildGoogleSearchRetrievalTool } from '../google-vertex-ai/chatComplete';
 import {
@@ -114,6 +115,8 @@ export const transformOpenAIRoleToGoogleRole = (
       return 'model';
     case 'tool':
       return 'function';
+    case 'developer':
+      return 'system';
     default:
       return role;
   }
@@ -159,7 +162,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
           // From gemini-1.5 onwards, systemInstruction is supported
           // Skipping system message and sending it in systemInstruction for gemini 1.5 models
           if (
-            message.role === 'system' &&
+            SYSTEM_MESSAGE_ROLES.includes(message.role) &&
             !SYSTEM_INSTRUCTION_DISABLED_MODELS.includes(params.model as string)
           )
             return;
@@ -268,7 +271,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
         if (!firstMessage) return;
 
         if (
-          firstMessage.role === 'system' &&
+          SYSTEM_MESSAGE_ROLES.includes(firstMessage.role) &&
           typeof firstMessage.content === 'string'
         ) {
           return {
@@ -282,7 +285,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
         }
 
         if (
-          firstMessage.role === 'system' &&
+          SYSTEM_MESSAGE_ROLES.includes(firstMessage.role) &&
           typeof firstMessage.content === 'object' &&
           firstMessage.content?.[0]?.text
         ) {

@@ -1,5 +1,10 @@
 import { BEDROCK, documentMimeTypes, imagesMimeTypes } from '../../globals';
-import { Message, Params, ToolCall } from '../../types/requestBody';
+import {
+  Message,
+  Params,
+  ToolCall,
+  SYSTEM_MESSAGE_ROLES,
+} from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -150,7 +155,7 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
       transform: (params: BedrockChatCompletionsParams) => {
         if (!params.messages) return [];
         const transformedMessages = params.messages
-          .filter((msg) => msg.role !== 'system')
+          .filter((msg) => !SYSTEM_MESSAGE_ROLES.includes(msg.role))
           .map((msg) => {
             return {
               role: msg.role === 'assistant' ? 'assistant' : 'user',
@@ -183,7 +188,7 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
         if (!params.messages) return;
         const systemMessages = params.messages.reduce(
           (acc: { text: string }[], msg) => {
-            if (msg.role === 'system')
+            if (SYSTEM_MESSAGE_ROLES.includes(msg.role))
               return acc.concat(...getMessageTextContentArray(msg));
             return acc;
           },
@@ -548,11 +553,6 @@ export const BedrockConverseCohereChatCompleteConfig: ProviderConfig = {
     transform: (params: BedrockConverseCohereChatCompletionsParams) =>
       transformCohereAdditionalModelRequestFields(params),
   },
-  stream: {
-    param: 'additionalModelRequestFields',
-    transform: (params: BedrockConverseCohereChatCompletionsParams) =>
-      transformCohereAdditionalModelRequestFields(params),
-  },
 };
 
 export const BedrockConverseAI21ChatCompleteConfig: ProviderConfig = {
@@ -603,7 +603,7 @@ export const BedrockCohereChatCompleteConfig: ProviderConfig = {
       if (!!params.messages) {
         let messages: Message[] = params.messages;
         messages.forEach((msg, index) => {
-          if (index === 0 && msg.role === 'system') {
+          if (index === 0 && SYSTEM_MESSAGE_ROLES.includes(msg.role)) {
             prompt += `system: ${messages}\n`;
           } else if (msg.role == 'user') {
             prompt += `user: ${msg.content}\n`;
@@ -787,7 +787,7 @@ export const BedrockAI21ChatCompleteConfig: ProviderConfig = {
       if (!!params.messages) {
         let messages: Message[] = params.messages;
         messages.forEach((msg, index) => {
-          if (index === 0 && msg.role === 'system') {
+          if (index === 0 && SYSTEM_MESSAGE_ROLES.includes(msg.role)) {
             prompt += `system: ${messages}\n`;
           } else if (msg.role == 'user') {
             prompt += `user: ${msg.content}\n`;

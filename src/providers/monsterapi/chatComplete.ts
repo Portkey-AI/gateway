@@ -1,4 +1,5 @@
 import { MONSTERAPI } from '../../globals';
+import { Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -47,6 +48,12 @@ export const MonsterAPIChatCompleteConfig: ProviderConfig = {
     param: 'messages',
     required: true,
     default: [],
+    transform: (params: Params) => {
+      return params.messages?.map((message) => {
+        if (message.role === 'developer') return { ...message, role: 'system' };
+        return message;
+      });
+    },
   },
 };
 
