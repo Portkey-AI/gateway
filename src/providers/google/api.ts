@@ -14,7 +14,7 @@ export const GoogleApiConfig: ProviderAPIConfig = {
     }
     const { apiKey } = providerOptions;
     if (stream && fn === 'chatComplete') {
-      return `/models/${model}:streamGenerateContent?key=${apiKey}`;
+      return `/${routeVersion}/models/${model}:streamGenerateContent?key=${apiKey}`;
     }
     switch (mappedFn) {
       case 'chatComplete': {
