@@ -9,7 +9,11 @@ import {
   SYSTEM_MESSAGE_ROLES,
 } from '../../types/requestBody';
 import { buildGoogleSearchRetrievalTool } from '../google-vertex-ai/chatComplete';
-import { derefer, getMimeType } from '../google-vertex-ai/utils';
+import {
+  derefer,
+  getMimeType,
+  recursivelyDeleteUnsupportedParameters,
+} from '../google-vertex-ai/utils';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -45,6 +49,9 @@ const transformGenerationConfig = (params: Params) => {
   }
   if (params?.response_format?.type === 'json_schema') {
     generationConfig['responseMimeType'] = 'application/json';
+    recursivelyDeleteUnsupportedParameters(
+      params?.response_format?.json_schema?.schema
+    );
     let schema =
       params?.response_format?.json_schema?.schema ??
       params?.response_format?.json_schema;
@@ -108,6 +115,8 @@ export const transformOpenAIRoleToGoogleRole = (
       return 'model';
     case 'tool':
       return 'function';
+    case 'developer':
+      return 'system';
     default:
       return role;
   }
@@ -330,6 +339,10 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
       const tools: any = [];
       params.tools?.forEach((tool) => {
         if (tool.type === 'function') {
+          // these are not supported by google
+          recursivelyDeleteUnsupportedParameters(tool.function?.parameters);
+          delete tool.function?.strict;
+
           if (tool.function.name === 'googleSearchRetrieval') {
             tools.push(buildGoogleSearchRetrievalTool(tool));
           } else {

@@ -8,6 +8,92 @@ import {
 } from './chatComplete';
 import { Context } from 'hono';
 import { env } from 'hono/adapter';
+import crypto from 'node:crypto';
+
+const hmac = (key: Buffer | string, data: string) => {
+  return crypto.createHmac('sha256', key).update(data).digest();
+};
+
+const sha256 = (data: string) => {
+  return crypto.createHash('sha256').update(data).digest('hex');
+};
+
+const getSignatureKey = (
+  key: string,
+  dateStamp: string,
+  region: string,
+  service: string
+) => {
+  const kDate = hmac(`AWS4${key}`, dateStamp);
+  const kRegion = hmac(kDate, region);
+  const kService = hmac(kRegion, service);
+  return hmac(kService, 'aws4_request');
+};
+
+export const awsSignerUtil = (
+  accessKeyId: string,
+  secretAccessKey: string,
+  method: string,
+  requestURL: string,
+  region: string,
+  service: string
+) => {
+  const now = new Date();
+  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, ''); // e.g., 20231210T000000Z
+  const dateStamp = amzDate.slice(0, 8); // e.g., 20231210
+  const urlObj = new URL(requestURL);
+
+  const headers: Record<string, string> = {
+    Host: urlObj.hostname,
+    'x-amz-date': amzDate,
+    'x-amz-content-sha256': 'UNSIGNED-PAYLOAD', // Required for S3
+  };
+
+  const canonicalUri = `${urlObj.pathname}`;
+  const canonicalQueryString = `${urlObj.searchParams.toString()}`;
+  const signedHeaders = Object.keys(headers)
+    .map((key) => key.toLowerCase())
+    .sort()
+    .join(';');
+  const canonicalHeaders = Object.entries(headers)
+    .map(([key, value]) => `${key.toLowerCase()}:${value.trim()}\n`)
+    .sort()
+    .join('');
+  const payloadHash = 'UNSIGNED-PAYLOAD';
+
+  const canonicalRequest = [
+    method,
+    canonicalUri,
+    canonicalQueryString,
+    canonicalHeaders,
+    signedHeaders,
+    payloadHash,
+  ].join('\n');
+
+  const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
+  const stringToSign = [
+    'AWS4-HMAC-SHA256',
+    amzDate,
+    credentialScope,
+    sha256(canonicalRequest),
+  ].join('\n');
+
+  const signingKey = getSignatureKey(
+    secretAccessKey,
+    dateStamp,
+    region,
+    service
+  );
+  const signature = hmac(signingKey, stringToSign).toString('hex');
+
+  headers['Authorization'] = [
+    `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}`,
+    `SignedHeaders=${signedHeaders}`,
+    `Signature=${signature}`,
+  ].join(', ');
+
+  return headers;
+};
 
 export const generateAWSHeaders = async (
   body: Record<string, any>,
@@ -34,13 +120,19 @@ export const generateAWSHeaders = async (
   const urlObj = new URL(url);
   const hostname = urlObj.hostname;
   headers['host'] = hostname;
+  let requestBody;
+  if (method !== 'GET' && body) {
+    requestBody = JSON.stringify(body);
+  }
+  const queryParams = Object.fromEntries(urlObj.searchParams.entries());
   const request = {
     method: method,
     path: urlObj.pathname,
+    query: queryParams,
     protocol: 'https',
     hostname: urlObj.hostname,
     headers: headers,
-    body: JSON.stringify(body),
+    ...(requestBody && { body: requestBody }),
   };
 
   const signed = await signer.sign(request);

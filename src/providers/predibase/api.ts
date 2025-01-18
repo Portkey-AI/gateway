@@ -9,9 +9,9 @@ const PredibaseAPIConfig: ProviderAPIConfig = {
       Accept: 'application/json',
     };
   },
-  getEndpoint: ({ fn, gatewayRequestBody }) => {
-    const user = gatewayRequestBody?.user;
-    const model = gatewayRequestBody?.model;
+  getEndpoint: ({ fn, gatewayRequestBodyJSON }) => {
+    const user = gatewayRequestBodyJSON?.user;
+    const model = gatewayRequestBodyJSON?.model;
     const base_model = splitString(`${model}`, ':').before;
     switch (fn) {
       case 'chatComplete':

@@ -4,7 +4,6 @@ import {
   PluginHandler,
   PluginParameters,
 } from '../types';
-import dns from 'dns';
 import { getText } from '../utils';
 
 export const handler: PluginHandler = async (
@@ -25,7 +24,11 @@ export const handler: PluginHandler = async (
     }
 
     // Find all URLs in the content, they may or may not start with http(s)
-    const urls = content.match(/https?:\/\/[^\s]*/g) || [];
+    // Regex explanation: https?:\/\/[^\s,"'{}\[\]]+
+    // https?:\/\/ - matches http or https
+    // [^\s,"'{}\[\]]+ - matches any characters that are not whitespace, comma, single quote, curly brace, or square bracket
+    const urls = content.match(/https?:\/\/[^\s,"'{}\[\]]+/g) || [];
+
     const onlyDNS = parameters.onlyDNS || false;
 
     if (urls.length === 0) {
@@ -144,11 +147,18 @@ async function checkUrl(target: string): Promise<boolean> {
 async function checkDNS(target: string): Promise<boolean> {
   try {
     const parsedUrl = new URL(target);
-    return new Promise((resolve) => {
-      dns.lookup(parsedUrl.hostname, (err) => {
-        resolve(err === null);
-      });
-    });
+    const response = await fetch(
+      // Using DNS over HTTPS (DoH) for cross-runtime compatibility (works in both Edge and Node.js)
+      // https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/make-api-requests/
+      `https://1.1.1.1/dns-query?name=${parsedUrl.hostname}`,
+      {
+        headers: {
+          accept: 'application/dns-json',
+        },
+      }
+    );
+    const data: Record<string, any> = await response.json();
+    return data.Status === 0 && data.Answer && data.Answer.length > 0;
   } catch (error) {
     return false;
   }

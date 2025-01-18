@@ -101,6 +101,7 @@ export function constructRequest(
   let fetchOptions: RequestInit = {
     method,
     headers,
+    ...(fn === 'uploadFile' && { duplex: 'half' }),
   };
   const contentType = headers['content-type']?.split(';')[0];
   const isGetMethod = method === 'GET';
@@ -112,6 +113,8 @@ export function constructRequest(
     let headers = fetchOptions.headers as Record<string, unknown>;
     delete headers['content-type'];
   }
+  if (fn === 'uploadFile')
+    headers['Content-Type'] = requestHeaders['content-type'];
 
   return fetchOptions;
 }
@@ -197,18 +200,26 @@ export function convertGuardrailsShorthand(guardrailsArr: any, type: string) {
     };
 
     // if the deny key is present (true or false), add it to hooksObject and remove it from guardrails
-    ['deny', 'on_fail', 'on_success', 'async', 'onFail', 'onSuccess'].forEach(
-      (key) => {
-        if (guardrails.hasOwnProperty(key)) {
-          hooksObject[key] = guardrails[key];
-          delete guardrails[key];
-        }
+    [
+      'deny',
+      'on_fail',
+      'on_success',
+      'async',
+      'id',
+      'type',
+      'guardrail_version_id',
+    ].forEach((key) => {
+      if (guardrails.hasOwnProperty(key)) {
+        hooksObject[key] = guardrails[key];
+        delete guardrails[key];
       }
-    );
+    });
+
+    hooksObject = convertKeysToCamelCase(hooksObject);
 
     // Now, add all the checks to the checks array
     hooksObject.checks = Object.keys(guardrails).map((key) => ({
-      id: key,
+      id: key.includes('.') ? key : `default.${key}`,
       parameters: guardrails[key],
     }));
 
@@ -230,14 +241,17 @@ export function convertGuardrailsShorthand(guardrailsArr: any, type: string) {
 export async function tryPost(
   c: Context,
   providerOption: Options,
-  inputParams: Params | FormData | ArrayBuffer,
+  requestBody: Params | FormData | ArrayBuffer | ReadableStream,
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
   currentIndex: number | string,
   method: string = 'POST'
 ): Promise<Response> {
   const overrideParams = providerOption?.overrideParams || {};
-  const params: Params = { ...inputParams, ...overrideParams };
+  const params: Params =
+    requestBody instanceof ReadableStream || requestBody instanceof FormData
+      ? {}
+      : { ...requestBody, ...overrideParams };
   const isStreamingMode = params.stream ? true : false;
   let strictOpenAiCompliance = true;
 
@@ -269,14 +283,22 @@ export async function tryPost(
   );
 
   // Mapping providers to corresponding URLs
-  const apiConfig: ProviderAPIConfig = Providers[provider].api;
+  const providerConfig = Providers[provider];
+  const apiConfig: ProviderAPIConfig = providerConfig.api;
   // Attach the body of the request
-  const transformedRequestBody = transformToProviderRequest(
-    provider,
-    params,
-    inputParams,
-    fn
-  );
+  let transformedRequestBody: ReadableStream | FormData | Params = {};
+  if (!providerConfig?.requestHandlers?.[fn]) {
+    transformedRequestBody =
+      method === 'POST'
+        ? transformToProviderRequest(
+            provider,
+            params,
+            requestBody,
+            fn,
+            requestHeaders
+          )
+        : requestBody;
+  }
 
   const forwardHeaders =
     requestHeaders[HEADER_KEYS.FORWARD_HEADERS]
@@ -289,12 +311,19 @@ export async function tryPost(
     requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || '';
 
   const baseUrl =
-    customHost || apiConfig.getBaseURL({ providerOptions: providerOption });
+    customHost ||
+    (await apiConfig.getBaseURL({
+      providerOptions: providerOption,
+      fn,
+      c,
+    }));
 
   const endpoint = apiConfig.getEndpoint({
+    c,
     providerOptions: providerOption,
     fn,
-    gatewayRequestBody: params,
+    gatewayRequestBodyJSON: params,
+    gatewayRequestBody: requestBody,
     gatewayRequestURL: c.req.url,
   });
 
@@ -335,6 +364,8 @@ export async function tryPost(
     (fn == 'proxy' && requestContentType === CONTENT_TYPES.MULTIPART_FORM_DATA)
   ) {
     fetchOptions.body = transformedRequestBody as FormData;
+  } else if (transformedRequestBody instanceof ReadableStream) {
+    fetchOptions.body = transformedRequestBody;
   } else if (
     fn == 'proxy' &&
     requestContentType.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
@@ -384,7 +415,8 @@ export async function tryPost(
           url,
           isCacheHit,
           params,
-          strictOpenAiCompliance
+          strictOpenAiCompliance,
+          c.req.url
         ));
     }
 
@@ -394,7 +426,8 @@ export async function tryPost(
       params,
       cacheStatus,
       retryCount ?? 0,
-      requestHeaders[HEADER_KEYS.TRACE_ID] ?? ''
+      requestHeaders[HEADER_KEYS.TRACE_ID] ?? '',
+      provider
     );
 
     c.set('requestOptions', [
@@ -485,7 +518,8 @@ export async function tryPost(
       fn,
       requestHeaders,
       hookSpan.id,
-      strictOpenAiCompliance
+      strictOpenAiCompliance,
+      requestBody
     ));
 
   return createResponse(mappedResponse, undefined, false, true);
@@ -494,7 +528,7 @@ export async function tryPost(
 export async function tryTargetsRecursively(
   c: Context,
   targetGroup: Targets,
-  request: Params | FormData,
+  request: Params | FormData | ReadableStream,
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
   method: string,
@@ -756,7 +790,8 @@ export function updateResponseHeaders(
   params: Record<string, any>,
   cacheStatus: string | undefined,
   retryAttempt: number,
-  traceId: string
+  traceId: string,
+  provider: string
 ) {
   response.headers.append(
     RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX,
@@ -785,6 +820,9 @@ export function updateResponseHeaders(
   // workerd environment handles this authomatically
   response.headers.delete('content-length');
   response.headers.delete('transfer-encoding');
+  if (provider && provider !== POWERED_BY) {
+    response.headers.append(HEADER_KEYS.PROVIDER, provider);
+  }
 }
 
 export function constructConfigFromRequestHeaders(
@@ -833,6 +871,9 @@ export function constructConfigFromRequestHeaders(
     awsRoleArn: requestHeaders[`x-${POWERED_BY}-aws-role-arn`],
     awsAuthType: requestHeaders[`x-${POWERED_BY}-aws-auth-type`],
     awsExternalId: requestHeaders[`x-${POWERED_BY}-aws-external-id`],
+    awsS3Bucket: requestHeaders[`x-${POWERED_BY}-aws-s3-bucket`],
+    awsS3ObjectKey: requestHeaders[`x-${POWERED_BY}-aws-s3-object-key`],
+    awsBedrockModel: requestHeaders[`x-${POWERED_BY}-aws-bedrock-model`],
   };
 
   const sagemakerConfig = {
@@ -983,6 +1024,8 @@ export function constructConfigFromRequestHeaders(
       'checks',
       'vertex_service_account_json',
       'conditions',
+      'input_guardrails',
+      'output_guardrails',
     ]) as any;
   }
 
@@ -1025,7 +1068,8 @@ export async function recursiveAfterRequestHookHandler(
   fn: any,
   requestHeaders: Record<string, string>,
   hookSpanId: string,
-  strictOpenAiCompliance: boolean
+  strictOpenAiCompliance: boolean,
+  requestBody?: ReadableStream | FormData | Params | ArrayBuffer
 ): Promise<{
   mappedResponse: Response;
   retryCount: number;
@@ -1040,6 +1084,21 @@ export async function recursiveAfterRequestHookHandler(
 
   const { retry } = providerOption;
 
+  const provider = providerOption.provider ?? '';
+  const providerConfig = Providers[provider];
+  const requestHandlers = providerConfig.requestHandlers;
+  let requestHandler;
+  if (requestHandlers && requestHandlers[fn]) {
+    requestHandler = () =>
+      requestHandlers[fn]({
+        c,
+        providerOptions: providerOption,
+        requestURL: c.req.url,
+        requestHeaders,
+        requestBody,
+      });
+  }
+
   ({
     response,
     attempt: retryCount,
@@ -1049,7 +1108,8 @@ export async function recursiveAfterRequestHookHandler(
     options,
     retry?.attempts || 0,
     retry?.onStatusCodes || [],
-    requestTimeout || null
+    requestTimeout || null,
+    requestHandler
   ));
 
   const {
@@ -1064,7 +1124,8 @@ export async function recursiveAfterRequestHookHandler(
     url,
     false,
     gatewayParams,
-    strictOpenAiCompliance
+    strictOpenAiCompliance,
+    c.req.url
   );
 
   const arhResponse = await afterRequestHookHandler(
