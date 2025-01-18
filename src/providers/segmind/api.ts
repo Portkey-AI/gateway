@@ -1,6 +1,6 @@
 import { ProviderAPIConfig } from '../types';
 
-const StabilityAIAPIConfig: ProviderAPIConfig = {
+const SegmindAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.segmind.com/v1',
   headers: ({ providerOptions }) => {
     return { 'x-api-key': `${providerOptions.apiKey}` };
@@ -10,4 +10,4 @@ const StabilityAIAPIConfig: ProviderAPIConfig = {
   },
 };
 
-export default StabilityAIAPIConfig;
+export default SegmindAIAPIConfig;

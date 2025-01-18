@@ -932,6 +932,28 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
 
   const parsedChunk: AnthropicChatCompleteStreamResponse = JSON.parse(chunk);
 
+  if (parsedChunk.type === 'error' && parsedChunk.error) {
+    return (
+      `data: ${JSON.stringify({
+        id: fallbackId,
+        object: 'chat.completion.chunk',
+        created: Math.floor(Date.now() / 1000),
+        model: '',
+        provider: GOOGLE_VERTEX_AI,
+        choices: [
+          {
+            finish_reason: parsedChunk.error.type,
+            delta: {
+              content: '',
+            },
+          },
+        ],
+      })}` +
+      '\n\n' +
+      'data: [DONE]\n\n'
+    );
+  }
+
   if (
     parsedChunk.type === 'content_block_start' &&
     parsedChunk.content_block?.type === 'text'
