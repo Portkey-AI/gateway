@@ -368,7 +368,7 @@ export async function tryPost(
     fetchOptions.body = transformedRequestBody;
   } else if (
     fn == 'proxy' &&
-    requestContentType.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
+    requestContentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
   ) {
     fetchOptions.body = transformedRequestBody as ArrayBuffer;
   } else {
