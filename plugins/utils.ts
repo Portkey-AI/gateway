@@ -4,13 +4,13 @@ interface PostOptions extends RequestInit {
   headers?: Record<string, string>;
 }
 
-interface ErrorResponse {
+export interface ErrorResponse {
   status: number;
   statusText: string;
   body: string;
 }
 
-class HttpError extends Error {
+export class HttpError extends Error {
   response: ErrorResponse;
 
   constructor(message: string, response: ErrorResponse) {

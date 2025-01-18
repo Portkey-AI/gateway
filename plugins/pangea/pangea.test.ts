@@ -8,7 +8,7 @@ const options = {
 describe('textGuardContentHandler', () => {
   it('should return an error if hook type is not supported', async () => {
     const context = {
-      request: { text: 'this is a test string for moderations' },
+      request: { text: 'This is a message' },
     };
     const eventType = 'unsupported';
     const parameters = {};
@@ -26,7 +26,7 @@ describe('textGuardContentHandler', () => {
 
   it('should return an error if fetch request fails', async () => {
     const context = {
-      request: { text: 'this is a test string for moderations' },
+      request: { text: 'This is a message' },
     };
     const eventType = 'beforeRequestHook';
     const parameters = {
@@ -39,16 +39,19 @@ describe('textGuardContentHandler', () => {
       options
     );
     expect(result.error).toBeDefined();
-    expect(result.verdict).toBe(false);
+    expect(result.verdict).toBe(true);
     expect(result.data).toBeNull();
   });
 
   it('should return an error if no apiKey', async () => {
     const context = {
-      request: { text: 'this is a test string for moderations' },
+      request: { text: 'This is a message' },
     };
     const eventType = 'beforeRequestHook';
-    const parameters = { credentials: { domain: testCreds.domain } };
+    const parameters = {
+      credentials: { domain: testCreds.domain },
+      recipe: undefined,
+    };
     const result = await textGuardContentHandler(
       context,
       parameters,
@@ -62,7 +65,7 @@ describe('textGuardContentHandler', () => {
 
   it('should return an error if no domain', async () => {
     const context = {
-      request: { text: 'this is a test string for moderations' },
+      request: { text: 'This is a message' },
     };
     const eventType = 'beforeRequestHook';
     const parameters = { credentials: { apiKey: testCreds.apiKey } };
@@ -77,9 +80,9 @@ describe('textGuardContentHandler', () => {
     expect(result.data).toBeNull();
   });
 
-  it('should return false verdict and data if fetch request succeeds', async () => {
+  it('should return true verdict and data if fetch request succeeds', async () => {
     const context = {
-      request: { text: 'this is a test string for moderations' },
+      request: { text: 'This is a message' },
     };
     const eventType = 'beforeRequestHook';
     const parameters = {
@@ -91,10 +94,31 @@ describe('textGuardContentHandler', () => {
       eventType,
       options
     );
-    expect(result.error).toBeNull();
     expect(result.verdict).toBeDefined();
     expect(result.verdict).toBe(true);
     expect(result.data).toBeDefined();
+    expect(result.error).toBeDefined();
+  });
+
+  it('should return true verdict and data if fetch request succeeds. Empty `recipe`', async () => {
+    const context = {
+      request: { text: 'This is a message' },
+    };
+    const eventType = 'beforeRequestHook';
+    const parameters = {
+      credentials: testCreds,
+      recipe: ' ',
+    };
+    const result = await textGuardContentHandler(
+      context,
+      parameters,
+      eventType,
+      options
+    );
+    expect(result.verdict).toBeDefined();
+    expect(result.verdict).toBe(true);
+    expect(result.data).toBeDefined();
+    expect(result.error).toBeDefined();
   });
 
   it('should return verdict as false if text is flagged', async () => {
@@ -113,9 +137,9 @@ describe('textGuardContentHandler', () => {
       eventType,
       options
     );
-    expect(result.error).toBeNull();
     expect(result.verdict).toBe(false);
     expect(result.data).toBeDefined();
+    expect(result.error).toBeNull();
   });
 
   it('should return true verdict and error if no text', async () => {
@@ -125,6 +149,27 @@ describe('textGuardContentHandler', () => {
     const eventType = 'beforeRequestHook';
     const parameters = {
       credentials: testCreds,
+    };
+    const result = await textGuardContentHandler(
+      context,
+      parameters,
+      eventType,
+      options
+    );
+    expect(result.error).toBeDefined();
+    expect(result.verdict).toBeDefined();
+    expect(result.verdict).toBe(true);
+    expect(result.data).toBeNull();
+  });
+
+  it('should return true verdict and error if invalid `recipe`', async () => {
+    const context = {
+      request: { text: 'This is a message' },
+    };
+    const eventType = 'beforeRequestHook';
+    const parameters = {
+      credentials: testCreds,
+      recipe: 'invalid_recipe',
     };
     const result = await textGuardContentHandler(
       context,
