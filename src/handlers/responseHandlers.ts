@@ -40,7 +40,8 @@ export async function responseHandler(
   requestURL: string,
   isCacheHit: boolean = false,
   gatewayRequest: Params,
-  strictOpenAiCompliance: boolean
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string
 ): Promise<{
   response: Response;
   responseJson: Record<string, any> | null;
@@ -112,7 +113,10 @@ export async function responseHandler(
     return { response: handleAudioResponse(response), responseJson: null };
   }
 
-  if (responseContentType === CONTENT_TYPES.APPLICATION_OCTET_STREAM) {
+  if (
+    responseContentType === CONTENT_TYPES.APPLICATION_OCTET_STREAM ||
+    responseContentType === CONTENT_TYPES.BINARY_OCTET_STREAM
+  ) {
     return {
       response: handleOctetStreamResponse(response),
       responseJson: null,
@@ -144,7 +148,8 @@ export async function responseHandler(
   const nonStreamingResponse = await handleNonStreamingMode(
     response,
     responseTransformerFunction,
-    strictOpenAiCompliance
+    strictOpenAiCompliance,
+    gatewayRequestUrl
   );
 
   return {

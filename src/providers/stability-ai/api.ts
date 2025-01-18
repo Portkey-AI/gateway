@@ -13,7 +13,7 @@ const StabilityAIAPIConfig: ProviderAPIConfig = {
     headers['Accept'] = CONTENT_TYPES.APPLICATION_JSON;
     return headers;
   },
-  getEndpoint: ({ fn, gatewayRequestBody, providerOptions }) => {
+  getEndpoint: ({ fn, gatewayRequestBodyJSON, providerOptions }) => {
     let mappedFn = fn;
     const { urlToFetch } = providerOptions;
     if (
@@ -26,9 +26,9 @@ const StabilityAIAPIConfig: ProviderAPIConfig = {
 
     switch (mappedFn) {
       case 'imageGenerate': {
-        if (isStabilityV1Model(gatewayRequestBody.model))
-          return `/v1/generation/${gatewayRequestBody.model}/text-to-image`;
-        return `/v2beta/stable-image/generate/${gatewayRequestBody.model}`;
+        if (isStabilityV1Model(gatewayRequestBodyJSON.model))
+          return `/v1/generation/${gatewayRequestBodyJSON.model}/text-to-image`;
+        return `/v2beta/stable-image/generate/${gatewayRequestBodyJSON.model}`;
       }
       default:
         return '';
