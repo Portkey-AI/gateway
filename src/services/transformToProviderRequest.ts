@@ -221,7 +221,7 @@ export const transformToProviderRequest = (
       fn
     );
   }
-  if (requestBody instanceof FormData || params instanceof ArrayBuffer)
+  if (requestBody instanceof FormData || requestBody instanceof ArrayBuffer)
     return requestBody;
 
   if (fn === 'proxy') {
