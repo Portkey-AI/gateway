@@ -765,7 +765,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
   streamState,
   strictOpenAiCompliance
 ) => {
-  let containsChainOfThoughtMessage: boolean =
+  streamState.containsChainOfThoughtMessage =
     streamState?.containsChainOfThoughtMessage ?? false;
   const chunk = responseChunk
     .trim()
@@ -801,7 +801,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
             streamState.containsChainOfThoughtMessage = true;
 
           let content: string =
-            strictOpenAiCompliance && containsChainOfThoughtMessage
+            strictOpenAiCompliance && streamState.containsChainOfThoughtMessage
               ? ''
               : generation.content.parts[0]?.text;
           if (generation.content.parts[1]?.text) {
