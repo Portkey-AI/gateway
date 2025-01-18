@@ -545,10 +545,11 @@ export const GoogleChatCompleteStreamChunkTransform: (
 ) => string = (
   responseChunk,
   fallbackId,
-  _streamState,
+  streamState,
   strictOpenAiCompliance
 ) => {
-  let containsChainOfThoughtMessage: boolean = false;
+  let containsChainOfThoughtMessage: boolean =
+    streamState?.containsChainOfThoughtMessage ?? false;
   let chunk = responseChunk.trim();
   if (chunk.startsWith('[')) {
     chunk = chunk.slice(1);
@@ -580,7 +581,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
           let message: Message = { role: 'assistant', content: '' };
           if (generation.content?.parts[0]?.text) {
             if (generation.content.parts[0].thought)
-              containsChainOfThoughtMessage = true;
+              streamState.containsChainOfThoughtMessage = true;
 
             let content: string =
               strictOpenAiCompliance && containsChainOfThoughtMessage
@@ -590,7 +591,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
               if (strictOpenAiCompliance)
                 content = generation.content.parts[1].text;
               else content += '\r\n\r\n' + generation.content.parts[1]?.text;
-              containsChainOfThoughtMessage = false;
+              streamState.containsChainOfThoughtMessage = false;
             } else if (
               containsChainOfThoughtMessage &&
               !generation.content.parts[0]?.thought
@@ -598,7 +599,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
               if (strictOpenAiCompliance)
                 content = generation.content.parts[0].text;
               else content = '\r\n\r\n' + content;
-              containsChainOfThoughtMessage = false;
+              streamState.containsChainOfThoughtMessage = false;
             }
             message = {
               role: 'assistant',
