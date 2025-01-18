@@ -399,7 +399,7 @@ export class HooksManager {
         !context.response.text) ||
       (hook.eventType === 'beforeRequestHook' &&
         span.getParentHookSpanId() !== null) ||
-      (hook.type === HookType.MUTATORS && hook.async === true)
+      (hook.type === HookType.MUTATORS && !!hook.async)
     );
   }
 
