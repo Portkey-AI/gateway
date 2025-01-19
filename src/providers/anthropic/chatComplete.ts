@@ -448,7 +448,11 @@ export const AnthropicChatCompleteResponseTransform: (
       usage: {
         prompt_tokens: input_tokens,
         completion_tokens: output_tokens,
-        total_tokens: input_tokens + output_tokens,
+        total_tokens:
+          input_tokens +
+          output_tokens +
+          (cache_creation_input_tokens ?? 0) +
+          (cache_read_input_tokens ?? 0),
         ...(shouldSendCacheUsage && {
           cache_read_input_tokens: cache_read_input_tokens,
           cache_creation_input_tokens: cache_creation_input_tokens,
@@ -521,6 +525,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
     parsedChunk.message?.usage?.cache_creation_input_tokens;
 
   if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
+    console.log(parsedChunk);
     streamState.usage = {
       prompt_tokens: parsedChunk.message?.usage?.input_tokens,
       ...(shouldSendCacheUsage && {
@@ -552,6 +557,12 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   }
 
   if (parsedChunk.type === 'message_delta' && parsedChunk.usage) {
+    console.log(parsedChunk);
+    const totalTokens =
+      (streamState?.usage?.prompt_tokens ?? 0) +
+      (streamState?.usage?.cache_creation_input_tokens ?? 0) +
+      (streamState?.usage?.cache_read_input_tokens ?? 0) +
+      (parsedChunk.usage.output_tokens ?? 0);
     return (
       `data: ${JSON.stringify({
         id: fallbackId,
@@ -569,6 +580,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
         usage: {
           completion_tokens: parsedChunk.usage?.output_tokens,
           ...streamState.usage,
+          total_tokens: totalTokens,
         },
       })}` + '\n\n'
     );
