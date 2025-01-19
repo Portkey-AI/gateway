@@ -525,7 +525,6 @@ export const AnthropicChatCompleteStreamChunkTransform: (
     parsedChunk.message?.usage?.cache_creation_input_tokens;
 
   if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
-    console.log(parsedChunk);
     streamState.usage = {
       prompt_tokens: parsedChunk.message?.usage?.input_tokens,
       ...(shouldSendCacheUsage && {
@@ -557,7 +556,6 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   }
 
   if (parsedChunk.type === 'message_delta' && parsedChunk.usage) {
-    console.log(parsedChunk);
     const totalTokens =
       (streamState?.usage?.prompt_tokens ?? 0) +
       (streamState?.usage?.cache_creation_input_tokens ?? 0) +
