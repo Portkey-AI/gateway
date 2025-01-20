@@ -317,7 +317,7 @@ export class HooksManager {
     options: HandlerOptions
   ): Promise<HookResult> {
     const span = this.getSpan(spanId);
-    let hookResult: HookResult = { id: hook.id } as HookResult;
+    let hookResult: HookResult = { id: hook.id, type: hook.type } as HookResult;
     let checkResults: GuardrailCheckResult[] = [];
     const createdAt = new Date();
 
