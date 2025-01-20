@@ -42,6 +42,7 @@ import { handler as pangearedactPii } from './pangea/redactPii';
 import { handler as patronusredactPii } from './patronus/redactPii';
 import { handler as patronusredactPhi } from './patronus/redactPhi';
 import { pluginHandler as bedrockHandler } from './bedrock/index';
+import { bedrockPIIHandler } from './bedrock/redactPii';
 
 export const plugins = {
   default: {
@@ -109,5 +110,6 @@ export const plugins = {
     pii: bedrockHandler.bind({ fn: 'pii' }),
     contentFilter: bedrockHandler.bind({ fn: 'contentFilter' }),
     wordFilter: bedrockHandler.bind({ fn: 'wordFilter' }),
+    redactPii: bedrockPIIHandler,
   },
 };

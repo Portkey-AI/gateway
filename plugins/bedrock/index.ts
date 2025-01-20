@@ -11,7 +11,7 @@ const REQUIRED_CREDENTIAL_KEYS = [
 ];
 
 type BedrockFunction = 'contentFilter' | 'pii' | 'wordFilter';
-type BedrockBody = {
+export type BedrockBody = {
   source: 'INPUT' | 'OUTPUT';
   content: { text: { text: string } }[];
 };
@@ -86,6 +86,9 @@ interface BedrockResponse {
       regexes: (Omit<PIIFilter, 'type'> & { name: string; regex: string })[];
     };
   }[];
+  output: {
+    text: string;
+  }[];
   usage: {
     contentPolicyUnits: number;
     sensitiveInformationPolicyUnits: number;
@@ -108,6 +111,38 @@ enum ResponseKey {
   wordFilter = 'wordPolicy',
 }
 
+export const validateCreds = (credentials?: BedrockParameters) => {
+  return REQUIRED_CREDENTIAL_KEYS.every((key) =>
+    Boolean(credentials?.[key as keyof BedrockParameters])
+  );
+};
+
+export const bedrockPost = async (
+  credentials: BedrockParameters,
+  body: BedrockBody
+) => {
+  const url = `https://bedrock-runtime.${credentials?.region}.amazonaws.com/guardrail/${credentials?.guardrailId}/version/${credentials?.guardrailVersion}/apply`;
+
+  const headers = await generateAWSHeaders(
+    body,
+    {
+      'Content-Type': 'application/json',
+    },
+    url,
+    'POST',
+    'bedrock',
+    credentials?.region ?? 'us-east-1',
+    credentials?.accessKeyId!,
+    credentials?.accessKeySecret!,
+    credentials?.awsSessionToken || ''
+  );
+
+  return await post<BedrockResponse>(url, body, {
+    headers,
+    method: 'POST',
+  });
+};
+
 export const pluginHandler: PluginHandler<BedrockParameters> = async function (
   this: { fn: BedrockFunction },
   context,
@@ -116,9 +151,7 @@ export const pluginHandler: PluginHandler<BedrockParameters> = async function (
 ) {
   const credentials = parameters.credentials;
 
-  const validate = REQUIRED_CREDENTIAL_KEYS.every((key) =>
-    Boolean(credentials?.[key as keyof BedrockParameters])
-  );
+  const validate = validateCreds(credentials);
 
   let verdict = true;
   let error = null;
@@ -148,42 +181,18 @@ export const pluginHandler: PluginHandler<BedrockParameters> = async function (
     },
   ];
 
-  const url = `https://bedrock-runtime.${credentials?.region}.amazonaws.com/guardrail/${credentials?.guardrailId}/version/${credentials?.guardrailVersion}/apply`;
-
-  const headers = await generateAWSHeaders(
-    body,
-    {
-      'Content-Type': 'application/json',
-    },
-    url,
-    'POST',
-    'bedrock',
-    credentials?.region ?? 'us-east-1',
-    credentials?.accessKeyId!,
-    credentials?.accessKeySecret!,
-    credentials?.awsSessionToken || ''
-  );
-
   try {
-    const response = await post<BedrockResponse>(url, body, {
-      headers,
-      method: 'POST',
-    });
-
+    const response = await bedrockPost(credentials!, body);
     if (response.action === 'GUARDRAIL_INTERVENED') {
       data = response.assessments[0]?.[ResponseKey[this.fn]];
-
-      if (this.fn === 'pii' && response.usage.contentPolicyUnits > 0) {
+      if (this.fn === 'pii' && !!data) {
         verdict = false;
       }
-      if (
-        this.fn === 'contentFilter' &&
-        response.usage.contentPolicyUnits > 0
-      ) {
+      if (this.fn === 'contentFilter' && !!data) {
         verdict = false;
       }
 
-      if (this.fn === 'wordFilter' && response.usage.wordPolicyUnits > 0) {
+      if (this.fn === 'wordFilter' && !!data) {
         verdict = false;
       }
     }
