@@ -15,7 +15,7 @@ export interface HookOnSuccessObject {
 // Interface for Hook that will be contain a name for the hook and parameters for it which would be an object
 // this can be extended for specific hook types later on
 export interface HookObject {
-  type: 'guardrail';
+  type: HookType;
   id: string;
   checks?: Check[];
   async?: boolean;
@@ -29,12 +29,14 @@ export interface HookSpanContextRequest {
   text: string;
   json: any;
   isStreamingRequest: boolean;
+  isTransformed: boolean;
 }
 
 export interface HookSpanContextResponse {
   text: string;
   json: any;
   statusCode: number | null;
+  isTransformed: boolean;
 }
 
 // Interface for the context object that will be passed to the hooks
@@ -67,6 +69,14 @@ export interface GuardrailCheckResult {
   id: string;
   execution_time: number;
   created_at: Date;
+  transformedData?: {
+    request: {
+      json: any;
+    };
+    response: {
+      json: any;
+    };
+  };
 }
 
 export interface GuardrailResult {
@@ -79,7 +89,7 @@ export interface GuardrailResult {
   deny: boolean;
   execution_time: number;
   skipped: boolean;
-  type: 'guardrail';
+  type: HookType;
   created_at: Date;
 }
 
@@ -87,6 +97,11 @@ export interface GuardrailResult {
 export type HookResult = GuardrailResult;
 
 export type EventType = 'beforeRequestHook' | 'afterRequestHook';
+
+export enum HookType {
+  GUARDRAIL = 'guardrail',
+  MUTATOR = 'mutator',
+}
 
 export interface HandlerOptions {
   env: Record<string, any>;

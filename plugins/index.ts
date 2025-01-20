@@ -34,6 +34,13 @@ import { handler as patronustoxicity } from './patronus/toxicity';
 import { handler as patronuscustom } from './patronus/custom';
 import { mistralGuardrailHandler } from './mistral';
 import { handler as pangeatextGuard } from './pangea/textGuard';
+import { handler as portkeyredactPii } from './portkey/redactPii';
+import { handler as promptfooRedactPii } from './promptfoo/redactPii';
+import { handler as promptfooHarm } from './promptfoo/harm';
+import { handler as promptfooGuard } from './promptfoo/guard';
+import { handler as pangearedactPii } from './pangea/redactPii';
+import { handler as patronusredactPii } from './patronus/redactPii';
+import { handler as patronusredactPhi } from './patronus/redactPhi';
 
 export const plugins = {
   default: {
@@ -58,6 +65,7 @@ export const plugins = {
     language: portkeylanguage,
     pii: portkeypii,
     gibberish: portkeygibberish,
+    redactPii: portkeyredactPii,
   },
   aporia: {
     validateProject: aporiavalidateProject,
@@ -81,11 +89,19 @@ export const plugins = {
     retrievalAnswerRelevance: patronusretrievalAnswerRelevance,
     toxicity: patronustoxicity,
     custom: patronuscustom,
+    redactPii: patronusredactPii,
+    redactPhi: patronusredactPhi,
   },
   mistral: {
     moderateContent: mistralGuardrailHandler,
   },
   pangea: {
     textGuard: pangeatextGuard,
+    redactPii: pangearedactPii,
+  },
+  promptfoo: {
+    redactPii: promptfooRedactPii,
+    harm: promptfooHarm,
+    guard: promptfooGuard,
   },
 };

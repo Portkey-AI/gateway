@@ -49,6 +49,138 @@ export const getText = (
 };
 
 /**
+ * Extracts the current content and its text representation from a request/response context
+ * @param context - The plugin context containing request/response data
+ * @param eventType - The type of hook event (beforeRequestHook or afterRequestHook)
+ * @returns An object containing the raw content and an array of extracted text strings
+ */
+export const getCurrentContentPart = (
+  context: PluginContext,
+  eventType: HookEventType
+): {
+  content: Array<any> | string | Record<string, any>;
+  textArray: Array<string>;
+} => {
+  // Determine if we're handling request or response data
+  const target = eventType === 'beforeRequestHook' ? 'request' : 'response';
+  const json = context[target].json;
+  let textArray: Array<string> = [];
+  let content: Array<any> | string | Record<string, any>;
+
+  // Handle chat completion request/response format
+  if (context.requestType === 'chatComplete') {
+    if (target === 'request') {
+      // Get the last message's content from the chat history
+      content = json.messages[json.messages.length - 1].content;
+      textArray = Array.isArray(content)
+        ? content.map((item: any) => item.text || '')
+        : [content];
+    } else {
+      // Get the content from the last choice in the response
+      content = json.choices[json.choices.length - 1].message.content as string;
+      textArray = [content];
+    }
+  } else {
+    // Handle completions format
+    content = json.prompt;
+    textArray = Array.isArray(content)
+      ? content.map((item: any) => item.text)
+      : [content];
+  }
+
+  return { content, textArray };
+};
+
+/**
+ * Updates the content of a request or response in the plugin context
+ * @param context - The plugin context containing request/response data
+ * @param eventType - The type of hook event (beforeRequestHook or afterRequestHook)
+ * @param newContent - New content to set (can be string, array, or object)
+ * @param textArray - Optional array of text strings to update text fields
+ */
+export const setCurrentContentPart = (
+  context: PluginContext,
+  eventType: HookEventType,
+  transformedData: Record<string, any>,
+  newContent: string | Array<any> | Record<string, any> | null,
+  textArray: Array<string | null> | null = null
+): void => {
+  const requestType = context.requestType;
+  const target = eventType === 'beforeRequestHook' ? 'request' : 'response';
+  const json = context[target].json;
+
+  // Create shallow copy of the json
+  const updatedJson = { ...json };
+
+  // Handle updating the main content structure
+  if (newContent) {
+    if (requestType === 'chatComplete') {
+      if (target === 'request') {
+        // Only clone messages array if we need to modify it
+        updatedJson.messages = [...json.messages];
+        updatedJson.messages[updatedJson.messages.length - 1] = {
+          ...updatedJson.messages[updatedJson.messages.length - 1],
+          content: newContent,
+        };
+        transformedData.request.json = updatedJson;
+      } else {
+        // Only clone choices array if we need to modify it
+        updatedJson.choices = [...json.choices];
+        const lastChoice = {
+          ...updatedJson.choices[updatedJson.choices.length - 1],
+        };
+        lastChoice.message = { ...lastChoice.message, content: newContent };
+        updatedJson.choices[updatedJson.choices.length - 1] = lastChoice;
+        transformedData.response.json = updatedJson;
+      }
+    } else {
+      updatedJson.prompt = newContent;
+      transformedData.request.json = updatedJson;
+    }
+  }
+
+  // Handle updating text fields if provided
+  if (textArray?.length) {
+    if (requestType === 'chatComplete') {
+      if (target === 'request') {
+        const currentContent =
+          updatedJson.messages[updatedJson.messages.length - 1].content;
+        if (Array.isArray(currentContent)) {
+          // Only clone messages array if not already cloned
+          if (!newContent) {
+            updatedJson.messages = [...json.messages];
+            updatedJson.messages[updatedJson.messages.length - 1] = {
+              ...updatedJson.messages[updatedJson.messages.length - 1],
+            };
+          }
+          updatedJson.messages[updatedJson.messages.length - 1].content =
+            currentContent.map((item: any, index: number) => ({
+              ...item,
+              text: textArray[index] || item.text,
+            }));
+        }
+        transformedData.request.json = updatedJson;
+      } else {
+        if (!newContent) {
+          updatedJson.choices = [...json.choices];
+          const lastChoice = {
+            ...updatedJson.choices[updatedJson.choices.length - 1],
+          };
+          lastChoice.message = { ...lastChoice.message, content: textArray[0] };
+          updatedJson.choices[updatedJson.choices.length - 1] = lastChoice;
+        }
+        transformedData.response.json = updatedJson;
+      }
+    } else {
+      updatedJson.prompt = Array.isArray(updatedJson.prompt)
+        ? textArray.map((text) => text)
+        : textArray[0];
+      transformedData.request.json = updatedJson;
+    }
+  }
+};
+
+/**
  * Sends a POST request to the specified URL with the given data and timeout.
  * @param url - The URL to send the POST request to.
  * @param data - The data to be sent in the request body.
