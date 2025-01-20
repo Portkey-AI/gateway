@@ -24,8 +24,7 @@ const redactPhi = async (text: string, credentials: any) => {
 
   const positionsData = evalResult.evaluation_result.additional_info;
   if (
-    positionsData &&
-    positionsData.positions &&
+    Array.isArray(positionsData?.positions) &&
     positionsData.positions.length > 0
   ) {
     const longestPosition = findAllLongestPositions(positionsData);
