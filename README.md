@@ -184,7 +184,7 @@ Minutes of Meetings [published here](https://portkey.wiki/gh-36).
 
 ### LLMs in Prod'25
 
-Insights from analyzing 2 trillion+ tokens, across 90+ regions and 650+ teams in production. What to Expect From This Report:
+Insights from analyzing 2 trillion+ tokens, across 90+ regions and 650+ teams in production. What to expect from this report:
 - Trends shaping AI adoption and LLM provider growth.
 - Benchmarks to optimize speed, cost and reliability.
 - Strategies to scale production-grade AI systems.
