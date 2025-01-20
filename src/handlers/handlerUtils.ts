@@ -28,6 +28,7 @@ import { HookSpan, HooksManager } from '../middlewares/hooks';
 import { ConditionalRouter } from '../services/conditionalRouter';
 import { RouterError } from '../errors/RouterError';
 import { GatewayError } from '../errors/GatewayError';
+import { HookType } from '../middlewares/hooks/types';
 
 /**
  * Constructs the request options for the API call.
@@ -599,7 +600,7 @@ export async function tryTargetsRecursively(
       ...convertHooksShorthand(
         currentTarget.inputGuardrails,
         'input',
-        'guardrail'
+        HookType.GUARDRAIL
       ),
     ];
   }
@@ -610,7 +611,7 @@ export async function tryTargetsRecursively(
       ...convertHooksShorthand(
         currentTarget.outputGuardrails,
         'output',
-        'guardrail'
+        HookType.GUARDRAIL
       ),
     ];
   }
@@ -618,7 +619,11 @@ export async function tryTargetsRecursively(
   if (currentTarget.inputMutators) {
     currentTarget.beforeRequestHooks = [
       ...(currentTarget.beforeRequestHooks || []),
-      ...convertHooksShorthand(currentTarget.inputMutators, 'input', 'mutator'),
+      ...convertHooksShorthand(
+        currentTarget.inputMutators,
+        'input',
+        HookType.MUTATOR
+      ),
     ];
   }
 
@@ -628,7 +633,7 @@ export async function tryTargetsRecursively(
       ...convertHooksShorthand(
         currentTarget.outputMutators,
         'output',
-        'mutator'
+        HookType.MUTATOR
       ),
     ];
   }

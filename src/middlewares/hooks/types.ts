@@ -100,7 +100,7 @@ export type EventType = 'beforeRequestHook' | 'afterRequestHook';
 
 export enum HookType {
   GUARDRAIL = 'guardrail',
-  MUTATORS = 'mutator',
+  MUTATOR = 'mutator',
 }
 
 export interface HandlerOptions {

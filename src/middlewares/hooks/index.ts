@@ -325,7 +325,7 @@ export class HooksManager {
       return { ...hookResult, skipped: true };
     }
 
-    if (hook.type === HookType.MUTATORS && hook.checks) {
+    if (hook.type === HookType.MUTATOR && hook.checks) {
       for (const check of hook.checks) {
         const result = await this.executeFunction(
           span.getContext(),
@@ -399,7 +399,7 @@ export class HooksManager {
         !context.response.text) ||
       (hook.eventType === 'beforeRequestHook' &&
         span.getParentHookSpanId() !== null) ||
-      (hook.type === HookType.MUTATORS && !!hook.async)
+      (hook.type === HookType.MUTATOR && !!hook.async)
     );
   }
 
