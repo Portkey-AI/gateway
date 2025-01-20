@@ -196,7 +196,7 @@ export function selectProviderByWeight(providers: Options[]): Options {
 export function convertHooksShorthand(
   hooksArr: any,
   type: string,
-  hookType: string
+  hookType: HookType
 ) {
   return hooksArr.map((hook: any) => {
     let hooksObject: any = {
