@@ -4,9 +4,9 @@ export interface PluginContext {
   provider?: string;
 }
 
-export interface PluginParameters {
+export interface PluginParameters<K = Record<string, string>> {
   [key: string]: any;
-  credentials?: { [key: string]: string };
+  credentials?: K;
 }
 
 export interface PluginHandlerResponse {
@@ -18,9 +18,9 @@ export interface PluginHandlerResponse {
 
 export type HookEventType = 'beforeRequestHook' | 'afterRequestHook';
 
-export type PluginHandler = (
+export type PluginHandler<P = unknown> = (
   context: PluginContext,
-  parameters: PluginParameters,
+  parameters: PluginParameters<P>,
   eventType: HookEventType,
   options?: {
     env: Record<string, any>;

@@ -10,7 +10,7 @@ interface ErrorResponse {
   body: string;
 }
 
-class HttpError extends Error {
+export class HttpError extends Error {
   response: ErrorResponse;
 
   constructor(message: string, response: ErrorResponse) {

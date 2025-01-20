@@ -1,0 +1,88 @@
+{
+  "id": "bedrock",
+  "description": "AWS Bedrock Content Moderation classifier leverages AWS guardrails for effective guardrails and introduces a pragmatic approach to LLM safety by addressing model-generated harms such as unqualified advice and PII",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "accessKeyId": {
+        "type": "string",
+        "label": "Access Key ID",
+        "description": "Find your Access Key ID in the AWS Management Console",
+        "encrypted": true
+      },
+      "accessKeySecret": {
+        "type": "string",
+        "label": "Access Key Secret",
+        "description": "Find your Access Key Secret in the AWS Management Console",
+        "encrypted": true
+      },
+      "guardrailVersion": {
+        "type": "string",
+        "label": "Guardrail Version",
+        "description": "Select the version of the guardrail to use"
+      },
+      "guardrailId": {
+        "type": "string",
+        "label": "Guardrail ID",
+        "description": "ID of the guardrail."
+      },
+      "awsSessionToken": {
+        "type": "string",
+        "label": "AWS Session Token",
+        "description": "AWS Session token."
+      },
+      "region": {
+        "type": "string",
+        "description": "Bedrock guardrail hosted region",
+        "lable": "Region"
+      }
+    },
+    "required": [
+      "accessKeyId",
+      "accessKeySecret",
+      "guardrailVersion",
+      "guardrailId",
+      "region"
+    ]
+  },
+
+  "functions": [
+    {
+      "name": "Content Filter",
+      "id": "contentFilter",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Filters out Content that contain harmful content & prompt filters"
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "pii",
+      "name": "Sensitive Content",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks if the content contains any Personally Identifiable Information (PII)."
+        }
+      ]
+    },
+    {
+      "id": "wordFilter",
+      "name": "Word Filter",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Filters out words that are not allowed in the content."
+        }
+      ]
+    }
+  ]
+}

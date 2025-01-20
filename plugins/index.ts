@@ -34,6 +34,7 @@ import { handler as patronustoxicity } from './patronus/toxicity';
 import { handler as patronuscustom } from './patronus/custom';
 import { mistralGuardrailHandler } from './mistral';
 import { handler as pangeatextGuard } from './pangea/textGuard';
+import { pluginHandler as bedrockHandler } from './bedrock/index';
 
 export const plugins = {
   default: {
@@ -87,5 +88,10 @@ export const plugins = {
   },
   pangea: {
     textGuard: pangeatextGuard,
+  },
+  bedrock: {
+    pii: bedrockHandler.bind({ fn: 'pii' }),
+    contentFilter: bedrockHandler.bind({ fn: 'contentFilter' }),
+    wordFilter: bedrockHandler.bind({ fn: 'wordFilter' }),
   },
 };
