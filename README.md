@@ -5,6 +5,9 @@
 
 <div align="center">
 
+<a href="https://portkey.sh/report-github"><img src="https://raw.githubusercontent.com/siddharthsambharia-portkey/Portkey-Product-Images/refs/heads/main/LLM%20Report%20Campaign%20Frame.png"></img></a>
+<br>
+
 # AI Gateway
 #### Route to 250+ LLMs with 1 fast & friendly API
 
@@ -44,6 +47,9 @@ The [**AI Gateway**](https://portkey.wiki/gh-10) is designed for fast, reliable 
 > Starring this repo helps more developers discover the AI Gateway 🙏🏻
 >
 > ![star-2](https://github.com/user-attachments/assets/53597dce-6333-4ecc-a154-eb05532954e4)
+> 
+<br>
+
 
 <br>
 
@@ -172,7 +178,21 @@ Join weekly community calls every Friday (8 AM PT) to kickstart your AI Gateway 
 
 Minutes of Meetings [published here](https://portkey.wiki/gh-36).
 
+
 <hr>
+
+### LLMs in Prod'25
+
+Insights from analyzing 2 trillion+ tokens, across 90+ regions and 650+ teams in production. What to expect from this report:
+- Trends shaping AI adoption and LLM provider growth.
+- Benchmarks to optimize speed, cost and reliability.
+- Strategies to scale production-grade AI systems.
+
+<a href="https://portkey.sh/report-github"><img width="500" src="https://raw.githubusercontent.com/siddharthsambharia-portkey/Portkey-Product-Images/refs/heads/main/LLM%20Report%20Campaign%20Image.png" /></a>
+
+<a href="https://portkey.sh/report-github">**Get the Report**</a>
+<hr>
+
 
 ## Core Features
 ### Reliable Routing

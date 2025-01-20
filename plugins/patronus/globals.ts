@@ -31,3 +31,36 @@ export const postPatronus = async (
 
   return post(BASE_URL, body, options, timeout);
 };
+
+interface Position {
+  positions: [number, number][];
+  extra: any;
+  confidence_interval: any;
+}
+
+// For finding all longest positions of equal length
+interface AllLongestPositionsResult {
+  positions: [number, number][];
+  length: number;
+}
+
+export function findAllLongestPositions(
+  data: Position
+): AllLongestPositionsResult | null {
+  if (!data?.positions?.length) {
+    return null;
+  }
+
+  // Calculate max length
+  const maxLength = Math.max(...data.positions.map((pos) => pos[1] - pos[0]));
+
+  // Find all positions with max length
+  const longestPositions = data.positions.filter(
+    (pos) => pos[1] - pos[0] === maxLength
+  );
+
+  return {
+    positions: longestPositions,
+    length: maxLength,
+  };
+}

@@ -364,6 +364,7 @@ export interface AnthropicChatCompleteStreamResponse {
       cache_read_input_tokens?: number;
     };
   };
+  error?: AnthropicErrorObject;
 }
 
 export const AnthropicErrorResponseTransform: (
@@ -447,7 +448,11 @@ export const AnthropicChatCompleteResponseTransform: (
       usage: {
         prompt_tokens: input_tokens,
         completion_tokens: output_tokens,
-        total_tokens: input_tokens + output_tokens,
+        total_tokens:
+          input_tokens +
+          output_tokens +
+          (cache_creation_input_tokens ?? 0) +
+          (cache_read_input_tokens ?? 0),
         ...(shouldSendCacheUsage && {
           cache_read_input_tokens: cache_read_input_tokens,
           cache_creation_input_tokens: cache_creation_input_tokens,
@@ -484,6 +489,29 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   chunk = chunk.trim();
 
   const parsedChunk: AnthropicChatCompleteStreamResponse = JSON.parse(chunk);
+
+  if (parsedChunk.type === 'error' && parsedChunk.error) {
+    return (
+      `data: ${JSON.stringify({
+        id: fallbackId,
+        object: 'chat.completion.chunk',
+        created: Math.floor(Date.now() / 1000),
+        model: '',
+        provider: ANTHROPIC,
+        choices: [
+          {
+            finish_reason: parsedChunk.error.type,
+            delta: {
+              content: '',
+            },
+          },
+        ],
+      })}` +
+      '\n\n' +
+      'data: [DONE]\n\n'
+    );
+  }
+
   if (
     parsedChunk.type === 'content_block_start' &&
     parsedChunk.content_block?.type === 'text'
@@ -528,6 +556,11 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   }
 
   if (parsedChunk.type === 'message_delta' && parsedChunk.usage) {
+    const totalTokens =
+      (streamState?.usage?.prompt_tokens ?? 0) +
+      (streamState?.usage?.cache_creation_input_tokens ?? 0) +
+      (streamState?.usage?.cache_read_input_tokens ?? 0) +
+      (parsedChunk.usage.output_tokens ?? 0);
     return (
       `data: ${JSON.stringify({
         id: fallbackId,
@@ -545,6 +578,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
         usage: {
           completion_tokens: parsedChunk.usage?.output_tokens,
           ...streamState.usage,
+          total_tokens: totalTokens,
         },
       })}` + '\n\n'
     );

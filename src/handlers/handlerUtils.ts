@@ -28,6 +28,7 @@ import { HookSpan, HooksManager } from '../middlewares/hooks';
 import { ConditionalRouter } from '../services/conditionalRouter';
 import { RouterError } from '../errors/RouterError';
 import { GatewayError } from '../errors/GatewayError';
+import { HookType } from '../middlewares/hooks/types';
 
 /**
  * Constructs the request options for the API call.
@@ -192,10 +193,14 @@ export function selectProviderByWeight(providers: Options[]): Options {
   throw new Error('No provider selected, please check the weights');
 }
 
-export function convertGuardrailsShorthand(guardrailsArr: any, type: string) {
-  return guardrailsArr.map((guardrails: any) => {
+export function convertHooksShorthand(
+  hooksArr: any,
+  type: string,
+  hookType: HookType
+) {
+  return hooksArr.map((hook: any) => {
     let hooksObject: any = {
-      type: 'guardrail',
+      type: hookType,
       id: `${type}_guardrail_${Math.random().toString(36).substring(2, 5)}`,
     };
 
@@ -209,18 +214,18 @@ export function convertGuardrailsShorthand(guardrailsArr: any, type: string) {
       'type',
       'guardrail_version_id',
     ].forEach((key) => {
-      if (guardrails.hasOwnProperty(key)) {
-        hooksObject[key] = guardrails[key];
-        delete guardrails[key];
+      if (hook.hasOwnProperty(key)) {
+        hooksObject[key] = hook[key];
+        delete hook[key];
       }
     });
 
     hooksObject = convertKeysToCamelCase(hooksObject);
 
     // Now, add all the checks to the checks array
-    hooksObject.checks = Object.keys(guardrails).map((key) => ({
+    hooksObject.checks = Object.keys(hook).map((key) => ({
       id: key.includes('.') ? key : `default.${key}`,
-      parameters: guardrails[key],
+      parameters: hook[key],
     }));
 
     return hooksObject;
@@ -248,7 +253,7 @@ export async function tryPost(
   method: string = 'POST'
 ): Promise<Response> {
   const overrideParams = providerOption?.overrideParams || {};
-  const params: Params =
+  let params: Params =
     requestBody instanceof ReadableStream || requestBody instanceof FormData
       ? {}
       : { ...requestBody, ...overrideParams };
@@ -261,15 +266,12 @@ export async function tryPost(
     strictOpenAiCompliance = false;
   }
 
-  let metadata: Record<string, string>;
+  let metadata: Record<string, string> = {};
   try {
     metadata = JSON.parse(requestHeaders[HEADER_KEYS.METADATA]);
-  } catch (err) {
-    metadata = {};
-  }
+  } catch {}
 
   const provider: string = providerOption.provider ?? '';
-
   const hooksManager = c.get('hooksManager');
   const hookSpan = hooksManager.createSpan(
     params,
@@ -285,8 +287,78 @@ export async function tryPost(
   // Mapping providers to corresponding URLs
   const providerConfig = Providers[provider];
   const apiConfig: ProviderAPIConfig = providerConfig.api;
-  // Attach the body of the request
+
+  let brhResponse: Response | undefined;
+  let transformedBody: any;
+  let createdAt: Date;
+
+  let url: string;
+  const forwardHeaders =
+    requestHeaders[HEADER_KEYS.FORWARD_HEADERS]
+      ?.split(',')
+      .map((h) => h.trim()) ||
+    providerOption.forwardHeaders ||
+    [];
+
+  const customHost =
+    requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || '';
+  const baseUrl =
+    customHost ||
+    (await apiConfig.getBaseURL({
+      providerOptions: providerOption,
+      fn,
+      c,
+    }));
+  const endpoint = apiConfig.getEndpoint({
+    c,
+    providerOptions: providerOption,
+    fn,
+    gatewayRequestBodyJSON: params,
+    gatewayRequestBody: requestBody,
+    gatewayRequestURL: c.req.url,
+  });
+
+  url =
+    fn === 'proxy'
+      ? getProxyPath(
+          c.req.url,
+          provider,
+          c.req.url.indexOf('/v1/proxy') > -1 ? '/v1/proxy' : '/v1',
+          baseUrl,
+          providerOption
+        )
+      : `${baseUrl}${endpoint}`;
+
+  let mappedResponse: Response;
+  let retryCount: number | undefined;
+  let originalResponseJson: Record<string, any> | undefined;
+
+  let cacheKey: string | undefined;
+  let { cacheMode, cacheMaxAge, cacheStatus } = getCacheOptions(
+    providerOption.cache
+  );
+  let cacheResponse: Response | undefined;
+
+  const requestOptions = c.get('requestOptions') ?? [];
   let transformedRequestBody: ReadableStream | FormData | Params = {};
+  let fetchOptions: RequestInit = {};
+
+  // before_request_hooks handler
+  ({
+    response: brhResponse,
+    createdAt,
+    transformedBody,
+  } = await beforeRequestHookHandler(c, hookSpan.id));
+
+  if (brhResponse) {
+    return createResponse(brhResponse, undefined, false, false);
+  }
+
+  if (transformedBody) {
+    params = hookSpan.getContext().request.json;
+  }
+
+  // Attach the body of the request
   if (!providerConfig?.requestHandlers?.[fn]) {
     transformedRequestBody =
       method === 'POST'
@@ -300,41 +372,6 @@ export async function tryPost(
         : requestBody;
   }
 
-  const forwardHeaders =
-    requestHeaders[HEADER_KEYS.FORWARD_HEADERS]
-      ?.split(',')
-      .map((h) => h.trim()) ||
-    providerOption.forwardHeaders ||
-    [];
-
-  const customHost =
-    requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || '';
-
-  const baseUrl =
-    customHost ||
-    (await apiConfig.getBaseURL({
-      providerOptions: providerOption,
-      fn,
-      c,
-    }));
-
-  const endpoint = apiConfig.getEndpoint({
-    c,
-    providerOptions: providerOption,
-    fn,
-    gatewayRequestBodyJSON: params,
-    gatewayRequestBody: requestBody,
-    gatewayRequestURL: c.req.url,
-  });
-
-  let url: string;
-  if (fn == 'proxy') {
-    let proxyPath = c.req.url.indexOf('/v1/proxy') > -1 ? '/v1/proxy' : '/v1';
-    url = getProxyPath(c.req.url, provider, proxyPath, baseUrl, providerOption);
-  } else {
-    url = `${baseUrl}${endpoint}`;
-  }
-
   const headers = await apiConfig.headers({
     c,
     providerOptions: providerOption,
@@ -345,7 +382,7 @@ export async function tryPost(
   });
 
   // Construct the base object for the POST request
-  const fetchOptions = constructRequest(
+  fetchOptions = constructRequest(
     headers,
     provider,
     method,
@@ -368,7 +405,7 @@ export async function tryPost(
     fetchOptions.body = transformedRequestBody;
   } else if (
     fn == 'proxy' &&
-    requestContentType.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
+    requestContentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
   ) {
     fetchOptions.body = transformedRequestBody as ArrayBuffer;
   } else {
@@ -383,21 +420,6 @@ export async function tryPost(
     attempts: providerOption.retry?.attempts ?? 0,
     onStatusCodes: providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES,
   };
-
-  const requestOptions = c.get('requestOptions') ?? [];
-
-  let mappedResponse: Response,
-    retryCount: number | undefined,
-    createdAt: Date,
-    originalResponseJson: Record<string, any> | undefined;
-
-  let cacheKey: string | undefined;
-  let { cacheMode, cacheMaxAge, cacheStatus } = getCacheOptions(
-    providerOption.cache
-  );
-  let cacheResponse: Response | undefined;
-
-  let brhResponse: Response | undefined;
 
   async function createResponse(
     response: Response,
@@ -471,17 +493,6 @@ export async function tryPost(
     return mappedResponse;
   }
 
-  // BeforeHooksHandler
-  ({ response: brhResponse, createdAt } = await beforeRequestHookHandler(
-    c,
-    hookSpan.id
-  ));
-
-  if (!!brhResponse) {
-    // If before requestHandler returns a response, return it
-    return createResponse(brhResponse, undefined, false, false);
-  }
-
   // Cache Handler
   ({ cacheResponse, cacheStatus, cacheKey, createdAt } = await cacheHandler(
     c,
@@ -492,7 +503,7 @@ export async function tryPost(
     hookSpan.id,
     fn
   ));
-  if (!!cacheResponse) {
+  if (cacheResponse) {
     return createResponse(cacheResponse, fn, true);
   }
 
@@ -501,7 +512,7 @@ export async function tryPost(
   const preRequestValidatorResponse = preRequestValidator
     ? await preRequestValidator(c, providerOption, requestHeaders, params)
     : undefined;
-  if (!!preRequestValidatorResponse) {
+  if (preRequestValidatorResponse) {
     return createResponse(preRequestValidatorResponse, undefined, false);
   }
 
@@ -586,14 +597,44 @@ export async function tryTargetsRecursively(
   if (currentTarget.inputGuardrails) {
     currentTarget.beforeRequestHooks = [
       ...(currentTarget.beforeRequestHooks || []),
-      ...convertGuardrailsShorthand(currentTarget.inputGuardrails, 'input'),
+      ...convertHooksShorthand(
+        currentTarget.inputGuardrails,
+        'input',
+        HookType.GUARDRAIL
+      ),
     ];
   }
 
   if (currentTarget.outputGuardrails) {
     currentTarget.afterRequestHooks = [
       ...(currentTarget.afterRequestHooks || []),
-      ...convertGuardrailsShorthand(currentTarget.outputGuardrails, 'output'),
+      ...convertHooksShorthand(
+        currentTarget.outputGuardrails,
+        'output',
+        HookType.GUARDRAIL
+      ),
+    ];
+  }
+
+  if (currentTarget.inputMutators) {
+    currentTarget.beforeRequestHooks = [
+      ...(currentTarget.beforeRequestHooks || []),
+      ...convertHooksShorthand(
+        currentTarget.inputMutators,
+        'input',
+        HookType.MUTATOR
+      ),
+    ];
+  }
+
+  if (currentTarget.outputMutators) {
+    currentTarget.afterRequestHooks = [
+      ...(currentTarget.afterRequestHooks || []),
+      ...convertHooksShorthand(
+        currentTarget.outputMutators,
+        'output',
+        HookType.MUTATOR
+      ),
     ];
   }
 
@@ -1264,6 +1305,8 @@ export async function beforeRequestHookHandler(
   c: Context,
   hookSpanId: string
 ): Promise<any> {
+  let span: HookSpan;
+  let isTransformed = false;
   try {
     const start = new Date();
     const hooksManager = c.get('hooksManager');
@@ -1272,6 +1315,9 @@ export async function beforeRequestHookHandler(
       ['syncBeforeRequestHook'],
       { env: env(c) }
     );
+
+    span = hooksManager.getSpan(hookSpanId) as HookSpan;
+    isTransformed = span.getContext().request.isTransformed;
 
     if (hooksResult.shouldDeny) {
       return {
@@ -1295,12 +1341,14 @@ export async function beforeRequestHookHandler(
           }
         ),
         createdAt: start,
+        transformedBody: isTransformed ? span.getContext().request.json : null,
       };
     }
   } catch (err) {
     console.log(err);
     return { error: err };
-    // TODO: Handle this error!!!
   }
-  return {};
+  return {
+    transformedBody: isTransformed ? span.getContext().request.json : null,
+  };
 }
