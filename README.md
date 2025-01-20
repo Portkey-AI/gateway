@@ -5,6 +5,9 @@
 
 <div align="center">
 
+<a href="https://portkey.sh/report-github"><img src="https://raw.githubusercontent.com/siddharthsambharia-portkey/Portkey-Product-Images/refs/heads/main/LLM%20Report%20Campaign%20Frame.png"></img></a>
+<br>
+
 # AI Gateway
 #### Route to 250+ LLMs with 1 fast & friendly API
 
@@ -45,10 +48,6 @@ The [**AI Gateway**](https://portkey.wiki/gh-10) is designed for fast, reliable 
 >
 > ![star-2](https://github.com/user-attachments/assets/53597dce-6333-4ecc-a154-eb05532954e4)
 > 
-> ⚡ **LLMs in Prod'25 Report**
-> 
-> Real-world Insights from processing 2 Trillion+ Tokens across 90+ regions on Portkey's Gateway. [Get the Report](https://portkey.sh/report-github)
-
 <br>
 
 
