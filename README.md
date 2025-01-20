@@ -47,6 +47,12 @@ The [**AI Gateway**](https://portkey.wiki/gh-10) is designed for fast, reliable 
 
 <br>
 
+> [!TIP]
+> 📊 **LLMs in Prod'25 Report** - Real-world Insights from processing 2 Trillion+ Tokens across 90+ regions on Portkey's Gateway
+>
+> [Get the Report](https://portkey.sh/report-github)
+
+<br>
 ## Quickstart (2 mins)
 
 ### 1. Setup your AI Gateway
@@ -173,6 +179,12 @@ Join weekly community calls every Friday (8 AM PT) to kickstart your AI Gateway 
 Minutes of Meetings [published here](https://portkey.wiki/gh-36).
 
 <hr>
+LLMs in Prod'25 Report
+
+<a href="https://portkey.sh/report-github"><img width="500" src="https://raw.githubusercontent.com/siddharthsambharia-portkey/Portkey-Product-Images/refs/heads/main/LLM%20Report%20Campaign%20Image.png" /></a>
+
+<hr>
+
 
 ## Core Features
 ### Reliable Routing
