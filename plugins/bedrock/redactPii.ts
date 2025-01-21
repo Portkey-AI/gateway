@@ -23,26 +23,21 @@ const redactPii = async (
     },
   ];
 
-  console.log(text, 'text');
   try {
     const response = await bedrockPost(credentials, body);
-    const isRegexMatch =
-      response.assessments[0].sensitiveInformationPolicy?.regexes.length > 0;
-    if (!isRegexMatch) {
-      const data = response.output?.[0];
-
-      if (!data) {
-        return null;
-      }
-
-      return data.text;
-    }
     let maskedText = text;
-    response.assessments[0].sensitiveInformationPolicy.regexes.forEach(
-      (regex) => {
-        maskedText = maskedText.replaceAll(regex.match, `{${regex.name}}`);
-      }
-    );
+    const data = response.output?.[0];
+
+    maskedText = data?.text;
+    const isRegexMatch =
+      response.assessments[0].sensitiveInformationPolicy?.regexes?.length > 0;
+    if (isRegexMatch) {
+      response.assessments[0].sensitiveInformationPolicy.regexes.forEach(
+        (regex) => {
+          maskedText = maskedText.replaceAll(regex.match, `{${regex.name}}`);
+        }
+      );
+    }
     return maskedText;
   } catch (e) {
     return null;

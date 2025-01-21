@@ -1,5 +1,6 @@
 import { PluginContext, PluginParameters } from '../types';
 import { BedrockParameters, pluginHandler } from './index';
+import { bedrockPIIHandler } from './redactPii';
 import creds from './.creds.json';
 
 describe('Credentials check', () => {
@@ -104,5 +105,80 @@ describe('Credentials check', () => {
     expect(result.verdict).toBe(false);
     expect(result.error).toBe(null);
     expect(result.data.filters).toHaveLength(1);
+  });
+
+  test('Should work fine with redaction for sensitive info', async () => {
+    const context = {
+      response: {
+        json: {
+          choices: [
+            {
+              message: {
+                content:
+                  'Hello, John doe. How are you doing?. I see your email is john@doe.com',
+              },
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+
+    const parameters: PluginParameters<BedrockParameters> = {
+      credentials: {
+        ...creds,
+      },
+    };
+
+    const result = await bedrockPIIHandler(
+      context as unknown as PluginContext,
+      parameters,
+      'afterRequestHook',
+      { env: {} }
+    );
+
+    const outputMessage =
+      result.transformedData?.response.json.choices[0].message.content;
+    expect(result).toBeDefined();
+    expect(result.verdict).toBe(true);
+    expect(outputMessage).toEqual(
+      'Hello, {NAME}. How are you doing?. I see your email is {EMAIL}\n'
+    );
+  });
+
+  test('Should work fine with regex redaction for sensitive info', async () => {
+    const context = {
+      response: {
+        json: {
+          choices: [
+            {
+              message: {
+                content: 'bedrock-12121, bedrock-12121',
+              },
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+
+    const parameters: PluginParameters<BedrockParameters> = {
+      credentials: {
+        ...creds,
+      },
+    };
+
+    const result = await bedrockPIIHandler(
+      context as unknown as PluginContext,
+      parameters,
+      'afterRequestHook',
+      { env: {} }
+    );
+
+    const outputMessage =
+      result.transformedData?.response.json.choices[0].message.content;
+    expect(result).toBeDefined();
+    expect(result.verdict).toBe(true);
+    expect(outputMessage).toBe('{bedrock-id}, {bedrock-id}\n');
   });
 });
