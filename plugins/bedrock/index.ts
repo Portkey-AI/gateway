@@ -1,6 +1,6 @@
-import { generateAWSHeaders } from '../../src/providers/bedrock/utils';
 import { PluginHandler } from '../types';
 import { getText, HttpError, post } from '../utils';
+import { generateAWSHeaders } from './util';
 
 const REQUIRED_CREDENTIAL_KEYS = [
   'accessKeyId',
