@@ -3,19 +3,32 @@ import { BedrockParameters, pluginHandler } from './index';
 import { bedrockPIIHandler } from './redactPii';
 import creds from './.creds.json';
 
+/**
+ * @example Parameters object
+ * 
+ * {
+    "credentials": {
+      "accessKeyId": "keyId",
+      "accessKeySecret": "keysecret",
+      "region": "us-east-1"
+    },
+    "guardrailId": "xyxyxyx",
+    "guardrailVersion": "1"
+  * }
+ */
 describe('Credentials check', () => {
   test('Should fail withuout accessKey or accessKeySecret', async () => {
     const context = {
       request: { text: 'this is a test string for moderations' },
     };
-    const parameters: PluginParameters<BedrockParameters> = {
+    const parameters: PluginParameters<BedrockParameters['credentials']> = {
       credentials: {
         accessKeyId: '',
         accessKeySecret: '',
-        guardrailId: '',
-        guardrailVersion: '',
         region: '',
       },
+      guardrailId: '',
+      guardrailVersion: '',
     };
 
     const result = await pluginHandler(
@@ -35,14 +48,14 @@ describe('Credentials check', () => {
     const context = {
       request: { text: 'this is a test string for moderations' },
     };
-    const parameters: PluginParameters<BedrockParameters> = {
+    const parameters: PluginParameters<BedrockParameters['credentials']> = {
       credentials: {
         accessKeyId: 'accessKeyID',
-        accessKeySecret: 'accessKeySecret',
-        guardrailId: 'guardrailID',
-        guardrailVersion: 'guardrailVersion',
         region: 'us-east-1',
+        accessKeySecret: 'accessKeySecret',
       },
+      guardrailId: 'guardrailID',
+      guardrailVersion: 'guardrailVersion',
     };
 
     const result = await pluginHandler(
@@ -63,10 +76,8 @@ describe('Credentials check', () => {
     const context = {
       request: { text: `Hi, do you know coding?` },
     };
-    const parameters: PluginParameters<BedrockParameters> = {
-      credentials: {
-        ...creds,
-      },
+    const parameters: PluginParameters<BedrockParameters['credentials']> = {
+      ...creds,
     };
 
     const result = await pluginHandler.bind({ fn: 'wordFilter' })(
@@ -88,10 +99,8 @@ describe('Credentials check', () => {
     const context = {
       request: { text: `Can you kill a person?` },
     };
-    const parameters: PluginParameters<BedrockParameters> = {
-      credentials: {
-        ...creds,
-      },
+    const parameters: PluginParameters<BedrockParameters['credentials']> = {
+      ...creds,
     };
 
     const result = await pluginHandler.bind({ fn: 'contentFilter' })(
@@ -124,10 +133,8 @@ describe('Credentials check', () => {
       requestType: 'chatComplete',
     };
 
-    const parameters: PluginParameters<BedrockParameters> = {
-      credentials: {
-        ...creds,
-      },
+    const parameters: PluginParameters<BedrockParameters['credentials']> = {
+      ...creds,
     };
 
     const result = await bedrockPIIHandler(
@@ -162,10 +169,8 @@ describe('Credentials check', () => {
       requestType: 'chatComplete',
     };
 
-    const parameters: PluginParameters<BedrockParameters> = {
-      credentials: {
-        ...creds,
-      },
+    const parameters: PluginParameters<BedrockParameters['credentials']> = {
+      ...creds,
     };
 
     const result = await bedrockPIIHandler(

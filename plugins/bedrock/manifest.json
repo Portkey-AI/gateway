@@ -16,16 +16,6 @@
         "description": "Find your Access Key Secret in the AWS Management Console",
         "encrypted": true
       },
-      "guardrailVersion": {
-        "type": "string",
-        "label": "Guardrail Version",
-        "description": "Select the version of the guardrail to use"
-      },
-      "guardrailId": {
-        "type": "string",
-        "label": "Guardrail ID",
-        "description": "ID of the guardrail."
-      },
       "awsSessionToken": {
         "type": "string",
         "label": "AWS Session Token",
@@ -37,13 +27,7 @@
         "lable": "Region"
       }
     },
-    "required": [
-      "accessKeyId",
-      "accessKeySecret",
-      "guardrailVersion",
-      "guardrailId",
-      "region"
-    ]
+    "required": ["accessKeyId", "accessKeySecret", "region"]
   },
 
   "functions": [
@@ -58,7 +42,22 @@
           "text": "Filters out Content that contain harmful content & prompt filters"
         }
       ],
-      "parameters": {}
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "guardrailVersion": {
+            "type": "string",
+            "label": "Guardrail Version",
+            "description": "Select the version of the guardrail to use"
+          },
+          "guardrailId": {
+            "type": "string",
+            "label": "Guardrail ID",
+            "description": "ID of the guardrail."
+          }
+        },
+        "required": ["guardrailVersion", "guardrailId"]
+      }
     },
     {
       "id": "pii",

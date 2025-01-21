@@ -2,13 +2,7 @@ import { PluginHandler } from '../types';
 import { getText, HttpError, post } from '../utils';
 import { generateAWSHeaders } from './util';
 
-const REQUIRED_CREDENTIAL_KEYS = [
-  'accessKeyId',
-  'accessKeySecret',
-  'guardrailVersion',
-  'guardrailId',
-  'region',
-];
+const REQUIRED_CREDENTIAL_KEYS = ['accessKeyId', 'accessKeySecret', 'region'];
 
 type BedrockFunction = 'contentFilter' | 'pii' | 'wordFilter';
 export type BedrockBody = {
@@ -97,12 +91,14 @@ interface BedrockResponse {
 }
 
 export interface BedrockParameters {
-  accessKeyId: string;
-  accessKeySecret: string;
+  credentials: {
+    accessKeyId: string;
+    accessKeySecret: string;
+    awsSessionToken?: string;
+    region: string;
+  };
   guardrailVersion: string;
   guardrailId: string;
-  region: string;
-  awsSessionToken?: string;
 }
 
 enum ResponseKey {
@@ -111,14 +107,16 @@ enum ResponseKey {
   wordFilter = 'wordPolicy',
 }
 
-export const validateCreds = (credentials?: BedrockParameters) => {
+export const validateCreds = (
+  credentials?: BedrockParameters['credentials']
+) => {
   return REQUIRED_CREDENTIAL_KEYS.every((key) =>
-    Boolean(credentials?.[key as keyof BedrockParameters])
+    Boolean(credentials?.[key as keyof BedrockParameters['credentials']])
   );
 };
 
 export const bedrockPost = async (
-  credentials: BedrockParameters,
+  credentials: Record<string, string>,
   body: BedrockBody
 ) => {
   const url = `https://bedrock-runtime.${credentials?.region}.amazonaws.com/guardrail/${credentials?.guardrailId}/version/${credentials?.guardrailVersion}/apply`;
@@ -143,69 +141,76 @@ export const bedrockPost = async (
   });
 };
 
-export const pluginHandler: PluginHandler<BedrockParameters> = async function (
-  this: { fn: BedrockFunction },
-  context,
-  parameters,
-  eventType
-) {
-  const credentials = parameters.credentials;
+export const pluginHandler: PluginHandler<BedrockParameters['credentials']> =
+  async function (
+    this: { fn: BedrockFunction },
+    context,
+    parameters,
+    eventType
+  ) {
+    const credentials = parameters.credentials;
 
-  const validate = validateCreds(credentials);
+    const validate = validateCreds(credentials);
 
-  let verdict = true;
-  let error = null;
-  let data = null;
+    const guardrailVersion = parameters.guardrailVersion;
+    const guardrailId = parameters.guardrailId;
 
-  if (!validate) {
+    let verdict = true;
+    let error = null;
+    let data = null;
+
+    if (!validate || !guardrailVersion || !guardrailId) {
+      return {
+        verdict,
+        error: 'Missing required credentials',
+        data,
+      };
+    }
+
+    const body = {} as BedrockBody;
+
+    if (eventType === 'beforeRequestHook') {
+      body.source = 'INPUT';
+    } else {
+      body.source = 'OUTPUT';
+    }
+
+    body.content = [
+      {
+        text: {
+          text: getText(context, eventType),
+        },
+      },
+    ];
+
+    try {
+      const response = await bedrockPost(
+        { ...(credentials as any), guardrailId, guardrailVersion },
+        body
+      );
+      if (response.action === 'GUARDRAIL_INTERVENED') {
+        data = response.assessments[0]?.[ResponseKey[this.fn]];
+        if (this.fn === 'pii' && !!data) {
+          verdict = false;
+        }
+        if (this.fn === 'contentFilter' && !!data) {
+          verdict = false;
+        }
+
+        if (this.fn === 'wordFilter' && !!data) {
+          verdict = false;
+        }
+      }
+    } catch (e) {
+      if (e instanceof HttpError) {
+        error = e.response.body;
+      } else {
+        error = (e as Error).message;
+      }
+    }
     return {
       verdict,
-      error: 'Missing required credentials',
+      error,
       data,
     };
-  }
-
-  const body = {} as BedrockBody;
-
-  if (eventType === 'beforeRequestHook') {
-    body.source = 'INPUT';
-  } else {
-    body.source = 'OUTPUT';
-  }
-
-  body.content = [
-    {
-      text: {
-        text: getText(context, eventType),
-      },
-    },
-  ];
-
-  try {
-    const response = await bedrockPost(credentials!, body);
-    if (response.action === 'GUARDRAIL_INTERVENED') {
-      data = response.assessments[0]?.[ResponseKey[this.fn]];
-      if (this.fn === 'pii' && !!data) {
-        verdict = false;
-      }
-      if (this.fn === 'contentFilter' && !!data) {
-        verdict = false;
-      }
-
-      if (this.fn === 'wordFilter' && !!data) {
-        verdict = false;
-      }
-    }
-  } catch (e) {
-    if (e instanceof HttpError) {
-      error = e.response.body;
-    } else {
-      error = (e as Error).message;
-    }
-  }
-  return {
-    verdict,
-    error,
-    data,
   };
-};

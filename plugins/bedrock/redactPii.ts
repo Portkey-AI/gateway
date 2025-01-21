@@ -24,7 +24,7 @@ const redactPii = async (
   ];
 
   try {
-    const response = await bedrockPost(credentials, body);
+    const response = await bedrockPost({ ...(credentials as any) }, body);
     let maskedText = text;
     const data = response.output?.[0];
 
@@ -44,70 +44,78 @@ const redactPii = async (
   }
 };
 
-export const bedrockPIIHandler: PluginHandler<BedrockParameters> =
-  async function (context, parameters, eventType) {
-    let transformedData: Record<string, any> = {
-      request: {
-        json: null,
-      },
-      response: {
-        json: null,
-      },
-    };
-
-    const credentials = parameters.credentials;
-
-    const validate = validateCreds(credentials);
-
-    if (!validate) {
-      return {
-        verdict: true,
-        error: 'Missing required credentials',
-        data: null,
-      };
-    }
-
-    try {
-      const { content, textArray } = getCurrentContentPart(context, eventType);
-
-      if (!content) {
-        return {
-          error: { message: 'request or response json is empty' },
-          verdict: true,
-          data: null,
-        };
-      }
-
-      const transformedTextPromise = textArray.map((text) =>
-        redactPii(text, eventType, credentials!)
-      );
-
-      const transformedText = await Promise.all(transformedTextPromise);
-
-      setCurrentContentPart(
-        context,
-        eventType,
-        transformedData,
-        null,
-        transformedText
-      );
-
-      return {
-        error: null,
-        verdict: true,
-        data:
-          transformedText.filter((text) => text !== null).length > 0
-            ? { flagged: true }
-            : null,
-        transformedData,
-      };
-    } catch (e: any) {
-      delete e.stack;
-      return {
-        error: e as Error,
-        verdict: true,
-        data: null,
-        transformedData,
-      };
-    }
+export const bedrockPIIHandler: PluginHandler<
+  BedrockParameters['credentials']
+> = async function (context, parameters, eventType) {
+  let transformedData: Record<string, any> = {
+    request: {
+      json: null,
+    },
+    response: {
+      json: null,
+    },
   };
+
+  const credentials = parameters.credentials;
+
+  const guardrailVersion = parameters.guardrailVersion;
+  const guardrailId = parameters.guardrailId;
+
+  const validate = validateCreds(credentials);
+
+  if (!validate || !guardrailVersion || !guardrailId) {
+    return {
+      verdict: true,
+      error: 'Missing required credentials',
+      data: null,
+    };
+  }
+
+  try {
+    const { content, textArray } = getCurrentContentPart(context, eventType);
+
+    if (!content) {
+      return {
+        error: { message: 'request or response json is empty' },
+        verdict: true,
+        data: null,
+      };
+    }
+
+    const transformedTextPromise = textArray.map((text) =>
+      redactPii(text, eventType, {
+        ...(credentials as any),
+        guardrailId,
+        guardrailVersion,
+      })
+    );
+
+    const transformedText = await Promise.all(transformedTextPromise);
+
+    setCurrentContentPart(
+      context,
+      eventType,
+      transformedData,
+      null,
+      transformedText
+    );
+
+    return {
+      error: null,
+      verdict: true,
+      data:
+        transformedText.filter((text) => text !== null).length > 0
+          ? { flagged: true }
+          : null,
+      transformedData,
+    };
+  } catch (e: any) {
+    delete e.stack;
+    return {
+      error: e as Error,
+      verdict: true,
+      data: null,
+      transformedData,
+    };
+  }
+};
