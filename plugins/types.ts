@@ -19,7 +19,7 @@ export interface PluginHandlerResponse {
 
 export type HookEventType = 'beforeRequestHook' | 'afterRequestHook';
 
-export type PluginHandler<P = unknown> = (
+export type PluginHandler<P = Record<string, string>> = (
   context: PluginContext,
   parameters: PluginParameters<P>,
   eventType: HookEventType,
