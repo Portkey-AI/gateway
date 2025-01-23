@@ -53,6 +53,7 @@ import SagemakerConfig from './sagemaker';
 import NebiusConfig from './nebius';
 import RecraftAIConfig from './recraft-ai';
 import MilvusConfig from './milvus';
+import ReplicateConfig from './replicate';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -106,6 +107,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   nebius: NebiusConfig,
   'recraft-ai': RecraftAIConfig,
   milvus: MilvusConfig,
+  replicate: ReplicateConfig,
 };
 
 export default Providers;
