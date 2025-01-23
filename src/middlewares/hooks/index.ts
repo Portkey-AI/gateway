@@ -98,6 +98,10 @@ export class HookSpan {
             .join('\n')
         : '';
       return concatenatedText || lastMessage.content;
+    } else if (requestParams?.input) {
+      return Array.isArray(requestParams.input)
+        ? requestParams.input.join('\n')
+        : requestParams.input;
     }
     return '';
   }
@@ -391,7 +395,10 @@ export class HooksManager {
   private shouldSkipHook(span: HookSpan, hook: HookObject): boolean {
     const context = span.getContext();
     return (
-      !['chatComplete', 'complete'].includes(context.requestType) ||
+      !['chatComplete', 'complete', 'embed'].includes(context.requestType) ||
+      (context.requestType === 'embed' &&
+        hook.eventType !== 'beforeRequestHook') ||
+      (context.requestType === 'embed' && hook.type === HookType.MUTATOR) ||
       (hook.eventType === 'afterRequestHook' &&
         context.response.statusCode !== 200) ||
       (hook.eventType === 'afterRequestHook' &&
