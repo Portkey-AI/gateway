@@ -98,6 +98,10 @@ export class HookSpan {
             .join('\n')
         : '';
       return concatenatedText || lastMessage.content;
+    } else if (requestParams?.input) {
+      return Array.isArray(requestParams.input)
+        ? requestParams.input.join('\n')
+        : requestParams.input;
     }
     return '';
   }
@@ -325,29 +329,6 @@ export class HooksManager {
       return { ...hookResult, skipped: true };
     }
 
-    if (hook.type === HookType.MUTATOR && hook.checks) {
-      for (const check of hook.checks) {
-        const result = await this.executeFunction(
-          span.getContext(),
-          check,
-          hook.eventType,
-          options
-        );
-        if (
-          result.transformedData &&
-          (result.transformedData.response.json ||
-            result.transformedData.request.json)
-        ) {
-          span.setContextAfterTransform(
-            result.transformedData.response.json,
-            result.transformedData.request.json
-          );
-        }
-        delete result.transformedData;
-        checkResults.push(result);
-      }
-    }
-
     if (hook.type === HookType.GUARDRAIL && hook.checks) {
       checkResults = await Promise.all(
         hook.checks
@@ -361,6 +342,20 @@ export class HooksManager {
             )
           )
       );
+
+      checkResults.forEach((checkResult) => {
+        if (
+          checkResult.transformedData &&
+          (checkResult.transformedData.response.json ||
+            checkResult.transformedData.request.json)
+        ) {
+          span.setContextAfterTransform(
+            checkResult.transformedData.response.json,
+            checkResult.transformedData.request.json
+          );
+        }
+        delete checkResult.transformedData;
+      });
     }
 
     hookResult = {
@@ -391,7 +386,10 @@ export class HooksManager {
   private shouldSkipHook(span: HookSpan, hook: HookObject): boolean {
     const context = span.getContext();
     return (
-      !['chatComplete', 'complete'].includes(context.requestType) ||
+      !['chatComplete', 'complete', 'embed'].includes(context.requestType) ||
+      (context.requestType === 'embed' &&
+        hook.eventType !== 'beforeRequestHook') ||
+      (context.requestType === 'embed' && hook.type === HookType.MUTATOR) ||
       (hook.eventType === 'afterRequestHook' &&
         context.response.statusCode !== 200) ||
       (hook.eventType === 'afterRequestHook' &&
