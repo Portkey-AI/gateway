@@ -1,5 +1,7 @@
 import { handler as textGuardContentHandler } from './textGuard';
+import { handler as piiHandler } from './pii';
 import testCreds from './.creds.json';
+import { HookEventType, PluginContext } from '../types';
 
 const options = {
   env: {},
@@ -181,5 +183,200 @@ describe('textGuardContentHandler', () => {
     expect(result.verdict).toBeDefined();
     expect(result.verdict).toBe(true);
     expect(result.data).toBeNull();
+  });
+});
+
+describe('pii handler', () => {
+  it('should only detect PII', async () => {
+    const eventType = 'beforeRequestHook' as HookEventType;
+    const context = {
+      request: {
+        text: 'My email is abc@xyz.com and some random text',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: 'My email is abc@xyz.com and some random text',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = {
+      credentials: testCreds,
+    };
+
+    const result = await piiHandler(
+      context as PluginContext,
+      parameters,
+      eventType,
+      {
+        env: {},
+      }
+    );
+    expect(result).toBeDefined();
+    expect(result.verdict).toBe(false);
+    expect(result.error).toBeNull();
+    expect(result.data).toBeDefined();
+    expect(result.transformedData?.request?.json).toBeNull();
+  });
+
+  it('should detect and redact PII in request text', async () => {
+    const context = {
+      request: {
+        text: 'My email is abc@xyz.com and some random text',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: 'My email is abc@xyz.com and some random text',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = {
+      redact: true,
+      credentials: testCreds,
+    };
+
+    const result = await piiHandler(
+      context as PluginContext,
+      parameters,
+      'beforeRequestHook',
+      {
+        env: {},
+      }
+    );
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(false);
+    expect(result.data).toBeDefined();
+    expect(result.transformedData?.request?.json?.messages?.[0]?.content).toBe(
+      'My email is <EMAIL_ADDRESS> and some random text'
+    );
+  });
+
+  it('should detect and redact PII in request text with multiple content parts', async () => {
+    const context = {
+      request: {
+        text: 'My email is abc@xyz.com My email is abc@xyz.com and some random text',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: 'My email is abc@xyz.com',
+                },
+                {
+                  type: 'text',
+                  text: 'My email is abc@xyz.com and some random text',
+                },
+              ],
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = {
+      redact: true,
+      credentials: testCreds,
+    };
+
+    const result = await piiHandler(
+      context as PluginContext,
+      parameters,
+      'beforeRequestHook',
+      {
+        env: {},
+      }
+    );
+
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(false);
+    expect(result.data).toBeDefined;
+    expect(
+      result.transformedData?.request?.json?.messages?.[0]?.content?.[0]?.text
+    ).toBe('My email is <EMAIL_ADDRESS>');
+    expect(
+      result.transformedData?.request?.json?.messages?.[0]?.content?.[1]?.text
+    ).toBe('My email is <EMAIL_ADDRESS> and some random text');
+  });
+
+  it('should detect and redact PII in response text', async () => {
+    const context = {
+      response: {
+        text: 'My email is abc@xyz.com and some random text',
+        json: {
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: 'My email is abc@xyz.com and some random text',
+              },
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = {
+      redact: true,
+      credentials: testCreds,
+    };
+
+    const result = await piiHandler(
+      context as PluginContext,
+      parameters,
+      'afterRequestHook',
+      {
+        env: {},
+      }
+    );
+
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(false);
+    expect(result.data).toBeDefined();
+    expect(
+      result.transformedData?.response?.json?.choices?.[0]?.message?.content
+    ).toBe('My email is <EMAIL_ADDRESS> and some random text');
+  });
+
+  it('should pass text without PII', async () => {
+    const eventType = 'beforeRequestHook' as HookEventType;
+    const context = {
+      request: {
+        text: 'Hello world',
+        json: {
+          messages: [
+            {
+              role: 'assistant',
+              content: 'Hello world',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = {
+      credentials: testCreds,
+    };
+
+    const result = await piiHandler(
+      context as PluginContext,
+      parameters,
+      eventType,
+      {
+        env: {},
+      }
+    );
+    expect(result).toBeDefined();
+    expect(result.verdict).toBe(true);
+    expect(result.error).toBeNull();
+    expect(result.data).toBeDefined();
   });
 });
