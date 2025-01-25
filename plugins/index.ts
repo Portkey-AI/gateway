@@ -39,7 +39,6 @@ import { handler as promptfooHarm } from './promptfoo/harm';
 import { handler as promptfooGuard } from './promptfoo/guard';
 import { handler as pangeapii } from './pangea/pii';
 import { pluginHandler as bedrockHandler } from './bedrock/index';
-import { bedrockPIIHandler } from './bedrock/redactPii';
 
 export const plugins = {
   default: {
@@ -101,9 +100,6 @@ export const plugins = {
     guard: promptfooGuard,
   },
   bedrock: {
-    pii: bedrockHandler.bind({ fn: 'pii' }),
-    contentFilter: bedrockHandler.bind({ fn: 'contentFilter' }),
-    wordFilter: bedrockHandler.bind({ fn: 'wordFilter' }),
-    redactPii: bedrockPIIHandler,
+    guard: bedrockHandler,
   },
 };
