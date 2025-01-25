@@ -1,7 +1,6 @@
-import { HookEventType, PluginContext, PluginHandler } from '../types';
+import { PluginHandler } from '../types';
 import {
   getCurrentContentPart,
-  getText,
   HttpError,
   setCurrentContentPart,
 } from '../utils';
@@ -18,46 +17,24 @@ export const validateCreds = (
   );
 };
 
-const transformedData = {
-  request: {
-    json: null,
-  },
-  response: {
-    json: null,
-  },
-};
-
-const handleRedaction = async (
-  context: PluginContext,
-  hookType: HookEventType,
-  credentials: Record<string, string>
-) => {
-  const { content, textArray } = getCurrentContentPart(context, hookType);
-
-  if (!content) {
-    return [];
-  }
-  const redactPromises = textArray.map(async (text) => {
-    const result = await redactPii(text, hookType, credentials);
-
-    if (result) {
-      setCurrentContentPart(context, hookType, transformedData, result);
-    }
-  });
-
-  await Promise.all(redactPromises);
-};
-
 export const pluginHandler: PluginHandler<
   BedrockParameters['credentials']
 > = async (context, parameters, eventType) => {
+  const transformedData: Record<string, any> = {
+    request: {
+      json: null,
+    },
+    response: {
+      json: null,
+    },
+  };
   const credentials = parameters.credentials;
 
   const validate = validateCreds(credentials);
 
   const guardrailVersion = parameters.guardrailVersion;
   const guardrailId = parameters.guardrailId;
-  const pii = parameters?.piiCheck as boolean;
+  const redact = parameters?.redact as boolean;
 
   let verdict = true;
   let error = null;
@@ -65,19 +42,9 @@ export const pluginHandler: PluginHandler<
   if (!validate || !guardrailVersion || !guardrailId) {
     return {
       verdict,
-      error: 'Missing required credentials',
+      error: { message: 'Missing required credentials' },
       data,
     };
-  }
-
-  if (pii) {
-    await handleRedaction(context, eventType, {
-      ...credentials,
-      guardrailId,
-      guardrailVersion,
-    });
-
-    return { error, data, verdict: true, transformedData };
   }
 
   const body = {} as BedrockBody;
@@ -88,37 +55,90 @@ export const pluginHandler: PluginHandler<
     body.source = 'OUTPUT';
   }
 
-  body.content = [
-    {
-      text: {
-        text: getText(context, eventType),
-      },
-    },
-  ];
-
   try {
-    const response = await bedrockPost(
-      { ...(credentials as any), guardrailId, guardrailVersion },
-      body
-    );
-    if (response.action === 'GUARDRAIL_INTERVENED') {
-      verdict = false;
-      // Send assessments
-      data = response.assessments[0] as any;
+    const { content, textArray } = getCurrentContentPart(context, eventType);
 
-      delete data['invocationMetrics'];
-      delete data['usage'];
+    if (!content) {
+      return {
+        error: { message: 'request or response json is empty' },
+        verdict: true,
+        data: null,
+        transformedData,
+      };
     }
+
+    const results = await Promise.all(
+      textArray.map((text) =>
+        text
+          ? bedrockPost(
+              { ...(credentials as any), guardrailId, guardrailVersion },
+              {
+                content: [{ text: { text } }],
+                source: body.source,
+              }
+            )
+          : null
+      )
+    );
+
+    const interventionData =
+      results.find(
+        (result) => result && result.action === 'GUARDRAIL_INTERVENED'
+      ) ?? results[0];
+
+    const flaggedCategories = new Set();
+
+    results.forEach((result) => {
+      if (!result) return;
+      if (result.assessments[0].contentPolicy?.filters?.length > 0) {
+        flaggedCategories.add('contentFilter');
+      }
+      if (result.assessments[0].wordPolicy?.customWords?.length > 0) {
+        flaggedCategories.add('wordFilter');
+      }
+      if (result.assessments[0].wordPolicy?.managedWordLists?.length > 0) {
+        flaggedCategories.add('wordFilter');
+      }
+      if (
+        result.assessments[0].sensitiveInformationPolicy?.piiEntities?.length >
+        0
+      ) {
+        flaggedCategories.add('piiFilter');
+      }
+    });
+
+    let hasPii = flaggedCategories.has('piiFilter');
+    if (hasPii && redact) {
+      const maskedTexts = textArray.map((text, index) =>
+        redactPii(text, results[index])
+      );
+
+      setCurrentContentPart(
+        context,
+        eventType,
+        transformedData,
+        null,
+        maskedTexts
+      );
+    }
+
+    if (hasPii && flaggedCategories.size === 1 && redact) {
+      verdict = true;
+    } else if (flaggedCategories.size > 0) {
+      verdict = false;
+    }
+    data = interventionData;
   } catch (e) {
     if (e instanceof HttpError) {
-      error = e.response.body;
+      error = { message: e.response.body };
     } else {
-      error = (e as Error).message;
+      error = { message: (e as Error).message };
     }
   }
   return {
     verdict,
     error,
     data,
+    transformedData,
   };
 };

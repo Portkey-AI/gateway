@@ -1,6 +1,6 @@
-import { PluginContext, PluginParameters } from '../types';
+import { HookEventType, PluginContext, PluginParameters } from '../types';
 import { pluginHandler } from './index';
-import creds from './.creds.json';
+import testCreds from './.creds.json';
 import { BedrockParameters } from './type';
 
 /**
@@ -19,7 +19,18 @@ import { BedrockParameters } from './type';
 describe('Credentials check', () => {
   test('Should fail withuout accessKey or accessKeySecret', async () => {
     const context = {
-      request: { text: 'this is a test string for moderations' },
+      request: {
+        text: 'My email is abc@xyz.com and SSN is 123-45-6789',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: 'My email is abc@xyz.com and SSN is 123-45-6789',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
     };
     const parameters: PluginParameters<BedrockParameters['credentials']> = {
       credentials: {
@@ -46,7 +57,18 @@ describe('Credentials check', () => {
 
   test('Should fail with wrong creds', async () => {
     const context = {
-      request: { text: 'this is a test string for moderations' },
+      request: {
+        text: 'My email is abc@xyz.com and SSN is 123-45-6789',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: 'My email is abc@xyz.com and SSN is 123-45-6789',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
     };
     const parameters: PluginParameters<BedrockParameters['credentials']> = {
       credentials: {
@@ -71,119 +93,209 @@ describe('Credentials check', () => {
     expect(result.data).toBeNull();
   });
 
-  test('Should be working with word_filter', async () => {
-    // coding is a blocked custom word.
+  it('should only detect PII', async () => {
+    const eventType = 'beforeRequestHook' as HookEventType;
     const context = {
-      request: { text: `Hi, do you know coding?` },
+      request: {
+        text: 'My email is abc@xyz.com and SSN is 123-45-6789',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: 'My email is abc@xyz.com and SSN is 123-45-6789',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
     };
-    const parameters: PluginParameters<BedrockParameters['credentials']> = {
-      ...creds,
+    const parameters = {
+      credentials: testCreds,
+      guardrailId: testCreds.guardrailId,
+      guardrailVersion: testCreds.guardrailVersion,
     };
 
-    const result = await pluginHandler.bind({ fn: 'wordFilter' })(
-      context as unknown as PluginContext,
+    const result = await pluginHandler(
+      context as PluginContext,
       parameters,
-      'beforeRequestHook',
-      { env: {} }
+      eventType,
+      {
+        env: {},
+      }
     );
-
     expect(result).toBeDefined();
     expect(result.verdict).toBe(false);
-    expect(result.error).toBe(null);
+    expect(result.error).toBeNull();
     expect(result.data).toBeDefined();
+    expect(result.transformedData?.request?.json).toBeNull();
   });
 
-  test('Should be working with content_filter', async () => {
-    // `kill` is a word that should be blocked under `contentFilter`
-    // Violence words are not allowed.
+  it('should detect and redact PII in request text', async () => {
     const context = {
-      request: { text: `Can you kill a person?` },
+      request: {
+        text: 'My SSN is 123-45-6789 and some random text',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: 'My SSN is 123-45-6789 and some random text',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
     };
-    const parameters: PluginParameters<BedrockParameters['credentials']> = {
-      ...creds,
+    const parameters = {
+      credentials: testCreds,
+      redact: true,
+      guardrailId: testCreds.guardrailId,
+      guardrailVersion: testCreds.guardrailVersion,
     };
 
-    const result = await pluginHandler.bind({ fn: 'contentFilter' })(
-      context as unknown as PluginContext,
+    const result = await pluginHandler(
+      context as PluginContext,
       parameters,
       'beforeRequestHook',
-      { env: {} }
+      {
+        env: {},
+      }
     );
-
-    expect(result).toBeDefined();
-    expect(result.verdict).toBe(false);
-    expect(result.error).toBe(null);
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(true);
     expect(result.data).toBeDefined();
+    expect(result.transformedData?.request?.json?.messages?.[0]?.content).toBe(
+      'My SSN is {US_SOCIAL_SECURITY_NUMBER} and some random text'
+    );
   });
 
-  // test('Should work fine with redaction for sensitive info', async () => {
-  //   const context = {
-  //     response: {
-  //       json: {
-  //         choices: [
-  //           {
-  //             message: {
-  //               content:
-  //                 'Hello, John doe. How are you doing?. I see your email is john@doe.com',
-  //             },
-  //           },
-  //         ],
-  //       },
-  //     },
-  //     requestType: 'chatComplete',
-  //   };
+  it('should detect and redact PII in request text with multiple content parts', async () => {
+    const context = {
+      request: {
+        text: 'My SSN is 123-45-6789 My SSN is 123-45-6789 and some random text',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: 'My SSN is 123-45-6789',
+                },
+                {
+                  type: 'text',
+                  text: 'My SSN is 123-45-6789 and some random text',
+                },
+              ],
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = {
+      credentials: testCreds,
+      redact: true,
+      guardrailId: testCreds.guardrailId,
+      guardrailVersion: testCreds.guardrailVersion,
+    };
 
-  //   const parameters: PluginParameters<BedrockParameters['credentials']> = {
-  //     ...creds,
-  //   };
+    const result = await pluginHandler(
+      context as PluginContext,
+      parameters,
+      'beforeRequestHook',
+      {
+        env: {},
+      }
+    );
 
-  //   const result = await bedrockPIIHandler(
-  //     context as unknown as PluginContext,
-  //     parameters,
-  //     'afterRequestHook',
-  //     { env: {} }
-  //   );
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(true);
+    expect(result.data).toBeDefined;
+    expect(
+      result.transformedData?.request?.json?.messages?.[0]?.content?.[0]?.text
+    ).toBe('My SSN is {US_SOCIAL_SECURITY_NUMBER}');
+    expect(
+      result.transformedData?.request?.json?.messages?.[0]?.content?.[1]?.text
+    ).toBe('My SSN is {US_SOCIAL_SECURITY_NUMBER} and some random text');
+  });
 
-  //   const outputMessage =
-  //     result.transformedData?.response.json.choices[0].message.content;
-  //   expect(result).toBeDefined();
-  //   expect(result.verdict).toBe(true);
-  //   expect(outputMessage).toEqual(
-  //     'Hello, {NAME}. How are you doing?. I see your email is {EMAIL}\n'
-  //   );
-  // });
+  it('should detect and redact PII in response text', async () => {
+    const context = {
+      response: {
+        text: 'My SSN is 123-45-6789 and some random text',
+        json: {
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: 'My SSN is 123-45-6789 and some random text',
+              },
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = {
+      credentials: testCreds,
+      redact: true,
+      guardrailId: testCreds.guardrailId,
+      guardrailVersion: testCreds.guardrailVersion,
+    };
 
-  // test('Should work fine with regex redaction for sensitive info', async () => {
-  //   const context = {
-  //     response: {
-  //       json: {
-  //         choices: [
-  //           {
-  //             message: {
-  //               content: 'bedrock-12121, bedrock-12121',
-  //             },
-  //           },
-  //         ],
-  //       },
-  //     },
-  //     requestType: 'chatComplete',
-  //   };
+    const result = await pluginHandler(
+      context as PluginContext,
+      parameters,
+      'afterRequestHook',
+      {
+        env: {},
+      }
+    );
 
-  //   const parameters: PluginParameters<BedrockParameters['credentials']> = {
-  //     ...creds,
-  //   };
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(true);
+    expect(result.data).toBeDefined();
+    expect(
+      result.transformedData?.response?.json?.choices?.[0]?.message?.content
+    ).toBe('My SSN is {US_SOCIAL_SECURITY_NUMBER} and some random text');
+  });
 
-  //   const result = await bedrockPIIHandler(
-  //     context as unknown as PluginContext,
-  //     parameters,
-  //     'afterRequestHook',
-  //     { env: {} }
-  //   );
+  it('should pass text without PII', async () => {
+    const eventType = 'afterRequestHook' as HookEventType;
+    const context = {
+      response: {
+        text: 'Hello world',
+        json: {
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: 'Hello world',
+              },
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = {
+      credentials: testCreds,
+      guardrailId: testCreds.guardrailId,
+      guardrailVersion: testCreds.guardrailVersion,
+    };
 
-  //   const outputMessage =
-  //     result.transformedData?.response.json.choices[0].message.content;
-  //   expect(result).toBeDefined();
-  //   expect(result.verdict).toBe(true);
-  //   expect(outputMessage).toBe('{bedrock-id}, {bedrock-id}\n');
-  // });
+    const result = await pluginHandler(
+      context as PluginContext,
+      parameters,
+      eventType,
+      {
+        env: {},
+      }
+    );
+    expect(result).toBeDefined();
+    expect(result.verdict).toBe(true);
+    expect(result.error).toBeNull();
+    expect(result.data).toBeDefined();
+    expect(result.transformedData?.response?.json).toBeNull();
+  });
 });

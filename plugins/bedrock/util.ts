@@ -1,13 +1,7 @@
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { SignatureV4 } from '@smithy/signature-v4';
-import {
-  BedrockBody,
-  BedrockParameters,
-  BedrockResponse,
-  PIIFilter,
-} from './type';
+import { BedrockBody, BedrockResponse, PIIFilter } from './type';
 import { post } from '../utils';
-import { HookEventType } from '../types';
 
 export const generateAWSHeaders = async (
   body: Record<string, any>,
@@ -98,44 +92,27 @@ const replaceMatches = (
  * @param credentials
  * @returns
  */
-export const redactPii = async (
-  text: string,
-  eventType: HookEventType,
-  credentials: Record<string, string>
-) => {
-  const body = {} as BedrockBody;
-
-  if (eventType === 'beforeRequestHook') {
-    body.source = 'INPUT';
-  } else {
-    body.source = 'OUTPUT';
-  }
-
-  body.content = [
-    {
-      text: {
-        text,
-      },
-    },
-  ];
-
+export const redactPii = (text: string, result: BedrockResponse | null) => {
   try {
-    const response = await bedrockPost({ ...(credentials as any) }, body);
+    if (!result) return null;
+    if (!result.assessments[0]?.sensitiveInformationPolicy || !text) {
+      return null;
+    }
     // `ANONYMIZED` means text is already masked by api invokation
     const isMasked =
-      response.assessments[0].sensitiveInformationPolicy.piiEntities?.find(
+      result.assessments[0].sensitiveInformationPolicy.piiEntities?.find(
         (entity) => entity.action === 'ANONYMIZED'
       );
 
-    let maskedText = text;
+    let maskedText: string = text;
     if (isMasked) {
       // Use the invoked text directly.
-      const data = response.output?.[0];
+      const data = result.output?.[0];
 
       maskedText = data?.text;
     } else {
       // Replace the all entires of each filter sent from api.
-      response.assessments[0].sensitiveInformationPolicy.piiEntities.forEach(
+      result.assessments[0].sensitiveInformationPolicy.piiEntities.forEach(
         (filter) => {
           maskedText = replaceMatches(filter, maskedText, false);
         }
@@ -144,9 +121,9 @@ export const redactPii = async (
 
     // Replace the all entires of each filter sent from api for regex
     const isRegexMatch =
-      response.assessments[0].sensitiveInformationPolicy?.regexes?.length > 0;
+      result.assessments[0].sensitiveInformationPolicy?.regexes?.length > 0;
     if (isRegexMatch) {
-      response.assessments[0].sensitiveInformationPolicy.regexes.forEach(
+      result.assessments[0].sensitiveInformationPolicy.regexes.forEach(
         (regex) => {
           maskedText = replaceMatches(regex as any, maskedText, true);
         }
