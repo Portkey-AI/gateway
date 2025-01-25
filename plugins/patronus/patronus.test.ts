@@ -99,7 +99,7 @@ describe('phi handler', () => {
     );
 
     expect(result.error).toBeNull();
-    expect(result.verdict).toBe(false);
+    expect(result.verdict).toBe(true);
     expect(result.data).toBeDefined();
     expect(result.transformedData?.request?.json?.messages?.[0]?.content).toBe(
       'J******e has a history of heart disease'
@@ -145,7 +145,7 @@ describe('phi handler', () => {
     );
 
     expect(result.error).toBeNull();
-    expect(result.verdict).toBe(false);
+    expect(result.verdict).toBe(true);
     expect(result.data).toBeDefined;
     expect(
       result.transformedData?.request?.json?.messages?.[0]?.content?.[0]?.text
@@ -188,7 +188,7 @@ describe('phi handler', () => {
     );
 
     expect(result.error).toBeNull();
-    expect(result.verdict).toBe(false);
+    expect(result.verdict).toBe(true);
     expect(result.data).toBeDefined();
     expect(
       result.transformedData?.response?.json?.choices?.[0]?.message?.content
@@ -289,7 +289,7 @@ describe('pii handler', () => {
     );
 
     expect(result.error).toBeNull();
-    expect(result.verdict).toBe(false);
+    expect(result.verdict).toBe(true);
     expect(result.data).toBeDefined();
     expect(result.transformedData?.request?.json?.messages?.[0]?.content).toBe(
       'My email is a*********m and some random text'
@@ -335,7 +335,7 @@ describe('pii handler', () => {
     );
 
     expect(result.error).toBeNull();
-    expect(result.verdict).toBe(false);
+    expect(result.verdict).toBe(true);
     expect(result.data).toBeDefined;
     expect(
       result.transformedData?.request?.json?.messages?.[0]?.content?.[0]?.text
@@ -377,7 +377,7 @@ describe('pii handler', () => {
     );
 
     expect(result.error).toBeNull();
-    expect(result.verdict).toBe(false);
+    expect(result.verdict).toBe(true);
     expect(result.data).toBeDefined();
     expect(
       result.transformedData?.response?.json?.choices?.[0]?.message?.content

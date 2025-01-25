@@ -116,6 +116,7 @@ export const handler: PluginHandler = async (
       results.find((result) => result?.data?.error_message)?.data
         ?.error_message || null;
 
+    let shouldBlock = hasPII;
     if (parameters?.redact && hasPII) {
       const maskedTexts = results.map((result) => result?.maskedText ?? null);
       setCurrentContentPart(
@@ -125,10 +126,11 @@ export const handler: PluginHandler = async (
         null,
         maskedTexts
       );
+      shouldBlock = false;
     }
 
     // verdict can be true/false
-    verdict = !hasPII;
+    verdict = !shouldBlock;
     data = piiData?.evaluation_result?.additional_info;
   } catch (e: any) {
     delete e.stack;

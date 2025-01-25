@@ -73,6 +73,7 @@ export const handler: PluginHandler = async (
     const hasPHI = results.some(
       (result) => result?.data?.evaluation_result?.pass === false
     );
+    let shouldBlock = hasPHI;
     const phiData =
       results.find((result) => result?.maskedText)?.data ?? results[0]?.data;
     error =
@@ -89,10 +90,11 @@ export const handler: PluginHandler = async (
         null,
         maskedTexts
       );
+      shouldBlock = false;
     }
 
     // verdict can be true/false
-    verdict = !hasPHI;
+    verdict = !shouldBlock;
     data = phiData.evaluation_result.additional_info;
   } catch (e: any) {
     delete e.stack;
