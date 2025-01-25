@@ -72,6 +72,7 @@ export const handler: PluginHandler = async (
         ? true
         : false;
 
+    let shouldBlock = piiDetected;
     if (piiDetected && redact) {
       setCurrentContentPart(
         context,
@@ -79,11 +80,12 @@ export const handler: PluginHandler = async (
         transformedData,
         response.result.redacted_data
       );
+      shouldBlock = false;
     }
 
     return {
       error: null,
-      verdict: !piiDetected,
+      verdict: !shouldBlock,
       data: {
         summary: response.summary,
       },

@@ -32,7 +32,7 @@ describe('textGuardContentHandler', () => {
     };
     const eventType = 'beforeRequestHook';
     const parameters = {
-      credentials: { apiKey: 'test', domain: testCreds.domain },
+      credentials: {},
     };
     const result = await textGuardContentHandler(
       context,
@@ -88,7 +88,10 @@ describe('textGuardContentHandler', () => {
     };
     const eventType = 'beforeRequestHook';
     const parameters = {
-      credentials: testCreds,
+      credentials: {
+        domain: testCreds.domain,
+        apiKey: testCreds.guardApiKey,
+      },
     };
     const result = await textGuardContentHandler(
       context,
@@ -108,7 +111,10 @@ describe('textGuardContentHandler', () => {
     };
     const eventType = 'beforeRequestHook';
     const parameters = {
-      credentials: testCreds,
+      credentials: {
+        domain: testCreds.domain,
+        apiKey: testCreds.guardApiKey,
+      },
       recipe: ' ',
     };
     const result = await textGuardContentHandler(
@@ -131,7 +137,10 @@ describe('textGuardContentHandler', () => {
     };
     const eventType = 'beforeRequestHook';
     const parameters = {
-      credentials: testCreds,
+      credentials: {
+        domain: testCreds.domain,
+        apiKey: testCreds.guardApiKey,
+      },
     };
     const result = await textGuardContentHandler(
       context,
@@ -150,7 +159,10 @@ describe('textGuardContentHandler', () => {
     };
     const eventType = 'beforeRequestHook';
     const parameters = {
-      credentials: testCreds,
+      credentials: {
+        domain: testCreds.domain,
+        apiKey: testCreds.guardApiKey,
+      },
     };
     const result = await textGuardContentHandler(
       context,
@@ -170,7 +182,10 @@ describe('textGuardContentHandler', () => {
     };
     const eventType = 'beforeRequestHook';
     const parameters = {
-      credentials: testCreds,
+      credentials: {
+        domain: testCreds.domain,
+        apiKey: testCreds.guardApiKey,
+      },
       recipe: 'invalid_recipe',
     };
     const result = await textGuardContentHandler(
@@ -251,7 +266,7 @@ describe('pii handler', () => {
       }
     );
     expect(result.error).toBeNull();
-    expect(result.verdict).toBe(false);
+    expect(result.verdict).toBe(true);
     expect(result.data).toBeDefined();
     expect(result.transformedData?.request?.json?.messages?.[0]?.content).toBe(
       'My email is <EMAIL_ADDRESS> and some random text'
@@ -297,7 +312,7 @@ describe('pii handler', () => {
     );
 
     expect(result.error).toBeNull();
-    expect(result.verdict).toBe(false);
+    expect(result.verdict).toBe(true);
     expect(result.data).toBeDefined;
     expect(
       result.transformedData?.request?.json?.messages?.[0]?.content?.[0]?.text
@@ -339,7 +354,7 @@ describe('pii handler', () => {
     );
 
     expect(result.error).toBeNull();
-    expect(result.verdict).toBe(false);
+    expect(result.verdict).toBe(true);
     expect(result.data).toBeDefined();
     expect(
       result.transformedData?.response?.json?.choices?.[0]?.message?.content
