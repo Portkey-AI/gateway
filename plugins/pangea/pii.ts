@@ -41,7 +41,7 @@ export const handler: PluginHandler = async (
 
     const url = `https://redact.${parameters.credentials.domain}/v1/redact_structured`;
 
-    const { content } = getCurrentContentPart(context, eventType);
+    const { content, textArray } = getCurrentContentPart(context, eventType);
 
     if (!content) {
       return {
@@ -60,10 +60,7 @@ export const handler: PluginHandler = async (
       },
     };
     const request = {
-      data: content,
-      ...(Array.isArray(content) && content[0]?.type === 'text'
-        ? { jsonp: ['$[*].text'] }
-        : {}),
+      data: textArray,
     };
 
     const response = await post(url, request, requestOptions);

@@ -113,13 +113,7 @@ export const pluginHandler: PluginHandler<
         redactPii(text, results[index])
       );
 
-      setCurrentContentPart(
-        context,
-        eventType,
-        transformedData,
-        null,
-        maskedTexts
-      );
+      setCurrentContentPart(context, eventType, transformedData, maskedTexts);
     }
 
     if (hasPii && flaggedCategories.size === 1 && redact) {

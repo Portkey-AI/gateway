@@ -82,13 +82,7 @@ export const handler: PluginHandler = async (
 
     if (hasPII && redact) {
       const maskedTexts = results.map((result) => result?.maskedText ?? null);
-      setCurrentContentPart(
-        context,
-        eventType,
-        transformedData,
-        null,
-        maskedTexts
-      );
+      setCurrentContentPart(context, eventType, transformedData, maskedTexts);
       shouldBlock = false;
     }
 
