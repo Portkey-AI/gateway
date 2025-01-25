@@ -120,27 +120,32 @@ export const handler: PluginHandler = async (
     );
 
     const hasPII = filteredCategories.length > 0;
+    let shouldBlock = hasPII;
+    let wasRedacted = false;
     if (parameters.redact && hasPII) {
       setCurrentContentPart(
         context,
         eventType,
         transformedData,
-        null,
         mappedTextArray
       );
+      shouldBlock = false;
+      wasRedacted = true;
     }
 
-    verdict = not ? hasPII : !hasPII;
+    verdict = not ? hasPII : !shouldBlock;
     data = {
       verdict,
       not,
-      explanation: verdict
-        ? not
-          ? 'PII was found in the text as expected.'
-          : 'No restricted PII was found in the text.'
-        : not
-          ? 'No PII was found in the text when it should have been.'
-          : `Found restricted PII in the text: ${filteredCategories.join(', ')}`,
+      explanation: wasRedacted
+        ? `Found and redacted PII in the text: ${filteredCategories.join(', ')}`
+        : verdict
+          ? not
+            ? 'PII was found in the text as expected.'
+            : 'No restricted PII was found in the text.'
+          : not
+            ? 'No PII was found in the text when it should have been.'
+            : `Found restricted PII in the text: ${filteredCategories.join(', ')}`,
       // detectedPII: PIIData,
       restrictedCategories: categoriesToCheck,
       detectedCategories: detectedCategories,

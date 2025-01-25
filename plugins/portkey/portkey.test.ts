@@ -169,11 +169,11 @@ describe('piiHandler', () => {
     );
 
     expect(result.error).toBeNull();
-    expect(result.verdict).toBe(false);
+    expect(result.verdict).toBe(true);
     expect(result.data).toMatchObject({
-      verdict: false,
+      verdict: true,
       not: false,
-      explanation: expect.stringContaining('Found restricted PII'),
+      explanation: expect.stringContaining('redacted'),
       restrictedCategories: ['CREDIT_CARD', 'EMAIL_ADDRESS'],
     });
     expect(result.transformedData?.request?.json?.messages?.[0]?.content).toBe(
@@ -220,11 +220,11 @@ describe('piiHandler', () => {
     );
 
     expect(result.error).toBeNull();
-    expect(result.verdict).toBe(false);
+    expect(result.verdict).toBe(true);
     expect(result.data).toMatchObject({
-      verdict: false,
+      verdict: true,
       not: false,
-      explanation: expect.stringContaining('Found restricted PII'),
+      explanation: expect.stringContaining('redacted'),
       restrictedCategories: ['CREDIT_CARD', 'EMAIL_ADDRESS'],
     });
     expect(
@@ -268,11 +268,11 @@ describe('piiHandler', () => {
     );
 
     expect(result.error).toBeNull();
-    expect(result.verdict).toBe(false);
+    expect(result.verdict).toBe(true);
     expect(result.data).toMatchObject({
-      verdict: false,
+      verdict: true,
       not: false,
-      explanation: expect.stringContaining('Found restricted PII'),
+      explanation: expect.stringContaining('redacted'),
       restrictedCategories: ['CREDIT_CARD', 'EMAIL_ADDRESS'],
     });
     expect(
@@ -284,7 +284,18 @@ describe('piiHandler', () => {
 
   it('should pass text without PII', async () => {
     const context = {
-      request: { text: 'This is a text without any personal information.' },
+      request: {
+        text: 'This is a text without any personal information.',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: 'This is a text without any personal information.',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
     };
     const parameters = {
       categories: ['CREDIT_CARD', 'LOCATION_ADDRESS'],
@@ -293,7 +304,7 @@ describe('piiHandler', () => {
     };
 
     const result = await piiHandler(
-      context,
+      context as PluginContext,
       parameters,
       'beforeRequestHook',
       mockOptions
@@ -306,13 +317,24 @@ describe('piiHandler', () => {
       not: false,
       explanation: 'No restricted PII was found in the text.',
     });
+    expect(result.transformedData?.request?.json).toBeNull();
   });
 
   it('should handle inverted results with not=true', async () => {
     const context = {
       request: {
-        text: 'My credit card number is 0123 0123 0123 0123',
+        text: 'My credit card number is 0123 0123 0123 0123, and my email is abc@xyz.com',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content:
+                'My credit card number is 0123 0123 0123 0123, and my email is abc@xyz.com',
+            },
+          ],
+        },
       },
+      requestType: 'chatComplete',
     };
     const parameters = {
       categories: ['CREDIT_CARD'],
@@ -321,7 +343,7 @@ describe('piiHandler', () => {
     };
 
     const result = await piiHandler(
-      context,
+      context as PluginContext,
       parameters,
       'beforeRequestHook',
       mockOptions
@@ -333,6 +355,45 @@ describe('piiHandler', () => {
       verdict: true,
       not: true,
       explanation: 'PII was found in the text as expected.',
+    });
+  });
+
+  it('should handle and redact inverted results with not=true', async () => {
+    const context = {
+      request: {
+        text: 'My credit card number is 0123 0123 0123 0123, and my email is abc@xyz.com',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content:
+                'My credit card number is 0123 0123 0123 0123, and my email is abc@xyz.com',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = {
+      categories: ['CREDIT_CARD'],
+      credentials: testCreds,
+      not: true,
+      redact: true,
+    };
+
+    const result = await piiHandler(
+      context as PluginContext,
+      parameters,
+      'beforeRequestHook',
+      mockOptions
+    );
+
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(true);
+    expect(result.data).toMatchObject({
+      verdict: true,
+      not: true,
+      explanation: expect.stringContaining('redacted'),
     });
   });
 });
