@@ -145,19 +145,23 @@ export const setCurrentContentPart = (
       if (target === 'request') {
         const currentContent =
           updatedJson.messages[updatedJson.messages.length - 1].content;
+        // Only clone messages array if not already cloned
+        if (!newContent) {
+          updatedJson.messages = [...json.messages];
+          updatedJson.messages[updatedJson.messages.length - 1] = {
+            ...updatedJson.messages[updatedJson.messages.length - 1],
+          };
+        }
+
         if (Array.isArray(currentContent)) {
-          // Only clone messages array if not already cloned
-          if (!newContent) {
-            updatedJson.messages = [...json.messages];
-            updatedJson.messages[updatedJson.messages.length - 1] = {
-              ...updatedJson.messages[updatedJson.messages.length - 1],
-            };
-          }
           updatedJson.messages[updatedJson.messages.length - 1].content =
             currentContent.map((item: any, index: number) => ({
               ...item,
               text: textArray[index] || item.text,
             }));
+        } else {
+          updatedJson.messages[updatedJson.messages.length - 1].content =
+            textArray[0] || currentContent;
         }
         transformedData.request.json = updatedJson;
       } else {

@@ -20,6 +20,7 @@ export const handler: PluginHandler = async (
       json: null,
     },
   };
+  const redact = parameters.redact || false;
 
   try {
     if (!parameters.credentials?.domain) {
@@ -66,8 +67,12 @@ export const handler: PluginHandler = async (
     };
 
     const response = await post(url, request, requestOptions);
+    const piiDetected =
+      response.result?.count > 0 && response.result.redacted_data
+        ? true
+        : false;
 
-    if (response.result?.count > 0 && response.result.redacted_data) {
+    if (piiDetected && redact) {
       setCurrentContentPart(
         context,
         eventType,
@@ -78,7 +83,7 @@ export const handler: PluginHandler = async (
 
     return {
       error: null,
-      verdict: true,
+      verdict: !piiDetected,
       data: {
         summary: response.summary,
       },
