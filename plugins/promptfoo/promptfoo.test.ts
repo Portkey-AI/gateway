@@ -101,7 +101,7 @@ describe('pii handler', () => {
       }
     );
     expect(result.error).toBeNull();
-    expect(result.verdict).toBe(false);
+    expect(result.verdict).toBe(true);
     expect(result.data).toBeDefined();
     expect(result.transformedData?.request?.json?.messages?.[0]?.content).toBe(
       'My SSN is [SOCIAL_SECURITY_NUMBER] and some random text'
@@ -147,7 +147,7 @@ describe('pii handler', () => {
     );
 
     expect(result.error).toBeNull();
-    expect(result.verdict).toBe(false);
+    expect(result.verdict).toBe(true);
     expect(result.data).toBeDefined;
     expect(
       result.transformedData?.request?.json?.messages?.[0]?.content?.[0]?.text
@@ -189,7 +189,7 @@ describe('pii handler', () => {
     );
 
     expect(result.error).toBeNull();
-    expect(result.verdict).toBe(false);
+    expect(result.verdict).toBe(true);
     expect(result.data).toBeDefined();
     expect(
       result.transformedData?.response?.json?.choices?.[0]?.message?.content
@@ -199,13 +199,29 @@ describe('pii handler', () => {
   it('should pass text without PII', async () => {
     const eventType = 'beforeRequestHook' as HookEventType;
     const context = {
-      request: { text: 'The weather is nice today' },
+      request: {
+        text: 'The weather is nice today',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: 'The weather is nice today',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
     };
     const parameters = {};
 
-    const result = await piiHandler(context, parameters, eventType, {
-      env: {},
-    });
+    const result = await piiHandler(
+      context as PluginContext,
+      parameters,
+      eventType,
+      {
+        env: {},
+      }
+    );
     expect(result).toBeDefined();
     expect(result.verdict).toBe(true);
     expect(result.error).toBeNull();

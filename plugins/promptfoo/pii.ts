@@ -75,6 +75,7 @@ export const handler: PluginHandler = async (
     const results = await Promise.all(textArray.map(redactPii));
 
     const hasPII = results.some((result) => result?.data?.flagged);
+    let shouldBlock = hasPII;
 
     const piiData =
       results.find((result) => result?.maskedText)?.data ?? results[0]?.data;
@@ -88,9 +89,10 @@ export const handler: PluginHandler = async (
         null,
         maskedTexts
       );
+      shouldBlock = false;
     }
 
-    verdict = !hasPII;
+    verdict = !shouldBlock;
     data = piiData;
   } catch (e: any) {
     delete e.stack;
