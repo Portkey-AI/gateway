@@ -25,7 +25,22 @@
           "text": "Checks for protected health information (PHI), defined broadly as any information about an individual's health status or provision of healthcare."
         }
       ],
-      "parameters": {}
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "redact": {
+            "type": "boolean",
+            "label": "Redact PHI",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the PHI identified will be redacted"
+              }
+            ],
+            "default": false
+          }
+        }
+      }
     },
     {
       "name": "Detect PII",
@@ -38,7 +53,22 @@
           "text": "Checks for personally identifiable information (PII). PII is information that, in conjunction with other data, can identify an individual."
         }
       ],
-      "parameters": {}
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "redact": {
+            "type": "boolean",
+            "label": "Redact PII",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the PII identified will be redacted"
+              }
+            ],
+            "default": false
+          }
+        }
+      }
     },
     {
       "name": "Is Concise",

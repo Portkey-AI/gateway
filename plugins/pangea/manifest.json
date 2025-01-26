@@ -70,6 +70,34 @@
           }
         }
       }
+    },
+    {
+      "name": "PII Guard",
+      "id": "pii",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Pangea PII Guard for scanning LLM inputs and outputs."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "redact": {
+            "type": "boolean",
+            "label": "Redact PII",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the PII identified will be redacted"
+              }
+            ],
+            "default": false
+          }
+        }
+      }
     }
   ]
 }

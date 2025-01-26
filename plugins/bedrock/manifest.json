@@ -55,10 +55,16 @@
             "label": "Guardrail ID",
             "description": "ID of the guardrail."
           },
-          "piiCheck": {
+          "redact": {
             "type": "boolean",
-            "label": "PII Guard",
-            "description": "Enable Personally Identifiable Information(PII) check"
+            "label": "Redact PII",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the PII identified will be redacted"
+              }
+            ],
+            "default": false
           }
         },
         "required": ["guardrailVersion", "guardrailId"]
