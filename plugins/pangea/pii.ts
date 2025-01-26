@@ -23,6 +23,15 @@ export const handler: PluginHandler = async (
   const redact = parameters.redact || false;
 
   try {
+    if (context.requestType === 'embed' && parameters?.redact) {
+      return {
+        error: { message: 'PII redaction is not supported for embed requests' },
+        verdict: true,
+        data: null,
+        transformedData,
+      };
+    }
+
     if (!parameters.credentials?.domain) {
       return {
         error: `'parameters.credentials.domain' must be set`,

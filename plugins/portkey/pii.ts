@@ -62,6 +62,15 @@ export const handler: PluginHandler = async (
   };
 
   try {
+    if (context.requestType === 'embed' && parameters?.redact) {
+      return {
+        error: { message: 'PII redaction is not supported for embed requests' },
+        verdict: true,
+        data: null,
+        transformedData,
+      };
+    }
+
     const { content, textArray } = getCurrentContentPart(context, eventType);
     const textExcerpt = textArray.filter((text) => text).join('\n');
 
