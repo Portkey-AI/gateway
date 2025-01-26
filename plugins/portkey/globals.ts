@@ -2,7 +2,7 @@ import { getRuntimeKey } from 'hono/adapter';
 import { post, postWithCloudflareServiceBinding } from '../utils';
 import { PluginParameters } from '../types';
 
-export const BASE_URL = 'https://api.portkeydev.com/v1/execute-guardrails';
+export const BASE_URL = 'https://api.portkey.ai/v1/execute-guardrails';
 
 export const PORTKEY_ENDPOINTS = {
   MODERATIONS: '/moderations',
