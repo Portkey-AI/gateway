@@ -58,14 +58,14 @@ export const getCurrentContentPart = (
   context: PluginContext,
   eventType: HookEventType
 ): {
-  content: Array<any> | string | Record<string, any>;
+  content: Array<any> | string | Record<string, any> | null;
   textArray: Array<string>;
 } => {
   // Determine if we're handling request or response data
   const target = eventType === 'beforeRequestHook' ? 'request' : 'response';
   const json = context[target].json;
   let textArray: Array<string> = [];
-  let content: Array<any> | string | Record<string, any>;
+  let content: Array<any> | string | Record<string, any> | null = null;
 
   // Handle chat completion request/response format
   if (context.requestType === 'chatComplete') {
@@ -80,14 +80,18 @@ export const getCurrentContentPart = (
       content = json.choices[json.choices.length - 1].message.content as string;
       textArray = [content];
     }
-  } else {
-    // Handle completions format
-    content = json.prompt;
-    textArray = Array.isArray(content)
-      ? content.map((item: any) => item.text)
-      : [content];
+  } else if (context.requestType === 'complete') {
+    if (target === 'request') {
+      // Handle completions format
+      content = json.prompt;
+      textArray = Array.isArray(content)
+        ? content.map((item: any) => item)
+        : [content];
+    } else {
+      content = json.choices[json.choices.length - 1].text as string;
+      textArray = [content];
+    }
   }
-
   return { content, textArray };
 };
 
@@ -102,7 +106,6 @@ export const setCurrentContentPart = (
   context: PluginContext,
   eventType: HookEventType,
   transformedData: Record<string, any>,
-  newContent: string | Array<any> | Record<string, any> | null,
   textArray: Array<string | null> | null = null
 ): void => {
   const requestType = context.requestType;
@@ -112,70 +115,52 @@ export const setCurrentContentPart = (
   // Create shallow copy of the json
   const updatedJson = { ...json };
 
-  // Handle updating the main content structure
-  if (newContent) {
-    if (requestType === 'chatComplete') {
-      if (target === 'request') {
-        // Only clone messages array if we need to modify it
-        updatedJson.messages = [...json.messages];
-        updatedJson.messages[updatedJson.messages.length - 1] = {
-          ...updatedJson.messages[updatedJson.messages.length - 1],
-          content: newContent,
-        };
-        transformedData.request.json = updatedJson;
-      } else {
-        // Only clone choices array if we need to modify it
-        updatedJson.choices = [...json.choices];
-        const lastChoice = {
-          ...updatedJson.choices[updatedJson.choices.length - 1],
-        };
-        lastChoice.message = { ...lastChoice.message, content: newContent };
-        updatedJson.choices[updatedJson.choices.length - 1] = lastChoice;
-        transformedData.response.json = updatedJson;
-      }
-    } else {
-      updatedJson.prompt = newContent;
-      transformedData.request.json = updatedJson;
-    }
-  }
-
   // Handle updating text fields if provided
   if (textArray?.length) {
     if (requestType === 'chatComplete') {
       if (target === 'request') {
         const currentContent =
           updatedJson.messages[updatedJson.messages.length - 1].content;
+        updatedJson.messages = [...json.messages];
+        updatedJson.messages[updatedJson.messages.length - 1] = {
+          ...updatedJson.messages[updatedJson.messages.length - 1],
+        };
+
         if (Array.isArray(currentContent)) {
-          // Only clone messages array if not already cloned
-          if (!newContent) {
-            updatedJson.messages = [...json.messages];
-            updatedJson.messages[updatedJson.messages.length - 1] = {
-              ...updatedJson.messages[updatedJson.messages.length - 1],
-            };
-          }
           updatedJson.messages[updatedJson.messages.length - 1].content =
             currentContent.map((item: any, index: number) => ({
               ...item,
               text: textArray[index] || item.text,
             }));
+        } else {
+          updatedJson.messages[updatedJson.messages.length - 1].content =
+            textArray[0] || currentContent;
         }
         transformedData.request.json = updatedJson;
       } else {
-        if (!newContent) {
-          updatedJson.choices = [...json.choices];
-          const lastChoice = {
-            ...updatedJson.choices[updatedJson.choices.length - 1],
-          };
-          lastChoice.message = { ...lastChoice.message, content: textArray[0] };
-          updatedJson.choices[updatedJson.choices.length - 1] = lastChoice;
-        }
+        updatedJson.choices = [...json.choices];
+        const lastChoice = {
+          ...updatedJson.choices[updatedJson.choices.length - 1],
+        };
+        lastChoice.message = {
+          ...lastChoice.message,
+          content: textArray[0] || lastChoice.message.content,
+        };
+        updatedJson.choices[updatedJson.choices.length - 1] = lastChoice;
         transformedData.response.json = updatedJson;
       }
     } else {
-      updatedJson.prompt = Array.isArray(updatedJson.prompt)
-        ? textArray.map((text) => text)
-        : textArray[0];
-      transformedData.request.json = updatedJson;
+      if (target === 'request') {
+        updatedJson.prompt = Array.isArray(updatedJson.prompt)
+          ? textArray.map((text, index) => text || updatedJson.prompt[index])
+          : textArray[0];
+        transformedData.request.json = updatedJson;
+      } else {
+        updatedJson.choices = [...json.choices];
+        updatedJson.choices[json.choices.length - 1].text =
+          textArray[0] || json.choices[json.choices.length - 1].text;
+        transformedData.response.json = updatedJson;
+      }
     }
   }
 };

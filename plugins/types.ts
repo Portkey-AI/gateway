@@ -1,6 +1,6 @@
 export interface PluginContext {
   [key: string]: any;
-  requestType?: 'complete' | 'chatComplete';
+  requestType?: 'complete' | 'chatComplete' | 'embed';
   provider?: string;
 }
 

@@ -365,6 +365,20 @@ export class HooksManager {
             )
           )
       );
+
+      checkResults.forEach((checkResult) => {
+        if (
+          checkResult.transformedData &&
+          (checkResult.transformedData.response.json ||
+            checkResult.transformedData.request.json)
+        ) {
+          span.setContextAfterTransform(
+            checkResult.transformedData.response.json,
+            checkResult.transformedData.request.json
+          );
+        }
+        delete checkResult.transformedData;
+      });
     }
 
     hookResult = {

@@ -20,8 +20,18 @@ export const handler: PluginHandler = async (
       json: null,
     },
   };
+  const redact = parameters.redact || false;
 
   try {
+    if (context.requestType === 'embed' && parameters?.redact) {
+      return {
+        error: { message: 'PII redaction is not supported for embed requests' },
+        verdict: true,
+        data: null,
+        transformedData,
+      };
+    }
+
     if (!parameters.credentials?.domain) {
       return {
         error: `'parameters.credentials.domain' must be set`,
@@ -40,7 +50,7 @@ export const handler: PluginHandler = async (
 
     const url = `https://redact.${parameters.credentials.domain}/v1/redact_structured`;
 
-    const { content } = getCurrentContentPart(context, eventType);
+    const { content, textArray } = getCurrentContentPart(context, eventType);
 
     if (!content) {
       return {
@@ -59,26 +69,29 @@ export const handler: PluginHandler = async (
       },
     };
     const request = {
-      data: content,
-      ...(Array.isArray(content) && content[0]?.type === 'text'
-        ? { jsonp: ['$[*].text'] }
-        : {}),
+      data: textArray,
     };
 
     const response = await post(url, request, requestOptions);
+    const piiDetected =
+      response.result?.count > 0 && response.result.redacted_data
+        ? true
+        : false;
 
-    if (response.result?.count > 0 && response.result.redacted_data) {
+    let shouldBlock = piiDetected;
+    if (piiDetected && redact) {
       setCurrentContentPart(
         context,
         eventType,
         transformedData,
         response.result.redacted_data
       );
+      shouldBlock = false;
     }
 
     return {
       error: null,
-      verdict: true,
+      verdict: !shouldBlock,
       data: {
         summary: response.summary,
       },

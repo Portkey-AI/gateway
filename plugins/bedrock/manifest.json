@@ -32,8 +32,8 @@
 
   "functions": [
     {
-      "name": "Content Filter",
-      "id": "contentFilter",
+      "name": "Apply Bedrock guardrail",
+      "id": "guard",
       "type": "guardrail",
       "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
       "description": [
@@ -54,34 +54,21 @@
             "type": "string",
             "label": "Guardrail ID",
             "description": "ID of the guardrail."
+          },
+          "redact": {
+            "type": "boolean",
+            "label": "Redact PII",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the PII identified will be redacted"
+              }
+            ],
+            "default": false
           }
         },
         "required": ["guardrailVersion", "guardrailId"]
       }
-    },
-    {
-      "id": "pii",
-      "name": "Sensitive Content",
-      "type": "guardrail",
-      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
-      "description": [
-        {
-          "type": "subHeading",
-          "text": "Checks if the content contains any Personally Identifiable Information (PII)."
-        }
-      ]
-    },
-    {
-      "id": "wordFilter",
-      "name": "Word Filter",
-      "type": "guardrail",
-      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
-      "description": [
-        {
-          "type": "subHeading",
-          "text": "Filters out words that are not allowed in the content."
-        }
-      ]
     }
   ]
 }
