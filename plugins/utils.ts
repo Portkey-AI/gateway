@@ -121,7 +121,6 @@ export const setCurrentContentPart = (
       if (target === 'request') {
         const currentContent =
           updatedJson.messages[updatedJson.messages.length - 1].content;
-        // Only clone messages array if not already cloned
         updatedJson.messages = [...json.messages];
         updatedJson.messages[updatedJson.messages.length - 1] = {
           ...updatedJson.messages[updatedJson.messages.length - 1],
