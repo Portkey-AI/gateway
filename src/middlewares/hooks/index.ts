@@ -329,6 +329,29 @@ export class HooksManager {
       return { ...hookResult, skipped: true };
     }
 
+    if (hook.type === HookType.MUTATOR && hook.checks) {
+      for (const check of hook.checks) {
+        const result = await this.executeFunction(
+          span.getContext(),
+          check,
+          hook.eventType,
+          options
+        );
+        if (
+          result.transformedData &&
+          (result.transformedData.response.json ||
+            result.transformedData.request.json)
+        ) {
+          span.setContextAfterTransform(
+            result.transformedData.response.json,
+            result.transformedData.request.json
+          );
+        }
+        delete result.transformedData;
+        checkResults.push(result);
+      }
+    }
+
     if (hook.type === HookType.GUARDRAIL && hook.checks) {
       checkResults = await Promise.all(
         hook.checks
