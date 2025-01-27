@@ -4,52 +4,43 @@ import {
   PluginHandler,
   PluginParameters,
 } from '../types';
-import { getText } from '../utils';
-import { PORTKEY_ENDPOINTS, fetchPortkey } from './globals';
+import {
+  getCurrentContentPart,
+  getText,
+  setCurrentContentPart,
+} from '../utils';
+import {
+  PIIResponse,
+  PIIResult,
+  PORTKEY_ENDPOINTS,
+  fetchPortkey,
+} from './globals';
 
 export async function detectPII(
   textArray: Array<string> | string,
-  credentials: any,
+  parameters: any,
   env: Record<string, any>
-): Promise<
-  Array<{
-    detectedPIICategories: Array<string>;
-    PIIData: Array<any>;
-    redactedText: string;
-  }>
-> {
-  const result = await fetchPortkey(env, PORTKEY_ENDPOINTS.PII, credentials, {
-    input: textArray,
-  });
-  const mappedResult: Array<any> = [];
+): Promise<Promise<PIIResult[]>> {
+  const result: PIIResponse[] = await fetchPortkey(
+    env,
+    PORTKEY_ENDPOINTS.PII,
+    parameters.credentials,
+    {
+      input: textArray,
+      ...(parameters.categories && { categories: parameters.categories }),
+    }
+  );
 
-  result.forEach((item: any) => {
-    // Identify all the PII categories in the text
-    let detectedPIICategories = item.entities
-      .map((entity: any) => {
-        return Object.keys(entity.labels);
-      })
-      .flat()
-      .filter((value: any, index: any, self: string | any[]) => {
-        return self.indexOf(value) === index;
-      });
-
-    // Generate the detailed data to be sent along with detectedPIICategories
-    let detailedData = item.entities.map((entity: any) => {
-      return {
-        text: entity.text,
-        labels: entity.labels,
-      };
-    });
-
-    mappedResult.push({
-      detectedPIICategories,
-      PIIData: detailedData,
-      redactedText: item.processed_text,
-    });
-  });
-
-  return mappedResult;
+  return result.map((item) => ({
+    detectedPIICategories: [
+      ...new Set(item.entities.flatMap((entity) => Object.keys(entity.labels))),
+    ],
+    PIIData: item.entities.map((entity) => ({
+      text: entity.text,
+      labels: entity.labels,
+    })),
+    redactedText: item.processed_text,
+  }));
 }
 
 export const handler: PluginHandler = async (
@@ -61,38 +52,116 @@ export const handler: PluginHandler = async (
   let error = null;
   let verdict = false;
   let data: any = null;
+  let transformedData: Record<string, any> = {
+    request: {
+      json: null,
+    },
+    response: {
+      json: null,
+    },
+  };
 
   try {
-    const text = getText(context, eventType);
-    const categoriesToCheck = parameters.categories;
+    if (context.requestType === 'embed' && parameters?.redact) {
+      return {
+        error: { message: 'PII redaction is not supported for embed requests' },
+        verdict: true,
+        data: null,
+        transformedData,
+      };
+    }
+
+    const { content, textArray } = getCurrentContentPart(context, eventType);
+    const textExcerpt = textArray.filter((text) => text).join('\n');
+
+    if (!content) {
+      return {
+        error: { message: 'request or response json is empty' },
+        verdict: true,
+        data: null,
+        transformedData,
+      };
+    }
+
+    if (!parameters.categories?.length) {
+      return {
+        error: { message: 'No PII categories are configured' },
+        verdict: true,
+        data: null,
+        transformedData,
+      };
+    }
+
+    if (!parameters.credentials) {
+      return {
+        error: { message: 'Credentials not found' },
+        verdict: true,
+        data: null,
+        transformedData,
+      };
+    }
+
+    let mappedResult = await detectPII(
+      textArray,
+      parameters,
+      options?.env || {}
+    );
+
+    const categoriesToCheck = parameters.categories || [];
     const not = parameters.not || false;
 
-    let { detectedPIICategories, PIIData } =
-      (
-        await detectPII(text, parameters.credentials, options?.env || {})
-      )?.[0] || {};
+    let detectedCategories: any = new Set();
+    const mappedTextArray: Array<string | null> = [];
+    mappedResult.forEach((result) => {
+      if (result.detectedPIICategories.length > 0 && result.redactedText) {
+        result.detectedPIICategories.forEach((category) =>
+          detectedCategories.add(category)
+        );
+        mappedTextArray.push(result.redactedText);
+      } else {
+        mappedTextArray.push(null);
+      }
+    });
 
-    let filteredCategories = detectedPIICategories.filter((category: string) =>
+    detectedCategories = [...detectedCategories];
+    let filteredCategories = detectedCategories.filter((category: string) =>
       categoriesToCheck.includes(category)
     );
 
     const hasPII = filteredCategories.length > 0;
-    verdict = not ? !hasPII : !hasPII;
+    let shouldBlock = hasPII;
+    let wasRedacted = false;
+    if (parameters.redact && hasPII) {
+      setCurrentContentPart(
+        context,
+        eventType,
+        transformedData,
+        mappedTextArray
+      );
+      shouldBlock = false;
+      wasRedacted = true;
+    }
 
+    verdict = not ? hasPII : !shouldBlock;
     data = {
       verdict,
       not,
-      explanation: verdict
-        ? not
-          ? 'PII was found in the text as expected.'
-          : 'No restricted PII was found in the text.'
-        : not
-          ? 'No PII was found in the text when it should have been.'
-          : `Found restricted PII in the text: ${filteredCategories.join(', ')}`,
-      detectedPII: PIIData,
+      explanation: wasRedacted
+        ? `Found and redacted PII in the text: ${filteredCategories.join(', ')}`
+        : verdict
+          ? not
+            ? 'PII was found in the text as expected.'
+            : 'No restricted PII was found in the text.'
+          : not
+            ? 'No PII was found in the text when it should have been.'
+            : `Found restricted PII in the text: ${filteredCategories.join(', ')}`,
+      // detectedPII: PIIData,
       restrictedCategories: categoriesToCheck,
-      detectedCategories: detectedPIICategories,
-      textExcerpt: text.length > 100 ? text.slice(0, 100) + '...' : text,
+      detectedCategories: detectedCategories,
+      textExcerpt:
+        textExcerpt.length > 100
+          ? textExcerpt.slice(0, 100) + '...'
+          : textExcerpt,
     };
   } catch (e) {
     error = e as Error;
@@ -109,5 +178,5 @@ export const handler: PluginHandler = async (
     };
   }
 
-  return { error, verdict, data };
+  return { error, verdict, data, transformedData };
 };

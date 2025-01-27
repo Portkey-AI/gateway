@@ -6,7 +6,7 @@ import {
 } from '../types';
 import { getText } from '../utils';
 import { postPromptfoo } from './globals';
-import { HarmResult, PromptfooResult } from './types';
+import { HarmResult } from './types';
 
 export const handler: PluginHandler = async (
   context: PluginContext,

@@ -1,111 +1,13 @@
 import { PluginHandler } from '../types';
-import { getText, HttpError, post } from '../utils';
-import { generateAWSHeaders } from './util';
+import {
+  getCurrentContentPart,
+  HttpError,
+  setCurrentContentPart,
+} from '../utils';
+import { BedrockBody, BedrockParameters } from './type';
+import { bedrockPost, redactPii } from './util';
 
 const REQUIRED_CREDENTIAL_KEYS = ['accessKeyId', 'accessKeySecret', 'region'];
-
-type BedrockFunction = 'contentFilter' | 'pii' | 'wordFilter';
-export type BedrockBody = {
-  source: 'INPUT' | 'OUTPUT';
-  content: { text: { text: string } }[];
-};
-type PIIType =
-  | 'ADDRESS'
-  | 'AGE'
-  | 'AWS_ACCESS_KEY'
-  | 'AWS_SECRET_KEY'
-  | 'CA_HEALTH_NUMBER'
-  | 'CA_SOCIAL_INSURANCE_NUMBER'
-  | 'CREDIT_DEBIT_CARD_CVV'
-  | 'CREDIT_DEBIT_CARD_EXPIRY'
-  | 'CREDIT_DEBIT_CARD_NUMBER'
-  | 'DRIVER_ID'
-  | 'EMAIL'
-  | 'INTERNATIONAL_BANK_ACCOUNT_NUMBER'
-  | 'IP_ADDRESS'
-  | 'LICENSE_PLATE'
-  | 'MAC_ADDRESS'
-  | 'NAME'
-  | 'PASSWORD'
-  | 'PHONE'
-  | 'PIN'
-  | 'SWIFT_CODE'
-  | 'UK_NATIONAL_HEALTH_SERVICE_NUMBER'
-  | 'UK_NATIONAL_INSURANCE_NUMBER'
-  | 'UK_UNIQUE_TAXPAYER_REFERENCE_NUMBER'
-  | 'URL'
-  | 'USERNAME'
-  | 'US_BANK_ACCOUNT_NUMBER'
-  | 'US_BANK_ROUTING_NUMBER'
-  | 'US_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER'
-  | 'US_PASSPORT_NUMBER'
-  | 'US_SOCIAL_SECURITY_NUMBER'
-  | 'VEHICLE_IDENTIFICATION_NUMBER';
-
-interface BedrockAction<T = string> {
-  action: 'BLOCKED' | T;
-}
-
-interface ContentPolicy extends BedrockAction {
-  confidence: 'LOW' | 'NONE' | 'MEDIUM' | 'HIGH';
-  type:
-    | 'INSULTS'
-    | 'HATE'
-    | 'SEXUAL'
-    | 'VIOLENCE'
-    | 'MISCONDUCT'
-    | 'PROMPT_ATTACK';
-  filterStrength: 'LOW' | 'MEDIUM' | 'HIGH';
-}
-
-interface WordPolicy extends BedrockAction {
-  match: string;
-}
-
-interface PIIFilter extends BedrockAction<'ANONYMIZED'> {
-  match: string;
-  type: PIIType;
-}
-
-interface BedrockResponse {
-  action: 'NONE' | 'GUARDRAIL_INTERVENED';
-  assessments: {
-    wordPolicy: {
-      customWords: WordPolicy[];
-      managedWordLists: (WordPolicy & { type: 'PROFANITY' })[];
-    };
-    contentPolicy: { filters: ContentPolicy[] };
-    sensitiveInformationPolicy: {
-      piiEntities: PIIFilter[];
-      regexes: (Omit<PIIFilter, 'type'> & { name: string; regex: string })[];
-    };
-  }[];
-  output: {
-    text: string;
-  }[];
-  usage: {
-    contentPolicyUnits: number;
-    sensitiveInformationPolicyUnits: number;
-    wordPolicyUnits: number;
-  };
-}
-
-export interface BedrockParameters {
-  credentials: {
-    accessKeyId: string;
-    accessKeySecret: string;
-    awsSessionToken?: string;
-    region: string;
-  };
-  guardrailVersion: string;
-  guardrailId: string;
-}
-
-enum ResponseKey {
-  pii = 'sensitiveInformationPolicy',
-  contentFilter = 'contentPolicy',
-  wordFilter = 'wordPolicy',
-}
 
 export const validateCreds = (
   credentials?: BedrockParameters['credentials']
@@ -115,102 +17,122 @@ export const validateCreds = (
   );
 };
 
-export const bedrockPost = async (
-  credentials: Record<string, string>,
-  body: BedrockBody
-) => {
-  const url = `https://bedrock-runtime.${credentials?.region}.amazonaws.com/guardrail/${credentials?.guardrailId}/version/${credentials?.guardrailVersion}/apply`;
-
-  const headers = await generateAWSHeaders(
-    body,
-    {
-      'Content-Type': 'application/json',
+export const pluginHandler: PluginHandler<
+  BedrockParameters['credentials']
+> = async (context, parameters, eventType) => {
+  const transformedData: Record<string, any> = {
+    request: {
+      json: null,
     },
-    url,
-    'POST',
-    'bedrock',
-    credentials?.region ?? 'us-east-1',
-    credentials?.accessKeyId!,
-    credentials?.accessKeySecret!,
-    credentials?.awsSessionToken || ''
-  );
+    response: {
+      json: null,
+    },
+  };
+  const credentials = parameters.credentials;
 
-  return await post<BedrockResponse>(url, body, {
-    headers,
-    method: 'POST',
-  });
-};
+  const validate = validateCreds(credentials);
 
-export const pluginHandler: PluginHandler<BedrockParameters['credentials']> =
-  async function (
-    this: { fn: BedrockFunction },
-    context,
-    parameters,
-    eventType
-  ) {
-    const credentials = parameters.credentials;
+  const guardrailVersion = parameters.guardrailVersion;
+  const guardrailId = parameters.guardrailId;
+  const redact = parameters?.redact as boolean;
 
-    const validate = validateCreds(credentials);
+  let verdict = true;
+  let error = null;
+  let data = null;
+  if (!validate || !guardrailVersion || !guardrailId) {
+    return {
+      verdict,
+      error: { message: 'Missing required credentials' },
+      data,
+    };
+  }
 
-    const guardrailVersion = parameters.guardrailVersion;
-    const guardrailId = parameters.guardrailId;
+  const body = {} as BedrockBody;
 
-    let verdict = true;
-    let error = null;
-    let data = null;
+  if (eventType === 'beforeRequestHook') {
+    body.source = 'INPUT';
+  } else {
+    body.source = 'OUTPUT';
+  }
 
-    if (!validate || !guardrailVersion || !guardrailId) {
+  try {
+    const { content, textArray } = getCurrentContentPart(context, eventType);
+
+    if (!content) {
       return {
-        verdict,
-        error: 'Missing required credentials',
-        data,
+        error: { message: 'request or response json is empty' },
+        verdict: true,
+        data: null,
+        transformedData,
       };
     }
 
-    const body = {} as BedrockBody;
+    const results = await Promise.all(
+      textArray.map((text) =>
+        text
+          ? bedrockPost(
+              { ...(credentials as any), guardrailId, guardrailVersion },
+              {
+                content: [{ text: { text } }],
+                source: body.source,
+              }
+            )
+          : null
+      )
+    );
 
-    if (eventType === 'beforeRequestHook') {
-      body.source = 'INPUT';
-    } else {
-      body.source = 'OUTPUT';
-    }
+    const interventionData =
+      results.find(
+        (result) => result && result.action === 'GUARDRAIL_INTERVENED'
+      ) ?? results[0];
 
-    body.content = [
-      {
-        text: {
-          text: getText(context, eventType),
-        },
-      },
-    ];
+    const flaggedCategories = new Set();
 
-    try {
-      const response = await bedrockPost(
-        { ...(credentials as any), guardrailId, guardrailVersion },
-        body
+    results.forEach((result) => {
+      if (!result) return;
+      if (result.assessments[0].contentPolicy?.filters?.length > 0) {
+        flaggedCategories.add('contentFilter');
+      }
+      if (result.assessments[0].wordPolicy?.customWords?.length > 0) {
+        flaggedCategories.add('wordFilter');
+      }
+      if (result.assessments[0].wordPolicy?.managedWordLists?.length > 0) {
+        flaggedCategories.add('wordFilter');
+      }
+      if (
+        result.assessments[0].sensitiveInformationPolicy?.piiEntities?.length >
+        0
+      ) {
+        flaggedCategories.add('piiFilter');
+      }
+    });
+
+    let hasPii = flaggedCategories.has('piiFilter');
+    if (hasPii && redact) {
+      const maskedTexts = textArray.map((text, index) =>
+        redactPii(text, results[index])
       );
-      if (response.action === 'GUARDRAIL_INTERVENED') {
-        data = response.assessments[0]?.[ResponseKey[this.fn]];
-        if (this.fn === 'pii' && !!data) {
-          verdict = false;
-        }
-        if (this.fn === 'contentFilter' && !!data) {
-          verdict = false;
-        }
 
-        if (this.fn === 'wordFilter' && !!data) {
-          verdict = false;
-        }
-      }
-    } catch (e) {
-      if (e instanceof HttpError) {
-        error = e.response.body;
-      } else {
-        error = (e as Error).message;
-      }
+      setCurrentContentPart(context, eventType, transformedData, maskedTexts);
     }
-    return {
-      verdict,
-      error,
-      data,
-    };
+
+    if (hasPii && flaggedCategories.size === 1 && redact) {
+      verdict = true;
+    } else if (flaggedCategories.size > 0) {
+      verdict = false;
+    }
+    data = interventionData;
+  } catch (e) {
+    if (e instanceof HttpError) {
+      error = { message: e.response.body };
+    } else {
+      error = { message: (e as Error).message };
+    }
+  }
+  return {
+    verdict,
+    error,
+    data,
+    transformedData,
   };
+};
