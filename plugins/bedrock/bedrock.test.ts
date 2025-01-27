@@ -34,9 +34,9 @@ describe('Credentials check', () => {
     };
     const parameters: PluginParameters<BedrockParameters['credentials']> = {
       credentials: {
-        accessKeyId: '',
-        accessKeySecret: '',
-        region: '',
+        awsAccessKeyId: '',
+        awsSecretAccessKey: '',
+        awsRegion: '',
       },
       guardrailId: '',
       guardrailVersion: '',
@@ -72,9 +72,9 @@ describe('Credentials check', () => {
     };
     const parameters: PluginParameters<BedrockParameters['credentials']> = {
       credentials: {
-        accessKeyId: 'accessKeyID',
-        region: 'us-east-1',
-        accessKeySecret: 'accessKeySecret',
+        awsAccessKeyId: 'accessKeyID',
+        awsRegion: 'us-east-1',
+        awsSecretAccessKey: 'accessKeySecret',
       },
       guardrailId: 'guardrailID',
       guardrailVersion: 'guardrailVersion',

@@ -51,7 +51,7 @@ export const bedrockPost = async (
   credentials: Record<string, string>,
   body: BedrockBody
 ) => {
-  const url = `https://bedrock-runtime.${credentials?.region}.amazonaws.com/guardrail/${credentials?.guardrailId}/version/${credentials?.guardrailVersion}/apply`;
+  const url = `https://bedrock-runtime.${credentials?.awsRegion}.amazonaws.com/guardrail/${credentials?.guardrailId}/version/${credentials?.guardrailVersion}/apply`;
 
   const headers = await generateAWSHeaders(
     body,
@@ -61,9 +61,9 @@ export const bedrockPost = async (
     url,
     'POST',
     'bedrock',
-    credentials?.region ?? 'us-east-1',
-    credentials?.accessKeyId!,
-    credentials?.accessKeySecret!,
+    credentials?.awsRegion ?? 'us-east-1',
+    credentials?.awsAccessKeyId!,
+    credentials?.awsSecretAccessKey!,
     credentials?.awsSessionToken || ''
   );
 
