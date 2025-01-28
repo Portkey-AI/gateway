@@ -166,7 +166,6 @@ export const DeepSeekChatCompleteResponseTransform: (
 export const DeepSeekChatCompleteStreamChunkTransform: (
   response: string
 ) => string = (responseChunk) => {
-  console.log('responseChunk', responseChunk);
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
