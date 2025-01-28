@@ -1,7 +1,7 @@
-import { GoogleErrorResponse } from './types';
+import { GoogleErrorResponse, GoogleResponseCandidate } from './types';
 import { generateErrorResponse } from '../utils';
 import { fileExtensionMimeTypeMap, GOOGLE_VERTEX_AI } from '../../globals';
-import { ErrorResponse } from '../types';
+import { ErrorResponse, Logprobs } from '../types';
 
 /**
  * Encodes an object as a Base64 URL-encoded string.
@@ -219,4 +219,44 @@ export const recursivelyDeleteUnsupportedParameters = (obj: any) => {
       });
     }
   }
+};
+
+export const transformVertexLogprobs = (
+  generation: GoogleResponseCandidate
+) => {
+  let logprobsContent: Logprobs[] = [];
+  if (!generation.logprobsResult) return null;
+  if (generation.logprobsResult?.chosenCandidates) {
+    generation.logprobsResult.chosenCandidates.forEach((candidate) => {
+      let bytes = [];
+      for (const char of candidate.token) {
+        bytes.push(char.charCodeAt(0));
+      }
+      logprobsContent.push({
+        token: candidate.token,
+        logprob: candidate.logProbability,
+        bytes: bytes,
+      });
+    });
+  }
+  if (generation.logprobsResult?.topCandidates) {
+    generation.logprobsResult.topCandidates.forEach(
+      (topCandidatesForIndex, index) => {
+        let topLogprobs = [];
+        for (const candidate of topCandidatesForIndex.candidates) {
+          let bytes = [];
+          for (const char of candidate.token) {
+            bytes.push(char.charCodeAt(0));
+          }
+          topLogprobs.push({
+            token: candidate.token,
+            logprob: candidate.logProbability,
+            bytes: bytes,
+          });
+        }
+        logprobsContent[index].top_logprobs = topLogprobs;
+      }
+    );
+  }
+  return logprobsContent;
 };

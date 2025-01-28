@@ -40,7 +40,7 @@ export const getStreamModeSplitPattern = (
   }
 
   if (proxyProvider === DEEPINFRA) {
-    splitPattern = '\r\n\r\n';
+    splitPattern = '\n';
   }
 
   if (proxyProvider === SAMBANOVA) {

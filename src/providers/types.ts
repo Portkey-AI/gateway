@@ -158,6 +158,17 @@ export interface ChatChoice {
   logprobs?: object | null;
 }
 
+export interface Logprobs {
+  token: string;
+  logprob: number;
+  bytes: number[];
+  top_logprobs?: {
+    token: string;
+    logprob: number;
+    bytes: number[];
+  }[];
+}
+
 /**
  * The structure of a completion response for the 'chatComplete' function.
  * @interface

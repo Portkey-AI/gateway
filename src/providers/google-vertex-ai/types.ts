@@ -14,40 +14,60 @@ export interface GoogleGenerateFunctionCall {
   args: Record<string, any>;
 }
 
-export interface GoogleGenerateContentResponse {
-  candidates: {
-    content: {
-      parts: {
-        text?: string;
-        thought?: string; // for models like gemini-2.0-flash-thinking-exp refer: https://ai.google.dev/gemini-api/docs/thinking-mode#streaming_model_thinking
-        functionCall?: GoogleGenerateFunctionCall;
-      }[];
-    };
-    finishReason: string;
-    index: 0;
-    safetyRatings: {
-      category: string;
-      probability: string;
+export interface GoogleResponseCandidate {
+  content: {
+    parts: {
+      text?: string;
+      thought?: string; // for models like gemini-2.0-flash-thinking-exp refer: https://ai.google.dev/gemini-api/docs/thinking-mode#streaming_model_thinking
+      functionCall?: GoogleGenerateFunctionCall;
     }[];
-    groundingMetadata?: {
-      webSearchQueries?: string[];
-      searchEntryPoint?: {
-        renderedContent: string;
-      };
-      groundingSupports?: Array<{
-        segment: {
-          startIndex: number;
-          endIndex: number;
-          text: string;
-        };
-        groundingChunkIndices: number[];
-        confidenceScores: number[];
-      }>;
-      retrievalMetadata?: {
-        webDynamicRetrievalScore: number;
-      };
-    };
+  };
+  logprobsResult?: {
+    topCandidates: [
+      {
+        candidates: [
+          {
+            token: string;
+            logProbability: number;
+          },
+        ];
+      },
+    ];
+    chosenCandidates: [
+      {
+        token: string;
+        logProbability: number;
+      },
+    ];
+  };
+  finishReason: string;
+  index: 0;
+  safetyRatings: {
+    category: string;
+    probability: string;
   }[];
+  groundingMetadata?: {
+    webSearchQueries?: string[];
+    searchEntryPoint?: {
+      renderedContent: string;
+    };
+    groundingSupports?: Array<{
+      segment: {
+        startIndex: number;
+        endIndex: number;
+        text: string;
+      };
+      groundingChunkIndices: number[];
+      confidenceScores: number[];
+    }>;
+    retrievalMetadata?: {
+      webDynamicRetrievalScore: number;
+    };
+  };
+}
+
+export interface GoogleGenerateContentResponse {
+  candidates: GoogleResponseCandidate[];
   promptFeedback: {
     safetyRatings: {
       category: string;

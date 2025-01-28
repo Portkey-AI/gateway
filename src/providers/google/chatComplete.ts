@@ -13,10 +13,12 @@ import {
   derefer,
   getMimeType,
   recursivelyDeleteUnsupportedParameters,
+  transformVertexLogprobs,
 } from '../google-vertex-ai/utils';
 import {
   ChatCompletionResponse,
   ErrorResponse,
+  Logprobs,
   ProviderConfig,
 } from '../types';
 import {
@@ -46,6 +48,12 @@ const transformGenerationConfig = (params: Params) => {
   }
   if (params?.response_format?.type === 'json_object') {
     generationConfig['responseMimeType'] = 'application/json';
+  }
+  if (params['logprobs']) {
+    generationConfig['responseLogprobs'] = params['logprobs'];
+  }
+  if (params['top_logprobs']) {
+    generationConfig['logprobs'] = params['top_logprobs']; // range 1-5, openai supports 1-20
   }
   if (params?.response_format?.type === 'json_schema') {
     generationConfig['responseMimeType'] = 'application/json';
@@ -331,6 +339,14 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
+  logprobs: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
+  top_logprobs: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
   tools: {
     param: 'tools',
     default: '',
@@ -397,40 +413,60 @@ interface GoogleGenerateFunctionCall {
   args: Record<string, any>;
 }
 
-interface GoogleGenerateContentResponse {
-  candidates: {
-    content: {
-      parts: {
-        text?: string;
-        thought?: string; // for models like gemini-2.0-flash-thinking-exp refer: https://ai.google.dev/gemini-api/docs/thinking-mode#streaming_model_thinking
-        functionCall?: GoogleGenerateFunctionCall;
-      }[];
-    };
-    finishReason: string;
-    index: 0;
-    safetyRatings: {
-      category: string;
-      probability: string;
+interface GoogleResponseCandidate {
+  content: {
+    parts: {
+      text?: string;
+      thought?: string; // for models like gemini-2.0-flash-thinking-exp refer: https://ai.google.dev/gemini-api/docs/thinking-mode#streaming_model_thinking
+      functionCall?: GoogleGenerateFunctionCall;
     }[];
-    groundingMetadata?: {
-      webSearchQueries?: string[];
-      searchEntryPoint?: {
-        renderedContent: string;
-      };
-      groundingSupports?: Array<{
-        segment: {
-          startIndex: number;
-          endIndex: number;
-          text: string;
-        };
-        groundingChunkIndices: number[];
-        confidenceScores: number[];
-      }>;
-      retrievalMetadata?: {
-        webDynamicRetrievalScore: number;
-      };
-    };
+  };
+  logprobsResult?: {
+    topCandidates: [
+      {
+        candidates: [
+          {
+            token: string;
+            logProbability: number;
+          },
+        ];
+      },
+    ];
+    chosenCandidates: [
+      {
+        token: string;
+        logProbability: number;
+      },
+    ];
+  };
+  finishReason: string;
+  index: 0;
+  safetyRatings: {
+    category: string;
+    probability: string;
   }[];
+  groundingMetadata?: {
+    webSearchQueries?: string[];
+    searchEntryPoint?: {
+      renderedContent: string;
+    };
+    groundingSupports?: Array<{
+      segment: {
+        startIndex: number;
+        endIndex: number;
+        text: string;
+      };
+      groundingChunkIndices: number[];
+      confidenceScores: number[];
+    }>;
+    retrievalMetadata?: {
+      webDynamicRetrievalScore: number;
+    };
+  };
+}
+
+interface GoogleGenerateContentResponse {
+  candidates: GoogleResponseCandidate[];
   promptFeedback: {
     safetyRatings: {
       category: string;
@@ -528,8 +564,17 @@ export const GoogleChatCompleteResponseTransform: (
               }),
             };
           }
+          const logprobsContent: Logprobs[] | null =
+            transformVertexLogprobs(generation);
+          let logprobs;
+          if (logprobsContent) {
+            logprobs = {
+              content: logprobsContent,
+            };
+          }
           return {
             message: message,
+            logprobs,
             index: generation.index ?? idx,
             finish_reason: generation.finishReason,
             ...(!strictOpenAiCompliance && generation.groundingMetadata
