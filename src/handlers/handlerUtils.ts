@@ -351,6 +351,18 @@ export async function tryPost(
   } = await beforeRequestHookHandler(c, hookSpan.id));
 
   if (brhResponse) {
+    if (!providerConfig?.requestHandlers?.[fn]) {
+      transformedRequestBody =
+        method === 'POST'
+          ? transformToProviderRequest(
+              provider,
+              params,
+              requestBody,
+              fn,
+              requestHeaders
+            )
+          : requestBody;
+    }
     return createResponse(brhResponse, undefined, false, false);
   }
 
