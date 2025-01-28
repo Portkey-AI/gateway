@@ -26,6 +26,7 @@ import {
 import {
   ChatCompletionResponse,
   ErrorResponse,
+  Logprobs,
   ProviderConfig,
 } from '../types';
 import {
@@ -40,7 +41,11 @@ import type {
   VertexLLamaChatCompleteResponse,
   GoogleSearchRetrievalTool,
 } from './types';
-import { getMimeType, recursivelyDeleteUnsupportedParameters } from './utils';
+import {
+  getMimeType,
+  recursivelyDeleteUnsupportedParameters,
+  transformVertexLogprobs,
+} from './utils';
 
 export const buildGoogleSearchRetrievalTool = (tool: Tool) => {
   const googleSearchRetrievalTool: GoogleSearchRetrievalTool = {
@@ -244,6 +249,14 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
     transform: (params: Params) => transformGenerationConfig(params),
   },
   response_format: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
+  logprobs: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
+  top_logprobs: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
@@ -682,10 +695,15 @@ export const GoogleChatCompleteResponseTransform: (
               }),
             };
           }
+          let logprobsContent: Logprobs[] = transformVertexLogprobs(generation);
+
           return {
             message: message,
             index: index,
             finish_reason: generation.finishReason,
+            logprobs: {
+              content: logprobsContent,
+            },
             ...(!strictOpenAiCompliance && {
               safetyRatings: generation.safetyRatings,
             }),
