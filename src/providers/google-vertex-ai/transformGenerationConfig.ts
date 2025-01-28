@@ -26,6 +26,12 @@ export function transformGenerationConfig(params: Params) {
   if (params?.response_format?.type === 'json_object') {
     generationConfig['responseMimeType'] = 'application/json';
   }
+  if (params['logprobs']) {
+    generationConfig['responseLogprobs'] = params['logprobs'];
+  }
+  if (params['top_logprobs']) {
+    generationConfig['logprobs'] = params['top_logprobs']; // range 1-5, openai supports 1-20
+  }
   if (params?.response_format?.type === 'json_schema') {
     generationConfig['responseMimeType'] = 'application/json';
     recursivelyDeleteUnsupportedParameters(

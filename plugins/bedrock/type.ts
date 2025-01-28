@@ -89,10 +89,10 @@ export interface BedrockResponse {
 
 export interface BedrockParameters {
   credentials: {
-    accessKeyId: string;
-    accessKeySecret: string;
+    awsAccessKeyId: string;
+    awsSecretAccessKey: string;
     awsSessionToken?: string;
-    region: string;
+    awsRegion: string;
   };
   guardrailVersion: string;
   guardrailId: string;
