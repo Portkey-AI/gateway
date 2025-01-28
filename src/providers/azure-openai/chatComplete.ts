@@ -105,6 +105,9 @@ export const AzureOpenAIChatCompleteConfig: ProviderConfig = {
   prediction: {
     param: 'prediction',
   },
+  reasoning_effort: {
+    param: 'reasoning_effort',
+  },
 };
 
 interface AzureOpenAIChatCompleteResponse extends ChatCompletionResponse {}
