@@ -194,7 +194,7 @@ function createHookResponse(
   return new Response(JSON.stringify(responseBody), {
     status: options.status || baseResponse.status,
     statusText: options.statusText || baseResponse.statusText,
-    headers: baseResponse.headers,
+    headers: options.headers || baseResponse.headers,
   });
 }
 
