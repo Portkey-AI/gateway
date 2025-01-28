@@ -7,7 +7,11 @@ import {
 import { BedrockBody, BedrockParameters } from './type';
 import { bedrockPost, redactPii } from './util';
 
-const REQUIRED_CREDENTIAL_KEYS = ['accessKeyId', 'accessKeySecret', 'region'];
+const REQUIRED_CREDENTIAL_KEYS = [
+  'awsAccessKeyId',
+  'awsSecretAccessKey',
+  'awsRegion',
+];
 
 export const validateCreds = (
   credentials?: BedrockParameters['credentials']
