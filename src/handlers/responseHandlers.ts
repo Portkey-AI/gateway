@@ -159,6 +159,45 @@ export async function responseHandler(
   };
 }
 
+function createHookResponse(
+  baseResponse: Response,
+  responseData: any,
+  hooksResult: any,
+  options: {
+    status?: number;
+    statusText?: string;
+    forceError?: boolean;
+    headers?: Record<string, string>;
+  } = {}
+) {
+  const responseBody = {
+    ...(options.forceError
+      ? {
+          error: {
+            message:
+              'The guardrail checks defined in the config failed. You can find more information in the `hook_results` object.',
+            type: 'hooks_failed',
+            param: null,
+            code: null,
+          },
+        }
+      : responseData),
+    ...((hooksResult.beforeRequestHooksResult?.length ||
+      hooksResult.afterRequestHooksResult?.length) && {
+      hook_results: {
+        before_request_hooks: hooksResult.beforeRequestHooksResult,
+        after_request_hooks: hooksResult.afterRequestHooksResult,
+      },
+    }),
+  };
+
+  return new Response(JSON.stringify(responseBody), {
+    status: options.status || baseResponse.status,
+    statusText: options.statusText || baseResponse.statusText,
+    headers: options.headers || baseResponse.headers,
+  });
+}
+
 export async function afterRequestHookHandler(
   c: Context,
   response: any,
@@ -179,11 +218,9 @@ export async function afterRequestHookHandler(
       hooksManager.getSpan(hookSpanId).resetHookResult('afterRequestHook');
     }
 
-    let { shouldDeny, results } = await hooksManager.executeHooks(
-      hookSpanId,
-      ['syncAfterRequestHook'],
-      { env: env(c) }
-    );
+    const { shouldDeny } = await hooksManager.executeHooks(hookSpanId, [
+      'syncAfterRequestHook',
+    ]);
 
     if (!responseJSON) {
       return response;
@@ -193,28 +230,11 @@ export async function afterRequestHookHandler(
     const hooksResult = span.getHooksResult();
 
     if (shouldDeny) {
-      return new Response(
-        JSON.stringify({
-          error: {
-            message:
-              'The guardrail checks defined in the config failed. You can find more information in the `hook_results` object.',
-            type: 'hooks_failed',
-            param: null,
-            code: null,
-          },
-          ...((hooksResult.beforeRequestHooksResult?.length ||
-            hooksResult.afterRequestHooksResult?.length) && {
-            hook_results: {
-              before_request_hooks: hooksResult.beforeRequestHooksResult,
-              after_request_hooks: hooksResult.afterRequestHooksResult,
-            },
-          }),
-        }),
-        {
-          status: 446,
-          headers: { 'content-type': 'application/json' },
-        }
-      );
+      return createHookResponse(response, {}, hooksResult, {
+        status: 446,
+        headers: { 'content-type': 'application/json' },
+        forceError: true,
+      });
     }
 
     const failedBeforeRequestHooks =
@@ -223,41 +243,18 @@ export async function afterRequestHookHandler(
       (h) => !h.verdict
     );
 
+    const responseData = span.getContext().response.isTransformed
+      ? span.getContext().response.json
+      : responseJSON;
+
     if (failedBeforeRequestHooks.length || failedAfterRequestHooks.length) {
-      response = new Response(
-        JSON.stringify({
-          ...(span.getContext().response.isTransformed
-            ? span.getContext().response.json
-            : responseJSON),
-          hook_results: hooksResult,
-        }),
-        {
-          status: 246,
-          statusText: 'Hooks failed',
-          headers: response.headers,
-        }
-      );
+      return createHookResponse(response, responseData, hooksResult, {
+        status: 246,
+        statusText: 'Hooks failed',
+      });
     }
 
-    return new Response(
-      JSON.stringify({
-        ...(span.getContext().response.isTransformed
-          ? span.getContext().response.json
-          : responseJSON),
-        ...((hooksResult.beforeRequestHooksResult?.length ||
-          hooksResult.afterRequestHooksResult?.length) && {
-          hook_results: {
-            before_request_hooks: hooksResult.beforeRequestHooksResult,
-            after_request_hooks: hooksResult.afterRequestHooksResult,
-          },
-        }),
-      }),
-      {
-        status: response.status,
-        statusText: response.statusText,
-        headers: response.headers,
-      }
-    );
+    return createHookResponse(response, responseData, hooksResult);
   } catch (err) {
     console.error(err);
     return response;
