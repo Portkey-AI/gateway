@@ -106,6 +106,11 @@ interface DeepSeekStreamChunk {
   object: string;
   created: number;
   model: string;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
   choices: {
     delta: {
       role?: string | null;
@@ -161,6 +166,7 @@ export const DeepSeekChatCompleteResponseTransform: (
 export const DeepSeekChatCompleteStreamChunkTransform: (
   response: string
 ) => string = (responseChunk) => {
+  console.log('responseChunk', responseChunk);
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
@@ -182,6 +188,7 @@ export const DeepSeekChatCompleteStreamChunkTransform: (
           finish_reason: parsedChunk.choices[0].finish_reason,
         },
       ],
+      usage: parsedChunk.usage,
     })}` + '\n\n'
   );
 };
