@@ -225,6 +225,7 @@ export const transformVertexLogprobs = (
   generation: GoogleResponseCandidate
 ) => {
   let logprobsContent: Logprobs[] = [];
+  if (!generation.logprobsResult) return null;
   if (generation.logprobsResult?.chosenCandidates) {
     generation.logprobsResult.chosenCandidates.forEach((candidate) => {
       let bytes = [];

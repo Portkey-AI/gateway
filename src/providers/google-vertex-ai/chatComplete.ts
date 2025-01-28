@@ -695,15 +695,20 @@ export const GoogleChatCompleteResponseTransform: (
               }),
             };
           }
-          let logprobsContent: Logprobs[] = transformVertexLogprobs(generation);
+          const logprobsContent: Logprobs[] | null =
+            transformVertexLogprobs(generation);
+          let logprobs;
+          if (logprobsContent) {
+            logprobs = {
+              content: logprobsContent,
+            };
+          }
 
           return {
             message: message,
             index: index,
             finish_reason: generation.finishReason,
-            logprobs: {
-              content: logprobsContent,
-            },
+            logprobs,
             ...(!strictOpenAiCompliance && {
               safetyRatings: generation.safetyRatings,
             }),

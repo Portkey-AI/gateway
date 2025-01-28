@@ -564,15 +564,17 @@ export const GoogleChatCompleteResponseTransform: (
               }),
             };
           }
-          let logprobsContent: Logprobs[] = [];
-          if (generation.logprobsResult) {
-            logprobsContent = transformVertexLogprobs(generation);
+          const logprobsContent: Logprobs[] | null =
+            transformVertexLogprobs(generation);
+          let logprobs;
+          if (logprobsContent) {
+            logprobs = {
+              content: logprobsContent,
+            };
           }
           return {
             message: message,
-            logprobs: {
-              content: logprobsContent,
-            },
+            logprobs,
             index: generation.index ?? idx,
             finish_reason: generation.finishReason,
             ...(!strictOpenAiCompliance && generation.groundingMetadata
