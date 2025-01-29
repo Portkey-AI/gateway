@@ -26,12 +26,22 @@
 
 ### 安装
 
-如果您熟悉Node.js和`npx`，您可以在本地运行您的私有AI网关。([其它部署选项](#deploying-ai-gateway))
+如果您熟悉Node.js和`npx`，您可以在本地运行您的私有AI网关。
 
 ```
 npx @portkey-ai/gateway
 ```
 
+<sup>
+[ 其它部署选项 ]
+&nbsp; <a href="https://portkey.wiki/gh-18"><img height="12" width="12" src="https://cfassets.portkey.ai/logo/dew-color.svg" /> Portkey Cloud 官方部署(推荐)</a>
+&nbsp; <a href="../docs/installation-deployments.md#docker"><img height="12" width="12" src="https://cdn.simpleicons.org/docker/3776AB" /> Docker</a>
+&nbsp; <a href="../docs/installation-deployments.md#nodejs-server"><img height="12" width="12" src="https://cdn.simpleicons.org/node.js/3776AB" /> Node.js</a>
+&nbsp; <a href="../docs/installation-deployments.md#cloudflare-workers"><img height="12" width="12" src="https://cdn.simpleicons.org/cloudflare/3776AB" /> Cloudflare</a>
+&nbsp; <a href="../docs/installation-deployments.md#replit"><img height="12" width="12" src="https://cdn.simpleicons.org/replit/3776AB" /> Replit</a>
+&nbsp; <a href="../docs/installation-deployments.md"> 其它...</a>
+
+</sup>
 > 您的AI网关现在运行在 [http://localhost:8787](http://localhost:8787/) 🚀 <br>
 
 ### 使用方法
