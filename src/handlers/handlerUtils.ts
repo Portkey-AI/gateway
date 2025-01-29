@@ -914,6 +914,7 @@ export function constructConfigFromRequestHeaders(
       requestHeaders[`x-${POWERED_BY}-azure-deployment-type`],
     azureApiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
     azureEndpointName: requestHeaders[`x-${POWERED_BY}-azure-endpoint-name`],
+    azureExtraParams: requestHeaders[`x-${POWERED_BY}-azure-extra-params`],
   };
 
   const awsConfig = {
