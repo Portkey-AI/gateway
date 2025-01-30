@@ -32,6 +32,7 @@ export const pluginHandler: PluginHandler<
       json: null,
     },
   };
+  let transformed = false;
   const credentials = parameters.credentials;
 
   const validate = validateCreds(credentials);
@@ -48,6 +49,8 @@ export const pluginHandler: PluginHandler<
       verdict,
       error: { message: 'Missing required credentials' },
       data,
+      transformed,
+      transformedData,
     };
   }
 
@@ -68,6 +71,7 @@ export const pluginHandler: PluginHandler<
         verdict: true,
         data: null,
         transformedData,
+        transformed,
       };
     }
 
@@ -118,6 +122,7 @@ export const pluginHandler: PluginHandler<
       );
 
       setCurrentContentPart(context, eventType, transformedData, maskedTexts);
+      transformed = true;
     }
 
     if (hasPii && flaggedCategories.size === 1 && redact) {
@@ -138,5 +143,6 @@ export const pluginHandler: PluginHandler<
     error,
     data,
     transformedData,
+    transformed,
   };
 };

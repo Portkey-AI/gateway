@@ -297,6 +297,7 @@ export class HooksManager {
           ? { name: result.error.name, message: result.error.message }
           : undefined,
         execution_time: new Date().getTime() - createdAt.getTime(),
+        transformed: result.transformed || false,
         created_at: createdAt,
       };
     } catch (err: any) {
@@ -384,6 +385,7 @@ export class HooksManager {
     hookResult = {
       verdict: checkResults.every((result) => result.verdict || result.error),
       id: hook.id,
+      transformed: checkResults.some((result) => result.transformed),
       checks: checkResults,
       feedback: this.createFeedbackObject(
         checkResults,

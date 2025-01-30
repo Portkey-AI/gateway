@@ -67,6 +67,7 @@ export interface GuardrailCheckResult {
   error?: Error | null;
   data?: any;
   id: string;
+  transformed?: boolean;
   execution_time: number;
   created_at: Date;
   transformedData?: {
@@ -83,6 +84,7 @@ export interface GuardrailResult {
   verdict: boolean;
   id: string;
   checks: GuardrailCheckResult[];
+  transformed?: boolean;
   feedback: GuardrailFeedback;
   error?: Error | null;
   async: boolean;

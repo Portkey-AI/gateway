@@ -136,6 +136,7 @@ describe('piiHandler', () => {
       restrictedCategories: ['CREDIT_CARD', 'LOCATION_ADDRESS'],
     });
     expect(result.transformedData?.request?.json).toBeNull();
+    expect(result.transformed).toBe(false);
   });
 
   it('should detect and redact PII in request text', async () => {
@@ -179,6 +180,7 @@ describe('piiHandler', () => {
     expect(result.transformedData?.request?.json?.messages?.[0]?.content).toBe(
       'My credit card number is [CREDIT_CARD_1], and my email is [EMAIL_ADDRESS_1]'
     );
+    expect(result.transformed).toBe(true);
   });
 
   it('should detect and redact PII in request text with multiple content parts', async () => {
@@ -233,6 +235,7 @@ describe('piiHandler', () => {
     expect(
       result.transformedData?.request?.json?.messages?.[0]?.content?.[1]?.text
     ).toBe('and my email is [EMAIL_ADDRESS_1]');
+    expect(result.transformed).toBe(true);
   });
 
   it('should detect and redact PII in response text', async () => {
@@ -280,6 +283,7 @@ describe('piiHandler', () => {
     ).toBe(
       'My credit card number is [CREDIT_CARD_1], and my email is [EMAIL_ADDRESS_1]'
     );
+    expect(result.transformed).toBe(true);
   });
 
   it('should pass text without PII', async () => {
@@ -318,6 +322,7 @@ describe('piiHandler', () => {
       explanation: 'No restricted PII was found in the text.',
     });
     expect(result.transformedData?.request?.json).toBeNull();
+    expect(result.transformed).toBe(false);
   });
 
   it('should handle inverted results with not=true', async () => {
@@ -356,6 +361,7 @@ describe('piiHandler', () => {
       not: true,
       explanation: 'PII was found in the text as expected.',
     });
+    expect(result.transformed).toBe(false);
   });
 
   it('should handle and redact inverted results with not=true', async () => {
@@ -395,6 +401,7 @@ describe('piiHandler', () => {
       not: true,
       explanation: expect.stringContaining('redacted'),
     });
+    expect(result.transformed).toBe(true);
   });
 });
 
@@ -403,7 +410,7 @@ describe('languageHandler', () => {
 
   it('should detect correct language', async () => {
     const context = {
-      request: { text: 'hola mundo' },
+      request: { text: 'Por favor hola gracias' },
     };
     const parameters = {
       language: ['spa_Latn'],

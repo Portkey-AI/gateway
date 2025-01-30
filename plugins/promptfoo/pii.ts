@@ -59,7 +59,7 @@ export const handler: PluginHandler = async (
       json: null,
     },
   };
-
+  let transformed = false;
   try {
     if (context.requestType === 'embed' && parameters?.redact) {
       return {
@@ -67,6 +67,7 @@ export const handler: PluginHandler = async (
         verdict: true,
         data: null,
         transformedData,
+        transformed,
       };
     }
 
@@ -77,6 +78,8 @@ export const handler: PluginHandler = async (
         error: { message: 'request or response json is empty' },
         verdict: true,
         data: null,
+        transformedData,
+        transformed,
       };
     }
 
@@ -93,6 +96,7 @@ export const handler: PluginHandler = async (
       const maskedTexts = results.map((result) => result?.maskedText ?? null);
       setCurrentContentPart(context, eventType, transformedData, maskedTexts);
       shouldBlock = false;
+      transformed = true;
     }
 
     verdict = !shouldBlock;
@@ -102,5 +106,5 @@ export const handler: PluginHandler = async (
     error = e;
   }
 
-  return { error, verdict, data, transformedData };
+  return { error, verdict, data, transformedData, transformed };
 };

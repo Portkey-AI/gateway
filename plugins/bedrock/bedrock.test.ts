@@ -2,15 +2,16 @@ import { HookEventType, PluginContext, PluginParameters } from '../types';
 import { pluginHandler } from './index';
 import testCreds from './.creds.json';
 import { BedrockParameters } from './type';
+import parametersCreds from './.parameters.json';
 
 /**
  * @example Parameters object
  * 
  * {
     "credentials": {
-      "accessKeyId": "keyId",
-      "accessKeySecret": "keysecret",
-      "region": "us-east-1"
+      "awsAccessKeyId": "keyId",
+      "awsSecretAccessKey": "keysecret",
+      "awsRegion": "us-east-1"
     },
     "guardrailId": "xyxyxyx",
     "guardrailVersion": "1"
@@ -53,6 +54,7 @@ describe('Credentials check', () => {
     expect(result.verdict).toBe(true);
     expect(result.error).toBeDefined();
     expect(result.data).toBeNull();
+    expect(result.transformed).toBe(false);
   });
 
   test('Should fail with wrong creds', async () => {
@@ -91,6 +93,7 @@ describe('Credentials check', () => {
     expect(result.verdict).toBe(true);
     expect(result.error).toBeDefined();
     expect(result.data).toBeNull();
+    expect(result.transformed).toBe(false);
   });
 
   it('should only detect PII', async () => {
@@ -110,9 +113,9 @@ describe('Credentials check', () => {
       requestType: 'chatComplete',
     };
     const parameters = {
-      credentials: testCreds,
-      guardrailId: testCreds.guardrailId,
-      guardrailVersion: testCreds.guardrailVersion,
+      credentials: testCreds as BedrockParameters['credentials'],
+      guardrailId: parametersCreds.guardrailId,
+      guardrailVersion: parametersCreds.guardrailVersion,
     };
 
     const result = await pluginHandler(
@@ -128,6 +131,7 @@ describe('Credentials check', () => {
     expect(result.error).toBeNull();
     expect(result.data).toBeDefined();
     expect(result.transformedData?.request?.json).toBeNull();
+    expect(result.transformed).toBe(false);
   });
 
   it('should detect and redact PII in request text', async () => {
@@ -146,10 +150,10 @@ describe('Credentials check', () => {
       requestType: 'chatComplete',
     };
     const parameters = {
-      credentials: testCreds,
+      credentials: testCreds as BedrockParameters['credentials'],
       redact: true,
-      guardrailId: testCreds.guardrailId,
-      guardrailVersion: testCreds.guardrailVersion,
+      guardrailId: parametersCreds.guardrailId,
+      guardrailVersion: parametersCreds.guardrailVersion,
     };
 
     const result = await pluginHandler(
@@ -166,6 +170,7 @@ describe('Credentials check', () => {
     expect(result.transformedData?.request?.json?.messages?.[0]?.content).toBe(
       'My SSN is {US_SOCIAL_SECURITY_NUMBER} and some random text'
     );
+    expect(result.transformed).toBe(true);
   });
 
   it('should detect and redact PII in request text with multiple content parts', async () => {
@@ -193,10 +198,10 @@ describe('Credentials check', () => {
       requestType: 'chatComplete',
     };
     const parameters = {
-      credentials: testCreds,
+      credentials: testCreds as BedrockParameters['credentials'],
       redact: true,
-      guardrailId: testCreds.guardrailId,
-      guardrailVersion: testCreds.guardrailVersion,
+      guardrailId: parametersCreds.guardrailId,
+      guardrailVersion: parametersCreds.guardrailVersion,
     };
 
     const result = await pluginHandler(
@@ -217,6 +222,7 @@ describe('Credentials check', () => {
     expect(
       result.transformedData?.request?.json?.messages?.[0]?.content?.[1]?.text
     ).toBe('My SSN is {US_SOCIAL_SECURITY_NUMBER} and some random text');
+    expect(result.transformed).toBe(true);
   });
 
   it('should detect and redact PII in response text', async () => {
@@ -237,10 +243,10 @@ describe('Credentials check', () => {
       requestType: 'chatComplete',
     };
     const parameters = {
-      credentials: testCreds,
+      credentials: testCreds as BedrockParameters['credentials'],
       redact: true,
-      guardrailId: testCreds.guardrailId,
-      guardrailVersion: testCreds.guardrailVersion,
+      guardrailId: parametersCreds.guardrailId,
+      guardrailVersion: parametersCreds.guardrailVersion,
     };
 
     const result = await pluginHandler(
@@ -258,6 +264,7 @@ describe('Credentials check', () => {
     expect(
       result.transformedData?.response?.json?.choices?.[0]?.message?.content
     ).toBe('My SSN is {US_SOCIAL_SECURITY_NUMBER} and some random text');
+    expect(result.transformed).toBe(true);
   });
 
   it('should pass text without PII', async () => {
@@ -279,9 +286,9 @@ describe('Credentials check', () => {
       requestType: 'chatComplete',
     };
     const parameters = {
-      credentials: testCreds,
-      guardrailId: testCreds.guardrailId,
-      guardrailVersion: testCreds.guardrailVersion,
+      credentials: testCreds as BedrockParameters['credentials'],
+      guardrailId: parametersCreds.guardrailId,
+      guardrailVersion: parametersCreds.guardrailVersion,
     };
 
     const result = await pluginHandler(
@@ -297,5 +304,6 @@ describe('Credentials check', () => {
     expect(result.error).toBeNull();
     expect(result.data).toBeDefined();
     expect(result.transformedData?.response?.json).toBeNull();
+    expect(result.transformed).toBe(false);
   });
 });
