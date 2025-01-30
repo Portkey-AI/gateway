@@ -9,8 +9,8 @@ import parametersCreds from './.parameters.json';
  * 
  * {
     "credentials": {
-      "accessKeyId": "keyId",
-      "accessKeySecret": "keysecret",
+      "awsAccessKeyId": "keyId",
+      "awsSecretAccessKey": "keysecret",
       "awsRegion": "us-east-1"
     },
     "guardrailId": "xyxyxyx",
