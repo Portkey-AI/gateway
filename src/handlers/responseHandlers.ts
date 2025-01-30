@@ -218,9 +218,15 @@ export async function afterRequestHookHandler(
       hooksManager.getSpan(hookSpanId).resetHookResult('afterRequestHook');
     }
 
-    const { shouldDeny } = await hooksManager.executeHooks(hookSpanId, [
-      'syncAfterRequestHook',
-    ]);
+    const { shouldDeny } = await hooksManager.executeHooks(
+      hookSpanId,
+      ['syncAfterRequestHook'],
+      {
+        env: env(c),
+        getFromCacheByKey: c.get('getFromCacheByKey'),
+        putInCacheWithValue: c.get('putInCacheWithValue'),
+      }
+    );
 
     if (!responseJSON) {
       return response;
