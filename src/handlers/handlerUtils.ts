@@ -1325,7 +1325,11 @@ export async function beforeRequestHookHandler(
     const hooksResult = await hooksManager.executeHooks(
       hookSpanId,
       ['syncBeforeRequestHook'],
-      { env: env(c) }
+      {
+        env: env(c),
+        getFromCacheByKey: c.get('getFromCacheByKey'),
+        putInCacheWithValue: c.get('putInCacheWithValue'),
+      }
     );
 
     span = hooksManager.getSpan(hookSpanId) as HookSpan;

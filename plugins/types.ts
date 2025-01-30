@@ -26,5 +26,7 @@ export type PluginHandler<P = Record<string, string>> = (
   eventType: HookEventType,
   options?: {
     env: Record<string, any>;
+    getFromCacheByKey?: (key: string) => Promise<any>;
+    putInCacheWithValue?: (key: string, value: any) => Promise<any>;
   }
 ) => Promise<PluginHandlerResponse>;
