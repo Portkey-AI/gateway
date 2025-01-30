@@ -4,8 +4,8 @@ import {
   HttpError,
   setCurrentContentPart,
 } from '../utils';
-import { BedrockBody, BedrockParameters } from './type';
-import { bedrockPost, redactPii } from './util';
+import { BedrockAccessKeyCreds, BedrockBody, BedrockParameters } from './type';
+import { bedrockPost, getAssumedRoleCredentials, redactPii } from './util';
 
 const REQUIRED_CREDENTIAL_KEYS = [
   'awsAccessKeyId',
@@ -20,10 +20,59 @@ export const validateCreds = (
     Boolean(credentials?.[key as keyof BedrockParameters['credentials']])
   );
 };
+export const handleCredentials = async (
+  options: Record<string, any>,
+  credentials: BedrockParameters['credentials'] | null
+) => {
+  const finalCredentials = {} as BedrockAccessKeyCreds;
+  if (credentials?.awsAuthType === 'assumedRole') {
+    try {
+      // Assume the role in the source account
+      const sourceRoleCredentials = await getAssumedRoleCredentials(
+        options.getFromCacheByKey,
+        options.putInCacheWithValue,
+        options.env,
+        options.env.AWS_ASSUME_ROLE_SOURCE_ARN, // Role ARN in the source account
+        options.env.AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID || '', // External ID for source role (if needed)
+        credentials.awsRegion || ''
+      );
+
+      if (!sourceRoleCredentials) {
+        throw new Error('Server Error while assuming internal role');
+      }
+
+      // Assume role in destination account using temporary creds obtained in first step
+      const { accessKeyId, secretAccessKey, sessionToken } =
+        (await getAssumedRoleCredentials(
+          options.getFromCacheByKey,
+          options.putInCacheWithValue,
+          options.env,
+          credentials.awsRoleArn || '',
+          credentials.awsExternalId || '',
+          credentials.awsRegion || '',
+          {
+            accessKeyId: sourceRoleCredentials.accessKeyId,
+            secretAccessKey: sourceRoleCredentials.secretAccessKey,
+            sessionToken: sourceRoleCredentials.sessionToken,
+          }
+        )) || {};
+      finalCredentials.awsAccessKeyId = accessKeyId;
+      finalCredentials.awsSecretAccessKey = secretAccessKey;
+      finalCredentials.awsSessionToken = sessionToken;
+      finalCredentials.awsRegion = credentials.awsRegion || '';
+    } catch {}
+  } else {
+    finalCredentials.awsAccessKeyId = credentials?.awsAccessKeyId || '';
+    finalCredentials.awsSecretAccessKey = credentials?.awsSecretAccessKey || '';
+    finalCredentials.awsSessionToken = credentials?.awsSessionToken || '';
+    finalCredentials.awsRegion = credentials?.awsRegion || '';
+  }
+  return finalCredentials;
+};
 
 export const pluginHandler: PluginHandler<
   BedrockParameters['credentials']
-> = async (context, parameters, eventType) => {
+> = async (context, parameters, eventType, options) => {
   const transformedData: Record<string, any> = {
     request: {
       json: null,
@@ -33,9 +82,12 @@ export const pluginHandler: PluginHandler<
     },
   };
   let transformed = false;
-  const credentials = parameters.credentials;
-
-  const validate = validateCreds(credentials);
+  const credentials = parameters.credentials || null;
+  const finalCredentials = await handleCredentials(
+    options as Record<string, any>,
+    credentials
+  );
+  const validate = validateCreds(finalCredentials);
 
   const guardrailVersion = parameters.guardrailVersion;
   const guardrailId = parameters.guardrailId;
@@ -79,7 +131,7 @@ export const pluginHandler: PluginHandler<
       textArray.map((text) =>
         text
           ? bedrockPost(
-              { ...(credentials as any), guardrailId, guardrailVersion },
+              { ...(finalCredentials as any), guardrailId, guardrailVersion },
               {
                 content: [{ text: { text } }],
                 source: body.source,
