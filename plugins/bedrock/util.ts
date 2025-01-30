@@ -148,6 +148,9 @@ export async function getAssumedRoleCredentials(
     sessionToken?: string;
   }
 ) {
+  if (!awsRoleArn) {
+    return;
+  }
   const cacheKey = `${awsRoleArn}/${awsExternalId}/${awsRegion}`;
   const resp = getFromCacheByKey
     ? await getFromCacheByKey(env, cacheKey)

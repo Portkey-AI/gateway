@@ -20,6 +20,7 @@ export const validateCreds = (
     Boolean(credentials?.[key as keyof BedrockParameters['credentials']])
   );
 };
+
 export const handleCredentials = async (
   options: Record<string, any>,
   credentials: BedrockParameters['credentials'] | null
@@ -38,11 +39,11 @@ export const handleCredentials = async (
       );
 
       if (!sourceRoleCredentials) {
-        throw new Error('Server Error while assuming internal role');
+        throw new Error('Failed to assume internal role');
       }
 
       // Assume role in destination account using temporary creds obtained in first step
-      const { accessKeyId, secretAccessKey, sessionToken } =
+      const destinationCredentials =
         (await getAssumedRoleCredentials(
           options.getFromCacheByKey,
           options.putInCacheWithValue,
@@ -56,11 +57,17 @@ export const handleCredentials = async (
             sessionToken: sourceRoleCredentials.sessionToken,
           }
         )) || {};
-      finalCredentials.awsAccessKeyId = accessKeyId;
-      finalCredentials.awsSecretAccessKey = secretAccessKey;
-      finalCredentials.awsSessionToken = sessionToken;
+      if (!destinationCredentials) {
+        throw new Error('Failed to assume destination role');
+      }
+      finalCredentials.awsAccessKeyId = destinationCredentials.accessKeyId;
+      finalCredentials.awsSecretAccessKey =
+        destinationCredentials.secretAccessKey;
+      finalCredentials.awsSessionToken = destinationCredentials.sessionToken;
       finalCredentials.awsRegion = credentials.awsRegion || '';
-    } catch {}
+    } catch {
+      throw new Error('Error while assuming role');
+    }
   } else {
     finalCredentials.awsAccessKeyId = credentials?.awsAccessKeyId || '';
     finalCredentials.awsSecretAccessKey = credentials?.awsSecretAccessKey || '';
@@ -81,33 +88,12 @@ export const pluginHandler: PluginHandler<
       json: null,
     },
   };
-  let transformed = false;
-  const credentials = parameters.credentials || null;
-  const finalCredentials = await handleCredentials(
-    options as Record<string, any>,
-    credentials
-  );
-  const validate = validateCreds(finalCredentials);
-
-  const guardrailVersion = parameters.guardrailVersion;
-  const guardrailId = parameters.guardrailId;
-  const redact = parameters?.redact as boolean;
-
   let verdict = true;
   let error = null;
   let data = null;
-  if (!validate || !guardrailVersion || !guardrailId) {
-    return {
-      verdict,
-      error: { message: 'Missing required credentials' },
-      data,
-      transformed,
-      transformedData,
-    };
-  }
+  let transformed = false;
 
   const body = {} as BedrockBody;
-
   if (eventType === 'beforeRequestHook') {
     body.source = 'INPUT';
   } else {
@@ -115,6 +101,27 @@ export const pluginHandler: PluginHandler<
   }
 
   try {
+    const credentials = parameters.credentials || null;
+    const finalCredentials = await handleCredentials(
+      options as Record<string, any>,
+      credentials
+    );
+    const validate = validateCreds(finalCredentials);
+
+    const guardrailVersion = parameters.guardrailVersion;
+    const guardrailId = parameters.guardrailId;
+    const redact = parameters?.redact as boolean;
+
+    if (!validate || !guardrailVersion || !guardrailId) {
+      return {
+        verdict,
+        error: { message: 'Missing required credentials' },
+        data,
+        transformed,
+        transformedData,
+      };
+    }
+
     const { content, textArray } = getCurrentContentPart(context, eventType);
 
     if (!content) {
