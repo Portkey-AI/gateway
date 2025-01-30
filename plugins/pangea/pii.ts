@@ -20,6 +20,7 @@ export const handler: PluginHandler = async (
       json: null,
     },
   };
+  let transformed = false;
   const redact = parameters.redact || false;
 
   try {
@@ -29,6 +30,7 @@ export const handler: PluginHandler = async (
         verdict: true,
         data: null,
         transformedData,
+        transformed,
       };
     }
 
@@ -37,6 +39,8 @@ export const handler: PluginHandler = async (
         error: `'parameters.credentials.domain' must be set`,
         verdict: true,
         data: null,
+        transformedData,
+        transformed,
       };
     }
 
@@ -45,6 +49,8 @@ export const handler: PluginHandler = async (
         error: `'parameters.credentials.apiKey' must be set`,
         verdict: true,
         data: null,
+        transformedData,
+        transformed,
       };
     }
 
@@ -58,6 +64,7 @@ export const handler: PluginHandler = async (
         verdict: true,
         data: null,
         transformedData,
+        transformed,
       };
     }
 
@@ -87,6 +94,7 @@ export const handler: PluginHandler = async (
         response.result.redacted_data
       );
       shouldBlock = false;
+      transformed = true;
     }
 
     return {
@@ -96,6 +104,7 @@ export const handler: PluginHandler = async (
         summary: response.summary,
       },
       transformedData,
+      transformed,
     };
   } catch (e) {
     return {
@@ -103,6 +112,7 @@ export const handler: PluginHandler = async (
       verdict: true,
       data: null,
       transformedData,
+      transformed,
     };
   }
 };

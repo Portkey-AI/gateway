@@ -15,6 +15,7 @@ export interface PluginHandlerResponse {
   // The data object can be any JSON object or null.
   data?: any | null;
   transformedData?: any;
+  transformed?: boolean;
 }
 
 export type HookEventType = 'beforeRequestHook' | 'afterRequestHook';
