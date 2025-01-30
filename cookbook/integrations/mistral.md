@@ -53,7 +53,7 @@ main()
 * **Trace** requests with single id.
 * **Append custom tags** for request segmenting & in-depth analysis.
 
-Just add their relevant headers to your reuqest:
+Just add their relevant headers to your request:
 
 ```py
 from portkey_ai import Portkey
