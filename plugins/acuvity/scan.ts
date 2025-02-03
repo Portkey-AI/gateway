@@ -53,20 +53,26 @@ export const handler: PluginHandler = async (
     text
   );
 
-  const extraction = result.extractions[0];
-
   const responseHelper = new ResponseHelper();
 
-  // Assuming parameters is loaded from manifest.json
-  const results = evaluateAllParameters(extraction, parameters, responseHelper);
+  // Loop through all extractions
+  for (const extraction of result.extractions) {
+    // Evaluate parameters for current extraction
+    const results = evaluateAllParameters(extraction, parameters, responseHelper);
 
-  // Process results
-  results.forEach(({ parameter, result }) => {
-    if (result.matched) {
-      console.log(`${parameter} check failed with value ${result.actualValue}`);
-      verdict = true;
+    // Check if any parameter check failed in this extraction
+    for (const { result } of results) {
+      if (result.matched) {
+        verdict = true;
+        break;
+      }
     }
-  });
+
+    // Optionally, break the outer loop if we already found a match
+    if (verdict) {
+      break;
+    }
+  }
 
   return { error, verdict, data };
 };
