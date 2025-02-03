@@ -11,7 +11,9 @@
         "encrypted": true
       }
     },
-    "required": ["apiKey"]
+    "required": [
+      "apiKey"
+    ]
   },
   "functions": [
     {
@@ -178,27 +180,32 @@
                 "items": {
                   "type": "string",
                   "enum": [
-                    "EMAIL_ADDRESS",
-                    "PHONE_NUMBER",
-                    "LOCATION_ADDRESS",
-                    "NAME",
-                    "IP_ADDRESS",
-                    "CREDIT_CARD",
-                    "SSN"
+                    "email_address",
+                    "ssn",
+                    "person",
+                    "aba_routing_number",
+                    "address",
+                    "bank_account",
+                    "bitcoin_wallet",
+                    "credit_card",
+                    "driver_license",
+                    "itin_number",
+                    "location",
+                    "medical_license",
+                    "money_amount",
+                    "passport_number",
+                    "phone_number"
                   ]
-                },
-                "default": [
-                  "EMAIL_ADDRESS",
-                  "PHONE_NUMBER",
-                  "CREDIT_CARD",
-                  "SSN"
-                ]
+                }
               }
-            }
+            },
+            "required": [
+              "categories"
+            ]
           },
           "secrets": {
             "type": "object",
-            "label": "PII Detection",
+            "label": "Secrets Detection",
             "properties": {
               "enabled": {
                 "type": "boolean",
@@ -315,7 +322,9 @@
                 }
               }
             },
-            "required": ["categories"]
+            "required": [
+              "categories"
+            ]
           }
         }
       }
