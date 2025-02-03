@@ -114,6 +114,9 @@ export const OpenAIChatCompleteConfig: ProviderConfig = {
   prediction: {
     param: 'prediction',
   },
+  reasoning_effort: {
+    param: 'reasoning_effort',
+  },
 };
 
 export interface OpenAIChatCompleteResponse extends ChatCompletionResponse {
