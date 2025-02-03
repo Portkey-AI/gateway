@@ -179,5 +179,21 @@ function evaluateAllParameters(
     }
   }
 
+  // Check Secrets
+  if (parameters.secrets.enabled && parameters.secrets.categories) {
+    // Iterate through each secrets category
+    for (const category of parameters.secrets.categories) {
+      results.push({
+        parameter: `secrets_${category.toLowerCase()}`,
+        result: responseHelper.evaluate(
+          extraction,
+          GuardName.SECRETS_DETECTOR,
+          0.5, // PII typically uses a fixed threshold
+          category.toLowerCase()
+        ),
+      });
+    }
+  }
+
   return results;
 }
