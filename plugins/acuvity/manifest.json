@@ -1,0 +1,324 @@
+{
+  "id": "acuvity",
+  "description": "acuvity Plugin",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "Find your API key in the acuvity dashboard",
+        "encrypted": true
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Acuvity",
+      "id": "Acuvity",
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Comprehensive content safety and security checks"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prompt_injection": {
+            "type": "object",
+            "label": "Prompt Injection Detection",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
+              "threshold": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "multipleOf": 0.01,
+                "default": 0.5
+              }
+            }
+          },
+          "toxic": {
+            "type": "object",
+            "label": "Toxicity Detection",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
+              "threshold": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "multipleOf": 0.01,
+                "default": 0.5
+              }
+            }
+          },
+          "jail_break": {
+            "type": "object",
+            "label": "Jailbreak Detection",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
+              "threshold": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "multipleOf": 0.01,
+                "default": 0.5
+              }
+            }
+          },
+          "malicious_url": {
+            "type": "object",
+            "label": "Malicious URL Detection",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
+              "threshold": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "multipleOf": 0.01,
+                "default": 0.5
+              }
+            }
+          },
+          "biased": {
+            "type": "object",
+            "label": "Bias Detection",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
+              "threshold": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "multipleOf": 0.01,
+                "default": 0.5
+              }
+            }
+          },
+          "harmful": {
+            "type": "object",
+            "label": "Harmful Content Detection",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
+              "threshold": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "multipleOf": 0.01,
+                "default": 0.5
+              }
+            }
+          },
+          "language": {
+            "type": "object",
+            "label": "Language Check",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
+              "languagevals": {
+                "type": "string",
+                "enum": [
+                  "eng_Latn",
+                  "zho_Hans",
+                  "spa_Latn",
+                  "ara_Arab",
+                  "por_Latn",
+                  "ind_Latn",
+                  "vie_Latn"
+                ],
+                "enumNames": [
+                  "English",
+                  "Chinese (Simplified)",
+                  "Spanish",
+                  "Modern Standard Arabic",
+                  "Portuguese",
+                  "Indonesian",
+                  "Vietnamese"
+                ],
+                "default": "eng_Latn"
+              }
+            }
+          },
+          "pii": {
+            "type": "object",
+            "label": "PII Detection",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
+              "redact": {
+                "type": "boolean",
+                "default": false
+              },
+              "categories": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "EMAIL_ADDRESS",
+                    "PHONE_NUMBER",
+                    "LOCATION_ADDRESS",
+                    "NAME",
+                    "IP_ADDRESS",
+                    "CREDIT_CARD",
+                    "SSN"
+                  ]
+                },
+                "default": [
+                  "EMAIL_ADDRESS",
+                  "PHONE_NUMBER",
+                  "CREDIT_CARD",
+                  "SSN"
+                ]
+              }
+            }
+          },
+          "secrets": {
+            "type": "object",
+            "label": "PII Detection",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
+              "redact": {
+                "type": "boolean",
+                "default": false
+              },
+              "categories": {
+                "type": "array",
+                "label": "Secret Categories",
+                "description": [
+                  {
+                    "type": "subHeading",
+                    "text": "Select the types of secrets that should be detected in the content."
+                  }
+                ],
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "credentials",
+                    "adafruit",
+                    "alibaba",
+                    "anthropic",
+                    "apideck",
+                    "apify",
+                    "atlassian",
+                    "aws_secret_key",
+                    "buildkite",
+                    "checkout",
+                    "clickuppersonal",
+                    "contentfulpersonalaccess",
+                    "database_url_with_credentials",
+                    "databricks",
+                    "denodeploy",
+                    "dfuse",
+                    "digitalocean",
+                    "discord_webhook",
+                    "docker_hub",
+                    "doppler",
+                    "dropbox",
+                    "endorlabs",
+                    "fleetbase",
+                    "flutterwave",
+                    "frameio",
+                    "freshdesk",
+                    "fullstory",
+                    "github",
+                    "gitlab",
+                    "gocardless",
+                    "google_api",
+                    "grafana",
+                    "groq",
+                    "huggingface",
+                    "intra42",
+                    "jwt",
+                    "klaviyo",
+                    "launchdarkly",
+                    "linearapi",
+                    "locationiq",
+                    "mailchimp",
+                    "mailgun",
+                    "mapbox",
+                    "maxmind",
+                    "microsoft_teams_webhook",
+                    "nightfall",
+                    "notion",
+                    "npm",
+                    "openai",
+                    "pagarme",
+                    "paystack",
+                    "planetscale",
+                    "planetscaledb",
+                    "portainer",
+                    "posthog",
+                    "postman",
+                    "prefect",
+                    "private_key",
+                    "pubnub_publish",
+                    "pubnub_subscribe",
+                    "pulumi",
+                    "ramp",
+                    "razorpay",
+                    "readme",
+                    "rechargepayments",
+                    "replicate",
+                    "rubygems",
+                    "salesforce",
+                    "sendgrid",
+                    "sendinblue",
+                    "shopify",
+                    "slack_access",
+                    "slack_bot",
+                    "slack_refresh",
+                    "slack_user",
+                    "slack_webhook",
+                    "slack_workflow_webhook",
+                    "sourcegraph",
+                    "sourcegraphcody",
+                    "squareapp",
+                    "squareup",
+                    "stripe",
+                    "supabase",
+                    "tailscale",
+                    "tines_webhook",
+                    "trufflehog",
+                    "twilio",
+                    "ubidots",
+                    "voiceflow",
+                    "web_url_with_credentials",
+                    "zapierwebhook"
+                  ]
+                }
+              }
+            },
+            "required": ["categories"]
+          }
+        }
+      }
+    }
+  ]
+}
