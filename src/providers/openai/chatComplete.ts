@@ -25,7 +25,7 @@ export const OpenAIChatCompleteConfig: ProviderConfig = {
     param: 'function_call',
   },
   max_tokens: {
-    param: 'max_completion_tokens',
+    param: 'max_tokens',
     default: 100,
     min: 0,
   },
