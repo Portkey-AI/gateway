@@ -58,7 +58,11 @@ export const handler: PluginHandler = async (
   // Loop through all extractions
   for (const extraction of result.extractions) {
     // Evaluate parameters for current extraction
-    const results = evaluateAllParameters(extraction, parameters, responseHelper);
+    const results = evaluateAllParameters(
+      extraction,
+      parameters,
+      responseHelper
+    );
 
     // Check if any parameter check failed in this extraction
     for (const { result } of results) {

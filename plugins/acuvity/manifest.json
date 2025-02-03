@@ -11,9 +11,7 @@
         "encrypted": true
       }
     },
-    "required": [
-      "apiKey"
-    ]
+    "required": ["apiKey"]
   },
   "functions": [
     {
@@ -199,9 +197,7 @@
                 }
               }
             },
-            "required": [
-              "categories"
-            ]
+            "required": ["categories"]
           },
           "secrets": {
             "type": "object",
@@ -322,9 +318,7 @@
                 }
               }
             },
-            "required": [
-              "categories"
-            ]
+            "required": ["categories"]
           }
         }
       }

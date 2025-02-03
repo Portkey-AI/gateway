@@ -37,7 +37,10 @@ export class GuardName {
 export function getApexUrlFromToken(token: string): string | null {
   try {
     const decodedToken = jose.decodeJwt(token);
-    return decodedToken?.opaque?.['apex-url'] || null;
+    console.log(decodedToken);
+    const opaqueObj = decodedToken['opaque'] as { 'apex-url': string };
+    const apex_url = opaqueObj['apex-url'];
+    return apex_url;
   } catch (error) {
     return null;
   }
