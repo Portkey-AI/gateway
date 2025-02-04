@@ -134,7 +134,7 @@ export const getAccessToken = async (
     const tokenJson: Record<string, any> = await tokenResponse.json();
     const putInCacheWithValue = c.get('putInCacheWithValue');
     if (putInCacheWithValue && cacheKey) {
-      await putInCacheWithValue(env(c), cacheKey, tokenJson.access_token, 1800); // 30 minutes
+      await putInCacheWithValue(env(c), cacheKey, tokenJson.access_token, 3000); // 50 minutes
     }
 
     return tokenJson.access_token;
