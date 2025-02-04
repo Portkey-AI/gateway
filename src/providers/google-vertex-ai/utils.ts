@@ -94,7 +94,6 @@ export const getAccessToken = async (
     } catch (err) {}
 
     const scope = 'https://www.googleapis.com/auth/cloud-platform';
-    ``;
     const iat = Math.floor(Date.now() / 1000);
     const exp = iat + 3600; // Token expiration time (1 hour)
 
