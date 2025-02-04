@@ -20,7 +20,8 @@ jobs:
       - name: Link Checker
         uses: lycheeverse/lychee-action@v1.8.0
         with:
-          args: --verbose --no-progress --fail './**/*.md'
+          args: --verbose --no-progress './**/*.md'
+          fail: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
