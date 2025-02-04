@@ -12,17 +12,60 @@ import {
 } from './helper';
 import { getText, post } from '../utils';
 
+interface ScanRequest {
+  anonymization: 'FixedSize';
+  messages: string[];
+  redactions: string[];
+  type: 'Input' | 'Output';
+}
+
+const getRedactionList = (parameters: PluginParameters): string[] => {
+  const redactions: string[] = [];
+
+  if (
+    parameters.pii.enabled &&
+    parameters.pii.redact &&
+    parameters.pii.categories
+  ) {
+    for (const category of parameters.pii.categories) {
+      redactions.push(category);
+    }
+  }
+
+  if (
+    parameters.secrets.enabled &&
+    parameters.secrets.redact &&
+    parameters.secrets.categories
+  ) {
+    for (const category of parameters.secrets.categories) {
+      redactions.push(category);
+    }
+  }
+
+  return redactions;
+};
+
 export const postAcuvityScan = async (
   base_url: string,
-  credentials: any,
-  data: any
+  apiKey: string,
+  text: string,
+  eventType: HookEventType,
+  redactions: string[]
 ) => {
+  const data: ScanRequest = {
+    anonymization: 'FixedSize',
+    messages: [text],
+    redactions: redactions,
+    type: eventType === 'beforeRequestHook' ? 'Input' : 'Output',
+  };
+
   const options = {
     headers: {
-      Authorization: 'Bearer ' + credentials.apiKey,
+      Authorization: `Bearer ${apiKey}`,
     },
   };
-  return post(base_url, data, options);
+
+  return post(`${base_url}/_acuvity/scan`, data, options);
 };
 
 export const handler: PluginHandler = async (
@@ -34,48 +77,55 @@ export const handler: PluginHandler = async (
   let verdict = false;
   let data = null;
 
-  if (!parameters.credentials) {
-    throw new Error('acuvity api key not given');
-  }
+  try {
+    if (!parameters.credentials) {
+      throw new Error('acuvity api key not given');
+    }
 
-  const text = getText(context, eventType);
+    const text = getText(context, eventType);
 
-  let token = parameters.credentials.apiKey;
-  let base_url = getApexUrlFromToken(token);
+    let token = parameters.credentials.apiKey;
+    let base_url = getApexUrlFromToken(token);
 
-  if (!base_url) {
-    throw new Error('acuvity base url not given');
-  }
+    if (!base_url) {
+      throw new Error('acuvity base url not given');
+    }
 
-  const result: any = await postAcuvityScan(
-    base_url,
-    parameters.credentials,
-    text
-  );
-
-  const responseHelper = new ResponseHelper();
-
-  // Loop through all extractions
-  for (const extraction of result.extractions) {
-    // Evaluate parameters for current extraction
-    const results = evaluateAllParameters(
-      extraction,
-      parameters,
-      responseHelper
+    const result: any = await postAcuvityScan(
+      base_url,
+      token,
+      text,
+      eventType,
+      getRedactionList(parameters)
     );
 
-    // Check if any parameter check failed in this extraction
-    for (const { result } of results) {
-      if (result.matched) {
-        verdict = true;
+    const responseHelper = new ResponseHelper();
+
+    // Loop through all extractions
+    for (const extraction of result.extractions) {
+      // Evaluate parameters for current extraction
+      const results = evaluateAllParameters(
+        extraction,
+        parameters,
+        responseHelper
+      );
+
+      data = results;
+      // Check if any parameter check failed in this extraction
+      for (const { result } of results) {
+        if (result.matched) {
+          verdict = true;
+          break;
+        }
+      }
+
+      if (verdict) {
         break;
       }
     }
-
-    // Optionally, break the outer loop if we already found a match
-    if (verdict) {
-      break;
-    }
+  } catch (e: any) {
+    delete e.stack;
+    error = e;
   }
 
   return { error, verdict, data };
