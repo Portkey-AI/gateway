@@ -42,14 +42,19 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     const headersObj: Record<string, string> = {
       'api-key': `${apiKey}`,
     };
-    if (fn === 'createTranscription' || fn === 'createTranslation')
+    if (
+      fn === 'createTranscription' ||
+      fn === 'createTranslation' ||
+      fn === 'uploadFile'
+    ) {
       headersObj['Content-Type'] = 'multipart/form-data';
+    }
     if (providerOptions.openaiBeta) {
       headersObj['OpenAI-Beta'] = providerOptions.openaiBeta;
     }
     return headersObj;
   },
-  getEndpoint: ({ providerOptions, fn }) => {
+  getEndpoint: ({ providerOptions, fn, gatewayRequestURL }) => {
     const { apiVersion, urlToFetch, deploymentId } = providerOptions;
     let mappedFn = fn;
 
@@ -69,6 +74,14 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       } else if (urlToFetch?.indexOf('/audio/translations') > -1) {
         mappedFn = 'createTranslation';
       }
+    }
+
+    const segments = gatewayRequestURL?.split('/');
+    let id = '';
+    if (['cancelFinetune', 'retrieveFileContent'].includes(mappedFn)) {
+      id = segments?.at(-2) ?? '';
+    } else {
+      id = segments?.at(-1) ?? '';
     }
 
     switch (mappedFn) {
@@ -96,6 +109,16 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       case 'realtime': {
         return `/realtime?api-version=${apiVersion}&deployment=${providerOptions.deploymentId}`;
       }
+      case 'uploadFile':
+        return `/files?api-version=${apiVersion}`;
+      case 'retrieveFile':
+        return `/files/${id}?api-version=${apiVersion}`;
+      case 'listFiles':
+        return `/files?api-version=${apiVersion}`;
+      case 'deleteFile':
+        return `/files/${id}?api-version=${apiVersion}`;
+      case 'retrieveFileContent':
+        return `/files/${id}/content?api-version=${apiVersion}`;
       default:
         return '';
     }
