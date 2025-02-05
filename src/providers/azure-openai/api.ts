@@ -6,7 +6,15 @@ import {
 
 const AzureOpenAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
-    const { resourceName } = providerOptions;
+    const { resourceName, azureCustomUri } = providerOptions;
+    /**
+     * Uses the standard OpenAI endpoint (openai.azure.com) by default.
+     * If a custom subdomain is provided, that endpoint is used instead.
+     * Example: DeepSeek-R1 uses `https://{resourceName}.services.ai.azure.com/models`.
+     */
+    if (azureCustomUri) {
+      return `https://${resourceName}.${azureCustomUri}`;
+    }
     return `https://${resourceName}.openai.azure.com/openai`;
   },
   headers: async ({ providerOptions, fn }) => {
@@ -55,7 +63,8 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     return headersObj;
   },
   getEndpoint: ({ providerOptions, fn, gatewayRequestURL }) => {
-    const { apiVersion, urlToFetch, deploymentId } = providerOptions;
+    const { apiVersion, urlToFetch, deploymentId, azureCustomUri } =
+      providerOptions;
     let mappedFn = fn;
 
     if (fn === 'proxy' && urlToFetch) {
@@ -79,27 +88,31 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     const segments = gatewayRequestURL?.split('/');
     const id = segments?.at(-1) ?? '';
 
+    const deploymentPrefix = azureCustomUri
+      ? ''
+      : `/deployments/${deploymentId}`;
+
     switch (mappedFn) {
       case 'complete': {
-        return `/deployments/${deploymentId}/completions?api-version=${apiVersion}`;
+        return `${deploymentPrefix}/completions?api-version=${apiVersion}`;
       }
       case 'chatComplete': {
-        return `/deployments/${deploymentId}/chat/completions?api-version=${apiVersion}`;
+        return `${deploymentPrefix}/chat/completions?api-version=${apiVersion}`;
       }
       case 'embed': {
-        return `/deployments/${deploymentId}/embeddings?api-version=${apiVersion}`;
+        return `${deploymentPrefix}/embeddings?api-version=${apiVersion}`;
       }
       case 'imageGenerate': {
-        return `/deployments/${deploymentId}/images/generations?api-version=${apiVersion}`;
+        return `${deploymentPrefix}/images/generations?api-version=${apiVersion}`;
       }
       case 'createSpeech': {
-        return `/deployments/${deploymentId}/audio/speech?api-version=${apiVersion}`;
+        return `${deploymentPrefix}/audio/speech?api-version=${apiVersion}`;
       }
       case 'createTranscription': {
-        return `/deployments/${deploymentId}/audio/transcriptions?api-version=${apiVersion}`;
+        return `${deploymentPrefix}/audio/transcriptions?api-version=${apiVersion}`;
       }
       case 'createTranslation': {
-        return `/deployments/${deploymentId}/audio/translations?api-version=${apiVersion}`;
+        return `${deploymentPrefix}/audio/translations?api-version=${apiVersion}`;
       }
       case 'realtime': {
         return `/realtime?api-version=${apiVersion}&deployment=${providerOptions.deploymentId}`;
