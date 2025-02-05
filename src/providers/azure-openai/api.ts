@@ -77,12 +77,7 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     }
 
     const segments = gatewayRequestURL?.split('/');
-    let id = '';
-    if (['cancelFinetune', 'retrieveFileContent'].includes(mappedFn)) {
-      id = segments?.at(-2) ?? '';
-    } else {
-      id = segments?.at(-1) ?? '';
-    }
+    const id = segments?.at(-1) ?? '';
 
     switch (mappedFn) {
       case 'complete': {
