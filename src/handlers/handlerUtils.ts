@@ -1086,6 +1086,9 @@ export function constructConfigFromRequestHeaders(
   return {
     provider: requestHeaders[`x-${POWERED_BY}-provider`],
     apiKey: requestHeaders['authorization']?.replace('Bearer ', ''),
+    overrideParams: JSON.parse(
+      requestHeaders[`x-${POWERED_BY}-override-params`] || '{}'
+    ),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === AZURE_OPEN_AI &&
       azureConfig),
     ...([BEDROCK, SAGEMAKER].includes(
