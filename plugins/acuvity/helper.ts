@@ -1,4 +1,3 @@
-import * as jose from 'jose';
 import { Extraction, Textualdetection, TextualdetectionType } from './model.js';
 
 export interface GuardResult {
@@ -11,7 +10,7 @@ export interface GuardResult {
 }
 
 export class GuardName {
-  private constructor(private readonly name: string) {}
+  private constructor(private readonly name: string) { }
 
   // Static instances
   public static readonly PROMPT_INJECTION = new GuardName('PROMPT_INJECTION');
@@ -34,9 +33,33 @@ export class GuardName {
   }
 }
 
+/**
+ * Decodes a JWT token without validation
+ * @param {string} token - The JWT token to decode
+ * @returns {Object|null} The decoded payload or null if invalid
+ */
+function decodeJwt(token: string) {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return null;
+    }
+
+    // Convert Base64Url to Base64
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+
+    // Decode Base64 payload
+    const jsonPayload = new TextDecoder().decode(Uint8Array.from(atob(base64), c => c.charCodeAt(0)));
+
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    return null;
+  }
+}
+
 export function getApexUrlFromToken(token: string): string | null {
   try {
-    const decodedToken = jose.decodeJwt(token);
+    const decodedToken = decodeJwt(token);
     const opaqueObj = decodedToken['opaque'] as { 'apex-url': string };
     const apex_url = opaqueObj['apex-url'];
     return apex_url;
