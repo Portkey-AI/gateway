@@ -615,7 +615,6 @@ export const GoogleChatCompleteResponseTransform: (
   _responseHeaders,
   strictOpenAiCompliance
 ) => {
-  console.log('response', response);
   // when error occurs on streaming request, the response is an array of errors.
   if (
     responseStatus !== 200 &&
