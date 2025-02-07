@@ -76,8 +76,7 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       }
     }
 
-    const segments = gatewayRequestURL?.split('/');
-    const id = segments?.at(-1) ?? '';
+    const path = gatewayRequestURL.split('/v1')?.[1];
 
     switch (mappedFn) {
       case 'complete': {
@@ -105,15 +104,23 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
         return `/realtime?api-version=${apiVersion}&deployment=${providerOptions.deploymentId}`;
       }
       case 'uploadFile':
-        return `/files?api-version=${apiVersion}`;
+        return `${path}?api-version=${apiVersion}`;
       case 'retrieveFile':
-        return `/files/${id}?api-version=${apiVersion}`;
+        return `${path}?api-version=${apiVersion}`;
       case 'listFiles':
-        return `/files?api-version=${apiVersion}`;
+        return `${path}?api-version=${apiVersion}`;
       case 'deleteFile':
-        return `/files/${id}?api-version=${apiVersion}`;
+        return `${path}?api-version=${apiVersion}`;
       case 'retrieveFileContent':
-        return `/files/${id}/content?api-version=${apiVersion}`;
+        return `${path}?api-version=${apiVersion}`;
+      case 'createBatch':
+        return `${path}?api-version=${apiVersion}`;
+      case 'retrieveBatch':
+        return `${path}?api-version=${apiVersion}`;
+      case 'cancelBatch':
+        return `${path}/cancel?api-version=${apiVersion}`;
+      case 'listBatches':
+        return `${path}?api-version=${apiVersion}`;
       default:
         return '';
     }

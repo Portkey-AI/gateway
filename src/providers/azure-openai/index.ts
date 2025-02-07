@@ -24,6 +24,8 @@ import { AzureOpenAICreateTranscriptionResponseTransform } from './createTranscr
 import { AzureOpenAICreateTranslationResponseTransform } from './createTranslation';
 import { AzureOpenAIResponseTransform } from './utils';
 import { AzureOpenAIRequestTransform } from './uploadFile';
+import { AzureOpenAICreateBatchConfig } from './createBatch';
+import { AzureOpenAIGetBatchOutputRequestHandler } from './getBatchOutput';
 
 const AzureOpenAIConfig: ProviderConfigs = {
   complete: AzureOpenAICompleteConfig,
@@ -34,7 +36,11 @@ const AzureOpenAIConfig: ProviderConfigs = {
   createSpeech: AzureOpenAICreateSpeechConfig,
   createTranscription: {},
   createTranslation: {},
+  createBatch: AzureOpenAICreateBatchConfig,
   realtime: {},
+  requestHandlers: {
+    getBatchOutput: AzureOpenAIGetBatchOutputRequestHandler,
+  },
   responseTransforms: {
     complete: AzureOpenAICompleteResponseTransform,
     chatComplete: AzureOpenAIChatCompleteResponseTransform,
@@ -49,6 +55,10 @@ const AzureOpenAIConfig: ProviderConfigs = {
     retrieveFile: AzureOpenAIResponseTransform,
     deleteFile: AzureOpenAIResponseTransform,
     retrieveFileContent: AzureOpenAIResponseTransform,
+    createBatch: AzureOpenAIResponseTransform,
+    retrieveBatch: AzureOpenAIResponseTransform,
+    cancelBatch: AzureOpenAIResponseTransform,
+    listBatches: AzureOpenAIResponseTransform,
   },
   requestTransforms: {
     uploadFile: AzureOpenAIRequestTransform,
