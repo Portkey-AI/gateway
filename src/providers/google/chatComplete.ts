@@ -466,6 +466,7 @@ interface GoogleResponseCandidate {
 }
 
 interface GoogleGenerateContentResponse {
+  modelVersion: string;
   candidates: GoogleResponseCandidate[];
   promptFeedback: {
     safetyRatings: {
@@ -522,7 +523,7 @@ export const GoogleChatCompleteResponseTransform: (
       id: 'portkey-' + crypto.randomUUID(),
       object: 'chat_completion',
       created: Math.floor(Date.now() / 1000),
-      model: 'Unknown',
+      model: response.modelVersion,
       provider: 'google',
       choices:
         response.candidates?.map((generation, idx) => {
