@@ -679,20 +679,22 @@ export const GoogleChatCompleteResponseTransform: (
               content,
             };
           } else if (generation.content?.parts[0]?.functionCall) {
+            let toolCalls: ToolCall[] = [];
+            generation.content.parts.forEach((part) => {
+              if (part.functionCall) {
+                toolCalls.push({
+                  id: 'portkey-' + crypto.randomUUID(),
+                  type: 'function',
+                  function: {
+                    name: part.functionCall.name,
+                    arguments: JSON.stringify(part.functionCall.args),
+                  },
+                });
+              }
+            });
             message = {
               role: 'assistant',
-              tool_calls: generation.content.parts.map((part) => {
-                if (part.functionCall) {
-                  return {
-                    id: 'portkey-' + crypto.randomUUID(),
-                    type: 'function',
-                    function: {
-                      name: part.functionCall.name,
-                      arguments: JSON.stringify(part.functionCall.args),
-                    },
-                  };
-                }
-              }),
+              tool_calls: toolCalls,
             };
           }
           const logprobsContent: Logprobs[] | null =
