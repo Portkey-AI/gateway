@@ -646,7 +646,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
       id: fallbackId,
       object: 'chat.completion.chunk',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: parsedChunk.modelVersion,
       provider: 'google',
       choices:
         parsedChunk.candidates?.map((generation, index) => {
