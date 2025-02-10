@@ -626,6 +626,15 @@ export const GoogleChatCompleteStreamChunkTransform: (
 
   const parsedChunk: GoogleGenerateContentResponse = JSON.parse(chunk);
 
+  let usageMetadata;
+  if (parsedChunk.usageMetadata) {
+    usageMetadata = {
+      prompt_tokens: parsedChunk.usageMetadata.promptTokenCount,
+      completion_tokens: parsedChunk.usageMetadata.candidatesTokenCount,
+      total_tokens: parsedChunk.usageMetadata.totalTokenCount,
+    };
+  }
+
   return (
     `data: ${JSON.stringify({
       id: fallbackId,
@@ -690,11 +699,9 @@ export const GoogleChatCompleteStreamChunkTransform: (
               : {}),
           };
         }) ?? [],
-      usage: {
-        prompt_tokens: parsedChunk.usageMetadata.promptTokenCount,
-        completion_tokens: parsedChunk.usageMetadata.candidatesTokenCount,
-        total_tokens: parsedChunk.usageMetadata.totalTokenCount,
-      },
+      ...(parsedChunk.usageMetadata?.candidatesTokenCount && {
+        usage: usageMetadata,
+      }),
     })}` + '\n\n'
   );
 };

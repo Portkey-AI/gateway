@@ -879,7 +879,9 @@ export const GoogleChatCompleteStreamChunkTransform: (
             : {}),
         };
       }) ?? [],
-    usage: usageMetadata,
+    ...(parsedChunk.usageMetadata?.candidatesTokenCount && {
+      usage: usageMetadata,
+    }),
   };
 
   return `data: ${JSON.stringify(dataChunk)}\n\n`;
