@@ -1,4 +1,4 @@
-import { Extraction, Textualdetection, TextualdetectionType } from './model.js';
+import { Extraction, Textualdetection, TextualdetectionType } from './model';
 
 export interface GuardResult {
   matched: boolean;
@@ -49,7 +49,9 @@ function decodeJwt(token: string) {
     const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
 
     // Decode Base64 payload
-    const jsonPayload = new TextDecoder().decode(Uint8Array.from(atob(base64), c => c.charCodeAt(0)));
+    const jsonPayload = new TextDecoder().decode(
+      Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
+    );
 
     return JSON.parse(jsonPayload);
   } catch (error) {
