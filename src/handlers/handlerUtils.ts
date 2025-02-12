@@ -420,7 +420,7 @@ export async function tryPost(
     requestContentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
   ) {
     fetchOptions.body = transformedRequestBody as ArrayBuffer;
-  } else {
+  } else if (requestContentType) {
     fetchOptions.body = JSON.stringify(transformedRequestBody);
   }
 
