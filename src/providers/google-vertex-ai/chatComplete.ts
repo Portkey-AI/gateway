@@ -667,7 +667,7 @@ export const GoogleChatCompleteResponseTransform: (
           // transform tool calls and content by iterating over the content parts
           let toolCalls: ToolCall[] = [];
           let content: string | undefined;
-          for (const part of generation.content?.parts) {
+          for (const part of generation.content?.parts ?? []) {
             if (part.functionCall) {
               toolCalls.push({
                 id: 'portkey-' + crypto.randomUUID(),
