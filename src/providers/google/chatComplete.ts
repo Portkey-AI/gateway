@@ -472,6 +472,7 @@ interface GoogleResponseCandidate {
 }
 
 interface GoogleGenerateContentResponse {
+  modelVersion: string;
   candidates: GoogleResponseCandidate[];
   promptFeedback: {
     safetyRatings: {
@@ -528,7 +529,7 @@ export const GoogleChatCompleteResponseTransform: (
       id: 'portkey-' + crypto.randomUUID(),
       object: 'chat_completion',
       created: Math.floor(Date.now() / 1000),
-      model: 'Unknown',
+      model: response.modelVersion,
       provider: 'google',
       choices:
         response.candidates?.map((generation, idx) => {
@@ -631,12 +632,21 @@ export const GoogleChatCompleteStreamChunkTransform: (
 
   const parsedChunk: GoogleGenerateContentResponse = JSON.parse(chunk);
 
+  let usageMetadata;
+  if (parsedChunk.usageMetadata) {
+    usageMetadata = {
+      prompt_tokens: parsedChunk.usageMetadata.promptTokenCount,
+      completion_tokens: parsedChunk.usageMetadata.candidatesTokenCount,
+      total_tokens: parsedChunk.usageMetadata.totalTokenCount,
+    };
+  }
+
   return (
     `data: ${JSON.stringify({
       id: fallbackId,
       object: 'chat.completion.chunk',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: parsedChunk.modelVersion,
       provider: 'google',
       choices:
         parsedChunk.candidates?.map((generation, index) => {
@@ -695,11 +705,9 @@ export const GoogleChatCompleteStreamChunkTransform: (
               : {}),
           };
         }) ?? [],
-      usage: {
-        prompt_tokens: parsedChunk.usageMetadata.promptTokenCount,
-        completion_tokens: parsedChunk.usageMetadata.candidatesTokenCount,
-        total_tokens: parsedChunk.usageMetadata.totalTokenCount,
-      },
+      ...(parsedChunk.usageMetadata?.candidatesTokenCount && {
+        usage: usageMetadata,
+      }),
     })}` + '\n\n'
   );
 };

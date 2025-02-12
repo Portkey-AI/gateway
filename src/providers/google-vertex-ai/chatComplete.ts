@@ -659,7 +659,7 @@ export const GoogleChatCompleteResponseTransform: (
       id: 'portkey-' + crypto.randomUUID(),
       object: 'chat_completion',
       created: Math.floor(Date.now() / 1000),
-      model: 'Unknown',
+      model: response.modelVersion,
       provider: GOOGLE_VERTEX_AI,
       choices:
         response.candidates?.map((generation, index) => {
@@ -824,7 +824,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
     id: fallbackId,
     object: 'chat.completion.chunk',
     created: Math.floor(Date.now() / 1000),
-    model: '',
+    model: parsedChunk.modelVersion,
     provider: GOOGLE_VERTEX_AI,
     choices:
       parsedChunk.candidates?.map((generation, index) => {
@@ -885,7 +885,9 @@ export const GoogleChatCompleteStreamChunkTransform: (
             : {}),
         };
       }) ?? [],
-    usage: usageMetadata,
+    ...(parsedChunk.usageMetadata?.candidatesTokenCount && {
+      usage: usageMetadata,
+    }),
   };
 
   return `data: ${JSON.stringify(dataChunk)}\n\n`;
