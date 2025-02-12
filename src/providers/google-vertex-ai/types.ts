@@ -67,6 +67,7 @@ export interface GoogleResponseCandidate {
 }
 
 export interface GoogleGenerateContentResponse {
+  modelVersion: string;
   candidates: GoogleResponseCandidate[];
   promptFeedback: {
     safetyRatings: {
