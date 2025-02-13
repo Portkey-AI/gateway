@@ -9,13 +9,17 @@ import { getText, post } from '../utils';
 export const SYDEGUARD_URL =
   'https://guard.sydelabs.ai/api/v1/guard/generate-score';
 
-export const fetchSydeGuard = async (credentials: any, data: any) => {
+export const fetchSydeGuard = async (
+  credentials: any,
+  data: any,
+  timeout?: number
+) => {
   const options = {
     headers: {
       'x-api-key': credentials.apiKey,
     },
   };
-  return post(SYDEGUARD_URL, data, options);
+  return post(SYDEGUARD_URL, data, options, timeout);
 };
 
 export const handler: PluginHandler = async (
@@ -32,9 +36,13 @@ export const handler: PluginHandler = async (
     const text = getText(context, eventType);
 
     // Get data from the relevant tool
-    const result: any = await fetchSydeGuard(parameters.credentials, {
-      prompt: text,
-    });
+    const result: any = await fetchSydeGuard(
+      parameters.credentials,
+      {
+        prompt: text,
+      },
+      parameters.timeout
+    );
 
     // Result example:
     // {

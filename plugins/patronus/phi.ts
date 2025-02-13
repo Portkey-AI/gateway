@@ -8,7 +8,7 @@ import { getCurrentContentPart, setCurrentContentPart } from '../utils';
 import { findAllLongestPositions, postPatronus } from './globals';
 import { maskEntities } from './pii';
 
-const redactPhi = async (text: string, credentials: any) => {
+const redactPhi = async (text: string, credentials: any, timeout?: number) => {
   if (!text) return { maskedText: null, data: null };
   const evaluator = 'phi';
 
@@ -19,7 +19,8 @@ const redactPhi = async (text: string, credentials: any) => {
   const result: any = await postPatronus(
     evaluator,
     credentials,
-    evaluationBody
+    evaluationBody,
+    timeout
   );
   const evalResult = result.results[0];
 
@@ -79,7 +80,9 @@ export const handler: PluginHandler = async (
     }
 
     const results = await Promise.all(
-      textArray.map((text) => redactPhi(text, parameters.credentials))
+      textArray.map((text) =>
+        redactPhi(text, parameters.credentials, parameters.timeout)
+      )
     );
 
     const hasPHI = results.some(

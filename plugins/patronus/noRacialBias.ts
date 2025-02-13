@@ -31,7 +31,6 @@ export const handler: PluginHandler = async (
   const evaluationBody: any = {
     input: context.request.text,
     output: context.response.text,
-    timeout: 15000,
   };
 
   try {
@@ -39,6 +38,7 @@ export const handler: PluginHandler = async (
       evaluator,
       parameters.credentials,
       evaluationBody,
+      parameters.timeout || 15000,
       criteria
     );
 

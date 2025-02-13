@@ -105,7 +105,8 @@ export const mistralGuardrailHandler: PluginHandler = async (
           Authorization: `Bearer ${creds.apiKey}`,
           'Content-Type': 'application/json',
         },
-      }
+      },
+      parameters.timeout
     );
 
     const categories: Record<GuardrailFunction, boolean> =

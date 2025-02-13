@@ -6,6 +6,7 @@ export const postPatronus = async (
   evaluator: string,
   credentials: any,
   data: any,
+  timeout?: number,
   criteria: string | null = null
 ) => {
   const options = {
@@ -26,8 +27,6 @@ export const postPatronus = async (
     evaluated_model_output: data.output,
     // "evaluated_model_retrieved_context": ["I am John."]
   };
-
-  const timeout = data.timeout || 5000;
 
   return post(BASE_URL, body, options, timeout);
 };

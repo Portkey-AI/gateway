@@ -26,7 +26,8 @@ export const handler: PluginHandler = async (
       options?.env || {},
       PORTKEY_ENDPOINTS.LANGUAGE,
       parameters.credentials,
-      { input: text }
+      { input: text },
+      parameters.timeout
     );
 
     const predictedLanguage = result[0][0].label;
