@@ -142,7 +142,8 @@ export const pluginHandler: PluginHandler<
               {
                 content: [{ text: { text } }],
                 source: body.source,
-              }
+              },
+              parameters.timeout
             )
           : null
       )

@@ -26,7 +26,8 @@ export const handler: PluginHandler = async (
       options?.env || {},
       PORTKEY_ENDPOINTS.MODERATIONS,
       parameters.credentials,
-      { input: text }
+      { input: text },
+      parameters.timeout
     );
 
     const categoriesFlagged = Object.keys(result.results[0].categories).filter(

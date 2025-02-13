@@ -28,7 +28,8 @@ export async function detectPII(
     {
       input: textArray,
       ...(parameters.categories && { categories: parameters.categories }),
-    }
+    },
+    parameters.timeout
   );
 
   return result.map((item) => ({

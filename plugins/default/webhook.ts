@@ -70,7 +70,7 @@ export const handler: PluginHandler = async (
       url,
       { ...context, eventType },
       { headers },
-      3000
+      parameters.timeout || 3000
     );
     verdict = response.verdict;
 

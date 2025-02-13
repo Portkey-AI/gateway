@@ -25,7 +25,8 @@ export const handler: PluginHandler = async (
       options?.env || {},
       PORTKEY_ENDPOINTS.GIBBERISH,
       parameters.credentials,
-      { input: text }
+      { input: text },
+      parameters.timeout
     );
 
     const isClean = response[0][0].label === 'clean';
