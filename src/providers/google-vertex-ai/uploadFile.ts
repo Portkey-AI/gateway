@@ -1,6 +1,5 @@
 // import { PassThrough, Transform } from 'stream';
 import { Stream, Transform } from 'stream';
-import { createInterface } from 'readline/promises';
 import { ReadableStream as NodeWebStream } from 'stream/web';
 import { RequestHandler } from '../types';
 import {
@@ -16,6 +15,7 @@ import {
 import { chatCompleteParams } from '../open-ai-base';
 import { POWERED_BY } from '../../globals';
 import { transformUsingProviderConfig } from '../../services/transformToProviderRequest';
+import { createLineSplitter } from '../../handlers/streamHandlerUtils';
 
 const PROVIDER_CONFIG = {
   google: VertexGoogleChatCompleteConfig,
@@ -43,13 +43,9 @@ export const GoogleFileUploadRequestHandler: RequestHandler<
   }
 
   const objectKey = filename ?? `${crypto.randomUUID()}.jsonl`;
-
   const bytes = requestHeaders['content-length'];
-
   const purpose = requestHeaders[`x-${POWERED_BY}-file-purpose`] ?? 'batch';
-
   const { provider } = getModelAndProvider(vertexModelName ?? '');
-
   let providerConfig =
     PROVIDER_CONFIG[provider as keyof typeof PROVIDER_CONFIG];
 
@@ -60,7 +56,10 @@ export const GoogleFileUploadRequestHandler: RequestHandler<
   // Convert web stream to node stream
   const nodeStream = Stream.Readable.fromWeb(requestBody);
 
-  // Transform to write and read at the same time.
+  // Create a reusable line splitter stream
+  const lineSplitter = createLineSplitter();
+
+  // Transform stream to process each complete line.
   const bodyStream = new Transform({
     decodeStrings: false,
     transform(chunk, _, callback) {
@@ -72,50 +71,28 @@ export const GoogleFileUploadRequestHandler: RequestHandler<
             providerConfig,
             json.body
           );
-          // File shouldn't have `model` param.
+          // Remove model parameter from file
           delete transformedBody['model'];
-
-          const bufferTransposed = {
-            request: transformedBody,
-          };
-          buffer = JSON.stringify(bufferTransposed);
+          buffer = JSON.stringify({ request: transformedBody });
         }
       } catch {
         buffer = null;
       } finally {
         if (buffer) {
-          this.push(buffer.toString() + '\n');
+          this.push(buffer + '\n');
         }
         callback();
       }
     },
   });
 
+  // Pipe the node stream through our line splitter and into the transform stream.
+  nodeStream.pipe(lineSplitter).pipe(bodyStream);
+
   let authToken: string = apiKey || '';
   if (vertexServiceAccountJson) {
     authToken = `Bearer ${await getAccessToken(vertexServiceAccountJson)}`;
   }
-
-  // Read the stream line by line.
-  const read = async () => {
-    return new Promise((resolve) => {
-      const readInterface = createInterface({
-        input: nodeStream,
-        crlfDelay: Infinity,
-      });
-
-      readInterface.on('line', async (line) => {
-        bodyStream.write(line);
-      });
-
-      readInterface.on('close', async () => {
-        bodyStream.end();
-        resolve(null);
-      });
-    });
-  };
-
-  read();
 
   const encodedFile = encodeURIComponent(objectKey ?? '');
   const url = `https://storage.googleapis.com/${vertexStorageBucketName}/${encodedFile}`;
@@ -134,7 +111,6 @@ export const GoogleFileUploadRequestHandler: RequestHandler<
     const request = await fetch(url, { ...options });
     if (!request.ok) {
       const error = await request.text();
-
       return GoogleResponseHandler(error, request.status);
     }
 

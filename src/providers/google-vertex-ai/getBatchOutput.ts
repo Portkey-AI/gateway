@@ -1,7 +1,6 @@
 import { Stream, Transform } from 'node:stream';
 import { GoogleBatchRecord, RequestHandler } from '../types';
 import { getAccessToken, getModelAndProvider } from './utils';
-import { createInterface } from 'node:readline/promises';
 import { ReadableStream as NodeReadableStream } from 'node:stream/web';
 import { responseTransformers } from '../open-ai-base';
 import {
@@ -10,6 +9,7 @@ import {
   VertexLlamaChatCompleteResponseTransform,
 } from './chatComplete';
 import { GOOGLE_VERTEX_AI } from '../../globals';
+import { createLineSplitter } from '../../handlers/streamHandlerUtils';
 
 const responseTransforms = {
   google: GoogleChatCompleteResponseTransform,
@@ -34,7 +34,7 @@ const getOpenAIBatchRow = ({
   const response = (row['response'] ?? {}) as Record<string, unknown>;
   const id = `batch-${batchId}-${response.responseId}`;
   return {
-    id: id,
+    id,
     custom_id: response.responseId,
     response: {
       status_code: 200,
@@ -67,7 +67,7 @@ export const BatchOutputRequestHandler: RequestHandler = async ({
     },
   };
 
-  // url: <gateway>/v1/batches/<batchId>/output
+  // URL: <gateway>/v1/batches/<batchId>/output
   const batchId = requestURL.split('/').at(-2);
 
   const batchDetailsURL = `https://${vertexRegion}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${vertexRegion}/batchPredictionJobs/${batchId}`;
@@ -93,25 +93,21 @@ export const BatchOutputRequestHandler: RequestHandler = async ({
   }
 
   const { provider } = getModelAndProvider(modelName ?? '');
-
   let responseTransform =
-    responseTransforms[provider as keyof typeof responseTransforms];
-
-  if (!responseTransform) {
-    responseTransform = responseTransforms['endpoints'];
-  }
+    responseTransforms[provider as keyof typeof responseTransforms] ||
+    responseTransforms['endpoints'];
 
   outputURL = outputURL.replace('gs://', 'https://storage.googleapis.com/');
   const outputResponse = await fetch(`${outputURL}/predictions.jsonl`, options);
 
   const reader = outputResponse.body;
-
   if (!reader) {
     throw new Error('Failed to retrieve batch output');
   }
 
   const nodeStream = Stream.Readable.fromWeb(reader as NodeReadableStream);
 
+  // Prepare a transform stream to process complete lines.
   const responseStream = new Transform({
     transform(chunk, _, callback) {
       let buffer;
@@ -132,20 +128,12 @@ export const BatchOutputRequestHandler: RequestHandler = async ({
     },
   });
 
-  const lineReader = createInterface({ input: nodeStream });
-
-  lineReader.on('line', (line) => {
-    responseStream.write(line);
-  });
-
-  lineReader.on('close', () => {
-    responseStream.end();
-  });
+  // Pipe the node stream through the line splitter and then to the response stream.
+  const lineSplitter = createLineSplitter();
+  nodeStream.pipe(lineSplitter).pipe(responseStream);
 
   return new Response(Stream.Readable.toWeb(responseStream) as ReadableStream, {
-    headers: {
-      'Content-Type': 'application/octet-stream',
-    },
+    headers: { 'Content-Type': 'application/octet-stream' },
   });
 };
 

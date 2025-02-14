@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto';
 import { GoogleBatchRecord, RequestHandler } from '../types';
 import {
   fetchGoogleCustomEndpoint,
@@ -51,7 +50,7 @@ export const GoogleBatchCreateHandler: RequestHandler<Params> = async ({
         outputUriPrefix: outputFile,
       },
     },
-    displayName: randomUUID(),
+    displayName: crypto.randomUUID(),
     model: `publishers/${provider}/models/${model}`,
   };
 
