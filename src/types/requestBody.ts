@@ -59,12 +59,13 @@ export interface Options {
   deploymentId?: string;
   apiVersion?: string;
   adAuth?: string;
-  azureModelName?: string;
-  azureAuthMode?: string; // can be entra or managed
+  azureAuthMode?: string;
   azureManagedClientId?: string;
   azureEntraClientId?: string;
   azureEntraClientSecret?: string;
   azureEntraTenantId?: string;
+  azureAdToken?: string;
+  azureModelName?: string;
   /** Workers AI specific */
   workersAiAccountId?: string;
   /** The parameter to set custom base url */
@@ -99,6 +100,7 @@ export interface Options {
   amznSagemakerEnableExplanations?: string;
   amznSagemakerInferenceComponent?: string;
   amznSagemakerSessionId?: string;
+  amznSagemakerModelName?: string;
 
   /** Stability AI specific */
   stabilityClientId?: string;
@@ -112,6 +114,11 @@ export interface Options {
   vertexRegion?: string;
   vertexProjectId?: string;
   vertexServiceAccountJson?: Record<string, any>;
+  vertexStorageBucketName?: string;
+  vertexModelName?: string;
+
+  // Required for file uploads with google.
+  filename?: string;
 
   afterRequestHooks?: HookObject[];
   beforeRequestHooks?: HookObject[];
@@ -135,6 +142,9 @@ export interface Options {
   /** Anthropic specific headers */
   anthropicBeta?: string;
   anthropicVersion?: string;
+
+  /** Fireworks finetune required fields */
+  fireworksAccountId?: string;
 }
 
 /**
@@ -173,6 +183,7 @@ export interface Targets {
   index?: number;
   cache?: CacheSettings | string;
   targets?: Targets[];
+
   /** This is used to determine if the request should be transformed to formData Example: Stability V2 */
   transformToFormData?: boolean;
 }
@@ -233,6 +244,7 @@ export type OpenAIMessageRole =
   | 'function'
   | 'tool'
   | 'developer';
+
 /**
  * A message in the conversation.
  * @interface
@@ -367,9 +379,6 @@ export interface Params {
   };
   // Google Vertex AI specific
   safety_settings?: any;
-  // Anthropic specific
-  anthropic_beta?: string;
-  anthropic_version?: string;
 }
 
 interface Examples {
@@ -403,7 +412,6 @@ export interface ShortConfig {
   retry?: RetrySettings;
   resourceName?: string;
   deploymentId?: string;
-  azureModelName?: string;
   workersAiAccountId?: string;
   apiVersion?: string;
   azureAuthMode?: string;
@@ -411,6 +419,7 @@ export interface ShortConfig {
   azureEntraClientId?: string;
   azureEntraClientSecret?: string;
   azureEntraTenantId?: string;
+  azureModelName?: string;
   customHost?: string;
   // Google Vertex AI specific
   vertexRegion?: string;

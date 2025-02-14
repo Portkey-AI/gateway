@@ -1,10 +1,10 @@
 import { Context } from 'hono';
-import OpenAIAPIConfig from './api';
+import AzureOpenAIAPIConfig from './api';
 import { Options } from '../../types/requestBody';
 import { RetrieveBatchResponse } from '../types';
 
 // Return a ReadableStream containing batches output data
-export const OpenAIGetBatchOutputRequestHandler = async ({
+export const AzureOpenAIGetBatchOutputRequestHandler = async ({
   c,
   providerOptions,
   requestURL,
@@ -16,15 +16,24 @@ export const OpenAIGetBatchOutputRequestHandler = async ({
   // get batch details which has ouptut file id
   // get file content as ReadableStream
   // return file content
-  const baseUrl = OpenAIAPIConfig.getBaseURL({
+  const baseUrl = AzureOpenAIAPIConfig.getBaseURL({
     providerOptions,
     fn: 'retrieveBatch',
     c,
     gatewayRequestURL: requestURL,
   });
-  const batchId = requestURL.split('/v1/batches/')[1].replace('/output', '');
-  const retrieveBatchURL = `${baseUrl}/batches/${batchId}`;
-  const retrieveBatchesHeaders = await OpenAIAPIConfig.headers({
+  const retrieveBatchRequestURL = requestURL.replace('/output', '');
+  const retrieveBatchURL =
+    baseUrl +
+    AzureOpenAIAPIConfig.getEndpoint({
+      providerOptions,
+      fn: 'retrieveBatch',
+      gatewayRequestURL: retrieveBatchRequestURL,
+      c,
+      gatewayRequestBodyJSON: {},
+      gatewayRequestBody: {},
+    });
+  const retrieveBatchesHeaders = await AzureOpenAIAPIConfig.headers({
     c,
     providerOptions,
     fn: 'retrieveBatch',
@@ -39,6 +48,7 @@ export const OpenAIGetBatchOutputRequestHandler = async ({
 
   const batchDetails: RetrieveBatchResponse =
     await retrieveBatchesResponse.json();
+
   const outputFileId = batchDetails.output_file_id;
   if (!outputFileId) {
     const errors = batchDetails.errors;
@@ -48,8 +58,18 @@ export const OpenAIGetBatchOutputRequestHandler = async ({
       });
     }
   }
-  const retrieveFileContentURL = `${baseUrl}/files/${outputFileId}/content`;
-  const retrieveFileContentHeaders = await OpenAIAPIConfig.headers({
+  const retrieveFileContentRequestURL = `https://api.portkey.ai/v1/files/${outputFileId}/content`; // construct the entire url instead of the path of sanity sake
+  const retrieveFileContentURL =
+    baseUrl +
+    AzureOpenAIAPIConfig.getEndpoint({
+      providerOptions,
+      fn: 'retrieveFileContent',
+      gatewayRequestURL: retrieveFileContentRequestURL,
+      c,
+      gatewayRequestBodyJSON: {},
+      gatewayRequestBody: {},
+    });
+  const retrieveFileContentHeaders = await AzureOpenAIAPIConfig.headers({
     c,
     providerOptions,
     fn: 'retrieveFileContent',
@@ -61,9 +81,5 @@ export const OpenAIGetBatchOutputRequestHandler = async ({
     method: 'GET',
     headers: retrieveFileContentHeaders,
   });
-  return response;
-};
-
-export const BatchOutputResponseTransform = async (response: Response) => {
   return response;
 };

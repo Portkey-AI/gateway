@@ -41,6 +41,11 @@ import {
   BedrockCreateBatchResponseTransform,
 } from './createBatch';
 import {
+  BedrockCreateFinetuneConfig,
+  BedrockCreateFinetuneResponseTransform,
+  BedrockRequestTransform,
+} from './createFinetune';
+import {
   BedrockCohereEmbedConfig,
   BedrockCohereEmbedResponseTransform,
   BedrockTitanEmbedConfig,
@@ -57,17 +62,20 @@ import {
   BedrockStabilityAIImageGenerateV2ResponseTransform,
 } from './imageGenerate';
 import { BedrockListBatchesResponseTransform } from './listBatches';
+import { BedrockListFinetuneResponseTransform } from './listFinetunes';
 import { BedrockRetrieveBatchResponseTransform } from './retrieveBatch';
 import { BedrockRetrieveFileRequestHandler } from './retrieveFile';
 import {
   BedrockRetrieveFileContentRequestHandler,
   BedrockRetrieveFileContentResponseTransform,
 } from './retrieveFileContent';
+import { BedrockFinetuneResponseTransform } from './retriveFinetune';
 import {
   BedrockUploadFileRequestHandler,
   BedrockUploadFileResponseTransform,
 } from './uploadFile';
-
+import { BedrockListFilesResponseTransform } from './listfiles';
+import { BedrockDeleteFileResponseTransform } from './deleteFile';
 const BedrockConfig: ProviderConfigs = {
   api: BedrockAPIConfig,
   requestHandlers: {
@@ -205,6 +213,11 @@ const BedrockConfig: ProviderConfigs = {
       listBatches: BedrockListBatchesResponseTransform,
       getBatchOutput: BedrockGetBatchOutputResponseTransform,
       retrieveFileContent: BedrockRetrieveFileContentResponseTransform,
+      createFinetune: BedrockCreateFinetuneResponseTransform,
+      retrieveFinetune: BedrockFinetuneResponseTransform,
+      listFinetunes: BedrockListFinetuneResponseTransform,
+      listFiles: BedrockListFilesResponseTransform,
+      deleteFile: BedrockDeleteFileResponseTransform,
     };
     if (!config.responseTransforms) {
       config.responseTransforms = commonResponseTransforms;
@@ -214,8 +227,13 @@ const BedrockConfig: ProviderConfigs = {
         ...commonResponseTransforms,
       };
     }
+    config.requestTransforms = {
+      createFinetune: BedrockRequestTransform,
+    };
     config.createBatch = BedrockCreateBatchConfig;
+    config.createFinetune = BedrockCreateFinetuneConfig;
     config.cancelBatch = {};
+    config.cancelFinetune = {};
     return config;
   },
 };

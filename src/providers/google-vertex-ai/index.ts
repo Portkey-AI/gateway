@@ -11,21 +11,53 @@ import {
   VertexLlamaChatCompleteResponseTransform,
   VertexLlamaChatCompleteStreamChunkTransform,
 } from './chatComplete';
-import { getModelAndProvider } from './utils';
 import { GoogleEmbedConfig, GoogleEmbedResponseTransform } from './embed';
+import { getModelAndProvider } from './utils';
 import {
   GoogleImageGenConfig,
   GoogleImageGenResponseTransform,
 } from './imageGenerate';
 import { chatCompleteParams, responseTransformers } from '../open-ai-base';
 import { GOOGLE_VERTEX_AI } from '../../globals';
+import { Params } from '../../types/requestBody';
+import { GoogleBatchCreateHandler } from './createBatch';
+import {
+  BatchOutputRequestHandler,
+  BatchOutputResponseTransform,
+} from './getBatchOutput';
+import { GoogleListBatchesResponseTransform } from './listBatches';
+import { GoogleCancelBatchResponseTransform } from './cancelBatch';
+import {
+  GoogleFileUploadRequestHandler,
+  GoogleFileUploadResponseTransform,
+} from './uploadFile';
+import { GoogleRetriveBatchResponseTransform } from './retriveBatch';
 
 const VertexConfig: ProviderConfigs = {
   api: VertexApiConfig,
   getConfig: (params: Params) => {
-    const providerModel = params.model;
-    const { provider } = getModelAndProvider(providerModel as string);
+    const baseConfig = {
+      uploadFile: {},
+      createBatch: {},
+      retrieveBatch: {},
+      listBatches: {},
+      cancelBatch: {},
+      responseTransforms: {
+        uploadFile: GoogleFileUploadResponseTransform,
+        retrieveBatch: GoogleRetriveBatchResponseTransform,
+        getBatchOutput: BatchOutputResponseTransform,
+        listBatches: GoogleListBatchesResponseTransform,
+        cancelBatch: GoogleCancelBatchResponseTransform,
+      },
+    };
 
+    const providerModel = params?.model;
+
+    if (!providerModel) {
+      return baseConfig;
+    }
+
+    const { provider } = getModelAndProvider(providerModel as string);
     switch (provider) {
       case 'google':
         return {
@@ -69,7 +101,14 @@ const VertexConfig: ProviderConfigs = {
             chatComplete: true,
           }),
         };
+      default:
+        return baseConfig;
     }
+  },
+  requestHandlers: {
+    uploadFile: GoogleFileUploadRequestHandler,
+    createBatch: GoogleBatchCreateHandler,
+    getBatchOutput: BatchOutputRequestHandler,
   },
 };
 

@@ -49,6 +49,7 @@ export interface ProviderAPIConfig {
     fn?: endpointStrings;
     requestHeaders?: Record<string, string>;
     c: Context;
+    gatewayRequestURL: string;
   }) => Promise<string> | string;
   /** A function to generate the endpoint based on parameters */
   getEndpoint: (args: {
@@ -91,7 +92,12 @@ export type endpointStrings =
   | 'retrieveBatch'
   | 'cancelBatch'
   | 'listBatches'
-  | 'getBatchOutput';
+  | 'getBatchOutput'
+  | 'listFinetunes'
+  | 'createFinetune'
+  | 'retrieveFinetune'
+  | 'cancelFinetune';
+
 /**
  * A collection of API configurations for multiple AI providers.
  * @interface
@@ -101,6 +107,20 @@ export interface ProviderAPIConfigs {
   [key: string]: ProviderAPIConfig;
 }
 
+export type RequestHandler<
+  T = Params | FormData | ArrayBuffer | ReadableStream,
+> = (Params: {
+  c: Context;
+  providerOptions: Options;
+  requestURL: string;
+  requestHeaders: Record<string, string>;
+  requestBody: T;
+}) => Promise<Response>;
+
+export type RequestHandlers = Partial<
+  Record<endpointStrings, RequestHandler<any>>
+>;
+
 /**
  * A collection of configurations for multiple AI providers.
  * @interface
@@ -108,6 +128,7 @@ export interface ProviderAPIConfigs {
 export interface ProviderConfigs {
   /** The configuration for each provider, indexed by provider name. */
   [key: string]: any;
+  requestHandlers?: RequestHandlers;
 }
 
 export interface BaseResponse {
@@ -297,4 +318,132 @@ export interface CancelBatchResponse extends Batch {}
 export interface ListBatchesResponse {
   object: string | 'list';
   data: Batch[];
+}
+
+interface FinetuneProviderOptions {
+  model: string;
+  training_type: 'chat' | 'text';
+  [key: string]: any;
+}
+
+export interface FinetuneRequest {
+  model: string;
+  suffix: string;
+  provider_options: FinetuneProviderOptions;
+  training_file: string;
+  validation_file?: string;
+  model_type?: string;
+  hyperparameters?: {
+    n_epochs?: number;
+    learning_rate_multiplier?: number;
+    batch_size?: number;
+  };
+  method?: {
+    type: 'supervised' | 'dpo';
+    supervised?: {
+      hyperparameters: {
+        n_epochs?: number;
+        learning_rate_multiplier?: number;
+        batch_size?: number;
+      };
+    };
+    dpo?: {
+      hyperparameters: {
+        beta?: string | number;
+        n_epochs?: number;
+        learning_rate_multiplier?: number;
+        batch_size?: number;
+      };
+    };
+  };
+}
+
+export interface BedrockFinetuneRecord {
+  baseModelArn: string;
+  creationTime: string;
+  customModelArn: string;
+  customModelName: string;
+  customizationType: string;
+  endTime: string;
+  jobArn: string;
+  jobName: string;
+  lastModifiedTime: string;
+  status: 'Completed' | 'Failed' | 'InProgress' | 'Stopping' | 'Stopped';
+  failureMessage?: string;
+  validationDataConfig?: {
+    s3Uri: string;
+  };
+  trainingDataConfig?: {
+    s3Uri: string;
+  };
+  hyperParameters?: {
+    learningRate: number;
+    batchSize: number;
+    epochCount: number;
+  };
+  outputModelName?: string;
+  outputModelArn?: string;
+}
+
+export interface CreateBatchRequest {
+  input_file_id: string;
+  endpoint: string;
+  completion_window: string;
+}
+
+type GoogleBatchJobStatus =
+  | 'JOB_STATE_UNSPECIFIED'
+  | 'JOB_STATE_QUEUED'
+  | 'JOB_STATE_PENDING'
+  | 'JOB_STATE_RUNNING'
+  | 'JOB_STATE_SUCCEEDED'
+  | 'JOB_STATE_FAILED'
+  | 'JOB_STATE_CANCELLING'
+  | 'JOB_STATE_CANCELLED'
+  | 'JOB_STATE_PAUSED'
+  | 'JOB_STATE_EXPIRED'
+  | 'JOB_STATE_UPDATING'
+  | 'JOB_STATE_PARTIALLY_SUCCEEDED';
+
+export interface GoogleBatchRecord {
+  /**
+   * @example projects/562188160088/locations/us-east4/batchPredictionJobs/{id}
+   */
+  name: string;
+  displayName: string;
+  /**
+   * @example projects/562188160088/locations/us-east4/models/{model}
+   */
+  model: string;
+  inputConfig: {
+    instancesFormat: 'jsonl';
+    gcsSource: {
+      uris: string;
+    };
+  };
+  outputConfig: {
+    predictionsFormat: 'jsonl';
+    gcsDestination: {
+      outputUriPrefix: string;
+    };
+  };
+  outputInfo?: {
+    gcsOutputDirectory: string;
+  };
+  state: GoogleBatchJobStatus;
+  createTime: string;
+  updateTime: string;
+  modelVersionId: string;
+  error?: {
+    code: string;
+    message: string;
+  };
+  startTime: string;
+  endTime: string;
+  completionsStats?: {
+    successfulCount: string;
+    failedCount: string;
+    incompleteCount: string;
+    successfulForecastPointCount: string;
+  };
 }

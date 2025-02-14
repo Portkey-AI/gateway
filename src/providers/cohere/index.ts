@@ -17,7 +17,7 @@ import {
 } from './createBatch';
 import { CohereDeleteFileResponseTransform } from './deleteFile';
 import { CohereEmbedConfig, CohereEmbedResponseTransform } from './embed';
-// import { CohereGetBatchOutputHandler } from './getBatchOutput';
+import { CohereGetBatchOutputHandler } from './getBatchOutput';
 import {
   CohereGetFileResponseTransform,
   CohereGetFilesResponseTransform,
@@ -36,9 +36,9 @@ const CohereConfig: ProviderConfigs = {
   api: CohereAPIConfig,
   createBatch: CohereCreateBatchConfig,
   cancelBatch: {},
-  // requestHandlers: {
-  //   getBatchOutput: CohereGetBatchOutputHandler,
-  // },
+  requestHandlers: {
+    getBatchOutput: CohereGetBatchOutputHandler,
+  },
   requestTransforms: {
     uploadFile: CohereUploadFileRequestTransform,
   },
