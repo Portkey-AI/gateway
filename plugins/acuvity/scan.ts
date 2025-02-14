@@ -23,19 +23,19 @@ const getRedactionList = (parameters: PluginParameters): string[] => {
   const redactions: string[] = [];
 
   if (
-    parameters.pii.enabled &&
-    parameters.pii.redact &&
-    parameters.pii.categories
+    parameters.pii &&
+    parameters.pii_redact &&
+    parameters.pii_categories
   ) {
-    for (const category of parameters.pii.categories) {
+    for (const category of parameters.pii_categories) {
       redactions.push(category);
     }
   }
 
   if (
-    parameters.secrets.enabled &&
-    parameters.secrets.redact &&
-    parameters.secrets.categories
+    parameters.secrets &&
+    parameters.secrets_redact &&
+    parameters.secrets_categories
   ) {
     for (const category of parameters.secrets.categories) {
       redactions.push(category);
@@ -74,7 +74,7 @@ export const handler: PluginHandler = async (
   eventType: HookEventType
 ) => {
   let error = null;
-  let verdict = false;
+  let verdict = true;
   let data = null;
 
   try {
@@ -114,12 +114,12 @@ export const handler: PluginHandler = async (
       // Check if any parameter check failed in this extraction
       for (const { result } of results) {
         if (result.matched) {
-          verdict = true;
+          verdict = false;
           break;
         }
       }
 
-      if (verdict) {
+      if (!verdict) {
         break;
       }
     }
@@ -139,94 +139,94 @@ function evaluateAllParameters(
   const results: Array<{ parameter: string; result: GuardResult }> = [];
 
   // Check prompt injection
-  if (parameters.prompt_injection.enabled) {
+  if (parameters.prompt_injection) {
     results.push({
       parameter: 'prompt_injection',
       result: responseHelper.evaluate(
         extraction,
         GuardName.PROMPT_INJECTION,
-        parameters.prompt_injection.threshold || 0.5
+        parameters.prompt_injection_threshold || 0.5
       ),
     });
   }
 
   // Check toxic content
-  if (parameters.toxic.enabled) {
+  if (parameters.toxic) {
     results.push({
       parameter: 'toxic',
       result: responseHelper.evaluate(
         extraction,
         GuardName.TOXIC,
-        parameters.toxic.threshold || 0.5
+        parameters.toxic_threshold || 0.5
       ),
     });
   }
 
   // Check jailbreak
-  if (parameters.jail_break.enabled) {
+  if (parameters.jail_break) {
     results.push({
       parameter: 'jail_break',
       result: responseHelper.evaluate(
         extraction,
         GuardName.JAIL_BREAK,
-        parameters.jail_break.threshold || 0.5
+        parameters.jail_break_threshold || 0.5
       ),
     });
   }
 
   // Check malicious URL
-  if (parameters.malicious_url.enabled) {
+  if (parameters.malicious_url) {
     results.push({
       parameter: 'malicious_url',
       result: responseHelper.evaluate(
         extraction,
         GuardName.MALICIOUS_URL,
-        parameters.malicious_url.threshold || 0.5
+        parameters.malicious_url_threshold || 0.5
       ),
     });
   }
 
   // Check bias
-  if (parameters.biased.enabled) {
+  if (parameters.biased) {
     results.push({
       parameter: 'biased',
       result: responseHelper.evaluate(
         extraction,
         GuardName.BIASED,
-        parameters.biased.threshold || 0.5
+        parameters.biased_threshold || 0.5
       ),
     });
   }
 
   // Check harmful content
-  if (parameters.harmful.enabled) {
+  if (parameters.harmful) {
     results.push({
       parameter: 'harmful',
       result: responseHelper.evaluate(
         extraction,
         GuardName.HARMFUL_CONTENT,
-        parameters.harmful.threshold || 0.5
+        parameters.harmful_threshold || 0.5
       ),
     });
   }
 
   // Check language
-  if (parameters.language.enabled && parameters.language.languagevals) {
+  if (parameters.language && parameters.languagevals) {
     results.push({
       parameter: 'language',
       result: responseHelper.evaluate(
         extraction,
         GuardName.LANGUAGE,
         0.5, // Language check typically uses a fixed threshold
-        parameters.language.languagevals
+        parameters.languagevals
       ),
     });
   }
 
   // Check PII
-  if (parameters.pii.enabled && parameters.pii.categories) {
+  if (parameters.pii && parameters.pii_categories) {
     // Iterate through each PII category
-    for (const category of parameters.pii.categories) {
+    for (const category of parameters.pii_categories) {
       results.push({
         parameter: `pii_${category.toLowerCase()}`,
         result: responseHelper.evaluate(
@@ -240,9 +240,9 @@ function evaluateAllParameters(
   }
 
   // Check Secrets
-  if (parameters.secrets.enabled && parameters.secrets.categories) {
+  if (parameters.secrets && parameters.secrets_categories) {
     // Iterate through each secrets category
-    for (const category of parameters.secrets.categories) {
+    for (const category of parameters.secrets_categories) {
       results.push({
         parameter: `secrets_${category.toLowerCase()}`,
         result: responseHelper.evaluate(

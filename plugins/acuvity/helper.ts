@@ -99,7 +99,7 @@ export class ResponseHelper {
       ) {
         [exists, value] = this.getGuardValue(
           extraction.exploits,
-          guardName.toString()
+          guardName.toString().toLowerCase()
         );
       } else if (
         guardName.equals(GuardName.TOXIC) ||

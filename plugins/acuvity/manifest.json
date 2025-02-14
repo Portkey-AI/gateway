@@ -11,7 +11,9 @@
         "encrypted": true
       }
     },
-    "required": ["apiKey"]
+    "required": [
+      "apiKey"
+    ]
   },
   "functions": [
     {
@@ -28,297 +30,354 @@
         "type": "object",
         "properties": {
           "prompt_injection": {
-            "type": "object",
-            "label": "Prompt Injection Detection",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "default": true
-              },
-              "threshold": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 1,
-                "multipleOf": 0.01,
-                "default": 0.5
+            "type": "boolean",
+            "default": true,
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enable prompt injection detection"
               }
-            }
+            ]
+          },
+          "prompt_injection_threshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.01,
+            "default": 0.5,
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Set the threshold for prompt injection detection"
+              }
+            ]
           },
           "toxic": {
-            "type": "object",
-            "label": "Toxicity Detection",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "default": true
-              },
-              "threshold": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 1,
-                "multipleOf": 0.01,
-                "default": 0.5
+            "type": "boolean",
+            "default": true,
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enable toxicity detection"
               }
-            }
+            ]
+          },
+          "toxic_threshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.01,
+            "default": 0.5,
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Set the threshold for toxicity detection"
+              }
+            ]
           },
           "jail_break": {
-            "type": "object",
-            "label": "Jailbreak Detection",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "default": true
-              },
-              "threshold": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 1,
-                "multipleOf": 0.01,
-                "default": 0.5
+            "type": "boolean",
+            "default": true,
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enable jailbreak detection"
               }
-            }
+            ]
+          },
+          "jail_break_threshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.01,
+            "default": 0.5,
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Set the threshold for jailbreak detection"
+              }
+            ]
           },
           "malicious_url": {
-            "type": "object",
-            "label": "Malicious URL Detection",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "default": true
-              },
-              "threshold": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 1,
-                "multipleOf": 0.01,
-                "default": 0.5
+            "type": "boolean",
+            "default": true,
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enable malicious URL detection"
               }
-            }
+            ]
+          },
+          "malicious_url_threshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.01,
+            "default": 0.5,
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Set the threshold for malicious URL detection"
+              }
+            ]
           },
           "biased": {
-            "type": "object",
-            "label": "Bias Detection",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "default": true
-              },
-              "threshold": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 1,
-                "multipleOf": 0.01,
-                "default": 0.5
+            "type": "boolean",
+            "default": true,
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enable bias detection"
               }
-            }
+            ]
+          },
+          "biased_threshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.01,
+            "default": 0.5,
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Set the threshold for bias detection"
+              }
+            ]
           },
           "harmful": {
-            "type": "object",
-            "label": "Harmful Content Detection",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "default": true
-              },
-              "threshold": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 1,
-                "multipleOf": 0.01,
-                "default": 0.5
+            "type": "boolean",
+            "default": true,
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enable harmful content detection"
               }
-            }
+            ]
+          },
+          "harmful_threshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.01,
+            "default": 0.5,
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Set the threshold for harmful content detection"
+              }
+            ]
           },
           "language": {
-            "type": "object",
-            "label": "Language Check",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "default": true
-              },
-              "languagevals": {
-                "type": "string",
-                "enum": [
-                  "eng_Latn",
-                  "zho_Hans",
-                  "spa_Latn",
-                  "ara_Arab",
-                  "por_Latn",
-                  "ind_Latn",
-                  "vie_Latn"
-                ],
-                "enumNames": [
-                  "English",
-                  "Chinese (Simplified)",
-                  "Spanish",
-                  "Modern Standard Arabic",
-                  "Portuguese",
-                  "Indonesian",
-                  "Vietnamese"
-                ],
-                "default": "eng_Latn"
+            "type": "boolean",
+            "default": true,
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enable language check"
               }
-            }
+            ]
+          },
+          "language_values": {
+            "type": "string",
+            "enum": [
+              "eng_Latn",
+              "zho_Hans",
+              "spa_Latn",
+              "ara_Arab",
+              "por_Latn",
+              "ind_Latn",
+              "vie_Latn"
+            ],
+            "enumNames": [
+              "English",
+              "Chinese (Simplified)",
+              "Spanish",
+              "Modern Standard Arabic",
+              "Portuguese",
+              "Indonesian",
+              "Vietnamese"
+            ],
+            "default": "eng_Latn",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Select the language to check"
+              }
+            ]
           },
           "pii": {
-            "type": "object",
-            "label": "PII Detection",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "default": true
-              },
-              "redact": {
-                "type": "boolean",
-                "default": false
-              },
-              "categories": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "enum": [
-                    "email_address",
-                    "ssn",
-                    "person",
-                    "aba_routing_number",
-                    "address",
-                    "bank_account",
-                    "bitcoin_wallet",
-                    "credit_card",
-                    "driver_license",
-                    "itin_number",
-                    "location",
-                    "medical_license",
-                    "money_amount",
-                    "passport_number",
-                    "phone_number"
-                  ]
-                }
+            "type": "boolean",
+            "default": true,
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enable PII detection"
               }
+            ]
+          },
+          "pii_redact": {
+            "type": "boolean",
+            "default": false,
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enable PII redaction"
+              }
+            ]
+          },
+          "pii_categories": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "email_address",
+                "ssn",
+                "person",
+                "aba_routing_number",
+                "address",
+                "bank_account",
+                "bitcoin_wallet",
+                "credit_card",
+                "driver_license",
+                "itin_number",
+                "location",
+                "medical_license",
+                "money_amount",
+                "passport_number",
+                "phone_number"
+              ]
             },
-            "required": ["categories"]
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Select the categories that should NOT be allowed in the content"
+              }
+            ]
           },
           "secrets": {
-            "type": "object",
-            "label": "Secrets Detection",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "default": true
-              },
-              "redact": {
-                "type": "boolean",
-                "default": false
-              },
-              "categories": {
-                "type": "array",
-                "label": "Secret Categories",
-                "description": [
-                  {
-                    "type": "subHeading",
-                    "text": "Select the types of secrets that should be detected in the content."
-                  }
-                ],
-                "items": {
-                  "type": "string",
-                  "enum": [
-                    "credentials",
-                    "adafruit",
-                    "alibaba",
-                    "anthropic",
-                    "apideck",
-                    "apify",
-                    "atlassian",
-                    "aws_secret_key",
-                    "buildkite",
-                    "checkout",
-                    "clickuppersonal",
-                    "contentfulpersonalaccess",
-                    "database_url_with_credentials",
-                    "databricks",
-                    "denodeploy",
-                    "dfuse",
-                    "digitalocean",
-                    "discord_webhook",
-                    "docker_hub",
-                    "doppler",
-                    "dropbox",
-                    "endorlabs",
-                    "fleetbase",
-                    "flutterwave",
-                    "frameio",
-                    "freshdesk",
-                    "fullstory",
-                    "github",
-                    "gitlab",
-                    "gocardless",
-                    "google_api",
-                    "grafana",
-                    "groq",
-                    "huggingface",
-                    "intra42",
-                    "jwt",
-                    "klaviyo",
-                    "launchdarkly",
-                    "linearapi",
-                    "locationiq",
-                    "mailchimp",
-                    "mailgun",
-                    "mapbox",
-                    "maxmind",
-                    "microsoft_teams_webhook",
-                    "nightfall",
-                    "notion",
-                    "npm",
-                    "openai",
-                    "pagarme",
-                    "paystack",
-                    "planetscale",
-                    "planetscaledb",
-                    "portainer",
-                    "posthog",
-                    "postman",
-                    "prefect",
-                    "private_key",
-                    "pubnub_publish",
-                    "pubnub_subscribe",
-                    "pulumi",
-                    "ramp",
-                    "razorpay",
-                    "readme",
-                    "rechargepayments",
-                    "replicate",
-                    "rubygems",
-                    "salesforce",
-                    "sendgrid",
-                    "sendinblue",
-                    "shopify",
-                    "slack_access",
-                    "slack_bot",
-                    "slack_refresh",
-                    "slack_user",
-                    "slack_webhook",
-                    "slack_workflow_webhook",
-                    "sourcegraph",
-                    "sourcegraphcody",
-                    "squareapp",
-                    "squareup",
-                    "stripe",
-                    "supabase",
-                    "tailscale",
-                    "tines_webhook",
-                    "trufflehog",
-                    "twilio",
-                    "ubidots",
-                    "voiceflow",
-                    "web_url_with_credentials",
-                    "zapierwebhook"
-                  ]
-                }
+            "type": "boolean",
+            "default": true,
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enable secrets detection"
               }
+            ]
+          },
+          "secrets_redact": {
+            "type": "boolean",
+            "default": false,
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enable secrets redaction"
+              }
+            ]
+          },
+          "secrets_categories": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "credentials",
+                "adafruit",
+                "alibaba",
+                "anthropic",
+                "apideck",
+                "apify",
+                "atlassian",
+                "aws_secret_key",
+                "buildkite",
+                "checkout",
+                "clickuppersonal",
+                "contentfulpersonalaccess",
+                "database_url_with_credentials",
+                "databricks",
+                "denodeploy",
+                "dfuse",
+                "digitalocean",
+                "discord_webhook",
+                "docker_hub",
+                "doppler",
+                "dropbox",
+                "endorlabs",
+                "fleetbase",
+                "flutterwave",
+                "frameio",
+                "freshdesk",
+                "fullstory",
+                "github",
+                "gitlab",
+                "gocardless",
+                "google_api",
+                "grafana",
+                "groq",
+                "huggingface",
+                "intra42",
+                "jwt",
+                "klaviyo",
+                "launchdarkly",
+                "linearapi",
+                "locationiq",
+                "mailchimp",
+                "mailgun",
+                "mapbox",
+                "maxmind",
+                "microsoft_teams_webhook",
+                "nightfall",
+                "notion",
+                "npm",
+                "openai",
+                "pagarme",
+                "paystack",
+                "planetscale",
+                "planetscaledb",
+                "portainer",
+                "posthog",
+                "postman",
+                "prefect",
+                "private_key",
+                "pubnub_publish",
+                "pubnub_subscribe",
+                "pulumi",
+                "ramp",
+                "razorpay",
+                "readme",
+                "rechargepayments",
+                "replicate",
+                "rubygems",
+                "salesforce",
+                "sendgrid",
+                "sendinblue",
+                "shopify",
+                "slack_access",
+                "slack_bot",
+                "slack_refresh",
+                "slack_user",
+                "slack_webhook",
+                "slack_workflow_webhook",
+                "sourcegraph",
+                "sourcegraphcody",
+                "squareapp",
+                "squareup",
+                "stripe",
+                "supabase",
+                "tailscale",
+                "tines_webhook",
+                "trufflehog",
+                "twilio",
+                "ubidots",
+                "voiceflow",
+                "web_url_with_credentials",
+                "zapierwebhook"
+              ]
             },
-            "required": ["categories"]
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Select the types of secrets that should be detected in the content"
+              }
+            ]
           }
         }
       }
