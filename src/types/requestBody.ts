@@ -379,6 +379,9 @@ export interface Params {
   };
   // Google Vertex AI specific
   safety_settings?: any;
+  // Anthropic specific
+  anthropic_beta?: string;
+  anthropic_version?: string;
 }
 
 interface Examples {

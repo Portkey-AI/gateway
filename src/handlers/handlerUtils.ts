@@ -1153,7 +1153,7 @@ export async function recursiveAfterRequestHookHandler(
   isStreamingMode: any,
   gatewayParams: any,
   retryAttemptsMade: any,
-  fn: any,
+  fn: endpointStrings,
   requestHeaders: Record<string, string>,
   hookSpanId: string,
   strictOpenAiCompliance: boolean,
@@ -1178,6 +1178,7 @@ export async function recursiveAfterRequestHookHandler(
   let requestHandler;
   if (requestHandlers && requestHandlers[fn]) {
     requestHandler = () =>
+      // @ts-ignore
       requestHandlers[fn]({
         c,
         providerOptions: providerOption,
