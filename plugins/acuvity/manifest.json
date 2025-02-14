@@ -11,9 +11,7 @@
         "encrypted": true
       }
     },
-    "required": [
-      "apiKey"
-    ]
+    "required": ["apiKey"]
   },
   "functions": [
     {

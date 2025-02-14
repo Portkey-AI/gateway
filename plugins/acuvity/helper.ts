@@ -10,7 +10,7 @@ export interface GuardResult {
 }
 
 export class GuardName {
-  private constructor(private readonly name: string) { }
+  private constructor(private readonly name: string) {}
 
   // Static instances
   public static readonly PROMPT_INJECTION = new GuardName('PROMPT_INJECTION');

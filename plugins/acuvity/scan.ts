@@ -22,11 +22,7 @@ interface ScanRequest {
 const getRedactionList = (parameters: PluginParameters): string[] => {
   const redactions: string[] = [];
 
-  if (
-    parameters.pii &&
-    parameters.pii_redact &&
-    parameters.pii_categories
-  ) {
+  if (parameters.pii && parameters.pii_redact && parameters.pii_categories) {
     for (const category of parameters.pii_categories) {
       redactions.push(category);
     }
