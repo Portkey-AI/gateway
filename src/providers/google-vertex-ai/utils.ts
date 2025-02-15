@@ -339,14 +339,14 @@ export const GoogleToOpenAIBatch = (response: GoogleBatchRecord) => {
 };
 
 export const fetchGoogleCustomEndpoint = async ({
-  authInfo,
+  authorization,
   method,
   url,
   body,
 }: {
   url: string;
   body?: ReadableStream | Record<string, unknown>;
-  authInfo: { token: string };
+  authorization: string;
   method: string;
 }) => {
   const result = { response: null, error: null, status: null };
@@ -358,7 +358,7 @@ export const fetchGoogleCustomEndpoint = async ({
         }),
       method: method,
       headers: {
-        Authorization: `Bearer ${authInfo.token}`,
+        Authorization: authorization,
         'Content-Type': 'application/json',
       },
     };
@@ -377,6 +377,7 @@ export const fetchGoogleCustomEndpoint = async ({
   }
   return result;
 };
+
 export const transformVertexLogprobs = (
   generation: GoogleResponseCandidate
 ) => {

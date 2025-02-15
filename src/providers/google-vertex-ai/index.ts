@@ -20,7 +20,7 @@ import {
 import { chatCompleteParams, responseTransformers } from '../open-ai-base';
 import { GOOGLE_VERTEX_AI } from '../../globals';
 import { Params } from '../../types/requestBody';
-import { GoogleBatchCreateHandler } from './createBatch';
+import { GoogleBatchCreateConfig } from './createBatch';
 import {
   BatchOutputRequestHandler,
   BatchOutputResponseTransform,
@@ -38,7 +38,7 @@ const VertexConfig: ProviderConfigs = {
   getConfig: (params: Params) => {
     const baseConfig = {
       uploadFile: {},
-      createBatch: {},
+      createBatch: GoogleBatchCreateConfig,
       retrieveBatch: {},
       listBatches: {},
       cancelBatch: {},
@@ -107,7 +107,6 @@ const VertexConfig: ProviderConfigs = {
   },
   requestHandlers: {
     uploadFile: GoogleFileUploadRequestHandler,
-    createBatch: GoogleBatchCreateHandler,
     getBatchOutput: BatchOutputRequestHandler,
   },
 };

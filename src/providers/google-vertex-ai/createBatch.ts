@@ -1,34 +1,90 @@
-import { RequestHandler } from '../types';
+import { ProviderConfig, RequestHandler } from '../types';
+import GoogleApiConfig from './api';
 import { GoogleBatchRecord } from './types';
 import {
   fetchGoogleCustomEndpoint,
-  getAccessToken,
   getModelAndProvider,
   GoogleResponseHandler,
   GoogleToOpenAIBatch,
 } from './utils';
 
+export const GoogleBatchCreateConfig: ProviderConfig = {
+  model: {
+    param: 'model',
+    required: true,
+    transform: (params: Record<string, any>) => {
+      const { model, provider } = getModelAndProvider(params.model);
+      return `publishers/${provider}/models/${model}`;
+    },
+  },
+  input_file_id: {
+    param: 'inputConfig',
+    required: true,
+    transform: (params: Record<string, any>) => {
+      return {
+        instancesFormat: 'jsonl',
+        gcsSource: {
+          uris: decodeURIComponent(params.input_file_id),
+        },
+      };
+    },
+  },
+  output_data_config: {
+    param: 'outputConfig',
+    required: true,
+    transform: (params: any) => {
+      const providedOutputFile = decodeURIComponent(
+        (params?.['output_data_config'] as string) ?? ''
+      );
+      return {
+        predictionsFormat: 'jsonl',
+        gcsDestination: {
+          outputUriPrefix: providedOutputFile,
+        },
+      };
+    },
+    default: (params: any) => {
+      const inputFileId = decodeURIComponent(params.input_file_id);
+      const gcsURLToContainingFolder =
+        inputFileId.split('/').slice(0, -1).join('/') + '/';
+      return {
+        predictionsFormat: 'jsonl',
+        gcsDestination: {
+          outputUriPrefix: gcsURLToContainingFolder,
+        },
+      };
+    },
+  },
+  job_name: {
+    param: 'displayName',
+    required: true,
+    default: () => {
+      return crypto.randomUUID();
+    },
+  },
+};
+
 export const GoogleBatchCreateHandler: RequestHandler<Params> = async ({
+  c,
   requestBody,
   providerOptions,
 }) => {
-  const {
-    vertexModelName,
-    apiKey,
-    vertexProjectId,
-    vertexRegion,
-    vertexServiceAccountJson,
-  } = providerOptions;
+  const { vertexModelName, vertexProjectId, vertexRegion } = providerOptions;
 
-  let authToken = apiKey;
   let projectId = vertexProjectId;
 
   const { model, provider } = getModelAndProvider(vertexModelName ?? '');
 
-  if (vertexServiceAccountJson) {
-    authToken = await getAccessToken(vertexServiceAccountJson);
-    projectId = vertexServiceAccountJson['project_id'];
-  }
+  const createBatchesHeaders = await GoogleApiConfig.headers({
+    c,
+    providerOptions,
+    fn: 'createBatch',
+    transformedRequestBody: {},
+    transformedRequestUrl: '',
+    gatewayRequestBody: {},
+  });
+
+  const { Authorization } = createBatchesHeaders;
 
   const inputFile = decodeURIComponent(
     (requestBody?.['input_file_id'] as string) ?? ''
@@ -61,9 +117,7 @@ export const GoogleBatchCreateHandler: RequestHandler<Params> = async ({
     url,
     body,
     method: 'POST',
-    authInfo: {
-      token: authToken ?? '',
-    },
+    authorization: Authorization,
   })) as {
     response: GoogleBatchRecord | null;
     error: any;

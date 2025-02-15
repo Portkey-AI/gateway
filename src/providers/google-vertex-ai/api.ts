@@ -103,7 +103,7 @@ export const GoogleApiConfig: ProviderAPIConfig = {
           // We handle file upload in a separate request handler
           return '';
         case 'createBatch':
-          return '';
+          return `/v1/projects/${projectId}/locations/${vertexRegion}/batchPredictionJobs`;
         default:
           return '';
       }

@@ -16,6 +16,7 @@ import { chatCompleteParams } from '../open-ai-base';
 import { POWERED_BY } from '../../globals';
 import { transformUsingProviderConfig } from '../../services/transformToProviderRequest';
 import { createLineSplitter } from '../../handlers/streamHandlerUtils';
+import GoogleApiConfig from './api';
 
 const PROVIDER_CONFIG = {
   google: VertexGoogleChatCompleteConfig,
@@ -26,14 +27,9 @@ const PROVIDER_CONFIG = {
 
 export const GoogleFileUploadRequestHandler: RequestHandler<
   NodeWebStream
-> = async ({ providerOptions, requestBody, requestHeaders }) => {
-  const {
-    vertexServiceAccountJson,
-    apiKey,
-    vertexStorageBucketName,
-    filename,
-    vertexModelName,
-  } = providerOptions;
+> = async ({ c, providerOptions, requestBody, requestHeaders }) => {
+  const { vertexStorageBucketName, filename, vertexModelName } =
+    providerOptions;
 
   if (!vertexModelName || !vertexStorageBucketName) {
     return GoogleResponseHandler(
@@ -89,10 +85,14 @@ export const GoogleFileUploadRequestHandler: RequestHandler<
   // Pipe the node stream through our line splitter and into the transform stream.
   nodeStream.pipe(lineSplitter).pipe(bodyStream);
 
-  let authToken: string = apiKey || '';
-  if (vertexServiceAccountJson) {
-    authToken = `Bearer ${await getAccessToken(vertexServiceAccountJson)}`;
-  }
+  const providerHeaders = await GoogleApiConfig.headers({
+    c,
+    providerOptions,
+    fn: 'uploadFile',
+    transformedRequestBody: {},
+    transformedRequestUrl: '',
+    gatewayRequestBody: {},
+  });
 
   const encodedFile = encodeURIComponent(objectKey ?? '');
   const url = `https://storage.googleapis.com/${vertexStorageBucketName}/${encodedFile}`;
@@ -100,7 +100,7 @@ export const GoogleFileUploadRequestHandler: RequestHandler<
   const options = {
     body: Stream.Readable.toWeb(bodyStream) as ReadableStream,
     headers: {
-      Authorization: authToken,
+      Authorization: providerHeaders.Authorization,
       'Content-Type': 'application/octet-stream',
     },
     method: 'PUT',
