@@ -942,11 +942,11 @@ export function constructConfigFromRequestHeaders(
     awsExternalId: requestHeaders[`x-${POWERED_BY}-aws-external-id`],
     awsS3Bucket: requestHeaders[`x-${POWERED_BY}-aws-s3-bucket`],
     awsS3ObjectKey:
-      requestHeaders[`x-${POWERED_BY}-provider-file-name`] ||
-      requestHeaders[`x-${POWERED_BY}-aws-s3-object-key`],
+      requestHeaders[`x-${POWERED_BY}-aws-s3-object-key`] ||
+      requestHeaders[`x-${POWERED_BY}-provider-file-name`],
     awsBedrockModel:
-      requestHeaders[`x-${POWERED_BY}-provider-model`] ||
-      requestHeaders[`x-${POWERED_BY}-aws-bedrock-model`],
+      requestHeaders[`x-${POWERED_BY}-aws-bedrock-model`] ||
+      requestHeaders[`x-${POWERED_BY}-provider-model`],
   };
 
   const sagemakerConfig = {
