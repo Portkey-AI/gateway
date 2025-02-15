@@ -1,6 +1,7 @@
 import { ErrorResponse, FinetuneRequest, ProviderConfig } from '../types';
 import { BedrockErrorResponseTransform } from './chatComplete';
 import { POWERED_BY } from '../../globals';
+import { BedrockErrorResponse } from './embed';
 
 const transform = (
   values: FinetuneRequest & { roleArn?: string; job_name?: string }
@@ -107,7 +108,10 @@ export const BedrockCreateFinetuneResponseTransform: (
   responseStatus: number
 ) => Response | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    return BedrockErrorResponseTransform(response as any) || response;
+    return (
+      BedrockErrorResponseTransform(response as BedrockErrorResponse) ||
+      response
+    );
   }
 
   return { id: (response as any).jobArn } as any;
@@ -123,6 +127,6 @@ export const BedrockRequestTransform = (
   if (bedrockRoleARN) {
     body.roleArn = bedrockRoleARN;
   }
-  const transformedBody = transform(body as FinetuneRequest);
+  const transformedBody = transform(body);
   return transformedBody;
 };

@@ -1,4 +1,4 @@
-import { FireworksFile } from './type';
+import { FireworksFile } from './types';
 
 export const fireworksDatasetToOpenAIFile = (dataset: FireworksFile) => {
   const name = dataset.displayName || dataset.name;

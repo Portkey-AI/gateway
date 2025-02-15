@@ -18,7 +18,11 @@ import {
   FIREWORKS_AI,
 } from '../globals';
 import Providers from '../providers';
-import { ProviderAPIConfig, endpointStrings } from '../providers/types';
+import {
+  ProviderAPIConfig,
+  RequestHandlers,
+  endpointStrings,
+} from '../providers/types';
 import transformToProviderRequest from '../services/transformToProviderRequest';
 import { Options, Params, StrategyModes, Targets } from '../types/requestBody';
 import { convertKeysToCamelCase } from '../utils';
@@ -1174,11 +1178,10 @@ export async function recursiveAfterRequestHookHandler(
 
   const provider = providerOption.provider ?? '';
   const providerConfig = Providers[provider];
-  const requestHandlers = providerConfig.requestHandlers;
+  const requestHandlers = providerConfig.requestHandlers as any;
   let requestHandler;
   if (requestHandlers && requestHandlers[fn]) {
     requestHandler = () =>
-      // @ts-ignore
       requestHandlers[fn]({
         c,
         providerOptions: providerOption,

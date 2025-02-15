@@ -1,7 +1,11 @@
-import { GoogleErrorResponse, GoogleResponseCandidate } from './types';
+import {
+  GoogleBatchRecord,
+  GoogleErrorResponse,
+  GoogleResponseCandidate,
+} from './types';
 import { generateErrorResponse } from '../utils';
 import { GOOGLE_VERTEX_AI, fileExtensionMimeTypeMap } from '../../globals';
-import { ErrorResponse, Logprobs, GoogleBatchRecord } from '../types';
+import { ErrorResponse, Logprobs } from '../types';
 
 /**
  * Encodes an object as a Base64 URL-encoded string.

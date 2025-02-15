@@ -6,7 +6,7 @@ export async function getAccessTokenFromEntraId(
   tenantId: string,
   clientId: string,
   clientSecret: string,
-  scope = 'https://openai.azure.com/.default'
+  scope = 'https://cognitiveservices.azure.com/.default'
 ) {
   try {
     const url = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;

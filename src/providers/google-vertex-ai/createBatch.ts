@@ -1,4 +1,5 @@
-import { GoogleBatchRecord, RequestHandler } from '../types';
+import { RequestHandler } from '../types';
+import { GoogleBatchRecord } from './types';
 import {
   fetchGoogleCustomEndpoint,
   getAccessToken,

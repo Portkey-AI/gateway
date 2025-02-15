@@ -141,7 +141,14 @@ export const retryRequest = async (
     } else if (error instanceof TypeError) {
       // Handle other fetch-level errors
       lastResponse = new Response(
-        `Message: ${error.message} Cause: ${error.cause} Name: ${error.name}`,
+        JSON.stringify({
+          error: {
+            message: `Message: ${error.message} Cause: ${error.cause} Name: ${error.name}`,
+            type: 'fetch_error',
+            param: null,
+            code: null,
+          },
+        }),
         {
           status: 500,
         }

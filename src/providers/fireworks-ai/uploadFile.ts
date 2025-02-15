@@ -1,5 +1,5 @@
 export const FireworksFileUploadResponseTransform = (
-  response: any,
+  response: Response,
   responseStatus: number
 ) => {
   return response;

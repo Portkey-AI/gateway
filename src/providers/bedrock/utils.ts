@@ -8,9 +8,9 @@ import {
   BedrockConverseAnthropicChatCompletionsParams,
   BedrockConverseCohereChatCompletionsParams,
 } from './chatComplete';
-import { BedrockFinetuneRecord } from '../types';
 import { Options } from '../../types/requestBody';
 import { GatewayError } from '../../errors/GatewayError';
+import { BedrockFinetuneRecord } from './types';
 
 export const generateAWSHeaders = async (
   body: Record<string, any> | string | undefined,

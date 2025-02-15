@@ -1,5 +1,6 @@
-import { BedrockFinetuneRecord, ErrorResponse } from '../types';
+import { ErrorResponse } from '../types';
 import { BedrockErrorResponseTransform } from './chatComplete';
+import { BedrockFinetuneRecord } from './types';
 import { bedrockFinetuneToOpenAI } from './utils';
 
 export const BedrockListFinetuneResponseTransform: (

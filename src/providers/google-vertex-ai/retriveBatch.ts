@@ -1,6 +1,6 @@
 // GoogleToOpenAIBatch
 
-import { GoogleBatchRecord } from '../types';
+import { GoogleBatchRecord } from './types';
 import { GoogleToOpenAIBatch } from './utils';
 
 export const GoogleRetriveBatchResponseTransform = (

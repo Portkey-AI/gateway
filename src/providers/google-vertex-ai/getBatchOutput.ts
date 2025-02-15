@@ -1,5 +1,6 @@
 import { Stream, Transform } from 'node:stream';
-import { GoogleBatchRecord, RequestHandler } from '../types';
+import { RequestHandler } from '../types';
+import { GoogleBatchRecord } from './types';
 import { getAccessToken, getModelAndProvider } from './utils';
 import { ReadableStream as NodeReadableStream } from 'node:stream/web';
 import { responseTransformers } from '../open-ai-base';

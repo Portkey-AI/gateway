@@ -1,9 +1,16 @@
-import { FireworksAIErrorResponseTransform } from './chatComplete';
-import { FireworksFile } from './type';
-import { fireworksDatasetToOpenAIFile } from './util';
+import {
+  FireworksAIErrorResponse,
+  FireworksAIErrorResponseTransform,
+  FireworksAIValidationErrorResponse,
+} from './chatComplete';
+import { FireworksFile } from './types';
+import { fireworksDatasetToOpenAIFile } from './utils';
 
 export const FireworksFileListResponseTransform = (
-  response: any,
+  response: (FireworksAIValidationErrorResponse | FireworksAIErrorResponse) & {
+    datasets: FireworksFile[];
+    totalSize: number;
+  },
   responseStatus: number
 ) => {
   if (responseStatus === 200) {
