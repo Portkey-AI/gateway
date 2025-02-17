@@ -10,7 +10,10 @@ import {
   GuardName,
   GuardResult,
 } from './helper';
-import { getText, post } from '../utils';
+import {
+  post, getCurrentContentPart,
+  setCurrentContentPart,
+} from '../utils';
 
 interface ScanRequest {
   anonymization: 'FixedSize';
@@ -44,13 +47,13 @@ const getRedactionList = (parameters: PluginParameters): string[] => {
 export const postAcuvityScan = async (
   base_url: string,
   apiKey: string,
-  text: string,
+  textArray: Array<string>,
   eventType: HookEventType,
   redactions: string[]
 ) => {
   const data: ScanRequest = {
     anonymization: 'FixedSize',
-    messages: [text],
+    messages: textArray,
     redactions: redactions,
     type: eventType === 'beforeRequestHook' ? 'Input' : 'Output',
   };
@@ -72,13 +75,33 @@ export const handler: PluginHandler = async (
   let error = null;
   let verdict = true;
   let data = null;
+  const transformedData: Record<string, any> = {
+    request: {
+      json: null,
+    },
+    response: {
+      json: null,
+    },
+  };
+  let transformed = false
 
   try {
     if (!parameters.credentials) {
       throw new Error('acuvity api key not given');
     }
 
-    const text = getText(context, eventType);
+    //const text = getText(context, eventType);
+    const { content, textArray } = getCurrentContentPart(context, eventType);
+
+    if (!content) {
+      return {
+        error: { message: 'request or response json is empty' },
+        verdict: true,
+        data: null,
+        transformedData,
+        transformed,
+      };
+    }
 
     let token = parameters.credentials.apiKey;
     let base_url = getApexUrlFromToken(token);
@@ -87,169 +110,174 @@ export const handler: PluginHandler = async (
       throw new Error('acuvity base url not given');
     }
 
+    let redactionList = getRedactionList(parameters)
     const result: any = await postAcuvityScan(
       base_url,
       token,
-      text,
+      textArray,
       eventType,
-      getRedactionList(parameters)
+      redactionList
     );
 
     const responseHelper = new ResponseHelper();
+    const extractionResult = result as { extractions: Array<{ data: string }> };
+    const respTextArray = extractionResult.extractions.map(extraction => extraction.data);
+    let guardResults = new Set();
 
     // Loop through all extractions
     for (const extraction of result.extractions) {
       // Evaluate parameters for current extraction
-      const results = evaluateAllParameters(
+      guardResults = evaluateAllParameters(
         extraction,
         parameters,
         responseHelper
       );
-
-      data = results;
-      // Check if any parameter check failed in this extraction
-      for (const { result } of results) {
-        if (result.matched) {
-          verdict = false;
-          break;
-        }
-      }
-
-      if (!verdict) {
-        break;
-      }
     }
+
+    data = result.summary;
+
+    // check if only PII/Secrets is enabled with redaction,
+    // if yes then return the redacted data with verdict = true.
+    // else verdict = false, as we found other detections.
+    if (guardResults.size == 1 && redactionList.length > 0 && guardResults.has(GuardName.PII_DETECTOR)) {
+      verdict = true
+      setCurrentContentPart(context, eventType, transformedData, respTextArray)
+      transformed = true
+    } else if (guardResults.size > 0) { // for the other detections.
+      verdict = false
+    }
+
   } catch (e: any) {
     delete e.stack;
     error = e;
   }
 
-  return { error, verdict, data };
+  return { error, verdict, data, transformedData, transformed };
 };
 
 function evaluateAllParameters(
   extraction: any,
   parameters: PluginParameters,
   responseHelper: ResponseHelper
-): Array<{ parameter: string; result: GuardResult }> {
-  const results: Array<{ parameter: string; result: GuardResult }> = [];
+): Set<GuardName> {
+  const guardTypes = new Set<GuardName>();
 
   // Check prompt injection
   if (parameters.prompt_injection) {
-    results.push({
-      parameter: 'prompt_injection',
-      result: responseHelper.evaluate(
-        extraction,
-        GuardName.PROMPT_INJECTION,
-        parameters.prompt_injection_threshold || 0.5
-      ),
-    });
+    const check = responseHelper.evaluate(
+      extraction,
+      GuardName.PROMPT_INJECTION,
+      parameters.prompt_injection_threshold || 0.5
+    );
+    if (check.matched) {
+      guardTypes.add(GuardName.PROMPT_INJECTION);
+    }
   }
 
   // Check toxic content
   if (parameters.toxic) {
-    results.push({
-      parameter: 'toxic',
-      result: responseHelper.evaluate(
-        extraction,
-        GuardName.TOXIC,
-        parameters.toxic_threshold || 0.5
-      ),
-    });
+    const check = responseHelper.evaluate(
+      extraction,
+      GuardName.TOXIC,
+      parameters.toxic_threshold || 0.5
+    );
+    if (check.matched) {
+      guardTypes.add(GuardName.TOXIC);
+    }
   }
 
   // Check jailbreak
   if (parameters.jail_break) {
-    results.push({
-      parameter: 'jail_break',
-      result: responseHelper.evaluate(
-        extraction,
-        GuardName.JAIL_BREAK,
-        parameters.jail_break_threshold || 0.5
-      ),
-    });
+    const check = responseHelper.evaluate(
+      extraction,
+      GuardName.JAIL_BREAK,
+      parameters.jail_break_threshold || 0.5
+    );
+    if (check.matched) {
+      guardTypes.add(GuardName.JAIL_BREAK);
+    }
   }
 
   // Check malicious URL
   if (parameters.malicious_url) {
-    results.push({
-      parameter: 'malicious_url',
-      result: responseHelper.evaluate(
-        extraction,
-        GuardName.MALICIOUS_URL,
-        parameters.malicious_url_threshold || 0.5
-      ),
-    });
+    const check = responseHelper.evaluate(
+      extraction,
+      GuardName.MALICIOUS_URL,
+      parameters.malicious_url_threshold || 0.5
+    );
+    if (check.matched) {
+      guardTypes.add(GuardName.MALICIOUS_URL);
+    }
   }
 
   // Check bias
   if (parameters.biased) {
-    results.push({
-      parameter: 'biased',
-      result: responseHelper.evaluate(
-        extraction,
-        GuardName.BIASED,
-        parameters.biased_threshold || 0.5
-      ),
-    });
+    const check = responseHelper.evaluate(
+      extraction,
+      GuardName.BIASED,
+      parameters.biased_threshold || 0.5
+    );
+    if (check.matched) {
+      guardTypes.add(GuardName.BIASED);
+    }
   }
 
   // Check harmful content
   if (parameters.harmful) {
-    results.push({
-      parameter: 'harmful',
-      result: responseHelper.evaluate(
-        extraction,
-        GuardName.HARMFUL_CONTENT,
-        parameters.harmful_threshold || 0.5
-      ),
-    });
+    const check = responseHelper.evaluate(
+      extraction,
+      GuardName.HARMFUL_CONTENT,
+      parameters.harmful_threshold || 0.5
+    );
+    if (check.matched) {
+      guardTypes.add(GuardName.HARMFUL_CONTENT);
+    }
   }
 
   // Check language
   if (parameters.language && parameters.languagevals) {
-    results.push({
-      parameter: 'language',
-      result: responseHelper.evaluate(
-        extraction,
-        GuardName.LANGUAGE,
-        0.5, // Language check typically uses a fixed threshold
-        parameters.languagevals
-      ),
-    });
+    const check = responseHelper.evaluate(
+      extraction,
+      GuardName.LANGUAGE,
+      0.5,
+      parameters.languagevals
+    );
+    if (check.matched) {
+      guardTypes.add(GuardName.LANGUAGE);
+    }
   }
 
   // Check PII
   if (parameters.pii && parameters.pii_categories) {
-    // Iterate through each PII category
     for (const category of parameters.pii_categories) {
-      results.push({
-        parameter: `pii_${category.toLowerCase()}`,
-        result: responseHelper.evaluate(
-          extraction,
-          GuardName.PII_DETECTOR,
-          0.5, // PII typically uses a fixed threshold
-          category.toLowerCase()
-        ),
-      });
+      const check = responseHelper.evaluate(
+        extraction,
+        GuardName.PII_DETECTOR,
+        0.5,
+        category.toLowerCase()
+      );
+      if (check.matched) {
+        guardTypes.add(GuardName.PII_DETECTOR);
+        break;
+      }
     }
   }
 
   // Check Secrets
   if (parameters.secrets && parameters.secrets_categories) {
-    // Iterate through each secrets category
     for (const category of parameters.secrets_categories) {
-      results.push({
-        parameter: `secrets_${category.toLowerCase()}`,
-        result: responseHelper.evaluate(
-          extraction,
-          GuardName.SECRETS_DETECTOR,
-          0.5, // PII typically uses a fixed threshold
-          category.toLowerCase()
-        ),
-      });
+      const check = responseHelper.evaluate(
+        extraction,
+        GuardName.SECRETS_DETECTOR,
+        0.5,
+        category.toLowerCase()
+      );
+      if (check.matched) {
+        guardTypes.add(GuardName.PII_DETECTOR);
+        break;
+      }
     }
   }
 
-  return results;
+  return guardTypes;
 }
