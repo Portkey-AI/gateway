@@ -22,7 +22,7 @@ const getProjectRoute = (
   }
 
   const { provider } = getModelAndProvider(inputModel as string);
-  let routeVersion = provider === 'meta' ? 'v1beta1' : 'v1';
+  let routeVersion = getApiVersion(provider, inputModel as string);
   return `/${routeVersion}/projects/${projectId}/locations/${vertexRegion}`;
 };
 
