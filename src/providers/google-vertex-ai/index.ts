@@ -31,7 +31,7 @@ import {
   GoogleFileUploadRequestHandler,
   GoogleFileUploadResponseTransform,
 } from './uploadFile';
-import { GoogleRetriveBatchResponseTransform } from './retriveBatch';
+import { GoogleRetrieveBatchResponseTransform } from './retrieveBatch';
 
 const VertexConfig: ProviderConfigs = {
   api: VertexApiConfig,
@@ -44,7 +44,7 @@ const VertexConfig: ProviderConfigs = {
       cancelBatch: {},
       responseTransforms: {
         uploadFile: GoogleFileUploadResponseTransform,
-        retrieveBatch: GoogleRetriveBatchResponseTransform,
+        retrieveBatch: GoogleRetrieveBatchResponseTransform,
         getBatchOutput: BatchOutputResponseTransform,
         listBatches: GoogleListBatchesResponseTransform,
         cancelBatch: GoogleCancelBatchResponseTransform,

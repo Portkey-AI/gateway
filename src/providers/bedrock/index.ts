@@ -69,7 +69,7 @@ import {
   BedrockRetrieveFileContentRequestHandler,
   BedrockRetrieveFileContentResponseTransform,
 } from './retrieveFileContent';
-import { BedrockFinetuneResponseTransform } from './retriveFinetune';
+import { BedrockFinetuneResponseTransform } from './retrieveFinetune';
 import {
   BedrockUploadFileRequestHandler,
   BedrockUploadFileResponseTransform,

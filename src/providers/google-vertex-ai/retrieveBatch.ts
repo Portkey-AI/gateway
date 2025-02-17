@@ -3,7 +3,7 @@
 import { GoogleBatchRecord } from './types';
 import { GoogleToOpenAIBatch } from './utils';
 
-export const GoogleRetriveBatchResponseTransform = (
+export const GoogleRetrieveBatchResponseTransform = (
   response: GoogleBatchRecord,
   status: number
 ) => {

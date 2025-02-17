@@ -28,7 +28,7 @@ const getProjectRoute = (
 
 const FILE_ENDPOINTS = [
   'uploadFile',
-  'retriveFileContent',
+  'retrieveFileContent',
   'deleteFile',
   'listFiles',
   'retrieveFile',
