@@ -22,7 +22,6 @@ import {
 } from './createSpeech';
 import { AzureOpenAICreateTranscriptionResponseTransform } from './createTranscription';
 import { AzureOpenAICreateTranslationResponseTransform } from './createTranslation';
-import { OpenAIResponseTransform } from '../open-ai-base';
 import { OpenAICreateFinetuneConfig } from '../openai/createFinetune';
 import { AzureTransformFinetuneBody } from './createFinetune';
 import { OpenAIFileUploadRequestTransform } from '../openai/uploadFile';
@@ -56,12 +55,12 @@ const AzureOpenAIConfig: ProviderConfigs = {
     createTranscription: AzureOpenAICreateTranscriptionResponseTransform,
     createTranslation: AzureOpenAICreateTranslationResponseTransform,
     realtime: {},
-    uploadFile: OpenAIResponseTransform,
-    listFiles: OpenAIResponseTransform,
-    retrieveFile: OpenAIResponseTransform,
-    deleteFile: OpenAIResponseTransform,
-    retrieveFileContent: OpenAIResponseTransform,
-    createFinetune: OpenAIResponseTransform,
+    uploadFile: AzureOpenAIResponseTransform,
+    listFiles: AzureOpenAIResponseTransform,
+    retrieveFile: AzureOpenAIResponseTransform,
+    deleteFile: AzureOpenAIResponseTransform,
+    retrieveFileContent: AzureOpenAIResponseTransform,
+    createFinetune: AzureOpenAIResponseTransform,
     retrieveFinetune: AzureOpenAIFinetuneResponseTransform,
     createBatch: AzureOpenAIResponseTransform,
     retrieveBatch: AzureOpenAIResponseTransform,
