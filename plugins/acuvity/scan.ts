@@ -10,10 +10,7 @@ import {
   GuardName,
   GuardResult,
 } from './helper';
-import {
-  post, getCurrentContentPart,
-  setCurrentContentPart,
-} from '../utils';
+import { post, getCurrentContentPart, setCurrentContentPart } from '../utils';
 
 interface ScanRequest {
   anonymization: 'FixedSize';
@@ -83,7 +80,7 @@ export const handler: PluginHandler = async (
       json: null,
     },
   };
-  let transformed = false
+  let transformed = false;
 
   try {
     if (!parameters.credentials) {
@@ -110,7 +107,7 @@ export const handler: PluginHandler = async (
       throw new Error('acuvity base url not given');
     }
 
-    let redactionList = getRedactionList(parameters)
+    let redactionList = getRedactionList(parameters);
     const result: any = await postAcuvityScan(
       base_url,
       token,
@@ -121,7 +118,9 @@ export const handler: PluginHandler = async (
 
     const responseHelper = new ResponseHelper();
     const extractionResult = result as { extractions: Array<{ data: string }> };
-    const respTextArray = extractionResult.extractions.map(extraction => extraction.data);
+    const respTextArray = extractionResult.extractions.map(
+      (extraction) => extraction.data
+    );
     let guardResults = new Set();
 
     // Loop through all extractions
@@ -139,14 +138,18 @@ export const handler: PluginHandler = async (
     // check if only PII/Secrets is enabled with redaction,
     // if yes then return the redacted data with verdict = true.
     // else verdict = false, as we found other detections.
-    if (guardResults.size == 1 && redactionList.length > 0 && guardResults.has(GuardName.PII_DETECTOR)) {
-      verdict = true
-      setCurrentContentPart(context, eventType, transformedData, respTextArray)
-      transformed = true
-    } else if (guardResults.size > 0) { // for the other detections.
-      verdict = false
+    if (
+      guardResults.size == 1 &&
+      redactionList.length > 0 &&
+      guardResults.has(GuardName.PII_DETECTOR)
+    ) {
+      verdict = true;
+      setCurrentContentPart(context, eventType, transformedData, respTextArray);
+      transformed = true;
+    } else if (guardResults.size > 0) {
+      // for the other detections.
+      verdict = false;
     }
-
   } catch (e: any) {
     delete e.stack;
     error = e;
