@@ -12,7 +12,8 @@ export const APORIA_BASE_URL = 'https://gr-prd.aporia.com';
 export const validate = async (
   projectID: string,
   credentials: any,
-  data: any
+  data: any,
+  timeout?: number
 ) => {
   const options = {
     headers: {
@@ -26,7 +27,7 @@ export const validate = async (
     baseURL = credentials.apiEndpoint;
   }
 
-  return post(`${baseURL}/${projectID}/validate`, data, options);
+  return post(`${baseURL}/${projectID}/validate`, data, options, timeout);
 };
 
 export const handler: PluginHandler = async (
@@ -70,7 +71,8 @@ export const handler: PluginHandler = async (
     const result: any = await validate(
       parameters.projectID,
       parameters.credentials,
-      aporiaObject
+      aporiaObject,
+      parameters.timeout
     );
 
     // Result example:

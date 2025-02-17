@@ -36,7 +36,8 @@ export const handler: PluginHandler = async (
     const result: any = await postPatronus(
       evaluator,
       parameters.credentials,
-      evaluationBody
+      evaluationBody,
+      parameters.timeout
     );
 
     const evalResult = result.results[0];

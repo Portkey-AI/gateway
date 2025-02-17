@@ -1,4 +1,9 @@
-import { PluginContext, PluginHandler, PluginParameters } from '../types';
+import {
+  HookEventType,
+  PluginContext,
+  PluginHandler,
+  PluginParameters,
+} from '../types';
 import { post } from '../utils';
 
 function parseHeaders(headers: unknown): Record<string, string> {
@@ -22,11 +27,23 @@ function parseHeaders(headers: unknown): Record<string, string> {
 
 export const handler: PluginHandler = async (
   context: PluginContext,
-  parameters: PluginParameters
+  parameters: PluginParameters,
+  eventType: HookEventType
 ) => {
   let error = null;
   let verdict = false;
   let data: any = null;
+  const transformedData: Record<string, any> = {
+    request: {
+      json: null,
+      text: null,
+    },
+    response: {
+      json: null,
+      text: null,
+    },
+  };
+  let transformed = false;
 
   try {
     const url = parameters.webhookURL;
@@ -49,8 +66,29 @@ export const handler: PluginHandler = async (
       throw new Error(`Failed to parse headers: ${e.message}`);
     }
 
-    const response = await post(url, context, { headers }, 3000);
+    const response = await post(
+      url,
+      { ...context, eventType },
+      { headers },
+      parameters.timeout || 3000
+    );
     verdict = response.verdict;
+
+    if (
+      response.transformedData?.request?.json &&
+      eventType === 'beforeRequestHook'
+    ) {
+      transformedData.request.json = response.transformedData.request.json;
+      transformed = true;
+    }
+
+    if (
+      response.transformedData?.response?.json &&
+      eventType === 'afterRequestHook'
+    ) {
+      transformedData.response.json = response.transformedData.response.json;
+      transformed = true;
+    }
 
     data = {
       verdict,
@@ -78,5 +116,5 @@ export const handler: PluginHandler = async (
     };
   }
 
-  return { error, verdict, data };
+  return { error, verdict, data, transformedData, transformed };
 };

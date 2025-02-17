@@ -63,7 +63,7 @@ export const handler: PluginHandler = async (
 
   let response;
   try {
-    response = await post(url, request, requestOptions);
+    response = await post(url, request, requestOptions, parameters.timeout);
   } catch (e) {
     if (e instanceof HttpError) {
       error = `${e.message}. body: ${e.response.body}`;

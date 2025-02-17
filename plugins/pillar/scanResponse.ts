@@ -34,7 +34,8 @@ export const handler: PluginHandler = async (
     const result: any = await postPillar(
       'scanResponse',
       parameters.credentials,
-      scanResponseObject
+      scanResponseObject,
+      parameters.timeout
     );
 
     // if any of the scanners found something, we will return a verdict of false

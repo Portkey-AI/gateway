@@ -79,7 +79,12 @@ export const handler: PluginHandler = async (
       data: textArray,
     };
 
-    const response = await post(url, request, requestOptions);
+    const response = await post(
+      url,
+      request,
+      requestOptions,
+      parameters.timeout
+    );
     const piiDetected =
       response.result?.count > 0 && response.result.redacted_data
         ? true

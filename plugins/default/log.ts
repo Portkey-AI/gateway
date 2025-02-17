@@ -16,7 +16,7 @@ export const handler: PluginHandler = async (
       : {};
 
     // log the request
-    await post(url, context, { headers }, 3000);
+    await post(url, context, { headers }, parameters.timeout || 3000);
 
     verdict = true;
     data = { message: `Logged the request to ${url}` };
