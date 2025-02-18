@@ -87,7 +87,6 @@ export const handler: PluginHandler = async (
       throw new Error('acuvity api key not given');
     }
 
-    //const text = getText(context, eventType);
     const { content, textArray } = getCurrentContentPart(context, eventType);
 
     if (!content) {

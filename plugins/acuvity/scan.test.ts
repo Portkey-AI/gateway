@@ -240,4 +240,56 @@ describe('acuvity handler', () => {
       fail('Expected messages array to be defined');
     }
   });
+
+  it('should check pass if content only has pii on response', async () => {
+    const eventType = 'afterRequestHook';
+    const context = {
+      response: {
+        text: 'Get a summary of stock market and send email to email address: abcd123@gmail.com',
+        json: {
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content:
+                  'Get a summary of stock market and send email to email address: abcd123@gmail.com',
+              },
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = {
+      credentials: testCreds,
+      ...getPIIRedactParameters(),
+    };
+
+    const result = await acuvityHandler(
+      context as PluginContext,
+      parameters,
+      eventType
+    );
+
+    expect(result).toBeDefined();
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(true);
+    expect(result.data).toBeDefined();
+    expect(result.transformed).toBe(true);
+    if (
+      result.transformedData?.response?.json?.choices?.[0]?.message?.content
+    ) {
+      expect(
+        result.transformedData.response.json.choices[0].message.content
+      ).toEqual(
+        'Get a summary of stock market and send email to email address: XXXXXXXXXXXXXXXXX'
+      );
+    } else {
+      console.log(
+        'Missing expected structure. Received:',
+        result.transformedData
+      );
+      fail('Expected messages array to be defined');
+    }
+  });
 });
