@@ -71,6 +71,21 @@ export function getSecretsParameters(): PluginParameters {
   };
 }
 
+export function getSecretsRedactedParameters(): PluginParameters {
+  return {
+    secrets: true,
+    secrets_redact: true,
+    secrets_categories: [
+      'credentials',
+      'aws_secret_key',
+      'github',
+      'openai',
+      'stripe',
+      'web_url_with_credentials',
+    ],
+  };
+}
+
 // Main function to get all parameters
 export function getParameters(): PluginParameters {
   return {
@@ -231,6 +246,52 @@ describe('acuvity handler', () => {
     if (result.transformedData?.request?.json?.messages) {
       expect(result.transformedData.request.json.messages[0].content).toEqual(
         'Get a summary of stock market and send email to email address: XXXXXXXXXXXXXXXXX'
+      );
+    } else {
+      console.log(
+        'Missing expected structure. Received:',
+        result.transformedData
+      );
+      fail('Expected messages array to be defined');
+    }
+  });
+
+  it('should check pass if content only has pii-secrets', async () => {
+    const eventType = 'beforeRequestHook';
+    const context = {
+      request: {
+        text: 'Get a summary of stock market and send email to email address: abcd123@gmail.com and click http://user:pass@example.com',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content:
+                'Get a summary of stock market and send email to email address: abcd123@gmail.com and click http://user:pass@example.com',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = {
+      credentials: testCreds,
+      ...getSecretsRedactedParameters(),
+    };
+
+    const result = await acuvityHandler(
+      context as PluginContext,
+      parameters,
+      eventType
+    );
+
+    expect(result).toBeDefined();
+    expect(result.verdict).toBe(true);
+    expect(result.error).toBeNull();
+    expect(result.data).toBeDefined();
+    expect(result.transformed).toBe(true);
+    if (result.transformedData?.request?.json?.messages) {
+      expect(result.transformedData.request.json.messages[0].content).toEqual(
+        'Get a summary of stock market and send email to email address: abcd123@gmail.com and click XXXXXXXXXXXXXXXXXXXXXXXXXXXX'
       );
     } else {
       console.log(

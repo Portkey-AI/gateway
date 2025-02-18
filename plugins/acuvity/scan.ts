@@ -33,7 +33,7 @@ const getRedactionList = (parameters: PluginParameters): string[] => {
     parameters.secrets_redact &&
     parameters.secrets_categories
   ) {
-    for (const category of parameters.secrets.categories) {
+    for (const category of parameters.secrets_categories) {
       redactions.push(category);
     }
   }
