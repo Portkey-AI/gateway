@@ -750,10 +750,21 @@ export async function tryTargetsRecursively(
       } catch (err) {
         metadata = {};
       }
+
+      let params =
+        request instanceof FormData ||
+        request instanceof ReadableStream ||
+        request instanceof ArrayBuffer
+          ? {} // Send empty object if not JSON
+          : request;
+
       let conditionalRouter: ConditionalRouter;
       let finalTarget: Targets;
       try {
-        conditionalRouter = new ConditionalRouter(currentTarget, { metadata });
+        conditionalRouter = new ConditionalRouter(currentTarget, {
+          metadata,
+          params,
+        });
         finalTarget = conditionalRouter.resolveTarget();
       } catch (conditionalRouter: any) {
         throw new RouterError(conditionalRouter.message);
