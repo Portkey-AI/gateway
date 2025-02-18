@@ -11,6 +11,7 @@ import {
 } from './chatComplete';
 import { GOOGLE_VERTEX_AI } from '../../globals';
 import { createLineSplitter } from '../../handlers/streamHandlerUtils';
+import GoogleApiConfig from './api';
 
 const responseTransforms = {
   google: GoogleChatCompleteResponseTransform,
@@ -49,6 +50,8 @@ const getOpenAIBatchRow = ({
 export const BatchOutputRequestHandler: RequestHandler = async ({
   requestURL,
   providerOptions,
+  c,
+  requestBody,
 }) => {
   const { vertexProjectId, vertexRegion, vertexServiceAccountJson, apiKey } =
     providerOptions;
@@ -60,12 +63,17 @@ export const BatchOutputRequestHandler: RequestHandler = async ({
     projectId = vertexServiceAccountJson.project_id;
   }
 
+  const headers = await GoogleApiConfig.headers({
+    c,
+    fn: 'getBatchOutput',
+    providerOptions,
+    transformedRequestBody: requestBody,
+    transformedRequestUrl: requestURL,
+  });
+
   const options = {
     method: 'GET',
-    headers: {
-      Authorization: `Bearer ${authToken}`,
-      'Content-Type': 'application/json',
-    },
+    headers,
   };
 
   // URL: <gateway>/v1/batches/<batchId>/output
@@ -106,11 +114,11 @@ export const BatchOutputRequestHandler: RequestHandler = async ({
     throw new Error('Failed to retrieve batch output');
   }
 
-  const nodeStream = Stream.Readable.fromWeb(reader as NodeReadableStream);
+  const encoder = new TextEncoder();
 
   // Prepare a transform stream to process complete lines.
-  const responseStream = new Transform({
-    transform(chunk, _, callback) {
+  const responseStream = new TransformStream({
+    transform(chunk, controller) {
       let buffer;
       try {
         const json = JSON.parse(chunk.toString());
@@ -121,19 +129,20 @@ export const BatchOutputRequestHandler: RequestHandler = async ({
         });
         buffer = JSON.stringify(row);
       } catch (error) {
-        callback();
         return;
       }
-      this.push(buffer + '\n');
-      callback();
+      controller.enqueue(encoder.encode(buffer + '\n'));
+    },
+    flush(controller) {
+      controller.terminate();
     },
   });
 
   // Pipe the node stream through the line splitter and then to the response stream.
   const lineSplitter = createLineSplitter();
-  nodeStream.pipe(lineSplitter).pipe(responseStream);
+  reader.pipeThrough(lineSplitter).pipeTo(responseStream.writable);
 
-  return new Response(Stream.Readable.toWeb(responseStream) as ReadableStream, {
+  return new Response(responseStream.readable, {
     headers: { 'Content-Type': 'application/octet-stream' },
   });
 };
