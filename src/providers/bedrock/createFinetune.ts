@@ -1,76 +1,6 @@
 import { ErrorResponse, FinetuneRequest, ProviderConfig } from '../types';
 import { BedrockErrorResponseTransform } from './chatComplete';
-import { POWERED_BY } from '../../globals';
 import { BedrockErrorResponse } from './embed';
-
-const transform = (
-  values: FinetuneRequest & { roleArn?: string; job_name?: string }
-) => {
-  const config: Record<string, unknown> = {
-    customizationType: 'FINE_TUNING',
-    jobName: values.job_name,
-  };
-
-  if (values.model) {
-    const model = values.provider_options?.['model'] || values.model;
-    config.baseModelIdentifier = model;
-  }
-
-  if (values.suffix) {
-    config.customModelName = values.suffix;
-  }
-
-  if (values.hyperparameters) {
-    let hyperparameters = values?.hyperparameters ?? {};
-    if (!hyperparameters) {
-      const method = values.method?.type;
-      if (!method || !values.method?.[method]?.hyperparameters) {
-        return null;
-      }
-      hyperparameters = {
-        ...(values.method?.[method]?.hyperparameters ?? {}),
-      };
-    }
-    config.hyperParameters = {
-      ...(hyperparameters?.n_epochs
-        ? { epochCount: String(hyperparameters?.n_epochs) || null }
-        : {}),
-      ...(hyperparameters?.learning_rate_multiplier
-        ? {
-            learningRateMultiplier: Number(
-              hyperparameters?.learning_rate_multiplier
-            ),
-          }
-        : {}),
-      ...(hyperparameters?.batch_size
-        ? { batchSize: Number(hyperparameters?.batch_size) }
-        : {}),
-    };
-  }
-
-  if (values.training_file) {
-    config.trainingDataConfig = {
-      s3Uri: values.training_file,
-    };
-    config.outputDataConfig = {
-      s3Uri:
-        values.training_file.substring(
-          0,
-          values.training_file.lastIndexOf('/') + 1
-        ) + values.suffix,
-    };
-  }
-
-  if (values.validation_file) {
-    config.validationDataConfig = {
-      s3Uri: values.validation_file,
-    };
-  }
-
-  config.roleArn = values.roleArn;
-
-  return config;
-};
 
 export const BedrockCreateFinetuneConfig: ProviderConfig = {
   model: {
@@ -84,49 +14,80 @@ export const BedrockCreateFinetuneConfig: ProviderConfig = {
   hyperparameters: {
     param: 'hyperParameters',
     required: false,
+    transform: (value: FinetuneRequest) => {
+      const epochCount = value.hyperparameters?.n_epochs;
+      const learningRateMultiplier =
+        value.hyperparameters?.learning_rate_multiplier;
+      const batchSize = value.hyperparameters?.batch_size;
+      return {
+        epochCount: epochCount ? String(epochCount) : undefined,
+        learningRateMultiplier: learningRateMultiplier
+          ? String(learningRateMultiplier)
+          : undefined,
+        batchSize: batchSize ? String(batchSize) : undefined,
+      };
+    },
   },
   training_file: {
     param: 'trainingDataConfig',
     required: true,
+    transform: (value: FinetuneRequest) => {
+      return {
+        s3Uri: decodeURIComponent(value.training_file),
+      };
+    },
   },
   validation_file: {
     param: 'validationDataConfig',
     required: false,
+    transform: (value: FinetuneRequest) => {
+      return {
+        s3Uri: decodeURIComponent(value.validation_file ?? ''),
+      };
+    },
   },
-  method: {
-    param: 'method',
-    required: false,
+  output_file: {
+    param: 'outputDataConfig',
+    required: true,
+    default: (value: FinetuneRequest) => {
+      const trainingFile = decodeURIComponent(value.training_file);
+      const uri =
+        trainingFile.substring(0, trainingFile.lastIndexOf('/') + 1) +
+        value.suffix;
+      return {
+        s3Uri: uri,
+      };
+    },
   },
   job_name: {
     param: 'jobName',
     required: true,
+    default: (value: FinetuneRequest & { job_name: string }) => {
+      return value.job_name ?? `portkey-finetune-${crypto.randomUUID()}`;
+    },
+  },
+  role_arn: {
+    param: 'roleArn',
+    required: true,
+  },
+  customization_type: {
+    param: 'customizationType',
+    required: true,
+    default: 'FINE_TUNING',
   },
 };
 
 export const BedrockCreateFinetuneResponseTransform: (
   response: Response | ErrorResponse,
   responseStatus: number
-) => Response | ErrorResponse = (response, responseStatus) => {
-  if (responseStatus !== 200) {
+) => Record<string, unknown> | ErrorResponse = (response, responseStatus) => {
+  Response;
+  if (responseStatus !== 201 || 'error' in response) {
     return (
       BedrockErrorResponseTransform(response as BedrockErrorResponse) ||
-      response
+      (response as ErrorResponse)
     );
   }
 
-  return { id: (response as any).jobArn } as any;
-};
-
-export const BedrockRequestTransform = (
-  requestBody: FinetuneRequest & { roleArn?: string },
-  requestHeaders: Record<string, string>
-) => {
-  const bedrockRoleARN =
-    requestHeaders?.[`x-${POWERED_BY}-aws-bedrock-role-arn`];
-  const body = { ...requestBody };
-  if (bedrockRoleARN) {
-    body.roleArn = bedrockRoleARN;
-  }
-  const transformedBody = transform(body);
-  return transformedBody;
+  return { id: encodeURIComponent((response as any).jobArn) };
 };

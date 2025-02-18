@@ -1,12 +1,6 @@
-import { ProviderConfig, RequestHandler } from '../types';
-import GoogleApiConfig from './api';
+import { ProviderConfig } from '../types';
 import { GoogleBatchRecord } from './types';
-import {
-  fetchGoogleCustomEndpoint,
-  getModelAndProvider,
-  GoogleResponseHandler,
-  GoogleToOpenAIBatch,
-} from './utils';
+import { getModelAndProvider, GoogleToOpenAIBatch } from './utils';
 
 export const GoogleBatchCreateConfig: ProviderConfig = {
   model: {
@@ -64,69 +58,12 @@ export const GoogleBatchCreateConfig: ProviderConfig = {
   },
 };
 
-export const GoogleBatchCreateHandler: RequestHandler<Params> = async ({
-  c,
-  requestBody,
-  providerOptions,
-}) => {
-  const { vertexModelName, vertexProjectId, vertexRegion } = providerOptions;
-
-  let projectId = vertexProjectId;
-
-  const { model, provider } = getModelAndProvider(vertexModelName ?? '');
-
-  const createBatchesHeaders = await GoogleApiConfig.headers({
-    c,
-    providerOptions,
-    fn: 'createBatch',
-    transformedRequestBody: {},
-    transformedRequestUrl: '',
-    gatewayRequestBody: {},
-  });
-
-  const { Authorization } = createBatchesHeaders;
-
-  const inputFile = decodeURIComponent(
-    (requestBody?.['input_file_id'] as string) ?? ''
-  );
-  const providedOutputFile = decodeURIComponent(
-    (requestBody?.['output_file_id'] as string) ?? ''
-  );
-  const outputFile =
-    providedOutputFile ?? inputFile.split('.jsonl')[0] + `output`;
-  const body = {
-    inputConfig: {
-      instancesFormat: 'jsonl',
-      gcsSource: {
-        uris: inputFile,
-      },
-    },
-    outputConfig: {
-      predictionsFormat: 'jsonl',
-      gcsDestination: {
-        outputUriPrefix: outputFile,
-      },
-    },
-    displayName: crypto.randomUUID(),
-    model: `publishers/${provider}/models/${model}`,
-  };
-
-  const url = `https://${vertexRegion}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${vertexRegion}/batchPredictionJobs`;
-
-  const response = (await fetchGoogleCustomEndpoint({
-    url,
-    body,
-    method: 'POST',
-    authorization: Authorization,
-  })) as {
-    response: GoogleBatchRecord | null;
-    error: any;
-    status: number | null;
-  };
-
-  if (!response.response || response.error) {
-    return GoogleResponseHandler(response.error, response.status ?? 500);
+export const GoogleBatchCreateResponseTransform = (
+  response: Response,
+  responseStatus: number
+) => {
+  if (responseStatus === 200) {
+    return GoogleToOpenAIBatch(response as unknown as GoogleBatchRecord);
   }
-
-  return GoogleResponseHandler(GoogleToOpenAIBatch(response.response), 200);
+  return response;
 };

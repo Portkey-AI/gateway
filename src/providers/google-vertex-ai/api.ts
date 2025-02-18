@@ -104,6 +104,8 @@ export const GoogleApiConfig: ProviderAPIConfig = {
           return '';
         case 'createBatch':
           return `/v1/projects/${projectId}/locations/${vertexRegion}/batchPredictionJobs`;
+        case 'getBatchOutput':
+          return '';
         default:
           return '';
       }

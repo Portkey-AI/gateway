@@ -43,7 +43,6 @@ import {
 import {
   BedrockCreateFinetuneConfig,
   BedrockCreateFinetuneResponseTransform,
-  BedrockRequestTransform,
 } from './createFinetune';
 import {
   BedrockCohereEmbedConfig,
@@ -227,9 +226,6 @@ const BedrockConfig: ProviderConfigs = {
         ...commonResponseTransforms,
       };
     }
-    config.requestTransforms = {
-      createFinetune: BedrockRequestTransform,
-    };
     config.createBatch = BedrockCreateBatchConfig;
     config.createFinetune = BedrockCreateFinetuneConfig;
     config.cancelBatch = {};

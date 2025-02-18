@@ -46,6 +46,13 @@ const AWS_GET_METHODS: endpointStrings[] = [
   'retrieveFinetune',
 ];
 
+// Endpoints that does not require model parameter
+const BEDROCK_FINETUNE_ENDPOINTS: endpointStrings[] = [
+  'listFinetunes',
+  'retrieveFinetune',
+  'cancelFinetune',
+];
+
 const S3_ENDPOINTS: endpointStrings[] = [
   'retrieveFileContent',
   'getBatchOutput',
@@ -162,7 +169,9 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
       return `/model-invocation-job/${batchId}/stop`;
     }
     const { model, stream } = gatewayRequestBody;
-    if (!model) throw new GatewayError('Model is required');
+    if (!model && !BEDROCK_FINETUNE_ENDPOINTS.includes(fn as endpointStrings)) {
+      throw new GatewayError('Model is required');
+    }
     let mappedFn: string = fn;
     if (stream) {
       mappedFn = `stream-${fn}`;
@@ -177,6 +186,10 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
       endpoint = `/model/${model}/converse`;
       streamEndpoint = `/model/${model}/converse-stream`;
     }
+
+    const jobIdIndex = fn === 'cancelFinetune' ? -2 : -1;
+    const jobId = gatewayRequestURL.split('/').at(jobIdIndex);
+
     switch (mappedFn) {
       case 'chatComplete': {
         return endpoint;
@@ -212,13 +225,13 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
         return '/model-customization-jobs';
       }
       case 'retrieveFinetune': {
-        return `/model-customization-jobs/${c.req.param('jobId')}`;
+        return `/model-customization-jobs/${jobId}`;
       }
       case 'createFinetune': {
         return '/model-customization-jobs';
       }
       case 'cancelFinetune': {
-        return `/model-customization-jobs/${c.req.param('jobId')}/stop`;
+        return `/model-customization-jobs/${jobId}/stop`;
       }
       default:
         return '';

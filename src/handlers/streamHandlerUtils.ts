@@ -297,26 +297,27 @@ export const formDataToOctetStreamTransformer = (
   return transformStream;
 };
 
-export function createLineSplitter(): Transform {
+const decoder = new TextDecoder();
+
+export function createLineSplitter(): TransformStream {
   let leftover = '';
-  return new Transform({
-    decodeStrings: false,
-    transform(chunk, _, callback) {
+  return new TransformStream({
+    transform(_chunk, controller) {
+      const chunk = decoder.decode(_chunk);
       leftover += chunk.toString();
       const lines = leftover.split('\n');
       leftover = lines.pop() || '';
       for (const line of lines) {
         if (line.trim()) {
-          this.push(line);
+          controller.enqueue(line);
         }
       }
-      callback();
+      return;
     },
-    flush(callback) {
+    flush(controller) {
       if (leftover.trim()) {
-        this.push(leftover);
+        controller.enqueue(leftover);
       }
-      callback();
     },
   });
 }

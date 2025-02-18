@@ -1,4 +1,3 @@
-import crypto from 'node:crypto';
 import { getBoundaryFromContentType } from '../../handlers/streamHandlerUtils';
 import {
   BedrockUploadFileTransformerConfig,
@@ -337,7 +336,7 @@ export const BedrockUploadFileRequestHandler: RequestHandler<
         JSON.stringify({
           status: 'failure',
           message:
-            'Please make sure you have x-portkey-aws-s3-bucket, x-portkey-aws-s3-object-key and x-portkey-aws-bedrock-model headers provided.',
+            'Please make sure you have x-portkey-aws-s3-bucket and x-portkey-aws-bedrock-model headers provided.',
         }),
         {
           status: 400,

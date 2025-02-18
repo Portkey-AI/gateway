@@ -1,12 +1,5 @@
-// import { PassThrough, Transform } from 'stream';
-import { Stream, Transform } from 'stream';
-import { ReadableStream as NodeWebStream } from 'stream/web';
 import { RequestHandler } from '../types';
-import {
-  getAccessToken,
-  getModelAndProvider,
-  GoogleResponseHandler,
-} from './utils';
+import { getModelAndProvider, GoogleResponseHandler } from './utils';
 import {
   VertexAnthropicChatCompleteConfig,
   VertexGoogleChatCompleteConfig,
@@ -25,15 +18,17 @@ const PROVIDER_CONFIG = {
   endpoints: chatCompleteParams(['model']),
 };
 
+const encoder = new TextEncoder();
+
 export const GoogleFileUploadRequestHandler: RequestHandler<
-  NodeWebStream
+  ReadableStream
 > = async ({ c, providerOptions, requestBody, requestHeaders }) => {
   const { vertexStorageBucketName, filename, vertexModelName } =
     providerOptions;
 
   if (!vertexModelName || !vertexStorageBucketName) {
     return GoogleResponseHandler(
-      'Invalid request, please provide `x-portkey-vertex-provider-model` and `x-portkey-vertex-storage-bucket-name` in the request headers',
+      'Invalid request, please provide `x-portkey-provider-model` and `x-portkey-vertex-storage-bucket-name` in the request headers',
       400
     );
   }
@@ -49,16 +44,12 @@ export const GoogleFileUploadRequestHandler: RequestHandler<
     providerConfig = PROVIDER_CONFIG['endpoints'];
   }
 
-  // Convert web stream to node stream
-  const nodeStream = Stream.Readable.fromWeb(requestBody);
-
   // Create a reusable line splitter stream
   const lineSplitter = createLineSplitter();
 
   // Transform stream to process each complete line.
-  const bodyStream = new Transform({
-    decodeStrings: false,
-    transform(chunk, _, callback) {
+  const transformStream = new TransformStream({
+    transform: function (chunk, controller) {
       let buffer;
       try {
         const json = JSON.parse(chunk.toString());
@@ -75,15 +66,17 @@ export const GoogleFileUploadRequestHandler: RequestHandler<
         buffer = null;
       } finally {
         if (buffer) {
-          this.push(buffer + '\n');
+          controller.enqueue(encoder.encode(buffer + '\n'));
         }
-        callback();
       }
+    },
+    flush(controller) {
+      controller.terminate();
     },
   });
 
   // Pipe the node stream through our line splitter and into the transform stream.
-  nodeStream.pipe(lineSplitter).pipe(bodyStream);
+  requestBody.pipeThrough(lineSplitter).pipeTo(transformStream.writable);
 
   const providerHeaders = await GoogleApiConfig.headers({
     c,
@@ -98,7 +91,7 @@ export const GoogleFileUploadRequestHandler: RequestHandler<
   const url = `https://storage.googleapis.com/${vertexStorageBucketName}/${encodedFile}`;
 
   const options = {
-    body: Stream.Readable.toWeb(bodyStream) as ReadableStream,
+    body: transformStream.readable,
     headers: {
       Authorization: providerHeaders.Authorization,
       'Content-Type': 'application/octet-stream',
@@ -126,7 +119,6 @@ export const GoogleFileUploadRequestHandler: RequestHandler<
 
     return GoogleResponseHandler(response, 200);
   } catch (error) {
-    console.log(error, 'error');
     return new Response(
       JSON.stringify({ message: 'Something went wrong', success: false }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }

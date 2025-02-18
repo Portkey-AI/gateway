@@ -309,21 +309,25 @@ export const bedrockFinetuneToOpenAI = (finetune: BedrockFinetuneRecord) => {
     id: finetune.jobName,
     object: 'finetune',
     status: status,
-    created_at: finetune.creationTime,
-    finished_at: finetune.endTime,
+    created_at: new Date(finetune.creationTime).getTime(),
+    finished_at: new Date(finetune.endTime).getTime(),
     fine_tuned_model:
       finetune.outputModelArn ||
       finetune.outputModelName ||
       finetune.customModelArn,
     suffix: finetune.customModelName,
-    training_file: finetune?.trainingDataConfig?.s3Uri,
-    validation_file: finetune?.validationDataConfig?.s3Uri,
+    training_file: encodeURIComponent(
+      finetune?.trainingDataConfig?.s3Uri ?? ''
+    ),
+    validation_file: encodeURIComponent(
+      finetune?.validationDataConfig?.s3Uri ?? ''
+    ),
     hyperparameters: {
       learning_rate_multiplier: Number(finetune?.hyperParameters?.learningRate),
       batch_size: Number(finetune?.hyperParameters?.batchSize),
       n_epochs: Number(finetune?.hyperParameters?.epochCount),
     },
-    error: finetune?.failureMessage,
+    error: finetune?.failureMessage ?? {},
   };
 };
 

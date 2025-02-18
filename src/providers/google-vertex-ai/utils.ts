@@ -314,7 +314,9 @@ export const GoogleToOpenAIBatch = (response: GoogleBatchRecord) => {
     id: jobId,
     object: 'batch',
     endpoint: '/generateContent',
-    input_file_id: response.inputConfig.gcsSource?.uris?.at(0),
+    input_file_id: encodeURIComponent(
+      response.inputConfig.gcsSource?.uris?.at(0) ?? ''
+    ),
     completion_window: null,
     status: googleBatchStatusToOpenAI(response.state),
     output_file_id: outputFileId,
