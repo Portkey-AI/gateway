@@ -77,12 +77,14 @@ export const BedrockCreateFinetuneConfig: ProviderConfig = {
   },
 };
 
+const OK_STATUS = [200, 201];
+
 export const BedrockCreateFinetuneResponseTransform: (
   response: Response | ErrorResponse,
   responseStatus: number
 ) => Record<string, unknown> | ErrorResponse = (response, responseStatus) => {
   Response;
-  if (responseStatus !== 201 || 'error' in response) {
+  if (!OK_STATUS.includes(responseStatus) || 'error' in response) {
     return (
       BedrockErrorResponseTransform(response as BedrockErrorResponse) ||
       (response as ErrorResponse)
