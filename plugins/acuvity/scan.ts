@@ -125,11 +125,13 @@ export const handler: PluginHandler = async (
     // Loop through all extractions
     for (const extraction of result.extractions) {
       // Evaluate parameters for current extraction
-      guardResults = evaluateAllParameters(
+      const currentResults = evaluateAllParameters(
         extraction,
         parameters,
         responseHelper
       );
+      // Add all results from current iteration to the main Set
+      currentResults.forEach((result) => guardResults.add(result));
     }
 
     data = result.summary;
