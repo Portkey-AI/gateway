@@ -133,18 +133,17 @@ export const handler: PluginHandler = async (
     }
 
     data = result.summary;
+    let hasPII = guardResults.has(GuardName.PII_DETECTOR);
 
+    if (redactionList.length > 0 && hasPII) {
+      setCurrentContentPart(context, eventType, transformedData, respTextArray);
+      transformed = true;
+    }
     // check if only PII/Secrets is enabled with redaction,
     // if yes then return the redacted data with verdict = true.
     // else verdict = false, as we found other detections.
-    if (
-      guardResults.size == 1 &&
-      redactionList.length > 0 &&
-      guardResults.has(GuardName.PII_DETECTOR)
-    ) {
+    if (guardResults.size == 1 && redactionList.length > 0 && hasPII) {
       verdict = true;
-      setCurrentContentPart(context, eventType, transformedData, respTextArray);
-      transformed = true;
     } else if (guardResults.size > 0) {
       // for the other detections.
       verdict = false;
@@ -169,7 +168,7 @@ function evaluateAllParameters(
     const check = responseHelper.evaluate(
       extraction,
       GuardName.PROMPT_INJECTION,
-      parameters.prompt_injection_threshold || 0.5
+      parameters.prompt_injection_threshold || 0.0
     );
     if (check.matched) {
       guardTypes.add(GuardName.PROMPT_INJECTION);
@@ -181,7 +180,7 @@ function evaluateAllParameters(
     const check = responseHelper.evaluate(
       extraction,
       GuardName.TOXIC,
-      parameters.toxic_threshold || 0.5
+      parameters.toxic_threshold || 0.0
     );
     if (check.matched) {
       guardTypes.add(GuardName.TOXIC);
@@ -193,7 +192,7 @@ function evaluateAllParameters(
     const check = responseHelper.evaluate(
       extraction,
       GuardName.JAIL_BREAK,
-      parameters.jail_break_threshold || 0.5
+      parameters.jail_break_threshold || 0.0
     );
     if (check.matched) {
       guardTypes.add(GuardName.JAIL_BREAK);
@@ -205,7 +204,7 @@ function evaluateAllParameters(
     const check = responseHelper.evaluate(
       extraction,
       GuardName.MALICIOUS_URL,
-      parameters.malicious_url_threshold || 0.5
+      parameters.malicious_url_threshold || 0.0
     );
     if (check.matched) {
       guardTypes.add(GuardName.MALICIOUS_URL);
@@ -217,7 +216,7 @@ function evaluateAllParameters(
     const check = responseHelper.evaluate(
       extraction,
       GuardName.BIASED,
-      parameters.biased_threshold || 0.5
+      parameters.biased_threshold || 0.0
     );
     if (check.matched) {
       guardTypes.add(GuardName.BIASED);
@@ -229,7 +228,7 @@ function evaluateAllParameters(
     const check = responseHelper.evaluate(
       extraction,
       GuardName.HARMFUL_CONTENT,
-      parameters.harmful_threshold || 0.5
+      parameters.harmful_threshold || 0.0
     );
     if (check.matched) {
       guardTypes.add(GuardName.HARMFUL_CONTENT);
@@ -255,7 +254,7 @@ function evaluateAllParameters(
       const check = responseHelper.evaluate(
         extraction,
         GuardName.PII_DETECTOR,
-        0.5,
+        0.0,
         category.toLowerCase()
       );
       if (check.matched) {
@@ -271,7 +270,7 @@ function evaluateAllParameters(
       const check = responseHelper.evaluate(
         extraction,
         GuardName.SECRETS_DETECTOR,
-        0.5,
+        0.0,
         category.toLowerCase()
       );
       if (check.matched) {

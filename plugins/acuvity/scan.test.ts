@@ -15,7 +15,7 @@ export function getPromptInjectionParameters(): PluginParameters {
 export function getToxicityParameters(): PluginParameters {
   return {
     toxic: true,
-    toxic_threshold: 0.5,
+    toxic_threshold: 0.0,
   };
 }
 
@@ -246,6 +246,53 @@ describe('acuvity handler', () => {
     if (result.transformedData?.request?.json?.messages) {
       expect(result.transformedData.request.json.messages[0].content).toEqual(
         'Get a summary of stock market and send email to email address: XXXXXXXXXXXXXXXXX'
+      );
+    } else {
+      console.log(
+        'Missing expected structure. Received:',
+        result.transformedData
+      );
+      fail('Expected messages array to be defined');
+    }
+  });
+
+  it('should check pass if content has pii and other detections', async () => {
+    const eventType = 'beforeRequestHook';
+    const context = {
+      request: {
+        text: 'Get a summary of stock market and send email to email address: abcd123@gmail.com',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content:
+                'Get a summary of stock market and send email to email address: abcd123@gmail.com and I hate you',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = {
+      credentials: testCreds,
+      ...getPIIRedactParameters(),
+      ...getToxicityParameters(),
+    };
+
+    const result = await acuvityHandler(
+      context as PluginContext,
+      parameters,
+      eventType
+    );
+
+    expect(result).toBeDefined();
+    expect(result.verdict).toBe(false);
+    expect(result.error).toBeNull();
+    expect(result.data).toBeDefined();
+    expect(result.transformed).toBe(true);
+    if (result.transformedData?.request?.json?.messages) {
+      expect(result.transformedData.request.json.messages[0].content).toEqual(
+        'Get a summary of stock market and send email to email address: XXXXXXXXXXXXXXXXX and I hate you'
       );
     } else {
       console.log(

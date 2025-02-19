@@ -106,8 +106,10 @@ export class ResponseHelper {
         guardName.equals(GuardName.BIASED) ||
         guardName.equals(GuardName.HARMFUL_CONTENT)
       ) {
-        const prefix = `content/${guardName}`;
-        [exists, value] = this.getGuardValue(extraction.topics, prefix);
+        [exists, value] = this.getGuardValue(
+          extraction.malcontents,
+          guardName.toString().toLowerCase()
+        );
       } else if (guardName.equals(GuardName.LANGUAGE)) {
         if (matchName) {
           [exists, value] = this.getGuardValue(extraction.languages, matchName);

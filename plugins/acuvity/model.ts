@@ -123,6 +123,17 @@ export type Extraction = {
    */
   languages?: { [k: string]: number } | undefined;
   /**
+   * The various malcontents attempts.
+   *
+   * @remarks
+   *
+   * The current list can be obtained through the analyzers API by searching for
+   * detector groups 'Malcontents' accross all analyzers.
+   *
+   * Example of malcontents: biased, harmful, toxic.
+   */
+  malcontents?: { [k: string]: number } | undefined;
+  /**
    * The modalities of data detected in the data.
    */
   modalities?: Array<Modality> | undefined;
