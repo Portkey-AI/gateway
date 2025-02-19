@@ -32,7 +32,7 @@ export const handler: PluginHandler = async (
   }
 
   // TODO: Update to v1 once released
-  const url = `https://ai-guard.${parameters.credentials.domain}/v1beta/text/guard`;
+  const url = `https://ai-guard.${parameters.credentials.domain}/v1/text/guard`;
 
   const text = getText(context, eventType);
   if (!text) {
