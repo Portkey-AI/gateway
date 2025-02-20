@@ -896,6 +896,7 @@ export function constructConfigFromRequestHeaders(
     openaiBeta:
       requestHeaders[`x-${POWERED_BY}-openai-beta`] ||
       requestHeaders[`openai-beta`],
+    azureCustomUri: requestHeaders[`x-${POWERED_BY}-azure-custom-uri`],
   };
 
   const stabilityAiConfig = {
