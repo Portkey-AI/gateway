@@ -108,6 +108,9 @@ export const AzureOpenAIChatCompleteConfig: ProviderConfig = {
   reasoning_effort: {
     param: 'reasoning_effort',
   },
+  stream_options: {
+    param: 'stream_options',
+  },
 };
 
 interface AzureOpenAIChatCompleteResponse extends ChatCompletionResponse {}

@@ -1,3 +1,7 @@
+import { AZURE_OPEN_AI } from '../../globals';
+import { OpenAIErrorResponseTransform } from '../openai/utils';
+import { ErrorResponse } from '../types';
+
 export async function getAccessTokenFromEntraId(
   tenantId: string,
   clientId: string,
@@ -58,3 +62,14 @@ export async function getAzureManagedIdentityToken(
     console.log({ error });
   }
 }
+
+export const AzureOpenAIResponseTransform: (
+  response: Response | ErrorResponse,
+  responseStatus: number
+) => Response | ErrorResponse = (response, responseStatus) => {
+  if (responseStatus !== 200 && 'error' in response) {
+    return OpenAIErrorResponseTransform(response, AZURE_OPEN_AI);
+  }
+
+  return response;
+};

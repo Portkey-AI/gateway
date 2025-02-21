@@ -22,7 +22,11 @@ export const handler: PluginHandler = async (
       input: getText(context, eventType),
     };
 
-    const result = await postPromptfoo<HarmResult>('harm', harmObject);
+    const result = await postPromptfoo<HarmResult>(
+      'harm',
+      harmObject,
+      parameters.timeout
+    );
 
     // If any harm category is flagged, set verdict to false
     if (result.results[0].flagged) {

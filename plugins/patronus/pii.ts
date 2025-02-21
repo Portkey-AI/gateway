@@ -44,7 +44,7 @@ export function maskEntities(
   return result;
 }
 
-const redactPii = async (text: string, credentials: any) => {
+const redactPii = async (text: string, credentials: any, timeout?: number) => {
   if (!text) return { maskedText: null, data: null };
   const evaluator = 'pii';
   const evaluationBody: any = {
@@ -54,7 +54,8 @@ const redactPii = async (text: string, credentials: any) => {
   const result: any = await postPatronus(
     evaluator,
     credentials,
-    evaluationBody
+    evaluationBody,
+    timeout
   );
 
   const evalResult = result.results[0];
@@ -115,7 +116,9 @@ export const handler: PluginHandler = async (
     }
 
     const results = await Promise.all(
-      textArray.map((text) => redactPii(text, parameters.credentials))
+      textArray.map((text) =>
+        redactPii(text, parameters.credentials, parameters.timeout)
+      )
     );
 
     const hasPII = results.some(

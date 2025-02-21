@@ -7,6 +7,7 @@ import {
   ToolCall,
   ToolChoice,
   SYSTEM_MESSAGE_ROLES,
+  MESSAGE_ROLES,
 } from '../../types/requestBody';
 import { buildGoogleSearchRetrievalTool } from '../google-vertex-ai/chatComplete';
 import {
@@ -359,7 +360,13 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
           recursivelyDeleteUnsupportedParameters(tool.function?.parameters);
           delete tool.function?.strict;
 
-          if (tool.function.name === 'googleSearchRetrieval') {
+          if (['googleSearch', 'google_search'].includes(tool.function.name)) {
+            tools.push({ googleSearch: {} });
+          } else if (
+            ['googleSearchRetrieval', 'google_search_retrieval'].includes(
+              tool.function.name
+            )
+          ) {
             tools.push(buildGoogleSearchRetrievalTool(tool));
           } else {
             functionDeclarations.push(tool.function);
@@ -466,6 +473,7 @@ interface GoogleResponseCandidate {
 }
 
 interface GoogleGenerateContentResponse {
+  modelVersion: string;
   candidates: GoogleResponseCandidate[];
   promptFeedback: {
     safetyRatings: {
@@ -522,48 +530,39 @@ export const GoogleChatCompleteResponseTransform: (
       id: 'portkey-' + crypto.randomUUID(),
       object: 'chat_completion',
       created: Math.floor(Date.now() / 1000),
-      model: 'Unknown',
+      model: response.modelVersion,
       provider: 'google',
       choices:
         response.candidates?.map((generation, idx) => {
-          const containsChainOfThoughtMessage =
-            generation.content?.parts.length > 1;
-          let message: Message = { role: 'assistant', content: '' };
-          if (generation.content?.parts[0]?.text) {
-            let content: string = generation.content.parts[0]?.text;
-            if (
-              containsChainOfThoughtMessage &&
-              generation.content.parts[1]?.text
-            ) {
-              if (strictOpenAiCompliance)
-                content = generation.content.parts[1]?.text;
-              else
-                content =
-                  generation.content.parts[0]?.text +
-                  '\r\n\r\n' +
-                  generation.content.parts[1]?.text;
+          // transform tool calls and content by iterating over the content parts
+          let toolCalls: ToolCall[] = [];
+          let content: string | undefined;
+          for (const part of generation.content?.parts ?? []) {
+            if (part.functionCall) {
+              toolCalls.push({
+                id: 'portkey-' + crypto.randomUUID(),
+                type: 'function',
+                function: {
+                  name: part.functionCall.name,
+                  arguments: JSON.stringify(part.functionCall.args),
+                },
+              });
+            } else if (part.text) {
+              // if content is already set to the chain of thought message and the user requires both the CoT message and the completion, we need to append the completion to the CoT message
+              if (content?.length && !strictOpenAiCompliance) {
+                content += '\r\n\r\n' + part.text;
+              } else {
+                // if content is already set to CoT, but user requires only the completion, we need to set content to the completion
+                content = part.text;
+              }
             }
-            message = {
-              role: 'assistant',
-              content,
-            };
-          } else if (generation.content?.parts[0]?.functionCall) {
-            message = {
-              role: 'assistant',
-              tool_calls: generation.content.parts.map((part) => {
-                if (part.functionCall) {
-                  return {
-                    id: 'portkey-' + crypto.randomUUID(),
-                    type: 'function',
-                    function: {
-                      name: part.functionCall.name,
-                      arguments: JSON.stringify(part.functionCall.args),
-                    },
-                  };
-                }
-              }),
-            };
           }
+
+          const message = {
+            role: MESSAGE_ROLES.ASSISTANT,
+            ...(toolCalls.length && { tool_calls: toolCalls }),
+            ...(content && { content }),
+          };
           const logprobsContent: Logprobs[] | null =
             transformVertexLogprobs(generation);
           let logprobs;
@@ -625,12 +624,21 @@ export const GoogleChatCompleteStreamChunkTransform: (
 
   const parsedChunk: GoogleGenerateContentResponse = JSON.parse(chunk);
 
+  let usageMetadata;
+  if (parsedChunk.usageMetadata) {
+    usageMetadata = {
+      prompt_tokens: parsedChunk.usageMetadata.promptTokenCount,
+      completion_tokens: parsedChunk.usageMetadata.candidatesTokenCount,
+      total_tokens: parsedChunk.usageMetadata.totalTokenCount,
+    };
+  }
+
   return (
     `data: ${JSON.stringify({
       id: fallbackId,
       object: 'chat.completion.chunk',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: parsedChunk.modelVersion,
       provider: 'google',
       choices:
         parsedChunk.candidates?.map((generation, index) => {
@@ -689,11 +697,9 @@ export const GoogleChatCompleteStreamChunkTransform: (
               : {}),
           };
         }) ?? [],
-      usage: {
-        prompt_tokens: parsedChunk.usageMetadata.promptTokenCount,
-        completion_tokens: parsedChunk.usageMetadata.candidatesTokenCount,
-        total_tokens: parsedChunk.usageMetadata.totalTokenCount,
-      },
+      ...(parsedChunk.usageMetadata?.candidatesTokenCount && {
+        usage: usageMetadata,
+      }),
     })}` + '\n\n'
   );
 };

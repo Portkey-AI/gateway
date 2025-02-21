@@ -22,6 +22,8 @@ import {
 } from './createSpeech';
 import { AzureOpenAICreateTranscriptionResponseTransform } from './createTranscription';
 import { AzureOpenAICreateTranslationResponseTransform } from './createTranslation';
+import { AzureOpenAIResponseTransform } from './utils';
+import { AzureOpenAIRequestTransform } from './uploadFile';
 
 const AzureOpenAIConfig: ProviderConfigs = {
   complete: AzureOpenAICompleteConfig,
@@ -42,6 +44,14 @@ const AzureOpenAIConfig: ProviderConfigs = {
     createTranscription: AzureOpenAICreateTranscriptionResponseTransform,
     createTranslation: AzureOpenAICreateTranslationResponseTransform,
     realtime: {},
+    uploadFile: AzureOpenAIResponseTransform,
+    listFiles: AzureOpenAIResponseTransform,
+    retrieveFile: AzureOpenAIResponseTransform,
+    deleteFile: AzureOpenAIResponseTransform,
+    retrieveFileContent: AzureOpenAIResponseTransform,
+  },
+  requestTransforms: {
+    uploadFile: AzureOpenAIRequestTransform,
   },
 };
 

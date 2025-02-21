@@ -19,7 +19,7 @@ const maskPiiEntries = (text: string, piiEntries: PIIEntity[]): string => {
   }, text);
 };
 
-export const redactPii = async (text: string) => {
+export const redactPii = async (text: string, timeout?: number) => {
   if (!text) {
     return { maskedText: null, data: null };
   }
@@ -27,7 +27,7 @@ export const redactPii = async (text: string) => {
     input: text,
   };
 
-  const result = await postPromptfoo<PIIResult>('pii', piiObject);
+  const result = await postPromptfoo<PIIResult>('pii', piiObject, timeout);
   const piiResult = result.results[0];
 
   if (piiResult.flagged) {
@@ -84,7 +84,9 @@ export const handler: PluginHandler = async (
     }
 
     const redact = parameters.redact || false;
-    const results = await Promise.all(textArray.map(redactPii));
+    const results = await Promise.all(
+      textArray.map((text) => redactPii(text, parameters.timeout))
+    );
 
     const hasPII = results.some((result) => result?.data?.flagged);
     let shouldBlock = hasPII;
