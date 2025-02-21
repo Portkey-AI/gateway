@@ -1,8 +1,6 @@
-import { Stream, Transform } from 'node:stream';
 import { RequestHandler } from '../types';
 import { GoogleBatchRecord } from './types';
-import { getAccessToken, getModelAndProvider } from './utils';
-import { ReadableStream as NodeReadableStream } from 'node:stream/web';
+import { getModelAndProvider } from './utils';
 import { responseTransformers } from '../open-ai-base';
 import {
   GoogleChatCompleteResponseTransform,
@@ -53,15 +51,7 @@ export const BatchOutputRequestHandler: RequestHandler = async ({
   c,
   requestBody,
 }) => {
-  const { vertexProjectId, vertexRegion, vertexServiceAccountJson, apiKey } =
-    providerOptions;
-  let authToken = apiKey;
-  let projectId = vertexProjectId;
-
-  if (vertexServiceAccountJson) {
-    authToken = await getAccessToken(vertexServiceAccountJson);
-    projectId = vertexServiceAccountJson.project_id;
-  }
+  const { vertexProjectId, vertexRegion } = providerOptions;
 
   const headers = await GoogleApiConfig.headers({
     c,
@@ -79,7 +69,7 @@ export const BatchOutputRequestHandler: RequestHandler = async ({
   // URL: <gateway>/v1/batches/<batchId>/output
   const batchId = requestURL.split('/').at(-2);
 
-  const batchDetailsURL = `https://${vertexRegion}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${vertexRegion}/batchPredictionJobs/${batchId}`;
+  const batchDetailsURL = `https://${vertexRegion}-aiplatform.googleapis.com/v1/projects/${vertexProjectId}/locations/${vertexRegion}/batchPredictionJobs/${batchId}`;
   let modelName;
   let outputURL;
   try {
