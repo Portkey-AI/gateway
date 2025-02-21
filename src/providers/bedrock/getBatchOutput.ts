@@ -4,12 +4,29 @@ import BedrockAPIConfig from './api';
 import { BedrockGetBatchResponse } from './types';
 import { getOctetStreamToOctetStreamTransformer } from '../../handlers/streamHandlerUtils';
 import { BedrockUploadFileResponseTransforms } from './uploadFileUtils';
+import { BEDROCK } from '../../globals';
 
-const getRowTransform = (provider: string) => {
+const getModelProvider = (modelId: string) => {
+  let provider = '';
+  if (modelId.includes('llama2')) provider = 'llama2';
+  else if (modelId.includes('llama3')) provider = 'llama3';
+  else if (modelId.includes('titan')) provider = 'titan';
+  else if (modelId.includes('mistral')) provider = 'mistral';
+  else if (modelId.includes('anthropic')) provider = 'anthropic';
+  else if (modelId.includes('ai21')) provider = 'ai21';
+  else if (modelId.includes('cohere')) provider = 'cohere';
+  else throw new Error('Invalid model slug');
+  return provider;
+};
+
+const getRowTransform = (modelId: string) => {
+  const provider = getModelProvider(modelId);
   return (row: Record<string, any>) => {
+    if (!row.modelOutput && row.error) return row.error;
     const transformedResponse = BedrockUploadFileResponseTransforms[provider](
       row.modelOutput
     );
+    transformedResponse.model = modelId;
     return {
       id: row.modelOutput.id,
       custom_id: row.recordId,
@@ -40,6 +57,7 @@ export const BedrockGetBatchOutputRequestHandler = async ({
       providerOptions,
       fn: 'retrieveBatch',
       c,
+      gatewayRequestURL: requestURL,
     });
     const batchId = requestURL.split('/v1/batches/')[1].replace('/output', '');
     const retrieveBatchURL = `${baseUrl}/model-invocation-job/${batchId}`;
@@ -66,8 +84,10 @@ export const BedrockGetBatchOutputRequestHandler = async ({
     const inputS3URIParts =
       batchDetails.inputDataConfig.s3InputDataConfig.s3Uri.split('/');
 
-    const awsS3ObjectKey = `${jobId}/${inputS3URIParts[inputS3URIParts.length - 1]}.out`;
-    const awsModelProvider = batchDetails.modelId.split('/')[1].split('.')[0];
+    const primaryKey = outputFileId?.replace(`s3://${awsS3Bucket}/`, '') ?? '';
+
+    const awsS3ObjectKey = `${primaryKey}${jobId}/${inputS3URIParts[inputS3URIParts.length - 1]}.out`;
+    const awsModelProvider = batchDetails.modelId;
 
     const s3FileURL = `https://${awsS3Bucket}.s3.${awsRegion}.amazonaws.com/${awsS3ObjectKey}`;
     const s3FileHeaders = await BedrockAPIConfig.headers({
@@ -101,20 +121,32 @@ export const BedrockGetBatchOutputRequestHandler = async ({
       const body = await s3FileResponse.text();
       throw new Error(body);
     }
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error }), {
-      headers: {
-        'content-type': 'application/json',
-      },
+  } catch (error: any) {
+    let errorResponse;
+
+    try {
+      errorResponse = JSON.parse(error.message);
+      errorResponse.provider = BEDROCK;
+    } catch (_e) {
+      errorResponse = {
+        error: {
+          message: error.message,
+          type: null,
+          param: null,
+          code: 500,
+        },
+        provider: BEDROCK,
+      };
+    }
+    return new Response(JSON.stringify(errorResponse), {
       status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
   }
 };
 
-export const BedrockGetBatchOutputResponseTransform = async ({
-  response,
-}: {
-  response: Response;
-}) => {
+export const BedrockGetBatchOutputResponseTransform = (response: Response) => {
   return response;
 };

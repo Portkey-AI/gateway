@@ -1,3 +1,4 @@
+import { Transform } from 'node:stream';
 /**
  * Returns the boundary from the content-type header of a multipart/form-data request.
  * @param contentType - The content-type header of the original request.
@@ -295,3 +296,28 @@ export const formDataToOctetStreamTransformer = (
   });
   return transformStream;
 };
+
+const decoder = new TextDecoder();
+
+export function createLineSplitter(): TransformStream {
+  let leftover = '';
+  return new TransformStream({
+    transform(_chunk, controller) {
+      const chunk = decoder.decode(_chunk);
+      leftover += chunk.toString();
+      const lines = leftover.split('\n');
+      leftover = lines.pop() || '';
+      for (const line of lines) {
+        if (line.trim()) {
+          controller.enqueue(line);
+        }
+      }
+      return;
+    },
+    flush(controller) {
+      if (leftover.trim()) {
+        controller.enqueue(leftover);
+      }
+    },
+  });
+}

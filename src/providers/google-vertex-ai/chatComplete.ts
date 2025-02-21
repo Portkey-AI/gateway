@@ -988,6 +988,7 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
   chunk = chunk.replace(/^event: content_block_start[\r\n]*/, '');
   chunk = chunk.replace(/^event: message_delta[\r\n]*/, '');
   chunk = chunk.replace(/^event: message_start[\r\n]*/, '');
+  chunk = chunk.replace(/^event: error[\r\n]*/, '');
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
 

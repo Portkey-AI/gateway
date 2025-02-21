@@ -1,10 +1,15 @@
 import { handler as textGuardContentHandler } from './textGuard';
 import { handler as piiHandler } from './pii';
-import testCreds from './.creds.json';
+import testCredsFile from './.creds.json';
 import { HookEventType, PluginContext } from '../types';
 
 const options = {
   env: {},
+};
+
+const testCreds = {
+  domain: testCredsFile.domain,
+  apiKey: testCredsFile.guardApiKey,
 };
 
 describe('textGuardContentHandler', () => {
@@ -90,7 +95,7 @@ describe('textGuardContentHandler', () => {
     const parameters = {
       credentials: {
         domain: testCreds.domain,
-        apiKey: testCreds.guardApiKey,
+        apiKey: testCreds.apiKey,
       },
     };
     const result = await textGuardContentHandler(
@@ -113,7 +118,7 @@ describe('textGuardContentHandler', () => {
     const parameters = {
       credentials: {
         domain: testCreds.domain,
-        apiKey: testCreds.guardApiKey,
+        apiKey: testCreds.apiKey,
       },
       recipe: ' ',
     };
@@ -139,7 +144,7 @@ describe('textGuardContentHandler', () => {
     const parameters = {
       credentials: {
         domain: testCreds.domain,
-        apiKey: testCreds.guardApiKey,
+        apiKey: testCreds.apiKey,
       },
     };
     const result = await textGuardContentHandler(
@@ -161,7 +166,7 @@ describe('textGuardContentHandler', () => {
     const parameters = {
       credentials: {
         domain: testCreds.domain,
-        apiKey: testCreds.guardApiKey,
+        apiKey: testCreds.apiKey,
       },
     };
     const result = await textGuardContentHandler(
@@ -184,7 +189,7 @@ describe('textGuardContentHandler', () => {
     const parameters = {
       credentials: {
         domain: testCreds.domain,
-        apiKey: testCreds.guardApiKey,
+        apiKey: testCreds.apiKey,
       },
       recipe: 'invalid_recipe',
     };

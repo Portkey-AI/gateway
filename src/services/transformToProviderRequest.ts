@@ -97,12 +97,14 @@ export const transformUsingProviderConfig = (
         paramConfig.required &&
         paramConfig.default !== undefined
       ) {
+        let value;
+        if (typeof paramConfig.default === 'function') {
+          value = paramConfig.default(params);
+        } else {
+          value = paramConfig.default;
+        }
         // Set the transformed parameter to the default value
-        setNestedProperty(
-          transformedRequest,
-          paramConfig.param,
-          paramConfig.default
-        );
+        setNestedProperty(transformedRequest, paramConfig.param, value);
       }
     }
   }
@@ -171,7 +173,13 @@ const transformToProviderRequestFormData = (
         paramConfig.required &&
         paramConfig.default !== undefined
       ) {
-        formData.append(paramConfig.param, paramConfig.default);
+        let value;
+        if (typeof paramConfig.default === 'function') {
+          value = paramConfig.default(params);
+        } else {
+          value = paramConfig.default;
+        }
+        formData.append(paramConfig.param, value);
       }
     }
   }
