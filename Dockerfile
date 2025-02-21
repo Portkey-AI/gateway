@@ -7,6 +7,12 @@ WORKDIR /app
 # Copy package.json and package-lock.json to the working directory
 COPY package*.json ./
 
+# Upgrade system packages
+RUN apk update && apk upgrade --no-cache
+
+# Upgrade npm to version 10.9.2
+RUN npm install -g npm@10.9.2
+
 # Install app dependencies
 RUN npm install
 
@@ -20,6 +26,12 @@ RUN npm run build \
 
 # Use the official Node.js runtime as a parent image
 FROM node:20-alpine
+
+# Upgrade system packages
+RUN apk update && apk upgrade --no-cache
+
+# Upgrade npm to version 10.9.2
+RUN npm install -g npm@10.9.2
 
 # Set the working directory in the container
 WORKDIR /app
