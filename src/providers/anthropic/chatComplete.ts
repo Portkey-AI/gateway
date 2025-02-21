@@ -162,6 +162,8 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                       });
                     }
                   }
+                } else {
+                  transformedMessage.content.push(item);
                 }
               });
               messages.push(transformedMessage as Message);
@@ -342,6 +344,14 @@ export interface AnthropicChatCompleteStreamResponse {
     text: string;
     partial_json?: string;
     stop_reason?: string;
+    citation?: {
+      type: string;
+      cited_text: string;
+      document_index: number;
+      document_title: string;
+      start_char_index: number;
+      end_char_index: number;
+    };
   };
   content_block?: {
     type: string;
@@ -388,8 +398,15 @@ export const AnthropicErrorResponseTransform: (
 // TODO: The token calculation is wrong atm
 export const AnthropicChatCompleteResponseTransform: (
   response: AnthropicChatCompleteResponse | AnthropicErrorResponse,
-  responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean
+) => ChatCompletionResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  strictOpenAiCompliance
+) => {
   if (responseStatus !== 200) {
     const errorResposne = AnthropicErrorResponseTransform(
       response as AnthropicErrorResponse
@@ -408,9 +425,25 @@ export const AnthropicChatCompleteResponseTransform: (
     const shouldSendCacheUsage =
       cache_creation_input_tokens || cache_read_input_tokens;
 
-    let content = '';
+    let content;
     if (response.content.length && response.content[0].type === 'text') {
       content = response.content[0].text;
+    }
+
+    content = response.content.reduce((acc, item) => {
+      if (item.type === 'text') {
+        acc += item.text;
+      }
+      return acc;
+    }, '');
+
+    if (!strictOpenAiCompliance) {
+      content = [];
+      response.content.forEach((item) => {
+        if (item.type === 'text') {
+          content.push(item);
+        }
+      });
     }
 
     let toolCalls: any = [];
@@ -467,8 +500,14 @@ export const AnthropicChatCompleteResponseTransform: (
 export const AnthropicChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
-  streamState: AnthropicStreamState
-) => string | undefined = (responseChunk, fallbackId, streamState) => {
+  streamState: AnthropicStreamState,
+  strictOpenAiCompliance: boolean
+) => string | undefined = (
+  responseChunk,
+  fallbackId,
+  streamState,
+  strictOpenAiCompliance
+) => {
   let chunk = responseChunk.trim();
   if (
     chunk.startsWith('event: ping') ||
@@ -626,8 +665,12 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           delta: {
             content: parsedChunk.delta?.text,
             tool_calls: toolCalls.length ? toolCalls : undefined,
+            ...(parsedChunk.delta?.type === 'citations_delta' &&
+              !strictOpenAiCompliance && {
+                citation: parsedChunk.delta?.citation,
+              }),
           },
-          index: 0,
+          index: parsedChunk.index,
           logprobs: null,
           finish_reason: parsedChunk.delta?.stop_reason ?? null,
         },
