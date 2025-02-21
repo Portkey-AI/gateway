@@ -71,7 +71,7 @@ export const GoogleApiConfig: ProviderAPIConfig = {
     fn,
     gatewayRequestBodyJSON: gatewayRequestBody,
     providerOptions,
-    c,
+    gatewayRequestURL,
   }) => {
     const { vertexProjectId, vertexRegion, vertexServiceAccountJson } =
       providerOptions;
@@ -82,7 +82,14 @@ export const GoogleApiConfig: ProviderAPIConfig = {
     }
 
     if (NON_INFERENCE_ENDPOINTS.includes(fn)) {
-      const jobId = c.req.param('id');
+      const jobIdIndex = ['cancelBatch'].includes(fn) ? -2 : -1;
+      const jobId = gatewayRequestURL.split('/').at(jobIdIndex);
+
+      const url = new URL(gatewayRequestURL);
+      const searchParams = url.searchParams;
+      const pageSize = searchParams.get('limit') ?? 20;
+      const after = searchParams.get('after') ?? '';
+
       let projectId = vertexProjectId;
       if (!projectId || vertexServiceAccountJson) {
         projectId = vertexServiceAccountJson?.project_id;
@@ -91,9 +98,6 @@ export const GoogleApiConfig: ProviderAPIConfig = {
         case 'retrieveBatch':
           return `/v1/projects/${projectId}/locations/${vertexRegion}/batchPredictionJobs/${jobId}`;
         case 'listBatches': {
-          const query = c.req.query();
-          const pageSize = query['limit'] ?? 20;
-          const after = query['after'] ?? '';
           return `/v1/projects/${projectId}/locations/${vertexRegion}/batchPredictionJobs?pageSize=${pageSize}&pageToken=${after}`;
         }
         case 'cancelBatch': {

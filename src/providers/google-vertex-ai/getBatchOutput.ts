@@ -1,8 +1,6 @@
-import { Stream, Transform } from 'node:stream';
 import { RequestHandler } from '../types';
 import { GoogleBatchRecord } from './types';
-import { getAccessToken, getModelAndProvider } from './utils';
-import { ReadableStream as NodeReadableStream } from 'node:stream/web';
+import { getModelAndProvider } from './utils';
 import { responseTransformers } from '../open-ai-base';
 import {
   GoogleChatCompleteResponseTransform,
@@ -53,19 +51,9 @@ export const BatchOutputRequestHandler: RequestHandler = async ({
   c,
   requestBody,
 }) => {
-  const { vertexProjectId, vertexRegion, vertexServiceAccountJson, apiKey } =
-    providerOptions;
-  let authToken = apiKey;
-  let projectId = vertexProjectId;
-
-  if (vertexServiceAccountJson) {
-    authToken = await getAccessToken(vertexServiceAccountJson);
-    projectId = vertexServiceAccountJson.project_id;
-  }
-
   const headers = await GoogleApiConfig.headers({
     c,
-    fn: 'getBatchOutput',
+    fn: 'retrieveBatch',
     providerOptions,
     transformedRequestBody: requestBody,
     transformedRequestUrl: requestURL,
@@ -79,11 +67,28 @@ export const BatchOutputRequestHandler: RequestHandler = async ({
   // URL: <gateway>/v1/batches/<batchId>/output
   const batchId = requestURL.split('/').at(-2);
 
-  const batchDetailsURL = `https://${vertexRegion}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${vertexRegion}/batchPredictionJobs/${batchId}`;
+  const batchDetailsURL = requestURL.replace(/\/output$/, '');
+
+  const baseURL = await GoogleApiConfig.getBaseURL({
+    c,
+    providerOptions,
+    fn: 'retrieveBatch',
+    gatewayRequestURL: batchDetailsURL,
+  });
+
+  const endpoint = GoogleApiConfig.getEndpoint({
+    c,
+    providerOptions,
+    fn: 'retrieveBatch',
+    gatewayRequestURL: batchDetailsURL,
+    gatewayRequestBodyJSON: {},
+  });
+
+  const batchesURL = `${baseURL}${endpoint}`;
   let modelName;
   let outputURL;
   try {
-    const response = await fetch(batchDetailsURL, options);
+    const response = await fetch(batchesURL, options);
     if (!response.ok) {
       const error = await response.text();
       throw new Error(error);
