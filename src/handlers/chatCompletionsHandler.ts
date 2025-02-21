@@ -1,4 +1,5 @@
 import { RouterError } from '../errors/RouterError';
+import { endpointStrings } from '../providers/types';
 import {
   constructConfigFromRequestHeaders,
   tryTargetsRecursively,
@@ -13,43 +14,48 @@ import { Context } from 'hono';
  * @throws Will throw an error if no provider options can be determined or if the request to the provider(s) fails.
  * @throws Will throw an 500 error if the handler fails due to some reasons
  */
-export async function chatCompletionsHandler(c: Context): Promise<Response> {
-  try {
-    let request = await c.req.json();
-    let requestHeaders = Object.fromEntries(c.req.raw.headers);
-    const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
-    const tryTargetsResponse = await tryTargetsRecursively(
-      c,
-      camelCaseConfig ?? {},
-      request,
-      requestHeaders,
-      'chatComplete',
-      'POST',
-      'config'
-    );
 
-    return tryTargetsResponse;
-  } catch (err: any) {
-    console.log('chatCompletion error', err.message);
-    let statusCode = 500;
-    let errorMessage = 'Something went wrong';
+export function chatCompletionsHandler(endpoint: endpointStrings) {
+  async function handler(c: Context): Promise<Response> {
+    try {
+      const method = c.req.method;
+      let request = method === 'POST' ? await c.req.json() : {};
+      let requestHeaders = Object.fromEntries(c.req.raw.headers);
+      const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
+      const tryTargetsResponse = await tryTargetsRecursively(
+        c,
+        camelCaseConfig ?? {},
+        request,
+        requestHeaders,
+        endpoint,
+        method,
+        'config'
+      );
 
-    if (err instanceof RouterError) {
-      statusCode = 400;
-      errorMessage = err.message;
-    }
+      return tryTargetsResponse;
+    } catch (err: any) {
+      console.log(`${endpoint} error`, err.message);
+      let statusCode = 500;
+      let errorMessage = 'Something went wrong';
 
-    return new Response(
-      JSON.stringify({
-        status: 'failure',
-        message: errorMessage,
-      }),
-      {
-        status: statusCode,
-        headers: {
-          'content-type': 'application/json',
-        },
+      if (err instanceof RouterError) {
+        statusCode = 400;
+        errorMessage = err.message;
       }
-    );
+
+      return new Response(
+        JSON.stringify({
+          status: 'failure',
+          message: errorMessage,
+        }),
+        {
+          status: statusCode,
+          headers: {
+            'content-type': 'application/json',
+          },
+        }
+      );
+    }
   }
+  return handler;
 }

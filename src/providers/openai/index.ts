@@ -34,6 +34,14 @@ import { OpenAIRetrieveBatchResponseTransform } from './retrieveBatch';
 import { OpenAICancelBatchResponseTransform } from './cancelBatch';
 import { OpenAIListBatchesResponseTransform } from './listBatches';
 import { OpenAIGetBatchOutputRequestHandler } from './getBatchOutput';
+import { OpenAIListChatCompletionsResponseTransform } from './listChatCompletions';
+import { OpenAIGetChatMessagesResponseTransform } from './getChatMessages';
+import { OpenAIDeleteChatCompletionResponseTransform } from './deleteChatCompletions';
+import { OpenAIGetChatCompletionResponseTransform } from './getChatCompletion';
+import {
+  OpenAIUpdateChatCompletionResponseTransform,
+  OpenAIUpdateChatCompletionConfig,
+} from './updateChatCompletions';
 
 const OpenAIConfig: ProviderConfigs = {
   complete: OpenAICompleteConfig,
@@ -47,6 +55,7 @@ const OpenAIConfig: ProviderConfigs = {
   realtime: {},
   createBatch: OpenAICreateBatchConfig,
   cancelBatch: {},
+  updateChatCompletion: OpenAIUpdateChatCompletionConfig,
   requestHandlers: {
     getBatchOutput: OpenAIGetBatchOutputRequestHandler,
   },
@@ -73,6 +82,11 @@ const OpenAIConfig: ProviderConfigs = {
     retrieveBatch: OpenAIRetrieveBatchResponseTransform,
     cancelBatch: OpenAICancelBatchResponseTransform,
     listBatches: OpenAIListBatchesResponseTransform,
+    listChatCompletions: OpenAIListChatCompletionsResponseTransform,
+    getChatCompletion: OpenAIGetChatCompletionResponseTransform,
+    getChatCompletionMessages: OpenAIGetChatMessagesResponseTransform,
+    updateChatCompletion: OpenAIUpdateChatCompletionResponseTransform,
+    deleteChatCompletion: OpenAIDeleteChatCompletionResponseTransform,
   },
 };
 

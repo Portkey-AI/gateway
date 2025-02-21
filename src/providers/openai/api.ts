@@ -64,6 +64,16 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
         return basePath;
       case 'listBatches':
         return basePath;
+      case 'listChatCompletions':
+        return basePath;
+      case 'getChatCompletion':
+        return basePath;
+      case 'getChatCompletionMessages':
+        return basePath;
+      case 'updateChatCompletion':
+        return basePath;
+      case 'deleteChatCompletion':
+        return basePath;
       default:
         return '';
     }
