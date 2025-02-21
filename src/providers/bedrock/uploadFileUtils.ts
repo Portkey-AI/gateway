@@ -17,13 +17,9 @@ import {
 import {
   BedrockAI21CompleteResponse,
   BedrockCohereCompleteResponse,
-  BedrockCohereStreamChunk,
   BedrockLlamaCompleteResponse,
-  BedrockLlamaStreamChunk,
   BedrockMistralCompleteResponse,
   BedrockTitanCompleteResponse,
-  BedrockTitanStreamChunk,
-  BedrocMistralStreamChunk,
 } from './complete';
 import {
   LLAMA_2_SPECIAL_TOKENS,
@@ -31,6 +27,7 @@ import {
   MISTRAL_CONTROL_TOKENS,
 } from './constants';
 import { BedrockErrorResponse } from './embed';
+import * as z from 'zod';
 
 interface AnthropicTool {
   name: string;
@@ -77,7 +74,7 @@ type AnthropicContentItem = AnthorpicTextContentItem | AnthropicToolContentItem;
 const transformAssistantMessageForAnthropic = (
   msg: Message
 ): AnthropicMessage => {
-  let content: AnthropicContentItem[] = [];
+  const content: AnthropicContentItem[] = [];
   const containsToolCalls = msg.tool_calls && msg.tool_calls.length;
 
   if (msg.content && typeof msg.content === 'string') {
@@ -132,9 +129,9 @@ const BedrockAnthropicChatCompleteConfig: ProviderConfig = {
       param: 'messages',
       required: true,
       transform: (params: Params) => {
-        let messages: AnthropicMessage[] = [];
+        const messages: AnthropicMessage[] = [];
         // Transform the chat messages into a simple prompt
-        if (!!params.messages) {
+        if (params.messages) {
           params.messages.forEach((msg) => {
             if (msg.role === 'system') return;
 
@@ -201,7 +198,7 @@ const BedrockAnthropicChatCompleteConfig: ProviderConfig = {
       transform: (params: Params) => {
         let systemMessage: string = '';
         // Transform the chat messages into a simple prompt
-        if (!!params.messages) {
+        if (params.messages) {
           params.messages.forEach((msg) => {
             if (
               msg.role === 'system' &&
@@ -226,7 +223,7 @@ const BedrockAnthropicChatCompleteConfig: ProviderConfig = {
     param: 'tools',
     required: false,
     transform: (params: Params) => {
-      let tools: AnthropicTool[] = [];
+      const tools: AnthropicTool[] = [];
       if (params.tools) {
         params.tools.forEach((tool) => {
           if (tool.function) {
@@ -308,8 +305,8 @@ const BedrockCohereChatCompleteConfig: ProviderConfig = {
     required: true,
     transform: (params: Params) => {
       let prompt: string = '';
-      if (!!params.messages) {
-        let messages: Message[] = params.messages;
+      if (params.messages) {
+        const messages: Message[] = params.messages;
         messages.forEach((msg, index) => {
           if (index === 0 && msg.role === 'system') {
             prompt += `system: ${messages}\n`;
@@ -411,7 +408,7 @@ const getMessageContent = (message: Message) => {
 const transformMessagesForLLama3Prompt = (messages: Message[]) => {
   let prompt: string = '';
   prompt += LLAMA_3_SPECIAL_TOKENS.PROMPT_START + '\n';
-  messages.forEach((msg, index) => {
+  messages.forEach((msg) => {
     prompt +=
       LLAMA_3_SPECIAL_TOKENS.ROLE_START +
       msg.role +
@@ -447,8 +444,8 @@ const transformMessagesForLLama2Prompt = (messages: Message[]) => {
   messages = [messages[0], ...messages.slice(2)];
   // attach message pairs
   for (let i = 1; i < messages.length; i += 2) {
-    let prompt = getMessageContent(messages[i - 1]);
-    let answer = getMessageContent(messages[i]);
+    const prompt = getMessageContent(messages[i - 1]);
+    const answer = getMessageContent(messages[i]);
     finalPrompt += `${LLAMA_2_SPECIAL_TOKENS.BEGINNING_OF_SENTENCE}${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_START} ${prompt} ${LLAMA_2_SPECIAL_TOKENS.CONVERSATION_TURN_END} ${answer} ${LLAMA_2_SPECIAL_TOKENS.END_OF_SENTENCE}`;
   }
   if (messages.length % 2 === 1) {
@@ -548,7 +545,7 @@ const BedrockMistralChatCompleteConfig: ProviderConfig = {
     required: true,
     transform: (params: Params) => {
       let prompt: string = '';
-      if (!!params.messages)
+      if (params.messages)
         prompt = transformMessagesForMistralPrompt(params.messages);
       return prompt;
     },
@@ -611,10 +608,10 @@ const BedrockTitanChatompleteConfig: ProviderConfig = {
     required: true,
     transform: (params: Params) => {
       let prompt: string = '';
-      if (!!params.messages) {
-        let messages: Message[] = params.messages;
-        messages.forEach((msg, index) => {
-          if (index === 0 && msg.role === 'system') {
+      if (params.messages) {
+        const messages: Message[] = params.messages;
+        messages.forEach((msg) => {
+          if (msg.role === 'system') {
             prompt += `system: ${messages}\n`;
           } else if (msg.role == 'user') {
             prompt += `user: ${msg.content}\n`;
@@ -653,8 +650,8 @@ const BedrockAI21ChatCompleteConfig: ProviderConfig = {
     required: true,
     transform: (params: Params) => {
       let prompt: string = '';
-      if (!!params.messages) {
-        let messages: Message[] = params.messages;
+      if (params.messages) {
+        const messages: Message[] = params.messages;
         messages.forEach((msg, index) => {
           if (index === 0 && msg.role === 'system') {
             prompt += `system: ${messages}\n`;
@@ -844,7 +841,7 @@ export const BedrockAnthropicChatCompleteResponseTransform: (
       content = response.content[0].text;
     }
 
-    let toolCalls: any = [];
+    const toolCalls: any = [];
     response.content.forEach((item) => {
       if (item.type === 'tool_use') {
         toolCalls.push({
@@ -947,7 +944,10 @@ export const BedrockMistralChatCompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, BEDROCK);
 };
 
-export const BedrockUploadFileConfig: Record<string, ProviderConfig> = {
+export const BedrockUploadFileTransformerConfig: Record<
+  string,
+  ProviderConfig
+> = {
   anthropic: BedrockAnthropicChatCompleteConfig,
   cohere: BedrockCohereChatCompleteConfig,
   mistral: BedrockMistralChatCompleteConfig,
@@ -965,4 +965,119 @@ export const BedrockUploadFileResponseTransforms: Record<string, any> = {
   ai21: BedrockAI21ChatCompleteResponseTransform,
   llama2: BedrockLlamaChatCompleteResponseTransform,
   llama3: BedrockLlamaChatCompleteResponseTransform,
+};
+
+type BedrockChatCompletionLine = {
+  system: string;
+  messages: Array<{
+    role: 'user' | 'assistant' | 'system' | 'tool';
+    content: string;
+  }>;
+};
+const chatCompletionLineSchema = z.object({
+  messages: z.array(
+    z.object({
+      role: z.enum(['user', 'assistant', 'system']),
+      content: z.string(),
+    })
+  ),
+});
+
+const textSchema = z.object({
+  prompt: z.string(),
+  completion: z.string(),
+});
+
+const chatCompletionTransform = chatCompletionLineSchema.transform((data) => {
+  const chunk: {
+    system: string;
+    messages: BedrockChatCompletionLine['messages'];
+  } = { system: '', messages: [] };
+  const [firstMessage, ...rest] = data.messages;
+
+  if (rest.at(0)?.role !== 'user') {
+    return null;
+  }
+
+  if (rest.at(-1)?.role !== 'assistant') {
+    return null;
+  }
+
+  if (firstMessage && firstMessage.role === 'system') {
+    chunk['system'] = firstMessage.content;
+  }
+
+  // Assuming message roles are alternating
+  chunk['messages'] = rest as BedrockChatCompletionLine['messages'];
+  return chunk;
+});
+
+const chatToTextTransform = chatCompletionTransform.transform((data) => {
+  const messages = data?.messages ?? [];
+
+  if (messages.length === 0) {
+    return null;
+  }
+
+  if (messages.at(0)?.role === 'system') {
+    messages.splice(0, 1);
+  }
+
+  if (messages.length > 2) {
+    return null;
+  }
+
+  if (messages.at(0)?.role !== 'user') {
+    // Invalid dataset
+    return null;
+  }
+
+  if (messages.at(-1)?.role !== 'assistant') {
+    // Invalid dataset
+    return null;
+  }
+
+  for (let index = 0; index < messages.length; index += 2) {
+    const userMessage = messages.at(index);
+    const assistantMessage = messages.at(index + 1);
+
+    if (userMessage?.role === 'tool' || assistantMessage?.role === 'tool') {
+      return null;
+    }
+
+    return {
+      completion: assistantMessage?.content ?? '',
+      prompt: userMessage?.content ?? '',
+    };
+  }
+});
+
+export const transformFinetuneDatasetLine = (json: any) => {
+  const parseResult = chatCompletionTransform.safeParse(json);
+  if (!parseResult.success) {
+    return null;
+  }
+  return parseResult.data;
+};
+
+export const tryChatToTextTransformation = (json: any) => {
+  const parseResult = chatCompletionLineSchema.safeParse(json);
+  const textSchemaResult = textSchema.safeParse(json);
+  // invalid chunk that doesn't follow either chat or text-to-text data.
+  if (!parseResult.success && !textSchemaResult.success) {
+    return null;
+  }
+
+  // follows text-to-text data
+  if (textSchemaResult.success) {
+    return json;
+  }
+
+  // follows chat data, transform to text-to-text data
+  if (parseResult.success) {
+    const transformed = chatToTextTransform.safeParse(parseResult.data);
+    return transformed.success ? transformed.data : null;
+  }
+
+  return null;
 };

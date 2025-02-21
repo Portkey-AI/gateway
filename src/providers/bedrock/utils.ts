@@ -1,102 +1,19 @@
 import { SignatureV4 } from '@smithy/signature-v4';
 import { Sha256 } from '@aws-crypto/sha256-js';
-import {
-  BedrockConverseAI21ChatCompletionsParams,
-  BedrockConverseAnthropicChatCompletionsParams,
-  BedrockChatCompletionsParams,
-  BedrockConverseCohereChatCompletionsParams,
-} from './chatComplete';
 import { Context } from 'hono';
 import { env } from 'hono/adapter';
-import crypto from 'node:crypto';
-
-const hmac = (key: Buffer | string, data: string) => {
-  return crypto.createHmac('sha256', key).update(data).digest();
-};
-
-const sha256 = (data: string) => {
-  return crypto.createHash('sha256').update(data).digest('hex');
-};
-
-const getSignatureKey = (
-  key: string,
-  dateStamp: string,
-  region: string,
-  service: string
-) => {
-  const kDate = hmac(`AWS4${key}`, dateStamp);
-  const kRegion = hmac(kDate, region);
-  const kService = hmac(kRegion, service);
-  return hmac(kService, 'aws4_request');
-};
-
-export const awsSignerUtil = (
-  accessKeyId: string,
-  secretAccessKey: string,
-  method: string,
-  requestURL: string,
-  region: string,
-  service: string
-) => {
-  const now = new Date();
-  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, ''); // e.g., 20231210T000000Z
-  const dateStamp = amzDate.slice(0, 8); // e.g., 20231210
-  const urlObj = new URL(requestURL);
-
-  const headers: Record<string, string> = {
-    Host: urlObj.hostname,
-    'x-amz-date': amzDate,
-    'x-amz-content-sha256': 'UNSIGNED-PAYLOAD', // Required for S3
-  };
-
-  const canonicalUri = `${urlObj.pathname}`;
-  const canonicalQueryString = `${urlObj.searchParams.toString()}`;
-  const signedHeaders = Object.keys(headers)
-    .map((key) => key.toLowerCase())
-    .sort()
-    .join(';');
-  const canonicalHeaders = Object.entries(headers)
-    .map(([key, value]) => `${key.toLowerCase()}:${value.trim()}\n`)
-    .sort()
-    .join('');
-  const payloadHash = 'UNSIGNED-PAYLOAD';
-
-  const canonicalRequest = [
-    method,
-    canonicalUri,
-    canonicalQueryString,
-    canonicalHeaders,
-    signedHeaders,
-    payloadHash,
-  ].join('\n');
-
-  const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
-  const stringToSign = [
-    'AWS4-HMAC-SHA256',
-    amzDate,
-    credentialScope,
-    sha256(canonicalRequest),
-  ].join('\n');
-
-  const signingKey = getSignatureKey(
-    secretAccessKey,
-    dateStamp,
-    region,
-    service
-  );
-  const signature = hmac(signingKey, stringToSign).toString('hex');
-
-  headers['Authorization'] = [
-    `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}`,
-    `SignedHeaders=${signedHeaders}`,
-    `Signature=${signature}`,
-  ].join(', ');
-
-  return headers;
-};
+import {
+  BedrockChatCompletionsParams,
+  BedrockConverseAI21ChatCompletionsParams,
+  BedrockConverseAnthropicChatCompletionsParams,
+  BedrockConverseCohereChatCompletionsParams,
+} from './chatComplete';
+import { Options } from '../../types/requestBody';
+import { GatewayError } from '../../errors/GatewayError';
+import { BedrockFinetuneRecord } from './types';
 
 export const generateAWSHeaders = async (
-  body: Record<string, any>,
+  body: Record<string, any> | string | undefined,
   headers: Record<string, string>,
   url: string,
   method: string,
@@ -121,15 +38,27 @@ export const generateAWSHeaders = async (
   const hostname = urlObj.hostname;
   headers['host'] = hostname;
   let requestBody;
-  if (method !== 'GET' && body) {
+  if (!body) {
+    requestBody = null;
+  } else if (
+    body instanceof Uint8Array ||
+    body instanceof Buffer ||
+    typeof body === 'string'
+  ) {
+    requestBody = body;
+  } else if (body && typeof body === 'object' && method !== 'GET') {
     requestBody = JSON.stringify(body);
   }
   const queryParams = Object.fromEntries(urlObj.searchParams.entries());
+  let protocol = 'https';
+  if (urlObj.protocol) {
+    protocol = urlObj.protocol.replace(':', '');
+  }
   const request = {
     method: method,
     path: urlObj.pathname,
+    protocol: protocol,
     query: queryParams,
-    protocol: 'https',
     hostname: urlObj.hostname,
     headers: headers,
     ...(requestBody && { body: requestBody }),
@@ -330,7 +259,7 @@ export async function getAssumedRoleCredentials(
     const xmlData = await response.text();
     credentials = parseXml(xmlData);
     if (putInCacheWithValue) {
-      putInCacheWithValue(env(c), cacheKey, credentials, 60); //1 minute
+      await putInCacheWithValue(env(c), cacheKey, credentials, 300); //5 minutes
     }
   } catch (error) {
     console.error({ message: `Error assuming role:, ${error}` });
@@ -357,4 +286,85 @@ function parseXml(xml: string) {
     sessionToken: getTagContent('SessionToken'),
     expiration: getTagContent('Expiration'),
   };
+}
+
+export const bedrockFinetuneToOpenAI = (finetune: BedrockFinetuneRecord) => {
+  let status = 'running';
+  switch (finetune.status) {
+    case 'Completed':
+      status = 'succeeded';
+      break;
+    case 'Failed':
+      status = 'failed';
+      break;
+    case 'InProgress':
+      status = 'running';
+      break;
+    case 'Stopping':
+    case 'Stopped':
+      status = 'cancelled';
+      break;
+  }
+  return {
+    id: finetune.jobName,
+    object: 'finetune',
+    status: status,
+    created_at: new Date(finetune.creationTime).getTime(),
+    finished_at: new Date(finetune.endTime).getTime(),
+    fine_tuned_model:
+      finetune.outputModelArn ||
+      finetune.outputModelName ||
+      finetune.customModelArn,
+    suffix: finetune.customModelName,
+    training_file: encodeURIComponent(
+      finetune?.trainingDataConfig?.s3Uri ?? ''
+    ),
+    validation_file: encodeURIComponent(
+      finetune?.validationDataConfig?.s3Uri ?? ''
+    ),
+    hyperparameters: {
+      learning_rate_multiplier: Number(finetune?.hyperParameters?.learningRate),
+      batch_size: Number(finetune?.hyperParameters?.batchSize),
+      n_epochs: Number(finetune?.hyperParameters?.epochCount),
+    },
+    error: finetune?.failureMessage ?? {},
+  };
+};
+
+export async function providerAssumedRoleCredentials(
+  c: Context,
+  providerOptions: Options
+) {
+  try {
+    // Assume the role in the source account
+    const sourceRoleCredentials = await getAssumedRoleCredentials(
+      c,
+      env(c).AWS_ASSUME_ROLE_SOURCE_ARN, // Role ARN in the source account
+      env(c).AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID || '', // External ID for source role (if needed)
+      providerOptions.awsRegion || ''
+    );
+
+    if (!sourceRoleCredentials) {
+      throw new Error('Server Error while assuming internal role');
+    }
+
+    // Assume role in destination account using temporary creds obtained in first step
+    const { accessKeyId, secretAccessKey, sessionToken } =
+      (await getAssumedRoleCredentials(
+        c,
+        providerOptions.awsRoleArn || '',
+        providerOptions.awsExternalId || '',
+        providerOptions.awsRegion || '',
+        {
+          accessKeyId: sourceRoleCredentials.accessKeyId,
+          secretAccessKey: sourceRoleCredentials.secretAccessKey,
+          sessionToken: sourceRoleCredentials.sessionToken,
+        }
+      )) || {};
+    providerOptions.awsAccessKeyId = accessKeyId;
+    providerOptions.awsSecretAccessKey = secretAccessKey;
+    providerOptions.awsSessionToken = sessionToken;
+  } catch (e) {
+    throw new GatewayError('Error while assuming bedrock role');
+  }
 }

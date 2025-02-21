@@ -37,3 +37,30 @@ export interface BedrockListBatchesResponse {
   invocationJobSummaries: BedrockBatch[];
   nextToken: string;
 }
+
+export interface BedrockFinetuneRecord {
+  baseModelArn: string;
+  creationTime: string;
+  customModelArn: string;
+  customModelName: string;
+  customizationType: string;
+  endTime: string;
+  jobArn: string;
+  jobName: string;
+  lastModifiedTime: string;
+  status: 'Completed' | 'Failed' | 'InProgress' | 'Stopping' | 'Stopped';
+  failureMessage?: string;
+  validationDataConfig?: {
+    s3Uri: string;
+  };
+  trainingDataConfig?: {
+    s3Uri: string;
+  };
+  hyperParameters?: {
+    learningRate: number;
+    batchSize: number;
+    epochCount: number;
+  };
+  outputModelName?: string;
+  outputModelArn?: string;
+}

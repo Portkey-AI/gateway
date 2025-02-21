@@ -71,7 +71,11 @@ export const getURLForOutgoingConnection = (
   gatewayRequestURL: string,
   c: Context
 ) => {
-  const baseUrl = apiConfig.getBaseURL({ providerOptions, c });
+  const baseUrl = apiConfig.getBaseURL({
+    providerOptions,
+    c,
+    gatewayRequestURL,
+  });
   const endpoint = apiConfig.getEndpoint({
     c,
     providerOptions,

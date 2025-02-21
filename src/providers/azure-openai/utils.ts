@@ -63,13 +63,19 @@ export async function getAzureManagedIdentityToken(
   }
 }
 
-export const AzureOpenAIResponseTransform: (
+export const AzureOpenAIFinetuneResponseTransform = (
   response: Response | ErrorResponse,
   responseStatus: number
-) => Response | ErrorResponse = (response, responseStatus) => {
+): Response | ErrorResponse => {
   if (responseStatus !== 200 && 'error' in response) {
     return OpenAIErrorResponseTransform(response, AZURE_OPEN_AI);
   }
 
-  return response;
+  const _response = { ...response } as any;
+
+  if (['created', 'pending'].includes(_response.status)) {
+    _response.status = 'queued';
+  }
+
+  return _response;
 };
