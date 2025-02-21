@@ -150,6 +150,9 @@ export const retryRequest = async (
           },
         }),
         {
+          headers: {
+            'content-type': 'application/json',
+          },
           status: 500,
         }
       );
