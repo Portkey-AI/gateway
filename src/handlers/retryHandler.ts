@@ -140,9 +140,12 @@ export const retryRequest = async (
       });
     } else if (error instanceof TypeError) {
       // Handle other fetch-level errors
-      lastResponse = new Response(error.message, {
-        status: 500,
-      });
+      lastResponse = new Response(
+        `Message: ${error.message} Cause: ${error.cause} Name: ${error.name}`,
+        {
+          status: 500,
+        }
+      );
     } else {
       lastResponse = new Response(error.message, {
         status: error.status,

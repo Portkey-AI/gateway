@@ -15,9 +15,14 @@ import {
   HUGGING_FACE,
   STABILITY_AI,
   SAGEMAKER,
+  FIREWORKS_AI,
 } from '../globals';
 import Providers from '../providers';
-import { ProviderAPIConfig, endpointStrings } from '../providers/types';
+import {
+  ProviderAPIConfig,
+  RequestHandlers,
+  endpointStrings,
+} from '../providers/types';
 import transformToProviderRequest from '../services/transformToProviderRequest';
 import { Options, Params, StrategyModes, Targets } from '../types/requestBody';
 import { convertKeysToCamelCase } from '../utils';
@@ -47,7 +52,7 @@ export function constructRequest(
   fn: endpointStrings,
   c: Context
 ) {
-  let proxyHeaders: Record<string, string> = {};
+  const proxyHeaders: Record<string, string> = {};
   // Handle proxy headers
   if (fn === 'proxy') {
     const poweredByHeadersPattern = `x-${POWERED_BY}-`;
@@ -71,8 +76,7 @@ export function constructRequest(
         'accept-encoding'
       ]?.replace('br', '');
   }
-
-  let baseHeaders: any = {
+  const baseHeaders: any = {
     'content-type': 'application/json',
   };
 
@@ -99,7 +103,7 @@ export function constructRequest(
     ...(fn === 'proxy' && proxyHeaders),
   };
 
-  let fetchOptions: RequestInit = {
+  const fetchOptions: RequestInit = {
     method,
     headers,
     ...(fn === 'uploadFile' && { duplex: 'half' }),
@@ -111,11 +115,14 @@ export function constructRequest(
     (isGetMethod || isMultipartFormData) && fetchOptions.headers;
 
   if (shouldDeleteContentTypeHeader) {
-    let headers = fetchOptions.headers as Record<string, unknown>;
+    const headers = fetchOptions.headers as Record<string, unknown>;
     delete headers['content-type'];
+    if (fn === 'uploadFile') {
+      headers['Content-Type'] = requestHeaders['content-type'];
+      headers[`x-${POWERED_BY}-file-purpose`] =
+        requestHeaders[`x-${POWERED_BY}-file-purpose`];
+    }
   }
-  if (fn === 'uploadFile')
-    headers['Content-Type'] = requestHeaders['content-type'];
 
   return fetchOptions;
 }
@@ -172,7 +179,7 @@ export function selectProviderByWeight(providers: Options[]): Options {
   }));
 
   // Compute the total weight
-  let totalWeight = providers.reduce(
+  const totalWeight = providers.reduce(
     (sum: number, provider: any) => sum + provider.weight,
     0
   );
@@ -181,7 +188,7 @@ export function selectProviderByWeight(providers: Options[]): Options {
   let randomWeight = Math.random() * totalWeight;
 
   // Find the provider that corresponds to the selected weight
-  for (let [index, provider] of providers.entries()) {
+  for (const [index, provider] of providers.entries()) {
     // @ts-ignore since weight is being default set above
     if (randomWeight < provider.weight) {
       return { ...provider, index };
@@ -269,7 +276,9 @@ export async function tryPost(
   let metadata: Record<string, string> = {};
   try {
     metadata = JSON.parse(requestHeaders[HEADER_KEYS.METADATA]);
-  } catch {}
+  } catch {
+    metadata = {};
+  }
 
   const provider: string = providerOption.provider ?? '';
   const hooksManager = c.get('hooksManager');
@@ -308,6 +317,7 @@ export async function tryPost(
       providerOptions: providerOption,
       fn,
       c,
+      gatewayRequestURL: c.req.url,
     }));
   const endpoint = apiConfig.getEndpoint({
     c,
@@ -351,6 +361,9 @@ export async function tryPost(
   } = await beforeRequestHookHandler(c, hookSpan.id));
 
   if (brhResponse) {
+    // transformedRequestBody is required to be set in requestOptions.
+    // So in case the before request hooks fail (with deny as true), we need to set it here.
+    // If the hooks do not result in a 446 response, transformedRequestBody is determined on the updated HookSpan context.
     if (!providerConfig?.requestHandlers?.[fn]) {
       transformedRequestBody =
         method === 'POST'
@@ -558,7 +571,7 @@ export async function tryTargetsRecursively(
   jsonPath: string,
   inheritedConfig: Record<string, any> = {}
 ): Promise<Response> {
-  let currentTarget: any = { ...targetGroup };
+  const currentTarget: any = { ...targetGroup };
   let currentJsonPath = jsonPath;
   const strategyMode = currentTarget.strategy?.mode;
 
@@ -689,7 +702,7 @@ export async function tryTargetsRecursively(
 
   switch (strategyMode) {
     case StrategyModes.FALLBACK:
-      for (let [index, target] of currentTarget.targets.entries()) {
+      for (const [index, target] of currentTarget.targets.entries()) {
         response = await tryTargetsRecursively(
           c,
           target,
@@ -724,7 +737,7 @@ export async function tryTargetsRecursively(
       );
 
       let randomWeight = Math.random() * totalWeight;
-      for (let [index, provider] of currentTarget.targets.entries()) {
+      for (const [index, provider] of currentTarget.targets.entries()) {
         if (randomWeight < provider.weight) {
           currentJsonPath = currentJsonPath + `.targets[${index}]`;
           response = await tryTargetsRecursively(
@@ -743,7 +756,7 @@ export async function tryTargetsRecursively(
       }
       break;
 
-    case StrategyModes.CONDITIONAL:
+    case StrategyModes.CONDITIONAL: {
       let metadata: Record<string, string>;
       try {
         metadata = JSON.parse(requestHeaders[HEADER_KEYS.METADATA]);
@@ -770,6 +783,7 @@ export async function tryTargetsRecursively(
         currentInheritedConfig
       );
       break;
+    }
 
     case StrategyModes.SINGLE:
       response = await tryTargetsRecursively(
@@ -885,6 +899,7 @@ export function constructConfigFromRequestHeaders(
     resourceName: requestHeaders[`x-${POWERED_BY}-azure-resource-name`],
     deploymentId: requestHeaders[`x-${POWERED_BY}-azure-deployment-id`],
     apiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
+    azureAdToken: requestHeaders[`x-${POWERED_BY}-azure-ad-token`],
     azureAuthMode: requestHeaders[`x-${POWERED_BY}-azure-auth-mode`],
     azureManagedClientId:
       requestHeaders[`x-${POWERED_BY}-azure-managed-client-id`],
@@ -926,8 +941,12 @@ export function constructConfigFromRequestHeaders(
     awsAuthType: requestHeaders[`x-${POWERED_BY}-aws-auth-type`],
     awsExternalId: requestHeaders[`x-${POWERED_BY}-aws-external-id`],
     awsS3Bucket: requestHeaders[`x-${POWERED_BY}-aws-s3-bucket`],
-    awsS3ObjectKey: requestHeaders[`x-${POWERED_BY}-aws-s3-object-key`],
-    awsBedrockModel: requestHeaders[`x-${POWERED_BY}-aws-bedrock-model`],
+    awsS3ObjectKey:
+      requestHeaders[`x-${POWERED_BY}-aws-s3-object-key`] ||
+      requestHeaders[`x-${POWERED_BY}-provider-file-name`],
+    awsBedrockModel:
+      requestHeaders[`x-${POWERED_BY}-aws-bedrock-model`] ||
+      requestHeaders[`x-${POWERED_BY}-provider-model`],
   };
 
   const sagemakerConfig = {
@@ -972,6 +991,14 @@ export function constructConfigFromRequestHeaders(
   const vertexConfig: Record<string, any> = {
     vertexProjectId: requestHeaders[`x-${POWERED_BY}-vertex-project-id`],
     vertexRegion: requestHeaders[`x-${POWERED_BY}-vertex-region`],
+    vertexStorageBucketName:
+      requestHeaders[`x-${POWERED_BY}-vertex-storage-bucket-name`],
+    filename: requestHeaders[`x-${POWERED_BY}-provider-file-name`],
+    vertexModelName: requestHeaders[`x-${POWERED_BY}-provider-model`],
+  };
+
+  const fireworksConfig = {
+    fireworksAccountId: requestHeaders[`x-${POWERED_BY}-fireworks-account-id`],
   };
 
   const anthropicConfig = {
@@ -979,8 +1006,9 @@ export function constructConfigFromRequestHeaders(
     anthropicVersion: requestHeaders[`x-${POWERED_BY}-anthropic-version`],
   };
 
-  let vertexServiceAccountJson =
+  const vertexServiceAccountJson =
     requestHeaders[`x-${POWERED_BY}-vertex-service-account-json`];
+
   if (vertexServiceAccountJson) {
     try {
       vertexConfig.vertexServiceAccountJson = JSON.parse(
@@ -1053,6 +1081,13 @@ export function constructConfigFromRequestHeaders(
         };
       }
 
+      if (parsedConfigJson.provider === FIREWORKS_AI) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...fireworksConfig,
+        };
+      }
+
       if (parsedConfigJson.provider === AZURE_AI_INFERENCE) {
         parsedConfigJson = {
           ...parsedConfigJson,
@@ -1077,6 +1112,7 @@ export function constructConfigFromRequestHeaders(
       'params',
       'checks',
       'vertex_service_account_json',
+      'vertexServiceAccountJson',
       'conditions',
       'input_guardrails',
       'output_guardrails',
@@ -1108,6 +1144,8 @@ export function constructConfigFromRequestHeaders(
       requestHeaders[`x-${POWERED_BY}-mistral-fim-completion`],
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === STABILITY_AI &&
       stabilityAiConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === FIREWORKS_AI &&
+      fireworksConfig),
   };
 }
 
@@ -1119,7 +1157,7 @@ export async function recursiveAfterRequestHookHandler(
   isStreamingMode: any,
   gatewayParams: any,
   retryAttemptsMade: any,
-  fn: any,
+  fn: endpointStrings,
   requestHeaders: Record<string, string>,
   hookSpanId: string,
   strictOpenAiCompliance: boolean,
@@ -1140,7 +1178,7 @@ export async function recursiveAfterRequestHookHandler(
 
   const provider = providerOption.provider ?? '';
   const providerConfig = Providers[provider];
-  const requestHandlers = providerConfig.requestHandlers;
+  const requestHandlers = providerConfig.requestHandlers as any;
   let requestHandler;
   if (requestHandlers && requestHandlers[fn]) {
     requestHandler = () =>
@@ -1255,6 +1293,32 @@ async function cacheHandler(
   hookSpanId: string,
   fn: endpointStrings
 ) {
+  if (
+    [
+      'uploadFile',
+      'listFiles',
+      'retrieveFile',
+      'deleteFile',
+      'retrieveFileContent',
+      'createBatch',
+      'retrieveBatch',
+      'cancelBatch',
+      'listBatches',
+      'getBatchOutput',
+      'listFinetunes',
+      'createFinetune',
+      'retrieveFinetune',
+      'cancelFinetune',
+    ].includes(fn)
+  ) {
+    return {
+      cacheResponse: undefined,
+      cacheStatus: 'DISABLED',
+      cacheKey: undefined,
+      createdAt: new Date(),
+      executionTime: 0,
+    };
+  }
   const start = new Date();
   const [getFromCacheFunction, cacheIdentifier] = [
     c.get('getFromCache'),
@@ -1332,7 +1396,6 @@ export async function beforeRequestHookHandler(
         putInCacheWithValue: c.get('putInCacheWithValue'),
       }
     );
-
     span = hooksManager.getSpan(hookSpanId) as HookSpan;
     isTransformed = span.getContext().request.isTransformed;
 

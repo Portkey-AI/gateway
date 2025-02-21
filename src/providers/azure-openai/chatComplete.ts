@@ -115,7 +115,7 @@ export const AzureOpenAIChatCompleteConfig: ProviderConfig = {
 
 interface AzureOpenAIChatCompleteResponse extends ChatCompletionResponse {}
 
-export const AzureOpenAIChatCompleteResponseTransform: (
+export const AzureOpenAIResponseTransform: (
   response: AzureOpenAIChatCompleteResponse | ErrorResponse,
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
