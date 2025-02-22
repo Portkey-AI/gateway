@@ -84,7 +84,9 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       id = segments?.at(-1) ?? '';
     }
     const path = gatewayRequestURL.split('/v1')?.[1];
-    const apiVersionQueryParam = path.includes('?') ? `&api-version=${apiVersion}` : `?api-version=${apiVersion}`;
+    const apiVersionQueryParam = path.includes('?')
+      ? `&api-version=${apiVersion}`
+      : `?api-version=${apiVersion}`;
 
     switch (mappedFn) {
       case 'complete': {
