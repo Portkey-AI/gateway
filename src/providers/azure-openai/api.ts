@@ -54,7 +54,8 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     }
     return headersObj;
   },
-  getEndpoint: ({ providerOptions, fn, gatewayRequestURL }) => {
+  getEndpoint: ({ providerOptions, fn, gatewayRequestURL, c }) => {
+    const gatewayRequestPath = c.req.url.split('/v1')[0];
     const { apiVersion, urlToFetch, deploymentId } = providerOptions;
     let mappedFn = fn;
 
@@ -83,6 +84,9 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     } else {
       id = segments?.at(-1) ?? '';
     }
+    const azureSpecificQueryParams = gatewayRequestPath.includes('?')
+      ? `&${apiVersion}&deployment=${providerOptions.deploymentId}`
+      : `?${apiVersion}&deployment=${providerOptions.deploymentId}`;
 
     switch (mappedFn) {
       case 'complete': {
@@ -119,6 +123,16 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
         return `/files/${id}?api-version=${apiVersion}`;
       case 'retrieveFileContent':
         return `/files/${id}/content?api-version=${apiVersion}`;
+      case 'listChatCompletions':
+        return gatewayRequestPath + azureSpecificQueryParams;
+      case 'getChatCompletion':
+        return gatewayRequestPath + azureSpecificQueryParams;
+      case 'getChatCompletionMessages':
+        return gatewayRequestPath + azureSpecificQueryParams;
+      case 'updateChatCompletion':
+        return gatewayRequestPath + azureSpecificQueryParams;
+      case 'deleteChatCompletion':
+        return gatewayRequestPath + azureSpecificQueryParams;
       default:
         return '';
     }

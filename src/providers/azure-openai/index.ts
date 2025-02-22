@@ -24,6 +24,7 @@ import { AzureOpenAICreateTranscriptionResponseTransform } from './createTranscr
 import { AzureOpenAICreateTranslationResponseTransform } from './createTranslation';
 import { AzureOpenAIResponseTransform } from './utils';
 import { AzureOpenAIRequestTransform } from './uploadFile';
+import { AzureOpenAIUpdateChatCompletionConfig } from './updateChatCompletion';
 
 const AzureOpenAIConfig: ProviderConfigs = {
   complete: AzureOpenAICompleteConfig,
@@ -35,6 +36,7 @@ const AzureOpenAIConfig: ProviderConfigs = {
   createTranscription: {},
   createTranslation: {},
   realtime: {},
+  updateChatCompletion: AzureOpenAIUpdateChatCompletionConfig,
   responseTransforms: {
     complete: AzureOpenAICompleteResponseTransform,
     chatComplete: AzureOpenAIChatCompleteResponseTransform,
@@ -49,6 +51,11 @@ const AzureOpenAIConfig: ProviderConfigs = {
     retrieveFile: AzureOpenAIResponseTransform,
     deleteFile: AzureOpenAIResponseTransform,
     retrieveFileContent: AzureOpenAIResponseTransform,
+    listChatCompletions: AzureOpenAIResponseTransform,
+    getChatCompletion: AzureOpenAIResponseTransform,
+    getChatCompletionMessages: AzureOpenAIResponseTransform,
+    updateChatCompletion: AzureOpenAIResponseTransform,
+    deleteChatCompletion: AzureOpenAIResponseTransform,
   },
   requestTransforms: {
     uploadFile: AzureOpenAIRequestTransform,
