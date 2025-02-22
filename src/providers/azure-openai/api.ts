@@ -85,8 +85,8 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       id = segments?.at(-1) ?? '';
     }
     const azureSpecificQueryParams = gatewayRequestPath.includes('?')
-      ? `&${apiVersion}&deployment=${providerOptions.deploymentId}`
-      : `?${apiVersion}&deployment=${providerOptions.deploymentId}`;
+      ? `&api-version=${apiVersion}&deployment=${providerOptions.deploymentId}`
+      : `?api-version=${apiVersion}&deployment=${providerOptions.deploymentId}`;
 
     switch (mappedFn) {
       case 'complete': {
