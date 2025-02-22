@@ -42,6 +42,10 @@ import {
   OpenAIUpdateChatCompletionResponseTransform,
   OpenAIUpdateChatCompletionConfig,
 } from './updateChatCompletions';
+import {
+  OpenAICreateFinetuneConfig,
+  OpenAIFinetuneResponseTransform,
+} from './createFinetune';
 
 const OpenAIConfig: ProviderConfigs = {
   complete: OpenAICompleteConfig,
@@ -54,8 +58,10 @@ const OpenAIConfig: ProviderConfigs = {
   createTranslation: {},
   realtime: {},
   createBatch: OpenAICreateBatchConfig,
+  createFinetune: OpenAICreateFinetuneConfig,
   cancelBatch: {},
   updateChatCompletion: OpenAIUpdateChatCompletionConfig,
+  cancelFinetune: {},
   requestHandlers: {
     getBatchOutput: OpenAIGetBatchOutputRequestHandler,
   },
@@ -87,6 +93,8 @@ const OpenAIConfig: ProviderConfigs = {
     getChatCompletionMessages: OpenAIGetChatMessagesResponseTransform,
     updateChatCompletion: OpenAIUpdateChatCompletionResponseTransform,
     deleteChatCompletion: OpenAIDeleteChatCompletionResponseTransform,
+    createFinetune: OpenAIFinetuneResponseTransform,
+    retrieveFinetune: OpenAIFinetuneResponseTransform,
   },
 };
 

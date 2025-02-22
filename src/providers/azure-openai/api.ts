@@ -55,7 +55,6 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     return headersObj;
   },
   getEndpoint: ({ providerOptions, fn, gatewayRequestURL, c }) => {
-    const gatewayRequestPath = c.req.url.split('/v1')[0];
     const { apiVersion, urlToFetch, deploymentId } = providerOptions;
     let mappedFn = fn;
 
@@ -84,9 +83,8 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     } else {
       id = segments?.at(-1) ?? '';
     }
-    const azureSpecificQueryParams = gatewayRequestPath.includes('?')
-      ? `&api-version=${apiVersion}&deployment=${providerOptions.deploymentId}`
-      : `?api-version=${apiVersion}&deployment=${providerOptions.deploymentId}`;
+    const path = gatewayRequestURL.split('/v1')?.[1];
+    const apiVersionQueryParam = path.includes('?') ? `&api-version=${apiVersion}` : `?api-version=${apiVersion}`;
 
     switch (mappedFn) {
       case 'complete': {
@@ -111,28 +109,44 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
         return `/deployments/${deploymentId}/audio/translations?api-version=${apiVersion}`;
       }
       case 'realtime': {
-        return `/realtime?api-version=${apiVersion}&deployment=${providerOptions.deploymentId}`;
+        return `/realtime?api-version=${apiVersion}&deployment=${deploymentId}`;
       }
       case 'uploadFile':
-        return `/files?api-version=${apiVersion}`;
+        return `${path}?api-version=${apiVersion}`;
       case 'retrieveFile':
-        return `/files/${id}?api-version=${apiVersion}`;
+        return `${path}?api-version=${apiVersion}`;
       case 'listFiles':
-        return `/files?api-version=${apiVersion}`;
+        return `${path}?api-version=${apiVersion}`;
       case 'deleteFile':
-        return `/files/${id}?api-version=${apiVersion}`;
+        return `${path}?api-version=${apiVersion}`;
       case 'retrieveFileContent':
-        return `/files/${id}/content?api-version=${apiVersion}`;
+        return `${path}?api-version=${apiVersion}`;
+      case 'createFinetune':
+        return `${path}?api-version=${apiVersion}`;
+      case 'retrieveFinetune':
+        return `${path}?api-version=${apiVersion}`;
+      case 'listFinetunes':
+        return `${path}?api-version=${apiVersion}`;
+      case 'cancelFinetune':
+        return `${path}?api-version=${apiVersion}`;
+      case 'createBatch':
+        return `${path}?api-version=${apiVersion}`;
+      case 'retrieveBatch':
+        return `${path}?api-version=${apiVersion}`;
+      case 'cancelBatch':
+        return `${path}?api-version=${apiVersion}`;
+      case 'listBatches':
+        return `${path}?api-version=${apiVersion}`;
       case 'listChatCompletions':
-        return gatewayRequestPath + azureSpecificQueryParams;
+        return `/deployments/${deploymentId}/${path}` + apiVersionQueryParam;
       case 'getChatCompletion':
-        return gatewayRequestPath + azureSpecificQueryParams;
+        return `/deployments/${deploymentId}/${path}` + apiVersionQueryParam;
       case 'getChatCompletionMessages':
-        return gatewayRequestPath + azureSpecificQueryParams;
+        return `/deployments/${deploymentId}/${path}` + apiVersionQueryParam;
       case 'updateChatCompletion':
-        return gatewayRequestPath + azureSpecificQueryParams;
+        return `/deployments/${deploymentId}/${path}` + apiVersionQueryParam;
       case 'deleteChatCompletion':
-        return gatewayRequestPath + azureSpecificQueryParams;
+        return `/deployments/${deploymentId}/${path}` + apiVersionQueryParam;
       default:
         return '';
     }

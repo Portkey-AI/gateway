@@ -30,6 +30,7 @@ import { modelsHandler, providersHandler } from './handlers/modelsHandler';
 import { realTimeHandler } from './handlers/realtimeHandler';
 import filesHandler from './handlers/filesHandler';
 import batchesHandler from './handlers/batchesHandler';
+import finetuneHandler from './handlers/finetuneHandler';
 
 // Config
 import conf from '../conf.json';
@@ -226,6 +227,12 @@ app.post(
   batchesHandler('cancelBatch', 'POST')
 );
 app.get('/v1/batches', requestValidator, batchesHandler('listBatches', 'GET'));
+
+app.all(
+  '/v1/fine_tuning/jobs/:jobId?/:cancel?',
+  requestValidator,
+  finetuneHandler
+);
 
 /**
  * POST route for '/v1/prompts/:id/completions'.

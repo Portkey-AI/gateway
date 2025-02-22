@@ -58,6 +58,14 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
         return basePath;
       case 'createBatch':
         return basePath;
+      case 'createFinetune':
+        return basePath;
+      case 'retrieveFinetune':
+        return basePath;
+      case 'listFinetunes':
+        return basePath;
+      case 'cancelFinetune':
+        return basePath;
       case 'retrieveBatch':
         return basePath;
       case 'cancelBatch':
