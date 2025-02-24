@@ -22,7 +22,6 @@ import {
 } from './createSpeech';
 import { AzureOpenAICreateTranscriptionResponseTransform } from './createTranscription';
 import { AzureOpenAICreateTranslationResponseTransform } from './createTranslation';
-import { AzureOpenAIRequestTransform } from './uploadFile';
 import { AzureOpenAIUpdateChatCompletionConfig } from './updateChatCompletion';
 import { OpenAICreateFinetuneConfig } from '../openai/createFinetune';
 import { AzureTransformFinetuneBody } from './createFinetune';
