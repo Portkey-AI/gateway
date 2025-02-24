@@ -76,13 +76,6 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       }
     }
 
-    const segments = gatewayRequestURL?.split('/');
-    let id = '';
-    if (['retrieveFileContent'].includes(mappedFn)) {
-      id = segments?.at(-2) ?? '';
-    } else {
-      id = segments?.at(-1) ?? '';
-    }
     const path = gatewayRequestURL.split('/v1')?.[1];
     const apiVersionQueryParam = path.includes('?')
       ? `&api-version=${apiVersion}`
