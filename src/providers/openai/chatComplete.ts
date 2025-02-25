@@ -248,8 +248,8 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
       typeof choice.message.content === 'string'
     ) {
       const inidividualWords: Array<string> = [];
-      for (let i = 0; i < choice.message.content.length; i += 4) {
-        inidividualWords.push(choice.message.content.slice(i, i + 4));
+      for (let i = 0; i < choice.message.content.length; i += 500) {
+        inidividualWords.push(choice.message.content.slice(i, i + 500));
       }
       inidividualWords.forEach((word: string) => {
         streamChunkArray.push(
