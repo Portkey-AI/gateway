@@ -13,6 +13,28 @@ import { OpenAIChatCompleteResponse } from '../providers/openai/chatComplete';
 import { OpenAICompleteResponse } from '../providers/openai/complete';
 import { getStreamModeSplitPattern, type SplitPatternType } from '../utils';
 
+const appendRawResponseToChunks = (
+  chunk: string,
+  rawResponse: Record<string, any>
+) => {
+  try {
+    if (chunk !== undefined) {
+      const parts = chunk.split('\n\n');
+      for (let i = 0; i < parts.length; i++) {
+        let part = parts[i];
+        if (part.startsWith('data: ')) {
+          const json = JSON.parse(part.slice(6));
+          json.raw_response = rawResponse;
+          parts[i] = 'data: ' + JSON.stringify(json);
+        }
+      }
+      return parts.join('\n\n');
+    }
+  } catch (error) {
+    return chunk;
+  }
+};
+
 function readUInt32BE(buffer: Uint8Array, offset: number) {
   return (
     ((buffer[offset] << 24) |
@@ -124,7 +146,8 @@ export async function* readStream(
   transformFunction: Function | undefined,
   isSleepTimeRequired: boolean,
   fallbackChunkId: string,
-  strictOpenAiCompliance: boolean
+  strictOpenAiCompliance: boolean,
+  includeRawResponse: boolean = false
 ) {
   let buffer = '';
   const decoder = new TextDecoder();
@@ -136,12 +159,21 @@ export async function* readStream(
     if (done) {
       if (buffer.length > 0) {
         if (transformFunction) {
-          yield transformFunction(
+          let transformedChunk = transformFunction(
             buffer,
             fallbackChunkId,
             streamState,
             strictOpenAiCompliance
           );
+          if (includeRawResponse && Array.isArray(transformedChunk)) {
+            transformedChunk = appendRawResponseToChunks(
+              transformedChunk[0],
+              transformedChunk[1]
+            );
+          }
+          if (transformedChunk !== undefined) {
+            yield transformedChunk;
+          }
         } else {
           yield buffer;
         }
@@ -167,12 +199,22 @@ export async function* readStream(
           }
 
           if (transformFunction) {
-            const transformedChunk = transformFunction(
+            let transformedChunk = transformFunction(
               part,
               fallbackChunkId,
               streamState,
               strictOpenAiCompliance
             );
+            if (Array.isArray(transformedChunk)) {
+              if (includeRawResponse) {
+                transformedChunk = appendRawResponseToChunks(
+                  transformedChunk[0],
+                  transformedChunk[1]
+                );
+              } else {
+                transformedChunk = transformedChunk[0];
+              }
+            }
             if (transformedChunk !== undefined) {
               yield transformedChunk;
             }
@@ -215,7 +257,8 @@ export async function handleNonStreamingMode(
   response: Response,
   responseTransformer: Function | undefined,
   strictOpenAiCompliance: boolean,
-  gatewayRequestUrl: string
+  gatewayRequestUrl: string,
+  includeRawResponse: boolean = false
 ): Promise<{
   response: Response;
   json: Record<string, any>;
@@ -243,6 +286,9 @@ export async function handleNonStreamingMode(
       strictOpenAiCompliance,
       gatewayRequestUrl
     );
+    if (includeRawResponse) {
+      responseBodyJson.raw_response = originalResponseBodyJson;
+    }
   }
 
   return {
@@ -270,7 +316,8 @@ export function handleStreamingMode(
   proxyProvider: string,
   responseTransformer: Function | undefined,
   requestURL: string,
-  strictOpenAiCompliance: boolean
+  strictOpenAiCompliance: boolean,
+  includeRawResponse: boolean = false
 ): Response {
   const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);
   // If the provider doesn't supply completion id,
@@ -305,7 +352,8 @@ export function handleStreamingMode(
         responseTransformer,
         isSleepTimeRequired,
         fallbackChunkId,
-        strictOpenAiCompliance
+        strictOpenAiCompliance,
+        includeRawResponse
       )) {
         await writer.write(encoder.encode(chunk));
       }

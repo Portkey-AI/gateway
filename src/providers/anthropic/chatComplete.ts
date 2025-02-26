@@ -292,6 +292,10 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
   user: {
     param: 'metadata.user_id',
   },
+  thinking: {
+    param: 'thinking',
+    required: false,
+  },
 };
 
 interface AnthropicErrorObject {
@@ -309,6 +313,12 @@ interface AnthorpicTextContentItem {
   text: string;
 }
 
+interface AnthropicThinkingContentItem {
+  type: 'thinking';
+  thinking: string;
+  signature: string;
+}
+
 interface AnthropicToolContentItem {
   type: 'tool_use';
   name: string;
@@ -316,7 +326,10 @@ interface AnthropicToolContentItem {
   input: Record<string, any>;
 }
 
-type AnthropicContentItem = AnthorpicTextContentItem | AnthropicToolContentItem;
+type AnthropicContentItem =
+  | AnthorpicTextContentItem
+  | AnthropicThinkingContentItem
+  | AnthropicToolContentItem;
 
 export interface AnthropicChatCompleteResponse {
   id: string;
@@ -339,7 +352,8 @@ export interface AnthropicChatCompleteStreamResponse {
   index: number;
   delta: {
     type: string;
-    text: string;
+    text?: string;
+    thinking?: string;
     partial_json?: string;
     stop_reason?: string;
   };
@@ -408,10 +422,19 @@ export const AnthropicChatCompleteResponseTransform: (
     const shouldSendCacheUsage =
       cache_creation_input_tokens || cache_read_input_tokens;
 
-    let content = '';
+    let content;
     if (response.content.length && response.content[0].type === 'text') {
       content = response.content[0].text;
     }
+
+    content = response.content.reduce((acc, item) => {
+      if (item.type === 'text') {
+        acc += item.text;
+      } else if (item.type === 'thinking') {
+        acc += item.thinking;
+      }
+      return acc;
+    }, '');
 
     let toolCalls: any = [];
     response.content.forEach((item) => {
@@ -468,7 +491,11 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
   streamState: AnthropicStreamState
-) => string | undefined = (responseChunk, fallbackId, streamState) => {
+) => string | (string | AnthropicChatCompleteStreamResponse)[] | undefined = (
+  responseChunk,
+  fallbackId,
+  streamState
+) => {
   let chunk = responseChunk.trim();
   if (
     chunk.startsWith('event: ping') ||
@@ -492,7 +519,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   const parsedChunk: AnthropicChatCompleteStreamResponse = JSON.parse(chunk);
 
   if (parsedChunk.type === 'error' && parsedChunk.error) {
-    return (
+    return [
       `data: ${JSON.stringify({
         id: fallbackId,
         object: 'chat.completion.chunk',
@@ -508,9 +535,10 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           },
         ],
       })}` +
-      '\n\n' +
-      'data: [DONE]\n\n'
-    );
+        '\n\n' +
+        'data: [DONE]\n\n',
+      parsedChunk,
+    ];
   }
 
   if (
@@ -535,7 +563,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           parsedChunk.message?.usage?.cache_creation_input_tokens,
       }),
     };
-    return (
+    return [
       `data: ${JSON.stringify({
         id: fallbackId,
         object: 'chat.completion.chunk',
@@ -552,8 +580,9 @@ export const AnthropicChatCompleteStreamChunkTransform: (
             finish_reason: null,
           },
         ],
-      })}` + '\n\n'
-    );
+      })}` + '\n\n',
+      parsedChunk,
+    ];
   }
 
   if (parsedChunk.type === 'message_delta' && parsedChunk.usage) {
@@ -562,7 +591,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
       (streamState?.usage?.cache_creation_input_tokens ?? 0) +
       (streamState?.usage?.cache_read_input_tokens ?? 0) +
       (parsedChunk.usage.output_tokens ?? 0);
-    return (
+    return [
       `data: ${JSON.stringify({
         id: fallbackId,
         object: 'chat.completion.chunk',
@@ -581,8 +610,9 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           ...streamState.usage,
           total_tokens: totalTokens,
         },
-      })}` + '\n\n'
-    );
+      })}` + '\n\n',
+      parsedChunk,
+    ];
   }
 
   const toolCalls = [];
@@ -615,7 +645,14 @@ export const AnthropicChatCompleteStreamChunkTransform: (
     });
   }
 
-  return (
+  let content = null;
+  if (parsedChunk.delta?.text) {
+    content = parsedChunk.delta.text;
+  } else if (parsedChunk.delta?.thinking) {
+    content = parsedChunk.delta.thinking;
+  }
+
+  return [
     `data: ${JSON.stringify({
       id: fallbackId,
       object: 'chat.completion.chunk',
@@ -625,7 +662,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
       choices: [
         {
           delta: {
-            content: parsedChunk.delta?.text,
+            content,
             tool_calls: toolCalls.length ? toolCalls : undefined,
           },
           index: 0,
@@ -633,6 +670,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           finish_reason: parsedChunk.delta?.stop_reason ?? null,
         },
       ],
-    })}` + '\n\n'
-  );
+    })}` + '\n\n',
+    parsedChunk,
+  ];
 };

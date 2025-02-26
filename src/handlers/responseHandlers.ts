@@ -41,7 +41,8 @@ export async function responseHandler(
   isCacheHit: boolean = false,
   gatewayRequest: Params,
   strictOpenAiCompliance: boolean,
-  gatewayRequestUrl: string
+  gatewayRequestUrl: string,
+  includeRawResponse: boolean = false
 ): Promise<{
   response: Response;
   responseJson: Record<string, any> | null;
@@ -103,7 +104,8 @@ export async function responseHandler(
         provider,
         responseTransformerFunction,
         requestURL,
-        strictOpenAiCompliance
+        strictOpenAiCompliance,
+        includeRawResponse
       ),
       responseJson: null,
     };
@@ -149,7 +151,8 @@ export async function responseHandler(
     response,
     responseTransformerFunction,
     strictOpenAiCompliance,
-    gatewayRequestUrl
+    gatewayRequestUrl,
+    includeRawResponse
   );
 
   return {

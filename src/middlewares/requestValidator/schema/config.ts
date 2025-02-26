@@ -108,6 +108,7 @@ export const configSchema: any = z
     // AzureOpenAI specific
     azure_model_name: z.string().optional(),
     strict_open_ai_compliance: z.boolean().optional(),
+    include_raw_response: z.boolean().optional(),
   })
   .refine(
     (value) => {
