@@ -61,12 +61,10 @@ const transformAssistantMessage = (msg: Message): AnthropicMessage => {
     typeof msg.content === 'object' &&
     msg.content.length
   ) {
-    if (msg.content[0].text) {
-      content.push({
-        type: 'text',
-        text: msg.content[0].text,
-      });
-    }
+    msg.content.forEach((item) => {
+      if (['text', 'thinking'].includes(item.type))
+        content.push(item as AnthropicContentItem);
+    });
   }
   if (containsToolCalls) {
     msg.tool_calls.forEach((toolCall: any) => {
