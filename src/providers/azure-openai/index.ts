@@ -22,6 +22,7 @@ import {
 } from './createSpeech';
 import { AzureOpenAICreateTranscriptionResponseTransform } from './createTranscription';
 import { AzureOpenAICreateTranslationResponseTransform } from './createTranslation';
+import { AzureOpenAIUpdateChatCompletionConfig } from './updateChatCompletion';
 import { OpenAICreateFinetuneConfig } from '../openai/createFinetune';
 import { AzureTransformFinetuneBody } from './createFinetune';
 import { OpenAIFileUploadRequestTransform } from '../openai/uploadFile';
@@ -40,6 +41,7 @@ const AzureOpenAIConfig: ProviderConfigs = {
   createTranscription: {},
   createTranslation: {},
   realtime: {},
+  updateChatCompletion: AzureOpenAIUpdateChatCompletionConfig,
   cancelFinetune: {},
   cancelBatch: {},
   createBatch: AzureOpenAICreateBatchConfig,
@@ -60,6 +62,11 @@ const AzureOpenAIConfig: ProviderConfigs = {
     retrieveFile: AzureOpenAIResponseTransform,
     deleteFile: AzureOpenAIResponseTransform,
     retrieveFileContent: AzureOpenAIResponseTransform,
+    listChatCompletions: AzureOpenAIResponseTransform,
+    getChatCompletion: AzureOpenAIResponseTransform,
+    getChatCompletionMessages: AzureOpenAIResponseTransform,
+    updateChatCompletion: AzureOpenAIResponseTransform,
+    deleteChatCompletion: AzureOpenAIResponseTransform,
     createFinetune: AzureOpenAIResponseTransform,
     retrieveFinetune: AzureOpenAIFinetuneResponseTransform,
     createBatch: AzureOpenAIResponseTransform,
