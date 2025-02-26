@@ -134,13 +134,20 @@ export const handler: PluginHandler = async (
       currentResults.forEach((result) => guardResults.add(result));
     }
 
-    data = result.summary;
     let hasPII = guardResults.has(GuardName.PII_DETECTOR);
 
     if (redactionList.length > 0 && hasPII) {
       setCurrentContentPart(context, eventType, transformedData, respTextArray);
       transformed = true;
     }
+
+    const scanResult: any = {
+      guards: guardResults,
+      transformed: transformed,
+      transformedData: transformedData,
+    };
+    data = scanResult;
+
     // check if only PII/Secrets is enabled with redaction,
     // if yes then return the redacted data with verdict = true.
     // else verdict = false, as we found other detections.
