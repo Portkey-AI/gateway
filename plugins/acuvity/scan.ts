@@ -143,8 +143,6 @@ export const handler: PluginHandler = async (
 
     const scanResult: any = {
       guards: guardResults,
-      transformed: transformed,
-      transformedData: transformedData,
     };
     data = scanResult;
 
