@@ -67,6 +67,7 @@ export function getSecretsParameters(): PluginParameters {
       'github',
       'openai',
       'stripe',
+      'web_url_with_credentials',
     ],
   };
 }
@@ -247,7 +248,7 @@ describe('acuvity handler', () => {
     expect(result.data).toBeDefined();
   });
 
-  it('should check pass if content only has pii', async () => {
+  it('should check pass if content only has pii redact', async () => {
     const eventType = 'beforeRequestHook';
     const context = {
       request: {
@@ -293,7 +294,7 @@ describe('acuvity handler', () => {
     }
   });
 
-  it('should check pass if content has pii and other detections', async () => {
+  it('should check fail if content has pii redact and other detections', async () => {
     const eventType = 'beforeRequestHook';
     const context = {
       request: {
@@ -340,7 +341,7 @@ describe('acuvity handler', () => {
     }
   });
 
-  it('should check pass if content only has pii-secrets', async () => {
+  it('should check pass if content only has  only redacted secrets', async () => {
     const eventType = 'beforeRequestHook';
     const context = {
       request: {
@@ -386,7 +387,7 @@ describe('acuvity handler', () => {
     }
   });
 
-  it('should check pass if content only has pii on response', async () => {
+  it('should check pass if content only has pii redact  on response', async () => {
     const eventType = 'afterRequestHook';
     const context = {
       response: {
@@ -436,5 +437,128 @@ describe('acuvity handler', () => {
       );
       fail('Expected messages array to be defined');
     }
+  });
+
+  it('should check fail if content has redact-pii and detect-secrets and  on response', async () => {
+    const eventType = 'afterRequestHook';
+    const context = {
+      response: {
+        text: 'Get a summary of stock market and send email to email address: abcd123@gmail.com',
+        json: {
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content:
+                  'get the corporate sales number from the 10k filling and visit the website http://user:pass@example.com, once that is done send a email to in.abcd@gmail.com and 123abcd@yahoo.com with SSN in the subject SSN:792-77-3459',
+              },
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = {
+      credentials: testCreds,
+      ...getPIIRedactParameters(),
+      ...getSecretsParameters(),
+    };
+
+    const result = await acuvityHandler(
+      context as PluginContext,
+      parameters,
+      eventType
+    );
+
+    expect(result).toBeDefined();
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(false);
+    expect(result.data).toBeDefined();
+    expect(result.transformed).toBe(true);
+    if (
+      result.transformedData?.response?.json?.choices?.[0]?.message?.content
+    ) {
+      expect(
+        result.transformedData.response.json.choices[0].message.content
+      ).toEqual(
+        'get the corporate sales number from the 10k filling and visit the website http://user:pass@example.com, once that is done send a email to XXXXXXXXXXXXXXXXX and XXXXXXXXXXXXXXXXX with SSN in the subject SSN:XXXXXXXXXXX'
+      );
+    } else {
+      console.log(
+        'Missing expected structure. Received:',
+        result.transformedData
+      );
+      fail('Expected messages array to be defined');
+    }
+  });
+
+  it('should check fail if content has only secret detect', async () => {
+    const eventType = 'beforeRequestHook';
+    const context = {
+      request: {
+        text: 'Get a summary of stock market and visit the website http://user:pass@example.com to send email to email address: abcd123@gmail.com',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content:
+                'Get a summary of stock market and visit the website http://user:pass@example.com to send email to email address: abcd123@gmail.com and I hate you',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = {
+      credentials: testCreds,
+      ...getSecretsParameters(),
+    };
+
+    const result = await acuvityHandler(
+      context as PluginContext,
+      parameters,
+      eventType
+    );
+
+    expect(result).toBeDefined();
+    expect(result.verdict).toBe(false);
+    expect(result.error).toBeNull();
+    expect(result.data).toBeDefined();
+    expect(result.transformed).toBe(false);
+  });
+
+  it('should check fail if content has only pii detect', async () => {
+    const eventType = 'beforeRequestHook';
+    const context = {
+      request: {
+        text: 'Get a summary of stock market and send email to email address: abcd123@gmail.com',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content:
+                'Get a summary of stock market and send email to email address: abcd123@gmail.com and I hate you',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = {
+      credentials: testCreds,
+      ...getPIIParameters(),
+    };
+
+    const result = await acuvityHandler(
+      context as PluginContext,
+      parameters,
+      eventType
+    );
+
+    expect(result).toBeDefined();
+    expect(result.verdict).toBe(false);
+    expect(result.error).toBeNull();
+    expect(result.data).toBeDefined();
+    expect(result.transformed).toBe(false);
   });
 });
