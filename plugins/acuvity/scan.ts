@@ -142,7 +142,7 @@ export const handler: PluginHandler = async (
     }
 
     const scanResult: any = {
-      guards: guardResults,
+      guards: JSON.stringify([...guardResults]),
     };
     data = scanResult;
 
@@ -243,12 +243,12 @@ function evaluateAllParameters(
   }
 
   // Check language
-  if (parameters.language && parameters.languagevals) {
+  if (parameters.language && parameters.language_values) {
     const check = responseHelper.evaluate(
       extraction,
       GuardName.LANGUAGE,
       0.5,
-      parameters.languagevals
+      parameters.language_values
     );
     if (check.matched) {
       guardTypes.add(GuardName.LANGUAGE);

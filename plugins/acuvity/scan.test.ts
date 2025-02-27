@@ -23,7 +23,7 @@ export function getToxicityParameters(): PluginParameters {
 export function getLanguageParameters(): PluginParameters {
   return {
     language: true,
-    language_values: 'eng_Latn',
+    language_values: 'english',
   };
 }
 
@@ -87,12 +87,19 @@ export function getSecretsRedactedParameters(): PluginParameters {
 }
 
 // Main function to get all parameters
+export function getLangParameters(): PluginParameters {
+  return {
+    credentials: testCreds,
+    ...getLanguageParameters(),
+  };
+}
+
+// Main function to get all parameters
 export function getParameters(): PluginParameters {
   return {
     credentials: testCreds,
     ...getPromptInjectionParameters(),
     ...getToxicityParameters(),
-    ...getLanguageParameters(),
     ...getPIIParameters(),
     ...getSecretsParameters(),
   };
@@ -144,6 +151,36 @@ describe('acuvity handler', () => {
 
     expect(result).toBeDefined();
     expect(result.verdict).toBe(true);
+    expect(result.error).toBeNull();
+    expect(result.data).toBeDefined();
+  });
+
+  it('should check fail if content is english', async () => {
+    const eventType = 'beforeRequestHook';
+    const context = {
+      request: {
+        text: 'this is a test string for moderations',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: 'this is a test string for moderations',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = getLangParameters();
+
+    const result = await acuvityHandler(
+      context as PluginContext,
+      parameters,
+      eventType
+    );
+
+    expect(result).toBeDefined();
+    expect(result.verdict).toBe(false);
     expect(result.error).toBeNull();
     expect(result.data).toBeDefined();
   });
