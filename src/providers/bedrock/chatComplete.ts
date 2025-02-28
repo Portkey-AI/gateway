@@ -44,6 +44,10 @@ export interface BedrockConverseAnthropicChatCompletionsParams
   extends BedrockChatCompletionsParams {
   anthropic_version?: string;
   user?: string;
+  thinking?: {
+    type: string;
+    budget_tokens: number;
+  };
 }
 
 export interface BedrockConverseCohereChatCompletionsParams
@@ -515,6 +519,11 @@ export const BedrockConverseAnthropicChatCompleteConfig: ProviderConfig = {
       transformAnthropicAdditionalModelRequestFields(params),
   },
   user: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
+      transformAnthropicAdditionalModelRequestFields(params),
+  },
+  thinking: {
     param: 'additionalModelRequestFields',
     transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
       transformAnthropicAdditionalModelRequestFields(params),
