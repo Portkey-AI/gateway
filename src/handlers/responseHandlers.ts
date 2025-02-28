@@ -104,8 +104,7 @@ export async function responseHandler(
         provider,
         responseTransformerFunction,
         requestURL,
-        strictOpenAiCompliance,
-        includeRawResponse
+        strictOpenAiCompliance
       ),
       responseJson: null,
     };

@@ -146,8 +146,7 @@ export async function* readStream(
   transformFunction: Function | undefined,
   isSleepTimeRequired: boolean,
   fallbackChunkId: string,
-  strictOpenAiCompliance: boolean,
-  includeRawResponse: boolean = false
+  strictOpenAiCompliance: boolean
 ) {
   let buffer = '';
   const decoder = new TextDecoder();
@@ -159,21 +158,12 @@ export async function* readStream(
     if (done) {
       if (buffer.length > 0) {
         if (transformFunction) {
-          let transformedChunk = transformFunction(
+          yield transformFunction(
             buffer,
             fallbackChunkId,
             streamState,
             strictOpenAiCompliance
           );
-          if (includeRawResponse && Array.isArray(transformedChunk)) {
-            transformedChunk = appendRawResponseToChunks(
-              transformedChunk[0],
-              transformedChunk[1]
-            );
-          }
-          if (transformedChunk !== undefined) {
-            yield transformedChunk;
-          }
         } else {
           yield buffer;
         }
@@ -199,22 +189,12 @@ export async function* readStream(
           }
 
           if (transformFunction) {
-            let transformedChunk = transformFunction(
+            const transformedChunk = transformFunction(
               part,
               fallbackChunkId,
               streamState,
               strictOpenAiCompliance
             );
-            if (Array.isArray(transformedChunk)) {
-              if (includeRawResponse) {
-                transformedChunk = appendRawResponseToChunks(
-                  transformedChunk[0],
-                  transformedChunk[1]
-                );
-              } else {
-                transformedChunk = transformedChunk[0];
-              }
-            }
             if (transformedChunk !== undefined) {
               yield transformedChunk;
             }
@@ -316,8 +296,7 @@ export function handleStreamingMode(
   proxyProvider: string,
   responseTransformer: Function | undefined,
   requestURL: string,
-  strictOpenAiCompliance: boolean,
-  includeRawResponse: boolean = false
+  strictOpenAiCompliance: boolean
 ): Response {
   const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);
   // If the provider doesn't supply completion id,
@@ -352,8 +331,7 @@ export function handleStreamingMode(
         responseTransformer,
         isSleepTimeRequired,
         fallbackChunkId,
-        strictOpenAiCompliance,
-        includeRawResponse
+        strictOpenAiCompliance
       )) {
         await writer.write(encoder.encode(chunk));
       }
