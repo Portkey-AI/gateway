@@ -61,12 +61,10 @@ const transformAssistantMessage = (msg: Message): AnthropicMessage => {
     typeof msg.content === 'object' &&
     msg.content.length
   ) {
-    if (msg.content[0].text) {
-      content.push({
-        type: 'text',
-        text: msg.content[0].text,
-      });
-    }
+    msg.content.forEach((item) => {
+      if (['text', 'thinking'].includes(item.type))
+        content.push(item as AnthropicContentItem);
+    });
   }
   if (containsToolCalls) {
     msg.tool_calls.forEach((toolCall: any) => {
@@ -292,6 +290,10 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
   user: {
     param: 'metadata.user_id',
   },
+  thinking: {
+    param: 'thinking',
+    required: false,
+  },
 };
 
 interface AnthropicErrorObject {
@@ -309,6 +311,12 @@ interface AnthorpicTextContentItem {
   text: string;
 }
 
+interface AnthropicThinkingContentItem {
+  type: 'thinking';
+  thinking: string;
+  signature: string;
+}
+
 interface AnthropicToolContentItem {
   type: 'tool_use';
   name: string;
@@ -316,7 +324,10 @@ interface AnthropicToolContentItem {
   input: Record<string, any>;
 }
 
-type AnthropicContentItem = AnthorpicTextContentItem | AnthropicToolContentItem;
+type AnthropicContentItem =
+  | AnthorpicTextContentItem
+  | AnthropicThinkingContentItem
+  | AnthropicToolContentItem;
 
 export interface AnthropicChatCompleteResponse {
   id: string;
@@ -339,7 +350,8 @@ export interface AnthropicChatCompleteStreamResponse {
   index: number;
   delta: {
     type: string;
-    text: string;
+    text?: string;
+    thinking?: string;
     partial_json?: string;
     stop_reason?: string;
   };
@@ -408,10 +420,19 @@ export const AnthropicChatCompleteResponseTransform: (
     const shouldSendCacheUsage =
       cache_creation_input_tokens || cache_read_input_tokens;
 
-    let content = '';
+    let content;
     if (response.content.length && response.content[0].type === 'text') {
       content = response.content[0].text;
     }
+
+    content = response.content.reduce((acc, item) => {
+      if (item.type === 'text') {
+        acc += item.text;
+      } else if (item.type === 'thinking') {
+        acc += item.thinking;
+      }
+      return acc;
+    }, '');
 
     let toolCalls: any = [];
     response.content.forEach((item) => {
@@ -615,6 +636,13 @@ export const AnthropicChatCompleteStreamChunkTransform: (
     });
   }
 
+  let content = null;
+  if (parsedChunk.delta?.text) {
+    content = parsedChunk.delta.text;
+  } else if (parsedChunk.delta?.thinking) {
+    content = parsedChunk.delta.thinking;
+  }
+
   return (
     `data: ${JSON.stringify({
       id: fallbackId,
@@ -625,7 +653,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
       choices: [
         {
           delta: {
-            content: parsedChunk.delta?.text,
+            content,
             tool_calls: toolCalls.length ? toolCalls : undefined,
           },
           index: 0,
