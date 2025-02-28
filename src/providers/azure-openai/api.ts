@@ -4,8 +4,7 @@ import {
   getAzureManagedIdentityToken,
   getAzureWorkloadIdentityToken,
 } from './utils';
-import { env } from 'hono/adapter';
-import fs from 'fs';
+import { env, getRuntimeKey } from 'hono/adapter';
 
 const AzureOpenAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
@@ -50,7 +49,15 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       const clientId = azureWorkloadClientId || env(c).AZURE_CLIENT_ID;
       const federatedTokenFile = env(c).AZURE_FEDERATED_TOKEN_FILE;
 
-      if (authorityHost && tenantId && clientId && federatedTokenFile) {
+      const runtime = getRuntimeKey();
+      if (
+        authorityHost &&
+        tenantId &&
+        clientId &&
+        federatedTokenFile &&
+        runtime === 'node'
+      ) {
+        const fs = await import('fs');
         const federatedToken = fs.readFileSync(federatedTokenFile, 'utf8');
 
         if (federatedToken) {
