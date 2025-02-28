@@ -14,11 +14,11 @@ export class GuardName {
 
   // Static instances
   public static readonly PROMPT_INJECTION = new GuardName('PROMPT_INJECTION');
-  public static readonly JAIL_BREAK = new GuardName('JAIL_BREAK');
+  public static readonly JAIL_BREAK = new GuardName('JAILBREAK');
   public static readonly MALICIOUS_URL = new GuardName('MALICIOUS_URL');
   public static readonly TOXIC = new GuardName('TOXIC');
   public static readonly BIASED = new GuardName('BIASED');
-  public static readonly HARMFUL_CONTENT = new GuardName('HARMFUL_CONTENT');
+  public static readonly HARMFUL_CONTENT = new GuardName('HARMFUL');
   public static readonly LANGUAGE = new GuardName('LANGUAGE');
   public static readonly PII_DETECTOR = new GuardName('PII_DETECTOR');
   public static readonly SECRETS_DETECTOR = new GuardName('SECRETS_DETECTOR');
