@@ -143,11 +143,13 @@ export const BatchOutputRequestHandler: RequestHandler = async ({
     },
   });
 
+  const [safeStream] = responseStream.readable.tee();
+
   // Pipe the node stream through the line splitter and then to the response stream.
   const lineSplitter = createLineSplitter();
   reader.pipeThrough(lineSplitter).pipeTo(responseStream.writable);
 
-  return new Response(responseStream.readable, {
+  return new Response(safeStream, {
     headers: { 'Content-Type': 'application/octet-stream' },
   });
 };
