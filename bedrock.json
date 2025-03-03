@@ -1,0 +1,119 @@
+{
+  "name": "bedrock",
+  "description": "",
+  "default": {
+    "params": [
+      { "key": "max_tokens", "defaultValue": 512, "minValue": 1, "maxValue": 2048 },
+      { "key": "temperature", "defaultValue": 0.5, "minValue": 0, "maxValue": 1 },
+      { "key": "top_p", "defaultValue": 0.9, "minValue": 0, "maxValue": 1 },
+      { "key": "n", "defaultValue": 1, "minValue": 1, "maxValue": 10 },
+      { "key": "stop", "defaultValue": null, "type": "array-of-strings", "skipValues": [null, []] },
+      { "key": "stream", "defaultValue": true, "type": "boolean" }
+    ],
+    "messages": { "options": ["system", "user", "assistant"] },
+    "type": { "primary": "chat", "supported": [] }
+  },
+
+  "mistral.mixtral-8x7b-instruct-v0:1": {
+    "params": [{ "key": "max_tokens", "maxValue": 32768 }],
+    "type": { "primary": "chat" }
+  },
+  "mistral.mistral-7b-instruct-v0:2": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "anthropic.claude-v1": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "anthropic.claude-v2": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "anthropic.claude-v2:1": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "anthropic.claude-instant-v1": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "ai21.j2-mid-v1": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "ai21.j2-ultra-v1": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "anthropic.claude-3-sonnet-20240229-v1:0": {
+    "type": { "primary": "chat", "supported": ["image"] }
+  },
+  "anthropic.claude-3-haiku-20240307-v1:0": {
+    "type": { "primary": "chat", "supported": ["image"] }
+  },
+  "anthropic.claude-3-5-sonnet-20240620-v1:0": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat", "supported": ["image"] }
+  },
+  "anthropic.claude-3-5-sonnet-20241022-v2:0": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat", "supported": ["image"] }
+  },
+  "anthropic.claude-3-5-haiku-20241022-v1:0": {
+    "type": { "primary": "chat", "supported": ["image"] }
+  },
+  "cohere.command-text-v14": {
+    "type": { "primary": "chat" }
+  },
+  "cohere.command-light-text-v14": {
+    "type": { "primary": "chat" }
+  },
+  "amazon.titan-text-express-v1": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "amazon.titan-text-lite-v1": {
+    "type": { "primary": "chat" }
+  },
+  "amazon.nova-pro-v1:0": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "amazon.nova-lite-v1:0": {
+    "type": { "primary": "chat" }
+  },
+  "amazon.nova-micro-v1:0": {
+    "type": { "primary": "chat" }
+  },
+  "meta.llama2-13b-chat-v1": {
+    "type": { "primary": "chat" }
+  },
+  "meta.llama2-70b-chat-v1": {
+    "type": { "primary": "chat" }
+  },
+  "us.meta.llama3-2-1b-instruct-v1:0": {
+    "type": { "primary": "chat" }
+  },
+  "eu.meta.llama3-2-1b-instruct-v1:0": {
+    "type": { "primary": "chat" }
+  },
+  "us.meta.llama3-2-3b-instruct-v1:0": {
+    "type": { "primary": "chat" }
+  },
+  "us.meta.llama3-2-11b-instruct-v1:0": {
+    "type": { "primary": "chat" }
+  },
+  "us.meta.llama3-2-90b-instruct-v1:0": {
+    "type": { "primary": "chat" }
+  },
+  "meta.llama3-1-8b-instruct-v1:0": {
+    "type": { "primary": "text" }
+  },
+  "eu.meta.llama3-2-3b-instruct-v1:0": {
+    "type": { "primary": "chat" }
+  },
+  "cohere.embed-english-v3": {
+    "type": { "primary": "text" }
+  }
+}
