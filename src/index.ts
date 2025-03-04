@@ -28,13 +28,15 @@ import { createTranscriptionHandler } from './handlers/createTranscriptionHandle
 import { createTranslationHandler } from './handlers/createTranslationHandler';
 import { modelsHandler, providersHandler } from './handlers/modelsHandler';
 import { realTimeHandler } from './handlers/realtimeHandler';
+import filesHandler from './handlers/filesHandler';
+import batchesHandler from './handlers/batchesHandler';
+import finetuneHandler from './handlers/finetuneHandler';
 
 // Config
 import conf from '../conf.json';
 
 // Create a new Hono server instance
 const app = new Hono();
-
 /**
  * Middleware that conditionally applies compression middleware based on the runtime.
  * Compression is automatically handled for lagon and workerd runtimes
@@ -158,6 +160,50 @@ app.post(
  * Handles requests by passing them to the createTranslationHandler.
  */
 app.post('/v1/audio/translations', requestValidator, createTranslationHandler);
+
+// files
+app.get('/v1/files', requestValidator, filesHandler('listFiles', 'GET'));
+app.get('/v1/files/:id', requestValidator, filesHandler('retrieveFile', 'GET'));
+app.get(
+  '/v1/files/:id/content',
+  requestValidator,
+  filesHandler('retrieveFileContent', 'GET')
+);
+app.post('/v1/files', requestValidator, filesHandler('uploadFile', 'POST'));
+app.delete(
+  '/v1/files/:id',
+  requestValidator,
+  filesHandler('deleteFile', 'DELETE')
+);
+
+// batches
+app.post(
+  '/v1/batches',
+  requestValidator,
+  batchesHandler('createBatch', 'POST')
+);
+app.get(
+  '/v1/batches/:id',
+  requestValidator,
+  batchesHandler('retrieveBatch', 'GET')
+);
+app.get(
+  '/v1/batches/*/output',
+  requestValidator,
+  batchesHandler('getBatchOutput', 'GET')
+);
+app.post(
+  '/v1/batches/:id/cancel',
+  requestValidator,
+  batchesHandler('cancelBatch', 'POST')
+);
+app.get('/v1/batches', requestValidator, batchesHandler('listBatches', 'GET'));
+
+app.all(
+  '/v1/fine_tuning/jobs/:jobId?/:cancel?',
+  requestValidator,
+  finetuneHandler
+);
 
 /**
  * POST route for '/v1/prompts/:id/completions'.

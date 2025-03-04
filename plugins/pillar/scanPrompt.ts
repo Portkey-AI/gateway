@@ -34,7 +34,8 @@ export const handler: PluginHandler = async (
     const result: any = await postPillar(
       'scanPrompt',
       parameters.credentials,
-      scanPromptObject
+      scanPromptObject,
+      parameters.timeout
     );
 
     // result is an object with the following structure:

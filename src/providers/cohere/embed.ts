@@ -101,3 +101,54 @@ export const CohereEmbedResponseTransform: (
     },
   };
 };
+
+interface CohereEmbedResponseBatch {
+  custom_id: string;
+  id: string;
+  text: string;
+  embeddings: {
+    float?: {
+      array: number[];
+    };
+    int8?: {
+      array: number[];
+    };
+    uint8?: {
+      array: number[];
+    };
+    binary?: {
+      array: number[];
+    };
+    ubinary?: {
+      array: number[];
+    };
+  };
+}
+
+export const CohereEmbedResponseTransformBatch = (
+  response: CohereEmbedResponseBatch
+) => {
+  return {
+    id: response.id,
+    custom_id: response.custom_id,
+    response: {
+      status_code: 200,
+      request_id: response.id,
+      body: {
+        object: 'list',
+        data: [
+          {
+            object: 'embedding',
+            index: 0,
+            embedding: response.embeddings.float?.array,
+          },
+        ],
+        model: '',
+        usage: {
+          prompt_tokens: 0,
+          total_tokens: 0,
+        },
+      },
+    },
+  };
+};

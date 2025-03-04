@@ -30,14 +30,14 @@ export const handler: PluginHandler = async (
   const evaluationBody: any = {
     input: context.request.text,
     output: context.response.text,
-    timeout: 15000,
   };
 
   try {
     const result: any = await postPatronus(
       evaluator,
       parameters.credentials,
-      evaluationBody
+      evaluationBody,
+      parameters.timeout || 15000
     );
 
     const evalResult = result.results[0];

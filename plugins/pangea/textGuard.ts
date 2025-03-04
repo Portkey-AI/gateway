@@ -4,7 +4,7 @@ import {
   PluginHandler,
   PluginParameters,
 } from '../types';
-import { post, getText } from '../utils';
+import { post, getText, HttpError } from '../utils';
 import { VERSION } from './version';
 
 export const handler: PluginHandler = async (
@@ -13,61 +13,82 @@ export const handler: PluginHandler = async (
   eventType: HookEventType
 ) => {
   let error = null;
-  let verdict = false;
+  let verdict = true;
   let data = null;
+  if (!parameters.credentials?.domain) {
+    return {
+      error: `'parameters.credentials.domain' must be set`,
+      verdict: true,
+      data,
+    };
+  }
+
+  if (!parameters.credentials?.apiKey) {
+    return {
+      error: `'parameters.credentials.apiKey' must be set`,
+      verdict: true,
+      data,
+    };
+  }
+
+  // TODO: Update to v1 once released
+  const url = `https://ai-guard.${parameters.credentials.domain}/v1/text/guard`;
+
+  const text = getText(context, eventType);
+  if (!text) {
+    return {
+      error: 'request or response text is empty',
+      verdict: true,
+      data,
+    };
+  }
+
+  const requestOptions = {
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent': 'portkey-ai-plugin/' + VERSION,
+      Authorization: `Bearer ${parameters.credentials.apiKey}`,
+    },
+  };
+
+  // Avoid sending empty strings
+  const recipe = parameters.recipe ? parameters.recipe : undefined;
+
+  const request = {
+    text: text,
+    recipe: recipe,
+    debug: parameters.debug,
+    overrides: parameters.overrides,
+  };
+
+  let response;
   try {
-    if (!parameters.credentials?.domain) {
-      return {
-        error: `'parameters.credentials.domain' must be set`,
-        verdict: true,
-        data,
-      };
-    }
-
-    if (!parameters.credentials?.apiKey) {
-      return {
-        error: `'parameters.credentials.apiKey' must be set`,
-        verdict: true,
-        data,
-      };
-    }
-
-    // TODO: Update to v1 once released
-    const url = `https://ai-guard.${parameters.credentials.domain}/v1beta/text/guard`;
-
-    const text = getText(context, eventType);
-    if (!text) {
-      return {
-        error: 'request or response text is empty',
-        verdict: true,
-        data,
-      };
-    }
-
-    const requestOptions = {
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'portkey-ai-plugin/' + VERSION,
-        Authorization: `Bearer ${parameters.credentials.apiKey}`,
-      },
-    };
-    const request = {
-      text: text,
-      recipe: parameters.recipe,
-      debug: parameters.debug,
-      overrides: parameters.overrides,
-    };
-
-    const response = await post(url, request, requestOptions);
-    data = response.result;
-    const si = response.result.findings;
-    if (
-      !(si.prompt_injection_count || si.malicious_count || si.artifact_count)
-    ) {
-      verdict = true;
-    }
+    response = await post(url, request, requestOptions, parameters.timeout);
   } catch (e) {
-    error = e as Error;
+    if (e instanceof HttpError) {
+      error = `${e.message}. body: ${e.response.body}`;
+    } else {
+      error = e as Error;
+    }
+  }
+
+  if (response) {
+    if (response.status == 'Success') {
+      data = response.result;
+      const detectors = data.detectors;
+      if (
+        detectors?.prompt_injection?.detected ||
+        detectors?.pii_entity?.detected ||
+        detectors?.malicious_entity?.detected ||
+        detectors?.custom_entity?.detected ||
+        detectors?.secrets_detection?.detected ||
+        detectors?.profanity_and_toxicity?.detected
+      ) {
+        verdict = false;
+      }
+    } else {
+      error = errorToString(response);
+    }
   }
 
   return {
@@ -76,3 +97,15 @@ export const handler: PluginHandler = async (
     data, // any additional data you want to return
   };
 };
+
+function errorToString(response: any): string {
+  let ret = `Summary: ${response.summary}\n`;
+  ret += `status: ${response.status}\n`;
+  ret += `request_id: ${response.request_id}\n`;
+  ret += `request_time: ${response.request_time}\n`;
+  ret += `response_time: ${response.response_time}\n`;
+  (response.result?.errors || []).forEach((ef: any) => {
+    ret += `\t${ef.source} ${ef.code}: ${ef.detail}\n`;
+  });
+  return ret;
+}

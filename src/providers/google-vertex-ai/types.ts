@@ -14,39 +14,61 @@ export interface GoogleGenerateFunctionCall {
   args: Record<string, any>;
 }
 
-export interface GoogleGenerateContentResponse {
-  candidates: {
-    content: {
-      parts: {
-        text?: string;
-        functionCall?: GoogleGenerateFunctionCall;
-      }[];
-    };
-    finishReason: string;
-    index: 0;
-    safetyRatings: {
-      category: string;
-      probability: string;
+export interface GoogleResponseCandidate {
+  content: {
+    parts: {
+      text?: string;
+      thought?: string; // for models like gemini-2.0-flash-thinking-exp refer: https://ai.google.dev/gemini-api/docs/thinking-mode#streaming_model_thinking
+      functionCall?: GoogleGenerateFunctionCall;
     }[];
-    groundingMetadata?: {
-      webSearchQueries?: string[];
-      searchEntryPoint?: {
-        renderedContent: string;
-      };
-      groundingSupports?: Array<{
-        segment: {
-          startIndex: number;
-          endIndex: number;
-          text: string;
-        };
-        groundingChunkIndices: number[];
-        confidenceScores: number[];
-      }>;
-      retrievalMetadata?: {
-        webDynamicRetrievalScore: number;
-      };
-    };
+  };
+  logprobsResult?: {
+    topCandidates: [
+      {
+        candidates: [
+          {
+            token: string;
+            logProbability: number;
+          },
+        ];
+      },
+    ];
+    chosenCandidates: [
+      {
+        token: string;
+        logProbability: number;
+      },
+    ];
+  };
+  finishReason: string;
+  index: 0;
+  safetyRatings: {
+    category: string;
+    probability: string;
   }[];
+  groundingMetadata?: {
+    webSearchQueries?: string[];
+    searchEntryPoint?: {
+      renderedContent: string;
+    };
+    groundingSupports?: Array<{
+      segment: {
+        startIndex: number;
+        endIndex: number;
+        text: string;
+      };
+      groundingChunkIndices: number[];
+      confidenceScores: number[];
+    }>;
+    retrievalMetadata?: {
+      webDynamicRetrievalScore: number;
+    };
+  };
+}
+
+export interface GoogleGenerateContentResponse {
+  modelVersion: string;
+  candidates: GoogleResponseCandidate[];
   promptFeedback: {
     safetyRatings: {
       category: string;
@@ -115,5 +137,62 @@ export interface GoogleSearchRetrievalTool {
       mode: string;
       dynamicThreshold?: string;
     };
+  };
+}
+
+type GoogleBatchJobStatus =
+  | 'JOB_STATE_UNSPECIFIED'
+  | 'JOB_STATE_QUEUED'
+  | 'JOB_STATE_PENDING'
+  | 'JOB_STATE_RUNNING'
+  | 'JOB_STATE_SUCCEEDED'
+  | 'JOB_STATE_FAILED'
+  | 'JOB_STATE_CANCELLING'
+  | 'JOB_STATE_CANCELLED'
+  | 'JOB_STATE_PAUSED'
+  | 'JOB_STATE_EXPIRED'
+  | 'JOB_STATE_UPDATING'
+  | 'JOB_STATE_PARTIALLY_SUCCEEDED';
+
+export interface GoogleBatchRecord {
+  /**
+   * @example projects/562188160088/locations/us-east4/batchPredictionJobs/{id}
+   */
+  name: string;
+  displayName: string;
+  /**
+   * @example projects/562188160088/locations/us-east4/models/{model}
+   */
+  model: string;
+  inputConfig: {
+    instancesFormat: 'jsonl';
+    gcsSource: {
+      uris: string;
+    };
+  };
+  outputConfig: {
+    predictionsFormat: 'jsonl';
+    gcsDestination: {
+      outputUriPrefix: string;
+    };
+  };
+  outputInfo?: {
+    gcsOutputDirectory: string;
+  };
+  state: GoogleBatchJobStatus;
+  createTime: string;
+  updateTime: string;
+  modelVersionId: string;
+  error?: {
+    code: string;
+    message: string;
+  };
+  startTime: string;
+  endTime: string;
+  completionsStats?: {
+    successfulCount: string;
+    failedCount: string;
+    incompleteCount: string;
+    successfulForecastPointCount: string;
   };
 }

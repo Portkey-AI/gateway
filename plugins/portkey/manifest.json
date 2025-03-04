@@ -239,6 +239,17 @@
       "parameters": {
         "type": "object",
         "properties": {
+          "redact": {
+            "type": "boolean",
+            "label": "Redact PII",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the PII identified will be redacted"
+              }
+            ],
+            "default": false
+          },
           "categories": {
             "type": "array",
             "label": "PII Categories",

@@ -15,9 +15,14 @@ import {
   HUGGING_FACE,
   STABILITY_AI,
   SAGEMAKER,
+  FIREWORKS_AI,
 } from '../globals';
 import Providers from '../providers';
-import { ProviderAPIConfig, endpointStrings } from '../providers/types';
+import {
+  ProviderAPIConfig,
+  RequestHandlers,
+  endpointStrings,
+} from '../providers/types';
 import transformToProviderRequest from '../services/transformToProviderRequest';
 import { Options, Params, StrategyModes, Targets } from '../types/requestBody';
 import { convertKeysToCamelCase } from '../utils';
@@ -28,6 +33,7 @@ import { HookSpan, HooksManager } from '../middlewares/hooks';
 import { ConditionalRouter } from '../services/conditionalRouter';
 import { RouterError } from '../errors/RouterError';
 import { GatewayError } from '../errors/GatewayError';
+import { HookType } from '../middlewares/hooks/types';
 
 /**
  * Constructs the request options for the API call.
@@ -46,7 +52,7 @@ export function constructRequest(
   fn: endpointStrings,
   c: Context
 ) {
-  let proxyHeaders: Record<string, string> = {};
+  const proxyHeaders: Record<string, string> = {};
   // Handle proxy headers
   if (fn === 'proxy') {
     const poweredByHeadersPattern = `x-${POWERED_BY}-`;
@@ -70,8 +76,7 @@ export function constructRequest(
         'accept-encoding'
       ]?.replace('br', '');
   }
-
-  let baseHeaders: any = {
+  const baseHeaders: any = {
     'content-type': 'application/json',
   };
 
@@ -98,9 +103,10 @@ export function constructRequest(
     ...(fn === 'proxy' && proxyHeaders),
   };
 
-  let fetchOptions: RequestInit = {
+  const fetchOptions: RequestInit = {
     method,
     headers,
+    ...(fn === 'uploadFile' && { duplex: 'half' }),
   };
   const contentType = headers['content-type']?.split(';')[0];
   const isGetMethod = method === 'GET';
@@ -109,8 +115,13 @@ export function constructRequest(
     (isGetMethod || isMultipartFormData) && fetchOptions.headers;
 
   if (shouldDeleteContentTypeHeader) {
-    let headers = fetchOptions.headers as Record<string, unknown>;
+    const headers = fetchOptions.headers as Record<string, unknown>;
     delete headers['content-type'];
+    if (fn === 'uploadFile') {
+      headers['Content-Type'] = requestHeaders['content-type'];
+      headers[`x-${POWERED_BY}-file-purpose`] =
+        requestHeaders[`x-${POWERED_BY}-file-purpose`];
+    }
   }
 
   return fetchOptions;
@@ -168,7 +179,7 @@ export function selectProviderByWeight(providers: Options[]): Options {
   }));
 
   // Compute the total weight
-  let totalWeight = providers.reduce(
+  const totalWeight = providers.reduce(
     (sum: number, provider: any) => sum + provider.weight,
     0
   );
@@ -177,7 +188,7 @@ export function selectProviderByWeight(providers: Options[]): Options {
   let randomWeight = Math.random() * totalWeight;
 
   // Find the provider that corresponds to the selected weight
-  for (let [index, provider] of providers.entries()) {
+  for (const [index, provider] of providers.entries()) {
     // @ts-ignore since weight is being default set above
     if (randomWeight < provider.weight) {
       return { ...provider, index };
@@ -189,10 +200,14 @@ export function selectProviderByWeight(providers: Options[]): Options {
   throw new Error('No provider selected, please check the weights');
 }
 
-export function convertGuardrailsShorthand(guardrailsArr: any, type: string) {
-  return guardrailsArr.map((guardrails: any) => {
+export function convertHooksShorthand(
+  hooksArr: any,
+  type: string,
+  hookType: HookType
+) {
+  return hooksArr.map((hook: any) => {
     let hooksObject: any = {
-      type: 'guardrail',
+      type: hookType,
       id: `${type}_guardrail_${Math.random().toString(36).substring(2, 5)}`,
     };
 
@@ -206,18 +221,18 @@ export function convertGuardrailsShorthand(guardrailsArr: any, type: string) {
       'type',
       'guardrail_version_id',
     ].forEach((key) => {
-      if (guardrails.hasOwnProperty(key)) {
-        hooksObject[key] = guardrails[key];
-        delete guardrails[key];
+      if (hook.hasOwnProperty(key)) {
+        hooksObject[key] = hook[key];
+        delete hook[key];
       }
     });
 
     hooksObject = convertKeysToCamelCase(hooksObject);
 
     // Now, add all the checks to the checks array
-    hooksObject.checks = Object.keys(guardrails).map((key) => ({
+    hooksObject.checks = Object.keys(hook).map((key) => ({
       id: key.includes('.') ? key : `default.${key}`,
-      parameters: guardrails[key],
+      parameters: hook[key],
     }));
 
     return hooksObject;
@@ -238,14 +253,17 @@ export function convertGuardrailsShorthand(guardrailsArr: any, type: string) {
 export async function tryPost(
   c: Context,
   providerOption: Options,
-  inputParams: Params | FormData | ArrayBuffer,
+  requestBody: Params | FormData | ArrayBuffer | ReadableStream,
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
   currentIndex: number | string,
   method: string = 'POST'
 ): Promise<Response> {
   const overrideParams = providerOption?.overrideParams || {};
-  const params: Params = { ...inputParams, ...overrideParams };
+  let params: Params =
+    requestBody instanceof ReadableStream || requestBody instanceof FormData
+      ? {}
+      : { ...requestBody, ...overrideParams };
   const isStreamingMode = params.stream ? true : false;
   let strictOpenAiCompliance = true;
 
@@ -255,15 +273,14 @@ export async function tryPost(
     strictOpenAiCompliance = false;
   }
 
-  let metadata: Record<string, string>;
+  let metadata: Record<string, string> = {};
   try {
     metadata = JSON.parse(requestHeaders[HEADER_KEYS.METADATA]);
-  } catch (err) {
+  } catch {
     metadata = {};
   }
 
   const provider: string = providerOption.provider ?? '';
-
   const hooksManager = c.get('hooksManager');
   const hookSpan = hooksManager.createSpan(
     params,
@@ -277,15 +294,14 @@ export async function tryPost(
   );
 
   // Mapping providers to corresponding URLs
-  const apiConfig: ProviderAPIConfig = Providers[provider].api;
-  // Attach the body of the request
-  const transformedRequestBody = transformToProviderRequest(
-    provider,
-    params,
-    inputParams,
-    fn
-  );
+  const providerConfig = Providers[provider];
+  const apiConfig: ProviderAPIConfig = providerConfig.api;
 
+  let brhResponse: Response | undefined;
+  let transformedBody: any;
+  let createdAt: Date;
+
+  let url: string;
   const forwardHeaders =
     requestHeaders[HEADER_KEYS.FORWARD_HEADERS]
       ?.split(',')
@@ -295,23 +311,90 @@ export async function tryPost(
 
   const customHost =
     requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || '';
-
   const baseUrl =
-    customHost || apiConfig.getBaseURL({ providerOptions: providerOption });
-
+    customHost ||
+    (await apiConfig.getBaseURL({
+      providerOptions: providerOption,
+      fn,
+      c,
+      gatewayRequestURL: c.req.url,
+    }));
   const endpoint = apiConfig.getEndpoint({
+    c,
     providerOptions: providerOption,
     fn,
-    gatewayRequestBody: params,
+    gatewayRequestBodyJSON: params,
+    gatewayRequestBody: requestBody,
     gatewayRequestURL: c.req.url,
   });
 
-  let url: string;
-  if (fn == 'proxy') {
-    let proxyPath = c.req.url.indexOf('/v1/proxy') > -1 ? '/v1/proxy' : '/v1';
-    url = getProxyPath(c.req.url, provider, proxyPath, baseUrl, providerOption);
-  } else {
-    url = `${baseUrl}${endpoint}`;
+  url =
+    fn === 'proxy'
+      ? getProxyPath(
+          c.req.url,
+          provider,
+          c.req.url.indexOf('/v1/proxy') > -1 ? '/v1/proxy' : '/v1',
+          baseUrl,
+          providerOption
+        )
+      : `${baseUrl}${endpoint}`;
+
+  let mappedResponse: Response;
+  let retryCount: number | undefined;
+  let originalResponseJson: Record<string, any> | undefined;
+
+  let cacheKey: string | undefined;
+  let { cacheMode, cacheMaxAge, cacheStatus } = getCacheOptions(
+    providerOption.cache
+  );
+  let cacheResponse: Response | undefined;
+
+  const requestOptions = c.get('requestOptions') ?? [];
+  let transformedRequestBody: ReadableStream | FormData | Params = {};
+  let fetchOptions: RequestInit = {};
+
+  // before_request_hooks handler
+  ({
+    response: brhResponse,
+    createdAt,
+    transformedBody,
+  } = await beforeRequestHookHandler(c, hookSpan.id));
+
+  if (brhResponse) {
+    // transformedRequestBody is required to be set in requestOptions.
+    // So in case the before request hooks fail (with deny as true), we need to set it here.
+    // If the hooks do not result in a 446 response, transformedRequestBody is determined on the updated HookSpan context.
+    if (!providerConfig?.requestHandlers?.[fn]) {
+      transformedRequestBody =
+        method === 'POST'
+          ? transformToProviderRequest(
+              provider,
+              params,
+              requestBody,
+              fn,
+              requestHeaders
+            )
+          : requestBody;
+    }
+    return createResponse(brhResponse, undefined, false, false);
+  }
+
+  if (transformedBody) {
+    params = hookSpan.getContext().request.json;
+  }
+
+  // Attach the body of the request
+  if (!providerConfig?.requestHandlers?.[fn]) {
+    transformedRequestBody =
+      method === 'POST'
+        ? transformToProviderRequest(
+            provider,
+            params,
+            requestBody,
+            fn,
+            requestHeaders
+          )
+        : requestBody;
   }
 
   const headers = await apiConfig.headers({
@@ -324,7 +407,7 @@ export async function tryPost(
   });
 
   // Construct the base object for the POST request
-  const fetchOptions = constructRequest(
+  fetchOptions = constructRequest(
     headers,
     provider,
     method,
@@ -343,12 +426,14 @@ export async function tryPost(
     (fn == 'proxy' && requestContentType === CONTENT_TYPES.MULTIPART_FORM_DATA)
   ) {
     fetchOptions.body = transformedRequestBody as FormData;
+  } else if (transformedRequestBody instanceof ReadableStream) {
+    fetchOptions.body = transformedRequestBody;
   } else if (
     fn == 'proxy' &&
-    requestContentType.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
+    requestContentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
   ) {
     fetchOptions.body = transformedRequestBody as ArrayBuffer;
-  } else {
+  } else if (requestContentType) {
     fetchOptions.body = JSON.stringify(transformedRequestBody);
   }
 
@@ -360,21 +445,6 @@ export async function tryPost(
     attempts: providerOption.retry?.attempts ?? 0,
     onStatusCodes: providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES,
   };
-
-  const requestOptions = c.get('requestOptions') ?? [];
-
-  let mappedResponse: Response,
-    retryCount: number | undefined,
-    createdAt: Date,
-    originalResponseJson: Record<string, any> | undefined;
-
-  let cacheKey: string | undefined;
-  let { cacheMode, cacheMaxAge, cacheStatus } = getCacheOptions(
-    providerOption.cache
-  );
-  let cacheResponse: Response | undefined;
-
-  let brhResponse: Response | undefined;
 
   async function createResponse(
     response: Response,
@@ -392,7 +462,8 @@ export async function tryPost(
           url,
           isCacheHit,
           params,
-          strictOpenAiCompliance
+          strictOpenAiCompliance,
+          c.req.url
         ));
     }
 
@@ -402,7 +473,8 @@ export async function tryPost(
       params,
       cacheStatus,
       retryCount ?? 0,
-      requestHeaders[HEADER_KEYS.TRACE_ID] ?? ''
+      requestHeaders[HEADER_KEYS.TRACE_ID] ?? '',
+      provider
     );
 
     c.set('requestOptions', [
@@ -446,17 +518,6 @@ export async function tryPost(
     return mappedResponse;
   }
 
-  // BeforeHooksHandler
-  ({ response: brhResponse, createdAt } = await beforeRequestHookHandler(
-    c,
-    hookSpan.id
-  ));
-
-  if (!!brhResponse) {
-    // If before requestHandler returns a response, return it
-    return createResponse(brhResponse, undefined, false, false);
-  }
-
   // Cache Handler
   ({ cacheResponse, cacheStatus, cacheKey, createdAt } = await cacheHandler(
     c,
@@ -467,7 +528,7 @@ export async function tryPost(
     hookSpan.id,
     fn
   ));
-  if (!!cacheResponse) {
+  if (cacheResponse) {
     return createResponse(cacheResponse, fn, true);
   }
 
@@ -476,7 +537,7 @@ export async function tryPost(
   const preRequestValidatorResponse = preRequestValidator
     ? await preRequestValidator(c, providerOption, requestHeaders, params)
     : undefined;
-  if (!!preRequestValidatorResponse) {
+  if (preRequestValidatorResponse) {
     return createResponse(preRequestValidatorResponse, undefined, false);
   }
 
@@ -493,7 +554,8 @@ export async function tryPost(
       fn,
       requestHeaders,
       hookSpan.id,
-      strictOpenAiCompliance
+      strictOpenAiCompliance,
+      requestBody
     ));
 
   return createResponse(mappedResponse, undefined, false, true);
@@ -502,14 +564,14 @@ export async function tryPost(
 export async function tryTargetsRecursively(
   c: Context,
   targetGroup: Targets,
-  request: Params | FormData,
+  request: Params | FormData | ReadableStream,
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
   method: string,
   jsonPath: string,
   inheritedConfig: Record<string, any> = {}
 ): Promise<Response> {
-  let currentTarget: any = { ...targetGroup };
+  const currentTarget: any = { ...targetGroup };
   let currentJsonPath = jsonPath;
   const strategyMode = currentTarget.strategy?.mode;
 
@@ -560,14 +622,44 @@ export async function tryTargetsRecursively(
   if (currentTarget.inputGuardrails) {
     currentTarget.beforeRequestHooks = [
       ...(currentTarget.beforeRequestHooks || []),
-      ...convertGuardrailsShorthand(currentTarget.inputGuardrails, 'input'),
+      ...convertHooksShorthand(
+        currentTarget.inputGuardrails,
+        'input',
+        HookType.GUARDRAIL
+      ),
     ];
   }
 
   if (currentTarget.outputGuardrails) {
     currentTarget.afterRequestHooks = [
       ...(currentTarget.afterRequestHooks || []),
-      ...convertGuardrailsShorthand(currentTarget.outputGuardrails, 'output'),
+      ...convertHooksShorthand(
+        currentTarget.outputGuardrails,
+        'output',
+        HookType.GUARDRAIL
+      ),
+    ];
+  }
+
+  if (currentTarget.inputMutators) {
+    currentTarget.beforeRequestHooks = [
+      ...(currentTarget.beforeRequestHooks || []),
+      ...convertHooksShorthand(
+        currentTarget.inputMutators,
+        'input',
+        HookType.MUTATOR
+      ),
+    ];
+  }
+
+  if (currentTarget.outputMutators) {
+    currentTarget.afterRequestHooks = [
+      ...(currentTarget.afterRequestHooks || []),
+      ...convertHooksShorthand(
+        currentTarget.outputMutators,
+        'output',
+        HookType.MUTATOR
+      ),
     ];
   }
 
@@ -610,7 +702,7 @@ export async function tryTargetsRecursively(
 
   switch (strategyMode) {
     case StrategyModes.FALLBACK:
-      for (let [index, target] of currentTarget.targets.entries()) {
+      for (const [index, target] of currentTarget.targets.entries()) {
         response = await tryTargetsRecursively(
           c,
           target,
@@ -645,7 +737,7 @@ export async function tryTargetsRecursively(
       );
 
       let randomWeight = Math.random() * totalWeight;
-      for (let [index, provider] of currentTarget.targets.entries()) {
+      for (const [index, provider] of currentTarget.targets.entries()) {
         if (randomWeight < provider.weight) {
           currentJsonPath = currentJsonPath + `.targets[${index}]`;
           response = await tryTargetsRecursively(
@@ -664,17 +756,28 @@ export async function tryTargetsRecursively(
       }
       break;
 
-    case StrategyModes.CONDITIONAL:
+    case StrategyModes.CONDITIONAL: {
       let metadata: Record<string, string>;
       try {
         metadata = JSON.parse(requestHeaders[HEADER_KEYS.METADATA]);
       } catch (err) {
         metadata = {};
       }
+
+      let params =
+        request instanceof FormData ||
+        request instanceof ReadableStream ||
+        request instanceof ArrayBuffer
+          ? {} // Send empty object if not JSON
+          : request;
+
       let conditionalRouter: ConditionalRouter;
       let finalTarget: Targets;
       try {
-        conditionalRouter = new ConditionalRouter(currentTarget, { metadata });
+        conditionalRouter = new ConditionalRouter(currentTarget, {
+          metadata,
+          params,
+        });
         finalTarget = conditionalRouter.resolveTarget();
       } catch (conditionalRouter: any) {
         throw new RouterError(conditionalRouter.message);
@@ -691,6 +794,7 @@ export async function tryTargetsRecursively(
         currentInheritedConfig
       );
       break;
+    }
 
     case StrategyModes.SINGLE:
       response = await tryTargetsRecursively(
@@ -764,7 +868,8 @@ export function updateResponseHeaders(
   params: Record<string, any>,
   cacheStatus: string | undefined,
   retryAttempt: number,
-  traceId: string
+  traceId: string,
+  provider: string
 ) {
   response.headers.append(
     RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX,
@@ -793,6 +898,9 @@ export function updateResponseHeaders(
   // workerd environment handles this authomatically
   response.headers.delete('content-length');
   response.headers.delete('transfer-encoding');
+  if (provider && provider !== POWERED_BY) {
+    response.headers.append(HEADER_KEYS.PROVIDER, provider);
+  }
 }
 
 export function constructConfigFromRequestHeaders(
@@ -802,6 +910,7 @@ export function constructConfigFromRequestHeaders(
     resourceName: requestHeaders[`x-${POWERED_BY}-azure-resource-name`],
     deploymentId: requestHeaders[`x-${POWERED_BY}-azure-deployment-id`],
     apiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
+    azureAdToken: requestHeaders[`x-${POWERED_BY}-azure-ad-token`],
     azureAuthMode: requestHeaders[`x-${POWERED_BY}-azure-auth-mode`],
     azureManagedClientId:
       requestHeaders[`x-${POWERED_BY}-azure-managed-client-id`],
@@ -831,6 +940,7 @@ export function constructConfigFromRequestHeaders(
       requestHeaders[`x-${POWERED_BY}-azure-deployment-type`],
     azureApiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
     azureEndpointName: requestHeaders[`x-${POWERED_BY}-azure-endpoint-name`],
+    azureExtraParams: requestHeaders[`x-${POWERED_BY}-azure-extra-params`],
   };
 
   const awsConfig = {
@@ -841,6 +951,13 @@ export function constructConfigFromRequestHeaders(
     awsRoleArn: requestHeaders[`x-${POWERED_BY}-aws-role-arn`],
     awsAuthType: requestHeaders[`x-${POWERED_BY}-aws-auth-type`],
     awsExternalId: requestHeaders[`x-${POWERED_BY}-aws-external-id`],
+    awsS3Bucket: requestHeaders[`x-${POWERED_BY}-aws-s3-bucket`],
+    awsS3ObjectKey:
+      requestHeaders[`x-${POWERED_BY}-aws-s3-object-key`] ||
+      requestHeaders[`x-${POWERED_BY}-provider-file-name`],
+    awsBedrockModel:
+      requestHeaders[`x-${POWERED_BY}-aws-bedrock-model`] ||
+      requestHeaders[`x-${POWERED_BY}-provider-model`],
   };
 
   const sagemakerConfig = {
@@ -885,6 +1002,14 @@ export function constructConfigFromRequestHeaders(
   const vertexConfig: Record<string, any> = {
     vertexProjectId: requestHeaders[`x-${POWERED_BY}-vertex-project-id`],
     vertexRegion: requestHeaders[`x-${POWERED_BY}-vertex-region`],
+    vertexStorageBucketName:
+      requestHeaders[`x-${POWERED_BY}-vertex-storage-bucket-name`],
+    filename: requestHeaders[`x-${POWERED_BY}-provider-file-name`],
+    vertexModelName: requestHeaders[`x-${POWERED_BY}-provider-model`],
+  };
+
+  const fireworksConfig = {
+    fireworksAccountId: requestHeaders[`x-${POWERED_BY}-fireworks-account-id`],
   };
 
   const anthropicConfig = {
@@ -892,8 +1017,9 @@ export function constructConfigFromRequestHeaders(
     anthropicVersion: requestHeaders[`x-${POWERED_BY}-anthropic-version`],
   };
 
-  let vertexServiceAccountJson =
+  const vertexServiceAccountJson =
     requestHeaders[`x-${POWERED_BY}-vertex-service-account-json`];
+
   if (vertexServiceAccountJson) {
     try {
       vertexConfig.vertexServiceAccountJson = JSON.parse(
@@ -966,6 +1092,13 @@ export function constructConfigFromRequestHeaders(
         };
       }
 
+      if (parsedConfigJson.provider === FIREWORKS_AI) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...fireworksConfig,
+        };
+      }
+
       if (parsedConfigJson.provider === AZURE_AI_INFERENCE) {
         parsedConfigJson = {
           ...parsedConfigJson,
@@ -990,6 +1123,7 @@ export function constructConfigFromRequestHeaders(
       'params',
       'checks',
       'vertex_service_account_json',
+      'vertexServiceAccountJson',
       'conditions',
       'input_guardrails',
       'output_guardrails',
@@ -1021,6 +1155,8 @@ export function constructConfigFromRequestHeaders(
       requestHeaders[`x-${POWERED_BY}-mistral-fim-completion`],
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === STABILITY_AI &&
       stabilityAiConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === FIREWORKS_AI &&
+      fireworksConfig),
   };
 }
 
@@ -1032,10 +1168,11 @@ export async function recursiveAfterRequestHookHandler(
   isStreamingMode: any,
   gatewayParams: any,
   retryAttemptsMade: any,
-  fn: any,
+  fn: endpointStrings,
   requestHeaders: Record<string, string>,
   hookSpanId: string,
-  strictOpenAiCompliance: boolean
+  strictOpenAiCompliance: boolean,
+  requestBody?: ReadableStream | FormData | Params | ArrayBuffer
 ): Promise<{
   mappedResponse: Response;
   retryCount: number;
@@ -1050,6 +1187,21 @@ export async function recursiveAfterRequestHookHandler(
 
   const { retry } = providerOption;
 
+  const provider = providerOption.provider ?? '';
+  const providerConfig = Providers[provider];
+  const requestHandlers = providerConfig.requestHandlers as any;
+  let requestHandler;
+  if (requestHandlers && requestHandlers[fn]) {
+    requestHandler = () =>
+      requestHandlers[fn]({
+        c,
+        providerOptions: providerOption,
+        requestURL: c.req.url,
+        requestHeaders,
+        requestBody,
+      });
+  }
+
   ({
     response,
     attempt: retryCount,
@@ -1059,7 +1211,8 @@ export async function recursiveAfterRequestHookHandler(
     options,
     retry?.attempts || 0,
     retry?.onStatusCodes || [],
-    requestTimeout || null
+    requestTimeout || null,
+    requestHandler
   ));
 
   const {
@@ -1074,7 +1227,8 @@ export async function recursiveAfterRequestHookHandler(
     url,
     false,
     gatewayParams,
-    strictOpenAiCompliance
+    strictOpenAiCompliance,
+    c.req.url
   );
 
   const arhResponse = await afterRequestHookHandler(
@@ -1150,6 +1304,32 @@ async function cacheHandler(
   hookSpanId: string,
   fn: endpointStrings
 ) {
+  if (
+    [
+      'uploadFile',
+      'listFiles',
+      'retrieveFile',
+      'deleteFile',
+      'retrieveFileContent',
+      'createBatch',
+      'retrieveBatch',
+      'cancelBatch',
+      'listBatches',
+      'getBatchOutput',
+      'listFinetunes',
+      'createFinetune',
+      'retrieveFinetune',
+      'cancelFinetune',
+    ].includes(fn)
+  ) {
+    return {
+      cacheResponse: undefined,
+      cacheStatus: 'DISABLED',
+      cacheKey: undefined,
+      createdAt: new Date(),
+      executionTime: 0,
+    };
+  }
   const start = new Date();
   const [getFromCacheFunction, cacheIdentifier] = [
     c.get('getFromCache'),
@@ -1213,14 +1393,22 @@ export async function beforeRequestHookHandler(
   c: Context,
   hookSpanId: string
 ): Promise<any> {
+  let span: HookSpan;
+  let isTransformed = false;
   try {
     const start = new Date();
     const hooksManager = c.get('hooksManager');
     const hooksResult = await hooksManager.executeHooks(
       hookSpanId,
       ['syncBeforeRequestHook'],
-      { env: env(c) }
+      {
+        env: env(c),
+        getFromCacheByKey: c.get('getFromCacheByKey'),
+        putInCacheWithValue: c.get('putInCacheWithValue'),
+      }
     );
+    span = hooksManager.getSpan(hookSpanId) as HookSpan;
+    isTransformed = span.getContext().request.isTransformed;
 
     if (hooksResult.shouldDeny) {
       return {
@@ -1244,12 +1432,14 @@ export async function beforeRequestHookHandler(
           }
         ),
         createdAt: start,
+        transformedBody: isTransformed ? span.getContext().request.json : null,
       };
     }
   } catch (err) {
     console.log(err);
     return { error: err };
-    // TODO: Handle this error!!!
   }
-  return {};
+  return {
+    transformedBody: isTransformed ? span.getContext().request.json : null,
+  };
 }

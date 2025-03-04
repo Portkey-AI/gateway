@@ -1,6 +1,6 @@
 {
   "name": "@portkey-ai/gateway",
-  "version": "1.8.7",
+  "version": "1.9.10",
   "description": "A fast AI gateway by Portkey",
   "repository": {
     "type": "git",
@@ -48,6 +48,7 @@
     "@smithy/signature-v4": "^2.1.1",
     "@types/mustache": "^4.2.5",
     "async-retry": "^1.3.3",
+    "avsc": "^5.7.7",
     "hono": "^4.6.10",
     "serialize-error": "^8.0.0",
     "ws": "^8.18.0",
@@ -70,7 +71,7 @@
     "ts-jest": "^29.2.4",
     "tsx": "^4.7.0",
     "typescript-eslint": "^8.1.0",
-    "wrangler": "^3.48.0"
+    "wrangler": "^3.97.0"
   },
   "bin": "build/start-server.js",
   "type": "module"

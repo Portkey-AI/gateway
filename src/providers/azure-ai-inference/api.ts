@@ -20,11 +20,15 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
     return `https://${azureEndpointName}.${azureRegion}.inference.ml.azure.com/score`;
   },
   headers: ({ providerOptions }) => {
-    const { apiKey, azureDeploymentType, azureDeploymentName } =
-      providerOptions;
+    const {
+      apiKey,
+      azureDeploymentType,
+      azureDeploymentName,
+      azureExtraParams,
+    } = providerOptions;
     const headers: Record<string, string> = {
       Authorization: `Bearer ${apiKey}`,
-      'extra-parameters': 'ignore',
+      'extra-parameters': azureExtraParams || 'pass-through',
     };
     if (azureDeploymentType === 'managed' && azureDeploymentName) {
       headers['azureml-model-deployment'] = azureDeploymentName;

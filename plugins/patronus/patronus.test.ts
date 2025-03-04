@@ -4,112 +4,394 @@ import { handler as piiHandler } from './pii';
 import { handler as toxicityHandler } from './toxicity';
 import { handler as retrievalAnswerRelevanceHandler } from './retrievalAnswerRelevance';
 import { handler as customHandler } from './custom';
+import { PluginContext } from '../types';
 
 describe('phi handler', () => {
-  it('should fail if beforeRequestHook is used', async () => {
+  it('should pass when text is clean', async () => {
     const eventType = 'beforeRequestHook';
     const context = {
-      request: { text: 'this is a test string for moderations' },
-    };
-    const parameters = { credentials: testCreds };
-
-    const result = await phiHandler(context, parameters, eventType);
-    // console.log(result);
-    expect(result).toBeDefined();
-    expect(result.error).toBeDefined();
-    expect(result.data).toBeNull();
-  });
-
-  it('should pass when text is clean', async () => {
-    const eventType = 'afterRequestHook';
-    const context = {
-      request: { text: 'this is a test string for moderations' },
-      response: { text: 'this is a test string for moderations' },
+      request: {
+        text: 'this is a test string for moderations',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: 'this is a test string for moderations',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
     };
 
     const parameters = { credentials: testCreds };
 
-    const result = await phiHandler(context, parameters, eventType);
-    // console.log(result);
+    const result = await phiHandler(
+      context as PluginContext,
+      parameters,
+      eventType
+    );
     expect(result).toBeDefined();
     expect(result.verdict).toBe(true);
     expect(result.error).toBeNull();
     expect(result.data).toBeDefined();
+    expect(result.transformed).toBe(false);
   });
 
   it('should fail when text contains PHI', async () => {
-    const eventType = 'afterRequestHook';
+    const eventType = 'beforeRequestHook';
     const context = {
       request: {
-        text: `Your hospital's patient - John Doe. What is he in for?`,
+        text: 'John Doe has a history of heart disease',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: 'John Doe has a history of heart disease',
+            },
+          ],
+        },
       },
-      response: {
-        text: 'John Doe is in the hospital for a bad case of carpal tunnel.',
-      },
+      requestType: 'chatComplete',
     };
 
     const parameters = { credentials: testCreds };
 
-    const result = await phiHandler(context, parameters, eventType);
-    // console.log(result);
+    const result = await phiHandler(
+      context as PluginContext,
+      parameters,
+      eventType
+    );
     expect(result).toBeDefined();
     expect(result.verdict).toBe(false);
     expect(result.error).toBeNull();
     expect(result.data).toBeDefined();
+    expect(result.transformedData?.response?.json).toBeNull();
+    expect(result.transformedData?.request?.json).toBeNull();
+    expect(result.transformed).toBe(false);
+  });
+
+  it('should detect and redact PII in request text', async () => {
+    const context = {
+      request: {
+        text: 'John Doe has a history of heart disease',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: 'John Doe has a history of heart disease',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = {
+      redact: true,
+      credentials: testCreds,
+    };
+
+    const result = await phiHandler(
+      context as PluginContext,
+      parameters,
+      'beforeRequestHook',
+      {
+        env: {},
+      }
+    );
+
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(true);
+    expect(result.data).toBeDefined();
+    expect(result.transformedData?.request?.json?.messages?.[0]?.content).toBe(
+      'J******e has a history of heart disease'
+    );
+    expect(result.transformed).toBe(true);
+  });
+
+  it('should detect and redact PII in request text with multiple content parts', async () => {
+    const context = {
+      request: {
+        text: 'John Doe has a history of heart disease John Doe has a history of heart disease and some random text',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: 'John Doe has a history of heart disease',
+                },
+                {
+                  type: 'text',
+                  text: 'John Doe has a history of heart disease and some random text',
+                },
+              ],
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = {
+      redact: true,
+      credentials: testCreds,
+    };
+
+    const result = await phiHandler(
+      context as PluginContext,
+      parameters,
+      'beforeRequestHook',
+      {
+        env: {},
+      }
+    );
+
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(true);
+    expect(result.data).toBeDefined;
+    expect(
+      result.transformedData?.request?.json?.messages?.[0]?.content?.[0]?.text
+    ).toBe('J******e has a history of heart disease');
+    expect(
+      result.transformedData?.request?.json?.messages?.[0]?.content?.[1]?.text
+    ).toBe('J******e has a history of heart disease and some random text');
+    expect(result.transformed).toBe(true);
+  });
+
+  it('should detect and redact PHI in response text', async () => {
+    const context = {
+      response: {
+        text: 'John Doe has a history of heart disease and some random text',
+        json: {
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content:
+                  'John Doe has a history of heart disease and some random text',
+              },
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = {
+      redact: true,
+      credentials: testCreds,
+    };
+
+    const result = await phiHandler(
+      context as PluginContext,
+      parameters,
+      'afterRequestHook',
+      {
+        env: {},
+      }
+    );
+
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(true);
+    expect(result.data).toBeDefined();
+    expect(
+      result.transformedData?.response?.json?.choices?.[0]?.message?.content
+    ).toBe('J******e has a history of heart disease and some random text');
+    expect(result.transformed).toBe(true);
   });
 });
 
 describe('pii handler', () => {
-  it('should fail if beforeRequestHook is used', async () => {
+  it('should pass when text is clean', async () => {
     const eventType = 'beforeRequestHook';
     const context = {
-      request: { text: 'this is a test string for moderations' },
-    };
-    const parameters = { credentials: testCreds };
-
-    const result = await piiHandler(context, parameters, eventType);
-    // console.log(result);
-    expect(result).toBeDefined();
-    expect(result.error).toBeDefined();
-    expect(result.data).toBeNull();
-  });
-
-  it('should pass when text is clean', async () => {
-    const eventType = 'afterRequestHook';
-    const context = {
-      request: { text: 'this is a test string for moderations' },
-      response: { text: 'this is a test string for moderations' },
+      request: {
+        text: 'this is a test string for moderations',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: 'this is a test string for moderations',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
     };
 
     const parameters = { credentials: testCreds };
 
-    const result = await piiHandler(context, parameters, eventType);
-    // console.log(result);
+    const result = await piiHandler(
+      context as PluginContext,
+      parameters,
+      eventType
+    );
     expect(result).toBeDefined();
     expect(result.verdict).toBe(true);
     expect(result.error).toBeNull();
     expect(result.data).toBeDefined();
+    expect(result.transformed).toBe(false);
   });
 
   it('should fail when text contains PII', async () => {
-    const eventType = 'afterRequestHook';
+    const eventType = 'beforeRequestHook';
     const context = {
       request: {
-        text: `Your hospital's patient - John Doe. What is he in for?`,
+        text: 'My email is abc@xyz.com and some random text',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: 'My email is abc@xyz.com and some random text',
+            },
+          ],
+        },
       },
-      response: {
-        text: `Sure! Happy to provide the SSN of John Doe - it's 123-45-6789.`,
-      },
+      requestType: 'chatComplete',
     };
 
     const parameters = { credentials: testCreds };
 
-    const result = await piiHandler(context, parameters, eventType);
-    // console.log(result);
+    const result = await piiHandler(
+      context as PluginContext,
+      parameters,
+      eventType
+    );
     expect(result).toBeDefined();
     expect(result.verdict).toBe(false);
     expect(result.error).toBeNull();
     expect(result.data).toBeDefined();
+    expect(result.transformedData?.response?.json).toBeNull();
+    expect(result.transformedData?.request?.json).toBeNull();
+    expect(result.transformed).toBe(false);
+  });
+
+  it('should detect and redact PII in request text', async () => {
+    const context = {
+      request: {
+        text: 'My email is abc@xyz.com and some random text',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: 'My email is abc@xyz.com and some random text',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = {
+      redact: true,
+      credentials: testCreds,
+    };
+
+    const result = await piiHandler(
+      context as PluginContext,
+      parameters,
+      'beforeRequestHook',
+      {
+        env: {},
+      }
+    );
+
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(true);
+    expect(result.data).toBeDefined();
+    expect(result.transformedData?.request?.json?.messages?.[0]?.content).toBe(
+      'My email is a*********m and some random text'
+    );
+    expect(result.transformed).toBe(true);
+  });
+
+  it('should detect and redact PII in request text with multiple content parts', async () => {
+    const context = {
+      request: {
+        text: 'My email is abc@xyz.com My email is abc@xyz.com and some random text',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: 'My email is abc@xyz.com',
+                },
+                {
+                  type: 'text',
+                  text: 'My email is abc@xyz.com and some random text',
+                },
+              ],
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = {
+      redact: true,
+      credentials: testCreds,
+    };
+
+    const result = await piiHandler(
+      context as PluginContext,
+      parameters,
+      'beforeRequestHook',
+      {
+        env: {},
+      }
+    );
+
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(true);
+    expect(result.data).toBeDefined;
+    expect(
+      result.transformedData?.request?.json?.messages?.[0]?.content?.[0]?.text
+    ).toBe('My email is a*********m');
+    expect(
+      result.transformedData?.request?.json?.messages?.[0]?.content?.[1]?.text
+    ).toBe('My email is a*********m and some random text');
+    expect(result.transformed).toBe(true);
+  });
+
+  it('should detect and redact PII in response text', async () => {
+    const context = {
+      response: {
+        text: 'My email is abc@xyz.com and some random text',
+        json: {
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: 'My email is abc@xyz.com and some random text',
+              },
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+    const parameters = {
+      redact: true,
+      credentials: testCreds,
+    };
+
+    const result = await piiHandler(
+      context as PluginContext,
+      parameters,
+      'afterRequestHook',
+      {
+        env: {},
+      }
+    );
+
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(true);
+    expect(result.data).toBeDefined();
+    expect(
+      result.transformedData?.response?.json?.choices?.[0]?.message?.content
+    ).toBe('My email is a*********m and some random text');
+    expect(result.transformed).toBe(true);
   });
 });
 
@@ -122,7 +404,6 @@ describe('toxicity handler', () => {
     const parameters = { credentials: testCreds };
 
     const result = await toxicityHandler(context, parameters, eventType);
-    // console.log(result);
     expect(result).toBeDefined();
     expect(result.error).toBeDefined();
     expect(result.data).toBeNull();
@@ -138,7 +419,6 @@ describe('toxicity handler', () => {
     const parameters = { credentials: testCreds };
 
     const result = await toxicityHandler(context, parameters, eventType);
-    console.log(result);
     expect(result).toBeDefined();
     expect(result.verdict).toBe(true);
     expect(result.error).toBeNull();
@@ -155,7 +435,6 @@ describe('toxicity handler', () => {
     const parameters = { credentials: testCreds };
 
     const result = await toxicityHandler(context, parameters, eventType);
-    console.log(result);
     expect(result).toBeDefined();
     expect(result.verdict).toBe(false);
     expect(result.error).toBeNull();
@@ -176,7 +455,6 @@ describe('retrieval answer relevance handler', () => {
       parameters,
       eventType
     );
-    // console.log(result);
     expect(result).toBeDefined();
     expect(result.error).toBeDefined();
     expect(result.data).toBeNull();
@@ -198,7 +476,6 @@ describe('retrieval answer relevance handler', () => {
       parameters,
       eventType
     );
-    console.log(result);
     expect(result).toBeDefined();
     expect(result.verdict).toBe(true);
     expect(result.error).toBeNull();
@@ -219,7 +496,6 @@ describe('retrieval answer relevance handler', () => {
       parameters,
       eventType
     );
-    console.log(result);
     expect(result).toBeDefined();
     expect(result.verdict).toBe(false);
     expect(result.error).toBeNull();
@@ -243,7 +519,6 @@ describe('custom handler (is-concise)', () => {
     };
 
     const result = await customHandler(context, parameters, eventType);
-    console.log(result);
     expect(result).toBeDefined();
     expect(result.verdict).toBe(true);
     expect(result.error).toBeNull();
@@ -265,7 +540,6 @@ describe('custom handler (is-concise)', () => {
     };
 
     const result = await customHandler(context, parameters, eventType);
-    console.log(result);
     expect(result).toBeDefined();
     expect(result.verdict).toBe(false);
     expect(result.error).toBeNull();

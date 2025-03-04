@@ -18,6 +18,8 @@ import {
   FireworksAIImageGenerateConfig,
   FireworksAIImageGenerateResponseTransform,
 } from './imageGenerate';
+import { FireworksFileListResponseTransform } from './listFiles';
+import { FireworksFileRetrieveResponseTransform } from './retrieveFile';
 
 const FireworksAIConfig: ProviderConfigs = {
   complete: FireworksAICompleteConfig,
@@ -32,6 +34,8 @@ const FireworksAIConfig: ProviderConfigs = {
     'stream-chatComplete': FireworksAIChatCompleteStreamChunkTransform,
     embed: FireworksAIEmbedResponseTransform,
     imageGenerate: FireworksAIImageGenerateResponseTransform,
+    listFiles: FireworksFileListResponseTransform,
+    retrieveFile: FireworksFileRetrieveResponseTransform,
   },
 };
 

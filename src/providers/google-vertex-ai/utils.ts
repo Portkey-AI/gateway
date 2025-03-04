@@ -1,7 +1,13 @@
-import { GoogleErrorResponse } from './types';
+import {
+  GoogleBatchRecord,
+  GoogleErrorResponse,
+  GoogleResponseCandidate,
+} from './types';
 import { generateErrorResponse } from '../utils';
-import { fileExtensionMimeTypeMap, GOOGLE_VERTEX_AI } from '../../globals';
-import { ErrorResponse } from '../types';
+import { GOOGLE_VERTEX_AI, fileExtensionMimeTypeMap } from '../../globals';
+import { ErrorResponse, Logprobs } from '../types';
+import { Context } from 'hono';
+import { env } from 'hono/adapter';
 
 /**
  * Encodes an object as a Base64 URL-encoded string.
@@ -75,9 +81,22 @@ async function importPrivateKey(pem: string): Promise<CryptoKey> {
 }
 
 export const getAccessToken = async (
+  c: Context,
   serviceAccountInfo: Record<string, any>
 ): Promise<string> => {
   try {
+    let cacheKey = `${serviceAccountInfo.project_id}/${serviceAccountInfo.private_key_id}/${serviceAccountInfo.client_email}`;
+    // try to get from cache
+    try {
+      const getFromCacheByKey = c.get('getFromCacheByKey');
+      const resp = getFromCacheByKey
+        ? await getFromCacheByKey(env(c), cacheKey)
+        : null;
+      if (resp) {
+        return resp;
+      }
+    } catch (err) {}
+
     const scope = 'https://www.googleapis.com/auth/cloud-platform';
     const iat = Math.floor(Date.now() / 1000);
     const exp = iat + 3600; // Token expiration time (1 hour)
@@ -117,6 +136,10 @@ export const getAccessToken = async (
     });
 
     const tokenJson: Record<string, any> = await tokenResponse.json();
+    const putInCacheWithValue = c.get('putInCacheWithValue');
+    if (putInCacheWithValue && cacheKey) {
+      await putInCacheWithValue(env(c), cacheKey, tokenJson.access_token, 3000); // 50 minutes
+    }
 
     return tokenJson.access_token;
   } catch (err) {
@@ -144,8 +167,7 @@ export const getMimeType = (url: string): string | undefined => {
   const extension = urlParts[
     urlParts.length - 1
   ] as keyof typeof fileExtensionMimeTypeMap;
-  const mimeType = fileExtensionMimeTypeMap[extension];
-  return mimeType;
+  return fileExtensionMimeTypeMap[extension];
 };
 
 export const GoogleErrorResponseTransform: (
@@ -201,4 +223,218 @@ export const derefer = (spec: Record<string, any>, defs = null) => {
     }
   }
   return original;
+};
+
+// Vertex AI does not support additionalProperties in JSON Schema
+// https://cloud.google.com/vertex-ai/docs/reference/rest/v1/Schema
+export const recursivelyDeleteUnsupportedParameters = (obj: any) => {
+  if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) return;
+  delete obj.additional_properties;
+  delete obj.additionalProperties;
+  for (const key in obj) {
+    if (obj[key] !== null && typeof obj[key] === 'object') {
+      recursivelyDeleteUnsupportedParameters(obj[key]);
+    }
+    if (key == 'anyOf' && Array.isArray(obj[key])) {
+      obj[key].forEach((item: any) => {
+        recursivelyDeleteUnsupportedParameters(item);
+      });
+    }
+  }
+};
+
+// Generate Gateway specific response.
+export const GoogleResponseHandler = (
+  response: Response | string | Record<string, unknown>,
+  status: number
+) => {
+  if (status !== 200) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: response,
+        param: null,
+        provider: GOOGLE_VERTEX_AI,
+      }),
+      { status: status || 500, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  if (!(response instanceof Response)) {
+    const _response =
+      typeof response === 'object' ? JSON.stringify(response) : response;
+    return new Response(_response as string, {
+      status: status || 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  return response as Response;
+};
+
+export const googleBatchStatusToOpenAI = (
+  status: GoogleBatchRecord['state']
+) => {
+  switch (status) {
+    case 'JOB_STATE_CANCELLED':
+    case 'JOB_STATE_CANCELLING':
+    case 'JOB_STATE_EXPIRED':
+      return 'cancelled';
+    case 'JOB_STATE_FAILED':
+      return 'failed';
+    case 'JOB_STATE_PARTIALLY_SUCCEEDED':
+    case 'JOB_STATE_SUCCEEDED':
+      return 'successeed';
+    case 'JOB_STATE_PAUSED':
+    case 'JOB_STATE_PENDING':
+    case 'JOB_STATE_QUEUED':
+      return 'queued';
+    case 'JOB_STATE_RUNNING':
+    case 'JOB_STATE_UPDATING':
+      return 'running';
+    case 'JOB_STATE_UNSPECIFIED':
+      return 'queued';
+    default:
+      return 'queued';
+  }
+};
+
+const getTimeKey = (status: GoogleBatchRecord['state'], value: string) => {
+  if (status === 'JOB_STATE_FAILED') {
+    return { failed_at: value };
+  }
+
+  if (status === 'JOB_STATE_SUCCEEDED') {
+    return { completed_at: value };
+  }
+
+  if (status === 'JOB_STATE_CANCELLED') {
+    return { canclled_at: value };
+  }
+
+  if (status === 'JOB_STATE_EXPIRED') {
+    return { failed_at: value };
+  }
+  return {};
+};
+
+export const GoogleToOpenAIBatch = (response: GoogleBatchRecord) => {
+  const jobId = response.name.split('/').at(-1);
+  const total = Object.values(response.completionsStats ?? {}).reduce(
+    (acc, current) => acc + Number.parseInt(current),
+    0
+  );
+
+  const outputFileId = response.outputInfo
+    ? `${response.outputInfo?.gcsOutputDirectory}/predictions.jsonl`
+    : response.outputConfig.gcsDestination.outputUriPrefix;
+
+  return {
+    id: jobId,
+    object: 'batch',
+    endpoint: '/generateContent',
+    input_file_id: encodeURIComponent(
+      response.inputConfig.gcsSource?.uris?.at(0) ?? ''
+    ),
+    completion_window: null,
+    status: googleBatchStatusToOpenAI(response.state),
+    output_file_id: outputFileId,
+    // Same as output_file_id
+    error_file_id: response.outputConfig.gcsDestination.outputUriPrefix,
+    created_at: response.createTime,
+    ...getTimeKey(response.state, response.endTime),
+    in_progress_at: response.startTime,
+    ...getTimeKey(response.state, response.updateTime),
+    request_counts: {
+      total: total,
+      completed: response.completionsStats?.successfulCount,
+      failed: response.completionsStats?.failedCount,
+    },
+    ...(response.error && {
+      errors: {
+        object: 'list',
+        data: [response.error],
+      },
+    }),
+  };
+};
+
+export const fetchGoogleCustomEndpoint = async ({
+  authorization,
+  method,
+  url,
+  body,
+}: {
+  url: string;
+  body?: ReadableStream | Record<string, unknown>;
+  authorization: string;
+  method: string;
+}) => {
+  const result = { response: null, error: null, status: null };
+  try {
+    const options = {
+      ...(method !== 'GET' &&
+        body && {
+          body: typeof body === 'object' ? JSON.stringify(body) : body,
+        }),
+      method: method,
+      headers: {
+        Authorization: authorization,
+        'Content-Type': 'application/json',
+      },
+    };
+
+    const request = await fetch(url, options);
+    if (!request.ok) {
+      const error = await request.text();
+      result.error = error as any;
+      result.status = request.status as any;
+    }
+
+    const response = await request.json();
+    result.response = response as any;
+  } catch (error) {
+    result.error = error as any;
+  }
+  return result;
+};
+
+export const transformVertexLogprobs = (
+  generation: GoogleResponseCandidate
+) => {
+  const logprobsContent: Logprobs[] = [];
+  if (!generation.logprobsResult) return null;
+  if (generation.logprobsResult?.chosenCandidates) {
+    generation.logprobsResult.chosenCandidates.forEach((candidate) => {
+      const bytes = [];
+      for (const char of candidate.token) {
+        bytes.push(char.charCodeAt(0));
+      }
+      logprobsContent.push({
+        token: candidate.token,
+        logprob: candidate.logProbability,
+        bytes: bytes,
+      });
+    });
+  }
+  if (generation.logprobsResult?.topCandidates) {
+    generation.logprobsResult.topCandidates.forEach(
+      (topCandidatesForIndex, index) => {
+        const topLogprobs = [];
+        for (const candidate of topCandidatesForIndex.candidates) {
+          const bytes = [];
+          for (const char of candidate.token) {
+            bytes.push(char.charCodeAt(0));
+          }
+          topLogprobs.push({
+            token: candidate.token,
+            logprob: candidate.logProbability,
+            bytes: bytes,
+          });
+        }
+        logprobsContent[index].top_logprobs = topLogprobs;
+      }
+    );
+  }
+  return logprobsContent;
 };

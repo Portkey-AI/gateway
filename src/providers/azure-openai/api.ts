@@ -42,14 +42,19 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     const headersObj: Record<string, string> = {
       'api-key': `${apiKey}`,
     };
-    if (fn === 'createTranscription' || fn === 'createTranslation')
+    if (
+      fn === 'createTranscription' ||
+      fn === 'createTranslation' ||
+      fn === 'uploadFile'
+    ) {
       headersObj['Content-Type'] = 'multipart/form-data';
+    }
     if (providerOptions.openaiBeta) {
       headersObj['OpenAI-Beta'] = providerOptions.openaiBeta;
     }
     return headersObj;
   },
-  getEndpoint: ({ providerOptions, fn }) => {
+  getEndpoint: ({ providerOptions, fn, gatewayRequestURL }) => {
     const { apiVersion, urlToFetch, deploymentId } = providerOptions;
     let mappedFn = fn;
 
@@ -70,6 +75,8 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
         mappedFn = 'createTranslation';
       }
     }
+
+    const path = gatewayRequestURL.split('/v1')?.[1];
 
     switch (mappedFn) {
       case 'complete': {
@@ -94,8 +101,34 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
         return `/deployments/${deploymentId}/audio/translations?api-version=${apiVersion}`;
       }
       case 'realtime': {
-        return `/realtime?api-version=${apiVersion}&deployment=${providerOptions.deploymentId}`;
+        return `/realtime?api-version=${apiVersion}&deployment=${deploymentId}`;
       }
+      case 'uploadFile':
+        return `${path}?api-version=${apiVersion}`;
+      case 'retrieveFile':
+        return `${path}?api-version=${apiVersion}`;
+      case 'listFiles':
+        return `${path}?api-version=${apiVersion}`;
+      case 'deleteFile':
+        return `${path}?api-version=${apiVersion}`;
+      case 'retrieveFileContent':
+        return `${path}?api-version=${apiVersion}`;
+      case 'createFinetune':
+        return `${path}?api-version=${apiVersion}`;
+      case 'retrieveFinetune':
+        return `${path}?api-version=${apiVersion}`;
+      case 'listFinetunes':
+        return `${path}?api-version=${apiVersion}`;
+      case 'cancelFinetune':
+        return `${path}?api-version=${apiVersion}`;
+      case 'createBatch':
+        return `${path}?api-version=${apiVersion}`;
+      case 'retrieveBatch':
+        return `${path}?api-version=${apiVersion}`;
+      case 'cancelBatch':
+        return `${path}?api-version=${apiVersion}`;
+      case 'listBatches':
+        return `${path}?api-version=${apiVersion}`;
       default:
         return '';
     }

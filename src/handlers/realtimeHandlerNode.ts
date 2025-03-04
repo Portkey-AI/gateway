@@ -18,11 +18,16 @@ export async function realTimeHandlerNode(
     const provider = camelCaseConfig?.provider ?? '';
     const apiConfig: ProviderAPIConfig = Providers[provider].api;
     const providerOptions = camelCaseConfig as Options;
-    const baseUrl = apiConfig.getBaseURL({ providerOptions });
+    const baseUrl = apiConfig.getBaseURL({
+      providerOptions,
+      c,
+      gatewayRequestURL: c.req.url,
+    });
     const endpoint = apiConfig.getEndpoint({
+      c,
       providerOptions,
       fn: 'realtime',
-      gatewayRequestBody: {},
+      gatewayRequestBodyJSON: {},
       gatewayRequestURL: c.req.url,
     });
     let url = `${baseUrl}${endpoint}`;

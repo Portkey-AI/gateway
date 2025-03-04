@@ -37,7 +37,7 @@ interface BedrockTitanEmbedResponse {
   inputTextTokenCount: number;
 }
 
-export interface BedrockErrorResponse {
+export interface BedrockErrorResponse extends ErrorResponse {
   message: string;
 }
 

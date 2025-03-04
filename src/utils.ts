@@ -6,6 +6,7 @@ import {
   PERPLEXITY_AI,
   DEEPINFRA,
   SAMBANOVA,
+  BEDROCK,
 } from './globals';
 import { Params } from './types/requestBody';
 
@@ -40,7 +41,7 @@ export const getStreamModeSplitPattern = (
   }
 
   if (proxyProvider === DEEPINFRA) {
-    splitPattern = '\r\n\r\n';
+    splitPattern = '\n';
   }
 
   if (proxyProvider === SAMBANOVA) {
@@ -56,7 +57,17 @@ export const getStreamingMode = (
   provider: string,
   requestUrl: string
 ) => {
-  if (provider === GOOGLE && requestUrl.indexOf('stream') > -1) {
+  if (
+    [GOOGLE, GOOGLE_VERTEX_AI].includes(provider) &&
+    requestUrl.indexOf('stream') > -1
+  ) {
+    return true;
+  }
+  if (
+    provider === BEDROCK &&
+    (requestUrl.indexOf('invoke-with-response-stream') > -1 ||
+      requestUrl.indexOf('converse-stream') > -1)
+  ) {
     return true;
   }
   return reqBody.stream;

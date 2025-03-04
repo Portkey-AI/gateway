@@ -71,7 +71,7 @@ export async function* readAWSStream(
               streamState
             );
             if (Array.isArray(transformedChunk)) {
-              for (var item of transformedChunk) {
+              for (const item of transformedChunk) {
                 yield item;
               }
             } else {
@@ -97,6 +97,7 @@ export async function* readAWSStream(
 
       expectedLength = readUInt32BE(buffer, 0);
       const payload = getPayloadFromAWSChunk(data);
+
       if (transformFunction) {
         const transformedChunk = transformFunction(
           payload,
@@ -104,7 +105,7 @@ export async function* readAWSStream(
           streamState
         );
         if (Array.isArray(transformedChunk)) {
-          for (var item of transformedChunk) {
+          for (const item of transformedChunk) {
             yield item;
           }
         } else {
@@ -126,7 +127,7 @@ export async function* readStream(
   strictOpenAiCompliance: boolean
 ) {
   let buffer = '';
-  let decoder = new TextDecoder();
+  const decoder = new TextDecoder();
   let isFirstChunk = true;
   const streamState = {};
 
@@ -152,9 +153,9 @@ export async function* readStream(
     // keep buffering until we have a complete chunk
 
     while (buffer.split(splitPattern).length > 1) {
-      let parts = buffer.split(splitPattern);
-      let lastPart = parts.pop() ?? ''; // remove the last part from the array and keep it in buffer
-      for (let part of parts) {
+      const parts = buffer.split(splitPattern);
+      const lastPart = parts.pop() ?? ''; // remove the last part from the array and keep it in buffer
+      for (const part of parts) {
         // Some providers send ping event which can be ignored during parsing
 
         if (part.length > 0) {
@@ -213,7 +214,8 @@ export async function handleTextResponse(
 export async function handleNonStreamingMode(
   response: Response,
   responseTransformer: Function | undefined,
-  strictOpenAiCompliance: boolean
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string
 ): Promise<{
   response: Response;
   json: Record<string, any>;
@@ -238,7 +240,8 @@ export async function handleNonStreamingMode(
       responseBodyJson,
       response.status,
       response.headers,
-      strictOpenAiCompliance
+      strictOpenAiCompliance,
+      gatewayRequestUrl
     );
   }
 

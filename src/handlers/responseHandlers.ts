@@ -40,7 +40,8 @@ export async function responseHandler(
   requestURL: string,
   isCacheHit: boolean = false,
   gatewayRequest: Params,
-  strictOpenAiCompliance: boolean
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string
 ): Promise<{
   response: Response;
   responseJson: Record<string, any> | null;
@@ -112,7 +113,10 @@ export async function responseHandler(
     return { response: handleAudioResponse(response), responseJson: null };
   }
 
-  if (responseContentType === CONTENT_TYPES.APPLICATION_OCTET_STREAM) {
+  if (
+    responseContentType === CONTENT_TYPES.APPLICATION_OCTET_STREAM ||
+    responseContentType === CONTENT_TYPES.BINARY_OCTET_STREAM
+  ) {
     return {
       response: handleOctetStreamResponse(response),
       responseJson: null,
@@ -144,7 +148,8 @@ export async function responseHandler(
   const nonStreamingResponse = await handleNonStreamingMode(
     response,
     responseTransformerFunction,
-    strictOpenAiCompliance
+    strictOpenAiCompliance,
+    gatewayRequestUrl
   );
 
   return {
@@ -152,6 +157,45 @@ export async function responseHandler(
     responseJson: nonStreamingResponse.json,
     originalResponseJson: nonStreamingResponse.originalResponseBodyJson,
   };
+}
+
+function createHookResponse(
+  baseResponse: Response,
+  responseData: any,
+  hooksResult: any,
+  options: {
+    status?: number;
+    statusText?: string;
+    forceError?: boolean;
+    headers?: Record<string, string>;
+  } = {}
+) {
+  const responseBody = {
+    ...(options.forceError
+      ? {
+          error: {
+            message:
+              'The guardrail checks defined in the config failed. You can find more information in the `hook_results` object.',
+            type: 'hooks_failed',
+            param: null,
+            code: null,
+          },
+        }
+      : responseData),
+    ...((hooksResult.beforeRequestHooksResult?.length ||
+      hooksResult.afterRequestHooksResult?.length) && {
+      hook_results: {
+        before_request_hooks: hooksResult.beforeRequestHooksResult,
+        after_request_hooks: hooksResult.afterRequestHooksResult,
+      },
+    }),
+  };
+
+  return new Response(JSON.stringify(responseBody), {
+    status: options.status || baseResponse.status,
+    statusText: options.statusText || baseResponse.statusText,
+    headers: options.headers || baseResponse.headers,
+  });
 }
 
 export async function afterRequestHookHandler(
@@ -174,10 +218,14 @@ export async function afterRequestHookHandler(
       hooksManager.getSpan(hookSpanId).resetHookResult('afterRequestHook');
     }
 
-    let { shouldDeny, results } = await hooksManager.executeHooks(
+    const { shouldDeny } = await hooksManager.executeHooks(
       hookSpanId,
       ['syncAfterRequestHook'],
-      { env: env(c) }
+      {
+        env: env(c),
+        getFromCacheByKey: c.get('getFromCacheByKey'),
+        putInCacheWithValue: c.get('putInCacheWithValue'),
+      }
     );
 
     if (!responseJSON) {
@@ -188,28 +236,11 @@ export async function afterRequestHookHandler(
     const hooksResult = span.getHooksResult();
 
     if (shouldDeny) {
-      return new Response(
-        JSON.stringify({
-          error: {
-            message:
-              'The guardrail checks defined in the config failed. You can find more information in the `hook_results` object.',
-            type: 'hooks_failed',
-            param: null,
-            code: null,
-          },
-          ...((hooksResult.beforeRequestHooksResult?.length ||
-            hooksResult.afterRequestHooksResult?.length) && {
-            hook_results: {
-              before_request_hooks: hooksResult.beforeRequestHooksResult,
-              after_request_hooks: hooksResult.afterRequestHooksResult,
-            },
-          }),
-        }),
-        {
-          status: 446,
-          headers: { 'content-type': 'application/json' },
-        }
-      );
+      return createHookResponse(response, {}, hooksResult, {
+        status: 446,
+        headers: { 'content-type': 'application/json' },
+        forceError: true,
+      });
     }
 
     const failedBeforeRequestHooks =
@@ -218,34 +249,18 @@ export async function afterRequestHookHandler(
       (h) => !h.verdict
     );
 
+    const responseData = span.getContext().response.isTransformed
+      ? span.getContext().response.json
+      : responseJSON;
+
     if (failedBeforeRequestHooks.length || failedAfterRequestHooks.length) {
-      response = new Response(
-        JSON.stringify({ ...responseJSON, hook_results: hooksResult }),
-        {
-          status: 246,
-          statusText: 'Hooks failed',
-          headers: response.headers,
-        }
-      );
+      return createHookResponse(response, responseData, hooksResult, {
+        status: 246,
+        statusText: 'Hooks failed',
+      });
     }
 
-    return new Response(
-      JSON.stringify({
-        ...responseJSON,
-        ...((hooksResult.beforeRequestHooksResult?.length ||
-          hooksResult.afterRequestHooksResult?.length) && {
-          hook_results: {
-            before_request_hooks: hooksResult.beforeRequestHooksResult,
-            after_request_hooks: hooksResult.afterRequestHooksResult,
-          },
-        }),
-      }),
-      {
-        status: response.status,
-        statusText: response.statusText,
-        headers: response.headers,
-      }
-    );
+    return createHookResponse(response, responseData, hooksResult);
   } catch (err) {
     console.error(err);
     return response;

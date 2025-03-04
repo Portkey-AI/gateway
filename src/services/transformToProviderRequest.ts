@@ -1,6 +1,6 @@
 import { GatewayError } from '../errors/GatewayError';
 import ProviderConfigs from '../providers';
-import { endpointStrings } from '../providers/types';
+import { endpointStrings, ProviderConfig } from '../providers/types';
 import { Params } from '../types/requestBody';
 
 /**
@@ -64,6 +64,54 @@ const getValue = (configParam: string, params: Params, paramConfig: any) => {
   return value;
 };
 
+export const transformUsingProviderConfig = (
+  providerConfig: ProviderConfig,
+  params: Params
+) => {
+  const transformedRequest: { [key: string]: any } = {};
+
+  // For each parameter in the provider's configuration
+  for (const configParam in providerConfig) {
+    // Get the config for this parameter
+    let paramConfigs = providerConfig[configParam];
+    if (!Array.isArray(paramConfigs)) {
+      paramConfigs = [paramConfigs];
+    }
+
+    for (const paramConfig of paramConfigs) {
+      // If the parameter is present in the incoming request body
+      if (configParam in params) {
+        // Get the value for this parameter
+        const value = getValue(configParam, params, paramConfig);
+
+        // Set the transformed parameter to the validated value
+        setNestedProperty(
+          transformedRequest,
+          paramConfig?.param as string,
+          value
+        );
+      }
+      // If the parameter is not present in the incoming request body but is required, set it to the default value
+      else if (
+        paramConfig &&
+        paramConfig.required &&
+        paramConfig.default !== undefined
+      ) {
+        let value;
+        if (typeof paramConfig.default === 'function') {
+          value = paramConfig.default(params);
+        } else {
+          value = paramConfig.default;
+        }
+        // Set the transformed parameter to the default value
+        setNestedProperty(transformedRequest, paramConfig.param, value);
+      }
+    }
+  }
+
+  return transformedRequest;
+};
+
 /**
  * Transforms the request body to match the structure required by the AI provider.
  * It also ensures the values for each parameter are within the minimum and maximum
@@ -95,46 +143,7 @@ const transformToProviderRequestJSON = (
     throw new GatewayError(`${fn} is not supported by ${provider}`);
   }
 
-  const transformedRequest: { [key: string]: any } = {};
-
-  // For each parameter in the provider's configuration
-  for (const configParam in providerConfig) {
-    // Get the config for this parameter
-    let paramConfigs = providerConfig[configParam];
-    if (!Array.isArray(paramConfigs)) {
-      paramConfigs = [paramConfigs];
-    }
-
-    for (const paramConfig of paramConfigs) {
-      // If the parameter is present in the incoming request body
-      if (configParam in params) {
-        // Get the value for this parameter
-        const value = getValue(configParam, params, paramConfig);
-
-        // Set the transformed parameter to the validated value
-        setNestedProperty(
-          transformedRequest,
-          paramConfig?.param as string,
-          value
-        );
-      }
-      // If the parameter is not present in the incoming request body but is required, set it to the default value
-      else if (
-        paramConfig &&
-        paramConfig.required &&
-        paramConfig.default !== undefined
-      ) {
-        // Set the transformed parameter to the default value
-        setNestedProperty(
-          transformedRequest,
-          paramConfig.param,
-          paramConfig.default
-        );
-      }
-    }
-  }
-
-  return transformedRequest;
+  return transformUsingProviderConfig(providerConfig, params);
 };
 
 const transformToProviderRequestFormData = (
@@ -164,11 +173,35 @@ const transformToProviderRequestFormData = (
         paramConfig.required &&
         paramConfig.default !== undefined
       ) {
-        formData.append(paramConfig.param, paramConfig.default);
+        let value;
+        if (typeof paramConfig.default === 'function') {
+          value = paramConfig.default(params);
+        } else {
+          value = paramConfig.default;
+        }
+        formData.append(paramConfig.param, value);
       }
     }
   }
   return formData;
+};
+
+const transformToProviderRequestReadableStream = (
+  provider: string,
+  requestBody: ReadableStream,
+  requestHeaders: Record<string, string>,
+  fn: string
+) => {
+  if (ProviderConfigs[provider].getConfig) {
+    return ProviderConfigs[provider]
+      .getConfig({}, fn)
+      .requestTransforms[fn](requestBody, requestHeaders);
+  } else {
+    return ProviderConfigs[provider].requestTransforms[fn](
+      requestBody,
+      requestHeaders
+    );
+  }
 };
 
 /**
@@ -183,11 +216,21 @@ const transformToProviderRequestFormData = (
 export const transformToProviderRequest = (
   provider: string,
   params: Params,
-  inputParams: Params | FormData | ArrayBuffer,
-  fn: endpointStrings
+  requestBody: Params | FormData | ArrayBuffer | ReadableStream | ArrayBuffer,
+  fn: endpointStrings,
+  requestHeaders: Record<string, string>
 ) => {
-  if (inputParams instanceof FormData || inputParams instanceof ArrayBuffer)
-    return inputParams;
+  // this returns a ReadableStream
+  if (fn === 'uploadFile') {
+    return transformToProviderRequestReadableStream(
+      provider,
+      requestBody as ReadableStream,
+      requestHeaders,
+      fn
+    );
+  }
+  if (requestBody instanceof FormData || requestBody instanceof ArrayBuffer)
+    return requestBody;
 
   if (fn === 'proxy') {
     return params;

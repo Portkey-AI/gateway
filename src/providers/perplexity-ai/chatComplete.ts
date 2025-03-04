@@ -216,6 +216,8 @@ export const PerplexityAIChatCompleteStreamChunkTransform: (
           finish_reason: parsedChunk.choices[0]?.finish_reason,
         },
       ],
+      ...(parsedChunk.usage &&
+        parsedChunk.choices[0]?.finish_reason && { usage: parsedChunk.usage }),
     })}` + '\n\n';
 
   if (parsedChunk.choices[0]?.finish_reason)

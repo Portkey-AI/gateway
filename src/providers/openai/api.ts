@@ -14,7 +14,11 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
       headersObj['OpenAI-Project'] = providerOptions.openaiProject;
     }
 
-    if (fn === 'createTranscription' || fn === 'createTranslation')
+    if (
+      fn === 'createTranscription' ||
+      fn === 'createTranslation' ||
+      fn === 'uploadFile'
+    )
       headersObj['Content-Type'] = 'multipart/form-data';
 
     if (providerOptions.openaiBeta) {
@@ -24,6 +28,7 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
     return headersObj;
   },
   getEndpoint: ({ fn, gatewayRequestURL }) => {
+    const basePath = gatewayRequestURL.split('/v1')?.[1];
     switch (fn) {
       case 'complete':
         return '/completions';
@@ -40,8 +45,33 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
       case 'createTranslation':
         return '/audio/translations';
       case 'realtime':
-        const endpoint = gatewayRequestURL.split('/v1')[1];
-        return endpoint;
+        return basePath;
+      case 'uploadFile':
+        return basePath;
+      case 'retrieveFile':
+        return basePath;
+      case 'listFiles':
+        return basePath;
+      case 'deleteFile':
+        return basePath;
+      case 'retrieveFileContent':
+        return basePath;
+      case 'createBatch':
+        return basePath;
+      case 'createFinetune':
+        return basePath;
+      case 'retrieveFinetune':
+        return basePath;
+      case 'listFinetunes':
+        return basePath;
+      case 'cancelFinetune':
+        return basePath;
+      case 'retrieveBatch':
+        return basePath;
+      case 'cancelBatch':
+        return basePath;
+      case 'listBatches':
+        return basePath;
       default:
         return '';
     }

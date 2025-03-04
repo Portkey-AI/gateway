@@ -1,16 +1,19 @@
 import { SignatureV4 } from '@smithy/signature-v4';
 import { Sha256 } from '@aws-crypto/sha256-js';
-import {
-  BedrockConverseAI21ChatCompletionsParams,
-  BedrockConverseAnthropicChatCompletionsParams,
-  BedrockChatCompletionsParams,
-  BedrockConverseCohereChatCompletionsParams,
-} from './chatComplete';
 import { Context } from 'hono';
 import { env } from 'hono/adapter';
+import {
+  BedrockChatCompletionsParams,
+  BedrockConverseAI21ChatCompletionsParams,
+  BedrockConverseAnthropicChatCompletionsParams,
+  BedrockConverseCohereChatCompletionsParams,
+} from './chatComplete';
+import { Options } from '../../types/requestBody';
+import { GatewayError } from '../../errors/GatewayError';
+import { BedrockFinetuneRecord } from './types';
 
 export const generateAWSHeaders = async (
-  body: Record<string, any>,
+  body: Record<string, any> | string | undefined,
   headers: Record<string, string>,
   url: string,
   method: string,
@@ -34,13 +37,31 @@ export const generateAWSHeaders = async (
   const urlObj = new URL(url);
   const hostname = urlObj.hostname;
   headers['host'] = hostname;
+  let requestBody;
+  if (!body) {
+    requestBody = null;
+  } else if (
+    body instanceof Uint8Array ||
+    body instanceof Buffer ||
+    typeof body === 'string'
+  ) {
+    requestBody = body;
+  } else if (body && typeof body === 'object' && method !== 'GET') {
+    requestBody = JSON.stringify(body);
+  }
+  const queryParams = Object.fromEntries(urlObj.searchParams.entries());
+  let protocol = 'https';
+  if (urlObj.protocol) {
+    protocol = urlObj.protocol.replace(':', '');
+  }
   const request = {
     method: method,
     path: urlObj.pathname,
-    protocol: 'https',
+    protocol: protocol,
+    query: queryParams,
     hostname: urlObj.hostname,
     headers: headers,
-    body: JSON.stringify(body),
+    ...(requestBody && { body: requestBody }),
   };
 
   const signed = await signer.sign(request);
@@ -238,7 +259,7 @@ export async function getAssumedRoleCredentials(
     const xmlData = await response.text();
     credentials = parseXml(xmlData);
     if (putInCacheWithValue) {
-      putInCacheWithValue(env(c), cacheKey, credentials, 60); //1 minute
+      await putInCacheWithValue(env(c), cacheKey, credentials, 300); //5 minutes
     }
   } catch (error) {
     console.error({ message: `Error assuming role:, ${error}` });
@@ -265,4 +286,85 @@ function parseXml(xml: string) {
     sessionToken: getTagContent('SessionToken'),
     expiration: getTagContent('Expiration'),
   };
+}
+
+export const bedrockFinetuneToOpenAI = (finetune: BedrockFinetuneRecord) => {
+  let status = 'running';
+  switch (finetune.status) {
+    case 'Completed':
+      status = 'succeeded';
+      break;
+    case 'Failed':
+      status = 'failed';
+      break;
+    case 'InProgress':
+      status = 'running';
+      break;
+    case 'Stopping':
+    case 'Stopped':
+      status = 'cancelled';
+      break;
+  }
+  return {
+    id: finetune.jobName,
+    object: 'finetune',
+    status: status,
+    created_at: new Date(finetune.creationTime).getTime(),
+    finished_at: new Date(finetune.endTime).getTime(),
+    fine_tuned_model:
+      finetune.outputModelArn ||
+      finetune.outputModelName ||
+      finetune.customModelArn,
+    suffix: finetune.customModelName,
+    training_file: encodeURIComponent(
+      finetune?.trainingDataConfig?.s3Uri ?? ''
+    ),
+    validation_file: encodeURIComponent(
+      finetune?.validationDataConfig?.s3Uri ?? ''
+    ),
+    hyperparameters: {
+      learning_rate_multiplier: Number(finetune?.hyperParameters?.learningRate),
+      batch_size: Number(finetune?.hyperParameters?.batchSize),
+      n_epochs: Number(finetune?.hyperParameters?.epochCount),
+    },
+    error: finetune?.failureMessage ?? {},
+  };
+};
+
+export async function providerAssumedRoleCredentials(
+  c: Context,
+  providerOptions: Options
+) {
+  try {
+    // Assume the role in the source account
+    const sourceRoleCredentials = await getAssumedRoleCredentials(
+      c,
+      env(c).AWS_ASSUME_ROLE_SOURCE_ARN, // Role ARN in the source account
+      env(c).AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID || '', // External ID for source role (if needed)
+      providerOptions.awsRegion || ''
+    );
+
+    if (!sourceRoleCredentials) {
+      throw new Error('Server Error while assuming internal role');
+    }
+
+    // Assume role in destination account using temporary creds obtained in first step
+    const { accessKeyId, secretAccessKey, sessionToken } =
+      (await getAssumedRoleCredentials(
+        c,
+        providerOptions.awsRoleArn || '',
+        providerOptions.awsExternalId || '',
+        providerOptions.awsRegion || '',
+        {
+          accessKeyId: sourceRoleCredentials.accessKeyId,
+          secretAccessKey: sourceRoleCredentials.secretAccessKey,
+          sessionToken: sourceRoleCredentials.sessionToken,
+        }
+      )) || {};
+    providerOptions.awsAccessKeyId = accessKeyId;
+    providerOptions.awsSecretAccessKey = secretAccessKey;
+    providerOptions.awsSessionToken = sessionToken;
+  } catch (e) {
+    throw new GatewayError('Error while assuming bedrock role');
+  }
 }

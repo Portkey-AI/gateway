@@ -9,6 +9,7 @@ import {
   HookOnSuccessObject,
   HookResult,
   HandlerOptions,
+  HookType,
 } from './types';
 import { plugins } from '../../../plugins';
 import { Context } from 'hono';
@@ -71,11 +72,13 @@ export class HookSpan {
         json: requestParams,
         text: requestText,
         isStreamingRequest,
+        isTransformed: false,
       },
       response: {
         json: {},
         text: '',
         statusCode: null,
+        isTransformed: false,
       },
       provider,
       requestType,
@@ -95,6 +98,10 @@ export class HookSpan {
             .join('\n')
         : '';
       return concatenatedText || lastMessage.content;
+    } else if (requestParams?.input) {
+      return Array.isArray(requestParams.input)
+        ? requestParams.input.join('\n')
+        : requestParams.input;
     }
     return '';
   }
@@ -115,7 +122,25 @@ export class HookSpan {
       json: responseJSON,
       text: responseText,
       statusCode: responseStatus,
+      isTransformed: this.context.response.isTransformed || false,
     };
+  }
+
+  public setContextAfterTransform(
+    responseJson: Record<string, any>,
+    requestJson: Record<string, any>
+  ): void {
+    if (responseJson) {
+      this.context.response.json = responseJson;
+      this.context.response.text = this.extractResponseText(responseJson);
+      this.context.response.isTransformed = true;
+    }
+
+    if (requestJson) {
+      this.context.request.json = requestJson;
+      this.context.request.text = this.extractRequestText(requestJson);
+      this.context.request.isTransformed = true;
+    }
   }
 
   private extractResponseText(responseJSON: Record<string, any>): string {
@@ -264,12 +289,15 @@ export class HooksManager {
         options
       );
       return {
-        ...result,
+        transformedData: result.transformedData,
+        data: result.data || null,
+        verdict: result.verdict,
         id: check.id,
         error: result.error
           ? { name: result.error.name, message: result.error.message }
           : undefined,
         execution_time: new Date().getTime() - createdAt.getTime(),
+        transformed: result.transformed || false,
         created_at: createdAt,
       };
     } catch (err: any) {
@@ -294,15 +322,39 @@ export class HooksManager {
     options: HandlerOptions
   ): Promise<HookResult> {
     const span = this.getSpan(spanId);
-    let hookResult: HookResult = { id: hook.id } as HookResult;
+    let hookResult: HookResult = { id: hook.id, type: hook.type } as HookResult;
+    let checkResults: GuardrailCheckResult[] = [];
     const createdAt = new Date();
 
     if (this.shouldSkipHook(span, hook)) {
       return { ...hookResult, skipped: true };
     }
 
-    if (hook.type === 'guardrail' && hook.checks) {
-      const checkResults = await Promise.all(
+    if (hook.type === HookType.MUTATOR && hook.checks) {
+      for (const check of hook.checks) {
+        const result = await this.executeFunction(
+          span.getContext(),
+          check,
+          hook.eventType,
+          options
+        );
+        if (
+          result.transformedData &&
+          (result.transformedData.response.json ||
+            result.transformedData.request.json)
+        ) {
+          span.setContextAfterTransform(
+            result.transformedData.response.json,
+            result.transformedData.request.json
+          );
+        }
+        delete result.transformedData;
+        checkResults.push(result);
+      }
+    }
+
+    if (hook.type === HookType.GUARDRAIL && hook.checks) {
+      checkResults = await Promise.all(
         hook.checks
           .filter((check: Check) => check.is_enabled !== false)
           .map((check: Check) =>
@@ -315,26 +367,41 @@ export class HooksManager {
           )
       );
 
-      hookResult = {
-        verdict: checkResults.every((result) => result.verdict || result.error),
-        id: hook.id,
-        checks: checkResults,
-        feedback: this.createFeedbackObject(
-          checkResults,
-          hook.onFail,
-          hook.onSuccess
-        ),
-        execution_time: new Date().getTime() - createdAt.getTime(),
-        async: hook.async || false,
-        type: hook.type,
-        created_at: createdAt,
-      } as HookResult;
+      checkResults.forEach((checkResult) => {
+        if (
+          checkResult.transformedData &&
+          (checkResult.transformedData.response.json ||
+            checkResult.transformedData.request.json)
+        ) {
+          span.setContextAfterTransform(
+            checkResult.transformedData.response.json,
+            checkResult.transformedData.request.json
+          );
+        }
+        delete checkResult.transformedData;
+      });
+    }
 
-      if (hook.deny && !hookResult.verdict) {
-        hookResult.deny = true;
-      } else {
-        hookResult.deny = false;
-      }
+    hookResult = {
+      verdict: checkResults.every((result) => result.verdict || result.error),
+      id: hook.id,
+      transformed: checkResults.some((result) => result.transformed),
+      checks: checkResults,
+      feedback: this.createFeedbackObject(
+        checkResults,
+        hook.onFail,
+        hook.onSuccess
+      ),
+      execution_time: new Date().getTime() - createdAt.getTime(),
+      async: hook.async || false,
+      type: hook.type,
+      created_at: createdAt,
+    } as HookResult;
+
+    if (hook.deny && !hookResult.verdict) {
+      hookResult.deny = true;
+    } else {
+      hookResult.deny = false;
     }
 
     span.addHookResult(hook.eventType, hookResult);
@@ -344,14 +411,18 @@ export class HooksManager {
   private shouldSkipHook(span: HookSpan, hook: HookObject): boolean {
     const context = span.getContext();
     return (
-      !['chatComplete', 'complete'].includes(context.requestType) ||
+      !['chatComplete', 'complete', 'embed'].includes(context.requestType) ||
+      (context.requestType === 'embed' &&
+        hook.eventType !== 'beforeRequestHook') ||
+      (context.requestType === 'embed' && hook.type === HookType.MUTATOR) ||
       (hook.eventType === 'afterRequestHook' &&
         context.response.statusCode !== 200) ||
       (hook.eventType === 'afterRequestHook' &&
         context.request.isStreamingRequest &&
         !context.response.text) ||
       (hook.eventType === 'beforeRequestHook' &&
-        span.getParentHookSpanId() !== null)
+        span.getParentHookSpanId() !== null) ||
+      (hook.type === HookType.MUTATOR && !!hook.async)
     );
   }
 
@@ -399,7 +470,6 @@ export class HooksManager {
     eventTypePresets: string[]
   ): HookObject[] {
     const hooksToExecute: HookObject[] = [];
-
     if (
       eventTypePresets.includes(
         HOOKS_EVENT_TYPE_PRESETS.ASYNC_BEFORE_REQUEST_HOOK

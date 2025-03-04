@@ -34,6 +34,12 @@ import { handler as patronustoxicity } from './patronus/toxicity';
 import { handler as patronuscustom } from './patronus/custom';
 import { mistralGuardrailHandler } from './mistral';
 import { handler as pangeatextGuard } from './pangea/textGuard';
+import { handler as promptfooPii } from './promptfoo/pii';
+import { handler as promptfooHarm } from './promptfoo/harm';
+import { handler as promptfooGuard } from './promptfoo/guard';
+import { handler as pangeapii } from './pangea/pii';
+import { pluginHandler as bedrockHandler } from './bedrock/index';
+import { handler as acuvityScan } from './acuvity/scan';
 
 export const plugins = {
   default: {
@@ -87,5 +93,17 @@ export const plugins = {
   },
   pangea: {
     textGuard: pangeatextGuard,
+    pii: pangeapii,
+  },
+  promptfoo: {
+    pii: promptfooPii,
+    harm: promptfooHarm,
+    guard: promptfooGuard,
+  },
+  bedrock: {
+    guard: bedrockHandler,
+  },
+  acuvity: {
+    scan: acuvityScan,
   },
 };

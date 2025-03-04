@@ -105,11 +105,17 @@ export const AzureOpenAIChatCompleteConfig: ProviderConfig = {
   prediction: {
     param: 'prediction',
   },
+  reasoning_effort: {
+    param: 'reasoning_effort',
+  },
+  stream_options: {
+    param: 'stream_options',
+  },
 };
 
 interface AzureOpenAIChatCompleteResponse extends ChatCompletionResponse {}
 
-export const AzureOpenAIChatCompleteResponseTransform: (
+export const AzureOpenAIResponseTransform: (
   response: AzureOpenAIChatCompleteResponse | ErrorResponse,
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {

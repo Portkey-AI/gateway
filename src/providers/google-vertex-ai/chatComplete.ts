@@ -9,6 +9,7 @@ import {
   Tool,
   ToolCall,
   SYSTEM_MESSAGE_ROLES,
+  MESSAGE_ROLES,
 } from '../../types/requestBody';
 import {
   AnthropicChatCompleteResponse,
@@ -26,6 +27,7 @@ import {
 import {
   ChatCompletionResponse,
   ErrorResponse,
+  Logprobs,
   ProviderConfig,
 } from '../types';
 import {
@@ -40,7 +42,11 @@ import type {
   VertexLLamaChatCompleteResponse,
   GoogleSearchRetrievalTool,
 } from './types';
-import { getMimeType } from './utils';
+import {
+  getMimeType,
+  recursivelyDeleteUnsupportedParameters,
+  transformVertexLogprobs,
+} from './utils';
 
 export const buildGoogleSearchRetrievalTool = (tool: Tool) => {
   const googleSearchRetrievalTool: GoogleSearchRetrievalTool = {
@@ -247,6 +253,14 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
+  logprobs: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
+  top_logprobs: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
   // https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/configure-safety-attributes
   // Example payload to be included in the request that sets the safety settings:
   //   "safety_settings": [
@@ -270,7 +284,17 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
       const tools: any = [];
       params.tools?.forEach((tool) => {
         if (tool.type === 'function') {
-          if (tool.function.name === 'googleSearchRetrieval') {
+          // these are not supported by google
+          recursivelyDeleteUnsupportedParameters(tool.function?.parameters);
+          delete tool.function?.strict;
+
+          if (['googleSearch', 'google_search'].includes(tool.function.name)) {
+            tools.push({ googleSearch: {} });
+          } else if (
+            ['googleSearchRetrieval', 'google_search_retrieval'].includes(
+              tool.function.name
+            )
+          ) {
             tools.push(buildGoogleSearchRetrievalTool(tool));
           } else {
             functionDeclarations.push(tool.function);
@@ -636,37 +660,53 @@ export const GoogleChatCompleteResponseTransform: (
       id: 'portkey-' + crypto.randomUUID(),
       object: 'chat_completion',
       created: Math.floor(Date.now() / 1000),
-      model: 'Unknown',
+      model: response.modelVersion,
       provider: GOOGLE_VERTEX_AI,
       choices:
         response.candidates?.map((generation, index) => {
-          let message: Message = { role: 'assistant', content: '' };
-          if (generation.content?.parts[0]?.text) {
-            message = {
-              role: 'assistant',
-              content: generation.content.parts[0]?.text,
-            };
-          } else if (generation.content?.parts[0]?.functionCall) {
-            message = {
-              role: 'assistant',
-              tool_calls: generation.content.parts.map((part) => {
-                if (part.functionCall) {
-                  return {
-                    id: 'portkey-' + crypto.randomUUID(),
-                    type: 'function',
-                    function: {
-                      name: part.functionCall.name,
-                      arguments: JSON.stringify(part.functionCall.args),
-                    },
-                  };
-                }
-              }),
+          // transform tool calls and content by iterating over the content parts
+          let toolCalls: ToolCall[] = [];
+          let content: string | undefined;
+          for (const part of generation.content?.parts ?? []) {
+            if (part.functionCall) {
+              toolCalls.push({
+                id: 'portkey-' + crypto.randomUUID(),
+                type: 'function',
+                function: {
+                  name: part.functionCall.name,
+                  arguments: JSON.stringify(part.functionCall.args),
+                },
+              });
+            } else if (part.text) {
+              // if content is already set to the chain of thought message and the user requires both the CoT message and the completion, we need to append the completion to the CoT message
+              if (content?.length && !strictOpenAiCompliance) {
+                content += '\r\n\r\n' + part.text;
+              } else {
+                // if content is already set to CoT, but user requires only the completion, we need to set content to the completion
+                content = part.text;
+              }
+            }
+          }
+
+          const message = {
+            role: MESSAGE_ROLES.ASSISTANT,
+            ...(toolCalls.length && { tool_calls: toolCalls }),
+            ...(content && { content }),
+          };
+          const logprobsContent: Logprobs[] | null =
+            transformVertexLogprobs(generation);
+          let logprobs;
+          if (logprobsContent) {
+            logprobs = {
+              content: logprobsContent,
             };
           }
+
           return {
             message: message,
             index: index,
             finish_reason: generation.finishReason,
+            logprobs,
             ...(!strictOpenAiCompliance && {
               safetyRatings: generation.safetyRatings,
             }),
@@ -747,9 +787,11 @@ export const GoogleChatCompleteStreamChunkTransform: (
 ) => string = (
   responseChunk,
   fallbackId,
-  _streamState,
+  streamState,
   strictOpenAiCompliance
 ) => {
+  streamState.containsChainOfThoughtMessage =
+    streamState?.containsChainOfThoughtMessage ?? false;
   const chunk = responseChunk
     .trim()
     .replace(/^data: /, '')
@@ -774,15 +816,36 @@ export const GoogleChatCompleteStreamChunkTransform: (
     id: fallbackId,
     object: 'chat.completion.chunk',
     created: Math.floor(Date.now() / 1000),
-    model: '',
+    model: parsedChunk.modelVersion,
     provider: GOOGLE_VERTEX_AI,
     choices:
       parsedChunk.candidates?.map((generation, index) => {
         let message: Message = { role: 'assistant', content: '' };
         if (generation.content?.parts[0]?.text) {
+          if (generation.content.parts[0].thought)
+            streamState.containsChainOfThoughtMessage = true;
+
+          let content: string =
+            strictOpenAiCompliance && streamState.containsChainOfThoughtMessage
+              ? ''
+              : generation.content.parts[0]?.text;
+          if (generation.content.parts[1]?.text) {
+            if (strictOpenAiCompliance)
+              content = generation.content.parts[1].text;
+            else content += '\r\n\r\n' + generation.content.parts[1]?.text;
+            streamState.containsChainOfThoughtMessage = false;
+          } else if (
+            streamState.containsChainOfThoughtMessage &&
+            !generation.content.parts[0]?.thought
+          ) {
+            if (strictOpenAiCompliance)
+              content = generation.content.parts[0].text;
+            else content = '\r\n\r\n' + content;
+            streamState.containsChainOfThoughtMessage = false;
+          }
           message = {
             role: 'assistant',
-            content: generation.content.parts[0]?.text,
+            content,
           };
         } else if (generation.content?.parts[0]?.functionCall) {
           message = {
@@ -814,7 +877,9 @@ export const GoogleChatCompleteStreamChunkTransform: (
             : {}),
         };
       }) ?? [],
-    usage: usageMetadata,
+    ...(parsedChunk.usageMetadata?.candidatesTokenCount && {
+      usage: usageMetadata,
+    }),
   };
 
   return `data: ${JSON.stringify(dataChunk)}\n\n`;
@@ -923,10 +988,33 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
   chunk = chunk.replace(/^event: content_block_start[\r\n]*/, '');
   chunk = chunk.replace(/^event: message_delta[\r\n]*/, '');
   chunk = chunk.replace(/^event: message_start[\r\n]*/, '');
+  chunk = chunk.replace(/^event: error[\r\n]*/, '');
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
 
   const parsedChunk: AnthropicChatCompleteStreamResponse = JSON.parse(chunk);
+
+  if (parsedChunk.type === 'error' && parsedChunk.error) {
+    return (
+      `data: ${JSON.stringify({
+        id: fallbackId,
+        object: 'chat.completion.chunk',
+        created: Math.floor(Date.now() / 1000),
+        model: '',
+        provider: GOOGLE_VERTEX_AI,
+        choices: [
+          {
+            finish_reason: parsedChunk.error.type,
+            delta: {
+              content: '',
+            },
+          },
+        ],
+      })}` +
+      '\n\n' +
+      'data: [DONE]\n\n'
+    );
+  }
 
   if (
     parsedChunk.type === 'content_block_start' &&
