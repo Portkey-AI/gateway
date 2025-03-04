@@ -266,11 +266,16 @@ export async function tryPost(
       : { ...requestBody, ...overrideParams };
   const isStreamingMode = params.stream ? true : false;
   let strictOpenAiCompliance = true;
+  let includeRawResponse = false;
 
   if (requestHeaders[HEADER_KEYS.STRICT_OPEN_AI_COMPLIANCE] === 'false') {
     strictOpenAiCompliance = false;
   } else if (providerOption.strictOpenAiCompliance === false) {
     strictOpenAiCompliance = false;
+  }
+
+  if (requestHeaders[HEADER_KEYS.INCLUDE_RAW_RESPONSE] === 'true') {
+    includeRawResponse = true;
   }
 
   let metadata: Record<string, string> = {};
@@ -463,7 +468,8 @@ export async function tryPost(
           isCacheHit,
           params,
           strictOpenAiCompliance,
-          c.req.url
+          c.req.url,
+          includeRawResponse
         ));
     }
 
@@ -555,6 +561,7 @@ export async function tryPost(
       requestHeaders,
       hookSpan.id,
       strictOpenAiCompliance,
+      includeRawResponse,
       requestBody
     ));
 
@@ -1172,6 +1179,7 @@ export async function recursiveAfterRequestHookHandler(
   requestHeaders: Record<string, string>,
   hookSpanId: string,
   strictOpenAiCompliance: boolean,
+  includeRawResponse: boolean = false,
   requestBody?: ReadableStream | FormData | Params | ArrayBuffer
 ): Promise<{
   mappedResponse: Response;
@@ -1228,7 +1236,8 @@ export async function recursiveAfterRequestHookHandler(
     false,
     gatewayParams,
     strictOpenAiCompliance,
-    c.req.url
+    c.req.url,
+    includeRawResponse
   );
 
   const arhResponse = await afterRequestHookHandler(
@@ -1258,7 +1267,8 @@ export async function recursiveAfterRequestHookHandler(
       fn,
       requestHeaders,
       hookSpanId,
-      strictOpenAiCompliance
+      strictOpenAiCompliance,
+      includeRawResponse
     );
   }
 

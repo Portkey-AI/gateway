@@ -600,6 +600,10 @@ export const VertexAnthropicChatCompleteConfig: ProviderConfig = {
     required: true,
     default: 'vertex-2023-10-16',
   },
+  thinking: {
+    param: 'thinking',
+    required: false,
+  },
 };
 
 export const GoogleChatCompleteResponseTransform: (

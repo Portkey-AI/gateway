@@ -13,6 +13,28 @@ import { OpenAIChatCompleteResponse } from '../providers/openai/chatComplete';
 import { OpenAICompleteResponse } from '../providers/openai/complete';
 import { getStreamModeSplitPattern, type SplitPatternType } from '../utils';
 
+const appendRawResponseToChunks = (
+  chunk: string,
+  rawResponse: Record<string, any>
+) => {
+  try {
+    if (chunk !== undefined) {
+      const parts = chunk.split('\n\n');
+      for (let i = 0; i < parts.length; i++) {
+        let part = parts[i];
+        if (part.startsWith('data: ')) {
+          const json = JSON.parse(part.slice(6));
+          json.raw_response = rawResponse;
+          parts[i] = 'data: ' + JSON.stringify(json);
+        }
+      }
+      return parts.join('\n\n');
+    }
+  } catch (error) {
+    return chunk;
+  }
+};
+
 function readUInt32BE(buffer: Uint8Array, offset: number) {
   return (
     ((buffer[offset] << 24) |
@@ -215,7 +237,8 @@ export async function handleNonStreamingMode(
   response: Response,
   responseTransformer: Function | undefined,
   strictOpenAiCompliance: boolean,
-  gatewayRequestUrl: string
+  gatewayRequestUrl: string,
+  includeRawResponse: boolean = false
 ): Promise<{
   response: Response;
   json: Record<string, any>;
@@ -243,6 +266,9 @@ export async function handleNonStreamingMode(
       strictOpenAiCompliance,
       gatewayRequestUrl
     );
+    if (includeRawResponse) {
+      responseBodyJson.raw_response = originalResponseBodyJson;
+    }
   }
 
   return {
