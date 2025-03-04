@@ -54,7 +54,7 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     }
     return headersObj;
   },
-  getEndpoint: ({ providerOptions, fn, gatewayRequestURL }) => {
+  getEndpoint: ({ providerOptions, fn, gatewayRequestURL, c }) => {
     const { apiVersion, urlToFetch, deploymentId } = providerOptions;
     let mappedFn = fn;
 
@@ -77,6 +77,9 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     }
 
     const path = gatewayRequestURL.split('/v1')?.[1];
+    const apiVersionQueryParam = path.includes('?')
+      ? `&api-version=${apiVersion}`
+      : `?api-version=${apiVersion}`;
 
     switch (mappedFn) {
       case 'complete': {
@@ -129,6 +132,16 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
         return `${path}?api-version=${apiVersion}`;
       case 'listBatches':
         return `${path}?api-version=${apiVersion}`;
+      case 'listChatCompletions':
+        return `/deployments/${deploymentId}/${path}` + apiVersionQueryParam;
+      case 'getChatCompletion':
+        return `/deployments/${deploymentId}/${path}` + apiVersionQueryParam;
+      case 'getChatCompletionMessages':
+        return `/deployments/${deploymentId}/${path}` + apiVersionQueryParam;
+      case 'updateChatCompletion':
+        return `/deployments/${deploymentId}/${path}` + apiVersionQueryParam;
+      case 'deleteChatCompletion':
+        return `/deployments/${deploymentId}/${path}` + apiVersionQueryParam;
       default:
         return '';
     }
