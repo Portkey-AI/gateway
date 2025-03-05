@@ -420,10 +420,17 @@ export const AnthropicChatCompleteResponseTransform: (
     const shouldSendCacheUsage =
       cache_creation_input_tokens || cache_read_input_tokens;
 
-    let content = '';
+    let content;
     if (response.content.length && response.content[0].type === 'text') {
       content = response.content[0].text;
     }
+
+    content = response.content.reduce((acc, item) => {
+      if (item.type === 'text') {
+        acc += item.text;
+      }
+      return acc;
+    }, '');
 
     let toolCalls: any = [];
     response.content.forEach((item) => {
