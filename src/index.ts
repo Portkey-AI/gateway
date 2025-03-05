@@ -119,7 +119,36 @@ app.onError((err, c) => {
  * POST route for '/v1/chat/completions'.
  * Handles requests by passing them to the chatCompletionsHandler.
  */
-app.post('/v1/chat/completions', requestValidator, chatCompletionsHandler);
+app.post(
+  '/v1/chat/completions',
+  requestValidator,
+  chatCompletionsHandler('chatComplete')
+);
+app.get(
+  '/v1/chat/completions',
+  requestValidator,
+  chatCompletionsHandler('listChatCompletions')
+);
+app.get(
+  '/v1/chat/completions/:completionId',
+  requestValidator,
+  chatCompletionsHandler('getChatCompletion')
+);
+app.get(
+  '/v1/chat/completions/:completionId/messages',
+  requestValidator,
+  chatCompletionsHandler('getChatCompletionMessages')
+);
+app.post(
+  '/v1/chat/completions/:completionId',
+  requestValidator,
+  chatCompletionsHandler('updateChatCompletion')
+);
+app.delete(
+  '/v1/chat/completions/:completionId',
+  requestValidator,
+  chatCompletionsHandler('deleteChatCompletion')
+);
 
 /**
  * POST route for '/v1/completions'.
@@ -211,7 +240,7 @@ app.all(
  */
 app.post('/v1/prompts/*', requestValidator, (c) => {
   if (c.req.url.endsWith('/v1/chat/completions')) {
-    return chatCompletionsHandler(c);
+    return chatCompletionsHandler('chatComplete')(c);
   } else if (c.req.url.endsWith('/v1/completions')) {
     return completionsHandler(c);
   }
