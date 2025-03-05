@@ -61,6 +61,7 @@ export interface Options {
   adAuth?: string;
   azureAuthMode?: string;
   azureManagedClientId?: string;
+  azureWorkloadClientId?: string;
   azureEntraClientId?: string;
   azureEntraClientSecret?: string;
   azureEntraTenantId?: string;
