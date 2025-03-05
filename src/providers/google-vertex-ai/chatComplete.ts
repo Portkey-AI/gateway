@@ -12,6 +12,7 @@ import {
   MESSAGE_ROLES,
 } from '../../types/requestBody';
 import {
+  AnthropicChatCompleteConfig,
   AnthropicChatCompleteResponse,
   AnthropicChatCompleteStreamResponse,
   AnthropicErrorResponse,
@@ -334,275 +335,12 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
   },
 };
 
-interface AnthropicTool {
-  name: string;
-  description: string;
-  input_schema: {
-    type: string;
-    properties: Record<
-      string,
-      {
-        type: string;
-        description: string;
-      }
-    >;
-    required: string[];
-  };
-}
-
-interface AnthropicToolResultContentItem {
-  type: 'tool_result';
-  tool_use_id: string;
-  content?: string;
-}
-
-type AnthropicMessageContentItem = AnthropicToolResultContentItem | ContentType;
-
-interface AnthropicMessage extends Message {
-  content?: string | AnthropicMessageContentItem[];
-}
-
-interface AnthorpicTextContentItem {
-  type: 'text';
-  text: string;
-}
-
-interface AnthropicToolContentItem {
-  type: 'tool_use';
-  name: string;
-  id: string;
-  input: Record<string, any>;
-}
-
-type AnthropicContentItem = AnthorpicTextContentItem | AnthropicToolContentItem;
-
-const transformAssistantMessageForAnthropic = (
-  msg: Message
-): AnthropicMessage => {
-  let content: AnthropicContentItem[] = [];
-  const containsToolCalls = msg.tool_calls && msg.tool_calls.length;
-
-  if (msg.content && typeof msg.content === 'string') {
-    content.push({
-      type: 'text',
-      text: msg.content,
-    });
-  } else if (
-    msg.content &&
-    typeof msg.content === 'object' &&
-    msg.content.length
-  ) {
-    if (msg.content[0].text) {
-      content.push({
-        type: 'text',
-        text: msg.content[0].text,
-      });
-    }
-  }
-  if (containsToolCalls) {
-    msg.tool_calls.forEach((toolCall: any) => {
-      content.push({
-        type: 'tool_use',
-        name: toolCall.function.name,
-        id: toolCall.id,
-        input: JSON.parse(toolCall.function.arguments),
-      });
-    });
-  }
-  return {
-    role: msg.role,
-    content,
-  };
-};
-
-const transformToolMessageForAnthropic = (msg: Message): AnthropicMessage => {
-  return {
-    role: 'user',
-    content: [
-      {
-        type: 'tool_result',
-        tool_use_id: msg.tool_call_id,
-        content: msg.content as string,
-      },
-    ],
-  };
-};
-
 export const VertexAnthropicChatCompleteConfig: ProviderConfig = {
-  messages: [
-    {
-      param: 'messages',
-      required: true,
-      transform: (params: Params) => {
-        let messages: AnthropicMessage[] = [];
-        // Transform the chat messages into a simple prompt
-        if (!!params.messages) {
-          params.messages.forEach((msg) => {
-            if (SYSTEM_MESSAGE_ROLES.includes(msg.role)) return;
-
-            if (msg.role === 'assistant') {
-              messages.push(transformAssistantMessageForAnthropic(msg));
-            } else if (
-              msg.content &&
-              typeof msg.content === 'object' &&
-              msg.content.length
-            ) {
-              const transformedMessage: Record<string, any> = {
-                role: msg.role,
-                content: [],
-              };
-              msg.content.forEach((item) => {
-                if (item.type === 'text') {
-                  transformedMessage.content.push({
-                    type: item.type,
-                    text: item.text,
-                  });
-                } else if (
-                  item.type === 'image_url' &&
-                  item.image_url &&
-                  item.image_url.url
-                ) {
-                  const parts = item.image_url.url.split(';');
-                  if (parts.length === 2) {
-                    const base64ImageParts = parts[1].split(',');
-                    const base64Image = base64ImageParts[1];
-                    const mediaTypeParts = parts[0].split(':');
-                    if (mediaTypeParts.length === 2 && base64Image) {
-                      const mediaType = mediaTypeParts[1];
-                      transformedMessage.content.push({
-                        type: 'image',
-                        source: {
-                          type: 'base64',
-                          media_type: mediaType,
-                          data: base64Image,
-                        },
-                      });
-                    }
-                  }
-                }
-              });
-              messages.push(transformedMessage as Message);
-            } else if (msg.role === 'tool') {
-              // even though anthropic supports images in tool results, openai doesn't support it yet
-              messages.push(transformToolMessageForAnthropic(msg));
-            } else {
-              messages.push({
-                role: msg.role,
-                content: msg.content,
-              });
-            }
-          });
-        }
-
-        return messages;
-      },
-    },
-    {
-      param: 'system',
-      required: false,
-      transform: (params: Params) => {
-        let systemMessage: string = '';
-        // Transform the chat messages into a simple prompt
-        if (!!params.messages) {
-          params.messages.forEach((msg) => {
-            if (
-              SYSTEM_MESSAGE_ROLES.includes(msg.role) &&
-              msg.content &&
-              typeof msg.content === 'object' &&
-              msg.content[0].text
-            ) {
-              systemMessage = msg.content[0].text;
-            } else if (
-              SYSTEM_MESSAGE_ROLES.includes(msg.role) &&
-              typeof msg.content === 'string'
-            ) {
-              systemMessage = msg.content;
-            }
-          });
-        }
-        return systemMessage;
-      },
-    },
-  ],
-  tools: {
-    param: 'tools',
-    required: false,
-    transform: (params: Params) => {
-      let tools: AnthropicTool[] = [];
-      if (params.tools) {
-        params.tools.forEach((tool) => {
-          if (tool.function) {
-            tools.push({
-              name: tool.function.name,
-              description: tool.function?.description || '',
-              input_schema: {
-                type: tool.function.parameters?.type || 'object',
-                properties: tool.function.parameters?.properties || {},
-                required: tool.function.parameters?.required || [],
-              },
-            });
-          }
-        });
-      }
-      return tools;
-    },
-  },
-  // None is not supported by Anthropic, defaults to auto
-  tool_choice: {
-    param: 'tool_choice',
-    required: false,
-    transform: (params: Params) => {
-      if (params.tool_choice) {
-        if (typeof params.tool_choice === 'string') {
-          if (params.tool_choice === 'required') return { type: 'any' };
-          else if (params.tool_choice === 'auto') return { type: 'auto' };
-        } else if (typeof params.tool_choice === 'object') {
-          return { type: 'tool', name: params.tool_choice.function.name };
-        }
-      }
-      return null;
-    },
-  },
-  max_tokens: {
-    param: 'max_tokens',
-    required: true,
-  },
-  max_completion_tokens: {
-    param: 'max_tokens',
-  },
-  temperature: {
-    param: 'temperature',
-    default: 1,
-    min: 0,
-    max: 1,
-  },
-  top_p: {
-    param: 'top_p',
-    default: -1,
-    min: -1,
-  },
-  top_k: {
-    param: 'top_k',
-    default: -1,
-  },
-  stop: {
-    param: 'stop_sequences',
-  },
-  stream: {
-    param: 'stream',
-    default: false,
-  },
-  user: {
-    param: 'metadata.user_id',
-  },
+  ...AnthropicChatCompleteConfig,
   anthropic_version: {
     param: 'anthropic_version',
     required: true,
     default: 'vertex-2023-10-16',
-  },
-  thinking: {
-    param: 'thinking',
-    required: false,
   },
 };
 
@@ -1105,13 +843,6 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
     });
   }
 
-  let content = null;
-  if (parsedChunk.delta?.text) {
-    content = parsedChunk.delta.text;
-  } else if (parsedChunk.delta?.thinking) {
-    content = parsedChunk.delta.thinking;
-  }
-
   return (
     `data: ${JSON.stringify({
       id: fallbackId,
@@ -1122,7 +853,7 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
       choices: [
         {
           delta: {
-            content,
+            content: parsedChunk.delta?.text,
             tool_calls: toolCalls.length ? toolCalls : undefined,
           },
           index: 0,
