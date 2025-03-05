@@ -1105,6 +1105,13 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
     });
   }
 
+  let content = null;
+  if (parsedChunk.delta?.text) {
+    content = parsedChunk.delta.text;
+  } else if (parsedChunk.delta?.thinking) {
+    content = parsedChunk.delta.thinking;
+  }
+
   return (
     `data: ${JSON.stringify({
       id: fallbackId,
@@ -1115,7 +1122,7 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
       choices: [
         {
           delta: {
-            content: parsedChunk.delta?.text,
+            content,
             tool_calls: toolCalls.length ? toolCalls : undefined,
           },
           index: 0,
