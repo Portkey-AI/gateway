@@ -178,24 +178,15 @@
           "language_values": {
             "type": "string",
             "enum": [
-              "eng_Latn",
-              "zho_Hans",
-              "spa_Latn",
-              "ara_Arab",
-              "por_Latn",
-              "ind_Latn",
-              "vie_Latn"
+              "english",
+              "chinese",
+              "spanish",
+              "french",
+              "german",
+              "japanese",
+              "gibberish"
             ],
-            "enumNames": [
-              "English",
-              "Chinese (Simplified)",
-              "Spanish",
-              "Modern Standard Arabic",
-              "Portuguese",
-              "Indonesian",
-              "Vietnamese"
-            ],
-            "default": "eng_Latn",
+            "default": "english",
             "description": [
               {
                 "type": "subHeading",

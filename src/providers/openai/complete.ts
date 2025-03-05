@@ -127,8 +127,8 @@ export const OpenAICompleteJSONToStreamResponseTransform: (
   for (const [index, choice] of choices.entries()) {
     if (choice.text) {
       const inidividualWords = [];
-      for (let i = 0; i < choice.text.length; i += 4) {
-        inidividualWords.push(choice.text.slice(i, i + 4));
+      for (let i = 0; i < choice.text.length; i += 500) {
+        inidividualWords.push(choice.text.slice(i, i + 500));
       }
       inidividualWords.forEach((word: string) => {
         streamChunkArray.push(

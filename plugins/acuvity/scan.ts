@@ -19,13 +19,22 @@ interface ScanRequest {
   type: 'Input' | 'Output';
 }
 
-const getRedactionList = (parameters: PluginParameters): string[] => {
+const getRedactionList = (
+  parameters: PluginParameters
+): {
+  redactions: string[];
+  pii_redaction: boolean;
+  secret_redaction: boolean;
+} => {
   const redactions: string[] = [];
+  let pii_redaction: boolean = false;
+  let secret_redaction: boolean = false;
 
   if (parameters.pii && parameters.pii_redact && parameters.pii_categories) {
     for (const category of parameters.pii_categories) {
       redactions.push(category);
     }
+    pii_redaction = true;
   }
 
   if (
@@ -36,9 +45,10 @@ const getRedactionList = (parameters: PluginParameters): string[] => {
     for (const category of parameters.secrets_categories) {
       redactions.push(category);
     }
+    secret_redaction = true;
   }
 
-  return redactions;
+  return { redactions, pii_redaction, secret_redaction };
 };
 
 export const postAcuvityScan = async (
@@ -106,7 +116,8 @@ export const handler: PluginHandler = async (
       throw new Error('acuvity base url not given');
     }
 
-    let redactionList = getRedactionList(parameters);
+    let redactResult = getRedactionList(parameters);
+    const redactionList = redactResult.redactions;
     const result: any = await postAcuvityScan(
       base_url,
       token,
@@ -134,17 +145,35 @@ export const handler: PluginHandler = async (
       currentResults.forEach((result) => guardResults.add(result));
     }
 
-    data = result.summary;
     let hasPII = guardResults.has(GuardName.PII_DETECTOR);
+    let hasSecret = guardResults.has(GuardName.SECRETS_DETECTOR);
 
-    if (redactionList.length > 0 && hasPII) {
+    if (redactionList.length > 0 && (hasPII || hasSecret)) {
       setCurrentContentPart(context, eventType, transformedData, respTextArray);
       transformed = true;
     }
+
+    const scanResult: any = {
+      guards: JSON.stringify([...guardResults]),
+    };
+    data = scanResult;
+
     // check if only PII/Secrets is enabled with redaction,
     // if yes then return the redacted data with verdict = true.
     // else verdict = false, as we found other detections.
-    if (guardResults.size == 1 && redactionList.length > 0 && hasPII) {
+    if (
+      guardResults.size == 2 &&
+      redactResult.pii_redaction &&
+      redactResult.secret_redaction &&
+      hasPII &&
+      hasSecret
+    ) {
+      verdict = true;
+    } else if (
+      guardResults.size == 1 &&
+      redactionList.length > 0 &&
+      (hasPII || hasSecret)
+    ) {
       verdict = true;
     } else if (guardResults.size > 0) {
       // for the other detections.
@@ -238,12 +267,12 @@ function evaluateAllParameters(
   }
 
   // Check language
-  if (parameters.language && parameters.languagevals) {
+  if (parameters.language && parameters.language_values) {
     const check = responseHelper.evaluate(
       extraction,
       GuardName.LANGUAGE,
       0.5,
-      parameters.languagevals
+      parameters.language_values
     );
     if (check.matched) {
       guardTypes.add(GuardName.LANGUAGE);
@@ -276,7 +305,7 @@ function evaluateAllParameters(
         category.toLowerCase()
       );
       if (check.matched) {
-        guardTypes.add(GuardName.PII_DETECTOR);
+        guardTypes.add(GuardName.SECRETS_DETECTOR);
         break;
       }
     }

@@ -182,6 +182,7 @@ export const fileExtensionMimeTypeMap = {
   wmv: 'video/wmv',
   mpegps: 'video/mpegps',
   flv: 'video/flv',
+  webm: 'video/webm',
 };
 
 export const imagesMimeTypes = [
