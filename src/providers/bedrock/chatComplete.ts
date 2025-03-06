@@ -133,6 +133,8 @@ const getMessageContent = (message: Message) => {
             },
           });
         }
+      } else {
+        out.push(item);
       }
     });
   }
