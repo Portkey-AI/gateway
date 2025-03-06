@@ -51,7 +51,9 @@ export const BedrockCreateBatchConfig: ProviderConfig = {
       return {
         s3OutputDataConfig: {
           s3Uri: s3URLToContainingFolder,
-          s3EncryptionKeyId: providerOptions.awsServerSideEncryptionKMSKeyId,
+          ...(providerOptions.awsServerSideEncryptionKMSKeyId && {
+            s3EncryptionKeyId: providerOptions.awsServerSideEncryptionKMSKeyId,
+          }),
         },
       };
     },

@@ -88,6 +88,7 @@ const setRouteSpecificHeaders = (
     if (providerOptions.awsServerSideEncryptionKMSKeyId) {
       headers['x-amz-server-side-encryption-aws-kms-key-id'] =
         providerOptions.awsServerSideEncryptionKMSKeyId;
+      headers['x-amz-server-side-encryption'] = 'aws:kms';
     }
     if (providerOptions.awsServerSideEncryption) {
       headers['x-amz-server-side-encryption'] =
