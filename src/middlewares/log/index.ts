@@ -61,7 +61,7 @@ async function processLog(c: Context, start: number) {
     return;
   }
 
-  if (requestOptionsArray[0].requestParams.stream) {
+  if (requestOptionsArray[0].finalTransformedRequest.body.stream) {
     requestOptionsArray[0].response = {
       message: 'The response was a stream.',
     };
