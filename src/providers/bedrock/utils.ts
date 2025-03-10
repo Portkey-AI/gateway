@@ -306,7 +306,8 @@ export const bedrockFinetuneToOpenAI = (finetune: BedrockFinetuneRecord) => {
       break;
   }
   return {
-    id: finetune.jobName,
+    id: encodeURIComponent(finetune.jobArn),
+    job_name: finetune.jobName,
     object: 'finetune',
     status: status,
     created_at: new Date(finetune.creationTime).getTime(),
