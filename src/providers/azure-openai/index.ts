@@ -28,6 +28,7 @@ import { OpenAIFileUploadRequestTransform } from '../openai/uploadFile';
 import { AzureOpenAIFinetuneResponseTransform } from './utils';
 import { AzureOpenAICreateBatchConfig } from './createBatch';
 import { AzureOpenAIGetBatchOutputRequestHandler } from './getBatchOutput';
+import { OpenAIUpdateChatCompletionConfig } from '../openai/updateChatCompletions';
 
 const AzureOpenAIConfig: ProviderConfigs = {
   complete: AzureOpenAICompleteConfig,
@@ -40,6 +41,7 @@ const AzureOpenAIConfig: ProviderConfigs = {
   createTranscription: {},
   createTranslation: {},
   realtime: {},
+  updateChatCompletion: OpenAIUpdateChatCompletionConfig,
   cancelFinetune: {},
   cancelBatch: {},
   createBatch: AzureOpenAICreateBatchConfig,
@@ -60,6 +62,11 @@ const AzureOpenAIConfig: ProviderConfigs = {
     retrieveFile: AzureOpenAIResponseTransform,
     deleteFile: AzureOpenAIResponseTransform,
     retrieveFileContent: AzureOpenAIResponseTransform,
+    listChatCompletions: AzureOpenAIResponseTransform,
+    getChatCompletion: AzureOpenAIResponseTransform,
+    getChatCompletionMessages: AzureOpenAIResponseTransform,
+    updateChatCompletion: AzureOpenAIResponseTransform,
+    deleteChatCompletion: AzureOpenAIResponseTransform,
     createFinetune: AzureOpenAIResponseTransform,
     retrieveFinetune: AzureOpenAIFinetuneResponseTransform,
     createBatch: AzureOpenAIResponseTransform,
