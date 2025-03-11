@@ -103,7 +103,8 @@ export async function responseHandler(
         provider,
         responseTransformerFunction,
         requestURL,
-        strictOpenAiCompliance
+        strictOpenAiCompliance,
+        gatewayRequest
       ),
       responseJson: null,
     };

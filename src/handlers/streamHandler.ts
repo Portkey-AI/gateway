@@ -50,7 +50,8 @@ function concatenateUint8Arrays(a: Uint8Array, b: Uint8Array): Uint8Array {
 export async function* readAWSStream(
   reader: ReadableStreamDefaultReader,
   transformFunction: Function | undefined,
-  fallbackChunkId: string
+  fallbackChunkId: string,
+  gatewayRequest: Params
 ) {
   let buffer = new Uint8Array();
   let expectedLength = 0;
@@ -69,7 +70,8 @@ export async function* readAWSStream(
             const transformedChunk = transformFunction(
               payload,
               fallbackChunkId,
-              streamState
+              streamState,
+              gatewayRequest
             );
             if (Array.isArray(transformedChunk)) {
               for (const item of transformedChunk) {
@@ -103,7 +105,8 @@ export async function* readAWSStream(
         const transformedChunk = transformFunction(
           payload,
           fallbackChunkId,
-          streamState
+          streamState,
+          gatewayRequest
         );
         if (Array.isArray(transformedChunk)) {
           for (const item of transformedChunk) {
@@ -125,7 +128,8 @@ export async function* readStream(
   transformFunction: Function | undefined,
   isSleepTimeRequired: boolean,
   fallbackChunkId: string,
-  strictOpenAiCompliance: boolean
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
 ) {
   let buffer = '';
   const decoder = new TextDecoder();
@@ -141,7 +145,8 @@ export async function* readStream(
             buffer,
             fallbackChunkId,
             streamState,
-            strictOpenAiCompliance
+            strictOpenAiCompliance,
+            gatewayRequest
           );
         } else {
           yield buffer;
@@ -172,7 +177,8 @@ export async function* readStream(
               part,
               fallbackChunkId,
               streamState,
-              strictOpenAiCompliance
+              strictOpenAiCompliance,
+              gatewayRequest
             );
             if (transformedChunk !== undefined) {
               yield transformedChunk;
@@ -273,7 +279,8 @@ export function handleStreamingMode(
   proxyProvider: string,
   responseTransformer: Function | undefined,
   requestURL: string,
-  strictOpenAiCompliance: boolean
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
 ): Response {
   const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);
   // If the provider doesn't supply completion id,
@@ -294,7 +301,8 @@ export function handleStreamingMode(
       for await (const chunk of readAWSStream(
         reader,
         responseTransformer,
-        fallbackChunkId
+        fallbackChunkId,
+        gatewayRequest
       )) {
         await writer.write(encoder.encode(chunk));
       }
@@ -308,7 +316,8 @@ export function handleStreamingMode(
         responseTransformer,
         isSleepTimeRequired,
         fallbackChunkId,
-        strictOpenAiCompliance
+        strictOpenAiCompliance,
+        gatewayRequest
       )) {
         await writer.write(encoder.encode(chunk));
       }

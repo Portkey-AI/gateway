@@ -425,8 +425,14 @@ interface BedrockStreamState {
 export const BedrockChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
-  streamState: BedrockStreamState
-) => string | string[] = (responseChunk, fallbackId, streamState) => {
+  streamState: BedrockStreamState,
+  gatewayRequest: Params
+) => string | string[] = (
+  responseChunk,
+  fallbackId,
+  streamState,
+  gatewayRequest
+) => {
   const parsedChunk: BedrockChatCompleteStreamChunk = JSON.parse(responseChunk);
   if (parsedChunk.stopReason) {
     streamState.stopReason = parsedChunk.stopReason;
@@ -441,7 +447,7 @@ export const BedrockChatCompleteStreamChunkTransform: (
         id: fallbackId,
         object: 'chat.completion.chunk',
         created: Math.floor(Date.now() / 1000),
-        model: '',
+        model: gatewayRequest.model || '',
         provider: BEDROCK,
         choices: [
           {
@@ -488,7 +494,7 @@ export const BedrockChatCompleteStreamChunkTransform: (
     id: fallbackId,
     object: 'chat.completion.chunk',
     created: Math.floor(Date.now() / 1000),
-    model: '',
+    model: gatewayRequest.model || '',
     provider: BEDROCK,
     choices: [
       {
