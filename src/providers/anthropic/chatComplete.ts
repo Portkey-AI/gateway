@@ -363,6 +363,7 @@ export interface AnthropicChatCompleteStreamResponse {
       cache_creation_input_tokens?: number;
       cache_read_input_tokens?: number;
     };
+    model?: string;
   };
   error?: AnthropicErrorObject;
 }
@@ -526,6 +527,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
     parsedChunk.message?.usage?.cache_creation_input_tokens;
 
   if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
+    streamState.model = parsedChunk?.message?.model ?? '';
     streamState.usage = {
       prompt_tokens: parsedChunk.message?.usage?.input_tokens,
       ...(shouldSendCacheUsage && {
@@ -540,7 +542,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
         id: fallbackId,
         object: 'chat.completion.chunk',
         created: Math.floor(Date.now() / 1000),
-        model: '',
+        model: streamState.model,
         provider: ANTHROPIC,
         choices: [
           {
@@ -567,7 +569,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
         id: fallbackId,
         object: 'chat.completion.chunk',
         created: Math.floor(Date.now() / 1000),
-        model: '',
+        model: streamState.model,
         provider: ANTHROPIC,
         choices: [
           {
@@ -620,7 +622,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
       id: fallbackId,
       object: 'chat.completion.chunk',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: streamState.model,
       provider: ANTHROPIC,
       choices: [
         {
