@@ -22,13 +22,13 @@ import {
 } from './createSpeech';
 import { AzureOpenAICreateTranscriptionResponseTransform } from './createTranscription';
 import { AzureOpenAICreateTranslationResponseTransform } from './createTranslation';
-import { AzureOpenAIUpdateChatCompletionConfig } from './updateChatCompletion';
 import { OpenAICreateFinetuneConfig } from '../openai/createFinetune';
 import { AzureTransformFinetuneBody } from './createFinetune';
 import { OpenAIFileUploadRequestTransform } from '../openai/uploadFile';
 import { AzureOpenAIFinetuneResponseTransform } from './utils';
 import { AzureOpenAICreateBatchConfig } from './createBatch';
 import { AzureOpenAIGetBatchOutputRequestHandler } from './getBatchOutput';
+import { OpenAIUpdateChatCompletionConfig } from '../openai/updateChatCompletions';
 
 const AzureOpenAIConfig: ProviderConfigs = {
   complete: AzureOpenAICompleteConfig,
@@ -41,7 +41,7 @@ const AzureOpenAIConfig: ProviderConfigs = {
   createTranscription: {},
   createTranslation: {},
   realtime: {},
-  updateChatCompletion: AzureOpenAIUpdateChatCompletionConfig,
+  updateChatCompletion: OpenAIUpdateChatCompletionConfig,
   cancelFinetune: {},
   cancelBatch: {},
   createBatch: AzureOpenAICreateBatchConfig,
