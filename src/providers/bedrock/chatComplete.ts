@@ -744,13 +744,11 @@ export const BedrockCohereChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
   _streamState: Record<string, any>,
-  _strictOpenAiCompliance: boolean,
   gatewayRequest: Params
 ) => string | string[] = (
   responseChunk,
   fallbackId,
   _streamState,
-  _strictOpenAiCompliance,
   gatewayRequest
 ) => {
   let chunk = responseChunk.trim();
