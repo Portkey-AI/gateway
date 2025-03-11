@@ -325,11 +325,17 @@ export const BedrockErrorResponseTransform: (
 export const BedrockChatCompleteResponseTransform: (
   response: BedrockChatCompletionResponse | BedrockErrorResponse,
   responseStatus: number,
-  responseHeaders: Headers
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  _gatewayRequestUrl: string,
+  gatewayRequest: Params
 ) => ChatCompletionResponse | ErrorResponse = (
   response,
   responseStatus,
-  responseHeaders
+  responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
 ) => {
   if (responseStatus !== 200) {
     const errorResponse = BedrockErrorResponseTransform(
@@ -343,7 +349,7 @@ export const BedrockChatCompleteResponseTransform: (
       id: Date.now().toString(),
       object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: gatewayRequest.model || '',
       provider: BEDROCK,
       choices: [
         {

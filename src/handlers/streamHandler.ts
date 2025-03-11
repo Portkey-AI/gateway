@@ -11,6 +11,7 @@ import {
 import { VertexLlamaChatCompleteStreamChunkTransform } from '../providers/google-vertex-ai/chatComplete';
 import { OpenAIChatCompleteResponse } from '../providers/openai/chatComplete';
 import { OpenAICompleteResponse } from '../providers/openai/complete';
+import { Params } from '../types/requestBody';
 import { getStreamModeSplitPattern, type SplitPatternType } from '../utils';
 
 function readUInt32BE(buffer: Uint8Array, offset: number) {
@@ -215,7 +216,8 @@ export async function handleNonStreamingMode(
   response: Response,
   responseTransformer: Function | undefined,
   strictOpenAiCompliance: boolean,
-  gatewayRequestUrl: string
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
 ): Promise<{
   response: Response;
   json: Record<string, any>;
@@ -241,7 +243,8 @@ export async function handleNonStreamingMode(
       response.status,
       response.headers,
       strictOpenAiCompliance,
-      gatewayRequestUrl
+      gatewayRequestUrl,
+      gatewayRequest
     );
   }
 
