@@ -53,12 +53,13 @@ const BEDROCK_FINETUNE_ENDPOINTS: endpointStrings[] = [
   'cancelFinetune',
 ];
 
-const S3_ENDPOINTS: endpointStrings[] = [
+const ENDPOINTS_TO_ROUTE_TO_S3 = [
   'retrieveFileContent',
   'getBatchOutput',
   'retrieveFile',
   'retrieveFileContent',
   'uploadFile',
+  'initiateMultipartUpload',
 ];
 
 const getMethod = (fn: endpointStrings, transformedRequestUrl: string) => {
@@ -67,6 +68,33 @@ const getMethod = (fn: endpointStrings, transformedRequestUrl: string) => {
     return url.searchParams.get('partNumber') ? 'PUT' : 'POST';
   }
   return AWS_GET_METHODS.includes(fn as endpointStrings) ? 'GET' : 'POST';
+};
+
+const getService = (fn: endpointStrings) => {
+  return ENDPOINTS_TO_ROUTE_TO_S3.includes(fn as endpointStrings)
+    ? 's3'
+    : 'bedrock';
+};
+
+const setRouteSpecificHeaders = (
+  fn: string,
+  headers: Record<string, string>,
+  providerOptions: Options
+) => {
+  if (fn === 'retrieveFile') {
+    headers['x-amz-object-attributes'] = 'ObjectSize';
+  }
+  if (fn === 'initiateMultipartUpload') {
+    if (providerOptions.awsServerSideEncryptionKMSKeyId) {
+      headers['x-amz-server-side-encryption-aws-kms-key-id'] =
+        providerOptions.awsServerSideEncryptionKMSKeyId;
+      headers['x-amz-server-side-encryption'] = 'aws:kms';
+    }
+    if (providerOptions.awsServerSideEncryption) {
+      headers['x-amz-server-side-encryption'] =
+        providerOptions.awsServerSideEncryption;
+    }
+  }
 };
 
 const BedrockAPIConfig: BedrockAPIConfigInterface = {
@@ -99,6 +127,7 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
     transformedRequestUrl,
   }) => {
     const method = getMethod(fn as endpointStrings, transformedRequestUrl);
+    const service = getService(fn as endpointStrings);
 
     const headers: Record<string, string> = {
       'content-type': 'application/json',
@@ -107,17 +136,12 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
     if (method === 'PUT' || method === 'GET') {
       delete headers['content-type'];
     }
-    if (fn === 'retrieveFile') {
-      headers['x-amz-object-attributes'] = 'ObjectSize';
-    }
+
+    setRouteSpecificHeaders(fn, headers, providerOptions);
 
     if (providerOptions.awsAuthType === 'assumedRole') {
       await providerAssumedRoleCredentials(c, providerOptions);
     }
-
-    const service = S3_ENDPOINTS.includes(fn as endpointStrings)
-      ? 's3'
-      : 'bedrock';
 
     let finalRequestBody = transformedRequestBody;
 
