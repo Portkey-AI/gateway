@@ -193,8 +193,18 @@ export const TogetherAIChatCompleteResponseTransform: (
 };
 
 export const TogetherAIChatCompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+  response: string,
+  fallbackId: string,
+  _streamState: Record<string, any>,
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
+) => string = (
+  responseChunk,
+  fallbackId,
+  _streamState,
+  _strictOpenAiCompliance,
+  gatewayRequest
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
@@ -207,7 +217,7 @@ export const TogetherAIChatCompleteStreamChunkTransform: (
       id: parsedChunk.id,
       object: parsedChunk.object,
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: gatewayRequest.model || '',
       provider: TOGETHER_AI,
       choices: [
         {

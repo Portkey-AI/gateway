@@ -468,8 +468,16 @@ export const AnthropicChatCompleteResponseTransform: (
 export const AnthropicChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
-  streamState: AnthropicStreamState
-) => string | undefined = (responseChunk, fallbackId, streamState) => {
+  streamState: AnthropicStreamState,
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
+) => string | undefined = (
+  responseChunk,
+  fallbackId,
+  streamState,
+  _strictOpenAiCompliance,
+  gatewayRequest
+) => {
   let chunk = responseChunk.trim();
   if (
     chunk.startsWith('event: ping') ||
@@ -498,7 +506,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
         id: fallbackId,
         object: 'chat.completion.chunk',
         created: Math.floor(Date.now() / 1000),
-        model: '',
+        model: gatewayRequest.model || '',
         provider: ANTHROPIC,
         choices: [
           {
