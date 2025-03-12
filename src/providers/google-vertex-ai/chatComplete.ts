@@ -332,6 +332,10 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
       }
     },
   },
+  labels: {
+    param: 'labels',
+    default: '',
+  },
 };
 
 interface AnthropicTool {
