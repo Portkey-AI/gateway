@@ -10,7 +10,6 @@ import {
   generateInvalidProviderResponseError,
 } from '../utils';
 
-// TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 // TODOS: this configuration might have to check on the max value of n
 
 export const NCompassChatCompleteConfig: ProviderConfig = {
@@ -80,17 +79,6 @@ export const NCompassChatCompleteConfig: ProviderConfig = {
   },
 };
 
-interface NCompassChatCompleteResponse extends ChatCompletionResponse {
-  id: string;
-  object: string;
-  created: number;
-  model: string;
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-}
 
 export interface NCompassErrorResponse {
   detail: {
@@ -116,7 +104,7 @@ interface NCompassStreamChunk {
 }
 
 export const NCompassChatCompleteResponseTransform: (
-  response: NCompassChatCompleteResponse | NCompassErrorResponse,
+  response: ChatCompletionResponse | NCompassErrorResponse,
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (
@@ -165,9 +153,9 @@ export const NCompassChatCompleteResponseTransform: (
         finish_reason: c.finish_reason,
       })),
       usage: {
-        prompt_tokens: response.usage?.prompt_tokens,
-        completion_tokens: response.usage?.completion_tokens,
-        total_tokens: response.usage?.total_tokens,
+        prompt_tokens: response.usage?.prompt_tokens ?? 0,
+        completion_tokens: response.usage?.completion_tokens ?? 0,
+        total_tokens: response.usage?.total_tokens ?? 0,
       },
     };
   }
