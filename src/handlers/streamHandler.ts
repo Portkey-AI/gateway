@@ -215,7 +215,8 @@ export async function handleNonStreamingMode(
   response: Response,
   responseTransformer: Function | undefined,
   strictOpenAiCompliance: boolean,
-  gatewayRequestUrl: string
+  gatewayRequestUrl: string,
+  includeRawResponse: boolean = false
 ): Promise<{
   response: Response;
   json: Record<string, any>;
@@ -243,6 +244,9 @@ export async function handleNonStreamingMode(
       strictOpenAiCompliance,
       gatewayRequestUrl
     );
+    if (includeRawResponse) {
+      responseBodyJson.raw_response = originalResponseBodyJson;
+    }
   }
 
   return {
