@@ -16,6 +16,7 @@ import {
   AnthropicChatCompleteStreamResponse,
   AnthropicErrorResponse,
 } from '../anthropic/chatComplete';
+import { AnthropicStreamState } from '../anthropic/types';
 import {
   GoogleMessage,
   GoogleMessageRole,
@@ -971,7 +972,7 @@ export const VertexAnthropicChatCompleteResponseTransform: (
 export const VertexAnthropicChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
-  streamState: Record<string, boolean>
+  streamState: AnthropicStreamState
 ) => string | undefined = (responseChunk, fallbackId, streamState) => {
   let chunk = responseChunk.trim();
 
@@ -1028,12 +1029,13 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
   }
 
   if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
+    streamState.model = parsedChunk?.message?.model ?? '';
     return (
       `data: ${JSON.stringify({
         id: fallbackId,
         object: 'chat.completion.chunk',
         created: Math.floor(Date.now() / 1000),
-        model: '',
+        model: streamState.model,
         provider: GOOGLE_VERTEX_AI,
         choices: [
           {
@@ -1058,7 +1060,7 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
         id: fallbackId,
         object: 'chat.completion.chunk',
         created: Math.floor(Date.now() / 1000),
-        model: '',
+        model: streamState.model,
         provider: GOOGLE_VERTEX_AI,
         choices: [
           {
@@ -1109,7 +1111,7 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
       id: fallbackId,
       object: 'chat.completion.chunk',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: streamState.model,
       provider: GOOGLE_VERTEX_AI,
       choices: [
         {

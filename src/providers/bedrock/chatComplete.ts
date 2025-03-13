@@ -325,11 +325,17 @@ export const BedrockErrorResponseTransform: (
 export const BedrockChatCompleteResponseTransform: (
   response: BedrockChatCompletionResponse | BedrockErrorResponse,
   responseStatus: number,
-  responseHeaders: Headers
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  _gatewayRequestUrl: string,
+  gatewayRequest: Params
 ) => ChatCompletionResponse | ErrorResponse = (
   response,
   responseStatus,
-  responseHeaders
+  responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
 ) => {
   if (responseStatus !== 200) {
     const errorResponse = BedrockErrorResponseTransform(
@@ -343,7 +349,7 @@ export const BedrockChatCompleteResponseTransform: (
       id: Date.now().toString(),
       object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: gatewayRequest.model || '',
       provider: BEDROCK,
       choices: [
         {
@@ -419,8 +425,14 @@ interface BedrockStreamState {
 export const BedrockChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
-  streamState: BedrockStreamState
-) => string | string[] = (responseChunk, fallbackId, streamState) => {
+  streamState: BedrockStreamState,
+  gatewayRequest: Params
+) => string | string[] = (
+  responseChunk,
+  fallbackId,
+  streamState,
+  gatewayRequest
+) => {
   const parsedChunk: BedrockChatCompleteStreamChunk = JSON.parse(responseChunk);
   if (parsedChunk.stopReason) {
     streamState.stopReason = parsedChunk.stopReason;
@@ -435,7 +447,7 @@ export const BedrockChatCompleteStreamChunkTransform: (
         id: fallbackId,
         object: 'chat.completion.chunk',
         created: Math.floor(Date.now() / 1000),
-        model: '',
+        model: gatewayRequest.model || '',
         provider: BEDROCK,
         choices: [
           {
@@ -482,7 +494,7 @@ export const BedrockChatCompleteStreamChunkTransform: (
     id: fallbackId,
     object: 'chat.completion.chunk',
     created: Math.floor(Date.now() / 1000),
-    model: '',
+    model: gatewayRequest.model || '',
     provider: BEDROCK,
     choices: [
       {
@@ -677,11 +689,17 @@ export const BedrockCohereChatCompleteConfig: ProviderConfig = {
 export const BedrockCohereChatCompleteResponseTransform: (
   response: BedrockCohereCompleteResponse | BedrockErrorResponse,
   responseStatus: number,
-  responseHeaders: Headers
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
 ) => ChatCompletionResponse | ErrorResponse = (
   response,
   responseStatus,
-  responseHeaders
+  responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
 ) => {
   if (responseStatus !== 200) {
     const errorResposne = BedrockErrorResponseTransform(
@@ -689,6 +707,8 @@ export const BedrockCohereChatCompleteResponseTransform: (
     );
     if (errorResposne) return errorResposne;
   }
+
+  const model = gatewayRequest.model || '';
 
   if ('generations' in response) {
     const prompt_tokens =
@@ -699,7 +719,7 @@ export const BedrockCohereChatCompleteResponseTransform: (
       id: Date.now().toString(),
       object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model,
       provider: BEDROCK,
       choices: response.generations.map((generation, index) => ({
         index: index,
@@ -722,13 +742,21 @@ export const BedrockCohereChatCompleteResponseTransform: (
 
 export const BedrockCohereChatCompleteStreamChunkTransform: (
   response: string,
-  fallbackId: string
-) => string | string[] = (responseChunk, fallbackId) => {
+  fallbackId: string,
+  _streamState: Record<string, any>,
+  gatewayRequest: Params
+) => string | string[] = (
+  responseChunk,
+  fallbackId,
+  _streamState,
+  gatewayRequest
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
   const parsedChunk: BedrockCohereStreamChunk = JSON.parse(chunk);
 
+  const model = gatewayRequest.model || '';
   // discard the last cohere chunk as it sends the whole response combined.
   if (parsedChunk.is_finished) {
     return [
@@ -736,7 +764,7 @@ export const BedrockCohereChatCompleteStreamChunkTransform: (
         id: fallbackId,
         object: 'chat.completion.chunk',
         created: Math.floor(Date.now() / 1000),
-        model: '',
+        model,
         provider: BEDROCK,
         choices: [
           {
@@ -763,7 +791,7 @@ export const BedrockCohereChatCompleteStreamChunkTransform: (
     id: fallbackId,
     object: 'chat.completion.chunk',
     created: Math.floor(Date.now() / 1000),
-    model: '',
+    model,
     provider: BEDROCK,
     choices: [
       {
@@ -853,11 +881,17 @@ export const BedrockAI21ChatCompleteConfig: ProviderConfig = {
 export const BedrockAI21ChatCompleteResponseTransform: (
   response: BedrockAI21CompleteResponse | BedrockErrorResponse,
   responseStatus: number,
-  responseHeaders: Headers
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  _gatewayRequestUrl: string,
+  gatewayRequest: Params
 ) => ChatCompletionResponse | ErrorResponse = (
   response,
   responseStatus,
-  responseHeaders
+  responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
 ) => {
   if (responseStatus !== 200) {
     const errorResposne = BedrockErrorResponseTransform(
@@ -875,7 +909,7 @@ export const BedrockAI21ChatCompleteResponseTransform: (
       id: response.id.toString(),
       object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: gatewayRequest.model ?? '',
       provider: BEDROCK,
       choices: response.completions.map((completion, index) => ({
         index: index,

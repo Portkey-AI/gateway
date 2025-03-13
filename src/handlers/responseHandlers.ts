@@ -103,7 +103,8 @@ export async function responseHandler(
         provider,
         responseTransformerFunction,
         requestURL,
-        strictOpenAiCompliance
+        strictOpenAiCompliance,
+        gatewayRequest
       ),
       responseJson: null,
     };
@@ -149,7 +150,8 @@ export async function responseHandler(
     response,
     responseTransformerFunction,
     strictOpenAiCompliance,
-    gatewayRequestUrl
+    gatewayRequestUrl,
+    gatewayRequest
   );
 
   return {
