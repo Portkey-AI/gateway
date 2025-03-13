@@ -5,6 +5,7 @@ import AzureOpenAIConfig from './azure-openai';
 import BedrockConfig from './bedrock';
 import CohereConfig from './cohere';
 import DeepInfraConfig from './deepinfra';
+import NCompassConfig from './ncompass';
 import GoogleConfig from './google';
 import VertexConfig from './google-vertex-ai';
 import MistralAIConfig from './mistral-ai';
@@ -69,6 +70,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'perplexity-ai': PerplexityAIConfig,
   'mistral-ai': MistralAIConfig,
   deepinfra: DeepInfraConfig,
+  ncompass: NCompassConfig,
   'stability-ai': StabilityAIConfig,
   nomic: NomicConfig,
   ollama: OllamaAPIConfig,
