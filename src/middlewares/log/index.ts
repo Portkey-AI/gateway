@@ -68,9 +68,14 @@ async function processLog(c: Context, start: number) {
       : await c.res.clone().json();
 
     const responseString = JSON.stringify(response);
-    requestOptionsArray[0].response = responseString.length > MAX_RESPONSE_LENGTH
-      ? JSON.parse(responseString.substring(0, MAX_RESPONSE_LENGTH) + '...')
-      : response;
+    if (responseString.length > MAX_RESPONSE_LENGTH) {
+      requestOptionsArray[0].response = {
+        ...response,
+        __truncated: `Response truncated (${responseString.length} chars exceeded limit of ${MAX_RESPONSE_LENGTH})`
+      };
+    } else {
+      requestOptionsArray[0].response = response;
+    }
   } catch (error) {
     console.error('Error processing log:', error);
   }
