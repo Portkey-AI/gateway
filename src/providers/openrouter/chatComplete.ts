@@ -79,6 +79,11 @@ interface OpenrouterStreamChunk {
   object: string;
   created: number;
   model: string;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
   choices: {
     delta: {
       role?: string | null;
@@ -170,6 +175,7 @@ export const OpenrouterChatCompleteStreamChunkTransform: (
           finish_reason: parsedChunk.choices[0].finish_reason,
         },
       ],
+      ...(parsedChunk.usage && { usage: parsedChunk.usage }),
     })}` + '\n\n'
   );
 };

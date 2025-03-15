@@ -41,8 +41,11 @@ export const BedrockCreateFinetuneConfig: ProviderConfig = {
     param: 'validationDataConfig',
     required: false,
     transform: (value: FinetuneRequest) => {
+      if (!value.validation_file) {
+        return undefined;
+      }
       return {
-        s3Uri: decodeURIComponent(value.validation_file ?? ''),
+        s3Uri: decodeURIComponent(value.validation_file),
       };
     },
   },
