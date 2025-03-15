@@ -1,0 +1,67 @@
+{
+  "id": "lasso",
+  "description": "Lasso Security is the leading genAI security platform that autonomously monitors interactions, detects risks in real-time, and empowers organizations to adopt AI safely.",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "Find your API key in the Lasso dashboard (https://app.lasso.security/organization-settings)",
+        "encrypted": true
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Classifier",
+      "id": "classify",
+      "supportedHooks": ["beforeRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Classify the text to detect sensitive information and risks using Lasso Security's Deputies."
+        },
+        {
+          "type": "subHeading",
+          "text": "Lasso Security's Deputies analyze content for various security risks including jailbreak attempts, custom policy violations, sexual content, hate speech, illegal content, and more."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "description": "Array of message objects containing role and content",
+            "items": {
+              "type": "object",
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "description": "The role of the message sender",
+                  "enum": ["system", "user", "assistant"]
+                },
+                "content": {
+                  "type": "string",
+                  "description": "The content of the message"
+                }
+              },
+              "required": ["role", "content"]
+            }
+          },
+          "conversationId": {
+            "type": "string",
+            "description": "Unique ID to group related API calls together (optional)"
+          },
+          "userId": {
+            "type": "string",
+            "description": "User identifier for tracking individual usage (optional)"
+          }
+        },
+        "required": ["messages"]
+      }
+    }
+  ]
+}
