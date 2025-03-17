@@ -1171,6 +1171,8 @@ export function constructConfigFromRequestHeaders(
       'conditions',
       'input_guardrails',
       'output_guardrails',
+      'default_input_guardrails',
+      'default_output_guardrails',
     ]) as any;
   }
 
