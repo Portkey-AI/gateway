@@ -69,7 +69,8 @@ async function processLog(c: Context, start: number) {
 
     const responseString = JSON.stringify(response);
     if (responseString.length > MAX_RESPONSE_LENGTH) {
-      requestOptionsArray[0].response = responseString.substring(0, MAX_RESPONSE_LENGTH) + '...';
+      requestOptionsArray[0].response =
+        responseString.substring(0, MAX_RESPONSE_LENGTH) + '...';
     } else {
       requestOptionsArray[0].response = response;
     }
