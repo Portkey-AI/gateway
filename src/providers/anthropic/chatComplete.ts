@@ -506,7 +506,6 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   strictOpenAiCompliance
 ) => {
   let chunk = responseChunk.trim();
-  console.log(chunk);
   if (
     chunk.startsWith('event: ping') ||
     chunk.startsWith('event: content_block_stop')
@@ -669,7 +668,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
             signature,
             tool_calls: toolCalls.length ? toolCalls : undefined,
           },
-          index: 0, // this will be a problem because of tool calls index
+          index: 0,
           logprobs: null,
           finish_reason: parsedChunk.delta?.stop_reason ?? null,
         },
