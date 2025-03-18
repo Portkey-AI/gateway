@@ -3,7 +3,6 @@ import CortexAPIConfig from './api';
 import {
   CortexChatCompleteConfig,
   CortexChatCompleteResponseTransform,
-  CortexErrorResponseTransform,
 } from './chatComplete';
 
 const CortexConfig: ProviderConfigs = {
@@ -12,7 +11,6 @@ const CortexConfig: ProviderConfigs = {
   responseTransforms: {
     chatComplete: CortexChatCompleteResponseTransform,
   },
-  errorResponseTransform: CortexErrorResponseTransform,
 };
 
 export default CortexConfig;
