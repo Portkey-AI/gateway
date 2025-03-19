@@ -145,6 +145,10 @@ export interface Options {
 
   /** Fireworks finetune required fields */
   fireworksAccountId?: string;
+
+  /** Cortex specific fields */
+  snowflakeAccount?: string;
+  snowflakeApiKey?: string;
 }
 
 /**
