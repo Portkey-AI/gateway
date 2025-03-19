@@ -1,16 +1,23 @@
 import { ProviderConfigs } from '../types';
 import CortexAPIConfig from './api';
+import { CORTEX } from '../../globals';
 import {
-  CortexChatCompleteConfig,
-  CortexChatCompleteResponseTransform,
-} from './chatComplete';
+  chatCompleteParams,
+  completeParams,
+  embedParams,
+  responseTransformers,
+} from '../open-ai-base';
 
 const CortexConfig: ProviderConfigs = {
-  chatComplete: CortexChatCompleteConfig,
+  chatComplete: chatCompleteParams([], { model: 'mistral-large' }),
+  complete: completeParams([], { model: 'mistral-large' }),
+  embed: embedParams([], { model: 'mistral-large' }),
   api: CortexAPIConfig,
-  responseTransforms: {
-    chatComplete: CortexChatCompleteResponseTransform,
-  },
+  responseTransforms: responseTransformers(CORTEX, {
+    chatComplete: true,
+    complete: true,
+    embed: true,
+  }),
 };
 
 export default CortexConfig;
