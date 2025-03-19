@@ -18,11 +18,7 @@ import {
   FIREWORKS_AI,
 } from '../globals';
 import Providers from '../providers';
-import {
-  ProviderAPIConfig,
-  RequestHandlers,
-  endpointStrings,
-} from '../providers/types';
+import { ProviderAPIConfig, endpointStrings } from '../providers/types';
 import transformToProviderRequest from '../services/transformToProviderRequest';
 import { Options, Params, StrategyModes, Targets } from '../types/requestBody';
 import { convertKeysToCamelCase } from '../utils';

@@ -11,10 +11,10 @@ export const BedrockRetrieveBatchResponseTransform = (
   responseStatus: number
 ): RetrieveBatchResponse | ErrorResponse => {
   if (responseStatus !== 200) {
-    const errorResposne = BedrockErrorResponseTransform(
+    const errorResponse = BedrockErrorResponseTransform(
       response as BedrockErrorResponse
     );
-    if (errorResposne) return errorResposne;
+    if (errorResponse) return errorResponse;
   }
 
   if ('jobArn' in response) {

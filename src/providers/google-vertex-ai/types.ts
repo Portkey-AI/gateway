@@ -196,3 +196,41 @@ export interface GoogleBatchRecord {
     successfulForecastPointCount: string;
   };
 }
+
+export interface GoogleFinetuneRecord {
+  name: string;
+  state: GoogleBatchJobStatus;
+  tunedModelDisplayName: string;
+  description: string;
+  createTime: string;
+  startTime: string;
+  endTime: string;
+  updateTime: string;
+  error: string;
+  tunedModel?: {
+    model: string;
+    endpoint: string;
+  };
+  tuningDataStats?: {
+    supervisedTuningDataStats: {
+      tuningDatasetExampleCount: number;
+      totalTuningCharacterCount: number;
+      totalBillableTokenCount: number;
+      tuningStepCount: number;
+      userInputTokenDistribution: number;
+    };
+  };
+  baseModel: string;
+  source_model?: {
+    baseModel: string;
+  };
+  supervisedTuningSpec: {
+    trainingDatasetUri: string;
+    validationDatasetUri: string;
+    hyperParameters: {
+      learningRateMultiplier: number;
+      epochCount: number;
+      adapterSize: number;
+    };
+  };
+}
