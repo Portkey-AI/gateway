@@ -383,7 +383,7 @@ export const BedrockUploadFileRequestHandler: RequestHandler<
       filename: s3Url,
       purpose,
       bytes: handler.contentLength,
-      status: 'uploaded',
+      status: 'processed',
       status_details: '',
     };
 
