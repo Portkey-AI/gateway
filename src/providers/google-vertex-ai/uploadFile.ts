@@ -35,7 +35,6 @@ export const GoogleFileUploadRequestHandler: RequestHandler<
 
   const objectKey = filename ?? `${crypto.randomUUID()}.jsonl`;
   const bytes = requestHeaders['content-length'];
-  const purpose = requestHeaders[`x-${POWERED_BY}-file-purpose`] ?? 'batch';
   const { provider } = getModelAndProvider(vertexModelName ?? '');
   let providerConfig =
     PROVIDER_CONFIG[provider as keyof typeof PROVIDER_CONFIG];
@@ -44,6 +43,8 @@ export const GoogleFileUploadRequestHandler: RequestHandler<
     providerConfig = PROVIDER_CONFIG['endpoints'];
   }
 
+  let isPurposeHeader = false;
+  let purpose = '';
   // Create a reusable line splitter stream
   const lineSplitter = createLineSplitter();
 
@@ -52,16 +53,50 @@ export const GoogleFileUploadRequestHandler: RequestHandler<
     transform: function (chunk, controller) {
       let buffer;
       try {
-        const json = JSON.parse(chunk.toString());
-        if (purpose === 'batch') {
-          const transformedBody = transformUsingProviderConfig(
-            providerConfig,
-            json.body
-          );
-          // Remove model parameter from file
-          delete transformedBody['model'];
-          buffer = JSON.stringify({ request: transformedBody });
+        const _chunk = chunk.toString();
+
+        const match = _chunk.match(/name="([^"]+)"/);
+        const headerKey = match ? match[1] : null;
+
+        if (headerKey && headerKey === 'purpose') {
+          isPurposeHeader = true;
+          return;
         }
+
+        if (isPurposeHeader && _chunk?.length > 0 && !purpose) {
+          isPurposeHeader = false;
+          purpose = _chunk.trim();
+          return;
+        }
+
+        if (!_chunk) {
+          return;
+        }
+
+        const json = JSON.parse(chunk.toString());
+
+        if (json && !purpose) {
+          // Close the stream.
+          controller.terminate();
+        }
+
+        const toTranspose = purpose === 'batch' ? json.body : json;
+        const transformedBody = transformUsingProviderConfig(
+          providerConfig,
+          toTranspose
+        );
+
+        delete transformedBody['model'];
+
+        let bufferTransposed;
+        if (purpose === 'fine-tune') {
+          bufferTransposed = transformedBody;
+        } else {
+          bufferTransposed = {
+            request: transformedBody,
+          };
+        }
+        buffer = JSON.stringify(bufferTransposed);
       } catch {
         buffer = null;
       } finally {
@@ -119,6 +154,12 @@ export const GoogleFileUploadRequestHandler: RequestHandler<
 
     return GoogleResponseHandler(response, 200);
   } catch (error) {
+    if (!purpose) {
+      return new Response(
+        JSON.stringify({ message: 'Purpose is not set', success: false }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
     return new Response(
       JSON.stringify({ message: 'Something went wrong', success: false }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }

@@ -149,34 +149,41 @@ export const pluginHandler: PluginHandler<
       )
     );
 
-    const interventionData =
-      results.find(
-        (result) => result && result.action === 'GUARDRAIL_INTERVENED'
-      ) ?? results[0];
+    const interventionData = results.find(
+      (result) => result && result.action === 'GUARDRAIL_INTERVENED'
+    );
+    if (interventionData) {
+      verdict = false;
+    }
 
     const flaggedCategories = new Set();
 
-    results.forEach((result) => {
-      if (!result) return;
-      if (result.assessments[0].contentPolicy?.filters?.length > 0) {
+    let hasTriggeredPII = false;
+    for (const result of results) {
+      if (!result) continue;
+      // adding other guardrail categories to the set, required for PII redaction check.
+      if (result.assessments[0]?.contentPolicy) {
         flaggedCategories.add('contentFilter');
       }
-      if (result.assessments[0].wordPolicy?.customWords?.length > 0) {
+      if (result.assessments[0]?.wordPolicy) {
         flaggedCategories.add('wordFilter');
       }
-      if (result.assessments[0].wordPolicy?.managedWordLists?.length > 0) {
-        flaggedCategories.add('wordFilter');
-      }
-      if (
-        result.assessments[0].sensitiveInformationPolicy?.piiEntities?.length >
-        0
-      ) {
-        flaggedCategories.add('piiFilter');
-      }
-    });
 
-    let hasPii = flaggedCategories.has('piiFilter');
-    if (hasPii && redact) {
+      if (hasTriggeredPII) {
+        continue;
+      }
+
+      const sensitiveInfo = result.assessments[0]?.sensitiveInformationPolicy;
+      const sensitiveInfoKeys = Object.keys(sensitiveInfo ?? {});
+      sensitiveInfoKeys.forEach((key: string) => {
+        if ((sensitiveInfo as any)[key].length > 0) {
+          flaggedCategories.add('piiFilter');
+          hasTriggeredPII = true;
+        }
+      });
+    }
+
+    if (hasTriggeredPII && redact) {
       const maskedTexts = textArray.map((text, index) =>
         redactPii(text, results[index])
       );
@@ -185,10 +192,8 @@ export const pluginHandler: PluginHandler<
       transformed = true;
     }
 
-    if (hasPii && flaggedCategories.size === 1 && redact) {
+    if (hasTriggeredPII && flaggedCategories.size === 1 && redact) {
       verdict = true;
-    } else if (flaggedCategories.size > 0) {
-      verdict = false;
     }
     data = interventionData;
   } catch (e) {
