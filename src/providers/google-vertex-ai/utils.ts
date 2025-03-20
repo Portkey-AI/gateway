@@ -1,11 +1,12 @@
 import {
   GoogleBatchRecord,
   GoogleErrorResponse,
+  GoogleFinetuneRecord,
   GoogleResponseCandidate,
 } from './types';
 import { generateErrorResponse } from '../utils';
 import { GOOGLE_VERTEX_AI, fileExtensionMimeTypeMap } from '../../globals';
-import { ErrorResponse, Logprobs } from '../types';
+import { ErrorResponse, FinetuneRequest, Logprobs } from '../types';
 import { Context } from 'hono';
 import { env } from 'hono/adapter';
 
@@ -276,6 +277,33 @@ export const googleBatchStatusToOpenAI = (
   status: GoogleBatchRecord['state']
 ) => {
   switch (status) {
+    case 'JOB_STATE_CANCELLING':
+      return 'cancelling';
+    case 'JOB_STATE_CANCELLED':
+      return 'cancelled';
+    case 'JOB_STATE_EXPIRED':
+      return 'expired';
+    case 'JOB_STATE_FAILED':
+      return 'failed';
+    case 'JOB_STATE_PARTIALLY_SUCCEEDED':
+    case 'JOB_STATE_SUCCEEDED':
+      return 'completed';
+    case 'JOB_STATE_RUNNING':
+    case 'JOB_STATE_UPDATING':
+      return 'in_progress';
+    case 'JOB_STATE_PAUSED':
+    case 'JOB_STATE_PENDING':
+    case 'JOB_STATE_QUEUED':
+    case 'JOB_STATE_UNSPECIFIED':
+    default:
+      return 'validating';
+  }
+};
+
+export const googleFinetuneStatusToOpenAI = (
+  status: GoogleFinetuneRecord['state']
+) => {
+  switch (status) {
     case 'JOB_STATE_CANCELLED':
     case 'JOB_STATE_CANCELLING':
     case 'JOB_STATE_EXPIRED':
@@ -284,7 +312,7 @@ export const googleBatchStatusToOpenAI = (
       return 'failed';
     case 'JOB_STATE_PARTIALLY_SUCCEEDED':
     case 'JOB_STATE_SUCCEEDED':
-      return 'successeed';
+      return 'succeeded';
     case 'JOB_STATE_PAUSED':
     case 'JOB_STATE_PENDING':
     case 'JOB_STATE_QUEUED':
@@ -301,19 +329,19 @@ export const googleBatchStatusToOpenAI = (
 
 const getTimeKey = (status: GoogleBatchRecord['state'], value: string) => {
   if (status === 'JOB_STATE_FAILED') {
-    return { failed_at: value };
+    return { failed_at: new Date(value).getTime() };
   }
 
   if (status === 'JOB_STATE_SUCCEEDED') {
-    return { completed_at: value };
+    return { completed_at: new Date(value).getTime() };
   }
 
   if (status === 'JOB_STATE_CANCELLED') {
-    return { canclled_at: value };
+    return { cancelled_at: new Date(value).getTime() };
   }
 
   if (status === 'JOB_STATE_EXPIRED') {
-    return { failed_at: value };
+    return { failed_at: new Date(value).getTime() };
   }
   return {};
 };
@@ -341,9 +369,9 @@ export const GoogleToOpenAIBatch = (response: GoogleBatchRecord) => {
     output_file_id: outputFileId,
     // Same as output_file_id
     error_file_id: response.outputConfig.gcsDestination.outputUriPrefix,
-    created_at: response.createTime,
+    created_at: new Date(response.createTime).getTime(),
     ...getTimeKey(response.state, response.endTime),
-    in_progress_at: response.startTime,
+    in_progress_at: new Date(response.startTime).getTime(),
     ...getTimeKey(response.state, response.updateTime),
     request_counts: {
       total: total,
@@ -437,4 +465,72 @@ export const transformVertexLogprobs = (
     );
   }
   return logprobsContent;
+};
+
+const populateHyperparameters = (value: FinetuneRequest) => {
+  let hyperParameters = value.hyperparameters ?? {};
+
+  if (value.method) {
+    const method = value.method.type;
+    hyperParameters = value.method?.[method]?.hyperparameters ?? {};
+  }
+
+  return {
+    epochCount: hyperParameters?.n_epochs,
+    learningRateMultiplier: hyperParameters?.learning_rate_multiplier,
+    adapterSize: hyperParameters?.batch_size,
+  };
+};
+
+export const transformVertexFinetune = (params: FinetuneRequest) => {
+  const parameterSpec = {
+    training_dataset_uri: decodeURIComponent(params['training_file'] ?? ''),
+    ...(params['validation_file'] && {
+      validation_dataset_uri: decodeURIComponent(params['validation_file']),
+    }),
+    hyperParameters: populateHyperparameters(params),
+  };
+  return parameterSpec;
+};
+
+export const getBucketAndFile = (uri: string) => {
+  if (!uri) return { bucket: '', file: '' };
+  let _url = decodeURIComponent(uri);
+  _url = _url.replaceAll('gs://', '');
+  const parts = _url.split('/');
+  const bucket = parts[0];
+  const file = parts.slice(1).join('/');
+  return { bucket, file };
+};
+
+export const GoogleToOpenAIFinetune = (response: GoogleFinetuneRecord) => {
+  return {
+    id: response.name.split('/').at(-1),
+    object: 'finetune',
+    status: googleBatchStatusToOpenAI(response.state),
+    created_at: new Date(response.createTime).getTime(),
+    error: response.error,
+    fine_tuned_model: response.tunedModel?.model,
+    ...(response.endTime && {
+      finished_at: new Date(response.endTime).getTime(),
+    }),
+    hyperparameters: {
+      batch_size: response.supervisedTuningSpec.hyperParameters?.adapterSize,
+      learning_rate_multiplier:
+        response.supervisedTuningSpec.hyperParameters.learningRateMultiplier,
+      n_epochs: response.supervisedTuningSpec.hyperParameters.epochCount,
+    },
+    model: response.baseModel ?? response.source_model?.baseModel,
+    trained_tokens:
+      response.tuningDataStats?.supervisedTuningDataStats
+        .totalBillableTokenCount,
+    training_file: encodeURIComponent(
+      response.supervisedTuningSpec.trainingDatasetUri
+    ),
+    ...(response.supervisedTuningSpec.validationDatasetUri && {
+      validation_file: encodeURIComponent(
+        response.supervisedTuningSpec.validationDatasetUri
+      ),
+    }),
+  };
 };

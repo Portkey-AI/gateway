@@ -1,7 +1,7 @@
 import { GatewayError } from '../errors/GatewayError';
 import ProviderConfigs from '../providers';
 import { endpointStrings, ProviderConfig } from '../providers/types';
-import { Params } from '../types/requestBody';
+import { Options, Params } from '../types/requestBody';
 
 /**
  * Helper function to set a nested property in an object.
@@ -66,7 +66,8 @@ const getValue = (configParam: string, params: Params, paramConfig: any) => {
 
 export const transformUsingProviderConfig = (
   providerConfig: ProviderConfig,
-  params: Params
+  params: Params,
+  providerOptions?: Options
 ) => {
   const transformedRequest: { [key: string]: any } = {};
 
@@ -99,7 +100,7 @@ export const transformUsingProviderConfig = (
       ) {
         let value;
         if (typeof paramConfig.default === 'function') {
-          value = paramConfig.default(params);
+          value = paramConfig.default(params, providerOptions);
         } else {
           value = paramConfig.default;
         }
@@ -129,7 +130,8 @@ export const transformUsingProviderConfig = (
 const transformToProviderRequestJSON = (
   provider: string,
   params: Params,
-  fn: string
+  fn: string,
+  providerOptions: Options
 ): { [key: string]: any } => {
   // Get the configuration for the specified provider
   let providerConfig = ProviderConfigs[provider];
@@ -143,7 +145,7 @@ const transformToProviderRequestJSON = (
     throw new GatewayError(`${fn} is not supported by ${provider}`);
   }
 
-  return transformUsingProviderConfig(providerConfig, params);
+  return transformUsingProviderConfig(providerConfig, params, providerOptions);
 };
 
 const transformToProviderRequestFormData = (
@@ -218,7 +220,8 @@ export const transformToProviderRequest = (
   params: Params,
   requestBody: Params | FormData | ArrayBuffer | ReadableStream | ArrayBuffer,
   fn: endpointStrings,
-  requestHeaders: Record<string, string>
+  requestHeaders: Record<string, string>,
+  providerOptions: Options
 ) => {
   // this returns a ReadableStream
   if (fn === 'uploadFile') {
@@ -242,7 +245,12 @@ export const transformToProviderRequest = (
     providerAPIConfig.transformToFormData({ gatewayRequestBody: params })
   )
     return transformToProviderRequestFormData(provider, params as Params, fn);
-  return transformToProviderRequestJSON(provider, params as Params, fn);
+  return transformToProviderRequestJSON(
+    provider,
+    params as Params,
+    fn,
+    providerOptions
+  );
 };
 
 export default transformToProviderRequest;
