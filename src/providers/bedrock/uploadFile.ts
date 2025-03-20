@@ -45,7 +45,7 @@ class AwsMultipartUploadHandler {
     const headers = await BedrockAPIConfig.headers({
       c: this.c,
       providerOptions: this.providerOptions,
-      fn: 'uploadFile',
+      fn: 'initiateMultipartUpload',
       transformedRequestBody: {},
       transformedRequestUrl: this.url.toString(),
     });
