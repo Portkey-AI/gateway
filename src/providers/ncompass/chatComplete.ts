@@ -79,7 +79,6 @@ export const NCompassChatCompleteConfig: ProviderConfig = {
   },
 };
 
-
 export interface NCompassErrorResponse {
   detail: {
     loc: string[];
