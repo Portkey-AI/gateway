@@ -118,7 +118,7 @@ export const redactPii = (text: string, result: BedrockResponse | null) => {
       maskedText = data?.text;
     } else {
       // Replace the all entires of each filter sent from api.
-      result.assessments[0].sensitiveInformationPolicy.piiEntities.forEach(
+      result.assessments[0].sensitiveInformationPolicy.piiEntities?.forEach(
         (filter) => {
           maskedText = replaceMatches(filter, maskedText, false);
         }

@@ -10,10 +10,10 @@ export const BedrockCancelBatchResponseTransform = (
   gatewayRequestUrl: string
 ): CancelBatchResponse | ErrorResponse => {
   if (responseStatus !== 200) {
-    const errorResposne = BedrockErrorResponseTransform(
+    const errorResponse = BedrockErrorResponseTransform(
       response as BedrockErrorResponse
     );
-    if (errorResposne) return errorResposne;
+    if (errorResponse) return errorResponse;
   }
   const batchId = decodeURIComponent(
     gatewayRequestUrl.split('/v1/batches/')[1].split('/')[0]

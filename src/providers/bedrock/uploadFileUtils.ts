@@ -57,7 +57,7 @@ interface AnthropicMessage extends Message {
   content?: string | AnthropicMessageContentItem[];
 }
 
-interface AnthorpicTextContentItem {
+interface AnthropicTextContentItem {
   type: 'text';
   text: string;
 }
@@ -69,7 +69,7 @@ interface AnthropicToolContentItem {
   input: Record<string, any>;
 }
 
-type AnthropicContentItem = AnthorpicTextContentItem | AnthropicToolContentItem;
+type AnthropicContentItem = AnthropicTextContentItem | AnthropicToolContentItem;
 
 const transformAssistantMessageForAnthropic = (
   msg: Message

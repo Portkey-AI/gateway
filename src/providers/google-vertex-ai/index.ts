@@ -35,6 +35,18 @@ import {
   GoogleFileUploadResponseTransform,
 } from './uploadFile';
 import { GoogleRetrieveBatchResponseTransform } from './retrieveBatch';
+import {
+  GoogleFinetuneCreateResponseTransform,
+  GoogleVertexFinetuneConfig,
+} from './createFinetune';
+import { GoogleRetrieveFileContentResponseTransform } from './retrieveFileContent';
+import {
+  GoogleRetrieveFileRequestHandler,
+  GoogleRetrieveFileResponseTransform,
+} from './retrieveFile';
+import { GoogleFinetuneRetrieveResponseTransform } from './retrieveFinetune';
+import { GoogleFinetuneListResponseTransform } from './listFinetunes';
+import { GoogleListFilesRequestHandler } from './listFiles';
 
 const VertexConfig: ProviderConfigs = {
   api: VertexApiConfig,
@@ -45,6 +57,10 @@ const VertexConfig: ProviderConfigs = {
       retrieveBatch: {},
       listBatches: {},
       cancelBatch: {},
+      createFinetune: GoogleVertexFinetuneConfig,
+      retrieveFile: {},
+      cancelFinetune: {},
+      retrieveFileContent: {},
     };
 
     const responseTransforms = {
@@ -54,6 +70,11 @@ const VertexConfig: ProviderConfigs = {
       listBatches: GoogleListBatchesResponseTransform,
       cancelBatch: GoogleCancelBatchResponseTransform,
       createBatch: GoogleBatchCreateResponseTransform,
+      retrieveFileContent: GoogleRetrieveFileContentResponseTransform,
+      retrieveFile: GoogleRetrieveFileResponseTransform,
+      createFinetune: GoogleFinetuneCreateResponseTransform,
+      retrieveFinetune: GoogleFinetuneRetrieveResponseTransform,
+      listFinetunes: GoogleFinetuneListResponseTransform,
     };
 
     const baseConfig = {
@@ -76,6 +97,7 @@ const VertexConfig: ProviderConfigs = {
           embed: GoogleEmbedConfig,
           imageGenerate: GoogleImageGenConfig,
           createBatch: GoogleBatchCreateConfig,
+          createFinetune: baseConfig.createFinetune,
           responseTransforms: {
             'stream-chatComplete': GoogleChatCompleteStreamChunkTransform,
             chatComplete: GoogleChatCompleteResponseTransform,
@@ -89,6 +111,7 @@ const VertexConfig: ProviderConfigs = {
           chatComplete: VertexAnthropicChatCompleteConfig,
           api: GoogleApiConfig,
           createBatch: GoogleBatchCreateConfig,
+          createFinetune: baseConfig.createFinetune,
           responseTransforms: {
             'stream-chatComplete':
               VertexAnthropicChatCompleteStreamChunkTransform,
@@ -101,6 +124,7 @@ const VertexConfig: ProviderConfigs = {
           chatComplete: VertexLlamaChatCompleteConfig,
           createBatch: GoogleBatchCreateConfig,
           api: GoogleApiConfig,
+          createFinetune: baseConfig.createFinetune,
           responseTransforms: {
             chatComplete: VertexLlamaChatCompleteResponseTransform,
             'stream-chatComplete': VertexLlamaChatCompleteStreamChunkTransform,
@@ -114,6 +138,7 @@ const VertexConfig: ProviderConfigs = {
           }),
           createBatch: GoogleBatchCreateConfig,
           api: GoogleApiConfig,
+          createFinetune: baseConfig.createFinetune,
           responseTransforms: {
             ...responseTransformers(GOOGLE_VERTEX_AI, {
               chatComplete: true,
@@ -128,6 +153,8 @@ const VertexConfig: ProviderConfigs = {
   requestHandlers: {
     uploadFile: GoogleFileUploadRequestHandler,
     getBatchOutput: BatchOutputRequestHandler,
+    listFiles: GoogleListFilesRequestHandler,
+    retrieveFile: GoogleRetrieveFileRequestHandler,
   },
 };
 

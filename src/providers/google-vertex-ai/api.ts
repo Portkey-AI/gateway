@@ -1,6 +1,6 @@
 import { Options } from '../../types/requestBody';
 import { endpointStrings, ProviderAPIConfig } from '../types';
-import { getModelAndProvider, getAccessToken } from './utils';
+import { getModelAndProvider, getAccessToken, getBucketAndFile } from './utils';
 
 const getApiVersion = (provider: string, inputModel: string) => {
   if (provider === 'meta') return 'v1beta1';
@@ -40,6 +40,10 @@ const BATCH_ENDPOINTS = [
   'getBatchOutput',
   'listBatches',
   'cancelBatch',
+  'createFinetune',
+  'retrieveFinetune',
+  'listFinetunes',
+  'cancelFinetune',
 ];
 const NON_INFERENCE_ENDPOINTS = [...FILE_ENDPOINTS, ...BATCH_ENDPOINTS];
 
@@ -82,7 +86,13 @@ export const GoogleApiConfig: ProviderAPIConfig = {
     }
 
     if (NON_INFERENCE_ENDPOINTS.includes(fn)) {
-      const jobIdIndex = ['cancelBatch'].includes(fn) ? -2 : -1;
+      const jobIdIndex = [
+        'cancelBatch',
+        'retrieveFileContent',
+        'cancelFinetune',
+      ].includes(fn)
+        ? -2
+        : -1;
       const jobId = gatewayRequestURL.split('/').at(jobIdIndex);
 
       const url = new URL(gatewayRequestURL);
@@ -104,14 +114,29 @@ export const GoogleApiConfig: ProviderAPIConfig = {
           return `/v1/projects/${projectId}/locations/${vertexRegion}/batchPredictionJobs/${jobId}:cancel`;
         }
         case 'uploadFile':
+        case 'getBatchOutput':
           // We handle file upload in a separate request handler
           return '';
+        case 'retrieveFile':
+          return '';
+        case 'retrieveFileContent': {
+          const { bucket, file } = getBucketAndFile(jobId ?? '');
+          return `/${bucket}/${file}`;
+        }
         case 'createBatch':
           return `/v1/projects/${projectId}/locations/${vertexRegion}/batchPredictionJobs`;
-        case 'getBatchOutput':
-          return '';
-        default:
-          return '';
+        case 'createFinetune':
+          return `/v1/projects/${projectId}/locations/${vertexRegion}/tuningJobs`;
+        case 'listFinetunes': {
+          const pageSize = searchParams.get('limit') ?? 20;
+          const after = searchParams.get('after') ?? '';
+          return `/v1/projects/${projectId}/locations/${vertexRegion}/tuningJobs?pageSize=${pageSize}&pageToken=${after}`;
+        }
+        case 'retrieveFinetune':
+          return `/v1/projects/${projectId}/locations/${vertexRegion}/tuningJobs/${jobId}`;
+        case 'cancelFinetune': {
+          return `/v1/projects/${projectId}/locations/${vertexRegion}/tuningJobs/${jobId}:cancel`;
+        }
       }
     }
 
