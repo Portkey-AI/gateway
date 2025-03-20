@@ -213,6 +213,8 @@ export interface Config {
 export interface ContentType {
   type: string;
   text?: string;
+  thinking?: string;
+  signature?: string;
   image_url?: {
     url: string;
     detail?: string;
