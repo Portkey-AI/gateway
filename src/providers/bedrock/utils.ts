@@ -11,6 +11,7 @@ import {
 import { Options } from '../../types/requestBody';
 import { GatewayError } from '../../errors/GatewayError';
 import { BedrockFinetuneRecord } from './types';
+import { FinetuneRequest } from '../types';
 
 export const generateAWSHeaders = async (
   body: Record<string, any> | string | undefined,
@@ -369,3 +370,14 @@ export async function providerAssumedRoleCredentials(
     throw new GatewayError('Error while assuming bedrock role');
   }
 }
+
+export const populateHyperParameters = (value: FinetuneRequest) => {
+  let hyperParameters = value.hyperparameters ?? {};
+
+  if (value.method) {
+    const method = value.method.type;
+    hyperParameters = value.method?.[method]?.hyperparameters ?? {};
+  }
+
+  return hyperParameters;
+};
