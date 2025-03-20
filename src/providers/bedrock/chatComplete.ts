@@ -102,7 +102,7 @@ const transformAndAppendThinkingMessageItem = (
 };
 
 const getMessageContent = (message: Message) => {
-  if (!message.content) return [];
+  if (!message.content && !message.tool_calls) return [];
   if (message.role === 'tool') {
     return [
       {
@@ -119,7 +119,7 @@ const getMessageContent = (message: Message) => {
     out.push({
       text: message.content,
     });
-  } else {
+  } else if (message.content) {
     message.content.forEach((item) => {
       if (item.type === 'text') {
         out.push({
