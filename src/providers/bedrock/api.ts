@@ -1,7 +1,5 @@
-import { env } from 'hono/adapter';
 import { Context } from 'hono';
 import { Options } from '../../types/requestBody';
-import { GatewayError } from '../../errors/GatewayError';
 import { endpointStrings, ProviderAPIConfig } from '../types';
 import { bedrockInvokeModels } from './constants';
 import {
@@ -9,6 +7,7 @@ import {
   getAssumedRoleCredentials,
   providerAssumedRoleCredentials,
 } from './utils';
+import { GatewayError } from '../../errors/GatewayError';
 
 interface BedrockAPIConfigInterface extends Omit<ProviderAPIConfig, 'headers'> {
   headers: (args: {
@@ -44,13 +43,6 @@ const AWS_GET_METHODS: endpointStrings[] = [
   'retrieveFileContent',
   'listFinetunes',
   'retrieveFinetune',
-];
-
-// Endpoints that does not require model parameter
-const BEDROCK_FINETUNE_ENDPOINTS: endpointStrings[] = [
-  'listFinetunes',
-  'retrieveFinetune',
-  'cancelFinetune',
 ];
 
 const ENDPOINTS_TO_ROUTE_TO_S3 = [
@@ -193,7 +185,7 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
       return `/model-invocation-job/${batchId}/stop`;
     }
     const { model, stream } = gatewayRequestBody;
-    if (!model && !BEDROCK_FINETUNE_ENDPOINTS.includes(fn as endpointStrings)) {
+    if (!model) {
       throw new GatewayError('Model is required');
     }
     let mappedFn: string = fn;
