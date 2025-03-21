@@ -45,7 +45,7 @@ class AwsMultipartUploadHandler {
     const headers = await BedrockAPIConfig.headers({
       c: this.c,
       providerOptions: this.providerOptions,
-      fn: 'uploadFile',
+      fn: 'initiateMultipartUpload',
       transformedRequestBody: {},
       transformedRequestUrl: this.url.toString(),
     });
@@ -383,7 +383,7 @@ export const BedrockUploadFileRequestHandler: RequestHandler<
       filename: s3Url,
       purpose,
       bytes: handler.contentLength,
-      status: 'uploaded',
+      status: 'processed',
       status_details: '',
     };
 
