@@ -41,10 +41,36 @@ interface AnthropicToolResultContentItem {
   content?: string;
 }
 
-type AnthropicMessageContentItem = AnthropicToolResultContentItem | ContentType;
+interface AnthropicBase64ImageContentItem {
+  type: 'image';
+  source: {
+    type: 'base64';
+    media_type: string;
+    data: string;
+  };
+}
+
+interface AnthropicUrlImageContentItem {
+  type: 'image';
+  source: {
+    type: 'url';
+    url: string;
+  };
+}
+
+interface AnthropicTextContentItem {
+  type: 'text';
+  text: string;
+}
+
+type AnthropicMessageContentItem =
+  | AnthropicToolResultContentItem
+  | AnthropicBase64ImageContentItem
+  | AnthropicUrlImageContentItem
+  | AnthropicTextContentItem;
 
 interface AnthropicMessage extends Message, AnthropicPromptCache {
-  content?: string | AnthropicMessageContentItem[];
+  content: AnthropicMessageContentItem[];
 }
 
 const transformAssistantMessage = (msg: Message): AnthropicMessage => {
@@ -78,21 +104,63 @@ const transformAssistantMessage = (msg: Message): AnthropicMessage => {
   }
   return {
     role: msg.role,
-    content,
+    content: content as AnthropicMessageContentItem[],
   };
 };
 
 const transformToolMessage = (msg: Message): AnthropicMessage => {
+  const tool_use_id = msg.tool_call_id ?? '';
   return {
     role: 'user',
     content: [
       {
         type: 'tool_result',
-        tool_use_id: msg.tool_call_id,
+        tool_use_id,
         content: msg.content as string,
       },
     ],
   };
+};
+
+const transformAndAppendImageContentItem = (
+  item: ContentType,
+  transformedMessage: AnthropicMessage
+) => {
+  if (!item?.image_url?.url || typeof transformedMessage.content === 'string')
+    return;
+  const url = item.image_url.url;
+  const isBase64EncodedImage = url.startsWith('data:');
+  if (!isBase64EncodedImage) {
+    transformedMessage.content.push({
+      type: 'image',
+      source: {
+        type: 'url',
+        url,
+      },
+    });
+  } else {
+    const parts = url.split(';');
+    if (parts.length === 2) {
+      const base64ImageParts = parts[1].split(',');
+      const base64Image = base64ImageParts[1];
+      const mediaTypeParts = parts[0].split(':');
+      if (mediaTypeParts.length === 2 && base64Image) {
+        const mediaType = mediaTypeParts[1];
+        transformedMessage.content.push({
+          type:
+            mediaType === fileExtensionMimeTypeMap.pdf ? 'document' : 'image',
+          source: {
+            type: 'base64',
+            media_type: mediaType,
+            data: base64Image,
+          },
+          ...((item as any).cache_control && {
+            cache_control: { type: 'ephemeral' },
+          }),
+        });
+      }
+    }
+  }
 };
 
 export const AnthropicChatCompleteConfig: ProviderConfig = {
@@ -119,7 +187,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
               typeof msg.content === 'object' &&
               msg.content.length
             ) {
-              const transformedMessage: Record<string, any> = {
+              const transformedMessage: AnthropicMessage = {
                 role: msg.role,
                 content: [],
               };
@@ -132,44 +200,18 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                       cache_control: { type: 'ephemeral' },
                     }),
                   });
-                } else if (
-                  item.type === 'image_url' &&
-                  item.image_url &&
-                  item.image_url.url
-                ) {
-                  const parts = item.image_url.url.split(';');
-                  if (parts.length === 2) {
-                    const base64ImageParts = parts[1].split(',');
-                    const base64Image = base64ImageParts[1];
-                    const mediaTypeParts = parts[0].split(':');
-                    if (mediaTypeParts.length === 2 && base64Image) {
-                      const mediaType = mediaTypeParts[1];
-                      transformedMessage.content.push({
-                        type:
-                          mediaType === fileExtensionMimeTypeMap.pdf
-                            ? 'document'
-                            : 'image',
-                        source: {
-                          type: 'base64',
-                          media_type: mediaType,
-                          data: base64Image,
-                        },
-                        ...((item as any).cache_control && {
-                          cache_control: { type: 'ephemeral' },
-                        }),
-                      });
-                    }
-                  }
+                } else if (item.type === 'image_url') {
+                  transformAndAppendImageContentItem(item, transformedMessage);
                 }
               });
-              messages.push(transformedMessage as Message);
+              messages.push(transformedMessage as AnthropicMessage);
             } else if (msg.role === 'tool') {
               // even though anthropic supports images in tool results, openai doesn't support it yet
               messages.push(transformToolMessage(msg));
             } else {
               messages.push({
                 role: msg.role,
-                content: msg.content,
+                content: msg.content as AnthropicMessageContentItem[],
               });
             }
           });
