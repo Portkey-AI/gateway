@@ -90,6 +90,8 @@ export interface Options {
   awsS3Bucket?: string;
   awsS3ObjectKey?: string;
   awsBedrockModel?: string;
+  awsServerSideEncryption?: string;
+  awsServerSideEncryptionKMSKeyId?: string;
 
   /** Sagemaker specific */
   amznSagemakerCustomAttributes?: string;
@@ -211,6 +213,8 @@ export interface Config {
 export interface ContentType {
   type: string;
   text?: string;
+  thinking?: string;
+  signature?: string;
   image_url?: {
     url: string;
     detail?: string;

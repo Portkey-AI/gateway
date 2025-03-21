@@ -17,6 +17,7 @@ import {
   AnthropicChatCompleteStreamResponse,
   AnthropicErrorResponse,
 } from '../anthropic/chatComplete';
+import { AnthropicStreamState } from '../anthropic/types';
 import {
   GoogleMessage,
   GoogleMessageRole,
@@ -333,7 +334,33 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
       }
     },
   },
+  labels: {
+    param: 'labels',
+  },
 };
+
+interface AnthorpicTextContentItem {
+  type: 'text';
+  text: string;
+}
+
+interface AnthropicThinkingContentItem {
+  type: 'thinking';
+  thinking: string;
+  signature: string;
+}
+
+interface AnthropicToolContentItem {
+  type: 'tool_use';
+  name: string;
+  id: string;
+  input: Record<string, any>;
+}
+
+type AnthropicContentItem =
+  | AnthorpicTextContentItem
+  | AnthropicThinkingContentItem
+  | AnthropicToolContentItem;
 
 export const VertexAnthropicChatCompleteConfig: ProviderConfig = {
   ...AnthropicChatCompleteConfig,
@@ -647,8 +674,15 @@ export const AnthropicErrorResponseTransform: (
 
 export const VertexAnthropicChatCompleteResponseTransform: (
   response: AnthropicChatCompleteResponse | AnthropicErrorResponse,
-  responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean
+) => ChatCompletionResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  strictOpenAiCompliance
+) => {
   if (responseStatus !== 200) {
     const errorResposne = AnthropicErrorResponseTransform(
       response as AnthropicErrorResponse
@@ -659,10 +693,20 @@ export const VertexAnthropicChatCompleteResponseTransform: (
   if ('content' in response) {
     const { input_tokens = 0, output_tokens = 0 } = response?.usage;
 
-    let content = '';
-    if (response.content.length && response.content[0].type === 'text') {
-      content = response.content[0].text;
-    }
+    let content: AnthropicContentItem[] | string = strictOpenAiCompliance
+      ? ''
+      : [];
+    response.content.forEach((item) => {
+      if (!strictOpenAiCompliance && Array.isArray(content)) {
+        if (['text', 'thinking'].includes(item.type)) {
+          content.push(item);
+        }
+      } else {
+        if (item.type === 'text') {
+          content += item.text;
+        }
+      }
+    });
 
     let toolCalls: any = [];
     response.content.forEach((item) => {
@@ -710,8 +754,14 @@ export const VertexAnthropicChatCompleteResponseTransform: (
 export const VertexAnthropicChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
-  streamState: Record<string, boolean>
-) => string | undefined = (responseChunk, fallbackId, streamState) => {
+  streamState: AnthropicStreamState,
+  strictOpenAiCompliance: boolean
+) => string | undefined = (
+  responseChunk,
+  fallbackId,
+  streamState,
+  strictOpenAiCompliance
+) => {
   let chunk = responseChunk.trim();
 
   if (
@@ -756,14 +806,6 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
       '\n\n' +
       'data: [DONE]\n\n'
     );
-  }
-
-  if (
-    parsedChunk.type === 'content_block_start' &&
-    parsedChunk.content_block?.type === 'text'
-  ) {
-    streamState.containsChainOfThoughtMessage = true;
-    return;
   }
 
   if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
@@ -816,17 +858,19 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
   const toolCalls = [];
   const isToolBlockStart: boolean =
     parsedChunk.type === 'content_block_start' &&
-    !!parsedChunk.content_block?.id;
+    parsedChunk.content_block?.type === 'tool_use';
+  if (isToolBlockStart) {
+    streamState.toolIndex = streamState.toolIndex
+      ? streamState.toolIndex + 1
+      : 0;
+  }
   const isToolBlockDelta: boolean =
     parsedChunk.type === 'content_block_delta' &&
     !!parsedChunk.delta.partial_json;
-  const toolIndex: number = streamState.containsChainOfThoughtMessage
-    ? parsedChunk.index - 1
-    : parsedChunk.index;
 
   if (isToolBlockStart && parsedChunk.content_block) {
     toolCalls.push({
-      index: toolIndex,
+      index: streamState.toolIndex,
       id: parsedChunk.content_block.id,
       type: 'function',
       function: {
@@ -836,12 +880,20 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
     });
   } else if (isToolBlockDelta) {
     toolCalls.push({
-      index: toolIndex,
+      index: streamState.toolIndex,
       function: {
         arguments: parsedChunk.delta.partial_json,
       },
     });
   }
+
+  const content = parsedChunk.delta?.text;
+  const thinking = !strictOpenAiCompliance
+    ? parsedChunk.delta?.thinking
+    : undefined;
+  const signature = !strictOpenAiCompliance
+    ? parsedChunk.delta?.signature
+    : undefined;
 
   return (
     `data: ${JSON.stringify({
@@ -853,7 +905,9 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
       choices: [
         {
           delta: {
-            content: parsedChunk.delta?.text,
+            content,
+            thinking,
+            signature,
             tool_calls: toolCalls.length ? toolCalls : undefined,
           },
           index: 0,
