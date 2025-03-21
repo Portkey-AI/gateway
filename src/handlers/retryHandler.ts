@@ -138,10 +138,10 @@ export const retryRequest = async (
       lastResponse = new Response(error.message, {
         status: 503,
       });
-    } else if (error instanceof TypeError) {
-      // Handle other fetch-level errors
+    } else if (!error.status || error instanceof TypeError) {
+      // The retry handler will always attach status code to the error object
       lastResponse = new Response(
-        `Message: ${error.message} Cause: ${error.cause} Name: ${error.name}`,
+        `Message: ${error.message} Cause: ${error.cause ?? 'NA'} Name: ${error.name}`,
         {
           status: 500,
         }
