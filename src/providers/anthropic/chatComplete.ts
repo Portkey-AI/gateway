@@ -126,11 +126,7 @@ const transformAndAppendImageContentItem = (
   item: ContentType,
   transformedMessage: AnthropicMessage
 ) => {
-  if (
-    !item?.image_url ||
-    !item?.image_url?.url ||
-    typeof transformedMessage.content === 'string'
-  )
+  if (!item?.image_url?.url || typeof transformedMessage.content === 'string')
     return;
   const url = item.image_url.url;
   const isBase64EncodedImage = url.startsWith('data:');
