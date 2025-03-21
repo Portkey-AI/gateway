@@ -127,8 +127,8 @@ const transformAndAppendImageContentItem = (
   transformedMessage: AnthropicMessage
 ) => {
   if (
-    !item.image_url ||
-    !item.image_url.url ||
+    !item?.image_url ||
+    !item?.image_url?.url ||
     typeof transformedMessage.content === 'string'
   )
     return;
