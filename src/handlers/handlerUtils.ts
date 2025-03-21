@@ -18,11 +18,7 @@ import {
   FIREWORKS_AI,
 } from '../globals';
 import Providers from '../providers';
-import {
-  ProviderAPIConfig,
-  RequestHandlers,
-  endpointStrings,
-} from '../providers/types';
+import { ProviderAPIConfig, endpointStrings } from '../providers/types';
 import transformToProviderRequest from '../services/transformToProviderRequest';
 import { Options, Params, StrategyModes, Targets } from '../types/requestBody';
 import { convertKeysToCamelCase } from '../utils';
@@ -372,7 +368,8 @@ export async function tryPost(
               params,
               requestBody,
               fn,
-              requestHeaders
+              requestHeaders,
+              providerOption
             )
           : requestBody;
     }
@@ -392,7 +389,8 @@ export async function tryPost(
             params,
             requestBody,
             fn,
-            requestHeaders
+            requestHeaders,
+            providerOption
           )
         : requestBody;
   }
@@ -958,6 +956,12 @@ export function constructConfigFromRequestHeaders(
     awsBedrockModel:
       requestHeaders[`x-${POWERED_BY}-aws-bedrock-model`] ||
       requestHeaders[`x-${POWERED_BY}-provider-model`],
+    awsServerSideEncryption:
+      requestHeaders[`x-${POWERED_BY}-amz-server-side-encryption`],
+    awsServerSideEncryptionKMSKeyId:
+      requestHeaders[
+        `x-${POWERED_BY}-amz-server-side-encryption-aws-kms-key-id`
+      ],
   };
 
   const sagemakerConfig = {
