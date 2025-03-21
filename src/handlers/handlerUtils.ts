@@ -596,21 +596,27 @@ export async function tryTargetsRecursively(
     defaultOutputGuardrails: inheritedConfig.defaultOutputGuardrails,
   };
 
+  // Inherited config can be empty only for the base case of recursive call.
+  // To avoid redundant conversion of guardrails to hooks, we do this check.
   if (Object.keys(inheritedConfig).length === 0) {
-    currentInheritedConfig.defaultInputGuardrails = [
-      ...convertHooksShorthand(
-        currentTarget.defaultInputGuardrails,
-        'input',
-        HookType.GUARDRAIL
-      ),
-    ];
-    currentInheritedConfig.defaultOutputGuardrails = [
-      ...convertHooksShorthand(
-        currentTarget.defaultOutputGuardrails,
-        'output',
-        HookType.GUARDRAIL
-      ),
-    ];
+    if (currentTarget.defaultInputGuardrails) {
+      currentInheritedConfig.defaultInputGuardrails = [
+        ...convertHooksShorthand(
+          currentTarget.defaultInputGuardrails,
+          'input',
+          HookType.GUARDRAIL
+        ),
+      ];
+    }
+    if (currentTarget.defaultOutputGuardrails) {
+      currentInheritedConfig.defaultOutputGuardrails = [
+        ...convertHooksShorthand(
+          currentTarget.defaultOutputGuardrails,
+          'output',
+          HookType.GUARDRAIL
+        ),
+      ];
+    }
   }
 
   if (typeof currentTarget.strictOpenAiCompliance === 'boolean') {
