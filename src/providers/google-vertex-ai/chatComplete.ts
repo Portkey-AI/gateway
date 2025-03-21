@@ -369,6 +369,13 @@ export const VertexAnthropicChatCompleteConfig: ProviderConfig = {
     required: true,
     default: 'vertex-2023-10-16',
   },
+  model: {
+    param: 'model',
+    required: false,
+    transform: (params: Params) => {
+      return undefined;
+    },
+  },
 };
 
 export const GoogleChatCompleteResponseTransform: (
