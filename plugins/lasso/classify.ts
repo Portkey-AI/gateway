@@ -7,7 +7,7 @@ import {
 } from '../types';
 import { post } from '../utils';
 
-export const LASSO_BASE_URL = 'https://app.lasso.security';
+export const LASSO_BASE_URL = 'https://server.lasso.security';
 
 interface LassoMessage {
   role: string;
