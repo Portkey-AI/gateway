@@ -148,7 +148,6 @@ export interface Options {
 
   /** Cortex specific fields */
   snowflakeAccount?: string;
-  snowflakeApiKey?: string;
 }
 
 /**

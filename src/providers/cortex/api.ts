@@ -5,7 +5,7 @@ const CortexAPIConfig: ProviderAPIConfig = {
     `https://${(providerOptions as any).snowflakeAccount}.snowflakecomputing.com/api/v2`,
   headers: ({ providerOptions }) => ({
     'X-Snowflake-Authorization-Token-Type': 'KEYPAIR_JWT',
-    Authorization: `Bearer ${(providerOptions as any).snowflakeApiKey || providerOptions.apiKey}`,
+    Authorization: `Bearer ${providerOptions.apiKey}`,
     'Content-Type': 'application/json',
     Accept: 'application/json, text/event-stream',
   }),

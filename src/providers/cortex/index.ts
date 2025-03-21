@@ -15,8 +15,6 @@ const CortexConfig: ProviderConfigs = {
   api: CortexAPIConfig,
   responseTransforms: responseTransformers(CORTEX, {
     chatComplete: true,
-    complete: true,
-    embed: true,
   }),
 };
 
