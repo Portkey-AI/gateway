@@ -146,13 +146,14 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
   provider: string
 ) => Array<string> = (response, provider) => {
   const streamChunkArray: Array<string> = [];
-  const { id, model, system_fingerprint, choices } = response;
+  const { id, model, system_fingerprint, choices, citations } = response;
 
   const {
     prompt_tokens,
     completion_tokens,
     cache_read_input_tokens,
     cache_creation_input_tokens,
+    num_search_queries,
   } = response.usage || {};
 
   let total_tokens;
@@ -179,7 +180,9 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
         cache_read_input_tokens,
         cache_creation_input_tokens,
       }),
+      ...(num_search_queries && { num_search_queries }),
     },
+    ...(citations && { citations }),
   };
 
   for (const [index, choice] of choices.entries()) {
@@ -262,6 +265,9 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
                   role: 'assistant',
                   content: word,
                 },
+                ...(choice.groundingMetadata && {
+                  groundingMetadata: choice.groundingMetadata,
+                }),
               },
             ],
           })}\n\n`
