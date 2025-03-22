@@ -1073,10 +1073,9 @@ export function constructConfigFromRequestHeaders(
     }
   }
 
-
   const cortexConfig = {
-    snowflakeAccount: requestHeaders[`x-${POWERED_BY}-snowflake-account`]
-  }
+    snowflakeAccount: requestHeaders[`x-${POWERED_BY}-snowflake-account`],
+  };
 
   const defaultsConfig = {
     input_guardrails: requestHeaders[`x-portkey-default-input-guardrails`]
@@ -1085,7 +1084,6 @@ export function constructConfigFromRequestHeaders(
     output_guardrails: requestHeaders[`x-portkey-default-output-guardrails`]
       ? JSON.parse(requestHeaders[`x-portkey-default-output-guardrails`])
       : [],
-
   };
 
   if (requestHeaders[`x-${POWERED_BY}-config`]) {
