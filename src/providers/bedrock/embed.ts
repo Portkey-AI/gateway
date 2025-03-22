@@ -1,5 +1,6 @@
 import { BEDROCK } from '../../globals';
 import { EmbedResponse } from '../../types/embedRequestBody';
+import { Params } from '../../types/requestBody';
 import { ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { BedrockErrorResponseTransform } from './chatComplete';
@@ -43,8 +44,19 @@ export interface BedrockErrorResponse extends ErrorResponse {
 
 export const BedrockTitanEmbedResponseTransform: (
   response: BedrockTitanEmbedResponse | BedrockErrorResponse,
-  responseStatus: number
-) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  _responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  _gatewayRequestUrl: string,
+  gatewayRequest: Params
+) => EmbedResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
+) => {
   if (responseStatus !== 200) {
     const errorResposne = BedrockErrorResponseTransform(
       response as BedrockErrorResponse
@@ -52,6 +64,7 @@ export const BedrockTitanEmbedResponseTransform: (
     if (errorResposne) return errorResposne;
   }
 
+  const model = (gatewayRequest.model as string) || '';
   if ('embedding' in response) {
     return {
       object: 'list',
@@ -63,7 +76,7 @@ export const BedrockTitanEmbedResponseTransform: (
         },
       ],
       provider: BEDROCK,
-      model: '',
+      model,
       usage: {
         prompt_tokens: response.inputTextTokenCount,
         total_tokens: response.inputTextTokenCount,
@@ -83,11 +96,17 @@ interface BedrockCohereEmbedResponse {
 export const BedrockCohereEmbedResponseTransform: (
   response: BedrockCohereEmbedResponse | BedrockErrorResponse,
   responseStatus: number,
-  responseHeaders: Headers
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
 ) => EmbedResponse | ErrorResponse = (
   response,
   responseStatus,
-  responseHeaders
+  responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
 ) => {
   if (responseStatus !== 200) {
     const errorResposne = BedrockErrorResponseTransform(
@@ -95,6 +114,8 @@ export const BedrockCohereEmbedResponseTransform: (
     );
     if (errorResposne) return errorResposne;
   }
+
+  const model = (gatewayRequest.model as string) || '';
 
   if ('embeddings' in response) {
     return {
@@ -105,7 +126,7 @@ export const BedrockCohereEmbedResponseTransform: (
         index: index,
       })),
       provider: BEDROCK,
-      model: '',
+      model,
       usage: {
         prompt_tokens:
           Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || -1,

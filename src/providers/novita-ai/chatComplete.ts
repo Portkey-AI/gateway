@@ -202,8 +202,18 @@ export const NovitaAIChatCompleteResponseTransform: (
 };
 
 export const NovitaAIChatCompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+  response: string,
+  fallbackId: string,
+  streamState: Record<string, any>,
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
+) => string = (
+  responseChunk,
+  fallbackId,
+  _streamState,
+  _strictOpenAiCompliance,
+  gatewayRequest
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
@@ -213,10 +223,10 @@ export const NovitaAIChatCompleteStreamChunkTransform: (
   const parsedChunk: NovitaAIChatCompletionStreamChunk = JSON.parse(chunk);
   return (
     `data: ${JSON.stringify({
-      id: parsedChunk.id,
+      id: parsedChunk.id || fallbackId,
       object: parsedChunk.object,
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: gatewayRequest.model || '',
       provider: NOVITA_AI,
       choices: [
         {

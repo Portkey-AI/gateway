@@ -70,8 +70,19 @@ export const WorkersAiErrorResponseTransform: (
 
 export const WorkersAiCompleteResponseTransform: (
   response: WorkersAiCompleteResponse | WorkersAiErrorResponse,
-  responseStatus: number
-) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
+) => CompletionResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
+) => {
   if (responseStatus !== 200) {
     const errorResponse = WorkersAiErrorResponseTransform(
       response as WorkersAiErrorResponse
@@ -84,7 +95,7 @@ export const WorkersAiCompleteResponseTransform: (
       id: Date.now().toString(),
       object: 'text_completion',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: gatewayRequest.model || '',
       provider: WORKERS_AI,
       choices: [
         {
@@ -101,8 +112,18 @@ export const WorkersAiCompleteResponseTransform: (
 };
 
 export const WorkersAiCompleteStreamChunkTransform: (
-  response: string
-) => string | undefined = (responseChunk) => {
+  response: string,
+  fallbackId: string,
+  _streamState: Record<string, any>,
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
+) => string | undefined = (
+  responseChunk,
+  fallbackId,
+  _streamState,
+  strictOpenAiCompliance,
+  gatewayRequest
+) => {
   let chunk = responseChunk.trim();
 
   if (chunk.startsWith('data: [DONE]')) {
@@ -115,10 +136,10 @@ export const WorkersAiCompleteStreamChunkTransform: (
   const parsedChunk: WorkersAiCompleteStreamResponse = JSON.parse(chunk);
   return (
     `data: ${JSON.stringify({
-      id: '',
+      id: fallbackId,
       object: 'text_completion',
       created: Math.floor(Date.now() / 1000),
-      model: '', // TODO: find a way to send the cohere embedding model name back
+      model: gatewayRequest.model || '',
       provider: WORKERS_AI,
       choices: [
         {
