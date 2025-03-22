@@ -1033,7 +1033,6 @@ export function constructConfigFromRequestHeaders(
 
   const cortexConfig = {
     snowflakeAccount: requestHeaders[`x-${POWERED_BY}-snowflake-account`],
-    snowflakeApiKey: requestHeaders[`x-${POWERED_BY}-snowflake-api-key`],
   };
 
   if (requestHeaders[`x-${POWERED_BY}-config`]) {
