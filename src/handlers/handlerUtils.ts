@@ -19,11 +19,7 @@ import {
   CORTEX,
 } from '../globals';
 import Providers from '../providers';
-import {
-  ProviderAPIConfig,
-  RequestHandlers,
-  endpointStrings,
-} from '../providers/types';
+import { ProviderAPIConfig, endpointStrings } from '../providers/types';
 import transformToProviderRequest from '../services/transformToProviderRequest';
 import { Options, Params, StrategyModes, Targets } from '../types/requestBody';
 import { convertKeysToCamelCase } from '../utils';
@@ -288,8 +284,14 @@ export async function tryPost(
     metadata,
     provider,
     isStreamingMode,
-    providerOption.beforeRequestHooks || [],
-    providerOption.afterRequestHooks || [],
+    [
+      ...(providerOption.beforeRequestHooks || []),
+      ...(providerOption.defaultInputGuardrails || []),
+    ],
+    [
+      ...(providerOption.afterRequestHooks || []),
+      ...(providerOption.defaultOutputGuardrails || []),
+    ],
     null,
     fn
   );
@@ -373,7 +375,8 @@ export async function tryPost(
               params,
               requestBody,
               fn,
-              requestHeaders
+              requestHeaders,
+              providerOption
             )
           : requestBody;
     }
@@ -393,7 +396,8 @@ export async function tryPost(
             params,
             requestBody,
             fn,
-            requestHeaders
+            requestHeaders,
+            providerOption
           )
         : requestBody;
   }
@@ -589,7 +593,32 @@ export async function tryTargetsRecursively(
       ? { ...currentTarget.cache }
       : { ...inheritedConfig.cache },
     requestTimeout: null,
+    defaultInputGuardrails: inheritedConfig.defaultInputGuardrails,
+    defaultOutputGuardrails: inheritedConfig.defaultOutputGuardrails,
   };
+
+  // Inherited config can be empty only for the base case of recursive call.
+  // To avoid redundant conversion of guardrails to hooks, we do this check.
+  if (Object.keys(inheritedConfig).length === 0) {
+    if (currentTarget.defaultInputGuardrails) {
+      currentInheritedConfig.defaultInputGuardrails = [
+        ...convertHooksShorthand(
+          currentTarget.defaultInputGuardrails,
+          'input',
+          HookType.GUARDRAIL
+        ),
+      ];
+    }
+    if (currentTarget.defaultOutputGuardrails) {
+      currentInheritedConfig.defaultOutputGuardrails = [
+        ...convertHooksShorthand(
+          currentTarget.defaultOutputGuardrails,
+          'output',
+          HookType.GUARDRAIL
+        ),
+      ];
+    }
+  }
 
   if (typeof currentTarget.strictOpenAiCompliance === 'boolean') {
     currentInheritedConfig.strictOpenAiCompliance =
@@ -697,6 +726,13 @@ export async function tryTargetsRecursively(
   currentTarget.cache = {
     ...currentInheritedConfig.cache,
   };
+
+  currentTarget.defaultInputGuardrails = [
+    ...currentInheritedConfig.defaultInputGuardrails,
+  ];
+  currentTarget.defaultOutputGuardrails = [
+    ...currentInheritedConfig.defaultOutputGuardrails,
+  ];
   // end: merge inherited config with current target config (preference given to current)
 
   let response;
@@ -959,6 +995,12 @@ export function constructConfigFromRequestHeaders(
     awsBedrockModel:
       requestHeaders[`x-${POWERED_BY}-aws-bedrock-model`] ||
       requestHeaders[`x-${POWERED_BY}-provider-model`],
+    awsServerSideEncryption:
+      requestHeaders[`x-${POWERED_BY}-amz-server-side-encryption`],
+    awsServerSideEncryptionKMSKeyId:
+      requestHeaders[
+        `x-${POWERED_BY}-amz-server-side-encryption-aws-kms-key-id`
+      ],
   };
 
   const sagemakerConfig = {
@@ -1031,12 +1073,26 @@ export function constructConfigFromRequestHeaders(
     }
   }
 
+
   const cortexConfig = {
-    snowflakeAccount: requestHeaders[`x-${POWERED_BY}-snowflake-account`],
+    snowflakeAccount: requestHeaders[`x-${POWERED_BY}-snowflake-account`]
+  }
+
+  const defaultsConfig = {
+    input_guardrails: requestHeaders[`x-portkey-default-input-guardrails`]
+      ? JSON.parse(requestHeaders[`x-portkey-default-input-guardrails`])
+      : [],
+    output_guardrails: requestHeaders[`x-portkey-default-output-guardrails`]
+      ? JSON.parse(requestHeaders[`x-portkey-default-output-guardrails`])
+      : [],
+
   };
 
   if (requestHeaders[`x-${POWERED_BY}-config`]) {
     let parsedConfigJson = JSON.parse(requestHeaders[`x-${POWERED_BY}-config`]);
+    parsedConfigJson.default_input_guardrails = defaultsConfig.input_guardrails;
+    parsedConfigJson.default_output_guardrails =
+      defaultsConfig.output_guardrails;
 
     if (!parsedConfigJson.provider && !parsedConfigJson.targets) {
       parsedConfigJson.provider = requestHeaders[`x-${POWERED_BY}-provider`];
@@ -1139,12 +1195,16 @@ export function constructConfigFromRequestHeaders(
       'conditions',
       'input_guardrails',
       'output_guardrails',
+      'default_input_guardrails',
+      'default_output_guardrails',
     ]) as any;
   }
 
   return {
     provider: requestHeaders[`x-${POWERED_BY}-provider`],
     apiKey: requestHeaders['authorization']?.replace('Bearer ', ''),
+    defaultInputGuardrails: defaultsConfig.input_guardrails,
+    defaultOutputGuardrails: defaultsConfig.output_guardrails,
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === AZURE_OPEN_AI &&
       azureConfig),
     ...([BEDROCK, SAGEMAKER].includes(

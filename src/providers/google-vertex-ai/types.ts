@@ -1,4 +1,4 @@
-import { ChatCompletionResponse } from '../types';
+import { ChatCompletionResponse, GroundingMetadata } from '../types';
 
 export interface GoogleErrorResponse {
   error: {
@@ -46,24 +46,7 @@ export interface GoogleResponseCandidate {
     category: string;
     probability: string;
   }[];
-  groundingMetadata?: {
-    webSearchQueries?: string[];
-    searchEntryPoint?: {
-      renderedContent: string;
-    };
-    groundingSupports?: Array<{
-      segment: {
-        startIndex: number;
-        endIndex: number;
-        text: string;
-      };
-      groundingChunkIndices: number[];
-      confidenceScores: number[];
-    }>;
-    retrievalMetadata?: {
-      webDynamicRetrievalScore: number;
-    };
-  };
+  groundingMetadata?: GroundingMetadata;
 }
 
 export interface GoogleGenerateContentResponse {
@@ -194,5 +177,43 @@ export interface GoogleBatchRecord {
     failedCount: string;
     incompleteCount: string;
     successfulForecastPointCount: string;
+  };
+}
+
+export interface GoogleFinetuneRecord {
+  name: string;
+  state: GoogleBatchJobStatus;
+  tunedModelDisplayName: string;
+  description: string;
+  createTime: string;
+  startTime: string;
+  endTime: string;
+  updateTime: string;
+  error: string;
+  tunedModel?: {
+    model: string;
+    endpoint: string;
+  };
+  tuningDataStats?: {
+    supervisedTuningDataStats: {
+      tuningDatasetExampleCount: number;
+      totalTuningCharacterCount: number;
+      totalBillableTokenCount: number;
+      tuningStepCount: number;
+      userInputTokenDistribution: number;
+    };
+  };
+  baseModel: string;
+  source_model?: {
+    baseModel: string;
+  };
+  supervisedTuningSpec: {
+    trainingDatasetUri: string;
+    validationDatasetUri: string;
+    hyperParameters: {
+      learningRateMultiplier: number;
+      epochCount: number;
+      adapterSize: number;
+    };
   };
 }

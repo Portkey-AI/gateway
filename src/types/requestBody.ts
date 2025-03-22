@@ -90,6 +90,8 @@ export interface Options {
   awsS3Bucket?: string;
   awsS3ObjectKey?: string;
   awsBedrockModel?: string;
+  awsServerSideEncryption?: string;
+  awsServerSideEncryptionKMSKeyId?: string;
 
   /** Sagemaker specific */
   amznSagemakerCustomAttributes?: string;
@@ -122,6 +124,9 @@ export interface Options {
 
   afterRequestHooks?: HookObject[];
   beforeRequestHooks?: HookObject[];
+  defaultInputGuardrails?: HookObject[];
+  defaultOutputGuardrails?: HookObject[];
+
   /** OpenAI specific */
   openaiProject?: string;
   openaiOrganization?: string;
@@ -189,6 +194,9 @@ export interface Targets {
 
   /** This is used to determine if the request should be transformed to formData Example: Stability V2 */
   transformToFormData?: boolean;
+
+  defaultInputGuardrails?: HookObject[];
+  defaultOutputGuardrails?: HookObject[];
 }
 
 /**
@@ -214,6 +222,8 @@ export interface Config {
 export interface ContentType {
   type: string;
   text?: string;
+  thinking?: string;
+  signature?: string;
   image_url?: {
     url: string;
     detail?: string;

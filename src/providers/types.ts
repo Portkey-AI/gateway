@@ -152,6 +152,7 @@ export interface CResponse extends BaseResponse {
      */
     cache_read_input_tokens?: number;
     cache_creation_input_tokens?: number;
+    num_search_queries?: number;
   };
 }
 
@@ -168,6 +169,25 @@ export interface CompletionResponse extends CResponse {
   }[];
 }
 
+export interface GroundingMetadata {
+  webSearchQueries?: string[];
+  searchEntryPoint?: {
+    renderedContent: string;
+  };
+  groundingSupports?: Array<{
+    segment: {
+      startIndex: number;
+      endIndex: number;
+      text: string;
+    };
+    groundingChunkIndices: number[];
+    confidenceScores: number[];
+  }>;
+  retrievalMetadata?: {
+    webDynamicRetrievalScore: number;
+  };
+}
+
 /**
  * The structure of a choice in a chat completion response.
  * @interface
@@ -177,6 +197,7 @@ export interface ChatChoice {
   message: Message;
   finish_reason: string;
   logprobs?: object | null;
+  groundingMetadata?: GroundingMetadata;
 }
 
 export interface Logprobs {
@@ -197,6 +218,7 @@ export interface Logprobs {
 export interface ChatCompletionResponse extends CResponse {
   choices: ChatChoice[];
   provider?: string;
+  citations?: string[];
 }
 
 /**
