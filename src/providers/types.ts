@@ -392,6 +392,6 @@ export interface StreamContentBlock {
     text?: string;
     thinking?: string;
     signature?: string;
-    redactedContent?: string;
+    data?: string;
   };
 }

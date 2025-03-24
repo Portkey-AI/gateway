@@ -268,7 +268,8 @@ export interface Message {
   role: OpenAIMessageRole;
   /** The content of the message. */
   content?: string | ContentType[];
-  content_blocks?: ContentType[]; // Anthropic compliant content blocks
+  /** The content blocks of the message. */
+  content_blocks?: ContentType[];
   /** The name of the function to call, if any. */
   name?: string;
   /** The function call to make, if any. */

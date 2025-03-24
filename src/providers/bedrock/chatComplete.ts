@@ -377,7 +377,6 @@ export const BedrockErrorResponseTransform: (
 const transformContentBlocks = (contentBlocks: BedrockContentItem[]) => {
   const output: ContentType[] = [];
   contentBlocks.forEach((contentBlock) => {
-    let type;
     if (contentBlock.text) {
       output.push({
         type: 'text',
@@ -418,7 +417,6 @@ export const BedrockChatCompleteResponseTransform: (
   }
 
   if ('output' in response) {
-    console.log(JSON.stringify(response.output.message.content, null, 2));
     let content: string = '';
     content = response.output.message.content
       .filter((item) => item.text)
@@ -592,7 +590,7 @@ export const BedrockChatCompleteStreamChunkTransform: (
   if (parsedChunk.delta?.text)
     contentBlockObject.delta.text = parsedChunk.delta.text;
   if (parsedChunk.delta?.reasoningContent?.redactedContent)
-    contentBlockObject.delta.redactedContent =
+    contentBlockObject.delta.data =
       parsedChunk.delta.reasoningContent.redactedContent;
 
   return `data: ${JSON.stringify({
