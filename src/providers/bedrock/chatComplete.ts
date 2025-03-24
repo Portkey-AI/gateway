@@ -4,7 +4,6 @@ import {
   Params,
   ToolCall,
   SYSTEM_MESSAGE_ROLES,
-  ContentType,
 } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
@@ -39,10 +38,6 @@ export interface BedrockChatCompletionsParams extends Params {
   };
   anthropic_version?: string;
   countPenalty?: number;
-  thinking?: {
-    type: string;
-    budget_tokens: number;
-  };
 }
 
 export interface BedrockConverseAnthropicChatCompletionsParams
@@ -85,22 +80,6 @@ const getMessageTextContentArray = (message: Message): { text: string }[] => {
   ];
 };
 
-const transformAndAppendThinkingMessageItem = (
-  item: ContentType,
-  out: any[]
-) => {
-  if (item.type === 'thinking') {
-    out.push({
-      reasoningContent: {
-        reasoningText: {
-          signature: item.signature,
-          text: item.thinking,
-        },
-      },
-    });
-  }
-};
-
 const getMessageContent = (message: Message) => {
   if (!message.content && !message.tool_calls) return [];
   if (message.role === 'tool') {
@@ -113,7 +92,7 @@ const getMessageContent = (message: Message) => {
       },
     ];
   }
-  const out: BedrockContentItem[] = [];
+  const out = [];
   // if message is a string, return a single element array with the text
   if (typeof message.content === 'string') {
     out.push({
@@ -125,8 +104,6 @@ const getMessageContent = (message: Message) => {
         out.push({
           text: item.text || '',
         });
-      } else if (item.type === 'thinking') {
-        transformAndAppendThinkingMessageItem(item, out);
       } else if (item.type === 'image_url' && item.image_url) {
         const mimetypeParts = item.image_url.url.split(';');
         const mimeType = mimetypeParts[0].split(':')[1];
@@ -305,34 +282,6 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
   },
 };
 
-type BedrockContentItem = {
-  text?: string;
-  toolUse?: {
-    toolUseId: string;
-    name: string;
-    input: object;
-  };
-  reasoningContent?: {
-    reasoningText: {
-      signature: string;
-      text: string;
-    };
-  };
-  image?: {
-    source: {
-      bytes: string;
-    };
-    format: string;
-  };
-  document?: {
-    format: string;
-    name: string;
-    source: {
-      bytes: string;
-    };
-  };
-};
-
 interface BedrockChatCompletionResponse {
   metrics: {
     latencyMs: number;
@@ -340,7 +289,16 @@ interface BedrockChatCompletionResponse {
   output: {
     message: {
       role: string;
-      content: BedrockContentItem[];
+      content: [
+        {
+          text: string;
+          toolUse: {
+            toolUseId: string;
+            name: string;
+            input: object;
+          };
+        },
+      ];
     };
   };
   stopReason: string;
@@ -367,13 +325,11 @@ export const BedrockErrorResponseTransform: (
 export const BedrockChatCompleteResponseTransform: (
   response: BedrockChatCompletionResponse | BedrockErrorResponse,
   responseStatus: number,
-  responseHeaders: Headers,
-  strictOpenAiCompliance: boolean
+  responseHeaders: Headers
 ) => ChatCompletionResponse | ErrorResponse = (
   response,
   responseStatus,
-  _responseHeaders,
-  strictOpenAiCompliance
+  responseHeaders
 ) => {
   if (responseStatus !== 200) {
     const errorResponse = BedrockErrorResponseTransform(
@@ -383,28 +339,6 @@ export const BedrockChatCompleteResponseTransform: (
   }
 
   if ('output' in response) {
-    let content: string | ContentType[] = strictOpenAiCompliance ? '' : [];
-    if (!strictOpenAiCompliance) {
-      response.output.message.content.forEach((item) => {
-        if (item.text && Array.isArray(content)) {
-          content.push({
-            type: 'text',
-            text: item.text,
-          });
-        } else if (item.reasoningContent && Array.isArray(content)) {
-          content.push({
-            type: 'thinking',
-            thinking: item.reasoningContent.reasoningText.text,
-            signature: item.reasoningContent.reasoningText.signature,
-          });
-        }
-      });
-    } else {
-      content = response.output.message.content
-        .filter((item) => item.text)
-        .map((item) => item.text)
-        .join('\n');
-    }
     const responseObj: ChatCompletionResponse = {
       id: Date.now().toString(),
       object: 'chat.completion',
@@ -416,7 +350,10 @@ export const BedrockChatCompleteResponseTransform: (
           index: 0,
           message: {
             role: 'assistant',
-            content,
+            content: response.output.message.content
+              .filter((content) => content.text)
+              .map((content) => content.text)
+              .join('\n'),
           },
           finish_reason: response.stopReason,
         },
@@ -430,11 +367,11 @@ export const BedrockChatCompleteResponseTransform: (
     const toolCalls = response.output.message.content
       .filter((content) => content.toolUse)
       .map((content) => ({
-        id: content?.toolUse?.toolUseId,
+        id: content.toolUse.toolUseId,
         type: 'function',
         function: {
-          name: content?.toolUse?.name,
-          arguments: JSON.stringify(content?.toolUse?.input),
+          name: content.toolUse.name,
+          arguments: JSON.stringify(content.toolUse.input),
         },
       }));
     if (toolCalls.length > 0)
@@ -453,10 +390,6 @@ export interface BedrockChatCompleteStreamChunk {
       toolUseId: string;
       name: string;
       input: object;
-    };
-    reasoningContent?: {
-      signature: string;
-      text: string;
     };
   };
   start?: {
@@ -486,14 +419,8 @@ interface BedrockStreamState {
 export const BedrockChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
-  streamState: BedrockStreamState,
-  strictOpenAiCompliance: boolean
-) => string | string[] = (
-  responseChunk,
-  fallbackId,
-  streamState,
-  strictOpenAiCompliance
-) => {
+  streamState: BedrockStreamState
+) => string | string[] = (responseChunk, fallbackId, streamState) => {
   const parsedChunk: BedrockChatCompleteStreamChunk = JSON.parse(responseChunk);
   if (parsedChunk.stopReason) {
     streamState.stopReason = parsedChunk.stopReason;
@@ -551,14 +478,6 @@ export const BedrockChatCompleteStreamChunkTransform: (
     });
   }
 
-  const content = parsedChunk.delta?.text;
-  const thinking = !strictOpenAiCompliance
-    ? parsedChunk.delta?.reasoningContent?.text
-    : undefined;
-  const signature = !strictOpenAiCompliance
-    ? parsedChunk.delta?.reasoningContent?.signature
-    : undefined;
-
   return `data: ${JSON.stringify({
     id: fallbackId,
     object: 'chat.completion.chunk',
@@ -570,9 +489,7 @@ export const BedrockChatCompleteStreamChunkTransform: (
         index: 0,
         delta: {
           role: 'assistant',
-          content,
-          thinking,
-          signature,
+          content: parsedChunk.delta?.text,
           tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
         },
       },
@@ -598,11 +515,6 @@ export const BedrockConverseAnthropicChatCompleteConfig: ProviderConfig = {
       transformAnthropicAdditionalModelRequestFields(params),
   },
   user: {
-    param: 'additionalModelRequestFields',
-    transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
-      transformAnthropicAdditionalModelRequestFields(params),
-  },
-  thinking: {
     param: 'additionalModelRequestFields',
     transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
       transformAnthropicAdditionalModelRequestFields(params),

@@ -117,9 +117,6 @@ export const transformAnthropicAdditionalModelRequestFields = (
       user_id: params['user'],
     };
   }
-  if (params['thinking']) {
-    additionalModelRequestFields['thinking'] = params['thinking'];
-  }
   return additionalModelRequestFields;
 };
 
