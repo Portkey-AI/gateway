@@ -51,6 +51,7 @@ export async function* readAWSStream(
   reader: ReadableStreamDefaultReader,
   transformFunction: Function | undefined,
   fallbackChunkId: string,
+  strictOpenAiCompliance: boolean,
   gatewayRequest: Params
 ) {
   let buffer = new Uint8Array();
@@ -71,6 +72,7 @@ export async function* readAWSStream(
               payload,
               fallbackChunkId,
               streamState,
+              strictOpenAiCompliance,
               gatewayRequest
             );
             if (Array.isArray(transformedChunk)) {
@@ -106,6 +108,7 @@ export async function* readAWSStream(
           payload,
           fallbackChunkId,
           streamState,
+          strictOpenAiCompliance,
           gatewayRequest
         );
         if (Array.isArray(transformedChunk)) {
@@ -302,6 +305,7 @@ export function handleStreamingMode(
         reader,
         responseTransformer,
         fallbackChunkId,
+        strictOpenAiCompliance,
         gatewayRequest
       )) {
         await writer.write(encoder.encode(chunk));
