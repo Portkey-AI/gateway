@@ -39,10 +39,6 @@ export interface BedrockChatCompletionsParams extends Params {
   };
   anthropic_version?: string;
   countPenalty?: number;
-  thinking?: {
-    type: string;
-    budget_tokens: number;
-  };
 }
 
 export interface BedrockConverseAnthropicChatCompletionsParams
@@ -85,22 +81,6 @@ const getMessageTextContentArray = (message: Message): { text: string }[] => {
   ];
 };
 
-const transformAndAppendThinkingMessageItem = (
-  item: ContentType,
-  out: any[]
-) => {
-  if (item.type === 'thinking') {
-    out.push({
-      reasoningContent: {
-        reasoningText: {
-          signature: item.signature,
-          text: item.thinking,
-        },
-      },
-    });
-  }
-};
-
 const getMessageContent = (message: Message) => {
   if (!message.content && !message.tool_calls) return [];
   if (message.role === 'tool') {
@@ -125,8 +105,6 @@ const getMessageContent = (message: Message) => {
         out.push({
           text: item.text || '',
         });
-      } else if (item.type === 'thinking') {
-        transformAndAppendThinkingMessageItem(item, out);
       } else if (item.type === 'image_url' && item.image_url) {
         const mimetypeParts = item.image_url.url.split(';');
         const mimeType = mimetypeParts[0].split(':')[1];
@@ -312,12 +290,6 @@ type BedrockContentItem = {
     name: string;
     input: object;
   };
-  reasoningContent?: {
-    reasoningText: {
-      signature: string;
-      text: string;
-    };
-  };
   image?: {
     source: {
       bytes: string;
@@ -436,10 +408,6 @@ export interface BedrockChatCompleteStreamChunk {
       toolUseId: string;
       name: string;
       input: object;
-    };
-    reasoningContent?: {
-      signature: string;
-      text: string;
     };
   };
   start?: {
@@ -573,11 +541,6 @@ export const BedrockConverseAnthropicChatCompleteConfig: ProviderConfig = {
       transformAnthropicAdditionalModelRequestFields(params),
   },
   user: {
-    param: 'additionalModelRequestFields',
-    transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
-      transformAnthropicAdditionalModelRequestFields(params),
-  },
-  thinking: {
     param: 'additionalModelRequestFields',
     transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
       transformAnthropicAdditionalModelRequestFields(params),

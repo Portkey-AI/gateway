@@ -88,8 +88,9 @@ const transformAssistantMessage = (msg: Message): AnthropicMessage => {
     msg.content.length
   ) {
     msg.content.forEach((item) => {
-      if (['text', 'thinking'].includes(item.type))
+      if (item.type === 'text') {
         content.push(item as AnthropicContentItem);
+      }
     });
   }
   if (containsToolCalls) {
@@ -349,12 +350,6 @@ interface AnthorpicTextContentItem {
   text: string;
 }
 
-interface AnthropicThinkingContentItem {
-  type: 'thinking';
-  thinking: string;
-  signature: string;
-}
-
 interface AnthropicToolContentItem {
   type: 'tool_use';
   name: string;
@@ -362,10 +357,7 @@ interface AnthropicToolContentItem {
   input: Record<string, any>;
 }
 
-type AnthropicContentItem =
-  | AnthorpicTextContentItem
-  | AnthropicThinkingContentItem
-  | AnthropicToolContentItem;
+type AnthropicContentItem = AnthorpicTextContentItem | AnthropicToolContentItem;
 
 export interface AnthropicChatCompleteResponse {
   id: string;
@@ -389,10 +381,8 @@ export interface AnthropicChatCompleteStreamResponse {
   delta: {
     type: string;
     text?: string;
-    thinking?: string;
     partial_json?: string;
     stop_reason?: string;
-    signature?: string;
   };
   content_block?: {
     type: string;
