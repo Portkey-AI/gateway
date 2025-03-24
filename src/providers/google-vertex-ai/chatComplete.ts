@@ -898,7 +898,7 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
 
   const contentBlockObject = {
     index: parsedChunk.index,
-    delta: parsedChunk.delta ?? {},
+    delta: parsedChunk.delta ?? parsedChunk.content_block ?? {},
   };
   delete contentBlockObject.delta.type;
 

@@ -322,10 +322,11 @@ type BedrockContentItem = {
     input: object;
   };
   reasoningContent?: {
-    reasoningText: {
+    reasoningText?: {
       signature: string;
       text: string;
     };
+    redactedContent?: string;
   };
   image?: {
     source: {
@@ -382,11 +383,16 @@ const transformContentBlocks = (contentBlocks: BedrockContentItem[]) => {
         type: 'text',
         text: contentBlock.text,
       });
-    } else if (contentBlock.reasoningContent) {
+    } else if (contentBlock.reasoningContent?.reasoningText) {
       output.push({
         type: 'thinking',
         thinking: contentBlock.reasoningContent.reasoningText.text,
         signature: contentBlock.reasoningContent.reasoningText.signature,
+      });
+    } else if (contentBlock.reasoningContent?.redactedContent) {
+      output.push({
+        type: 'redacted_thinking',
+        data: contentBlock.reasoningContent.redactedContent,
       });
     }
   });
@@ -412,6 +418,7 @@ export const BedrockChatCompleteResponseTransform: (
   }
 
   if ('output' in response) {
+    console.log(JSON.stringify(response.output.message.content, null, 2));
     let content: string = '';
     content = response.output.message.content
       .filter((item) => item.text)
