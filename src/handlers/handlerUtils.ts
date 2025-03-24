@@ -16,6 +16,7 @@ import {
   STABILITY_AI,
   SAGEMAKER,
   FIREWORKS_AI,
+  CORTEX,
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
@@ -1072,6 +1073,10 @@ export function constructConfigFromRequestHeaders(
     }
   }
 
+  const cortexConfig = {
+    snowflakeAccount: requestHeaders[`x-${POWERED_BY}-snowflake-account`],
+  };
+
   const defaultsConfig = {
     input_guardrails: requestHeaders[`x-portkey-default-input-guardrails`]
       ? JSON.parse(requestHeaders[`x-portkey-default-input-guardrails`])
@@ -1171,6 +1176,13 @@ export function constructConfigFromRequestHeaders(
           ...stabilityAiConfig,
         };
       }
+
+      if (parsedConfigJson.provider === CORTEX) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...cortexConfig,
+        };
+      }
     }
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
@@ -1215,6 +1227,7 @@ export function constructConfigFromRequestHeaders(
       stabilityAiConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === FIREWORKS_AI &&
       fireworksConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === CORTEX && cortexConfig),
   };
 }
 
