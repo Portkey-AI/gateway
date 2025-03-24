@@ -383,28 +383,11 @@ export const BedrockChatCompleteResponseTransform: (
   }
 
   if ('output' in response) {
-    let content: string | ContentType[] = strictOpenAiCompliance ? '' : [];
-    if (!strictOpenAiCompliance) {
-      response.output.message.content.forEach((item) => {
-        if (item.text && Array.isArray(content)) {
-          content.push({
-            type: 'text',
-            text: item.text,
-          });
-        } else if (item.reasoningContent && Array.isArray(content)) {
-          content.push({
-            type: 'thinking',
-            thinking: item.reasoningContent.reasoningText.text,
-            signature: item.reasoningContent.reasoningText.signature,
-          });
-        }
-      });
-    } else {
-      content = response.output.message.content
-        .filter((item) => item.text)
-        .map((item) => item.text)
-        .join('\n');
-    }
+    let content: string = '';
+    content = response.output.message.content
+      .filter((item) => item.text)
+      .map((item) => item.text)
+      .join('\n');
     const responseObj: ChatCompletionResponse = {
       id: Date.now().toString(),
       object: 'chat.completion',
@@ -552,12 +535,6 @@ export const BedrockChatCompleteStreamChunkTransform: (
   }
 
   const content = parsedChunk.delta?.text;
-  const thinking = !strictOpenAiCompliance
-    ? parsedChunk.delta?.reasoningContent?.text
-    : undefined;
-  const signature = !strictOpenAiCompliance
-    ? parsedChunk.delta?.reasoningContent?.signature
-    : undefined;
 
   return `data: ${JSON.stringify({
     id: fallbackId,
@@ -571,8 +548,6 @@ export const BedrockChatCompleteStreamChunkTransform: (
         delta: {
           role: 'assistant',
           content,
-          thinking,
-          signature,
           tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
         },
       },

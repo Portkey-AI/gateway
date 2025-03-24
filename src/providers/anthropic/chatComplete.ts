@@ -332,10 +332,6 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
   user: {
     param: 'metadata.user_id',
   },
-  thinking: {
-    param: 'thinking',
-    required: false,
-  },
 };
 
 interface AnthropicErrorObject {
@@ -470,18 +466,10 @@ export const AnthropicChatCompleteResponseTransform: (
     const shouldSendCacheUsage =
       cache_creation_input_tokens || cache_read_input_tokens;
 
-    let content: AnthropicContentItem[] | string = strictOpenAiCompliance
-      ? ''
-      : [];
+    let content: string = '';
     response.content.forEach((item) => {
-      if (!strictOpenAiCompliance && Array.isArray(content)) {
-        if (['text', 'thinking'].includes(item.type)) {
-          content.push(item);
-        }
-      } else {
-        if (item.type === 'text') {
-          content += item.text;
-        }
+      if (item.type === 'text') {
+        content += item.text;
       }
     });
 
@@ -688,12 +676,6 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   }
 
   const content = parsedChunk.delta?.text;
-  const thinking = !strictOpenAiCompliance
-    ? parsedChunk.delta?.thinking
-    : undefined;
-  const signature = !strictOpenAiCompliance
-    ? parsedChunk.delta?.signature
-    : undefined;
 
   return (
     `data: ${JSON.stringify({
@@ -706,8 +688,6 @@ export const AnthropicChatCompleteStreamChunkTransform: (
         {
           delta: {
             content,
-            thinking,
-            signature,
             tool_calls: toolCalls.length ? toolCalls : undefined,
           },
           index: 0,
