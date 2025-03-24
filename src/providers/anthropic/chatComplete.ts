@@ -74,28 +74,30 @@ interface AnthropicMessage extends Message, AnthropicPromptCache {
 }
 
 const transformAssistantMessage = (msg: Message): AnthropicMessage => {
-  let content: AnthropicContentItem[] = [];
+  let transformedContent: AnthropicContentItem[] = [];
+  let inputContent: ContentType[] | string | undefined =
+    msg.content_blocks ?? msg.content;
   const containsToolCalls = msg.tool_calls && msg.tool_calls.length;
 
-  if (msg.content && typeof msg.content === 'string') {
-    content.push({
+  if (inputContent && typeof inputContent === 'string') {
+    transformedContent.push({
       type: 'text',
-      text: msg.content,
+      text: inputContent,
     });
   } else if (
-    msg.content &&
-    typeof msg.content === 'object' &&
-    msg.content.length
+    inputContent &&
+    typeof inputContent === 'object' &&
+    inputContent.length
   ) {
-    msg.content.forEach((item) => {
-      if (item.type === 'text') {
-        content.push(item as AnthropicContentItem);
+    inputContent.forEach((item) => {
+      if (item.type !== 'tool_use') {
+        transformedContent.push(item as AnthropicContentItem);
       }
     });
   }
   if (containsToolCalls) {
     msg.tool_calls.forEach((toolCall: any) => {
-      content.push({
+      transformedContent.push({
         type: 'tool_use',
         name: toolCall.function.name,
         id: toolCall.id,
@@ -105,7 +107,7 @@ const transformAssistantMessage = (msg: Message): AnthropicMessage => {
   }
   return {
     role: msg.role,
-    content: content as AnthropicMessageContentItem[],
+    content: transformedContent as AnthropicMessageContentItem[],
   };
 };
 
@@ -333,6 +335,10 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
   user: {
     param: 'metadata.user_id',
   },
+  thinking: {
+    param: 'thinking',
+    required: false,
+  },
 };
 
 interface AnthropicErrorObject {
@@ -379,7 +385,7 @@ export interface AnthropicChatCompleteStreamResponse {
   type: string;
   index: number;
   delta: {
-    type: string;
+    type?: string;
     text?: string;
     partial_json?: string;
     stop_reason?: string;
@@ -488,6 +494,11 @@ export const AnthropicChatCompleteResponseTransform: (
           message: {
             role: 'assistant',
             content,
+            ...(!strictOpenAiCompliance && {
+              content_blocks: response.content.filter(
+                (item) => item.type !== 'tool_use'
+              ),
+            }),
             tool_calls: toolCalls.length ? toolCalls : undefined,
           },
           index: 0,
@@ -667,6 +678,12 @@ export const AnthropicChatCompleteStreamChunkTransform: (
 
   const content = parsedChunk.delta?.text;
 
+  const contentBlockObject = {
+    index: parsedChunk.index,
+    delta: parsedChunk.delta ?? {},
+  };
+  delete contentBlockObject.delta.type;
+
   return (
     `data: ${JSON.stringify({
       id: fallbackId,
@@ -679,6 +696,10 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           delta: {
             content,
             tool_calls: toolCalls.length ? toolCalls : undefined,
+            ...(!strictOpenAiCompliance &&
+              !toolCalls.length && {
+                content_blocks: [contentBlockObject],
+              }),
           },
           index: 0,
           logprobs: null,

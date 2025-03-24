@@ -895,12 +895,12 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
   }
 
   const content = parsedChunk.delta?.text;
-  const thinking = !strictOpenAiCompliance
-    ? parsedChunk.delta?.thinking
-    : undefined;
-  const signature = !strictOpenAiCompliance
-    ? parsedChunk.delta?.signature
-    : undefined;
+
+  const contentBlockObject = {
+    index: parsedChunk.index,
+    delta: parsedChunk.delta ?? {},
+  };
+  delete contentBlockObject.delta.type;
 
   return (
     `data: ${JSON.stringify({
@@ -913,9 +913,11 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
         {
           delta: {
             content,
-            thinking,
-            signature,
             tool_calls: toolCalls.length ? toolCalls : undefined,
+            ...(!strictOpenAiCompliance &&
+              !toolCalls.length && {
+                content_blocks: [contentBlockObject],
+              }),
           },
           index: 0,
           logprobs: null,

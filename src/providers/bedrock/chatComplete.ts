@@ -10,6 +10,7 @@ import {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
+  StreamContentBlock,
 } from '../types';
 import {
   generateErrorResponse,
@@ -45,6 +46,10 @@ export interface BedrockConverseAnthropicChatCompletionsParams
   extends BedrockChatCompletionsParams {
   anthropic_version?: string;
   user?: string;
+  thinking?: {
+    type: string;
+    budget_tokens: number;
+  };
 }
 
 export interface BedrockConverseCohereChatCompletionsParams
@@ -81,6 +86,28 @@ const getMessageTextContentArray = (message: Message): { text: string }[] => {
   ];
 };
 
+const transformAndAppendThinkingMessageItem = (
+  item: ContentType,
+  out: any[]
+) => {
+  if (item.type === 'thinking') {
+    out.push({
+      reasoningContent: {
+        reasoningText: {
+          signature: item.signature,
+          text: item.thinking,
+        },
+      },
+    });
+  } else if (item.type === 'redacted_thinking') {
+    out.push({
+      reasoningContent: {
+        redactedContent: item.data,
+      },
+    });
+  }
+};
+
 const getMessageContent = (message: Message) => {
   if (!message.content && !message.tool_calls) return [];
   if (message.role === 'tool') {
@@ -94,17 +121,21 @@ const getMessageContent = (message: Message) => {
     ];
   }
   const out: BedrockContentItem[] = [];
+  const inputContent: ContentType[] | string | undefined =
+    message.content_blocks ?? message.content;
   // if message is a string, return a single element array with the text
-  if (typeof message.content === 'string') {
+  if (typeof inputContent === 'string') {
     out.push({
-      text: message.content,
+      text: inputContent,
     });
-  } else if (message.content) {
-    message.content.forEach((item) => {
+  } else if (inputContent) {
+    inputContent.forEach((item) => {
       if (item.type === 'text') {
         out.push({
           text: item.text || '',
         });
+      } else if (item.type === 'thinking') {
+        transformAndAppendThinkingMessageItem(item, out);
       } else if (item.type === 'image_url' && item.image_url) {
         const mimetypeParts = item.image_url.url.split(';');
         const mimeType = mimetypeParts[0].split(':')[1];
@@ -290,6 +321,12 @@ type BedrockContentItem = {
     name: string;
     input: object;
   };
+  reasoningContent?: {
+    reasoningText: {
+      signature: string;
+      text: string;
+    };
+  };
   image?: {
     source: {
       bytes: string;
@@ -336,6 +373,26 @@ export const BedrockErrorResponseTransform: (
   return undefined;
 };
 
+const transformContentBlocks = (contentBlocks: BedrockContentItem[]) => {
+  const output: ContentType[] = [];
+  contentBlocks.forEach((contentBlock) => {
+    let type;
+    if (contentBlock.text) {
+      output.push({
+        type: 'text',
+        text: contentBlock.text,
+      });
+    } else if (contentBlock.reasoningContent) {
+      output.push({
+        type: 'thinking',
+        thinking: contentBlock.reasoningContent.reasoningText.text,
+        signature: contentBlock.reasoningContent.reasoningText.signature,
+      });
+    }
+  });
+  return output;
+};
+
 export const BedrockChatCompleteResponseTransform: (
   response: BedrockChatCompletionResponse | BedrockErrorResponse,
   responseStatus: number,
@@ -360,6 +417,10 @@ export const BedrockChatCompleteResponseTransform: (
       .filter((item) => item.text)
       .map((item) => item.text)
       .join('\n');
+    const contentBlocks = !strictOpenAiCompliance
+      ? transformContentBlocks(response.output.message.content)
+      : undefined;
+
     const responseObj: ChatCompletionResponse = {
       id: Date.now().toString(),
       object: 'chat.completion',
@@ -372,6 +433,9 @@ export const BedrockChatCompleteResponseTransform: (
           message: {
             role: 'assistant',
             content,
+            ...(!strictOpenAiCompliance && {
+              content_blocks: contentBlocks,
+            }),
           },
           finish_reason: response.stopReason,
         },
@@ -408,6 +472,11 @@ export interface BedrockChatCompleteStreamChunk {
       toolUseId: string;
       name: string;
       input: object;
+    };
+    reasoningContent?: {
+      text?: string;
+      signature?: string;
+      redactedContent?: string;
     };
   };
   start?: {
@@ -504,6 +573,21 @@ export const BedrockChatCompleteStreamChunkTransform: (
 
   const content = parsedChunk.delta?.text;
 
+  const contentBlockObject: StreamContentBlock = {
+    index: parsedChunk.contentBlockIndex ?? 0,
+    delta: {},
+  };
+  if (parsedChunk.delta?.reasoningContent?.text)
+    contentBlockObject.delta.thinking = parsedChunk.delta.reasoningContent.text;
+  if (parsedChunk.delta?.reasoningContent?.signature)
+    contentBlockObject.delta.signature =
+      parsedChunk.delta.reasoningContent.signature;
+  if (parsedChunk.delta?.text)
+    contentBlockObject.delta.text = parsedChunk.delta.text;
+  if (parsedChunk.delta?.reasoningContent?.redactedContent)
+    contentBlockObject.delta.redactedContent =
+      parsedChunk.delta.reasoningContent.redactedContent;
+
   return `data: ${JSON.stringify({
     id: fallbackId,
     object: 'chat.completion.chunk',
@@ -516,6 +600,10 @@ export const BedrockChatCompleteStreamChunkTransform: (
         delta: {
           role: 'assistant',
           content,
+          ...(!strictOpenAiCompliance &&
+            !toolCalls.length && {
+              content_blocks: [contentBlockObject],
+            }),
           tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
         },
       },
@@ -541,6 +629,11 @@ export const BedrockConverseAnthropicChatCompleteConfig: ProviderConfig = {
       transformAnthropicAdditionalModelRequestFields(params),
   },
   user: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
+      transformAnthropicAdditionalModelRequestFields(params),
+  },
+  thinking: {
     param: 'additionalModelRequestFields',
     transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
       transformAnthropicAdditionalModelRequestFields(params),
