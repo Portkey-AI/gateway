@@ -74,27 +74,30 @@ interface AnthropicMessage extends Message, AnthropicPromptCache {
 }
 
 const transformAssistantMessage = (msg: Message): AnthropicMessage => {
-  let content: AnthropicContentItem[] = [];
+  let transformedContent: AnthropicContentItem[] = [];
+  let inputContent: ContentType[] | string | undefined =
+    msg.content_blocks ?? msg.content;
   const containsToolCalls = msg.tool_calls && msg.tool_calls.length;
 
-  if (msg.content && typeof msg.content === 'string') {
-    content.push({
+  if (inputContent && typeof inputContent === 'string') {
+    transformedContent.push({
       type: 'text',
-      text: msg.content,
+      text: inputContent,
     });
   } else if (
-    msg.content &&
-    typeof msg.content === 'object' &&
-    msg.content.length
+    inputContent &&
+    typeof inputContent === 'object' &&
+    inputContent.length
   ) {
-    msg.content.forEach((item) => {
-      if (['text', 'thinking'].includes(item.type))
-        content.push(item as AnthropicContentItem);
+    inputContent.forEach((item) => {
+      if (item.type !== 'tool_use') {
+        transformedContent.push(item as AnthropicContentItem);
+      }
     });
   }
   if (containsToolCalls) {
     msg.tool_calls.forEach((toolCall: any) => {
-      content.push({
+      transformedContent.push({
         type: 'tool_use',
         name: toolCall.function.name,
         id: toolCall.id,
@@ -104,7 +107,7 @@ const transformAssistantMessage = (msg: Message): AnthropicMessage => {
   }
   return {
     role: msg.role,
-    content: content as AnthropicMessageContentItem[],
+    content: transformedContent as AnthropicMessageContentItem[],
   };
 };
 
@@ -353,12 +356,6 @@ interface AnthorpicTextContentItem {
   text: string;
 }
 
-interface AnthropicThinkingContentItem {
-  type: 'thinking';
-  thinking: string;
-  signature: string;
-}
-
 interface AnthropicToolContentItem {
   type: 'tool_use';
   name: string;
@@ -366,10 +363,7 @@ interface AnthropicToolContentItem {
   input: Record<string, any>;
 }
 
-type AnthropicContentItem =
-  | AnthorpicTextContentItem
-  | AnthropicThinkingContentItem
-  | AnthropicToolContentItem;
+type AnthropicContentItem = AnthorpicTextContentItem | AnthropicToolContentItem;
 
 export interface AnthropicChatCompleteResponse {
   id: string;
@@ -391,12 +385,10 @@ export interface AnthropicChatCompleteStreamResponse {
   type: string;
   index: number;
   delta: {
-    type: string;
+    type?: string;
     text?: string;
-    thinking?: string;
     partial_json?: string;
     stop_reason?: string;
-    signature?: string;
   };
   content_block?: {
     type: string;
@@ -470,18 +462,10 @@ export const AnthropicChatCompleteResponseTransform: (
     const shouldSendCacheUsage =
       cache_creation_input_tokens || cache_read_input_tokens;
 
-    let content: AnthropicContentItem[] | string = strictOpenAiCompliance
-      ? ''
-      : [];
+    let content: string = '';
     response.content.forEach((item) => {
-      if (!strictOpenAiCompliance && Array.isArray(content)) {
-        if (['text', 'thinking'].includes(item.type)) {
-          content.push(item);
-        }
-      } else {
-        if (item.type === 'text') {
-          content += item.text;
-        }
+      if (item.type === 'text') {
+        content += item.text;
       }
     });
 
@@ -510,6 +494,11 @@ export const AnthropicChatCompleteResponseTransform: (
           message: {
             role: 'assistant',
             content,
+            ...(!strictOpenAiCompliance && {
+              content_blocks: response.content.filter(
+                (item) => item.type !== 'tool_use'
+              ),
+            }),
             tool_calls: toolCalls.length ? toolCalls : undefined,
           },
           index: 0,
@@ -688,12 +677,12 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   }
 
   const content = parsedChunk.delta?.text;
-  const thinking = !strictOpenAiCompliance
-    ? parsedChunk.delta?.thinking
-    : undefined;
-  const signature = !strictOpenAiCompliance
-    ? parsedChunk.delta?.signature
-    : undefined;
+
+  const contentBlockObject = {
+    index: parsedChunk.index,
+    delta: parsedChunk.delta ?? parsedChunk.content_block ?? {},
+  };
+  delete contentBlockObject.delta.type;
 
   return (
     `data: ${JSON.stringify({
@@ -706,9 +695,11 @@ export const AnthropicChatCompleteStreamChunkTransform: (
         {
           delta: {
             content,
-            thinking,
-            signature,
             tool_calls: toolCalls.length ? toolCalls : undefined,
+            ...(!strictOpenAiCompliance &&
+              !toolCalls.length && {
+                content_blocks: [contentBlockObject],
+              }),
           },
           index: 0,
           logprobs: null,

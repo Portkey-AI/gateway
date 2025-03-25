@@ -385,3 +385,13 @@ export interface CreateBatchRequest {
   endpoint: string;
   completion_window: string;
 }
+
+export interface StreamContentBlock {
+  index: number;
+  delta: {
+    text?: string;
+    thinking?: string;
+    signature?: string;
+    data?: string;
+  };
+}

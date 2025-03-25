@@ -228,6 +228,7 @@ export interface ContentType {
     url: string;
     detail?: string;
   };
+  data?: string;
 }
 
 export interface ToolCall {
@@ -267,6 +268,8 @@ export interface Message {
   role: OpenAIMessageRole;
   /** The content of the message. */
   content?: string | ContentType[];
+  /** The content blocks of the message. */
+  content_blocks?: ContentType[];
   /** The name of the function to call, if any. */
   name?: string;
   /** The function call to make, if any. */
