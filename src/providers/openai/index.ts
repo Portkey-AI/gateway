@@ -34,6 +34,14 @@ import { OpenAIRetrieveBatchResponseTransform } from './retrieveBatch';
 import { OpenAICancelBatchResponseTransform } from './cancelBatch';
 import { OpenAIListBatchesResponseTransform } from './listBatches';
 import { OpenAIGetBatchOutputRequestHandler } from './getBatchOutput';
+import { OpenAIListChatCompletionsResponseTransform } from './listChatCompletions';
+import { OpenAIGetChatMessagesResponseTransform } from './getChatMessages';
+import { OpenAIDeleteChatCompletionResponseTransform } from './deleteChatCompletions';
+import { OpenAIGetChatCompletionResponseTransform } from './getChatCompletion';
+import {
+  OpenAIUpdateChatCompletionResponseTransform,
+  OpenAIUpdateChatCompletionConfig,
+} from './updateChatCompletions';
 import {
   OpenAICreateFinetuneConfig,
   OpenAIFinetuneResponseTransform,
@@ -52,6 +60,7 @@ const OpenAIConfig: ProviderConfigs = {
   createBatch: OpenAICreateBatchConfig,
   createFinetune: OpenAICreateFinetuneConfig,
   cancelBatch: {},
+  updateChatCompletion: OpenAIUpdateChatCompletionConfig,
   cancelFinetune: {},
   requestHandlers: {
     getBatchOutput: OpenAIGetBatchOutputRequestHandler,
@@ -79,6 +88,11 @@ const OpenAIConfig: ProviderConfigs = {
     retrieveBatch: OpenAIRetrieveBatchResponseTransform,
     cancelBatch: OpenAICancelBatchResponseTransform,
     listBatches: OpenAIListBatchesResponseTransform,
+    listChatCompletions: OpenAIListChatCompletionsResponseTransform,
+    getChatCompletion: OpenAIGetChatCompletionResponseTransform,
+    getChatCompletionMessages: OpenAIGetChatMessagesResponseTransform,
+    updateChatCompletion: OpenAIUpdateChatCompletionResponseTransform,
+    deleteChatCompletion: OpenAIDeleteChatCompletionResponseTransform,
     createFinetune: OpenAIFinetuneResponseTransform,
     retrieveFinetune: OpenAIFinetuneResponseTransform,
   },
