@@ -359,5 +359,7 @@ export async function handleJSONToStreamResponse(
       ...Object.fromEntries(response.headers),
       'content-type': CONTENT_TYPES.EVENT_STREAM,
     }),
+    status: response.status,
+    statusText: response.statusText,
   });
 }
