@@ -187,65 +187,6 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
   };
 
   for (const [index, choice] of choices.entries()) {
-    if (
-      choice.message &&
-      choice.message.tool_calls &&
-      choice.message.tool_calls.length
-    ) {
-      for (const [
-        toolCallIndex,
-        toolCall,
-      ] of choice.message.tool_calls.entries()) {
-        const toolCallNameChunk = {
-          index: toolCallIndex,
-          id: toolCall.id,
-          type: 'function',
-          function: {
-            name: toolCall.function.name,
-            arguments: '',
-          },
-        };
-
-        const toolCallArgumentChunk = {
-          index: toolCallIndex,
-          function: {
-            arguments: toolCall.function.arguments,
-          },
-        };
-
-        streamChunkArray.push(
-          `data: ${JSON.stringify({
-            ...streamChunkTemplate,
-            choices: [
-              {
-                index: index,
-                delta: {
-                  role: 'assistant',
-                  content: null,
-                  tool_calls: [toolCallNameChunk],
-                },
-              },
-            ],
-          })}\n\n`
-        );
-
-        streamChunkArray.push(
-          `data: ${JSON.stringify({
-            ...streamChunkTemplate,
-            choices: [
-              {
-                index: index,
-                delta: {
-                  role: 'assistant',
-                  tool_calls: [toolCallArgumentChunk],
-                },
-              },
-            ],
-          })}\n\n`
-        );
-      }
-    }
-
     if (choice.message?.content_blocks) {
       for (const [
         contentBlockIndex,
@@ -353,6 +294,65 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
             );
           }
         }
+      }
+    }
+
+    if (
+      choice.message &&
+      choice.message.tool_calls &&
+      choice.message.tool_calls.length
+    ) {
+      for (const [
+        toolCallIndex,
+        toolCall,
+      ] of choice.message.tool_calls.entries()) {
+        const toolCallNameChunk = {
+          index: toolCallIndex,
+          id: toolCall.id,
+          type: 'function',
+          function: {
+            name: toolCall.function.name,
+            arguments: '',
+          },
+        };
+
+        const toolCallArgumentChunk = {
+          index: toolCallIndex,
+          function: {
+            arguments: toolCall.function.arguments,
+          },
+        };
+
+        streamChunkArray.push(
+          `data: ${JSON.stringify({
+            ...streamChunkTemplate,
+            choices: [
+              {
+                index: index,
+                delta: {
+                  role: 'assistant',
+                  content: null,
+                  tool_calls: [toolCallNameChunk],
+                },
+              },
+            ],
+          })}\n\n`
+        );
+
+        streamChunkArray.push(
+          `data: ${JSON.stringify({
+            ...streamChunkTemplate,
+            choices: [
+              {
+                index: index,
+                delta: {
+                  role: 'assistant',
+                  tool_calls: [toolCallArgumentChunk],
+                },
+              },
+            ],
+          })}\n\n`
+        );
       }
     }
 
