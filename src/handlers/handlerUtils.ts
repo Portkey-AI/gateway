@@ -448,7 +448,9 @@ export async function tryPost(
 
   providerOption.retry = {
     attempts: providerOption.retry?.attempts ?? 0,
-    onStatusCodes: providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES,
+    onStatusCodes: providerOption.retry?.attempts
+      ? providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES
+      : [],
   };
 
   async function createResponse(
