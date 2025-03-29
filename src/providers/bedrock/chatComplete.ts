@@ -606,7 +606,8 @@ export const BedrockChatCompleteStreamChunkTransform: (
           role: 'assistant',
           content,
           ...(!strictOpenAiCompliance &&
-            !toolCalls.length && {
+            !toolCalls.length &&
+            Object.keys(contentBlockObject.delta).length > 0 && {
               content_blocks: [contentBlockObject],
             }),
           tool_calls: toolCalls.length > 0 ? toolCalls : undefined,

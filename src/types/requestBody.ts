@@ -259,6 +259,11 @@ export type OpenAIMessageRole =
   | 'tool'
   | 'developer';
 
+export interface ContentBlockChunk extends Omit<ContentType, 'type'> {
+  index: number;
+  type?: string;
+}
+
 /**
  * A message in the conversation.
  * @interface
