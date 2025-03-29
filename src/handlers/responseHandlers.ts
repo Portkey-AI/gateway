@@ -265,7 +265,10 @@ export async function afterRequestHookHandler(
       ? span.getContext().response.json
       : responseJSON;
 
-    if (failedBeforeRequestHooks.length || failedAfterRequestHooks.length) {
+    if (
+      (failedBeforeRequestHooks.length || failedAfterRequestHooks.length) &&
+      response.status === 200
+    ) {
       return createHookResponse(response, responseData, hooksResult, {
         status: 246,
         statusText: 'Hooks failed',
