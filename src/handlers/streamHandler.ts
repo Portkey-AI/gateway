@@ -11,6 +11,7 @@ import {
 import { VertexLlamaChatCompleteStreamChunkTransform } from '../providers/google-vertex-ai/chatComplete';
 import { OpenAIChatCompleteResponse } from '../providers/openai/chatComplete';
 import { OpenAICompleteResponse } from '../providers/openai/complete';
+import { Params } from '../types/requestBody';
 import { getStreamModeSplitPattern, type SplitPatternType } from '../utils';
 
 function readUInt32BE(buffer: Uint8Array, offset: number) {
@@ -49,7 +50,9 @@ function concatenateUint8Arrays(a: Uint8Array, b: Uint8Array): Uint8Array {
 export async function* readAWSStream(
   reader: ReadableStreamDefaultReader,
   transformFunction: Function | undefined,
-  fallbackChunkId: string
+  fallbackChunkId: string,
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
 ) {
   let buffer = new Uint8Array();
   let expectedLength = 0;
@@ -68,7 +71,9 @@ export async function* readAWSStream(
             const transformedChunk = transformFunction(
               payload,
               fallbackChunkId,
-              streamState
+              streamState,
+              strictOpenAiCompliance,
+              gatewayRequest
             );
             if (Array.isArray(transformedChunk)) {
               for (const item of transformedChunk) {
@@ -102,7 +107,9 @@ export async function* readAWSStream(
         const transformedChunk = transformFunction(
           payload,
           fallbackChunkId,
-          streamState
+          streamState,
+          strictOpenAiCompliance,
+          gatewayRequest
         );
         if (Array.isArray(transformedChunk)) {
           for (const item of transformedChunk) {
@@ -124,7 +131,8 @@ export async function* readStream(
   transformFunction: Function | undefined,
   isSleepTimeRequired: boolean,
   fallbackChunkId: string,
-  strictOpenAiCompliance: boolean
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
 ) {
   let buffer = '';
   const decoder = new TextDecoder();
@@ -140,7 +148,8 @@ export async function* readStream(
             buffer,
             fallbackChunkId,
             streamState,
-            strictOpenAiCompliance
+            strictOpenAiCompliance,
+            gatewayRequest
           );
         } else {
           yield buffer;
@@ -171,7 +180,8 @@ export async function* readStream(
               part,
               fallbackChunkId,
               streamState,
-              strictOpenAiCompliance
+              strictOpenAiCompliance,
+              gatewayRequest
             );
             if (transformedChunk !== undefined) {
               yield transformedChunk;
@@ -215,7 +225,8 @@ export async function handleNonStreamingMode(
   response: Response,
   responseTransformer: Function | undefined,
   strictOpenAiCompliance: boolean,
-  gatewayRequestUrl: string
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
 ): Promise<{
   response: Response;
   json: Record<string, any>;
@@ -241,7 +252,8 @@ export async function handleNonStreamingMode(
       response.status,
       response.headers,
       strictOpenAiCompliance,
-      gatewayRequestUrl
+      gatewayRequestUrl,
+      gatewayRequest
     );
   }
 
@@ -270,7 +282,8 @@ export function handleStreamingMode(
   proxyProvider: string,
   responseTransformer: Function | undefined,
   requestURL: string,
-  strictOpenAiCompliance: boolean
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
 ): Response {
   const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);
   // If the provider doesn't supply completion id,
@@ -291,7 +304,9 @@ export function handleStreamingMode(
       for await (const chunk of readAWSStream(
         reader,
         responseTransformer,
-        fallbackChunkId
+        fallbackChunkId,
+        strictOpenAiCompliance,
+        gatewayRequest
       )) {
         await writer.write(encoder.encode(chunk));
       }
@@ -305,7 +320,8 @@ export function handleStreamingMode(
         responseTransformer,
         isSleepTimeRequired,
         fallbackChunkId,
-        strictOpenAiCompliance
+        strictOpenAiCompliance,
+        gatewayRequest
       )) {
         await writer.write(encoder.encode(chunk));
       }

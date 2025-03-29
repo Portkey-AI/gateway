@@ -135,8 +135,17 @@ export const CohereCompleteResponseTransform: (
 
 export const CohereCompleteStreamChunkTransform: (
   response: string,
-  fallbackId: string
-) => string = (responseChunk, fallbackId) => {
+  fallbackId: string,
+  _streamState: Record<string, boolean>,
+  _strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
+) => string = (
+  responseChunk,
+  fallbackId,
+  _streamState,
+  _strictOpenAiCompliance,
+  gatewayRequest
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
@@ -152,7 +161,7 @@ export const CohereCompleteStreamChunkTransform: (
       id: parsedChunk.id ?? fallbackId,
       object: 'text_completion',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: gatewayRequest.model || '',
       provider: COHERE,
       choices: [
         {
