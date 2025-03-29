@@ -238,7 +238,10 @@ export async function afterRequestHookHandler(
 
     if (!responseJSON) {
       // For streaming responses, check if beforeRequestHooks failed without deny enabled.
-      if (failedBeforeRequestHooks.length || failedAfterRequestHooks.length) {
+      if (
+        (failedBeforeRequestHooks.length || failedAfterRequestHooks.length) &&
+        response.status === 200
+      ) {
         // This should not be a major performance bottleneck as it is just copying the headers and using the body as is.
         return new Response(response.body, {
           ...response,
