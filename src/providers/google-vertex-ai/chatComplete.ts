@@ -873,7 +873,7 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
   }
   const isToolBlockDelta: boolean =
     parsedChunk.type === 'content_block_delta' &&
-    !!parsedChunk.delta.partial_json;
+    parsedChunk.delta?.partial_json != undefined;
 
   if (isToolBlockStart && parsedChunk.content_block) {
     toolCalls.push({
