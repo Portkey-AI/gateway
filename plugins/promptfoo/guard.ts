@@ -22,7 +22,11 @@ export const handler: PluginHandler = async (
       input: getText(context, eventType),
     };
 
-    const result = await postPromptfoo<GuardResult>('guard', guardObject);
+    const result = await postPromptfoo<GuardResult>(
+      'guard',
+      guardObject,
+      parameters.timeout
+    );
 
     // For now, we only check for jailbreak
     if (result.results[0].categories.jailbreak) {

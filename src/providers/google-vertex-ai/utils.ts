@@ -1,7 +1,14 @@
-import { GoogleErrorResponse, GoogleResponseCandidate } from './types';
+import {
+  GoogleBatchRecord,
+  GoogleErrorResponse,
+  GoogleFinetuneRecord,
+  GoogleResponseCandidate,
+} from './types';
 import { generateErrorResponse } from '../utils';
-import { fileExtensionMimeTypeMap, GOOGLE_VERTEX_AI } from '../../globals';
-import { ErrorResponse, Logprobs } from '../types';
+import { GOOGLE_VERTEX_AI, fileExtensionMimeTypeMap } from '../../globals';
+import { ErrorResponse, FinetuneRequest, Logprobs } from '../types';
+import { Context } from 'hono';
+import { env } from 'hono/adapter';
 
 /**
  * Encodes an object as a Base64 URL-encoded string.
@@ -75,9 +82,22 @@ async function importPrivateKey(pem: string): Promise<CryptoKey> {
 }
 
 export const getAccessToken = async (
+  c: Context,
   serviceAccountInfo: Record<string, any>
 ): Promise<string> => {
   try {
+    let cacheKey = `${serviceAccountInfo.project_id}/${serviceAccountInfo.private_key_id}/${serviceAccountInfo.client_email}`;
+    // try to get from cache
+    try {
+      const getFromCacheByKey = c.get('getFromCacheByKey');
+      const resp = getFromCacheByKey
+        ? await getFromCacheByKey(env(c), cacheKey)
+        : null;
+      if (resp) {
+        return resp;
+      }
+    } catch (err) {}
+
     const scope = 'https://www.googleapis.com/auth/cloud-platform';
     const iat = Math.floor(Date.now() / 1000);
     const exp = iat + 3600; // Token expiration time (1 hour)
@@ -117,6 +137,10 @@ export const getAccessToken = async (
     });
 
     const tokenJson: Record<string, any> = await tokenResponse.json();
+    const putInCacheWithValue = c.get('putInCacheWithValue');
+    if (putInCacheWithValue && cacheKey) {
+      await putInCacheWithValue(env(c), cacheKey, tokenJson.access_token, 3000); // 50 minutes
+    }
 
     return tokenJson.access_token;
   } catch (err) {
@@ -144,8 +168,7 @@ export const getMimeType = (url: string): string | undefined => {
   const extension = urlParts[
     urlParts.length - 1
   ] as keyof typeof fileExtensionMimeTypeMap;
-  const mimeType = fileExtensionMimeTypeMap[extension];
-  return mimeType;
+  return fileExtensionMimeTypeMap[extension];
 };
 
 export const GoogleErrorResponseTransform: (
@@ -221,14 +244,197 @@ export const recursivelyDeleteUnsupportedParameters = (obj: any) => {
   }
 };
 
+// Generate Gateway specific response.
+export const GoogleResponseHandler = (
+  response: Response | string | Record<string, unknown>,
+  status: number
+) => {
+  if (status !== 200) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: response,
+        param: null,
+        provider: GOOGLE_VERTEX_AI,
+      }),
+      { status: status || 500, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  if (!(response instanceof Response)) {
+    const _response =
+      typeof response === 'object' ? JSON.stringify(response) : response;
+    return new Response(_response as string, {
+      status: status || 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  return response as Response;
+};
+
+export const googleBatchStatusToOpenAI = (
+  status: GoogleBatchRecord['state']
+) => {
+  switch (status) {
+    case 'JOB_STATE_CANCELLING':
+      return 'cancelling';
+    case 'JOB_STATE_CANCELLED':
+      return 'cancelled';
+    case 'JOB_STATE_EXPIRED':
+      return 'expired';
+    case 'JOB_STATE_FAILED':
+      return 'failed';
+    case 'JOB_STATE_PARTIALLY_SUCCEEDED':
+    case 'JOB_STATE_SUCCEEDED':
+      return 'completed';
+    case 'JOB_STATE_RUNNING':
+    case 'JOB_STATE_UPDATING':
+      return 'in_progress';
+    case 'JOB_STATE_PAUSED':
+    case 'JOB_STATE_PENDING':
+    case 'JOB_STATE_QUEUED':
+    case 'JOB_STATE_UNSPECIFIED':
+    default:
+      return 'validating';
+  }
+};
+
+export const googleFinetuneStatusToOpenAI = (
+  status: GoogleFinetuneRecord['state']
+) => {
+  switch (status) {
+    case 'JOB_STATE_CANCELLED':
+    case 'JOB_STATE_CANCELLING':
+    case 'JOB_STATE_EXPIRED':
+      return 'cancelled';
+    case 'JOB_STATE_FAILED':
+      return 'failed';
+    case 'JOB_STATE_PARTIALLY_SUCCEEDED':
+    case 'JOB_STATE_SUCCEEDED':
+      return 'succeeded';
+    case 'JOB_STATE_PAUSED':
+    case 'JOB_STATE_PENDING':
+    case 'JOB_STATE_QUEUED':
+      return 'queued';
+    case 'JOB_STATE_RUNNING':
+    case 'JOB_STATE_UPDATING':
+      return 'running';
+    case 'JOB_STATE_UNSPECIFIED':
+      return 'queued';
+    default:
+      return 'queued';
+  }
+};
+
+const getTimeKey = (status: GoogleBatchRecord['state'], value: string) => {
+  if (status === 'JOB_STATE_FAILED') {
+    return { failed_at: new Date(value).getTime() };
+  }
+
+  if (status === 'JOB_STATE_SUCCEEDED') {
+    return { completed_at: new Date(value).getTime() };
+  }
+
+  if (status === 'JOB_STATE_CANCELLED') {
+    return { cancelled_at: new Date(value).getTime() };
+  }
+
+  if (status === 'JOB_STATE_EXPIRED') {
+    return { failed_at: new Date(value).getTime() };
+  }
+  return {};
+};
+
+export const GoogleToOpenAIBatch = (response: GoogleBatchRecord) => {
+  const jobId = response.name.split('/').at(-1);
+  const total = Object.values(response.completionsStats ?? {}).reduce(
+    (acc, current) => acc + Number.parseInt(current),
+    0
+  );
+
+  const outputFileId = response.outputInfo
+    ? `${response.outputInfo?.gcsOutputDirectory}/predictions.jsonl`
+    : response.outputConfig.gcsDestination.outputUriPrefix;
+
+  return {
+    id: jobId,
+    object: 'batch',
+    endpoint: '/generateContent',
+    input_file_id: encodeURIComponent(
+      response.inputConfig.gcsSource?.uris?.at(0) ?? ''
+    ),
+    completion_window: null,
+    status: googleBatchStatusToOpenAI(response.state),
+    output_file_id: outputFileId,
+    // Same as output_file_id
+    error_file_id: response.outputConfig.gcsDestination.outputUriPrefix,
+    created_at: new Date(response.createTime).getTime(),
+    ...getTimeKey(response.state, response.endTime),
+    in_progress_at: new Date(response.startTime).getTime(),
+    ...getTimeKey(response.state, response.updateTime),
+    request_counts: {
+      total: total,
+      completed: response.completionsStats?.successfulCount,
+      failed: response.completionsStats?.failedCount,
+    },
+    ...(response.error && {
+      errors: {
+        object: 'list',
+        data: [response.error],
+      },
+    }),
+  };
+};
+
+export const fetchGoogleCustomEndpoint = async ({
+  authorization,
+  method,
+  url,
+  body,
+}: {
+  url: string;
+  body?: ReadableStream | Record<string, unknown>;
+  authorization: string;
+  method: string;
+}) => {
+  const result = { response: null, error: null, status: null };
+  try {
+    const options = {
+      ...(method !== 'GET' &&
+        body && {
+          body: typeof body === 'object' ? JSON.stringify(body) : body,
+        }),
+      method: method,
+      headers: {
+        Authorization: authorization,
+        'Content-Type': 'application/json',
+      },
+    };
+
+    const request = await fetch(url, options);
+    if (!request.ok) {
+      const error = await request.text();
+      result.error = error as any;
+      result.status = request.status as any;
+    }
+
+    const response = await request.json();
+    result.response = response as any;
+  } catch (error) {
+    result.error = error as any;
+  }
+  return result;
+};
+
 export const transformVertexLogprobs = (
   generation: GoogleResponseCandidate
 ) => {
-  let logprobsContent: Logprobs[] = [];
+  const logprobsContent: Logprobs[] = [];
   if (!generation.logprobsResult) return null;
   if (generation.logprobsResult?.chosenCandidates) {
     generation.logprobsResult.chosenCandidates.forEach((candidate) => {
-      let bytes = [];
+      const bytes = [];
       for (const char of candidate.token) {
         bytes.push(char.charCodeAt(0));
       }
@@ -242,9 +448,9 @@ export const transformVertexLogprobs = (
   if (generation.logprobsResult?.topCandidates) {
     generation.logprobsResult.topCandidates.forEach(
       (topCandidatesForIndex, index) => {
-        let topLogprobs = [];
+        const topLogprobs = [];
         for (const candidate of topCandidatesForIndex.candidates) {
-          let bytes = [];
+          const bytes = [];
           for (const char of candidate.token) {
             bytes.push(char.charCodeAt(0));
           }
@@ -259,4 +465,72 @@ export const transformVertexLogprobs = (
     );
   }
   return logprobsContent;
+};
+
+const populateHyperparameters = (value: FinetuneRequest) => {
+  let hyperParameters = value.hyperparameters ?? {};
+
+  if (value.method) {
+    const method = value.method.type;
+    hyperParameters = value.method?.[method]?.hyperparameters ?? {};
+  }
+
+  return {
+    epochCount: hyperParameters?.n_epochs,
+    learningRateMultiplier: hyperParameters?.learning_rate_multiplier,
+    adapterSize: hyperParameters?.batch_size,
+  };
+};
+
+export const transformVertexFinetune = (params: FinetuneRequest) => {
+  const parameterSpec = {
+    training_dataset_uri: decodeURIComponent(params['training_file'] ?? ''),
+    ...(params['validation_file'] && {
+      validation_dataset_uri: decodeURIComponent(params['validation_file']),
+    }),
+    hyperParameters: populateHyperparameters(params),
+  };
+  return parameterSpec;
+};
+
+export const getBucketAndFile = (uri: string) => {
+  if (!uri) return { bucket: '', file: '' };
+  let _url = decodeURIComponent(uri);
+  _url = _url.replaceAll('gs://', '');
+  const parts = _url.split('/');
+  const bucket = parts[0];
+  const file = parts.slice(1).join('/');
+  return { bucket, file };
+};
+
+export const GoogleToOpenAIFinetune = (response: GoogleFinetuneRecord) => {
+  return {
+    id: response.name.split('/').at(-1),
+    object: 'finetune',
+    status: googleBatchStatusToOpenAI(response.state),
+    created_at: new Date(response.createTime).getTime(),
+    error: response.error,
+    fine_tuned_model: response.tunedModel?.model,
+    ...(response.endTime && {
+      finished_at: new Date(response.endTime).getTime(),
+    }),
+    hyperparameters: {
+      batch_size: response.supervisedTuningSpec.hyperParameters?.adapterSize,
+      learning_rate_multiplier:
+        response.supervisedTuningSpec.hyperParameters.learningRateMultiplier,
+      n_epochs: response.supervisedTuningSpec.hyperParameters.epochCount,
+    },
+    model: response.baseModel ?? response.source_model?.baseModel,
+    trained_tokens:
+      response.tuningDataStats?.supervisedTuningDataStats
+        .totalBillableTokenCount,
+    training_file: encodeURIComponent(
+      response.supervisedTuningSpec.trainingDatasetUri
+    ),
+    ...(response.supervisedTuningSpec.validationDatasetUri && {
+      validation_file: encodeURIComponent(
+        response.supervisedTuningSpec.validationDatasetUri
+      ),
+    }),
+  };
 };

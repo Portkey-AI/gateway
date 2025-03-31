@@ -44,7 +44,7 @@ export function maskEntities(
   return result;
 }
 
-const redactPii = async (text: string, credentials: any) => {
+const redactPii = async (text: string, credentials: any, timeout?: number) => {
   if (!text) return { maskedText: null, data: null };
   const evaluator = 'pii';
   const evaluationBody: any = {
@@ -54,7 +54,8 @@ const redactPii = async (text: string, credentials: any) => {
   const result: any = await postPatronus(
     evaluator,
     credentials,
-    evaluationBody
+    evaluationBody,
+    timeout
   );
 
   const evalResult = result.results[0];
@@ -89,6 +90,7 @@ export const handler: PluginHandler = async (
       json: null,
     },
   };
+  let transformed = false;
 
   try {
     if (context.requestType === 'embed' && parameters?.redact) {
@@ -97,6 +99,7 @@ export const handler: PluginHandler = async (
         verdict: true,
         data: null,
         transformedData,
+        transformed,
       };
     }
 
@@ -108,11 +111,14 @@ export const handler: PluginHandler = async (
         verdict: true,
         data: null,
         transformedData,
+        transformed,
       };
     }
 
     const results = await Promise.all(
-      textArray.map((text) => redactPii(text, parameters.credentials))
+      textArray.map((text) =>
+        redactPii(text, parameters.credentials, parameters.timeout)
+      )
     );
 
     const hasPII = results.some(
@@ -130,6 +136,7 @@ export const handler: PluginHandler = async (
       const maskedTexts = results.map((result) => result?.maskedText ?? null);
       setCurrentContentPart(context, eventType, transformedData, maskedTexts);
       shouldBlock = false;
+      transformed = true;
     }
 
     // verdict can be true/false
@@ -140,5 +147,5 @@ export const handler: PluginHandler = async (
     error = e;
   }
 
-  return { error, verdict, data, transformedData };
+  return { error, verdict, data, transformedData, transformed };
 };

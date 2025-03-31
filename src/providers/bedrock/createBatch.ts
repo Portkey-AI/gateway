@@ -1,8 +1,22 @@
 import { BEDROCK } from '../../globals';
-import { CreateBatchResponse, ErrorResponse, ProviderConfig } from '../types';
+import { Options } from '../../types/requestBody';
+import {
+  CreateBatchRequest,
+  CreateBatchResponse,
+  ErrorResponse,
+  ProviderConfig,
+} from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { BedrockErrorResponseTransform } from './chatComplete';
 import { BedrockErrorResponse } from './embed';
+
+interface BedrockCreateBatchRequest extends CreateBatchRequest {
+  job_name?: string;
+  output_data_config?: {
+    s3Uri: string;
+  };
+  role_arn: string;
+}
 
 export const BedrockCreateBatchConfig: ProviderConfig = {
   model: {
@@ -12,24 +26,39 @@ export const BedrockCreateBatchConfig: ProviderConfig = {
   input_file_id: {
     param: 'inputDataConfig',
     required: true,
-    transform: (params: CreateBatchResponse) => {
+    transform: (params: BedrockCreateBatchRequest) => {
       return {
         s3InputDataConfig: {
-          s3Uri: params.input_file_id,
+          s3Uri: decodeURIComponent(params.input_file_id),
         },
       };
     },
   },
-  jobName: {
+  job_name: {
     param: 'jobName',
     required: true,
-    default: 'portkey-batch-job',
+    default: () => {
+      return `portkey-batch-job-${crypto.randomUUID()}`;
+    },
   },
-  outputDataConfig: {
+  output_data_config: {
     param: 'outputDataConfig',
     required: true,
+    default: (params: BedrockCreateBatchRequest, providerOptions: Options) => {
+      const inputFileId = decodeURIComponent(params.input_file_id);
+      const s3URLToContainingFolder =
+        inputFileId.split('/').slice(0, -1).join('/') + '/';
+      return {
+        s3OutputDataConfig: {
+          s3Uri: s3URLToContainingFolder,
+          ...(providerOptions.awsServerSideEncryptionKMSKeyId && {
+            s3EncryptionKeyId: providerOptions.awsServerSideEncryptionKMSKeyId,
+          }),
+        },
+      };
+    },
   },
-  roleArn: {
+  role_arn: {
     param: 'roleArn',
     required: true,
   },
@@ -40,15 +69,15 @@ export const BedrockCreateBatchResponseTransform: (
   responseStatus: number
 ) => CreateBatchResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    const errorResposne = BedrockErrorResponseTransform(
+    const errorResponse = BedrockErrorResponseTransform(
       response as BedrockErrorResponse
     );
-    if (errorResposne) return errorResposne;
+    if (errorResponse) return errorResponse;
   }
 
   if ('jobArn' in response) {
     return {
-      id: response.jobArn as string,
+      id: encodeURIComponent(response.jobArn as string),
       object: 'batch',
     };
   }

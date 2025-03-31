@@ -1,10 +1,15 @@
 import { handler as textGuardContentHandler } from './textGuard';
 import { handler as piiHandler } from './pii';
-import testCreds from './.creds.json';
+import testCredsFile from './.creds.json';
 import { HookEventType, PluginContext } from '../types';
 
 const options = {
   env: {},
+};
+
+const testCreds = {
+  domain: testCredsFile.domain,
+  apiKey: testCredsFile.guardApiKey,
 };
 
 describe('textGuardContentHandler', () => {
@@ -90,7 +95,7 @@ describe('textGuardContentHandler', () => {
     const parameters = {
       credentials: {
         domain: testCreds.domain,
-        apiKey: testCreds.guardApiKey,
+        apiKey: testCreds.apiKey,
       },
     };
     const result = await textGuardContentHandler(
@@ -113,7 +118,7 @@ describe('textGuardContentHandler', () => {
     const parameters = {
       credentials: {
         domain: testCreds.domain,
-        apiKey: testCreds.guardApiKey,
+        apiKey: testCreds.apiKey,
       },
       recipe: ' ',
     };
@@ -139,7 +144,7 @@ describe('textGuardContentHandler', () => {
     const parameters = {
       credentials: {
         domain: testCreds.domain,
-        apiKey: testCreds.guardApiKey,
+        apiKey: testCreds.apiKey,
       },
     };
     const result = await textGuardContentHandler(
@@ -161,7 +166,7 @@ describe('textGuardContentHandler', () => {
     const parameters = {
       credentials: {
         domain: testCreds.domain,
-        apiKey: testCreds.guardApiKey,
+        apiKey: testCreds.apiKey,
       },
     };
     const result = await textGuardContentHandler(
@@ -184,7 +189,7 @@ describe('textGuardContentHandler', () => {
     const parameters = {
       credentials: {
         domain: testCreds.domain,
-        apiKey: testCreds.guardApiKey,
+        apiKey: testCreds.apiKey,
       },
       recipe: 'invalid_recipe',
     };
@@ -235,6 +240,7 @@ describe('pii handler', () => {
     expect(result.error).toBeNull();
     expect(result.data).toBeDefined();
     expect(result.transformedData?.request?.json).toBeNull();
+    expect(result.transformed).toBe(false);
   });
 
   it('should detect and redact PII in request text', async () => {
@@ -271,6 +277,7 @@ describe('pii handler', () => {
     expect(result.transformedData?.request?.json?.messages?.[0]?.content).toBe(
       'My email is <EMAIL_ADDRESS> and some random text'
     );
+    expect(result.transformed).toBe(true);
   });
 
   it('should detect and redact PII in request text with multiple content parts', async () => {
@@ -320,6 +327,7 @@ describe('pii handler', () => {
     expect(
       result.transformedData?.request?.json?.messages?.[0]?.content?.[1]?.text
     ).toBe('My email is <EMAIL_ADDRESS> and some random text');
+    expect(result.transformed).toBe(true);
   });
 
   it('should detect and redact PII in response text', async () => {
@@ -359,6 +367,7 @@ describe('pii handler', () => {
     expect(
       result.transformedData?.response?.json?.choices?.[0]?.message?.content
     ).toBe('My email is <EMAIL_ADDRESS> and some random text');
+    expect(result.transformed).toBe(true);
   });
 
   it('should pass text without PII', async () => {
@@ -393,5 +402,6 @@ describe('pii handler', () => {
     expect(result.verdict).toBe(true);
     expect(result.error).toBeNull();
     expect(result.data).toBeDefined();
+    expect(result.transformed).toBe(false);
   });
 });

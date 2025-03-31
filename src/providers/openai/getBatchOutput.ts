@@ -20,6 +20,7 @@ export const OpenAIGetBatchOutputRequestHandler = async ({
     providerOptions,
     fn: 'retrieveBatch',
     c,
+    gatewayRequestURL: requestURL,
   });
   const batchId = requestURL.split('/v1/batches/')[1].replace('/output', '');
   const retrieveBatchURL = `${baseUrl}/batches/${batchId}`;

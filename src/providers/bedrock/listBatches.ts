@@ -18,14 +18,22 @@ export const BedrockListBatchesResponseTransform = (
 
   if ('invocationJobSummaries' in response) {
     const batches = response.invocationJobSummaries.map((batch) => ({
-      id: batch.jobArn,
+      id: encodeURIComponent(batch.jobArn),
       object: 'batch',
       created_at: new Date(batch.submitTime).getTime(),
       status: batch.status,
-      input_file_id: batch.inputDataConfig.s3InputDataConfig.s3Uri,
-      output_file_id: batch.outputDataConfig.s3OutputDataConfig.s3Uri,
-      finalizing_at: new Date(batch.endTime).getTime(),
-      expires_at: new Date(batch.jobExpirationTime).getTime(),
+      input_file_id: encodeURIComponent(
+        batch.inputDataConfig.s3InputDataConfig.s3Uri
+      ),
+      output_file_id: encodeURIComponent(
+        batch.outputDataConfig.s3OutputDataConfig.s3Uri
+      ),
+      finalizing_at: batch.endTime
+        ? new Date(batch.endTime).getTime()
+        : undefined,
+      expires_at: batch.jobExpirationTime
+        ? new Date(batch.jobExpirationTime).getTime()
+        : undefined,
     }));
 
     return {

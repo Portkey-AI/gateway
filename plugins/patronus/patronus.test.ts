@@ -4,7 +4,7 @@ import { handler as piiHandler } from './pii';
 import { handler as toxicityHandler } from './toxicity';
 import { handler as retrievalAnswerRelevanceHandler } from './retrievalAnswerRelevance';
 import { handler as customHandler } from './custom';
-import { HookEventType, PluginContext } from '../types';
+import { PluginContext } from '../types';
 
 describe('phi handler', () => {
   it('should pass when text is clean', async () => {
@@ -35,6 +35,7 @@ describe('phi handler', () => {
     expect(result.verdict).toBe(true);
     expect(result.error).toBeNull();
     expect(result.data).toBeDefined();
+    expect(result.transformed).toBe(false);
   });
 
   it('should fail when text contains PHI', async () => {
@@ -67,6 +68,7 @@ describe('phi handler', () => {
     expect(result.data).toBeDefined();
     expect(result.transformedData?.response?.json).toBeNull();
     expect(result.transformedData?.request?.json).toBeNull();
+    expect(result.transformed).toBe(false);
   });
 
   it('should detect and redact PII in request text', async () => {
@@ -104,6 +106,7 @@ describe('phi handler', () => {
     expect(result.transformedData?.request?.json?.messages?.[0]?.content).toBe(
       'J******e has a history of heart disease'
     );
+    expect(result.transformed).toBe(true);
   });
 
   it('should detect and redact PII in request text with multiple content parts', async () => {
@@ -153,6 +156,7 @@ describe('phi handler', () => {
     expect(
       result.transformedData?.request?.json?.messages?.[0]?.content?.[1]?.text
     ).toBe('J******e has a history of heart disease and some random text');
+    expect(result.transformed).toBe(true);
   });
 
   it('should detect and redact PHI in response text', async () => {
@@ -193,6 +197,7 @@ describe('phi handler', () => {
     expect(
       result.transformedData?.response?.json?.choices?.[0]?.message?.content
     ).toBe('J******e has a history of heart disease and some random text');
+    expect(result.transformed).toBe(true);
   });
 });
 
@@ -225,6 +230,7 @@ describe('pii handler', () => {
     expect(result.verdict).toBe(true);
     expect(result.error).toBeNull();
     expect(result.data).toBeDefined();
+    expect(result.transformed).toBe(false);
   });
 
   it('should fail when text contains PII', async () => {
@@ -257,6 +263,7 @@ describe('pii handler', () => {
     expect(result.data).toBeDefined();
     expect(result.transformedData?.response?.json).toBeNull();
     expect(result.transformedData?.request?.json).toBeNull();
+    expect(result.transformed).toBe(false);
   });
 
   it('should detect and redact PII in request text', async () => {
@@ -294,6 +301,7 @@ describe('pii handler', () => {
     expect(result.transformedData?.request?.json?.messages?.[0]?.content).toBe(
       'My email is a*********m and some random text'
     );
+    expect(result.transformed).toBe(true);
   });
 
   it('should detect and redact PII in request text with multiple content parts', async () => {
@@ -343,6 +351,7 @@ describe('pii handler', () => {
     expect(
       result.transformedData?.request?.json?.messages?.[0]?.content?.[1]?.text
     ).toBe('My email is a*********m and some random text');
+    expect(result.transformed).toBe(true);
   });
 
   it('should detect and redact PII in response text', async () => {
@@ -382,6 +391,7 @@ describe('pii handler', () => {
     expect(
       result.transformedData?.response?.json?.choices?.[0]?.message?.content
     ).toBe('My email is a*********m and some random text');
+    expect(result.transformed).toBe(true);
   });
 });
 

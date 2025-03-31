@@ -216,6 +216,126 @@ docker compose up -d
 
 <br>
 
+### AWS EC2
+1. Copy the AWS CloudFormation template from below:
+```yaml
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC where the EC2 instance will be launched
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: Subnet where the EC2 instance will be launched
+  InstanceType:
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t3.micro
+      - t3.small
+    Description: EC2 instance type
+
+Resources:
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]
+      InstanceType: !Ref InstanceType
+      SecurityGroupIds:
+        - !Ref InstanceSecurityGroup
+      SubnetId: !Ref SubnetId
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          sudo yum update -y
+          sudo yum install -y amazon-linux-extras
+          sudo amazon-linux-extras enable docker
+          sudo yum install -y docker
+          sudo systemctl start docker
+          sudo systemctl enable docker
+          sudo docker run -p 8787:8787 -d portkeyai/gateway:latest
+      Tags:
+        - Key: Name
+          Value: PortkeyGateway
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Portkey Gateway
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8787
+          ToPort: 8787
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+
+Mappings:
+  RegionMap:
+    Metadata:
+      Name: amzn2-ami-hvm-2.0.20250220.0-x86_64-gp2
+      Owner: amazon
+      CreationDate: 2025-02-20T22:38:11.000Z
+    eu-west-1:
+      AMI: ami-049b732d3f35a4f44
+    ca-central-1:
+      AMI: ami-06816da431adb7634
+    eu-west-2:
+      AMI: ami-0eebf19cec0b40d10
+    us-east-2:
+      AMI: ami-0e7b3e7766d24a6ff
+    eu-west-3:
+      AMI: ami-004f2229fb9afa698
+    eu-north-1:
+      AMI: ami-08fbe5a8c8061068f
+    us-west-1:
+      AMI: ami-01891d4f3898759b2
+    ap-northeast-3:
+      AMI: ami-0316e0efae0ce53d2
+    us-east-1:
+      AMI: ami-0ace34e9f53c91c5d
+    ap-northeast-2:
+      AMI: ami-0891aeb92f786d7a2
+    sa-east-1:
+      AMI: ami-081d377a25d396ece
+    us-west-2:
+      AMI: ami-04c0ab8f1251f1600
+    ap-northeast-1:
+      AMI: ami-00561c77487da40c1
+    ap-south-1:
+      AMI: ami-0f4f6fd19fad11737
+    ap-southeast-2:
+      AMI: ami-044b50caba366ec3a
+    ap-southeast-1:
+      AMI: ami-0301dd2fb476c9850
+    eu-central-1:
+      AMI: ami-014eb100f18a84d89
+
+
+Outputs:
+  PortkeyGatewayURL:
+    Description: URL to access Portkey Gateway
+    Value: !Sub http://${EC2Instance.PublicDnsName}:8787
+```
+
+2. Create a new stack in the AWS CloudFormation console with the template above(you can upload in your S3 or directly upload the template).
+
+3. Fill the following parameters:
+- **VpcId**: The VPC ID of the VPC where the EC2 instance will be launched
+- **SubnetId**: The Subnet ID of the Subnet where the EC2 instance will be launched
+- **InstanceType**: The instance type of the EC2 instance
+
+4. Create the stack and wait for it to be created.
+
+5. Once the stack is created, you can access the Portkey Gateway URL from the Outputs section.
+
 ### Replit
 
 [![Deploy on Replit](https://replit.com/badge?caption=Deploy%20on%20Replit)](https://replit.com/@portkey/AI-Gateway?v=1)

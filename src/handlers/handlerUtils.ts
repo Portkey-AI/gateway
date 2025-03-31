@@ -15,6 +15,8 @@ import {
   HUGGING_FACE,
   STABILITY_AI,
   SAGEMAKER,
+  FIREWORKS_AI,
+  CORTEX,
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
@@ -47,7 +49,7 @@ export function constructRequest(
   fn: endpointStrings,
   c: Context
 ) {
-  let proxyHeaders: Record<string, string> = {};
+  const proxyHeaders: Record<string, string> = {};
   // Handle proxy headers
   if (fn === 'proxy') {
     const poweredByHeadersPattern = `x-${POWERED_BY}-`;
@@ -71,8 +73,7 @@ export function constructRequest(
         'accept-encoding'
       ]?.replace('br', '');
   }
-
-  let baseHeaders: any = {
+  const baseHeaders: any = {
     'content-type': 'application/json',
   };
 
@@ -99,7 +100,7 @@ export function constructRequest(
     ...(fn === 'proxy' && proxyHeaders),
   };
 
-  let fetchOptions: RequestInit = {
+  const fetchOptions: RequestInit = {
     method,
     headers,
     ...(fn === 'uploadFile' && { duplex: 'half' }),
@@ -111,11 +112,14 @@ export function constructRequest(
     (isGetMethod || isMultipartFormData) && fetchOptions.headers;
 
   if (shouldDeleteContentTypeHeader) {
-    let headers = fetchOptions.headers as Record<string, unknown>;
+    const headers = fetchOptions.headers as Record<string, unknown>;
     delete headers['content-type'];
+    if (fn === 'uploadFile') {
+      headers['Content-Type'] = requestHeaders['content-type'];
+      headers[`x-${POWERED_BY}-file-purpose`] =
+        requestHeaders[`x-${POWERED_BY}-file-purpose`];
+    }
   }
-  if (fn === 'uploadFile')
-    headers['Content-Type'] = requestHeaders['content-type'];
 
   return fetchOptions;
 }
@@ -172,7 +176,7 @@ export function selectProviderByWeight(providers: Options[]): Options {
   }));
 
   // Compute the total weight
-  let totalWeight = providers.reduce(
+  const totalWeight = providers.reduce(
     (sum: number, provider: any) => sum + provider.weight,
     0
   );
@@ -181,7 +185,7 @@ export function selectProviderByWeight(providers: Options[]): Options {
   let randomWeight = Math.random() * totalWeight;
 
   // Find the provider that corresponds to the selected weight
-  for (let [index, provider] of providers.entries()) {
+  for (const [index, provider] of providers.entries()) {
     // @ts-ignore since weight is being default set above
     if (randomWeight < provider.weight) {
       return { ...provider, index };
@@ -269,7 +273,9 @@ export async function tryPost(
   let metadata: Record<string, string> = {};
   try {
     metadata = JSON.parse(requestHeaders[HEADER_KEYS.METADATA]);
-  } catch {}
+  } catch {
+    metadata = {};
+  }
 
   const provider: string = providerOption.provider ?? '';
   const hooksManager = c.get('hooksManager');
@@ -278,8 +284,14 @@ export async function tryPost(
     metadata,
     provider,
     isStreamingMode,
-    providerOption.beforeRequestHooks || [],
-    providerOption.afterRequestHooks || [],
+    [
+      ...(providerOption.beforeRequestHooks || []),
+      ...(providerOption.defaultInputGuardrails || []),
+    ],
+    [
+      ...(providerOption.afterRequestHooks || []),
+      ...(providerOption.defaultOutputGuardrails || []),
+    ],
     null,
     fn
   );
@@ -308,6 +320,7 @@ export async function tryPost(
       providerOptions: providerOption,
       fn,
       c,
+      gatewayRequestURL: c.req.url,
     }));
   const endpoint = apiConfig.getEndpoint({
     c,
@@ -351,6 +364,9 @@ export async function tryPost(
   } = await beforeRequestHookHandler(c, hookSpan.id));
 
   if (brhResponse) {
+    // transformedRequestBody is required to be set in requestOptions.
+    // So in case the before request hooks fail (with deny as true), we need to set it here.
+    // If the hooks do not result in a 446 response, transformedRequestBody is determined on the updated HookSpan context.
     if (!providerConfig?.requestHandlers?.[fn]) {
       transformedRequestBody =
         method === 'POST'
@@ -359,7 +375,8 @@ export async function tryPost(
               params,
               requestBody,
               fn,
-              requestHeaders
+              requestHeaders,
+              providerOption
             )
           : requestBody;
     }
@@ -379,7 +396,8 @@ export async function tryPost(
             params,
             requestBody,
             fn,
-            requestHeaders
+            requestHeaders,
+            providerOption
           )
         : requestBody;
   }
@@ -420,7 +438,7 @@ export async function tryPost(
     requestContentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
   ) {
     fetchOptions.body = transformedRequestBody as ArrayBuffer;
-  } else {
+  } else if (requestContentType) {
     fetchOptions.body = JSON.stringify(transformedRequestBody);
   }
 
@@ -430,7 +448,9 @@ export async function tryPost(
 
   providerOption.retry = {
     attempts: providerOption.retry?.attempts ?? 0,
-    onStatusCodes: providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES,
+    onStatusCodes: providerOption.retry?.attempts
+      ? providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES
+      : [],
   };
 
   async function createResponse(
@@ -558,7 +578,7 @@ export async function tryTargetsRecursively(
   jsonPath: string,
   inheritedConfig: Record<string, any> = {}
 ): Promise<Response> {
-  let currentTarget: any = { ...targetGroup };
+  const currentTarget: any = { ...targetGroup };
   let currentJsonPath = jsonPath;
   const strategyMode = currentTarget.strategy?.mode;
 
@@ -575,7 +595,32 @@ export async function tryTargetsRecursively(
       ? { ...currentTarget.cache }
       : { ...inheritedConfig.cache },
     requestTimeout: null,
+    defaultInputGuardrails: inheritedConfig.defaultInputGuardrails,
+    defaultOutputGuardrails: inheritedConfig.defaultOutputGuardrails,
   };
+
+  // Inherited config can be empty only for the base case of recursive call.
+  // To avoid redundant conversion of guardrails to hooks, we do this check.
+  if (Object.keys(inheritedConfig).length === 0) {
+    if (currentTarget.defaultInputGuardrails) {
+      currentInheritedConfig.defaultInputGuardrails = [
+        ...convertHooksShorthand(
+          currentTarget.defaultInputGuardrails,
+          'input',
+          HookType.GUARDRAIL
+        ),
+      ];
+    }
+    if (currentTarget.defaultOutputGuardrails) {
+      currentInheritedConfig.defaultOutputGuardrails = [
+        ...convertHooksShorthand(
+          currentTarget.defaultOutputGuardrails,
+          'output',
+          HookType.GUARDRAIL
+        ),
+      ];
+    }
+  }
 
   if (typeof currentTarget.strictOpenAiCompliance === 'boolean') {
     currentInheritedConfig.strictOpenAiCompliance =
@@ -683,13 +728,20 @@ export async function tryTargetsRecursively(
   currentTarget.cache = {
     ...currentInheritedConfig.cache,
   };
+
+  currentTarget.defaultInputGuardrails = [
+    ...currentInheritedConfig.defaultInputGuardrails,
+  ];
+  currentTarget.defaultOutputGuardrails = [
+    ...currentInheritedConfig.defaultOutputGuardrails,
+  ];
   // end: merge inherited config with current target config (preference given to current)
 
   let response;
 
   switch (strategyMode) {
     case StrategyModes.FALLBACK:
-      for (let [index, target] of currentTarget.targets.entries()) {
+      for (const [index, target] of currentTarget.targets.entries()) {
         response = await tryTargetsRecursively(
           c,
           target,
@@ -724,7 +776,7 @@ export async function tryTargetsRecursively(
       );
 
       let randomWeight = Math.random() * totalWeight;
-      for (let [index, provider] of currentTarget.targets.entries()) {
+      for (const [index, provider] of currentTarget.targets.entries()) {
         if (randomWeight < provider.weight) {
           currentJsonPath = currentJsonPath + `.targets[${index}]`;
           response = await tryTargetsRecursively(
@@ -743,17 +795,28 @@ export async function tryTargetsRecursively(
       }
       break;
 
-    case StrategyModes.CONDITIONAL:
+    case StrategyModes.CONDITIONAL: {
       let metadata: Record<string, string>;
       try {
         metadata = JSON.parse(requestHeaders[HEADER_KEYS.METADATA]);
       } catch (err) {
         metadata = {};
       }
+
+      let params =
+        request instanceof FormData ||
+        request instanceof ReadableStream ||
+        request instanceof ArrayBuffer
+          ? {} // Send empty object if not JSON
+          : request;
+
       let conditionalRouter: ConditionalRouter;
       let finalTarget: Targets;
       try {
-        conditionalRouter = new ConditionalRouter(currentTarget, { metadata });
+        conditionalRouter = new ConditionalRouter(currentTarget, {
+          metadata,
+          params,
+        });
         finalTarget = conditionalRouter.resolveTarget();
       } catch (conditionalRouter: any) {
         throw new RouterError(conditionalRouter.message);
@@ -770,6 +833,7 @@ export async function tryTargetsRecursively(
         currentInheritedConfig
       );
       break;
+    }
 
     case StrategyModes.SINGLE:
       response = await tryTargetsRecursively(
@@ -885,6 +949,7 @@ export function constructConfigFromRequestHeaders(
     resourceName: requestHeaders[`x-${POWERED_BY}-azure-resource-name`],
     deploymentId: requestHeaders[`x-${POWERED_BY}-azure-deployment-id`],
     apiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
+    azureAdToken: requestHeaders[`x-${POWERED_BY}-azure-ad-token`],
     azureAuthMode: requestHeaders[`x-${POWERED_BY}-azure-auth-mode`],
     azureManagedClientId:
       requestHeaders[`x-${POWERED_BY}-azure-managed-client-id`],
@@ -914,6 +979,7 @@ export function constructConfigFromRequestHeaders(
       requestHeaders[`x-${POWERED_BY}-azure-deployment-type`],
     azureApiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
     azureEndpointName: requestHeaders[`x-${POWERED_BY}-azure-endpoint-name`],
+    azureExtraParams: requestHeaders[`x-${POWERED_BY}-azure-extra-params`],
   };
 
   const awsConfig = {
@@ -925,8 +991,18 @@ export function constructConfigFromRequestHeaders(
     awsAuthType: requestHeaders[`x-${POWERED_BY}-aws-auth-type`],
     awsExternalId: requestHeaders[`x-${POWERED_BY}-aws-external-id`],
     awsS3Bucket: requestHeaders[`x-${POWERED_BY}-aws-s3-bucket`],
-    awsS3ObjectKey: requestHeaders[`x-${POWERED_BY}-aws-s3-object-key`],
-    awsBedrockModel: requestHeaders[`x-${POWERED_BY}-aws-bedrock-model`],
+    awsS3ObjectKey:
+      requestHeaders[`x-${POWERED_BY}-aws-s3-object-key`] ||
+      requestHeaders[`x-${POWERED_BY}-provider-file-name`],
+    awsBedrockModel:
+      requestHeaders[`x-${POWERED_BY}-aws-bedrock-model`] ||
+      requestHeaders[`x-${POWERED_BY}-provider-model`],
+    awsServerSideEncryption:
+      requestHeaders[`x-${POWERED_BY}-amz-server-side-encryption`],
+    awsServerSideEncryptionKMSKeyId:
+      requestHeaders[
+        `x-${POWERED_BY}-amz-server-side-encryption-aws-kms-key-id`
+      ],
   };
 
   const sagemakerConfig = {
@@ -971,6 +1047,14 @@ export function constructConfigFromRequestHeaders(
   const vertexConfig: Record<string, any> = {
     vertexProjectId: requestHeaders[`x-${POWERED_BY}-vertex-project-id`],
     vertexRegion: requestHeaders[`x-${POWERED_BY}-vertex-region`],
+    vertexStorageBucketName:
+      requestHeaders[`x-${POWERED_BY}-vertex-storage-bucket-name`],
+    filename: requestHeaders[`x-${POWERED_BY}-provider-file-name`],
+    vertexModelName: requestHeaders[`x-${POWERED_BY}-provider-model`],
+  };
+
+  const fireworksConfig = {
+    fireworksAccountId: requestHeaders[`x-${POWERED_BY}-fireworks-account-id`],
   };
 
   const anthropicConfig = {
@@ -978,8 +1062,9 @@ export function constructConfigFromRequestHeaders(
     anthropicVersion: requestHeaders[`x-${POWERED_BY}-anthropic-version`],
   };
 
-  let vertexServiceAccountJson =
+  const vertexServiceAccountJson =
     requestHeaders[`x-${POWERED_BY}-vertex-service-account-json`];
+
   if (vertexServiceAccountJson) {
     try {
       vertexConfig.vertexServiceAccountJson = JSON.parse(
@@ -990,8 +1075,24 @@ export function constructConfigFromRequestHeaders(
     }
   }
 
+  const cortexConfig = {
+    snowflakeAccount: requestHeaders[`x-${POWERED_BY}-snowflake-account`],
+  };
+
+  const defaultsConfig = {
+    input_guardrails: requestHeaders[`x-portkey-default-input-guardrails`]
+      ? JSON.parse(requestHeaders[`x-portkey-default-input-guardrails`])
+      : [],
+    output_guardrails: requestHeaders[`x-portkey-default-output-guardrails`]
+      ? JSON.parse(requestHeaders[`x-portkey-default-output-guardrails`])
+      : [],
+  };
+
   if (requestHeaders[`x-${POWERED_BY}-config`]) {
     let parsedConfigJson = JSON.parse(requestHeaders[`x-${POWERED_BY}-config`]);
+    parsedConfigJson.default_input_guardrails = defaultsConfig.input_guardrails;
+    parsedConfigJson.default_output_guardrails =
+      defaultsConfig.output_guardrails;
 
     if (!parsedConfigJson.provider && !parsedConfigJson.targets) {
       parsedConfigJson.provider = requestHeaders[`x-${POWERED_BY}-provider`];
@@ -1052,6 +1153,13 @@ export function constructConfigFromRequestHeaders(
         };
       }
 
+      if (parsedConfigJson.provider === FIREWORKS_AI) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...fireworksConfig,
+        };
+      }
+
       if (parsedConfigJson.provider === AZURE_AI_INFERENCE) {
         parsedConfigJson = {
           ...parsedConfigJson,
@@ -1070,21 +1178,33 @@ export function constructConfigFromRequestHeaders(
           ...stabilityAiConfig,
         };
       }
+
+      if (parsedConfigJson.provider === CORTEX) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...cortexConfig,
+        };
+      }
     }
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
       'params',
       'checks',
       'vertex_service_account_json',
+      'vertexServiceAccountJson',
       'conditions',
       'input_guardrails',
       'output_guardrails',
+      'default_input_guardrails',
+      'default_output_guardrails',
     ]) as any;
   }
 
   return {
     provider: requestHeaders[`x-${POWERED_BY}-provider`],
     apiKey: requestHeaders['authorization']?.replace('Bearer ', ''),
+    defaultInputGuardrails: defaultsConfig.input_guardrails,
+    defaultOutputGuardrails: defaultsConfig.output_guardrails,
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === AZURE_OPEN_AI &&
       azureConfig),
     ...([BEDROCK, SAGEMAKER].includes(
@@ -1107,6 +1227,9 @@ export function constructConfigFromRequestHeaders(
       requestHeaders[`x-${POWERED_BY}-mistral-fim-completion`],
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === STABILITY_AI &&
       stabilityAiConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === FIREWORKS_AI &&
+      fireworksConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === CORTEX && cortexConfig),
   };
 }
 
@@ -1118,7 +1241,7 @@ export async function recursiveAfterRequestHookHandler(
   isStreamingMode: any,
   gatewayParams: any,
   retryAttemptsMade: any,
-  fn: any,
+  fn: endpointStrings,
   requestHeaders: Record<string, string>,
   hookSpanId: string,
   strictOpenAiCompliance: boolean,
@@ -1139,7 +1262,7 @@ export async function recursiveAfterRequestHookHandler(
 
   const provider = providerOption.provider ?? '';
   const providerConfig = Providers[provider];
-  const requestHandlers = providerConfig.requestHandlers;
+  const requestHandlers = providerConfig.requestHandlers as any;
   let requestHandler;
   if (requestHandlers && requestHandlers[fn]) {
     requestHandler = () =>
@@ -1254,6 +1377,32 @@ async function cacheHandler(
   hookSpanId: string,
   fn: endpointStrings
 ) {
+  if (
+    [
+      'uploadFile',
+      'listFiles',
+      'retrieveFile',
+      'deleteFile',
+      'retrieveFileContent',
+      'createBatch',
+      'retrieveBatch',
+      'cancelBatch',
+      'listBatches',
+      'getBatchOutput',
+      'listFinetunes',
+      'createFinetune',
+      'retrieveFinetune',
+      'cancelFinetune',
+    ].includes(fn)
+  ) {
+    return {
+      cacheResponse: undefined,
+      cacheStatus: 'DISABLED',
+      cacheKey: undefined,
+      createdAt: new Date(),
+      executionTime: 0,
+    };
+  }
   const start = new Date();
   const [getFromCacheFunction, cacheIdentifier] = [
     c.get('getFromCache'),
@@ -1325,9 +1474,12 @@ export async function beforeRequestHookHandler(
     const hooksResult = await hooksManager.executeHooks(
       hookSpanId,
       ['syncBeforeRequestHook'],
-      { env: env(c) }
+      {
+        env: env(c),
+        getFromCacheByKey: c.get('getFromCacheByKey'),
+        putInCacheWithValue: c.get('putInCacheWithValue'),
+      }
     );
-
     span = hooksManager.getSpan(hookSpanId) as HookSpan;
     isTransformed = span.getContext().request.isTransformed;
 

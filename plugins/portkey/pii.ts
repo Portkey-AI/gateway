@@ -28,7 +28,8 @@ export async function detectPII(
     {
       input: textArray,
       ...(parameters.categories && { categories: parameters.categories }),
-    }
+    },
+    parameters.timeout
   );
 
   return result.map((item) => ({
@@ -60,7 +61,7 @@ export const handler: PluginHandler = async (
       json: null,
     },
   };
-
+  let transformed = false;
   try {
     if (context.requestType === 'embed' && parameters?.redact) {
       return {
@@ -68,6 +69,7 @@ export const handler: PluginHandler = async (
         verdict: true,
         data: null,
         transformedData,
+        transformed,
       };
     }
 
@@ -80,6 +82,7 @@ export const handler: PluginHandler = async (
         verdict: true,
         data: null,
         transformedData,
+        transformed,
       };
     }
 
@@ -89,6 +92,7 @@ export const handler: PluginHandler = async (
         verdict: true,
         data: null,
         transformedData,
+        transformed,
       };
     }
 
@@ -98,6 +102,7 @@ export const handler: PluginHandler = async (
         verdict: true,
         data: null,
         transformedData,
+        transformed,
       };
     }
 
@@ -130,7 +135,6 @@ export const handler: PluginHandler = async (
 
     const hasPII = filteredCategories.length > 0;
     let shouldBlock = hasPII;
-    let wasRedacted = false;
     if (parameters.redact && hasPII) {
       setCurrentContentPart(
         context,
@@ -139,14 +143,14 @@ export const handler: PluginHandler = async (
         mappedTextArray
       );
       shouldBlock = false;
-      wasRedacted = true;
+      transformed = true;
     }
 
     verdict = not ? hasPII : !shouldBlock;
     data = {
       verdict,
       not,
-      explanation: wasRedacted
+      explanation: transformed
         ? `Found and redacted PII in the text: ${filteredCategories.join(', ')}`
         : verdict
           ? not
@@ -178,5 +182,5 @@ export const handler: PluginHandler = async (
     };
   }
 
-  return { error, verdict, data, transformedData };
+  return { error, verdict, data, transformedData, transformed };
 };

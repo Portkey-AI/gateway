@@ -19,7 +19,7 @@ const maskPiiEntries = (text: string, piiEntries: PIIEntity[]): string => {
   }, text);
 };
 
-export const redactPii = async (text: string) => {
+export const redactPii = async (text: string, timeout?: number) => {
   if (!text) {
     return { maskedText: null, data: null };
   }
@@ -27,7 +27,7 @@ export const redactPii = async (text: string) => {
     input: text,
   };
 
-  const result = await postPromptfoo<PIIResult>('pii', piiObject);
+  const result = await postPromptfoo<PIIResult>('pii', piiObject, timeout);
   const piiResult = result.results[0];
 
   if (piiResult.flagged) {
@@ -59,7 +59,7 @@ export const handler: PluginHandler = async (
       json: null,
     },
   };
-
+  let transformed = false;
   try {
     if (context.requestType === 'embed' && parameters?.redact) {
       return {
@@ -67,6 +67,7 @@ export const handler: PluginHandler = async (
         verdict: true,
         data: null,
         transformedData,
+        transformed,
       };
     }
 
@@ -77,11 +78,15 @@ export const handler: PluginHandler = async (
         error: { message: 'request or response json is empty' },
         verdict: true,
         data: null,
+        transformedData,
+        transformed,
       };
     }
 
     const redact = parameters.redact || false;
-    const results = await Promise.all(textArray.map(redactPii));
+    const results = await Promise.all(
+      textArray.map((text) => redactPii(text, parameters.timeout))
+    );
 
     const hasPII = results.some((result) => result?.data?.flagged);
     let shouldBlock = hasPII;
@@ -93,6 +98,7 @@ export const handler: PluginHandler = async (
       const maskedTexts = results.map((result) => result?.maskedText ?? null);
       setCurrentContentPart(context, eventType, transformedData, maskedTexts);
       shouldBlock = false;
+      transformed = true;
     }
 
     verdict = !shouldBlock;
@@ -102,5 +108,5 @@ export const handler: PluginHandler = async (
     error = e;
   }
 
-  return { error, verdict, data, transformedData };
+  return { error, verdict, data, transformedData, transformed };
 };

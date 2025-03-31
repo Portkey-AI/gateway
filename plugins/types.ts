@@ -15,6 +15,7 @@ export interface PluginHandlerResponse {
   // The data object can be any JSON object or null.
   data?: any | null;
   transformedData?: any;
+  transformed?: boolean;
 }
 
 export type HookEventType = 'beforeRequestHook' | 'afterRequestHook';
@@ -25,5 +26,7 @@ export type PluginHandler<P = Record<string, string>> = (
   eventType: HookEventType,
   options?: {
     env: Record<string, any>;
+    getFromCacheByKey?: (key: string) => Promise<any>;
+    putInCacheWithValue?: (key: string, value: any) => Promise<any>;
   }
 ) => Promise<PluginHandlerResponse>;

@@ -141,3 +141,4 @@ build
 .idea
 plugins/**/.creds.json
 plugins/**/creds.json
+plugins/**/.parameters.json

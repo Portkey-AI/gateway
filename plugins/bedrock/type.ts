@@ -1,3 +1,18 @@
+export type BedrockAccessKeyCreds = {
+  awsAuthType?: 'accessKey';
+  awsAccessKeyId: string;
+  awsSecretAccessKey: string;
+  awsSessionToken?: string;
+  awsRegion: string;
+};
+
+export type BedrockAssumedRoleCreds = {
+  awsAuthType: 'assumedRole';
+  awsRoleArn: string;
+  awsExternalId: string;
+  awsRegion: string;
+};
+
 export type BedrockBody = {
   source: 'INPUT' | 'OUTPUT';
   content: { text: { text: string } }[];
@@ -64,12 +79,12 @@ export interface PIIFilter<T = any> extends BedrockAction<T> {
 export interface BedrockResponse {
   action: 'NONE' | 'GUARDRAIL_INTERVENED';
   assessments: {
-    wordPolicy: {
+    wordPolicy?: {
       customWords: WordPolicy[];
       managedWordLists: (WordPolicy & { type: 'PROFANITY' })[];
     };
-    contentPolicy: { filters: ContentPolicy[] };
-    sensitiveInformationPolicy: {
+    contentPolicy?: { filters: ContentPolicy[] };
+    sensitiveInformationPolicy?: {
       piiEntities: PIIFilter<'ANONYMIZED' | 'BLOCKED'>[];
       regexes: (Omit<PIIFilter, 'type'> & {
         name: string;
@@ -88,12 +103,7 @@ export interface BedrockResponse {
 }
 
 export interface BedrockParameters {
-  credentials: {
-    awsAccessKeyId: string;
-    awsSecretAccessKey: string;
-    awsSessionToken?: string;
-    awsRegion: string;
-  };
+  credentials: BedrockAccessKeyCreds | BedrockAssumedRoleCreds;
   guardrailVersion: string;
   guardrailId: string;
 }

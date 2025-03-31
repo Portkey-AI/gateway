@@ -32,7 +32,7 @@ export const handler: PluginHandler = async (
   }
 
   // TODO: Update to v1 once released
-  const url = `https://ai-guard.${parameters.credentials.domain}/v1beta/text/guard`;
+  const url = `https://ai-guard.${parameters.credentials.domain}/v1/text/guard`;
 
   const text = getText(context, eventType);
   if (!text) {
@@ -63,7 +63,7 @@ export const handler: PluginHandler = async (
 
   let response;
   try {
-    response = await post(url, request, requestOptions);
+    response = await post(url, request, requestOptions, parameters.timeout);
   } catch (e) {
     if (e instanceof HttpError) {
       error = `${e.message}. body: ${e.response.body}`;

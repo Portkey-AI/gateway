@@ -38,7 +38,8 @@ export const fetchPortkey = async (
   env: Record<string, any>,
   endpoint: string,
   credentials: any,
-  data: any
+  data: any,
+  timeout?: number
 ) => {
   const options = {
     headers: {
@@ -51,9 +52,10 @@ export const fetchPortkey = async (
       `${BASE_URL}${endpoint}`,
       data,
       env.portkeyGuardrails,
-      options
+      options,
+      timeout
     );
   }
 
-  return post(`${BASE_URL}${endpoint}`, data, options);
+  return post(`${BASE_URL}${endpoint}`, data, options, timeout);
 };

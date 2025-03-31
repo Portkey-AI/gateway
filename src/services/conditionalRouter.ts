@@ -6,6 +6,7 @@ type Query = {
 
 interface RouterContext {
   metadata?: Record<string, string>;
+  params?: Record<string, any>;
 }
 
 enum Operator {
@@ -71,13 +72,13 @@ export class ConditionalRouter {
         );
       }
 
-      const metadataValue = this.getContextValue(key);
+      const contextValue = this.getContextValue(key);
 
       if (typeof value === 'object' && value !== null) {
-        if (!this.evaluateOperator(value, metadataValue)) {
+        if (!this.evaluateOperator(value, contextValue)) {
           return false;
         }
-      } else if (metadataValue !== value) {
+      } else if (contextValue !== value) {
         return false;
       }
     }

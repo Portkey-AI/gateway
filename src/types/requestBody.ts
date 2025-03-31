@@ -59,12 +59,13 @@ export interface Options {
   deploymentId?: string;
   apiVersion?: string;
   adAuth?: string;
-  azureModelName?: string;
-  azureAuthMode?: string; // can be entra or managed
+  azureAuthMode?: string;
   azureManagedClientId?: string;
   azureEntraClientId?: string;
   azureEntraClientSecret?: string;
   azureEntraTenantId?: string;
+  azureAdToken?: string;
+  azureModelName?: string;
   /** Workers AI specific */
   workersAiAccountId?: string;
   /** The parameter to set custom base url */
@@ -89,6 +90,8 @@ export interface Options {
   awsS3Bucket?: string;
   awsS3ObjectKey?: string;
   awsBedrockModel?: string;
+  awsServerSideEncryption?: string;
+  awsServerSideEncryptionKMSKeyId?: string;
 
   /** Sagemaker specific */
   amznSagemakerCustomAttributes?: string;
@@ -99,6 +102,7 @@ export interface Options {
   amznSagemakerEnableExplanations?: string;
   amznSagemakerInferenceComponent?: string;
   amznSagemakerSessionId?: string;
+  amznSagemakerModelName?: string;
 
   /** Stability AI specific */
   stabilityClientId?: string;
@@ -112,9 +116,17 @@ export interface Options {
   vertexRegion?: string;
   vertexProjectId?: string;
   vertexServiceAccountJson?: Record<string, any>;
+  vertexStorageBucketName?: string;
+  vertexModelName?: string;
+
+  // Required for file uploads with google.
+  filename?: string;
 
   afterRequestHooks?: HookObject[];
   beforeRequestHooks?: HookObject[];
+  defaultInputGuardrails?: HookObject[];
+  defaultOutputGuardrails?: HookObject[];
+
   /** OpenAI specific */
   openaiProject?: string;
   openaiOrganization?: string;
@@ -126,6 +138,7 @@ export interface Options {
   azureDeploymentType?: 'managed' | 'serverless';
   azureEndpointName?: string;
   azureApiVersion?: string;
+  azureExtraParams?: string;
 
   /** The parameter to determine if extra non-openai compliant fields should be returned in response */
   strictOpenAiCompliance?: boolean;
@@ -134,6 +147,12 @@ export interface Options {
   /** Anthropic specific headers */
   anthropicBeta?: string;
   anthropicVersion?: string;
+
+  /** Fireworks finetune required fields */
+  fireworksAccountId?: string;
+
+  /** Cortex specific fields */
+  snowflakeAccount?: string;
 }
 
 /**
@@ -172,8 +191,12 @@ export interface Targets {
   index?: number;
   cache?: CacheSettings | string;
   targets?: Targets[];
+
   /** This is used to determine if the request should be transformed to formData Example: Stability V2 */
   transformToFormData?: boolean;
+
+  defaultInputGuardrails?: HookObject[];
+  defaultOutputGuardrails?: HookObject[];
 }
 
 /**
@@ -199,10 +222,13 @@ export interface Config {
 export interface ContentType {
   type: string;
   text?: string;
+  thinking?: string;
+  signature?: string;
   image_url?: {
     url: string;
     detail?: string;
   };
+  data?: string;
 }
 
 export interface ToolCall {
@@ -232,6 +258,12 @@ export type OpenAIMessageRole =
   | 'function'
   | 'tool'
   | 'developer';
+
+export interface ContentBlockChunk extends Omit<ContentType, 'type'> {
+  index: number;
+  type?: string;
+}
+
 /**
  * A message in the conversation.
  * @interface
@@ -241,6 +273,8 @@ export interface Message {
   role: OpenAIMessageRole;
   /** The content of the message. */
   content?: string | ContentType[];
+  /** The content blocks of the message. */
+  content_blocks?: ContentType[];
   /** The name of the function to call, if any. */
   name?: string;
   /** The function call to make, if any. */
@@ -402,7 +436,6 @@ export interface ShortConfig {
   retry?: RetrySettings;
   resourceName?: string;
   deploymentId?: string;
-  azureModelName?: string;
   workersAiAccountId?: string;
   apiVersion?: string;
   azureAuthMode?: string;
@@ -410,6 +443,7 @@ export interface ShortConfig {
   azureEntraClientId?: string;
   azureEntraClientSecret?: string;
   azureEntraTenantId?: string;
+  azureModelName?: string;
   customHost?: string;
   // Google Vertex AI specific
   vertexRegion?: string;
