@@ -93,6 +93,11 @@ export type endpointStrings =
   | 'cancelBatch'
   | 'listBatches'
   | 'getBatchOutput'
+  | 'listChatCompletions'
+  | 'getChatCompletion'
+  | 'getChatCompletionMessages'
+  | 'deleteChatCompletion'
+  | 'updateChatCompletion'
   | 'listFinetunes'
   | 'createFinetune'
   | 'retrieveFinetune'
@@ -340,6 +345,20 @@ export interface CancelBatchResponse extends Batch {}
 export interface ListBatchesResponse {
   object: string | 'list';
   data: Batch[];
+}
+
+export interface DeleteChatCompletionResponse {
+  object: string;
+  deleted: boolean;
+  id: string;
+}
+
+export interface GetChatMessagesResponse {
+  object: string;
+  data: Message[];
+  first_id: string;
+  last_id: string;
+  has_more: boolean;
 }
 
 interface FinetuneProviderOptions {

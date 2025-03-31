@@ -54,7 +54,7 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     }
     return headersObj;
   },
-  getEndpoint: ({ providerOptions, fn, gatewayRequestURL }) => {
+  getEndpoint: ({ providerOptions, fn, gatewayRequestURL, c }) => {
     const { apiVersion, urlToFetch, deploymentId } = providerOptions;
     let mappedFn = fn;
 
@@ -76,7 +76,12 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       }
     }
 
-    const path = gatewayRequestURL.split('/v1')?.[1];
+    const url = new URL(gatewayRequestURL);
+    if (apiVersion) {
+      url.searchParams.set('api-version', apiVersion);
+    }
+    const path = url.pathname;
+    const searchParams = url.searchParams.toString();
 
     switch (mappedFn) {
       case 'complete': {
@@ -104,31 +109,41 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
         return `/realtime?api-version=${apiVersion}&deployment=${deploymentId}`;
       }
       case 'uploadFile':
-        return `${path}?api-version=${apiVersion}`;
+        return `${path}?${searchParams}`;
       case 'retrieveFile':
-        return `${path}?api-version=${apiVersion}`;
+        return `${path}?${searchParams}`;
       case 'listFiles':
-        return `${path}?api-version=${apiVersion}`;
+        return `${path}?${searchParams}`;
       case 'deleteFile':
-        return `${path}?api-version=${apiVersion}`;
+        return `${path}?${searchParams}`;
       case 'retrieveFileContent':
-        return `${path}?api-version=${apiVersion}`;
+        return `${path}?${searchParams}`;
       case 'createFinetune':
-        return `${path}?api-version=${apiVersion}`;
+        return `${path}?${searchParams}`;
       case 'retrieveFinetune':
-        return `${path}?api-version=${apiVersion}`;
+        return `${path}?${searchParams}`;
       case 'listFinetunes':
-        return `${path}?api-version=${apiVersion}`;
+        return `${path}?${searchParams}`;
       case 'cancelFinetune':
-        return `${path}?api-version=${apiVersion}`;
+        return `${path}?${searchParams}`;
       case 'createBatch':
-        return `${path}?api-version=${apiVersion}`;
+        return `${path}?${searchParams}`;
       case 'retrieveBatch':
-        return `${path}?api-version=${apiVersion}`;
+        return `${path}?${searchParams}`;
       case 'cancelBatch':
-        return `${path}?api-version=${apiVersion}`;
+        return `${path}?${searchParams}`;
       case 'listBatches':
-        return `${path}?api-version=${apiVersion}`;
+        return `${path}?${searchParams}`;
+      case 'listChatCompletions':
+        return `/deployments/${deploymentId}/${path}?${searchParams}`;
+      case 'getChatCompletion':
+        return `/deployments/${deploymentId}/${path}?${searchParams}`;
+      case 'getChatCompletionMessages':
+        return `/deployments/${deploymentId}/${path}?${searchParams}`;
+      case 'updateChatCompletion':
+        return `/deployments/${deploymentId}/${path}?${searchParams}`;
+      case 'deleteChatCompletion':
+        return `/deployments/${deploymentId}/${path}?${searchParams}`;
       default:
         return '';
     }
