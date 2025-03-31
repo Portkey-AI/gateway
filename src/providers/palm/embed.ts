@@ -28,8 +28,19 @@ interface PalmEmbedResponse {
 
 export const PalmEmbedResponseTransform: (
   response: PalmEmbedResponse | GoogleErrorResponse,
-  responseStatus: number
-) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  _responseHeaders: Headers,
+  _strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
+) => EmbedResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
+) => {
   if (responseStatus !== 200) {
     const errorResponse = GoogleErrorResponseTransform(
       response as GoogleErrorResponse,
@@ -38,6 +49,7 @@ export const PalmEmbedResponseTransform: (
     if (errorResponse) return errorResponse;
   }
 
+  const model = (gatewayRequest.model as string) || '';
   if ('embedding' in response) {
     return {
       object: 'list',
@@ -48,7 +60,7 @@ export const PalmEmbedResponseTransform: (
           index: 0,
         },
       ],
-      model: '',
+      model,
       usage: {
         prompt_tokens: -1,
         total_tokens: -1,
