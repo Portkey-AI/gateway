@@ -34,6 +34,7 @@ import finetuneHandler from './handlers/finetuneHandler';
 
 // Config
 import conf from '../conf.json';
+import responsesHandler from './handlers/responsesHandler';
 
 // Create a new Hono server instance
 const app = new Hono();
@@ -198,6 +199,28 @@ app.post(
   batchesHandler('cancelBatch', 'POST')
 );
 app.get('/v1/batches', requestValidator, batchesHandler('listBatches', 'GET'));
+
+// responses
+app.post(
+  '/v1/responses',
+  requestValidator,
+  responsesHandler('createModelResponse', 'POST')
+);
+app.get(
+  '/v1/responses/:id',
+  requestValidator,
+  responsesHandler('getModelResponse', 'GET')
+);
+app.delete(
+  '/v1/responses/:id',
+  requestValidator,
+  responsesHandler('deleteModelResponse', 'DELETE')
+);
+app.get(
+  '/v1/responses/:id/input_items',
+  requestValidator,
+  responsesHandler('listResponseInputItems', 'GET')
+);
 
 app.all(
   '/v1/fine_tuning/jobs/:jobId?/:cancel?',
