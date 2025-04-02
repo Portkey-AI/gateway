@@ -1,0 +1,96 @@
+{
+  "id": "exa",
+  "description": "Exa.ai integration for enhancing AI responses with real-time web search information",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "Your Exa.ai API key",
+        "encrypted": true
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Online Search",
+      "id": "online",
+      "supportedHooks": ["beforeRequestHook"],
+      "type": "transformer",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Enhances prompts with relevant web search results from Exa's search API before processing the request"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "insert_location": {
+            "type": "string",
+            "label": "Insert Location",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Where to add the search context in the request"
+              }
+            ],
+            "enum": [
+              "append_to_system",
+              "add_user_after_system",
+              "add_user_to_end"
+            ],
+            "default": "append_to_system"
+          },
+          "prefix": {
+            "type": "string",
+            "label": "Context Prefix",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "String to prepend to the search context"
+              }
+            ],
+            "default": "\n<web_search_context>"
+          },
+          "suffix": {
+            "type": "string",
+            "label": "Context Suffix",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "String to append to the search context"
+              }
+            ],
+            "default": "\n</web_search_context>"
+          },
+          "numResults": {
+            "type": "number",
+            "label": "Number of Results",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Number of search results to include in the enhanced prompt"
+              }
+            ],
+            "default": 5
+          },
+          "timeout": {
+            "type": "number",
+            "label": "Timeout",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Timeout for the Exa API call in milliseconds"
+              }
+            ],
+            "default": 10000
+          }
+        },
+        "required": ["insert_location"]
+      }
+    }
+  ]
+}
