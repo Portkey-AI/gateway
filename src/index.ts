@@ -15,6 +15,7 @@ import { getRuntimeKey } from 'hono/adapter';
 import { requestValidator } from './middlewares/requestValidator';
 import { hooks } from './middlewares/hooks';
 import { memoryCache } from './middlewares/cache';
+import { protection } from './middlewares/ecs/protection';
 
 // Handlers
 import { proxyHandler } from './handlers/proxyHandler';
@@ -87,6 +88,7 @@ app.use('*', prettyJSON());
 // Use logger middleware for all routes
 if (getRuntimeKey() === 'node') {
   app.use(logger());
+  app.use(protection());
 }
 
 // Use hooks middleware for all routes
