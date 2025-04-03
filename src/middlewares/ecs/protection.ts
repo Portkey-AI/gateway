@@ -27,24 +27,43 @@ export const protection = () => {
 
     // Only wrap if it's a ReadableStream
     if (originalBody instanceof ReadableStream) {
-      const reader = originalBody.getReader();
+      const releaseProtection = async () => {
+        try {
+          await protectionManager.releaseProtection();
+        } catch (err) {
+          console.error('[Middleware] Error releasing protection:', err);
+        }
+      };
 
-      // Create a new ReadableStream that proxies data but also runs cleanup when done
-      const wrappedStream = new ReadableStream({
-        async pull(controller) {
-          const { done, value } = await reader.read();
-          if (done) {
-            // Cleanup work after the final chunk
-            await protectionManager.releaseProtection();
-            controller.close();
-            return;
+      // Create a TransformStream to monitor completion/error
+      const monitorStream = new TransformStream({
+        transform(chunk, controller) {
+          // Pass data through untouched
+          try {
+            controller.enqueue(chunk);
+          } catch (err) {
+            console.error('[Middleware] Error during transform enqueue:', err);
+            // If enqueue fails, signal error and release
+            releaseProtection();
+            controller.error(err); // Propagate error
           }
-          controller.enqueue(value);
+        },
+        flush() {
+          console.log('[Middleware] Source stream finished successfully.');
+          releaseProtection();
         },
       });
 
+      // Pipe the original body through the monitor
+      const monitoredBody = originalBody.pipeThrough(monitorStream);
+
       // Re-create the Response with the new body stream
-      c.res = new Response(wrappedStream, {
+      // Hono uses a setter internally for res, so we need to set to undefined
+      // first to completely unset the Response, before then trying to set it
+      // to our wrapped version
+      // Docs here: https://hono.dev/docs/guides/middleware#modify-the-response-after-next
+      c.res = undefined;
+      c.res = new Response(monitoredBody, {
         status: originalResponse.status,
         headers: originalResponse.headers,
       });
