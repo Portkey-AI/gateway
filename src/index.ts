@@ -54,6 +54,9 @@ app.use('*', (c, next) => {
 });
 
 if (runtime === 'node') {
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  });
   app.use('*', async (c: Context, next) => {
     if (!c.req.url.includes('/realtime')) {
       return next();

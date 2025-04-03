@@ -11,12 +11,20 @@ export function createProtectionManager(
 
   const acquireProtection = async () => {
     console.info('Acquiring protection');
-    await protectionManager.acquire();
+    try {
+      await protectionManager.acquire();
+    } catch (error) {
+      console.error('Failed to acquire protection', error);
+    }
   };
 
   const releaseProtection = async () => {
     console.info('Releasing protection');
-    await protectionManager.release();
+    try {
+      await protectionManager.release();
+    } catch (error) {
+      console.error('Failed to release protection', error);
+    }
   };
 
   return {
