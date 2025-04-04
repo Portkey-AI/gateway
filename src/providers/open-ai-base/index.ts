@@ -386,7 +386,7 @@ export const OpenAICreateModelResponseTransformer = <
   ) => T | ErrorResponse = (response, responseStatus) => {
     if (responseStatus !== 200 && 'error' in response) {
       const errorResponse = OpenAIErrorResponseTransform(
-        response,
+        response as ErrorResponse,
         provider ?? OPEN_AI
       );
       if (customTransformer) {
@@ -422,7 +422,7 @@ export const OpenAIGetModelResponseTransformer = <
   ) => T | ErrorResponse = (response, responseStatus) => {
     if (responseStatus !== 200 && 'error' in response) {
       const errorResponse = OpenAIErrorResponseTransform(
-        response,
+        response as ErrorResponse,
         provider ?? OPEN_AI
       );
       if (customTransformer) {
