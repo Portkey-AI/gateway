@@ -26,7 +26,7 @@ export type ParsedResponseOutputItem<ParsedT> =
   | ResponseFileSearchToolCall
   | ResponseFunctionWebSearch
   | ResponseComputerToolCall
-  | ResponseOutputItem.Reasoning;
+  | ResponseOutputItemReasoning;
 
 export interface ParsedResponse<ParsedT> extends OpenAIResponse {
   output: Array<ParsedResponseOutputItem<ParsedT>>;
@@ -118,26 +118,21 @@ export interface FileSearchTool {
   /**
    * Ranking options for search.
    */
-  ranking_options?: FileSearchTool.RankingOptions;
+  ranking_options?: FileSearchToolRankingOptions;
 }
 
-export namespace FileSearchTool {
+export interface FileSearchToolRankingOptions {
   /**
-   * Ranking options for search.
+   * The ranker to use for the file search.
    */
-  export interface RankingOptions {
-    /**
-     * The ranker to use for the file search.
-     */
-    ranker?: 'auto' | 'default-2024-11-15';
+  ranker?: 'auto' | 'default-2024-11-15';
 
-    /**
-     * The score threshold for the file search, a number between 0 and 1. Numbers
-     * closer to 1 will attempt to return only the most relevant results, but may
-     * return fewer results.
-     */
-    score_threshold?: number;
-  }
+  /**
+   * The score threshold for the file search, a number between 0 and 1. Numbers
+   * closer to 1 will attempt to return only the most relevant results, but may
+   * return fewer results.
+   */
+  score_threshold?: number;
 }
 
 /**
@@ -184,12 +179,15 @@ export interface OpenAIResponse {
    */
   created_at: number;
 
-  output_text: string;
+  /**
+   * An error object returned when the model fails to generate a Response.
+   */
+  error: ResponseError | null;
 
   /**
    * Details about why the response is incomplete.
    */
-  incomplete_details: Response.IncompleteDetails | null;
+  incomplete_details: IncompleteDetails | null;
 
   /**
    * Inserts a system (or developer) message as the first item in the model's
@@ -335,26 +333,23 @@ export interface OpenAIResponse {
    * Represents token usage details including input tokens, output tokens, a
    * breakdown of output tokens, and the total tokens used.
    */
-  usage?: ResponseUsage;
+  usage?: ResponseUsage | null;
 
   /**
    * A unique identifier representing your end-user, which can help OpenAI to monitor
    * and detect abuse.
    * [Learn more](https://platform.openai.com/docs/guides/safety-best-practices#end-user-ids).
    */
-  user?: string;
+  user?: string | null;
+
+  store?: boolean;
 }
 
-export namespace Response {
+export interface IncompleteDetails {
   /**
-   * Details about why the response is incomplete.
+   * The reason why the response is incomplete.
    */
-  export interface IncompleteDetails {
-    /**
-     * The reason why the response is incomplete.
-     */
-    reason?: 'max_output_tokens' | 'content_filter';
-  }
+  reason?: 'max_output_tokens' | 'content_filter';
 }
 
 /**
@@ -954,25 +949,7 @@ export interface ResponseError {
   /**
    * The error code for the response.
    */
-  code:
-    | 'server_error'
-    | 'rate_limit_exceeded'
-    | 'invalid_prompt'
-    | 'vector_store_timeout'
-    | 'invalid_image'
-    | 'invalid_image_format'
-    | 'invalid_base64_image'
-    | 'invalid_image_url'
-    | 'image_too_large'
-    | 'image_too_small'
-    | 'image_parse_error'
-    | 'image_content_policy_violation'
-    | 'invalid_image_mode'
-    | 'image_file_too_large'
-    | 'unsupported_image_media_type'
-    | 'empty_image_file'
-    | 'failed_to_download_image'
-    | 'image_file_not_found';
+  code: string;
 
   /**
    * A human-readable description of the error.
@@ -1713,49 +1690,39 @@ export type ResponseOutputItem =
   | ResponseFunctionToolCall
   | ResponseFunctionWebSearch
   | ResponseComputerToolCall
-  | ResponseOutputItem.Reasoning;
+  | ResponseOutputItemReasoning;
 
-export namespace ResponseOutputItem {
+export interface ResponseOutputItemReasoning {
   /**
-   * A description of the chain of thought used by a reasoning model while generating
-   * a response.
+   * The unique identifier of the reasoning content.
    */
-  export interface Reasoning {
-    /**
-     * The unique identifier of the reasoning content.
-     */
-    id: string;
+  id: string;
 
+  /**
+   * Reasoning text contents.
+   */
+  content: {
     /**
-     * Reasoning text contents.
+     * A short summary of the reasoning used by the model when generating the response.
      */
-    content: Array<Reasoning.Content>;
-
-    /**
-     * The type of the object. Always `reasoning`.
-     */
-    type: 'reasoning';
+    text: string;
 
     /**
-     * The status of the item. One of `in_progress`, `completed`, or `incomplete`.
-     * Populated when items are returned via API.
+     * The type of the object. Always `text`.
      */
-    status?: 'in_progress' | 'completed' | 'incomplete';
-  }
+    type: 'reasoning_summary';
+  };
 
-  export namespace Reasoning {
-    export interface Content {
-      /**
-       * A short summary of the reasoning used by the model when generating the response.
-       */
-      text: string;
+  /**
+   * The type of the object. Always `reasoning`.
+   */
+  type: 'reasoning';
 
-      /**
-       * The type of the object. Always `text`.
-       */
-      type: 'reasoning_summary';
-    }
-  }
+  /**
+   * The status of the item. One of `in_progress`, `completed`, or `incomplete`.
+   * Populated when items are returned via API.
+   */
+  status?: 'in_progress' | 'completed' | 'incomplete';
 }
 
 /**
@@ -2417,38 +2384,36 @@ export interface WebSearchTool {
    */
   search_context_size?: 'low' | 'medium' | 'high';
 
-  user_location?: WebSearchTool.UserLocation | null;
+  user_location?: WebSearchToolUserLocation | null;
 }
 
-export namespace WebSearchTool {
-  export interface UserLocation {
-    /**
-     * The type of location approximation. Always `approximate`.
-     */
-    type: 'approximate';
+interface WebSearchToolUserLocation {
+  /**
+   * The type of location approximation. Always `approximate`.
+   */
+  type: 'approximate';
 
-    /**
-     * Free text input for the city of the user, e.g. `San Francisco`.
-     */
-    city?: string;
+  /**
+   * Free text input for the city of the user, e.g. `San Francisco`.
+   */
+  city?: string;
 
-    /**
-     * The two-letter [ISO country code](https://en.wikipedia.org/wiki/ISO_3166-1) of
-     * the user, e.g. `US`.
-     */
-    country?: string;
+  /**
+   * The two-letter [ISO country code](https://en.wikipedia.org/wiki/ISO_3166-1) of
+   * the user, e.g. `US`.
+   */
+  country?: string;
 
-    /**
-     * Free text input for the region of the user, e.g. `California`.
-     */
-    region?: string;
+  /**
+   * Free text input for the region of the user, e.g. `California`.
+   */
+  region?: string;
 
-    /**
-     * The [IANA timezone](https://timeapi.io/documentation/iana-timezones) of the
-     * user, e.g. `America/Los_Angeles`.
-     */
-    timezone?: string;
-  }
+  /**
+   * The [IANA timezone](https://timeapi.io/documentation/iana-timezones) of the
+   * user, e.g. `America/Los_Angeles`.
+   */
+  timezone?: string;
 }
 
 export type ResponseCreateParams =

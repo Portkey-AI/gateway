@@ -5,7 +5,7 @@ import { Params, Message } from '../../types/requestBody';
 import {
   OpenAIResponse,
   ModelResponseDeleteResponse,
-} from '../../types/responses';
+} from '../../types/modelResponses';
 import { OpenAIChatCompleteResponse } from '../openai/chatComplete';
 import { OpenAICompleteResponse } from '../openai/complete';
 import { OpenAIErrorResponseTransform } from '../openai/utils';

@@ -1,4 +1,37 @@
 import { ProviderConfig } from '../types';
+import { OpenAIResponse } from '../../types/modelResponses';
+import {
+  getRandomId,
+  getResponseCompletedEvent,
+  getResponseOutputFileSearchCallCompletedEvent,
+  getResponseOutputFileSearchCallInProgressEvent,
+  getResponseOutputFileSearchCallSearchingEvent,
+  getResponseOutputFileSearchItemAddedEvent,
+  getResponseOutputFileSearchItemDoneEvent,
+  getResponseOutputMessageItemAddedEvent,
+  getResponseOutputMessageItemDoneEvent,
+  getResponseOutputMessageOutputTextContentPartAddedEvent,
+  getResponseOutputMessageOutputTextContentPartDeltaEvent,
+  getResponseOutputMessageOutputTextContentPartDoneEvent,
+  getResponseOutputMessageRefusalContentPartAddedEvent,
+  getResponseOutputMessageRefusalContentPartDeltaEvent,
+  getResponseOutputTextDoneEvent,
+  getResponseOutputWebSearchCallCompletedEvent,
+  getResponseOutputWebSearchCallInProgressEvent,
+  getResponseOutputWebSearchCallSearchingEvent,
+  getResponseOutputWebSearchItemAddedEvent,
+  getResponseOutputWebSearchItemDoneEvent,
+  getResponseOutputMessageRefusalDoneEvent,
+  getResponseOutputMessageRefusalContentPartDoneEvent,
+  getResponseErrorEvent,
+  getResponseFailedEvent,
+  getResponseIncompleteEvent,
+  getResponseCreatedEvent,
+  getResponseFunctionCallArgumentsDeltaEvents,
+  getResponseInProgressEvent,
+  getResponseOutputFunctionCallItemAddedEvent,
+  getResponseOutputFunctionCallItemDoneEvent,
+} from './helpers';
 
 export const OpenAICreateModelResponseConfig: ProviderConfig = {
   input: {
@@ -70,3 +103,132 @@ export const OpenAICreateModelResponseConfig: ProviderConfig = {
     required: false,
   },
 };
+
+export function* OpenAIModelResponseJSONToStreamGenerator(
+  response: OpenAIResponse
+): Generator<string, void, unknown> {
+  if (response.error?.code) {
+    yield getResponseErrorEvent(response.error);
+    return;
+  }
+
+  if (response.status === 'failed') {
+    yield getResponseFailedEvent(response);
+    return;
+  }
+
+  if (response.status === 'incomplete') {
+    yield getResponseIncompleteEvent(response);
+    return;
+  }
+
+  const responseId = getRandomId();
+  yield getResponseCreatedEvent(response, responseId);
+  yield getResponseInProgressEvent(response, responseId);
+  for (const [index, outputItem] of response.output.entries()) {
+    const outputItemId = getRandomId();
+    if (outputItem.type === 'function_call') {
+      const functionCallId = getRandomId();
+      yield getResponseOutputFunctionCallItemAddedEvent(
+        index,
+        outputItemId,
+        functionCallId,
+        outputItem
+      );
+      yield getResponseFunctionCallArgumentsDeltaEvents(
+        index,
+        outputItemId,
+        outputItem
+      );
+      yield getResponseOutputFunctionCallItemDoneEvent(
+        index,
+        outputItemId,
+        functionCallId,
+        outputItem
+      );
+    } else if (outputItem.type === 'web_search_call') {
+      yield getResponseOutputWebSearchItemAddedEvent(index, outputItemId);
+      yield getResponseOutputWebSearchCallInProgressEvent(index, outputItemId);
+      yield getResponseOutputWebSearchCallSearchingEvent(index, outputItemId);
+      yield getResponseOutputWebSearchCallCompletedEvent(index, outputItemId);
+      yield getResponseOutputWebSearchItemDoneEvent(index, outputItemId);
+    } else if (outputItem.type === 'file_search_call') {
+      // TODO: validate this
+      yield getResponseOutputFileSearchItemAddedEvent(index, outputItemId);
+      yield getResponseOutputFileSearchCallInProgressEvent(index, outputItemId);
+      yield getResponseOutputFileSearchCallSearchingEvent(index, outputItemId);
+      yield getResponseOutputFileSearchCallCompletedEvent(index, outputItemId);
+      yield getResponseOutputFileSearchItemDoneEvent(
+        index,
+        outputItemId,
+        outputItem
+      );
+    } else if (outputItem.type === 'message') {
+      yield getResponseOutputMessageItemAddedEvent(index, outputItemId);
+      for (const [
+        contentPartIndex,
+        contentPart,
+      ] of outputItem.content.entries()) {
+        if (contentPart.type === 'output_text') {
+          yield getResponseOutputMessageOutputTextContentPartAddedEvent(
+            index,
+            outputItemId,
+            contentPartIndex
+          );
+          for (let i = 0; i < contentPart.text.length; i += 500) {
+            yield getResponseOutputMessageOutputTextContentPartDeltaEvent(
+              index,
+              outputItemId,
+              contentPartIndex,
+              contentPart.text.slice(i, i + 500)
+            );
+          }
+          yield getResponseOutputTextDoneEvent(
+            index,
+            outputItemId,
+            contentPartIndex,
+            contentPart
+          );
+          yield getResponseOutputMessageOutputTextContentPartDoneEvent(
+            index,
+            outputItemId,
+            contentPartIndex,
+            contentPart
+          );
+        } else if (contentPart.type === 'refusal') {
+          yield getResponseOutputMessageRefusalContentPartAddedEvent(
+            index,
+            outputItemId,
+            contentPartIndex
+          );
+          for (let i = 0; i < contentPart.refusal.length; i += 500) {
+            yield getResponseOutputMessageRefusalContentPartDeltaEvent(
+              index,
+              outputItemId,
+              contentPartIndex,
+              contentPart.refusal.slice(i, i + 500)
+            );
+          }
+          yield getResponseOutputMessageRefusalDoneEvent(
+            index,
+            outputItemId,
+            contentPartIndex,
+            contentPart
+          );
+          yield getResponseOutputMessageRefusalContentPartDoneEvent(
+            index,
+            outputItemId,
+            contentPartIndex,
+            contentPart
+          );
+        }
+      }
+      yield getResponseOutputMessageItemDoneEvent(
+        index,
+        outputItemId,
+        outputItem
+      );
+    }
+  }
+  yield getResponseCompletedEvent(response, responseId);
+}

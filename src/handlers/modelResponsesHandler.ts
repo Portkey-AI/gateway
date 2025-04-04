@@ -5,7 +5,7 @@ import {
 } from './handlerUtils';
 import { endpointStrings } from '../providers/types';
 
-function responsesHandler(
+function modelResponsesHandler(
   endpoint: endpointStrings,
   method: 'POST' | 'GET' | 'DELETE'
 ) {
@@ -44,4 +44,4 @@ function responsesHandler(
   return handler;
 }
 
-export default responsesHandler;
+export default modelResponsesHandler;

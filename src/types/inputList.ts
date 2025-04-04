@@ -1,6 +1,6 @@
 // File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
 
-import * as ResponsesAPI from './responses';
+import * as ResponsesAPI from './modelResponses';
 
 /**
  * A list of Response items.

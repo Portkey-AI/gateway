@@ -345,14 +345,34 @@ export async function handleJSONToStreamResponse(
   const encoder = new TextEncoder();
   const responseJSON: OpenAIChatCompleteResponse | OpenAICompleteResponse =
     await response.clone().json();
-  const streamChunkArray = responseTransformerFunction(responseJSON, provider);
 
-  (async () => {
-    for (const chunk of streamChunkArray) {
-      await writer.write(encoder.encode(chunk));
-    }
-    writer.close();
-  })();
+  if (
+    Object.prototype.toString.call(responseTransformerFunction) ===
+    '[object GeneratorFunction]'
+  ) {
+    const generator = responseTransformerFunction(responseJSON, provider);
+    (async () => {
+      while (true) {
+        const chunk = generator.next();
+        if (chunk.done) {
+          break;
+        }
+        await writer.write(encoder.encode(chunk.value));
+      }
+      writer.close();
+    })();
+  } else {
+    const streamChunkArray = responseTransformerFunction(
+      responseJSON,
+      provider
+    );
+    (async () => {
+      for (const chunk of streamChunkArray) {
+        await writer.write(encoder.encode(chunk));
+      }
+      writer.close();
+    })();
+  }
 
   return new Response(readable, {
     headers: new Headers({
