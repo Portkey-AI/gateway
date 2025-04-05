@@ -12,5 +12,6 @@ export default tseslint.config({
   rules: {
     // '@typescript-eslint/no-unused-vars': 'error',
     'no-duplicate-imports': 'error',
+    '@typescript-eslint/no-namespace': 'off',
   },
 });

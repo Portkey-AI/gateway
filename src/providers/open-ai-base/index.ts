@@ -1,10 +1,16 @@
 import { OPEN_AI } from '../../globals';
 import { EmbedResponse } from '../../types/embedRequestBody';
+import { ResponseItemList } from '../../types/inputList';
 import { Params, Message } from '../../types/requestBody';
+import {
+  OpenAIResponse,
+  ModelResponseDeleteResponse,
+} from '../../types/modelResponses';
 import { OpenAIChatCompleteResponse } from '../openai/chatComplete';
 import { OpenAICompleteResponse } from '../openai/complete';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
 import { ErrorResponse, ProviderConfig } from '../types';
+import { OpenAICreateModelResponseConfig } from './createModelResponse';
 
 type CustomTransformer<T, U> = (
   response: T | ErrorResponse,
@@ -21,7 +27,6 @@ type DefaultValues = {
   [key: string]: unknown;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const excludeObjectKeys = (keyList: string[], object: Record<string, any>) => {
   if (keyList) {
     keyList.forEach((excludeKey) => {
@@ -256,9 +261,28 @@ export const embedParams = (
   return { ...baseParams, ...(extra ?? {}) };
 };
 
+export const createModelResponseParams = (
+  exclude: string[],
+  defaultValues: Record<string, string> = {},
+  extra?: ProviderConfig
+): ProviderConfig => {
+  const baseParams: ProviderConfig = {
+    ...OpenAICreateModelResponseConfig,
+  };
+
+  excludeObjectKeys(exclude, baseParams);
+
+  // Object.keys(defaultValues).forEach((key) => {
+  //   if (Object.hasOwn(baseParams, key) && !Array.isArray(baseParams[key])) {
+  //     baseParams[key].default = defaultValues[key];
+  //   }
+  // });
+
+  return { ...baseParams, ...(extra ?? {}) };
+};
+
 const EmbedResponseTransformer = <T extends EmbedResponse | ErrorResponse>(
   provider: string,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   customTransformer?: CustomTransformer<EmbedResponse, T>
 ) => {
   const transformer: (
@@ -319,6 +343,150 @@ const ChatCompleteResponseTransformer = <
 >(
   provider: string,
   customTransformer?: CustomTransformer<OpenAIChatCompleteResponse, T>
+) => {
+  const transformer: (
+    response: T | ErrorResponse,
+    responseStatus: number
+  ) => T | ErrorResponse = (response, responseStatus) => {
+    if (responseStatus !== 200 && 'error' in response) {
+      const errorResponse = OpenAIErrorResponseTransform(
+        response,
+        provider ?? OPEN_AI
+      );
+      if (customTransformer) {
+        return customTransformer(response as ErrorResponse, true);
+      }
+
+      return errorResponse;
+    }
+
+    if (customTransformer) {
+      return customTransformer(response as T);
+    }
+
+    Object.defineProperty(response, 'provider', {
+      value: provider,
+      enumerable: true,
+    });
+    return response;
+  };
+
+  return transformer;
+};
+
+export const OpenAICreateModelResponseTransformer = <
+  T extends OpenAIResponse | ErrorResponse,
+>(
+  provider: string,
+  customTransformer?: CustomTransformer<OpenAIResponse, T>
+) => {
+  const transformer: (
+    response: T | ErrorResponse,
+    responseStatus: number
+  ) => T | ErrorResponse = (response, responseStatus) => {
+    if (responseStatus !== 200 && 'error' in response) {
+      const errorResponse = OpenAIErrorResponseTransform(
+        response as ErrorResponse,
+        provider ?? OPEN_AI
+      );
+      if (customTransformer) {
+        return customTransformer(response as ErrorResponse, true);
+      }
+
+      return errorResponse;
+    }
+
+    if (customTransformer) {
+      return customTransformer(response as T);
+    }
+
+    Object.defineProperty(response, 'provider', {
+      value: provider,
+      enumerable: true,
+    });
+    return response;
+  };
+
+  return transformer;
+};
+
+export const OpenAIGetModelResponseTransformer = <
+  T extends OpenAIResponse | ErrorResponse,
+>(
+  provider: string,
+  customTransformer?: CustomTransformer<OpenAIResponse, T>
+) => {
+  const transformer: (
+    response: T | ErrorResponse,
+    responseStatus: number
+  ) => T | ErrorResponse = (response, responseStatus) => {
+    if (responseStatus !== 200 && 'error' in response) {
+      const errorResponse = OpenAIErrorResponseTransform(
+        response as ErrorResponse,
+        provider ?? OPEN_AI
+      );
+      if (customTransformer) {
+        return customTransformer(response as ErrorResponse, true);
+      }
+
+      return errorResponse;
+    }
+
+    if (customTransformer) {
+      return customTransformer(response as T);
+    }
+
+    Object.defineProperty(response, 'provider', {
+      value: provider,
+      enumerable: true,
+    });
+    return response;
+  };
+
+  return transformer;
+};
+
+export const OpenAIDeleteModelResponseTransformer = <
+  T extends ModelResponseDeleteResponse | ErrorResponse,
+>(
+  provider: string,
+  customTransformer?: CustomTransformer<ModelResponseDeleteResponse, T>
+) => {
+  const transformer: (
+    response: T | ErrorResponse,
+    responseStatus: number
+  ) => T | ErrorResponse = (response, responseStatus) => {
+    if (responseStatus !== 200 && 'error' in response) {
+      const errorResponse = OpenAIErrorResponseTransform(
+        response,
+        provider ?? OPEN_AI
+      );
+      if (customTransformer) {
+        return customTransformer(response as ErrorResponse, true);
+      }
+
+      return errorResponse;
+    }
+
+    if (customTransformer) {
+      return customTransformer(response as T);
+    }
+
+    Object.defineProperty(response, 'provider', {
+      value: provider,
+      enumerable: true,
+    });
+    return response;
+  };
+
+  return transformer;
+};
+
+export const OpenAIListInputItemsResponseTransformer = <
+  T extends ResponseItemList | ErrorResponse,
+>(
+  provider: string,
+  customTransformer?: CustomTransformer<ResponseItemList, T>
 ) => {
   const transformer: (
     response: T | ErrorResponse,
