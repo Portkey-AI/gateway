@@ -146,6 +146,13 @@ app.get(
 const server = serve({
   fetch: app.fetch,
   port: port,
+  serverOptions: {
+    // Ensure all inactive connections are terminated by the ALB, by setting this
+    // a few seconds higher than the ALB idle timeout
+    //
+    // @see https://adamcrowder.net/posts/node-express-api-and-aws-alb-502/
+    keepAliveTimeout: 65000,
+  },
 });
 
 const url = `http://localhost:${port}`;
