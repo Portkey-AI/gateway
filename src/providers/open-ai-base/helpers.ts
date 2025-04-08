@@ -31,6 +31,8 @@ import {
   ResponseErrorEvent,
   ResponseFailedEvent,
   ResponseIncompleteEvent,
+  ResponseComputerToolCall,
+  ResponseOutputItemReasoning,
 } from '../../types/modelResponses';
 import {
   RESPONSE_CREATED_EVENT,
@@ -60,6 +62,10 @@ import {
   RESPONSE_OUTPUT_REFUSAL_DELTA_EVENT,
   RESPONSE_OUTPUT_REFUSAL_DONE_EVENT,
   RESPONSE_ERROR_EVENT,
+  RESPONSE_OUTPUT_COMPUTER_CALL_ITEM_ADDED_EVENT,
+  RESPONSE_OUTPUT_COMPUTER_CALL_ITEM_DONE_EVENT,
+  RESPONSE_OUTPUT_REASONING_ITEM_ADDED_EVENT,
+  RESPONSE_OUTPUT_REASONING_ITEM_DONE_EVENT,
 } from './constants';
 
 export const getRandomId = () => {
@@ -504,5 +510,73 @@ export const getResponseOutputFileSearchItemDoneEvent = (
   item.id = outputItemId;
   item.queries = contentItem.queries;
   item.results = contentItem.results;
+  return `event: response.output_item.done\ndata: ${JSON.stringify(template)}\n\n`;
+};
+
+// response.output_item.added computer_call
+export const getResponseOutputComputerCallItemAddedEvent = (
+  index: number,
+  outputItemId: string
+): string => {
+  const template: ResponseOutputItemAddedEvent = {
+    ...RESPONSE_OUTPUT_COMPUTER_CALL_ITEM_ADDED_EVENT,
+  };
+  template.output_index = index;
+  const item: ResponseComputerToolCall =
+    template.item as ResponseComputerToolCall;
+  item.id = outputItemId;
+  return `event: response.output_item.added\ndata: ${JSON.stringify(template)}\n\n`;
+};
+
+// response.output_item.done computer_call
+export const getResponseOutputComputerCallItemDoneEvent = (
+  index: number,
+  outputItemId: string,
+  contentItem: ResponseOutputItem
+): string => {
+  if (contentItem.type !== 'computer_call') return '\n\n'; // TOOD: this is for type safety, make it prettier
+  const template: ResponseOutputItemDoneEvent = {
+    ...RESPONSE_OUTPUT_COMPUTER_CALL_ITEM_DONE_EVENT,
+  };
+  template.output_index = index;
+  const item: ResponseComputerToolCall =
+    template.item as ResponseComputerToolCall;
+  item.id = outputItemId;
+  item.call_id = contentItem.call_id;
+  item.action = contentItem.action;
+  item.pending_safety_checks = contentItem.pending_safety_checks;
+  return `event: response.output_item.done\ndata: ${JSON.stringify(template)}\n\n`;
+};
+
+// response.output_item.added reasoning
+export const getResponseOutputReasoningItemAddedEvent = (
+  index: number,
+  outputItemId: string
+): string => {
+  const template: ResponseOutputItemAddedEvent = {
+    ...RESPONSE_OUTPUT_REASONING_ITEM_ADDED_EVENT,
+  };
+  template.output_index = index;
+  const item: ResponseOutputItemReasoning =
+    template.item as ResponseOutputItemReasoning;
+  item.id = outputItemId;
+  return `event: response.output_item.added\ndata: ${JSON.stringify(template)}\n\n`;
+};
+
+// response.output_item.done reasoning
+export const getResponseOutputReasoningItemDoneEvent = (
+  index: number,
+  outputItemId: string,
+  contentItem: ResponseOutputItem
+): string => {
+  if (contentItem.type !== 'reasoning') return '\n\n'; // TOOD: this is for type safety, make it prettier
+  const template: ResponseOutputItemDoneEvent = {
+    ...RESPONSE_OUTPUT_REASONING_ITEM_DONE_EVENT,
+  };
+  template.output_index = index;
+  const item: ResponseOutputItemReasoning =
+    template.item as ResponseOutputItemReasoning;
+  item.id = outputItemId;
+  item.summary = contentItem.summary;
   return `event: response.output_item.done\ndata: ${JSON.stringify(template)}\n\n`;
 };

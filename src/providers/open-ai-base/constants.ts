@@ -373,3 +373,53 @@ export const RESPONSE_OUTPUT_FILE_SEARCH_ITEM_DONE_EVENT: ResponseOutputItemDone
       status: 'completed',
     },
   };
+
+export const RESPONSE_OUTPUT_COMPUTER_CALL_ITEM_ADDED_EVENT: ResponseOutputItemAddedEvent =
+  {
+    type: 'response.output_item.added',
+    output_index: 0,
+    item: {
+      type: 'computer_call',
+      id: '',
+      call_id: '',
+      action: null,
+      pending_safety_checks: [],
+      status: 'in_progress',
+    },
+  };
+
+export const RESPONSE_OUTPUT_COMPUTER_CALL_ITEM_DONE_EVENT: ResponseOutputItemDoneEvent =
+  {
+    type: 'response.output_item.done',
+    output_index: 0,
+    item: {
+      type: 'computer_call',
+      id: '',
+      call_id: '',
+      action: null,
+      pending_safety_checks: [],
+      status: 'completed',
+    },
+  };
+
+export const RESPONSE_OUTPUT_REASONING_ITEM_ADDED_EVENT: ResponseOutputItemAddedEvent =
+  {
+    type: 'response.output_item.added',
+    output_index: 0,
+    item: {
+      type: 'reasoning',
+      id: 'rs_67f52cb87b7c819198a16adfae0eb05004a13d81bd64355b',
+      summary: [],
+    },
+  };
+
+export const RESPONSE_OUTPUT_REASONING_ITEM_DONE_EVENT: ResponseOutputItemDoneEvent =
+  {
+    type: 'response.output_item.done',
+    output_index: 0,
+    item: {
+      type: 'reasoning',
+      id: 'rs_67f52cb87b7c819198a16adfae0eb05004a13d81bd64355b',
+      summary: [],
+    },
+  };

@@ -31,6 +31,10 @@ import {
   getResponseInProgressEvent,
   getResponseOutputFunctionCallItemAddedEvent,
   getResponseOutputFunctionCallItemDoneEvent,
+  getResponseOutputComputerCallItemDoneEvent,
+  getResponseOutputComputerCallItemAddedEvent,
+  getResponseOutputReasoningItemDoneEvent,
+  getResponseOutputReasoningItemAddedEvent,
 } from './helpers';
 
 export const OpenAICreateModelResponseConfig: ProviderConfig = {
@@ -163,6 +167,20 @@ export function* OpenAIModelResponseJSONToStreamGenerator(
       yield getResponseOutputFileSearchCallSearchingEvent(index, outputItemId);
       yield getResponseOutputFileSearchCallCompletedEvent(index, outputItemId);
       yield getResponseOutputFileSearchItemDoneEvent(
+        index,
+        outputItemId,
+        outputItem
+      );
+    } else if (outputItem.type === 'computer_call') {
+      yield getResponseOutputComputerCallItemAddedEvent(index, outputItemId);
+      yield getResponseOutputComputerCallItemDoneEvent(
+        index,
+        outputItemId,
+        outputItem
+      );
+    } else if (outputItem.type === 'reasoning') {
+      yield getResponseOutputReasoningItemAddedEvent(index, outputItemId);
+      yield getResponseOutputReasoningItemDoneEvent(
         index,
         outputItemId,
         outputItem

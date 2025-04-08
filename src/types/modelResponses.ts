@@ -615,7 +615,8 @@ export interface ResponseComputerToolCall {
     | ResponseComputerToolCall.Screenshot
     | ResponseComputerToolCall.Scroll
     | ResponseComputerToolCall.Type
-    | ResponseComputerToolCall.Wait;
+    | ResponseComputerToolCall.Wait
+    | null;
 
   /**
    * An identifier used when responding to the tool call with output.
@@ -1701,7 +1702,7 @@ export interface ResponseOutputItemReasoning {
   /**
    * Reasoning text contents.
    */
-  content: {
+  content?: {
     /**
      * A short summary of the reasoning used by the model when generating the response.
      */
@@ -1723,6 +1724,11 @@ export interface ResponseOutputItemReasoning {
    * Populated when items are returned via API.
    */
   status?: 'in_progress' | 'completed' | 'incomplete';
+
+  /**
+   * A short summary of the reasoning used by the model when generating the response.
+   */
+  summary?: any;
 }
 
 /**
