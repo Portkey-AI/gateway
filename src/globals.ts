@@ -45,6 +45,7 @@ export const PERPLEXITY_AI: string = 'perplexity-ai';
 export const REKA_AI: string = 'reka-ai';
 export const MISTRAL_AI: string = 'mistral-ai';
 export const DEEPINFRA: string = 'deepinfra';
+export const NCOMPASS: string = 'ncompass';
 export const STABILITY_AI: string = 'stability-ai';
 export const NOMIC: string = 'nomic';
 export const OLLAMA: string = 'ollama';
@@ -76,6 +77,7 @@ export const UPSTAGE: string = 'upstage';
 export const LAMBDA: string = 'lambda';
 export const DASHSCOPE: string = 'dashscope';
 export const X_AI: string = 'x-ai';
+export const CORTEX: string = 'cortex';
 export const SAGEMAKER: string = 'sagemaker';
 export const NEBIUS: string = 'nebius';
 export const RECRAFTAI: string = 'recraft-ai';
@@ -96,6 +98,7 @@ export const VALID_PROVIDERS = [
   REKA_AI,
   TOGETHER_AI,
   DEEPINFRA,
+  NCOMPASS,
   STABILITY_AI,
   NOMIC,
   OLLAMA,
@@ -129,6 +132,7 @@ export const VALID_PROVIDERS = [
   LAMBDA,
   DASHSCOPE,
   X_AI,
+  CORTEX,
   SAGEMAKER,
   NEBIUS,
   RECRAFTAI,

@@ -1,6 +1,6 @@
 {
   "name": "@portkey-ai/gateway",
-  "version": "1.9.10",
+  "version": "1.9.13",
   "description": "A fast AI gateway by Portkey",
   "repository": {
     "type": "git",

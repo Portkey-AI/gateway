@@ -79,12 +79,12 @@ export interface PIIFilter<T = any> extends BedrockAction<T> {
 export interface BedrockResponse {
   action: 'NONE' | 'GUARDRAIL_INTERVENED';
   assessments: {
-    wordPolicy: {
+    wordPolicy?: {
       customWords: WordPolicy[];
       managedWordLists: (WordPolicy & { type: 'PROFANITY' })[];
     };
-    contentPolicy: { filters: ContentPolicy[] };
-    sensitiveInformationPolicy: {
+    contentPolicy?: { filters: ContentPolicy[] };
+    sensitiveInformationPolicy?: {
       piiEntities: PIIFilter<'ANONYMIZED' | 'BLOCKED'>[];
       regexes: (Omit<PIIFilter, 'type'> & {
         name: string;

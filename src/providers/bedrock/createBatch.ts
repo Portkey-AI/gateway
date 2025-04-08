@@ -1,4 +1,5 @@
 import { BEDROCK } from '../../globals';
+import { Options } from '../../types/requestBody';
 import {
   CreateBatchRequest,
   CreateBatchResponse,
@@ -43,13 +44,16 @@ export const BedrockCreateBatchConfig: ProviderConfig = {
   output_data_config: {
     param: 'outputDataConfig',
     required: true,
-    default: (params: BedrockCreateBatchRequest) => {
+    default: (params: BedrockCreateBatchRequest, providerOptions: Options) => {
       const inputFileId = decodeURIComponent(params.input_file_id);
       const s3URLToContainingFolder =
         inputFileId.split('/').slice(0, -1).join('/') + '/';
       return {
         s3OutputDataConfig: {
           s3Uri: s3URLToContainingFolder,
+          ...(providerOptions.awsServerSideEncryptionKMSKeyId && {
+            s3EncryptionKeyId: providerOptions.awsServerSideEncryptionKMSKeyId,
+          }),
         },
       };
     },
@@ -65,10 +69,10 @@ export const BedrockCreateBatchResponseTransform: (
   responseStatus: number
 ) => CreateBatchResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    const errorResposne = BedrockErrorResponseTransform(
+    const errorResponse = BedrockErrorResponseTransform(
       response as BedrockErrorResponse
     );
-    if (errorResposne) return errorResposne;
+    if (errorResponse) return errorResponse;
   }
 
   if ('jobArn' in response) {
