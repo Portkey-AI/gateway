@@ -102,6 +102,10 @@ export const OpenAICreateModelResponseConfig: ProviderConfig = {
     param: 'user',
     required: false,
   },
+  truncation: {
+    param: 'truncation',
+    required: false,
+  },
 };
 
 export function* OpenAIModelResponseJSONToStreamGenerator(
