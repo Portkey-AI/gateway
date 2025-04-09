@@ -26,8 +26,8 @@ describe('exa online handler', () => {
 
     const parameters = {
       credentials: testCreds,
-      num_results: 1,
-      insert_location: 'append_to_system',
+      numResults: 1,
+      insertLocation: 'append_to_system',
     };
 
     const result = await onlineHandler(
@@ -65,8 +65,8 @@ describe('exa online handler', () => {
 
     const parameters = {
       credentials: testCreds,
-      insert_location: 'append_to_system',
-      num_results: 1,
+      insertLocation: 'append_to_system',
+      numResults: 1,
     };
 
     const result = await onlineHandler(
@@ -110,8 +110,8 @@ describe('exa online handler', () => {
 
     const parameters = {
       credentials: testCreds,
-      insert_location: 'append_to_system',
-      num_results: 1,
+      insertLocation: 'append_to_system',
+      numResults: 1,
     };
 
     const result = await onlineHandler(
@@ -156,8 +156,8 @@ describe('exa online handler', () => {
 
     const parameters = {
       credentials: testCreds,
-      insert_location: 'add_user_after_system',
-      num_results: 1,
+      insertLocation: 'add_user_after_system',
+      numResults: 1,
     };
 
     const result = await onlineHandler(
@@ -204,8 +204,8 @@ describe('exa online handler', () => {
 
     const parameters = {
       credentials: testCreds,
-      insert_location: 'add_user_to_end',
-      num_results: 1,
+      insertLocation: 'add_user_to_end',
+      numResults: 1,
     };
 
     const result = await onlineHandler(
@@ -252,7 +252,7 @@ describe('exa online handler', () => {
 
     const parameters = {
       credentials: testCreds,
-      insert_location: 'append_to_system',
+      insertLocation: 'append_to_system',
       prefix: '\n[SEARCH_RESULTS]',
       suffix: '[END_RESULTS]\n',
     };
@@ -290,8 +290,8 @@ describe('exa online handler', () => {
 
     const parameters = {
       credentials: testCreds,
-      insert_location: 'append_to_system', // Should still work for completion
-      num_results: 1,
+      insertLocation: 'append_to_system', // Should still work for completion
+      numResults: 1,
     };
 
     const result = await onlineHandler(
@@ -333,7 +333,7 @@ describe('exa online handler', () => {
 
     const parameters = {
       credentials: testCreds,
-      num_results: 1,
+      numResults: 1,
     };
 
     const result = await onlineHandler(
@@ -349,6 +349,152 @@ describe('exa online handler', () => {
     // Check that sources have the right structure
     expect(result.data.sources[0]).toHaveProperty('title');
     expect(result.data.sources[0]).toHaveProperty('url');
+  });
+
+  it('should filter results using includeDomains parameter', async () => {
+    const eventType = 'beforeRequestHook';
+    const context = {
+      request: {
+        text: 'Latest news on climate change',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: 'Latest news on climate change',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+
+    const parameters = {
+      credentials: testCreds,
+      includeDomains: ['theguardian.com', 'bbc.com'],
+      numResults: 3,
+    };
+
+    const result = await onlineHandler(
+      context as PluginContext,
+      parameters,
+      eventType
+    );
+
+    // We might not get results if the domains don't have matching content
+    if (result.transformed) {
+      expect(result.data.sources.length).toBeGreaterThan(0);
+
+      // Check that all results come from the included domains
+      // Note: This test might be flaky if Exa doesn't return results from these domains
+      const allResultsFromIncludedDomains = result.data.sources.every(
+        (source: { url: string | URL }) => {
+          const domain = new URL(source.url).hostname;
+          return parameters.includeDomains.some(
+            (includeDomain) =>
+              domain === includeDomain || domain.endsWith('.' + includeDomain)
+          );
+        }
+      );
+
+      // Only check if we actually got sources
+      if (result.data.sources.length > 0) {
+        expect(allResultsFromIncludedDomains).toBe(true);
+      }
+    }
+  });
+
+  it('should filter results using excludeDomains parameter', async () => {
+    const eventType = 'beforeRequestHook';
+    const context = {
+      request: {
+        text: 'Latest iPhone reviews',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: 'Latest iPhone reviews',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+
+    const parameters = {
+      credentials: testCreds,
+      excludeDomains: ['wikipedia.org', 'reddit.com'],
+      numResults: 3,
+    };
+
+    const result = await onlineHandler(
+      context as PluginContext,
+      parameters,
+      eventType
+    );
+
+    if (result.transformed && result.data.sources.length > 0) {
+      // Check that no results come from excluded domains
+      const noResultsFromExcludedDomains = result.data.sources.every(
+        (source: { url: string | URL }) => {
+          const domain = new URL(source.url).hostname;
+          return !parameters.excludeDomains.some(
+            (excludeDomain) =>
+              domain === excludeDomain || domain.endsWith('.' + excludeDomain)
+          );
+        }
+      );
+
+      expect(noResultsFromExcludedDomains).toBe(true);
+    }
+  });
+
+  it('should limit results based on numResults parameter', async () => {
+    const eventType = 'beforeRequestHook';
+    const context = {
+      request: {
+        text: 'Latest AI research papers',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: 'Latest AI research papers',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+
+    // Test with a small number to clearly verify the limit
+    const specificNumResults = 2;
+    const parameters = {
+      credentials: testCreds,
+      insertLocation: 'append_to_system',
+      numResults: specificNumResults,
+    };
+
+    const result = await onlineHandler(
+      context as PluginContext,
+      parameters,
+      eventType
+    );
+
+    if (result.transformed) {
+      // Verify we got the exact number of results requested (or fewer if not enough available)
+      expect(result.data.sources.length).toBeLessThanOrEqual(
+        specificNumResults
+      );
+
+      // If we got results, check the content structure in the transformed result
+      if (result.transformedData.request.json.messages[0].content) {
+        const content = result.transformedData.request.json.messages[0].content;
+
+        // Count the number of result entries in the content
+        // Each result starts with a number in brackets like [1], [2], etc.
+        const resultCount = (content.match(/\[\d+\]/g) || []).length;
+        expect(resultCount).toBeLessThanOrEqual(specificNumResults);
+      }
+    }
   });
 
   it('should handle invalid queries gracefully', async () => {
@@ -370,7 +516,7 @@ describe('exa online handler', () => {
 
     const parameters = {
       credentials: testCreds,
-      num_results: 1,
+      numResults: 1,
     };
 
     const result = await onlineHandler(

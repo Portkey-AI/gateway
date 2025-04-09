@@ -27,11 +27,13 @@ const performExaSearch = async (
   query: string,
   credentials: any,
   timeout?: number,
-  numResults: number = 10
+  numResults: number = 10,
+  includeDomains?: string[],
+  excludeDomains?: string[]
 ) => {
   if (!query.trim()) return { searchResults: null, data: null };
 
-  const searchBody = {
+  const searchBody: any = {
     query,
     numResults,
     useAutoprompt: true,
@@ -39,6 +41,15 @@ const performExaSearch = async (
       text: true,
     },
   };
+
+  // Add domain filters if provided
+  if (includeDomains && includeDomains.length > 0) {
+    searchBody.includeDomains = includeDomains;
+  }
+
+  if (excludeDomains && excludeDomains.length > 0) {
+    searchBody.excludeDomains = excludeDomains;
+  }
 
   const options = {
     headers: {
@@ -58,8 +69,6 @@ const performExaSearch = async (
     if (!result.results || result.results.length === 0) {
       return { searchResults: null, data: null };
     }
-
-    console.log(result.results);
 
     const formattedResults = result.results.map((item) => ({
       title: item.title,
@@ -212,7 +221,9 @@ export const handler: PluginHandler = async (
       combinedQuery,
       parameters.credentials,
       parameters.timeout,
-      parameters.numResults || 10
+      parameters.numResults || 10,
+      parameters.includeDomains,
+      parameters.excludeDomains
     );
 
     // Store the search metadata including sources
@@ -238,7 +249,7 @@ export const handler: PluginHandler = async (
       const newTransformedData = insertSearchResults(
         context,
         formattedResults,
-        parameters.insert_location || 'append_to_system'
+        parameters.insertLocation || 'append_to_system'
       );
       Object.assign(transformedData, newTransformedData);
       transformed = true;

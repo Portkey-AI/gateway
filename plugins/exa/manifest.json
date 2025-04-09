@@ -28,7 +28,7 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "insert_location": {
+          "insertLocation": {
             "type": "string",
             "label": "Insert Location",
             "description": [
@@ -77,6 +77,32 @@
             ],
             "default": 5
           },
+          "includeDomains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "label": "Include Domains",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Limit search results to these domains (e.g., ['nytimes.com', 'bbc.com'])"
+              }
+            ]
+          },
+          "excludeDomains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "label": "Exclude Domains",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Remove these domains from search results (e.g., ['wikipedia.org', 'reddit.com'])"
+              }
+            ]
+          },
           "timeout": {
             "type": "number",
             "label": "Timeout",
@@ -89,7 +115,7 @@
             "default": 10000
           }
         },
-        "required": ["insert_location"]
+        "required": ["insertLocation"]
       }
     }
   ]
