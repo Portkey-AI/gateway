@@ -1,4 +1,4 @@
-import Sentry from '@sentry/node';
+import * as Sentry from '@sentry/node';
 
 // Ensure to call this before requiring any other modules!
 Sentry.init({
