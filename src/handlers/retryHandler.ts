@@ -1,4 +1,5 @@
 import retry from 'async-retry';
+import { MAX_RETRY_LIMIT_MS, POSSIBLE_RETRY_STATUS_HEADERS } from '../globals';
 
 async function fetchWithTimeout(
   url: string,
@@ -72,13 +73,15 @@ export const retryRequest = async (
   response: Response;
   attempt: number | undefined;
   createdAt: Date;
+  skip: boolean;
 }> => {
   let lastResponse: Response | undefined;
   let lastAttempt: number | undefined;
   const start = new Date();
+  let retrySkipped = false;
   try {
     await retry(
-      async (bail: any, attempt: number) => {
+      async (bail: any, attempt: number, rateLimiter: any) => {
         try {
           let response: Response;
           if (timeout) {
@@ -97,7 +100,48 @@ export const retryRequest = async (
             const errorObj: any = new Error(await response.text());
             errorObj.status = response.status;
             errorObj.headers = Object.fromEntries(response.headers);
-            throw errorObj;
+
+            if (response.status === 429) {
+              // get retry header.
+              const retryHeader = POSSIBLE_RETRY_STATUS_HEADERS.find(
+                (header) => {
+                  return response.headers.get(header);
+                }
+              );
+              const retryAfterValue = response.headers.get(retryHeader ?? '');
+              // continue, if no retry header is found.
+              if (!retryAfterValue) {
+                throw errorObj;
+              }
+              let retryAfter: number | undefined;
+              // if the header is `retry-after` convert it to milliseconds.
+              if (retryHeader === 'retry-after') {
+                retryAfter = Number.parseInt(retryAfterValue.trim()) * 1000;
+              } else {
+                retryAfter = Number.parseInt(retryAfterValue.trim());
+              }
+
+              if (retryAfter && !Number.isNaN(retryAfter)) {
+                // break the loop if the retryAfter is greater than the max retry limit
+                if (retryAfter >= MAX_RETRY_LIMIT_MS) {
+                  retrySkipped = true;
+                  rateLimiter._timeouts = [];
+                  throw errorObj;
+                }
+                // will reset the current backoff timeout(s) to `0`.
+                rateLimiter._timeouts = Array.from({
+                  length: retryCount - attempt + 1,
+                }).map(() => 0);
+
+                throw await new Promise((resolve) => {
+                  setTimeout(() => {
+                    resolve(errorObj);
+                  }, retryAfter);
+                });
+              } else {
+                throw errorObj;
+              }
+            }
           } else if (response.status >= 200 && response.status <= 204) {
             // do nothing
           } else {
@@ -160,5 +204,6 @@ export const retryRequest = async (
     response: lastResponse as Response,
     attempt: lastAttempt,
     createdAt: start,
+    skip: retrySkipped,
   };
 };
