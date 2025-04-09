@@ -16,7 +16,7 @@ import { getRuntimeKey } from 'hono/adapter';
 import { requestValidator } from './middlewares/requestValidator';
 import { hooks } from './middlewares/hooks';
 import { memoryCache } from './middlewares/cache';
-import { protection } from './middlewares/ecs/protection';
+import { protection } from './utils/ecs/protection';
 
 // Handlers
 import { proxyHandler } from './handlers/proxyHandler';

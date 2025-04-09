@@ -12,6 +12,7 @@ import { VertexLlamaChatCompleteStreamChunkTransform } from '../providers/google
 import { OpenAIChatCompleteResponse } from '../providers/openai/chatComplete';
 import { OpenAICompleteResponse } from '../providers/openai/complete';
 import { getStreamModeSplitPattern, type SplitPatternType } from '../utils';
+import { protectionManager } from '../utils/ecs/protection';
 
 function readUInt32BE(buffer: Uint8Array, offset: number) {
   return (
@@ -296,7 +297,15 @@ export function handleStreamingMode(
         await writer.write(encoder.encode(chunk));
       }
       writer.close();
-    })();
+      try {
+        await protectionManager.releaseProtection();
+      } catch (error) {
+        console.error('Error releasing protection:', error);
+      }
+    })().catch((error) => {
+      console.error('Error in stream processing:', error);
+      writer.close();
+    });
   } else {
     (async () => {
       for await (const chunk of readStream(
@@ -310,7 +319,15 @@ export function handleStreamingMode(
         await writer.write(encoder.encode(chunk));
       }
       writer.close();
-    })();
+      try {
+        await protectionManager.releaseProtection();
+      } catch (error) {
+        console.error('Error releasing protection:', error);
+      }
+    })().catch((error) => {
+      console.error('Error in stream processing:', error);
+      writer.close();
+    });
   }
 
   // Convert GEMINI/COHERE json stream to text/event-stream for non-proxy calls
