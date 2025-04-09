@@ -82,7 +82,7 @@ export const getResponseErrorEvent = (error: ResponseError): string => {
 export const getResponseFailedEvent = (response: OpenAIResponse): string => {
   const chunk: ResponseFailedEvent = {
     type: 'response.failed',
-    response: response,
+    response: { ...response },
   };
   chunk.response.created_at = Math.floor(Date.now() / 1000);
   chunk.response.id = getRandomId();
@@ -94,7 +94,7 @@ export const getResponseIncompleteEvent = (
 ): string => {
   const chunk: ResponseIncompleteEvent = {
     type: 'response.incomplete',
-    response: response,
+    response: { ...response },
   };
   chunk.response.created_at = Math.floor(Date.now() / 1000);
   chunk.response.id = getRandomId();
@@ -108,8 +108,8 @@ export const getResponseCreatedEvent = (
 ): string => {
   const template: ResponseCreatedEvent = {
     ...RESPONSE_CREATED_EVENT,
-    ...finalResponse,
   };
+  template.response = { ...finalResponse };
   template.response.output = [];
   template.response.created_at = Math.floor(Date.now() / 1000);
   template.response.id = responseId;
@@ -123,8 +123,8 @@ export const getResponseInProgressEvent = (
 ): string => {
   const template: ResponseInProgressEvent = {
     ...RESPONSE_IN_PROGRESS_EVENT,
-    ...finalResponse,
   };
+  template.response = { ...finalResponse };
   template.response.output = [];
   template.response.created_at = Math.floor(Date.now() / 1000);
   template.response.id = responseId;
@@ -138,7 +138,7 @@ export const getResponseCompletedEvent = (
 ): string => {
   const template: ResponseCompletedEvent = {
     type: 'response.completed',
-    response: finalResponse,
+    response: { ...finalResponse },
   };
   template.response.id = responseId;
   template.response.created_at = Math.floor(Date.now() / 1000);
