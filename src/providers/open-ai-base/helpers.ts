@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto';
 import {
   OpenAIResponse,
   ResponseCreatedEvent,
@@ -69,7 +68,7 @@ import {
 } from './constants';
 
 export const getRandomId = () => {
-  return 'portkey_cache_' + randomUUID();
+  return 'portkey_cache_' + crypto.randomUUID();
 };
 
 export const getResponseErrorEvent = (error: ResponseError): string => {
