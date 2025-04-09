@@ -530,14 +530,12 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
   streamState: AnthropicStreamState,
-  _strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  _strictOpenAiCompliance: boolean
 ) => string | undefined = (
   responseChunk,
   fallbackId,
   streamState,
-  strictOpenAiCompliance,
-  gatewayRequest
+  strictOpenAiCompliance
 ) => {
   let chunk = responseChunk.trim();
   if (
@@ -567,7 +565,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
         id: fallbackId,
         object: 'chat.completion.chunk',
         created: Math.floor(Date.now() / 1000),
-        model: gatewayRequest.model || '',
+        model: '',
         provider: ANTHROPIC,
         choices: [
           {
