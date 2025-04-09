@@ -972,13 +972,9 @@ export function constructConfigFromRequestHeaders(
   };
 
   const azureAiInferenceConfig = {
-    azureDeploymentName:
-      requestHeaders[`x-${POWERED_BY}-azure-deployment-name`],
-    azureRegion: requestHeaders[`x-${POWERED_BY}-azure-region`],
-    azureDeploymentType:
-      requestHeaders[`x-${POWERED_BY}-azure-deployment-type`],
     azureApiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
     azureEndpointName: requestHeaders[`x-${POWERED_BY}-azure-endpoint-name`],
+    azureFoundryUrl: requestHeaders[`x-${POWERED_BY}-azure-foundry-url`],
     azureExtraParams: requestHeaders[`x-${POWERED_BY}-azure-extra-params`],
   };
 
