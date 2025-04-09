@@ -31,26 +31,14 @@ interface AI21EmbedResponse {
 
 export const AI21EmbedResponseTransform: (
   response: AI21EmbedResponse | AI21ErrorResponse,
-  responseStatus: number,
-  responseHeaders: Headers,
-  strictOpenAiCompliance: boolean,
-  gatewayRequestUrl: string,
-  gatewayRequest: Params
-) => EmbedResponse | ErrorResponse = (
-  response,
-  responseStatus,
-  _responseHeaders,
-  _strictOpenAiCompliance,
-  _gatewayRequestUrl,
-  gatewayRequest
-) => {
+  responseStatus: number
+) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
     const errorResposne = AI21ErrorResponseTransform(
       response as AI21ErrorResponse
     );
     if (errorResposne) return errorResposne;
   }
-  const model = (gatewayRequest.model as string) || '';
   if ('results' in response) {
     return {
       object: 'list',
@@ -59,7 +47,7 @@ export const AI21EmbedResponseTransform: (
         embedding: result.embedding,
         index: index,
       })),
-      model,
+      model: '',
       provider: AI21,
       usage: {
         prompt_tokens: -1,

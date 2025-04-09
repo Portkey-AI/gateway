@@ -135,19 +135,8 @@ export const AI21ErrorResponseTransform: (
 
 export const AI21ChatCompleteResponseTransform: (
   response: AI21ChatCompleteResponse | AI21ErrorResponse,
-  responseStatus: number,
-  responseHeaders: Headers,
-  strictOpenAiCompliance: boolean,
-  gatewayRequestUrl: string,
-  gatewayRequest: Params
-) => ChatCompletionResponse | ErrorResponse = (
-  response,
-  responseStatus,
-  _responseHeaders,
-  _strictOpenAiCompliance,
-  _gatewayRequestUrl,
-  gatewayRequest
-) => {
+  responseStatus: number
+) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
     const errorResposne = AI21ErrorResponseTransform(
       response as AI21ErrorResponse
@@ -160,7 +149,7 @@ export const AI21ChatCompleteResponseTransform: (
       id: response.id,
       object: 'chat_completion',
       created: Math.floor(Date.now() / 1000),
-      model: gatewayRequest.model || '',
+      model: '',
       provider: AI21,
       choices: response.outputs.map((o, index) => ({
         message: {

@@ -91,19 +91,8 @@ export interface AI21ErrorResponse {
 
 export const AI21CompleteResponseTransform: (
   response: AI21CompleteResponse | AI21ErrorResponse,
-  responseStatus: number,
-  responseHeaders: Headers,
-  strictOpenAiCompliance: boolean,
-  gatewayRequestUrl: string,
-  gatewayRequest: Params
-) => CompletionResponse | ErrorResponse = (
-  response,
-  responseStatus,
-  _responseHeaders,
-  _strictOpenAiCompliance,
-  _gatewayRequestUrl,
-  gatewayRequest
-) => {
+  responseStatus: number
+) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
     const errorResposne = AI21ErrorResponseTransform(
       response as AI21ErrorResponse
@@ -121,7 +110,7 @@ export const AI21CompleteResponseTransform: (
       id: response.id,
       object: 'text_completion',
       created: Math.floor(Date.now() / 1000),
-      model: gatewayRequest.model || '',
+      model: '',
       provider: AI21,
       choices: response.completions.map((completion, index) => ({
         text: completion.data.text,
