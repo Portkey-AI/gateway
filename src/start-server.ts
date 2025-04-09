@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import './instrument.ts';
 import { serve } from '@hono/node-server';
 
 import app from './index';

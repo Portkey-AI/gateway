@@ -49,7 +49,7 @@ export const protection = () => {
           }
         },
         flush() {
-          console.log('[Middleware] Source stream finished successfully.');
+          //console.log('[Middleware] Source stream finished successfully.');
           releaseProtection();
         },
       });
