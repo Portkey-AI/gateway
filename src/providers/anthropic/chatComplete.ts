@@ -41,34 +41,63 @@ interface AnthropicToolResultContentItem {
   content?: string;
 }
 
-type AnthropicMessageContentItem = AnthropicToolResultContentItem | ContentType;
+interface AnthropicBase64ImageContentItem {
+  type: 'image';
+  source: {
+    type: 'base64';
+    media_type: string;
+    data: string;
+  };
+}
+
+interface AnthropicUrlImageContentItem {
+  type: 'image';
+  source: {
+    type: 'url';
+    url: string;
+  };
+}
+
+interface AnthropicTextContentItem {
+  type: 'text';
+  text: string;
+}
+
+type AnthropicMessageContentItem =
+  | AnthropicToolResultContentItem
+  | AnthropicBase64ImageContentItem
+  | AnthropicUrlImageContentItem
+  | AnthropicTextContentItem;
 
 interface AnthropicMessage extends Message, AnthropicPromptCache {
-  content?: string | AnthropicMessageContentItem[];
+  content: AnthropicMessageContentItem[];
 }
 
 const transformAssistantMessage = (msg: Message): AnthropicMessage => {
-  let content: AnthropicContentItem[] = [];
+  let transformedContent: AnthropicContentItem[] = [];
+  let inputContent: ContentType[] | string | undefined =
+    msg.content_blocks ?? msg.content;
   const containsToolCalls = msg.tool_calls && msg.tool_calls.length;
 
-  if (msg.content && typeof msg.content === 'string') {
-    content.push({
+  if (inputContent && typeof inputContent === 'string') {
+    transformedContent.push({
       type: 'text',
-      text: msg.content,
+      text: inputContent,
     });
   } else if (
-    msg.content &&
-    typeof msg.content === 'object' &&
-    msg.content.length
+    inputContent &&
+    typeof inputContent === 'object' &&
+    inputContent.length
   ) {
-    msg.content.forEach((item) => {
-      if (['text', 'thinking'].includes(item.type))
-        content.push(item as AnthropicContentItem);
+    inputContent.forEach((item) => {
+      if (item.type !== 'tool_use') {
+        transformedContent.push(item as AnthropicContentItem);
+      }
     });
   }
   if (containsToolCalls) {
     msg.tool_calls.forEach((toolCall: any) => {
-      content.push({
+      transformedContent.push({
         type: 'tool_use',
         name: toolCall.function.name,
         id: toolCall.id,
@@ -78,21 +107,63 @@ const transformAssistantMessage = (msg: Message): AnthropicMessage => {
   }
   return {
     role: msg.role,
-    content,
+    content: transformedContent as AnthropicMessageContentItem[],
   };
 };
 
 const transformToolMessage = (msg: Message): AnthropicMessage => {
+  const tool_use_id = msg.tool_call_id ?? '';
   return {
     role: 'user',
     content: [
       {
         type: 'tool_result',
-        tool_use_id: msg.tool_call_id,
+        tool_use_id,
         content: msg.content as string,
       },
     ],
   };
+};
+
+const transformAndAppendImageContentItem = (
+  item: ContentType,
+  transformedMessage: AnthropicMessage
+) => {
+  if (!item?.image_url?.url || typeof transformedMessage.content === 'string')
+    return;
+  const url = item.image_url.url;
+  const isBase64EncodedImage = url.startsWith('data:');
+  if (!isBase64EncodedImage) {
+    transformedMessage.content.push({
+      type: 'image',
+      source: {
+        type: 'url',
+        url,
+      },
+    });
+  } else {
+    const parts = url.split(';');
+    if (parts.length === 2) {
+      const base64ImageParts = parts[1].split(',');
+      const base64Image = base64ImageParts[1];
+      const mediaTypeParts = parts[0].split(':');
+      if (mediaTypeParts.length === 2 && base64Image) {
+        const mediaType = mediaTypeParts[1];
+        transformedMessage.content.push({
+          type:
+            mediaType === fileExtensionMimeTypeMap.pdf ? 'document' : 'image',
+          source: {
+            type: 'base64',
+            media_type: mediaType,
+            data: base64Image,
+          },
+          ...((item as any).cache_control && {
+            cache_control: { type: 'ephemeral' },
+          }),
+        });
+      }
+    }
+  }
 };
 
 export const AnthropicChatCompleteConfig: ProviderConfig = {
@@ -119,7 +190,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
               typeof msg.content === 'object' &&
               msg.content.length
             ) {
-              const transformedMessage: Record<string, any> = {
+              const transformedMessage: AnthropicMessage = {
                 role: msg.role,
                 content: [],
               };
@@ -132,44 +203,18 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                       cache_control: { type: 'ephemeral' },
                     }),
                   });
-                } else if (
-                  item.type === 'image_url' &&
-                  item.image_url &&
-                  item.image_url.url
-                ) {
-                  const parts = item.image_url.url.split(';');
-                  if (parts.length === 2) {
-                    const base64ImageParts = parts[1].split(',');
-                    const base64Image = base64ImageParts[1];
-                    const mediaTypeParts = parts[0].split(':');
-                    if (mediaTypeParts.length === 2 && base64Image) {
-                      const mediaType = mediaTypeParts[1];
-                      transformedMessage.content.push({
-                        type:
-                          mediaType === fileExtensionMimeTypeMap.pdf
-                            ? 'document'
-                            : 'image',
-                        source: {
-                          type: 'base64',
-                          media_type: mediaType,
-                          data: base64Image,
-                        },
-                        ...((item as any).cache_control && {
-                          cache_control: { type: 'ephemeral' },
-                        }),
-                      });
-                    }
-                  }
+                } else if (item.type === 'image_url') {
+                  transformAndAppendImageContentItem(item, transformedMessage);
                 }
               });
-              messages.push(transformedMessage as Message);
+              messages.push(transformedMessage as AnthropicMessage);
             } else if (msg.role === 'tool') {
               // even though anthropic supports images in tool results, openai doesn't support it yet
               messages.push(transformToolMessage(msg));
             } else {
               messages.push({
                 role: msg.role,
-                content: msg.content,
+                content: msg.content as AnthropicMessageContentItem[],
               });
             }
           });
@@ -311,12 +356,6 @@ interface AnthorpicTextContentItem {
   text: string;
 }
 
-interface AnthropicThinkingContentItem {
-  type: 'thinking';
-  thinking: string;
-  signature: string;
-}
-
 interface AnthropicToolContentItem {
   type: 'tool_use';
   name: string;
@@ -324,10 +363,7 @@ interface AnthropicToolContentItem {
   input: Record<string, any>;
 }
 
-type AnthropicContentItem =
-  | AnthorpicTextContentItem
-  | AnthropicThinkingContentItem
-  | AnthropicToolContentItem;
+type AnthropicContentItem = AnthorpicTextContentItem | AnthropicToolContentItem;
 
 export interface AnthropicChatCompleteResponse {
   id: string;
@@ -349,12 +385,10 @@ export interface AnthropicChatCompleteStreamResponse {
   type: string;
   index: number;
   delta: {
-    type: string;
+    type?: string;
     text?: string;
-    thinking?: string;
     partial_json?: string;
     stop_reason?: string;
-    signature?: string;
   };
   content_block?: {
     type: string;
@@ -429,18 +463,10 @@ export const AnthropicChatCompleteResponseTransform: (
     const shouldSendCacheUsage =
       cache_creation_input_tokens || cache_read_input_tokens;
 
-    let content: AnthropicContentItem[] | string = strictOpenAiCompliance
-      ? ''
-      : [];
+    let content: string = '';
     response.content.forEach((item) => {
-      if (!strictOpenAiCompliance && Array.isArray(content)) {
-        if (['text', 'thinking'].includes(item.type)) {
-          content.push(item);
-        }
-      } else {
-        if (item.type === 'text') {
-          content += item.text;
-        }
+      if (item.type === 'text') {
+        content += item.text;
       }
     });
 
@@ -469,6 +495,11 @@ export const AnthropicChatCompleteResponseTransform: (
           message: {
             role: 'assistant',
             content,
+            ...(!strictOpenAiCompliance && {
+              content_blocks: response.content.filter(
+                (item) => item.type !== 'tool_use'
+              ),
+            }),
             tool_calls: toolCalls.length ? toolCalls : undefined,
           },
           index: 0,
@@ -628,7 +659,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   }
   const isToolBlockDelta: boolean =
     parsedChunk.type === 'content_block_delta' &&
-    !!parsedChunk.delta.partial_json;
+    parsedChunk.delta?.partial_json != undefined;
 
   if (isToolBlockStart && parsedChunk.content_block) {
     toolCalls.push({
@@ -650,12 +681,12 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   }
 
   const content = parsedChunk.delta?.text;
-  const thinking = !strictOpenAiCompliance
-    ? parsedChunk.delta?.thinking
-    : undefined;
-  const signature = !strictOpenAiCompliance
-    ? parsedChunk.delta?.signature
-    : undefined;
+
+  const contentBlockObject = {
+    index: parsedChunk.index,
+    delta: parsedChunk.delta ?? parsedChunk.content_block ?? {},
+  };
+  delete contentBlockObject.delta.type;
 
   return (
     `data: ${JSON.stringify({
@@ -668,9 +699,11 @@ export const AnthropicChatCompleteStreamChunkTransform: (
         {
           delta: {
             content,
-            thinking,
-            signature,
             tool_calls: toolCalls.length ? toolCalls : undefined,
+            ...(!strictOpenAiCompliance &&
+              !toolCalls.length && {
+                content_blocks: [contentBlockObject],
+              }),
           },
           index: 0,
           logprobs: null,

@@ -93,6 +93,12 @@ export const FireworksAIChatCompleteConfig: ProviderConfig = {
   user: {
     param: 'user',
   },
+  logprobs: {
+    param: 'logprobs',
+  },
+  top_logprobs: {
+    param: 'top_logprobs',
+  },
 };
 
 interface FireworksAIChatCompleteResponse extends ChatCompletionResponse {
@@ -130,6 +136,7 @@ export interface FireworksAIStreamChunk {
     };
     index: number;
     finish_reason: string | null;
+    logprobs: object | null;
   }[];
   usage: null | {
     prompt_tokens: number;
@@ -193,6 +200,7 @@ export const FireworksAIChatCompleteResponseTransform: (
           tool_calls: c.message.tool_calls,
         },
         finish_reason: c.finish_reason,
+        logprobs: c.logprobs,
       })),
       usage: {
         prompt_tokens: response.usage?.prompt_tokens,
@@ -226,6 +234,7 @@ export const FireworksAIChatCompleteStreamChunkTransform: (
           index: parsedChunk.choices[0].index,
           delta: parsedChunk.choices[0].delta,
           finish_reason: parsedChunk.choices[0].finish_reason,
+          logprobs: parsedChunk.choices[0].logprobs,
         },
       ],
       ...(parsedChunk.usage ? { usage: parsedChunk.usage } : {}),

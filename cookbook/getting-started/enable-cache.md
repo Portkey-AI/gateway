@@ -59,7 +59,7 @@ The `mode` key specifies the desired strategy of caching you want for your app.
 
 ```
 
-Next up, attach these configs to the request using Portkey SDK. The SDK accepts an `config` parameter that can accept these configurations as an argument. To learn about more ways, refer to the [101 on Gateway Configs](https://github.com/Portkey-AI/portkey-cookbook/blob/main/ai-gateway/101-portkey-gateway-configs.md#a-reference-gateway-configs-from-the-ui).
+Next up, attach these configs to the request using Portkey SDK. The SDK accepts an `config` parameter that can accept these configurations as an argument. To learn about more ways, refer to the [101 on Gateway Configs](https://github.com/Portkey-AI/portkey-cookbook/blob/main/product/101-portkey-gateway-configs.md#a-reference-gateway-configs-from-the-ui).
 
 ## 3. Make API calls, Serve from Cache
 

@@ -48,6 +48,12 @@ export const OpenrouterChatCompleteConfig: ProviderConfig = {
     min: 0,
     max: 1,
   },
+  tools: {
+    param: 'tools',
+  },
+  tool_choice: {
+    param: 'tool_choice',
+  },
   stream: {
     param: 'stream',
     default: false,
@@ -180,9 +186,9 @@ export const OpenrouterChatCompleteStreamChunkTransform: (
       provider: OPENROUTER,
       choices: [
         {
-          index: parsedChunk.choices[0].index,
-          delta: parsedChunk.choices[0].delta,
-          finish_reason: parsedChunk.choices[0].finish_reason,
+          index: parsedChunk.choices?.[0]?.index,
+          delta: parsedChunk.choices?.[0]?.delta,
+          finish_reason: parsedChunk.choices?.[0]?.finish_reason,
         },
       ],
       ...(parsedChunk.usage && { usage: parsedChunk.usage }),

@@ -1,4 +1,4 @@
-import { ChatCompletionResponse } from '../types';
+import { ChatCompletionResponse, GroundingMetadata } from '../types';
 
 export interface GoogleErrorResponse {
   error: {
@@ -46,24 +46,7 @@ export interface GoogleResponseCandidate {
     category: string;
     probability: string;
   }[];
-  groundingMetadata?: {
-    webSearchQueries?: string[];
-    searchEntryPoint?: {
-      renderedContent: string;
-    };
-    groundingSupports?: Array<{
-      segment: {
-        startIndex: number;
-        endIndex: number;
-        text: string;
-      };
-      groundingChunkIndices: number[];
-      confidenceScores: number[];
-    }>;
-    retrievalMetadata?: {
-      webDynamicRetrievalScore: number;
-    };
-  };
+  groundingMetadata?: GroundingMetadata;
 }
 
 export interface GoogleGenerateContentResponse {
