@@ -58,6 +58,7 @@ interface NovitaAICompleteResponse extends CompletionResponse {
 
 interface NovitaAICompletionStreamChunk {
   id: string;
+  model: string;
   request_id: string;
   choices: {
     text: string;
@@ -103,18 +104,8 @@ export const NovitaAICompleteResponseTransform: (
 };
 
 export const NovitaAICompleteStreamChunkTransform: (
-  response: string,
-  fallbackId: string,
-  streamState: Record<string, any>,
-  strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
-) => string = (
-  responseChunk,
-  fallbackId,
-  _streamState,
-  _strictOpenAiCompliance,
-  gatewayRequest
-) => {
+  response: string
+) => string = (responseChunk) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
@@ -124,10 +115,10 @@ export const NovitaAICompleteStreamChunkTransform: (
   const parsedChunk: NovitaAICompletionStreamChunk = JSON.parse(chunk);
   return (
     `data: ${JSON.stringify({
-      id: parsedChunk.id || fallbackId,
+      id: parsedChunk.id,
       object: 'text_completion',
       created: Math.floor(Date.now() / 1000),
-      model: gatewayRequest.model || '',
+      model: parsedChunk.model,
       provider: NOVITA_AI,
       choices: [
         {

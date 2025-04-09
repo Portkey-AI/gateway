@@ -143,18 +143,8 @@ export const OpenrouterChatCompleteResponseTransform: (
 };
 
 export const OpenrouterChatCompleteStreamChunkTransform: (
-  response: string,
-  fallbackId: string,
-  _streamState: Record<string, any>,
-  strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
-) => string = (
-  responseChunk,
-  fallbackId,
-  _streamState,
-  _strictOpenAiCompliance,
-  gatewayRequest
-) => {
+  response: string
+) => string = (responseChunk) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
@@ -164,7 +154,7 @@ export const OpenrouterChatCompleteStreamChunkTransform: (
   if (chunk.includes('OPENROUTER PROCESSING')) {
     chunk = JSON.stringify({
       id: `${Date.now()}`,
-      model: gatewayRequest.model || '',
+      model: '',
       object: 'chat.completion.chunk',
       created: Date.now(),
       choices: [

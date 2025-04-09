@@ -58,6 +58,7 @@ interface TogetherAICompleteResponse extends CompletionResponse {
 
 interface TogetherAICompletionStreamChunk {
   id: string;
+  model: string;
   request_id: string;
   choices: {
     text: string;
@@ -103,18 +104,8 @@ export const TogetherAICompleteResponseTransform: (
 };
 
 export const TogetherAICompleteStreamChunkTransform: (
-  response: string,
-  fallbackId: string,
-  _streamState: Record<string, boolean>,
-  _strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
-) => string = (
-  responseChunk,
-  fallbackId,
-  _streamState,
-  _strictOpenAiCompliance,
-  gatewayRequest
-) => {
+  response: string
+) => string = (responseChunk) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
@@ -127,7 +118,7 @@ export const TogetherAICompleteStreamChunkTransform: (
       id: parsedChunk.id,
       object: 'text_completion',
       created: Math.floor(Date.now() / 1000),
-      model: gatewayRequest.model || '',
+      model: parsedChunk.model,
       provider: TOGETHER_AI,
       choices: [
         {

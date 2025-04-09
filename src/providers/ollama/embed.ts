@@ -47,7 +47,7 @@ export const OllamaEmbedResponseTransform: (
     );
   }
 
-  const model = (gatewayRequest.model as string) || '';
+  const model = response.model || (gatewayRequest.model as string) || '';
   if ('embedding' in response) {
     return {
       object: 'list',

@@ -104,6 +104,7 @@ export interface NovitaAIOpenAICompatibleErrorResponse extends ErrorResponse {}
 
 export interface NovitaAIChatCompletionStreamChunk {
   id: string;
+  model: string;
   request_id: string;
   object: string;
   choices: {
@@ -202,18 +203,8 @@ export const NovitaAIChatCompleteResponseTransform: (
 };
 
 export const NovitaAIChatCompleteStreamChunkTransform: (
-  response: string,
-  fallbackId: string,
-  streamState: Record<string, any>,
-  strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
-) => string = (
-  responseChunk,
-  fallbackId,
-  _streamState,
-  _strictOpenAiCompliance,
-  gatewayRequest
-) => {
+  response: string
+) => string = (responseChunk) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
@@ -223,10 +214,10 @@ export const NovitaAIChatCompleteStreamChunkTransform: (
   const parsedChunk: NovitaAIChatCompletionStreamChunk = JSON.parse(chunk);
   return (
     `data: ${JSON.stringify({
-      id: parsedChunk.id || fallbackId,
+      id: parsedChunk.id,
       object: parsedChunk.object,
       created: Math.floor(Date.now() / 1000),
-      model: gatewayRequest.model || '',
+      model: parsedChunk.model,
       provider: NOVITA_AI,
       choices: [
         {
