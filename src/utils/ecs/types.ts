@@ -3,4 +3,5 @@ export interface ProtectionSettings {
   protectionAdjustIntervalInMs: number;
   maintainProtectionPercentage: number;
   refreshProtectionPercentage: number;
+  loggingEnabled?: boolean;
 }

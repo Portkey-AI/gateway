@@ -18,6 +18,7 @@ export default class ECSProtectionManager extends EventEmitter {
   protectionAdjustIntervalInMs: number;
   maintainProtectionPercentage: number;
   refreshProtectionPercentage: number;
+  loggingEnabled: boolean;
   ECS_AGENT_URI: string | undefined;
 
   desiredState: string;
@@ -43,6 +44,7 @@ export default class ECSProtectionManager extends EventEmitter {
       protectionSettings.maintainProtectionPercentage;
     this.refreshProtectionPercentage =
       protectionSettings.refreshProtectionPercentage;
+    this.loggingEnabled = protectionSettings.loggingEnabled ?? false;
     this.ECS_AGENT_URI = process.env.ECS_AGENT_URI;
 
     if (!this.ECS_AGENT_URI) {
@@ -60,12 +62,19 @@ export default class ECSProtectionManager extends EventEmitter {
     );
   }
 
+  log(msg: string) {
+    if (!this.loggingEnabled) {
+      return;
+    }
+    console.info(msg);
+  }
+
   async attemptAdjustProtection() {
     if (
       this.currentState === 'unprotected' &&
       this.desiredState === 'unprotected'
     ) {
-      console.info('Already unprotected, nothing to do.');
+      this.log('Already unprotected, nothing to do.');
       // Already unprotected so nothing to do right now.
       this.emit(this.currentState);
       return;
@@ -92,7 +101,7 @@ export default class ECSProtectionManager extends EventEmitter {
       // We are already protected and haven't yet reached 80% of the acquired protection duration
       // so no need to do an early refresh.
       this.emit(this.currentState);
-      console.info('Already protected, nothing to do.');
+      this.log('Already protected, nothing to do.');
       return;
     }
 
@@ -104,7 +113,7 @@ export default class ECSProtectionManager extends EventEmitter {
       // We are currently protected and not enough duration has passed since we became protected
       // so don't actually release the protection yet, maintain it for now.
       this.emit(this.currentState);
-      console.info(
+      this.log(
         'Not enough time has passed since protection was acquired, maintaining protection.'
       );
       return;
@@ -139,7 +148,7 @@ export default class ECSProtectionManager extends EventEmitter {
 
     this.lastStateChange = new Date().getTime();
     this.currentState = this.desiredState;
-    console.info(`Successfully set protection to ${this.currentState}.`);
+    this.log(`Successfully set protection to ${this.currentState}.`);
     this.emit(this.currentState);
   }
 
@@ -147,7 +156,7 @@ export default class ECSProtectionManager extends EventEmitter {
    * Set the desired state to protected and wait for protection to be successfully acquired
    */
   async acquire() {
-    console.info('Attempting to acquire scale in protection.');
+    this.log('Attempting to acquire scale in protection.');
     this.desiredState = 'protected';
     return new Promise((resolve) => {
       this.once('protected', resolve);
@@ -159,7 +168,7 @@ export default class ECSProtectionManager extends EventEmitter {
    * Set the desired state to unprotected and wait for protection to be successfully released
    */
   release() {
-    console.info('Attempting to release scale in protection.');
+    this.log('Attempting to release scale in protection.');
     this.desiredState = 'unprotected';
     return new Promise((resolve) => {
       this.once('unprotected', resolve);

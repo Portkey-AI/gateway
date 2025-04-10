@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node';
 import ECSProtectionManager from './ECSProtectionManager';
 import { InMemoryProtectionManager } from './InMemoryProtectionManager';
 import type { ProtectionSettings } from './types';
@@ -12,28 +13,26 @@ export function createProtectionManager(
 
   if ('on' in protectionManager) {
     protectionManager.on('error', (err) => {
-      console.error('Error emitted from protectionManager', err);
+      Sentry.captureException(err);
     });
   }
 
   const acquireProtection = async () => {
-    console.info('Acquiring protection');
     protectionCount++;
     try {
       await protectionManager.acquire();
     } catch (error) {
-      console.error('Failed to acquire protection', error);
+      Sentry.captureException(error);
     }
   };
 
   const releaseProtection = async () => {
-    console.info('Releasing protection');
     protectionCount--;
     if (protectionCount <= 0) {
       try {
         await protectionManager.release();
       } catch (error) {
-        console.error('Failed to release protection', error);
+        Sentry.captureException(error);
       }
     }
   };

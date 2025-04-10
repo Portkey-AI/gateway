@@ -147,6 +147,7 @@ app.get(
 const server = serve({
   fetch: app.fetch,
   port: port,
+  overrideGlobalObjects: false,
   serverOptions: {
     // Ensure all inactive connections are terminated by the ALB, by setting this
     // a few seconds higher than the ALB idle timeout
