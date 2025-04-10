@@ -744,6 +744,9 @@ export async function tryTargetsRecursively(
   Sentry.setTag('fn', fn);
   Sentry.setContext('overrideParams', currentTarget.overrideParams);
   Sentry.setContext('retry', currentTarget.retry);
+  if ('model' in request) {
+    Sentry.setContext('request', { ...request });
+  }
 
   switch (strategyMode) {
     case StrategyModes.FALLBACK:
