@@ -97,11 +97,17 @@ const transformAssistantMessage = (msg: Message): AnthropicMessage => {
   }
   if (containsToolCalls) {
     msg.tool_calls.forEach((toolCall: any) => {
+      let input;
+      try {
+        input = JSON.parse(toolCall.function.arguments);
+      } catch (error) {
+        input = {};
+      }
       transformedContent.push({
         type: 'tool_use',
         name: toolCall.function.name,
         id: toolCall.id,
-        input: JSON.parse(toolCall.function.arguments),
+        input,
       });
     });
   }
