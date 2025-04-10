@@ -296,7 +296,7 @@ export function handleStreamingMode(
       )) {
         await writer.write(encoder.encode(chunk));
       }
-      writer.close();
+      await writer.close();
       try {
         await protectionManager.releaseProtection();
       } catch (error) {
@@ -304,7 +304,6 @@ export function handleStreamingMode(
       }
     })().catch((error) => {
       console.error('Error in stream processing:', error);
-      writer.close();
     });
   } else {
     (async () => {
@@ -318,7 +317,7 @@ export function handleStreamingMode(
       )) {
         await writer.write(encoder.encode(chunk));
       }
-      writer.close();
+      await writer.close();
       try {
         await protectionManager.releaseProtection();
       } catch (error) {
@@ -326,7 +325,6 @@ export function handleStreamingMode(
       }
     })().catch((error) => {
       console.error('Error in stream processing:', error);
-      writer.close();
     });
   }
 

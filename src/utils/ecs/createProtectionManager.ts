@@ -9,6 +9,12 @@ export function createProtectionManager(
     ? new ECSProtectionManager(protectionSettings)
     : new InMemoryProtectionManager();
 
+  if ('on' in protectionManager) {
+    protectionManager.on('error', () => {
+      console.error('Protection manager error');
+    });
+  }
+
   const acquireProtection = async () => {
     //console.info('Acquiring protection');
     try {
