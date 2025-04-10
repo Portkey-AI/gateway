@@ -1,0 +1,13 @@
+diff --git a/node_modules/@hono/node-server/dist/index.mjs b/node_modules/@hono/node-server/dist/index.mjs
+index e8ab604..92cd329 100644
+--- a/node_modules/@hono/node-server/dist/index.mjs
++++ b/node_modules/@hono/node-server/dist/index.mjs
+@@ -428,7 +428,7 @@ var getRequestListener = (fetchCallback, options = {}) => {
+       }
+     }
+     try {
+-      return responseViaResponseObject(res, outgoing, options);
++      return await responseViaResponseObject(res, outgoing, options);
+     } catch (e) {
+       return handleResponseError(e, outgoing);
+     }
