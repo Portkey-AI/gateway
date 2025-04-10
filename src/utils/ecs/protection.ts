@@ -3,7 +3,7 @@ import { createProtectionManager } from './createProtectionManager';
 
 export const protectionManager = createProtectionManager({
   desiredProtectionDurationInMins: 15,
-  maintainProtectionPercentage: 10,
+  maintainProtectionPercentage: 1,
   refreshProtectionPercentage: 80,
   protectionAdjustIntervalInMs: 10 * 1000,
 });
@@ -24,7 +24,12 @@ export const protection = () => {
     if (!(c.res.body instanceof ReadableStream)) {
       // If it's not a streaming response, there's nothing extra to wrap,
       // so you can do final logic right now
-      await protectionManager.releaseProtection();
+
+      // We don't actually care to wait for the release to finish
+      // and in fact often it might take a while to release
+      protectionManager.releaseProtection().catch((err) => {
+        console.error('Error releasing protection:', err);
+      });
     }
   };
 };
