@@ -21,7 +21,7 @@ export const protection = () => {
 
     await next();
     // Only immediately release if not a stream
-    if (!(c.res instanceof ReadableStream)) {
+    if (!(c.res.body instanceof ReadableStream)) {
       // If it's not a streaming response, there's nothing extra to wrap,
       // so you can do final logic right now
       await protectionManager.releaseProtection();
