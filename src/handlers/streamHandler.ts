@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node';
 import {
   AZURE_OPEN_AI,
   BEDROCK,
@@ -283,7 +284,12 @@ export function handleStreamingMode(
   }
   const { readable, writable } = new TransformStream();
   const writer = writable.getWriter();
-  const reader = response.body.getReader();
+  // Try cloning
+  const clonedResponse = response.clone();
+  if (!clonedResponse.body) {
+    throw new Error('Response format is invalid. Body not found');
+  }
+  const reader = clonedResponse.body.getReader();
   const isSleepTimeRequired = proxyProvider === AZURE_OPEN_AI ? true : false;
   const encoder = new TextEncoder();
 
@@ -305,7 +311,11 @@ export function handleStreamingMode(
         console.error('Error releasing protection:', error);
       }
     })().catch((error) => {
-      console.error('Error in stream processing:', error);
+      Sentry.captureException(error, {
+        extra: {
+          requestURL,
+        },
+      });
     });
   } else {
     (async () => {
@@ -328,7 +338,11 @@ export function handleStreamingMode(
         console.error('Error releasing protection:', error);
       }
     })().catch((error) => {
-      console.error('Error in stream processing:', error);
+      Sentry.captureException(error, {
+        extra: {
+          requestURL,
+        },
+      });
     });
   }
 
