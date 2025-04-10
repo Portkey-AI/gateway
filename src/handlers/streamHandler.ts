@@ -305,18 +305,17 @@ export function handleStreamingMode(
       }
       await writer.ready;
       await writer.close();
-      try {
-        await protectionManager.releaseProtection();
-      } catch (error) {
-        console.error('Error releasing protection:', error);
-      }
-    })().catch((error) => {
-      Sentry.captureException(error, {
-        extra: {
-          requestURL,
-        },
+    })()
+      .catch((error) => {
+        Sentry.captureException(error, {
+          extra: {
+            requestURL,
+          },
+        });
+      })
+      .finally(() => {
+        protectionManager.releaseProtection();
       });
-    });
   } else {
     (async () => {
       for await (const chunk of readStream(
@@ -332,18 +331,17 @@ export function handleStreamingMode(
       }
       await writer.ready;
       await writer.close();
-      try {
-        await protectionManager.releaseProtection();
-      } catch (error) {
-        console.error('Error releasing protection:', error);
-      }
-    })().catch((error) => {
-      Sentry.captureException(error, {
-        extra: {
-          requestURL,
-        },
+    })()
+      .catch((error) => {
+        Sentry.captureException(error, {
+          extra: {
+            requestURL,
+          },
+        });
+      })
+      .finally(() => {
+        protectionManager.releaseProtection();
       });
-    });
   }
 
   // Convert GEMINI/COHERE json stream to text/event-stream for non-proxy calls
