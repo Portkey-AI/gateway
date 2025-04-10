@@ -294,8 +294,10 @@ export function handleStreamingMode(
         responseTransformer,
         fallbackChunkId
       )) {
+        await writer.ready;
         await writer.write(encoder.encode(chunk));
       }
+      await writer.ready;
       await writer.close();
       try {
         await protectionManager.releaseProtection();
@@ -315,8 +317,10 @@ export function handleStreamingMode(
         fallbackChunkId,
         strictOpenAiCompliance
       )) {
+        await writer.ready;
         await writer.write(encoder.encode(chunk));
       }
+      await writer.ready;
       await writer.close();
       try {
         await protectionManager.releaseProtection();
