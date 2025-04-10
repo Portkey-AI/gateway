@@ -739,6 +739,11 @@ export async function tryTargetsRecursively(
   // end: merge inherited config with current target config (preference given to current)
 
   let response: Response | null = null;
+  Sentry.setTag('provider', currentTarget.provider);
+  Sentry.setTag('strategyMode', strategyMode);
+  Sentry.setTag('fn', fn);
+  Sentry.setContext('overrideParams', currentTarget.overrideParams);
+  Sentry.setContext('retry', currentTarget.retry);
 
   switch (strategyMode) {
     case StrategyModes.FALLBACK:
@@ -861,6 +866,7 @@ export async function tryTargetsRecursively(
           method
         );
       } catch (error: any) {
+        Sentry.captureException(error);
         // tryPost always returns a Response.
         // TypeError will check for all unhandled exceptions.
         // GatewayError will check for all handled exceptions which cannot allow the request to proceed.
@@ -890,12 +896,6 @@ export async function tryTargetsRecursively(
       break;
   }
   if (!response) {
-    Sentry.setTag('provider', currentTarget.provider);
-    Sentry.setTag('strategyMode', strategyMode);
-    Sentry.setTag('fn', fn);
-    Sentry.setContext('overrideParams', currentTarget.overrideParams);
-    Sentry.setContext('retry', currentTarget.retry);
-
     throw new Error('Could not create response');
   }
 
