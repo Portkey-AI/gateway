@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node';
 import { Context } from 'hono';
 import {
   AZURE_OPEN_AI,
@@ -737,7 +738,7 @@ export async function tryTargetsRecursively(
   ];
   // end: merge inherited config with current target config (preference given to current)
 
-  let response;
+  let response: Response | null = null;
 
   switch (strategyMode) {
     case StrategyModes.FALLBACK:
@@ -887,6 +888,15 @@ export async function tryTargetsRecursively(
         }
       }
       break;
+  }
+  if (!response) {
+    Sentry.setTag('provider', currentTarget.provider);
+    Sentry.setTag('strategyMode', strategyMode);
+    Sentry.setTag('fn', fn);
+    Sentry.setContext('overrideParams', currentTarget.overrideParams);
+    Sentry.setContext('retry', currentTarget.retry);
+
+    throw new Error('Could not create response');
   }
 
   return response;
