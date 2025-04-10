@@ -10,7 +10,7 @@ export function createProtectionManager(
     : new InMemoryProtectionManager();
 
   const acquireProtection = async () => {
-    //console.info('Acquiring protection');
+    console.info('Acquiring protection');
     try {
       await protectionManager.acquire();
     } catch (error) {
@@ -19,7 +19,7 @@ export function createProtectionManager(
   };
 
   const releaseProtection = async () => {
-    //console.info('Releasing protection');
+    console.info('Releasing protection');
     try {
       await protectionManager.release();
     } catch (error) {
