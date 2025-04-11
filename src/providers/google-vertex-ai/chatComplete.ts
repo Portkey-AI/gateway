@@ -369,6 +369,13 @@ export const VertexAnthropicChatCompleteConfig: ProviderConfig = {
     required: true,
     default: 'vertex-2023-10-16',
   },
+  model: {
+    param: 'model',
+    required: false,
+    transform: (params: Params) => {
+      return undefined;
+    },
+  },
 };
 
 export const GoogleChatCompleteResponseTransform: (
@@ -809,12 +816,13 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
   }
 
   if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
+    streamState.model = parsedChunk?.message?.model ?? '';
     return (
       `data: ${JSON.stringify({
         id: fallbackId,
         object: 'chat.completion.chunk',
         created: Math.floor(Date.now() / 1000),
-        model: '',
+        model: streamState.model,
         provider: GOOGLE_VERTEX_AI,
         choices: [
           {
@@ -839,7 +847,7 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
         id: fallbackId,
         object: 'chat.completion.chunk',
         created: Math.floor(Date.now() / 1000),
-        model: '',
+        model: streamState.model,
         provider: GOOGLE_VERTEX_AI,
         choices: [
           {
@@ -866,7 +874,7 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
   }
   const isToolBlockDelta: boolean =
     parsedChunk.type === 'content_block_delta' &&
-    !!parsedChunk.delta.partial_json;
+    parsedChunk.delta?.partial_json != undefined;
 
   if (isToolBlockStart && parsedChunk.content_block) {
     toolCalls.push({
@@ -888,27 +896,29 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
   }
 
   const content = parsedChunk.delta?.text;
-  const thinking = !strictOpenAiCompliance
-    ? parsedChunk.delta?.thinking
-    : undefined;
-  const signature = !strictOpenAiCompliance
-    ? parsedChunk.delta?.signature
-    : undefined;
+
+  const contentBlockObject = {
+    index: parsedChunk.index,
+    delta: parsedChunk.delta ?? parsedChunk.content_block ?? {},
+  };
+  delete contentBlockObject.delta.type;
 
   return (
     `data: ${JSON.stringify({
       id: fallbackId,
       object: 'chat.completion.chunk',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: streamState.model,
       provider: GOOGLE_VERTEX_AI,
       choices: [
         {
           delta: {
             content,
-            thinking,
-            signature,
             tool_calls: toolCalls.length ? toolCalls : undefined,
+            ...(!strictOpenAiCompliance &&
+              !toolCalls.length && {
+                content_blocks: [contentBlockObject],
+              }),
           },
           index: 0,
           logprobs: null,

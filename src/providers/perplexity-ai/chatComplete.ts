@@ -74,6 +74,18 @@ export const PerplexityAIChatCompleteConfig: ProviderConfig = {
     max: 1,
     min: 1,
   },
+  web_search_options: {
+    param: 'web_search_options',
+    required: false,
+  },
+  response_format: {
+    param: 'response_format',
+    required: false,
+  },
+  search_recency_filter: {
+    param: 'search_recency_filter',
+    required: false,
+  },
 };
 
 interface PerplexityAIChatChoice {

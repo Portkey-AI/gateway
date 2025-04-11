@@ -95,6 +95,7 @@ export interface TogetherAIOpenAICompatibleErrorResponse
 
 export interface TogetherAIChatCompletionStreamChunk {
   id: string;
+  model: string;
   request_id: string;
   object: string;
   choices: {
@@ -207,7 +208,7 @@ export const TogetherAIChatCompleteStreamChunkTransform: (
       id: parsedChunk.id,
       object: parsedChunk.object,
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: parsedChunk.model,
       provider: TOGETHER_AI,
       choices: [
         {
