@@ -27,8 +27,19 @@ interface OllamaErrorResponse {
 }
 export const OllamaEmbedResponseTransform: (
   response: OllamaEmbedResponse | OllamaErrorResponse,
-  responseStatus: number
-) => EmbedResponse | ErrorResponse = (response) => {
+  responseStatus: number,
+  _responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
+) => EmbedResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
+) => {
   if ('error' in response) {
     return generateErrorResponse(
       { message: response.error, type: null, param: null, code: null },
@@ -36,6 +47,7 @@ export const OllamaEmbedResponseTransform: (
     );
   }
 
+  const model = response.model || (gatewayRequest.model as string) || '';
   if ('embedding' in response) {
     return {
       object: 'list',
@@ -46,7 +58,7 @@ export const OllamaEmbedResponseTransform: (
           index: 0,
         },
       ],
-      model: '',
+      model,
       usage: {
         prompt_tokens: -1,
         total_tokens: -1,

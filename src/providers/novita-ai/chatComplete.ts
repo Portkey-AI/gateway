@@ -104,6 +104,7 @@ export interface NovitaAIOpenAICompatibleErrorResponse extends ErrorResponse {}
 
 export interface NovitaAIChatCompletionStreamChunk {
   id: string;
+  model: string;
   request_id: string;
   object: string;
   choices: {
@@ -216,7 +217,7 @@ export const NovitaAIChatCompleteStreamChunkTransform: (
       id: parsedChunk.id,
       object: parsedChunk.object,
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: parsedChunk.model,
       provider: NOVITA_AI,
       choices: [
         {

@@ -39,7 +39,6 @@ export const AI21EmbedResponseTransform: (
     );
     if (errorResposne) return errorResposne;
   }
-
   if ('results' in response) {
     return {
       object: 'list',
