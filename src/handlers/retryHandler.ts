@@ -1,5 +1,6 @@
 import retry from 'async-retry';
 import { serializeError } from 'serialize-error';
+import * as Sentry from '@sentry/node';
 
 async function fetchWithTimeout(
   url: string,
@@ -153,6 +154,7 @@ export const retryRequest = async (
         headers: error.headers,
       });
     }
+    Sentry.captureException(error);
     console.warn(
       `Tried ${lastAttempt ?? 1} time(s) but failed. Error: ${JSON.stringify(serializeError(error))}`
     );
