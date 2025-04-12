@@ -66,8 +66,19 @@ export interface WorkersAiEmbedResponse {
 
 export const WorkersAiEmbedResponseTransform: (
   response: WorkersAiEmbedResponse | WorkersAiErrorResponse,
-  responseStatus: number
-) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  _responseHeaders: Headers,
+  _strictOpenAiCompliance: boolean,
+  _gatewayRequestUrl: string,
+  gatewayRequest: Params
+) => EmbedResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
+) => {
   if (responseStatus !== 200) {
     const errorResponse = WorkersAiErrorResponseTransform(
       response as WorkersAiErrorResponse
@@ -75,6 +86,7 @@ export const WorkersAiEmbedResponseTransform: (
     if (errorResponse) return errorResponse;
   }
 
+  const model = (gatewayRequest.model as string) || '';
   if ('result' in response) {
     return {
       object: 'list',
@@ -83,7 +95,7 @@ export const WorkersAiEmbedResponseTransform: (
         embedding: embedding,
         index: index,
       })),
-      model: '', // TODO: find a way to send the cohere embedding model name back
+      model,
       usage: {
         prompt_tokens: -1,
         total_tokens: -1,

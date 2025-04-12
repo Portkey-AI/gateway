@@ -250,8 +250,19 @@ export interface BedrockLlamaCompleteResponse {
 
 export const BedrockLlamaCompleteResponseTransform: (
   response: BedrockLlamaCompleteResponse | BedrockErrorResponse,
-  responseStatus: number
-) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
+) => CompletionResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
+) => {
   if (responseStatus !== 200) {
     const errorResposne = BedrockErrorResponseTransform(
       response as BedrockErrorResponse
@@ -264,7 +275,7 @@ export const BedrockLlamaCompleteResponseTransform: (
       id: Date.now().toString(),
       object: 'text_completion',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: gatewayRequest.model ?? '',
       provider: BEDROCK,
       choices: [
         {
@@ -301,19 +312,29 @@ export interface BedrockLlamaStreamChunk {
 
 export const BedrockLlamaCompleteStreamChunkTransform: (
   response: string,
-  fallbackId: string
-) => string | string[] = (responseChunk, fallbackId) => {
+  fallbackId: string,
+  _streamState: Record<string, any>,
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
+) => string | string[] = (
+  responseChunk,
+  fallbackId,
+  _streamState,
+  _strictOpenAiCompliance,
+  gatewayRequest
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.trim();
   const parsedChunk: BedrockLlamaStreamChunk = JSON.parse(chunk);
 
+  const model = gatewayRequest.model ?? '';
   if (parsedChunk.stop_reason) {
     return [
       `data: ${JSON.stringify({
         id: fallbackId,
         object: 'text_completion',
         created: Math.floor(Date.now() / 1000),
-        model: '',
+        model,
         provider: BEDROCK,
         choices: [
           {
@@ -341,7 +362,7 @@ export const BedrockLlamaCompleteStreamChunkTransform: (
     id: fallbackId,
     object: 'text_completion',
     created: Math.floor(Date.now() / 1000),
-    model: '',
+    model,
     provider: BEDROCK,
     choices: [
       {
@@ -365,8 +386,19 @@ export interface BedrockTitanCompleteResponse {
 
 export const BedrockTitanCompleteResponseTransform: (
   response: BedrockTitanCompleteResponse | BedrockErrorResponse,
-  responseStatus: number
-) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
+) => CompletionResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  responseHeaders,
+  strictOpenAiCompliance,
+  gatewayRequestUrl,
+  gatewayRequest
+) => {
   if (responseStatus !== 200) {
     const errorResposne = BedrockErrorResponseTransform(
       response as BedrockErrorResponse
@@ -382,7 +414,7 @@ export const BedrockTitanCompleteResponseTransform: (
       id: Date.now().toString(),
       object: 'text_completion',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: gatewayRequest.model ?? '',
       provider: BEDROCK,
       choices: response.results.map((generation, index) => ({
         text: generation.outputText,
@@ -416,8 +448,17 @@ export interface BedrockTitanStreamChunk {
 
 export const BedrockTitanCompleteStreamChunkTransform: (
   response: string,
-  fallbackId: string
-) => string | string[] = (responseChunk, fallbackId) => {
+  fallbackId: string,
+  _streamState: Record<string, any>,
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
+) => string | string[] = (
+  responseChunk,
+  fallbackId,
+  _streamState,
+  _strictOpenAiCompliance,
+  gatewayRequest
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.trim();
   const parsedChunk: BedrockTitanStreamChunk = JSON.parse(chunk);
@@ -427,7 +468,7 @@ export const BedrockTitanCompleteStreamChunkTransform: (
       id: fallbackId,
       object: 'text_completion',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: gatewayRequest.model ?? '',
       provider: BEDROCK,
       choices: [
         {
@@ -442,7 +483,7 @@ export const BedrockTitanCompleteStreamChunkTransform: (
       id: fallbackId,
       object: 'text_completion',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: gatewayRequest.model ?? '',
       provider: BEDROCK,
       choices: [
         {
@@ -489,11 +530,17 @@ export interface BedrockAI21CompleteResponse {
 export const BedrockAI21CompleteResponseTransform: (
   response: BedrockAI21CompleteResponse | BedrockErrorResponse,
   responseStatus: number,
-  responseHeaders: Headers
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
 ) => CompletionResponse | ErrorResponse = (
   response,
   responseStatus,
-  responseHeaders
+  responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
 ) => {
   if (responseStatus !== 200) {
     const errorResposne = BedrockErrorResponseTransform(
@@ -511,7 +558,7 @@ export const BedrockAI21CompleteResponseTransform: (
       id: response.id.toString(),
       object: 'text_completion',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: gatewayRequest.model ?? '',
       provider: BEDROCK,
       choices: response.completions.map((completion, index) => ({
         text: completion.data.text,
@@ -539,11 +586,17 @@ export interface BedrockAnthropicCompleteResponse {
 export const BedrockAnthropicCompleteResponseTransform: (
   response: BedrockAnthropicCompleteResponse | BedrockErrorResponse,
   responseStatus: number,
-  responseHeaders: Headers
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
 ) => CompletionResponse | ErrorResponse = (
   response,
   responseStatus,
-  responseHeaders
+  responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
 ) => {
   if (responseStatus !== 200) {
     const errorResposne = BedrockErrorResponseTransform(
@@ -561,7 +614,7 @@ export const BedrockAnthropicCompleteResponseTransform: (
       id: Date.now().toString(),
       object: 'text_completion',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: gatewayRequest.model ?? '',
       provider: BEDROCK,
       choices: [
         {
@@ -596,9 +649,19 @@ export interface BedrockAnthropicStreamChunk {
 
 export const BedrockAnthropicCompleteStreamChunkTransform: (
   response: string,
-  fallbackId: string
-) => string | string[] = (responseChunk, fallbackId) => {
+  fallbackId: string,
+  _streamState: Record<string, any>,
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
+) => string | string[] = (
+  responseChunk,
+  fallbackId,
+  _streamState,
+  _strictOpenAiCompliance,
+  gatewayRequest
+) => {
   let chunk = responseChunk.trim();
+  const model = gatewayRequest.model ?? '';
 
   const parsedChunk: BedrockAnthropicStreamChunk = JSON.parse(chunk);
   if (parsedChunk.stop_reason) {
@@ -607,7 +670,7 @@ export const BedrockAnthropicCompleteStreamChunkTransform: (
         id: fallbackId,
         object: 'text_completion',
         created: Math.floor(Date.now() / 1000),
-        model: '',
+        model,
         provider: BEDROCK,
         choices: [
           {
@@ -622,7 +685,7 @@ export const BedrockAnthropicCompleteStreamChunkTransform: (
         id: fallbackId,
         object: 'text_completion',
         created: Math.floor(Date.now() / 1000),
-        model: '',
+        model,
         provider: BEDROCK,
         choices: [
           {
@@ -649,7 +712,7 @@ export const BedrockAnthropicCompleteStreamChunkTransform: (
     id: fallbackId,
     object: 'text_completion',
     created: Math.floor(Date.now() / 1000),
-    model: '',
+    model,
     provider: BEDROCK,
     choices: [
       {
@@ -675,11 +738,17 @@ export interface BedrockCohereCompleteResponse {
 export const BedrockCohereCompleteResponseTransform: (
   response: BedrockCohereCompleteResponse | BedrockErrorResponse,
   responseStatus: number,
-  responseHeaders: Headers
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
 ) => CompletionResponse | ErrorResponse = (
   response,
   responseStatus,
-  responseHeaders
+  responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
 ) => {
   if (responseStatus !== 200) {
     const errorResposne = BedrockErrorResponseTransform(
@@ -697,7 +766,7 @@ export const BedrockCohereCompleteResponseTransform: (
       id: response.id,
       object: 'text_completion',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: gatewayRequest.model ?? '',
       provider: BEDROCK,
       choices: response.generations.map((generation, index) => ({
         text: generation.text,
@@ -731,8 +800,17 @@ export interface BedrockCohereStreamChunk {
 
 export const BedrockCohereCompleteStreamChunkTransform: (
   response: string,
-  fallbackId: string
-) => string | string[] = (responseChunk, fallbackId) => {
+  fallbackId: string,
+  _streamState: Record<string, any>,
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
+) => string | string[] = (
+  responseChunk,
+  fallbackId,
+  _streamState,
+  _strictOpenAiCompliance,
+  gatewayRequest
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
@@ -745,7 +823,7 @@ export const BedrockCohereCompleteStreamChunkTransform: (
         id: fallbackId,
         object: 'text_completion',
         created: Math.floor(Date.now() / 1000),
-        model: '',
+        model: gatewayRequest.model ?? '',
         provider: BEDROCK,
         choices: [
           {
@@ -773,7 +851,7 @@ export const BedrockCohereCompleteStreamChunkTransform: (
     id: fallbackId,
     object: 'text_completion',
     created: Math.floor(Date.now() / 1000),
-    model: '',
+    model: gatewayRequest.model ?? '',
     provider: BEDROCK,
     choices: [
       {
@@ -801,8 +879,17 @@ export interface BedrocMistralStreamChunk {
 
 export const BedrockMistralCompleteStreamChunkTransform: (
   response: string,
-  fallbackId: string
-) => string | string[] = (responseChunk, fallbackId) => {
+  fallbackId: string,
+  _streamState: Record<string, any>,
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
+) => string | string[] = (
+  responseChunk,
+  fallbackId,
+  _streamState,
+  _strictOpenAiCompliance,
+  gatewayRequest
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.trim();
   const parsedChunk: BedrocMistralStreamChunk = JSON.parse(chunk);
@@ -813,7 +900,7 @@ export const BedrockMistralCompleteStreamChunkTransform: (
         id: fallbackId,
         object: 'text_completion',
         created: Math.floor(Date.now() / 1000),
-        model: '',
+        model: gatewayRequest.model ?? '',
         provider: BEDROCK,
         choices: [
           {
@@ -841,7 +928,7 @@ export const BedrockMistralCompleteStreamChunkTransform: (
     id: fallbackId,
     object: 'text_completion',
     created: Math.floor(Date.now() / 1000),
-    model: '',
+    model: gatewayRequest.model ?? '',
     provider: BEDROCK,
     choices: [
       {
@@ -864,11 +951,17 @@ export interface BedrockMistralCompleteResponse {
 export const BedrockMistralCompleteResponseTransform: (
   response: BedrockMistralCompleteResponse | BedrockErrorResponse,
   responseStatus: number,
-  responseHeaders: Headers
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
 ) => CompletionResponse | ErrorResponse = (
   response,
   responseStatus,
-  responseHeaders
+  responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
 ) => {
   if (responseStatus !== 200) {
     const errorResponse = BedrockErrorResponseTransform(
@@ -886,7 +979,7 @@ export const BedrockMistralCompleteResponseTransform: (
       id: Date.now().toString(),
       object: 'text_completion',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: gatewayRequest.model ?? '',
       provider: BEDROCK,
       choices: [
         {
