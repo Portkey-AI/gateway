@@ -451,6 +451,7 @@ export async function tryPost(
     onStatusCodes: providerOption.retry?.attempts
       ? providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES
       : [],
+    useRetryAfterHeader: providerOption?.retry?.useRetryAfterHeader,
   };
 
   async function createResponse(
@@ -1286,7 +1287,8 @@ export async function recursiveAfterRequestHookHandler(
     retry?.attempts || 0,
     retry?.onStatusCodes || [],
     requestTimeout || null,
-    requestHandler
+    requestHandler,
+    retry?.useRetryAfterHeader || false
   ));
 
   const {

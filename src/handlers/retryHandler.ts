@@ -68,7 +68,8 @@ export const retryRequest = async (
   retryCount: number,
   statusCodesToRetry: number[],
   timeout: number | null,
-  requestHandler?: () => Promise<Response>
+  requestHandler?: () => Promise<Response>,
+  followProviderRetry?: boolean
 ): Promise<{
   response: Response;
   attempt: number | undefined;
@@ -79,6 +80,9 @@ export const retryRequest = async (
   let lastAttempt: number | undefined;
   const start = new Date();
   let retrySkipped = false;
+
+  let remainingRetryTimeout = MAX_RETRY_LIMIT_MS;
+
   try {
     await retry(
       async (bail: any, attempt: number, rateLimiter: any) => {
@@ -101,7 +105,7 @@ export const retryRequest = async (
             errorObj.status = response.status;
             errorObj.headers = Object.fromEntries(response.headers);
 
-            if (response.status === 429) {
+            if (response.status === 429 && followProviderRetry) {
               // get retry header.
               const retryHeader = POSSIBLE_RETRY_STATUS_HEADERS.find(
                 (header) => {
@@ -123,11 +127,15 @@ export const retryRequest = async (
 
               if (retryAfter && !Number.isNaN(retryAfter)) {
                 // break the loop if the retryAfter is greater than the max retry limit
-                if (retryAfter >= MAX_RETRY_LIMIT_MS) {
+                if (
+                  retryAfter >= MAX_RETRY_LIMIT_MS ||
+                  retryAfter > remainingRetryTimeout
+                ) {
                   retrySkipped = true;
                   rateLimiter._timeouts = [];
                   throw errorObj;
                 }
+                remainingRetryTimeout -= retryAfter;
                 // will reset the current backoff timeout(s) to `0`.
                 rateLimiter._timeouts = Array.from({
                   length: retryCount - attempt + 1,
@@ -142,6 +150,8 @@ export const retryRequest = async (
                 throw errorObj;
               }
             }
+
+            throw errorObj;
           } else if (response.status >= 200 && response.status <= 204) {
             // do nothing
           } else {
