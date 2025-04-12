@@ -9,6 +9,8 @@ interface RetrySettings {
   attempts: number;
   /** The HTTP status codes on which to retry. */
   onStatusCodes: number[];
+  /** Whether to use the provider's retry wait. */
+  useRetryAfterHeader?: boolean;
 }
 
 interface CacheSettings {
