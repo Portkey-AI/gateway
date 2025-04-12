@@ -83,6 +83,7 @@ export const NEBIUS: string = 'nebius';
 export const RECRAFTAI: string = 'recraft-ai';
 export const MILVUS: string = 'milvus';
 export const REPLICATE: string = 'replicate';
+export const LEPTON: string = 'lepton';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -139,6 +140,7 @@ export const VALID_PROVIDERS = [
   MILVUS,
   REPLICATE,
   POWERED_BY,
+  LEPTON,
 ];
 
 export const CONTENT_TYPES = {
