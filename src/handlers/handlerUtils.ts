@@ -451,6 +451,7 @@ export async function tryPost(
     onStatusCodes: providerOption.retry?.attempts
       ? providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES
       : [],
+    useRetryAfterHeader: providerOption?.retry?.useRetryAfterHeader,
   };
 
   async function createResponse(
@@ -1248,7 +1249,7 @@ export async function recursiveAfterRequestHookHandler(
   createdAt: Date;
   originalResponseJson?: Record<string, any>;
 }> {
-  let response, retryCount, createdAt, executionTime;
+  let response, retryCount, createdAt, executionTime, retrySkipped;
   const requestTimeout =
     Number(requestHeaders[HEADER_KEYS.REQUEST_TIMEOUT]) ||
     providerOption.requestTimeout ||
@@ -1275,13 +1276,15 @@ export async function recursiveAfterRequestHookHandler(
     response,
     attempt: retryCount,
     createdAt,
+    skip: retrySkipped,
   } = await retryRequest(
     url,
     options,
     retry?.attempts || 0,
     retry?.onStatusCodes || [],
     requestTimeout || null,
-    requestHandler
+    requestHandler,
+    retry?.useRetryAfterHeader || false
   ));
 
   const {
@@ -1315,7 +1318,7 @@ export async function recursiveAfterRequestHookHandler(
     arhResponse.status
   );
 
-  if (remainingRetryCount > 0 && isRetriableStatusCode) {
+  if (remainingRetryCount > 0 && !retrySkipped && isRetriableStatusCode) {
     return recursiveAfterRequestHookHandler(
       c,
       url,
@@ -1332,7 +1335,10 @@ export async function recursiveAfterRequestHookHandler(
   }
 
   let lastAttempt = (retryCount || 0) + retryAttemptsMade;
-  if (lastAttempt === (retry?.attempts || 0) && isRetriableStatusCode) {
+  if (
+    (lastAttempt === (retry?.attempts || 0) && isRetriableStatusCode) ||
+    retrySkipped
+  ) {
     lastAttempt = -1; // All retry attempts exhausted without success.
   }
 

@@ -45,6 +45,17 @@ const AWS_GET_METHODS: endpointStrings[] = [
   'retrieveFinetune',
 ];
 
+// Endpoints that does not require model parameter
+const BEDROCK_NO_MODEL_ENDPOINTS: endpointStrings[] = [
+  'listFinetunes',
+  'retrieveFinetune',
+  'cancelFinetune',
+  'listBatches',
+  'retrieveBatch',
+  'getBatchOutput',
+  'cancelBatch',
+];
+
 const ENDPOINTS_TO_ROUTE_TO_S3 = [
   'retrieveFileContent',
   'getBatchOutput',
@@ -185,7 +196,7 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
       return `/model-invocation-job/${batchId}/stop`;
     }
     const { model, stream } = gatewayRequestBody;
-    if (!model) {
+    if (!model && !BEDROCK_NO_MODEL_ENDPOINTS.includes(fn as endpointStrings)) {
       throw new GatewayError('Model is required');
     }
     let mappedFn: string = fn;

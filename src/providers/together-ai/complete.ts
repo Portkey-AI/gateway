@@ -58,6 +58,7 @@ interface TogetherAICompleteResponse extends CompletionResponse {
 
 interface TogetherAICompletionStreamChunk {
   id: string;
+  model: string;
   request_id: string;
   choices: {
     text: string;
@@ -117,7 +118,7 @@ export const TogetherAICompleteStreamChunkTransform: (
       id: parsedChunk.id,
       object: 'text_completion',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: parsedChunk.model,
       provider: TOGETHER_AI,
       choices: [
         {

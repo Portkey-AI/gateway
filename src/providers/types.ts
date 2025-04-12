@@ -96,7 +96,11 @@ export type endpointStrings =
   | 'listFinetunes'
   | 'createFinetune'
   | 'retrieveFinetune'
-  | 'cancelFinetune';
+  | 'cancelFinetune'
+  | 'createModelResponse'
+  | 'getModelResponse'
+  | 'deleteModelResponse'
+  | 'listResponseInputItems';
 
 /**
  * A collection of API configurations for multiple AI providers.
