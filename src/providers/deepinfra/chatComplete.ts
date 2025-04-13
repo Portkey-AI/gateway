@@ -178,6 +178,10 @@ export const DeepInfraChatCompleteResponseTransform: (
 export const DeepInfraChatCompleteStreamChunkTransform: (
   response: string
 ) => string = (responseChunk) => {
+  if (responseChunk.startsWith(': ping - ')) {
+    return '';
+  }
+
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
