@@ -2,6 +2,14 @@ import { endpointStrings } from './providers/types';
 
 export const POWERED_BY: string = 'portkey';
 
+export const MAX_RETRY_LIMIT_MS = 60 * 1000; // 60 seconds
+
+export const POSSIBLE_RETRY_STATUS_HEADERS = [
+  'retry-after-ms',
+  'x-ms-retry-after-ms',
+  'retry-after',
+];
+
 export const HEADER_KEYS: Record<string, string> = {
   MODE: `x-${POWERED_BY}-mode`,
   RETRIES: `x-${POWERED_BY}-retry-count`,
