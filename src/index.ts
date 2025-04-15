@@ -36,6 +36,9 @@ import finetuneHandler from './handlers/finetuneHandler';
 import conf from '../conf.json';
 import modelResponsesHandler from './handlers/modelResponsesHandler';
 
+// Dotenv
+import 'dotenv/config';
+
 // Create a new Hono server instance
 const app = new Hono();
 /**

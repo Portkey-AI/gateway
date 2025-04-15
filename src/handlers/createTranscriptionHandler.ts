@@ -1,5 +1,6 @@
 import {
   constructConfigFromRequestHeaders,
+  patchConfigFromEnvironment,
   tryTargetsRecursively,
 } from './handlerUtils';
 import { Context } from 'hono';
@@ -18,7 +19,11 @@ export async function createTranscriptionHandler(
   try {
     let request = await c.req.raw.formData();
     let requestHeaders = Object.fromEntries(c.req.raw.headers);
-    const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
+    let camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
+    
+    // Patch config using env variables
+    camelCaseConfig = patchConfigFromEnvironment(camelCaseConfig);
+
     const tryTargetsResponse = await tryTargetsRecursively(
       c,
       camelCaseConfig ?? {},

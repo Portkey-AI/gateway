@@ -1,6 +1,7 @@
 import { Context } from 'hono';
 import {
   constructConfigFromRequestHeaders,
+  patchConfigFromEnvironment,
   tryTargetsRecursively,
 } from './handlerUtils';
 import { endpointStrings } from '../providers/types';
@@ -12,7 +13,11 @@ function filesHandler(
   async function handler(c: Context): Promise<Response> {
     try {
       const requestHeaders = Object.fromEntries(c.req.raw.headers);
-      const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
+      let camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
+      
+      // Patch config using env variables
+      camelCaseConfig = patchConfigFromEnvironment(camelCaseConfig);
+
       let body = {};
       if (c.req.raw.body instanceof ReadableStream) {
         body = c.req.raw.body;

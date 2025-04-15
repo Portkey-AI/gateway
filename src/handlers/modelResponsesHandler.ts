@@ -1,6 +1,7 @@
 import { Context } from 'hono';
 import {
   constructConfigFromRequestHeaders,
+  patchConfigFromEnvironment,
   tryTargetsRecursively,
 } from './handlerUtils';
 import { endpointStrings } from '../providers/types';
@@ -13,7 +14,11 @@ function modelResponsesHandler(
     try {
       let requestHeaders = Object.fromEntries(c.req.raw.headers);
       let request = method === 'POST' ? await c.req.json() : {};
-      const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
+      let camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
+
+      // Patch config using env variables
+      camelCaseConfig = patchConfigFromEnvironment(camelCaseConfig);
+
       const tryTargetsResponse = await tryTargetsRecursively(
         c,
         camelCaseConfig ?? {},

@@ -1,5 +1,5 @@
 import { Context } from 'hono';
-import { constructConfigFromRequestHeaders } from './handlerUtils';
+import { constructConfigFromRequestHeaders, patchConfigFromEnvironment } from './handlerUtils';
 import { ProviderAPIConfig } from '../providers/types';
 import Providers from '../providers';
 import { Options } from '../types/requestBody';
@@ -31,9 +31,13 @@ export async function realTimeHandler(c: Context): Promise<Response> {
   try {
     const requestHeaders = Object.fromEntries(c.req.raw.headers);
 
-    const providerOptions = constructConfigFromRequestHeaders(
+    let providerOptions = constructConfigFromRequestHeaders(
       requestHeaders
     ) as Options;
+
+    // Patch provider options with env variables
+    providerOptions = patchConfigFromEnvironment(providerOptions) as Options;
+
     const provider = providerOptions.provider ?? '';
     const apiConfig: ProviderAPIConfig = Providers[provider].api;
     const url = getURLForOutgoingConnection(
