@@ -4,11 +4,12 @@
  * @module index
  */
 
-import { Context, Hono } from 'hono';
+import { Context, Hono, Next } from 'hono';
 import { prettyJSON } from 'hono/pretty-json';
 import { HTTPException } from 'hono/http-exception';
 import { compress } from 'hono/compress';
 import { getRuntimeKey } from 'hono/adapter';
+import { bearerAuth } from 'hono/bearer-auth';
 // import { env } from 'hono/adapter' // Have to set this up for multi-environment deployment
 
 // Middlewares
@@ -37,7 +38,23 @@ import conf from '../conf.json';
 import modelResponsesHandler from './handlers/modelResponsesHandler';
 
 // Create a new Hono server instance
-const app = new Hono();
+const app = new Hono<{
+  Bindings: {
+    GATEWAY_API_KEY: string;
+  };
+}>();
+
+app.use('*', async (c, next) => {
+  // Apply bearerAuth middleware for all other paths
+  const authMiddleware = bearerAuth({
+    verifyToken: async (token, c) => {
+      return token === c.env.GATEWAY_API_KEY;
+    },
+  });
+
+  return authMiddleware(c, next);
+});
+
 /**
  * Middleware that conditionally applies compression middleware based on the runtime.
  * Compression is automatically handled for lagon and workerd runtimes
