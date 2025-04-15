@@ -113,6 +113,11 @@ interface DeepInfraStreamChunk {
     index: number;
     finish_reason: string | null;
   }[];
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
 }
 
 export const DeepInfraChatCompleteResponseTransform: (
@@ -199,6 +204,13 @@ export const DeepInfraChatCompleteStreamChunkTransform: (
           finish_reason: parsedChunk.choices[0].finish_reason,
         },
       ],
+      usage: parsedChunk.usage
+        ? {
+            prompt_tokens: parsedChunk.usage.prompt_tokens,
+            completion_tokens: parsedChunk.usage.completion_tokens,
+            total_tokens: parsedChunk.usage.total_tokens,
+          }
+        : undefined,
     })}` + '\n\n'
   );
 };
