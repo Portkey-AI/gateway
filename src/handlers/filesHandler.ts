@@ -14,7 +14,7 @@ function filesHandler(
     try {
       const requestHeaders = Object.fromEntries(c.req.raw.headers);
       let camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
-      
+
       // Patch config using env variables
       camelCaseConfig = patchConfigFromEnvironment(camelCaseConfig);
 

@@ -12,8 +12,8 @@ import WXApiConfig from './api';
 // } from './complete';
 
 const WatsonxConfig: ProviderConfigs = {
-//   complete: AnthropicCompleteConfig,
-//   chatComplete: AnthropicChatCompleteConfig,
+  //   complete: AnthropicCompleteConfig,
+  //   chatComplete: AnthropicChatCompleteConfig,
   api: WXApiConfig,
   responseTransforms: {
     // 'stream-complete': AnthropicCompleteStreamChunkTransform,

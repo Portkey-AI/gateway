@@ -943,18 +943,23 @@ export function updateResponseHeaders(
   }
 }
 
-export function patchConfigFromEnvironment(config: Options | Targets): Options | Targets {
+export function patchConfigFromEnvironment(
+  config: Options | Targets
+): Options | Targets {
   if (!config.apiKey || config.apiKey == POWERED_BY) {
     if (config.provider === 'openai' && process.env.OPENAI_API_KEY) {
       config.apiKey = process.env.OPENAI_API_KEY;
-    }
-    else if (config.provider === 'anthropic' && process.env.ANTHROPIC_API_KEY) {
+    } else if (
+      config.provider === 'anthropic' &&
+      process.env.ANTHROPIC_API_KEY
+    ) {
       config.apiKey = process.env.ANTHROPIC_API_KEY;
-    }
-    else if (config.provider == 'openrouter' && process.env.OPENROUTER_API_KEY) {
+    } else if (
+      config.provider == 'openrouter' &&
+      process.env.OPENROUTER_API_KEY
+    ) {
       config.apiKey = process.env.OPENROUTER_API_KEY;
-    }
-    else if (config.provider == 'google' && process.env.GEMINI_API_KEY) {
+    } else if (config.provider == 'google' && process.env.GEMINI_API_KEY) {
       config.apiKey = process.env.GEMINI_API_KEY;
     }
   }

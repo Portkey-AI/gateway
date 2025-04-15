@@ -1,5 +1,8 @@
 import { Context } from 'hono';
-import { constructConfigFromRequestHeaders, patchConfigFromEnvironment } from './handlerUtils';
+import {
+  constructConfigFromRequestHeaders,
+  patchConfigFromEnvironment,
+} from './handlerUtils';
 import { ProviderAPIConfig } from '../providers/types';
 import Providers from '../providers';
 import { Options } from '../types/requestBody';

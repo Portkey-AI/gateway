@@ -1,5 +1,8 @@
 import { Context } from 'hono';
-import { constructConfigFromRequestHeaders, patchConfigFromEnvironment } from './handlerUtils';
+import {
+  constructConfigFromRequestHeaders,
+  patchConfigFromEnvironment,
+} from './handlerUtils';
 import WebSocket from 'ws';
 import { ProviderAPIConfig } from '../providers/types';
 import Providers from '../providers';
@@ -14,7 +17,7 @@ export async function realTimeHandlerNode(
     let incomingWebsocket: WSContext<unknown> | null = null;
     const requestHeaders = Object.fromEntries(c.req.raw.headers);
     let camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
-    
+
     // Patch config with environment variables
     camelCaseConfig = patchConfigFromEnvironment(camelCaseConfig);
 

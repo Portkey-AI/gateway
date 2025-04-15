@@ -19,7 +19,7 @@ export async function embeddingsHandler(c: Context): Promise<Response> {
     let request = await c.req.json();
     let requestHeaders = Object.fromEntries(c.req.raw.headers);
     let camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
-    
+
     // Patch config using env variables
     camelCaseConfig = patchConfigFromEnvironment(camelCaseConfig);
 

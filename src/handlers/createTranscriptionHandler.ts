@@ -20,7 +20,7 @@ export async function createTranscriptionHandler(
     let request = await c.req.raw.formData();
     let requestHeaders = Object.fromEntries(c.req.raw.headers);
     let camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
-    
+
     // Patch config using env variables
     camelCaseConfig = patchConfigFromEnvironment(camelCaseConfig);
 

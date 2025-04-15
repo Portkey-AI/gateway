@@ -12,7 +12,7 @@ function batchesHandler(endpoint: endpointStrings, method: 'POST' | 'GET') {
       let requestHeaders = Object.fromEntries(c.req.raw.headers);
       let request = endpoint === 'createBatch' ? await c.req.json() : {};
       let camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
-      
+
       // Patch config using env variables
       camelCaseConfig = patchConfigFromEnvironment(camelCaseConfig);
 

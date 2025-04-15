@@ -19,7 +19,7 @@ export async function chatCompletionsHandler(c: Context): Promise<Response> {
     let request = await c.req.json();
     let requestHeaders = Object.fromEntries(c.req.raw.headers);
     let camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
-    
+
     // Patch provider config with system values specified in env vars
     camelCaseConfig = patchConfigFromEnvironment(camelCaseConfig);
 
