@@ -65,6 +65,7 @@ export const configSchema: any = z
       .object({
         attempts: z.number(),
         on_status_codes: z.array(z.number()).optional(),
+        use_retry_after_header: z.boolean().optional(),
       })
       .refine((value) => value.attempts !== undefined, {
         message: "'retry.attempts' must be defined",

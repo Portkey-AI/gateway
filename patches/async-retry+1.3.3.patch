@@ -1,0 +1,13 @@
+diff --git a/node_modules/async-retry/lib/index.js b/node_modules/async-retry/lib/index.js
+index d8f0c8a..d7a545e 100644
+--- a/node_modules/async-retry/lib/index.js
++++ b/node_modules/async-retry/lib/index.js
+@@ -39,7 +39,7 @@ function retry(fn, opts) {
+       var val;
+ 
+       try {
+-        val = fn(bail, num);
++        val = fn(bail, num, op);
+       } catch (err) {
+         onError(err, num);
+         return;

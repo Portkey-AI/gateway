@@ -72,6 +72,14 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
         return basePath;
       case 'listBatches':
         return basePath;
+      case 'createModelResponse':
+        return basePath;
+      case 'getModelResponse':
+        return basePath;
+      case 'deleteModelResponse':
+        return basePath;
+      case 'listResponseInputItems':
+        return basePath;
       default:
         return '';
     }

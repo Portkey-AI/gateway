@@ -16,6 +16,7 @@ import {
 } from './streamHandler';
 import { HookSpan } from '../middlewares/hooks';
 import { env } from 'hono/adapter';
+import { OpenAIModelResponseJSONToStreamGenerator } from '../providers/open-ai-base/createModelResponse';
 
 /**
  * Handles various types of responses based on the specified parameters
@@ -74,10 +75,19 @@ export async function responseHandler(
   // JSON to text/event-stream conversion is only allowed for unified routes: chat completions and completions.
   // Set the transformer to OpenAI json to stream convertor function in that case.
   if (responseTransformer && streamingMode && isCacheHit) {
-    responseTransformerFunction =
-      responseTransformer === 'chatComplete'
-        ? OpenAIChatCompleteJSONToStreamResponseTransform
-        : OpenAICompleteJSONToStreamResponseTransform;
+    switch (responseTransformer) {
+      case 'chatComplete':
+        responseTransformerFunction =
+          OpenAIChatCompleteJSONToStreamResponseTransform;
+        break;
+      case 'createModelResponse':
+        responseTransformerFunction = OpenAIModelResponseJSONToStreamGenerator;
+        break;
+      default:
+        responseTransformerFunction =
+          OpenAICompleteJSONToStreamResponseTransform;
+        break;
+    }
   } else if (responseTransformer && !streamingMode && isCacheHit) {
     responseTransformerFunction = undefined;
   }
@@ -102,7 +112,8 @@ export async function responseHandler(
         provider,
         responseTransformerFunction,
         requestURL,
-        strictOpenAiCompliance
+        strictOpenAiCompliance,
+        gatewayRequest
       ),
       responseJson: null,
     };
@@ -148,7 +159,8 @@ export async function responseHandler(
     response,
     responseTransformerFunction,
     strictOpenAiCompliance,
-    gatewayRequestUrl
+    gatewayRequestUrl,
+    gatewayRequest
   );
 
   return {

@@ -9,6 +9,8 @@ interface RetrySettings {
   attempts: number;
   /** The HTTP status codes on which to retry. */
   onStatusCodes: number[];
+  /** Whether to use the provider's retry wait. */
+  useRetryAfterHeader?: boolean;
 }
 
 interface CacheSettings {
@@ -133,12 +135,10 @@ export interface Options {
   openaiBeta?: string;
 
   /** Azure Inference Specific */
-  azureRegion?: string;
   azureDeploymentName?: string;
-  azureDeploymentType?: 'managed' | 'serverless';
-  azureEndpointName?: string;
   azureApiVersion?: string;
   azureExtraParams?: string;
+  azureFoundryUrl?: string;
 
   /** The parameter to determine if extra non-openai compliant fields should be returned in response */
   strictOpenAiCompliance?: boolean;
