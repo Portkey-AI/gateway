@@ -28,22 +28,6 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "insertLocation": {
-            "type": "string",
-            "label": "Insert Location",
-            "description": [
-              {
-                "type": "subHeading",
-                "text": "Where to add the search context in the request"
-              }
-            ],
-            "enum": [
-              "append_to_system",
-              "add_user_after_system",
-              "add_user_to_end"
-            ],
-            "default": "append_to_system"
-          },
           "prefix": {
             "type": "string",
             "label": "Context Prefix",
@@ -115,7 +99,7 @@
             "default": 10000
           }
         },
-        "required": ["insertLocation"]
+        "required": []
       }
     }
   ]

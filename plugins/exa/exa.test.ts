@@ -27,7 +27,6 @@ describe('exa online handler', () => {
     const parameters = {
       credentials: testCreds,
       numResults: 1,
-      insertLocation: 'append_to_system',
     };
 
     const result = await onlineHandler(
@@ -42,7 +41,7 @@ describe('exa online handler', () => {
     expect(result.transformed).toBe(false);
   });
 
-  it('should enhance chat completion request with search results appended to system message', async () => {
+  it('should enhance chat completion request by appending search results to system message', async () => {
     const eventType = 'beforeRequestHook';
     const context = {
       request: {
@@ -65,7 +64,6 @@ describe('exa online handler', () => {
 
     const parameters = {
       credentials: testCreds,
-      insertLocation: 'append_to_system',
       numResults: 1,
     };
 
@@ -83,7 +81,6 @@ describe('exa online handler', () => {
     // Check that system message was enhanced
     const messages = result.transformedData.request.json.messages;
 
-    console.log(messages);
     expect(messages[0].role).toBe('system');
     expect(messages[0].content).toContain('You are a helpful assistant.');
     expect(messages[0].content).toContain('<web_search_context>');
@@ -110,7 +107,6 @@ describe('exa online handler', () => {
 
     const parameters = {
       credentials: testCreds,
-      insertLocation: 'append_to_system',
       numResults: 1,
     };
 
@@ -131,102 +127,6 @@ describe('exa online handler', () => {
     expect(messages[0].content).toContain('<web_search_context>');
     expect(messages[1].role).toBe('user');
     expect(messages[1].content).toBe('What are recent advances in AI?');
-  });
-
-  it('should add a user message after system with search results', async () => {
-    const eventType = 'beforeRequestHook';
-    const context = {
-      request: {
-        text: 'What are recent advances in AI?',
-        json: {
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a helpful assistant.',
-            },
-            {
-              role: 'user',
-              content: 'What are recent advances in AI?',
-            },
-          ],
-        },
-      },
-      requestType: 'chatComplete',
-    };
-
-    const parameters = {
-      credentials: testCreds,
-      insertLocation: 'add_user_after_system',
-      numResults: 1,
-    };
-
-    const result = await onlineHandler(
-      context as PluginContext,
-      parameters,
-      eventType
-    );
-
-    expect(result).toBeDefined();
-    expect(result.verdict).toBe(true);
-    expect(result.error).toBeNull();
-    expect(result.transformed).toBe(true);
-
-    // Check that a new user message was added after system
-    const messages = result.transformedData.request.json.messages;
-    expect(messages[0].role).toBe('system');
-    expect(messages[0].content).toBe('You are a helpful assistant.');
-    expect(messages[1].role).toBe('user');
-    expect(messages[1].content).toContain('<web_search_context>');
-    expect(messages[2].role).toBe('user');
-    expect(messages[2].content).toBe('What are recent advances in AI?');
-  });
-
-  it('should add a user message at the end with search results', async () => {
-    const eventType = 'beforeRequestHook';
-    const context = {
-      request: {
-        text: 'What are recent advances in AI?',
-        json: {
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a helpful assistant.',
-            },
-            {
-              role: 'user',
-              content: 'What are recent advances in AI?',
-            },
-          ],
-        },
-      },
-      requestType: 'chatComplete',
-    };
-
-    const parameters = {
-      credentials: testCreds,
-      insertLocation: 'add_user_to_end',
-      numResults: 1,
-    };
-
-    const result = await onlineHandler(
-      context as PluginContext,
-      parameters,
-      eventType
-    );
-
-    expect(result).toBeDefined();
-    expect(result.verdict).toBe(true);
-    expect(result.error).toBeNull();
-    expect(result.transformed).toBe(true);
-
-    // Check that a new user message was added at the end
-    const messages = result.transformedData.request.json.messages;
-    expect(messages[0].role).toBe('system');
-    expect(messages[0].content).toBe('You are a helpful assistant.');
-    expect(messages[1].role).toBe('user');
-    expect(messages[1].content).toBe('What are recent advances in AI?');
-    expect(messages[2].role).toBe('user');
-    expect(messages[2].content).toContain('<web_search_context>');
   });
 
   it('should use custom prefix and suffix for search results', async () => {
@@ -252,7 +152,6 @@ describe('exa online handler', () => {
 
     const parameters = {
       credentials: testCreds,
-      insertLocation: 'append_to_system',
       prefix: '\n[SEARCH_RESULTS]',
       suffix: '[END_RESULTS]\n',
     };
@@ -290,7 +189,6 @@ describe('exa online handler', () => {
 
     const parameters = {
       credentials: testCreds,
-      insertLocation: 'append_to_system', // Should still work for completion
       numResults: 1,
     };
 
@@ -469,7 +367,6 @@ describe('exa online handler', () => {
     const specificNumResults = 2;
     const parameters = {
       credentials: testCreds,
-      insertLocation: 'append_to_system',
       numResults: specificNumResults,
     };
 
