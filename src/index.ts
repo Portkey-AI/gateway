@@ -40,7 +40,7 @@ import modelResponsesHandler from './handlers/modelResponsesHandler';
 // Create a new Hono server instance
 const app = new Hono<{
   Bindings: {
-    GATEWAY_API_KEY: string;
+    PORTKEY_API_KEY: string;
   };
 }>();
 
@@ -48,7 +48,7 @@ app.use('*', async (c, next) => {
   // Apply bearerAuth middleware for all other paths
   const authMiddleware = bearerAuth({
     verifyToken: async (token, c) => {
-      return token === c.env.GATEWAY_API_KEY;
+      return token === c.env.PORTKEY_API_KEY;
     },
   });
 
