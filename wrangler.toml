@@ -1,4 +1,4 @@
-name = "rubeus"
+name = "portkey-gateway-development"
 compatibility_date = "2024-12-05"
 main = "src/index.ts"
 compatibility_flags = [ "nodejs_compat" ]
@@ -22,7 +22,7 @@ CUSTOM_HEADERS_TO_IGNORE = []
 #Configuration for PRODUCTION environment
 #
 [env.production]
-name = "rubeus"
+name = "portkey-gateway-production"
 logpush=true
 
 [env.production.vars]
