@@ -106,7 +106,7 @@ export const WorkersAiChatCompleteResponseTransform: (
   if ('result' in response) {
     return {
       id: Date.now().toString(),
-      object: 'chat_completion',
+      object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
       model: gatewayRequest.model || '',
       provider: WORKERS_AI,
