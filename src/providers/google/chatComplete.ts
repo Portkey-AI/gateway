@@ -209,7 +209,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                 });
               }
               if (c.type === 'image_url') {
-                const { url } = c.image_url || {};
+                const { url, mime_type: passedMimeType } = c.image_url || {};
                 if (!url) return;
 
                 if (url.startsWith('data:')) {
@@ -230,7 +230,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                 ) {
                   parts.push({
                     fileData: {
-                      mimeType: getMimeType(url),
+                      mimeType: passedMimeType || getMimeType(url),
                       fileUri: url,
                     },
                   });

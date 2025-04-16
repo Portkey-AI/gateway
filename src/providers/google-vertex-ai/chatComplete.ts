@@ -117,7 +117,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
                 });
               }
               if (c.type === 'image_url') {
-                const { url } = c.image_url || {};
+                const { url, mime_type: passedMimeType } = c.image_url || {};
 
                 if (!url) {
                   // Shouldn't throw error?
@@ -145,7 +145,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
                 ) {
                   parts.push({
                     fileData: {
-                      mimeType: getMimeType(url),
+                      mimeType: passedMimeType || getMimeType(url),
                       fileUri: url,
                     },
                   });
