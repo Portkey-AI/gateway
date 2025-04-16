@@ -162,7 +162,7 @@ export const CohereChatCompleteResponseTransform: (
 
   return {
     id: response.generation_id,
-    object: 'chat_completion',
+    object: 'chat.completion',
     created: Math.floor(Date.now() / 1000),
     model: 'Unknown',
     provider: COHERE,

@@ -512,7 +512,7 @@ export const GoogleChatCompleteResponseTransform: (
   if ('candidates' in response) {
     return {
       id: 'portkey-' + crypto.randomUUID(),
-      object: 'chat_completion',
+      object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
       model: response.modelVersion,
       provider: 'google',
