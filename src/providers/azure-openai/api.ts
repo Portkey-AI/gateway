@@ -2,14 +2,16 @@ import { ProviderAPIConfig } from '../types';
 import {
   getAccessTokenFromEntraId,
   getAzureManagedIdentityToken,
+  getAzureWorkloadIdentityToken,
 } from './utils';
+import { env, getRuntimeKey } from 'hono/adapter';
 
 const AzureOpenAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
     const { resourceName } = providerOptions;
     return `https://${resourceName}.openai.azure.com/openai`;
   },
-  headers: async ({ providerOptions, fn }) => {
+  headers: async ({ c, providerOptions, fn }) => {
     const { apiKey, azureAuthMode } = providerOptions;
 
     if (azureAuthMode === 'entra') {
@@ -38,6 +40,40 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       return {
         Authorization: `Bearer ${accessToken}`,
       };
+    }
+    if (azureAuthMode === 'workload') {
+      const { azureWorkloadClientId } = providerOptions;
+
+      const authorityHost = env(c).AZURE_AUTHORITY_HOST;
+      const tenantId = env(c).AZURE_TENANT_ID;
+      const clientId = azureWorkloadClientId || env(c).AZURE_CLIENT_ID;
+      const federatedTokenFile = env(c).AZURE_FEDERATED_TOKEN_FILE;
+
+      const runtime = getRuntimeKey();
+      if (
+        authorityHost &&
+        tenantId &&
+        clientId &&
+        federatedTokenFile &&
+        runtime === 'node'
+      ) {
+        const fs = await import('fs');
+        const federatedToken = fs.readFileSync(federatedTokenFile, 'utf8');
+
+        if (federatedToken) {
+          const scope = 'https://cognitiveservices.azure.com/.default';
+          const accessToken = await getAzureWorkloadIdentityToken(
+            authorityHost,
+            tenantId,
+            clientId,
+            federatedToken,
+            scope
+          );
+          return {
+            Authorization: `Bearer ${accessToken}`,
+          };
+        }
+      }
     }
     const headersObj: Record<string, string> = {
       'api-key': `${apiKey}`,
