@@ -111,7 +111,7 @@ export const handler: PluginHandler<{
     // Check if any category exceeds the threshold (default: 2 - Medium)
     const hasHarmfulContent = response.categoriesAnalysis?.some(
       (category: any) => {
-        return category.severity >= parameters.severity || 2;
+        return category.severity >= (parameters.severity || 2);
       }
     );
 
