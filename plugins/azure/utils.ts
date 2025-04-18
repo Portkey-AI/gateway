@@ -7,6 +7,7 @@ export async function getAccessTokenFromEntraId(
   clientId: string,
   clientSecret: string,
   scope = 'https://openai.azure.com/.default',
+  check: string,
   options?: Record<string, any>,
   env?: Record<string, any>
 ) {
@@ -14,7 +15,7 @@ export async function getAccessTokenFromEntraId(
     token: '',
     error: null,
   };
-  const cacheKey = `azure-plugin-entra-token-${tenantId}-${clientId}-${clientSecret}`;
+  const cacheKey = `azure-plugin-entra-token-${check}-${tenantId}-${clientId}-${clientSecret}`;
   const cachedToken = await options?.getFromCacheByKey?.(env, cacheKey);
   if (cachedToken) {
     return { token: cachedToken, error: null };
@@ -57,6 +58,7 @@ export async function getAccessTokenFromEntraId(
 
 export async function getAzureManagedIdentityToken(
   resource: string,
+  check: string,
   clientId?: string,
   options?: Record<string, any>,
   env?: Record<string, any>
@@ -65,7 +67,7 @@ export async function getAzureManagedIdentityToken(
     token: '',
     error: null,
   };
-  const cacheKey = `azure-plugin-managed-identity-token-${resource}-${clientId}`;
+  const cacheKey = `azure-plugin-managed-identity-token-${check}-${resource}-${clientId}`;
   const cachedToken = await options?.getFromCacheByKey?.(env, cacheKey);
   if (cachedToken) {
     return { token: cachedToken, error: null };
@@ -102,6 +104,7 @@ export async function getAzureManagedIdentityToken(
 
 export const getAccessToken = async (
   credentials: AzureCredentials,
+  check: string,
   options?: Record<string, any>,
   env?: Record<string, any>
 ) => {
@@ -120,6 +123,7 @@ export const getAccessToken = async (
   if (azureAuthMode === 'managed') {
     tokenResult = await getAzureManagedIdentityToken(
       credentials?.resourceName ?? '',
+      check,
       clientId,
       options,
       env
@@ -132,6 +136,7 @@ export const getAccessToken = async (
       clientId ?? '',
       clientSecret ?? '',
       scope,
+      check,
       options,
       env
     );

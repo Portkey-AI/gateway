@@ -33,6 +33,7 @@ const redact = async (
 
   const { token, error: tokenError } = await getAccessToken(
     credentials as any,
+    'pii',
     options,
     options?.env
   );

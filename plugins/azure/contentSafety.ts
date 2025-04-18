@@ -67,6 +67,7 @@ export const handler: PluginHandler<{
 
   const { token, error: tokenError } = await getAccessToken(
     credentials as any,
+    'contentSafety',
     options,
     options?.env
   );
