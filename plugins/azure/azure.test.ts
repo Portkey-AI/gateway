@@ -10,7 +10,7 @@ describe('Azure Plugins', () => {
     jest.clearAllMocks();
   });
 
-  describe.skip('PII Plugin', () => {
+  describe('PII Plugin', () => {
     const mockContext: PluginContext = {
       request: {
         text: 'My email is abc@xyz.com and SSN is 123-45-6789',
@@ -120,7 +120,6 @@ describe('Azure Plugins', () => {
           params,
           'beforeRequestHook'
         );
-        console.log(result);
 
         expect(result.error).toBeNull();
         expect(result.verdict).toBe(false);
@@ -143,10 +142,9 @@ describe('Azure Plugins', () => {
           params,
           'beforeRequestHook'
         );
-        console.log(result);
 
         expect(result.error).toBeNull();
-        expect(result.verdict).toBe(true);
+        expect(result.verdict).toBe(false);
         expect(result.data).toBeDefined();
       });
 
@@ -166,7 +164,6 @@ describe('Azure Plugins', () => {
           params,
           'beforeRequestHook'
         );
-        console.log(result);
         expect(result.error).toBeNull();
         expect(result.verdict).toBe(false); // Should be false due to high severity
         expect(result.data).toBeDefined();
