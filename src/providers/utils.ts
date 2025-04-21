@@ -57,3 +57,8 @@ export function splitString(input: string, separator: string): SplitResult {
     after: input.substring(sepIndex + 1),
   };
 }
+
+export function getFakeId() {
+  // Some providers have a max length for the id, so we need to limit it
+  return ('portkey-' + crypto.randomUUID()).slice(0, 40);
+}
