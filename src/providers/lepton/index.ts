@@ -10,15 +10,12 @@ import {
   LeptonCompleteResponseTransform,
   LeptonCompleteStreamChunkTransform,
 } from './complete';
-import {
-  LeptonCreateTranscriptionConfig,
-  LeptonCreateTranscriptionResponseTransform,
-} from './createTranscription';
+import { LeptonCreateTranscriptionResponseTransform } from './createTranscription';
 
 const LeptonConfig: ProviderConfigs = {
   chatComplete: LeptonChatCompleteConfig,
   complete: LeptonCompleteConfig,
-  createTranscription: LeptonCreateTranscriptionConfig,
+  createTranscription: {},
   api: LeptonAPIConfig,
   responseTransforms: {
     chatComplete: LeptonChatCompleteResponseTransform,
