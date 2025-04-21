@@ -6,6 +6,7 @@ WORKDIR /app
 
 # Copy package.json and package-lock.json to the working directory
 COPY package*.json ./
+COPY patches ./
 
 # Upgrade system packages
 RUN apk update && apk upgrade --no-cache
@@ -40,6 +41,7 @@ WORKDIR /app
 COPY --from=build /app/build /app/build
 COPY --from=build /app/node_modules /app/node_modules
 COPY --from=build /app/package.json /app/package.json
+COPY --from=build /app/patches /app/patches
 
 # Expose port 8787
 EXPOSE 8787
