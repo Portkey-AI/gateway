@@ -78,6 +78,7 @@ export interface GuardrailCheckResult {
       json: any;
     };
   };
+  log?: any;
 }
 
 export interface GuardrailResult {
