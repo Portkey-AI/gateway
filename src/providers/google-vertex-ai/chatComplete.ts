@@ -35,6 +35,7 @@ import {
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
+  getFakeId,
 } from '../utils';
 import { transformGenerationConfig } from './transformGenerationConfig';
 import type {
@@ -48,7 +49,6 @@ import {
   getMimeType,
   recursivelyDeleteUnsupportedParameters,
   transformVertexLogprobs,
-  getFakeId,
 } from './utils';
 
 export const buildGoogleSearchRetrievalTool = (tool: Tool) => {
