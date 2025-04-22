@@ -183,6 +183,15 @@ export const DeepInfraChatCompleteResponseTransform: (
 export const DeepInfraChatCompleteStreamChunkTransform: (
   response: string
 ) => string = (responseChunk) => {
+  // Matches a ping chunk `: ping - 2025-04-13 03:55:09.637341+00:00`
+  if (
+    responseChunk.match(
+      /^:\s*ping\s*-\s*\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d{6}\+\d{2}:\d{2}$/
+    )
+  ) {
+    return '';
+  }
+
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
