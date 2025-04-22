@@ -209,7 +209,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                 });
               }
               if (c.type === 'image_url') {
-                const { url } = c.image_url || {};
+                const { url, mime_type: passedMimeType } = c.image_url || {};
                 if (!url) return;
 
                 if (url.startsWith('data:')) {
@@ -230,7 +230,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                 ) {
                   parts.push({
                     fileData: {
-                      mimeType: getMimeType(url),
+                      mimeType: passedMimeType || getMimeType(url),
                       fileUri: url,
                     },
                   });
@@ -512,7 +512,7 @@ export const GoogleChatCompleteResponseTransform: (
   if ('candidates' in response) {
     return {
       id: 'portkey-' + crypto.randomUUID(),
-      object: 'chat_completion',
+      object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
       model: response.modelVersion,
       provider: 'google',

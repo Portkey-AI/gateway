@@ -486,7 +486,7 @@ export const AnthropicChatCompleteResponseTransform: (
 
     return {
       id: response.id,
-      object: 'chat_completion',
+      object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
       model: response.model,
       provider: ANTHROPIC,
