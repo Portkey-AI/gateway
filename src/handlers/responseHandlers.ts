@@ -42,11 +42,12 @@ export async function responseHandler(
   isCacheHit: boolean = false,
   gatewayRequest: Params,
   strictOpenAiCompliance: boolean,
-  gatewayRequestUrl: string
+  gatewayRequestUrl: string,
+  areSyncHooksAvailable: boolean
 ): Promise<{
   response: Response;
   responseJson: Record<string, any> | null;
-  originalResponseJson?: Record<string, any>;
+  originalResponseJson?: Record<string, any> | null;
 }> {
   let responseTransformerFunction: Function | undefined;
   const responseContentType = response.headers?.get('content-type');
@@ -160,7 +161,8 @@ export async function responseHandler(
     responseTransformerFunction,
     strictOpenAiCompliance,
     gatewayRequestUrl,
-    gatewayRequest
+    gatewayRequest,
+    areSyncHooksAvailable
   );
 
   return {
