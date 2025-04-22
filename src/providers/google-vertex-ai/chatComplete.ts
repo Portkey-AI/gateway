@@ -434,7 +434,7 @@ export const GoogleChatCompleteResponseTransform: (
 
     return {
       id: 'portkey-' + crypto.randomUUID(),
-      object: 'chat_completion',
+      object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
       model: response.modelVersion,
       provider: GOOGLE_VERTEX_AI,
@@ -731,7 +731,7 @@ export const VertexAnthropicChatCompleteResponseTransform: (
 
     return {
       id: response.id,
-      object: 'chat_completion',
+      object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
       model: response.model,
       provider: GOOGLE_VERTEX_AI,
