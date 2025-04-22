@@ -41,6 +41,7 @@ import { handler as pangeapii } from './pangea/pii';
 import { pluginHandler as bedrockHandler } from './bedrock/index';
 import { handler as acuvityScan } from './acuvity/scan';
 import { handler as lassoclassify } from './lasso/classify';
+import { handler as exaonline } from './exa/online';
 import { handler as azurePii } from './azure/pii';
 import { handler as azureContentSafety } from './azure/contentSafety';
 
@@ -111,6 +112,9 @@ export const plugins = {
   },
   lasso: {
     classify: lassoclassify,
+  },
+  exa: {
+    online: exaonline,
   },
   azure: {
     pii: azurePii,
