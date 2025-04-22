@@ -164,7 +164,7 @@ export const RekaAIChatCompleteResponseTransform: (
   if ('text' in response) {
     return {
       id: crypto.randomUUID(),
-      object: 'chat_completion',
+      object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
       model: 'Unknown',
       provider: REKA_AI,
