@@ -227,6 +227,7 @@ export interface ContentType {
   image_url?: {
     url: string;
     detail?: string;
+    mime_type?: string;
   };
   data?: string;
 }
