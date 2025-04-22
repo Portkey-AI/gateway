@@ -45,14 +45,27 @@ interface GoogleEmbedResponse {
 
 export const GoogleEmbedResponseTransform: (
   response: GoogleEmbedResponse | GoogleErrorResponse,
-  responseStatus: number
-) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
+) => EmbedResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
+) => {
   if (responseStatus !== 200) {
     const errorResposne = GoogleErrorResponseTransform(
       response as GoogleErrorResponse
     );
     if (errorResposne) return errorResposne;
   }
+
+  const model = (gatewayRequest.model as string) || '';
 
   if ('embedding' in response) {
     return {
@@ -64,7 +77,7 @@ export const GoogleEmbedResponseTransform: (
           index: 0,
         },
       ],
-      model: '', // Todo: find a way to send the google embedding model name back
+      model,
       usage: {
         prompt_tokens: -1,
         total_tokens: -1,

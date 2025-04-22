@@ -77,6 +77,12 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     }
 
     const path = gatewayRequestURL.split('/v1')?.[1];
+    const urlObj = new URL(gatewayRequestURL);
+    const pathname = urlObj.pathname;
+    const searchParams = urlObj.searchParams;
+    if (apiVersion) {
+      searchParams.set('api-version', apiVersion);
+    }
 
     switch (mappedFn) {
       case 'complete': {
@@ -102,6 +108,18 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       }
       case 'realtime': {
         return `/realtime?api-version=${apiVersion}&deployment=${deploymentId}`;
+      }
+      case 'createModelResponse': {
+        return `/responses?${searchParams.toString()}`;
+      }
+      case 'getModelResponse': {
+        return `${pathname}?${searchParams.toString()}`;
+      }
+      case 'deleteModelResponse': {
+        return `${pathname}?${searchParams.toString()}`;
+      }
+      case 'listResponseInputItems': {
+        return `${pathname}?${searchParams.toString()}`;
       }
       case 'uploadFile':
         return `${path}?api-version=${apiVersion}`;

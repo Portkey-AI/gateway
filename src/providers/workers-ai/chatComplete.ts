@@ -83,8 +83,19 @@ export const WorkersAiErrorResponseTransform: (
 // TODO: cloudflare do not return the usage
 export const WorkersAiChatCompleteResponseTransform: (
   response: WorkersAiChatCompleteResponse | WorkersAiErrorResponse,
-  responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
+) => ChatCompletionResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
+) => {
   if (responseStatus !== 200) {
     const errorResponse = WorkersAiErrorResponseTransform(
       response as WorkersAiErrorResponse
@@ -95,9 +106,9 @@ export const WorkersAiChatCompleteResponseTransform: (
   if ('result' in response) {
     return {
       id: Date.now().toString(),
-      object: 'chat_completion',
+      object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
-      model: '', // TODO: find a way to send the cohere embedding model name back
+      model: gatewayRequest.model || '',
       provider: WORKERS_AI,
       choices: [
         {
@@ -115,8 +126,17 @@ export const WorkersAiChatCompleteResponseTransform: (
 
 export const WorkersAiChatCompleteStreamChunkTransform: (
   response: string,
-  fallbackId: string
-) => string | undefined = (responseChunk, fallbackId) => {
+  fallbackId: string,
+  _streamState: Record<string, boolean>,
+  _strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
+) => string | undefined = (
+  responseChunk,
+  fallbackId,
+  _streamState,
+  _strictOpenAiCompliance,
+  gatewayRequest
+) => {
   let chunk = responseChunk.trim();
 
   if (chunk.startsWith('data: [DONE]')) {
@@ -132,7 +152,7 @@ export const WorkersAiChatCompleteStreamChunkTransform: (
       id: fallbackId,
       object: 'chat.completion.chunk',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: gatewayRequest.model || '',
       provider: WORKERS_AI,
       choices: [
         {
