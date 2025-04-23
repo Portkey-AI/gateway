@@ -337,6 +337,10 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
   labels: {
     param: 'labels',
   },
+  thinking: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
 };
 
 interface AnthorpicTextContentItem {
@@ -424,6 +428,8 @@ export const GoogleChatCompleteResponseTransform: (
       GOOGLE_VERTEX_AI
     );
   }
+
+  console.log(JSON.stringify(response, null, 2));
 
   if ('candidates' in response) {
     const {
