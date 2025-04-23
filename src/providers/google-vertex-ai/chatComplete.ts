@@ -429,8 +429,6 @@ export const GoogleChatCompleteResponseTransform: (
     );
   }
 
-  console.log(JSON.stringify(response, null, 2));
-
   if ('candidates' in response) {
     const {
       promptTokenCount = 0,
