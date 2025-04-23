@@ -226,11 +226,12 @@ export async function handleNonStreamingMode(
   responseTransformer: Function | undefined,
   strictOpenAiCompliance: boolean,
   gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
+  areSyncHooksAvailable: boolean
 ): Promise<{
   response: Response;
-  json: Record<string, any>;
-  originalResponseBodyJson?: Record<string, any>;
+  json: Record<string, any> | null;
+  originalResponseBodyJson?: Record<string, any> | null;
 }> {
   // 408 is thrown whenever a request takes more than request_timeout to respond.
   // In that case, response thrown by gateway is already in OpenAI format.
@@ -244,7 +245,9 @@ export async function handleNonStreamingMode(
     return { response, json: await response.clone().json() };
   }
 
-  const originalResponseBodyJson: Record<string, any> = await response.json();
+  const isJsonParsingRequired = responseTransformer || areSyncHooksAvailable;
+  const originalResponseBodyJson: Record<string, any> | null =
+    isJsonParsingRequired ? await response.json() : null;
   let responseBodyJson = originalResponseBodyJson;
   if (responseTransformer) {
     responseBodyJson = responseTransformer(
@@ -255,6 +258,12 @@ export async function handleNonStreamingMode(
       gatewayRequestUrl,
       gatewayRequest
     );
+  } else if (!areSyncHooksAvailable) {
+    return {
+      response: new Response(response.body, response),
+      json: null,
+      originalResponseBodyJson,
+    };
   }
 
   return {

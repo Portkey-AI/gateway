@@ -344,7 +344,7 @@ export async function tryPost(
 
   let mappedResponse: Response;
   let retryCount: number | undefined;
-  let originalResponseJson: Record<string, any> | undefined;
+  let originalResponseJson: Record<string, any> | null | undefined;
 
   let cacheKey: string | undefined;
   let { cacheMode, cacheMaxAge, cacheStatus } = getCacheOptions(
@@ -355,6 +355,12 @@ export async function tryPost(
   const requestOptions = c.get('requestOptions') ?? [];
   let transformedRequestBody: ReadableStream | FormData | Params = {};
   let fetchOptions: RequestInit = {};
+  const areSyncHooksAvailable = Boolean(
+    hooksManager.getHooksToExecute(hookSpan, [
+      'syncBeforeRequestHook',
+      'syncAfterRequestHook',
+    ]).length
+  );
 
   // before_request_hooks handler
   ({
@@ -471,7 +477,8 @@ export async function tryPost(
           isCacheHit,
           params,
           strictOpenAiCompliance,
-          c.req.url
+          c.req.url,
+          areSyncHooksAvailable
         ));
     }
 
@@ -1247,7 +1254,7 @@ export async function recursiveAfterRequestHookHandler(
   mappedResponse: Response;
   retryCount: number;
   createdAt: Date;
-  originalResponseJson?: Record<string, any>;
+  originalResponseJson?: Record<string, any> | null;
 }> {
   let response, retryCount, createdAt, executionTime, retrySkipped;
   const requestTimeout =
@@ -1287,6 +1294,17 @@ export async function recursiveAfterRequestHookHandler(
     retry?.useRetryAfterHeader || false
   ));
 
+  const hooksManager = c.get('hooksManager') as HooksManager;
+  const hookSpan = hooksManager.getSpan(hookSpanId) as HookSpan;
+  // Check if sync hooks are available
+  // This will be used to determine if we need to parse the response body or simply passthrough the response as is
+  const areSyncHooksAvailable = Boolean(
+    hooksManager.getHooksToExecute(hookSpan, [
+      'syncBeforeRequestHook',
+      'syncAfterRequestHook',
+    ]).length
+  );
+
   const {
     response: mappedResponse,
     responseJson: mappedResponseJson,
@@ -1300,7 +1318,8 @@ export async function recursiveAfterRequestHookHandler(
     false,
     gatewayParams,
     strictOpenAiCompliance,
-    c.req.url
+    c.req.url,
+    areSyncHooksAvailable
   );
 
   const arhResponse = await afterRequestHookHandler(

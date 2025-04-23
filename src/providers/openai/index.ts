@@ -76,7 +76,6 @@ const OpenAIConfig: ProviderConfigs = {
     // 'stream-complete': OpenAICompleteResponseTransform,
     chatComplete: OpenAIChatCompleteResponseTransform,
     // 'stream-chatComplete': OpenAIChatCompleteResponseTransform,
-    embed: OpenAIEmbedResponseTransform,
     imageGenerate: OpenAIImageGenerateResponseTransform,
     createSpeech: OpenAICreateSpeechResponseTransform,
     createTranscription: OpenAICreateTranscriptionResponseTransform,
