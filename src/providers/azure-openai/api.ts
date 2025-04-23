@@ -76,7 +76,6 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       }
     }
 
-    const path = gatewayRequestURL.split('/v1')?.[1];
     const urlObj = new URL(gatewayRequestURL);
     const pathname = urlObj.pathname.replace('/v1', '');
     const searchParams = urlObj.searchParams;
