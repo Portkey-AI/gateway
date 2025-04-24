@@ -9,7 +9,7 @@ import { prettyJSON } from 'hono/pretty-json';
 import { HTTPException } from 'hono/http-exception';
 import { compress } from 'hono/compress';
 import { getRuntimeKey } from 'hono/adapter';
-// import { bearerAuth } from 'hono/bearer-auth';
+import { bearerAuth } from 'hono/bearer-auth';
 // import { env } from 'hono/adapter' // Have to set this up for multi-environment deployment
 
 // Middlewares
@@ -44,17 +44,16 @@ const app = new Hono<{
   };
 }>();
 
-// TODO: Re add auth once we figure out how to pass it in the portkey client
-// app.use('*', async (c, next) => {
-//   // Apply bearerAuth middleware for all other paths
-//   const authMiddleware = bearerAuth({
-//     verifyToken: async (token, c) => {
-//       return token === c.env.PORTKEY_API_KEY;
-//     },
-//   });
+app.use('*', async (c, next) => {
+  const authMiddleware = bearerAuth({
+    verifyToken: (token, c) => {
+      return token === c.env.PORTKEY_API_KEY;
+    },
+    headerName: 'x-portkey-api-key',
+  });
 
-//   return authMiddleware(c, next);
-// });
+  return authMiddleware(c, next);
+});
 
 /**
  * Middleware that conditionally applies compression middleware based on the runtime.
