@@ -404,6 +404,10 @@ export interface Params {
   // Anthropic specific
   anthropic_beta?: string;
   anthropic_version?: string;
+  thinking?: {
+    type?: string;
+    budget_tokens: number;
+  };
 }
 
 interface Examples {

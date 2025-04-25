@@ -71,6 +71,12 @@ const transformGenerationConfig = (params: Params) => {
     }
     generationConfig['responseSchema'] = schema;
   }
+  if (params?.thinking) {
+    const thinkingConfig: Record<string, any> = {};
+    thinkingConfig['include_thoughts'] = true;
+    thinkingConfig['thinking_budget'] = params.thinking.budget_tokens;
+    generationConfig['thinking_config'] = thinkingConfig;
+  }
   return generationConfig;
 };
 
@@ -404,6 +410,10 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
         return toolConfig;
       }
     },
+  },
+  thinking: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
   },
 };
 
