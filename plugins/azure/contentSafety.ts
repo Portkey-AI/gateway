@@ -116,9 +116,7 @@ export const handler: PluginHandler<{
     );
 
     // Check if any blocklist items were hit
-    const hasBlocklistHit = response.blocklistsMatch?.some((match: any) => {
-      return match.matchResults.length > 0;
-    });
+    const hasBlocklistHit = response.blocklistsMatch?.length > 0;
 
     verdict = !(hasHarmfulContent || hasBlocklistHit);
   }
