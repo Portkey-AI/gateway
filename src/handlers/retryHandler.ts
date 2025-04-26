@@ -100,6 +100,36 @@ export const retryRequest = async (
           } else {
             response = await fetch(url, options);
           }
+
+          // custom code to handle image generation when the provider returns a image/ response
+          // Check if the response is an image and convert to base64 JSON
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.startsWith('image/') && response.ok) {
+            const imageBuffer = await response.arrayBuffer();
+            // Simple ArrayBuffer to base64 conversion for environments like Cloudflare Workers
+            let binary = '';
+            const bytes = new Uint8Array(imageBuffer);
+            const len = bytes.byteLength;
+            for (let i = 0; i < len; i++) {
+              binary += String.fromCharCode(bytes[i]);
+            }
+            const base64Image = btoa(binary);
+            const jsonBody = JSON.stringify({ image: base64Image }); // Or format matching SegmindImageGenerateResponse if needed e.g. { data: [{b64_json: base64Image}], created: ... }
+            response = new Response(jsonBody, {
+              headers: {
+                // keep original headers
+                ...Object.fromEntries(response.headers),
+                'content-type': 'application/json',
+              },
+              status: response.status,
+              statusText: response.statusText,
+            });
+            // Since we successfully converted, we don't need to retry based on status code.
+            // Proceed as if it was a successful JSON response from the start.
+            lastResponse = response;
+            return; // Exit the current retry attempt function as we handled it.
+          }
+
           if (statusCodesToRetry.includes(response.status)) {
             const errorObj: any = new Error(await response.text());
             errorObj.status = response.status;
