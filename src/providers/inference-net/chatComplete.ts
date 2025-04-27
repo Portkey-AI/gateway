@@ -1,4 +1,4 @@
-// import { INFERENCENET } from '../../globals';
+import { INFERENCENET } from '../../globals';
 
 export const InferenceNetChatCompleteStreamChunkTransform: (
   response: string
@@ -17,9 +17,7 @@ export const InferenceNetChatCompleteStreamChunkTransform: (
   return (
     `data: ${JSON.stringify({
       ...parsedChunk,
-      // NOTE: Since were currently using this internally to fallback to testnet, we set the provider to 'inference-testnet'
-      // so that our relay server can identify it properly
-      provider: 'inference-testnet',
+      provider: INFERENCENET,
     })}` + '\n\n'
   );
 };
