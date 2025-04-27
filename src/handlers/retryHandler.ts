@@ -1,10 +1,5 @@
 import retry from 'async-retry';
-import {
-  MAX_RETRY_LIMIT_MS,
-  POSSIBLE_RETRY_STATUS_HEADERS,
-  SEGMIND,
-  WORKERS_AI,
-} from '../globals';
+import { MAX_RETRY_LIMIT_MS, POSSIBLE_RETRY_STATUS_HEADERS } from '../globals';
 
 async function fetchWithTimeout(
   url: string,
@@ -108,35 +103,46 @@ export const retryRequest = async (
 
           // custom code to handle image generation when the provider returns a image/ response
           // Check if the response is an image and convert to base64 JSON
-          const getImageProvider = (url: string) => {
+          const getImageTransformer = (url: string) => {
             switch (new URL(url).host) {
               case 'api.segmind.com':
-                return SEGMIND;
+                return (base64Image: string) => ({
+                  image: base64Image,
+                });
               case 'api.cloudflare.com':
-                return WORKERS_AI;
+                return (base64Image: string) => ({
+                  result: {
+                    image: base64Image,
+                  },
+                });
               default:
                 return undefined;
             }
           };
-          const formatResponse = (provider: string, base64Image: string) => {
-            switch (provider) {
-              case SEGMIND:
-                return {
-                  image: base64Image,
-                };
-              case WORKERS_AI:
-                return {
-                  result: {
-                    image: base64Image,
-                  },
-                };
-              default:
-                return {};
+          const requestedBase64 = () => {
+            try {
+              // parse body if string
+              if (typeof options.body === 'string') {
+                const { base64 } = JSON.parse(options.body);
+                return base64;
+              }
+            } catch (_) {}
+            return false;
+          };
+          const getTransformer = () => {
+            if (
+              requestedBase64() &&
+              response.headers.get('content-type')?.startsWith('image/') &&
+              response.ok
+            ) {
+              return getImageTransformer(url);
             }
           };
-          const contentType = response.headers.get('content-type');
-          const provider = getImageProvider(url);
-          if (provider && contentType?.startsWith('image/') && response.ok) {
+          const transformer = getTransformer();
+          if (transformer) {
+            console.info(
+              'retryRequest > converting image response to base64 JSON'
+            );
             const imageBuffer = await response.arrayBuffer();
             // Simple ArrayBuffer to base64 conversion for environments like Cloudflare Workers
             let binary = '';
@@ -145,22 +151,20 @@ export const retryRequest = async (
             for (let i = 0; i < len; i++) {
               binary += String.fromCharCode(bytes[i]);
             }
-            const base64Image = btoa(binary);
-            const jsonBody = JSON.stringify(
-              formatResponse(provider, base64Image)
-            ); // Or format matching SegmindImageGenerateResponse if needed e.g. { data: [{b64_json: base64Image}], created: ... }
-            response = new Response(jsonBody, {
-              headers: {
-                // keep original headers
-                ...Object.fromEntries(response.headers),
-                'content-type': 'application/json',
-              },
-              status: response.status,
-              statusText: response.statusText,
-            });
             // Since we successfully converted, we don't need to retry based on status code.
             // Proceed as if it was a successful JSON response from the start.
-            lastResponse = response;
+            lastResponse = new Response(
+              JSON.stringify(transformer(btoa(binary))),
+              {
+                headers: {
+                  // keep original headers
+                  ...Object.fromEntries(response.headers),
+                  'content-type': 'application/json',
+                },
+                status: response.status,
+                statusText: response.statusText,
+              }
+            );
             return; // Exit the current retry attempt function as we handled it.
           }
 
