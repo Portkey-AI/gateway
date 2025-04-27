@@ -20,8 +20,37 @@ export const WorkersAiImageGenerateConfig: ProviderConfig = {
     param: 'prompt',
     required: true,
   },
-  steps: {
-    param: 'steps',
+  negative_prompt: {
+    param: 'negative_prompt',
+  },
+  base64: {
+    param: 'base64',
+    transform: (params: any) => true, // Always true to handle uniform responses
+    default: true,
+    required: true,
+  },
+  steps: [
+    {
+      param: 'num_steps',
+    },
+    {
+      param: 'steps',
+    },
+  ],
+  size: [
+    {
+      param: 'height',
+      transform: (params: any) =>
+        parseInt(params.size.toLowerCase().split('x')[1]),
+    },
+    {
+      param: 'width',
+      transform: (params: any) =>
+        parseInt(params.size.toLowerCase().split('x')[0]),
+    },
+  ],
+  seed: {
+    param: 'seed',
   },
 };
 
