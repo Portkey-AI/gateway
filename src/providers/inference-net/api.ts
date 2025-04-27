@@ -10,6 +10,9 @@ export const inferenceAPIConfig: ProviderAPIConfig = {
     switch (fn) {
       case 'chatComplete':
         return `/chat/completions`;
+      case 'complete': {
+        return '/completions';
+      }
       default:
         return '';
     }
