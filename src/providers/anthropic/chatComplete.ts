@@ -3,8 +3,8 @@ import {
   Params,
   Message,
   ContentType,
-  AnthropicPromptCache,
   SYSTEM_MESSAGE_ROLES,
+  PromptCache,
 } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
@@ -19,7 +19,7 @@ import { AnthropicStreamState } from './types';
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
-interface AnthropicTool extends AnthropicPromptCache {
+interface AnthropicTool extends PromptCache {
   name: string;
   description: string;
   input_schema: {
@@ -69,7 +69,7 @@ type AnthropicMessageContentItem =
   | AnthropicUrlImageContentItem
   | AnthropicTextContentItem;
 
-interface AnthropicMessage extends Message, AnthropicPromptCache {
+interface AnthropicMessage extends Message, PromptCache {
   content: AnthropicMessageContentItem[];
 }
 
@@ -180,7 +180,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
         let messages: AnthropicMessage[] = [];
         // Transform the chat messages into a simple prompt
         if (!!params.messages) {
-          params.messages.forEach((msg: Message & AnthropicPromptCache) => {
+          params.messages.forEach((msg: Message & PromptCache) => {
             if (SYSTEM_MESSAGE_ROLES.includes(msg.role)) return;
 
             if (msg.role === 'assistant') {
@@ -230,7 +230,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
         let systemMessages: AnthropicMessageContentItem[] = [];
         // Transform the chat messages into a simple prompt
         if (!!params.messages) {
-          params.messages.forEach((msg: Message & AnthropicPromptCache) => {
+          params.messages.forEach((msg: Message & PromptCache) => {
             if (
               SYSTEM_MESSAGE_ROLES.includes(msg.role) &&
               msg.content &&
