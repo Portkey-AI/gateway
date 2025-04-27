@@ -146,6 +146,12 @@ export const OpenrouterChatCompleteResponseTransform: (
         message: {
           role: c.message.role,
           content: c.message.content,
+          ...(c.message.reasoning && {
+            reasoning: c.message.reasoning,
+          }),
+          ...(c.message.tool_calls && {
+            tool_calls: c.message.tool_calls,
+          }),
         },
         finish_reason: c.finish_reason,
       })),
