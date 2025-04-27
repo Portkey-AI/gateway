@@ -1,5 +1,10 @@
 import retry from 'async-retry';
-import { MAX_RETRY_LIMIT_MS, POSSIBLE_RETRY_STATUS_HEADERS } from '../globals';
+import {
+  MAX_RETRY_LIMIT_MS,
+  POSSIBLE_RETRY_STATUS_HEADERS,
+  SEGMIND,
+  WORKERS_AI,
+} from '../globals';
 
 async function fetchWithTimeout(
   url: string,
@@ -103,8 +108,35 @@ export const retryRequest = async (
 
           // custom code to handle image generation when the provider returns a image/ response
           // Check if the response is an image and convert to base64 JSON
+          const getImageProvider = (url: string) => {
+            switch (new URL(url).host) {
+              case 'api.segmind.com':
+                return SEGMIND;
+              case 'api.cloudflare.com':
+                return WORKERS_AI;
+              default:
+                return undefined;
+            }
+          };
+          const formatResponse = (provider: string, base64Image: string) => {
+            switch (provider) {
+              case SEGMIND:
+                return {
+                  image: base64Image,
+                };
+              case WORKERS_AI:
+                return {
+                  result: {
+                    image: base64Image,
+                  },
+                };
+              default:
+                return {};
+            }
+          };
           const contentType = response.headers.get('content-type');
-          if (contentType && contentType.startsWith('image/') && response.ok) {
+          const provider = getImageProvider(url);
+          if (provider && contentType?.startsWith('image/') && response.ok) {
             const imageBuffer = await response.arrayBuffer();
             // Simple ArrayBuffer to base64 conversion for environments like Cloudflare Workers
             let binary = '';
@@ -114,7 +146,9 @@ export const retryRequest = async (
               binary += String.fromCharCode(bytes[i]);
             }
             const base64Image = btoa(binary);
-            const jsonBody = JSON.stringify({ image: base64Image }); // Or format matching SegmindImageGenerateResponse if needed e.g. { data: [{b64_json: base64Image}], created: ... }
+            const jsonBody = JSON.stringify(
+              formatResponse(provider, base64Image)
+            ); // Or format matching SegmindImageGenerateResponse if needed e.g. { data: [{b64_json: base64Image}], created: ... }
             response = new Response(jsonBody, {
               headers: {
                 // keep original headers
