@@ -16,18 +16,13 @@
         "encrypted": true
       }
     },
-    "required": [
-      "apiDomain",
-      "apiKey"
-    ]
+    "required": ["apiDomain", "apiKey"]
   },
   "functions": [
     {
       "name": "Protect Prompt",
       "id": "protectPrompt",
-      "supportedHooks": [
-        "beforeRequestHook"
-      ],
+      "supportedHooks": ["beforeRequestHook"],
       "type": "guardrail",
       "description": [
         {
@@ -39,9 +34,7 @@
     {
       "name": "Protect Response",
       "id": "protectResponse",
-      "supportedHooks": [
-        "afterRequestHook"
-      ],
+      "supportedHooks": ["afterRequestHook"],
       "type": "guardrail",
       "description": [
         {

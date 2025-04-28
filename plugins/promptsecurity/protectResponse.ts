@@ -17,7 +17,10 @@ export const handler: PluginHandler = async (
   let data = null;
   try {
     let scanResponseObject: any = { response: getText(context, eventType) };
-    data = await promptSecurityProtectApi(parameters.credentials, scanResponseObject);
+    data = await promptSecurityProtectApi(
+      parameters.credentials,
+      scanResponseObject
+    );
     data = data.result.response;
     verdict = data.passed;
   } catch (e: any) {
