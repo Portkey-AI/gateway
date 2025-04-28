@@ -50,7 +50,6 @@ export async function responseHandler(
   originalResponseJson?: Record<string, any> | null;
 }> {
   let responseTransformerFunction: Function | undefined;
-  const responseContentType = response.headers?.get('content-type');
   const isSuccessStatusCode = [200, 246].includes(response.status);
 
   if (typeof provider == 'object') {
@@ -59,6 +58,22 @@ export async function responseHandler(
 
   const providerConfig = Providers[provider];
   let providerTransformers = Providers[provider]?.responseTransforms;
+
+  // if the original response is an image, convert it to JSON if the provider has a transformer
+  if (
+    response.headers
+      ?.get('content-type')
+      ?.startsWith(CONTENT_TYPES.GENERIC_IMAGE_PATTERN)
+  ) {
+    const imageToJsonResponseTransform = providerTransformers?.[`imageToJson`];
+    if (imageToJsonResponseTransform) {
+      // transformers are async, because we read the body as an array buffer
+      response = await imageToJsonResponseTransform(response);
+    }
+  }
+
+  // read the final content type after transformations
+  const responseContentType = response.headers?.get('content-type');
 
   if (providerConfig?.getConfig) {
     providerTransformers =
