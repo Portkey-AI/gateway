@@ -146,12 +146,14 @@ export const OpenrouterChatCompleteResponseTransform: (
         message: {
           role: c.message.role,
           content: c.message.content,
-          content_blocks: [
-            {
-              type: 'thinking',
-              thinking: c.message.reasoning,
-            },
-          ],
+          ...(c.message.reasoning && {
+            content_blocks: [
+              {
+                type: 'thinking',
+                thinking: c.message.reasoning,
+              },
+            ],
+          }),
           ...(c.message.tool_calls && {
             tool_calls: c.message.tool_calls,
           }),
