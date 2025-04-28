@@ -23,12 +23,6 @@ export const WorkersAiImageGenerateConfig: ProviderConfig = {
   negative_prompt: {
     param: 'negative_prompt',
   },
-  base64: {
-    param: 'base64',
-    transform: (params: any) => true, // Always true to handle uniform responses
-    default: true,
-    required: true,
-  },
   steps: [
     {
       param: 'num_steps',
