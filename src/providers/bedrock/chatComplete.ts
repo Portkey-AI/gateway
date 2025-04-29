@@ -32,8 +32,14 @@ import {
 
 export interface BedrockChatCompletionsParams extends Params {
   additionalModelRequestFields?: Record<string, any>;
+  additional_model_request_fields?: Record<string, any>;
   additionalModelResponseFieldPaths?: string[];
   guardrailConfig?: {
+    guardrailIdentifier: string;
+    guardrailVersion: string;
+    trace?: string;
+  };
+  guardrail_config?: {
     guardrailIdentifier: string;
     guardrailVersion: string;
     trace?: string;
@@ -312,7 +318,15 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
     param: 'guardrailConfig',
     required: false,
   },
+  guardrail_config: {
+    param: 'guardrailConfig',
+    required: false,
+  },
   additionalModelResponseFieldPaths: {
+    param: 'additionalModelResponseFieldPaths',
+    required: false,
+  },
+  additional_model_response_field_paths: {
     param: 'additionalModelResponseFieldPaths',
     required: false,
   },
