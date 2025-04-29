@@ -1,6 +1,7 @@
 import { OPENROUTER } from '../../globals';
-import { Params } from '../../types/requestBody';
+import { Message, Params } from '../../types/requestBody';
 import {
+  ChatChoice,
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
@@ -88,6 +89,7 @@ interface OpenrouterChatCompleteResponse extends ChatCompletionResponse {
     completion_tokens: number;
     total_tokens: number;
   };
+  choices: (ChatChoice & { message: Message & { reasoning: string } })[];
 }
 
 export interface OpenrouterErrorResponse {
@@ -112,6 +114,7 @@ interface OpenrouterStreamChunk {
     delta: {
       role?: string | null;
       content?: string;
+      reasoning?: string;
     };
     index: number;
     finish_reason: string | null;
@@ -120,8 +123,19 @@ interface OpenrouterStreamChunk {
 
 export const OpenrouterChatCompleteResponseTransform: (
   response: OpenrouterChatCompleteResponse | OpenrouterErrorResponse,
-  responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  _responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  _gatewayRequestUrl: string,
+  gatewayRequest: Params
+) => ChatCompletionResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
+) => {
   if ('message' in response && responseStatus !== 200) {
     return generateErrorResponse(
       {
@@ -146,14 +160,16 @@ export const OpenrouterChatCompleteResponseTransform: (
         message: {
           role: c.message.role,
           content: c.message.content,
-          ...(c.message.reasoning && {
-            content_blocks: [
-              {
-                type: 'thinking',
-                thinking: c.message.reasoning,
-              },
-            ],
-          }),
+          ...(!strictOpenAiCompliance &&
+            c.message.reasoning && {
+              // this is to match portkey unified api
+              content_blocks: [
+                {
+                  type: 'thinking',
+                  thinking: c.message.reasoning,
+                },
+              ],
+            }),
           ...(c.message.tool_calls && {
             tool_calls: c.message.tool_calls,
           }),
@@ -181,7 +197,7 @@ export const OpenrouterChatCompleteStreamChunkTransform: (
   responseChunk,
   fallbackId,
   _streamState,
-  _strictOpenAiCompliance,
+  strictOpenAiCompliance,
   gatewayRequest
 ) => {
   let chunk = responseChunk.trim();
@@ -216,7 +232,21 @@ export const OpenrouterChatCompleteStreamChunkTransform: (
       choices: [
         {
           index: parsedChunk.choices?.[0]?.index,
-          delta: parsedChunk.choices?.[0]?.delta,
+          delta: {
+            ...parsedChunk.choices?.[0]?.delta,
+            ...(!strictOpenAiCompliance &&
+              parsedChunk.choices?.[0]?.delta?.reasoning && {
+                // this is to match portkey unified api
+                content_blocks: [
+                  {
+                    index: parsedChunk.choices?.[0]?.index,
+                    delta: {
+                      thinking: parsedChunk.choices?.[0]?.delta?.reasoning,
+                    },
+                  },
+                ],
+              }),
+          },
           finish_reason: parsedChunk.choices?.[0]?.finish_reason,
         },
       ],
