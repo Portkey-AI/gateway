@@ -346,6 +346,11 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
     transform: (params: BedrockChatCompletionsParams) =>
       transformAdditionalModelRequestFields(params),
   },
+  additional_model_request_fields: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockChatCompletionsParams) =>
+      transformAdditionalModelRequestFields(params),
+  },
   top_k: {
     param: 'additionalModelRequestFields',
     transform: (params: BedrockChatCompletionsParams) =>
@@ -696,6 +701,11 @@ export const BedrockConverseAnthropicChatCompleteConfig: ProviderConfig = {
     transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
       transformAnthropicAdditionalModelRequestFields(params),
   },
+  additional_model_request_fields: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
+      transformAnthropicAdditionalModelRequestFields(params),
+  },
   top_k: {
     param: 'additionalModelRequestFields',
     transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
@@ -724,6 +734,11 @@ export const BedrockConverseAnthropicChatCompleteConfig: ProviderConfig = {
 export const BedrockConverseCohereChatCompleteConfig: ProviderConfig = {
   ...BedrockConverseChatCompleteConfig,
   additionalModelRequestFields: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockConverseCohereChatCompletionsParams) =>
+      transformCohereAdditionalModelRequestFields(params),
+  },
+  additional_model_request_fields: {
     param: 'additionalModelRequestFields',
     transform: (params: BedrockConverseCohereChatCompletionsParams) =>
       transformCohereAdditionalModelRequestFields(params),
@@ -758,6 +773,11 @@ export const BedrockConverseCohereChatCompleteConfig: ProviderConfig = {
 export const BedrockConverseAI21ChatCompleteConfig: ProviderConfig = {
   ...BedrockConverseChatCompleteConfig,
   additionalModelRequestFields: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockConverseAI21ChatCompletionsParams) =>
+      transformAI21AdditionalModelRequestFields(params),
+  },
+  additional_model_request_fields: {
     param: 'additionalModelRequestFields',
     transform: (params: BedrockConverseAI21ChatCompletionsParams) =>
       transformAI21AdditionalModelRequestFields(params),
