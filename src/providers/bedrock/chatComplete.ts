@@ -133,6 +133,7 @@ const imageURLToBase64 = async (url: string) => {
 };
 
 const getMessageContent = async (message: Message) => {
+  throw new Error('test!!!');
   if (!message.content && !message.tool_calls) return [];
   if (message.role === 'tool') {
     return [
