@@ -75,7 +75,6 @@ const Providers: { [key: string]: ProviderConfigs } = {
   nomic: NomicConfig,
   ollama: OllamaAPIConfig,
   ai21: AI21Config,
-  bedrock: BedrockConfig,
   groq: GroqConfig,
   segmind: SegmindConfig,
   jina: JinaConfig,
