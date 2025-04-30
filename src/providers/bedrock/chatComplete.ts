@@ -133,7 +133,6 @@ const imageURLToBase64 = async (url: string) => {
 };
 
 const getMessageContent = async (message: Message) => {
-  throw new Error('test!!!');
   if (!message.content && !message.tool_calls) return [];
   if (message.role === 'tool') {
     return [
@@ -149,6 +148,8 @@ const getMessageContent = async (message: Message) => {
   const inputContent: ContentType[] | string | undefined =
     message.content_blocks ?? message.content;
   // if message is a string, return a single element array with the text
+  console.log('!!inputContent', inputContent);
+  console.log('!!typeof', typeof inputContent);
   if (typeof inputContent === 'string') {
     out.push({
       text: inputContent,
@@ -164,11 +165,14 @@ const getMessageContent = async (message: Message) => {
           transformAndAppendThinkingMessageItem(item, out);
         } else if (item.type === 'image_url' && item.image_url?.url) {
           try {
+            console.log('!!item.image_url.url', item.image_url.url);
             const data = await imageURLToBase64(item.image_url.url);
             if (!data) {
               throw new Error('Failed to encode image url');
             }
             const { prefix, base64String } = data;
+            console.log('!!prefix', prefix);
+            console.log('!!base64String', base64String);
             const mimeType = prefix.match(/^data:(.*);base64,/)?.[1];
             const fileFormat = mimeType?.split('/')[1];
             if (!mimeType || !fileFormat) {
