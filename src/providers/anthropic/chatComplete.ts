@@ -63,11 +63,40 @@ interface AnthropicTextContentItem {
   text: string;
 }
 
+interface AnthropicUrlPdfContentItem {
+  type: 'document';
+  source: {
+    type: 'url';
+    url: string;
+  };
+}
+
+interface AnthropicBase64PdfContentItem {
+  type: 'document';
+  source: {
+    type: 'base64';
+    data: string;
+    media_type: string;
+  };
+}
+
+interface AnthropicPlainTextContentItem {
+  type: 'document';
+  source: {
+    type: 'text';
+    data: string;
+    media_type: string;
+  };
+}
+
 type AnthropicMessageContentItem =
   | AnthropicToolResultContentItem
   | AnthropicBase64ImageContentItem
   | AnthropicUrlImageContentItem
-  | AnthropicTextContentItem;
+  | AnthropicTextContentItem
+  | AnthropicUrlPdfContentItem
+  | AnthropicBase64PdfContentItem
+  | AnthropicPlainTextContentItem;
 
 interface AnthropicMessage extends Message, PromptCache {
   content: AnthropicMessageContentItem[];
@@ -166,6 +195,46 @@ const transformAndAppendImageContentItem = (
   }
 };
 
+const transformAndAppendFileContentItem = (
+  item: ContentType,
+  transformedMessage: AnthropicMessage
+) => {
+  const mimeType =
+    (item.file?.mime_type as keyof typeof fileExtensionMimeTypeMap) ||
+    fileExtensionMimeTypeMap.pdf;
+  if (item.file?.file_url) {
+    transformedMessage.content.push({
+      type: 'document',
+      source: {
+        type: 'url',
+        url: item.file.file_url,
+      },
+    });
+  } else if (item.file?.file_data) {
+    const contentType =
+      mimeType === fileExtensionMimeTypeMap.txt ? 'text' : 'base64';
+    if (contentType === 'text') {
+      transformedMessage.content.push({
+        type: 'document',
+        source: {
+          type: contentType,
+          data: item.file.file_data,
+          media_type: mimeType,
+        },
+      });
+    } else {
+      transformedMessage.content.push({
+        type: 'document',
+        source: {
+          type: contentType,
+          data: item.file.file_data,
+          media_type: mimeType,
+        },
+      });
+    }
+  }
+};
+
 export const AnthropicChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
@@ -205,6 +274,8 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                   });
                 } else if (item.type === 'image_url') {
                   transformAndAppendImageContentItem(item, transformedMessage);
+                } else if (item.type === 'file') {
+                  transformAndAppendFileContentItem(item, transformedMessage);
                 }
               });
               messages.push(transformedMessage as AnthropicMessage);
