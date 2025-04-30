@@ -1,4 +1,9 @@
-import { BEDROCK, documentMimeTypes, imagesMimeTypes } from '../../globals';
+import {
+  BEDROCK,
+  documentMimeTypes,
+  fileExtensionMimeTypeMap,
+  imagesMimeTypes,
+} from '../../globals';
 import {
   Message,
   Params,
@@ -172,6 +177,32 @@ const getMessageContent = (message: Message) => {
               name: crypto.randomUUID(),
               source: {
                 bytes,
+              },
+            },
+          });
+        }
+      } else if (item.type === 'file') {
+        const mimeType = item.file?.mime_type || fileExtensionMimeTypeMap.pdf;
+        const fileFormat = mimeType.split('/')[1];
+        if (item.file?.file_url) {
+          out.push({
+            document: {
+              format: fileFormat,
+              name: crypto.randomUUID(),
+              source: {
+                s3Location: {
+                  uri: item.file.file_url,
+                },
+              },
+            },
+          });
+        } else if (item.file?.file_data) {
+          out.push({
+            document: {
+              format: fileFormat,
+              name: crypto.randomUUID(),
+              source: {
+                bytes: item.file.file_data,
               },
             },
           });
@@ -377,7 +408,10 @@ type BedrockContentItem = {
     format: string;
     name: string;
     source: {
-      bytes: string;
+      bytes?: string;
+      s3Location?: {
+        uri: string;
+      };
     };
   };
   cachePoint?: {
