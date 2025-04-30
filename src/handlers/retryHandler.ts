@@ -85,7 +85,6 @@ export const retryRequest = async (
 
   try {
     await retry(
-      // @ts-expect-error type error with rateLimiter
       async (bail: any, attempt: number, rateLimiter: any) => {
         try {
           let response: Response;
@@ -101,7 +100,6 @@ export const retryRequest = async (
           } else {
             response = await fetch(url, options);
           }
-
           if (statusCodesToRetry.includes(response.status)) {
             const errorObj: any = new Error(await response.text());
             errorObj.status = response.status;
