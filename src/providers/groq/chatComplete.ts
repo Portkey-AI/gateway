@@ -34,9 +34,9 @@ export interface GroqStreamChunk {
     logprobs: object | null;
   }[];
   x_groq: {
-    usage: GroqStreamChunkUsage
+    usage: GroqStreamChunkUsage;
   };
-  usage: GroqStreamChunkUsage
+  usage: GroqStreamChunkUsage;
 }
 
 export const GroqChatCompleteResponseTransform: (
@@ -118,22 +118,27 @@ export const GroqChatCompleteStreamChunkTransform: (
     created: parsedChunk.created,
     model: parsedChunk.model,
     provider: GROQ,
-    choices: parsedChunk.choices && parsedChunk.choices.length > 0 ? [
-      {
-        index: parsedChunk.choices[0].index || 0,
-        delta: {
-          role: 'assistant',
-          content: parsedChunk.choices[0].delta?.content || '',
-          tool_calls: parsedChunk.choices[0].delta?.tool_calls || [],
-        },
-        logprobs: null,
-        finish_reason: parsedChunk.choices[0].finish_reason || null,
-      },
-    ] : [],
-    usage: parsedChunk.usage ? {
-      prompt_tokens: parsedChunk.usage.prompt_tokens || 0,
-      completion_tokens: parsedChunk.usage.completion_tokens || 0,
-      total_tokens: parsedChunk.usage.total_tokens || 0,
-    } : undefined
+    choices:
+      parsedChunk.choices && parsedChunk.choices.length > 0
+        ? [
+            {
+              index: parsedChunk.choices[0].index || 0,
+              delta: {
+                role: 'assistant',
+                content: parsedChunk.choices[0].delta?.content || '',
+                tool_calls: parsedChunk.choices[0].delta?.tool_calls || [],
+              },
+              logprobs: null,
+              finish_reason: parsedChunk.choices[0].finish_reason || null,
+            },
+          ]
+        : [],
+    usage: parsedChunk.usage
+      ? {
+          prompt_tokens: parsedChunk.usage.prompt_tokens || 0,
+          completion_tokens: parsedChunk.usage.completion_tokens || 0,
+          total_tokens: parsedChunk.usage.total_tokens || 0,
+        }
+      : undefined,
   })}\n\n`;
 };
