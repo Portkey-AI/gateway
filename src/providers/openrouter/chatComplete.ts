@@ -158,27 +158,26 @@ export const OpenrouterChatCompleteResponseTransform: (
       choices: response.choices.map((c) => {
         const content_blocks = [];
 
-        if (c.message.reasoning) {
+        if (!strictOpenAiCompliance) {
+          if (c.message.reasoning) {
+            content_blocks.push({
+              type: 'thinking',
+              thinking: c.message.reasoning,
+            });
+          }
+
           content_blocks.push({
-            type: 'thinking',
-            thinking: c.message.reasoning,
+            type: 'text',
+            text: c.message.content,
           });
         }
-
-        content_blocks.push({
-          type: 'text',
-          text: c.message.content,
-        });
 
         return {
           index: c.index,
           message: {
             role: c.message.role,
             content: c.message.content,
-            ...(!strictOpenAiCompliance &&
-              content_blocks.length > 0 && {
-                content_blocks,
-              }),
+            ...(content_blocks.length && { content_blocks }),
             ...(c.message.tool_calls && { tool_calls: c.message.tool_calls }),
           },
           finish_reason: c.finish_reason,
@@ -232,23 +231,25 @@ export const OpenrouterChatCompleteStreamChunkTransform: (
   const parsedChunk: OpenrouterStreamChunk = JSON.parse(chunk);
 
   const content_blocks = [];
-  // ad the reasoning first
-  if (parsedChunk.choices?.[0]?.delta?.reasoning) {
-    content_blocks.push({
-      index: parsedChunk.choices?.[0]?.index,
-      delta: {
-        thinking: parsedChunk.choices?.[0]?.delta?.reasoning,
-      },
-    });
-  }
-  // then add the content
-  if (parsedChunk.choices?.[0]?.delta?.content) {
-    content_blocks.push({
-      index: parsedChunk.choices?.[0]?.index,
-      delta: {
-        text: parsedChunk.choices?.[0]?.delta?.content,
-      },
-    });
+  if (!strictOpenAiCompliance) {
+    // add the reasoning first
+    if (parsedChunk.choices?.[0]?.delta?.reasoning) {
+      content_blocks.push({
+        index: parsedChunk.choices?.[0]?.index,
+        delta: {
+          thinking: parsedChunk.choices?.[0]?.delta?.reasoning,
+        },
+      });
+    }
+    // then add the content
+    if (parsedChunk.choices?.[0]?.delta?.content) {
+      content_blocks.push({
+        index: parsedChunk.choices?.[0]?.index,
+        delta: {
+          text: parsedChunk.choices?.[0]?.delta?.content,
+        },
+      });
+    }
   }
 
   return (
@@ -263,10 +264,7 @@ export const OpenrouterChatCompleteStreamChunkTransform: (
           index: parsedChunk.choices?.[0]?.index,
           delta: {
             ...parsedChunk.choices?.[0]?.delta,
-            ...(!strictOpenAiCompliance &&
-              content_blocks.length && {
-                content_blocks,
-              }),
+            ...(content_blocks.length && { content_blocks }),
           },
           finish_reason: parsedChunk.choices?.[0]?.finish_reason,
         },
