@@ -131,7 +131,6 @@ const BedrockAnthropicChatCompleteConfig: ProviderConfig = {
       transform: (params: Params) => {
         const messages: AnthropicMessage[] = [];
         // Transform the chat messages into a simple prompt
-        throw new Error('test!!!');
         if (params.messages) {
           params.messages.forEach((msg) => {
             if (msg.role === 'system') return;
