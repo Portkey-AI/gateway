@@ -30,6 +30,8 @@ import {
   transformInferenceConfig,
 } from './utils';
 
+import urljoin from 'url-join';
+
 export interface BedrockChatCompletionsParams extends Params {
   additionalModelRequestFields?: Record<string, any>;
   additionalModelResponseFieldPaths?: string[];
@@ -108,7 +110,29 @@ const transformAndAppendThinkingMessageItem = (
   }
 };
 
-const getMessageContent = (message: Message) => {
+const imageURLToBase64 = async (url: string) => {
+  const urlWithTransformation = url.startsWith('https://ucarecdn.com/')
+    ? urljoin(url, '-/preview/')
+    : url;
+
+  const response = await fetch(urlWithTransformation, {
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch image. Status: ${response.status}`);
+  }
+  const arrayBuffer = await response.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  const contentType = response.headers.get('content-type')?.split(';')[0];
+  const base64String = buffer.toString('base64');
+  const prefix = `data:${contentType};base64,`;
+  return {
+    prefix,
+    base64String,
+  };
+};
+
+const getMessageContent = async (message: Message) => {
   if (!message.content && !message.tool_calls) return [];
   if (message.role === 'tool') {
     return [
@@ -129,40 +153,56 @@ const getMessageContent = (message: Message) => {
       text: inputContent,
     });
   } else if (inputContent) {
-    inputContent.forEach((item) => {
-      if (item.type === 'text') {
-        out.push({
-          text: item.text || '',
-        });
-      } else if (item.type === 'thinking') {
-        transformAndAppendThinkingMessageItem(item, out);
-      } else if (item.type === 'image_url' && item.image_url) {
-        const mimetypeParts = item.image_url.url.split(';');
-        const mimeType = mimetypeParts[0].split(':')[1];
-        const fileFormat = mimeType.split('/')[1];
-        const bytes = mimetypeParts[1].split(',')[1];
-        if (imagesMimeTypes.includes(mimeType)) {
+    await Promise.all(
+      inputContent.map(async (item) => {
+        if (item.type === 'text') {
           out.push({
-            image: {
-              source: {
-                bytes,
-              },
-              format: fileFormat,
-            },
+            text: item.text || '',
           });
-        } else if (documentMimeTypes.includes(mimeType)) {
-          out.push({
-            document: {
-              format: fileFormat,
-              name: crypto.randomUUID(),
-              source: {
-                bytes,
-              },
-            },
-          });
+        } else if (item.type === 'thinking') {
+          transformAndAppendThinkingMessageItem(item, out);
+        } else if (item.type === 'image_url' && item.image_url?.url) {
+          try {
+            const data = await imageURLToBase64(item.image_url.url);
+            if (!data) {
+              throw new Error('Failed to encode image url');
+            }
+            const { prefix, base64String } = data;
+            const mimeType = prefix.match(/^data:(.*);base64,/)?.[1];
+            const fileFormat = mimeType?.split('/')[1];
+            if (!mimeType || !fileFormat) {
+              throw new Error('Failed to get mime type or file format');
+            }
+            if (imagesMimeTypes.includes(mimeType)) {
+              out.push({
+                image: {
+                  source: {
+                    bytes: base64String,
+                  },
+                  format: fileFormat,
+                },
+              });
+            } else if (documentMimeTypes.includes(mimeType)) {
+              out.push({
+                document: {
+                  format: fileFormat,
+                  name: crypto.randomUUID(),
+                  source: {
+                    bytes: base64String,
+                  },
+                },
+              });
+            }
+
+          } catch (error) {
+            console.error('Error trying to encode image url', error);
+            out.push({
+              text: `Image URL fallback: ${item.image_url.url}`,
+            });
+          }
         }
-      }
-    });
+      })
+    );
   }
 
   // If message is an array of objects, handle text content, tool calls, tool results, this would be much cleaner if portkeys chat create object were a union type
