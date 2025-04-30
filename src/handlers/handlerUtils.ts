@@ -32,6 +32,7 @@ import { ConditionalRouter } from '../services/conditionalRouter';
 import { RouterError } from '../errors/RouterError';
 import { GatewayError } from '../errors/GatewayError';
 import { HookType } from '../middlewares/hooks/types';
+import { prefetchImageUrls } from '../providers/bedrock/chatComplete';
 
 /**
  * Constructs the request options for the API call.
@@ -356,6 +357,11 @@ export async function tryPost(
   const requestOptions = c.get('requestOptions') ?? [];
   let transformedRequestBody: ReadableStream | FormData | Params = {};
   let fetchOptions: RequestInit = {};
+
+  
+  if (provider === BEDROCK && params.messages) {
+    params.messages = await prefetchImageUrls(params.messages);
+  }
 
   // before_request_hooks handler
   ({

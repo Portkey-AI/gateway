@@ -54,6 +54,7 @@
     "hono": "^4.6.10",
     "patch-package": "^8.0.0",
     "serialize-error": "^8.0.0",
+    "url-join": "^5.0.0",
     "ws": "^8.18.0",
     "zod": "^3.22.4"
   },
