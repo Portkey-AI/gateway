@@ -117,7 +117,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
                 });
               }
               if (c.type === 'image_url') {
-                const { url } = c.image_url || {};
+                const { url, mime_type: passedMimeType } = c.image_url || {};
 
                 if (!url) {
                   // Shouldn't throw error?
@@ -145,7 +145,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
                 ) {
                   parts.push({
                     fileData: {
-                      mimeType: getMimeType(url),
+                      mimeType: passedMimeType || getMimeType(url),
                       fileUri: url,
                     },
                   });
@@ -337,6 +337,10 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
   labels: {
     param: 'labels',
   },
+  thinking: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
 };
 
 interface AnthorpicTextContentItem {
@@ -434,7 +438,7 @@ export const GoogleChatCompleteResponseTransform: (
 
     return {
       id: 'portkey-' + crypto.randomUUID(),
-      object: 'chat_completion',
+      object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
       model: response.modelVersion,
       provider: GOOGLE_VERTEX_AI,
@@ -731,7 +735,7 @@ export const VertexAnthropicChatCompleteResponseTransform: (
 
     return {
       id: response.id,
-      object: 'chat_completion',
+      object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
       model: response.model,
       provider: GOOGLE_VERTEX_AI,

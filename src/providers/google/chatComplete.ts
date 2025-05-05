@@ -71,6 +71,12 @@ const transformGenerationConfig = (params: Params) => {
     }
     generationConfig['responseSchema'] = schema;
   }
+  if (params?.thinking) {
+    const thinkingConfig: Record<string, any> = {};
+    thinkingConfig['include_thoughts'] = true;
+    thinkingConfig['thinking_budget'] = params.thinking.budget_tokens;
+    generationConfig['thinking_config'] = thinkingConfig;
+  }
   return generationConfig;
 };
 
@@ -209,7 +215,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                 });
               }
               if (c.type === 'image_url') {
-                const { url } = c.image_url || {};
+                const { url, mime_type: passedMimeType } = c.image_url || {};
                 if (!url) return;
 
                 if (url.startsWith('data:')) {
@@ -230,7 +236,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                 ) {
                   parts.push({
                     fileData: {
-                      mimeType: getMimeType(url),
+                      mimeType: passedMimeType || getMimeType(url),
                       fileUri: url,
                     },
                   });
@@ -405,6 +411,10 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
       }
     },
   },
+  thinking: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
 };
 
 export interface GoogleErrorResponse {
@@ -512,7 +522,7 @@ export const GoogleChatCompleteResponseTransform: (
   if ('candidates' in response) {
     return {
       id: 'portkey-' + crypto.randomUUID(),
-      object: 'chat_completion',
+      object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
       model: response.modelVersion,
       provider: 'google',
