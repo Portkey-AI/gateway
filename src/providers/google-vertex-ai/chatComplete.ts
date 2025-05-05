@@ -337,6 +337,10 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
   labels: {
     param: 'labels',
   },
+  thinking: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
 };
 
 interface AnthorpicTextContentItem {

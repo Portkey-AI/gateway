@@ -219,7 +219,7 @@ export interface Config {
  * A message content type.
  * @interface
  */
-export interface ContentType {
+export interface ContentType extends PromptCache {
   type: string;
   text?: string;
   thinking?: string;
@@ -285,7 +285,7 @@ export interface Message {
   citationMetadata?: CitationMetadata;
 }
 
-export interface AnthropicPromptCache {
+export interface PromptCache {
   cache_control?: { type: 'ephemeral' };
 }
 
@@ -340,7 +340,7 @@ export type ToolChoice = ToolChoiceObject | 'none' | 'auto' | 'required';
  *
  * @interface
  */
-export interface Tool extends AnthropicPromptCache {
+export interface Tool extends PromptCache {
   /** The name of the function. */
   type: string;
   /** A description of the function. */
@@ -404,6 +404,10 @@ export interface Params {
   // Anthropic specific
   anthropic_beta?: string;
   anthropic_version?: string;
+  thinking?: {
+    type?: string;
+    budget_tokens: number;
+  };
 }
 
 interface Examples {
