@@ -97,6 +97,9 @@ export const transformAdditionalModelRequestFields = (
   if (params['top_k']) {
     additionalModelRequestFields['top_k'] = params['top_k'];
   }
+  if (params['response_format']) {
+    additionalModelRequestFields['response_format'] = params['response_format'];
+  }
   return additionalModelRequestFields;
 };
 
