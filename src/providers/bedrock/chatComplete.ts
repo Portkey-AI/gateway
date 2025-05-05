@@ -370,6 +370,11 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
     transform: (params: BedrockChatCompletionsParams) =>
       transformAdditionalModelRequestFields(params),
   },
+  response_format: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockChatCompletionsParams) =>
+      transformAdditionalModelRequestFields(params),
+  },
 };
 
 type BedrockContentItem = {
