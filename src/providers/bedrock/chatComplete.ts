@@ -43,13 +43,14 @@ export interface BedrockChatCompletionsParams extends Params {
 }
 
 export interface BedrockConverseAnthropicChatCompletionsParams
-  extends BedrockChatCompletionsParams {
+  extends Omit<BedrockChatCompletionsParams, 'anthropic_beta'> {
   anthropic_version?: string;
   user?: string;
   thinking?: {
     type: string;
     budget_tokens: number;
   };
+  anthropic_beta?: string | string[];
 }
 
 export interface BedrockConverseCohereChatCompletionsParams
@@ -717,7 +718,9 @@ export const BedrockConverseAnthropicChatCompleteConfig: ProviderConfig = {
       transformAnthropicAdditionalModelRequestFields(params),
   },
   anthropic_beta: {
-    param: 'anthropic_beta',
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
+      transformAnthropicAdditionalModelRequestFields(params),
   },
 };
 
