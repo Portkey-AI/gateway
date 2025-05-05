@@ -466,7 +466,7 @@ export class HooksManager {
       .join(', ');
   }
 
-  private getHooksToExecute(
+  public getHooksToExecute(
     span: HookSpan,
     eventTypePresets: string[]
   ): HookObject[] {

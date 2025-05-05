@@ -147,7 +147,7 @@ export const AI21ChatCompleteResponseTransform: (
   if ('outputs' in response) {
     return {
       id: response.id,
-      object: 'chat_completion',
+      object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
       model: '',
       provider: AI21,
