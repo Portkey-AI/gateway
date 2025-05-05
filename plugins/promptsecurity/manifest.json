@@ -1,0 +1,47 @@
+{
+  "id": "promptsecurity",
+  "description": "Prompt Security Plugin",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiDomain": {
+        "type": "string",
+        "label": "API Domain",
+        "description": "The domain of the Prompt Security API"
+      },
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "The API key for the Prompt Security API",
+        "encrypted": true
+      }
+    },
+    "required": ["apiDomain", "apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Protect Prompt",
+      "id": "protectPrompt",
+      "supportedHooks": ["beforeRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Protect a user prompt before it is sent to the LLM."
+        }
+      ]
+    },
+    {
+      "name": "Protect Response",
+      "id": "protectResponse",
+      "supportedHooks": ["afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Protect a LLM response before it is sent to the user."
+        }
+      ]
+    }
+  ]
+}

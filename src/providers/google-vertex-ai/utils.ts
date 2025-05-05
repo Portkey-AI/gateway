@@ -232,6 +232,7 @@ export const recursivelyDeleteUnsupportedParameters = (obj: any) => {
   if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) return;
   delete obj.additional_properties;
   delete obj.additionalProperties;
+  delete obj['$schema'];
   for (const key in obj) {
     if (obj[key] !== null && typeof obj[key] === 'object') {
       recursivelyDeleteUnsupportedParameters(obj[key]);

@@ -1,10 +1,11 @@
 import { Params } from '../../types/requestBody';
 import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { WORKERS_AI } from '../../globals';
+import { generateInvalidProviderResponseError } from '../utils';
 import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+  WorkersAiErrorResponse,
+  WorkersAiErrorResponseTransform,
+} from './utils';
 
 export const WorkersAiCompleteConfig: ProviderConfig = {
   prompt: {
@@ -24,16 +25,6 @@ export const WorkersAiCompleteConfig: ProviderConfig = {
   },
 };
 
-export interface WorkersAiErrorObject {
-  code: string;
-  message: string;
-}
-
-interface WorkersAiErrorResponse {
-  success: boolean;
-  errors: WorkersAiErrorObject[];
-}
-
 interface WorkersAiCompleteResponse {
   result: {
     response: string;
@@ -47,26 +38,6 @@ interface WorkersAiCompleteStreamResponse {
   response: string;
   p?: string;
 }
-
-export const WorkersAiErrorResponseTransform: (
-  response: WorkersAiErrorResponse
-) => ErrorResponse | undefined = (response) => {
-  if ('errors' in response) {
-    return generateErrorResponse(
-      {
-        message: response.errors
-          ?.map((error) => `Error ${error.code}:${error.message}`)
-          .join(', '),
-        type: null,
-        param: null,
-        code: null,
-      },
-      WORKERS_AI
-    );
-  }
-
-  return undefined;
-};
 
 export const WorkersAiCompleteResponseTransform: (
   response: WorkersAiCompleteResponse | WorkersAiErrorResponse,

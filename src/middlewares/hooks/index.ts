@@ -299,6 +299,7 @@ export class HooksManager {
         execution_time: new Date().getTime() - createdAt.getTime(),
         transformed: result.transformed || false,
         created_at: createdAt,
+        log: result.log || null,
       };
     } catch (err: any) {
       console.error(`Error executing check "${check.id}":`, err);
