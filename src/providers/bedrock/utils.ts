@@ -93,9 +93,14 @@ export const transformAdditionalModelRequestFields = (
   params: BedrockChatCompletionsParams
 ) => {
   const additionalModelRequestFields: Record<string, any> =
-    params.additionalModelRequestFields || {};
+    params.additionalModelRequestFields ||
+    params.additional_model_request_fields ||
+    {};
   if (params['top_k']) {
     additionalModelRequestFields['top_k'] = params['top_k'];
+  }
+  if (params['response_format']) {
+    additionalModelRequestFields['response_format'] = params['response_format'];
   }
   return additionalModelRequestFields;
 };
@@ -104,7 +109,9 @@ export const transformAnthropicAdditionalModelRequestFields = (
   params: BedrockConverseAnthropicChatCompletionsParams
 ) => {
   const additionalModelRequestFields: Record<string, any> =
-    params.additionalModelRequestFields || {};
+    params.additionalModelRequestFields ||
+    params.additional_model_request_fields ||
+    {};
   if (params['top_k']) {
     additionalModelRequestFields['top_k'] = params['top_k'];
   }
@@ -127,7 +134,9 @@ export const transformCohereAdditionalModelRequestFields = (
   params: BedrockConverseCohereChatCompletionsParams
 ) => {
   const additionalModelRequestFields: Record<string, any> =
-    params.additionalModelRequestFields || {};
+    params.additionalModelRequestFields ||
+    params.additional_model_request_fields ||
+    {};
   if (params['top_k']) {
     additionalModelRequestFields['top_k'] = params['top_k'];
   }
@@ -152,7 +161,9 @@ export const transformAI21AdditionalModelRequestFields = (
   params: BedrockConverseAI21ChatCompletionsParams
 ) => {
   const additionalModelRequestFields: Record<string, any> =
-    params.additionalModelRequestFields || {};
+    params.additionalModelRequestFields ||
+    params.additional_model_request_fields ||
+    {};
   if (params['top_k']) {
     additionalModelRequestFields['top_k'] = params['top_k'];
   }

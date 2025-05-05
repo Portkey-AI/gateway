@@ -70,6 +70,9 @@ export const OpenrouterChatCompleteConfig: ProviderConfig = {
   models: {
     param: 'models',
   },
+  usage: {
+    param: 'usage',
+  },
   stream: {
     param: 'stream',
     default: false,
@@ -79,17 +82,30 @@ export const OpenrouterChatCompleteConfig: ProviderConfig = {
   },
 };
 
+interface OpenrouterUsageDetails {
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  prompt_tokens_details?: {
+    cached_tokens: number;
+    audio_tokens: number;
+  };
+  completion_tokens_details?: {
+    reasoning_tokens: number;
+    audio_tokens: number;
+    accepted_prediction_tokens: number;
+    rejected_prediction_tokens: number;
+  };
+  cost?: number;
+}
+
 interface OpenrouterChatCompleteResponse extends ChatCompletionResponse {
   id: string;
   object: string;
   created: number;
   model: string;
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
   choices: (ChatChoice & { message: Message & { reasoning: string } })[];
+  usage: OpenrouterUsageDetails;
 }
 
 export interface OpenrouterErrorResponse {
@@ -105,11 +121,7 @@ interface OpenrouterStreamChunk {
   object: string;
   created: number;
   model: string;
-  usage?: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
+  usage?: OpenrouterUsageDetails;
   choices: {
     delta: {
       role?: string | null;
@@ -183,11 +195,7 @@ export const OpenrouterChatCompleteResponseTransform: (
           finish_reason: c.finish_reason,
         };
       }),
-      usage: {
-        prompt_tokens: response.usage?.prompt_tokens,
-        completion_tokens: response.usage?.completion_tokens,
-        total_tokens: response.usage?.total_tokens,
-      },
+      usage: response.usage,
     };
   }
 

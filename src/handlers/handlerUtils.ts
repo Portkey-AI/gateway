@@ -322,14 +322,17 @@ export async function tryPost(
       c,
       gatewayRequestURL: c.req.url,
     }));
-  const endpoint = apiConfig.getEndpoint({
-    c,
-    providerOptions: providerOption,
-    fn,
-    gatewayRequestBodyJSON: params,
-    gatewayRequestBody: requestBody,
-    gatewayRequestURL: c.req.url,
-  });
+  const endpoint =
+    fn === 'proxy'
+      ? ''
+      : apiConfig.getEndpoint({
+          c,
+          providerOptions: providerOption,
+          fn,
+          gatewayRequestBodyJSON: params,
+          gatewayRequestBody: {}, // not using anywhere.
+          gatewayRequestURL: c.req.url,
+        });
 
   url =
     fn === 'proxy'
