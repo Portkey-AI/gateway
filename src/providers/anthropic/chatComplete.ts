@@ -64,26 +64,26 @@ interface AnthropicTextContentItem {
 }
 
 interface AnthropicUrlPdfContentItem {
-  type: 'document';
+  type: string;
   source: {
-    type: 'url';
+    type: string;
     url: string;
   };
 }
 
 interface AnthropicBase64PdfContentItem {
-  type: 'document';
+  type: string;
   source: {
-    type: 'base64';
+    type: string;
     data: string;
     media_type: string;
   };
 }
 
 interface AnthropicPlainTextContentItem {
-  type: 'document';
+  type: string;
   source: {
-    type: 'text';
+    type: string;
     data: string;
     media_type: string;
   };
@@ -213,25 +213,14 @@ const transformAndAppendFileContentItem = (
   } else if (item.file?.file_data) {
     const contentType =
       mimeType === fileExtensionMimeTypeMap.txt ? 'text' : 'base64';
-    if (contentType === 'text') {
-      transformedMessage.content.push({
-        type: 'document',
-        source: {
-          type: contentType,
-          data: item.file.file_data,
-          media_type: mimeType,
-        },
-      });
-    } else {
-      transformedMessage.content.push({
-        type: 'document',
-        source: {
-          type: contentType,
-          data: item.file.file_data,
-          media_type: mimeType,
-        },
-      });
-    }
+    transformedMessage.content.push({
+      type: 'document',
+      source: {
+        type: contentType,
+        data: item.file.file_data,
+        media_type: mimeType,
+      },
+    });
   }
 };
 

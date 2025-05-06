@@ -188,7 +188,7 @@ const getMessageContent = (message: Message) => {
           out.push({
             document: {
               format: fileFormat,
-              name: crypto.randomUUID(),
+              name: item.file.file_name || crypto.randomUUID(),
               source: {
                 s3Location: {
                   uri: item.file.file_url,
@@ -200,7 +200,7 @@ const getMessageContent = (message: Message) => {
           out.push({
             document: {
               format: fileFormat,
-              name: crypto.randomUUID(),
+              name: item.file.file_name || crypto.randomUUID(),
               source: {
                 bytes: item.file.file_data,
               },
