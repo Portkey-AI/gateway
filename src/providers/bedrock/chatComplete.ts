@@ -32,8 +32,14 @@ import {
 
 export interface BedrockChatCompletionsParams extends Params {
   additionalModelRequestFields?: Record<string, any>;
+  additional_model_request_fields?: Record<string, any>;
   additionalModelResponseFieldPaths?: string[];
   guardrailConfig?: {
+    guardrailIdentifier: string;
+    guardrailVersion: string;
+    trace?: string;
+  };
+  guardrail_config?: {
     guardrailIdentifier: string;
     guardrailVersion: string;
     trace?: string;
@@ -313,7 +319,15 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
     param: 'guardrailConfig',
     required: false,
   },
+  guardrail_config: {
+    param: 'guardrailConfig',
+    required: false,
+  },
   additionalModelResponseFieldPaths: {
+    param: 'additionalModelResponseFieldPaths',
+    required: false,
+  },
+  additional_model_response_field_paths: {
     param: 'additionalModelResponseFieldPaths',
     required: false,
   },
@@ -347,7 +361,17 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
     transform: (params: BedrockChatCompletionsParams) =>
       transformAdditionalModelRequestFields(params),
   },
+  additional_model_request_fields: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockChatCompletionsParams) =>
+      transformAdditionalModelRequestFields(params),
+  },
   top_k: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockChatCompletionsParams) =>
+      transformAdditionalModelRequestFields(params),
+  },
+  response_format: {
     param: 'additionalModelRequestFields',
     transform: (params: BedrockChatCompletionsParams) =>
       transformAdditionalModelRequestFields(params),
@@ -697,6 +721,11 @@ export const BedrockConverseAnthropicChatCompleteConfig: ProviderConfig = {
     transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
       transformAnthropicAdditionalModelRequestFields(params),
   },
+  additional_model_request_fields: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
+      transformAnthropicAdditionalModelRequestFields(params),
+  },
   top_k: {
     param: 'additionalModelRequestFields',
     transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
@@ -731,6 +760,11 @@ export const BedrockConverseCohereChatCompleteConfig: ProviderConfig = {
     transform: (params: BedrockConverseCohereChatCompletionsParams) =>
       transformCohereAdditionalModelRequestFields(params),
   },
+  additional_model_request_fields: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockConverseCohereChatCompletionsParams) =>
+      transformCohereAdditionalModelRequestFields(params),
+  },
   top_k: {
     param: 'additionalModelRequestFields',
     transform: (params: BedrockConverseCohereChatCompletionsParams) =>
@@ -761,6 +795,11 @@ export const BedrockConverseCohereChatCompleteConfig: ProviderConfig = {
 export const BedrockConverseAI21ChatCompleteConfig: ProviderConfig = {
   ...BedrockConverseChatCompleteConfig,
   additionalModelRequestFields: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockConverseAI21ChatCompletionsParams) =>
+      transformAI21AdditionalModelRequestFields(params),
+  },
+  additional_model_request_fields: {
     param: 'additionalModelRequestFields',
     transform: (params: BedrockConverseAI21ChatCompletionsParams) =>
       transformAI21AdditionalModelRequestFields(params),
