@@ -216,6 +216,7 @@ export interface Config {
 }
 
 /**
+ * TODO: make this a union type
  * A message content type.
  * @interface
  */
@@ -230,6 +231,17 @@ export interface ContentType extends PromptCache {
     mime_type?: string;
   };
   data?: string;
+  file?: {
+    file_data?: string;
+    file_id?: string;
+    file_name?: string;
+    file_url?: string;
+    mime_type?: string;
+  };
+  input_audio?: {
+    data: string;
+    format: string; //defaults to auto
+  };
 }
 
 export interface ToolCall {
