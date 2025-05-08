@@ -1,10 +1,39 @@
 import { BaseResponse } from '../providers/types';
 import { Options } from './requestBody';
 
+interface ImageEmbedInput {
+  type: 'image';
+  image: {
+    url?: string;
+    base64?: string;
+    text?: string; // used for image captioning
+  };
+}
+
+interface VideoEmbedInput {
+  type: 'video';
+  video: {
+    url?: string;
+    base64?: string;
+    start_offset?: number;
+    end_offset?: number;
+    interval?: number;
+    text?: string; // used for video captioning
+  };
+}
+
+interface TextEmbedInput {
+  type: 'text';
+  text: string;
+}
+
+type EmbedInput = ImageEmbedInput | TextEmbedInput | VideoEmbedInput;
+
 export interface EmbedParams {
   model: string; // The model name to be used as the embedding model
   input: string | string[]; // The text or texts to be embedded
   user: string; // An identifier for the user making the request
+  inputs?: EmbedInput[];
 }
 
 export interface EmbedRequestBody {
@@ -22,6 +51,9 @@ export interface EmbedResponseData {
   object: string; // The type of data object, e.g., "embedding"
   embedding: number[] | number[][]; // The embedding vector(s)
   index: number; // The index of the data object
+  type?: string; // The type of data object, e.g., "image", "text", "video"
+  start_offset?: number; // The start offset of the video
+  end_offset?: number; // The end offset of the video
 }
 
 export interface EmbedResponse extends BaseResponse {

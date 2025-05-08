@@ -4,14 +4,11 @@ import {
   EmbedResponseData,
   EmbedParams,
 } from '../../types/embedRequestBody';
-import {
-  GoogleErrorResponse,
-  EmbedInstancesData,
-  GoogleEmbedResponse,
-} from './types';
+import { GoogleErrorResponse, GoogleEmbedResponse } from './types';
 import { GOOGLE_VERTEX_AI } from '../../globals';
 import { generateInvalidProviderResponseError } from '../utils';
 import { GoogleErrorResponseTransform } from './utils';
+import { transformEmbeddingInputs } from './transformGenerationConfig';
 
 enum TASK_TYPE {
   RETRIEVAL_QUERY = 'RETRIEVAL_QUERY',
@@ -24,7 +21,7 @@ enum TASK_TYPE {
   CODE_RETRIEVAL_QUERY = 'CODE_RETRIEVAL_QUERY',
 }
 
-interface GoogleEmbedParams extends EmbedParams {
+export interface GoogleEmbedParams extends EmbedParams {
   task_type: TASK_TYPE | string;
 }
 
@@ -32,23 +29,12 @@ export const GoogleEmbedConfig: ProviderConfig = {
   input: {
     param: 'instances',
     required: true,
-    transform: (params: GoogleEmbedParams): Array<EmbedInstancesData> => {
-      const instances = Array<EmbedInstancesData>();
-      if (Array.isArray(params.input)) {
-        params.input.forEach((text) => {
-          instances.push({
-            content: text,
-            task_type: params.task_type,
-          });
-        });
-      } else {
-        instances.push({
-          content: params.input,
-          task_type: params.task_type,
-        });
-      }
-      return instances;
-    },
+    transform: (params: GoogleEmbedParams) => transformEmbeddingInputs(params),
+  },
+  inputs: {
+    param: 'instances',
+    required: false,
+    transform: (params: GoogleEmbedParams) => transformEmbeddingInputs(params),
   },
   parameters: {
     param: 'parameters',
@@ -84,12 +70,45 @@ export const GoogleEmbedResponseTransform: (
     const data: EmbedResponseData[] = [];
     let tokenCount = 0;
     response.predictions.forEach((prediction, index) => {
-      data.push({
-        object: 'embedding',
-        embedding: prediction.embeddings.values,
-        index: index,
+      if (prediction.imageEmbedding) {
+        data.push({
+          object: 'embedding',
+          embedding: prediction.imageEmbedding,
+          type: 'image',
+          index: index,
+        });
+      }
+      if (prediction.textEmbedding) {
+        data.push({
+          object: 'embedding',
+          embedding: prediction.textEmbedding,
+          type: 'text',
+          index: index,
+        });
+      }
+      if (prediction.videoEmbeddings) {
+        prediction.videoEmbeddings.forEach((videoEmbedding) => {
+          data.push({
+            object: 'embedding',
+            embedding: videoEmbedding.embedding,
+            type: 'video',
+            index: index,
+            start_offset: videoEmbedding.startOffsetSec,
+            end_offset: videoEmbedding.endOffsetSec,
+          });
+        });
+      }
+      if (prediction.embeddings) {
+        data.push({
+          object: 'embedding',
+          embedding: prediction.embeddings.values,
+          index: index,
+        });
+      }
+      data.forEach((item, index) => {
+        item.index = index;
       });
-      tokenCount += prediction.embeddings.statistics.token_count;
+      tokenCount += prediction?.embeddings?.statistics?.token_count || 0;
     });
     return {
       object: 'list',
