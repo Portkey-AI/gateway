@@ -5,13 +5,19 @@ import {
   NscaleChatCompleteResponseTransform,
   NscaleChatCompleteStreamChunkTransform,
 } from './chatComplete';
+import {
+  NscaleImageGenerateConfig,
+  NscaleImageGenerateResponseTransform,
+} from './imageGenerate';
 
 const NscaleConfig: ProviderConfigs = {
   chatComplete: NscaleChatCompleteConfig,
+  imageGenerate: NscaleImageGenerateConfig,
   api: NscaleAPIConfig,
   responseTransforms: {
     chatComplete: NscaleChatCompleteResponseTransform,
     'stream-chatComplete': NscaleChatCompleteStreamChunkTransform,
+    imageGenerate: NscaleImageGenerateResponseTransform,
   },
 };
 
