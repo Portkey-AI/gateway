@@ -92,9 +92,25 @@ export interface VertexLlamaChatCompleteStreamChunk {
   provider?: string;
 }
 
-export interface EmbedInstancesData {
+export type EmbedInstancesData = TextEmbedInstance | MultimodalEmbedInstance;
+
+export interface TextEmbedInstance {
   task_type: string;
   content: string;
+}
+export interface MultimodalEmbedInstance {
+  image?: {
+    gcsUri?: string;
+    bytesBase64Encoded?: string;
+  };
+  text?: string;
+  video?: {
+    gcsUri?: string;
+    bytesBase64Encoded?: string;
+    start_time?: number;
+    end_time?: number;
+    interval?: number;
+  };
 }
 
 interface EmbedPredictionsResponse {
@@ -105,6 +121,13 @@ interface EmbedPredictionsResponse {
       token_count: number;
     };
   };
+  imageEmbedding?: number[];
+  textEmbedding?: number[];
+  videoEmbeddings?: {
+    embedding: number[];
+    endOffsetSec: number;
+    startOffsetSec: number;
+  }[];
 }
 
 export interface GoogleEmbedResponse {
