@@ -56,6 +56,7 @@ import RecraftAIConfig from './recraft-ai';
 import MilvusConfig from './milvus';
 import ReplicateConfig from './replicate';
 import LeptonConfig from './lepton';
+import NscaleConfig from './nscale';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -112,6 +113,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   milvus: MilvusConfig,
   replicate: ReplicateConfig,
   lepton: LeptonConfig,
+  nscale: NscaleConfig,
 };
 
 export default Providers;
