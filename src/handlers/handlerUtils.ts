@@ -31,6 +31,7 @@ import { ConditionalRouter } from '../services/conditionalRouter';
 import { RouterError } from '../errors/RouterError';
 import { GatewayError } from '../errors/GatewayError';
 import { HookType } from '../middlewares/hooks/types';
+import { Readable } from 'node:stream';
 
 /**
  * Constructs the request options for the API call.
@@ -1058,10 +1059,13 @@ export function constructConfigFromRequestHeaders(
       requestHeaders[`x-${POWERED_BY}-vertex-storage-bucket-name`],
     filename: requestHeaders[`x-${POWERED_BY}-provider-file-name`],
     vertexModelName: requestHeaders[`x-${POWERED_BY}-provider-model`],
+    vertexBatchEndpoint:
+      requestHeaders[`x-${POWERED_BY}-provider-batch-endpoint`],
   };
 
   const fireworksConfig = {
     fireworksAccountId: requestHeaders[`x-${POWERED_BY}-fireworks-account-id`],
+    fireworksFileLength: requestHeaders[`x-${POWERED_BY}-file-upload-size`],
   };
 
   const anthropicConfig = {

@@ -219,3 +219,9 @@ export const documentMimeTypes = [
   fileExtensionMimeTypeMap.md,
   fileExtensionMimeTypeMap.txt,
 ];
+
+export enum BatchEndpoints {
+  CHAT_COMPLETIONS = '/v1/chat/completions',
+  COMPLETIONS = '/v1/completions',
+  EMBEDDINGS = '/v1/embeddings',
+}
