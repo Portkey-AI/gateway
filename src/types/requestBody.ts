@@ -1,3 +1,4 @@
+import { BatchEndpoints } from '../globals';
 import { HookObject } from '../middlewares/hooks/types';
 
 /**
@@ -120,6 +121,7 @@ export interface Options {
   vertexServiceAccountJson?: Record<string, any>;
   vertexStorageBucketName?: string;
   vertexModelName?: string;
+  vertexBatchEndpoint?: BatchEndpoints;
 
   // Required for file uploads with google.
   filename?: string;
@@ -150,6 +152,7 @@ export interface Options {
 
   /** Fireworks finetune required fields */
   fireworksAccountId?: string;
+  fireworksFileLength?: string;
 
   /** Cortex specific fields */
   snowflakeAccount?: string;

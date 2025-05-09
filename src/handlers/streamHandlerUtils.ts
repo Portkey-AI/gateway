@@ -309,7 +309,7 @@ export function createLineSplitter(): TransformStream {
       leftover = lines.pop() || '';
       for (const line of lines) {
         if (line.trim()) {
-          controller.enqueue(line);
+          controller.enqueue(line.trim());
         }
       }
       return;

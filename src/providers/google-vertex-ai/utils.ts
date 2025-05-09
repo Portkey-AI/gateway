@@ -5,7 +5,11 @@ import {
   GoogleResponseCandidate,
 } from './types';
 import { generateErrorResponse } from '../utils';
-import { GOOGLE_VERTEX_AI, fileExtensionMimeTypeMap } from '../../globals';
+import {
+  BatchEndpoints,
+  GOOGLE_VERTEX_AI,
+  fileExtensionMimeTypeMap,
+} from '../../globals';
 import { ErrorResponse, FinetuneRequest, Logprobs } from '../types';
 import { Context } from 'hono';
 import { env } from 'hono/adapter';
@@ -354,22 +358,33 @@ export const GoogleToOpenAIBatch = (response: GoogleBatchRecord) => {
     0
   );
 
+  const endpoint = isEmbeddingModel(response.model)
+    ? BatchEndpoints.EMBEDDINGS
+    : BatchEndpoints.CHAT_COMPLETIONS;
+
+  const fileSuffix =
+    endpoint === BatchEndpoints.EMBEDDINGS
+      ? '000000000000.jsonl'
+      : 'predictions.jsonl';
+
   const outputFileId = response.outputInfo
-    ? `${response.outputInfo?.gcsOutputDirectory}/predictions.jsonl`
+    ? `${response.outputInfo?.gcsOutputDirectory}/${fileSuffix}`
     : response.outputConfig.gcsDestination.outputUriPrefix;
 
   return {
     id: jobId,
     object: 'batch',
-    endpoint: '/generateContent',
+    endpoint: endpoint,
     input_file_id: encodeURIComponent(
       response.inputConfig.gcsSource?.uris?.at(0) ?? ''
     ),
     completion_window: null,
     status: googleBatchStatusToOpenAI(response.state),
-    output_file_id: outputFileId,
+    output_file_id: encodeURIComponent(outputFileId),
     // Same as output_file_id
-    error_file_id: response.outputConfig.gcsDestination.outputUriPrefix,
+    error_file_id: encodeURIComponent(
+      response.outputConfig.gcsDestination.outputUriPrefix ?? ''
+    ),
     created_at: new Date(response.createTime).getTime(),
     ...getTimeKey(response.state, response.endTime),
     in_progress_at: new Date(response.startTime).getTime(),
@@ -508,7 +523,7 @@ export const GoogleToOpenAIFinetune = (response: GoogleFinetuneRecord) => {
   return {
     id: response.name.split('/').at(-1),
     object: 'finetune',
-    status: googleBatchStatusToOpenAI(response.state),
+    status: googleFinetuneStatusToOpenAI(response.state),
     created_at: new Date(response.createTime).getTime(),
     error: response.error,
     fine_tuned_model: response.tunedModel?.model,
@@ -534,4 +549,23 @@ export const GoogleToOpenAIFinetune = (response: GoogleFinetuneRecord) => {
       ),
     }),
   };
+};
+
+export const vertexRequestLineHandler = (
+  purpose: string,
+  vertexBatchEndpoint: BatchEndpoints,
+  transformedBody: any,
+  requestId: string
+) => {
+  switch (purpose) {
+    case 'batch':
+      return vertexBatchEndpoint === BatchEndpoints.EMBEDDINGS
+        ? { ...transformedBody, requestId: requestId }
+        : { request: transformedBody, requestId: requestId };
+    case 'fine-tune':
+      return transformedBody;
+  }
+};
+export const isEmbeddingModel = (modelName: string) => {
+  return modelName.includes('embedding');
 };
