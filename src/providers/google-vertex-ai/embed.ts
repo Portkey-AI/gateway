@@ -8,7 +8,10 @@ import { GoogleErrorResponse, GoogleEmbedResponse } from './types';
 import { GOOGLE_VERTEX_AI } from '../../globals';
 import { generateInvalidProviderResponseError } from '../utils';
 import { GoogleErrorResponseTransform } from './utils';
-import { transformEmbeddingInputs } from './transformGenerationConfig';
+import {
+  transformEmbeddingInputs,
+  transformEmbeddingsParameters,
+} from './transformGenerationConfig';
 
 enum TASK_TYPE {
   RETRIEVAL_QUERY = 'RETRIEVAL_QUERY',
@@ -34,6 +37,11 @@ export const GoogleEmbedConfig: ProviderConfig = {
   parameters: {
     param: 'parameters',
     required: false,
+  },
+  dimensions: {
+    param: 'parameters',
+    required: false,
+    transform: (params: Params) => transformEmbeddingsParameters(params),
   },
 };
 
