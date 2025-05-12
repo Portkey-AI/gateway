@@ -65,6 +65,7 @@ export interface GoogleGenerateContentResponse {
     promptTokenCount: number;
     candidatesTokenCount: number;
     totalTokenCount: number;
+    thoughtsTokenCount?: number;
   };
 }
 
