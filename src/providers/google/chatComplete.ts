@@ -581,7 +581,7 @@ export const GoogleChatCompleteResponseTransform: (
         prompt_tokens: response.usageMetadata.promptTokenCount,
         completion_tokens: response.usageMetadata.candidatesTokenCount,
         total_tokens: response.usageMetadata.totalTokenCount,
-        completions_tokens_details: {
+        completion_tokens_details: {
           reasoning_tokens: response.usageMetadata.thoughtsTokenCount ?? 0,
         },
       },

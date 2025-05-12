@@ -500,7 +500,7 @@ export const GoogleChatCompleteResponseTransform: (
         prompt_tokens: promptTokenCount,
         completion_tokens: candidatesTokenCount,
         total_tokens: totalTokenCount,
-        completion_token_details: {
+        completion_tokens_details: {
           reasoning_tokens: thoughtsTokenCount,
         },
       },
