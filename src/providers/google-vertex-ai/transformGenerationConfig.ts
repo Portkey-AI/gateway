@@ -64,60 +64,38 @@ export function transformGenerationConfig(params: Params) {
 
 export function transformEmbeddingInputs(params: GoogleEmbedParams) {
   const instances = Array<EmbedInstancesData>();
-  if (params.input) {
-    if (Array.isArray(params.input)) {
-      params.input.forEach((text) => {
+  if (Array.isArray(params.input)) {
+    params.input.forEach((input) => {
+      if (typeof input === 'string') {
         instances.push({
-          content: text,
+          content: input,
           task_type: params.task_type,
         });
-      });
-    } else {
-      instances.push({
-        content: params.input,
-        task_type: params.task_type,
-      });
-    }
-  } else if (params.inputs) {
-    params.inputs.forEach((input) => {
-      if (input.type === 'text') {
+      } else if (typeof input === 'object') {
         instances.push({
-          content: input.text,
-          task_type: params.task_type,
-        });
-      } else if (input.type === 'image') {
-        if (input.image.url) {
-          instances.push({
+          text: input.text,
+          ...(input.image && {
             image: {
               gcsUri: input.image.url,
-            },
-            text: input.image.text,
-          });
-        } else if (input.image.base64) {
-          instances.push({
-            image: {
               bytesBase64Encoded: input.image.base64,
             },
-            text: input.image.text,
-          });
-        }
-      } else if (input.type === 'video') {
-        if (input.video.url) {
-          instances.push({
+          }),
+          ...(input.video && {
             video: {
               gcsUri: input.video.url,
-            },
-            text: input.video.text,
-          });
-        } else if (input.video.base64) {
-          instances.push({
-            video: {
               bytesBase64Encoded: input.video.base64,
+              startOffsetSec: input.video.start_offset,
+              endOffsetSec: input.video.end_offset,
+              intervalSec: input.video.interval,
             },
-            text: input.video.text,
-          });
-        }
+          }),
+        });
       }
+    });
+  } else {
+    instances.push({
+      content: params.input,
+      task_type: params.task_type,
     });
   }
   return instances;
