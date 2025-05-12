@@ -75,7 +75,7 @@ export function transformEmbeddingsParameters(params: Params) {
 }
 
 export function transformEmbeddingInputs(params: GoogleEmbedParams) {
-  const instances = Array<EmbedInstancesData>();
+  const instances: EmbedInstancesData[] = [];
   if (Array.isArray(params.input)) {
     params.input.forEach((input) => {
       if (typeof input === 'string') {
