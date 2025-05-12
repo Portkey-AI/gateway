@@ -45,9 +45,6 @@ export interface EmbedResponseData {
     embedding: number[];
   }[];
   index: number; // The index of the data object
-  type?: string; // The type of data object, e.g., "image", "text", "video"
-  start_offset?: number; // The start offset of the video
-  end_offset?: number; // The end offset of the video
 }
 
 export interface EmbedResponse extends BaseResponse {
