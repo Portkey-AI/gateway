@@ -196,7 +196,7 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
       return `/model-invocation-job/${batchId}/stop`;
     }
     const { model, stream } = gatewayRequestBody;
-    const uriEncodedModel = encodeURIComponent(model ?? '');
+    const uriEncodedModel = encodeURIComponent(decodeURIComponent(model ?? ''));
     if (!model && !BEDROCK_NO_MODEL_ENDPOINTS.includes(fn as endpointStrings)) {
       throw new GatewayError('Model is required');
     }
