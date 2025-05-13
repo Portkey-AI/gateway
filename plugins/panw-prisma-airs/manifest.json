@@ -22,7 +22,8 @@
           "profile_name": { "type": "string" },
           "ai_model": { "type": "string" },
           "app_user": { "type": "string" }
-        }
+        },
+        "required": ["profile_name"]
       }
     }
   ]

@@ -22,11 +22,11 @@ export const handler: PluginHandler = async (
   hook: HookEventType
 ) => {
   const apiKey =
-    (ctx.credentials?.AIRS_API_KEY as string | undefined) ||
+    (params.credentials?.AIRS_API_KEY as string | undefined) ||
     process.env.AIRS_API_KEY ||
     '';
 
-  let verdict = false;
+  let verdict = true;
   let data: any = null;
   let error: any = null;
 
@@ -34,7 +34,10 @@ export const handler: PluginHandler = async (
     const text = getText(ctx, hook); // prompt or response
 
     const payload = {
-      tr_id: ctx.requestId,
+      tr_id:
+        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : Math.random().toString(36).substring(2) + Date.now().toString(36),
       ai_profile: {
         profile_name: params.profile_name ?? 'dev-block-all-profile',
       },
@@ -48,13 +51,13 @@ export const handler: PluginHandler = async (
     };
 
     const res: any = await fetchAIRS(payload, apiKey, params.timeout);
-    console.log('AIRS API response:', res);
 
     if (!res || typeof res.action !== 'string') {
       throw new Error('Malformed AIRS response');
     }
-
-    verdict = res.action !== 'block';
+    if (res.action === 'block') {
+      verdict = false;
+    }
     data = res;
   } catch (e: any) {
     error = e;
