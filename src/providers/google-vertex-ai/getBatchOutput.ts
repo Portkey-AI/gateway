@@ -1,47 +1,87 @@
 import { RequestHandler } from '../types';
 import { GoogleBatchRecord } from './types';
-import { getModelAndProvider } from './utils';
+import { getModelAndProvider, isEmbeddingModel } from './utils';
 import { responseTransformers } from '../open-ai-base';
 import {
   GoogleChatCompleteResponseTransform,
   VertexAnthropicChatCompleteResponseTransform,
   VertexLlamaChatCompleteResponseTransform,
 } from './chatComplete';
-import { GOOGLE_VERTEX_AI } from '../../globals';
+import { BatchEndpoints, GOOGLE_VERTEX_AI } from '../../globals';
 import { createLineSplitter } from '../../handlers/streamHandlerUtils';
 import GoogleApiConfig from './api';
+import { GoogleEmbedResponseTransform } from './embed';
 
 const responseTransforms = {
-  google: GoogleChatCompleteResponseTransform,
-  anthropic: VertexAnthropicChatCompleteResponseTransform,
-  meta: VertexLlamaChatCompleteResponseTransform,
-  endpoints: responseTransformers(GOOGLE_VERTEX_AI, {
-    chatComplete: true,
-  }).chatComplete,
+  google: {
+    [BatchEndpoints.CHAT_COMPLETIONS]: GoogleChatCompleteResponseTransform,
+    [BatchEndpoints.EMBEDDINGS]: GoogleEmbedResponseTransform,
+  },
+  anthropic: {
+    [BatchEndpoints.CHAT_COMPLETIONS]:
+      VertexAnthropicChatCompleteResponseTransform,
+    [BatchEndpoints.EMBEDDINGS]: null,
+  },
+  meta: {
+    [BatchEndpoints.CHAT_COMPLETIONS]: VertexLlamaChatCompleteResponseTransform,
+    [BatchEndpoints.EMBEDDINGS]: null,
+  },
+  endpoints: {
+    [BatchEndpoints.CHAT_COMPLETIONS]: responseTransformers(GOOGLE_VERTEX_AI, {
+      chatComplete: true,
+    }).chatComplete,
+    [BatchEndpoints.EMBEDDINGS]: responseTransformers(GOOGLE_VERTEX_AI, {
+      embed: true,
+    }).embed,
+  },
 };
 
-type TransformFunction = (response: unknown) => Record<string, unknown>;
+type TransformFunction = (
+  response: unknown,
+  responseStatus: number,
+  headers: Record<string, string>,
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
+) => Record<string, unknown>;
 
 const getOpenAIBatchRow = ({
   row,
   batchId,
   transform,
+  endpoint,
+  modelName,
 }: {
   row: Record<string, unknown>;
   transform: TransformFunction;
   batchId: string;
+  endpoint: BatchEndpoints;
+  modelName: string;
 }) => {
-  const response = (row['response'] ?? {}) as Record<string, unknown>;
-  const id = `batch-${batchId}-${response.responseId}`;
+  const response =
+    endpoint === BatchEndpoints.EMBEDDINGS
+      ? ((row ?? {}) as Record<string, unknown>)
+      : ((row['response'] ?? {}) as Record<string, unknown>);
+  const id = `batch-${batchId}-${response.responseId ? `-${response.responseId}` : ''}`;
+
+  let error = null;
+  try {
+    error = JSON.parse(row.status as string);
+  } catch {
+    error = row.status;
+  }
+
   return {
     id,
-    custom_id: response.responseId,
+    custom_id:
+      row.requestId || (row?.instance as any)?.requestId || response.responseId,
     response: {
-      status_code: 200,
+      ...(!error && { status_code: 200 }),
       request_id: id,
-      body: transform(response),
+      body:
+        !error && transform(response, 200, {}, false, '', { model: modelName }),
     },
-    error: null,
+    error: error,
   };
 };
 
@@ -85,7 +125,7 @@ export const BatchOutputRequestHandler: RequestHandler = async ({
   });
 
   const batchesURL = `${baseURL}${endpoint}`;
-  let modelName;
+  let modelName = '';
   let outputURL;
   try {
     const response = await fetch(batchesURL, options);
@@ -111,8 +151,33 @@ export const BatchOutputRequestHandler: RequestHandler = async ({
     responseTransforms[provider as keyof typeof responseTransforms] ||
     responseTransforms['endpoints'];
 
+  const batchEndpoint = isEmbeddingModel(modelName)
+    ? BatchEndpoints.EMBEDDINGS
+    : BatchEndpoints.CHAT_COMPLETIONS;
+
+  const providerConfigMap =
+    responseTransforms[provider as keyof typeof responseTransforms];
+  const providerConfig =
+    providerConfigMap?.[batchEndpoint] ??
+    responseTransforms['endpoints'][batchEndpoint];
+
+  if (!providerConfig) {
+    throw new Error(
+      `Endpoint ${endpoint} not supported for provider ${provider}`
+    );
+  }
+
   outputURL = outputURL.replace('gs://', 'https://storage.googleapis.com/');
-  const outputResponse = await fetch(`${outputURL}/predictions.jsonl`, options);
+
+  const predictionFileId =
+    endpoint === BatchEndpoints.EMBEDDINGS
+      ? '000000000000.jsonl'
+      : 'predictions.jsonl';
+
+  const outputResponse = await fetch(
+    `${outputURL}/${predictionFileId}`,
+    options
+  );
 
   const reader = outputResponse.body;
   if (!reader) {
@@ -130,7 +195,9 @@ export const BatchOutputRequestHandler: RequestHandler = async ({
         const row = getOpenAIBatchRow({
           row: json,
           batchId: batchId ?? '',
-          transform: responseTransform as TransformFunction,
+          transform: providerConfig as TransformFunction,
+          endpoint: batchEndpoint,
+          modelName,
         });
         buffer = JSON.stringify(row);
       } catch (error) {

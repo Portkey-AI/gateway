@@ -1,21 +1,40 @@
-import { RequestHandler } from '../types';
-import { getModelAndProvider, GoogleResponseHandler } from './utils';
+import { ProviderConfig, RequestHandler } from '../types';
+import {
+  getModelAndProvider,
+  GoogleResponseHandler,
+  vertexRequestLineHandler,
+} from './utils';
 import {
   VertexAnthropicChatCompleteConfig,
   VertexGoogleChatCompleteConfig,
   VertexLlamaChatCompleteConfig,
 } from './chatComplete';
-import { chatCompleteParams } from '../open-ai-base';
-import { POWERED_BY } from '../../globals';
+import { chatCompleteParams, embedParams } from '../open-ai-base';
+import { BatchEndpoints, POWERED_BY } from '../../globals';
 import { transformUsingProviderConfig } from '../../services/transformToProviderRequest';
 import { createLineSplitter } from '../../handlers/streamHandlerUtils';
 import GoogleApiConfig from './api';
+import { VertexBatchEmbedConfig } from './embed';
+import { GatewayError } from '../../errors/GatewayError';
 
-const PROVIDER_CONFIG = {
-  google: VertexGoogleChatCompleteConfig,
-  anthropic: VertexAnthropicChatCompleteConfig,
-  meta: VertexLlamaChatCompleteConfig,
-  endpoints: chatCompleteParams(['model']),
+const PROVIDER_CONFIG: Record<
+  string,
+  Partial<Record<BatchEndpoints, ProviderConfig>>
+> = {
+  google: {
+    [BatchEndpoints.CHAT_COMPLETIONS]: VertexGoogleChatCompleteConfig,
+    [BatchEndpoints.EMBEDDINGS]: VertexBatchEmbedConfig,
+  },
+  anthropic: {
+    [BatchEndpoints.CHAT_COMPLETIONS]: VertexAnthropicChatCompleteConfig,
+  },
+  meta: {
+    [BatchEndpoints.CHAT_COMPLETIONS]: VertexLlamaChatCompleteConfig,
+  },
+  endpoints: {
+    [BatchEndpoints.CHAT_COMPLETIONS]: chatCompleteParams(['model']),
+    [BatchEndpoints.EMBEDDINGS]: embedParams(['model']),
+  },
 };
 
 const encoder = new TextEncoder();
@@ -23,8 +42,12 @@ const encoder = new TextEncoder();
 export const GoogleFileUploadRequestHandler: RequestHandler<
   ReadableStream
 > = async ({ c, providerOptions, requestBody, requestHeaders }) => {
-  const { vertexStorageBucketName, filename, vertexModelName } =
-    providerOptions;
+  const {
+    vertexStorageBucketName,
+    filename,
+    vertexModelName,
+    vertexBatchEndpoint = BatchEndpoints.CHAT_COMPLETIONS, //default to inference endpoint
+  } = providerOptions;
 
   if (!vertexModelName || !vertexStorageBucketName) {
     return GoogleResponseHandler(
@@ -36,11 +59,17 @@ export const GoogleFileUploadRequestHandler: RequestHandler<
   const objectKey = filename ?? `${crypto.randomUUID()}.jsonl`;
   const bytes = requestHeaders['content-length'];
   const { provider } = getModelAndProvider(vertexModelName ?? '');
-  let providerConfig =
+  const providerConfigMap =
     PROVIDER_CONFIG[provider as keyof typeof PROVIDER_CONFIG];
 
+  const providerConfig =
+    providerConfigMap?.[vertexBatchEndpoint] ??
+    PROVIDER_CONFIG['endpoints'][vertexBatchEndpoint];
+
   if (!providerConfig) {
-    providerConfig = PROVIDER_CONFIG['endpoints'];
+    throw new GatewayError(
+      `Endpoint ${vertexBatchEndpoint} not supported for provider ${provider}`
+    );
   }
 
   let isPurposeHeader = false;
@@ -88,14 +117,13 @@ export const GoogleFileUploadRequestHandler: RequestHandler<
 
         delete transformedBody['model'];
 
-        let bufferTransposed;
-        if (purpose === 'fine-tune') {
-          bufferTransposed = transformedBody;
-        } else {
-          bufferTransposed = {
-            request: transformedBody,
-          };
-        }
+        const bufferTransposed = vertexRequestLineHandler(
+          purpose,
+          vertexBatchEndpoint,
+          transformedBody,
+          json['custom_id']
+        );
+
         buffer = JSON.stringify(bufferTransposed);
       } catch {
         buffer = null;
