@@ -294,7 +294,8 @@ export async function tryPost(
       ...(providerOption.defaultOutputGuardrails || []),
     ],
     null,
-    fn
+    fn,
+    requestHeaders
   );
 
   // Mapping providers to corresponding URLs
