@@ -22,6 +22,7 @@ export interface EmbedParams {
   model: string; // The model name to be used as the embedding model
   input: string | string[] | EmbedInput[]; // The text or texts to be embedded
   user: string; // An identifier for the user making the request
+  dimensions?: number; // The number of dimensions the resulting output embeddings should have
 }
 
 export interface EmbedRequestBody {

@@ -62,13 +62,18 @@ export function transformGenerationConfig(params: Params) {
   return generationConfig;
 }
 
-export function transformEmbeddingsParameters(params: Params) {
+export function transformEmbeddingsParameters(params: GoogleEmbedParams) {
   let embeddingsParameters: Record<string, any> = {};
   if (params['parameters'] && typeof params['parameters'] === 'object') {
     embeddingsParameters = { ...params['parameters'] };
   }
   if (params['dimensions']) {
-    embeddingsParameters['outputDimensionality'] = params['dimensions'];
+    // for multimodal embeddings, the parameter is dimension
+    if (Array.isArray(params.input) && typeof params.input[0] === 'object') {
+      embeddingsParameters['dimension'] = params['dimensions'];
+    } else {
+      embeddingsParameters['outputDimensionality'] = params['dimensions'];
+    }
   }
 
   return embeddingsParameters;

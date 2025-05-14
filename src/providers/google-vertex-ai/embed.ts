@@ -26,6 +26,9 @@ enum TASK_TYPE {
 
 export interface GoogleEmbedParams extends EmbedParams {
   task_type: TASK_TYPE | string;
+  parameters?: {
+    outputDimensionality: number;
+  };
 }
 
 export const GoogleEmbedConfig: ProviderConfig = {
@@ -41,7 +44,8 @@ export const GoogleEmbedConfig: ProviderConfig = {
   dimensions: {
     param: 'parameters',
     required: false,
-    transform: (params: Params) => transformEmbeddingsParameters(params),
+    transform: (params: GoogleEmbedParams) =>
+      transformEmbeddingsParameters(params),
   },
 };
 
