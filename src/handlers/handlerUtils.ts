@@ -230,6 +230,7 @@ export function convertHooksShorthand(
     hooksObject.checks = Object.keys(hook).map((key) => ({
       id: key.includes('.') ? key : `default.${key}`,
       parameters: hook[key],
+      is_enabled: hook[key].is_enabled,
     }));
 
     return hooksObject;
