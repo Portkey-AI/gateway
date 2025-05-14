@@ -1,4 +1,5 @@
 import { ParameterConfig } from '../types';
+import { chatCompleteParams } from '../open-ai-base';
 
 interface ChatChoice {
   index: number;
@@ -18,53 +19,15 @@ interface StreamChoice {
   finish_reason: string | null;
 }
 
-export const NscaleChatCompleteConfig: { [key: string]: ParameterConfig } = {
-  messages: {
-    param: 'messages',
-    required: true,
-  },
-  model: {
-    param: 'model',
-    required: true,
-  },
-  max_tokens: {
-    param: 'max_tokens',
-  },
-  n: {
-    param: 'n',
-  },
-  temperature: {
-    param: 'temperature',
-    default: 1,
-  },
-  top_p: {
-    param: 'top_p',
-  },
-  stream: {
-    param: 'stream',
-  },
-  logprobs: {
-    param: 'logprobs',
-  },
-  top_logprobs: {
-    param: 'top_logprobs',
-  },
-  frequency_penalty: {
-    param: 'frequency_penalty',
-  },
-  presence_penalty: {
-    param: 'presence_penalty',
-  },
-  response_format: {
-    param: 'response_format',
-  },
-  stop: {
-    param: 'stop',
-  },
-  logit_bias: {
-    param: 'logit_bias',
-  },
-};
+export const NscaleChatCompleteConfig = chatCompleteParams([
+  'functions',
+  'function_call',
+  'user',
+  'seed',
+  'tools',
+  'tool_choice',
+  'stream_options',
+]);
 
 export const NscaleChatCompleteResponseTransform = (response: any) => {
   return {
