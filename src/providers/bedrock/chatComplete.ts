@@ -1,4 +1,9 @@
-import { BEDROCK, documentMimeTypes, imagesMimeTypes } from '../../globals';
+import {
+  BEDROCK,
+  documentMimeTypes,
+  fileExtensionMimeTypeMap,
+  imagesMimeTypes,
+} from '../../globals';
 import {
   Message,
   Params,
@@ -49,13 +54,14 @@ export interface BedrockChatCompletionsParams extends Params {
 }
 
 export interface BedrockConverseAnthropicChatCompletionsParams
-  extends BedrockChatCompletionsParams {
+  extends Omit<BedrockChatCompletionsParams, 'anthropic_beta'> {
   anthropic_version?: string;
   user?: string;
   thinking?: {
     type: string;
     budget_tokens: number;
   };
+  anthropic_beta?: string | string[];
 }
 
 export interface BedrockConverseCohereChatCompletionsParams
@@ -178,6 +184,32 @@ const getMessageContent = (message: Message) => {
               name: crypto.randomUUID(),
               source: {
                 bytes,
+              },
+            },
+          });
+        }
+      } else if (item.type === 'file') {
+        const mimeType = item.file?.mime_type || fileExtensionMimeTypeMap.pdf;
+        const fileFormat = mimeType.split('/')[1];
+        if (item.file?.file_url) {
+          out.push({
+            document: {
+              format: fileFormat,
+              name: item.file.file_name || crypto.randomUUID(),
+              source: {
+                s3Location: {
+                  uri: item.file.file_url,
+                },
+              },
+            },
+          });
+        } else if (item.file?.file_data) {
+          out.push({
+            document: {
+              format: fileFormat,
+              name: item.file.file_name || crypto.randomUUID(),
+              source: {
+                bytes: item.file.file_data,
               },
             },
           });
@@ -365,16 +397,6 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
     transform: (params: BedrockChatCompletionsParams) =>
       transformAdditionalModelRequestFields(params),
   },
-  top_k: {
-    param: 'additionalModelRequestFields',
-    transform: (params: BedrockChatCompletionsParams) =>
-      transformAdditionalModelRequestFields(params),
-  },
-  response_format: {
-    param: 'additionalModelRequestFields',
-    transform: (params: BedrockChatCompletionsParams) =>
-      transformAdditionalModelRequestFields(params),
-  },
 };
 
 type BedrockContentItem = {
@@ -401,7 +423,10 @@ type BedrockContentItem = {
     format: string;
     name: string;
     source: {
-      bytes: string;
+      bytes?: string;
+      s3Location?: {
+        uri: string;
+      };
     };
   };
   cachePoint?: {
