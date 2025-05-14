@@ -47,7 +47,6 @@ import { handler as azureContentSafety } from './azure/contentSafety';
 import { handler as promptSecurityProtectPrompt } from './promptsecurity/protectPrompt';
 import { handler as promptSecurityProtectResponse } from './promptsecurity/protectResponse';
 import { handler as panwPrismaAirsintercept } from './panw-prisma-airs/intercept';
-=======
 import { handler as defaultjwt } from './default/jwt';
 
 export const plugins = {
