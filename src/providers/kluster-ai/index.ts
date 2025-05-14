@@ -1,17 +1,31 @@
 import { ProviderConfigs } from '../types';
 import { KLUSTER_AI } from '../../globals';
-import { responseTransformers } from '../open-ai-base';
-import KlusterAIAPIConfig from './api';
 import {
-  KlusterAIChatCompleteConfig,
-  KlusterAIResponseTransform,
-} from './chatComplete';
-import { KlusterAIEmbedConfig } from './embed';
+  chatCompleteParams,
+  embedParams,
+  responseTransformers,
+} from '../open-ai-base';
+import KlusterAIAPIConfig from './api';
+import { KlusterAIResponseTransform } from './chatComplete';
 import { KlusterAIRequestTransform } from './uploadFile';
 
 const KlusterAIConfig: ProviderConfigs = {
-  chatComplete: KlusterAIChatCompleteConfig,
-  embed: KlusterAIEmbedConfig,
+  chatComplete: chatCompleteParams(
+    [],
+    { model: 'klusterai/Meta-Llama-3.1-8B-Instruct-Turbo' },
+    {
+      store: {
+        param: 'store',
+      },
+      metadata: {
+        param: 'metadata',
+        required: true,
+      },
+    }
+  ),
+  embed: embedParams([], {
+    model: 'klusterai/Meta-Llama-3.1-8B-Instruct-Turbo',
+  }),
   api: KlusterAIAPIConfig,
   responseTransforms: {
     ...responseTransformers(KLUSTER_AI, {
