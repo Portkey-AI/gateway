@@ -1,15 +1,23 @@
 import { ProviderConfigs } from '../types';
 import NscaleAPIConfig from './api';
-import { NscaleChatCompleteConfig } from './chatComplete';
 import {
   NscaleImageGenerateConfig,
   NscaleImageGenerateResponseTransform,
 } from './imageGenerate';
 import { responseTransformers } from '../open-ai-base';
 import { NSCALE } from '../../globals';
+import { chatCompleteParams } from '../open-ai-base';
 
 const NscaleConfig: ProviderConfigs = {
-  chatComplete: NscaleChatCompleteConfig,
+  chatComplete: chatCompleteParams([
+    'functions',
+    'function_call',
+    'user',
+    'seed',
+    'tools',
+    'tool_choice',
+    'stream_options',
+  ]),
   imageGenerate: NscaleImageGenerateConfig,
   api: NscaleAPIConfig,
   responseTransforms: {
