@@ -153,7 +153,13 @@ cd gateway
 npm install
 ```
 
-3. Deploy (using [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/))
+3. Create a `wrangler` configuration file from the example one we have
+
+```sh
+cp wrangler.toml.example wrangler.toml
+```
+
+4. Deploy (using [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/))
 
 ```sh
 npm run deploy
