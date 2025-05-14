@@ -1,6 +1,7 @@
 import { OPENROUTER } from '../../globals';
-import { Params } from '../../types/requestBody';
+import { Message, Params } from '../../types/requestBody';
 import {
+  ChatChoice,
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
@@ -103,6 +104,7 @@ interface OpenrouterChatCompleteResponse extends ChatCompletionResponse {
   object: string;
   created: number;
   model: string;
+  choices: (ChatChoice & { message: Message & { reasoning: string } })[];
   usage: OpenrouterUsageDetails;
 }
 
@@ -124,6 +126,7 @@ interface OpenrouterStreamChunk {
     delta: {
       role?: string | null;
       content?: string;
+      reasoning?: string;
     };
     index: number;
     finish_reason: string | null;
@@ -132,8 +135,19 @@ interface OpenrouterStreamChunk {
 
 export const OpenrouterChatCompleteResponseTransform: (
   response: OpenrouterChatCompleteResponse | OpenrouterErrorResponse,
-  responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  _responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  _gatewayRequestUrl: string,
+  _gatewayRequest: Params
+) => ChatCompletionResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  _gatewayRequest
+) => {
   if ('message' in response && responseStatus !== 200) {
     return generateErrorResponse(
       {
@@ -153,14 +167,34 @@ export const OpenrouterChatCompleteResponseTransform: (
       created: response.created,
       model: response.model,
       provider: OPENROUTER,
-      choices: response.choices.map((c) => ({
-        index: c.index,
-        message: {
-          role: c.message.role,
-          content: c.message.content,
-        },
-        finish_reason: c.finish_reason,
-      })),
+      choices: response.choices.map((c) => {
+        const content_blocks = [];
+
+        if (!strictOpenAiCompliance) {
+          if (c.message.reasoning) {
+            content_blocks.push({
+              type: 'thinking',
+              thinking: c.message.reasoning,
+            });
+          }
+
+          content_blocks.push({
+            type: 'text',
+            text: c.message.content,
+          });
+        }
+
+        return {
+          index: c.index,
+          message: {
+            role: c.message.role,
+            content: c.message.content,
+            ...(content_blocks.length && { content_blocks }),
+            ...(c.message.tool_calls && { tool_calls: c.message.tool_calls }),
+          },
+          finish_reason: c.finish_reason,
+        };
+      }),
       usage: response.usage,
     };
   }
@@ -178,7 +212,7 @@ export const OpenrouterChatCompleteStreamChunkTransform: (
   responseChunk,
   fallbackId,
   _streamState,
-  _strictOpenAiCompliance,
+  strictOpenAiCompliance,
   gatewayRequest
 ) => {
   let chunk = responseChunk.trim();
@@ -203,6 +237,29 @@ export const OpenrouterChatCompleteStreamChunkTransform: (
     });
   }
   const parsedChunk: OpenrouterStreamChunk = JSON.parse(chunk);
+
+  const content_blocks = [];
+  if (!strictOpenAiCompliance) {
+    // add the reasoning first
+    if (parsedChunk.choices?.[0]?.delta?.reasoning) {
+      content_blocks.push({
+        index: parsedChunk.choices?.[0]?.index,
+        delta: {
+          thinking: parsedChunk.choices?.[0]?.delta?.reasoning,
+        },
+      });
+    }
+    // then add the content
+    if (parsedChunk.choices?.[0]?.delta?.content) {
+      content_blocks.push({
+        index: parsedChunk.choices?.[0]?.index,
+        delta: {
+          text: parsedChunk.choices?.[0]?.delta?.content,
+        },
+      });
+    }
+  }
+
   return (
     `data: ${JSON.stringify({
       id: parsedChunk.id,
@@ -213,7 +270,10 @@ export const OpenrouterChatCompleteStreamChunkTransform: (
       choices: [
         {
           index: parsedChunk.choices?.[0]?.index,
-          delta: parsedChunk.choices?.[0]?.delta,
+          delta: {
+            ...parsedChunk.choices?.[0]?.delta,
+            ...(content_blocks.length && { content_blocks }),
+          },
           finish_reason: parsedChunk.choices?.[0]?.finish_reason,
         },
       ],
