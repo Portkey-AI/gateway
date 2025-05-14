@@ -137,6 +137,10 @@ build
 # Wrangler temp directory
 .wrangler
 
+# Wrangler config file
+wrangler.toml
+wrangler.json
+
 # IntelliJ Idea
 .idea
 plugins/**/.creds.json
