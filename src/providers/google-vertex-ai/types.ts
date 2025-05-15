@@ -107,9 +107,11 @@ export interface MultimodalEmbedInstance {
   video?: {
     gcsUri?: string;
     bytesBase64Encoded?: string;
-    startOffsetSec?: number;
-    endOffsetSec?: number;
-    intervalSec?: number;
+    videoSegmentConfig?: {
+      startOffsetSec?: number;
+      endOffsetSec?: number;
+      intervalSec?: number;
+    };
   };
 }
 
