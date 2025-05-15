@@ -156,11 +156,11 @@ const getMessageContent = (message: Message) => {
   const inputContent: ContentType[] | string | undefined =
     message.content_blocks ?? message.content;
   // if message is a string, return a single element array with the text
-  if (typeof inputContent === 'string') {
+  if (typeof inputContent === 'string' && inputContent.trim()) {
     out.push({
       text: inputContent,
     });
-  } else if (inputContent) {
+  } else if (inputContent && Array.isArray(inputContent)) {
     inputContent.forEach((item) => {
       if (item.type === 'text') {
         out.push({
@@ -285,7 +285,9 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
       required: false,
       transform: (params: BedrockChatCompletionsParams) => {
         if (!params.messages) return;
-        const systemMessages = params.messages.reduce(
+        const systemMessages: Array<
+          { text: string } | { cachePoint: { type: string } }
+        > = params.messages.reduce(
           (
             acc: Array<{ text: string } | { cachePoint: { type: string } }>,
             msg
@@ -326,7 +328,7 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
         }
       });
       const toolConfig = {
-        tools: tools,
+        tools,
       };
       let toolChoice = undefined;
       if (params.tool_choice) {
@@ -556,7 +558,7 @@ export const BedrockChatCompleteResponseTransform: (
       usage: {
         prompt_tokens: response.usage.inputTokens,
         completion_tokens: response.usage.outputTokens,
-        total_tokens: response.usage.totalTokens,
+        total_tokens: response.usage.totalTokens, // contains the cache usage as well
         ...(shouldSendCacheUsage && {
           cache_read_input_tokens: response.usage.cacheReadInputTokens,
           cache_creation_input_tokens: response.usage.cacheWriteInputTokens,
@@ -871,7 +873,7 @@ export const BedrockCohereChatCompleteConfig: ProviderConfig = {
     required: true,
     transform: (params: Params) => {
       let prompt: string = '';
-      if (!!params.messages) {
+      if (params.messages) {
         let messages: Message[] = params.messages;
         messages.forEach((msg, index) => {
           if (index === 0 && SYSTEM_MESSAGE_ROLES.includes(msg.role)) {
@@ -1073,7 +1075,7 @@ export const BedrockAI21ChatCompleteConfig: ProviderConfig = {
     required: true,
     transform: (params: Params) => {
       let prompt: string = '';
-      if (!!params.messages) {
+      if (params.messages) {
         let messages: Message[] = params.messages;
         messages.forEach((msg, index) => {
           if (index === 0 && SYSTEM_MESSAGE_ROLES.includes(msg.role)) {
