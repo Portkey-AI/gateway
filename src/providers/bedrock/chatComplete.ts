@@ -136,12 +136,17 @@ const transformAndAppendThinkingMessageItem = (
 };
 
 const getMessageContent = (message: Message) => {
-  if (!message.content && !message.tool_calls) return [];
+  if (!message.content && !message.tool_calls && !message.tool_call_id)
+    return [];
   if (message.role === 'tool') {
+    const toolResultContent = getMessageTextContentArray(message);
     return [
       {
         toolResult: {
-          content: getMessageTextContentArray(message),
+          ...(toolResultContent.length &&
+          (toolResultContent[0] as { text: string })?.text
+            ? { content: toolResultContent }
+            : { content: [] }), // Bedrock allows empty array but does not allow empty string in content.
           toolUseId: message.tool_call_id,
         },
       },
