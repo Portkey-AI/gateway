@@ -32,6 +32,7 @@ interface AnthropicTool extends PromptCache {
       }
     >;
     required: string[];
+    $defs: Record<string, any>;
   };
 }
 
@@ -130,7 +131,9 @@ const transformAssistantMessage = (msg: Message): AnthropicMessage => {
         type: 'tool_use',
         name: toolCall.function.name,
         id: toolCall.id,
-        input: JSON.parse(toolCall.function.arguments),
+        input: toolCall.function.arguments?.length
+          ? JSON.parse(toolCall.function.arguments)
+          : {},
       });
     });
   }
@@ -336,6 +339,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                 type: tool.function.parameters?.type || 'object',
                 properties: tool.function.parameters?.properties || {},
                 required: tool.function.parameters?.required || [],
+                $defs: tool.function.parameters?.['$defs'] || {},
               },
               ...(tool.cache_control && {
                 cache_control: { type: 'ephemeral' },
