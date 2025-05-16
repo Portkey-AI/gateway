@@ -130,7 +130,9 @@ const transformAssistantMessage = (msg: Message): AnthropicMessage => {
         type: 'tool_use',
         name: toolCall.function.name,
         id: toolCall.id,
-        input: JSON.parse(toolCall.function.arguments),
+        input: toolCall.function.arguments?.length
+          ? JSON.parse(toolCall.function.arguments)
+          : {},
       });
     });
   }
