@@ -32,6 +32,7 @@ interface AnthropicTool extends PromptCache {
       }
     >;
     required: string[];
+    $defs: Record<string, any>;
   };
 }
 
@@ -338,6 +339,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                 type: tool.function.parameters?.type || 'object',
                 properties: tool.function.parameters?.properties || {},
                 required: tool.function.parameters?.required || [],
+                $defs: tool.function.parameters?.['$defs'] || {},
               },
               ...(tool.cache_control && {
                 cache_control: { type: 'ephemeral' },
