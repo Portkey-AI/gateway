@@ -30,6 +30,7 @@ const getOutgoingWebSocket = async (url: string, options: RequestInit) => {
 export async function realTimeHandler(c: Context): Promise<Response> {
   try {
     const requestHeaders = Object.fromEntries(c.req.raw.headers);
+    const hooksManager = c.get('hooksManager');
 
     const providerOptions = constructConfigFromRequestHeaders(
       requestHeaders
@@ -68,7 +69,14 @@ export async function realTimeHandler(c: Context): Promise<Response> {
 
     let outgoingWebSocket: WebSocket = await getOutgoingWebSocket(url, options);
     const eventParser = new RealtimeLlmEventParser();
-    addListeners(outgoingWebSocket, eventParser, server, c, sessionOptions);
+    addListeners(
+      outgoingWebSocket,
+      eventParser,
+      server,
+      c,
+      sessionOptions,
+      providerOptions
+    );
 
     return new Response(null, {
       status: 101,

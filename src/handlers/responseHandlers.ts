@@ -295,3 +295,51 @@ export async function afterRequestHookHandler(
     return response;
   }
 }
+
+// we need a new function because we won't be returning HTTP responses, we need to send websocket events
+export async function realtimeAfterRequestHookHandler(
+  c: Context,
+  transcript: string,
+  hookSpanId: string,
+  retryAttemptsMade: number,
+  server: WebSocket
+) {
+  const hooksManager = c.get('hooksManager');
+  const responseJSON = {
+    choices: [
+      {
+        text: transcript,
+      },
+    ],
+  };
+  hooksManager.setSpanContextResponse(hookSpanId, responseJSON, 200);
+  if (retryAttemptsMade > 0) {
+    hooksManager.getSpan(hookSpanId).resetHookResult('afterRequestHook');
+  }
+
+  const { shouldDeny } = await hooksManager.executeHooks(
+    hookSpanId,
+    ['syncAfterRequestHook'],
+    {
+      env: env(c),
+      getFromCacheByKey: c.get('getFromCacheByKey'),
+      putInCacheWithValue: c.get('putInCacheWithValue'),
+    }
+  );
+  const span = hooksManager.getSpan(hookSpanId) as HookSpan;
+  const hooksResult = span.getHooksResult();
+
+  const failedBeforeRequestHooks = hooksResult.beforeRequestHooksResult.filter(
+    (h) => !h.verdict
+  );
+  const failedAfterRequestHooks = hooksResult.afterRequestHooksResult.filter(
+    (h) => !h.verdict
+  );
+
+  if (shouldDeny) {
+    // send a realtime event to the client
+  } else {
+    // log hook results
+  }
+  server.close(1008, 'Hooks failed');
+}
