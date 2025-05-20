@@ -635,6 +635,77 @@
         },
         "required": ["models"]
       }
+    },
+    {
+      "name": "JWT",
+      "id": "jwt",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Check if the JWT token is valid."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "jwksUri": {
+            "type": "string",
+            "label": "JWKS URI",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enter the JWKS URI of the JWT token."
+              }
+            ]
+          },
+          "headerKey": {
+            "type": "string",
+            "label": "Header Key",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enter the header key to check for the JWT token."
+              }
+            ]
+          },
+          "cacheMaxAge": {
+            "type": "number",
+            "label": "Cache Max Age",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enter the cache max age in seconds."
+              }
+            ],
+            "default": 86400
+          },
+          "clockTolerance": {
+            "type": "number",
+            "label": "Clock Tolerance",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enter the clock tolerance in seconds."
+              }
+            ],
+            "default": 5
+          },
+          "maxTokenAge": {
+            "type": "string",
+            "label": "Max Token Age",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enter the max token age."
+              }
+            ],
+            "default": "1d"
+          }
+        },
+        "required": ["jwksUri", "headerKey"]
+      }
     }
   ]
 }

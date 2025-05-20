@@ -66,9 +66,17 @@ export const handler: PluginHandler = async (
       throw new Error(`Failed to parse headers: ${e.message}`);
     }
 
+    const requestBody = {
+      ...context,
+      // Setting headers to undefined to avoid passing sensitive information to the webhook endpoint.
+      // This can later be controlled through parameters.
+      request: { ...context.request, headers: undefined },
+      eventType,
+    };
+
     const response = await post(
       url,
-      { ...context, eventType },
+      requestBody,
       { headers },
       parameters.timeout || 3000
     );

@@ -196,6 +196,7 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
       return `/model-invocation-job/${batchId}/stop`;
     }
     const { model, stream } = gatewayRequestBody;
+    const uriEncodedModel = encodeURIComponent(decodeURIComponent(model ?? ''));
     if (!model && !BEDROCK_NO_MODEL_ENDPOINTS.includes(fn as endpointStrings)) {
       throw new GatewayError('Model is required');
     }
@@ -203,15 +204,15 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
     if (stream) {
       mappedFn = `stream-${fn}`;
     }
-    let endpoint = `/model/${model}/invoke`;
-    let streamEndpoint = `/model/${model}/invoke-with-response-stream`;
+    let endpoint = `/model/${uriEncodedModel}/invoke`;
+    let streamEndpoint = `/model/${uriEncodedModel}/invoke-with-response-stream`;
     if (
       (mappedFn === 'chatComplete' || mappedFn === 'stream-chatComplete') &&
       model &&
       !bedrockInvokeModels.includes(model)
     ) {
-      endpoint = `/model/${model}/converse`;
-      streamEndpoint = `/model/${model}/converse-stream`;
+      endpoint = `/model/${uriEncodedModel}/converse`;
+      streamEndpoint = `/model/${uriEncodedModel}/converse-stream`;
     }
 
     const jobIdIndex = fn === 'cancelFinetune' ? -2 : -1;
