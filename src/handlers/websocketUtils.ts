@@ -1,20 +1,78 @@
 import { Context } from 'hono';
 import { ProviderAPIConfig } from '../providers/types';
-import { Options } from '../types/requestBody';
+import { Options, Targets } from '../types/requestBody';
 import { RealtimeLlmEventParser } from '../services/realtimeLlmEventParser';
+import {
+  beforeRequestHookHandler,
+  convertHooksShorthand,
+} from './handlerUtils';
+import { HookType } from '../middlewares/hooks/types';
+import { afterRequestHookHandler } from './responseHandlers';
 
 export const addListeners = (
   outgoingWebSocket: WebSocket,
   eventParser: RealtimeLlmEventParser,
   server: WebSocket,
   c: Context,
-  sessionOptions: any
+  sessionOptions: any,
+  providerOptions: any
 ) => {
+  const hooksManager = c.get('hooksManager');
+  if (providerOptions.inputGuardrails) {
+    providerOptions.beforeRequestHooks = [
+      ...(providerOptions.beforeRequestHooks || []),
+      ...convertHooksShorthand(
+        providerOptions.inputGuardrails,
+        'input',
+        HookType.GUARDRAIL
+      ),
+    ];
+  }
+
+  if (providerOptions.outputGuardrails) {
+    providerOptions.afterRequestHooks = [
+      ...(providerOptions.afterRequestHooks || []),
+      ...convertHooksShorthand(
+        providerOptions.outputGuardrails,
+        'output',
+        HookType.GUARDRAIL
+      ),
+    ];
+  }
+
+  if (providerOptions.inputMutators) {
+    providerOptions.beforeRequestHooks = [
+      ...(providerOptions.beforeRequestHooks || []),
+      ...convertHooksShorthand(
+        providerOptions.inputMutators,
+        'input',
+        HookType.MUTATOR
+      ),
+    ];
+  }
+
+  if (providerOptions.outputMutators) {
+    providerOptions.afterRequestHooks = [
+      ...(providerOptions.afterRequestHooks || []),
+      ...convertHooksShorthand(
+        providerOptions.outputMutators,
+        'output',
+        HookType.MUTATOR
+      ),
+    ];
+  }
   outgoingWebSocket.addEventListener('message', (event) => {
     server?.send(event.data as string);
     try {
       const parsedData = JSON.parse(event.data as string);
-      eventParser.handleEvent(c, parsedData, sessionOptions);
+      eventParser.handleEvent(
+        c,
+        parsedData,
+        sessionOptions,
+        providerOptions,
+        hooksManager,
+        server
+      );
     } catch (err) {
       console.log('outgoingWebSocket message parse error', event);
     }

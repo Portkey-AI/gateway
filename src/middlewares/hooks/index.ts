@@ -418,7 +418,9 @@ export class HooksManager {
   private shouldSkipHook(span: HookSpan, hook: HookObject): boolean {
     const context = span.getContext();
     return (
-      !['chatComplete', 'complete', 'embed'].includes(context.requestType) ||
+      !['chatComplete', 'complete', 'embed', 'realtime'].includes(
+        context.requestType
+      ) ||
       (context.requestType === 'embed' &&
         hook.eventType !== 'beforeRequestHook') ||
       (context.requestType === 'embed' && hook.type === HookType.MUTATOR) ||

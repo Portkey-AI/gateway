@@ -1,4 +1,5 @@
 import { Context } from 'hono';
+import { realtimeAfterRequestHookHandler } from '../handlers/responseHandlers';
 
 export class RealtimeLlmEventParser {
   private sessionState: any;
@@ -14,28 +15,62 @@ export class RealtimeLlmEventParser {
   }
 
   // Main entry point for processing events
-  handleEvent(c: Context, event: any, sessionOptions: any): void {
+  handleEvent(
+    c: Context,
+    event: any,
+    sessionOptions: any,
+    providerOptions: any,
+    hooksManager: any,
+    server: WebSocket
+  ): void {
+    let eventHandler = null;
+    let parsedData = null;
     switch (event.type) {
       case 'session.created':
-        this.handleSessionCreated(c, event, sessionOptions);
+        eventHandler = this.handleSessionCreated;
         break;
       case 'session.updated':
-        this.handleSessionUpdated(c, event, sessionOptions);
+        eventHandler = this.handleSessionUpdated;
         break;
       case 'conversation.item.created':
-        this.handleConversationItemCreated(c, event);
+        eventHandler = this.handleConversationItemCreated;
         break;
       case 'conversation.item.deleted':
-        this.handleConversationItemDeleted(c, event);
+        eventHandler = this.handleConversationItemDeleted;
         break;
       case 'response.done':
-        this.handleResponseDone(c, event, sessionOptions);
+        eventHandler = this.handleResponseDone;
         break;
       case 'error':
-        this.handleError(c, event, sessionOptions);
+        eventHandler = this.handleError;
         break;
+      case 'response.audio_transcript.done':
+        parsedData = event.transcript;
       default:
         break;
+    }
+    const hookSpan = hooksManager.createSpan(
+      {},
+      {},
+      providerOptions.provider,
+      false,
+      [
+        ...(providerOptions.beforeRequestHooks || []),
+        ...(providerOptions.defaultInputGuardrails || []),
+      ],
+      [
+        ...(providerOptions.afterRequestHooks || []),
+        ...(providerOptions.defaultOutputGuardrails || []),
+      ],
+      null,
+      'realtime',
+      {}
+    );
+    if (eventHandler) {
+      eventHandler(c, event, sessionOptions);
+    }
+    if (parsedData) {
+      realtimeAfterRequestHookHandler(c, parsedData, hookSpan.id, 0, server);
     }
   }
 
