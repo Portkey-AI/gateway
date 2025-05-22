@@ -95,7 +95,6 @@ export const LEPTON: string = 'lepton';
 export const KLUSTER_AI: string = 'kluster-ai';
 export const NSCALE: string = 'nscale';
 
-
 export const VALID_PROVIDERS = [
   ANTHROPIC,
   ANYSCALE,
