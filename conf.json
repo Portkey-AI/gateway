@@ -7,7 +7,8 @@
     "pillar",
     "patronus",
     "pangea",
-    "promptsecurity"
+    "promptsecurity",
+    "panw-prisma-airs"
   ],
   "credentials": {
     "portkey": {

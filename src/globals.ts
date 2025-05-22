@@ -93,6 +93,8 @@ export const MILVUS: string = 'milvus';
 export const REPLICATE: string = 'replicate';
 export const LEPTON: string = 'lepton';
 export const KLUSTER_AI: string = 'kluster-ai';
+export const NSCALE: string = 'nscale';
+
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -151,6 +153,7 @@ export const VALID_PROVIDERS = [
   POWERED_BY,
   LEPTON,
   KLUSTER_AI,
+  NSCALE,
 ];
 
 export const CONTENT_TYPES = {

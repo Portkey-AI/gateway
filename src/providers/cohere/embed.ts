@@ -9,7 +9,7 @@ export const CohereEmbedConfig: ProviderConfig = {
     required: true,
     transform: (params: EmbedParams): string[] => {
       if (Array.isArray(params.input)) {
-        return params.input;
+        return params.input as string[];
       } else {
         return [params.input];
       }
