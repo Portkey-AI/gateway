@@ -73,7 +73,8 @@ const transformGenerationConfig = (params: Params) => {
   }
   if (params?.thinking) {
     const thinkingConfig: Record<string, any> = {};
-    thinkingConfig['include_thoughts'] = true;
+    thinkingConfig['include_thoughts'] =
+      params.thinking.type && params.thinking.type === 'enabled' ? true : false;
     thinkingConfig['thinking_budget'] = params.thinking.budget_tokens;
     generationConfig['thinking_config'] = thinkingConfig;
   }
@@ -479,6 +480,7 @@ interface GoogleGenerateContentResponse {
     promptTokenCount: number;
     candidatesTokenCount: number;
     totalTokenCount: number;
+    thoughtsTokenCount: number;
   };
 }
 
@@ -579,6 +581,9 @@ export const GoogleChatCompleteResponseTransform: (
         prompt_tokens: response.usageMetadata.promptTokenCount,
         completion_tokens: response.usageMetadata.candidatesTokenCount,
         total_tokens: response.usageMetadata.totalTokenCount,
+        completion_tokens_details: {
+          reasoning_tokens: response.usageMetadata.thoughtsTokenCount ?? 0,
+        },
       },
     };
   }
@@ -624,6 +629,9 @@ export const GoogleChatCompleteStreamChunkTransform: (
       prompt_tokens: parsedChunk.usageMetadata.promptTokenCount,
       completion_tokens: parsedChunk.usageMetadata.candidatesTokenCount,
       total_tokens: parsedChunk.usageMetadata.totalTokenCount,
+      completion_tokens_details: {
+        reasoning_tokens: parsedChunk.usageMetadata.thoughtsTokenCount ?? 0,
+      },
     };
   }
 
