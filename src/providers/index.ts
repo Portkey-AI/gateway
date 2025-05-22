@@ -56,6 +56,7 @@ import RecraftAIConfig from './recraft-ai';
 import MilvusConfig from './milvus';
 import ReplicateConfig from './replicate';
 import LeptonConfig from './lepton';
+import KlusterAIConfig from './kluster-ai';
 import NscaleConfig from './nscale';
 
 const Providers: { [key: string]: ProviderConfigs } = {
@@ -113,6 +114,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   milvus: MilvusConfig,
   replicate: ReplicateConfig,
   lepton: LeptonConfig,
+  'kluster-ai': KlusterAIConfig,
   nscale: NscaleConfig,
 };
 
