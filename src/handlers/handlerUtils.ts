@@ -231,6 +231,7 @@ export function convertHooksShorthand(
     hooksObject.checks = Object.keys(hook).map((key) => ({
       id: key.includes('.') ? key : `default.${key}`,
       parameters: hook[key],
+      is_enabled: hook[key].is_enabled,
     }));
 
     return hooksObject;
@@ -294,7 +295,8 @@ export async function tryPost(
       ...(providerOption.defaultOutputGuardrails || []),
     ],
     null,
-    fn
+    fn,
+    requestHeaders
   );
 
   // Mapping providers to corresponding URLs

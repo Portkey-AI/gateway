@@ -423,6 +423,9 @@ export interface Params {
     type?: string;
     budget_tokens: number;
   };
+  // Embeddings specific
+  dimensions?: number;
+  parameters?: any;
 }
 
 interface Examples {

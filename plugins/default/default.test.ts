@@ -13,8 +13,7 @@ import { handler as endsWithHandler } from './endsWith';
 import { handler as allLowerCaseHandler } from './alllowercase';
 import { handler as modelWhitelistHandler } from './modelWhitelist';
 import { handler as characterCountHandler } from './characterCount';
-
-import { z } from 'zod';
+import { handler as jwtHandler } from './jwt';
 import { PluginContext, PluginParameters } from '../types';
 
 describe('Regex Matcher Plugin', () => {
@@ -2312,6 +2311,159 @@ describe('endsWith handler', () => {
       suffix: '',
       not: false,
       textExcerpt: 'This is a test.',
+    });
+  });
+});
+
+describe('jwt handler', () => {
+  const mockEventType = 'beforeRequestHook';
+
+  it('should validate a valid JWT token', async () => {
+    const context: PluginContext = {
+      headers: {
+        Authorization:
+          'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+      },
+    };
+    const parameters: PluginParameters = {
+      jwksUri: 'https://www.googleapis.com/oauth2/v3/certs',
+      headerKey: 'Authorization',
+    };
+
+    const result = await jwtHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toMatchObject({
+      verdict: true,
+      explanation: 'JWT token validation succeeded',
+      payload: expect.any(Object),
+    });
+  });
+
+  it('should handle missing authorization header', async () => {
+    const context: PluginContext = {
+      headers: {},
+    };
+    const parameters: PluginParameters = {
+      jwksUri: 'https://www.googleapis.com/oauth2/v3/certs',
+    };
+
+    const result = await jwtHandler(context, parameters, mockEventType);
+
+    expect(result.error).not.toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toMatchObject({
+      verdict: false,
+      explanation: 'JWT validation error: Missing authorization header',
+    });
+  });
+
+  it('should handle invalid authorization header format', async () => {
+    const context: PluginContext = {
+      headers: {
+        Authorization: 'InvalidFormat',
+      },
+    };
+    const parameters: PluginParameters = {
+      jwksUri: 'https://www.googleapis.com/oauth2/v3/certs',
+    };
+
+    const result = await jwtHandler(context, parameters, mockEventType);
+
+    expect(result.error).not.toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toMatchObject({
+      verdict: false,
+      explanation: 'JWT validation error: Invalid authorization header format',
+    });
+  });
+
+  it('should handle missing JWKS URI', async () => {
+    const context: PluginContext = {
+      headers: {
+        Authorization: 'Bearer valid.token.here',
+      },
+    };
+    const parameters: PluginParameters = {};
+
+    const result = await jwtHandler(context, parameters, mockEventType);
+
+    expect(result.error).not.toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toMatchObject({
+      verdict: false,
+      explanation: 'JWT validation error: Missing JWKS URI',
+    });
+  });
+
+  it('should use custom header key from parameters', async () => {
+    const context: PluginContext = {
+      headers: {
+        'X-Custom-Auth':
+          'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+      },
+    };
+    const parameters: PluginParameters = {
+      jwksUri: 'https://www.googleapis.com/oauth2/v3/certs',
+      headerKey: 'X-Custom-Auth',
+    };
+
+    const result = await jwtHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toMatchObject({
+      verdict: true,
+      explanation: 'JWT token validation succeeded',
+      payload: expect.any(Object),
+    });
+  });
+
+  it('should use environment variables when parameters not provided', async () => {
+    process.env.JWT_AUTH_HEADER = 'X-Env-Auth';
+    process.env.JWT_JWKS_URI = 'https://www.googleapis.com/oauth2/v3/certs';
+
+    const context: PluginContext = {
+      headers: {
+        'X-Env-Auth':
+          'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+      },
+    };
+    const parameters: PluginParameters = {};
+
+    const result = await jwtHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toMatchObject({
+      verdict: true,
+      explanation: 'JWT token validation succeeded',
+      payload: expect.any(Object),
+    });
+
+    // Clean up
+    delete process.env.JWT_AUTH_HEADER;
+    delete process.env.JWT_JWKS_URI;
+  });
+
+  it('should handle invalid JWKS URI', async () => {
+    const context: PluginContext = {
+      headers: {
+        Authorization: 'Bearer valid.token.here',
+      },
+    };
+    const parameters: PluginParameters = {
+      jwksUri: 'https://invalid-jwks-uri.example.com/keys',
+    };
+
+    const result = await jwtHandler(context, parameters, mockEventType);
+
+    expect(result.error).not.toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toMatchObject({
+      verdict: false,
+      explanation: expect.stringContaining('JWT validation error'),
     });
   });
 });
