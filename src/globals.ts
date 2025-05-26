@@ -93,6 +93,7 @@ export const MILVUS: string = 'milvus';
 export const REPLICATE: string = 'replicate';
 export const LEPTON: string = 'lepton';
 export const NSCALE: string = 'nscale';
+export const HYPERBOLIC: string = 'hyperbolic';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -151,6 +152,7 @@ export const VALID_PROVIDERS = [
   POWERED_BY,
   LEPTON,
   NSCALE,
+  HYPERBOLIC,
 ];
 
 export const CONTENT_TYPES = {
