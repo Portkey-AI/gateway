@@ -53,9 +53,11 @@ export function transformGenerationConfig(params: Params) {
   }
 
   if (params?.thinking) {
+    const { budget_tokens, type } = params.thinking;
     const thinkingConfig: Record<string, any> = {};
-    thinkingConfig['include_thoughts'] = true;
-    thinkingConfig['thinking_budget'] = params.thinking.budget_tokens;
+    thinkingConfig['include_thoughts'] =
+      type === 'enabled' && budget_tokens ? true : false;
+    thinkingConfig['thinking_budget'] = budget_tokens;
     generationConfig['thinking_config'] = thinkingConfig;
   }
 
