@@ -38,7 +38,7 @@ export interface EmbedRequestBody {
 
 export interface EmbedResponseData {
   object: string; // The type of data object, e.g., "embedding"
-  embedding?: number[] | number[][]; // The embedding vector(s)
+  embedding?: number[] | number[][] | string | string[]; // The embedding vector(s)
   image_embedding?: number[];
   video_embeddings?: {
     start_offset: number;
@@ -53,6 +53,8 @@ export interface EmbedResponse extends BaseResponse {
   data: EmbedResponseData[]; // The list of data objects
   model: string; // The model used to generate the embedding
   usage: {
+    text_tokens?: number; // The total number of text tokens in the list of inputs.
+    image_pixels?: number; // The total number of image pixels in the list of inputs.
     prompt_tokens: number; // The number of tokens in the prompt
     total_tokens: number; // The total number of tokens used
   };
