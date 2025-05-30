@@ -1,4 +1,4 @@
-import { Agent } from 'undici';
+import { Agent } from 'https';
 import {
   HookEventType,
   PluginContext,
@@ -56,11 +56,12 @@ const redact = async (
 
   let agent: Agent | null = null;
   // privatelink doesn't contain a valid certificate, skipping verification if it's customHost.
+  // SECURITY NOTE: The following disables SSL certificate validation for custom hosts.
+  // This is necessary for Azure Private Link endpoints that may use self-signed certificates,
+  // but should only be used with trusted private endpoints.
   if (credentials?.customHost) {
     agent = new Agent({
-      connect: {
-        rejectUnauthorized: false,
-      },
+      rejectUnauthorized: false,
     });
   }
 
