@@ -1,3 +1,4 @@
+import { Agent } from 'https';
 import {
   HookEventType,
   PluginContext,
@@ -29,7 +30,7 @@ const redact = async (
 
   const apiVersion = parameters.apiVersion || '2024-11-01';
 
-  const url = `https://${credentials?.resourceName}.cognitiveservices.azure.com/language/:analyze-text?api-version=${apiVersion}`;
+  const url = `${credentials?.customHost || `https://${credentials?.resourceName}.cognitiveservices.azure.com`}/language/:analyze-text?api-version=${apiVersion}`;
 
   const { token, error: tokenError } = await getAccessToken(
     credentials as any,
@@ -53,8 +54,24 @@ const redact = async (
     throw new Error('Unable to get access token');
   }
 
+  let agent: Agent | null = null;
+  // privatelink doesn't contain a valid certificate, skipping verification if it's customHost.
+  // SECURITY NOTE: The following disables SSL certificate validation for custom hosts.
+  // This is necessary for Azure Private Link endpoints that may use self-signed certificates,
+  // but should only be used with trusted private endpoints.
+  if (credentials?.customHost) {
+    agent = new Agent({
+      rejectUnauthorized: false,
+    });
+  }
+
   const timeout = parameters.timeout || 5000;
-  const response = await post(url, body, { headers }, timeout);
+  const response = await post(
+    url,
+    body,
+    { headers, dispatcher: agent },
+    timeout
+  );
   return response;
 };
 
