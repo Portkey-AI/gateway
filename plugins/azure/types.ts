@@ -5,4 +5,5 @@ export interface AzureCredentials {
   clientId?: string;
   clientSecret?: string;
   tenantId?: string;
+  customHost?: string;
 }
