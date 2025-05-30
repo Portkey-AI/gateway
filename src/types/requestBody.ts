@@ -423,6 +423,7 @@ export interface Params {
   // Embeddings specific
   dimensions?: number;
   parameters?: any;
+  [key: string]: any;
 }
 
 interface Examples {
