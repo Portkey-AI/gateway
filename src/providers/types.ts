@@ -100,7 +100,8 @@ export type endpointStrings =
   | 'createModelResponse'
   | 'getModelResponse'
   | 'deleteModelResponse'
-  | 'listResponseInputItems';
+  | 'listResponseInputItems'
+  | 'multimodalEmbed';
 
 /**
  * A collection of API configurations for multiple AI providers.
