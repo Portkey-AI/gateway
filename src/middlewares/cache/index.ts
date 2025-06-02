@@ -94,11 +94,13 @@ export const memoryCache = () => {
     await next();
 
     let requestOptions = c.get('requestOptions');
+    // console.log("requestOptions", requestOptions);
 
     if (
       requestOptions &&
       Array.isArray(requestOptions) &&
-      requestOptions.length > 0
+      requestOptions.length > 0 &&
+      requestOptions[0].requestParams.stream === false
     ) {
       requestOptions = requestOptions[0];
       if (requestOptions.cacheMode === 'simple') {

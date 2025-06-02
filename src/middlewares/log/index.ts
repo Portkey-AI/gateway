@@ -63,6 +63,7 @@ async function processLog(c: Context, start: number) {
   }
 
   try {
+    // console.log('requestOptionsArray', requestOptionsArray);
     const response = requestOptionsArray[0].requestParams.stream
       ? { message: 'The response was a stream.' }
       : await c.res.clone().json();
