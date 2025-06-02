@@ -53,7 +53,7 @@ export const BedrockGetBatchOutputRequestHandler = async ({
     // get s3 file id from batch details
     // get file from s3
     // return file
-    const baseUrl = BedrockAPIConfig.getBaseURL({
+    const baseUrl = await BedrockAPIConfig.getBaseURL({
       providerOptions,
       fn: 'retrieveBatch',
       c,

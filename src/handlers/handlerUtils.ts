@@ -323,6 +323,7 @@ export async function tryPost(
       fn,
       c,
       gatewayRequestURL: c.req.url,
+      params: params,
     }));
   const endpoint =
     fn === 'proxy'

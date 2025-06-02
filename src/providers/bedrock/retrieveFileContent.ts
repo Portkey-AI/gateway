@@ -19,7 +19,7 @@ export const BedrockRetrieveFileContentRequestHandler = async ({
 }) => {
   try {
     // construct the base url and endpoint
-    const baseURL = BedrockAPIConfig.getBaseURL({
+    const baseURL = await BedrockAPIConfig.getBaseURL({
       providerOptions,
       fn: 'retrieveFileContent',
       c,
