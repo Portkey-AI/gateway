@@ -314,9 +314,9 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
       params.tools?.forEach((tool) => {
         tools.push({
           toolSpec: {
-            name: tool.function.name,
-            description: tool.function.description,
-            inputSchema: { json: tool.function.parameters },
+            name: tool.function!.name,
+            description: tool.function!.description,
+            inputSchema: { json: tool.function!.parameters },
           },
         });
         if (tool.cache_control && !canBeAmazonModel) {
