@@ -38,6 +38,7 @@ import { PreRequestValidatorService } from './services/preRequestValidatorServic
 import { ProviderContext } from './services/providerContext';
 import { RequestContext } from './services/requestContext';
 import { ResponseService } from './services/responseService';
+import { McpService } from './services/mcpService';
 
 function constructRequestBody(
   requestContext: RequestContext,
@@ -325,7 +326,6 @@ export async function tryPost(
   currentIndex: number | string,
   method: string = 'POST'
 ): Promise<Response> {
-  // console.log('1. requestBody', requestBody);
   const requestContext = new RequestContext(
     c,
     providerOption,
@@ -376,6 +376,17 @@ export async function tryPost(
 
   if (transformedBody) {
     requestContext.params = hookSpan.getContext().request.json;
+  }
+
+  // NEW: Initialize MCP service if needed
+  await using mcpService = requestContext.shouldHandleMcp()
+    ? new McpService(requestContext)
+    : null;
+  if (mcpService) {
+    await mcpService.init();
+    // Add MCP tools to the request
+    const mcpTools = mcpService.tools;
+    requestContext.addMcpTools(mcpTools);
   }
 
   // Attach the body of the request
@@ -446,7 +457,8 @@ export async function tryPost(
       0,
       hookSpan.id,
       providerContext,
-      hooksService
+      hooksService,
+      mcpService || undefined
     );
 
   return responseService.create({
@@ -1134,7 +1146,8 @@ export async function recursiveAfterRequestHookHandler(
   retryAttemptsMade: any,
   hookSpanId: string,
   providerContext: ProviderContext,
-  hooksService: HooksService
+  hooksService: HooksService,
+  mcpService?: McpService
 ): Promise<{
   mappedResponse: Response;
   retryCount: number;
@@ -1192,6 +1205,50 @@ export async function recursiveAfterRequestHookHandler(
     c.req.url,
     areSyncHooksAvailable
   );
+
+  if (
+    mcpService &&
+    !isStreamingMode &&
+    mappedResponseJson?.choices?.[0]?.message?.tool_calls?.[0]
+  ) {
+    const mcpResult = await handleMcpToolCalls(
+      requestContext,
+      mappedResponseJson,
+      mcpService
+    );
+    if (mcpResult.success) {
+      // TODO: the hookspan context might need to be updated here.
+      // Update hook span context for the new request
+      // hooksService.hookSpan.updateContext({
+      //   request: { json: requestContext.params },
+      // });
+
+      // Construct the base object for the request
+      const providerMappedHeaders =
+        await providerContext.getHeaders(requestContext);
+      const fetchOptions: RequestInit = constructRequest(
+        providerMappedHeaders,
+        requestContext
+      );
+
+      // Recurse with updated conversation
+      return recursiveAfterRequestHookHandler(
+        requestContext,
+        fetchOptions,
+        0, // Reset retry attempts for new LLM request
+        hookSpanId,
+        providerContext,
+        hooksService,
+        mcpService
+      );
+    } else {
+      // MCP failed, log and continue with current response
+      console.warn(
+        'MCP processing failed, returning current response:',
+        mcpResult.error
+      );
+    }
+  }
 
   const arhResponse = await afterRequestHookHandler(
     c,
@@ -1402,4 +1459,57 @@ export async function beforeRequestHookHandler(
   return {
     transformedBody: isTransformed ? span.getContext().request.json : null,
   };
+}
+
+// handlerUtils.ts
+async function handleMcpToolCalls(
+  requestContext: RequestContext,
+  responseJson: any,
+  mcpService: McpService
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const toolCalls = responseJson.choices[0].message.tool_calls;
+    const conversation = [...(requestContext.params.messages || [])];
+
+    // Add assistant's response with tool calls to conversation
+    conversation.push(responseJson.choices[0].message);
+
+    // Execute each tool call and add results to conversation
+    for (const toolCall of toolCalls) {
+      try {
+        const toolResult = await mcpService.executeTool(
+          toolCall.function.name,
+          JSON.parse(toolCall.function.arguments)
+        );
+        conversation.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: JSON.stringify(toolResult),
+        });
+      } catch (toolError: any) {
+        console.error(
+          `MCP tool call failed for ${toolCall.function.name}:`,
+          toolError
+        );
+        // Add error message as tool response
+        conversation.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: JSON.stringify({
+            error: 'Tool execution failed',
+            details: toolError.message,
+          }),
+        });
+      }
+    }
+
+    // Update the existing context
+    requestContext.updateMessages(conversation);
+    requestContext.transformToProviderRequestAndSave();
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error in handleMcpToolCalls:', error);
+    return { success: false, error: error.message };
+  }
 }

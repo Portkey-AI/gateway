@@ -12,6 +12,7 @@ import { HEADER_KEYS, RETRY_STATUS_CODES } from '../../globals';
 import { HookObject } from '../../middlewares/hooks/types';
 import { HooksManager } from '../../middlewares/hooks';
 import { transformToProviderRequest } from '../../services/transformToProviderRequest';
+import { LLMFunction } from './mcpService';
 
 export class RequestContext {
   private _params: Params | null = null;
@@ -217,5 +218,27 @@ export class RequestContext {
       ...this.requestOptions,
       requestOptions,
     ]);
+  }
+
+  shouldHandleMcp(): boolean {
+    return (
+      !!this.params.mcp_servers &&
+      this.params.mcp_servers.length > 0 &&
+      this.endpoint === 'chatComplete'
+    );
+  }
+
+  addMcpTools(mcpTools: LLMFunction[]) {
+    if (mcpTools.length > 0) {
+      let newParams = { ...this.params };
+      newParams.tools = [...(this.params.tools || []), ...mcpTools];
+      this.params = newParams;
+    }
+  }
+
+  updateMessages(messages: any[]) {
+    let newParams = { ...this.params };
+    newParams.messages = messages;
+    this.params = newParams;
   }
 }

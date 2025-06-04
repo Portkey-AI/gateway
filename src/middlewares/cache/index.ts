@@ -35,12 +35,10 @@ export const getFromCache = async (
       myText
     );
 
-
     // Convert arraybuffer to hex
     let cacheKey = Array.from(new Uint8Array(cacheDigest))
       .map((b) => b.toString(16).padStart(2, '0'))
       .join('');
-
 
     // console.log("Get from cache", cacheKey, cacheKey in inMemoryCache, stringToHash);
 
@@ -105,7 +103,7 @@ export const memoryCache = () => {
     await next();
 
     let requestOptions = c.get('requestOptions');
-    console.log("requestOptions", requestOptions);
+    console.log('requestOptions', requestOptions);
 
     if (
       requestOptions &&
