@@ -4,7 +4,7 @@ import { HookObject } from '../middlewares/hooks/types';
  * Settings for retrying requests.
  * @interface
  */
-interface RetrySettings {
+export interface RetrySettings {
   /** The maximum number of retry attempts. */
   attempts: number;
   /** The HTTP status codes on which to retry. */
@@ -13,7 +13,7 @@ interface RetrySettings {
   useRetryAfterHeader?: boolean;
 }
 
-interface CacheSettings {
+export interface CacheSettings {
   mode: string;
   maxAge?: number;
 }

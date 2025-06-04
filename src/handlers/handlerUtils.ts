@@ -6,7 +6,6 @@ import {
   HEADER_KEYS,
   POWERED_BY,
   RESPONSE_HEADER_KEYS,
-  RETRY_STATUS_CODES,
   GOOGLE_VERTEX_AI,
   OPEN_AI,
   AZURE_AI_INFERENCE,
@@ -19,8 +18,7 @@ import {
   CORTEX,
 } from '../globals';
 import Providers from '../providers';
-import { ProviderAPIConfig, endpointStrings } from '../providers/types';
-import transformToProviderRequest from '../services/transformToProviderRequest';
+import { endpointStrings } from '../providers/types';
 import { Options, Params, StrategyModes, Targets } from '../types/requestBody';
 import { convertKeysToCamelCase } from '../utils';
 import { retryRequest } from './retryHandler';
@@ -32,23 +30,65 @@ import { RouterError } from '../errors/RouterError';
 import { GatewayError } from '../errors/GatewayError';
 import { HookType } from '../middlewares/hooks/types';
 
-/**
- * Constructs the request options for the API call.
- *
- * @param {any} headers - The headers to add in the request.
- * @param {string} provider - The provider for the request.
- * @param {string} method - The HTTP method for the request.
- * @returns {RequestInit} - The fetch options for the request.
- */
-export function constructRequest(
-  providerConfigMappedHeaders: any,
-  provider: string,
-  method: string,
-  forwardHeaders: string[],
-  requestHeaders: Record<string, string>,
-  fn: endpointStrings,
-  c: Context
-) {
+// Services
+import { CacheResponseObject, CacheService } from './services/cacheService';
+import { HooksService } from './services/hooksService';
+import { LogsService } from './services/logsService';
+import { PreRequestValidatorService } from './services/preRequestValidatorService';
+import { ProviderContext } from './services/providerContext';
+import { RequestContext } from './services/requestContext';
+import { ResponseService } from './services/responseService';
+
+function constructRequestBody(
+  requestContext: RequestContext,
+  providerHeaders: Record<string, string>
+): BodyInit | null {
+  const headerContentType = providerHeaders[HEADER_KEYS.CONTENT_TYPE];
+  const requestContentType = requestContext.getHeader(HEADER_KEYS.CONTENT_TYPE);
+
+  let body: BodyInit | null = null;
+
+  const isMultiPartRequest =
+    headerContentType === CONTENT_TYPES.MULTIPART_FORM_DATA ||
+    (requestContext.endpoint == 'proxy' &&
+      requestContentType === CONTENT_TYPES.MULTIPART_FORM_DATA);
+
+  const isProxyAudio =
+    requestContext.endpoint == 'proxy' &&
+    requestContentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN);
+
+  const reqBody = requestContext.transformedRequestBody;
+
+  if (isMultiPartRequest) {
+    body = reqBody as FormData;
+  } else if (requestContext.requestBody instanceof ReadableStream) {
+    body = requestContext.requestBody;
+  } else if (isProxyAudio) {
+    body = reqBody as ArrayBuffer;
+  } else if (requestContentType) {
+    body = JSON.stringify(reqBody);
+  }
+
+  if (['GET', 'DELETE'].includes(requestContext.method)) {
+    body = null;
+  }
+
+  return body;
+}
+
+function constructRequestHeaders(
+  requestContext: RequestContext,
+  providerConfigMappedHeaders: any
+): Record<string, string> {
+  const {
+    method,
+    forwardHeaders,
+    requestHeaders,
+    endpoint: fn,
+    honoContext: c,
+    provider: provider,
+  } = requestContext;
+
   const proxyHeaders: Record<string, string> = {};
   // Handle proxy headers
   if (fn === 'proxy') {
@@ -100,25 +140,53 @@ export function constructRequest(
     ...(fn === 'proxy' && proxyHeaders),
   };
 
-  const fetchOptions: RequestInit = {
-    method,
-    headers,
-    ...(fn === 'uploadFile' && { duplex: 'half' }),
-  };
   const contentType = headers['content-type']?.split(';')[0];
   const isGetMethod = method === 'GET';
   const isMultipartFormData = contentType === CONTENT_TYPES.MULTIPART_FORM_DATA;
   const shouldDeleteContentTypeHeader =
-    (isGetMethod || isMultipartFormData) && fetchOptions.headers;
+    (isGetMethod || isMultipartFormData) && headers;
 
   if (shouldDeleteContentTypeHeader) {
-    const headers = fetchOptions.headers as Record<string, unknown>;
     delete headers['content-type'];
     if (fn === 'uploadFile') {
       headers['Content-Type'] = requestHeaders['content-type'];
       headers[`x-${POWERED_BY}-file-purpose`] =
         requestHeaders[`x-${POWERED_BY}-file-purpose`];
     }
+  }
+
+  return headers;
+}
+
+/**
+ * Constructs the request options for the API call.
+ *
+ * @param {any} headers - The headers to add in the request.
+ * @param {string} provider - The provider for the request.
+ * @param {string} method - The HTTP method for the request.
+ * @returns {RequestInit} - The fetch options for the request.
+ */
+export function constructRequest(
+  providerConfigMappedHeaders: any,
+  requestContext: RequestContext
+): RequestInit {
+  const headers = constructRequestHeaders(
+    requestContext,
+    providerConfigMappedHeaders
+  );
+
+  const fetchOptions: RequestInit = {
+    method: requestContext.method,
+    headers,
+    ...(requestContext.endpoint === 'uploadFile' && { duplex: 'half' }),
+  };
+
+  const body = constructRequestBody(
+    requestContext,
+    providerConfigMappedHeaders
+  );
+  if (body) {
+    fetchOptions.body = body;
   }
 
   return fetchOptions;
@@ -257,328 +325,144 @@ export async function tryPost(
   currentIndex: number | string,
   method: string = 'POST'
 ): Promise<Response> {
-  const overrideParams = providerOption?.overrideParams || {};
-  let params: Params =
-    requestBody instanceof ReadableStream || requestBody instanceof FormData
-      ? {}
-      : { ...requestBody, ...overrideParams };
-  const isStreamingMode = params.stream ? true : false;
-  let strictOpenAiCompliance = true;
-
-  if (requestHeaders[HEADER_KEYS.STRICT_OPEN_AI_COMPLIANCE] === 'false') {
-    strictOpenAiCompliance = false;
-  } else if (providerOption.strictOpenAiCompliance === false) {
-    strictOpenAiCompliance = false;
-  }
-
-  let metadata: Record<string, string> = {};
-  try {
-    metadata = JSON.parse(requestHeaders[HEADER_KEYS.METADATA]);
-  } catch {
-    metadata = {};
-  }
-
-  const provider: string = providerOption.provider ?? '';
-  const hooksManager = c.get('hooksManager');
-  const hookSpan = hooksManager.createSpan(
-    params,
-    metadata,
-    provider,
-    isStreamingMode,
-    [
-      ...(providerOption.beforeRequestHooks || []),
-      ...(providerOption.defaultInputGuardrails || []),
-    ],
-    [
-      ...(providerOption.afterRequestHooks || []),
-      ...(providerOption.defaultOutputGuardrails || []),
-    ],
-    null,
+  // console.log('1. requestBody', requestBody);
+  const requestContext = new RequestContext(
+    c,
+    providerOption,
     fn,
-    requestHeaders
+    requestHeaders,
+    requestBody,
+    method,
+    currentIndex as number
   );
-
-  // Mapping providers to corresponding URLs
-  const providerConfig = Providers[provider];
-  const apiConfig: ProviderAPIConfig = providerConfig.api;
-
-  let brhResponse: Response | undefined;
-  let transformedBody: any;
-  let createdAt: Date;
-
-  let url: string;
-  const forwardHeaders =
-    requestHeaders[HEADER_KEYS.FORWARD_HEADERS]
-      ?.split(',')
-      .map((h) => h.trim()) ||
-    providerOption.forwardHeaders ||
-    [];
-
-  const customHost =
-    requestHeaders[HEADER_KEYS.CUSTOM_HOST] || providerOption.customHost || '';
-  const baseUrl =
-    customHost ||
-    (await apiConfig.getBaseURL({
-      providerOptions: providerOption,
-      fn,
-      c,
-      gatewayRequestURL: c.req.url,
-    }));
-  const endpoint =
-    fn === 'proxy'
-      ? ''
-      : apiConfig.getEndpoint({
-          c,
-          providerOptions: providerOption,
-          fn,
-          gatewayRequestBodyJSON: params,
-          gatewayRequestBody: {}, // not using anywhere.
-          gatewayRequestURL: c.req.url,
-        });
-
-  url =
-    fn === 'proxy'
-      ? getProxyPath(
-          c.req.url,
-          provider,
-          c.req.url.indexOf('/v1/proxy') > -1 ? '/v1/proxy' : '/v1',
-          baseUrl,
-          providerOption
-        )
-      : `${baseUrl}${endpoint}`;
-
-  let mappedResponse: Response;
-  let retryCount: number | undefined;
-  let originalResponseJson: Record<string, any> | null | undefined;
-
-  let cacheKey: string | undefined;
-  let { cacheMode, cacheMaxAge, cacheStatus } = getCacheOptions(
-    providerOption.cache
+  const hooksService = new HooksService(requestContext);
+  const providerContext = new ProviderContext(requestContext.provider);
+  const logsService = new LogsService(c);
+  const responseService = new ResponseService(
+    requestContext,
+    providerContext,
+    hooksService,
+    logsService
   );
-  let cacheResponse: Response | undefined;
-
-  const requestOptions = c.get('requestOptions') ?? [];
-  let transformedRequestBody: ReadableStream | FormData | Params = {};
-  let fetchOptions: RequestInit = {};
-  const areSyncHooksAvailable = Boolean(
-    hooksManager.getHooksToExecute(hookSpan, [
-      'syncBeforeRequestHook',
-      'syncAfterRequestHook',
-    ]).length
-  );
+  const hookSpan: HookSpan = hooksService.hookSpan;
 
   // before_request_hooks handler
-  ({
+  const {
     response: brhResponse,
-    createdAt,
+    createdAt: brhCreatedAt,
     transformedBody,
-  } = await beforeRequestHookHandler(c, hookSpan.id));
-
+  } = await beforeRequestHookHandler(c, hookSpan.id);
   if (brhResponse) {
     // transformedRequestBody is required to be set in requestOptions.
     // So in case the before request hooks fail (with deny as true), we need to set it here.
     // If the hooks do not result in a 446 response, transformedRequestBody is determined on the updated HookSpan context.
-    if (!providerConfig?.requestHandlers?.[fn]) {
-      transformedRequestBody =
-        method === 'POST'
-          ? transformToProviderRequest(
-              provider,
-              params,
-              requestBody,
-              fn,
-              requestHeaders,
-              providerOption
-            )
-          : requestBody;
+    if (!providerContext.hasRequestHandler(requestContext)) {
+      requestContext.transformToProviderRequestAndSave();
     }
-    return createResponse(brhResponse, undefined, false, false);
+
+    return responseService.create({
+      response: brhResponse,
+      responseTransformer: undefined,
+      isResponseAlreadyMapped: false,
+      cache: {
+        isCacheHit: false,
+        cacheStatus: undefined,
+        cacheKey: undefined,
+      },
+      retryAttempt: 0,
+      createdAt: brhCreatedAt,
+    });
   }
 
   if (transformedBody) {
-    params = hookSpan.getContext().request.json;
+    requestContext.params = hookSpan.getContext().request.json;
   }
 
   // Attach the body of the request
-  if (!providerConfig?.requestHandlers?.[fn]) {
-    transformedRequestBody =
-      method === 'POST'
-        ? transformToProviderRequest(
-            provider,
-            params,
-            requestBody,
-            fn,
-            requestHeaders,
-            providerOption
-          )
-        : requestBody;
+  if (!providerContext.hasRequestHandler(requestContext)) {
+    requestContext.transformToProviderRequestAndSave();
   }
 
-  const headers = await apiConfig.headers({
-    c,
-    providerOptions: providerOption,
-    fn,
-    transformedRequestBody,
-    transformedRequestUrl: url,
-    gatewayRequestBody: params,
-  });
-
-  // Construct the base object for the POST request
-  fetchOptions = constructRequest(
-    headers,
-    provider,
-    method,
-    forwardHeaders,
-    requestHeaders,
-    fn,
-    c
+  // Construct the base object for the request
+  const providerMappedHeaders =
+    await providerContext.getHeaders(requestContext);
+  const fetchOptions: RequestInit = constructRequest(
+    providerMappedHeaders,
+    requestContext
   );
 
-  const headerContentType = headers[HEADER_KEYS.CONTENT_TYPE];
-  const requestContentType =
-    requestHeaders[HEADER_KEYS.CONTENT_TYPE.toLowerCase()]?.split(';')[0];
-
-  if (
-    headerContentType === CONTENT_TYPES.MULTIPART_FORM_DATA ||
-    (fn == 'proxy' && requestContentType === CONTENT_TYPES.MULTIPART_FORM_DATA)
-  ) {
-    fetchOptions.body = transformedRequestBody as FormData;
-  } else if (transformedRequestBody instanceof ReadableStream) {
-    fetchOptions.body = transformedRequestBody;
-  } else if (
-    fn == 'proxy' &&
-    requestContentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
-  ) {
-    fetchOptions.body = transformedRequestBody as ArrayBuffer;
-  } else if (requestContentType) {
-    fetchOptions.body = JSON.stringify(transformedRequestBody);
-  }
-
-  if (['GET', 'DELETE'].includes(method)) {
-    delete fetchOptions.body;
-  }
-
-  providerOption.retry = {
-    attempts: providerOption.retry?.attempts ?? 0,
-    onStatusCodes: providerOption.retry?.attempts
-      ? providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES
-      : [],
-    useRetryAfterHeader: providerOption?.retry?.useRetryAfterHeader,
-  };
-
-  async function createResponse(
-    response: Response,
-    responseTransformer: string | undefined,
-    isCacheHit: boolean,
-    isResponseAlreadyMapped: boolean = false
-  ) {
-    if (!isResponseAlreadyMapped) {
-      ({ response: mappedResponse, originalResponseJson } =
-        await responseHandler(
-          response,
-          isStreamingMode,
-          provider,
-          responseTransformer,
-          url,
-          isCacheHit,
-          params,
-          strictOpenAiCompliance,
-          c.req.url,
-          areSyncHooksAvailable
-        ));
-    }
-
-    updateResponseHeaders(
-      mappedResponse as Response,
-      currentIndex,
-      params,
-      cacheStatus,
-      retryCount ?? 0,
-      requestHeaders[HEADER_KEYS.TRACE_ID] ?? '',
-      provider
-    );
-
-    c.set('requestOptions', [
-      ...requestOptions,
-      {
-        providerOptions: {
-          ...providerOption,
-          requestURL: url,
-          rubeusURL: fn,
-        },
-        transformedRequest: {
-          body: transformedRequestBody,
-          headers: fetchOptions.headers,
-        },
-        requestParams: transformedRequestBody,
-        finalUntransformedRequest: {
-          body: params,
-        },
-        originalResponse: {
-          body: originalResponseJson,
-        },
-        createdAt,
-        response: mappedResponse.clone(),
-        cacheStatus: cacheStatus,
-        lastUsedOptionIndex: currentIndex,
-        cacheKey: cacheKey,
-        cacheMode: cacheMode,
-        cacheMaxAge: cacheMaxAge,
-        hookSpanId: hookSpan.id,
-      },
-    ]);
-
-    // If the response was not ok, throw an error
-    if (!mappedResponse.ok) {
-      const errorObj: any = new Error(await mappedResponse.clone().text());
-      errorObj.status = mappedResponse.status;
-      errorObj.response = mappedResponse;
-      throw errorObj;
-    }
-
-    return mappedResponse;
-  }
-
   // Cache Handler
-  ({ cacheResponse, cacheStatus, cacheKey, createdAt } = await cacheHandler(
-    c,
-    providerOption,
-    requestHeaders,
-    fetchOptions,
-    transformedRequestBody,
-    hookSpan.id,
-    fn
-  ));
-  if (cacheResponse) {
-    return createResponse(cacheResponse, fn, true);
+  const cacheService = new CacheService(c, hooksService);
+  const cacheResponseObject: CacheResponseObject =
+    await cacheService.getCachedResponse(
+      requestContext,
+      fetchOptions.headers || {}
+    );
+  if (cacheResponseObject.cacheResponse) {
+    return responseService.create({
+      response: cacheResponseObject.cacheResponse,
+      responseTransformer: requestContext.endpoint,
+      cache: {
+        isCacheHit: true,
+        cacheStatus: cacheResponseObject.cacheStatus,
+        cacheKey: cacheResponseObject.cacheKey,
+      },
+      isResponseAlreadyMapped: true,
+      retryAttempt: 0,
+      fetchOptions,
+      createdAt: cacheResponseObject.createdAt,
+      executionTime: 0,
+    });
   }
 
   // Prerequest validator (For virtual key budgets)
-  const preRequestValidator = c.get('preRequestValidator');
-  const preRequestValidatorResponse = preRequestValidator
-    ? await preRequestValidator(c, providerOption, requestHeaders, params)
-    : undefined;
+  const preRequestValidatorService = new PreRequestValidatorService(
+    c,
+    requestContext
+  );
+  const preRequestValidatorResponse =
+    await preRequestValidatorService.getResponse();
   if (preRequestValidatorResponse) {
-    return createResponse(preRequestValidatorResponse, undefined, false);
+    return responseService.create({
+      response: preRequestValidatorResponse,
+      responseTransformer: undefined,
+      isResponseAlreadyMapped: false,
+      cache: {
+        isCacheHit: false,
+        cacheStatus: cacheResponseObject.cacheStatus,
+        cacheKey: cacheResponseObject.cacheKey,
+      },
+      retryAttempt: 0,
+      fetchOptions,
+      createdAt: new Date(),
+    });
   }
 
   // Request Handler (Including retries, recursion and hooks)
-  ({ mappedResponse, retryCount, createdAt, originalResponseJson } =
+  const { mappedResponse, retryCount, createdAt, originalResponseJson } =
     await recursiveAfterRequestHookHandler(
-      c,
-      url,
+      requestContext,
       fetchOptions,
-      providerOption,
-      isStreamingMode,
-      params,
       0,
-      fn,
-      requestHeaders,
       hookSpan.id,
-      strictOpenAiCompliance,
-      requestBody
-    ));
+      providerContext,
+      hooksService
+    );
 
-  return createResponse(mappedResponse, undefined, false, true);
+  return responseService.create({
+    response: mappedResponse,
+    responseTransformer: undefined,
+    isResponseAlreadyMapped: true,
+    cache: {
+      isCacheHit: false,
+      cacheStatus: cacheResponseObject.cacheStatus,
+      cacheKey: cacheResponseObject.cacheKey,
+    },
+    retryAttempt: retryCount,
+    fetchOptions,
+    createdAt,
+    originalResponseJson,
+  });
 }
 
 export async function tryTargetsRecursively(
@@ -877,6 +761,7 @@ export async function tryTargetsRecursively(
         // TypeError will check for all unhandled exceptions.
         // GatewayError will check for all handled exceptions which cannot allow the request to proceed.
         if (error instanceof TypeError || error instanceof GatewayError) {
+          // console.log('Error in tryTargetsRecursively', error);
           const errorMessage =
             error instanceof GatewayError
               ? error.message
@@ -906,6 +791,7 @@ export async function tryTargetsRecursively(
 }
 
 /**
+ * @deprecated
  * Updates the response headers with the provided values.
  * @param {Response} response - The response object.
  * @param {string | number} currentIndex - The current index value.
@@ -1243,46 +1129,33 @@ export function constructConfigFromRequestHeaders(
 }
 
 export async function recursiveAfterRequestHookHandler(
-  c: Context,
-  url: any,
+  requestContext: RequestContext,
   options: any,
-  providerOption: Options,
-  isStreamingMode: any,
-  gatewayParams: any,
   retryAttemptsMade: any,
-  fn: endpointStrings,
-  requestHeaders: Record<string, string>,
   hookSpanId: string,
-  strictOpenAiCompliance: boolean,
-  requestBody?: ReadableStream | FormData | Params | ArrayBuffer
+  providerContext: ProviderContext,
+  hooksService: HooksService
 ): Promise<{
   mappedResponse: Response;
   retryCount: number;
   createdAt: Date;
   originalResponseJson?: Record<string, any> | null;
 }> {
-  let response, retryCount, createdAt, executionTime, retrySkipped;
-  const requestTimeout =
-    Number(requestHeaders[HEADER_KEYS.REQUEST_TIMEOUT]) ||
-    providerOption.requestTimeout ||
-    null;
+  const {
+    honoContext: c,
+    providerOption,
+    isStreaming: isStreamingMode,
+    params: gatewayParams,
+    endpoint: fn,
+    strictOpenAiCompliance,
+    requestTimeout,
+    retryConfig: retry,
+  } = requestContext;
 
-  const { retry } = providerOption;
+  let response, retryCount, createdAt, retrySkipped;
 
-  const provider = providerOption.provider ?? '';
-  const providerConfig = Providers[provider];
-  const requestHandlers = providerConfig.requestHandlers as any;
-  let requestHandler;
-  if (requestHandlers && requestHandlers[fn]) {
-    requestHandler = () =>
-      requestHandlers[fn]({
-        c,
-        providerOptions: providerOption,
-        requestURL: c.req.url,
-        requestHeaders,
-        requestBody,
-      });
-  }
+  const requestHandler = providerContext.getRequestHandler(requestContext);
+  const url = await providerContext.getFullURL(requestContext);
 
   ({
     response,
@@ -1292,23 +1165,16 @@ export async function recursiveAfterRequestHookHandler(
   } = await retryRequest(
     url,
     options,
-    retry?.attempts || 0,
-    retry?.onStatusCodes || [],
-    requestTimeout || null,
+    retry.attempts,
+    retry.onStatusCodes,
+    requestTimeout,
     requestHandler,
-    retry?.useRetryAfterHeader || false
+    retry.useRetryAfterHeader
   ));
 
-  const hooksManager = c.get('hooksManager') as HooksManager;
-  const hookSpan = hooksManager.getSpan(hookSpanId) as HookSpan;
   // Check if sync hooks are available
   // This will be used to determine if we need to parse the response body or simply passthrough the response as is
-  const areSyncHooksAvailable = Boolean(
-    hooksManager.getHooksToExecute(hookSpan, [
-      'syncBeforeRequestHook',
-      'syncAfterRequestHook',
-    ]).length
-  );
+  const areSyncHooksAvailable = hooksService.areSyncHooksAvailable;
 
   const {
     response: mappedResponse,
@@ -1344,17 +1210,12 @@ export async function recursiveAfterRequestHookHandler(
 
   if (remainingRetryCount > 0 && !retrySkipped && isRetriableStatusCode) {
     return recursiveAfterRequestHookHandler(
-      c,
-      url,
+      requestContext,
       options,
-      providerOption,
-      isStreamingMode,
-      gatewayParams,
-      (retryCount || 0) + 1 + retryAttemptsMade,
-      fn,
-      requestHeaders,
+      (retryCount ?? 0) + 1 + retryAttemptsMade,
       hookSpanId,
-      strictOpenAiCompliance
+      providerContext,
+      hooksService
     );
   }
 
