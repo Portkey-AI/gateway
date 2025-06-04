@@ -54,7 +54,7 @@ export const buildGoogleSearchRetrievalTool = (tool: Tool) => {
   const googleSearchRetrievalTool: GoogleSearchRetrievalTool = {
     googleSearchRetrieval: {},
   };
-  if (tool.function.parameters?.dynamicRetrievalConfig) {
+  if (tool.function?.parameters?.dynamicRetrievalConfig) {
     googleSearchRetrievalTool.googleSearchRetrieval.dynamicRetrievalConfig =
       tool.function.parameters.dynamicRetrievalConfig;
   }
@@ -290,16 +290,16 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
           recursivelyDeleteUnsupportedParameters(tool.function?.parameters);
           delete tool.function?.strict;
 
-          if (['googleSearch', 'google_search'].includes(tool.function.name)) {
+          if (['googleSearch', 'google_search'].includes(tool.function!.name)) {
             tools.push({ googleSearch: {} });
           } else if (
             ['googleSearchRetrieval', 'google_search_retrieval'].includes(
-              tool.function.name
+              tool.function!.name
             )
           ) {
             tools.push(buildGoogleSearchRetrievalTool(tool));
           } else {
-            functionDeclarations.push(tool.function);
+            functionDeclarations.push(tool.function!);
           }
         }
       });

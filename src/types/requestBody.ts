@@ -355,8 +355,18 @@ export type ToolChoice = ToolChoiceObject | 'none' | 'auto' | 'required';
 export interface Tool extends PromptCache {
   /** The name of the function. */
   type: string;
-  /** A description of the function. */
-  function: Function;
+  /** A function tool definition when type is `function`. */
+  function?: Function;
+  /** The name of the tool when using non-function tools. */
+  name?: string;
+  /** Maximum number of times the tool can be used. */
+  max_uses?: number;
+  /** Allowed domains for web search tool. */
+  allowed_domains?: string[];
+  /** Blocked domains for web search tool. */
+  blocked_domains?: string[];
+  /** User location information for web search tool. */
+  user_location?: Record<string, any>;
 }
 
 /**
