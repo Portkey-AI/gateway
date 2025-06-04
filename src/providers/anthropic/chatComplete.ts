@@ -328,7 +328,23 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
       let tools: AnthropicTool[] = [];
       if (params.tools) {
         params.tools.forEach((tool) => {
-          if (tool.function) {
+          if (tool.type === 'web_search_20250305') {
+            tools.push({
+              type: tool.type,
+              name: tool.name ?? 'web_search',
+              ...(tool.max_uses !== undefined && { max_uses: tool.max_uses }),
+              ...(tool.allowed_domains && {
+                allowed_domains: tool.allowed_domains,
+              }),
+              ...(tool.blocked_domains && {
+                blocked_domains: tool.blocked_domains,
+              }),
+              ...(tool.user_location && { user_location: tool.user_location }),
+              ...(tool.cache_control && {
+                cache_control: { type: 'ephemeral' },
+              }),
+            } as any);
+          } else if (tool.function) {
             tools.push({
               name: tool.function.name,
               description: tool.function?.description || '',
