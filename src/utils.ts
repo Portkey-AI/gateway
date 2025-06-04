@@ -2,9 +2,11 @@ import {
   ANTHROPIC,
   COHERE,
   GOOGLE,
+  GOOGLE_VERTEX_AI,
   PERPLEXITY_AI,
   DEEPINFRA,
-  OLLAMA,
+  SAMBANOVA,
+  BEDROCK,
 } from './globals';
 import { Params } from './types/requestBody';
 
@@ -12,15 +14,26 @@ export const getStreamModeSplitPattern = (
   proxyProvider: string,
   requestURL: string
 ) => {
-  let splitPattern = '\n\n';
+  let splitPattern: SplitPatternType = '\n\n';
+
   if (proxyProvider === ANTHROPIC && requestURL.endsWith('/complete')) {
     splitPattern = '\r\n\r\n';
   }
+
   if (proxyProvider === COHERE) {
     splitPattern = '\n';
   }
+
   if (proxyProvider === GOOGLE) {
     splitPattern = '\r\n';
+  }
+
+  // In Vertex Anthropic and LLama have \n\n as the pattern only Gemini has \r\n\r\n
+  if (
+    proxyProvider === GOOGLE_VERTEX_AI &&
+    requestURL.includes('/publishers/google')
+  ) {
+    splitPattern = '\r\n\r\n';
   }
 
   if (proxyProvider === PERPLEXITY_AI) {
@@ -28,18 +41,33 @@ export const getStreamModeSplitPattern = (
   }
 
   if (proxyProvider === DEEPINFRA) {
-    splitPattern = '\r\n\r\n';
+    splitPattern = '\n';
+  }
+
+  if (proxyProvider === SAMBANOVA) {
+    splitPattern = '\n';
   }
 
   return splitPattern;
 };
+export type SplitPatternType = '\n\n' | '\r\n\r\n' | '\n' | '\r\n';
 
 export const getStreamingMode = (
   reqBody: Params,
   provider: string,
   requestUrl: string
 ) => {
-  if (provider === GOOGLE && requestUrl.indexOf('stream') > -1) {
+  if (
+    [GOOGLE, GOOGLE_VERTEX_AI].includes(provider) &&
+    requestUrl.indexOf('stream') > -1
+  ) {
+    return true;
+  }
+  if (
+    provider === BEDROCK &&
+    (requestUrl.indexOf('invoke-with-response-stream') > -1 ||
+      requestUrl.indexOf('converse-stream') > -1)
+  ) {
     return true;
   }
   return reqBody.stream;

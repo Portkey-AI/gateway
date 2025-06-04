@@ -86,10 +86,6 @@ interface FireworksAIImageObject {
   ['X-Fireworks-Billing-Idempotency-Id']: string;
 }
 
-interface FireworksAIImageGenerateResponse extends ImageGenerateResponse {
-  data: FireworksAIImageObject[];
-}
-
 export const FireworksAIImageGenerateResponseTransform: (
   response:
     | FireworksAIImageObject[]
@@ -104,7 +100,7 @@ export const FireworksAIImageGenerateResponseTransform: (
   }
   if (response instanceof Array) {
     return {
-      created: `${new Date().getTime()}`, // Corrected method call
+      created: Math.floor(Date.now() / 1000), // Corrected method call
       data: response?.map((r) => ({
         b64_json: r.base64,
         seed: r.seed,

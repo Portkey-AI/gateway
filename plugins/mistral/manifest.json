@@ -1,0 +1,66 @@
+{
+  "id": "mistral",
+  "description": "Mistral Content Moderation classifier leverages the most relevant policy categories for effective guardrails and introduces a pragmatic approach to LLM safety by addressing model-generated harms such as unqualified advice and PII",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "Find your API key in the Mistral la-plateforme",
+        "encrypted": true
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Moderate Content",
+      "id": "moderateContent",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks if the content passes the mentioned content moderation checks."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "label": "Moderation Checks",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Select the categories that should NOT be allowed in the content. (Checked via OpenAI moderation API)"
+              }
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "sexual",
+                "hate_and_discrimination",
+                "violence_and_threats",
+                "dangerous_and_criminal_content",
+                "selfharm",
+                "health",
+                "financial",
+                "law",
+                "pii"
+              ],
+              "default": [
+                "selfharm",
+                "pii",
+                "sexual",
+                "hate_and_discrimination"
+              ]
+            }
+          }
+        },
+        "required": ["categories"]
+      }
+    }
+  ]
+}

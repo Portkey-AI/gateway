@@ -1,0 +1,74 @@
+{
+  "id": "bedrock",
+  "description": "AWS Bedrock Content Moderation classifier leverages AWS guardrails for effective guardrails and introduces a pragmatic approach to LLM safety by addressing model-generated harms such as unqualified advice and PII",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "accessKeyId": {
+        "type": "string",
+        "label": "Access Key ID",
+        "description": "Find your Access Key ID in the AWS Management Console",
+        "encrypted": true
+      },
+      "accessKeySecret": {
+        "type": "string",
+        "label": "Access Key Secret",
+        "description": "Find your Access Key Secret in the AWS Management Console",
+        "encrypted": true
+      },
+      "awsSessionToken": {
+        "type": "string",
+        "label": "AWS Session Token",
+        "description": "AWS Session token."
+      },
+      "region": {
+        "type": "string",
+        "description": "Bedrock guardrail hosted region",
+        "lable": "Region"
+      }
+    },
+    "required": ["accessKeyId", "accessKeySecret", "region"]
+  },
+
+  "functions": [
+    {
+      "name": "Apply Bedrock guardrail",
+      "id": "guard",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Filters out Content that contain harmful content & prompt filters"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "guardrailVersion": {
+            "type": "string",
+            "label": "Guardrail Version",
+            "description": "Select the version of the guardrail to use"
+          },
+          "guardrailId": {
+            "type": "string",
+            "label": "Guardrail ID",
+            "description": "ID of the guardrail."
+          },
+          "redact": {
+            "type": "boolean",
+            "label": "Redact PII",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the PII identified will be redacted"
+              }
+            ],
+            "default": false
+          }
+        },
+        "required": ["guardrailVersion", "guardrailId"]
+      }
+    }
+  ]
+}

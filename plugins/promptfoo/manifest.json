@@ -1,0 +1,65 @@
+{
+  "id": "promptfoo",
+  "description": "Promptfoo's Red Team and Guardrails API helps detect security risks, PII, and harmful content in LLM interactions",
+  "credentials": {
+    "type": "object",
+    "properties": {},
+    "required": []
+  },
+  "functions": [
+    {
+      "name": "Guard Check",
+      "id": "guard",
+      "supportedHooks": ["beforeRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Detect injection and jailbreak attempts"
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "PII Detection",
+      "id": "pii",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Detect personally identifiable information (PII) in text"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "redact": {
+            "type": "boolean",
+            "label": "Redact PII",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the PII identified will be redacted"
+              }
+            ],
+            "default": false
+          }
+        }
+      }
+    },
+    {
+      "name": "Harm Detection",
+      "id": "harm",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Detect potentially harmful content across multiple categories"
+        }
+      ],
+      "parameters": {}
+    }
+  ]
+}

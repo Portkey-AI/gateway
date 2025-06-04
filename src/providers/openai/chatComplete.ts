@@ -1,10 +1,11 @@
-import { OPEN_AI } from '../../globals';
+import { ANTHROPIC, OPEN_AI } from '../../globals';
+import { ContentBlockChunk } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
 } from '../types';
-import { generateErrorResponse } from '../utils';
+import { OpenAIErrorResponseTransform } from './utils';
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -87,23 +88,41 @@ export const OpenAIChatCompleteConfig: ProviderConfig = {
   top_logprobs: {
     param: 'top_logprobs',
   },
+  stream_options: {
+    param: 'stream_options',
+  },
+  service_tier: {
+    param: 'service_tier',
+  },
+  parallel_tool_calls: {
+    param: 'parallel_tool_calls',
+  },
+  max_completion_tokens: {
+    param: 'max_completion_tokens',
+  },
+  store: {
+    param: 'store',
+  },
+  metadata: {
+    param: 'metadata',
+  },
+  modalities: {
+    param: 'modalities',
+  },
+  audio: {
+    param: 'audio',
+  },
+  prediction: {
+    param: 'prediction',
+  },
+  reasoning_effort: {
+    param: 'reasoning_effort',
+  },
 };
 
 export interface OpenAIChatCompleteResponse extends ChatCompletionResponse {
   system_fingerprint: string;
 }
-
-export const OpenAIErrorResponseTransform: (
-  response: ErrorResponse,
-  provider: string
-) => ErrorResponse = (response, provider) => {
-  return generateErrorResponse(
-    {
-      ...response.error,
-    },
-    provider
-  );
-};
 
 export const OpenAIChatCompleteResponseTransform: (
   response: OpenAIChatCompleteResponse | ErrorResponse,
@@ -128,13 +147,24 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
   provider: string
 ) => Array<string> = (response, provider) => {
   const streamChunkArray: Array<string> = [];
-  const { id, model, system_fingerprint, choices } = response;
+  const { id, model, system_fingerprint, choices, citations } = response;
 
-  const { prompt_tokens, completion_tokens } = response.usage || {};
+  const {
+    prompt_tokens,
+    completion_tokens,
+    cache_read_input_tokens,
+    cache_creation_input_tokens,
+    num_search_queries,
+  } = response.usage || {};
 
   let total_tokens;
   if (prompt_tokens && completion_tokens)
     total_tokens = prompt_tokens + completion_tokens;
+
+  const shouldSendCacheUsage =
+    provider === ANTHROPIC &&
+    (Number.isInteger(cache_read_input_tokens) ||
+      Number.isInteger(cache_creation_input_tokens));
 
   const streamChunkTemplate: Record<string, any> = {
     id,
@@ -147,10 +177,126 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
       ...(completion_tokens && { completion_tokens }),
       ...(prompt_tokens && { prompt_tokens }),
       ...(total_tokens && { total_tokens }),
+      ...(shouldSendCacheUsage && {
+        cache_read_input_tokens,
+        cache_creation_input_tokens,
+      }),
+      ...(num_search_queries && { num_search_queries }),
     },
+    ...(citations && { citations }),
   };
 
   for (const [index, choice] of choices.entries()) {
+    if (choice.message?.content_blocks) {
+      for (const [
+        contentBlockIndex,
+        contentBlock,
+      ] of choice.message.content_blocks.entries()) {
+        const contentBlockDelta: ContentBlockChunk = {
+          ...contentBlock,
+        } as ContentBlockChunk;
+        delete contentBlockDelta.type;
+        if (contentBlockDelta.text) {
+          for (let i = 0; i < contentBlockDelta.text.length; i += 500) {
+            const content = contentBlockDelta.text.slice(i, i + 500);
+            streamChunkArray.push(
+              `data: ${JSON.stringify({
+                ...streamChunkTemplate,
+                choices: [
+                  {
+                    index: index,
+                    delta: {
+                      role: 'assistant',
+                      content,
+                      content_blocks: [
+                        {
+                          index: contentBlockIndex,
+                          delta: {
+                            text: content,
+                          },
+                        },
+                      ],
+                    },
+                  },
+                ],
+              })}\n\n`
+            );
+          }
+        } else if (contentBlockDelta.thinking) {
+          for (let i = 0; i < contentBlockDelta.thinking.length; i += 500) {
+            const thinking = contentBlockDelta.thinking.slice(i, i + 500);
+            streamChunkArray.push(
+              `data: ${JSON.stringify({
+                ...streamChunkTemplate,
+                choices: [
+                  {
+                    index: index,
+                    delta: {
+                      role: 'assistant',
+                      content_blocks: [
+                        {
+                          index: contentBlockIndex,
+                          delta: {
+                            thinking,
+                          },
+                        },
+                      ],
+                    },
+                  },
+                ],
+              })}\n\n`
+            );
+          }
+          streamChunkArray.push(
+            `data: ${JSON.stringify({
+              ...streamChunkTemplate,
+              choices: [
+                {
+                  index: index,
+                  delta: {
+                    role: 'assistant',
+                    content_blocks: [
+                      {
+                        index: contentBlockIndex,
+                        delta: {
+                          signature: contentBlockDelta.signature,
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            })}\n\n`
+          );
+        } else if (contentBlockDelta.data) {
+          for (let i = 0; i < contentBlockDelta.data.length; i += 500) {
+            const data = contentBlockDelta.data.slice(i, i + 500);
+            streamChunkArray.push(
+              `data: ${JSON.stringify({
+                ...streamChunkTemplate,
+                choices: [
+                  {
+                    index: index,
+                    delta: {
+                      role: 'assistant',
+                      content_blocks: [
+                        {
+                          index: contentBlockIndex,
+                          delta: {
+                            data,
+                          },
+                        },
+                      ],
+                    },
+                  },
+                ],
+              })}\n\n`
+            );
+          }
+        }
+      }
+    }
+
     if (
       choice.message &&
       choice.message.tool_calls &&
@@ -213,11 +359,12 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
     if (
       choice.message &&
       choice.message.content &&
-      typeof choice.message.content === 'string'
+      typeof choice.message.content === 'string' &&
+      !choice.message.content_blocks
     ) {
       const inidividualWords: Array<string> = [];
-      for (let i = 0; i < choice.message.content.length; i += 4) {
-        inidividualWords.push(choice.message.content.slice(i, i + 4));
+      for (let i = 0; i < choice.message.content.length; i += 500) {
+        inidividualWords.push(choice.message.content.slice(i, i + 500));
       }
       inidividualWords.forEach((word: string) => {
         streamChunkArray.push(
@@ -230,6 +377,9 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
                   role: 'assistant',
                   content: word,
                 },
+                ...(choice.groundingMetadata && {
+                  groundingMetadata: choice.groundingMetadata,
+                }),
               },
             ],
           })}\n\n`

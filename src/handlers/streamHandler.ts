@@ -5,10 +5,14 @@ import {
   COHERE,
   GOOGLE,
   REQUEST_TIMEOUT_STATUS_CODE,
+  PRECONDITION_CHECK_FAILED_STATUS_CODE,
+  GOOGLE_VERTEX_AI,
 } from '../globals';
+import { VertexLlamaChatCompleteStreamChunkTransform } from '../providers/google-vertex-ai/chatComplete';
 import { OpenAIChatCompleteResponse } from '../providers/openai/chatComplete';
 import { OpenAICompleteResponse } from '../providers/openai/complete';
-import { getStreamModeSplitPattern } from '../utils';
+import { Params } from '../types/requestBody';
+import { getStreamModeSplitPattern, type SplitPatternType } from '../utils';
 
 function readUInt32BE(buffer: Uint8Array, offset: number) {
   return (
@@ -30,7 +34,10 @@ function getPayloadFromAWSChunk(chunk: Uint8Array): string {
 
   const payloadLength = chunkLength - headersEnd - 4; // Subtracting 4 for the message crc
   const payload = chunk.slice(headersEnd, headersEnd + payloadLength);
-  return decoder.decode(payload);
+  const decodedJson = JSON.parse(decoder.decode(payload));
+  return decodedJson.bytes
+    ? Buffer.from(decodedJson.bytes, 'base64').toString()
+    : JSON.stringify(decodedJson);
 }
 
 function concatenateUint8Arrays(a: Uint8Array, b: Uint8Array): Uint8Array {
@@ -43,10 +50,13 @@ function concatenateUint8Arrays(a: Uint8Array, b: Uint8Array): Uint8Array {
 export async function* readAWSStream(
   reader: ReadableStreamDefaultReader,
   transformFunction: Function | undefined,
-  fallbackChunkId: string
+  fallbackChunkId: string,
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
 ) {
   let buffer = new Uint8Array();
   let expectedLength = 0;
+  const streamState = {};
   while (true) {
     const { done, value } = await reader.read();
     if (done) {
@@ -56,17 +66,17 @@ export async function* readAWSStream(
           const data = buffer.subarray(0, expectedLength);
           buffer = buffer.subarray(expectedLength);
           expectedLength = readUInt32BE(buffer, 0);
-          const payload = Buffer.from(
-            JSON.parse(getPayloadFromAWSChunk(data)).bytes,
-            'base64'
-          ).toString();
+          const payload = getPayloadFromAWSChunk(data);
           if (transformFunction) {
             const transformedChunk = transformFunction(
               payload,
-              fallbackChunkId
+              fallbackChunkId,
+              streamState,
+              strictOpenAiCompliance,
+              gatewayRequest
             );
             if (Array.isArray(transformedChunk)) {
-              for (var item of transformedChunk) {
+              for (const item of transformedChunk) {
                 yield item;
               }
             } else {
@@ -91,15 +101,18 @@ export async function* readAWSStream(
       buffer = buffer.subarray(expectedLength);
 
       expectedLength = readUInt32BE(buffer, 0);
-      const payload = Buffer.from(
-        JSON.parse(getPayloadFromAWSChunk(data)).bytes,
-        'base64'
-      ).toString();
+      const payload = getPayloadFromAWSChunk(data);
 
       if (transformFunction) {
-        const transformedChunk = transformFunction(payload, fallbackChunkId);
+        const transformedChunk = transformFunction(
+          payload,
+          fallbackChunkId,
+          streamState,
+          strictOpenAiCompliance,
+          gatewayRequest
+        );
         if (Array.isArray(transformedChunk)) {
-          for (var item of transformedChunk) {
+          for (const item of transformedChunk) {
             yield item;
           }
         } else {
@@ -114,21 +127,30 @@ export async function* readAWSStream(
 
 export async function* readStream(
   reader: ReadableStreamDefaultReader,
-  splitPattern: string,
+  splitPattern: SplitPatternType,
   transformFunction: Function | undefined,
   isSleepTimeRequired: boolean,
-  fallbackChunkId: string
+  fallbackChunkId: string,
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
 ) {
   let buffer = '';
-  let decoder = new TextDecoder();
+  const decoder = new TextDecoder();
   let isFirstChunk = true;
+  const streamState = {};
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) {
       if (buffer.length > 0) {
         if (transformFunction) {
-          yield transformFunction(buffer, fallbackChunkId);
+          yield transformFunction(
+            buffer,
+            fallbackChunkId,
+            streamState,
+            strictOpenAiCompliance,
+            gatewayRequest
+          );
         } else {
           yield buffer;
         }
@@ -140,9 +162,9 @@ export async function* readStream(
     // keep buffering until we have a complete chunk
 
     while (buffer.split(splitPattern).length > 1) {
-      let parts = buffer.split(splitPattern);
-      let lastPart = parts.pop() ?? ''; // remove the last part from the array and keep it in buffer
-      for (let part of parts) {
+      const parts = buffer.split(splitPattern);
+      const lastPart = parts.pop() ?? ''; // remove the last part from the array and keep it in buffer
+      for (const part of parts) {
         // Some providers send ping event which can be ignored during parsing
 
         if (part.length > 0) {
@@ -154,7 +176,13 @@ export async function* readStream(
           }
 
           if (transformFunction) {
-            const transformedChunk = transformFunction(part, fallbackChunkId);
+            const transformedChunk = transformFunction(
+              part,
+              fallbackChunkId,
+              streamState,
+              strictOpenAiCompliance,
+              gatewayRequest
+            );
             if (transformedChunk !== undefined) {
               yield transformedChunk;
             }
@@ -195,47 +223,81 @@ export async function handleTextResponse(
 
 export async function handleNonStreamingMode(
   response: Response,
-  responseTransformer: Function | undefined
-) {
+  responseTransformer: Function | undefined,
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string,
+  gatewayRequest: Params,
+  areSyncHooksAvailable: boolean
+): Promise<{
+  response: Response;
+  json: Record<string, any> | null;
+  originalResponseBodyJson?: Record<string, any> | null;
+}> {
   // 408 is thrown whenever a request takes more than request_timeout to respond.
   // In that case, response thrown by gateway is already in OpenAI format.
   // So no need to transform it again.
-  if (response.status === REQUEST_TIMEOUT_STATUS_CODE) {
-    return response;
+  if (
+    [
+      REQUEST_TIMEOUT_STATUS_CODE,
+      PRECONDITION_CHECK_FAILED_STATUS_CODE,
+    ].includes(response.status)
+  ) {
+    return { response, json: await response.clone().json() };
   }
 
-  let responseBodyJson = await response.json();
+  const isJsonParsingRequired = responseTransformer || areSyncHooksAvailable;
+  const originalResponseBodyJson: Record<string, any> | null =
+    isJsonParsingRequired ? await response.json() : null;
+  let responseBodyJson = originalResponseBodyJson;
   if (responseTransformer) {
     responseBodyJson = responseTransformer(
       responseBodyJson,
       response.status,
-      response.headers
+      response.headers,
+      strictOpenAiCompliance,
+      gatewayRequestUrl,
+      gatewayRequest
     );
+  } else if (!areSyncHooksAvailable) {
+    return {
+      response: new Response(response.body, response),
+      json: null,
+      originalResponseBodyJson,
+    };
   }
 
-  return new Response(JSON.stringify(responseBodyJson), response);
+  return {
+    response: new Response(JSON.stringify(responseBodyJson), response),
+    json: responseBodyJson as Record<string, any>,
+    // Send original response if transformer exists
+    ...(responseTransformer && { originalResponseBodyJson }),
+  };
 }
 
-export async function handleAudioResponse(response: Response) {
+export function handleAudioResponse(response: Response) {
   return new Response(response.body, response);
 }
 
-export async function handleOctetStreamResponse(response: Response) {
+export function handleOctetStreamResponse(response: Response) {
   return new Response(response.body, response);
 }
 
-export async function handleImageResponse(response: Response) {
+export function handleImageResponse(response: Response) {
   return new Response(response.body, response);
 }
 
-export async function handleStreamingMode(
+export function handleStreamingMode(
   response: Response,
   proxyProvider: string,
   responseTransformer: Function | undefined,
-  requestURL: string
-): Promise<Response> {
+  requestURL: string,
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
+): Response {
   const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);
-  const fallbackChunkId = Date.now().toString();
+  // If the provider doesn't supply completion id,
+  // we generate a fallback id using the provider name + timestamp.
+  const fallbackChunkId = `${proxyProvider}-${Date.now().toString()}`;
 
   if (!response.body) {
     throw new Error('Response format is invalid. Body not found');
@@ -251,7 +313,9 @@ export async function handleStreamingMode(
       for await (const chunk of readAWSStream(
         reader,
         responseTransformer,
-        fallbackChunkId
+        fallbackChunkId,
+        strictOpenAiCompliance,
+        gatewayRequest
       )) {
         await writer.write(encoder.encode(chunk));
       }
@@ -264,7 +328,9 @@ export async function handleStreamingMode(
         splitPattern,
         responseTransformer,
         isSleepTimeRequired,
-        fallbackChunkId
+        fallbackChunkId,
+        strictOpenAiCompliance,
+        gatewayRequest
       )) {
         await writer.write(encoder.encode(chunk));
       }
@@ -273,10 +339,15 @@ export async function handleStreamingMode(
   }
 
   // Convert GEMINI/COHERE json stream to text/event-stream for non-proxy calls
-  if (
-    [GOOGLE, COHERE, BEDROCK].includes(proxyProvider) &&
-    responseTransformer
-  ) {
+  const isGoogleCohereOrBedrock = [GOOGLE, COHERE, BEDROCK].includes(
+    proxyProvider
+  );
+  const isVertexLlama =
+    proxyProvider === GOOGLE_VERTEX_AI &&
+    responseTransformer?.name ===
+      VertexLlamaChatCompleteStreamChunkTransform.name;
+  const isJsonStream = isGoogleCohereOrBedrock || isVertexLlama;
+  if (isJsonStream && responseTransformer) {
     return new Response(readable, {
       ...response,
       headers: new Headers({
@@ -299,19 +370,41 @@ export async function handleJSONToStreamResponse(
   const encoder = new TextEncoder();
   const responseJSON: OpenAIChatCompleteResponse | OpenAICompleteResponse =
     await response.clone().json();
-  const streamChunkArray = responseTransformerFunction(responseJSON, provider);
 
-  (async () => {
-    for (const chunk of streamChunkArray) {
-      await writer.write(encoder.encode(chunk));
-    }
-    writer.close();
-  })();
+  if (
+    Object.prototype.toString.call(responseTransformerFunction) ===
+    '[object GeneratorFunction]'
+  ) {
+    const generator = responseTransformerFunction(responseJSON, provider);
+    (async () => {
+      while (true) {
+        const chunk = generator.next();
+        if (chunk.done) {
+          break;
+        }
+        await writer.write(encoder.encode(chunk.value));
+      }
+      writer.close();
+    })();
+  } else {
+    const streamChunkArray = responseTransformerFunction(
+      responseJSON,
+      provider
+    );
+    (async () => {
+      for (const chunk of streamChunkArray) {
+        await writer.write(encoder.encode(chunk));
+      }
+      writer.close();
+    })();
+  }
 
   return new Response(readable, {
     headers: new Headers({
       ...Object.fromEntries(response.headers),
       'content-type': CONTENT_TYPES.EVENT_STREAM,
     }),
+    status: response.status,
+    statusText: response.statusText,
   });
 }

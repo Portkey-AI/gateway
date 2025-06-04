@@ -1,4 +1,5 @@
 import { TOGETHER_AI } from '../../globals';
+import { Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -15,16 +16,27 @@ export const TogetherAIChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
-    default: 'togethercomputer/RedPajama-INCITE-Chat-3B-v1',
+    default: 'meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo',
   },
   messages: {
     param: 'messages',
     required: true,
     default: '',
+    transform: (params: Params) => {
+      return params.messages?.map((message) => {
+        if (message.role === 'developer') return { ...message, role: 'system' };
+        return message;
+      });
+    },
   },
   max_tokens: {
     param: 'max_tokens',
     required: true,
+    default: 128,
+    min: 1,
+  },
+  max_completion_tokens: {
+    param: 'max_tokens',
     default: 128,
     min: 1,
   },
@@ -83,6 +95,7 @@ export interface TogetherAIOpenAICompatibleErrorResponse
 
 export interface TogetherAIChatCompletionStreamChunk {
   id: string;
+  model: string;
   request_id: string;
   object: string;
   choices: {
@@ -195,7 +208,7 @@ export const TogetherAIChatCompleteStreamChunkTransform: (
       id: parsedChunk.id,
       object: parsedChunk.object,
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: parsedChunk.model,
       provider: TOGETHER_AI,
       choices: [
         {

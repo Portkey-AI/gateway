@@ -1,16 +1,24 @@
 import { ProviderConfigs } from '../types';
 import GroqAPIConfig from './api';
+import { GroqChatCompleteStreamChunkTransform } from './chatComplete';
 import {
-  GroqChatCompleteConfig,
-  GroqChatCompleteResponseTransform,
-  GroqChatCompleteStreamChunkTransform,
-} from './chatComplete';
+  chatCompleteParams,
+  responseTransformers,
+  createSpeechParams,
+} from '../open-ai-base';
+import { GROQ } from '../../globals';
 
 const GroqConfig: ProviderConfigs = {
-  chatComplete: GroqChatCompleteConfig,
   api: GroqAPIConfig,
+  chatComplete: chatCompleteParams(['logprobs', 'logits_bias', 'top_logprobs']),
+  createTranscription: {},
+  createTranslation: {},
+  createSpeech: createSpeechParams([]),
   responseTransforms: {
-    chatComplete: GroqChatCompleteResponseTransform,
+    ...responseTransformers(GROQ, {
+      chatComplete: true,
+      createSpeech: true,
+    }),
     'stream-chatComplete': GroqChatCompleteStreamChunkTransform,
   },
 };

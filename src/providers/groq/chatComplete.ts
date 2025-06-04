@@ -1,59 +1,23 @@
 import { GROQ } from '../../globals';
-import {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
+import { ChatCompletionResponse, ErrorResponse } from '../types';
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
 
-export const GroqChatCompleteConfig: ProviderConfig = {
-  model: {
-    param: 'model',
-    required: true,
-    default: 'mixtral-8x7b-32768',
-  },
-  messages: {
-    param: 'messages',
-    default: '',
-  },
-  max_tokens: {
-    param: 'max_tokens',
-    default: 100,
-    min: 0,
-  },
-  temperature: {
-    param: 'temperature',
-    default: 1,
-    min: 0,
-    max: 2,
-  },
-  top_p: {
-    param: 'top_p',
-    default: 1,
-    min: 0,
-    max: 1,
-  },
-  stream: {
-    param: 'stream',
-    default: false,
-  },
-  stop: {
-    param: 'stop',
-  },
-  n: {
-    param: 'n',
-    default: 1,
-    max: 1,
-    min: 1,
-  },
-};
-
 export interface GroqChatCompleteResponse extends ChatCompletionResponse {}
 
 export interface GroqErrorResponse extends ErrorResponse {}
+
+export interface GroqStreamChunkUsage {
+  queue_time: number;
+  prompt_tokens: number;
+  prompt_time: number;
+  completion_tokens: number;
+  completion_time: number;
+  total_tokens: number;
+  total_time: number;
+}
 
 export interface GroqStreamChunk {
   id: string;
@@ -63,22 +27,16 @@ export interface GroqStreamChunk {
   choices: {
     delta: {
       content?: string;
+      tool_calls?: object[];
     };
     index: number;
     finish_reason: string | null;
     logprobs: object | null;
   }[];
   x_groq: {
-    usage: {
-      queue_time: number;
-      prompt_tokens: number;
-      prompt_time: number;
-      completion_tokens: number;
-      completion_time: number;
-      total_tokens: number;
-      total_time: number;
-    };
+    usage: GroqStreamChunkUsage;
   };
+  usage: GroqStreamChunkUsage;
 }
 
 export const GroqChatCompleteResponseTransform: (
@@ -144,7 +102,7 @@ export const GroqChatCompleteStreamChunkTransform: (
           index: parsedChunk.choices[0].index || 0,
           delta: {},
           logprobs: null,
-          finish_reason: parsedChunk.choices[0].index,
+          finish_reason: parsedChunk.choices[0].finish_reason,
         },
       ],
       usage: {
@@ -160,16 +118,27 @@ export const GroqChatCompleteStreamChunkTransform: (
     created: parsedChunk.created,
     model: parsedChunk.model,
     provider: GROQ,
-    choices: [
-      {
-        index: parsedChunk.choices[0].index || 0,
-        delta: {
-          role: 'assistant',
-          content: parsedChunk.choices[0].delta.content,
-        },
-        logprobs: null,
-        finish_reason: parsedChunk.choices[0].finish_reason || null,
-      },
-    ],
+    choices:
+      parsedChunk.choices && parsedChunk.choices.length > 0
+        ? [
+            {
+              index: parsedChunk.choices[0].index || 0,
+              delta: {
+                role: 'assistant',
+                content: parsedChunk.choices[0].delta?.content || '',
+                tool_calls: parsedChunk.choices[0].delta?.tool_calls || [],
+              },
+              logprobs: null,
+              finish_reason: parsedChunk.choices[0].finish_reason || null,
+            },
+          ]
+        : [],
+    usage: parsedChunk.usage
+      ? {
+          prompt_tokens: parsedChunk.usage.prompt_tokens || 0,
+          completion_tokens: parsedChunk.usage.completion_tokens || 0,
+          total_tokens: parsedChunk.usage.total_tokens || 0,
+        }
+      : undefined,
   })}\n\n`;
 };

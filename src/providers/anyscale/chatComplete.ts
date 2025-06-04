@@ -1,4 +1,5 @@
 import { ANYSCALE } from '../../globals';
+import { Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -20,6 +21,12 @@ export const AnyscaleChatCompleteConfig: ProviderConfig = {
   messages: {
     param: 'messages',
     default: '',
+    transform: (params: Params) => {
+      return params.messages?.map((message) => {
+        if (message.role === 'developer') return { ...message, role: 'system' };
+        return message;
+      });
+    },
   },
   functions: {
     param: 'functions',
@@ -28,6 +35,11 @@ export const AnyscaleChatCompleteConfig: ProviderConfig = {
     param: 'function_call',
   },
   max_tokens: {
+    param: 'max_tokens',
+    default: 100,
+    min: 0,
+  },
+  max_completion_tokens: {
     param: 'max_tokens',
     default: 100,
     min: 0,

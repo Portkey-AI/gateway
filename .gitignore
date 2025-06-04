@@ -135,4 +135,10 @@ build
 .DS_Store
 
 # Wrangler temp directory
-.wrangler 
+.wrangler
+
+# IntelliJ Idea
+.idea
+plugins/**/.creds.json
+plugins/**/creds.json
+plugins/**/.parameters.json

@@ -1,5 +1,5 @@
 import { AI21 } from '../../globals';
-import { Params } from '../../types/requestBody';
+import { Params, SYSTEM_MESSAGE_ROLES } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -19,7 +19,10 @@ export const AI21ChatCompleteConfig: ProviderConfig = {
       transform: (params: Params) => {
         let inputMessages: any = [];
 
-        if (params.messages?.[0]?.role === 'system') {
+        if (
+          params.messages?.[0]?.role &&
+          SYSTEM_MESSAGE_ROLES.includes(params.messages?.[0]?.role)
+        ) {
           inputMessages = params.messages.slice(1);
         } else if (params.messages) {
           inputMessages = params.messages;
@@ -35,7 +38,10 @@ export const AI21ChatCompleteConfig: ProviderConfig = {
       param: 'system',
       required: false,
       transform: (params: Params) => {
-        if (params.messages?.[0].role === 'system') {
+        if (
+          params.messages?.[0]?.role &&
+          SYSTEM_MESSAGE_ROLES.includes(params.messages?.[0]?.role)
+        ) {
           return params.messages?.[0].content;
         }
       },
@@ -46,6 +52,10 @@ export const AI21ChatCompleteConfig: ProviderConfig = {
     default: 1,
   },
   max_tokens: {
+    param: 'maxTokens',
+    default: 16,
+  },
+  max_completion_tokens: {
     param: 'maxTokens',
     default: 16,
   },
@@ -137,7 +147,7 @@ export const AI21ChatCompleteResponseTransform: (
   if ('outputs' in response) {
     return {
       id: response.id,
-      object: 'chat_completion',
+      object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
       model: '',
       provider: AI21,

@@ -26,7 +26,7 @@ export const PalmChatCompleteConfig: ProviderConfig = {
     transform: (params: Params) => {
       const { examples, context, messages } = params;
       const palmMessages = messages?.map((message) => ({
-        author: message.role,
+        author: message.role === 'developer' ? 'system' : message.role,
         content: message.content,
       }));
       const prompt = {
@@ -66,6 +66,11 @@ export const PalmChatCompleteConfig: ProviderConfig = {
     default: 100,
     min: 1,
   },
+  max_completion_tokens: {
+    param: 'maxOutputTokens',
+    default: 100,
+    min: 1,
+  },
   stop: {
     param: 'stopSequences',
   },
@@ -86,7 +91,7 @@ export const PalmChatCompleteResponseTransform: (
   if ('candidates' in response) {
     return {
       id: Date.now().toString(),
-      object: 'chat_completion',
+      object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
       model: 'Unknown',
       provider: PALM,

@@ -1,4 +1,5 @@
 import { DEEPINFRA } from '../../globals';
+import { Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -22,6 +23,12 @@ export const DeepInfraChatCompleteConfig: ProviderConfig = {
     param: 'messages',
     required: true,
     default: [],
+    transform: (params: Params) => {
+      return params.messages?.map((message) => {
+        if (message.role === 'developer') return { ...message, role: 'system' };
+        return message;
+      });
+    },
   },
   frequency_penalty: {
     param: 'frequency_penalty',
@@ -30,6 +37,11 @@ export const DeepInfraChatCompleteConfig: ProviderConfig = {
     max: 2,
   },
   max_tokens: {
+    param: 'max_tokens',
+    default: 100,
+    min: 1,
+  },
+  max_completion_tokens: {
     param: 'max_tokens',
     default: 100,
     min: 1,
@@ -101,6 +113,11 @@ interface DeepInfraStreamChunk {
     index: number;
     finish_reason: string | null;
   }[];
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
 }
 
 export const DeepInfraChatCompleteResponseTransform: (
@@ -166,6 +183,15 @@ export const DeepInfraChatCompleteResponseTransform: (
 export const DeepInfraChatCompleteStreamChunkTransform: (
   response: string
 ) => string = (responseChunk) => {
+  // Matches a ping chunk `: ping - 2025-04-13 03:55:09.637341+00:00`
+  if (
+    responseChunk.match(
+      /^:\s*ping\s*-\s*\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d{6}\+\d{2}:\d{2}$/
+    )
+  ) {
+    return '';
+  }
+
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
@@ -187,6 +213,13 @@ export const DeepInfraChatCompleteStreamChunkTransform: (
           finish_reason: parsedChunk.choices[0].finish_reason,
         },
       ],
+      usage: parsedChunk.usage
+        ? {
+            prompt_tokens: parsedChunk.usage.prompt_tokens,
+            completion_tokens: parsedChunk.usage.completion_tokens,
+            total_tokens: parsedChunk.usage.total_tokens,
+          }
+        : undefined,
     })}` + '\n\n'
   );
 };

@@ -1,0 +1,103 @@
+{
+  "id": "pangea",
+  "description": "Pangea AI Guard for scanning LLM inputs and outputs",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "Pangea token",
+        "description": "AI Guard token. Get your token configured on Pangea User Console (https://pangea.cloud/docs/getting-started/configure-services/#configure-a-pangea-service).",
+        "encrypted": true
+      },
+      "domain": {
+        "type": "string",
+        "label": "Pangea domain",
+        "description": "Pangea domain, including cloud provider and zone."
+      }
+    },
+    "required": ["domain", "apiKey"]
+  },
+  "functions": [
+    {
+      "name": "AI Guard for scanning LLM inputs and outputs",
+      "id": "textGuard",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Analyze and redact text to avoid manipulation of the model, addition of malicious content, and other undesirable data transfers."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "recipe": {
+            "type": "string",
+            "label": "Recipe",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Recipe key of a configuration of data types and settings defined in the Pangea User Console. It specifies the rules that are to be applied to the text, such as defang malicious URLs."
+              }
+            ]
+          },
+          "debug": {
+            "type": "boolean",
+            "label": "Debug",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Setting this value to true will provide a detailed analysis of the text data."
+              }
+            ]
+          },
+          "overrides": {
+            "type": "object",
+            "properties": {
+              "prompt_guard": {
+                "type": "object",
+                "label": "Prompt guard",
+                "properties": {
+                  "state": {
+                    "type": "string",
+                    "label": "State"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "PII Guard",
+      "id": "pii",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Pangea PII Guard for scanning LLM inputs and outputs."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "redact": {
+            "type": "boolean",
+            "label": "Redact PII",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the PII identified will be redacted"
+              }
+            ],
+            "default": false
+          }
+        }
+      }
+    }
+  ]
+}

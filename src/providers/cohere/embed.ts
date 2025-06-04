@@ -9,7 +9,7 @@ export const CohereEmbedConfig: ProviderConfig = {
     required: true,
     transform: (params: EmbedParams): string[] => {
       if (Array.isArray(params.input)) {
-        return params.input;
+        return params.input as string[];
       } else {
         return [params.input];
       }
@@ -18,6 +18,18 @@ export const CohereEmbedConfig: ProviderConfig = {
   model: {
     param: 'model',
     default: 'embed-english-light-v2.0',
+  },
+  input_type: {
+    param: 'input_type',
+    required: false,
+  },
+  embedding_types: {
+    param: 'embedding_types',
+    required: false,
+  },
+  truncate: {
+    param: 'truncate',
+    required: false,
   },
 };
 
@@ -61,8 +73,19 @@ export interface CohereEmbedResponse {
 
 export const CohereEmbedResponseTransform: (
   response: CohereEmbedResponse,
-  responseStatus: number
-) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
+) => EmbedResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
+) => {
   if (responseStatus !== 200) {
     return generateErrorResponse(
       {
@@ -82,10 +105,61 @@ export const CohereEmbedResponseTransform: (
       embedding: embedding,
       index: index,
     })),
-    model: '', // Todo: find a way to send the cohere embedding model name back
+    model: (gatewayRequest.model as string) || '',
     usage: {
       prompt_tokens: -1,
       total_tokens: -1,
+    },
+  };
+};
+
+interface CohereEmbedResponseBatch {
+  custom_id: string;
+  id: string;
+  text: string;
+  embeddings: {
+    float?: {
+      array: number[];
+    };
+    int8?: {
+      array: number[];
+    };
+    uint8?: {
+      array: number[];
+    };
+    binary?: {
+      array: number[];
+    };
+    ubinary?: {
+      array: number[];
+    };
+  };
+}
+
+export const CohereEmbedResponseTransformBatch = (
+  response: CohereEmbedResponseBatch
+) => {
+  return {
+    id: response.id,
+    custom_id: response.custom_id,
+    response: {
+      status_code: 200,
+      request_id: response.id,
+      body: {
+        object: 'list',
+        data: [
+          {
+            object: 'embedding',
+            index: 0,
+            embedding: response.embeddings.float?.array,
+          },
+        ],
+        model: '',
+        usage: {
+          prompt_tokens: 0,
+          total_tokens: 0,
+        },
+      },
     },
   };
 };

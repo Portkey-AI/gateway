@@ -1,4 +1,5 @@
 import { FIREWORKS_AI } from '../../globals';
+import { Message, Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -13,16 +14,28 @@ export const FireworksAIChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
+    default: 'accounts/fireworks/models/llama-v3p1-405b-instruct',
   },
   messages: {
     param: 'messages',
     required: true,
     default: [],
+    transform: (params: Params) => {
+      return params.messages?.map((message: Message) => {
+        if (message.role === 'developer') return { ...message, role: 'system' };
+        return message;
+      });
+    },
   },
   tools: {
     param: 'tools',
   },
   max_tokens: {
+    param: 'max_tokens',
+    default: 200,
+    min: 1,
+  },
+  max_completion_tokens: {
     param: 'max_tokens',
     default: 200,
     min: 1,
@@ -80,6 +93,12 @@ export const FireworksAIChatCompleteConfig: ProviderConfig = {
   user: {
     param: 'user',
   },
+  logprobs: {
+    param: 'logprobs',
+  },
+  top_logprobs: {
+    param: 'top_logprobs',
+  },
 };
 
 interface FireworksAIChatCompleteResponse extends ChatCompletionResponse {
@@ -117,6 +136,7 @@ export interface FireworksAIStreamChunk {
     };
     index: number;
     finish_reason: string | null;
+    logprobs: object | null;
   }[];
   usage: null | {
     prompt_tokens: number;
@@ -180,6 +200,7 @@ export const FireworksAIChatCompleteResponseTransform: (
           tool_calls: c.message.tool_calls,
         },
         finish_reason: c.finish_reason,
+        logprobs: c.logprobs,
       })),
       usage: {
         prompt_tokens: response.usage?.prompt_tokens,
@@ -213,6 +234,7 @@ export const FireworksAIChatCompleteStreamChunkTransform: (
           index: parsedChunk.choices[0].index,
           delta: parsedChunk.choices[0].delta,
           finish_reason: parsedChunk.choices[0].finish_reason,
+          logprobs: parsedChunk.choices[0].logprobs,
         },
       ],
       ...(parsedChunk.usage ? { usage: parsedChunk.usage } : {}),

@@ -1,5 +1,5 @@
 import { AZURE_OPEN_AI } from '../../globals';
-import { OpenAIErrorResponseTransform } from '../openai/chatComplete';
+import { OpenAIErrorResponseTransform } from '../openai/utils';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -27,6 +27,11 @@ export const AzureOpenAIChatCompleteConfig: ProviderConfig = {
     default: 100,
     min: 0,
   },
+  max_completion_tokens: {
+    param: 'max_completion_tokens',
+    default: 100,
+    min: 0,
+  },
   temperature: {
     param: 'temperature',
     default: 1,
@@ -42,6 +47,13 @@ export const AzureOpenAIChatCompleteConfig: ProviderConfig = {
   n: {
     param: 'n',
     default: 1,
+  },
+  logprobs: {
+    param: 'logprobs',
+    default: false,
+  },
+  top_logprobs: {
+    param: 'top_logprobs',
   },
   stream: {
     param: 'stream',
@@ -75,11 +87,35 @@ export const AzureOpenAIChatCompleteConfig: ProviderConfig = {
   response_format: {
     param: 'response_format',
   },
+  store: {
+    param: 'store',
+  },
+  metadata: {
+    param: 'metadata',
+  },
+  modalities: {
+    param: 'modalities',
+  },
+  audio: {
+    param: 'audio',
+  },
+  seed: {
+    param: 'seed',
+  },
+  prediction: {
+    param: 'prediction',
+  },
+  reasoning_effort: {
+    param: 'reasoning_effort',
+  },
+  stream_options: {
+    param: 'stream_options',
+  },
 };
 
 interface AzureOpenAIChatCompleteResponse extends ChatCompletionResponse {}
 
-export const AzureOpenAIChatCompleteResponseTransform: (
+export const AzureOpenAIResponseTransform: (
   response: AzureOpenAIChatCompleteResponse | ErrorResponse,
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {

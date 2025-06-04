@@ -11,7 +11,7 @@ export const AI21EmbedConfig: ProviderConfig = {
     required: true,
     transform: (params: EmbedParams): string[] => {
       if (Array.isArray(params.input)) {
-        return params.input;
+        return params.input as string[];
       } else {
         return [params.input];
       }
@@ -39,7 +39,6 @@ export const AI21EmbedResponseTransform: (
     );
     if (errorResposne) return errorResposne;
   }
-
   if ('results' in response) {
     return {
       object: 'list',

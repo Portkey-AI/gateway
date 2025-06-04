@@ -1,4 +1,5 @@
 import { MISTRAL_AI } from '../../globals';
+import { Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -18,6 +19,12 @@ export const MistralAIChatCompleteConfig: ProviderConfig = {
   messages: {
     param: 'messages',
     default: [],
+    transform: (params: Params) => {
+      return params.messages?.map((message) => {
+        if (message.role === 'developer') return { ...message, role: 'system' };
+        return message;
+      });
+    },
   },
   temperature: {
     param: 'temperature',
@@ -32,6 +39,11 @@ export const MistralAIChatCompleteConfig: ProviderConfig = {
     max: 1,
   },
   max_tokens: {
+    param: 'max_tokens',
+    default: null,
+    min: 1,
+  },
+  max_completion_tokens: {
     param: 'max_tokens',
     default: null,
     min: 1,
@@ -53,7 +65,49 @@ export const MistralAIChatCompleteConfig: ProviderConfig = {
     param: 'safe_prompt',
     default: false,
   },
+  prompt: {
+    param: 'prompt',
+    required: false,
+    default: '',
+  },
+  suffix: {
+    param: 'suffix',
+    required: false,
+    default: '',
+  },
+  tools: {
+    param: 'tools',
+    default: null,
+  },
+  tool_choice: {
+    param: 'tool_choice',
+    default: null,
+    transform: (params: Params) => {
+      if (
+        typeof params.tool_choice === 'string' &&
+        params.tool_choice === 'required'
+      ) {
+        return 'any';
+      }
+      return params.tool_choice;
+    },
+  },
+  parallel_tool_calls: {
+    param: 'parallel_tool_calls',
+    default: null,
+  },
 };
+
+interface MistralToolCallFunction {
+  name: string;
+  arguments: string;
+}
+
+interface MistralToolCall {
+  id: string;
+  type: string;
+  function: MistralToolCallFunction;
+}
 
 interface MistralAIChatCompleteResponse extends ChatCompletionResponse {
   id: string;
@@ -84,6 +138,7 @@ interface MistralAIStreamChunk {
     delta: {
       role?: string | null;
       content?: string;
+      tool_calls?: MistralToolCall[];
     };
     index: number;
     finish_reason: string | null;
@@ -118,6 +173,7 @@ export const MistralAIChatCompleteResponseTransform: (
         message: {
           role: c.message.role,
           content: c.message.content,
+          tool_calls: c.message.tool_calls,
         },
         finish_reason: c.finish_reason,
       })),
