@@ -458,7 +458,7 @@ export async function tryPost(
       hookSpan.id,
       providerContext,
       hooksService,
-      mcpService || undefined
+      mcpService || undefined,
       logsService || undefined
     );
 
@@ -1148,7 +1148,7 @@ export async function recursiveAfterRequestHookHandler(
   hookSpanId: string,
   providerContext: ProviderContext,
   hooksService: HooksService,
-  mcpService?: McpService
+  mcpService?: McpService,
   logsService?: LogsService
 ): Promise<{
   mappedResponse: Response;
