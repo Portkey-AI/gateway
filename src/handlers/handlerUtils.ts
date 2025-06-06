@@ -459,6 +459,7 @@ export async function tryPost(
       providerContext,
       hooksService,
       mcpService || undefined
+      logsService || undefined
     );
 
   return responseService.create({
@@ -1148,6 +1149,7 @@ export async function recursiveAfterRequestHookHandler(
   providerContext: ProviderContext,
   hooksService: HooksService,
   mcpService?: McpService
+  logsService?: LogsService
 ): Promise<{
   mappedResponse: Response;
   retryCount: number;
@@ -1208,13 +1210,15 @@ export async function recursiveAfterRequestHookHandler(
 
   if (
     mcpService &&
+    logsService &&
     !isStreamingMode &&
     mappedResponseJson?.choices?.[0]?.message?.tool_calls?.[0]
   ) {
     const mcpResult = await handleMcpToolCalls(
       requestContext,
       mappedResponseJson,
-      mcpService
+      mcpService,
+      logsService
     );
     if (mcpResult.success) {
       // TODO: the hookspan context might need to be updated here.
@@ -1239,7 +1243,8 @@ export async function recursiveAfterRequestHookHandler(
         hookSpanId,
         providerContext,
         hooksService,
-        mcpService
+        mcpService,
+        logsService
       );
     } else {
       // MCP failed, log and continue with current response
@@ -1465,7 +1470,8 @@ export async function beforeRequestHookHandler(
 async function handleMcpToolCalls(
   requestContext: RequestContext,
   responseJson: any,
-  mcpService: McpService
+  mcpService: McpService,
+  logsService: LogsService
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const toolCalls = responseJson.choices[0].message.tool_calls;
@@ -1476,22 +1482,33 @@ async function handleMcpToolCalls(
 
     // Execute each tool call and add results to conversation
     for (const toolCall of toolCalls) {
+      const startTimeUnixNano = new Date().getTime();
       try {
         const toolResult = await mcpService.executeTool(
           toolCall.function.name,
           JSON.parse(toolCall.function.arguments)
         );
+        const endTimeUnixNano = new Date().getTime();
         conversation.push({
           role: 'tool',
           tool_call_id: toolCall.id,
           content: JSON.stringify(toolResult),
         });
+        const toolCallSpan = logsService.createExecuteToolSpan(
+          toolCall,
+          toolResult.content,
+          startTimeUnixNano,
+          endTimeUnixNano,
+          requestContext.traceId
+        );
+        logsService.addRequestLog(toolCallSpan);
       } catch (toolError: any) {
         console.error(
           `MCP tool call failed for ${toolCall.function.name}:`,
           toolError
         );
         // Add error message as tool response
+        const endTimeUnixNano = new Date().getTime();
         conversation.push({
           role: 'tool',
           tool_call_id: toolCall.id,
@@ -1500,6 +1517,14 @@ async function handleMcpToolCalls(
             details: toolError.message,
           }),
         });
+        const toolCallSpan = logsService.createExecuteToolSpan(
+          toolCall,
+          { error: toolError.message },
+          startTimeUnixNano,
+          endTimeUnixNano,
+          requestContext.traceId
+        );
+        logsService.addRequestLog(toolCallSpan);
       }
     }
 
