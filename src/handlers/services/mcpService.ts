@@ -19,7 +19,7 @@ export class McpService {
         if (client) {
           this.mcpConnections.set(server.name, client);
           let tools = await client.listTools();
-          if (server.tool_configuration.enabled) {
+          if (server.tool_configuration?.enabled) {
             const allowedTools = server.tool_configuration.allowed_tools;
             tools = tools.filter((tool) => allowedTools.includes(tool.name));
           }
@@ -94,7 +94,12 @@ export class McpService {
     for (const [name, client] of this.mcpConnections) {
       try {
         // console.log('Closing MCP connection to', name);
-        await client.close();
+        await Promise.race([
+          client.close(),
+          new Promise<void>((_, reject) =>
+            setTimeout(() => reject(new Error('Close timeout')), 10000)
+          ),
+        ]);
       } catch (error) {
         console.error(`Error closing MCP connection to ${name}:`, error);
         // Continue closing other connections even if one fails
@@ -251,6 +256,8 @@ class MinimalMCPClient {
   private isSSE = false;
   private sseEndpoint?: URL;
   private eventSource?: EventSource;
+  private abortController?: AbortController; // Add this
+  private streamReader?: ReadableStreamDefaultReader<Uint8Array>; // Add this
   private pendingRequests = new Map<
     string | number,
     {
@@ -349,6 +356,9 @@ class MinimalMCPClient {
   private parseSSEStream(response: Response): void {
     if (!response.body) return;
 
+    // Create abort controller for this stream
+    this.abortController = new AbortController();
+
     const reader = response.body
       .pipeThrough(new TextDecoderStream())
       .getReader();
@@ -365,6 +375,12 @@ class MinimalMCPClient {
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
+
+          // Check if aborted
+          if (this.abortController?.signal.aborted) {
+            console.log('SSE stream processing aborted');
+            break;
+          }
 
           buffer += value;
 
@@ -400,11 +416,19 @@ class MinimalMCPClient {
           }
         }
       } catch (error) {
-        console.error('SSE stream error:', error);
-        if (this.sseConnectionReject) {
-          this.sseConnectionReject(error as Error);
-          this.sseConnectionResolve = undefined;
-          this.sseConnectionReject = undefined;
+        if (!this.abortController?.signal.aborted) {
+          console.error('SSE stream error:', error);
+          if (this.sseConnectionReject) {
+            this.sseConnectionReject(error as Error);
+            this.sseConnectionResolve = undefined;
+            this.sseConnectionReject = undefined;
+          }
+        }
+      } finally {
+        try {
+          reader.releaseLock();
+        } catch (e) {
+          // Reader might already be released
         }
       }
     };
@@ -729,16 +753,29 @@ class MinimalMCPClient {
       this.eventSource = undefined;
     }
 
+    // For SSE connections, we need to abort any ongoing fetch operations
+    if (this.isSSE && this.abortController) {
+      console.log('Aborting SSE connection...');
+      this.abortController.abort();
+    }
+
     // Attempt to terminate session if we have a session ID
     if (this.sessionId && !this.isSSE) {
       try {
         const headers = new Headers(this.getAuthHeaders());
         headers.set('mcp-session-id', this.sessionId);
 
+        // Add a timeout to prevent hanging
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
         await fetch(this.url, {
           method: 'DELETE',
           headers,
+          signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
       } catch (error) {
         // Ignore errors when terminating - server might not support it
         console.warn('Failed to terminate session:', error);
