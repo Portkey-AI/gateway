@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  gateway:
+    # This is a placeholder for the actual gateway service configuration.
+    # It needs to be defined for the nginx service to connect to it.
+    # Replace with actual image, build context, ports, etc.
+    image: busybox # Using a minimal image as a placeholder
+    command: ["tail", "-f", "/dev/null"] # Keep container running
+
+  ui:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    ports:
+      - "8787:80" # Map host port 8787 to container port 80 (nginx)
+    depends_on:
+      - gateway
+    networks:
+      - portkey-network
+
+networks:
+  portkey-network:
+    driver: bridge
