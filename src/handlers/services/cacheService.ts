@@ -103,7 +103,7 @@ export class CacheService {
     if (!cacheResponse) {
       return {
         cacheResponse: undefined,
-        cacheStatus,
+        cacheStatus: cacheStatus || 'DISABLED',
         cacheKey: !!cacheKey ? cacheKey : undefined,
         createdAt: startTime,
       };
