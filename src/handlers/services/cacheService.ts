@@ -104,7 +104,7 @@ export class CacheService {
       return {
         cacheResponse: undefined,
         cacheStatus,
-        cacheKey,
+        cacheKey: !!cacheKey ? cacheKey : undefined,
         createdAt: startTime,
       };
     }
