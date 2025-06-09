@@ -293,8 +293,10 @@ export class LogObjectBuilder {
       throw new Error('Cannot log from a committed log object');
     }
 
-    if (!this.isComplete(this.logData)) {
-      console.error('Log data is not complete', this.logData);
+    const result = this.isComplete(this.logData);
+
+    if (!result.success) {
+      console.error('Log data is not complete', result.error!.issues);
     }
 
     // Update execution time if we have a createdAt
@@ -307,9 +309,8 @@ export class LogObjectBuilder {
     return this;
   }
 
-  private isComplete(obj: any): obj is LogObject {
-    const result = LogObjectSchema.safeParse(obj);
-    return result.success;
+  private isComplete(obj: any): any {
+    return LogObjectSchema.safeParse(obj);
   }
 
   // Final commit that destroys the object
