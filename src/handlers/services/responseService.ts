@@ -1,7 +1,7 @@
 // responseService.ts
 
 import { getRuntimeKey } from 'hono/adapter';
-import { POWERED_BY } from '../../globals';
+import { HEADER_KEYS, POWERED_BY } from '../../globals';
 import { RESPONSE_HEADER_KEYS } from '../../globals';
 import { responseHandler } from '../responseHandlers';
 import { HooksService } from './hooksService';
@@ -151,7 +151,7 @@ export class ResponseService {
 
     if (this.context.provider && this.context.provider !== POWERED_BY) {
       response.headers.append(
-        RESPONSE_HEADER_KEYS.PROVIDER,
+        HEADER_KEYS.PROVIDER,
         this.context.provider
       );
     }
