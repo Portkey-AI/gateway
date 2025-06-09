@@ -150,10 +150,7 @@ export class ResponseService {
     }
 
     if (this.context.provider && this.context.provider !== POWERED_BY) {
-      response.headers.append(
-        HEADER_KEYS.PROVIDER,
-        this.context.provider
-      );
+      response.headers.append(HEADER_KEYS.PROVIDER, this.context.provider);
     }
 
     // Remove headers directly
