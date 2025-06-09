@@ -33,7 +33,7 @@ import { HookType } from '../middlewares/hooks/types';
 // Services
 import { CacheResponseObject, CacheService } from './services/cacheService';
 import { HooksService } from './services/hooksService';
-import { LogsService } from './services/logsService';
+import { LogObjectBuilder, LogsService } from './services/logsService';
 import { PreRequestValidatorService } from './services/preRequestValidatorService';
 import { ProviderContext } from './services/providerContext';
 import { RequestContext } from './services/requestContext';
@@ -346,6 +346,13 @@ export async function tryPost(
   );
   const hookSpan: HookSpan = hooksService.hookSpan;
 
+  // Set the requestURL in requestContext
+  requestContext.requestURL = await providerContext.getFullURL(requestContext);
+
+  // Create the base log object from requestContext
+  const logObject = new LogObjectBuilder(logsService, requestContext);
+  logObject.addHookSpanId(hookSpan.id);
+
   // before_request_hooks handler
   const {
     response: brhResponse,
@@ -360,7 +367,7 @@ export async function tryPost(
       requestContext.transformToProviderRequestAndSave();
     }
 
-    return responseService.create({
+    const { response, originalResponseJson } = await responseService.create({
       response: brhResponse,
       responseTransformer: undefined,
       isResponseAlreadyMapped: false,
@@ -372,8 +379,17 @@ export async function tryPost(
       retryAttempt: 0,
       createdAt: brhCreatedAt,
     });
+
+    logObject
+      .updateRequestContext(requestContext)
+      .addResponse(response, originalResponseJson)
+      .addCache()
+      .log();
+
+    return response;
   }
 
+  // If before request hook transformed the body, update the request context
   if (transformedBody) {
     requestContext.params = hookSpan.getContext().request.json;
   }
@@ -398,8 +414,12 @@ export async function tryPost(
       requestContext,
       fetchOptions.headers || {}
     );
+  logObject.addCache(
+    cacheResponseObject.cacheStatus,
+    cacheResponseObject.cacheKey
+  );
   if (cacheResponseObject.cacheResponse) {
-    return responseService.create({
+    const { response, originalResponseJson } = await responseService.create({
       response: cacheResponseObject.cacheResponse,
       responseTransformer: requestContext.endpoint,
       cache: {
@@ -413,6 +433,13 @@ export async function tryPost(
       createdAt: cacheResponseObject.createdAt,
       executionTime: 0,
     });
+
+    logObject
+      .updateRequestContext(requestContext, fetchOptions.headers)
+      .addResponse(response, originalResponseJson)
+      .log();
+
+    return response;
   }
 
   // Prerequest validator (For virtual key budgets)
@@ -423,7 +450,7 @@ export async function tryPost(
   const preRequestValidatorResponse =
     await preRequestValidatorService.getResponse();
   if (preRequestValidatorResponse) {
-    return responseService.create({
+    const { response, originalResponseJson } = await responseService.create({
       response: preRequestValidatorResponse,
       responseTransformer: undefined,
       isResponseAlreadyMapped: false,
@@ -436,6 +463,13 @@ export async function tryPost(
       fetchOptions,
       createdAt: new Date(),
     });
+
+    logObject
+      .updateRequestContext(requestContext, fetchOptions.headers)
+      .addResponse(response, originalResponseJson)
+      .log();
+
+    return response;
   }
 
   // Request Handler (Including retries, recursion and hooks)
@@ -446,23 +480,32 @@ export async function tryPost(
       0,
       hookSpan.id,
       providerContext,
-      hooksService
+      hooksService,
+      logObject
     );
 
-  return responseService.create({
-    response: mappedResponse,
-    responseTransformer: undefined,
-    isResponseAlreadyMapped: true,
-    cache: {
-      isCacheHit: false,
-      cacheStatus: cacheResponseObject.cacheStatus,
-      cacheKey: cacheResponseObject.cacheKey,
-    },
-    retryAttempt: retryCount,
-    fetchOptions,
-    createdAt,
-    originalResponseJson,
-  });
+  const { response, originalResponseJson: mappedOriginalResponseJson } =
+    await responseService.create({
+      response: mappedResponse,
+      responseTransformer: undefined,
+      isResponseAlreadyMapped: true,
+      cache: {
+        isCacheHit: false,
+        cacheStatus: cacheResponseObject.cacheStatus,
+        cacheKey: cacheResponseObject.cacheKey,
+      },
+      retryAttempt: retryCount,
+      fetchOptions,
+      createdAt,
+      originalResponseJson,
+    });
+
+  logObject
+    .updateRequestContext(requestContext, fetchOptions.headers)
+    .addResponse(response, mappedOriginalResponseJson)
+    .log();
+
+  return response;
 }
 
 export async function tryTargetsRecursively(
@@ -800,7 +843,7 @@ export async function tryTargetsRecursively(
  * @param {number} retryAttempt - The retry attempt count.
  * @param {string} traceId - The trace ID value.
  */
-export function updateResponseHeaders(
+function updateResponseHeaders(
   response: Response,
   currentIndex: string | number,
   params: Record<string, any>,
@@ -1134,7 +1177,8 @@ export async function recursiveAfterRequestHookHandler(
   retryAttemptsMade: any,
   hookSpanId: string,
   providerContext: ProviderContext,
-  hooksService: HooksService
+  hooksService: HooksService,
+  logObject: LogObjectBuilder
 ): Promise<{
   mappedResponse: Response;
   retryCount: number;
@@ -1155,7 +1199,7 @@ export async function recursiveAfterRequestHookHandler(
   let response, retryCount, createdAt, retrySkipped;
 
   const requestHandler = providerContext.getRequestHandler(requestContext);
-  const url = await providerContext.getFullURL(requestContext);
+  const url = requestContext.requestURL;
 
   ({
     response,
@@ -1209,13 +1253,20 @@ export async function recursiveAfterRequestHookHandler(
   );
 
   if (remainingRetryCount > 0 && !retrySkipped && isRetriableStatusCode) {
+    // Log the request here since we're about to retry
+    logObject
+      .updateRequestContext(requestContext, options.headers)
+      .addResponse(arhResponse, originalResponseJson)
+      .log();
+
     return recursiveAfterRequestHookHandler(
       requestContext,
       options,
       (retryCount ?? 0) + 1 + retryAttemptsMade,
       hookSpanId,
       providerContext,
-      hooksService
+      hooksService,
+      logObject
     );
   }
 

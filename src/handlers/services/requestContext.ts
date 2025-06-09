@@ -14,9 +14,11 @@ import { HooksManager } from '../../middlewares/hooks';
 import { transformToProviderRequest } from '../../services/transformToProviderRequest';
 
 export class RequestContext {
+  private originalRequestParams: any;
   private _params: Params | null = null;
   private _transformedRequestBody: any;
   public readonly providerOption: Options;
+  private _requestURL: string = ''; // Is set at the beginning of tryPost()
 
   constructor(
     public readonly honoContext: Context,
@@ -33,6 +35,14 @@ export class RequestContext {
   ) {
     this.providerOption = providerOption;
     this.providerOption.retry = this.normalizeRetryConfig(providerOption.retry);
+  }
+
+  get requestURL(): string {
+    return this._requestURL;
+  }
+
+  set requestURL(requestURL: string) {
+    this._requestURL = requestURL;
   }
 
   get overrideParams(): Params {

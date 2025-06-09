@@ -33,7 +33,11 @@ export class ResponseService {
     private logsService: LogsService
   ) {}
 
-  async create(options: CreateResponseOptions) {
+  async create(options: CreateResponseOptions): Promise<{
+    response: Response;
+    responseJson?: Record<string, any> | null;
+    originalResponseJson?: Record<string, any> | null;
+  }> {
     const {
       response,
       responseTransformer,
@@ -48,6 +52,7 @@ export class ResponseService {
 
     let finalMappedResponse: Response;
     let originalResponseJSON: Record<string, any> | null | undefined;
+    let responseJson: Record<string, any> | null | undefined;
 
     if (isResponseAlreadyMapped) {
       finalMappedResponse = response;
@@ -56,6 +61,7 @@ export class ResponseService {
       ({
         response: finalMappedResponse,
         originalResponseJson: originalResponseJSON,
+        responseJson: responseJson,
       } = await this.getResponse(
         response,
         responseTransformer,
@@ -66,20 +72,20 @@ export class ResponseService {
     this.updateHeaders(finalMappedResponse, cache.cacheStatus, retryAttempt);
 
     // Add the log object to the logs service.
-    this.logsService.addRequestLog(
-      await this.logsService.createLogObject(
-        this.context,
-        this.providerContext,
-        this.hooksService.hookSpan.id,
-        cache.cacheKey,
-        fetchOptions,
-        cache.cacheStatus,
-        finalMappedResponse,
-        originalResponseJSON,
-        createdAt,
-        executionTime
-      )
-    );
+    // this.logsService.addRequestLog(
+    //   await this.logsService.createLogObject(
+    //     this.context,
+    //     this.providerContext,
+    //     this.hooksService.hookSpan.id,
+    //     cache.cacheKey,
+    //     fetchOptions,
+    //     cache.cacheStatus,
+    //     finalMappedResponse,
+    //     originalResponseJSON,
+    //     createdAt,
+    //     executionTime
+    //   )
+    // );
 
     if (!finalMappedResponse.ok) {
       const errorObj: any = new Error(await finalMappedResponse.clone().text());
@@ -89,7 +95,11 @@ export class ResponseService {
     }
 
     // console.log("End tryPost", new Date().getTime());
-    return finalMappedResponse;
+    return {
+      response,
+      responseJson,
+      originalResponseJson,
+    };
   }
 
   async getResponse(
@@ -99,8 +109,9 @@ export class ResponseService {
   ): Promise<{
     response: Response;
     originalResponseJson?: Record<string, any> | null;
+    responseJson?: Record<string, any> | null;
   }> {
-    const url = await this.providerContext.getFullURL(this.context);
+    const url = this.context.requestURL;
     return await responseHandler(
       response,
       this.context.isStreaming,
@@ -120,43 +131,39 @@ export class ResponseService {
     cacheStatus: string | undefined,
     retryAttempt: number
   ) {
-    const headersToAppend = new Map<string, string>();
-    const headersToRemove = new Set<string>();
-
-    headersToAppend.set(
+    // Append headers directly
+    response.headers.append(
       RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX,
       this.context.index.toString()
     );
-    headersToAppend.set(RESPONSE_HEADER_KEYS.TRACE_ID, this.context.traceId);
-    headersToAppend.set(
+    response.headers.append(
+      RESPONSE_HEADER_KEYS.TRACE_ID,
+      this.context.traceId
+    );
+    response.headers.append(
       RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT,
       retryAttempt.toString()
     );
 
     if (cacheStatus) {
-      headersToAppend.set(RESPONSE_HEADER_KEYS.CACHE_STATUS, cacheStatus);
+      response.headers.append(RESPONSE_HEADER_KEYS.CACHE_STATUS, cacheStatus);
     }
 
     if (this.context.provider && this.context.provider !== POWERED_BY) {
-      headersToAppend.set(RESPONSE_HEADER_KEYS.PROVIDER, this.context.provider);
+      response.headers.append(
+        RESPONSE_HEADER_KEYS.PROVIDER,
+        this.context.provider
+      );
     }
 
-    // Append the headers to response.headers
-    for (const [key, value] of headersToAppend) {
-      response.headers.append(key, value);
-    }
-
+    // Remove headers directly
     const encoding = response.headers.get('content-encoding');
     if (encoding?.includes('br') || getRuntimeKey() == 'node') {
-      headersToRemove.add('content-encoding');
+      response.headers.delete('content-encoding');
     }
+    response.headers.delete('content-length');
+    response.headers.delete('transfer-encoding');
 
-    headersToRemove.add('content-length');
-    headersToRemove.add('transfer-encoding');
-
-    for (const key of headersToRemove) {
-      response.headers.delete(key);
-    }
     return response;
   }
 }
