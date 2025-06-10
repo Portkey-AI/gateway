@@ -31,7 +31,7 @@ export class ProviderContext {
       providerOptions: context.providerOption,
       fn: context.endpoint,
       transformedRequestBody: context.transformedRequestBody,
-      transformedRequestUrl: context.honoContext.req.url,
+      transformedRequestUrl: context.requestURL,
       gatewayRequestBody: context.params,
     });
   }
