@@ -1,5 +1,5 @@
 import { BEDROCK } from '../../globals';
-import { EmbedResponse } from '../../types/embedRequestBody';
+import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
 import { Params } from '../../types/requestBody';
 import { ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
@@ -27,9 +27,69 @@ export const BedrockCohereEmbedConfig: ProviderConfig = {
 };
 
 export const BedrockTitanEmbedConfig: ProviderConfig = {
-  input: {
-    param: 'inputText',
-    required: true,
+  input: [
+    {
+      param: 'inputText',
+      required: false,
+      transform: (params: EmbedParams): string | undefined => {
+        if (
+          Array.isArray(params.input) &&
+          typeof params.input[0] === 'object' &&
+          params.input[0].text
+        ) {
+          return params.input[0].text;
+        }
+        if (typeof params.input === 'string') return params.input;
+      },
+    },
+    {
+      param: 'inputImage',
+      required: false,
+      transform: (params: EmbedParams) => {
+        if (
+          Array.isArray(params.input) &&
+          typeof params.input[0] === 'object' &&
+          params.input[0].image?.base64
+        ) {
+          return params.input[0].image.base64;
+        }
+      },
+    },
+  ],
+  dimensions: [
+    {
+      param: 'dimensions',
+      required: false,
+      transform: (params: EmbedParams): number | undefined => {
+        if (typeof params.input === 'string') return params.dimensions;
+      },
+    },
+    {
+      param: 'embeddingConfig',
+      required: false,
+      transform: (
+        params: EmbedParams
+      ): { outputEmbeddingLength: number } | undefined => {
+        if (Array.isArray(params.input) && params.dimensions) {
+          return {
+            outputEmbeddingLength: params.dimensions,
+          };
+        }
+      },
+    },
+  ],
+  encoding_format: {
+    param: 'embeddingTypes',
+    required: false,
+    transform: (params: any): string[] => {
+      if (Array.isArray(params.encoding_format)) return params.encoding_format;
+      return [params.encoding_format];
+    },
+  },
+  // Titan specific parameters
+  normalize: {
+    param: 'normalize',
+    required: false,
   },
 };
 
