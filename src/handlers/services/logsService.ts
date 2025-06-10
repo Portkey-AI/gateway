@@ -25,12 +25,12 @@ const LogObjectSchema = z.object({
   createdAt: z.date(),
   response: z.instanceof(Response),
   cacheStatus: z.string().optional(),
-  lastUsedOptionIndex: z.number(),
+  lastUsedOptionIndex: z.number().or(z.string()),
   cacheKey: z.string().optional(),
   cacheMode: z.string(),
-  cacheMaxAge: z.number(),
+  cacheMaxAge: z.number().optional(),
   hookSpanId: z.string(),
-  executionTime: z.number(),
+  executionTime: z.number().optional(),
 });
 
 export interface LogObject {
@@ -52,7 +52,7 @@ export interface LogObject {
   createdAt: Date;
   response: Response;
   cacheStatus: string | undefined;
-  lastUsedOptionIndex: number;
+  lastUsedOptionIndex: number | string;
   cacheKey: string | undefined;
   cacheMode: string;
   cacheMaxAge: number;
@@ -296,6 +296,7 @@ export class LogObjectBuilder {
     const result = this.isComplete(this.logData);
 
     if (!result.success) {
+      console.log(this.logData);
       console.error('Log data is not complete', result.error!.issues);
     }
 

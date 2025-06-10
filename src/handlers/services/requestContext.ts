@@ -31,7 +31,7 @@ export class RequestContext {
       | ReadableStream
       | ArrayBuffer,
     public readonly method: string = 'POST',
-    public readonly index: number
+    public readonly index: number | string
   ) {
     this.providerOption = providerOption;
     this.providerOption.retry = this.normalizeRetryConfig(providerOption.retry);
