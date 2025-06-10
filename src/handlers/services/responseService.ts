@@ -96,9 +96,9 @@ export class ResponseService {
 
     // console.log("End tryPost", new Date().getTime());
     return {
-      response,
+      response: finalMappedResponse,
       responseJson,
-      originalResponseJson,
+      originalResponseJson: originalResponseJSON,
     };
   }
 
