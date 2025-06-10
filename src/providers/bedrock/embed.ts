@@ -79,6 +79,7 @@ export const BedrockTitanEmbedConfig: ProviderConfig = {
       param: 'inputImage',
       required: false,
       transform: (params: EmbedParams) => {
+        // Titan models only support one image per request
         if (
           Array.isArray(params.input) &&
           typeof params.input[0] === 'object' &&
