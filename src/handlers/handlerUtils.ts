@@ -150,8 +150,10 @@ function constructRequestHeaders(
     delete headers['content-type'];
     if (fn === 'uploadFile') {
       headers['Content-Type'] = requestHeaders['content-type'];
-      headers[`x-${POWERED_BY}-file-purpose`] =
-        requestHeaders[`x-${POWERED_BY}-file-purpose`];
+      if (requestHeaders[`x-${POWERED_BY}-file-purpose`]) {
+        headers[`x-${POWERED_BY}-file-purpose`] =
+          requestHeaders[`x-${POWERED_BY}-file-purpose`];
+      }
     }
   }
 
