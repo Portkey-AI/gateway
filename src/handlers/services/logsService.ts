@@ -235,6 +235,47 @@ export class LogObjectBuilder {
     };
   }
 
+  private clone() {
+    const clonedLogData: Partial<LogObject> = {
+      providerOptions: {
+        ...this.logData.providerOptions,
+        requestURL: this.logData.providerOptions?.requestURL ?? '',
+        rubeusURL: this.logData.providerOptions?.rubeusURL ?? '',
+      },
+      finalUntransformedRequest: {
+        body: this.logData.finalUntransformedRequest?.body,
+      },
+      createdAt: new Date(this.logData.createdAt?.getTime() ?? Date.now()),
+      lastUsedOptionIndex: this.logData.lastUsedOptionIndex,
+      cacheMode: this.logData.cacheMode,
+      cacheMaxAge: this.logData.cacheMaxAge,
+    };
+    if (this.logData.transformedRequest) {
+      clonedLogData.transformedRequest = {
+        body: this.logData.transformedRequest.body,
+        headers: this.logData.transformedRequest.headers,
+      };
+    }
+    if (this.logData.requestParams) {
+      clonedLogData.requestParams = this.logData.requestParams;
+    }
+    if (this.logData.originalResponse) {
+      clonedLogData.originalResponse = {
+        body: this.logData.originalResponse.body,
+      };
+    }
+    if (this.logData.response) {
+      clonedLogData.response = this.logData.response; // we don't need to clone the response, it's already cloned in the addResponse function
+    }
+    if (this.logData.hookSpanId) {
+      clonedLogData.hookSpanId = this.logData.hookSpanId;
+    }
+    if (this.logData.executionTime) {
+      clonedLogData.executionTime = this.logData.executionTime;
+    }
+    return clonedLogData;
+  }
+
   updateRequestContext(
     requestContext: RequestContext,
     transformedRequestHeaders?: HeadersInit
@@ -294,10 +335,11 @@ export class LogObjectBuilder {
     }
 
     const result = this.isComplete(this.logData);
-
-    if (!result.success) {
-      console.log(this.logData);
-      console.error('Log data is not complete', result.error!.issues);
+    if (!result) {
+      const parsed = LogObjectSchema.safeParse(this.logData);
+      if (!parsed.success) {
+        console.error('Log data is not complete', parsed.error.issues);
+      }
     }
 
     // Update execution time if we have a createdAt
@@ -306,12 +348,113 @@ export class LogObjectBuilder {
         Date.now() - this.logData.createdAt.getTime();
     }
 
-    this.logsService.addRequestLog(this.logData as LogObject);
+    this.logsService.addRequestLog(this.clone() as LogObject);
     return this;
   }
 
-  private isComplete(obj: any): any {
-    return LogObjectSchema.safeParse(obj);
+  private isComplete(obj: unknown): obj is LogObject {
+    if (obj === null || (typeof obj !== 'object' && typeof obj !== 'function'))
+      return false;
+    const typedObj = obj as any;
+
+    // providerOptions
+    if (
+      typedObj.providerOptions == null ||
+      (typeof typedObj.providerOptions !== 'object' &&
+        typeof typedObj.providerOptions !== 'function')
+    )
+      return false;
+    if (typeof typedObj.providerOptions.requestURL !== 'string') return false;
+    if (typeof typedObj.providerOptions.rubeusURL !== 'string') return false;
+
+    // transformedRequest
+    if (
+      typedObj.transformedRequest == null ||
+      (typeof typedObj.transformedRequest !== 'object' &&
+        typeof typedObj.transformedRequest !== 'function')
+    )
+      return false;
+    if (!('body' in typedObj.transformedRequest)) return false;
+    if (
+      typedObj.transformedRequest.headers == null ||
+      (typeof typedObj.transformedRequest.headers !== 'object' &&
+        typeof typedObj.transformedRequest.headers !== 'function')
+    )
+      return false;
+    if (
+      !Object.entries<any>(typedObj.transformedRequest.headers).every(
+        ([key, value]) => typeof key === 'string' && typeof value === 'string'
+      )
+    )
+      return false;
+
+    // requestParams (any)
+    if (!('requestParams' in typedObj)) return false;
+
+    // finalUntransformedRequest
+    if (
+      typedObj.finalUntransformedRequest == null ||
+      (typeof typedObj.finalUntransformedRequest !== 'object' &&
+        typeof typedObj.finalUntransformedRequest !== 'function')
+    )
+      return false;
+    if (!('body' in typedObj.finalUntransformedRequest)) return false;
+
+    // originalResponse
+    if (
+      typedObj.originalResponse == null ||
+      (typeof typedObj.originalResponse !== 'object' &&
+        typeof typedObj.originalResponse !== 'function')
+    )
+      return false;
+    if (!('body' in typedObj.originalResponse)) return false;
+
+    // createdAt & response
+    if (!(typedObj.createdAt instanceof Date)) return false;
+    if (!(typedObj.response instanceof Response)) return false;
+
+    // cacheStatus
+    if (
+      typedObj.cacheStatus !== undefined &&
+      typeof typedObj.cacheStatus !== 'string'
+    )
+      return false;
+
+    // lastUsedOptionIndex
+    if (
+      typeof typedObj.lastUsedOptionIndex !== 'number' &&
+      typeof typedObj.lastUsedOptionIndex !== 'string'
+    )
+      return false;
+
+    // cacheKey
+    if (
+      typedObj.cacheKey !== undefined &&
+      typeof typedObj.cacheKey !== 'string'
+    )
+      return false;
+
+    // cacheMode
+    if (typeof typedObj.cacheMode !== 'string') return false;
+
+    // cacheMaxAge
+    if (
+      typedObj.cacheMaxAge !== undefined &&
+      typeof typedObj.cacheMaxAge !== 'number'
+    )
+      return false;
+
+    // hookSpanId
+    if (typeof typedObj.hookSpanId !== 'string') return false;
+
+    // executionTime
+    if (
+      typedObj.executionTime !== undefined &&
+      typeof typedObj.executionTime !== 'number'
+    )
+      return false;
+
+    return true;
   }
 
   // Final commit that destroys the object
