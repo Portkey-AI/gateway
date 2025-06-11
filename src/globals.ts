@@ -92,6 +92,7 @@ export const RECRAFTAI: string = 'recraft-ai';
 export const MILVUS: string = 'milvus';
 export const REPLICATE: string = 'replicate';
 export const LEPTON: string = 'lepton';
+export const KLUSTER_AI: string = 'kluster-ai';
 export const NSCALE: string = 'nscale';
 
 export const VALID_PROVIDERS = [
@@ -150,6 +151,7 @@ export const VALID_PROVIDERS = [
   REPLICATE,
   POWERED_BY,
   LEPTON,
+  KLUSTER_AI,
   NSCALE,
 ];
 
