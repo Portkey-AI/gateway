@@ -94,6 +94,7 @@ export const REPLICATE: string = 'replicate';
 export const LEPTON: string = 'lepton';
 export const KLUSTER_AI: string = 'kluster-ai';
 export const NSCALE: string = 'nscale';
+export const HYPERBOLIC: string = 'hyperbolic';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -153,6 +154,7 @@ export const VALID_PROVIDERS = [
   LEPTON,
   KLUSTER_AI,
   NSCALE,
+  HYPERBOLIC,
 ];
 
 export const CONTENT_TYPES = {

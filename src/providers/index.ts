@@ -58,6 +58,7 @@ import ReplicateConfig from './replicate';
 import LeptonConfig from './lepton';
 import KlusterAIConfig from './kluster-ai';
 import NscaleConfig from './nscale';
+import HyperbolicConfig from './hyperbolic';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -116,6 +117,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   lepton: LeptonConfig,
   'kluster-ai': KlusterAIConfig,
   nscale: NscaleConfig,
+  hyperbolic: HyperbolicConfig,
 };
 
 export default Providers;
