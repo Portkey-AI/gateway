@@ -12,6 +12,7 @@ import {
 import { VertexLlamaChatCompleteStreamChunkTransform } from '../providers/google-vertex-ai/chatComplete';
 import { OpenAIChatCompleteResponse } from '../providers/openai/chatComplete';
 import { OpenAICompleteResponse } from '../providers/openai/complete';
+import { Params } from '../types/requestBody';
 import { getStreamModeSplitPattern, type SplitPatternType } from '../utils';
 import { protectionManager } from '../utils/ecs/protection';
 
@@ -51,7 +52,9 @@ function concatenateUint8Arrays(a: Uint8Array, b: Uint8Array): Uint8Array {
 export async function* readAWSStream(
   reader: ReadableStreamDefaultReader,
   transformFunction: Function | undefined,
-  fallbackChunkId: string
+  fallbackChunkId: string,
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
 ) {
   let buffer = new Uint8Array();
   let expectedLength = 0;
@@ -70,7 +73,9 @@ export async function* readAWSStream(
             const transformedChunk = transformFunction(
               payload,
               fallbackChunkId,
-              streamState
+              streamState,
+              strictOpenAiCompliance,
+              gatewayRequest
             );
             if (Array.isArray(transformedChunk)) {
               for (const item of transformedChunk) {
@@ -104,7 +109,9 @@ export async function* readAWSStream(
         const transformedChunk = transformFunction(
           payload,
           fallbackChunkId,
-          streamState
+          streamState,
+          strictOpenAiCompliance,
+          gatewayRequest
         );
         if (Array.isArray(transformedChunk)) {
           for (const item of transformedChunk) {
@@ -126,7 +133,8 @@ export async function* readStream(
   transformFunction: Function | undefined,
   isSleepTimeRequired: boolean,
   fallbackChunkId: string,
-  strictOpenAiCompliance: boolean
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
 ) {
   let buffer = '';
   const decoder = new TextDecoder();
@@ -142,7 +150,8 @@ export async function* readStream(
             buffer,
             fallbackChunkId,
             streamState,
-            strictOpenAiCompliance
+            strictOpenAiCompliance,
+            gatewayRequest
           );
         } else {
           yield buffer;
@@ -173,7 +182,8 @@ export async function* readStream(
               part,
               fallbackChunkId,
               streamState,
-              strictOpenAiCompliance
+              strictOpenAiCompliance,
+              gatewayRequest
             );
             if (transformedChunk !== undefined) {
               yield transformedChunk;
@@ -217,11 +227,13 @@ export async function handleNonStreamingMode(
   response: Response,
   responseTransformer: Function | undefined,
   strictOpenAiCompliance: boolean,
-  gatewayRequestUrl: string
+  gatewayRequestUrl: string,
+  gatewayRequest: Params,
+  areSyncHooksAvailable: boolean
 ): Promise<{
   response: Response;
-  json: Record<string, any>;
-  originalResponseBodyJson?: Record<string, any>;
+  json: Record<string, any> | null;
+  originalResponseBodyJson?: Record<string, any> | null;
 }> {
   // 408 is thrown whenever a request takes more than request_timeout to respond.
   // In that case, response thrown by gateway is already in OpenAI format.
@@ -235,7 +247,9 @@ export async function handleNonStreamingMode(
     return { response, json: await response.clone().json() };
   }
 
-  const originalResponseBodyJson: Record<string, any> = await response.json();
+  const isJsonParsingRequired = responseTransformer || areSyncHooksAvailable;
+  const originalResponseBodyJson: Record<string, any> | null =
+    isJsonParsingRequired ? await response.json() : null;
   let responseBodyJson = originalResponseBodyJson;
   if (responseTransformer) {
     responseBodyJson = responseTransformer(
@@ -243,8 +257,15 @@ export async function handleNonStreamingMode(
       response.status,
       response.headers,
       strictOpenAiCompliance,
-      gatewayRequestUrl
+      gatewayRequestUrl,
+      gatewayRequest
     );
+  } else if (!areSyncHooksAvailable) {
+    return {
+      response: new Response(response.body, response),
+      json: null,
+      originalResponseBodyJson,
+    };
   }
 
   return {
@@ -272,7 +293,8 @@ export function handleStreamingMode(
   proxyProvider: string,
   responseTransformer: Function | undefined,
   requestURL: string,
-  strictOpenAiCompliance: boolean
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
 ): Response {
   const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);
   // If the provider doesn't supply completion id,
@@ -293,7 +315,9 @@ export function handleStreamingMode(
       for await (const chunk of readAWSStream(
         reader,
         responseTransformer,
-        fallbackChunkId
+        fallbackChunkId,
+        strictOpenAiCompliance,
+        gatewayRequest
       )) {
         await writer.ready;
         await writer.write(encoder.encode(chunk));
@@ -319,7 +343,8 @@ export function handleStreamingMode(
         responseTransformer,
         isSleepTimeRequired,
         fallbackChunkId,
-        strictOpenAiCompliance
+        strictOpenAiCompliance,
+        gatewayRequest
       )) {
         await writer.ready;
         await writer.write(encoder.encode(chunk));
@@ -371,14 +396,34 @@ export async function handleJSONToStreamResponse(
   const encoder = new TextEncoder();
   const responseJSON: OpenAIChatCompleteResponse | OpenAICompleteResponse =
     await response.clone().json();
-  const streamChunkArray = responseTransformerFunction(responseJSON, provider);
 
-  (async () => {
-    for (const chunk of streamChunkArray) {
-      await writer.write(encoder.encode(chunk));
-    }
-    writer.close();
-  })();
+  if (
+    Object.prototype.toString.call(responseTransformerFunction) ===
+    '[object GeneratorFunction]'
+  ) {
+    const generator = responseTransformerFunction(responseJSON, provider);
+    (async () => {
+      while (true) {
+        const chunk = generator.next();
+        if (chunk.done) {
+          break;
+        }
+        await writer.write(encoder.encode(chunk.value));
+      }
+      writer.close();
+    })();
+  } else {
+    const streamChunkArray = responseTransformerFunction(
+      responseJSON,
+      provider
+    );
+    (async () => {
+      for (const chunk of streamChunkArray) {
+        await writer.write(encoder.encode(chunk));
+      }
+      writer.close();
+    })();
+  }
 
   return new Response(readable, {
     headers: new Headers({

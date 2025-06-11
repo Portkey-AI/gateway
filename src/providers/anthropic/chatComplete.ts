@@ -3,8 +3,8 @@ import {
   Params,
   Message,
   ContentType,
-  AnthropicPromptCache,
   SYSTEM_MESSAGE_ROLES,
+  PromptCache,
 } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
@@ -19,10 +19,10 @@ import { AnthropicStreamState } from './types';
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
-interface AnthropicTool extends AnthropicPromptCache {
+interface AnthropicTool extends PromptCache {
   name: string;
-  description: string;
-  input_schema: {
+  description?: string;
+  input_schema?: {
     type: string;
     properties: Record<
       string,
@@ -32,7 +32,12 @@ interface AnthropicTool extends AnthropicPromptCache {
       }
     >;
     required: string[];
+    $defs: Record<string, any>;
   };
+  type?: string;
+  display_width_px?: number;
+  display_height_px?: number;
+  display_number?: number;
 }
 
 interface AnthropicToolResultContentItem {
@@ -63,13 +68,42 @@ interface AnthropicTextContentItem {
   text: string;
 }
 
+interface AnthropicUrlPdfContentItem {
+  type: string;
+  source: {
+    type: string;
+    url: string;
+  };
+}
+
+interface AnthropicBase64PdfContentItem {
+  type: string;
+  source: {
+    type: string;
+    data: string;
+    media_type: string;
+  };
+}
+
+interface AnthropicPlainTextContentItem {
+  type: string;
+  source: {
+    type: string;
+    data: string;
+    media_type: string;
+  };
+}
+
 type AnthropicMessageContentItem =
   | AnthropicToolResultContentItem
   | AnthropicBase64ImageContentItem
   | AnthropicUrlImageContentItem
-  | AnthropicTextContentItem;
+  | AnthropicTextContentItem
+  | AnthropicUrlPdfContentItem
+  | AnthropicBase64PdfContentItem
+  | AnthropicPlainTextContentItem;
 
-interface AnthropicMessage extends Message, AnthropicPromptCache {
+interface AnthropicMessage extends Message, PromptCache {
   content: AnthropicMessageContentItem[];
 }
 
@@ -175,6 +209,35 @@ const transformAndAppendImageContentItem = (
   }
 };
 
+const transformAndAppendFileContentItem = (
+  item: ContentType,
+  transformedMessage: AnthropicMessage
+) => {
+  const mimeType =
+    (item.file?.mime_type as keyof typeof fileExtensionMimeTypeMap) ||
+    fileExtensionMimeTypeMap.pdf;
+  if (item.file?.file_url) {
+    transformedMessage.content.push({
+      type: 'document',
+      source: {
+        type: 'url',
+        url: item.file.file_url,
+      },
+    });
+  } else if (item.file?.file_data) {
+    const contentType =
+      mimeType === fileExtensionMimeTypeMap.txt ? 'text' : 'base64';
+    transformedMessage.content.push({
+      type: 'document',
+      source: {
+        type: contentType,
+        data: item.file.file_data,
+        media_type: mimeType,
+      },
+    });
+  }
+};
+
 export const AnthropicChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
@@ -190,7 +253,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
 
         // Transform the chat messages into a simple prompt
         if (!!params.messages) {
-          params.messages.forEach((msg: Message & AnthropicPromptCache) => {
+          params.messages.forEach((msg: Message & PromptCache) => {
             if (SYSTEM_MESSAGE_ROLES.includes(msg.role)) return;
 
             if (msg.role === 'assistant') {
@@ -215,6 +278,8 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                   });
                 } else if (item.type === 'image_url') {
                   transformAndAppendImageContentItem(item, transformedMessage);
+                } else if (item.type === 'file') {
+                  transformAndAppendFileContentItem(item, transformedMessage);
                 }
               });
               messages.push(transformedMessage as AnthropicMessage);
@@ -250,7 +315,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
         }
         // Transform the chat messages into a simple prompt
         if (!!params.messages) {
-          params.messages.forEach((msg: Message & AnthropicPromptCache) => {
+          params.messages.forEach((msg: Message & PromptCache) => {
             if (
               SYSTEM_MESSAGE_ROLES.includes(msg.role) &&
               msg.content &&
@@ -296,10 +361,17 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                 type: tool.function.parameters?.type || 'object',
                 properties: tool.function.parameters?.properties || {},
                 required: tool.function.parameters?.required || [],
+                $defs: tool.function.parameters?.['$defs'] || {},
               },
               ...(tool.cache_control && {
                 cache_control: { type: 'ephemeral' },
               }),
+            });
+          } else if (tool.computer) {
+            tools.push({
+              ...tool.computer,
+              name: 'computer',
+              type: tool.computer.name,
             });
           }
         });
@@ -430,6 +502,7 @@ export interface AnthropicChatCompleteStreamResponse {
       cache_creation_input_tokens?: number;
       cache_read_input_tokens?: number;
     };
+    model?: string;
   };
   error?: AnthropicErrorObject;
 }
@@ -505,7 +578,7 @@ export const AnthropicChatCompleteResponseTransform: (
 
     return {
       id: response.id,
-      object: 'chat_completion',
+      object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
       model: response.model,
       provider: ANTHROPIC,
@@ -549,7 +622,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
   streamState: AnthropicStreamState,
-  strictOpenAiCompliance: boolean
+  _strictOpenAiCompliance: boolean
 ) => string | undefined = (
   responseChunk,
   fallbackId,
@@ -605,6 +678,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
     parsedChunk.message?.usage?.cache_creation_input_tokens;
 
   if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
+    streamState.model = parsedChunk?.message?.model ?? '';
     streamState.usage = {
       prompt_tokens: parsedChunk.message?.usage?.input_tokens,
       ...(shouldSendCacheUsage && {
@@ -619,7 +693,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
         id: fallbackId,
         object: 'chat.completion.chunk',
         created: Math.floor(Date.now() / 1000),
-        model: '',
+        model: streamState.model,
         provider: ANTHROPIC,
         choices: [
           {
@@ -646,7 +720,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
         id: fallbackId,
         object: 'chat.completion.chunk',
         created: Math.floor(Date.now() / 1000),
-        model: '',
+        model: streamState.model,
         provider: ANTHROPIC,
         choices: [
           {
@@ -709,7 +783,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
       id: fallbackId,
       object: 'chat.completion.chunk',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: streamState.model,
       provider: ANTHROPIC,
       choices: [
         {

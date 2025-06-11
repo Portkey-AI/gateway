@@ -118,7 +118,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
                 });
               }
               if (c.type === 'image_url') {
-                const { url } = c.image_url || {};
+                const { url, mime_type: passedMimeType } = c.image_url || {};
 
                 if (!url) {
                   // Shouldn't throw error?
@@ -146,7 +146,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
                 ) {
                   parts.push({
                     fileData: {
-                      mimeType: getMimeType(url),
+                      mimeType: passedMimeType || getMimeType(url),
                       fileUri: url,
                     },
                   });
@@ -338,6 +338,14 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
   labels: {
     param: 'labels',
   },
+  thinking: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
+  seed: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
 };
 
 interface AnthorpicTextContentItem {
@@ -373,7 +381,7 @@ export const VertexAnthropicChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: false,
-    transform: (params: Params) => {
+    transform: () => {
       return undefined;
     },
   },
@@ -431,19 +439,21 @@ export const GoogleChatCompleteResponseTransform: (
       promptTokenCount = 0,
       candidatesTokenCount = 0,
       totalTokenCount = 0,
+      thoughtsTokenCount = 0,
     } = response.usageMetadata;
 
     return {
       id: getFakeId(),
-      object: 'chat_completion',
+      object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
       model: response.modelVersion,
       provider: GOOGLE_VERTEX_AI,
       choices:
         response.candidates?.map((generation, index) => {
           // transform tool calls and content by iterating over the content parts
-          let toolCalls: ToolCall[] = [];
+          const toolCalls: ToolCall[] = [];
           let content: string | undefined;
+          const contentBlocks = [];
           for (const part of generation.content?.parts ?? []) {
             if (part.functionCall) {
               toolCalls.push({
@@ -455,12 +465,11 @@ export const GoogleChatCompleteResponseTransform: (
                 },
               });
             } else if (part.text) {
-              // if content is already set to the chain of thought message and the user requires both the CoT message and the completion, we need to append the completion to the CoT message
-              if (content?.length && !strictOpenAiCompliance) {
-                content += '\r\n\r\n' + part.text;
+              if (part.thought) {
+                contentBlocks.push({ type: 'thinking', thinking: part.text });
               } else {
-                // if content is already set to CoT, but user requires only the completion, we need to set content to the completion
                 content = part.text;
+                contentBlocks.push({ type: 'text', text: part.text });
               }
             }
           }
@@ -469,6 +478,8 @@ export const GoogleChatCompleteResponseTransform: (
             role: MESSAGE_ROLES.ASSISTANT,
             ...(toolCalls.length && { tool_calls: toolCalls }),
             ...(content && { content }),
+            ...(!strictOpenAiCompliance &&
+              contentBlocks.length && { content_blocks: contentBlocks }),
           };
           const logprobsContent: Logprobs[] | null =
             transformVertexLogprobs(generation);
@@ -496,6 +507,9 @@ export const GoogleChatCompleteResponseTransform: (
         prompt_tokens: promptTokenCount,
         completion_tokens: candidatesTokenCount,
         total_tokens: totalTokenCount,
+        completion_tokens_details: {
+          reasoning_tokens: thoughtsTokenCount,
+        },
       },
     };
   }
@@ -586,6 +600,9 @@ export const GoogleChatCompleteStreamChunkTransform: (
       prompt_tokens: parsedChunk.usageMetadata.promptTokenCount,
       completion_tokens: parsedChunk.usageMetadata.candidatesTokenCount,
       total_tokens: parsedChunk.usageMetadata.totalTokenCount,
+      completion_tokens_details: {
+        reasoning_tokens: parsedChunk.usageMetadata.thoughtsTokenCount ?? 0,
+      },
     };
   }
 
@@ -597,32 +614,30 @@ export const GoogleChatCompleteStreamChunkTransform: (
     provider: GOOGLE_VERTEX_AI,
     choices:
       parsedChunk.candidates?.map((generation, index) => {
-        let message: Message = { role: 'assistant', content: '' };
+        let message: any = { role: 'assistant', content: '' };
         if (generation.content?.parts[0]?.text) {
-          if (generation.content.parts[0].thought)
-            streamState.containsChainOfThoughtMessage = true;
-
-          let content: string =
-            strictOpenAiCompliance && streamState.containsChainOfThoughtMessage
-              ? ''
-              : generation.content.parts[0]?.text;
-          if (generation.content.parts[1]?.text) {
-            if (strictOpenAiCompliance)
-              content = generation.content.parts[1].text;
-            else content += '\r\n\r\n' + generation.content.parts[1]?.text;
-            streamState.containsChainOfThoughtMessage = false;
-          } else if (
-            streamState.containsChainOfThoughtMessage &&
-            !generation.content.parts[0]?.thought
-          ) {
-            if (strictOpenAiCompliance)
-              content = generation.content.parts[0].text;
-            else content = '\r\n\r\n' + content;
-            streamState.containsChainOfThoughtMessage = false;
+          const contentBlocks = [];
+          let content = '';
+          for (const part of generation.content.parts) {
+            if (part.thought) {
+              contentBlocks.push({
+                index: 0,
+                delta: { thinking: part.text },
+              });
+              streamState.containsChainOfThoughtMessage = true;
+            } else {
+              content = part.text ?? '';
+              contentBlocks.push({
+                index: streamState.containsChainOfThoughtMessage ? 1 : 0,
+                delta: { text: part.text },
+              });
+            }
           }
           message = {
             role: 'assistant',
             content,
+            ...(!strictOpenAiCompliance &&
+              contentBlocks.length && { content_blocks: contentBlocks }),
           };
         } else if (generation.content?.parts[0]?.functionCall) {
           message = {
@@ -699,7 +714,7 @@ export const VertexAnthropicChatCompleteResponseTransform: (
   }
 
   if ('content' in response) {
-    const { input_tokens = 0, output_tokens = 0 } = response?.usage;
+    const { input_tokens = 0, output_tokens = 0 } = response?.usage ?? {};
 
     let content: AnthropicContentItem[] | string = strictOpenAiCompliance
       ? ''
@@ -732,7 +747,7 @@ export const VertexAnthropicChatCompleteResponseTransform: (
 
     return {
       id: response.id,
-      object: 'chat_completion',
+      object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
       model: response.model,
       provider: GOOGLE_VERTEX_AI,
@@ -817,12 +832,13 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
   }
 
   if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
+    streamState.model = parsedChunk?.message?.model ?? '';
     return (
       `data: ${JSON.stringify({
         id: fallbackId,
         object: 'chat.completion.chunk',
         created: Math.floor(Date.now() / 1000),
-        model: '',
+        model: streamState.model,
         provider: GOOGLE_VERTEX_AI,
         choices: [
           {
@@ -847,7 +863,7 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
         id: fallbackId,
         object: 'chat.completion.chunk',
         created: Math.floor(Date.now() / 1000),
-        model: '',
+        model: streamState.model,
         provider: GOOGLE_VERTEX_AI,
         choices: [
           {
@@ -908,7 +924,7 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
       id: fallbackId,
       object: 'chat.completion.chunk',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: streamState.model,
       provider: GOOGLE_VERTEX_AI,
       choices: [
         {

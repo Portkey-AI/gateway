@@ -232,6 +232,7 @@ export function convertHooksShorthand(
     hooksObject.checks = Object.keys(hook).map((key) => ({
       id: key.includes('.') ? key : `default.${key}`,
       parameters: hook[key],
+      is_enabled: hook[key].is_enabled,
     }));
 
     return hooksObject;
@@ -295,7 +296,8 @@ export async function tryPost(
       ...(providerOption.defaultOutputGuardrails || []),
     ],
     null,
-    fn
+    fn,
+    requestHeaders
   );
 
   // Mapping providers to corresponding URLs
@@ -323,15 +325,19 @@ export async function tryPost(
       fn,
       c,
       gatewayRequestURL: c.req.url,
+      params: params,
     }));
-  const endpoint = apiConfig.getEndpoint({
-    c,
-    providerOptions: providerOption,
-    fn,
-    gatewayRequestBodyJSON: params,
-    gatewayRequestBody: requestBody,
-    gatewayRequestURL: c.req.url,
-  });
+  const endpoint =
+    fn === 'proxy'
+      ? ''
+      : apiConfig.getEndpoint({
+          c,
+          providerOptions: providerOption,
+          fn,
+          gatewayRequestBodyJSON: params,
+          gatewayRequestBody: {}, // not using anywhere.
+          gatewayRequestURL: c.req.url,
+        });
 
   url =
     fn === 'proxy'
@@ -346,7 +352,7 @@ export async function tryPost(
 
   let mappedResponse: Response;
   let retryCount: number | undefined;
-  let originalResponseJson: Record<string, any> | undefined;
+  let originalResponseJson: Record<string, any> | null | undefined;
 
   let cacheKey: string | undefined;
   let { cacheMode, cacheMaxAge, cacheStatus } = getCacheOptions(
@@ -357,8 +363,13 @@ export async function tryPost(
   const requestOptions = c.get('requestOptions') ?? [];
   let transformedRequestBody: ReadableStream | FormData | Params = {};
   let fetchOptions: RequestInit = {};
+  const areSyncHooksAvailable = Boolean(
+    hooksManager.getHooksToExecute(hookSpan, [
+      'syncBeforeRequestHook',
+      'syncAfterRequestHook',
+    ]).length
+  );
 
-  
   if (provider === BEDROCK && params.messages) {
     params.messages = await prefetchImageUrls(params.messages);
   }
@@ -458,6 +469,7 @@ export async function tryPost(
     onStatusCodes: providerOption.retry?.attempts
       ? providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES
       : [],
+    useRetryAfterHeader: providerOption?.retry?.useRetryAfterHeader,
   };
 
   async function createResponse(
@@ -477,7 +489,8 @@ export async function tryPost(
           isCacheHit,
           params,
           strictOpenAiCompliance,
-          c.req.url
+          c.req.url,
+          areSyncHooksAvailable
         ));
     }
 
@@ -991,13 +1004,9 @@ export function constructConfigFromRequestHeaders(
   };
 
   const azureAiInferenceConfig = {
-    azureDeploymentName:
-      requestHeaders[`x-${POWERED_BY}-azure-deployment-name`],
-    azureRegion: requestHeaders[`x-${POWERED_BY}-azure-region`],
-    azureDeploymentType:
-      requestHeaders[`x-${POWERED_BY}-azure-deployment-type`],
     azureApiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
     azureEndpointName: requestHeaders[`x-${POWERED_BY}-azure-endpoint-name`],
+    azureFoundryUrl: requestHeaders[`x-${POWERED_BY}-azure-foundry-url`],
     azureExtraParams: requestHeaders[`x-${POWERED_BY}-azure-extra-params`],
   };
 
@@ -1269,9 +1278,9 @@ export async function recursiveAfterRequestHookHandler(
   mappedResponse: Response;
   retryCount: number;
   createdAt: Date;
-  originalResponseJson?: Record<string, any>;
+  originalResponseJson?: Record<string, any> | null;
 }> {
-  let response, retryCount, createdAt, executionTime;
+  let response, retryCount, createdAt, executionTime, retrySkipped;
   const requestTimeout =
     Number(requestHeaders[HEADER_KEYS.REQUEST_TIMEOUT]) ||
     providerOption.requestTimeout ||
@@ -1298,14 +1307,27 @@ export async function recursiveAfterRequestHookHandler(
     response,
     attempt: retryCount,
     createdAt,
+    skip: retrySkipped,
   } = await retryRequest(
     url,
     options,
     retry?.attempts || 0,
     retry?.onStatusCodes || [],
     requestTimeout || null,
-    requestHandler
+    requestHandler,
+    retry?.useRetryAfterHeader || false
   ));
+
+  const hooksManager = c.get('hooksManager') as HooksManager;
+  const hookSpan = hooksManager.getSpan(hookSpanId) as HookSpan;
+  // Check if sync hooks are available
+  // This will be used to determine if we need to parse the response body or simply passthrough the response as is
+  const areSyncHooksAvailable = Boolean(
+    hooksManager.getHooksToExecute(hookSpan, [
+      'syncBeforeRequestHook',
+      'syncAfterRequestHook',
+    ]).length
+  );
 
   const {
     response: mappedResponse,
@@ -1320,7 +1342,8 @@ export async function recursiveAfterRequestHookHandler(
     false,
     gatewayParams,
     strictOpenAiCompliance,
-    c.req.url
+    c.req.url,
+    areSyncHooksAvailable
   );
 
   const arhResponse = await afterRequestHookHandler(
@@ -1338,7 +1361,7 @@ export async function recursiveAfterRequestHookHandler(
     arhResponse.status
   );
 
-  if (remainingRetryCount > 0 && isRetriableStatusCode) {
+  if (remainingRetryCount > 0 && !retrySkipped && isRetriableStatusCode) {
     return recursiveAfterRequestHookHandler(
       c,
       url,
@@ -1355,7 +1378,10 @@ export async function recursiveAfterRequestHookHandler(
   }
 
   let lastAttempt = (retryCount || 0) + retryAttemptsMade;
-  if (lastAttempt === (retry?.attempts || 0) && isRetriableStatusCode) {
+  if (
+    (lastAttempt === (retry?.attempts || 0) && isRetriableStatusCode) ||
+    retrySkipped
+  ) {
     lastAttempt = -1; // All retry attempts exhausted without success.
   }
 

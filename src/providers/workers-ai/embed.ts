@@ -1,10 +1,11 @@
 import { WORKERS_AI } from '../../globals';
 import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
 import { ErrorResponse, ProviderConfig } from '../types';
+import { generateInvalidProviderResponseError } from '../utils';
 import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+  WorkersAiErrorResponse,
+  WorkersAiErrorResponseTransform,
+} from './utils';
 
 export const WorkersAiEmbedConfig: ProviderConfig = {
   input: {
@@ -12,42 +13,12 @@ export const WorkersAiEmbedConfig: ProviderConfig = {
     required: true,
     transform: (params: EmbedParams): string[] => {
       if (Array.isArray(params.input)) {
-        return params.input;
+        return params.input as string[];
       } else {
         return [params.input];
       }
     },
   },
-};
-
-export interface WorkersAiErrorObject {
-  code: string;
-  message: string;
-}
-
-interface WorkersAiErrorResponse {
-  success: boolean;
-  errors: WorkersAiErrorObject[];
-}
-
-export const WorkersAiErrorResponseTransform: (
-  response: WorkersAiErrorResponse
-) => ErrorResponse | undefined = (response) => {
-  if ('errors' in response) {
-    return generateErrorResponse(
-      {
-        message: response.errors
-          ?.map((error) => `Error ${error.code}:${error.message}`)
-          .join(', '),
-        type: null,
-        param: null,
-        code: null,
-      },
-      WORKERS_AI
-    );
-  }
-
-  return undefined;
 };
 
 /**
@@ -66,8 +37,19 @@ export interface WorkersAiEmbedResponse {
 
 export const WorkersAiEmbedResponseTransform: (
   response: WorkersAiEmbedResponse | WorkersAiErrorResponse,
-  responseStatus: number
-) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  _responseHeaders: Headers,
+  _strictOpenAiCompliance: boolean,
+  _gatewayRequestUrl: string,
+  gatewayRequest: Params
+) => EmbedResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
+) => {
   if (responseStatus !== 200) {
     const errorResponse = WorkersAiErrorResponseTransform(
       response as WorkersAiErrorResponse
@@ -75,6 +57,7 @@ export const WorkersAiEmbedResponseTransform: (
     if (errorResponse) return errorResponse;
   }
 
+  const model = (gatewayRequest.model as string) || '';
   if ('result' in response) {
     return {
       object: 'list',
@@ -83,7 +66,7 @@ export const WorkersAiEmbedResponseTransform: (
         embedding: embedding,
         index: index,
       })),
-      model: '', // TODO: find a way to send the cohere embedding model name back
+      model,
       usage: {
         prompt_tokens: -1,
         total_tokens: -1,

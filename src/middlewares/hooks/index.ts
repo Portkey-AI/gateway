@@ -34,14 +34,16 @@ export class HookSpan {
     beforeRequestHooks: HookObject[],
     afterRequestHooks: HookObject[],
     parentHookSpanId: string | null,
-    requestType: string
+    requestType: string,
+    requestHeaders: Record<string, string>
   ) {
     this.context = this.createContext(
       requestParams,
       metadata,
       provider,
       isStreamingRequest,
-      requestType
+      requestType,
+      requestHeaders
     );
     this.beforeRequestHooks = this.initializeHooks(
       beforeRequestHooks,
@@ -64,7 +66,8 @@ export class HookSpan {
     metadata: Record<string, string>,
     provider: string,
     isStreamingRequest: boolean,
-    requestType: string
+    requestType: string,
+    requestHeaders: Record<string, string>
   ): HookSpanContext {
     const requestText = this.extractRequestText(requestParams);
     return {
@@ -73,6 +76,7 @@ export class HookSpan {
         text: requestText,
         isStreamingRequest,
         isTransformed: false,
+        headers: requestHeaders,
       },
       response: {
         json: {},
@@ -211,7 +215,8 @@ export class HooksManager {
     beforeRequestHooks: HookObject[],
     afterRequestHooks: HookObject[],
     parentHookSpanId: string | null,
-    requestType: string
+    requestType: string,
+    requestHeaders: Record<string, string>
   ): HookSpan {
     const span = new HookSpan(
       requestParams,
@@ -221,7 +226,8 @@ export class HooksManager {
       beforeRequestHooks,
       afterRequestHooks,
       parentHookSpanId,
-      requestType
+      requestType,
+      requestHeaders
     );
 
     this.spans[span.id] = span;
@@ -299,6 +305,7 @@ export class HooksManager {
         execution_time: new Date().getTime() - createdAt.getTime(),
         transformed: result.transformed || false,
         created_at: createdAt,
+        log: result.log || null,
       };
     } catch (err: any) {
       console.error(`Error executing check "${check.id}":`, err);
@@ -465,7 +472,7 @@ export class HooksManager {
       .join(', ');
   }
 
-  private getHooksToExecute(
+  public getHooksToExecute(
     span: HookSpan,
     eventTypePresets: string[]
   ): HookObject[] {

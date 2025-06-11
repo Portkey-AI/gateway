@@ -28,6 +28,14 @@ import { OpenAIFileUploadRequestTransform } from '../openai/uploadFile';
 import { AzureOpenAIFinetuneResponseTransform } from './utils';
 import { AzureOpenAICreateBatchConfig } from './createBatch';
 import { AzureOpenAIGetBatchOutputRequestHandler } from './getBatchOutput';
+import {
+  createModelResponseParams,
+  OpenAICreateModelResponseTransformer,
+  OpenAIDeleteModelResponseTransformer,
+  OpenAIGetModelResponseTransformer,
+  OpenAIListInputItemsResponseTransformer,
+} from '../open-ai-base';
+import { AZURE_OPEN_AI } from '../../globals';
 
 const AzureOpenAIConfig: ProviderConfigs = {
   complete: AzureOpenAICompleteConfig,
@@ -43,6 +51,10 @@ const AzureOpenAIConfig: ProviderConfigs = {
   cancelFinetune: {},
   cancelBatch: {},
   createBatch: AzureOpenAICreateBatchConfig,
+  createModelResponse: createModelResponseParams([]),
+  getModelResponse: {},
+  deleteModelResponse: {},
+  listModelsResponse: {},
   requestHandlers: {
     getBatchOutput: AzureOpenAIGetBatchOutputRequestHandler,
   },
@@ -66,6 +78,10 @@ const AzureOpenAIConfig: ProviderConfigs = {
     retrieveBatch: AzureOpenAIResponseTransform,
     cancelBatch: AzureOpenAIResponseTransform,
     listBatches: AzureOpenAIResponseTransform,
+    createModelResponse: OpenAICreateModelResponseTransformer(AZURE_OPEN_AI),
+    getModelResponse: OpenAIGetModelResponseTransformer(AZURE_OPEN_AI),
+    deleteModelResponse: OpenAIDeleteModelResponseTransformer(AZURE_OPEN_AI),
+    listModelsResponse: OpenAIListInputItemsResponseTransformer(AZURE_OPEN_AI),
   },
   requestTransforms: {
     createFinetune: AzureTransformFinetuneBody,

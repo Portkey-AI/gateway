@@ -97,6 +97,16 @@ export interface GroqChatCompleteResponse extends ChatCompletionResponse {}
 
 export interface GroqErrorResponse extends ErrorResponse {}
 
+export interface GroqStreamChunkUsage {
+  queue_time: number;
+  prompt_tokens: number;
+  prompt_time: number;
+  completion_tokens: number;
+  completion_time: number;
+  total_tokens: number;
+  total_time: number;
+}
+
 export interface GroqStreamChunk {
   id: string;
   object: string;
@@ -112,16 +122,9 @@ export interface GroqStreamChunk {
     logprobs: object | null;
   }[];
   x_groq: {
-    usage: {
-      queue_time: number;
-      prompt_tokens: number;
-      prompt_time: number;
-      completion_tokens: number;
-      completion_time: number;
-      total_tokens: number;
-      total_time: number;
-    };
+    usage: GroqStreamChunkUsage;
   };
+  usage: GroqStreamChunkUsage;
 }
 
 export const GroqChatCompleteResponseTransform: (
@@ -203,17 +206,27 @@ export const GroqChatCompleteStreamChunkTransform: (
     created: parsedChunk.created,
     model: parsedChunk.model,
     provider: GROQ,
-    choices: [
-      {
-        index: parsedChunk.choices[0].index || 0,
-        delta: {
-          role: 'assistant',
-          content: parsedChunk.choices[0].delta.content,
-          tool_calls: parsedChunk.choices[0].delta?.tool_calls,
-        },
-        logprobs: null,
-        finish_reason: parsedChunk.choices[0].finish_reason || null,
-      },
-    ],
+    choices:
+      parsedChunk.choices && parsedChunk.choices.length > 0
+        ? [
+            {
+              index: parsedChunk.choices[0].index || 0,
+              delta: {
+                role: 'assistant',
+                content: parsedChunk.choices[0].delta?.content || '',
+                tool_calls: parsedChunk.choices[0].delta?.tool_calls || [],
+              },
+              logprobs: null,
+              finish_reason: parsedChunk.choices[0].finish_reason || null,
+            },
+          ]
+        : [],
+    usage: parsedChunk.usage
+      ? {
+          prompt_tokens: parsedChunk.usage.prompt_tokens || 0,
+          completion_tokens: parsedChunk.usage.completion_tokens || 0,
+          total_tokens: parsedChunk.usage.total_tokens || 0,
+        }
+      : undefined,
   })}\n\n`;
 };

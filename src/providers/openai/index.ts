@@ -38,6 +38,14 @@ import {
   OpenAICreateFinetuneConfig,
   OpenAIFinetuneResponseTransform,
 } from './createFinetune';
+import {
+  createModelResponseParams,
+  OpenAICreateModelResponseTransformer,
+  OpenAIGetModelResponseTransformer,
+  OpenAIDeleteModelResponseTransformer,
+  OpenAIListInputItemsResponseTransformer,
+} from '../open-ai-base';
+import { OPEN_AI } from '../../globals';
 
 const OpenAIConfig: ProviderConfigs = {
   complete: OpenAICompleteConfig,
@@ -53,6 +61,10 @@ const OpenAIConfig: ProviderConfigs = {
   createFinetune: OpenAICreateFinetuneConfig,
   cancelBatch: {},
   cancelFinetune: {},
+  createModelResponse: createModelResponseParams([]),
+  getModelResponse: {},
+  deleteModelResponse: {},
+  listModelsResponse: {},
   requestHandlers: {
     getBatchOutput: OpenAIGetBatchOutputRequestHandler,
   },
@@ -64,7 +76,6 @@ const OpenAIConfig: ProviderConfigs = {
     // 'stream-complete': OpenAICompleteResponseTransform,
     chatComplete: OpenAIChatCompleteResponseTransform,
     // 'stream-chatComplete': OpenAIChatCompleteResponseTransform,
-    embed: OpenAIEmbedResponseTransform,
     imageGenerate: OpenAIImageGenerateResponseTransform,
     createSpeech: OpenAICreateSpeechResponseTransform,
     createTranscription: OpenAICreateTranscriptionResponseTransform,
@@ -81,6 +92,10 @@ const OpenAIConfig: ProviderConfigs = {
     listBatches: OpenAIListBatchesResponseTransform,
     createFinetune: OpenAIFinetuneResponseTransform,
     retrieveFinetune: OpenAIFinetuneResponseTransform,
+    createModelResponse: OpenAICreateModelResponseTransformer(OPEN_AI),
+    getModelResponse: OpenAIGetModelResponseTransformer(OPEN_AI),
+    deleteModelResponse: OpenAIDeleteModelResponseTransformer(OPEN_AI),
+    listModelsResponse: OpenAIListInputItemsResponseTransformer(OPEN_AI),
   },
 };
 

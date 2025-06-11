@@ -4,14 +4,14 @@ import {
   EmbedResponseData,
   EmbedParams,
 } from '../../types/embedRequestBody';
-import {
-  GoogleErrorResponse,
-  EmbedInstancesData,
-  GoogleEmbedResponse,
-} from './types';
+import { GoogleErrorResponse, GoogleEmbedResponse } from './types';
 import { GOOGLE_VERTEX_AI } from '../../globals';
 import { generateInvalidProviderResponseError } from '../utils';
 import { GoogleErrorResponseTransform } from './utils';
+import {
+  transformEmbeddingInputs,
+  transformEmbeddingsParameters,
+} from './transformGenerationConfig';
 
 enum TASK_TYPE {
   RETRIEVAL_QUERY = 'RETRIEVAL_QUERY',
@@ -24,42 +24,46 @@ enum TASK_TYPE {
   CODE_RETRIEVAL_QUERY = 'CODE_RETRIEVAL_QUERY',
 }
 
-interface GoogleEmbedParams extends EmbedParams {
+export interface GoogleEmbedParams extends EmbedParams {
   task_type: TASK_TYPE | string;
+  parameters?: {
+    outputDimensionality: number;
+  };
 }
 
 export const GoogleEmbedConfig: ProviderConfig = {
   input: {
     param: 'instances',
     required: true,
-    transform: (params: GoogleEmbedParams): Array<EmbedInstancesData> => {
-      const instances = Array<EmbedInstancesData>();
-      if (Array.isArray(params.input)) {
-        params.input.forEach((text) => {
-          instances.push({
-            content: text,
-            task_type: params.task_type,
-          });
-        });
-      } else {
-        instances.push({
-          content: params.input,
-          task_type: params.task_type,
-        });
-      }
-      return instances;
-    },
+    transform: (params: GoogleEmbedParams) => transformEmbeddingInputs(params),
   },
   parameters: {
     param: 'parameters',
     required: false,
   },
+  dimensions: {
+    param: 'parameters',
+    required: false,
+    transform: (params: GoogleEmbedParams) =>
+      transformEmbeddingsParameters(params),
+  },
 };
 
 export const GoogleEmbedResponseTransform: (
   response: GoogleEmbedResponse | GoogleErrorResponse,
-  responseStatus: number
-) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
+) => EmbedResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
+) => {
   if (responseStatus !== 200) {
     const errorResposne = GoogleErrorResponseTransform(
       response as GoogleErrorResponse
@@ -67,21 +71,46 @@ export const GoogleEmbedResponseTransform: (
     if (errorResposne) return errorResposne;
   }
 
+  const model = (gatewayRequest.model as string) || '';
+
   if ('predictions' in response) {
     const data: EmbedResponseData[] = [];
     let tokenCount = 0;
     response.predictions.forEach((prediction, index) => {
-      data.push({
+      const item = {
         object: 'embedding',
-        embedding: prediction.embeddings.values,
         index: index,
-      });
-      tokenCount += prediction.embeddings.statistics.token_count;
+        ...(prediction.imageEmbedding && {
+          image_embedding: prediction.imageEmbedding,
+        }),
+        ...(prediction.videoEmbeddings && {
+          video_embeddings: prediction.videoEmbeddings.map(
+            (videoEmbedding, idx) => ({
+              object: 'embedding',
+              embedding: videoEmbedding.embedding,
+              index: idx,
+              start_offset: videoEmbedding.startOffsetSec,
+              end_offset: videoEmbedding.endOffsetSec,
+            })
+          ),
+        }),
+        ...(prediction.textEmbedding && {
+          embedding: prediction.textEmbedding,
+        }),
+        ...(prediction.embeddings && {
+          embedding: prediction.embeddings.values,
+        }),
+      };
+      tokenCount += prediction?.embeddings?.statistics?.token_count || 0;
+      data.push(item);
+    });
+    data.forEach((item, index) => {
+      item.index = index;
     });
     return {
       object: 'list',
       data: data,
-      model: '', // Todo: find a way to send the google embedding model name back
+      model,
       usage: {
         prompt_tokens: tokenCount,
         total_tokens: tokenCount,

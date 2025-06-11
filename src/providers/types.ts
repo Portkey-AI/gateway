@@ -50,6 +50,7 @@ export interface ProviderAPIConfig {
     requestHeaders?: Record<string, string>;
     c: Context;
     gatewayRequestURL: string;
+    params?: Params;
   }) => Promise<string> | string;
   /** A function to generate the endpoint based on parameters */
   getEndpoint: (args: {
@@ -96,7 +97,11 @@ export type endpointStrings =
   | 'listFinetunes'
   | 'createFinetune'
   | 'retrieveFinetune'
-  | 'cancelFinetune';
+  | 'cancelFinetune'
+  | 'createModelResponse'
+  | 'getModelResponse'
+  | 'deleteModelResponse'
+  | 'listResponseInputItems';
 
 /**
  * A collection of API configurations for multiple AI providers.

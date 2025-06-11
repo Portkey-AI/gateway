@@ -76,7 +76,12 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       }
     }
 
-    const path = gatewayRequestURL.split('/v1')?.[1];
+    const urlObj = new URL(gatewayRequestURL);
+    const pathname = urlObj.pathname.replace('/v1', '');
+    const searchParams = urlObj.searchParams;
+    if (apiVersion) {
+      searchParams.set('api-version', apiVersion);
+    }
 
     switch (mappedFn) {
       case 'complete': {
@@ -103,32 +108,32 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       case 'realtime': {
         return `/realtime?api-version=${apiVersion}&deployment=${deploymentId}`;
       }
+      case 'createModelResponse': {
+        return `${pathname}?${searchParams.toString()}`;
+      }
+      case 'getModelResponse': {
+        return `${pathname}?${searchParams.toString()}`;
+      }
+      case 'deleteModelResponse': {
+        return `${pathname}?${searchParams.toString()}`;
+      }
+      case 'listResponseInputItems': {
+        return `${pathname}?${searchParams.toString()}`;
+      }
       case 'uploadFile':
-        return `${path}?api-version=${apiVersion}`;
       case 'retrieveFile':
-        return `${path}?api-version=${apiVersion}`;
       case 'listFiles':
-        return `${path}?api-version=${apiVersion}`;
       case 'deleteFile':
-        return `${path}?api-version=${apiVersion}`;
       case 'retrieveFileContent':
-        return `${path}?api-version=${apiVersion}`;
       case 'createFinetune':
-        return `${path}?api-version=${apiVersion}`;
       case 'retrieveFinetune':
-        return `${path}?api-version=${apiVersion}`;
       case 'listFinetunes':
-        return `${path}?api-version=${apiVersion}`;
       case 'cancelFinetune':
-        return `${path}?api-version=${apiVersion}`;
       case 'createBatch':
-        return `${path}?api-version=${apiVersion}`;
       case 'retrieveBatch':
-        return `${path}?api-version=${apiVersion}`;
       case 'cancelBatch':
-        return `${path}?api-version=${apiVersion}`;
       case 'listBatches':
-        return `${path}?api-version=${apiVersion}`;
+        return `${pathname}?api-version=${apiVersion}`;
       default:
         return '';
     }

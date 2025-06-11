@@ -89,7 +89,8 @@ const BedrockConfig: ProviderConfigs = {
     let config: ProviderConfigs = {};
 
     if (params.model) {
-      const providerModel = params?.model?.replace(/^(us\.|eu\.)/, '');
+      let providerModel = params.foundationModel || params.model;
+      providerModel = providerModel.replace(/^(us\.|eu\.)/, '');
       const providerModelArray = providerModel?.split('.');
       const provider = providerModelArray?.[0];
       const model = providerModelArray?.slice(1).join('.');
@@ -195,12 +196,16 @@ const BedrockConfig: ProviderConfigs = {
         config.chatComplete = BedrockConverseChatCompleteConfig;
       }
       if (!config.responseTransforms?.['stream-chatComplete']) {
-        config.responseTransforms['stream-chatComplete'] =
-          BedrockChatCompleteStreamChunkTransform;
+        config.responseTransforms = {
+          ...(config.responseTransforms ?? {}),
+          'stream-chatComplete': BedrockChatCompleteStreamChunkTransform,
+        };
       }
       if (!config.responseTransforms?.chatComplete) {
-        config.responseTransforms.chatComplete =
-          BedrockChatCompleteResponseTransform;
+        config.responseTransforms = {
+          ...(config.responseTransforms ?? {}),
+          chatComplete: BedrockChatCompleteResponseTransform,
+        };
       }
     }
 

@@ -75,7 +75,39 @@ export const MistralAIChatCompleteConfig: ProviderConfig = {
     required: false,
     default: '',
   },
+  tools: {
+    param: 'tools',
+    default: null,
+  },
+  tool_choice: {
+    param: 'tool_choice',
+    default: null,
+    transform: (params: Params) => {
+      if (
+        typeof params.tool_choice === 'string' &&
+        params.tool_choice === 'required'
+      ) {
+        return 'any';
+      }
+      return params.tool_choice;
+    },
+  },
+  parallel_tool_calls: {
+    param: 'parallel_tool_calls',
+    default: null,
+  },
 };
+
+interface MistralToolCallFunction {
+  name: string;
+  arguments: string;
+}
+
+interface MistralToolCall {
+  id: string;
+  type: string;
+  function: MistralToolCallFunction;
+}
 
 interface MistralAIChatCompleteResponse extends ChatCompletionResponse {
   id: string;
@@ -106,6 +138,7 @@ interface MistralAIStreamChunk {
     delta: {
       role?: string | null;
       content?: string;
+      tool_calls?: MistralToolCall[];
     };
     index: number;
     finish_reason: string | null;
@@ -140,6 +173,7 @@ export const MistralAIChatCompleteResponseTransform: (
         message: {
           role: c.message.role,
           content: c.message.content,
+          tool_calls: c.message.tool_calls,
         },
         finish_reason: c.finish_reason,
       })),

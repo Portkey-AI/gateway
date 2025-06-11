@@ -9,7 +9,7 @@ export const CohereEmbedConfig: ProviderConfig = {
     required: true,
     transform: (params: EmbedParams): string[] => {
       if (Array.isArray(params.input)) {
-        return params.input;
+        return params.input as string[];
       } else {
         return [params.input];
       }
@@ -73,8 +73,19 @@ export interface CohereEmbedResponse {
 
 export const CohereEmbedResponseTransform: (
   response: CohereEmbedResponse,
-  responseStatus: number
-) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
+) => EmbedResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
+) => {
   if (responseStatus !== 200) {
     return generateErrorResponse(
       {
@@ -94,7 +105,7 @@ export const CohereEmbedResponseTransform: (
       embedding: embedding,
       index: index,
     })),
-    model: '', // Todo: find a way to send the cohere embedding model name back
+    model: (gatewayRequest.model as string) || '',
     usage: {
       prompt_tokens: -1,
       total_tokens: -1,

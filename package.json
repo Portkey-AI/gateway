@@ -1,6 +1,6 @@
 {
   "name": "@portkey-ai/gateway",
-  "version": "1.9.13",
+  "version": "1.9.19",
   "description": "A fast AI gateway by Portkey",
   "repository": {
     "type": "git",
@@ -38,7 +38,8 @@
     "test:gateway": "jest src/",
     "test:plugins": "jest plugins/",
     "pre-push": "npm run build && node start-test.js",
-    "prepare": "node -e \"if (process.env.NODE_ENV !== 'production'){process.exit(1)} \" || husky"
+    "prepare": "node -e \"if (process.env.NODE_ENV !== 'production'){process.exit(1)} \" || husky",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@aws-crypto/sha256-js": "^5.2.0",
@@ -52,6 +53,7 @@
     "async-retry": "^1.3.3",
     "avsc": "^5.7.7",
     "hono": "^4.6.10",
+    "jose": "^6.0.11",
     "patch-package": "^8.0.0",
     "serialize-error": "^8.0.0",
     "url-join": "^5.0.0",

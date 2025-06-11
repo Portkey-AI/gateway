@@ -162,7 +162,7 @@ export const CohereChatCompleteResponseTransform: (
 
   return {
     id: response.generation_id,
-    object: 'chat_completion',
+    object: 'chat.completion',
     created: Math.floor(Date.now() / 1000),
     model: 'Unknown',
     provider: COHERE,
@@ -199,11 +199,15 @@ export type CohereStreamChunk =
 export const CohereChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
-  streamState: CohereStreamState
+  streamState: CohereStreamState,
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
 ) => string = (
   responseChunk,
   fallbackId,
-  streamState = { generation_id: '' }
+  streamState = { generation_id: '' },
+  _strictOpenAiCompliance,
+  gatewayRequest
 ) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
@@ -218,7 +222,7 @@ export const CohereChatCompleteStreamChunkTransform: (
       id: streamState?.generation_id ?? fallbackId,
       object: 'chat.completion.chunk',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: gatewayRequest.model || '',
       provider: COHERE,
       ...(parsedChunk.event_type === 'stream-end' && {
         usage: {
