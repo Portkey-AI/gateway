@@ -92,6 +92,7 @@ export const RECRAFTAI: string = 'recraft-ai';
 export const MILVUS: string = 'milvus';
 export const REPLICATE: string = 'replicate';
 export const LEPTON: string = 'lepton';
+export const NSCALE: string = 'nscale';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -149,6 +150,7 @@ export const VALID_PROVIDERS = [
   REPLICATE,
   POWERED_BY,
   LEPTON,
+  NSCALE,
 ];
 
 export const CONTENT_TYPES = {

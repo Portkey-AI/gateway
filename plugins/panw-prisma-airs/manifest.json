@@ -1,0 +1,30 @@
+{
+  "id": "panwPrismaAirs",
+  "name": "PANW Prisma AIRS Guardrail",
+  "description": "Blocks prompt/response when Palo Alto Networks Prisma AI Runtime Security returns action=block.",
+  "credentials": [
+    {
+      "id": "AIRS_API_KEY",
+      "name": "AIRS API Key",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "functions": [
+    {
+      "id": "intercept",
+      "name": "PANW Prisma AIRS Guardrail",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "profile_name": { "type": "string" },
+          "ai_model": { "type": "string" },
+          "app_user": { "type": "string" }
+        },
+        "required": ["profile_name"]
+      }
+    }
+  ]
+}

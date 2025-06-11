@@ -21,8 +21,8 @@ import { AnthropicStreamState } from './types';
 
 interface AnthropicTool extends PromptCache {
   name: string;
-  description: string;
-  input_schema: {
+  description?: string;
+  input_schema?: {
     type: string;
     properties: Record<
       string,
@@ -34,6 +34,10 @@ interface AnthropicTool extends PromptCache {
     required: string[];
     $defs: Record<string, any>;
   };
+  type?: string;
+  display_width_px?: number;
+  display_height_px?: number;
+  display_number?: number;
 }
 
 interface AnthropicToolResultContentItem {
@@ -344,6 +348,12 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
               ...(tool.cache_control && {
                 cache_control: { type: 'ephemeral' },
               }),
+            });
+          } else if (tool.computer) {
+            tools.push({
+              ...tool.computer,
+              name: 'computer',
+              type: tool.computer.name,
             });
           }
         });
