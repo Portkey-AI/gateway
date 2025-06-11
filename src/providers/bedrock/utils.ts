@@ -10,7 +10,7 @@ import {
 } from './chatComplete';
 import { Options } from '../../types/requestBody';
 import { GatewayError } from '../../errors/GatewayError';
-import { BedrockFinetuneRecord } from './types';
+import { BedrockFinetuneRecord, BedrockInferenceProfile } from './types';
 import { FinetuneRequest } from '../types';
 
 export const generateAWSHeaders = async (
@@ -403,4 +403,81 @@ export const populateHyperParameters = (value: FinetuneRequest) => {
   }
 
   return hyperParameters;
+};
+
+export const getInferenceProfile = async (
+  inferenceProfileIdentifier: string,
+  awsRegion: string,
+  awsAccessKeyId: string,
+  awsSecretAccessKey: string,
+  awsSessionToken?: string
+) => {
+  const url = `https://bedrock.${awsRegion}.amazonaws.com/inference-profiles/${encodeURIComponent(decodeURIComponent(inferenceProfileIdentifier))}`;
+
+  const headers = await generateAWSHeaders(
+    undefined,
+    { 'content-type': 'application/json' },
+    url,
+    'GET',
+    'bedrock',
+    awsRegion,
+    awsAccessKeyId,
+    awsSecretAccessKey,
+    awsSessionToken
+  );
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to get inference profile: ${response.status} ${response.statusText}`
+      );
+    }
+
+    return (await response.json()) as BedrockInferenceProfile;
+  } catch (error) {
+    console.error('Error getting inference profile:', error);
+    throw error;
+  }
+};
+
+export const getFoundationModelFromInferenceProfile = async (
+  c: Context,
+  inferenceProfileIdentifier: string,
+  providerOptions: Options
+) => {
+  try {
+    const getFromCacheByKey = c.get('getFromCacheByKey');
+    const putInCacheWithValue = c.get('putInCacheWithValue');
+    const cacheKey = `bedrock-inference-profile-${inferenceProfileIdentifier}`;
+    const cachedFoundationModel = getFromCacheByKey
+      ? await getFromCacheByKey(env(c), cacheKey)
+      : null;
+    if (cachedFoundationModel) {
+      return cachedFoundationModel;
+    }
+
+    const inferenceProfile = await getInferenceProfile(
+      inferenceProfileIdentifier || '',
+      providerOptions.awsRegion || '',
+      providerOptions.awsAccessKeyId || '',
+      providerOptions.awsSecretAccessKey || '',
+      providerOptions.awsSessionToken || ''
+    );
+
+    // modelArn is always like arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-v2:1
+    const foundationModel = inferenceProfile?.models?.[0]?.modelArn
+      ?.split('/')
+      ?.pop();
+    if (putInCacheWithValue) {
+      putInCacheWithValue(env(c), cacheKey, foundationModel, 86400);
+    }
+    return foundationModel;
+  } catch (error) {
+    return null;
+  }
 };

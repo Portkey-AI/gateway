@@ -50,6 +50,7 @@ export interface ProviderAPIConfig {
     requestHeaders?: Record<string, string>;
     c: Context;
     gatewayRequestURL: string;
+    params?: Params;
   }) => Promise<string> | string;
   /** A function to generate the endpoint based on parameters */
   getEndpoint: (args: {
