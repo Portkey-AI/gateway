@@ -2,6 +2,7 @@ import { HookEventType, PluginContext } from './types';
 
 interface PostOptions extends RequestInit {
   headers?: Record<string, string>;
+  [key: string]: any;
 }
 
 export interface ErrorResponse {

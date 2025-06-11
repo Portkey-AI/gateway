@@ -110,6 +110,10 @@ export const OpenAICreateModelResponseConfig: ProviderConfig = {
     param: 'truncation',
     required: false,
   },
+  background: {
+    param: 'background',
+    required: false,
+  },
 };
 
 export function* OpenAIModelResponseJSONToStreamGenerator(
