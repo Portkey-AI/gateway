@@ -474,7 +474,7 @@ export const getFoundationModelFromInferenceProfile = async (
       ?.split('/')
       ?.pop();
     if (putInCacheWithValue) {
-      putInCacheWithValue(env(c), cacheKey, foundationModel, 56400);
+      putInCacheWithValue(env(c), cacheKey, foundationModel, 86400);
     }
     return foundationModel;
   } catch (error) {
