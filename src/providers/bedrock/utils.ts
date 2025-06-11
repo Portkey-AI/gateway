@@ -458,8 +458,6 @@ export const getFoundationModelFromInferenceProfile = async (
       ? await getFromCacheByKey(env(c), cacheKey)
       : null;
     if (cachedFoundationModel) {
-      //update ttl, dont't await the result
-      putInCacheWithValue(env(c), cacheKey, cachedFoundationModel, 56400);
       return cachedFoundationModel;
     }
 
@@ -475,7 +473,9 @@ export const getFoundationModelFromInferenceProfile = async (
     const foundationModel = inferenceProfile?.models?.[0]?.modelArn
       ?.split('/')
       ?.pop();
-    putInCacheWithValue(env(c), cacheKey, foundationModel, 56400);
+    if (putInCacheWithValue) {
+      putInCacheWithValue(env(c), cacheKey, foundationModel, 56400);
+    }
     return foundationModel;
   } catch (error) {
     return null;
