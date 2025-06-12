@@ -1,5 +1,4 @@
 import { Portkey } from 'portkey-ai';
-import FormData from 'form-data';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -21,6 +20,7 @@ export class RequestBuilder {
       'Content-Type': 'application/json',
       'x-portkey-provider': 'anthropic',
       Authorization: `Bearer ${creds.anthropic.apiKey}`,
+      'x-portkey-api-key': creds.portkey.apiKey,
     };
     this._method = 'POST';
     this._client = new Portkey({
@@ -53,10 +53,7 @@ export class RequestBuilder {
 
     if (this.requestBody instanceof FormData) {
       const { ['Content-Type']: _, ...restHeaders } = this.requestHeaders;
-      _options.headers = {
-        ...restHeaders,
-        ...this.requestBody.getHeaders(),
-      };
+      _options.headers = restHeaders;
     }
 
     if (this._method === 'GET') {
@@ -130,12 +127,20 @@ export class RequestBuilder {
   }
 
   apiKey(apiKey: string) {
-    this.requestHeaders['Authorization'] = `Bearer ${apiKey}`;
+    if (apiKey) {
+      this.requestHeaders['Authorization'] = `Bearer ${apiKey}`;
+    } else {
+      delete this.requestHeaders['Authorization'];
+    }
     return this;
   }
 
   body(body: Record<string, any> | FormData) {
     this.requestBody = body;
+    // If we're switching to FormData we must remove any stale JSON content-type header
+    if (body instanceof FormData) {
+      delete this.requestHeaders['Content-Type'];
+    }
     return this;
   }
 

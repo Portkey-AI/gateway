@@ -11,6 +11,20 @@ const CACHE_STATUS = {
   DISABLED: 'DISABLED',
 };
 
+const getCacheKey = async (requestBody: any, url: string) => {
+  const stringToHash = `${JSON.stringify(requestBody)}-${url}`;
+  const myText = new TextEncoder().encode(stringToHash);
+  let cacheDigest = await crypto.subtle.digest(
+    {
+      name: 'SHA-256',
+    },
+    myText
+  );
+  return Array.from(new Uint8Array(cacheDigest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+};
+
 // Cache Handling
 export const getFromCache = async (
   env: any,
@@ -25,20 +39,7 @@ export const getFromCache = async (
     return [null, CACHE_STATUS.REFRESH, null];
   }
   try {
-    const stringToHash = `${JSON.stringify(requestBody)}-${url}`;
-    const myText = new TextEncoder().encode(stringToHash);
-
-    let cacheDigest = await crypto.subtle.digest(
-      {
-        name: 'SHA-256',
-      },
-      myText
-    );
-
-    // Convert arraybuffer to hex
-    let cacheKey = Array.from(new Uint8Array(cacheDigest))
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
+    const cacheKey = await getCacheKey(requestBody, url);
 
     // console.log("Get from cache", cacheKey, cacheKey in inMemoryCache, stringToHash);
 
@@ -73,22 +74,9 @@ export const putInCache = async (
     // Does not support caching of streams
     return;
   }
-  const stringToHash = `${JSON.stringify(requestBody)}-${url}`;
-  const myText = new TextEncoder().encode(stringToHash);
 
-  let cacheDigest = await crypto.subtle.digest(
-    {
-      name: 'SHA-256',
-    },
-    myText
-  );
+  const cacheKey = await getCacheKey(requestBody, url);
 
-  // Convert arraybuffer to hex
-  let cacheKey = Array.from(new Uint8Array(cacheDigest))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-
-  // console.log("Put in cache", cacheKey, stringToHash);
   inMemoryCache[cacheKey] = {
     responseBody: JSON.stringify(responseBody),
     maxAge: cacheMaxAge,
@@ -103,7 +91,7 @@ export const memoryCache = () => {
     await next();
 
     let requestOptions = c.get('requestOptions');
-    console.log('requestOptions', requestOptions);
+    // console.log('requestOptions', requestOptions);
 
     if (
       requestOptions &&
@@ -117,8 +105,8 @@ export const memoryCache = () => {
         await putInCache(
           null,
           null,
-          requestOptions.requestParams,
-          await requestOptions.response.json(),
+          requestOptions.transformedRequest.body,
+          await requestOptions.response.clone().json(),
           requestOptions.providerOptions.rubeusURL,
           '',
           null,
