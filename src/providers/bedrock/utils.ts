@@ -478,7 +478,7 @@ export const getFoundationModelFromInferenceProfile = async (
 
     const inferenceProfile = await getInferenceProfile(
       inferenceProfileIdentifier || '',
-      providerOptions,
+      { ...providerOptions },
       c
     );
 
