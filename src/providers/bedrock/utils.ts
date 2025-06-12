@@ -407,11 +407,26 @@ export const populateHyperParameters = (value: FinetuneRequest) => {
 
 export const getInferenceProfile = async (
   inferenceProfileIdentifier: string,
-  awsRegion: string,
-  awsAccessKeyId: string,
-  awsSecretAccessKey: string,
-  awsSessionToken?: string
+  providerOptions: Options,
+  c: Context
 ) => {
+  if (providerOptions.awsAuthType === 'assumedRole') {
+    const { accessKeyId, secretAccessKey, sessionToken } =
+      (await getAssumedRoleCredentials(
+        c,
+        providerOptions.awsRoleArn || '',
+        providerOptions.awsExternalId || '',
+        providerOptions.awsRegion || ''
+      )) || {};
+    providerOptions.awsAccessKeyId = accessKeyId;
+    providerOptions.awsSecretAccessKey = secretAccessKey;
+    providerOptions.awsSessionToken = sessionToken;
+  }
+
+  const awsRegion = providerOptions.awsRegion || 'us-east-1';
+  const awsAccessKeyId = providerOptions.awsAccessKeyId || '';
+  const awsSecretAccessKey = providerOptions.awsSecretAccessKey || '';
+  const awsSessionToken = providerOptions.awsSessionToken || '';
   const url = `https://bedrock.${awsRegion}.amazonaws.com/inference-profiles/${encodeURIComponent(decodeURIComponent(inferenceProfileIdentifier))}`;
 
   const headers = await generateAWSHeaders(
@@ -463,10 +478,8 @@ export const getFoundationModelFromInferenceProfile = async (
 
     const inferenceProfile = await getInferenceProfile(
       inferenceProfileIdentifier || '',
-      providerOptions.awsRegion || '',
-      providerOptions.awsAccessKeyId || '',
-      providerOptions.awsSecretAccessKey || '',
-      providerOptions.awsSessionToken || ''
+      providerOptions,
+      c
     );
 
     // modelArn is always like arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-v2:1
