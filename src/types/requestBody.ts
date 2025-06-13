@@ -358,6 +358,12 @@ export interface Tool extends PromptCache {
   type: string;
   /** A description of the function. */
   function: Function;
+  computer?: {
+    name: string;
+    display_width_px: number;
+    display_height_px: number;
+    display_number: number;
+  };
 }
 
 /**
@@ -424,6 +430,7 @@ export interface Params {
   // Embeddings specific
   dimensions?: number;
   parameters?: any;
+  [key: string]: any;
 }
 
 interface Examples {

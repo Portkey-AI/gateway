@@ -46,6 +46,7 @@ export class ProviderContext {
       fn: context.endpoint,
       c: context.honoContext,
       gatewayRequestURL: context.honoContext.req.url,
+      params: context.params,
     });
   }
 
