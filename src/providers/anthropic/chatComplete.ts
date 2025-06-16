@@ -147,6 +147,9 @@ const transformAssistantMessage = (msg: Message): AnthropicMessage => {
         input: toolCall.function.arguments?.length
           ? JSON.parse(toolCall.function.arguments)
           : {},
+        ...(toolCall.cache_control && {
+          cache_control: toolCall.cache_control,
+        }),
       });
     });
   }
