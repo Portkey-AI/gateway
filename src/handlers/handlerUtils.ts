@@ -751,7 +751,7 @@ export async function tryTargetsRecursively(
   ];
   // end: merge inherited config with current target config (preference given to current)
 
-  let response;
+  let response: Response | null = null;
 
   switch (strategyMode) {
     case StrategyModes.FALLBACK:
@@ -873,7 +873,7 @@ export async function tryTargetsRecursively(
           currentJsonPath,
           method
         );
-      } catch (error: any) {
+      } catch (error: unknown) {
         // tryPost always returns a Response.
         // TypeError will check for all unhandled exceptions.
         // GatewayError will check for all handled exceptions which cannot allow the request to proceed.
@@ -896,11 +896,20 @@ export async function tryTargetsRecursively(
               },
             }
           );
-        } else {
+        } else if (
+          typeof error === 'object' &&
+          error &&
+          'response' in error &&
+          error.response instanceof Response
+        ) {
           response = error.response;
         }
       }
       break;
+  }
+
+  if (!response) {
+    throw new Error('Could not create response');
   }
 
   return response;
