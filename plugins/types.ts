@@ -2,6 +2,7 @@ export interface PluginContext {
   [key: string]: any;
   requestType?: 'complete' | 'chatComplete' | 'embed';
   provider?: string;
+  metadata?: Record<string, any>;
 }
 
 export interface PluginParameters<K = Record<string, string>> {
