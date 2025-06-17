@@ -643,7 +643,6 @@ export const BedrockChatCompleteStreamChunkTransform: (
   gatewayRequest
 ) => {
   const parsedChunk: BedrockChatCompleteStreamChunk = JSON.parse(responseChunk);
-  console.log(JSON.stringify(parsedChunk, null, 2));
   if (parsedChunk.message) {
     return getBedrockErrorChunk(fallbackId, gatewayRequest.model || '');
   }
