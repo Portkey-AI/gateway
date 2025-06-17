@@ -276,7 +276,7 @@ export async function getAssumedRoleCredentials(
 
     if (!response.ok) {
       const resp = await response.text();
-      console.error({ message: resp });
+      console.error('getAssumedRoleCredentials error: ', { message: resp });
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
@@ -286,7 +286,9 @@ export async function getAssumedRoleCredentials(
       await putInCacheWithValue(env(c), cacheKey, credentials, 300); //5 minutes
     }
   } catch (error) {
-    console.error({ message: `Error assuming role:, ${error}` });
+    console.error('getAssumedRoleCredentials error: ', {
+      message: `Error assuming role:, ${error}`,
+    });
   }
   return credentials;
 }

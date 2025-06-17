@@ -16,7 +16,7 @@ export const addListeners = (
       const parsedData = JSON.parse(event.data as string);
       eventParser.handleEvent(c, parsedData, sessionOptions);
     } catch (err) {
-      console.log('outgoingWebSocket message parse error', event);
+      console.error('outgoingWebSocket message parse error: ', event);
     }
   });
 
@@ -25,7 +25,7 @@ export const addListeners = (
   });
 
   outgoingWebSocket.addEventListener('error', (event) => {
-    console.log('outgoingWebSocket error', event);
+    console.error('outgoingWebSocket error: ', event);
     server?.close();
   });
 
@@ -38,7 +38,7 @@ export const addListeners = (
   });
 
   server.addEventListener('error', (event) => {
-    console.log('serverWebSocket error', event);
+    console.error('serverWebSocket error: ', event);
     outgoingWebSocket?.close();
   });
 };

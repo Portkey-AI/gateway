@@ -31,7 +31,7 @@ export async function embeddingsHandler(c: Context): Promise<Response> {
 
     return tryTargetsResponse;
   } catch (err: any) {
-    console.log('embeddings error', err.message);
+    console.error('embeddingsHandler error: ', err);
     let statusCode = 500;
     let errorMessage = 'Something went wrong';
 
