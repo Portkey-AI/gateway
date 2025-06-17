@@ -805,6 +805,7 @@ export async function tryTargetsRecursively(
           method
         );
       } catch (error: any) {
+        console.error('tryTargetsRecursively error: ', error);
         // tryPost always returns a Response.
         // TypeError will check for all unhandled exceptions.
         // GatewayError will check for all handled exceptions which cannot allow the request to proceed.
