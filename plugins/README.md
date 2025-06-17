@@ -21,6 +21,7 @@
 ## Introduction
 
 This folder contains plugins for the Portkey Gateway. Plugins allow developers to extend the capabilities of the Gateway by adding custom functionality at various stages of the request lifecycle. Currently, the primary type of plugins supported in the AI gateway are guardrails.
+The default plugin set includes guardrails for common checks such as regex matching, model whitelisting, and metadata verification.
 
 ## What are Plugins?
 
@@ -170,6 +171,22 @@ To build plugins into your Gateway, follow these steps:
     }
   },
   "cache": false
+}
+```
+
+To check request metadata using the default plugin set, add a guardrail referencing `default.metadata`:
+
+```json
+{
+  "guardrails": {
+    "beforeRequest": [
+      {
+        "plugin": "default.metadata",
+        "pairs": { "foo": "bar" },
+        "operator": "all"
+      }
+    ]
+  }
 }
 ```
 

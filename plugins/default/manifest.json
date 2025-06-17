@@ -706,6 +706,43 @@
         },
         "required": ["jwksUri", "headerKey"]
       }
+    },
+    {
+      "name": "Metadata Check",
+      "id": "metadata",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Verify metadata key/value pairs"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "pairs": {
+            "type": "json",
+            "label": "Key/Value pairs",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "e.g. {\"foo\":\"bar\"}"
+              }
+            ]
+          },
+          "operator": {
+            "type": "string",
+            "enum": ["any", "all", "none"],
+            "default": "all"
+          },
+          "not": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": ["pairs"]
+      }
     }
   ]
 }
