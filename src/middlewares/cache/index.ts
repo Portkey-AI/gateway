@@ -41,21 +41,18 @@ export const getFromCache = async (
   try {
     const cacheKey = await getCacheKey(requestBody, url);
 
-    // console.log("Get from cache", cacheKey, cacheKey in inMemoryCache, stringToHash);
-
     if (cacheKey in inMemoryCache) {
       const cacheObject = inMemoryCache[cacheKey];
       if (cacheObject.maxAge && cacheObject.maxAge < Date.now()) {
         delete inMemoryCache[cacheKey];
         return [null, CACHE_STATUS.MISS, null];
       }
-      // console.log("Got from cache", inMemoryCache[cacheKey])
       return [cacheObject.responseBody, CACHE_STATUS.HIT, cacheKey];
     } else {
       return [null, CACHE_STATUS.MISS, null];
     }
   } catch (error) {
-    console.log(error);
+    console.error('getFromCache error: ', error);
     return [null, CACHE_STATUS.MISS, null];
   }
 };
@@ -85,13 +82,11 @@ export const putInCache = async (
 
 export const memoryCache = () => {
   return async (c: Context, next: any) => {
-    // console.log("Cache Init")
     c.set('getFromCache', getFromCache);
 
     await next();
 
     let requestOptions = c.get('requestOptions');
-    // console.log('requestOptions', requestOptions);
 
     if (
       requestOptions &&
@@ -100,7 +95,6 @@ export const memoryCache = () => {
       requestOptions[0].requestParams.stream === (false || undefined)
     ) {
       requestOptions = requestOptions[0];
-      // console.log("requestOptions", requestOptions);
       if (requestOptions.cacheMode === 'simple') {
         await putInCache(
           null,

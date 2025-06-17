@@ -9,16 +9,10 @@ const logClients: Map<string | number, any> = new Map();
 
 const addLogClient = (clientId: any, client: any) => {
   logClients.set(clientId, client);
-  // console.log(
-  //   `New client ${clientId} connected. Total clients: ${logClients.size}`
-  // );
 };
 
 const removeLogClient = (clientId: any) => {
   logClients.delete(clientId);
-  // console.log(
-  //   `Client ${clientId} disconnected. Total clients: ${logClients.size}`
-  // );
 };
 
 const broadcastLog = async (log: any) => {
@@ -63,7 +57,6 @@ async function processLog(c: Context, start: number) {
   }
 
   try {
-    // console.log('requestOptionsArray', requestOptionsArray);
     const response = requestOptionsArray[0].requestParams.stream
       ? { message: 'The response was a stream.' }
       : await c.res.clone().json();

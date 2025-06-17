@@ -330,7 +330,6 @@ export async function tryPost(
   currentIndex: number | string,
   method: string = 'POST'
 ): Promise<Response> {
-  // console.log('1. requestBody', requestBody);
   const requestContext = new RequestContext(
     c,
     providerOption,
@@ -810,7 +809,6 @@ export async function tryTargetsRecursively(
         // TypeError will check for all unhandled exceptions.
         // GatewayError will check for all handled exceptions which cannot allow the request to proceed.
         if (error instanceof TypeError || error instanceof GatewayError) {
-          // console.log('Error in tryTargetsRecursively', error);
           const errorMessage =
             error instanceof GatewayError
               ? error.message
@@ -1453,7 +1451,7 @@ export async function beforeRequestHookHandler(
       };
     }
   } catch (err) {
-    console.log(err);
+    console.error('beforeRequestHookHandler error: ', err);
     return { error: err };
   }
   return {
