@@ -108,13 +108,16 @@ function constructRequestHeaders(
       }
     });
     // Remove brotli from accept-encoding because cloudflare has problems with it
-    if (proxyHeaders['accept-encoding']?.includes('br'))
-      proxyHeaders['accept-encoding'] = proxyHeaders[
-        'accept-encoding'
-      ]?.replace('br', '');
+    // if (proxyHeaders['accept-encoding']?.includes('br'))
+    //   proxyHeaders['accept-encoding'] = proxyHeaders[
+    //     'accept-encoding'
+    //   ]?.replace('br', '');
   }
   const baseHeaders: any = {
     'content-type': 'application/json',
+    ...(requestHeaders['accept-encoding'] && {
+      'accept-encoding': requestHeaders['accept-encoding'],
+    }),
   };
 
   let headers: Record<string, string> = {};
@@ -868,19 +871,19 @@ function updateResponseHeaders(
     retryAttempt.toString()
   );
 
-  const contentEncodingHeader = response.headers.get('content-encoding');
-  if (contentEncodingHeader && contentEncodingHeader.indexOf('br') > -1) {
-    // Brotli compression causes errors at runtime, removing the header in that case
-    response.headers.delete('content-encoding');
-  }
-  if (getRuntimeKey() == 'node') {
-    response.headers.delete('content-encoding');
-  }
+  // const contentEncodingHeader = response.headers.get('content-encoding');
+  // if (contentEncodingHeader && contentEncodingHeader.indexOf('br') > -1) {
+  //   // Brotli compression causes errors at runtime, removing the header in that case
+  //   response.headers.delete('content-encoding');
+  // }
+  // if (getRuntimeKey() == 'node') {
+  //   response.headers.delete('content-encoding');
+  // }
 
   // Delete content-length header to avoid conflicts with hono compress middleware
   // workerd environment handles this authomatically
   response.headers.delete('content-length');
-  response.headers.delete('transfer-encoding');
+  // response.headers.delete('transfer-encoding');
   if (provider && provider !== POWERED_BY) {
     response.headers.append(HEADER_KEYS.PROVIDER, provider);
   }
