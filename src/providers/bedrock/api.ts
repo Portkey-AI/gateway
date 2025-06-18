@@ -5,6 +5,7 @@ import { bedrockInvokeModels } from './constants';
 import {
   generateAWSHeaders,
   getAssumedRoleCredentials,
+  getFoundationModelFromInferenceProfile,
   providerAssumedRoleCredentials,
 } from './utils';
 import { GatewayError } from '../../errors/GatewayError';
@@ -101,7 +102,20 @@ const setRouteSpecificHeaders = (
 };
 
 const BedrockAPIConfig: BedrockAPIConfigInterface = {
-  getBaseURL: ({ providerOptions, fn, gatewayRequestURL }) => {
+  getBaseURL: async ({ c, providerOptions, fn, gatewayRequestURL, params }) => {
+    const model = decodeURIComponent(params?.model || '');
+    if (model.includes('arn:aws') && params) {
+      const foundationModel = model.includes('foundation-model/')
+        ? model.split('/').pop()
+        : await getFoundationModelFromInferenceProfile(
+            c,
+            model,
+            providerOptions
+          );
+      if (foundationModel) {
+        params.foundationModel = foundationModel;
+      }
+    }
     if (fn === 'retrieveFile') {
       const s3URL = decodeURIComponent(
         gatewayRequestURL.split('/v1/files/')[1]

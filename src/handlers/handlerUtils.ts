@@ -33,12 +33,13 @@ import { HookType } from '../middlewares/hooks/types';
 // Services
 import { CacheResponseObject, CacheService } from './services/cacheService';
 import { HooksService } from './services/hooksService';
-import { LogsService } from './services/logsService';
+import { LogObjectBuilder, LogsService } from './services/logsService';
 import { PreRequestValidatorService } from './services/preRequestValidatorService';
 import { ProviderContext } from './services/providerContext';
 import { RequestContext } from './services/requestContext';
 import { ResponseService } from './services/responseService';
 import { McpService } from './services/mcpService';
+import { log } from 'console';
 
 function constructRequestBody(
   requestContext: RequestContext,
@@ -109,13 +110,16 @@ function constructRequestHeaders(
       }
     });
     // Remove brotli from accept-encoding because cloudflare has problems with it
-    if (proxyHeaders['accept-encoding']?.includes('br'))
-      proxyHeaders['accept-encoding'] = proxyHeaders[
-        'accept-encoding'
-      ]?.replace('br', '');
+    // if (proxyHeaders['accept-encoding']?.includes('br'))
+    //   proxyHeaders['accept-encoding'] = proxyHeaders[
+    //     'accept-encoding'
+    //   ]?.replace('br', '');
   }
   const baseHeaders: any = {
     'content-type': 'application/json',
+    ...(requestHeaders['accept-encoding'] && {
+      'accept-encoding': requestHeaders['accept-encoding'],
+    }),
   };
 
   let headers: Record<string, string> = {};
@@ -151,8 +155,10 @@ function constructRequestHeaders(
     delete headers['content-type'];
     if (fn === 'uploadFile') {
       headers['Content-Type'] = requestHeaders['content-type'];
-      headers[`x-${POWERED_BY}-file-purpose`] =
-        requestHeaders[`x-${POWERED_BY}-file-purpose`];
+      if (requestHeaders[`x-${POWERED_BY}-file-purpose`]) {
+        headers[`x-${POWERED_BY}-file-purpose`] =
+          requestHeaders[`x-${POWERED_BY}-file-purpose`];
+      }
     }
   }
 
@@ -346,6 +352,13 @@ export async function tryPost(
   );
   const hookSpan: HookSpan = hooksService.hookSpan;
 
+  // Set the requestURL in requestContext
+  requestContext.requestURL = await providerContext.getFullURL(requestContext);
+
+  // Create the base log object from requestContext
+  const logObject = new LogObjectBuilder(logsService, requestContext);
+  logObject.addHookSpanId(hookSpan.id);
+
   // before_request_hooks handler
   const {
     response: brhResponse,
@@ -360,7 +373,7 @@ export async function tryPost(
       requestContext.transformToProviderRequestAndSave();
     }
 
-    return responseService.create({
+    const { response, originalResponseJson } = await responseService.create({
       response: brhResponse,
       responseTransformer: undefined,
       isResponseAlreadyMapped: false,
@@ -372,13 +385,22 @@ export async function tryPost(
       retryAttempt: 0,
       createdAt: brhCreatedAt,
     });
+
+    logObject
+      .updateRequestContext(requestContext)
+      .addResponse(response, originalResponseJson)
+      .addCache()
+      .log();
+
+    return response;
   }
 
+  // If before request hook transformed the body, update the request context
   if (transformedBody) {
     requestContext.params = hookSpan.getContext().request.json;
   }
 
-  // NEW: Initialize MCP service if needed
+  // Initialize MCP service if needed
   await using mcpService = requestContext.shouldHandleMcp()
     ? new McpService(requestContext)
     : null;
@@ -409,8 +431,12 @@ export async function tryPost(
       requestContext,
       fetchOptions.headers || {}
     );
+  logObject.addCache(
+    cacheResponseObject.cacheStatus,
+    cacheResponseObject.cacheKey
+  );
   if (cacheResponseObject.cacheResponse) {
-    return responseService.create({
+    const { response, originalResponseJson } = await responseService.create({
       response: cacheResponseObject.cacheResponse,
       responseTransformer: requestContext.endpoint,
       cache: {
@@ -424,6 +450,13 @@ export async function tryPost(
       createdAt: cacheResponseObject.createdAt,
       executionTime: 0,
     });
+
+    logObject
+      .updateRequestContext(requestContext, fetchOptions.headers)
+      .addResponse(response, originalResponseJson)
+      .log();
+
+    return response;
   }
 
   // Prerequest validator (For virtual key budgets)
@@ -434,7 +467,7 @@ export async function tryPost(
   const preRequestValidatorResponse =
     await preRequestValidatorService.getResponse();
   if (preRequestValidatorResponse) {
-    return responseService.create({
+    const { response, originalResponseJson } = await responseService.create({
       response: preRequestValidatorResponse,
       responseTransformer: undefined,
       isResponseAlreadyMapped: false,
@@ -447,6 +480,13 @@ export async function tryPost(
       fetchOptions,
       createdAt: new Date(),
     });
+
+    logObject
+      .updateRequestContext(requestContext, fetchOptions.headers)
+      .addResponse(response, originalResponseJson)
+      .log();
+
+    return response;
   }
 
   // Request Handler (Including retries, recursion and hooks)
@@ -458,24 +498,32 @@ export async function tryPost(
       hookSpan.id,
       providerContext,
       hooksService,
-      mcpService || undefined,
-      logsService || undefined
+      logObject,
+      mcpService || undefined
     );
 
-  return responseService.create({
-    response: mappedResponse,
-    responseTransformer: undefined,
-    isResponseAlreadyMapped: true,
-    cache: {
-      isCacheHit: false,
-      cacheStatus: cacheResponseObject.cacheStatus,
-      cacheKey: cacheResponseObject.cacheKey,
-    },
-    retryAttempt: retryCount,
-    fetchOptions,
-    createdAt,
-    originalResponseJson,
-  });
+  const { response, originalResponseJson: mappedOriginalResponseJson } =
+    await responseService.create({
+      response: mappedResponse,
+      responseTransformer: undefined,
+      isResponseAlreadyMapped: true,
+      cache: {
+        isCacheHit: false,
+        cacheStatus: cacheResponseObject.cacheStatus,
+        cacheKey: cacheResponseObject.cacheKey,
+      },
+      retryAttempt: retryCount,
+      fetchOptions,
+      createdAt,
+      originalResponseJson,
+    });
+
+  logObject
+    .updateRequestContext(requestContext, fetchOptions.headers)
+    .addResponse(response, mappedOriginalResponseJson)
+    .log();
+
+  return response;
 }
 
 export async function tryTargetsRecursively(
@@ -770,11 +818,11 @@ export async function tryTargetsRecursively(
           method
         );
       } catch (error: any) {
+        console.error('tryTargetsRecursively error: ', error);
         // tryPost always returns a Response.
         // TypeError will check for all unhandled exceptions.
         // GatewayError will check for all handled exceptions which cannot allow the request to proceed.
         if (error instanceof TypeError || error instanceof GatewayError) {
-          // console.log('Error in tryTargetsRecursively', error);
           const errorMessage =
             error instanceof GatewayError
               ? error.message
@@ -813,7 +861,7 @@ export async function tryTargetsRecursively(
  * @param {number} retryAttempt - The retry attempt count.
  * @param {string} traceId - The trace ID value.
  */
-export function updateResponseHeaders(
+function updateResponseHeaders(
   response: Response,
   currentIndex: string | number,
   params: Record<string, any>,
@@ -836,19 +884,19 @@ export function updateResponseHeaders(
     retryAttempt.toString()
   );
 
-  const contentEncodingHeader = response.headers.get('content-encoding');
-  if (contentEncodingHeader && contentEncodingHeader.indexOf('br') > -1) {
-    // Brotli compression causes errors at runtime, removing the header in that case
-    response.headers.delete('content-encoding');
-  }
-  if (getRuntimeKey() == 'node') {
-    response.headers.delete('content-encoding');
-  }
+  // const contentEncodingHeader = response.headers.get('content-encoding');
+  // if (contentEncodingHeader && contentEncodingHeader.indexOf('br') > -1) {
+  //   // Brotli compression causes errors at runtime, removing the header in that case
+  //   response.headers.delete('content-encoding');
+  // }
+  // if (getRuntimeKey() == 'node') {
+  //   response.headers.delete('content-encoding');
+  // }
 
   // Delete content-length header to avoid conflicts with hono compress middleware
   // workerd environment handles this authomatically
   response.headers.delete('content-length');
-  response.headers.delete('transfer-encoding');
+  // response.headers.delete('transfer-encoding');
   if (provider && provider !== POWERED_BY) {
     response.headers.append(HEADER_KEYS.PROVIDER, provider);
   }
@@ -1148,8 +1196,8 @@ export async function recursiveAfterRequestHookHandler(
   hookSpanId: string,
   providerContext: ProviderContext,
   hooksService: HooksService,
-  mcpService?: McpService,
-  logsService?: LogsService
+  logObject: LogObjectBuilder,
+  mcpService?: McpService
 ): Promise<{
   mappedResponse: Response;
   retryCount: number;
@@ -1170,7 +1218,7 @@ export async function recursiveAfterRequestHookHandler(
   let response, retryCount, createdAt, retrySkipped;
 
   const requestHandler = providerContext.getRequestHandler(requestContext);
-  const url = await providerContext.getFullURL(requestContext);
+  const url = requestContext.requestURL;
 
   ({
     response,
@@ -1210,15 +1258,14 @@ export async function recursiveAfterRequestHookHandler(
 
   if (
     mcpService &&
-    logsService &&
+    logObject &&
     !isStreamingMode &&
     mappedResponseJson?.choices?.[0]?.message?.tool_calls?.[0]
   ) {
     const mcpResult = await handleMcpToolCalls(
       requestContext,
       mappedResponseJson,
-      mcpService,
-      logsService
+      mcpService
     );
     if (mcpResult.success) {
       // TODO: the hookspan context might need to be updated here.
@@ -1243,8 +1290,8 @@ export async function recursiveAfterRequestHookHandler(
         hookSpanId,
         providerContext,
         hooksService,
-        mcpService,
-        logsService
+        logObject,
+        mcpService
       );
     } else {
       // MCP failed, log and continue with current response
@@ -1271,13 +1318,20 @@ export async function recursiveAfterRequestHookHandler(
   );
 
   if (remainingRetryCount > 0 && !retrySkipped && isRetriableStatusCode) {
+    // Log the request here since we're about to retry
+    logObject
+      .updateRequestContext(requestContext, options.headers)
+      .addResponse(arhResponse, originalResponseJson)
+      .log();
+
     return recursiveAfterRequestHookHandler(
       requestContext,
       options,
       (retryCount ?? 0) + 1 + retryAttemptsMade,
       hookSpanId,
       providerContext,
-      hooksService
+      hooksService,
+      logObject
     );
   }
 
@@ -1458,7 +1512,7 @@ export async function beforeRequestHookHandler(
       };
     }
   } catch (err) {
-    console.log(err);
+    console.error('beforeRequestHookHandler error: ', err);
     return { error: err };
   }
   return {
@@ -1470,9 +1524,10 @@ export async function beforeRequestHookHandler(
 async function handleMcpToolCalls(
   requestContext: RequestContext,
   responseJson: any,
-  mcpService: McpService,
-  logsService: LogsService
+  mcpService: McpService
 ): Promise<{ success: boolean; error?: string }> {
+  let logsService = new LogsService(requestContext.honoContext);
+
   try {
     const toolCalls = responseJson.choices[0].message.tool_calls;
     const conversation = [...(requestContext.params.messages || [])];
@@ -1482,25 +1537,27 @@ async function handleMcpToolCalls(
 
     // Execute each tool call and add results to conversation
     for (const toolCall of toolCalls) {
-      const startTimeUnixNano = new Date().getTime();
+      const start = new Date().getTime();
       try {
         const toolResult = await mcpService.executeTool(
           toolCall.function.name,
           JSON.parse(toolCall.function.arguments)
         );
-        const endTimeUnixNano = new Date().getTime();
+
         conversation.push({
           role: 'tool',
           tool_call_id: toolCall.id,
           content: JSON.stringify(toolResult),
         });
+
         const toolCallSpan = logsService.createExecuteToolSpan(
           toolCall,
           toolResult.content,
-          startTimeUnixNano,
-          endTimeUnixNano,
+          start,
+          new Date().getTime(),
           requestContext.traceId
         );
+
         logsService.addRequestLog(toolCallSpan);
       } catch (toolError: any) {
         console.error(
@@ -1508,7 +1565,6 @@ async function handleMcpToolCalls(
           toolError
         );
         // Add error message as tool response
-        const endTimeUnixNano = new Date().getTime();
         conversation.push({
           role: 'tool',
           tool_call_id: toolCall.id,
@@ -1517,13 +1573,15 @@ async function handleMcpToolCalls(
             details: toolError.message,
           }),
         });
+
         const toolCallSpan = logsService.createExecuteToolSpan(
           toolCall,
           { error: toolError.message },
-          startTimeUnixNano,
-          endTimeUnixNano,
+          start,
+          new Date().getTime(),
           requestContext.traceId
         );
+
         logsService.addRequestLog(toolCallSpan);
       }
     }

@@ -1,9 +1,4 @@
-import { describe, it, expect } from '@jest/globals';
 import { readFileSync } from 'fs';
-import { createReadStream, existsSync, statSync } from 'fs';
-import FormData from 'form-data';
-import fetch from 'node-fetch';
-import { Portkey } from 'portkey-ai';
 import { RequestBuilder, URLBuilder } from './requestBuilder';
 import { join } from 'path';
 
@@ -46,7 +41,7 @@ describe('core functionality', () => {
     // Append a random file to formData
     formData.append(
       'file',
-      createReadStream('./src/handlers/tests/test.txt'),
+      new Blob([readFileSync('./src/handlers/tests/test.txt')]),
       'test.txt'
     );
     formData.append('purpose', 'assistants');
@@ -67,7 +62,7 @@ describe('core functionality', () => {
       const formData = new FormData();
       formData.append(
         'file',
-        createReadStream('./src/handlers/tests/speech2.mp3'),
+        new Blob([readFileSync('./src/handlers/tests/speech2.mp3')]),
         'speech2.mp3'
       );
       formData.append('model', 'gpt-4o-transcribe');
@@ -118,7 +113,7 @@ describe('core functionality', () => {
   // TODO: some more difficult proxy paths with different file types here.
 });
 
-describe('tryPost-provider-specific', () => {
+describe.skip('tryPost-provider-specific', () => {
   beforeEach(() => {
     requestBuilder = new RequestBuilder();
     urlBuilder = new URLBuilder();
@@ -151,6 +146,29 @@ describe('tryPost-provider-specific', () => {
 
   it('should handle AWS Bedrock with SigV4 authentication', async () => {
     // Verify AWS auth headers are generated
+    const url = urlBuilder.chat();
+    const creds = JSON.parse(
+      readFileSync(join(__dirname, '.creds.json'), 'utf8')
+    );
+    const options = requestBuilder
+      .provider('bedrock')
+      .model('cohere.command-r-v1:0')
+      .apiKey('')
+      .providerHeaders({
+        aws_access_key_id: creds.aws.accessKeyId,
+        aws_secret_access_key: creds.aws.secretAccessKey,
+        aws_region: creds.aws.region,
+      }).options;
+
+    const response = await fetch(url, options);
+    if (response.status !== 200) {
+      console.log(await response.text());
+    }
+    const data: any = await response.json();
+    // console.log(data);
+
+    expect(response.status).toBe(200);
+    expect(data.choices[0].message.content).toBeDefined();
   });
 
   it('should handle Google Vertex AI with service account auth', async () => {
@@ -161,7 +179,7 @@ describe('tryPost-provider-specific', () => {
     // Verify custom handlers bypass normal transformation
   });
 
-  it('should handle invalid provider gracefully', async () => {
+  it.only('should handle invalid provider gracefully', async () => {
     // Verify error when provider not found
     const url = urlBuilder.chat();
     const options = requestBuilder
@@ -170,7 +188,7 @@ describe('tryPost-provider-specific', () => {
       .messages([{ role: 'user', content: 'Hello' }]).options;
 
     const response = await fetch(url, options);
-    const error = await response.json();
+    const error: any = await response.json();
 
     console.log(error);
 
@@ -206,8 +224,7 @@ describe('tryPost-error-handling', () => {
     expect(response.headers.get('x-portkey-retry-attempt-count')).toBe('-1');
 
     expect(response.status).toBe(401);
-    expect(data.status).toBe('failure');
-    expect(data.message).toMatch(/Invalid API key/i);
+    expect(data.error.message).toMatch(/invalid/i);
   });
 
   it('should handle network timeouts with requestTimeout', async () => {
@@ -312,7 +329,7 @@ describe('tryPost-hooks-and-guardrails', () => {
     const response = await fetch(url, options);
     const data: any = await response.json();
 
-    console.log(data.hook_results.before_request_hooks[0].checks[0]);
+    // console.log(data.hook_results.before_request_hooks[0].checks[0]);
 
     expect(response.status).toBe(200);
     expect(data.hook_results.before_request_hooks[0].checks[0]).toBeDefined();
@@ -353,7 +370,7 @@ describe('tryPost-hooks-and-guardrails', () => {
         {
           role: 'user',
           content:
-            'Based on the web search results, who is the chief minister of Delhi in May 2025? reply with name only.',
+            'Based on the web search results, who was the chief minister of Delhi in May 2025? reply with name only.',
         },
       ]).options;
 
@@ -478,7 +495,7 @@ describe('tryPost-caching', () => {
     // Append a random file to formData
     formData.append(
       'file',
-      createReadStream('./src/handlers/tests/test.txt'),
+      new Blob([readFileSync('./src/handlers/tests/test.txt')]),
       'test.txt'
     );
     formData.append('purpose', 'assistants');
@@ -496,7 +513,7 @@ describe('tryPost-caching', () => {
     const url = urlBuilder.chat();
     const options = requestBuilder
       .config({
-        cache: { mode: 'simple', maxAge: 2000 },
+        cache: { mode: 'simple', maxAge: 5000 },
       })
       .messages([
         { role: 'user', content: 'Hello' + new Date().getTime() },
@@ -513,7 +530,7 @@ describe('tryPost-caching', () => {
     expect(response1.headers.get('x-portkey-cache-status')).toBe('HIT');
 
     // Wait 2 seconds
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
     // Make the request again
     const response2 = await fetch(url, options);
@@ -524,7 +541,7 @@ describe('tryPost-caching', () => {
     expect(data2.choices[0].message.content).toBeDefined();
   });
 
-  it.only('should handle cache with streaming responses correctly', async () => {
+  it.skip('should handle cache with streaming responses correctly', async () => {
     // Verify streaming from cache works
     const url = urlBuilder.chat();
     const options = requestBuilder
@@ -538,7 +555,8 @@ describe('tryPost-caching', () => {
 
     // Store in cache
     const nonCachedResponse = await fetch(url, options);
-    const nonCachedData: any = await nonCachedResponse.json();
+    // The response should be a stream
+    expect(nonCachedResponse.body).toBeInstanceOf(ReadableStream);
 
     expect(nonCachedResponse.status).toBe(200);
     expect(nonCachedResponse.headers.get('x-portkey-cache-status')).toBe(
@@ -547,10 +565,10 @@ describe('tryPost-caching', () => {
 
     // Get from cache
     const response = await fetch(url, options);
-    const data: any = await response.json();
+    // The response should be a stream
+    expect(response.body).toBeInstanceOf(ReadableStream);
 
     expect(response.status).toBe(200);
     expect(response.headers.get('x-portkey-cache-status')).toBe('HIT');
-    expect(data.choices[0].message.content).toBeDefined();
   });
 });

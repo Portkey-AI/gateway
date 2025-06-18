@@ -358,6 +358,12 @@ export interface Tool extends PromptCache {
   type: string;
   /** A description of the function. */
   function: Function;
+  computer?: {
+    name: string;
+    display_width_px: number;
+    display_height_px: number;
+    display_number: number;
+  };
 }
 
 /**
@@ -425,6 +431,7 @@ export interface Params {
   dimensions?: number;
   parameters?: any;
   mcp_servers?: McpServerConfig[];
+  [key: string]: any;
 }
 
 export interface McpServerConfig {

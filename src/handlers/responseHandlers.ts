@@ -291,7 +291,7 @@ export async function afterRequestHookHandler(
 
     return createHookResponse(response, responseData, hooksResult);
   } catch (err) {
-    console.error(err);
+    console.error('afterRequestHookHandler error: ', err);
     return response;
   }
 }

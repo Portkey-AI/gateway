@@ -109,6 +109,7 @@ app.notFound((c) => c.json({ message: 'Not Found', ok: false }, 404));
  * Otherwise, logs the error and returns a JSON response with status code 500.
  */
 app.onError((err, c) => {
+  console.error('Global Error Handler: ', err);
   if (err instanceof HTTPException) {
     return err.getResponse();
   }

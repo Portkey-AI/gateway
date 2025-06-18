@@ -34,6 +34,9 @@ export function transformGenerationConfig(params: Params) {
   if (params['top_logprobs']) {
     generationConfig['logprobs'] = params['top_logprobs']; // range 1-5, openai supports 1-20
   }
+  if (params['seed']) {
+    generationConfig['seed'] = params['seed'];
+  }
   if (params?.response_format?.type === 'json_schema') {
     generationConfig['responseMimeType'] = 'application/json';
     recursivelyDeleteUnsupportedParameters(
@@ -53,9 +56,11 @@ export function transformGenerationConfig(params: Params) {
   }
 
   if (params?.thinking) {
+    const { budget_tokens, type } = params.thinking;
     const thinkingConfig: Record<string, any> = {};
-    thinkingConfig['include_thoughts'] = true;
-    thinkingConfig['thinking_budget'] = params.thinking.budget_tokens;
+    thinkingConfig['include_thoughts'] =
+      type === 'enabled' && budget_tokens ? true : false;
+    thinkingConfig['thinking_budget'] = budget_tokens;
     generationConfig['thinking_config'] = thinkingConfig;
   }
 

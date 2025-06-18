@@ -15,9 +15,11 @@ import { transformToProviderRequest } from '../../services/transformToProviderRe
 import { LLMFunction } from './mcpService';
 
 export class RequestContext {
+  private originalRequestParams: any;
   private _params: Params | null = null;
   private _transformedRequestBody: any;
   public readonly providerOption: Options;
+  private _requestURL: string = ''; // Is set at the beginning of tryPost()
 
   constructor(
     public readonly honoContext: Context,
@@ -30,10 +32,18 @@ export class RequestContext {
       | ReadableStream
       | ArrayBuffer,
     public readonly method: string = 'POST',
-    public readonly index: number
+    public readonly index: number | string
   ) {
     this.providerOption = providerOption;
     this.providerOption.retry = this.normalizeRetryConfig(providerOption.retry);
+  }
+
+  get requestURL(): string {
+    return this._requestURL;
+  }
+
+  set requestURL(requestURL: string) {
+    this._requestURL = requestURL;
   }
 
   get overrideParams(): Params {

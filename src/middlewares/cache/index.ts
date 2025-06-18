@@ -11,6 +11,20 @@ const CACHE_STATUS = {
   DISABLED: 'DISABLED',
 };
 
+const getCacheKey = async (requestBody: any, url: string) => {
+  const stringToHash = `${JSON.stringify(requestBody)}-${url}`;
+  const myText = new TextEncoder().encode(stringToHash);
+  let cacheDigest = await crypto.subtle.digest(
+    {
+      name: 'SHA-256',
+    },
+    myText
+  );
+  return Array.from(new Uint8Array(cacheDigest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+};
+
 // Cache Handling
 export const getFromCache = async (
   env: any,
@@ -25,22 +39,7 @@ export const getFromCache = async (
     return [null, CACHE_STATUS.REFRESH, null];
   }
   try {
-    const stringToHash = `${JSON.stringify(requestBody)}-${url}`;
-    const myText = new TextEncoder().encode(stringToHash);
-
-    let cacheDigest = await crypto.subtle.digest(
-      {
-        name: 'SHA-256',
-      },
-      myText
-    );
-
-    // Convert arraybuffer to hex
-    let cacheKey = Array.from(new Uint8Array(cacheDigest))
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
-
-    // console.log("Get from cache", cacheKey, cacheKey in inMemoryCache, stringToHash);
+    const cacheKey = await getCacheKey(requestBody, url);
 
     if (cacheKey in inMemoryCache) {
       const cacheObject = inMemoryCache[cacheKey];
@@ -48,13 +47,12 @@ export const getFromCache = async (
         delete inMemoryCache[cacheKey];
         return [null, CACHE_STATUS.MISS, null];
       }
-      // console.log("Got from cache", inMemoryCache[cacheKey])
       return [cacheObject.responseBody, CACHE_STATUS.HIT, cacheKey];
     } else {
       return [null, CACHE_STATUS.MISS, null];
     }
   } catch (error) {
-    console.log(error);
+    console.error('getFromCache error: ', error);
     return [null, CACHE_STATUS.MISS, null];
   }
 };
@@ -73,22 +71,9 @@ export const putInCache = async (
     // Does not support caching of streams
     return;
   }
-  const stringToHash = `${JSON.stringify(requestBody)}-${url}`;
-  const myText = new TextEncoder().encode(stringToHash);
 
-  let cacheDigest = await crypto.subtle.digest(
-    {
-      name: 'SHA-256',
-    },
-    myText
-  );
+  const cacheKey = await getCacheKey(requestBody, url);
 
-  // Convert arraybuffer to hex
-  let cacheKey = Array.from(new Uint8Array(cacheDigest))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-
-  // console.log("Put in cache", cacheKey, stringToHash);
   inMemoryCache[cacheKey] = {
     responseBody: JSON.stringify(responseBody),
     maxAge: cacheMaxAge,
@@ -97,13 +82,11 @@ export const putInCache = async (
 
 export const memoryCache = () => {
   return async (c: Context, next: any) => {
-    // console.log("Cache Init")
     c.set('getFromCache', getFromCache);
 
     await next();
 
     let requestOptions = c.get('requestOptions');
-    console.log('requestOptions', requestOptions);
 
     if (
       requestOptions &&
@@ -112,13 +95,12 @@ export const memoryCache = () => {
       requestOptions[0].requestParams.stream === (false || undefined)
     ) {
       requestOptions = requestOptions[0];
-      // console.log("requestOptions", requestOptions);
       if (requestOptions.cacheMode === 'simple') {
         await putInCache(
           null,
           null,
-          requestOptions.requestParams,
-          await requestOptions.response.json(),
+          requestOptions.transformedRequest.body,
+          await requestOptions.response.clone().json(),
           requestOptions.providerOptions.rubeusURL,
           '',
           null,

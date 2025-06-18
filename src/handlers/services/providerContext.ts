@@ -11,11 +11,6 @@ import { ANTHROPIC } from '../../globals';
 import { AZURE_OPEN_AI } from '../../globals';
 
 export class ProviderContext {
-  // Using a WeakMap to cache the URL for the provider.
-  // This is to avoid recalculating the URL for the same request.
-  // GC will clear the cache when the request context is no longer needed.
-  private urlCache = new WeakMap<RequestContext, string>();
-
   constructor(private provider: string) {
     if (!Providers[provider]) {
       throw new Error(`Provider ${provider} not found`);
@@ -36,7 +31,7 @@ export class ProviderContext {
       providerOptions: context.providerOption,
       fn: context.endpoint,
       transformedRequestBody: context.transformedRequestBody,
-      transformedRequestUrl: context.honoContext.req.url,
+      transformedRequestUrl: context.requestURL,
       gatewayRequestBody: context.params,
     });
   }
@@ -51,6 +46,7 @@ export class ProviderContext {
       fn: context.endpoint,
       c: context.honoContext,
       gatewayRequestURL: context.honoContext.req.url,
+      params: context.params,
     });
   }
 
@@ -98,10 +94,6 @@ export class ProviderContext {
   }
 
   async getFullURL(context: RequestContext): Promise<string> {
-    if (this.urlCache.has(context)) {
-      return this.urlCache.get(context)!;
-    }
-
     const baseURL = context.customHost || (await this.getBaseURL(context));
     let url: string;
     if (context.endpoint === 'proxy') {
@@ -111,7 +103,6 @@ export class ProviderContext {
       url = `${baseURL}${endpointPath}`;
     }
 
-    this.urlCache.set(context, url);
     return url;
   }
 
