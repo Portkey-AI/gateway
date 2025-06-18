@@ -174,6 +174,7 @@ To build plugins into your Gateway, follow these steps:
 }
 ```
 
+Metadata is supplied to the Gateway via the `x-portkey-metadata` request header as a JSON object. The parsed metadata is available to plugins through `context.metadata`.
 To check request metadata using the default plugin set, add a guardrail referencing `default.metadata`:
 
 ```json
