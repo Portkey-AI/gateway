@@ -37,8 +37,8 @@ const performExaSearch = async (
     query,
     numResults,
     useAutoprompt: true,
-    contents: {
-      text: true,
+    text: {
+      includeHtmlTags: false,
     },
   };
 
