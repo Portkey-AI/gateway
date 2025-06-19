@@ -595,14 +595,14 @@
       }
     },
     {
-      "name": "Model whitelisting",
+      "name": "Allowed Models",
       "id": "modelwhitelist",
       "type": "guardrail",
       "supportedHooks": ["beforeRequestHook"],
       "description": [
         {
           "type": "subHeading",
-          "text": "Check if the model in the request is part of the allowed model list."
+          "text": "Blocks any request whose model isn’t on this list."
         }
       ],
       "parameters": {
@@ -614,7 +614,7 @@
             "description": [
               {
                 "type": "subHeading",
-                "text": "Enter the allowed models."
+                "text": "Enter the allowed models. e.g. gpt-4o, llama-3-70b, mixtral-8x7b"
               }
             ],
             "items": {
@@ -627,7 +627,7 @@
             "description": [
               {
                 "type": "subHeading",
-                "text": "If true, the verdict will be true when model is not in the list"
+                "text": "When on, any model in the list is blocked instead of allowed."
               }
             ],
             "default": false
