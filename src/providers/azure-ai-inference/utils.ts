@@ -10,38 +10,38 @@ export const AzureAIInferenceResponseTransform = (
     return OpenAIErrorResponseTransform(response, AZURE_AI_INFERENCE);
   }
 
-  return { ...response, AZURE_AI_INFERENCE };
+  return { ...response, provider: AZURE_AI_INFERENCE };
 };
 
-export const AzureAIInferenceCreateSpeechResponseTransform: (
-  response: Response | ErrorResponse,
+export const AzureAIInferenceCreateSpeechResponseTransform = (
+  response: any,
   responseStatus: number
-) => Response | ErrorResponse = (response, responseStatus) => {
+) => {
   if (responseStatus !== 200 && 'error' in response) {
     return OpenAIErrorResponseTransform(response, AZURE_AI_INFERENCE);
   }
 
-  return response;
+  return { ...response, provider: AZURE_AI_INFERENCE };
 };
 
-export const AzureOpenAICreateTranscriptionResponseTransform: (
-  response: Response | ErrorResponse,
+export const AzureAIInferenceCreateTranscriptionResponseTransform = (
+  response: any,
   responseStatus: number
-) => Response | ErrorResponse = (response, responseStatus) => {
+) => {
   if (responseStatus !== 200 && 'error' in response) {
     return OpenAIErrorResponseTransform(response, AZURE_AI_INFERENCE);
   }
 
-  return response;
+  return { ...response, provider: AZURE_AI_INFERENCE };
 };
 
-export const AzureOpenAICreateTranslationResponseTransform: (
-  response: Response | ErrorResponse,
+export const AzureAIInferenceCreateTranslationResponseTransform = (
+  response: any,
   responseStatus: number
-) => Response | ErrorResponse = (response, responseStatus) => {
+) => {
   if (responseStatus !== 200 && 'error' in response) {
     return OpenAIErrorResponseTransform(response, AZURE_AI_INFERENCE);
   }
 
-  return response;
+  return { ...response, provider: AZURE_AI_INFERENCE };
 };
