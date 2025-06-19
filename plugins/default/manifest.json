@@ -614,7 +614,7 @@
             "description": [
               {
                 "type": "subHeading",
-                "text": "gpt-4o, llama-3-70b, mixtral-8x7b"
+                "text": "Enter the allowed models. e.g. gpt-4o, llama-3-70b, mixtral-8x7b"
               }
             ],
             "items": {
