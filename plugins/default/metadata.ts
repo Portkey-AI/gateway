@@ -19,8 +19,12 @@ export const handler: PluginHandler = async (
     const operator = parameters.operator || 'all';
     const not = parameters.not || false;
 
-    if (!pairs || typeof pairs !== 'object') {
-      throw new Error('Invalid or missing metadata pairs');
+    if (!pairs) {
+      throw new Error('Missing metadata pairs parameter');
+    }
+    
+    if (typeof pairs !== 'object' || Array.isArray(pairs)) {
+      throw new Error('Metadata pairs must be an object with key-value pairs');
     }
 
     const metadata = context.metadata || {};
