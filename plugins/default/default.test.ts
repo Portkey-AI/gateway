@@ -2543,4 +2543,26 @@ describe('metadata handler', () => {
       explanation: 'Metadata matches the specified pairs.',
     });
   });
-});
+  it('should return false when any pair matches but not is true', async () => {
+    const context: PluginContext = {
+      metadata: { foo: 'bar', a: 'b' },
+    };
+    const parameters: PluginParameters = {
+      pairs: { foo: 'bar', x: 'y' },
+      operator: 'any',
+      not: true,
+    };
+
+    const result = await metadataHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      verdict: false,
+      not: true,
+      operator: 'any',
+      foundKeys: ['foo'],
+      missingKeys: ['x'],
+      explanation: 'Metadata matches the specified pairs when it should not.',
+    });
+  });
