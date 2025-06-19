@@ -15,9 +15,11 @@ import {
   AnthropicChatCompleteConfig,
   AnthropicChatCompleteResponse,
   AnthropicChatCompleteStreamResponse,
-  AnthropicErrorResponse,
 } from '../anthropic/chatComplete';
-import { AnthropicStreamState } from '../anthropic/types';
+import {
+  AnthropicErrorResponse,
+  AnthropicStreamState,
+} from '../anthropic/types';
 import {
   GoogleMessage,
   GoogleMessageRole,

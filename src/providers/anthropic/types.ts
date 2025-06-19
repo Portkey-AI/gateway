@@ -8,3 +8,13 @@ export type AnthropicStreamState = {
   };
   model?: string;
 };
+
+export interface AnthropicErrorObject {
+  type: string;
+  message: string;
+}
+
+export interface AnthropicErrorResponse {
+  type: string;
+  error: AnthropicErrorObject;
+}

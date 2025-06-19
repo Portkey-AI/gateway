@@ -31,6 +31,7 @@ import { realTimeHandler } from './handlers/realtimeHandler';
 import filesHandler from './handlers/filesHandler';
 import batchesHandler from './handlers/batchesHandler';
 import finetuneHandler from './handlers/finetuneHandler';
+import { messagesHandler } from './handlers/messagesHandler';
 
 // Config
 import conf from '../conf.json';
@@ -115,6 +116,8 @@ app.onError((err, c) => {
   c.status(500);
   return c.json({ status: 'failure', message: err.message });
 });
+
+app.post('/v1/messages', requestValidator, messagesHandler);
 
 /**
  * POST route for '/v1/chat/completions'.
