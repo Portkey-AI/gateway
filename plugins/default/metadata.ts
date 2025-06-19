@@ -52,18 +52,14 @@ export const handler: PluginHandler = async (
     }
 
     let result = false;
-    switch (operator) {
-      case 'any':
-        result = foundKeys.length > 0;
-        break;
-      case 'all':
-        result = missingKeys.length === 0;
-        break;
-      case 'none':
-        result = foundKeys.length === 0;
-        break;
-      default:
-        throw new Error('Invalid operator');
+    if (operator === 'any') {
+      result = foundKeys.length > 0;
+    } else if (operator === 'all') {
+      result = missingKeys.length === 0;
+    } else if (operator === 'none') {
+      result = foundKeys.length === 0;
+    } else {
+      throw new Error(`Invalid operator: ${operator}. Must be one of: any, all, none`);
     }
 
     verdict = not ? !result : result;
