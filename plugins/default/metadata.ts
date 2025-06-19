@@ -27,7 +27,19 @@ export const handler: PluginHandler = async (
       throw new Error('Metadata pairs must be an object with key-value pairs');
     }
 
-    const metadata = context.metadata || {};
+    if (!context.metadata) {
+      data = {
+        verdict: false,
+        explanation: 'No metadata provided in the request context',
+        operator,
+        not,
+        foundKeys: [],
+        missingKeys: Object.keys(pairs)
+      };
+      return { error: null, verdict: not, data };
+    }
+    
+    const metadata = context.metadata;
     const foundKeys: string[] = [];
     const missingKeys: string[] = [];
 
