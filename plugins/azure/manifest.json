@@ -123,6 +123,10 @@
         "tenantId": {
           "type": "string",
           "description": "Tenant ID for Azure Entra ID authentication"
+        },
+        "customHost": {
+          "type": "string",
+          "description": "Custom host for Azure AI services (Private Link etc.)"
         }
       },
       "anyOf": [

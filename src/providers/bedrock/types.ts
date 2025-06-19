@@ -64,3 +64,17 @@ export interface BedrockFinetuneRecord {
   outputModelName?: string;
   outputModelArn?: string;
 }
+
+export interface BedrockInferenceProfile {
+  inferenceProfileName: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+  inferenceProfileArn: string;
+  models: {
+    modelArn: string;
+  }[];
+  inferenceProfileId: string;
+  status: string;
+  type: string;
+}
