@@ -31,7 +31,6 @@ import { ConditionalRouter } from '../services/conditionalRouter';
 import { RouterError } from '../errors/RouterError';
 import { GatewayError } from '../errors/GatewayError';
 import { HookType } from '../middlewares/hooks/types';
-import { Readable } from 'node:stream';
 
 /**
  * Constructs the request options for the API call.
