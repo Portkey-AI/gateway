@@ -14,6 +14,7 @@ import { handler as allLowerCaseHandler } from './alllowercase';
 import { handler as modelWhitelistHandler } from './modelWhitelist';
 import { handler as characterCountHandler } from './characterCount';
 import { handler as jwtHandler } from './jwt';
+import { handler as metadataHandler } from './metadata';
 import { PluginContext, PluginParameters } from '../types';
 
 describe('Regex Matcher Plugin', () => {
@@ -2467,3 +2468,101 @@ describe('jwt handler', () => {
     });
   });
 });
+
+describe('metadata handler', () => {
+  const mockEventType = 'beforeRequestHook';
+
+  it('should return true when any pair matches', async () => {
+    const context: PluginContext = {
+      metadata: { foo: 'bar', a: 'b' },
+    };
+    const parameters: PluginParameters = {
+      pairs: { foo: 'bar', x: 'y' },
+      operator: 'any',
+      not: false,
+    };
+
+    const result = await metadataHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toEqual({
+      verdict: true,
+      not: false,
+      operator: 'any',
+      foundKeys: ['foo'],
+      missingKeys: ['x'],
+      explanation: 'Metadata matches the specified pairs.',
+    });
+  });
+
+  it('should return false when not all pairs match', async () => {
+    const context: PluginContext = {
+      metadata: { foo: 'bar' },
+    };
+    const parameters: PluginParameters = {
+      pairs: { foo: 'bar', x: 'y' },
+      operator: 'all',
+      not: false,
+    };
+
+    const result = await metadataHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      verdict: false,
+      not: false,
+      operator: 'all',
+      foundKeys: ['foo'],
+      missingKeys: ['x'],
+      explanation: 'Metadata does not match the specified pairs.',
+    });
+  });
+
+  it('should return true when none of the pairs match', async () => {
+    const context: PluginContext = {
+      metadata: { foo: 'bar' },
+    };
+    const parameters: PluginParameters = {
+      pairs: { x: 'y' },
+      operator: 'none',
+      not: false,
+    };
+
+    const result = await metadataHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toEqual({
+      verdict: true,
+      not: false,
+      operator: 'none',
+      foundKeys: [],
+      missingKeys: ['x'],
+      explanation: 'Metadata matches the specified pairs.',
+    });
+  });
+  it('should return false when any pair matches but not is true', async () => {
+    const context: PluginContext = {
+      metadata: { foo: 'bar', a: 'b' },
+    };
+    const parameters: PluginParameters = {
+      pairs: { foo: 'bar', x: 'y' },
+      operator: 'any',
+      not: true,
+    };
+
+    const result = await metadataHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toEqual({
+      verdict: false,
+      not: true,
+      operator: 'any',
+      foundKeys: ['foo'],
+      missingKeys: ['x'],
+      explanation: 'Metadata matches the specified pairs when it should not.',
+    });
+  });
