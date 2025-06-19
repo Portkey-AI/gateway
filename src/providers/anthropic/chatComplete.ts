@@ -14,8 +14,9 @@ import {
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
+  transformFinishReason,
 } from '../utils';
-import { AnthropicStreamState } from './types';
+import { ANTHROPIC_STOP_REASON, AnthropicStreamState } from './types';
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -444,7 +445,7 @@ export interface AnthropicChatCompleteResponse {
   type: string;
   role: string;
   content: AnthropicContentItem[];
-  stop_reason: string;
+  stop_reason: ANTHROPIC_STOP_REASON;
   model: string;
   stop_sequence: null | string;
   usage: {
@@ -462,7 +463,7 @@ export interface AnthropicChatCompleteStreamResponse {
     type?: string;
     text?: string;
     partial_json?: string;
-    stop_reason?: string;
+    stop_reason?: ANTHROPIC_STOP_REASON;
   };
   content_block?: {
     type: string;
@@ -578,7 +579,10 @@ export const AnthropicChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: response.stop_reason,
+          finish_reason: transformFinishReason(
+            response.stop_reason,
+            strictOpenAiCompliance
+          ),
         },
       ],
       usage: {
@@ -691,6 +695,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
     );
   }
 
+  // final chunk
   if (parsedChunk.type === 'message_delta' && parsedChunk.usage) {
     const totalTokens =
       (streamState?.usage?.prompt_tokens ?? 0) +
@@ -708,7 +713,10 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           {
             index: 0,
             delta: {},
-            finish_reason: parsedChunk.delta?.stop_reason,
+            finish_reason: transformFinishReason(
+              parsedChunk.delta?.stop_reason,
+              strictOpenAiCompliance
+            ),
           },
         ],
         usage: {
@@ -760,6 +768,13 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   };
   delete contentBlockObject.delta.type;
 
+  const finishReason = parsedChunk.delta?.stop_reason
+    ? transformFinishReason(
+        parsedChunk.delta?.stop_reason,
+        strictOpenAiCompliance
+      )
+    : null;
+
   return (
     `data: ${JSON.stringify({
       id: fallbackId,
@@ -779,7 +794,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: parsedChunk.delta?.stop_reason ?? null,
+          finish_reason: finishReason,
         },
       ],
     })}` + '\n\n'
