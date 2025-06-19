@@ -64,6 +64,7 @@ export function splitString(input: string, separator: string): SplitResult {
   If the finish reason is not found in the map, it will return the stop reason.
   If the strictOpenAiCompliance is true, it will return the finish reason from the map.
   If the strictOpenAiCompliance is false, it will return the finish reason from the provider.
+  NOTE: this function always returns a finish reason
 */
 export const transformFinishReason = (
   finishReason?: PROVIDER_FINISH_REASON,
