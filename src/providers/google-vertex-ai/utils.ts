@@ -362,6 +362,7 @@ export const GoogleToOpenAIBatch = (response: GoogleBatchRecord) => {
     ? BatchEndpoints.EMBEDDINGS
     : BatchEndpoints.CHAT_COMPLETIONS;
 
+  // Embeddings file is `000000000000.jsonl`, for inference the output is at `predictions.jsonl`
   const fileSuffix =
     endpoint === BatchEndpoints.EMBEDDINGS
       ? '000000000000.jsonl'
