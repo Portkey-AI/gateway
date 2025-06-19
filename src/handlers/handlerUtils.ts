@@ -771,7 +771,6 @@ export async function tryTargetsRecursively(
     case StrategyModes.FALLBACK:
       for (const [index, target] of currentTarget.targets.entries()) {
         const originalIndex = target.originalIndex || index;
-        currentJsonPath = `${currentJsonPath}.targets[${originalIndex}]`;
         response = await tryTargetsRecursively(
           c,
           target,
@@ -779,7 +778,7 @@ export async function tryTargetsRecursively(
           requestHeaders,
           fn,
           method,
-          currentJsonPath,
+          `${currentJsonPath}.targets[${originalIndex}]`,
           currentInheritedConfig
         );
         if (response?.headers.get('x-portkey-gateway-exception') === 'true') {
