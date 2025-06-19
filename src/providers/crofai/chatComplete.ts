@@ -151,7 +151,6 @@ export const crofaiChatCompleteResponseTransform: (
         code: null,
       },
       DEEPINFRA
-    );
   }
 
   if ('choices' in response) {
