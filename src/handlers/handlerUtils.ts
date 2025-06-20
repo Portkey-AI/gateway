@@ -598,6 +598,7 @@ export async function tryTargetsRecursively(
 
   // start: merge inherited config with current target config (preference given to current)
   const currentInheritedConfig: Record<string, any> = {
+    id: inheritedConfig.id || currentTarget.id,
     overrideParams: {
       ...inheritedConfig.overrideParams,
       ...currentTarget.overrideParams,
@@ -751,8 +752,8 @@ export async function tryTargetsRecursively(
   ];
   // end: merge inherited config with current target config (preference given to current)
 
-  const circuitBreakerConfigId = c.get('circuitBreakerConfigId');
-  if (circuitBreakerConfigId) {
+  const isHandlingCircuitBreaker = currentInheritedConfig.id;
+  if (isHandlingCircuitBreaker) {
     const healthyTargets = (currentTarget.targets || [])
       .map((t: any, index: number) => ({
         ...t,
@@ -891,10 +892,11 @@ export async function tryTargetsRecursively(
           currentJsonPath,
           method
         );
-        if (circuitBreakerConfigId) {
+        if (isHandlingCircuitBreaker) {
           await c.get('handleCircuitBreakerResponse')(
             response,
-            circuitBreakerConfigId,
+            currentInheritedConfig.id,
+            currentTarget.cbConfig,
             currentJsonPath,
             c
           );
@@ -924,11 +926,13 @@ export async function tryTargetsRecursively(
           );
         } else {
           response = error.response;
-          if (circuitBreakerConfigId) {
+          if (isHandlingCircuitBreaker) {
             await c.get('recordCircuitBreakerFailure')(
               env(c),
-              circuitBreakerConfigId,
-              currentJsonPath
+              currentInheritedConfig.id,
+              currentTarget.cbConfig,
+              currentJsonPath,
+              response.status
             );
           }
         }
@@ -1240,6 +1244,7 @@ export function constructConfigFromRequestHeaders(
       'output_guardrails',
       'default_input_guardrails',
       'default_output_guardrails',
+      'cb_config',
     ]) as any;
   }
 
