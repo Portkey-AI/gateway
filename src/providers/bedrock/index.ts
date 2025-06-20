@@ -75,6 +75,11 @@ import {
 } from './uploadFile';
 import { BedrockListFilesResponseTransform } from './listfiles';
 import { BedrockDeleteFileResponseTransform } from './deleteFile';
+import {
+  BedrockConverseMessagesConfig,
+  BedrockMessagesResponseTransform,
+} from './messages';
+
 const BedrockConfig: ProviderConfigs = {
   api: BedrockAPIConfig,
   requestHandlers: {
@@ -99,10 +104,12 @@ const BedrockConfig: ProviderConfigs = {
           config = {
             complete: BedrockAnthropicCompleteConfig,
             chatComplete: BedrockConverseAnthropicChatCompleteConfig,
+            messages: BedrockConverseMessagesConfig,
             api: BedrockAPIConfig,
             responseTransforms: {
               'stream-complete': BedrockAnthropicCompleteStreamChunkTransform,
               complete: BedrockAnthropicCompleteResponseTransform,
+              messages: BedrockMessagesResponseTransform,
             },
           };
           break;
