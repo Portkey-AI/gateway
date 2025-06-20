@@ -1,5 +1,4 @@
-import { MessagesResponse } from '../../types/messages';
-import { ErrorResponse, ProviderConfig } from '../types';
+import { ProviderConfig } from '../types';
 
 export const messagesBaseConfig: ProviderConfig = {
   model: {

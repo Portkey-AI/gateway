@@ -1,4 +1,4 @@
-import { MessagesResponse } from '../../types/messages';
+import { MessagesResponse } from '../../types/messagesResponse';
 import { getMessagesConfig } from '../anthropic-base/messages';
 import { AnthropicErrorResponse } from './types';
 import { ErrorResponse } from '../types';
