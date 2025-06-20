@@ -33,6 +33,7 @@ import {
   BedrockStreamState,
 } from './types';
 import {
+  transformAnthropicAdditionalModelRequestFields,
   transformInferenceConfig,
   transformToolsConfig as transformToolConfig,
 } from './utils/messagesUtils';
@@ -302,11 +303,6 @@ export const BedrockConverseMessagesConfig: ProviderConfig = {
       return transformInferenceConfig(params);
     },
   },
-  // this if for anthropic
-  // thinking: {
-  //   param: 'thinking',
-  //   required: false,
-  // },
   tool_choice: {
     param: 'toolChoice',
     required: false,
@@ -321,16 +317,46 @@ export const BedrockConverseMessagesConfig: ProviderConfig = {
       return transformToolConfig(params);
     },
   },
-  // top_k: {
-  //   param: 'top_k',
-  //   required: false,
-  // },
   top_p: {
     param: 'inferenceConfig',
     required: false,
     transform: (params: BedrockMessagesParams) => {
       return transformInferenceConfig(params);
     },
+  },
+};
+
+export const AnthropicBedrockConverseMessagesConfig: ProviderConfig = {
+  ...BedrockConverseMessagesConfig,
+  additional_model_request_fields: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockMessagesParams) =>
+      transformAnthropicAdditionalModelRequestFields(params),
+  },
+  top_k: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockMessagesParams) =>
+      transformAnthropicAdditionalModelRequestFields(params),
+  },
+  anthropic_version: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockMessagesParams) =>
+      transformAnthropicAdditionalModelRequestFields(params),
+  },
+  user: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockMessagesParams) =>
+      transformAnthropicAdditionalModelRequestFields(params),
+  },
+  thinking: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockMessagesParams) =>
+      transformAnthropicAdditionalModelRequestFields(params),
+  },
+  anthropic_beta: {
+    param: 'additionalModelRequestFields',
+    transform: (params: BedrockMessagesParams) =>
+      transformAnthropicAdditionalModelRequestFields(params),
   },
 };
 
