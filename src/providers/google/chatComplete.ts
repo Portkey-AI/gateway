@@ -239,10 +239,19 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
 
           if (message.role === 'assistant' && message.tool_calls) {
             message.tool_calls.forEach((tool_call: ToolCall) => {
+              let args;
+              try {
+                args = JSON.parse(tool_call.function.arguments);
+                if (typeof args !== 'object' || Array.isArray(args)) {
+                  args = {};
+                }
+              } catch (error) {
+                args = {};
+              }
               parts.push({
                 functionCall: {
                   name: tool_call.function.name,
-                  args: JSON.parse(tool_call.function.arguments),
+                  args,
                 },
               });
             });
