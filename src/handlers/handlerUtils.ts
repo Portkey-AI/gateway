@@ -893,7 +893,7 @@ export async function tryTargetsRecursively(
           method
         );
         if (isHandlingCircuitBreaker) {
-          await c.get('handleCircuitBreakerResponse')(
+          await c.get('handleCircuitBreakerResponse')?.(
             response,
             currentInheritedConfig.id,
             currentTarget.cbConfig,
@@ -927,7 +927,7 @@ export async function tryTargetsRecursively(
         } else {
           response = error.response;
           if (isHandlingCircuitBreaker) {
-            await c.get('recordCircuitBreakerFailure')(
+            await c.get('recordCircuitBreakerFailure')?.(
               env(c),
               currentInheritedConfig.id,
               currentTarget.cbConfig,
