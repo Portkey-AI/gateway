@@ -66,7 +66,7 @@ export interface TextBlock {
    * Citing a PDF results in `page_location`, plain text results in `char_location`,
    * and content document results in `content_block_location`.
    */
-  citations: Array<TextCitation> | null;
+  citations?: Array<TextCitation> | null;
 
   text: string;
 
@@ -170,12 +170,12 @@ export interface Usage {
   /**
    * The number of input tokens used to create the cache entry.
    */
-  cache_creation_input_tokens: number | null;
+  cache_creation_input_tokens?: number | null;
 
   /**
    * The number of input tokens read from the cache.
    */
-  cache_read_input_tokens: number | null;
+  cache_read_input_tokens?: number | null;
 
   /**
    * The number of input tokens which were used.
@@ -190,12 +190,12 @@ export interface Usage {
   /**
    * The number of server tool requests.
    */
-  server_tool_use: ServerToolUsage | null;
+  server_tool_use?: ServerToolUsage | null;
 
   /**
    * If the request used the priority, standard, or batch tier.
    */
-  service_tier: 'standard' | 'priority' | 'batch' | null;
+  service_tier?: 'standard' | 'priority' | 'batch' | null;
 }
 
 export interface MessagesResponse {
@@ -242,7 +242,7 @@ export interface MessagesResponse {
    * This value will be a non-null string if one of your custom stop sequences was
    * generated.
    */
-  stop_sequence: string | null;
+  stop_sequence?: string | null;
 
   /**
    * Object type.

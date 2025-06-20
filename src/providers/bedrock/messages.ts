@@ -8,12 +8,20 @@ import {
   ToolResultBlockParam,
   ToolUseBlockParam,
 } from '../../types/MessagesRequest';
-import { MessagesResponse } from '../../types/messagesResponse';
+import {
+  ContentBlock,
+  MessagesResponse,
+  STOP_REASON,
+} from '../../types/messagesResponse';
 import { ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { BedrockErrorResponseTransform } from './chatComplete';
 import { BedrockErrorResponse } from './embed';
-import { BedrockMessagesParams } from './types';
+import {
+  BedrockChatCompletionResponse,
+  BedrockContentItem,
+  BedrockMessagesParams,
+} from './types';
 import {
   transformInferenceConfig,
   transformToolsConfig as transformToolConfig,
@@ -316,9 +324,46 @@ export const BedrockConverseMessagesConfig: ProviderConfig = {
   },
 };
 
+const transformContentBlocks = (
+  contentBlocks: BedrockContentItem[]
+): ContentBlock[] => {
+  const transformedContent: ContentBlock[] = [];
+  for (const contentBlock of contentBlocks) {
+    if (contentBlock.text) {
+      transformedContent.push({
+        type: 'text',
+        text: contentBlock.text,
+      });
+    } else if (contentBlock.reasoningContent?.reasoningText) {
+      transformedContent.push({
+        type: 'thinking',
+        thinking: contentBlock.reasoningContent.reasoningText.text,
+        signature: contentBlock.reasoningContent.reasoningText.signature,
+      });
+    } else if (contentBlock.reasoningContent?.redactedContent) {
+      transformedContent.push({
+        type: 'redacted_thinking',
+        data: contentBlock.reasoningContent.redactedContent,
+      });
+    } else if (contentBlock.toolUse) {
+      transformedContent.push({
+        type: 'tool_use',
+        id: contentBlock.toolUse.toolUseId,
+        name: contentBlock.toolUse.name,
+        input: contentBlock.toolUse.input,
+      });
+    }
+  }
+  return transformedContent;
+};
+
 export const BedrockMessagesResponseTransform = (
-  response: MessagesResponse | BedrockErrorResponse,
-  responseStatus: number
+  response: BedrockChatCompletionResponse | BedrockErrorResponse,
+  responseStatus: number,
+  _responseHeaders: Headers,
+  _strictOpenAiCompliance: boolean,
+  _gatewayRequestUrl: string,
+  gatewayRequest: Params
 ): MessagesResponse | ErrorResponse => {
   if (responseStatus !== 200 && 'error' in response) {
     return (
@@ -327,7 +372,28 @@ export const BedrockMessagesResponseTransform = (
     );
   }
 
-  if ('model' in response) return response;
+  if ('output' in response) {
+    const transformedContent = transformContentBlocks(
+      response.output.message.content
+    );
+    const responseObj: MessagesResponse = {
+      // TODO: shorten this
+      id: 'portkey-' + crypto.randomUUID(),
+      model: (gatewayRequest.model as string) || '',
+      type: 'message',
+      role: 'assistant',
+      content: transformedContent,
+      // TODO: pull changes from stop reason transformation PR
+      stop_reason: response.stopReason as STOP_REASON,
+      usage: {
+        cache_read_input_tokens: response.usage.cacheReadInputTokens,
+        cache_creation_input_tokens: response.usage.cacheWriteInputTokens,
+        input_tokens: response.usage.inputTokens,
+        output_tokens: response.usage.outputTokens,
+      },
+    };
+    return responseObj;
+  }
 
   return generateInvalidProviderResponseError(response, BEDROCK);
 };

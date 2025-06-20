@@ -27,6 +27,7 @@ import {
   BedrockCohereStreamChunk,
 } from './complete';
 import { BedrockErrorResponse } from './embed';
+import { BedrockChatCompletionResponse, BedrockContentItem } from './types';
 import {
   transformAdditionalModelRequestFields,
   transformAI21AdditionalModelRequestFields,
@@ -405,63 +406,6 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
       transformAdditionalModelRequestFields(params),
   },
 };
-
-type BedrockContentItem = {
-  text?: string;
-  toolUse?: {
-    toolUseId: string;
-    name: string;
-    input: object;
-  };
-  reasoningContent?: {
-    reasoningText?: {
-      signature: string;
-      text: string;
-    };
-    redactedContent?: string;
-  };
-  image?: {
-    source: {
-      bytes: string;
-    };
-    format: string;
-  };
-  document?: {
-    format: string;
-    name: string;
-    source: {
-      bytes?: string;
-      s3Location?: {
-        uri: string;
-      };
-    };
-  };
-  cachePoint?: {
-    type: string;
-  };
-};
-
-interface BedrockChatCompletionResponse {
-  metrics: {
-    latencyMs: number;
-  };
-  output: {
-    message: {
-      role: string;
-      content: BedrockContentItem[];
-    };
-  };
-  stopReason: string;
-  usage: {
-    inputTokens: number;
-    outputTokens: number;
-    totalTokens: number;
-    cacheReadInputTokenCount?: number;
-    cacheReadInputTokens?: number;
-    cacheWriteInputTokenCount?: number;
-    cacheWriteInputTokens?: number;
-  };
-}
 
 export const BedrockErrorResponseTransform: (
   response: BedrockErrorResponse
