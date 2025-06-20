@@ -117,6 +117,9 @@ app.onError((err, c) => {
   return c.json({ status: 'failure', message: err.message });
 });
 
+/**
+ * POST route for '/v1/messages' in anthropic format
+ */
 app.post('/v1/messages', requestValidator, messagesHandler);
 
 /**

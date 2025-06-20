@@ -30,7 +30,7 @@ export async function messagesHandler(c: Context): Promise<Response> {
 
     return tryTargetsResponse;
   } catch (err: any) {
-    console.log('chatCompletion error', err.message);
+    console.log('messages error', err.message);
     let statusCode = 500;
     let errorMessage = 'Something went wrong';
 
