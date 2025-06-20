@@ -240,7 +240,8 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
       case 'messages': {
         return endpoint;
       }
-      case 'stream-chatComplete': {
+      case 'stream-chatComplete':
+      case 'stream-messages': {
         return streamEndpoint;
       }
       case 'complete': {

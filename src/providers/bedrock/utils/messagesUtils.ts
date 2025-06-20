@@ -68,7 +68,7 @@ export const transformToolsConfig = (params: BedrockMessagesParams) => {
   }
   if (params.tools) {
     for (const tool of params.tools) {
-      if (tool.type === 'custom' || tool.type === null) {
+      if (tool.type === 'custom' || !tool.type) {
         tools.push({
           toolSpec: {
             name: tool.name,

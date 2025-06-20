@@ -13,14 +13,24 @@ import {
   MessagesResponse,
   STOP_REASON,
 } from '../../types/messagesResponse';
+import { RawContentBlockDeltaEvent } from '../../types/MessagesStreamResponse';
+import {
+  ANTHROPIC_CONTENT_BLOCK_START_EVENT,
+  ANTHROPIC_CONTENT_BLOCK_STOP_EVENT,
+  ANTHROPIC_MESSAGE_DELTA_EVENT,
+  ANTHROPIC_MESSAGE_START_EVENT,
+  ANTHROPIC_MESSAGE_STOP_EVENT,
+} from '../anthropic-base/constants';
 import { ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { BedrockErrorResponseTransform } from './chatComplete';
 import { BedrockErrorResponse } from './embed';
 import {
+  BedrockChatCompleteStreamChunk,
   BedrockChatCompletionResponse,
   BedrockContentItem,
   BedrockMessagesParams,
+  BedrockStreamState,
 } from './types';
 import {
   transformInferenceConfig,
@@ -397,3 +407,124 @@ export const BedrockMessagesResponseTransform = (
 
   return generateInvalidProviderResponseError(response, BEDROCK);
 };
+
+const transformContentBlock = (
+  contentBlock: BedrockChatCompleteStreamChunk
+): RawContentBlockDeltaEvent | undefined => {
+  if (!contentBlock.delta || contentBlock.contentBlockIndex === undefined) {
+    return undefined;
+  }
+  if (contentBlock.delta.text) {
+    return {
+      type: 'content_block_delta',
+      index: contentBlock.contentBlockIndex,
+      delta: {
+        type: 'text_delta',
+        text: contentBlock.delta.text,
+      },
+    };
+  } else if (contentBlock.delta.reasoningContent?.text) {
+    return {
+      type: 'content_block_delta',
+      index: contentBlock.contentBlockIndex,
+      delta: {
+        type: 'thinking_delta',
+        thinking: contentBlock.delta.reasoningContent.text,
+      },
+    };
+  } else if (contentBlock.delta.reasoningContent?.signature) {
+    return {
+      type: 'content_block_delta',
+      index: contentBlock.contentBlockIndex,
+      delta: {
+        type: 'signature_delta',
+        signature: contentBlock.delta.reasoningContent.signature,
+      },
+    };
+  } else if (contentBlock.delta.toolUse) {
+    return {
+      type: 'content_block_delta',
+      index: contentBlock.contentBlockIndex,
+      delta: {
+        type: 'input_json_delta',
+        partial_json: contentBlock.delta.toolUse.input,
+      },
+    };
+  }
+  return undefined;
+};
+
+export const BedrockConverseMessagesStreamChunkTransform = (
+  responseChunk: string,
+  fallbackId: string,
+  streamState: BedrockStreamState,
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
+) => {
+  const parsedChunk: BedrockChatCompleteStreamChunk = JSON.parse(responseChunk);
+  if (streamState.currentContentBlockIndex === undefined) {
+    streamState.currentContentBlockIndex = -1;
+  }
+  if (parsedChunk.stopReason) {
+    streamState.stopReason = parsedChunk.stopReason;
+  }
+  // message start event
+  if (parsedChunk.role) {
+    return getMessageStartEvent(fallbackId, gatewayRequest);
+  }
+  // content block start and stop events
+  if (
+    parsedChunk.contentBlockIndex !== undefined &&
+    parsedChunk.contentBlockIndex !== streamState.currentContentBlockIndex
+  ) {
+    let returnChunk = '';
+    if (streamState.currentContentBlockIndex !== -1) {
+      const previousBlockStopEvent = { ...ANTHROPIC_CONTENT_BLOCK_STOP_EVENT };
+      previousBlockStopEvent.index = parsedChunk.contentBlockIndex - 1;
+      returnChunk += `event: content_block_stop\ndata: ${JSON.stringify(previousBlockStopEvent)}\n\n`;
+    }
+    streamState.currentContentBlockIndex = parsedChunk.contentBlockIndex;
+    const contentBlockStartEvent = { ...ANTHROPIC_CONTENT_BLOCK_START_EVENT };
+    contentBlockStartEvent.index = parsedChunk.contentBlockIndex;
+    returnChunk += `event: content_block_start\ndata: ${JSON.stringify(contentBlockStartEvent)}\n\n`;
+    const contentBlockDeltaEvent = transformContentBlock(parsedChunk);
+    if (contentBlockDeltaEvent) {
+      returnChunk += `event: content_block_delta\ndata: ${JSON.stringify(contentBlockDeltaEvent)}\n\n`;
+    }
+    return returnChunk;
+  }
+  // content block delta event
+  if (parsedChunk.delta) {
+    const contentBlockDeltaEvent = transformContentBlock(parsedChunk);
+    if (contentBlockDeltaEvent) {
+      return `event: content_block_delta\ndata: ${JSON.stringify(contentBlockDeltaEvent)}\n\n`;
+    }
+  }
+  // message delta and message stop events
+  if (parsedChunk.usage) {
+    const messageDeltaEvent = { ...ANTHROPIC_MESSAGE_DELTA_EVENT };
+    messageDeltaEvent.usage.input_tokens = parsedChunk.usage.inputTokens;
+    messageDeltaEvent.usage.output_tokens = parsedChunk.usage.outputTokens;
+    messageDeltaEvent.usage.cache_read_input_tokens =
+      parsedChunk.usage.cacheReadInputTokens;
+    messageDeltaEvent.usage.cache_creation_input_tokens =
+      parsedChunk.usage.cacheWriteInputTokens;
+    messageDeltaEvent.delta.stop_reason = streamState.stopReason || '';
+    const contentBlockStopEvent = { ...ANTHROPIC_CONTENT_BLOCK_STOP_EVENT };
+    contentBlockStopEvent.index = streamState.currentContentBlockIndex;
+    let returnChunk = `event: content_block_stop\ndata: ${JSON.stringify(contentBlockStopEvent)}\n\n`;
+    returnChunk += `event: message_delta\ndata: ${JSON.stringify(messageDeltaEvent)}\n\n`;
+    returnChunk += `event: message_stop\ndata: ${JSON.stringify(ANTHROPIC_MESSAGE_STOP_EVENT)}\n\n`;
+    return returnChunk;
+  }
+  // console.log(JSON.stringify(parsedChunk, null, 2));
+};
+
+function getMessageStartEvent(fallbackId: string, gatewayRequest: Params<any>) {
+  const messageStartEvent = { ...ANTHROPIC_MESSAGE_START_EVENT };
+  messageStartEvent.message.id = fallbackId;
+  messageStartEvent.message.model = gatewayRequest.model as string;
+  // bedrock does not send usage in the beginning of the stream
+  delete messageStartEvent.message.usage;
+  return `event: message_start\ndata: ${JSON.stringify(messageStartEvent)}\n\n`;
+}

@@ -27,7 +27,12 @@ import {
   BedrockCohereStreamChunk,
 } from './complete';
 import { BedrockErrorResponse } from './embed';
-import { BedrockChatCompletionResponse, BedrockContentItem } from './types';
+import {
+  BedrockChatCompleteStreamChunk,
+  BedrockChatCompletionResponse,
+  BedrockContentItem,
+  BedrockStreamState,
+} from './types';
 import {
   transformAdditionalModelRequestFields,
   transformAI21AdditionalModelRequestFields,
@@ -526,48 +531,6 @@ export const BedrockChatCompleteResponseTransform: (
 
   return generateInvalidProviderResponseError(response, BEDROCK);
 };
-
-export interface BedrockChatCompleteStreamChunk {
-  contentBlockIndex?: number;
-  delta?: {
-    text: string;
-    toolUse: {
-      toolUseId: string;
-      name: string;
-      input: object;
-    };
-    reasoningContent?: {
-      text?: string;
-      signature?: string;
-      redactedContent?: string;
-    };
-  };
-  start?: {
-    toolUse: {
-      toolUseId: string;
-      name: string;
-      input?: object;
-    };
-  };
-  stopReason?: string;
-  metrics?: {
-    latencyMs: number;
-  };
-  usage?: {
-    inputTokens: number;
-    outputTokens: number;
-    totalTokens: number;
-    cacheReadInputTokenCount?: number;
-    cacheReadInputTokens?: number;
-    cacheWriteInputTokenCount?: number;
-    cacheWriteInputTokens?: number;
-  };
-}
-
-interface BedrockStreamState {
-  stopReason?: string;
-  currentToolCallIndex?: number;
-}
 
 // refer: https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStream.html
 export const BedrockChatCompleteStreamChunkTransform: (
