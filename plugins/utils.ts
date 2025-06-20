@@ -9,6 +9,7 @@ export interface ErrorResponse {
   status: number;
   statusText: string;
   body: string;
+  headers?: Headers;
 }
 
 export class HttpError extends Error {
@@ -21,7 +22,7 @@ export class HttpError extends Error {
   }
 }
 
-class TimeoutError extends Error {
+export class TimeoutError extends Error {
   url: string;
   timeout: number;
   method: string;
@@ -222,6 +223,7 @@ export async function post<T = any>(
         status: response.status,
         statusText: response.statusText,
         body: errorBody,
+        headers: response.headers,
       };
 
       throw new HttpError(

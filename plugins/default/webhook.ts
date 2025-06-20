@@ -4,7 +4,7 @@ import {
   PluginHandler,
   PluginParameters,
 } from '../types';
-import { post } from '../utils';
+import { post, TimeoutError } from '../utils';
 
 function parseHeaders(headers: unknown): Record<string, string> {
   try {
@@ -114,6 +114,11 @@ export const handler: PluginHandler = async (
     error = e;
     delete error.stack;
 
+    const isTimeoutError = e instanceof TimeoutError;
+
+    const responseData = !isTimeoutError && e.response?.body;
+    const responseDataContentType = e.response?.headers?.get('content-type');
+
     data = {
       explanation: `Webhook error: ${e.message}`,
       webhookUrl: parameters.webhookURL || 'No URL provided',
@@ -121,6 +126,11 @@ export const handler: PluginHandler = async (
         headers: parameters.headers || {},
         timeout: 3000,
       },
+      // return response body if it's not a ok response and not a timeout error
+      ...(responseData &&
+        responseDataContentType === 'application/json' && {
+          responseData: JSON.parse(responseData),
+        }),
     };
   }
 
