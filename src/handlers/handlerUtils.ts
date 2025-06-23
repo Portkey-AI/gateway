@@ -401,129 +401,141 @@ export async function tryPost(
   }
 
   // Initialize MCP service if needed
-  await using mcpService = requestContext.shouldHandleMcp()
+  const mcpService = requestContext.shouldHandleMcp()
     ? new McpService(requestContext)
     : null;
-  if (mcpService) {
-    await mcpService.init();
-    // Add MCP tools to the request
-    const mcpTools = mcpService.tools;
-    requestContext.addMcpTools(mcpTools);
-  }
 
-  // Attach the body of the request
-  if (!providerContext.hasRequestHandler(requestContext)) {
-    requestContext.transformToProviderRequestAndSave();
-  }
+  try {
+    if (mcpService) {
+      await mcpService.init();
+      // Add MCP tools to the request
+      const mcpTools = mcpService.tools;
+      requestContext.addMcpTools(mcpTools);
+    }
 
-  // Construct the base object for the request
-  const providerMappedHeaders =
-    await providerContext.getHeaders(requestContext);
-  const fetchOptions: RequestInit = constructRequest(
-    providerMappedHeaders,
-    requestContext
-  );
+    // Attach the body of the request
+    if (!providerContext.hasRequestHandler(requestContext)) {
+      requestContext.transformToProviderRequestAndSave();
+    }
 
-  // Cache Handler
-  const cacheService = new CacheService(c, hooksService);
-  const cacheResponseObject: CacheResponseObject =
-    await cacheService.getCachedResponse(
-      requestContext,
-      fetchOptions.headers || {}
+    // Construct the base object for the request
+    const providerMappedHeaders =
+      await providerContext.getHeaders(requestContext);
+    const fetchOptions: RequestInit = constructRequest(
+      providerMappedHeaders,
+      requestContext
     );
-  logObject.addCache(
-    cacheResponseObject.cacheStatus,
-    cacheResponseObject.cacheKey
-  );
-  if (cacheResponseObject.cacheResponse) {
-    const { response, originalResponseJson } = await responseService.create({
-      response: cacheResponseObject.cacheResponse,
-      responseTransformer: requestContext.endpoint,
-      cache: {
-        isCacheHit: true,
-        cacheStatus: cacheResponseObject.cacheStatus,
-        cacheKey: cacheResponseObject.cacheKey,
-      },
-      isResponseAlreadyMapped: true,
-      retryAttempt: 0,
-      fetchOptions,
-      createdAt: cacheResponseObject.createdAt,
-      executionTime: 0,
-    });
+
+    // Cache Handler
+    const cacheService = new CacheService(c, hooksService);
+    const cacheResponseObject: CacheResponseObject =
+      await cacheService.getCachedResponse(
+        requestContext,
+        fetchOptions.headers || {}
+      );
+    logObject.addCache(
+      cacheResponseObject.cacheStatus,
+      cacheResponseObject.cacheKey
+    );
+    if (cacheResponseObject.cacheResponse) {
+      const { response, originalResponseJson } = await responseService.create({
+        response: cacheResponseObject.cacheResponse,
+        responseTransformer: requestContext.endpoint,
+        cache: {
+          isCacheHit: true,
+          cacheStatus: cacheResponseObject.cacheStatus,
+          cacheKey: cacheResponseObject.cacheKey,
+        },
+        isResponseAlreadyMapped: true,
+        retryAttempt: 0,
+        fetchOptions,
+        createdAt: cacheResponseObject.createdAt,
+        executionTime: 0,
+      });
+
+      logObject
+        .updateRequestContext(requestContext, fetchOptions.headers)
+        .addResponse(response, originalResponseJson)
+        .log();
+
+      return response;
+    }
+
+    // Prerequest validator (For virtual key budgets)
+    const preRequestValidatorService = new PreRequestValidatorService(
+      c,
+      requestContext
+    );
+    const preRequestValidatorResponse =
+      await preRequestValidatorService.getResponse();
+    if (preRequestValidatorResponse) {
+      const { response, originalResponseJson } = await responseService.create({
+        response: preRequestValidatorResponse,
+        responseTransformer: undefined,
+        isResponseAlreadyMapped: false,
+        cache: {
+          isCacheHit: false,
+          cacheStatus: cacheResponseObject.cacheStatus,
+          cacheKey: cacheResponseObject.cacheKey,
+        },
+        retryAttempt: 0,
+        fetchOptions,
+        createdAt: new Date(),
+      });
+
+      logObject
+        .updateRequestContext(requestContext, fetchOptions.headers)
+        .addResponse(response, originalResponseJson)
+        .log();
+
+      return response;
+    }
+
+    // Request Handler (Including retries, recursion and hooks)
+    const { mappedResponse, retryCount, createdAt, originalResponseJson } =
+      await recursiveAfterRequestHookHandler(
+        requestContext,
+        fetchOptions,
+        0,
+        hookSpan.id,
+        providerContext,
+        hooksService,
+        logObject,
+        mcpService || undefined
+      );
+
+    const { response, originalResponseJson: mappedOriginalResponseJson } =
+      await responseService.create({
+        response: mappedResponse,
+        responseTransformer: undefined,
+        isResponseAlreadyMapped: true,
+        cache: {
+          isCacheHit: false,
+          cacheStatus: cacheResponseObject.cacheStatus,
+          cacheKey: cacheResponseObject.cacheKey,
+        },
+        retryAttempt: retryCount,
+        fetchOptions,
+        createdAt,
+        originalResponseJson,
+      });
 
     logObject
       .updateRequestContext(requestContext, fetchOptions.headers)
-      .addResponse(response, originalResponseJson)
+      .addResponse(response, mappedOriginalResponseJson)
       .log();
 
     return response;
+  } finally {
+    // Clean up MCP service
+    if (mcpService) {
+      try {
+        await mcpService[Symbol.asyncDispose]();
+      } catch (error) {
+        console.error('Error disposing MCP service:', error);
+      }
+    }
   }
-
-  // Prerequest validator (For virtual key budgets)
-  const preRequestValidatorService = new PreRequestValidatorService(
-    c,
-    requestContext
-  );
-  const preRequestValidatorResponse =
-    await preRequestValidatorService.getResponse();
-  if (preRequestValidatorResponse) {
-    const { response, originalResponseJson } = await responseService.create({
-      response: preRequestValidatorResponse,
-      responseTransformer: undefined,
-      isResponseAlreadyMapped: false,
-      cache: {
-        isCacheHit: false,
-        cacheStatus: cacheResponseObject.cacheStatus,
-        cacheKey: cacheResponseObject.cacheKey,
-      },
-      retryAttempt: 0,
-      fetchOptions,
-      createdAt: new Date(),
-    });
-
-    logObject
-      .updateRequestContext(requestContext, fetchOptions.headers)
-      .addResponse(response, originalResponseJson)
-      .log();
-
-    return response;
-  }
-
-  // Request Handler (Including retries, recursion and hooks)
-  const { mappedResponse, retryCount, createdAt, originalResponseJson } =
-    await recursiveAfterRequestHookHandler(
-      requestContext,
-      fetchOptions,
-      0,
-      hookSpan.id,
-      providerContext,
-      hooksService,
-      logObject,
-      mcpService || undefined
-    );
-
-  const { response, originalResponseJson: mappedOriginalResponseJson } =
-    await responseService.create({
-      response: mappedResponse,
-      responseTransformer: undefined,
-      isResponseAlreadyMapped: true,
-      cache: {
-        isCacheHit: false,
-        cacheStatus: cacheResponseObject.cacheStatus,
-        cacheKey: cacheResponseObject.cacheKey,
-      },
-      retryAttempt: retryCount,
-      fetchOptions,
-      createdAt,
-      originalResponseJson,
-    });
-
-  logObject
-    .updateRequestContext(requestContext, fetchOptions.headers)
-    .addResponse(response, mappedOriginalResponseJson)
-    .log();
-
-  return response;
 }
 
 export async function tryTargetsRecursively(

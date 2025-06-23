@@ -113,60 +113,6 @@ export class McpService {
   }
 }
 
-// Minimal MCP Client for fetching tools from remote servers
-// Supports both StreamableHTTP and SSE transports
-
-interface JSONRPCRequest {
-  jsonrpc: '2.0';
-  id: string | number;
-  method: string;
-  params?: any;
-}
-
-interface JSONRPCResponse {
-  jsonrpc: '2.0';
-  id: string | number;
-  result?: any;
-  error?: {
-    code: number;
-    message: string;
-    data?: any;
-  };
-}
-
-interface Tool {
-  name: string;
-  description?: string;
-  inputSchema: {
-    type: 'object';
-    properties?: Record<string, any>;
-    required?: string[];
-  };
-  outputSchema?: {
-    type: 'object';
-    properties?: Record<string, any>;
-    required?: string[];
-  };
-}
-
-interface InitializeResult {
-  protocolVersion: string;
-  capabilities: {
-    tools?: any;
-    [key: string]: any;
-  };
-  serverInfo: {
-    name: string;
-    version: string;
-  };
-  instructions?: string;
-}
-
-interface ListToolsResult {
-  tools: Tool[];
-  nextCursor?: string;
-}
-
 // LLM Function Call format (OpenAI-style)
 export interface LLMFunction {
   type: 'function';
