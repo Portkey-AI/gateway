@@ -168,13 +168,16 @@ function constructRequestHeaders(
  * @param {string} method - The HTTP method for the request.
  * @returns {RequestInit} - The fetch options for the request.
  */
-export function constructRequest(
-  providerConfigMappedHeaders: any,
+export async function constructRequest(
+  providerContext: ProviderContext,
   requestContext: RequestContext
-): RequestInit {
+): Promise<RequestInit> {
+  const providerMappedHeaders =
+    await providerContext.getHeaders(requestContext);
+
   const headers = constructRequestHeaders(
     requestContext,
-    providerConfigMappedHeaders
+    providerMappedHeaders
   );
 
   const fetchOptions: RequestInit = {
@@ -183,10 +186,7 @@ export function constructRequest(
     ...(requestContext.endpoint === 'uploadFile' && { duplex: 'half' }),
   };
 
-  const body = constructRequestBody(
-    requestContext,
-    providerConfigMappedHeaders
-  );
+  const body = constructRequestBody(requestContext, providerMappedHeaders);
   if (body) {
     fetchOptions.body = body;
   }
@@ -361,10 +361,8 @@ export async function tryPost(
   }
 
   // Construct the base object for the request
-  const providerMappedHeaders =
-    await providerContext.getHeaders(requestContext);
-  const fetchOptions: RequestInit = constructRequest(
-    providerMappedHeaders,
+  const fetchOptions: RequestInit = await constructRequest(
+    providerContext,
     requestContext
   );
 
