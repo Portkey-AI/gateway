@@ -1,8 +1,11 @@
 import { Context } from 'hono';
-import { LogsService, LogObjectBuilder } from '../logsService';
-import { RequestContext } from '../requestContext';
-import { ProviderContext } from '../providerContext';
-import { ToolCall } from '../../../types/requestBody';
+import {
+  LogsService,
+  LogObjectBuilder,
+} from '../../../../../src/handlers/services/logsService';
+import { RequestContext } from '../../../../../src/handlers/services/requestContext';
+import { ProviderContext } from '../../../../../src/handlers/services/providerContext';
+import { ToolCall } from '../../../../../src/types/requestBody';
 
 describe('LogsService', () => {
   let mockContext: Context;

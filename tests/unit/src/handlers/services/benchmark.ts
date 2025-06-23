@@ -1,6 +1,9 @@
-import { LogsService, LogObjectBuilder } from '../logsService.js';
+import {
+  LogsService,
+  LogObjectBuilder,
+} from '../../../../../src/handlers/services/logsService.js';
 import type { Context } from 'hono';
-import type { RequestContext } from '../requestContext.js';
+import type { RequestContext } from '../../../../../src/handlers/services/requestContext.js';
 
 // Helper function to create sample data of different sizes
 function createSampleData(size: number) {

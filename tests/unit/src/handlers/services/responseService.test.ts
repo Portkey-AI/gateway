@@ -1,15 +1,15 @@
-import { ResponseService } from '../responseService';
-import { RequestContext } from '../requestContext';
-import { ProviderContext } from '../providerContext';
-import { HooksService } from '../hooksService';
-import { LogsService } from '../logsService';
-import { responseHandler } from '../../responseHandlers';
+import { ResponseService } from '../../../../../src/handlers/services/responseService';
+import { RequestContext } from '../../../../../src/handlers/services/requestContext';
+import { ProviderContext } from '../../../../../src/handlers/services/providerContext';
+import { HooksService } from '../../../../../src/handlers/services/hooksService';
+import { LogsService } from '../../../../../src/handlers/services/logsService';
+import { responseHandler } from '../../../../../src/handlers/responseHandlers';
 import { getRuntimeKey } from 'hono/adapter';
 import {
   RESPONSE_HEADER_KEYS,
   HEADER_KEYS,
   POWERED_BY,
-} from '../../../globals';
+} from '../../../../../src/globals';
 
 // Mock dependencies
 jest.mock('../../responseHandlers');

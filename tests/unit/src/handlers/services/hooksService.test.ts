@@ -1,12 +1,12 @@
-import { HooksService } from '../hooksService';
-import { RequestContext } from '../requestContext';
-import { HooksManager, HookSpan } from '../../../middlewares/hooks';
+import { HooksService } from '../../../../../src/handlers/services/hooksService';
+import { RequestContext } from '../../../../../src/handlers/services/requestContext';
+import { HooksManager, HookSpan } from '../../../../../src/middlewares/hooks';
 import {
   HookType,
   AllHookResults,
   GuardrailResult,
   HookObject,
-} from '../../../middlewares/hooks/types';
+} from '../../../../../src/middlewares/hooks/types';
 
 // Mock the HooksManager and HookSpan
 jest.mock('../../../middlewares/hooks');
