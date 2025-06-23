@@ -1,12 +1,9 @@
 // responseService.ts
 
-import { HEADER_KEYS, POWERED_BY } from '../../globals';
-import { RESPONSE_HEADER_KEYS } from '../../globals';
+import { HEADER_KEYS, POWERED_BY, RESPONSE_HEADER_KEYS } from '../../globals';
 import { responseHandler } from '../responseHandlers';
 import { HooksService } from './hooksService';
-import { ProviderContext } from './providerContext';
 import { RequestContext } from './requestContext';
-import { LogsService } from './logsService';
 
 interface CreateResponseOptions {
   response: Response;
@@ -27,9 +24,7 @@ interface CreateResponseOptions {
 export class ResponseService {
   constructor(
     private context: RequestContext,
-    private providerContext: ProviderContext,
-    private hooksService: HooksService,
-    private logsService: LogsService
+    private hooksService: HooksService
   ) {}
 
   async create(options: CreateResponseOptions): Promise<{
@@ -43,10 +38,7 @@ export class ResponseService {
       isResponseAlreadyMapped,
       cache,
       retryAttempt,
-      fetchOptions = {},
       originalResponseJson,
-      createdAt,
-      executionTime,
     } = options;
 
     let finalMappedResponse: Response;
@@ -69,22 +61,6 @@ export class ResponseService {
     }
 
     this.updateHeaders(finalMappedResponse, cache.cacheStatus, retryAttempt);
-
-    // Add the log object to the logs service.
-    // this.logsService.addRequestLog(
-    //   await this.logsService.createLogObject(
-    //     this.context,
-    //     this.providerContext,
-    //     this.hooksService.hookSpan.id,
-    //     cache.cacheKey,
-    //     fetchOptions,
-    //     cache.cacheStatus,
-    //     finalMappedResponse,
-    //     originalResponseJSON,
-    //     createdAt,
-    //     executionTime
-    //   )
-    // );
 
     if (!finalMappedResponse.ok) {
       const errorObj: any = new Error(await finalMappedResponse.clone().text());

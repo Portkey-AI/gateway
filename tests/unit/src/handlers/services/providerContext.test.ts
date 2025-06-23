@@ -1,7 +1,7 @@
-import { ProviderContext } from '../providerContext';
-import { RequestContext } from '../requestContext';
-import Providers from '../../../providers';
-import { ANTHROPIC, AZURE_OPEN_AI } from '../../../globals';
+import { ProviderContext } from '../../../../../src/handlers/services/providerContext';
+import { RequestContext } from '../../../../../src/handlers/services/requestContext';
+import Providers from '../../../../../src/providers';
+import { ANTHROPIC, AZURE_OPEN_AI } from '../../../../../src/globals';
 
 // Mock the Providers object
 jest.mock('../../../providers', () => ({

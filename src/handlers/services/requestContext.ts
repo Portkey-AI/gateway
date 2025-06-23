@@ -15,7 +15,6 @@ import { transformToProviderRequest } from '../../services/transformToProviderRe
 import { LLMFunction } from './mcpService';
 
 export class RequestContext {
-  private originalRequestParams: any;
   private _params: Params | null = null;
   private _transformedRequestBody: any;
   public readonly providerOption: Options;

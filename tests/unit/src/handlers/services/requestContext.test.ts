@@ -1,10 +1,10 @@
 import { Context } from 'hono';
-import { RequestContext } from '../requestContext';
-import { Options, Params } from '../../../types/requestBody';
-import { endpointStrings } from '../../../providers/types';
-import { HEADER_KEYS } from '../../../globals';
-import { HooksManager } from '../../../middlewares/hooks';
-import { HookType } from '../../../middlewares/hooks/types';
+import { RequestContext } from '../../../../../src/handlers/services/requestContext';
+import { Options, Params } from '../../../../../src/types/requestBody';
+import { endpointStrings } from '../../../../../src/providers/types';
+import { HEADER_KEYS } from '../../../../../src/globals';
+import { HooksManager } from '../../../../../src/middlewares/hooks';
+import { HookType } from '../../../../../src/middlewares/hooks/types';
 
 // Mock the transformToProviderRequest function
 jest.mock('../../../services/transformToProviderRequest', () => ({

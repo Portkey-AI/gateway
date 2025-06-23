@@ -1,8 +1,8 @@
 import { Context } from 'hono';
-import { CacheService } from '../cacheService';
-import { HooksService } from '../hooksService';
-import { RequestContext } from '../requestContext';
-import { endpointStrings } from '../../../providers/types';
+import { CacheService } from '../../../../../src/handlers/services/cacheService';
+import { HooksService } from '../../../../../src/handlers/services/hooksService';
+import { RequestContext } from '../../../../../src/handlers/services/requestContext';
+import { endpointStrings } from '../../../../../src/providers/types';
 
 // Mock HooksService
 jest.mock('../hooksService');

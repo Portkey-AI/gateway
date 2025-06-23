@@ -1,6 +1,6 @@
 import { Context } from 'hono';
-import { PreRequestValidatorService } from '../preRequestValidatorService';
-import { RequestContext } from '../requestContext';
+import { PreRequestValidatorService } from '../../../../../src/handlers/services/preRequestValidatorService';
+import { RequestContext } from '../../../../../src/handlers/services/requestContext';
 
 describe('PreRequestValidatorService', () => {
   let mockContext: Context;
