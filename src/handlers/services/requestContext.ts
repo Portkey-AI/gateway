@@ -14,7 +14,6 @@ import { HooksManager } from '../../middlewares/hooks';
 import { transformToProviderRequest } from '../../services/transformToProviderRequest';
 
 export class RequestContext {
-  private originalRequestParams: any;
   private _params: Params | null = null;
   private _transformedRequestBody: any;
   public readonly providerOption: Options;

@@ -7,8 +7,7 @@ import {
 } from '../../providers/types';
 import Providers from '../../providers';
 import { RequestContext } from './requestContext';
-import { ANTHROPIC } from '../../globals';
-import { AZURE_OPEN_AI } from '../../globals';
+import { ANTHROPIC, AZURE_OPEN_AI } from '../../globals';
 
 export class ProviderContext {
   constructor(private provider: string) {

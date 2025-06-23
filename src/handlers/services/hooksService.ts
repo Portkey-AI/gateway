@@ -1,8 +1,7 @@
 // hooksService.ts
 
-import { HookSpan } from '../../middlewares/hooks';
+import { HookSpan, HooksManager } from '../../middlewares/hooks';
 import { RequestContext } from './requestContext';
-import { HooksManager } from '../../middlewares/hooks';
 import { AllHookResults } from '../../middlewares/hooks/types';
 
 export class HooksService {

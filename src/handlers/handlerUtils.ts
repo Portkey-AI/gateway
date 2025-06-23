@@ -5,7 +5,6 @@ import {
   WORKERS_AI,
   HEADER_KEYS,
   POWERED_BY,
-  RESPONSE_HEADER_KEYS,
   GOOGLE_VERTEX_AI,
   OPEN_AI,
   AZURE_AI_INFERENCE,
@@ -17,14 +16,13 @@ import {
   FIREWORKS_AI,
   CORTEX,
 } from '../globals';
-import Providers from '../providers';
 import { endpointStrings } from '../providers/types';
 import { Options, Params, StrategyModes, Targets } from '../types/requestBody';
 import { convertKeysToCamelCase } from '../utils';
 import { retryRequest } from './retryHandler';
-import { env, getRuntimeKey } from 'hono/adapter';
+import { env } from 'hono/adapter';
 import { afterRequestHookHandler, responseHandler } from './responseHandlers';
-import { HookSpan, HooksManager } from '../middlewares/hooks';
+import { HookSpan } from '../middlewares/hooks';
 import { ConditionalRouter } from '../services/conditionalRouter';
 import { RouterError } from '../errors/RouterError';
 import { GatewayError } from '../errors/GatewayError';
@@ -86,7 +84,6 @@ function constructRequestHeaders(
     requestHeaders,
     endpoint: fn,
     honoContext: c,
-    provider: provider,
   } = requestContext;
 
   const proxyHeaders: Record<string, string> = {};
@@ -195,41 +192,6 @@ export function constructRequest(
   }
 
   return fetchOptions;
-}
-
-function getProxyPath(
-  requestURL: string,
-  proxyProvider: string,
-  proxyEndpointPath: string,
-  baseURL: string,
-  providerOptions: Options
-) {
-  let reqURL = new URL(requestURL);
-  let reqPath = reqURL.pathname;
-  const reqQuery = reqURL.search;
-  reqPath = reqPath.replace(proxyEndpointPath, '');
-
-  // NOTE: temporary support for the deprecated way of making azure requests
-  // where the endpoint was sent in request path of the incoming gateway url
-  if (
-    proxyProvider === AZURE_OPEN_AI &&
-    reqPath.includes('.openai.azure.com')
-  ) {
-    return `https:/${reqPath}${reqQuery}`;
-  }
-
-  if (Providers[proxyProvider]?.api?.getProxyEndpoint) {
-    return `${baseURL}${Providers[proxyProvider].api.getProxyEndpoint({ reqPath, reqQuery, providerOptions })}`;
-  }
-
-  let proxyPath = `${baseURL}${reqPath}${reqQuery}`;
-
-  // Fix specific for Anthropic SDK calls. Is this needed? - Yes
-  if (proxyProvider === ANTHROPIC) {
-    proxyPath = proxyPath.replace('/v1/v1/', '/v1/');
-  }
-
-  return proxyPath;
 }
 
 /**
@@ -342,12 +304,7 @@ export async function tryPost(
   const hooksService = new HooksService(requestContext);
   const providerContext = new ProviderContext(requestContext.provider);
   const logsService = new LogsService(c);
-  const responseService = new ResponseService(
-    requestContext,
-    providerContext,
-    hooksService,
-    logsService
-  );
+  const responseService = new ResponseService(requestContext, hooksService);
   const hookSpan: HookSpan = hooksService.hookSpan;
 
   // Set the requestURL in requestContext
@@ -837,57 +794,6 @@ export async function tryTargetsRecursively(
   return response;
 }
 
-/**
- * @deprecated
- * Updates the response headers with the provided values.
- * @param {Response} response - The response object.
- * @param {string | number} currentIndex - The current index value.
- * @param {Record<string, any>} params - The parameters object.
- * @param {string} cacheStatus - The cache status value.
- * @param {number} retryAttempt - The retry attempt count.
- * @param {string} traceId - The trace ID value.
- */
-function updateResponseHeaders(
-  response: Response,
-  currentIndex: string | number,
-  params: Record<string, any>,
-  cacheStatus: string | undefined,
-  retryAttempt: number,
-  traceId: string,
-  provider: string
-) {
-  response.headers.append(
-    RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX,
-    currentIndex.toString()
-  );
-
-  if (cacheStatus) {
-    response.headers.append(RESPONSE_HEADER_KEYS.CACHE_STATUS, cacheStatus);
-  }
-  response.headers.append(RESPONSE_HEADER_KEYS.TRACE_ID, traceId);
-  response.headers.append(
-    RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT,
-    retryAttempt.toString()
-  );
-
-  // const contentEncodingHeader = response.headers.get('content-encoding');
-  // if (contentEncodingHeader && contentEncodingHeader.indexOf('br') > -1) {
-  //   // Brotli compression causes errors at runtime, removing the header in that case
-  //   response.headers.delete('content-encoding');
-  // }
-  // if (getRuntimeKey() == 'node') {
-  //   response.headers.delete('content-encoding');
-  // }
-
-  // Delete content-length header to avoid conflicts with hono compress middleware
-  // workerd environment handles this authomatically
-  response.headers.delete('content-length');
-  // response.headers.delete('transfer-encoding');
-  if (provider && provider !== POWERED_BY) {
-    response.headers.append(HEADER_KEYS.PROVIDER, provider);
-  }
-}
-
 export function constructConfigFromRequestHeaders(
   requestHeaders: Record<string, any>
 ): Options | Targets {
@@ -1287,120 +1193,6 @@ export async function recursiveAfterRequestHookHandler(
     retryCount: lastAttempt,
     createdAt,
     originalResponseJson,
-  };
-}
-
-/**
- * Retrieves the cache options based on the provided cache configuration.
- * @param cacheConfig - The cache configuration object or string.
- * @returns An object containing the cache mode and cache max age.
- */
-function getCacheOptions(cacheConfig: any) {
-  // providerOption.cache needs to be sent here
-  let cacheMode: string | undefined;
-  let cacheMaxAge: string | number = '';
-  let cacheStatus = 'DISABLED';
-
-  if (typeof cacheConfig === 'object' && cacheConfig?.mode) {
-    cacheMode = cacheConfig.mode;
-    cacheMaxAge = cacheConfig.maxAge;
-  } else if (typeof cacheConfig === 'string') {
-    cacheMode = cacheConfig;
-  }
-  return { cacheMode, cacheMaxAge, cacheStatus };
-}
-
-async function cacheHandler(
-  c: Context,
-  providerOption: Options,
-  requestHeaders: Record<string, string>,
-  fetchOptions: any,
-  transformedRequestBody: any,
-  hookSpanId: string,
-  fn: endpointStrings
-) {
-  if (
-    [
-      'uploadFile',
-      'listFiles',
-      'retrieveFile',
-      'deleteFile',
-      'retrieveFileContent',
-      'createBatch',
-      'retrieveBatch',
-      'cancelBatch',
-      'listBatches',
-      'getBatchOutput',
-      'listFinetunes',
-      'createFinetune',
-      'retrieveFinetune',
-      'cancelFinetune',
-    ].includes(fn)
-  ) {
-    return {
-      cacheResponse: undefined,
-      cacheStatus: 'DISABLED',
-      cacheKey: undefined,
-      createdAt: new Date(),
-      executionTime: 0,
-    };
-  }
-  const start = new Date();
-  const [getFromCacheFunction, cacheIdentifier] = [
-    c.get('getFromCache'),
-    c.get('cacheIdentifier'),
-  ];
-
-  let cacheResponse, cacheKey;
-  let cacheMode: string | undefined,
-    cacheMaxAge: string | number | undefined,
-    cacheStatus: string;
-  ({ cacheMode, cacheMaxAge, cacheStatus } = getCacheOptions(
-    providerOption.cache
-  ));
-
-  if (getFromCacheFunction && cacheMode) {
-    [cacheResponse, cacheStatus, cacheKey] = await getFromCacheFunction(
-      env(c),
-      { ...requestHeaders, ...fetchOptions.headers },
-      transformedRequestBody,
-      fn,
-      cacheIdentifier,
-      cacheMode,
-      cacheMaxAge
-    );
-  }
-
-  const hooksManager = c.get('hooksManager') as HooksManager;
-  const span = hooksManager.getSpan(hookSpanId) as HookSpan;
-  const results = span.getHooksResult();
-  const failedBeforeRequestHooks = results.beforeRequestHooksResult?.filter(
-    (h) => !h.verdict
-  );
-
-  let responseBody = cacheResponse;
-
-  const hasHookResults = results.beforeRequestHooksResult?.length > 0;
-  const responseStatus = failedBeforeRequestHooks.length ? 246 : 200;
-
-  if (hasHookResults && cacheResponse) {
-    responseBody = JSON.stringify({
-      ...JSON.parse(cacheResponse),
-      hook_results: {
-        before_request_hooks: results.beforeRequestHooksResult,
-      },
-    });
-  }
-  return {
-    cacheResponse: !!cacheResponse
-      ? new Response(responseBody, {
-          headers: { 'content-type': 'application/json' },
-          status: responseStatus,
-        })
-      : undefined,
-    cacheStatus,
-    cacheKey,
-    createdAt: start,
   };
 }
 
