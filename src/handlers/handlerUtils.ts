@@ -369,7 +369,7 @@ export async function tryPost(
       const mcpTools = mcpService.tools;
       requestContext.addMcpTools(mcpTools);
     }
-  
+
     // Attach the body of the request
     if (!providerContext.hasRequestHandler(requestContext)) {
       requestContext.transformToProviderRequestAndSave();
