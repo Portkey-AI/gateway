@@ -746,6 +746,7 @@ export const BedrockChatCompleteStreamChunkTransform: (
             }),
           tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
         },
+        finish_reason: streamState.stopReason ?? null,
       },
     ],
   })}\n\n`;
