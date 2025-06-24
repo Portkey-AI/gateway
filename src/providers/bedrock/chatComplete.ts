@@ -28,6 +28,7 @@ import {
 } from './complete';
 import { BedrockErrorResponse } from './embed';
 import {
+  getBedrockErrorChunk,
   transformAdditionalModelRequestFields,
   transformAI21AdditionalModelRequestFields,
   transformAnthropicAdditionalModelRequestFields,
@@ -584,6 +585,8 @@ export const BedrockChatCompleteResponseTransform: (
 };
 
 export interface BedrockChatCompleteStreamChunk {
+  // this is error message from bedrock
+  message?: string;
   contentBlockIndex?: number;
   delta?: {
     text: string;
@@ -640,6 +643,9 @@ export const BedrockChatCompleteStreamChunkTransform: (
   gatewayRequest
 ) => {
   const parsedChunk: BedrockChatCompleteStreamChunk = JSON.parse(responseChunk);
+  if (parsedChunk.message) {
+    return getBedrockErrorChunk(fallbackId, gatewayRequest.model || '');
+  }
   if (parsedChunk.stopReason) {
     streamState.stopReason = parsedChunk.stopReason;
   }
@@ -740,6 +746,7 @@ export const BedrockChatCompleteStreamChunkTransform: (
             }),
           tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
         },
+        finish_reason: null,
       },
     ],
   })}\n\n`;
