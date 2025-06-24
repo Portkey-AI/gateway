@@ -30,6 +30,7 @@ export interface HookSpanContextRequest {
   json: any;
   isStreamingRequest: boolean;
   isTransformed: boolean;
+  headers: Record<string, string>;
 }
 
 export interface HookSpanContextResponse {
@@ -78,6 +79,7 @@ export interface GuardrailCheckResult {
       json: any;
     };
   };
+  log?: any;
 }
 
 export interface GuardrailResult {

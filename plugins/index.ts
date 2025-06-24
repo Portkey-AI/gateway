@@ -41,6 +41,13 @@ import { handler as pangeapii } from './pangea/pii';
 import { pluginHandler as bedrockHandler } from './bedrock/index';
 import { handler as acuvityScan } from './acuvity/scan';
 import { handler as lassoclassify } from './lasso/classify';
+import { handler as exaonline } from './exa/online';
+import { handler as azurePii } from './azure/pii';
+import { handler as azureContentSafety } from './azure/contentSafety';
+import { handler as promptSecurityProtectPrompt } from './promptsecurity/protectPrompt';
+import { handler as promptSecurityProtectResponse } from './promptsecurity/protectResponse';
+import { handler as panwPrismaAirsintercept } from './panw-prisma-airs/intercept';
+import { handler as defaultjwt } from './default/jwt';
 
 export const plugins = {
   default: {
@@ -59,6 +66,7 @@ export const plugins = {
     alllowercase: defaultalllowercase,
     endsWith: defaultendsWith,
     modelWhitelist: defaultmodelWhitelist,
+    jwt: defaultjwt,
   },
   portkey: {
     moderateContent: portkeymoderateContent,
@@ -109,5 +117,19 @@ export const plugins = {
   },
   lasso: {
     classify: lassoclassify,
+  },
+  exa: {
+    online: exaonline,
+  },
+  azure: {
+    pii: azurePii,
+    contentSafety: azureContentSafety,
+  },
+  promptsecurity: {
+    protectPrompt: promptSecurityProtectPrompt,
+    protectResponse: promptSecurityProtectResponse,
+  },
+  'panw-prisma-airs': {
+    intercept: panwPrismaAirsintercept,
   },
 };

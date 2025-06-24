@@ -55,6 +55,11 @@ import NebiusConfig from './nebius';
 import RecraftAIConfig from './recraft-ai';
 import MilvusConfig from './milvus';
 import ReplicateConfig from './replicate';
+import LeptonConfig from './lepton';
+import KlusterAIConfig from './kluster-ai';
+import NscaleConfig from './nscale';
+import HyperbolicConfig from './hyperbolic';
+import { FeatherlessAIConfig } from './featherless-ai';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -110,6 +115,11 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'recraft-ai': RecraftAIConfig,
   milvus: MilvusConfig,
   replicate: ReplicateConfig,
+  lepton: LeptonConfig,
+  'kluster-ai': KlusterAIConfig,
+  nscale: NscaleConfig,
+  hyperbolic: HyperbolicConfig,
+  'featherless-ai': FeatherlessAIConfig,
 };
 
 export default Providers;

@@ -1,10 +1,11 @@
 import { WORKERS_AI } from '../../globals';
 import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
 import { ErrorResponse, ProviderConfig } from '../types';
+import { generateInvalidProviderResponseError } from '../utils';
 import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+  WorkersAiErrorResponse,
+  WorkersAiErrorResponseTransform,
+} from './utils';
 
 export const WorkersAiEmbedConfig: ProviderConfig = {
   input: {
@@ -12,42 +13,12 @@ export const WorkersAiEmbedConfig: ProviderConfig = {
     required: true,
     transform: (params: EmbedParams): string[] => {
       if (Array.isArray(params.input)) {
-        return params.input;
+        return params.input as string[];
       } else {
         return [params.input];
       }
     },
   },
-};
-
-export interface WorkersAiErrorObject {
-  code: string;
-  message: string;
-}
-
-interface WorkersAiErrorResponse {
-  success: boolean;
-  errors: WorkersAiErrorObject[];
-}
-
-export const WorkersAiErrorResponseTransform: (
-  response: WorkersAiErrorResponse
-) => ErrorResponse | undefined = (response) => {
-  if ('errors' in response) {
-    return generateErrorResponse(
-      {
-        message: response.errors
-          ?.map((error) => `Error ${error.code}:${error.message}`)
-          .join(', '),
-        type: null,
-        param: null,
-        code: null,
-      },
-      WORKERS_AI
-    );
-  }
-
-  return undefined;
 };
 
 /**

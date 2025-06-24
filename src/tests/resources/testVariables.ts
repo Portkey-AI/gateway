@@ -136,6 +136,12 @@ const testVariables: TestVariables = {
     apiKey: process.env.PREDIBASE_API_KEY,
     chatCompletions: { model: '' },
   },
+  nscale: {
+    apiKey: process.env.NSCALE_API_KEY,
+    chatCompletions: {
+      model: 'Qwen/Qwen2.5-Coder-3B-Instruct',
+    },
+  },
 };
 
 export default testVariables;

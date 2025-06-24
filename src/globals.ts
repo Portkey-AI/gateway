@@ -91,6 +91,11 @@ export const NEBIUS: string = 'nebius';
 export const RECRAFTAI: string = 'recraft-ai';
 export const MILVUS: string = 'milvus';
 export const REPLICATE: string = 'replicate';
+export const LEPTON: string = 'lepton';
+export const KLUSTER_AI: string = 'kluster-ai';
+export const NSCALE: string = 'nscale';
+export const HYPERBOLIC: string = 'hyperbolic';
+export const FEATHERLESS_AI: string = 'featherless-ai';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -147,6 +152,11 @@ export const VALID_PROVIDERS = [
   MILVUS,
   REPLICATE,
   POWERED_BY,
+  LEPTON,
+  KLUSTER_AI,
+  NSCALE,
+  HYPERBOLIC,
+  FEATHERLESS_AI,
 ];
 
 export const CONTENT_TYPES = {

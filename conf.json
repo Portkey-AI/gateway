@@ -6,7 +6,9 @@
     "sydelabs",
     "pillar",
     "patronus",
-    "pangea"
+    "pangea",
+    "promptsecurity",
+    "panw-prisma-airs"
   ],
   "credentials": {
     "portkey": {
