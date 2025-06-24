@@ -706,6 +706,49 @@
         },
         "required": ["jwksUri", "headerKey"]
       }
+    },
+    {
+      "name": "Required Metadata Keys",
+      "id": "requiredMetadataKeys",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks if the metadata contains all the required keys"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "metadataKeys": {
+            "type": "array",
+            "label": "Metadata Keys",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enter the metadata keys to check for."
+              }
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "operator": {
+            "type": "string",
+            "label": "Operator",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Select the operator to use."
+              }
+            ],
+            "enum": ["all", "any", "none"],
+            "default": "all"
+          }
+        },
+        "required": ["metadataKeys", "operator"]
+      }
     }
   ]
 }
