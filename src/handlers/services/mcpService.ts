@@ -1,4 +1,4 @@
-import { McpServerConfig, ToolCall } from '../../types/requestBody';
+import { McpServer, McpServerConfig, ToolCall } from '../../types/requestBody';
 import { RequestContext } from './requestContext';
 
 // services/mcpService.ts
@@ -9,7 +9,7 @@ export class McpService {
   constructor(private requestContext: RequestContext) {}
 
   async init(): Promise<void> {
-    const mcpServers = this.requestContext.params.mcp_servers;
+    const mcpServers: McpServer[] = this.requestContext.mcpServers;
     if (!mcpServers) {
       return;
     }
@@ -17,17 +17,24 @@ export class McpService {
       try {
         const client = await this.connectToMcpServer(server);
         if (client) {
-          this.mcpConnections.set(server.name, client);
+          this.mcpConnections.set(server.server_label, client);
           let tools = await client.listTools();
-          if (server.tool_configuration?.enabled) {
-            const allowedTools = server.tool_configuration.allowed_tools;
-            tools = tools.filter((tool) => allowedTools.includes(tool.name));
+          if (server.allowed_tools && server.allowed_tools.length) {
+            tools = tools.filter((tool) =>
+              server.allowed_tools!.includes(tool.name)
+            );
           }
-          const llmTools = this.transformToolsForLLM(server.name, tools);
-          this.mcpTools.set(server.name, llmTools);
+          const llmTools = this.transformToolsForLLM(
+            server.server_label,
+            tools
+          );
+          this.mcpTools.set(server.server_label, llmTools);
         }
       } catch (error) {
-        console.error(`Error connecting to MCP server ${server.url}:`, error);
+        console.error(
+          `Error connecting to MCP server ${server.server_url}:`,
+          error
+        );
       }
     }
     return;
@@ -77,12 +84,12 @@ export class McpService {
   }
 
   private async connectToMcpServer(
-    config: McpServerConfig
+    server: McpServer
   ): Promise<MinimalMCPClient | null> {
-    const client = new MinimalMCPClient(config.url, config.authorization_token);
+    const client = new MinimalMCPClient(server.server_url, server.headers);
     const result = await client.initialize();
     if (!result.capabilities.tools) {
-      throw new Error(`MCP server ${config.url} does not support tools`);
+      throw new Error(`MCP server ${server.server_url} does not support tools`);
       return null;
     }
     return client;
@@ -196,7 +203,7 @@ interface ToolExecutionResult {
 
 class MinimalMCPClient {
   private url: URL;
-  private accessToken: string;
+  private headers: Record<string, string>;
   private messageId = 0;
   private sessionId?: string;
   private isSSE = false;
@@ -216,11 +223,11 @@ class MinimalMCPClient {
 
   constructor(
     serverUrl: string,
-    accessToken: string,
+    headers?: Record<string, string>,
     options?: { messageEndpoint?: string }
   ) {
     this.url = new URL(serverUrl);
-    this.accessToken = accessToken;
+    this.headers = headers || {};
 
     // Check if this looks like an SSE endpoint
     this.isSSE = serverUrl.includes('/sse') || serverUrl.includes('sse');
@@ -237,7 +244,7 @@ class MinimalMCPClient {
 
   private getAuthHeaders(): HeadersInit {
     const headers: HeadersInit = {
-      Authorization: `Bearer ${this.accessToken}`,
+      ...(this.headers || {}),
     };
 
     if (!this.isSSE) {

@@ -6,6 +6,8 @@ import {
   Options,
   Params,
   RetrySettings,
+  McpServer,
+  McpTool,
 } from '../../types/requestBody';
 import { endpointStrings } from '../../providers/types';
 import { HEADER_KEYS, RETRY_STATUS_CODES } from '../../globals';
@@ -230,11 +232,58 @@ export class RequestContext {
   }
 
   shouldHandleMcp(): boolean {
+    // Should handle MCP if there are MCP servers and the endpoint is chatComplete
+    // or if there are tools of type `mcp`
+    const hasMcpTools =
+      this.params.tools?.some((tool) => tool.type === 'mcp') ?? false;
     return (
-      !!this.params.mcp_servers &&
-      this.params.mcp_servers.length > 0 &&
-      this.endpoint === 'chatComplete'
+      (!!this.params.mcp_servers &&
+        this.params.mcp_servers.length > 0 &&
+        this.endpoint === 'chatComplete') ||
+      hasMcpTools
     );
+  }
+
+  get mcpServers(): McpServer[] {
+    const mcpServers: McpServer[] = [];
+    if (!!this.params.mcp_servers) {
+      mcpServers.push(
+        ...this.params.mcp_servers.map((server) => ({
+          type: 'mcp',
+          server_url: server.url,
+          server_label: server.name,
+          ...(server.tool_configuration && {
+            allowed_tools: server.tool_configuration.allowed_tools,
+          }),
+          ...(server.authorization_token && {
+            headers: {
+              Authorization: `Bearer ${server.authorization_token}`,
+            },
+          }),
+        }))
+      );
+    }
+
+    if (!!this.params.tools) {
+      mcpServers.push(
+        ...(
+          this.params.tools.filter((tool) => tool.type === 'mcp') as McpTool[]
+        ).map((tool) => ({
+          type: 'mcp',
+          server_url: tool.server_url,
+          server_label: tool.server_label,
+          ...(tool.allowed_tools && {
+            allowed_tools: tool.allowed_tools,
+          }),
+          ...(tool.require_approval && {
+            require_approval: tool.require_approval,
+          }),
+          ...(tool.headers && { headers: tool.headers }),
+        }))
+      );
+    }
+
+    return mcpServers;
   }
 
   addMcpTools(mcpTools: LLMFunction[]) {
