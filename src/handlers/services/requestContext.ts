@@ -8,6 +8,7 @@ import {
   RetrySettings,
   McpServer,
   McpTool,
+  McpServerConfig,
 } from '../../types/requestBody';
 import { endpointStrings } from '../../providers/types';
 import { HEADER_KEYS, RETRY_STATUS_CODES } from '../../globals';
@@ -232,55 +233,59 @@ export class RequestContext {
   }
 
   shouldHandleMcp(): boolean {
-    // Should handle MCP if there are MCP servers and the endpoint is chatComplete
-    // or if there are tools of type `mcp`
-    const hasMcpTools =
-      this.params.tools?.some((tool) => tool.type === 'mcp') ?? false;
-    return (
-      (!!this.params.mcp_servers &&
-        this.params.mcp_servers.length > 0 &&
-        this.endpoint === 'chatComplete') ||
-      hasMcpTools
-    );
+    // MCP applies only to chatComplete requests
+    if (this.endpoint !== 'chatComplete') return false;
+
+    const { mcp_servers = [], tools = [] } = this.params ?? {};
+
+    if (mcp_servers.length > 0) return true;
+
+    return tools.some((tool) => tool.type === 'mcp');
   }
 
   get mcpServers(): McpServer[] {
+    const { mcp_servers = [], tools = [] } = this.params ?? {};
+    if (mcp_servers.length === 0 && tools.length === 0) return [];
+
     const mcpServers: McpServer[] = [];
-    if (!!this.params.mcp_servers) {
-      mcpServers.push(
-        ...this.params.mcp_servers.map((server) => ({
-          type: 'mcp',
-          server_url: server.url,
-          server_label: server.name,
-          ...(server.tool_configuration && {
-            allowed_tools: server.tool_configuration.allowed_tools,
-          }),
-          ...(server.authorization_token && {
-            headers: {
-              Authorization: `Bearer ${server.authorization_token}`,
-            },
-          }),
-        }))
-      );
+
+    if (mcp_servers) {
+      for (const srv of mcp_servers) {
+        // Build the one object you actually need
+        const entry: McpServer = {
+          server_url:   srv.url,
+          server_label: srv.name,
+        };
+      
+        // Optional pieces, added only when present — no throw-away spreads
+        const tc = srv.tool_configuration;
+        if (tc?.allowed_tools) entry.allowed_tools = tc.allowed_tools;
+      
+        if (srv.authorization_token) {
+          entry.headers = { Authorization: `Bearer ${srv.authorization_token}` };
+        }
+      
+        mcpServers.push(entry);
+      }
     }
 
-    if (!!this.params.tools) {
-      mcpServers.push(
-        ...(
-          this.params.tools.filter((tool) => tool.type === 'mcp') as McpTool[]
-        ).map((tool) => ({
-          type: 'mcp',
-          server_url: tool.server_url,
-          server_label: tool.server_label,
-          ...(tool.allowed_tools && {
-            allowed_tools: tool.allowed_tools,
-          }),
-          ...(tool.require_approval && {
-            require_approval: tool.require_approval,
-          }),
-          ...(tool.headers && { headers: tool.headers }),
-        }))
-      );
+    if (tools) {
+      for (const tool of tools) {
+        if (tool.type !== 'mcp') continue;
+
+        //typecast tool to McpTool
+        const mcpTool = tool as McpTool;
+
+        const entry: McpServer = {
+          server_url:   mcpTool.server_url,
+          server_label: mcpTool.server_label,
+        };
+        if (mcpTool.allowed_tools)    entry.allowed_tools    = mcpTool.allowed_tools;
+        if (mcpTool.require_approval) entry.require_approval = mcpTool.require_approval;
+        if (mcpTool.headers)          entry.headers          = mcpTool.headers;
+      
+        mcpServers.push(entry);
+      }
     }
 
     return mcpServers;
