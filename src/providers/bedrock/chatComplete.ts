@@ -20,6 +20,7 @@ import {
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
+  transformFinishReason,
 } from '../utils';
 import {
   BedrockAI21CompleteResponse,
@@ -34,6 +35,7 @@ import {
   BedrockStreamState,
 } from './types';
 import {
+  getBedrockErrorChunk,
   transformAdditionalModelRequestFields,
   transformAI21AdditionalModelRequestFields,
   transformAnthropicAdditionalModelRequestFields,
@@ -501,7 +503,10 @@ export const BedrockChatCompleteResponseTransform: (
               content_blocks: contentBlocks,
             }),
           },
-          finish_reason: response.stopReason,
+          finish_reason: transformFinishReason(
+            response.stopReason,
+            strictOpenAiCompliance
+          ),
         },
       ],
       usage: {
@@ -547,6 +552,9 @@ export const BedrockChatCompleteStreamChunkTransform: (
   gatewayRequest
 ) => {
   const parsedChunk: BedrockChatCompleteStreamChunk = JSON.parse(responseChunk);
+  if (parsedChunk.message) {
+    return getBedrockErrorChunk(fallbackId, gatewayRequest.model || '');
+  }
   if (parsedChunk.stopReason) {
     streamState.stopReason = parsedChunk.stopReason;
   }
@@ -554,6 +562,7 @@ export const BedrockChatCompleteStreamChunkTransform: (
     streamState.currentToolCallIndex = -1;
   }
 
+  // final chunk
   if (parsedChunk.usage) {
     const shouldSendCacheUsage =
       parsedChunk.usage.cacheWriteInputTokens ||
@@ -569,7 +578,10 @@ export const BedrockChatCompleteStreamChunkTransform: (
           {
             index: 0,
             delta: {},
-            finish_reason: streamState.stopReason,
+            finish_reason: transformFinishReason(
+              streamState.stopReason,
+              strictOpenAiCompliance
+            ),
           },
         ],
         usage: {
@@ -647,6 +659,7 @@ export const BedrockChatCompleteStreamChunkTransform: (
             }),
           tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
         },
+        finish_reason: null,
       },
     ],
   })}\n\n`;

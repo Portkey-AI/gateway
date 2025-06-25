@@ -11,12 +11,17 @@ import {
   ErrorResponse,
   ProviderConfig,
 } from '../types';
-import { generateInvalidProviderResponseError } from '../utils';
 import {
   AnthropicErrorObject,
   AnthropicErrorResponse,
   AnthropicStreamState,
+  ANTHROPIC_STOP_REASON,
 } from './types';
+import {
+  generateErrorResponse,
+  generateInvalidProviderResponseError,
+  transformFinishReason,
+} from '../utils';
 import { AnthropicErrorResponseTransform } from './utils';
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
@@ -45,7 +50,16 @@ interface AnthropicTool extends PromptCache {
 interface AnthropicToolResultContentItem {
   type: 'tool_result';
   tool_use_id: string;
-  content?: string;
+  content?:
+    | {
+        type: string;
+        text?: string;
+        cache_control?: {
+          type: string;
+          ttl?: number;
+        };
+      }[]
+    | string;
 }
 
 interface AnthropicBase64ImageContentItem {
@@ -140,6 +154,9 @@ const transformAssistantMessage = (msg: Message): AnthropicMessage => {
         input: toolCall.function.arguments?.length
           ? JSON.parse(toolCall.function.arguments)
           : {},
+        ...(toolCall.cache_control && {
+          cache_control: toolCall.cache_control,
+        }),
       });
     });
   }
@@ -157,7 +174,7 @@ const transformToolMessage = (msg: Message): AnthropicMessage => {
       {
         type: 'tool_result',
         tool_use_id,
-        content: msg.content as string,
+        content: msg.content,
       },
     ],
   };
@@ -252,6 +269,9 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
 
             if (msg.role === 'assistant') {
               messages.push(transformAssistantMessage(msg));
+            } else if (msg.role === 'tool') {
+              // even though anthropic supports images in tool results, openai doesn't support it yet
+              messages.push(transformToolMessage(msg));
             } else if (
               msg.content &&
               typeof msg.content === 'object' &&
@@ -277,9 +297,6 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                 }
               });
               messages.push(transformedMessage as AnthropicMessage);
-            } else if (msg.role === 'tool') {
-              // even though anthropic supports images in tool results, openai doesn't support it yet
-              messages.push(transformToolMessage(msg));
             } else {
               messages.push({
                 role: msg.role,
@@ -436,7 +453,7 @@ export interface AnthropicChatCompleteResponse {
   type: string;
   role: string;
   content: AnthropicContentItem[];
-  stop_reason: string;
+  stop_reason: ANTHROPIC_STOP_REASON;
   model: string;
   stop_sequence: null | string;
   usage: {
@@ -454,7 +471,7 @@ export interface AnthropicChatCompleteStreamResponse {
     type?: string;
     text?: string;
     partial_json?: string;
-    stop_reason?: string;
+    stop_reason?: ANTHROPIC_STOP_REASON;
   };
   content_block?: {
     type: string;
@@ -549,7 +566,10 @@ export const AnthropicChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: response.stop_reason,
+          finish_reason: transformFinishReason(
+            response.stop_reason,
+            strictOpenAiCompliance
+          ),
         },
       ],
       usage: {
@@ -662,6 +682,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
     );
   }
 
+  // final chunk
   if (parsedChunk.type === 'message_delta' && parsedChunk.usage) {
     const totalTokens =
       (streamState?.usage?.prompt_tokens ?? 0) +
@@ -679,7 +700,10 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           {
             index: 0,
             delta: {},
-            finish_reason: parsedChunk.delta?.stop_reason,
+            finish_reason: transformFinishReason(
+              parsedChunk.delta?.stop_reason,
+              strictOpenAiCompliance
+            ),
           },
         ],
         usage: {
@@ -750,7 +774,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: parsedChunk.delta?.stop_reason ?? null,
+          finish_reason: null,
         },
       ],
     })}` + '\n\n'

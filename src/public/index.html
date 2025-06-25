@@ -90,7 +90,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 1rem; 
+      padding: 0 1rem;
     }
 
     .logo {
@@ -259,15 +259,15 @@
     }
 
     @keyframes highlight {
-      0% { 
+      0% {
           background-color: rgba(253, 224, 71, 0.2);
           transform: scale(1);
       }
-      20% { 
-          background-color: rgba(253, 224, 71, 1); 
+      20% {
+          background-color: rgba(253, 224, 71, 1);
           transform: scale(1.05);
       }
-      100% { 
+      100% {
           background-color: rgba(253, 224, 71, 0.2);
           transform: scale(1);
       }
@@ -889,7 +889,7 @@
       <a class="github-button" href="https://github.com/portkey-ai/gateway"
               data-color-scheme="no-preference: light; light: light; dark: dark;" data-icon="octicon-star" data-size="large"
               data-show-count="true" aria-label="Star portkey-ai/gateway on GitHub">Star</a>
-      
+
     </div>
   </header>
 
@@ -1165,13 +1165,13 @@
       // 1. Create the load-balanced config
       const lbConfig = {
         "strategy": { "mode": "loadbalance" },
-        "targets": [{ 
-          "provider": 'openai', 
-          "api_key": 'Your OpenAI API key', 
-          "weight": 0.7 
-        },{ 
-          "provider": 'anthropic', 
-          "api_key": 'Your Anthropic API key', 
+        "targets": [{
+          "provider": 'openai',
+          "api_key": 'Your OpenAI API key',
+          "weight": 0.7
+        },{
+          "provider": 'anthropic',
+          "api_key": 'Your Anthropic API key',
           "weight": 0.3,
           "override_params": {
             "model": 'claude-3-opus-20240229' // Any params you want to override
@@ -1191,11 +1191,11 @@
       const fallbackConfig = {
         "strategy": { "mode": "fallback" },
         "targets": [{ // The primary target
-          "provider": 'openai', 
-          "api_key": 'Your OpenAI API key', 
+          "provider": 'openai',
+          "api_key": 'Your OpenAI API key',
         },{ // The fallback target
-          "provider": 'anthropic', 
-          "api_key": 'Your Anthropic API key', 
+          "provider": 'anthropic',
+          "api_key": 'Your Anthropic API key',
         }],
       };
 
@@ -1209,12 +1209,12 @@
       configs["nodejs"]["autoRetries"] = `
       // 1. Create the retry and timeout config
       const retryTimeoutConfig = {
-        "retry": { 
+        "retry": {
           "attempts": 3,
           "on_status_codes": [429, 502, 503, 504] // Optional
         },
         "request_timeout": 10000,
-        "provider": 'openai', 
+        "provider": 'openai',
         "api_key": 'Your OpenAI API key'
       };
 
@@ -1246,13 +1246,13 @@
       # 1. Create the load-balanced config
       lb_config = {
         "strategy": { "mode": "loadbalance" },
-        "targets": [{ 
-          "provider": 'openai', 
-          "api_key": 'Your OpenAI API key', 
-          "weight": 0.7 
-        },{ 
-          "provider": 'anthropic', 
-          "api_key": 'Your Anthropic API key', 
+        "targets": [{
+          "provider": 'openai',
+          "api_key": 'Your OpenAI API key',
+          "weight": 0.7
+        },{
+          "provider": 'anthropic',
+          "api_key": 'Your Anthropic API key',
           "weight": 0.3,
           "override_params": {
             "model": 'claude-3-opus-20240229' # Any params you want to override
@@ -1272,11 +1272,11 @@
       fallback_config = {
         "strategy": { "mode": "fallback" },
         "targets": [{ # The primary target
-          "provider": 'openai', 
-          "api_key": 'Your OpenAI API key', 
+          "provider": 'openai',
+          "api_key": 'Your OpenAI API key',
         },{ # The fallback target
-          "provider": 'anthropic', 
-          "api_key": 'Your Anthropic API key', 
+          "provider": 'anthropic',
+          "api_key": 'Your Anthropic API key',
           "override_params": {
             "model": 'claude-3-opus-20240229' # Any params you want to override
           },
@@ -1293,12 +1293,12 @@
       configs["python"]["autoRetries"] = `
       # 1. Create the retry and timeout config
       retry_timeout_config = {
-        "retry": { 
+        "retry": {
           "attempts": 3,
           "on_status_codes": [429, 502, 503, 504] # Optional
         },
         "request_timeout": 10000,
-        "provider": 'openai', 
+        "provider": 'openai',
         "api_key": 'Your OpenAI API key'
       }
 
@@ -1314,7 +1314,7 @@
       simple_config='{"provider":"openai","api_key":"Your OpenAI API Key"}'
 
       # Use the config in completion requests
-      curl http://localhost:8787/v1/chat/completions \
+      curl ${location.origin}/v1/chat/completions \
       \n-H "Content-Type: application/json" \
       \n-H "x-portkey-config: $simple_config" \
       \n-d '{
@@ -1330,7 +1330,7 @@
       lb_config='{"strategy":{"mode":"loadbalance"},"targets":[{"provider":"openai","api_key":"Your OpenAI API key","weight": 0.7 },{"provider":"anthropic","api_key":"Your Anthropic API key","weight": 0.3,"override_params":{"model":"claude-3-opus-20240229"}}]}'
 
       # Use the config in completion requests
-      curl http://localhost:8787/v1/chat/completions \
+      curl ${location.origin}/v1/chat/completions \
       \n-H "Content-Type: application/json" \
       \n-H "x-portkey-config: $lb_config" \
       \n-d '{
@@ -1346,7 +1346,7 @@
       fb_config='{"strategy":{"mode":"fallback"},"targets":[{"provider":"openai","api_key":"Your OpenAI API key"},{"provider":"anthropic","api_key":"Your Anthropic API key","override_params":{"model":"claude-3-opus-20240229"}}]}'
 
       # Use the config in completion requests
-      curl http://localhost:8787/v1/chat/completions \
+      curl ${location.origin}/v1/chat/completions \
       \n-H "Content-Type: application/json" \
       \n-H "x-portkey-config: $fb_config" \
       \n-d '{
@@ -1362,7 +1362,7 @@
       rt_config='{"retry":{"attempts": 3,"on_status_codes": [429, 502, 503, 504]},"request_timeout": 10000, "provider": "openai", "api_key": "Your OpenAI API key"}'
 
       # Use the config in completion requests
-      curl http://localhost:8787/v1/chat/completions \
+      curl ${location.origin}/v1/chat/completions \
       \n-H "Content-Type: application/json" \
       \n-H "x-portkey-config: $rt_config" \
       \n-d '{
@@ -1420,7 +1420,7 @@
 
       // Case conversion utilities
       function toCamelCase(str) {
-        return str.replace(/([-_][a-z])/g, group => 
+        return str.replace(/([-_][a-z])/g, group =>
           group.toUpperCase()
             .replace('-', '')
             .replace('_', '')
@@ -1440,7 +1440,7 @@
         bedrock: {
           fields: [
             'awsAccessKeyId',
-            'awsSecretAccessKey', 
+            'awsSecretAccessKey',
             'awsRegion',
             'awsSessionToken'
           ]
@@ -1487,7 +1487,7 @@
           formatKey: fieldName => fieldName,
           separator: ':',
           indent: '  ',
-          template: (key, separator, value) => 
+          template: (key, separator, value) =>
             `  <span class="hljs-attr">${key}</span>${separator}<span class="hljs-string">"${value}"</span>`,
           joinWith: ',\n',
           prefix: ',\n',
@@ -1496,7 +1496,7 @@
           formatKey: fieldName => toSnakeCase(fieldName),
           separator: '=',
           indent: '    ',
-          template: (key, separator, value) => 
+          template: (key, separator, value) =>
             `    <span class="hljs-attr">${key}</span>${separator}<span class="hljs-string">"${value}"</span>`,
           joinWith: ',\n',
           prefix: ',\n',
@@ -1505,7 +1505,7 @@
           formatKey: fieldName => `x-portkey-${toKebabCase(fieldName)}`,
           separator: ':',
           indent: '',
-          template: (key, separator, value) => 
+          template: (key, separator, value) =>
             `-H <span class="hljs-string">"${key}${separator} ${value}"</span> \\`,
           joinWith: '\n',
           prefix: '\n',
@@ -1524,12 +1524,12 @@
         const { fields } = providerConfigs[provider];
         const formatter = formatGenerators[format];
         const details = vars.providerDetails || {};
-        
+
         const configLines = fields
           .map(fieldName => {
             // Skip session token if not provided (for Bedrock)
             if (fieldName === 'awsSessionToken' && !details[fieldName]) return null;
-            
+
             const key = formatter.formatKey(fieldName);
             const value = generateHighlightedValue(details[fieldName], fieldName);
             return formatter.template(key, formatter.separator, value);
@@ -1578,13 +1578,13 @@
 
           case 'curl':
             return `curl -X POST \\
-      https://api.portkey.ai/v1/chat/completions \\
+      ${location.origin}/v1/chat/completions \\
       -H <span class="hljs-string">"Content-Type: application/json"</span> \\
       -H <span class="hljs-string">"x-portkey-provider: <span class="highlighted-value ${vars.provider ? 'filled' : 'empty'}" id="providerValue">${vars.provider || '[Click to edit]'}</span>"</span> \\${vars.provider != 'bedrock' ? `
       -H <span class="hljs-string">"Authorization: <span class="highlighted-value ${vars.providerDetails?.apiKey ? 'filled' : 'empty'}" id="apiKeyValue">${vars.providerDetails?.apiKey || '[Click to edit]'}</span>"</span> \\`: '' }${vars.provider === 'azure-openai' ? `${generateConfig('azure', 'curl', vars)}` : ''}${vars.provider === 'bedrock' ? `${generateConfig('bedrock', 'curl', vars)}` : ''}
       <span class="hljs-string">-d '{
         "messages": [
-            { "role": "user", "content": "Hello, how are you?" },
+            { "role": "user", "content": "Hello, how are you?" }
         ],
         "model": "<span class="hljs-string">"${modelMap[vars.provider] || ''}"</span>"
       }'</span>`.trim();
@@ -1632,9 +1632,9 @@
           // Use the provider and providerDetails to make the request
           const myHeaders = new Headers();
           Object.keys(providerDetails).forEach(key => {
-            if (key === 'apiKey') { 
+            if (key === 'apiKey') {
               myHeaders.append("Authorization", providerDetails[key]);
-            } else { 
+            } else {
               myHeaders.append("x-portkey-" + camelToKebabCase(key), providerDetails[key]);
             }
           })
@@ -1684,10 +1684,10 @@
       function switchTab(tabsContainer, tabName, updateRoutingConfigFlag = true) {
         const tabs = tabsContainer.querySelectorAll('.tab');
         const tabContents = tabsContainer.closest('.card').querySelectorAll('.tab-content');
-        
+
         tabs.forEach(tab => tab.classList.remove('active'));
         tabContents.forEach(content => content.classList.remove('active'));
-        
+
         tabsContainer.querySelector(`.tab[data-tab="${tabName}"]`).classList.add('active');
         tabsContainer.closest('.card').querySelector(`#${tabName}Content`).classList.add('active');
 
@@ -1892,7 +1892,7 @@
         }
         tabButtons.forEach(btn => btn.classList.remove('active'));
         tabContents.forEach(content => content.classList.remove('active'));
-            
+
         document.getElementById(`${tabName}-tab-button`).classList.add('active');
         document.getElementById(`${tabName}-tab`).classList.add('active');
       }
@@ -1937,18 +1937,18 @@
         logSource.addEventListener('connected', (event) => {
           console.log('Connected to log stream', event.data);
         });
-        
+
         logSource.addEventListener('log', (event) => {
           const entry = JSON.parse(event.data);
           console.log('Received log entry', entry);
           addLogEntry(entry.time, entry.method, entry.endpoint, entry.status, entry.duration, entry.requestOptions);
         });
-        
+
         // Handle heartbeat to keep connection alive
         logSource.addEventListener('heartbeat', (event) => {
           console.log('Received heartbeat');
         });
-        
+
         logSource.onerror = (error) => {
           console.error('SSE error (logs):', error);
           reconnectLogSource();
@@ -1986,10 +1986,10 @@
               <td class="log-duration">${duration}ms</td>
               <td><button class="btn-view-details">View Details</button></td>
           `;
-          
+
           const viewDetailsBtn = tr.querySelector('.btn-view-details');
           viewDetailsBtn.addEventListener('click', () => showLogDetails(time, method, endpoint, status, duration, requestOptions));
-          
+
           if (logsTableBody.children.length > 1) {
               logsTableBody.insertBefore(tr, logsTableBody.children[1]);
           } else {
@@ -2000,7 +2000,7 @@
           while (logsTableBody.children.length > 100) {
               logsTableBody.removeChild(logsTableBody.lastChild);
           }
-          
+
           // Add a message to the last line of the table
           if (logsTableBody.children.length === 100) {
               let messageRow = logsTableBody.querySelector('.log-message-row');
@@ -2070,7 +2070,7 @@
       window.onload = function() {
         // Run the confetti function only once by storing the state in localStorage
         if(!localStorage.getItem('confettiRun')) {
-          setTimeout(() => {  
+          setTimeout(() => {
             confetti();
             localStorage.setItem('confettiRun', 'true');
           }, 1000);
