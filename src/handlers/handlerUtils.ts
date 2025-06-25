@@ -510,7 +510,7 @@ export async function tryPost(
           body: transformedRequestBody,
           headers: fetchOptions.headers,
         },
-        requestParams: transformedRequestBody,
+        requestParams: { ...params, ...transformedRequestBody },
         finalUntransformedRequest: {
           body: params,
         },

@@ -1106,6 +1106,7 @@
         <div class="select-wrapper">
           <select id="providerSelect" class="select">
             <option value="">Select a provider</option>
+            <option value="bytez">Bytez</option>
             <option value="openai">OpenAI</option>
             <option value="anthropic">Anthropic</option>
             <option value="groq">Groq</option>
@@ -1456,6 +1457,7 @@
       };
 
       const modelMap = {
+        "bytez": "google/gemma-3-1b-it",
         "openai": "gpt-4o-mini",
         "anthropic": "claude-3-5-sonnet-20240620",
         "groq": "llama3-70b-8192",
