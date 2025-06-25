@@ -6,7 +6,7 @@ import {
   MessagesResponse,
   RedactedThinkingBlock,
   ServerToolUseBlock,
-  STOP_REASON,
+  ANTHROPIC_STOP_REASON,
   TextBlock,
   ThinkingBlock,
   ToolUseBlock,
@@ -21,7 +21,7 @@ export interface RawMessageStartEvent {
 }
 
 export interface RawMessageDelta {
-  stop_reason: STOP_REASON | null;
+  stop_reason: ANTHROPIC_STOP_REASON | null;
 
   stop_sequence: string | null;
 }

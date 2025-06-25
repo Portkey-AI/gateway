@@ -11,7 +11,7 @@ import {
 import {
   ContentBlock,
   MessagesResponse,
-  STOP_REASON,
+  ANTHROPIC_STOP_REASON,
 } from '../../types/messagesResponse';
 import { RawContentBlockDeltaEvent } from '../../types/MessagesStreamResponse';
 import {
@@ -22,7 +22,10 @@ import {
   ANTHROPIC_MESSAGE_STOP_EVENT,
 } from '../anthropic-base/constants';
 import { ErrorResponse, ProviderConfig } from '../types';
-import { generateInvalidProviderResponseError } from '../utils';
+import {
+  generateInvalidProviderResponseError,
+  transformToAnthropicStopReason,
+} from '../utils';
 import { BedrockErrorResponseTransform } from './chatComplete';
 import { BedrockErrorResponse } from './embed';
 import {
@@ -185,7 +188,6 @@ const appendToolResultBlock = (
           text: item.text,
         });
       } else if (item.type === 'image') {
-        // TODO: test this
         appendImageBlock(transformedToolResultContent, item);
       }
     }
@@ -419,8 +421,7 @@ export const BedrockMessagesResponseTransform = (
       type: 'message',
       role: 'assistant',
       content: transformedContent,
-      // TODO: pull changes from stop reason transformation PR
-      stop_reason: response.stopReason as STOP_REASON,
+      stop_reason: transformToAnthropicStopReason(response.stopReason),
       usage: {
         cache_read_input_tokens: response.usage.cacheReadInputTokens,
         cache_creation_input_tokens: response.usage.cacheWriteInputTokens,
@@ -535,7 +536,9 @@ export const BedrockConverseMessagesStreamChunkTransform = (
       parsedChunk.usage.cacheReadInputTokens;
     messageDeltaEvent.usage.cache_creation_input_tokens =
       parsedChunk.usage.cacheWriteInputTokens;
-    messageDeltaEvent.delta.stop_reason = streamState.stopReason || '';
+    messageDeltaEvent.delta.stop_reason = transformToAnthropicStopReason(
+      streamState.stopReason
+    );
     const contentBlockStopEvent = { ...ANTHROPIC_CONTENT_BLOCK_STOP_EVENT };
     contentBlockStopEvent.index = streamState.currentContentBlockIndex;
     let returnChunk = `event: content_block_stop\ndata: ${JSON.stringify(contentBlockStopEvent)}\n\n`;
@@ -543,7 +546,6 @@ export const BedrockConverseMessagesStreamChunkTransform = (
     returnChunk += `event: message_stop\ndata: ${JSON.stringify(ANTHROPIC_MESSAGE_STOP_EVENT)}\n\n`;
     return returnChunk;
   }
-  // console.log(JSON.stringify(parsedChunk, null, 2));
 };
 
 function getMessageStartEvent(fallbackId: string, gatewayRequest: Params<any>) {

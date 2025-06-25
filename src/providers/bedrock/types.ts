@@ -108,7 +108,7 @@ export interface BedrockChatCompletionResponse {
       content: BedrockContentItem[];
     };
   };
-  stopReason: string;
+  stopReason: BEDROCK_STOP_REASON;
   usage: {
     inputTokens: number;
     outputTokens: number;
@@ -154,8 +154,9 @@ export type BedrockContentItem = {
     type: string;
   };
 };
+
 export interface BedrockStreamState {
-  stopReason?: string;
+  stopReason?: BEDROCK_STOP_REASON;
   currentToolCallIndex?: number;
   currentContentBlockIndex?: number;
 }
@@ -185,7 +186,7 @@ export interface BedrockChatCompleteStreamChunk {
       input?: object;
     };
   };
-  stopReason?: string;
+  stopReason?: BEDROCK_STOP_REASON;
   metrics?: {
     latencyMs: number;
   };

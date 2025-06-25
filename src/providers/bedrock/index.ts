@@ -203,6 +203,9 @@ const BedrockConfig: ProviderConfigs = {
       if (!config.chatComplete) {
         config.chatComplete = BedrockConverseChatCompleteConfig;
       }
+      if (!config.messages) {
+        config.messages = BedrockConverseMessagesConfig;
+      }
       if (!config.responseTransforms?.['stream-chatComplete']) {
         config.responseTransforms = {
           ...(config.responseTransforms ?? {}),

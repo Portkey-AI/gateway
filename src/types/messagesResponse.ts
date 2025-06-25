@@ -150,7 +150,7 @@ export type ContentBlock =
   | ThinkingBlock
   | RedactedThinkingBlock;
 
-export enum STOP_REASON {
+export enum ANTHROPIC_STOP_REASON {
   end_turn = 'end_turn',
   max_tokens = 'max_tokens',
   stop_sequence = 'stop_sequence',
@@ -234,7 +234,7 @@ export interface MessagesResponse {
    * In non-streaming mode this value is always non-null. In streaming mode, it is
    * null in the `message_start` event and non-null otherwise.
    */
-  stop_reason: STOP_REASON | null;
+  stop_reason: ANTHROPIC_STOP_REASON | null;
 
   /**
    * Which custom stop sequence was generated, if any.
