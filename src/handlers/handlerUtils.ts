@@ -759,7 +759,7 @@ export async function tryTargetsRecursively(
         ...t,
         originalIndex: index,
       }))
-      .filter((t: any) => !t.isClosed);
+      .filter((t: any) => !t.isOpen);
 
     if (healthyTargets.length) {
       currentTarget.targets = healthyTargets;
