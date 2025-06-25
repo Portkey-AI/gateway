@@ -44,7 +44,16 @@ interface AnthropicTool extends PromptCache {
 interface AnthropicToolResultContentItem {
   type: 'tool_result';
   tool_use_id: string;
-  content?: string;
+  content?:
+    | {
+        type: string;
+        text?: string;
+        cache_control?: {
+          type: string;
+          ttl?: number;
+        };
+      }[]
+    | string;
 }
 
 interface AnthropicBase64ImageContentItem {
@@ -139,6 +148,9 @@ const transformAssistantMessage = (msg: Message): AnthropicMessage => {
         input: toolCall.function.arguments?.length
           ? JSON.parse(toolCall.function.arguments)
           : {},
+        ...(toolCall.cache_control && {
+          cache_control: toolCall.cache_control,
+        }),
       });
     });
   }
@@ -156,7 +168,7 @@ const transformToolMessage = (msg: Message): AnthropicMessage => {
       {
         type: 'tool_result',
         tool_use_id,
-        content: msg.content as string,
+        content: msg.content,
       },
     ],
   };
@@ -251,6 +263,9 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
 
             if (msg.role === 'assistant') {
               messages.push(transformAssistantMessage(msg));
+            } else if (msg.role === 'tool') {
+              // even though anthropic supports images in tool results, openai doesn't support it yet
+              messages.push(transformToolMessage(msg));
             } else if (
               msg.content &&
               typeof msg.content === 'object' &&
@@ -276,9 +291,6 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                 }
               });
               messages.push(transformedMessage as AnthropicMessage);
-            } else if (msg.role === 'tool') {
-              // even though anthropic supports images in tool results, openai doesn't support it yet
-              messages.push(transformToolMessage(msg));
             } else {
               messages.push({
                 role: msg.role,
