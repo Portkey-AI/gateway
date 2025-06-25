@@ -14,6 +14,6 @@ export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   [BEDROCK_STOP_REASON.tool_use, FINISH_REASON.tool_calls],
   [BEDROCK_STOP_REASON.max_tokens, FINISH_REASON.length],
   [BEDROCK_STOP_REASON.stop_sequence, FINISH_REASON.stop],
-  [BEDROCK_STOP_REASON.guardrail_intervened, FINISH_REASON.stop],
-  [BEDROCK_STOP_REASON.content_filtered, FINISH_REASON.stop],
+  [BEDROCK_STOP_REASON.guardrail_intervened, FINISH_REASON.content_filter],
+  [BEDROCK_STOP_REASON.content_filtered, FINISH_REASON.content_filter],
 ]);
