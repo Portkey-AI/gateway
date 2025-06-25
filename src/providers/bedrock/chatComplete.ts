@@ -748,8 +748,8 @@ export const BedrockChatCompleteStreamChunkTransform: (
               content_blocks: [contentBlockObject],
             }),
           tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
-          finish_reason: null,
         },
+        finish_reason: null,
       },
     ],
   })}\n\n`;
