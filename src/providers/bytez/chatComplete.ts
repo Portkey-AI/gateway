@@ -6,7 +6,7 @@ const BytezInferenceChatCompleteConfig: ProviderConfig = {
     required: true,
   },
   max_tokens: {
-    // NOTE param acts as an alias, it will be added to "params" oon the req body
+    // NOTE param acts as an alias, it will be added to "params" on the req body
     param: 'max_new_tokens',
     default: 100,
     min: 0,
