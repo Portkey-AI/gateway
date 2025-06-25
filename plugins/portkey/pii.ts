@@ -10,6 +10,7 @@ import {
   setCurrentContentPart,
 } from '../utils';
 import {
+  LogObject,
   PIIResponse,
   PIIResult,
   PORTKEY_ENDPOINTS,
@@ -20,8 +21,8 @@ export async function detectPII(
   textArray: Array<string> | string,
   parameters: any,
   env: Record<string, any>
-): Promise<Promise<PIIResult[]>> {
-  const result: PIIResponse[] = await fetchPortkey(
+): Promise<{ results: PIIResult[]; log: LogObject }> {
+  const { response, log } = await fetchPortkey(
     env,
     PORTKEY_ENDPOINTS.PII,
     parameters.credentials,
@@ -32,7 +33,7 @@ export async function detectPII(
     parameters.timeout
   );
 
-  return result.map((item) => ({
+  const results = response.map((item) => ({
     detectedPIICategories: [
       ...new Set(item.entities.flatMap((entity) => Object.keys(entity.labels))),
     ],
@@ -42,6 +43,8 @@ export async function detectPII(
     })),
     redactedText: item.processed_text,
   }));
+
+  return { results, log };
 }
 
 export const handler: PluginHandler = async (
@@ -53,6 +56,7 @@ export const handler: PluginHandler = async (
   let error = null;
   let verdict = false;
   let data: any = null;
+  let log: LogObject | null = null;
   let transformedData: Record<string, any> = {
     request: {
       json: null,
@@ -70,6 +74,7 @@ export const handler: PluginHandler = async (
         data: null,
         transformedData,
         transformed,
+        log: null,
       };
     }
 
@@ -83,6 +88,7 @@ export const handler: PluginHandler = async (
         data: null,
         transformedData,
         transformed,
+        log: null,
       };
     }
 
@@ -93,6 +99,7 @@ export const handler: PluginHandler = async (
         data: null,
         transformedData,
         transformed,
+        log: null,
       };
     }
 
@@ -103,14 +110,16 @@ export const handler: PluginHandler = async (
         data: null,
         transformedData,
         transformed,
+        log: null,
       };
     }
 
-    let mappedResult = await detectPII(
+    const { results: mappedResult, log: piiLog } = await detectPII(
       textArray,
       parameters,
       options?.env || {}
     );
+    log = piiLog;
 
     const categoriesToCheck = parameters.categories || [];
     const not = parameters.not || false;
@@ -169,6 +178,10 @@ export const handler: PluginHandler = async (
     };
   } catch (e) {
     error = e as Error;
+    // If there's a log in the error, capture it
+    if ((e as any).log) {
+      log = (e as any).log;
+    }
     const text = getText(context, eventType);
     data = {
       explanation: `An error occurred while checking for PII: ${error.message}`,
@@ -182,5 +195,5 @@ export const handler: PluginHandler = async (
     };
   }
 
-  return { error, verdict, data, transformedData, transformed };
+  return { error, verdict, data, transformedData, transformed, log };
 };

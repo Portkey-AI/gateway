@@ -20,6 +20,7 @@ import {
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
+  transformFinishReason,
 } from '../utils';
 import {
   BedrockAI21CompleteResponse,
@@ -27,7 +28,9 @@ import {
   BedrockCohereStreamChunk,
 } from './complete';
 import { BedrockErrorResponse } from './embed';
+import { BEDROCK_STOP_REASON } from './types';
 import {
+  getBedrockErrorChunk,
   transformAdditionalModelRequestFields,
   transformAI21AdditionalModelRequestFields,
   transformAnthropicAdditionalModelRequestFields,
@@ -459,7 +462,7 @@ interface BedrockChatCompletionResponse {
       content: BedrockContentItem[];
     };
   };
-  stopReason: string;
+  stopReason: BEDROCK_STOP_REASON;
   usage: {
     inputTokens: number;
     outputTokens: number;
@@ -560,7 +563,10 @@ export const BedrockChatCompleteResponseTransform: (
               content_blocks: contentBlocks,
             }),
           },
-          finish_reason: response.stopReason,
+          finish_reason: transformFinishReason(
+            response.stopReason,
+            strictOpenAiCompliance
+          ),
         },
       ],
       usage: {
@@ -592,6 +598,8 @@ export const BedrockChatCompleteResponseTransform: (
 };
 
 export interface BedrockChatCompleteStreamChunk {
+  // this is error message from bedrock
+  message?: string;
   contentBlockIndex?: number;
   delta?: {
     text: string;
@@ -613,7 +621,7 @@ export interface BedrockChatCompleteStreamChunk {
       input?: object;
     };
   };
-  stopReason?: string;
+  stopReason?: BEDROCK_STOP_REASON;
   metrics?: {
     latencyMs: number;
   };
@@ -629,7 +637,7 @@ export interface BedrockChatCompleteStreamChunk {
 }
 
 interface BedrockStreamState {
-  stopReason?: string;
+  stopReason?: BEDROCK_STOP_REASON;
   currentToolCallIndex?: number;
 }
 
@@ -648,6 +656,9 @@ export const BedrockChatCompleteStreamChunkTransform: (
   gatewayRequest
 ) => {
   const parsedChunk: BedrockChatCompleteStreamChunk = JSON.parse(responseChunk);
+  if (parsedChunk.message) {
+    return getBedrockErrorChunk(fallbackId, gatewayRequest.model || '');
+  }
   if (parsedChunk.stopReason) {
     streamState.stopReason = parsedChunk.stopReason;
   }
@@ -655,6 +666,7 @@ export const BedrockChatCompleteStreamChunkTransform: (
     streamState.currentToolCallIndex = -1;
   }
 
+  // final chunk
   if (parsedChunk.usage) {
     const shouldSendCacheUsage =
       parsedChunk.usage.cacheWriteInputTokens ||
@@ -670,7 +682,10 @@ export const BedrockChatCompleteStreamChunkTransform: (
           {
             index: 0,
             delta: {},
-            finish_reason: streamState.stopReason,
+            finish_reason: transformFinishReason(
+              streamState.stopReason,
+              strictOpenAiCompliance
+            ),
           },
         ],
         usage: {
@@ -748,6 +763,7 @@ export const BedrockChatCompleteStreamChunkTransform: (
             }),
           tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
         },
+        finish_reason: null,
       },
     ],
   })}\n\n`;

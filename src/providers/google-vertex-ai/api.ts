@@ -57,6 +57,9 @@ export const GoogleApiConfig: ProviderAPIConfig = {
       return `https://storage.googleapis.com`;
     }
 
+    if (vertexRegion === 'global') {
+      return `https://aiplatform.googleapis.com`;
+    }
     return `https://${vertexRegion}-aiplatform.googleapis.com`;
   },
   headers: async ({ c, providerOptions }) => {
