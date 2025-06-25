@@ -80,7 +80,7 @@ export interface GuardrailCheckResult {
     };
   };
   log?: any;
-  failOnError?: boolean;
+  fail_on_error?: boolean;
 }
 
 export interface GuardrailResult {

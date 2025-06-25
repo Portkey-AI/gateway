@@ -306,7 +306,7 @@ export class HooksManager {
         transformed: result.transformed || false,
         created_at: createdAt,
         log: result.log || null,
-        failOnError:
+        fail_on_error:
           (check.parameters as Record<string, any>)?.failOnError || false,
       };
     } catch (err: any) {
@@ -394,7 +394,7 @@ export class HooksManager {
     hookResult = {
       // if guardrail has error, make verdict false else do the normal check
       verdict: checkResults.every(
-        (result) => result.verdict || (result.error && !result.failOnError)
+        (result) => result.verdict || (result.error && !result.fail_on_error)
       ),
       id: hook.id,
       transformed: checkResults.some((result) => result.transformed),
