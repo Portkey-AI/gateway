@@ -768,13 +768,6 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   };
   delete contentBlockObject.delta.type;
 
-  const finishReason = parsedChunk.delta?.stop_reason
-    ? transformFinishReason(
-        parsedChunk.delta?.stop_reason,
-        strictOpenAiCompliance
-      )
-    : null;
-
   return (
     `data: ${JSON.stringify({
       id: fallbackId,
@@ -794,7 +787,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: finishReason,
+          finish_reason: null,
         },
       ],
     })}` + '\n\n'
