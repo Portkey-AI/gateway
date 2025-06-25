@@ -197,28 +197,35 @@ export const crofaiChatCompleteStreamChunkTransform: (
   if (chunk === '[DONE]') {
     return `data: ${chunk}\n\n`;
   }
-  const parsedChunk: crofaiStreamChunk = JSON.parse(chunk);
-  return (
-    `data: ${JSON.stringify({
-      id: parsedChunk.id,
-      object: parsedChunk.object,
-      created: parsedChunk.created,
-      model: parsedChunk.model,
-      provider: DEEPINFRA,
-      choices: [
-        {
-          index: parsedChunk.choices[0].index,
-          delta: parsedChunk.choices[0].delta,
-          finish_reason: parsedChunk.choices[0].finish_reason,
-        },
-      ],
-      usage: parsedChunk.usage
-        ? {
-            prompt_tokens: parsedChunk.usage.prompt_tokens,
-            completion_tokens: parsedChunk.usage.completion_tokens,
-            total_tokens: parsedChunk.usage.total_tokens,
-          }
-        : undefined,
-    })}` + '\n\n'
-  );
+  try {
+    const parsedChunk: crofaiStreamChunk = JSON.parse(chunk);
+    return (
+      `data: ${JSON.stringify({
+        id: parsedChunk.id,
+        object: parsedChunk.object,
+        created: parsedChunk.created,
+        model: parsedChunk.model,
+        provider: DEEPINFRA,
+        choices: [
+          {
+            index: parsedChunk.choices[0].index,
+            delta: parsedChunk.choices[0].delta,
+            finish_reason: parsedChunk.choices[0].finish_reason,
+          },
+        ],
+        usage: parsedChunk.usage
+          ? {
+              prompt_tokens: parsedChunk.usage.prompt_tokens,
+              completion_tokens: parsedChunk.usage.completion_tokens,
+              total_tokens: parsedChunk.usage.total_tokens,
+            }
+          : undefined,
+      })}` + '\
+\
+'
+    );
+  } catch (error) {
+    console.error('Error parsing CrofAI stream chunk:', error);
+    return '';
+  }
 };
