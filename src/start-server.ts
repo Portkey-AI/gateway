@@ -33,7 +33,7 @@ if (
     const scriptDir = dirname(fileURLToPath(import.meta.url));
 
     // Serve the index.html content directly for both routes
-    const indexPath = join(`${scriptDir}/../`, 'public/index.html');
+    const indexPath = join(scriptDir, 'public/index.html');
     const indexContent = readFileSync(indexPath, 'utf-8');
 
     const serveIndex = (c: Context) => {
