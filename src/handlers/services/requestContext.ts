@@ -253,18 +253,20 @@ export class RequestContext {
       for (const srv of mcp_servers) {
         // Build the one object you actually need
         const entry: McpServer = {
-          server_url:   srv.url,
+          server_url: srv.url,
           server_label: srv.name,
         };
-      
+
         // Optional pieces, added only when present — no throw-away spreads
         const tc = srv.tool_configuration;
         if (tc?.allowed_tools) entry.allowed_tools = tc.allowed_tools;
-      
+
         if (srv.authorization_token) {
-          entry.headers = { Authorization: `Bearer ${srv.authorization_token}` };
+          entry.headers = {
+            Authorization: `Bearer ${srv.authorization_token}`,
+          };
         }
-      
+
         mcpServers.push(entry);
       }
     }
@@ -277,13 +279,14 @@ export class RequestContext {
         const mcpTool = tool as McpTool;
 
         const entry: McpServer = {
-          server_url:   mcpTool.server_url,
+          server_url: mcpTool.server_url,
           server_label: mcpTool.server_label,
         };
-        if (mcpTool.allowed_tools)    entry.allowed_tools    = mcpTool.allowed_tools;
-        if (mcpTool.require_approval) entry.require_approval = mcpTool.require_approval;
-        if (mcpTool.headers)          entry.headers          = mcpTool.headers;
-      
+        if (mcpTool.allowed_tools) entry.allowed_tools = mcpTool.allowed_tools;
+        if (mcpTool.require_approval)
+          entry.require_approval = mcpTool.require_approval;
+        if (mcpTool.headers) entry.headers = mcpTool.headers;
+
         mcpServers.push(entry);
       }
     }
