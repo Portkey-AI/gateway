@@ -48,6 +48,7 @@ import { handler as promptSecurityProtectPrompt } from './promptsecurity/protect
 import { handler as promptSecurityProtectResponse } from './promptsecurity/protectResponse';
 import { handler as panwPrismaAirsintercept } from './panw-prisma-airs/intercept';
 import { handler as defaultjwt } from './default/jwt';
+import { handler as defaultrequiredMetadataKeys } from './default/requiredMetadataKeys';
 
 export const plugins = {
   default: {
@@ -67,6 +68,7 @@ export const plugins = {
     endsWith: defaultendsWith,
     modelWhitelist: defaultmodelWhitelist,
     jwt: defaultjwt,
+    requiredMetadataKeys: defaultrequiredMetadataKeys,
   },
   portkey: {
     moderateContent: portkeymoderateContent,
