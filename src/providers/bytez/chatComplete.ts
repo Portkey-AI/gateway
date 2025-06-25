@@ -7,6 +7,7 @@ const BytezInferenceChatCompleteConfig: ProviderConfig = {
   },
   max_tokens: {
     // NOTE param acts as an alias, it will be added to "params" on the req body
+    // we do this adaptation ourselves in our custom requestHandler. See src/providers/bytez/index.ts
     param: 'max_new_tokens',
     default: 100,
     min: 0,
