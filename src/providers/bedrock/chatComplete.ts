@@ -20,6 +20,7 @@ import {
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
+  transformFinishReason,
 } from '../utils';
 import {
   BedrockAI21CompleteResponse,
@@ -27,6 +28,7 @@ import {
   BedrockCohereStreamChunk,
 } from './complete';
 import { BedrockErrorResponse } from './embed';
+import { BEDROCK_STOP_REASON } from './types';
 import {
   getBedrockErrorChunk,
   transformAdditionalModelRequestFields,
@@ -452,7 +454,7 @@ interface BedrockChatCompletionResponse {
       content: BedrockContentItem[];
     };
   };
-  stopReason: string;
+  stopReason: BEDROCK_STOP_REASON;
   usage: {
     inputTokens: number;
     outputTokens: number;
@@ -553,7 +555,10 @@ export const BedrockChatCompleteResponseTransform: (
               content_blocks: contentBlocks,
             }),
           },
-          finish_reason: response.stopReason,
+          finish_reason: transformFinishReason(
+            response.stopReason,
+            strictOpenAiCompliance
+          ),
         },
       ],
       usage: {
@@ -608,7 +613,7 @@ export interface BedrockChatCompleteStreamChunk {
       input?: object;
     };
   };
-  stopReason?: string;
+  stopReason?: BEDROCK_STOP_REASON;
   metrics?: {
     latencyMs: number;
   };
@@ -624,7 +629,7 @@ export interface BedrockChatCompleteStreamChunk {
 }
 
 interface BedrockStreamState {
-  stopReason?: string;
+  stopReason?: BEDROCK_STOP_REASON;
   currentToolCallIndex?: number;
 }
 
@@ -653,6 +658,7 @@ export const BedrockChatCompleteStreamChunkTransform: (
     streamState.currentToolCallIndex = -1;
   }
 
+  // final chunk
   if (parsedChunk.usage) {
     const shouldSendCacheUsage =
       parsedChunk.usage.cacheWriteInputTokens ||
@@ -668,7 +674,10 @@ export const BedrockChatCompleteStreamChunkTransform: (
           {
             index: 0,
             delta: {},
-            finish_reason: streamState.stopReason,
+            finish_reason: transformFinishReason(
+              streamState.stopReason,
+              strictOpenAiCompliance
+            ),
           },
         ],
         usage: {
