@@ -1,17 +1,13 @@
 import { ProviderConfig } from '../types';
 
-export const BytezInferenceChatCompleteConfig: ProviderConfig = {
+const BytezInferenceChatCompleteConfig: ProviderConfig = {
   messages: {
     param: 'messages',
-    default: '',
+    required: true,
   },
   max_tokens: {
-    param: 'max_tokens',
-    default: 100,
-    min: 0,
-  },
-  max_completion_tokens: {
-    param: 'max_tokens',
+    // NOTE param acts as an alias, it will be added to "params" oon the req body
+    param: 'max_new_tokens',
     default: 100,
     min: 0,
   },
@@ -31,29 +27,6 @@ export const BytezInferenceChatCompleteConfig: ProviderConfig = {
     param: 'stream',
     default: false,
   },
-  stop: {
-    param: 'stop',
-  },
-  presence_penalty: {
-    param: 'presence_penalty',
-    min: -2,
-    max: 2,
-  },
-  frequency_penalty: {
-    param: 'frequency_penalty',
-    min: -2,
-    max: 2,
-  },
-  user: {
-    param: 'user',
-  },
-  tools: {
-    param: 'tools',
-  },
-  tool_choice: {
-    param: 'tool_choice',
-  },
-  response_format: {
-    param: 'response_format',
-  },
 };
+
+export { BytezInferenceChatCompleteConfig };

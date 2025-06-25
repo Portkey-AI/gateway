@@ -1,51 +1,65 @@
 import crypto from 'node:crypto';
-import { ProviderConfigs } from '../types';
+import { ParameterConfig, ProviderConfigs } from '../types';
 import BytezInferenceAPI from './api';
 import { BytezInferenceChatCompleteConfig } from './chatComplete';
 
 const BASE_URL = 'https://api.bytez.com/models/v2';
+
+const IS_CHAT_MODEL_CACHE: Record<string, boolean> = {};
 
 const BytezInferenceAPIConfig: ProviderConfigs = {
   api: BytezInferenceAPI,
   chatComplete: BytezInferenceChatCompleteConfig,
   requestHandlers: {
     chatComplete: async ({ providerOptions, requestBody }) => {
-      const skipProps: Record<string, boolean> = {
-        model: true,
-      };
+      const { model: modelId } = requestBody;
 
-      const reservedProps: Record<string, boolean> = {
-        stream: true,
-        messages: true,
-        text: true,
-      };
+      let adaptedBody;
 
-      const adaptedBody: Record<string, any> = {};
-      const params: Record<string, any> = {};
-
-      for (const [key, value] of Object.entries(requestBody)) {
-        if (skipProps[key]) {
-          continue;
-        }
-
-        if (reservedProps[key]) {
-          adaptedBody[key] = value;
-          continue;
-        }
-
-        params[key] = value;
+      try {
+        adaptedBody = bodyAdapter(requestBody);
+      } catch (error: any) {
+        return new Response(
+          JSON.stringify({
+            status: 'failure',
+            message: error.message,
+          }),
+          {
+            status: 500,
+            headers: {
+              'content-type': 'application/json',
+            },
+          }
+        );
       }
 
-      adaptedBody.params = paramsAdapter(params);
+      const headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Key ${providerOptions.apiKey}`,
+      };
 
-      const url = `${BASE_URL}/${requestBody.model}`;
+      const isChatModel = await validateModelIsChat(modelId, headers);
+
+      if (!isChatModel) {
+        return new Response(
+          JSON.stringify({
+            status: 'failure',
+            message: 'Bytez only supports chat models on PortKey',
+          }),
+          {
+            status: 500,
+            headers: {
+              'content-type': 'application/json',
+            },
+          }
+        );
+      }
+
+      const url = `${BASE_URL}/${modelId}`;
 
       const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Key ${providerOptions.apiKey}`,
-        },
+        headers,
         body: JSON.stringify(adaptedBody),
       });
 
@@ -71,7 +85,7 @@ const BytezInferenceAPIConfig: ProviderConfigs = {
           id: crypto.randomUUID(),
           object: 'chat.completion',
           created: Date.now(),
-          model: requestBody.model,
+          model: modelId,
           choices: [
             {
               index: 0,
@@ -106,21 +120,115 @@ const BytezInferenceAPIConfig: ProviderConfigs = {
   },
 };
 
-function paramsAdapter(params: Record<string, any>) {
-  const aliasMap: Record<string, any> = {
-    max_tokens: 'max_new_tokens',
-  };
+function bodyAdapter(requestBody: Record<string, any>) {
+  for (const [param, paramConfig] of Object.entries(
+    BytezInferenceChatCompleteConfig
+  )) {
+    const hasParam = Boolean(requestBody[param]);
 
-  for (const key of Object.keys(params)) {
-    const alias = aliasMap[key];
+    // first assign defaults
+    if (!hasParam) {
+      const { default: defaultValue, required } =
+        paramConfig as ParameterConfig;
 
-    if (alias) {
-      params[alias] = params[key];
-      delete params[key];
+      // if it's required, throw
+      if (required) {
+        throw new Error(`Param ${param} is required`);
+      }
+
+      // assign the default value
+      if (defaultValue !== undefined && requestBody[param] === undefined) {
+        requestBody[param] = defaultValue;
+      }
     }
   }
 
-  return params;
+  // now we remap everything that has an alias, i.e. "prop" on propConfig
+  for (const [key, value] of Object.entries(requestBody)) {
+    const paramObj = BytezInferenceChatCompleteConfig[key] as
+      | ParameterConfig
+      | undefined;
+
+    if (paramObj) {
+      const { param } = paramObj;
+
+      if (key !== param) {
+        requestBody[param] = requestBody[key];
+        delete requestBody[key];
+      }
+    }
+  }
+
+  // now we adapt to the bytez input signature
+  // props to skip
+  const skipProps: Record<string, boolean> = {
+    model: true,
+  };
+
+  // props that cannot be removed from the body
+  const reservedProps: Record<string, boolean> = {
+    stream: true,
+    messages: true,
+  };
+  const adaptedBody: Record<string, any> = { params: {} };
+
+  for (const [key, value] of Object.entries(requestBody)) {
+    // things like "model"
+    if (skipProps[key]) {
+      continue;
+    }
+
+    // things like "messages", "stream"
+    if (reservedProps[key]) {
+      adaptedBody[key] = value;
+      continue;
+    }
+    // anything else, e.g. max_new_tokens
+    adaptedBody.params[key] = value;
+  }
+
+  return adaptedBody;
+}
+
+interface Model {
+  task: string;
+}
+
+interface BytezResponse {
+  error: string;
+  output: Model[];
+  // add other model properties as needed
+}
+
+async function validateModelIsChat(
+  modelId: string,
+  headers: Record<string, any>
+) {
+  // return from cache if already validated
+  if (IS_CHAT_MODEL_CACHE[modelId]) {
+    return IS_CHAT_MODEL_CACHE[modelId];
+  }
+
+  const url = `${BASE_URL}/list/models?modelId=${modelId}`;
+
+  const response = await fetch(url, {
+    headers,
+  });
+
+  const {
+    error,
+    output: [model],
+  }: BytezResponse = await response.json();
+
+  if (error) {
+    throw new Error(error);
+  }
+
+  const isChatModel = model.task === 'chat';
+
+  IS_CHAT_MODEL_CACHE[modelId] = isChatModel;
+
+  return isChatModel;
 }
 
 export default BytezInferenceAPIConfig;
