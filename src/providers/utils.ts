@@ -74,9 +74,6 @@ export const transformFinishReason = (
   if (!strictOpenAiCompliance) return finishReason;
   const transformedFinishReason = finishReasonMap.get(finishReason);
   if (!transformedFinishReason) {
-    console.error(
-      `Unknown finish reason, please update finish reason map: ${finishReason}`
-    );
     return FINISH_REASON.stop;
   }
   return transformedFinishReason;
