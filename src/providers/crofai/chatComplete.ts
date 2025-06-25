@@ -1,4 +1,4 @@
-import { DEEPINFRA } from '../../globals';
+import { CROFAI } from '../../globals';
 import { Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
@@ -150,7 +150,7 @@ export const crofaiChatCompleteResponseTransform: (
         param: null,
         code: null,
       },
-      DEEPINFRA
+      CROFAI
   }
 
   if ('choices' in response) {
@@ -159,7 +159,7 @@ export const crofaiChatCompleteResponseTransform: (
       object: response.object,
       created: response.created,
       model: response.model,
-      provider: DEEPINFRA,
+      provider: CROFAI,
       choices: response.choices.map((c) => ({
         index: c.index,
         message: {
@@ -176,7 +176,7 @@ export const crofaiChatCompleteResponseTransform: (
     };
   }
 
-  return generateInvalidProviderResponseError(response, DEEPINFRA);
+  return generateInvalidProviderResponseError(response, CROFAI);
 };
 
 export const crofaiChatCompleteStreamChunkTransform: (
@@ -205,7 +205,7 @@ export const crofaiChatCompleteStreamChunkTransform: (
         object: parsedChunk.object,
         created: parsedChunk.created,
         model: parsedChunk.model,
-        provider: DEEPINFRA,
+        provider: CROFAI,
         choices: [
           {
             index: parsedChunk.choices[0].index,
