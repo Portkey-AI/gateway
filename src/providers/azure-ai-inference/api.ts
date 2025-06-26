@@ -5,9 +5,28 @@ import {
 } from '../azure-openai/utils';
 import { ProviderAPIConfig } from '../types';
 
+const NON_INFERENCE_ENDPOINTS = [
+  'createBatch',
+  'retrieveBatch',
+  'cancelBatch',
+  'getBatchOutput',
+  'listBatches',
+  'uploadFile',
+  'listFiles',
+  'retrieveFile',
+  'deleteFile',
+  'retrieveFileContent',
+];
+
 const AzureAIInferenceAPI: ProviderAPIConfig = {
-  getBaseURL: ({ providerOptions }) => {
+  getBaseURL: ({ providerOptions, fn }) => {
     const { provider, azureFoundryUrl } = providerOptions;
+
+    // Azure Foundry URL includes `/deployments/<deployment>`, strip out and append openai for batches/finetunes
+    if (fn && NON_INFERENCE_ENDPOINTS.includes(fn)) {
+      return new URL(azureFoundryUrl ?? '').origin + '/openai';
+    }
+
     if (provider === GITHUB) {
       return 'https://models.inference.ai.azure.com';
     }
@@ -17,7 +36,7 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
 
     return '';
   },
-  headers: async ({ providerOptions }) => {
+  headers: async ({ providerOptions, fn }) => {
     const {
       apiKey,
       azureExtraParams,
@@ -31,6 +50,13 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
       ...(azureDeploymentName && {
         'azureml-model-deployment': azureDeploymentName,
       }),
+      ...(['createTranscription', 'createTranslation', 'uploadFile'].includes(
+        fn
+      )
+        ? {
+            'Content-Type': 'multipart/form-data',
+          }
+        : {}),
     };
     if (azureAdToken) {
       headers['Authorization'] =
@@ -70,14 +96,37 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
     }
     return headers;
   },
-  getEndpoint: ({ providerOptions, fn }) => {
+  getEndpoint: ({ providerOptions, fn, gatewayRequestURL }) => {
     const { azureApiVersion, urlToFetch } = providerOptions;
     let mappedFn = fn;
+
+    const urlObj = new URL(gatewayRequestURL);
+    const path = urlObj.pathname.replace('/v1', '');
+    const searchParams = urlObj.searchParams;
+
+    if (azureApiVersion) {
+      searchParams.set('api-version', azureApiVersion);
+    }
 
     const ENDPOINT_MAPPING: Record<string, string> = {
       complete: '/completions',
       chatComplete: '/chat/completions',
       embed: '/embeddings',
+      realtime: '/realtime',
+      imageGenerate: '/images/generations',
+      createSpeech: '/audio/speech',
+      createTranscription: '/audio/transcriptions',
+      createTranslation: '/audio/translations',
+      uploadFile: path,
+      retrieveFile: path,
+      listFiles: path,
+      deleteFile: path,
+      retrieveFileContent: path,
+      listBatches: path,
+      retrieveBatch: path,
+      cancelBatch: path,
+      getBatchOutput: path,
+      createBatch: path,
     };
 
     const isGithub = providerOptions.provider === GITHUB;
@@ -92,23 +141,40 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
       }
     }
 
-    const apiVersion = azureApiVersion ? `?api-version=${azureApiVersion}` : '';
+    const searchParamsString = searchParams.toString();
     switch (mappedFn) {
       case 'complete': {
         return isGithub
           ? ENDPOINT_MAPPING[mappedFn]
-          : `${ENDPOINT_MAPPING[mappedFn]}${apiVersion}`;
+          : `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
       }
       case 'chatComplete': {
         return isGithub
           ? ENDPOINT_MAPPING[mappedFn]
-          : `${ENDPOINT_MAPPING[mappedFn]}${apiVersion}`;
+          : `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
       }
       case 'embed': {
         return isGithub
           ? ENDPOINT_MAPPING[mappedFn]
-          : `${ENDPOINT_MAPPING[mappedFn]}${apiVersion}`;
+          : `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
       }
+      case 'realtime':
+      case 'imageGenerate':
+      case 'createSpeech':
+      case 'createTranscription':
+      case 'createTranslation':
+      case 'cancelBatch':
+      case 'createBatch':
+      case 'getBatchOutput':
+      case 'retrieveBatch':
+      case 'listBatches':
+      case 'retrieveFile':
+      case 'listFiles':
+      case 'deleteFile':
+      case 'retrieveFileContent': {
+        return `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
+      }
+
       default:
         return '';
     }

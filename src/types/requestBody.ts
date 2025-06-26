@@ -200,6 +200,7 @@ export interface Targets {
 
   defaultInputGuardrails?: HookObject[];
   defaultOutputGuardrails?: HookObject[];
+  originalIndex?: number;
 }
 
 /**
