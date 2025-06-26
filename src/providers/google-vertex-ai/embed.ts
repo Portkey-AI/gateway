@@ -120,3 +120,16 @@ export const GoogleEmbedResponseTransform: (
 
   return generateInvalidProviderResponseError(response, GOOGLE_VERTEX_AI);
 };
+
+export const VertexBatchEmbedConfig: ProviderConfig = {
+  input: {
+    param: 'content',
+    required: true,
+    transform: (value: EmbedParams) => {
+      if (typeof value.input === 'string') {
+        return value.input;
+      }
+      return value.input.map((item) => item).join('\n');
+    },
+  },
+};

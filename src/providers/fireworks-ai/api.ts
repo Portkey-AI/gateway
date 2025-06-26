@@ -21,8 +21,23 @@ const FireworksAIAPIConfig: ProviderAPIConfig = {
       Accept: 'application/json',
     };
   },
-  getEndpoint: ({ fn, gatewayRequestBodyJSON: gatewayRequestBody, c }) => {
+  getEndpoint: ({
+    fn,
+    gatewayRequestBodyJSON: gatewayRequestBody,
+    c,
+    gatewayRequestURL,
+  }) => {
     const model = gatewayRequestBody?.model;
+
+    const jobIdIndex = ['cancelFinetune'].includes(fn ?? '') ? -2 : -1;
+    const jobId = gatewayRequestURL.split('/').at(jobIdIndex);
+
+    const url = new URL(gatewayRequestURL);
+    const params = url.searchParams;
+
+    const size = params.get('limit') ?? 50;
+    const page = params.get('after') ?? '1';
+
     switch (fn) {
       case 'complete':
         return '/completions';
@@ -33,7 +48,7 @@ const FireworksAIAPIConfig: ProviderAPIConfig = {
       case 'imageGenerate':
         return `/image_generation/${model}`;
       case 'uploadFile':
-        return `/datasets`;
+        return '';
       case 'retrieveFile': {
         const datasetId = c.req.param('id');
         return `/datasets/${datasetId}`;
@@ -45,13 +60,13 @@ const FireworksAIAPIConfig: ProviderAPIConfig = {
         return `/datasets/${datasetId}`;
       }
       case 'createFinetune':
-        return `/fineTuningJobs`;
+        return `/supervisedFineTuningJobs`;
       case 'retrieveFinetune':
-        return `/fineTuningJobs/${c.req.param('jobId')}`;
+        return `/supervisedFineTuningJobs/${jobId}`;
       case 'listFinetunes':
-        return `/fineTuningJobs`;
+        return `/supervisedFineTuningJobs?pageToken=${page}&pageSize=${size}`;
       case 'cancelFinetune':
-        return `/fineTuningJobs/${c.req.param('jobId')}`;
+        return `/supervisedFineTuningJobs/${jobId}`;
       default:
         return '';
     }

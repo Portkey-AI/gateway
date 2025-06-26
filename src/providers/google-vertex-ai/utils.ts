@@ -5,7 +5,11 @@ import {
   GoogleResponseCandidate,
 } from './types';
 import { generateErrorResponse } from '../utils';
-import { GOOGLE_VERTEX_AI, fileExtensionMimeTypeMap } from '../../globals';
+import {
+  BatchEndpoints,
+  GOOGLE_VERTEX_AI,
+  fileExtensionMimeTypeMap,
+} from '../../globals';
 import { ErrorResponse, FinetuneRequest, Logprobs } from '../types';
 import { Context } from 'hono';
 import { env } from 'hono/adapter';
@@ -354,22 +358,34 @@ export const GoogleToOpenAIBatch = (response: GoogleBatchRecord) => {
     0
   );
 
+  const endpoint = isEmbeddingModel(response.model)
+    ? BatchEndpoints.EMBEDDINGS
+    : BatchEndpoints.CHAT_COMPLETIONS;
+
+  // Embeddings file is `000000000000.jsonl`, for inference the output is at `predictions.jsonl`
+  const fileSuffix =
+    endpoint === BatchEndpoints.EMBEDDINGS
+      ? '000000000000.jsonl'
+      : 'predictions.jsonl';
+
   const outputFileId = response.outputInfo
-    ? `${response.outputInfo?.gcsOutputDirectory}/predictions.jsonl`
+    ? `${response.outputInfo?.gcsOutputDirectory}/${fileSuffix}`
     : response.outputConfig.gcsDestination.outputUriPrefix;
 
   return {
     id: jobId,
     object: 'batch',
-    endpoint: '/generateContent',
+    endpoint: endpoint,
     input_file_id: encodeURIComponent(
       response.inputConfig.gcsSource?.uris?.at(0) ?? ''
     ),
     completion_window: null,
     status: googleBatchStatusToOpenAI(response.state),
-    output_file_id: outputFileId,
+    output_file_id: encodeURIComponent(outputFileId),
     // Same as output_file_id
-    error_file_id: response.outputConfig.gcsDestination.outputUriPrefix,
+    error_file_id: encodeURIComponent(
+      response.outputConfig.gcsDestination.outputUriPrefix ?? ''
+    ),
     created_at: new Date(response.createTime).getTime(),
     ...getTimeKey(response.state, response.endTime),
     in_progress_at: new Date(response.startTime).getTime(),
@@ -508,7 +524,7 @@ export const GoogleToOpenAIFinetune = (response: GoogleFinetuneRecord) => {
   return {
     id: response.name.split('/').at(-1),
     object: 'finetune',
-    status: googleBatchStatusToOpenAI(response.state),
+    status: googleFinetuneStatusToOpenAI(response.state),
     created_at: new Date(response.createTime).getTime(),
     error: response.error,
     fine_tuned_model: response.tunedModel?.model,
@@ -534,4 +550,135 @@ export const GoogleToOpenAIFinetune = (response: GoogleFinetuneRecord) => {
       ),
     }),
   };
+};
+
+export const vertexRequestLineHandler = (
+  purpose: string,
+  vertexBatchEndpoint: BatchEndpoints,
+  transformedBody: any,
+  requestId: string
+) => {
+  switch (purpose) {
+    case 'batch':
+      return vertexBatchEndpoint === BatchEndpoints.EMBEDDINGS
+        ? { ...transformedBody, requestId: requestId }
+        : { request: transformedBody, requestId: requestId };
+    case 'fine-tune':
+      return transformedBody;
+  }
+};
+export const isEmbeddingModel = (modelName: string) => {
+  return modelName.includes('embedding');
+};
+
+export const generateSignedURL = async (
+  serviceAccountInfo: Record<string, any>,
+  bucketName: string,
+  objectName: string,
+  expiration: number = 604800,
+  httpMethod: string = 'GET',
+  queryParameters: Record<string, string> = {},
+  headers: Record<string, string> = {}
+): Promise<string> => {
+  if (expiration > 604800) {
+    throw new Error(
+      "Expiration Time can't be longer than 604800 seconds (7 days)."
+    );
+  }
+
+  const escapedObjectName = encodeURIComponent(objectName).replace(/%2F/g, '/');
+  const canonicalUri = `/${escapedObjectName}`;
+
+  const datetimeNow = new Date();
+  const requestTimestamp = datetimeNow
+    .toISOString()
+    .replace(/[-:]/g, '') // Remove hyphens and colons
+    .replace(/\.\d{3}Z$/, 'Z'); // Remove milliseconds and ensure Z at end
+  const datestamp = datetimeNow.toISOString().slice(0, 10).replace(/-/g, '');
+
+  const clientEmail = serviceAccountInfo.client_email;
+  const credentialScope = `${datestamp}/auto/storage/goog4_request`;
+  const credential = `${clientEmail}/${credentialScope}`;
+
+  const host = `${bucketName}.storage.googleapis.com`;
+  headers['host'] = host;
+
+  // Create canonical headers
+  let canonicalHeaders = '';
+  const orderedHeaders = Object.keys(headers).sort();
+  for (const key of orderedHeaders) {
+    const lowerKey = key.toLowerCase();
+    const value = headers[key].toLowerCase();
+    canonicalHeaders += `${lowerKey}:${value}\n`;
+  }
+
+  // Create signed headers
+  const signedHeaders = orderedHeaders
+    .map((key) => key.toLowerCase())
+    .join(';');
+
+  // Add required query parameters
+  const queryParams: Record<string, string> = {
+    ...queryParameters,
+    'X-Goog-Algorithm': 'GOOG4-RSA-SHA256',
+    'X-Goog-Credential': credential,
+    'X-Goog-Date': requestTimestamp,
+    'X-Goog-Expires': expiration.toString(),
+    'X-Goog-SignedHeaders': signedHeaders,
+  };
+
+  // Create canonical query string
+  const canonicalQueryString = Object.keys(queryParams)
+    .sort()
+    .map(
+      (key) =>
+        `${encodeURIComponent(key)}=${encodeURIComponent(queryParams[key])}`
+    )
+    .join('&');
+
+  // Create canonical request
+  const canonicalRequest = [
+    httpMethod,
+    canonicalUri,
+    canonicalQueryString,
+    canonicalHeaders,
+    signedHeaders,
+    'UNSIGNED-PAYLOAD',
+  ].join('\n');
+
+  // Hash the canonical request
+  const canonicalRequestHash = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(canonicalRequest)
+  );
+
+  // Create string to sign
+  const stringToSign = [
+    'GOOG4-RSA-SHA256',
+    requestTimestamp,
+    credentialScope,
+    Array.from(new Uint8Array(canonicalRequestHash))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join(''),
+  ].join('\n');
+
+  // Sign the string
+  const privateKey = await importPrivateKey(serviceAccountInfo.private_key);
+  const signature = await crypto.subtle.sign(
+    {
+      name: 'RSASSA-PKCS1-v1_5',
+      hash: { name: 'SHA-256' },
+    },
+    privateKey,
+    new TextEncoder().encode(stringToSign)
+  );
+
+  // Convert signature to hex
+  const signatureHex = Array.from(new Uint8Array(signature))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+
+  // Construct the final URL
+  const schemeAndHost = `https://${host}`;
+  return `${schemeAndHost}${canonicalUri}?${canonicalQueryString}&x-goog-signature=${signatureHex}`;
 };
