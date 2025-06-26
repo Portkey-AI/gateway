@@ -137,10 +137,10 @@ export const transformAnthropicAdditionalModelRequestFields = (
       additionalModelRequestFields['anthropic_beta'] = params['anthropic_beta'];
     }
   }
-  if (params['tools']) {
+  if (params.tools && params.tools.length) {
     const anthropicTools: any[] = [];
     params.tools.forEach((tool: Tool) => {
-      if (tool.type != 'function') {
+      if (tool.type !== 'function') {
         const toolOptions = tool[tool.type];
         anthropicTools.push({
           ...(toolOptions && { ...toolOptions }),
