@@ -15,7 +15,7 @@
     "ai": "^3.3.26",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
-    "lucide-react": "^0.366.0",
+    "lucide-react": "^0.513.0",
     "nanoid": "^5.0.7",
     "next": "~14.2.3",
     "@portkey-ai/vercel-provider": "^1.0.1",
