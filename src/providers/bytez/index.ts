@@ -1,8 +1,8 @@
 import crypto from 'node:crypto';
-import { ParameterConfig, ProviderConfigs } from '../types';
+import { ProviderConfigs } from '../types';
 import BytezInferenceAPI from './api';
 import { BytezInferenceChatCompleteConfig } from './chatComplete';
-import { LRUCache } from './utils';
+import { bodyAdapter, LRUCache } from './utils';
 import { BytezResponse } from './types';
 
 const BASE_URL = 'https://api.bytez.com/models/v2';
@@ -79,93 +79,6 @@ const BytezInferenceAPIConfig: ProviderConfigs = {
   },
 };
 
-function constructFailureResponse(message: string, response?: object) {
-  return new Response(
-    JSON.stringify({
-      status: 'failure',
-      message,
-    }),
-    {
-      status: 500,
-      headers: {
-        'content-type': 'application/json',
-      },
-      // override defaults if desired
-      ...response,
-    }
-  );
-}
-
-function bodyAdapter(requestBody: Record<string, any>) {
-  for (const [param, paramConfig] of Object.entries(
-    BytezInferenceChatCompleteConfig
-  )) {
-    const hasParam = Boolean(requestBody[param]);
-
-    // first assign defaults
-    if (!hasParam) {
-      const { default: defaultValue, required } =
-        paramConfig as ParameterConfig;
-
-      // if it's required, throw
-      if (required) {
-        throw new Error(`Param ${param} is required`);
-      }
-
-      // assign the default value
-      if (defaultValue !== undefined && requestBody[param] === undefined) {
-        requestBody[param] = defaultValue;
-      }
-    }
-  }
-
-  // now we remap everything that has an alias, i.e. "prop" on propConfig
-  for (const [key, value] of Object.entries(requestBody)) {
-    const paramObj = BytezInferenceChatCompleteConfig[key] as
-      | ParameterConfig
-      | undefined;
-
-    if (paramObj) {
-      const { param } = paramObj;
-
-      if (key !== param) {
-        requestBody[param] = requestBody[key];
-        delete requestBody[key];
-      }
-    }
-  }
-
-  // now we adapt to the bytez input signature
-  // props to skip
-  const skipProps: Record<string, boolean> = {
-    model: true,
-  };
-
-  // props that cannot be removed from the body
-  const reservedProps: Record<string, boolean> = {
-    stream: true,
-    messages: true,
-  };
-  const adaptedBody: Record<string, any> = { params: {} };
-
-  for (const [key, value] of Object.entries(requestBody)) {
-    // things like "model"
-    if (skipProps[key]) {
-      continue;
-    }
-
-    // things like "messages", "stream"
-    if (reservedProps[key]) {
-      adaptedBody[key] = value;
-      continue;
-    }
-    // anything else, e.g. max_new_tokens
-    adaptedBody.params[key] = value;
-  }
-
-  return adaptedBody;
-}
-
 async function validateModelIsChat(
   modelId: string,
   headers: Record<string, any>
@@ -195,6 +108,23 @@ async function validateModelIsChat(
   IS_CHAT_MODEL_CACHE.set(modelId, isChatModel);
 
   return isChatModel;
+}
+
+function constructFailureResponse(message: string, response?: object) {
+  return new Response(
+    JSON.stringify({
+      status: 'failure',
+      message,
+    }),
+    {
+      status: 500,
+      headers: {
+        'content-type': 'application/json',
+      },
+      // override defaults if desired
+      ...response,
+    }
+  );
 }
 
 export default BytezInferenceAPIConfig;
