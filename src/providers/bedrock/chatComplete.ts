@@ -355,7 +355,8 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
           }
         }
       }
-      return { ...toolConfig, toolChoice };
+      // TODO: split this into two provider options, one for tools and one for toolChoice
+      return tools.length ? { ...toolConfig, toolChoice } : null;
     },
   },
   guardrailConfig: {
