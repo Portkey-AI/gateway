@@ -315,13 +315,15 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
         | { cachePoint: { type: string } }
       > = [];
       params.tools?.forEach((tool) => {
-        tools.push({
-          toolSpec: {
-            name: tool.function.name,
-            description: tool.function.description,
-            inputSchema: { json: tool.function.parameters },
-          },
-        });
+        if (tool.function) {
+          tools.push({
+            toolSpec: {
+              name: tool.function.name,
+              description: tool.function.description,
+              inputSchema: { json: tool.function.parameters },
+            },
+          });
+        }
         if (tool.cache_control && !canBeAmazonModel) {
           tools.push({
             cachePoint: {
