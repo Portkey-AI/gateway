@@ -1004,8 +1004,8 @@ export function updateResponseHeaders(
   }
   if (isCircuitBreakerOpen) {
     response.headers.append(
-      RESPONSE_HEADER_KEYS.CIRCUIT_BREAKER_STATUS,
-      'OPEN'
+      RESPONSE_HEADER_KEYS.CIRCUIT_BREAKER_TRIGGERED,
+      'true'
     );
   }
 }

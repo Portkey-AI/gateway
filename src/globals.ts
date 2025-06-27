@@ -31,7 +31,7 @@ export const RESPONSE_HEADER_KEYS = {
   LAST_USED_OPTION_PARAMS: `x-${POWERED_BY}-last-used-option-params`,
   CACHE_STATUS: `x-${POWERED_BY}-cache-status`,
   TRACE_ID: `x-${POWERED_BY}-trace-id`,
-  CIRCUIT_BREAKER_STATUS: `x-${POWERED_BY}-circuit-breaker-status`,
+  CIRCUIT_BREAKER_TRIGGERED: `x-${POWERED_BY}-circuit-breaker-triggered`,
 };
 
 export const RETRY_STATUS_CODES = [429, 500, 502, 503, 504];
