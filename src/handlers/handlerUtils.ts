@@ -483,6 +483,7 @@ export async function tryTargetsRecursively(
 
   // start: merge inherited config with current target config (preference given to current)
   const currentInheritedConfig: Record<string, any> = {
+    id: inheritedConfig.id || currentTarget.id,
     overrideParams: {
       ...inheritedConfig.overrideParams,
       ...currentTarget.overrideParams,
@@ -636,11 +637,26 @@ export async function tryTargetsRecursively(
   ];
   // end: merge inherited config with current target config (preference given to current)
 
+  const isHandlingCircuitBreaker = currentInheritedConfig.id;
+  if (isHandlingCircuitBreaker) {
+    const healthyTargets = (currentTarget.targets || [])
+      .map((t: any, index: number) => ({
+        ...t,
+        originalIndex: index,
+      }))
+      .filter((t: any) => !t.isOpen);
+
+    if (healthyTargets.length) {
+      currentTarget.targets = healthyTargets;
+    }
+  }
+
   let response;
 
   switch (strategyMode) {
     case StrategyModes.FALLBACK:
       for (const [index, target] of currentTarget.targets.entries()) {
+        const originalIndex = target.originalIndex || index;
         response = await tryTargetsRecursively(
           c,
           target,
@@ -648,7 +664,7 @@ export async function tryTargetsRecursively(
           requestHeaders,
           fn,
           method,
-          `${currentJsonPath}.targets[${index}]`,
+          `${currentJsonPath}.targets[${originalIndex}]`,
           currentInheritedConfig
         );
         if (response?.headers.get('x-portkey-gateway-exception') === 'true') {
@@ -676,8 +692,9 @@ export async function tryTargetsRecursively(
 
       let randomWeight = Math.random() * totalWeight;
       for (const [index, provider] of currentTarget.targets.entries()) {
+        const originalIndex = provider.originalIndex || index;
         if (randomWeight < provider.weight) {
-          currentJsonPath = currentJsonPath + `.targets[${index}]`;
+          currentJsonPath = currentJsonPath + `.targets[${originalIndex}]`;
           response = await tryTargetsRecursively(
             c,
             provider,
@@ -721,6 +738,7 @@ export async function tryTargetsRecursively(
         throw new RouterError(conditionalRouter.message);
       }
 
+      const originalIndex = finalTarget.originalIndex || finalTarget.index;
       response = await tryTargetsRecursively(
         c,
         finalTarget,
@@ -728,13 +746,14 @@ export async function tryTargetsRecursively(
         requestHeaders,
         fn,
         method,
-        `${currentJsonPath}.targets[${finalTarget.index}]`,
+        `${currentJsonPath}.targets[${originalIndex}]`,
         currentInheritedConfig
       );
       break;
     }
 
     case StrategyModes.SINGLE:
+      const originalIndex = currentTarget.targets[0].originalIndex || 0;
       response = await tryTargetsRecursively(
         c,
         currentTarget.targets[0],
@@ -742,7 +761,7 @@ export async function tryTargetsRecursively(
         requestHeaders,
         fn,
         method,
-        `${currentJsonPath}.targets[0]`,
+        `${currentJsonPath}.targets[${originalIndex}]`,
         currentInheritedConfig
       );
       break;
@@ -758,6 +777,15 @@ export async function tryTargetsRecursively(
           currentJsonPath,
           method
         );
+        if (isHandlingCircuitBreaker) {
+          await c.get('handleCircuitBreakerResponse')?.(
+            response,
+            currentInheritedConfig.id,
+            currentTarget.cbConfig,
+            currentJsonPath,
+            c
+          );
+        }
       } catch (error: any) {
         console.error('tryTargetsRecursively error: ', error);
         // tryPost always returns a Response.
@@ -784,6 +812,15 @@ export async function tryTargetsRecursively(
           );
         } else {
           response = error.response;
+          if (isHandlingCircuitBreaker) {
+            await c.get('recordCircuitBreakerFailure')?.(
+              env(c),
+              currentInheritedConfig.id,
+              currentTarget.cbConfig,
+              currentJsonPath,
+              response.status
+            );
+          }
         }
       }
       break;
@@ -1043,6 +1080,7 @@ export function constructConfigFromRequestHeaders(
       'output_guardrails',
       'default_input_guardrails',
       'default_output_guardrails',
+      'cb_config',
     ]) as any;
   }
 
