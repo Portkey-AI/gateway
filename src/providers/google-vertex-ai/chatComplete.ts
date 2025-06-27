@@ -832,6 +832,10 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
 
   if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
     streamState.model = parsedChunk?.message?.model ?? '';
+
+    streamState.usage = {
+      prompt_tokens: parsedChunk.message.usage?.input_tokens,
+    };
     return (
       `data: ${JSON.stringify({
         id: fallbackId,
@@ -850,7 +854,7 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
           },
         ],
         usage: {
-          prompt_tokens: parsedChunk.message?.usage?.input_tokens,
+          prompt_tokens: streamState.usage.prompt_tokens,
         },
       })}` + '\n\n'
     );
@@ -873,6 +877,10 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
         ],
         usage: {
           completion_tokens: parsedChunk.usage?.output_tokens,
+          prompt_tokens: streamState.usage?.prompt_tokens,
+          total_tokens:
+            (streamState.usage?.prompt_tokens || 0) +
+            (parsedChunk.usage?.output_tokens || 0),
         },
       })}` + '\n\n'
     );
