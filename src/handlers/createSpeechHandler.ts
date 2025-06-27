@@ -29,7 +29,7 @@ export async function createSpeechHandler(c: Context): Promise<Response> {
 
     return tryTargetsResponse;
   } catch (err: any) {
-    console.log('createSpeech error', err.message);
+    console.error('createSpeechHandler error: ', err);
     return new Response(
       JSON.stringify({
         status: 'failure',

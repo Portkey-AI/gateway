@@ -50,7 +50,7 @@ async function finetuneHandler(c: Context) {
 
     return tryTargetsResponse;
   } catch (err: any) {
-    console.error({ message: `${endpoint} error ${err.message}` });
+    console.error('finetuneHandler error: ', err);
     return new Response(
       JSON.stringify({
         status: 'failure',
