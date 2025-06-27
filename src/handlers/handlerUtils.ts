@@ -255,7 +255,8 @@ export async function tryPost(
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
   currentIndex: number | string,
-  method: string = 'POST'
+  method: string = 'POST',
+  isCircuitBreakerOpen: boolean = false
 ): Promise<Response> {
   const overrideParams = providerOption?.overrideParams || {};
   let params: Params =
@@ -495,7 +496,8 @@ export async function tryPost(
       cacheStatus,
       retryCount ?? 0,
       requestHeaders[HEADER_KEYS.TRACE_ID] ?? '',
-      provider
+      provider,
+      isCircuitBreakerOpen
     );
 
     c.set('requestOptions', [
@@ -590,7 +592,8 @@ export async function tryTargetsRecursively(
   fn: endpointStrings,
   method: string,
   jsonPath: string,
-  inheritedConfig: Record<string, any> = {}
+  inheritedConfig: Record<string, any> = {},
+  isCircuitBreakerOpen: boolean = false
 ): Promise<Response> {
   const currentTarget: any = { ...targetGroup };
   let currentJsonPath = jsonPath;
@@ -762,6 +765,9 @@ export async function tryTargetsRecursively(
       .filter((t: any) => !t.isOpen);
 
     if (healthyTargets.length) {
+      if (healthyTargets.length < currentTarget.targets.length) {
+        isCircuitBreakerOpen = true;
+      }
       currentTarget.targets = healthyTargets;
     }
   }
@@ -818,7 +824,8 @@ export async function tryTargetsRecursively(
             fn,
             method,
             currentJsonPath,
-            currentInheritedConfig
+            currentInheritedConfig,
+            isCircuitBreakerOpen
           );
           break;
         }
@@ -862,7 +869,8 @@ export async function tryTargetsRecursively(
         fn,
         method,
         `${currentJsonPath}.targets[${originalIndex}]`,
-        currentInheritedConfig
+        currentInheritedConfig,
+        isCircuitBreakerOpen
       );
       break;
     }
@@ -877,7 +885,8 @@ export async function tryTargetsRecursively(
         fn,
         method,
         `${currentJsonPath}.targets[${originalIndex}]`,
-        currentInheritedConfig
+        currentInheritedConfig,
+        isCircuitBreakerOpen
       );
       break;
 
@@ -890,7 +899,8 @@ export async function tryTargetsRecursively(
           requestHeaders,
           fn,
           currentJsonPath,
-          method
+          method,
+          isCircuitBreakerOpen
         );
         if (isHandlingCircuitBreaker) {
           await c.get('handleCircuitBreakerResponse')?.(
@@ -959,7 +969,8 @@ export function updateResponseHeaders(
   cacheStatus: string | undefined,
   retryAttempt: number,
   traceId: string,
-  provider: string
+  provider: string,
+  isCircuitBreakerOpen: boolean
 ) {
   response.headers.append(
     RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX,
@@ -990,6 +1001,12 @@ export function updateResponseHeaders(
   response.headers.delete('transfer-encoding');
   if (provider && provider !== POWERED_BY) {
     response.headers.append(HEADER_KEYS.PROVIDER, provider);
+  }
+  if (isCircuitBreakerOpen) {
+    response.headers.append(
+      RESPONSE_HEADER_KEYS.CIRCUIT_BREAKER_STATUS,
+      'OPEN'
+    );
   }
 }
 

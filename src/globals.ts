@@ -25,12 +25,13 @@ export const HEADER_KEYS: Record<string, string> = {
   CONTENT_TYPE: `Content-Type`,
 };
 
-export const RESPONSE_HEADER_KEYS: Record<string, string> = {
+export const RESPONSE_HEADER_KEYS = {
   RETRY_ATTEMPT_COUNT: `x-${POWERED_BY}-retry-attempt-count`,
   LAST_USED_OPTION_INDEX: `x-${POWERED_BY}-last-used-option-index`,
   LAST_USED_OPTION_PARAMS: `x-${POWERED_BY}-last-used-option-params`,
   CACHE_STATUS: `x-${POWERED_BY}-cache-status`,
   TRACE_ID: `x-${POWERED_BY}-trace-id`,
+  CIRCUIT_BREAKER_STATUS: `x-${POWERED_BY}-circuit-breaker-status`,
 };
 
 export const RETRY_STATUS_CODES = [429, 500, 502, 503, 504];
