@@ -1,7 +1,6 @@
 
-<p align="right">
-   <strong>English</strong> | <a href="./.github/README.cn.md">中文</a> | <a href="./.github/README.jp.md">日本語</a>
-</p>
+
+
 
 <div align="center">
 
@@ -24,6 +23,29 @@
 
 <a href="https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?stackName=portkey-gateway&templateURL=https://portkey-gateway-ec2-quicklaunch.s3.us-east-1.amazonaws.com/portkey-gateway-ec2-quicklaunch.template.yaml"><img src="https://img.shields.io/badge/Deploy_to_EC2-232F3E?style=for-the-badge&logo=amazonwebservices&logoColor=white" alt="Deploy to AWS EC2" width="105"/></a> [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Portkey-AI/gateway)
 </div>
+
+<p align="center">
+  <a href="https://openaitx.github.io/view.html?user=Portkey-AI&project=gateway&lang=en">English</a> |
+  <a href="https://openaitx.github.io/view.html?user=Portkey-AI&project=gateway&lang=zh-CN">简体中文</a> |
+  <a href="https://openaitx.github.io/view.html?user=Portkey-AI&project=gateway&lang=zh-TW">繁體中文</a> |
+  <a href="https://openaitx.github.io/view.html?user=Portkey-AI&project=gateway&lang=ja">日本語</a> |
+  <a href="https://openaitx.github.io/view.html?user=Portkey-AI&project=gateway&lang=ko">한국어</a> |
+  <a href="https://openaitx.github.io/view.html?user=Portkey-AI&project=gateway&lang=hi">हिन्दी</a> |
+  <a href="https://openaitx.github.io/view.html?user=Portkey-AI&project=gateway&lang=th">ไทย</a> |
+  <a href="https://openaitx.github.io/view.html?user=Portkey-AI&project=gateway&lang=fr">Français</a> |
+  <a href="https://openaitx.github.io/view.html?user=Portkey-AI&project=gateway&lang=de">Deutsch</a> |
+  <a href="https://openaitx.github.io/view.html?user=Portkey-AI&project=gateway&lang=es">Español</a> |
+  <a href="https://openaitx.github.io/view.html?user=Portkey-AI&project=gateway&lang=it">Italiano</a> |
+  <a href="https://openaitx.github.io/view.html?user=Portkey-AI&project=gateway&lang=ru">Русский</a> |
+  <a href="https://openaitx.github.io/view.html?user=Portkey-AI&project=gateway&lang=pt">Português</a> |
+  <a href="https://openaitx.github.io/view.html?user=Portkey-AI&project=gateway&lang=nl">Nederlands</a> |
+  <a href="https://openaitx.github.io/view.html?user=Portkey-AI&project=gateway&lang=pl">Polski</a> |
+  <a href="https://openaitx.github.io/view.html?user=Portkey-AI&project=gateway&lang=ar">العربية</a> |
+  <a href="https://openaitx.github.io/view.html?user=Portkey-AI&project=gateway&lang=fa">فارسی</a> |
+  <a href="https://openaitx.github.io/view.html?user=Portkey-AI&project=gateway&lang=tr">Türkçe</a> |
+  <a href="https://openaitx.github.io/view.html?user=Portkey-AI&project=gateway&lang=vi">Tiếng Việt</a> |
+  <a href="https://openaitx.github.io/view.html?user=Portkey-AI&project=gateway&lang=id">Bahasa Indonesia</a>
+</p>
 
 <br/>
 
