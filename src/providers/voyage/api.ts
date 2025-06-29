@@ -9,6 +9,10 @@ const VoyageAPIConfig: ProviderAPIConfig = {
     switch (fn) {
       case 'embed':
         return '/embeddings';
+      case 'multimodalEmbed':
+        return '/multimodalembeddings';
+      case 'rerank':
+        return '/rerank';
       default:
         return '';
     }
