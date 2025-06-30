@@ -596,7 +596,7 @@
     },
     {
       "name": "Allowed Models",
-      "id": "modelwhitelist",
+      "id": "modelWhitelist",
       "type": "guardrail",
       "supportedHooks": ["beforeRequestHook"],
       "description": [
