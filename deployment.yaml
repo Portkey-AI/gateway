@@ -28,6 +28,8 @@ spec:
     spec:
       containers:
       - image: portkeyai/gateway
+        securityContext:
+          allowPrivilegeEscalation: false
         imagePullPolicy: IfNotPresent
         name: portkeyai
         ports:
