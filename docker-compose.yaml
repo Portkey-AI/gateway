@@ -1,6 +1,8 @@
 version: '3'
 services:
   web:
+    security_opt:
+      - "no-new-privileges:true"
     ports:
       - "8787:8787"
     image: "portkeyai/gateway:latest"
