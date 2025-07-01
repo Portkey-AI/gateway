@@ -55,6 +55,11 @@ export const CohereEmbedConfig: ProviderConfig = {
       return [params.encoding_format];
     },
   },
+  //backwards compatibility
+  embedding_types: {
+    param: 'embedding_types',
+    required: false,
+  },
 };
 
 /**
