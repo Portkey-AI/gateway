@@ -16,8 +16,8 @@ describe('WalledAI Guardrail Plugin Handler (integration)', () => {
     text_type: 'prompt',
     generic_safety_check: true,
     greetings_list: ['generalgreetings'],
-    pii_list:["Person's Name","Address"],
-    compliance_list:[]
+    pii_list: ["Person's Name", 'Address'],
+    compliance_list: [],
   };
 
   it('returns verdict=true for safe text', async () => {
@@ -25,7 +25,11 @@ describe('WalledAI Guardrail Plugin Handler (integration)', () => {
       request: { text: 'Hello world' },
       response: {},
     };
-    const result = await handler(context, baseParams, 'beforeRequestHook' as HookEventType);
+    const result = await handler(
+      context,
+      baseParams,
+      'beforeRequestHook' as HookEventType
+    );
     expect(result.verdict).toBe(true);
     expect(result.error).toBeNull();
     expect(result.data).toBeDefined();
@@ -36,7 +40,11 @@ describe('WalledAI Guardrail Plugin Handler (integration)', () => {
       request: { text: 'I want to harm someone.' },
       response: {},
     };
-    const result = await handler(context, baseParams, 'beforeRequestHook' as HookEventType);
+    const result = await handler(
+      context,
+      baseParams,
+      'beforeRequestHook' as HookEventType
+    );
     expect(result.verdict).toBe(false);
     expect(result.error).toBeNull();
     expect(result.data).toBeDefined();
@@ -48,7 +56,11 @@ describe('WalledAI Guardrail Plugin Handler (integration)', () => {
       request: { text: 'Hello world' },
       response: {},
     };
-    const result = await handler(context, params, 'beforeRequestHook' as HookEventType);
+    const result = await handler(
+      context,
+      params,
+      'beforeRequestHook' as HookEventType
+    );
     expect(result.error).toMatch(/apiKey/);
     expect(result.verdict).toBe(true);
     expect(result.data).toBeNull();
@@ -59,7 +71,11 @@ describe('WalledAI Guardrail Plugin Handler (integration)', () => {
       request: { text: '' },
       response: {},
     };
-    const result = await handler(context, baseParams, 'beforeRequestHook' as HookEventType);
+    const result = await handler(
+      context,
+      baseParams,
+      'beforeRequestHook' as HookEventType
+    );
     expect(result.error).toMatch(/empty/);
     expect(result.verdict).toBe(true);
     expect(result.data).toBeNull();
@@ -71,7 +87,11 @@ describe('WalledAI Guardrail Plugin Handler (integration)', () => {
       response: {},
     };
     const params: PluginParameters = { credentials: testCreds };
-    const result = await handler(context, params, 'beforeRequestHook' as HookEventType);
+    const result = await handler(
+      context,
+      params,
+      'beforeRequestHook' as HookEventType
+    );
     expect(result.verdict).toBe(true);
     expect(result.error).toBeNull();
     expect(result.data).toBeDefined();

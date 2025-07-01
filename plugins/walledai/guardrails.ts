@@ -6,8 +6,7 @@ import {
 } from '../types';
 import { post, getText } from '../utils';
 
-const API_URL =
-  'https://services.walled.ai/v1/guardrail/moderate';
+const API_URL = 'https://services.walled.ai/v1/guardrail/moderate';
 
 export const handler: PluginHandler = async (
   context: PluginContext,
@@ -47,20 +46,23 @@ export const handler: PluginHandler = async (
   const requestOptions = {
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${parameters.credentials.apiKey}`, // Uncomment if API key is required
+      Authorization: `Bearer ${parameters.credentials.apiKey}`, // Uncomment if API key is required
     },
   };
 
   try {
-    const response = await post(API_URL, requestBody, requestOptions, parameters.timeout);
+    const response = await post(
+      API_URL,
+      requestBody,
+      requestOptions,
+      parameters.timeout
+    );
     data = response.data;
-    if (
-        data.safety[0]?.isSafe==false
-    ) {
+    if (data.safety[0]?.isSafe == false) {
       verdict = false;
     }
   } catch (e) {
-    console.log(e)
+    console.log(e);
     error = e instanceof Error ? e.message : String(e);
     verdict = true;
     data = null;
