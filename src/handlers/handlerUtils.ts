@@ -928,7 +928,7 @@ export async function tryTargetsRecursively(
           response = new Response(
             JSON.stringify({
               status: 'failure',
-              message: errorMessage,
+              error: errorMessage,
             }),
             {
               status: 500,
