@@ -111,6 +111,9 @@ export const AzureOpenAIChatCompleteConfig: ProviderConfig = {
   stream_options: {
     param: 'stream_options',
   },
+  web_search_options: {
+    param: 'web_search_options',
+  },
 };
 
 interface AzureOpenAIChatCompleteResponse extends ChatCompletionResponse {}
