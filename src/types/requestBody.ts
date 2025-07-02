@@ -197,6 +197,7 @@ export interface Targets {
 
   defaultInputGuardrails?: HookObject[];
   defaultOutputGuardrails?: HookObject[];
+  originalIndex?: number;
 }
 
 /**
@@ -357,6 +358,8 @@ export interface Tool extends PromptCache {
   type: string;
   /** A description of the function. */
   function: Function;
+  // this is used to support tools like computer, web_search, etc.
+  [key: string]: any;
 }
 
 /**
@@ -423,6 +426,7 @@ export interface Params {
   // Embeddings specific
   dimensions?: number;
   parameters?: any;
+  [key: string]: any;
 }
 
 interface Examples {
