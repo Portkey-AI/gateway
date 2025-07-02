@@ -29,7 +29,7 @@ function filesHandler(
 
       return tryTargetsResponse;
     } catch (err: any) {
-      console.error({ message: `${endpoint} error ${err.message}` });
+      console.error('filesHandler error: ', err);
       return new Response(
         JSON.stringify({
           status: 'failure',

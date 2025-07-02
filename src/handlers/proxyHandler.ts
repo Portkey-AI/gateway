@@ -44,7 +44,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
 
     return tryTargetsResponse;
   } catch (err: any) {
-    console.log('proxy error', err.message);
+    console.error('proxyHandler error: ', err);
     let statusCode = 500;
     let errorMessage = `Proxy error: ${err.message}`;
 
