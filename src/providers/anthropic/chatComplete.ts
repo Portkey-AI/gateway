@@ -362,11 +362,15 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                 cache_control: { type: 'ephemeral' },
               }),
             });
-          } else if (tool.computer) {
+          } else if (tool.type) {
+            const toolOptions = tool[tool.type];
             tools.push({
-              ...tool.computer,
-              name: 'computer',
-              type: tool.computer.name,
+              ...(toolOptions && { ...toolOptions }),
+              name: tool.type,
+              type: toolOptions?.name,
+              ...(tool.cache_control && {
+                cache_control: { type: 'ephemeral' },
+              }),
             });
           }
         });

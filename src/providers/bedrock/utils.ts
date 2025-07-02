@@ -8,7 +8,7 @@ import {
   BedrockConverseAnthropicChatCompletionsParams,
   BedrockConverseCohereChatCompletionsParams,
 } from './chatComplete';
-import { Options } from '../../types/requestBody';
+import { Options, Tool } from '../../types/requestBody';
 import { GatewayError } from '../../errors/GatewayError';
 import { BedrockFinetuneRecord, BedrockInferenceProfile } from './types';
 import { FinetuneRequest } from '../types';
@@ -135,6 +135,25 @@ export const transformAnthropicAdditionalModelRequestFields = (
       ];
     } else {
       additionalModelRequestFields['anthropic_beta'] = params['anthropic_beta'];
+    }
+  }
+  if (params.tools && params.tools.length) {
+    const anthropicTools: any[] = [];
+    params.tools.forEach((tool: Tool) => {
+      if (tool.type !== 'function') {
+        const toolOptions = tool[tool.type];
+        anthropicTools.push({
+          ...(toolOptions && { ...toolOptions }),
+          name: tool.type,
+          type: toolOptions?.name,
+          ...(tool.cache_control && {
+            cache_control: { type: 'ephemeral' },
+          }),
+        });
+      }
+    });
+    if (anthropicTools.length) {
+      additionalModelRequestFields['tools'] = anthropicTools;
     }
   }
   return additionalModelRequestFields;
