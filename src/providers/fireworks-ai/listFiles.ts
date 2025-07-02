@@ -1,3 +1,4 @@
+import { FIREWORKS_AI } from '../../globals';
 import {
   FireworksAIErrorResponse,
   FireworksAIErrorResponseTransform,
@@ -25,5 +26,11 @@ export const FireworksFileListResponseTransform = (
     };
   }
 
-  return FireworksAIErrorResponseTransform(response);
+  return {
+    error: {
+      message: (response as any).message ?? 'unable to fetch files.',
+      param: null,
+    },
+    provider: FIREWORKS_AI,
+  };
 };
