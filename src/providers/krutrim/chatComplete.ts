@@ -1,7 +1,5 @@
 import { ChatCompletionResponse, ErrorResponse } from '../types';
-
 import { generateErrorResponse } from '../utils';
-
 import { KRUTRIM } from '../../globals';
 
 interface KrutrimChatCompleteResponse extends ChatCompletionResponse {}
