@@ -1,5 +1,9 @@
+import { ANTHROPIC_STOP_REASON } from './anthropic/types';
 import { FINISH_REASON, ErrorResponse, PROVIDER_FINISH_REASON } from './types';
-import { finishReasonMap } from './utils/finishReasonMap';
+import {
+  AnthropicFinishReasonMap,
+  finishReasonMap,
+} from './utils/finishReasonMap';
 
 export const generateInvalidProviderResponseError: (
   response: Record<string, any>,
@@ -75,6 +79,22 @@ export const transformFinishReason = (
   const transformedFinishReason = finishReasonMap.get(finishReason);
   if (!transformedFinishReason) {
     return FINISH_REASON.stop;
+  }
+  return transformedFinishReason;
+};
+
+/*
+  Transforms the finish reason from the provider to the finish reason used by the Anthropic API.
+  If the finish reason is not found in the map, it will return the stop reason.
+  NOTE: this function always returns a finish reason
+*/
+export const transformToAnthropicStopReason = (
+  finishReason?: PROVIDER_FINISH_REASON
+): ANTHROPIC_STOP_REASON => {
+  if (!finishReason) return ANTHROPIC_STOP_REASON.end_turn;
+  const transformedFinishReason = AnthropicFinishReasonMap.get(finishReason);
+  if (!transformedFinishReason) {
+    return ANTHROPIC_STOP_REASON.end_turn;
   }
   return transformedFinishReason;
 };
