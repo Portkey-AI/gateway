@@ -1,6 +1,6 @@
 import { ProviderConfigs } from '../types';
-import { X_AI } from '../../globals';
-import XAIAPIConfig from './api';
+import { crofAI } from '../../globals';
+import crofAIAPIConfig from './api';
 import {
   chatCompleteParams,
   completeParams,
