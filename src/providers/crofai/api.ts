@@ -1,23 +1,22 @@
 import { ProviderAPIConfig } from '../types';
 
-const crofaiApiConfig: ProviderAPIConfig = {
+const XAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://ai.nahcrof.com/v2',
   headers: ({ providerOptions }) => {
-    if (!providerOptions.apiKey) {
-      throw new Error('CrofAI API key is required');
-    }
-    return {
-      Authorization: `Bearer ${providerOptions.apiKey}`,
-    };
+    return { Authorization: `Bearer ${providerOptions.apiKey}` };
   },
   getEndpoint: ({ fn }) => {
     switch (fn) {
       case 'chatComplete':
         return '/chat/completions';
+      case 'complete':
+        return '/completions';
+      case 'embed':
+        return '/embeddings';
       default:
         return '';
     }
   },
 };
 
-export default crofaiApiConfig;
+export default crofAIAPIConfig;
