@@ -1,18 +1,23 @@
 import { ProviderConfigs } from '../types';
-import crofaiApiConfig from './api';
+import { X_AI } from '../../globals';
+import XAIAPIConfig from './api';
 import {
-  crofaiChatCompleteConfig,
-  crofaiChatCompleteResponseTransform,
-  crofaiChatCompleteStreamChunkTransform,
-} from './chatComplete';
+  chatCompleteParams,
+  completeParams,
+  embedParams,
+  responseTransformers,
+} from '../open-ai-base';
 
-const crofaiConfig: ProviderConfigs = {
-  chatComplete: crofaiChatCompleteConfig,
-  api: crofaiApiConfig,
-  responseTransforms: {
-    chatComplete: crofaiChatCompleteResponseTransform,
-    'stream-chatComplete': crofaiChatCompleteStreamChunkTransform,
-  },
+const XAIConfig: ProviderConfigs = {
+  chatComplete: chatCompleteParams([], { model: 'deepseek-v3-0324' }),
+  complete: completeParams([], { model: 'deepseek-v3-0324' }),
+  embed: embedParams([], { model: 'multilingual-e5-large-instruct' }),
+  api: XAIAPIConfig,
+  responseTransforms: responseTransformers(crofAI, {
+    chatComplete: true,
+    complete: true,
+    embed: true,
+  }),
 };
 
-export default crofaiConfig;
+export default crofAIConfig;
