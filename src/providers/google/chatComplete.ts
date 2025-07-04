@@ -26,7 +26,9 @@ import {
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
+  transformFinishReason,
 } from '../utils';
+import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from './types';
 
 const transformGenerationConfig = (params: Params) => {
   const generationConfig: Record<string, any> = {};
@@ -466,7 +468,7 @@ interface GoogleResponseCandidate {
       },
     ];
   };
-  finishReason: string;
+  finishReason: GOOGLE_GENERATE_CONTENT_FINISH_REASON;
   index: 0;
   safetyRatings: {
     category: string;
@@ -581,7 +583,10 @@ export const GoogleChatCompleteResponseTransform: (
             message: message,
             logprobs,
             index: generation.index ?? idx,
-            finish_reason: generation.finishReason,
+            finish_reason: transformFinishReason(
+              generation.finishReason,
+              strictOpenAiCompliance
+            ),
             ...(!strictOpenAiCompliance && generation.groundingMetadata
               ? { groundingMetadata: generation.groundingMetadata }
               : {}),
@@ -655,6 +660,12 @@ export const GoogleChatCompleteStreamChunkTransform: (
       choices:
         parsedChunk.candidates?.map((generation, index) => {
           let message: any = { role: 'assistant', content: '' };
+          const finishReason = generation.finishReason
+            ? transformFinishReason(
+                generation.finishReason,
+                strictOpenAiCompliance
+              )
+            : null;
           if (generation.content?.parts[0]?.text) {
             const contentBlocks = [];
             let content = '';
@@ -700,7 +711,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
           return {
             delta: message,
             index: generation.index ?? index,
-            finish_reason: generation.finishReason,
+            finish_reason: finishReason,
             ...(!strictOpenAiCompliance && generation.groundingMetadata
               ? { groundingMetadata: generation.groundingMetadata }
               : {}),
