@@ -696,6 +696,10 @@ export const BedrockChatCompleteStreamChunkTransform: (
             cacheWriteInputTokens,
           completion_tokens: parsedChunk.usage.outputTokens,
           total_tokens: parsedChunk.usage.totalTokens,
+          prompt_tokens_details: {
+            cached_tokens: cacheReadInputTokens,
+          },
+          // we only want to be sending this for anthropic models and this is not openai compliant
           ...((cacheReadInputTokens > 0 || cacheWriteInputTokens > 0) && {
             cache_read_input_tokens: parsedChunk.usage.cacheReadInputTokens,
             cache_creation_input_tokens:
