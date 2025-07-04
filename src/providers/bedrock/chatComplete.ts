@@ -669,9 +669,9 @@ export const BedrockChatCompleteStreamChunkTransform: (
 
   // final chunk
   if (parsedChunk.usage) {
-    const shouldSendCacheUsage =
-      parsedChunk.usage.cacheWriteInputTokens ||
-      parsedChunk.usage.cacheReadInputTokens;
+    const cacheReadInputTokens = parsedChunk.usage?.cacheReadInputTokens || 0;
+    const cacheWriteInputTokens = parsedChunk.usage?.cacheWriteInputTokens || 0;
+
     return [
       `data: ${JSON.stringify({
         id: fallbackId,
@@ -690,10 +690,13 @@ export const BedrockChatCompleteStreamChunkTransform: (
           },
         ],
         usage: {
-          prompt_tokens: parsedChunk.usage.inputTokens,
+          prompt_tokens:
+            parsedChunk.usage.inputTokens +
+            cacheReadInputTokens +
+            cacheWriteInputTokens,
           completion_tokens: parsedChunk.usage.outputTokens,
           total_tokens: parsedChunk.usage.totalTokens,
-          ...(shouldSendCacheUsage && {
+          ...((cacheReadInputTokens > 0 || cacheWriteInputTokens > 0) && {
             cache_read_input_tokens: parsedChunk.usage.cacheReadInputTokens,
             cache_creation_input_tokens:
               parsedChunk.usage.cacheWriteInputTokens,
