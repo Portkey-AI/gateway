@@ -529,8 +529,8 @@ export const BedrockChatCompleteResponseTransform: (
   }
 
   if ('output' in response) {
-    const cacheReadInputTokens = response.usage.cacheReadInputTokens || 0;
-    const cacheWriteInputTokens = response.usage.cacheWriteInputTokens || 0;
+    const cacheReadInputTokens = response.usage?.cacheReadInputTokens || 0;
+    const cacheWriteInputTokens = response.usage?.cacheWriteInputTokens || 0;
 
     let content: string = '';
     content = response.output.message.content
@@ -574,7 +574,7 @@ export const BedrockChatCompleteResponseTransform: (
           cached_tokens: cacheReadInputTokens,
         },
         // we only want to be sending this for anthropic models and this is not openai compliant
-        ...((cacheReadInputTokens || cacheWriteInputTokens) && {
+        ...((cacheReadInputTokens > 0 || cacheWriteInputTokens > 0) && {
           cache_read_input_tokens: cacheReadInputTokens,
           cache_creation_input_tokens: cacheWriteInputTokens,
         }),
