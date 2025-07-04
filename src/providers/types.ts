@@ -2,6 +2,7 @@ import { Context } from 'hono';
 import { Message, Options, Params } from '../types/requestBody';
 import { ANTHROPIC_STOP_REASON } from './anthropic/types';
 import { BEDROCK_STOP_REASON } from './bedrock/types';
+import { VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON } from './google-vertex-ai/types';
 
 /**
  * Configuration for a parameter.
@@ -413,4 +414,5 @@ export enum FINISH_REASON {
 
 export type PROVIDER_FINISH_REASON =
   | ANTHROPIC_STOP_REASON
-  | BEDROCK_STOP_REASON;
+  | BEDROCK_STOP_REASON
+  | VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON;

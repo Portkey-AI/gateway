@@ -1,6 +1,7 @@
 import { ANTHROPIC_STOP_REASON } from '../anthropic/types';
 import { FINISH_REASON, PROVIDER_FINISH_REASON } from '../types';
 import { BEDROCK_STOP_REASON } from '../bedrock/types';
+import { VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON } from '../google-vertex-ai/types';
 
 export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   // https://docs.anthropic.com/en/api/messages#response-stop-reason
@@ -16,4 +17,32 @@ export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   [BEDROCK_STOP_REASON.stop_sequence, FINISH_REASON.stop],
   [BEDROCK_STOP_REASON.guardrail_intervened, FINISH_REASON.content_filter],
   [BEDROCK_STOP_REASON.content_filtered, FINISH_REASON.content_filter],
+  // https://cloud.google.com/vertex-ai/generative-ai/docs/reference/nodejs/latest/vertexai/finishreason?hl=en
+  [VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.STOP, FINISH_REASON.stop],
+  [VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.RECITATION, FINISH_REASON.stop],
+  [VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.OTHER, FINISH_REASON.stop],
+  [
+    VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.FINISH_REASON_UNSPECIFIED,
+    FINISH_REASON.stop,
+  ],
+  [
+    VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.MAX_TOKENS,
+    FINISH_REASON.length,
+  ],
+  [
+    VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.SAFETY,
+    FINISH_REASON.content_filter,
+  ],
+  [
+    VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.PROHIBITED_CONTENT,
+    FINISH_REASON.content_filter,
+  ],
+  [
+    VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.BLOCKLIST,
+    FINISH_REASON.content_filter,
+  ],
+  [
+    VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.SPII,
+    FINISH_REASON.content_filter,
+  ],
 ]);
