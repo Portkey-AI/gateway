@@ -7,6 +7,7 @@ import {
 } from './bedrock/types';
 import { VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON } from './google-vertex-ai/types';
 import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from './google/types';
+import { DEEPSEEK_STOP_REASON } from './deepseek/types';
 
 /**
  * Configuration for a parameter.
@@ -421,4 +422,5 @@ export type PROVIDER_FINISH_REASON =
   | BEDROCK_CONVERSE_STOP_REASON
   | VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON
   | GOOGLE_GENERATE_CONTENT_FINISH_REASON
-  | TITAN_STOP_REASON;
+  | TITAN_STOP_REASON
+  | DEEPSEEK_STOP_REASON;

@@ -6,6 +6,7 @@ import {
 } from '../bedrock/types';
 import { VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON } from '../google-vertex-ai/types';
 import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from '../google/types';
+import { DEEPSEEK_STOP_REASON } from '../deepseek/types';
 
 export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   // https://docs.anthropic.com/en/api/messages#response-stop-reason
@@ -89,4 +90,10 @@ export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   [TITAN_STOP_REASON.STOP_CRITERIA_MET, FINISH_REASON.stop],
   [TITAN_STOP_REASON.RAG_QUERY_WHEN_RAG_DISABLED, FINISH_REASON.stop],
   [TITAN_STOP_REASON.CONTENT_FILTERED, FINISH_REASON.content_filter],
+  // https://api-docs.deepseek.com/api/create-chat-completion#:~:text=Array%20%5B-,finish_reason,-string
+  [DEEPSEEK_STOP_REASON.stop, FINISH_REASON.stop],
+  [DEEPSEEK_STOP_REASON.length, FINISH_REASON.length],
+  [DEEPSEEK_STOP_REASON.tool_calls, FINISH_REASON.tool_calls],
+  [DEEPSEEK_STOP_REASON.content_filter, FINISH_REASON.content_filter],
+  [DEEPSEEK_STOP_REASON.insufficient_system_resource, FINISH_REASON.stop],
 ]);
