@@ -8,6 +8,7 @@ import {
 import { VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON } from './google-vertex-ai/types';
 import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from './google/types';
 import { DEEPSEEK_STOP_REASON } from './deepseek/types';
+import { MISTRAL_AI_FINISH_REASON } from './mistral-ai/types';
 
 /**
  * Configuration for a parameter.
@@ -423,4 +424,5 @@ export type PROVIDER_FINISH_REASON =
   | VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON
   | GOOGLE_GENERATE_CONTENT_FINISH_REASON
   | TITAN_STOP_REASON
-  | DEEPSEEK_STOP_REASON;
+  | DEEPSEEK_STOP_REASON
+  | MISTRAL_AI_FINISH_REASON;

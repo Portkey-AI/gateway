@@ -7,6 +7,7 @@ import {
 import { VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON } from '../google-vertex-ai/types';
 import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from '../google/types';
 import { DEEPSEEK_STOP_REASON } from '../deepseek/types';
+import { MISTRAL_AI_FINISH_REASON } from '../mistral-ai/types';
 
 export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   // https://docs.anthropic.com/en/api/messages#response-stop-reason
@@ -96,4 +97,10 @@ export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   [DEEPSEEK_STOP_REASON.tool_calls, FINISH_REASON.tool_calls],
   [DEEPSEEK_STOP_REASON.content_filter, FINISH_REASON.content_filter],
   [DEEPSEEK_STOP_REASON.insufficient_system_resource, FINISH_REASON.stop],
+  // https://docs.mistral.ai/api/#tag/chat/operation/chat_completion_v1_chat_completions_post
+  [MISTRAL_AI_FINISH_REASON.STOP, FINISH_REASON.stop],
+  [MISTRAL_AI_FINISH_REASON.LENGTH, FINISH_REASON.length],
+  [MISTRAL_AI_FINISH_REASON.MODEL_LENGTH, FINISH_REASON.length],
+  [MISTRAL_AI_FINISH_REASON.TOOL_CALLS, FINISH_REASON.tool_calls],
+  [MISTRAL_AI_FINISH_REASON.ERROR, FINISH_REASON.stop],
 ]);
