@@ -1,6 +1,9 @@
 import { ANTHROPIC_STOP_REASON } from '../anthropic/types';
 import { FINISH_REASON, PROVIDER_FINISH_REASON } from '../types';
-import { BEDROCK_STOP_REASON } from '../bedrock/types';
+import {
+  BEDROCK_CONVERSE_STOP_REASON,
+  TITAN_STOP_REASON,
+} from '../bedrock/types';
 import { VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON } from '../google-vertex-ai/types';
 import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from '../google/types';
 
@@ -12,12 +15,15 @@ export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   [ANTHROPIC_STOP_REASON.tool_use, FINISH_REASON.tool_calls],
   [ANTHROPIC_STOP_REASON.max_tokens, FINISH_REASON.length],
   // https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html#API_runtime_Converse_ResponseSyntax
-  [BEDROCK_STOP_REASON.end_turn, FINISH_REASON.stop],
-  [BEDROCK_STOP_REASON.tool_use, FINISH_REASON.tool_calls],
-  [BEDROCK_STOP_REASON.max_tokens, FINISH_REASON.length],
-  [BEDROCK_STOP_REASON.stop_sequence, FINISH_REASON.stop],
-  [BEDROCK_STOP_REASON.guardrail_intervened, FINISH_REASON.content_filter],
-  [BEDROCK_STOP_REASON.content_filtered, FINISH_REASON.content_filter],
+  [BEDROCK_CONVERSE_STOP_REASON.end_turn, FINISH_REASON.stop],
+  [BEDROCK_CONVERSE_STOP_REASON.tool_use, FINISH_REASON.tool_calls],
+  [BEDROCK_CONVERSE_STOP_REASON.max_tokens, FINISH_REASON.length],
+  [BEDROCK_CONVERSE_STOP_REASON.stop_sequence, FINISH_REASON.stop],
+  [
+    BEDROCK_CONVERSE_STOP_REASON.guardrail_intervened,
+    FINISH_REASON.content_filter,
+  ],
+  [BEDROCK_CONVERSE_STOP_REASON.content_filtered, FINISH_REASON.content_filter],
   // https://cloud.google.com/vertex-ai/generative-ai/docs/reference/nodejs/latest/vertexai/finishreason?hl=en
   [VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.STOP, FINISH_REASON.stop],
   [VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.RECITATION, FINISH_REASON.stop],
@@ -77,4 +83,10 @@ export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
     GOOGLE_GENERATE_CONTENT_FINISH_REASON.IMAGE_SAFETY,
     FINISH_REASON.content_filter,
   ],
+  // https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-titan-text.html
+  [TITAN_STOP_REASON.FINISHED, FINISH_REASON.stop],
+  [TITAN_STOP_REASON.LENGTH, FINISH_REASON.length],
+  [TITAN_STOP_REASON.STOP_CRITERIA_MET, FINISH_REASON.stop],
+  [TITAN_STOP_REASON.RAG_QUERY_WHEN_RAG_DISABLED, FINISH_REASON.stop],
+  [TITAN_STOP_REASON.CONTENT_FILTERED, FINISH_REASON.content_filter],
 ]);

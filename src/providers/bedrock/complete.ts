@@ -1,9 +1,13 @@
 import { BEDROCK } from '../../globals';
 import { Params } from '../../types/requestBody';
 import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
-import { generateInvalidProviderResponseError } from '../utils';
+import {
+  generateInvalidProviderResponseError,
+  transformFinishReason,
+} from '../utils';
 import { BedrockErrorResponseTransform } from './chatComplete';
 import { BedrockErrorResponse } from './embed';
+import { TITAN_STOP_REASON as TITAN_COMPLETION_REASON } from './types';
 
 export const BedrockAnthropicCompleteConfig: ProviderConfig = {
   prompt: {
@@ -380,7 +384,7 @@ export interface BedrockTitanCompleteResponse {
   results: {
     tokenCount: number;
     outputText: string;
-    completionReason: string;
+    completionReason: TITAN_COMPLETION_REASON;
   }[];
 }
 
@@ -420,7 +424,10 @@ export const BedrockTitanCompleteResponseTransform: (
         text: generation.outputText,
         index: index,
         logprobs: null,
-        finish_reason: generation.completionReason,
+        finish_reason: transformFinishReason(
+          generation.completionReason,
+          strictOpenAiCompliance
+        ),
       })),
       usage: {
         prompt_tokens: response.inputTextTokenCount,

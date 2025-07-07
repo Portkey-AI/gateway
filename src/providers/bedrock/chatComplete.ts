@@ -28,7 +28,7 @@ import {
   BedrockCohereStreamChunk,
 } from './complete';
 import { BedrockErrorResponse } from './embed';
-import { BEDROCK_STOP_REASON } from './types';
+import { BEDROCK_CONVERSE_STOP_REASON } from './types';
 import {
   getBedrockErrorChunk,
   transformAdditionalModelRequestFields,
@@ -457,7 +457,7 @@ interface BedrockChatCompletionResponse {
       content: BedrockContentItem[];
     };
   };
-  stopReason: BEDROCK_STOP_REASON;
+  stopReason: BEDROCK_CONVERSE_STOP_REASON;
   usage: {
     inputTokens: number;
     outputTokens: number;
@@ -616,7 +616,7 @@ export interface BedrockChatCompleteStreamChunk {
       input?: object;
     };
   };
-  stopReason?: BEDROCK_STOP_REASON;
+  stopReason?: BEDROCK_CONVERSE_STOP_REASON;
   metrics?: {
     latencyMs: number;
   };
@@ -632,7 +632,7 @@ export interface BedrockChatCompleteStreamChunk {
 }
 
 interface BedrockStreamState {
-  stopReason?: BEDROCK_STOP_REASON;
+  stopReason?: BEDROCK_CONVERSE_STOP_REASON;
   currentToolCallIndex?: number;
 }
 
