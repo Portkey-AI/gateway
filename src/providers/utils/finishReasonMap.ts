@@ -8,6 +8,7 @@ import { VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON } from '../google-vertex-a
 import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from '../google/types';
 import { DEEPSEEK_STOP_REASON } from '../deepseek/types';
 import { MISTRAL_AI_FINISH_REASON } from '../mistral-ai/types';
+import { TOGETHER_AI_FINISH_REASON } from '../together-ai/types';
 
 export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   // https://docs.anthropic.com/en/api/messages#response-stop-reason
@@ -103,4 +104,10 @@ export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   [MISTRAL_AI_FINISH_REASON.MODEL_LENGTH, FINISH_REASON.length],
   [MISTRAL_AI_FINISH_REASON.TOOL_CALLS, FINISH_REASON.tool_calls],
   [MISTRAL_AI_FINISH_REASON.ERROR, FINISH_REASON.stop],
+  // https://docs.together.ai/reference/chat-completions-1
+  [TOGETHER_AI_FINISH_REASON.STOP, FINISH_REASON.stop],
+  [TOGETHER_AI_FINISH_REASON.EOS, FINISH_REASON.stop],
+  [TOGETHER_AI_FINISH_REASON.LENGTH, FINISH_REASON.length],
+  [TOGETHER_AI_FINISH_REASON.TOOL_CALLS, FINISH_REASON.tool_calls],
+  [TOGETHER_AI_FINISH_REASON.FUNCTION_CALL, FINISH_REASON.function_call],
 ]);
