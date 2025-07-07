@@ -444,7 +444,7 @@ export interface BedrockTitanStreamChunk {
   outputText: string;
   index: number;
   totalOutputTextTokenCount: number;
-  completionReason: string | null;
+  completionReason: TITAN_COMPLETION_REASON | null;
   'amazon-bedrock-invocationMetrics': {
     inputTokenCount: number;
     outputTokenCount: number;
@@ -469,6 +469,12 @@ export const BedrockTitanCompleteStreamChunkTransform: (
   let chunk = responseChunk.trim();
   chunk = chunk.trim();
   const parsedChunk: BedrockTitanStreamChunk = JSON.parse(chunk);
+  const finishReason = parsedChunk.completionReason
+    ? transformFinishReason(
+        parsedChunk.completionReason,
+        _strictOpenAiCompliance
+      )
+    : null;
 
   return [
     `data: ${JSON.stringify({
@@ -497,7 +503,7 @@ export const BedrockTitanCompleteStreamChunkTransform: (
           text: '',
           index: 0,
           logprobs: null,
-          finish_reason: parsedChunk.completionReason,
+          finish_reason: finishReason,
         },
       ],
       usage: {

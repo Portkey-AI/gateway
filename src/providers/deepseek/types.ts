@@ -1,5 +1,3 @@
-import { FINISH_REASON } from '../types';
-
 export enum DEEPSEEK_STOP_REASON {
   stop = 'stop',
   length = 'length',
