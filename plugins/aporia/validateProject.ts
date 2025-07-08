@@ -52,7 +52,7 @@ export const handler: PluginHandler = async (
         } else {
           const _content = message.content?.reduce(
             (value, item) =>
-              value + (item.type === 'text' ? `${item.text}\n` ?? '' : ''),
+              value + (item.type === 'text' ? (`${item.text}\n` ?? '') : ''),
             ''
           );
           return { ...message, content: _content };

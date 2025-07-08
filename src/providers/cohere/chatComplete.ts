@@ -34,20 +34,27 @@ export const CohereChatCompleteConfig: ProviderConfig = {
           const textContents = message.content
             .filter((c) => c.type === 'text')
             .map((c) => c.text);
-          
+
           if (textContents.length === 0) {
             throw new Error('No text content found in message content array');
           }
-          
-          content = textContents.join('\
-');
+
+          content =
+            textContents.join(
+              '\
+'
+            );
         }
 
         return {
-          role: message.role === 'assistant' ? 'assistant' : 
-               message.role === 'user' ? 'user' : 
-               message.role === 'system' ? 'system' : 
-               message.role,
+          role:
+            message.role === 'assistant'
+              ? 'assistant'
+              : message.role === 'user'
+                ? 'user'
+                : message.role === 'system'
+                  ? 'system'
+                  : message.role,
           content: content,
         };
       });
