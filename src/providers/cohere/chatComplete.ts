@@ -31,14 +31,23 @@ export const CohereChatCompleteConfig: ProviderConfig = {
         if (typeof message.content === 'string') {
           content = message.content;
         } else if (Array.isArray(message.content)) {
-          content = message.content
+          const textContents = message.content
             .filter((c) => c.type === 'text')
-            .map((c) => c.text)
-            .join('\n');
+            .map((c) => c.text);
+          
+          if (textContents.length === 0) {
+            throw new Error('No text content found in message content array');
+          }
+          
+          content = textContents.join('\
+');
         }
 
         return {
-          role: message.role === 'assistant' ? 'assistant' : message.role,
+          role: message.role === 'assistant' ? 'assistant' : 
+               message.role === 'user' ? 'user' : 
+               message.role === 'system' ? 'system' : 
+               message.role,
           content: content,
         };
       });
@@ -151,8 +160,8 @@ export const CohereChatCompleteResponseTransform: (
   const successResponse = response as CohereV2CompleteResponse;
 
   const textContent = successResponse.message.content
-    .filter((c: { type: string; text: string }) => c.type === 'text')
-    .map((c: { type: string; text: string }) => c.text)
+    .filter((c) => c.type === 'text')
+    .map((c) => c.text)
     .join('');
 
   return {
@@ -284,12 +293,14 @@ export const CohereChatCompleteStreamChunkTransform: (
       })}` + '\n\n'
     );
   } catch (error) {
+    console.error('Error processing Cohere stream chunk:', error);
     return `data: ${JSON.stringify({
       id: fallbackId,
       object: 'chat.completion.chunk',
       created: Math.floor(Date.now() / 1000),
       model: gatewayRequest.model || '',
       provider: COHERE,
+      error: error instanceof Error ? error.message : String(error),
       choices: [
         {
           index: 0,
