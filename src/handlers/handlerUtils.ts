@@ -461,7 +461,7 @@ export async function tryPost(
   providerOption.retry = {
     attempts: providerOption.retry?.attempts ?? 0,
     onStatusCodes: providerOption.retry?.attempts
-      ? (providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES)
+      ? providerOption.retry?.onStatusCodes ?? RETRY_STATUS_CODES
       : [],
     useRetryAfterHeader: providerOption?.retry?.useRetryAfterHeader,
   };
