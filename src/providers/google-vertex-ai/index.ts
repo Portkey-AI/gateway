@@ -47,6 +47,10 @@ import {
 import { GoogleFinetuneRetrieveResponseTransform } from './retrieveFinetune';
 import { GoogleFinetuneListResponseTransform } from './listFinetunes';
 import { GoogleListFilesRequestHandler } from './listFiles';
+import {
+  VertexAnthropicMessagesConfig,
+  VertexAnthropicMessagesResponseTransform,
+} from './messages';
 
 const VertexConfig: ProviderConfigs = {
   api: VertexApiConfig,
@@ -112,10 +116,12 @@ const VertexConfig: ProviderConfigs = {
           api: GoogleApiConfig,
           createBatch: GoogleBatchCreateConfig,
           createFinetune: baseConfig.createFinetune,
+          messages: VertexAnthropicMessagesConfig,
           responseTransforms: {
             'stream-chatComplete':
               VertexAnthropicChatCompleteStreamChunkTransform,
             chatComplete: VertexAnthropicChatCompleteResponseTransform,
+            messages: VertexAnthropicMessagesResponseTransform,
             ...responseTransforms,
           },
         };

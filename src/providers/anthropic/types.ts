@@ -9,6 +9,16 @@ export type AnthropicStreamState = {
   model?: string;
 };
 
+export interface AnthropicErrorObject {
+  type: string;
+  message: string;
+}
+
+export interface AnthropicErrorResponse {
+  type: string;
+  error: AnthropicErrorObject;
+}
+
 // https://docs.anthropic.com/en/api/messages#response-stop-reason
 export enum ANTHROPIC_STOP_REASON {
   max_tokens = 'max_tokens',

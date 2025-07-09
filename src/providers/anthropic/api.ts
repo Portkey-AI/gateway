@@ -29,6 +29,8 @@ const AnthropicAPIConfig: ProviderAPIConfig = {
         return '/complete';
       case 'chatComplete':
         return '/messages';
+      case 'messages':
+        return '/messages';
       default:
         return '';
     }

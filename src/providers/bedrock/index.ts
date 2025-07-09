@@ -75,6 +75,13 @@ import {
 } from './uploadFile';
 import { BedrockListFilesResponseTransform } from './listfiles';
 import { BedrockDeleteFileResponseTransform } from './deleteFile';
+import {
+  AnthropicBedrockConverseMessagesConfig as BedrockAnthropicConverseMessagesConfig,
+  BedrockConverseMessagesConfig,
+  BedrockConverseMessagesStreamChunkTransform,
+  BedrockMessagesResponseTransform,
+} from './messages';
+
 const BedrockConfig: ProviderConfigs = {
   api: BedrockAPIConfig,
   requestHandlers: {
@@ -99,6 +106,7 @@ const BedrockConfig: ProviderConfigs = {
           config = {
             complete: BedrockAnthropicCompleteConfig,
             chatComplete: BedrockConverseAnthropicChatCompleteConfig,
+            messages: BedrockAnthropicConverseMessagesConfig,
             api: BedrockAPIConfig,
             responseTransforms: {
               'stream-complete': BedrockAnthropicCompleteStreamChunkTransform,
@@ -195,10 +203,15 @@ const BedrockConfig: ProviderConfigs = {
       if (!config.chatComplete) {
         config.chatComplete = BedrockConverseChatCompleteConfig;
       }
+      if (!config.messages) {
+        config.messages = BedrockConverseMessagesConfig;
+      }
       if (!config.responseTransforms?.['stream-chatComplete']) {
         config.responseTransforms = {
           ...(config.responseTransforms ?? {}),
           'stream-chatComplete': BedrockChatCompleteStreamChunkTransform,
+          messages: BedrockMessagesResponseTransform,
+          'stream-messages': BedrockConverseMessagesStreamChunkTransform,
         };
       }
       if (!config.responseTransforms?.chatComplete) {
