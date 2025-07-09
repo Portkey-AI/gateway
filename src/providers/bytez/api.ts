@@ -9,7 +9,7 @@ const BytezInferenceAPI: ProviderAPIConfig = {
     const headers: Record<string, string> = {};
 
     headers['Authorization'] = `Key ${apiKey}`;
-    headers['user-agent'] = `portkey-${version}`;
+    headers['user-agent'] = `portkey/${version}`;
 
     return headers;
   },
