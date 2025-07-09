@@ -8,11 +8,7 @@ import {
   ToolResultBlockParam,
   ToolUseBlockParam,
 } from '../../types/MessagesRequest';
-import {
-  ContentBlock,
-  MessagesResponse,
-  ANTHROPIC_STOP_REASON,
-} from '../../types/messagesResponse';
+import { ContentBlock, MessagesResponse } from '../../types/messagesResponse';
 import { RawContentBlockDeltaEvent } from '../../types/MessagesStreamResponse';
 import {
   ANTHROPIC_CONTENT_BLOCK_START_EVENT,
@@ -41,15 +37,20 @@ import {
   transformToolsConfig as transformToolConfig,
 } from './utils/messagesUtils';
 
-const transformTextBlock = (textBlock: TextBlockParam) => {
-  return {
+const appendTextBlock = (
+  transformedContent: any[],
+  textBlock: TextBlockParam
+) => {
+  transformedContent.push({
     text: textBlock.text,
-    ...(textBlock.cache_control && {
+  });
+  if (textBlock.cache_control) {
+    transformedContent.push({
       cachePoint: {
         type: 'default',
       },
-    }),
-  };
+    });
+  }
 };
 
 const appendImageBlock = (
@@ -64,12 +65,14 @@ const appendImageBlock = (
           bytes: imageBlock.source.data,
         },
       },
-      ...(imageBlock.cache_control && {
+    });
+    if (imageBlock.cache_control) {
+      transformedContent.push({
         cachePoint: {
           type: 'default',
         },
-      }),
-    });
+      });
+    }
   } else if (imageBlock.source.type === 'url') {
     transformedContent.push({
       image: {
@@ -80,12 +83,14 @@ const appendImageBlock = (
           },
         },
       },
-      ...(imageBlock.cache_control && {
+    });
+    if (imageBlock.cache_control) {
+      transformedContent.push({
         cachePoint: {
           type: 'default',
         },
-      }),
-    });
+      });
+    }
   } else if (imageBlock.source.type === 'file') {
     // not supported
   }
@@ -103,12 +108,14 @@ const appendDocumentBlock = (
           bytes: documentBlock.source.data,
         },
       },
-      ...(documentBlock.cache_control && {
+    });
+    if (documentBlock.cache_control) {
+      transformedContent.push({
         cachePoint: {
           type: 'default',
         },
-      }),
-    });
+      });
+    }
   } else if (documentBlock.source.type === 'url') {
     transformedContent.push({
       document: {
@@ -119,12 +126,14 @@ const appendDocumentBlock = (
           },
         },
       },
-      ...(documentBlock.cache_control && {
+    });
+    if (documentBlock.cache_control) {
+      transformedContent.push({
         cachePoint: {
           type: 'default',
         },
-      }),
-    });
+      });
+    }
   }
 };
 
@@ -157,18 +166,20 @@ const appendToolUseBlock = (
   transformedContent: any[],
   toolUseBlock: ToolUseBlockParam
 ) => {
-  return {
+  transformedContent.push({
     toolUse: {
       input: toolUseBlock.input,
       name: toolUseBlock.name,
       toolUseId: toolUseBlock.id,
     },
-    ...(toolUseBlock.cache_control && {
+  });
+  if (toolUseBlock.cache_control) {
+    transformedContent.push({
       cachePoint: {
         type: 'default',
       },
-    }),
-  };
+    });
+  }
 };
 
 const appendToolResultBlock = (
@@ -192,18 +203,20 @@ const appendToolResultBlock = (
       }
     }
   }
-  return {
+  transformedContent.push({
     toolResult: {
       toolUseId: toolResultBlock.tool_use_id,
       status: toolResultBlock.is_error ? 'error' : 'success',
       content: transformedToolResultContent,
     },
-    ...(toolResultBlock.cache_control && {
+  });
+  if (toolResultBlock.cache_control) {
+    transformedContent.push({
       cachePoint: {
         type: 'default',
       },
-    }),
-  };
+    });
+  }
 };
 
 export const BedrockConverseMessagesConfig: ProviderConfig = {
@@ -233,7 +246,7 @@ export const BedrockConverseMessagesConfig: ProviderConfig = {
           const transformedContent: any[] = [];
           for (const content of message.content) {
             if (content.type === 'text') {
-              transformedContent.push(transformTextBlock(content));
+              appendTextBlock(transformedContent, content);
             } else if (content.type === 'image') {
               appendImageBlock(transformedContent, content);
             } else if (content.type === 'document') {
@@ -287,14 +300,20 @@ export const BedrockConverseMessagesConfig: ProviderConfig = {
           },
         ];
       } else if (Array.isArray(system)) {
-        return system.map((item) => ({
-          text: item.text,
-          ...(item.cache_control && {
-            cachePoint: {
-              type: 'default',
-            },
-          }),
-        }));
+        const transformedSystem: any[] = [];
+        system.forEach((item) => {
+          transformedSystem.push({
+            text: item.text,
+          });
+          if (item.cache_control) {
+            transformedSystem.push({
+              cachePoint: {
+                type: 'default',
+              },
+            });
+          }
+        });
+        return transformedSystem;
       }
     },
   },
