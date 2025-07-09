@@ -80,6 +80,7 @@ export type endpointStrings =
   | 'moderate'
   | 'stream-complete'
   | 'stream-chatComplete'
+  | 'stream-messages'
   | 'proxy'
   | 'imageGenerate'
   | 'createSpeech'
