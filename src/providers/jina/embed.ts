@@ -16,7 +16,6 @@ export const JinaEmbedConfig: ProviderConfig = {
     param: 'input',
     default: '',
   },
-
   encoding_format: {
     param: 'encoding_format',
   },
