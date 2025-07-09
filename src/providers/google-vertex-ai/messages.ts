@@ -14,6 +14,7 @@ export const VertexAnthropicMessagesConfig = getMessagesConfig({
       default: 'vertex-2023-10-16',
     },
   },
+  exclude: ['model'],
 });
 
 export const VertexAnthropicMessagesResponseTransform = (
