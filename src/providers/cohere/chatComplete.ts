@@ -39,11 +39,7 @@ export const CohereChatCompleteConfig: ProviderConfig = {
             throw new Error('No text content found in message content array');
           }
 
-          content =
-            textContents.join(
-              '\
-'
-            );
+          content = textContents.join('\n');
         }
 
         return {
@@ -61,11 +57,6 @@ export const CohereChatCompleteConfig: ProviderConfig = {
     },
   },
   max_tokens: {
-    param: 'max_tokens',
-    default: 20,
-    min: 1,
-  },
-  max_completion_tokens: {
     param: 'max_tokens',
     default: 20,
     min: 1,
@@ -113,6 +104,30 @@ export const CohereChatCompleteConfig: ProviderConfig = {
     param: 'logprobs',
     default: false,
   },
+  preamble: {
+    param: 'preamble',
+  },
+  connectors: {
+    param: 'connectors',
+  },
+  search_queries_only: {
+    param: 'search_queries_only',
+    default: false,
+  },
+  citation_quality: {
+    param: 'citation_quality',
+    default: 'accurate',
+  },
+  prompt_truncation: {
+    param: 'prompt_truncation',
+    default: 'AUTO',
+  },
+  tools: {
+    param: 'tools',
+  },
+  tool_results: {
+    param: 'tool_results',
+  },
 };
 
 interface CohereV2CompleteResponse {
@@ -126,8 +141,12 @@ interface CohereV2CompleteResponse {
   message: {
     role: 'assistant';
     content: Array<{
-      type: 'text';
-      text: string;
+      type: 'text' | 'tool_calls';
+      text?: string;
+      tool_calls?: Array<{
+        name: string;
+        parameters: Record<string, any>;
+      }>;
     }>;
   };
   usage: {
@@ -138,6 +157,21 @@ interface CohereV2CompleteResponse {
     token: string;
     logprob: number;
   }> | null;
+  search_results?: Array<{
+    search_query: string;
+    results: Array<{
+      id: string;
+      title: string;
+      url: string;
+      text: string;
+    }>;
+  }>;
+  citations?: Array<{
+    start: number;
+    end: number;
+    text: string;
+    document_ids: string[];
+  }>;
 }
 
 interface CohereV2ErrorResponse {
@@ -171,6 +205,23 @@ export const CohereChatCompleteResponseTransform: (
     .map((c) => c.text)
     .join('');
 
+  const toolCalls = successResponse.message.content
+    .filter((c) => c.type === 'tool_calls')
+    .flatMap((c) => c.tool_calls || []);
+
+  const message: any = { role: 'assistant', content: textContent };
+
+  if (toolCalls.length > 0) {
+    message.tool_calls = toolCalls.map((toolCall, index) => ({
+      id: `call_${index}`,
+      type: 'function',
+      function: {
+        name: toolCall.name,
+        arguments: JSON.stringify(toolCall.parameters),
+      },
+    }));
+  }
+
   return {
     id: successResponse.id,
     object: 'chat.completion',
@@ -179,7 +230,7 @@ export const CohereChatCompleteResponseTransform: (
     provider: COHERE,
     choices: [
       {
-        message: { role: 'assistant', content: textContent },
+        message,
         index: 0,
         finish_reason: successResponse.finish_reason,
       },
@@ -207,15 +258,23 @@ export type CohereV2StreamChunk =
       type: 'content-start';
       index: number;
       content_block: {
-        type: 'text';
-        text: string;
+        type: 'text' | 'tool_calls';
+        text?: string;
+        tool_calls?: Array<{
+          name: string;
+          parameters: Record<string, any>;
+        }>;
       };
     }
   | {
       type: 'content-delta';
       index: number;
       delta: {
-        text: string;
+        text?: string;
+        tool_calls?: Array<{
+          name: string;
+          parameters: Record<string, any>;
+        }>;
       };
     }
   | {
@@ -228,6 +287,8 @@ export type CohereV2StreamChunk =
         id: string;
         finish_reason: CohereV2CompleteResponse['finish_reason'];
         usage: CohereV2CompleteResponse['usage'];
+        search_results?: CohereV2CompleteResponse['search_results'];
+        citations?: CohereV2CompleteResponse['citations'];
       };
     };
 
@@ -265,7 +326,7 @@ export const CohereChatCompleteStreamChunkTransform: (
     let usage = null;
 
     if (parsedChunk.type === 'content-delta') {
-      deltaContent = parsedChunk.delta.text;
+      deltaContent = parsedChunk.delta.text || '';
     } else if (parsedChunk.type === 'message-end') {
       finishReason = parsedChunk.message.finish_reason;
       usage = {
@@ -300,7 +361,6 @@ export const CohereChatCompleteStreamChunkTransform: (
       })}` + '\n\n'
     );
   } catch (error) {
-    console.error('Error processing Cohere stream chunk:', error);
     return `data: ${JSON.stringify({
       id: fallbackId,
       object: 'chat.completion.chunk',
