@@ -16,13 +16,13 @@ export const JinaEmbedConfig: ProviderConfig = {
     param: 'input',
     default: '',
   },
-  
+
   encoding_format: {
     param: 'encoding_format',
   },
   dimensions: {
     param: 'dimensions',
-  }
+  },
 };
 
 interface JinaEmbedResponse extends EmbedResponse {}
