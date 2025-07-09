@@ -6,7 +6,15 @@ import { AnthropicErrorResponseTransform } from './utils';
 import { generateInvalidProviderResponseError } from '../utils';
 import { ANTHROPIC } from '../../globals';
 
-export const AnthropicMessagesConfig = getMessagesConfig({});
+export const AnthropicMessagesConfig = getMessagesConfig({
+  extra: {
+    anthropic_version: {
+      param: 'anthropic_version',
+      required: true,
+      default: 'vertex-2023-10-16',
+    },
+  },
+});
 
 export const AnthropicMessagesResponseTransform = (
   response: MessagesResponse | AnthropicErrorResponse,
