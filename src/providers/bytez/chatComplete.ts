@@ -6,20 +6,18 @@ const BytezInferenceChatCompleteConfig: ProviderConfig = {
     required: true,
   },
   max_tokens: {
-    // NOTE param acts as an alias, it will be added to "params" on the req body
-    // we do this adaptation ourselves in our custom requestHandler. See src/providers/bytez/index.ts
-    param: 'max_new_tokens',
+    param: 'params.max_new_tokens',
     default: 100,
     min: 0,
   },
   temperature: {
-    param: 'temperature',
+    param: 'params.temperature',
     default: 1,
     min: 0,
     max: 2,
   },
   top_p: {
-    param: 'top_p',
+    param: 'params.top_p',
     default: 1,
     min: 0,
     max: 1,

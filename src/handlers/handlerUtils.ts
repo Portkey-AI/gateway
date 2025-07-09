@@ -510,12 +510,7 @@ export async function tryPost(
           body: transformedRequestBody,
           headers: fetchOptions.headers,
         },
-        requestParams: {
-          // in the event transformedRequestBody request is empty, e.g. you have opted to handle requests via a custom requestHandler
-          ...params,
-          // if this is populated, we will overwrite whatever was initially in params
-          ...transformedRequestBody,
-        },
+        requestParams: transformedRequestBody,
         finalUntransformedRequest: {
           body: params,
         },
