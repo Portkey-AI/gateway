@@ -20,6 +20,7 @@ import {
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
+  transformFinishReason,
 } from '../utils';
 import {
   BedrockAI21CompleteResponse,
@@ -27,7 +28,9 @@ import {
   BedrockCohereStreamChunk,
 } from './complete';
 import { BedrockErrorResponse } from './embed';
+import { BEDROCK_STOP_REASON } from './types';
 import {
+  getBedrockErrorChunk,
   transformAdditionalModelRequestFields,
   transformAI21AdditionalModelRequestFields,
   transformAnthropicAdditionalModelRequestFields,
@@ -312,13 +315,15 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
         | { cachePoint: { type: string } }
       > = [];
       params.tools?.forEach((tool) => {
-        tools.push({
-          toolSpec: {
-            name: tool.function.name,
-            description: tool.function.description,
-            inputSchema: { json: tool.function.parameters },
-          },
-        });
+        if (tool.function) {
+          tools.push({
+            toolSpec: {
+              name: tool.function.name,
+              description: tool.function.description,
+              inputSchema: { json: tool.function.parameters },
+            },
+          });
+        }
         if (tool.cache_control && !canBeAmazonModel) {
           tools.push({
             cachePoint: {
@@ -350,7 +355,8 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
           }
         }
       }
-      return { ...toolConfig, toolChoice };
+      // TODO: split this into two provider options, one for tools and one for toolChoice
+      return tools.length ? { ...toolConfig, toolChoice } : null;
     },
   },
   guardrailConfig: {
@@ -451,7 +457,7 @@ interface BedrockChatCompletionResponse {
       content: BedrockContentItem[];
     };
   };
-  stopReason: string;
+  stopReason: BEDROCK_STOP_REASON;
   usage: {
     inputTokens: number;
     outputTokens: number;
@@ -523,9 +529,8 @@ export const BedrockChatCompleteResponseTransform: (
   }
 
   if ('output' in response) {
-    const shouldSendCacheUsage =
-      response.usage.cacheWriteInputTokens ||
-      response.usage.cacheReadInputTokens;
+    const cacheReadInputTokens = response.usage?.cacheReadInputTokens || 0;
+    const cacheWriteInputTokens = response.usage?.cacheWriteInputTokens || 0;
 
     let content: string = '';
     content = response.output.message.content
@@ -552,16 +557,26 @@ export const BedrockChatCompleteResponseTransform: (
               content_blocks: contentBlocks,
             }),
           },
-          finish_reason: response.stopReason,
+          finish_reason: transformFinishReason(
+            response.stopReason,
+            strictOpenAiCompliance
+          ),
         },
       ],
       usage: {
-        prompt_tokens: response.usage.inputTokens,
+        prompt_tokens:
+          response.usage.inputTokens +
+          cacheReadInputTokens +
+          cacheWriteInputTokens,
         completion_tokens: response.usage.outputTokens,
         total_tokens: response.usage.totalTokens, // contains the cache usage as well
-        ...(shouldSendCacheUsage && {
-          cache_read_input_tokens: response.usage.cacheReadInputTokens,
-          cache_creation_input_tokens: response.usage.cacheWriteInputTokens,
+        prompt_tokens_details: {
+          cached_tokens: cacheReadInputTokens,
+        },
+        // we only want to be sending this for anthropic models and this is not openai compliant
+        ...((cacheReadInputTokens > 0 || cacheWriteInputTokens > 0) && {
+          cache_read_input_tokens: cacheReadInputTokens,
+          cache_creation_input_tokens: cacheWriteInputTokens,
         }),
       },
     };
@@ -584,6 +599,8 @@ export const BedrockChatCompleteResponseTransform: (
 };
 
 export interface BedrockChatCompleteStreamChunk {
+  // this is error message from bedrock
+  message?: string;
   contentBlockIndex?: number;
   delta?: {
     text: string;
@@ -605,7 +622,7 @@ export interface BedrockChatCompleteStreamChunk {
       input?: object;
     };
   };
-  stopReason?: string;
+  stopReason?: BEDROCK_STOP_REASON;
   metrics?: {
     latencyMs: number;
   };
@@ -621,7 +638,7 @@ export interface BedrockChatCompleteStreamChunk {
 }
 
 interface BedrockStreamState {
-  stopReason?: string;
+  stopReason?: BEDROCK_STOP_REASON;
   currentToolCallIndex?: number;
 }
 
@@ -640,6 +657,9 @@ export const BedrockChatCompleteStreamChunkTransform: (
   gatewayRequest
 ) => {
   const parsedChunk: BedrockChatCompleteStreamChunk = JSON.parse(responseChunk);
+  if (parsedChunk.message) {
+    return getBedrockErrorChunk(fallbackId, gatewayRequest.model || '');
+  }
   if (parsedChunk.stopReason) {
     streamState.stopReason = parsedChunk.stopReason;
   }
@@ -647,10 +667,11 @@ export const BedrockChatCompleteStreamChunkTransform: (
     streamState.currentToolCallIndex = -1;
   }
 
+  // final chunk
   if (parsedChunk.usage) {
-    const shouldSendCacheUsage =
-      parsedChunk.usage.cacheWriteInputTokens ||
-      parsedChunk.usage.cacheReadInputTokens;
+    const cacheReadInputTokens = parsedChunk.usage?.cacheReadInputTokens || 0;
+    const cacheWriteInputTokens = parsedChunk.usage?.cacheWriteInputTokens || 0;
+
     return [
       `data: ${JSON.stringify({
         id: fallbackId,
@@ -662,14 +683,24 @@ export const BedrockChatCompleteStreamChunkTransform: (
           {
             index: 0,
             delta: {},
-            finish_reason: streamState.stopReason,
+            finish_reason: transformFinishReason(
+              streamState.stopReason,
+              strictOpenAiCompliance
+            ),
           },
         ],
         usage: {
-          prompt_tokens: parsedChunk.usage.inputTokens,
+          prompt_tokens:
+            parsedChunk.usage.inputTokens +
+            cacheReadInputTokens +
+            cacheWriteInputTokens,
           completion_tokens: parsedChunk.usage.outputTokens,
           total_tokens: parsedChunk.usage.totalTokens,
-          ...(shouldSendCacheUsage && {
+          prompt_tokens_details: {
+            cached_tokens: cacheReadInputTokens,
+          },
+          // we only want to be sending this for anthropic models and this is not openai compliant
+          ...((cacheReadInputTokens > 0 || cacheWriteInputTokens > 0) && {
             cache_read_input_tokens: parsedChunk.usage.cacheReadInputTokens,
             cache_creation_input_tokens:
               parsedChunk.usage.cacheWriteInputTokens,
@@ -740,6 +771,7 @@ export const BedrockChatCompleteStreamChunkTransform: (
             }),
           tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
         },
+        finish_reason: null,
       },
     ],
   })}\n\n`;
