@@ -9,7 +9,7 @@ import {
   AnthropicErrorResponse,
   AnthropicErrorResponseTransform,
 } from './chatComplete';
-import { ANTHROPIC_STOP_REASON } from './types';
+import { ANTHROPIC_STOP_REASON, AnthropicStreamState } from './types';
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -74,8 +74,15 @@ interface AnthropicCompleteResponse {
 // TODO: The token calculation is wrong atm
 export const AnthropicCompleteResponseTransform: (
   response: AnthropicCompleteResponse | AnthropicErrorResponse,
-  responseStatus: number
-) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean
+) => CompletionResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  strictOpenAiCompliance
+) => {
   if (responseStatus !== 200) {
     const errorResposne = AnthropicErrorResponseTransform(
       response as AnthropicErrorResponse
@@ -95,7 +102,10 @@ export const AnthropicCompleteResponseTransform: (
           text: response.completion,
           index: 0,
           logprobs: null,
-          finish_reason: transformFinishReason(response.stop_reason),
+          finish_reason: transformFinishReason(
+            response.stop_reason,
+            strictOpenAiCompliance
+          ),
         },
       ],
     };
@@ -105,8 +115,16 @@ export const AnthropicCompleteResponseTransform: (
 };
 
 export const AnthropicCompleteStreamChunkTransform: (
-  response: string
-) => string | undefined = (responseChunk) => {
+  response: string,
+  fallbackId: string,
+  streamState: AnthropicStreamState,
+  strictOpenAiCompliance: boolean
+) => string | undefined = (
+  responseChunk,
+  fallbackId,
+  streamState,
+  strictOpenAiCompliance
+) => {
   let chunk = responseChunk.trim();
   if (chunk.startsWith('event: ping')) {
     return;
@@ -120,7 +138,7 @@ export const AnthropicCompleteStreamChunkTransform: (
   }
   const parsedChunk: AnthropicCompleteResponse = JSON.parse(chunk);
   const finishReason = parsedChunk.stop_reason
-    ? transformFinishReason(parsedChunk.stop_reason)
+    ? transformFinishReason(parsedChunk.stop_reason, strictOpenAiCompliance)
     : null;
   return (
     `data: ${JSON.stringify({
