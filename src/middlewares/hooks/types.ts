@@ -101,6 +101,11 @@ export interface GuardrailResult {
 // HookResult can be of type GuardrailResult or any other type of result
 export type HookResult = GuardrailResult;
 
+export type AllHookResults = {
+  beforeRequestHooksResult: HookResult[];
+  afterRequestHooksResult: HookResult[];
+};
+
 export type EventType = 'beforeRequestHook' | 'afterRequestHook';
 
 export enum HookType {
