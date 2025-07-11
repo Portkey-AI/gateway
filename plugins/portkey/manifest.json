@@ -323,6 +323,71 @@
           }
         }
       }
+    },
+    {
+      "name": "Prompt Guardrail",
+      "id": "prompt",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Runs a prompt and returns the verdict based on the response."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "promptId": {
+            "type": "string",
+            "label": "Prompt ID",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "The ID of the prompt to run."
+              }
+            ],
+            "required": true
+          },
+          "verdictType": {
+            "type": "string",
+            "label": "Verdict Type",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "The type of verdict to return."
+              }
+            ],
+            "enum": ["boolean", "choice", "jsonMatch", "score", "regex"],
+            "enumNames": ["Boolean", "Choice", "JSON Match", "Score", "Regex"],
+            "default": "boolean"
+          },
+          "expectedResult": {
+            "type": "string",
+            "label": "Verdict",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "The verdict to return."
+              }
+            ],
+            "enum": ["true", "false"],
+            "enumNames": ["True", "False"],
+            "default": "true"
+          },
+          "not": {
+            "type": "boolean",
+            "label": "Invert Result",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the verdict will be inverted"
+              }
+            ],
+            "default": false
+          }
+        }
+      }
     }
   ]
 }

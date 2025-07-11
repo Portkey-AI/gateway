@@ -97,20 +97,22 @@ class VerdictChecker {
             expectedResult: this.expectedResult,
           },
         };
-      case 'choice':
-        return this.choices();
-      case 'jsonMatch':
-        return this.jsonMatch();
-      case 'score':
-        return this.score();
-      case 'regex':
-        return this.regex();
+      default:
+        return {
+          verdict: false,
+          data: {
+            explanation: 'Unsupported verdict type.',
+          },
+        };
     }
   }
 
   boolean() {
     this.expectedResult = this.expectedResult as BooleanExpectedResult;
-    return this.completionText === this.expectedResult.booleanResult.toString();
+    return (
+      this.completionText.toLowerCase() ===
+      this.expectedResult.booleanResult.toString().toLowerCase()
+    );
   }
 
   choices() {
@@ -140,33 +142,13 @@ const getPromptCompletion = async (
   variables: Record<string, string>
 ) => {
   const response = await fetch(
-    `${process.env.PORTKEY_API_URL}/prompts/${promptId}/complete`,
+    `${process.env.PORTKEY_API_URL}/prompts/${promptId}/completions`,
     {
       method: 'POST',
       body: JSON.stringify({ variables }),
     }
   );
   return response.json();
-};
-
-const checkJsonMatchVerdict = (
-  completionText: string,
-  expectedResult: JsonMatchExpectedResult
-) => {};
-
-const findVerdict = async (
-  completion: any,
-  verdictKind: string,
-  expectedResult: any
-) => {
-  const completionText = completion.choices[0].message.content;
-  switch (verdictKind) {
-    case 'boolean':
-      return completionText === expectedResult.booleanResult.toString();
-    case 'choice':
-      return completionText === expectedResult.choice;
-    case 'jsonMatch':
-  }
 };
 
 export const handler: PluginHandler = async (
@@ -179,59 +161,31 @@ export const handler: PluginHandler = async (
   let verdict = false;
   let data: any = null;
 
+  // Construct variables for the prompt based on the parameters
+  const variables = {
+    ...parameters.variables,
+    request_text: context.request?.text,
+    metadata: context.metadata,
+  };
+
+  if (eventType === 'afterRequestHook') {
+    variables.response_text = context.response?.text;
+  }
+
   try {
-    const text = getText(context, eventType);
-    const categories = parameters.categories;
-    const not = parameters.not || false;
-
-    const result: any = await fetchPortkey(
-      options?.env || {},
-      PORTKEY_ENDPOINTS.MODERATIONS,
-      parameters.credentials,
-      { input: text },
-      parameters.timeout
+    const responseJson: any = await getPromptCompletion(
+      parameters.promptId,
+      variables
     );
-
-    const categoriesFlagged = Object.keys(result.results[0].categories).filter(
-      (category) => result.results[0].categories[category]
-    );
-
-    const intersection = categoriesFlagged.filter((category) =>
-      categories.includes(category)
-    );
-
-    const hasRestrictedContent = intersection.length > 0;
-    verdict = not ? hasRestrictedContent : !hasRestrictedContent;
-
-    data = {
-      verdict,
-      not,
-      explanation: verdict
-        ? not
-          ? 'Found restricted content categories as expected.'
-          : 'No restricted content categories were found.'
-        : not
-          ? 'No restricted content categories were found when they should have been.'
-          : `Found restricted content categories: ${intersection.join(', ')}`,
-      flaggedCategories: intersection,
-      restrictedCategories: categories,
-      allFlaggedCategories: categoriesFlagged,
-      moderationResults: result.results[0],
-      textExcerpt: text.length > 100 ? text.slice(0, 100) + '...' : text,
-    };
+    const result = new VerdictChecker(
+      responseJson.choices[0].message.content,
+      parameters.expectedResult,
+      parameters.verdictType
+    ).check();
+    verdict = result.verdict;
+    data = result.data;
   } catch (e) {
-    error = e as Error;
-    const text = getText(context, eventType);
-    data = {
-      explanation: `An error occurred during content moderation: ${error.message}`,
-      not: parameters.not || false,
-      restrictedCategories: parameters.categories || [],
-      textExcerpt: text
-        ? text.length > 100
-          ? text.slice(0, 100) + '...'
-          : text
-        : 'No text available',
-    };
+    error = e;
   }
 
   return { error, verdict, data };
