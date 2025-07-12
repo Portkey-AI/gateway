@@ -13,7 +13,6 @@ import { CohereStreamState } from './types';
 export const CohereChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
-    default: 'command-r-plus',
     required: true,
   },
   messages: {
@@ -22,113 +21,213 @@ export const CohereChatCompleteConfig: ProviderConfig = {
     transform: (params: Params) => {
       const messages = params.messages || [];
       if (messages.length === 0) {
-        throw new Error('messages length should be at least of length 1');
+        throw new Error('At least one message is required');
       }
 
       return messages.map((message: Message) => {
-        let content: string = '';
+        if (message.role === 'system') {
+          return {
+            role: 'system',
+            content: typeof message.content === 'string' ? message.content : '',
+          };
+        }
+
+        if (message.role === 'tool') {
+          return {
+            role: 'tool',
+            tool_call_id: message.tool_call_id,
+            content: message.content,
+          };
+        }
+
+        let content: string | Array<any> = '';
 
         if (typeof message.content === 'string') {
           content = message.content;
         } else if (Array.isArray(message.content)) {
-          const textContents = message.content
-            .filter((c) => c.type === 'text')
-            .map((c) => c.text);
+          const cohereContent: Array<any> = [];
 
-          if (textContents.length === 0) {
-            throw new Error('No text content found in message content array');
+          for (const item of message.content) {
+            if (item.type === 'text') {
+              cohereContent.push({
+                type: 'text',
+                text: item.text,
+              });
+            } else if (item.type === 'image_url') {
+              cohereContent.push({
+                type: 'image',
+                source: {
+                  type: 'url',
+                  url: item.image_url?.url,
+                },
+              });
+            }
           }
 
-          content = textContents.join('\n');
+          content = cohereContent.length > 0 ? cohereContent : '';
         }
 
-        return {
-          role:
-            message.role === 'assistant'
-              ? 'assistant'
-              : message.role === 'user'
-                ? 'user'
-                : message.role === 'system'
-                  ? 'system'
-                  : message.role,
+        const cohereMessage: any = {
+          role: message.role === 'assistant' ? 'assistant' : 'user',
           content: content,
         };
+
+        if (message.role === 'assistant' && message.tool_calls) {
+          cohereMessage.tool_calls = message.tool_calls.map(
+            (toolCall: any) => ({
+              id: toolCall.id,
+              type: toolCall.type,
+              function: {
+                name: toolCall.function.name,
+                arguments: toolCall.function.arguments,
+              },
+            })
+          );
+        }
+
+        if (message.role === 'assistant' && (message as any).tool_plan) {
+          cohereMessage.tool_plan = (message as any).tool_plan;
+        }
+
+        return cohereMessage;
       });
     },
   },
   max_tokens: {
     param: 'max_tokens',
-    default: 20,
     min: 1,
   },
   temperature: {
     param: 'temperature',
-    default: 0.75,
+    default: 0.3,
     min: 0,
-    max: 5,
   },
-  top_p: {
-    param: 'p',
-    default: 0.75,
-    min: 0,
-    max: 1,
-  },
-  top_k: {
-    param: 'k',
-    default: 0,
-    max: 500,
-  },
-  frequency_penalty: {
-    param: 'frequency_penalty',
-    default: 0,
-    min: 0,
-    max: 1,
-  },
-  presence_penalty: {
-    param: 'presence_penalty',
-    default: 0,
-    min: 0,
-    max: 1,
+  seed: {
+    param: 'seed',
   },
   stop: {
     param: 'stop_sequences',
   },
-  stream: {
-    param: 'stream',
-    default: false,
+  top_k: {
+    param: 'k',
+    default: 0,
+    min: 0,
+    max: 500,
   },
-  seed: {
-    param: 'seed',
+  top_p: {
+    param: 'p',
+    default: 0.75,
+    min: 0.01,
+    max: 0.99,
+  },
+  frequency_penalty: {
+    param: 'frequency_penalty',
+    default: 0.0,
+    min: 0.0,
+    max: 1.0,
+  },
+  presence_penalty: {
+    param: 'presence_penalty',
+    default: 0.0,
+    min: 0.0,
+    max: 1.0,
   },
   logprobs: {
     param: 'logprobs',
     default: false,
   },
-  preamble: {
-    param: 'preamble',
-  },
-  connectors: {
-    param: 'connectors',
-  },
-  search_queries_only: {
-    param: 'search_queries_only',
+  stream: {
+    param: 'stream',
     default: false,
-  },
-  citation_quality: {
-    param: 'citation_quality',
-    default: 'accurate',
-  },
-  prompt_truncation: {
-    param: 'prompt_truncation',
-    default: 'AUTO',
   },
   tools: {
     param: 'tools',
+    transform: (params: Params) => {
+      if (!params.tools) return undefined;
+
+      return params.tools.map((tool) => ({
+        type: 'function',
+        function: {
+          name: tool.function.name,
+          description: tool.function.description,
+          parameters: tool.function.parameters,
+        },
+      }));
+    },
   },
-  tool_results: {
-    param: 'tool_results',
+  tool_choice: {
+    param: 'tool_choice',
+    transform: (params: Params) => {
+      const toolChoice = params.tool_choice;
+      if (!toolChoice) return undefined;
+
+      if (toolChoice === 'none') return 'NONE';
+      if (toolChoice === 'required') return 'REQUIRED';
+      if (toolChoice === 'auto') return undefined;
+
+      return toolChoice;
+    },
+  },
+  strict_tools: {
+    param: 'strict_tools',
+  },
+  documents: {
+    param: 'documents',
+  },
+  citation_options: {
+    param: 'citation_options',
+  },
+  response_format: {
+    param: 'response_format',
+  },
+  safety_mode: {
+    param: 'safety_mode',
+    default: 'CONTEXTUAL',
   },
 };
+
+interface CohereV2Usage {
+  billed_units: {
+    input_tokens: number;
+    output_tokens: number;
+  };
+  tokens: {
+    input_tokens: number;
+    output_tokens: number;
+  };
+}
+
+interface CohereV2Citation {
+  start: number;
+  end: number;
+  text: string;
+  sources: Array<{
+    type: string;
+    id: string;
+    document?: any;
+    tool_output?: any;
+  }>;
+}
+
+interface CohereV2ToolCall {
+  id: string;
+  type: 'function';
+  function: {
+    name: string;
+    arguments: string;
+  };
+}
+
+interface CohereV2Message {
+  role: 'assistant';
+  content: Array<{
+    type: 'text';
+    text: string;
+  }>;
+  tool_calls?: CohereV2ToolCall[];
+  tool_plan?: string;
+  citations?: CohereV2Citation[];
+}
 
 interface CohereV2CompleteResponse {
   id: string;
@@ -138,46 +237,18 @@ interface CohereV2CompleteResponse {
     | 'MAX_TOKENS'
     | 'TOOL_CALL'
     | 'ERROR';
-  message: {
-    role: 'assistant';
-    content: Array<{
-      type: 'text' | 'tool_calls';
-      text?: string;
-      tool_calls?: Array<{
-        name: string;
-        parameters: Record<string, any>;
-      }>;
-    }>;
-  };
-  usage: {
-    input_tokens: number;
-    output_tokens: number;
-  };
+  message: CohereV2Message;
+  usage?: CohereV2Usage;
   logprobs?: Array<{
     token: string;
     logprob: number;
-  }> | null;
-  search_results?: Array<{
-    search_query: string;
-    results: Array<{
-      id: string;
-      title: string;
-      url: string;
-      text: string;
-    }>;
-  }>;
-  citations?: Array<{
-    start: number;
-    end: number;
-    text: string;
-    document_ids: string[];
   }>;
 }
 
 interface CohereV2ErrorResponse {
   message?: string;
   error?: string;
-  status?: number;
+  detail?: string;
 }
 
 export const CohereChatCompleteResponseTransform: (
@@ -189,7 +260,10 @@ export const CohereChatCompleteResponseTransform: (
     return generateErrorResponse(
       {
         message:
-          errorResponse.message || errorResponse.error || 'Unknown error',
+          errorResponse.message ||
+          errorResponse.error ||
+          errorResponse.detail ||
+          'Unknown error',
         type: null,
         param: null,
         code: null,
@@ -205,43 +279,54 @@ export const CohereChatCompleteResponseTransform: (
     .map((c) => c.text)
     .join('');
 
-  const toolCalls = successResponse.message.content
-    .filter((c) => c.type === 'tool_calls')
-    .flatMap((c) => c.tool_calls || []);
+  const message: any = {
+    role: 'assistant',
+    content: textContent,
+  };
 
-  const message: any = { role: 'assistant', content: textContent };
-
-  if (toolCalls.length > 0) {
-    message.tool_calls = toolCalls.map((toolCall, index) => ({
-      id: `call_${index}`,
-      type: 'function',
+  if (
+    successResponse.message.tool_calls &&
+    successResponse.message.tool_calls.length > 0
+  ) {
+    message.tool_calls = successResponse.message.tool_calls.map((toolCall) => ({
+      id: toolCall.id,
+      type: toolCall.type,
       function: {
-        name: toolCall.name,
-        arguments: JSON.stringify(toolCall.parameters),
+        name: toolCall.function.name,
+        arguments: toolCall.function.arguments,
       },
     }));
   }
+
+  let finishReason: string = successResponse.finish_reason;
+  if (finishReason === 'COMPLETE') finishReason = 'stop';
+  else if (finishReason === 'MAX_TOKENS') finishReason = 'length';
+  else if (finishReason === 'TOOL_CALL') finishReason = 'tool_calls';
+  else if (finishReason === 'STOP_SEQUENCE') finishReason = 'stop';
 
   return {
     id: successResponse.id,
     object: 'chat.completion',
     created: Math.floor(Date.now() / 1000),
-    model: 'Unknown',
+    model: 'command-r-plus', // Default model name
     provider: COHERE,
     choices: [
       {
         message,
         index: 0,
-        finish_reason: successResponse.finish_reason,
+        finish_reason: finishReason,
       },
     ],
-    usage: {
-      completion_tokens: successResponse.usage.output_tokens,
-      prompt_tokens: successResponse.usage.input_tokens,
-      total_tokens: Number(
-        successResponse.usage.output_tokens + successResponse.usage.input_tokens
-      ),
-    },
+    usage: successResponse.usage
+      ? {
+          completion_tokens:
+            successResponse.usage.billed_units?.output_tokens || 0,
+          prompt_tokens: successResponse.usage.billed_units?.input_tokens || 0,
+          total_tokens:
+            (successResponse.usage.billed_units?.output_tokens || 0) +
+            (successResponse.usage.billed_units?.input_tokens || 0),
+        }
+      : undefined,
   };
 };
 
@@ -252,18 +337,16 @@ export type CohereV2StreamChunk =
         id: string;
         role: 'assistant';
         content: Array<any>;
+        tool_calls?: Array<any>;
+        tool_plan?: string;
       };
     }
   | {
       type: 'content-start';
       index: number;
       content_block: {
-        type: 'text' | 'tool_calls';
-        text?: string;
-        tool_calls?: Array<{
-          name: string;
-          parameters: Record<string, any>;
-        }>;
+        type: 'text';
+        text: string;
       };
     }
   | {
@@ -271,10 +354,6 @@ export type CohereV2StreamChunk =
       index: number;
       delta: {
         text?: string;
-        tool_calls?: Array<{
-          name: string;
-          parameters: Record<string, any>;
-        }>;
       };
     }
   | {
@@ -282,13 +361,51 @@ export type CohereV2StreamChunk =
       index: number;
     }
   | {
+      type: 'tool-plan-delta';
+      delta: {
+        tool_plan?: string;
+      };
+    }
+  | {
+      type: 'tool-call-start';
+      index: number;
+      tool_call: {
+        id: string;
+        type: 'function';
+        function: {
+          name: string;
+          arguments: string;
+        };
+      };
+    }
+  | {
+      type: 'tool-call-delta';
+      index: number;
+      delta: {
+        function?: {
+          arguments?: string;
+        };
+      };
+    }
+  | {
+      type: 'tool-call-end';
+      index: number;
+    }
+  | {
+      type: 'citation-start';
+      index: number;
+      citation: CohereV2Citation;
+    }
+  | {
+      type: 'citation-end';
+      index: number;
+    }
+  | {
       type: 'message-end';
       message: {
         id: string;
         finish_reason: CohereV2CompleteResponse['finish_reason'];
-        usage: CohereV2CompleteResponse['usage'];
-        search_results?: CohereV2CompleteResponse['search_results'];
-        citations?: CohereV2CompleteResponse['citations'];
+        usage?: CohereV2Usage;
       };
     };
 
@@ -301,7 +418,7 @@ export const CohereChatCompleteStreamChunkTransform: (
 ) => string = (
   responseChunk,
   fallbackId,
-  streamState = { generation_id: '' },
+  streamState = { generation_id: '', tool_calls: {}, current_tool_call: null },
   _strictOpenAiCompliance,
   gatewayRequest
 ) => {
@@ -318,25 +435,73 @@ export const CohereChatCompleteStreamChunkTransform: (
 
     if (parsedChunk.type === 'message-start') {
       streamState.generation_id = parsedChunk.message.id;
+      streamState.tool_calls = {};
+      streamState.current_tool_call = null;
     }
 
     const messageId = streamState?.generation_id ?? fallbackId;
     let deltaContent = '';
     let finishReason = null;
     let usage = null;
+    let toolCalls = null;
 
     if (parsedChunk.type === 'content-delta') {
       deltaContent = parsedChunk.delta.text || '';
-    } else if (parsedChunk.type === 'message-end') {
-      finishReason = parsedChunk.message.finish_reason;
-      usage = {
-        completion_tokens: parsedChunk.message.usage.output_tokens,
-        prompt_tokens: parsedChunk.message.usage.input_tokens,
-        total_tokens: Number(
-          parsedChunk.message.usage.output_tokens +
-            parsedChunk.message.usage.input_tokens
-        ),
+    } else if (parsedChunk.type === 'tool-call-start') {
+      streamState.current_tool_call = {
+        id: parsedChunk.tool_call.id,
+        type: 'function',
+        function: {
+          name: parsedChunk.tool_call.function.name,
+          arguments: '',
+        },
       };
+      streamState.tool_calls[parsedChunk.index] = streamState.current_tool_call;
+
+      toolCalls = [streamState.current_tool_call];
+    } else if (parsedChunk.type === 'tool-call-delta') {
+      if (
+        streamState.current_tool_call &&
+        parsedChunk.delta.function?.arguments
+      ) {
+        streamState.current_tool_call.function.arguments +=
+          parsedChunk.delta.function.arguments;
+        toolCalls = [streamState.current_tool_call];
+      }
+    } else if (parsedChunk.type === 'message-end') {
+      const cohereFinishReason = parsedChunk.message.finish_reason;
+      let mappedFinishReason: string;
+      if (cohereFinishReason === 'COMPLETE') mappedFinishReason = 'stop';
+      else if (cohereFinishReason === 'MAX_TOKENS')
+        mappedFinishReason = 'length';
+      else if (cohereFinishReason === 'TOOL_CALL')
+        mappedFinishReason = 'tool_calls';
+      else if (cohereFinishReason === 'STOP_SEQUENCE')
+        mappedFinishReason = 'stop';
+      else mappedFinishReason = cohereFinishReason;
+
+      finishReason = mappedFinishReason;
+
+      if (parsedChunk.message.usage) {
+        usage = {
+          completion_tokens:
+            parsedChunk.message.usage.billed_units?.output_tokens || 0,
+          prompt_tokens:
+            parsedChunk.message.usage.billed_units?.input_tokens || 0,
+          total_tokens:
+            (parsedChunk.message.usage.billed_units?.output_tokens || 0) +
+            (parsedChunk.message.usage.billed_units?.input_tokens || 0),
+        };
+      }
+    }
+
+    const delta: any = {
+      content: deltaContent,
+      role: 'assistant',
+    };
+
+    if (toolCalls) {
+      delta.tool_calls = toolCalls;
     }
 
     return (
@@ -344,16 +509,13 @@ export const CohereChatCompleteStreamChunkTransform: (
         id: messageId,
         object: 'chat.completion.chunk',
         created: Math.floor(Date.now() / 1000),
-        model: gatewayRequest.model || '',
+        model: gatewayRequest.model || 'command-r-plus',
         provider: COHERE,
         ...(usage && { usage }),
         choices: [
           {
             index: 0,
-            delta: {
-              content: deltaContent,
-              role: 'assistant',
-            },
+            delta,
             logprobs: null,
             finish_reason: finishReason,
           },
@@ -365,7 +527,7 @@ export const CohereChatCompleteStreamChunkTransform: (
       id: fallbackId,
       object: 'chat.completion.chunk',
       created: Math.floor(Date.now() / 1000),
-      model: gatewayRequest.model || '',
+      model: gatewayRequest.model || 'command-r-plus',
       provider: COHERE,
       error: error instanceof Error ? error.message : String(error),
       choices: [

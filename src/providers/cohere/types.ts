@@ -1,5 +1,7 @@
 export type CohereStreamState = {
   generation_id: string;
+  tool_calls: Record<number, any>;
+  current_tool_call: any;
 };
 
 export interface CohereErrorResponse {
