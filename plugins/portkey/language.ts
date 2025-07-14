@@ -4,7 +4,7 @@ import {
   PluginHandler,
   PluginParameters,
 } from '../types';
-import { getText } from '../utils';
+import { getCurrentContentPart } from '../utils';
 import { PORTKEY_ENDPOINTS, fetchPortkey } from './globals';
 
 export const handler: PluginHandler = async (
@@ -16,9 +16,17 @@ export const handler: PluginHandler = async (
   let error = null;
   let verdict = false;
   let data: any = null;
-
+  let text = '';
   try {
-    const text = getText(context, eventType);
+    const { content, textArray } = getCurrentContentPart(context, eventType);
+    if (!content) {
+      return {
+        error: { message: 'request or response json is empty' },
+        verdict: true,
+        data: null,
+      };
+    }
+    text = textArray.filter((text) => text).join('\n');
     const languages = parameters.language;
     const not = parameters.not || false;
 
@@ -51,7 +59,6 @@ export const handler: PluginHandler = async (
     };
   } catch (e) {
     error = e as Error;
-    const text = getText(context, eventType);
     data = {
       explanation: `An error occurred while checking language: ${error.message}`,
       not: parameters.not || false,

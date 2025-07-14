@@ -1,5 +1,7 @@
 import { Context } from 'hono';
 import { Message, Options, Params } from '../types/requestBody';
+import { ANTHROPIC_STOP_REASON } from './anthropic/types';
+import { BEDROCK_STOP_REASON } from './bedrock/types';
 
 /**
  * Configuration for a parameter.
@@ -152,6 +154,16 @@ export interface CResponse extends BaseResponse {
     prompt_tokens: number;
     completion_tokens: number;
     total_tokens: number;
+    completion_tokens_details?: {
+      accepted_prediction_tokens?: number;
+      audio_tokens?: number;
+      reasoning_tokens?: number;
+      rejected_prediction_tokens?: number;
+    };
+    prompt_tokens_details?: {
+      audio_tokens?: number;
+      cached_tokens?: number;
+    };
     /*
      * Anthropic Prompt cache token usage
      */
@@ -400,3 +412,15 @@ export interface StreamContentBlock {
     data?: string;
   };
 }
+
+export enum FINISH_REASON {
+  stop = 'stop',
+  length = 'length',
+  tool_calls = 'tool_calls',
+  content_filter = 'content_filter',
+  function_call = 'function_call',
+}
+
+export type PROVIDER_FINISH_REASON =
+  | ANTHROPIC_STOP_REASON
+  | BEDROCK_STOP_REASON;

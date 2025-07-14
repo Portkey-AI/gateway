@@ -95,6 +95,8 @@ export const LEPTON: string = 'lepton';
 export const KLUSTER_AI: string = 'kluster-ai';
 export const NSCALE: string = 'nscale';
 export const HYPERBOLIC: string = 'hyperbolic';
+export const FEATHERLESS_AI: string = 'featherless-ai';
+export const KRUTRIM: string = 'krutrim';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -155,6 +157,8 @@ export const VALID_PROVIDERS = [
   KLUSTER_AI,
   NSCALE,
   HYPERBOLIC,
+  FEATHERLESS_AI,
+  KRUTRIM,
 ];
 
 export const CONTENT_TYPES = {
