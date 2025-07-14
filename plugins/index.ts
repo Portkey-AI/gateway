@@ -17,6 +17,7 @@ import { handler as portkeymoderateContent } from './portkey/moderateContent';
 import { handler as portkeylanguage } from './portkey/language';
 import { handler as portkeypii } from './portkey/pii';
 import { handler as portkeygibberish } from './portkey/gibberish';
+import { handler as portkeyprompt } from './portkey/prompt';
 import { handler as aporiavalidateProject } from './aporia/validateProject';
 import { handler as sydelabssydeguard } from './sydelabs/sydeguard';
 import { handler as pillarscanPrompt } from './pillar/scanPrompt';
@@ -75,6 +76,7 @@ export const plugins = {
     language: portkeylanguage,
     pii: portkeypii,
     gibberish: portkeygibberish,
+    prompt: portkeyprompt,
   },
   aporia: {
     validateProject: aporiavalidateProject,

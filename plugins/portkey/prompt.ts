@@ -109,10 +109,9 @@ class VerdictChecker {
 
   boolean() {
     this.expectedResult = this.expectedResult as BooleanExpectedResult;
-    return (
-      this.completionText.toLowerCase() ===
-      this.expectedResult.booleanResult.toString().toLowerCase()
-    );
+    return this.completionText
+      .toLowerCase()
+      .includes(this.expectedResult.booleanResult.toString().toLowerCase());
   }
 
   choices() {
@@ -139,13 +138,18 @@ class VerdictChecker {
 
 const getPromptCompletion = async (
   promptId: string,
-  variables: Record<string, string>
+  variables: Record<string, string>,
+  credentials: Record<string, string>
 ) => {
   const response = await fetch(
     `${process.env.PORTKEY_API_URL}/prompts/${promptId}/completions`,
     {
       method: 'POST',
       body: JSON.stringify({ variables }),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${credentials.apiKey}`,
+      },
     }
   );
   return response.json();
@@ -173,15 +177,19 @@ export const handler: PluginHandler = async (
   }
 
   try {
+    console.log('Getting prompt completion');
     const responseJson: any = await getPromptCompletion(
       parameters.promptId,
-      variables
+      variables,
+      parameters.credentials || {}
     );
+    console.log('Prompt completion received', responseJson.choices[0].message);
     const result = new VerdictChecker(
       responseJson.choices[0].message.content,
       parameters.expectedResult,
       parameters.verdictType
     ).check();
+    console.log('Verdict check result', result);
     verdict = result.verdict;
     data = result.data;
   } catch (e) {
