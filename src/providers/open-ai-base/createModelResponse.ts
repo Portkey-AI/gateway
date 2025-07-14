@@ -62,8 +62,12 @@ export const OpenAICreateModelResponseConfig: ProviderConfig = {
     param: 'metadata',
     required: false,
   },
-  parallel_tool_calls: {
+  modalities: {
     param: 'modalities',
+    required: false,
+  },
+  parallel_tool_calls: {
+    param: 'parallel_tool_calls',
     required: false,
   },
   previous_response_id: {
