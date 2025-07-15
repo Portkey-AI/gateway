@@ -370,10 +370,7 @@
                 "type": "subHeading",
                 "text": "The verdict to return."
               }
-            ],
-            "enum": ["true", "false"],
-            "enumNames": ["True", "False"],
-            "default": "true"
+            ]
           },
           "not": {
             "type": "boolean",
@@ -386,7 +383,8 @@
             ],
             "default": false
           }
-        }
+        },
+        "required": ["promptId", "verdictType", "expectedResult"]
       }
     }
   ]

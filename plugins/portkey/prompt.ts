@@ -1,11 +1,11 @@
+import { getRuntimeKey } from 'hono/adapter';
 import {
   HookEventType,
   PluginContext,
   PluginHandler,
   PluginParameters,
 } from '../types';
-import { getText } from '../utils';
-import { PORTKEY_ENDPOINTS, fetchPortkey } from './globals';
+import { post, postWithCloudflareServiceBinding } from '../utils';
 
 interface BooleanExpectedResult {
   type: 'boolean';
@@ -95,6 +95,7 @@ class VerdictChecker {
               ? 'The completion text matches the expected result.'
               : 'The completion text does not match the expected result.',
             expectedResult: this.expectedResult,
+            completionText: this.completionText,
           },
         };
       default:
@@ -137,29 +138,57 @@ class VerdictChecker {
 }
 
 const getPromptCompletion = async (
+  env: Record<string, any>,
   promptId: string,
   variables: Record<string, string>,
   credentials: Record<string, string>
 ) => {
-  const response = await fetch(
-    `${process.env.PORTKEY_API_URL}/prompts/${promptId}/completions`,
-    {
-      method: 'POST',
-      body: JSON.stringify({ variables }),
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${credentials.apiKey}`,
-      },
+  const timeout = 10000;
+  const url = `${env.GATEWAY_BASEPATH}/prompts/${promptId}/completions`;
+  const postData = { variables };
+
+  let clientAuth;
+  if (env.CLIENT_ID) {
+    clientAuth = 'clientId::' + env.CLIENT_ID;
+  } else if (env.PORTKEY_CLIENT_AUTH) {
+    clientAuth = 'clientAuth::' + env.PORTKEY_CLIENT_AUTH;
+  } else {
+    clientAuth = 'test::test-1234';
+  }
+
+  const options = {
+    headers: {
+      Authorization: `Bearer ${credentials.apiKey}`,
+      'Content-Type': 'application/json',
+      'x-portkey-config': JSON.stringify({ retry: { attempts: 1 } }),
+      'x-portkey-force-config-override': 'true',
+      'x-portkey-client-auth': clientAuth,
+    },
+  };
+  try {
+    let responseData;
+    if (getRuntimeKey() === 'workerd' && env.authWorker) {
+      responseData = await postWithCloudflareServiceBinding(
+        url,
+        postData,
+        env.authWorker,
+        options,
+        timeout
+      );
+    } else {
+      responseData = await post(url, postData, options, timeout);
     }
-  );
-  return response.json();
+    return responseData;
+  } catch (e: any) {
+    throw e;
+  }
 };
 
 export const handler: PluginHandler = async (
   context: PluginContext,
   parameters: PluginParameters,
   eventType: HookEventType,
-  options
+  options: any
 ) => {
   let error = null;
   let verdict = false;
@@ -177,19 +206,19 @@ export const handler: PluginHandler = async (
   }
 
   try {
-    console.log('Getting prompt completion');
     const responseJson: any = await getPromptCompletion(
+      options.env,
       parameters.promptId,
       variables,
       parameters.credentials || {}
     );
-    console.log('Prompt completion received', responseJson.choices[0].message);
+
     const result = new VerdictChecker(
       responseJson.choices[0].message.content,
       parameters.expectedResult,
       parameters.verdictType
     ).check();
-    console.log('Verdict check result', result);
+
     verdict = result.verdict;
     data = result.data;
   } catch (e) {
