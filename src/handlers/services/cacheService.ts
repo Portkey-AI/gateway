@@ -1,10 +1,10 @@
 // cacheService.ts
 
 import { Context } from 'hono';
-import { HooksService } from './hooksService';
 import { endpointStrings } from '../../providers/types';
 import { env } from 'hono/adapter';
 import { RequestContext } from './requestContext';
+import { HookSpan } from '../../middlewares/hooks';
 
 export interface CacheResponseObject {
   cacheResponse: Response | undefined;
@@ -16,7 +16,7 @@ export interface CacheResponseObject {
 export class CacheService {
   constructor(
     private honoContext: Context,
-    private hooksService: HooksService
+    private hookSpan: HookSpan
   ) {}
 
   isEndpointCacheable(endpoint: endpointStrings): boolean {
@@ -112,7 +112,7 @@ export class CacheService {
     let responseBody: string = cacheResponse;
     let responseStatus: number = 200;
 
-    const brhResults = this.hooksService.results?.beforeRequestHooksResult;
+    const brhResults = this.hookSpan.getHooksResult().beforeRequestHooksResult;
     if (brhResults?.length) {
       responseBody = JSON.stringify({
         ...JSON.parse(responseBody),
@@ -120,7 +120,7 @@ export class CacheService {
           before_request_hooks: brhResults,
         },
       });
-      responseStatus = this.hooksService.hasFailedHooks('beforeRequest')
+      responseStatus = this.hookSpan.hasFailedHooks('beforeRequest')
         ? 246
         : 200;
     }

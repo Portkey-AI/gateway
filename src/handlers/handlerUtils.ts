@@ -30,7 +30,6 @@ import { HookType } from '../middlewares/hooks/types';
 
 // Services
 import { CacheResponseObject, CacheService } from './services/cacheService';
-import { HooksService } from './services/hooksService';
 import { LogObjectBuilder, LogsService } from './services/logsService';
 import { PreRequestValidatorService } from './services/preRequestValidatorService';
 import { ProviderContext } from './services/providerContext';
@@ -301,11 +300,12 @@ export async function tryPost(
     method,
     currentIndex as number
   );
-  const hooksService = new HooksService(requestContext);
+  // const hooksService = new HooksService(requestContext);
+  const hooksManager = requestContext.hooksManager;
+  const hookSpan: HookSpan = hooksManager.createSpan(requestContext);
   const providerContext = new ProviderContext(requestContext.provider);
   const logsService = new LogsService(c);
-  const responseService = new ResponseService(requestContext, hooksService);
-  const hookSpan: HookSpan = hooksService.hookSpan;
+  const responseService = new ResponseService(requestContext, hookSpan);
 
   // Set the requestURL in requestContext
   requestContext.requestURL = await providerContext.getFullURL(requestContext);
@@ -367,7 +367,7 @@ export async function tryPost(
   );
 
   // Cache Handler
-  const cacheService = new CacheService(c, hooksService);
+  const cacheService = new CacheService(c, hookSpan);
   const cacheResponseObject: CacheResponseObject =
     await cacheService.getCachedResponse(
       requestContext,
@@ -439,7 +439,7 @@ export async function tryPost(
       0,
       hookSpan.id,
       providerContext,
-      hooksService,
+      hookSpan,
       logObject
     );
 
@@ -1123,7 +1123,7 @@ export async function recursiveAfterRequestHookHandler(
   retryAttemptsMade: any,
   hookSpanId: string,
   providerContext: ProviderContext,
-  hooksService: HooksService,
+  hookSpan: HookSpan,
   logObject: LogObjectBuilder
 ): Promise<{
   mappedResponse: Response;
@@ -1164,7 +1164,7 @@ export async function recursiveAfterRequestHookHandler(
 
   // Check if sync hooks are available
   // This will be used to determine if we need to parse the response body or simply passthrough the response as is
-  const areSyncHooksAvailable = hooksService.areSyncHooksAvailable;
+  const areSyncHooksAvailable = hookSpan.areSyncHooksAvailable();
 
   const {
     response: mappedResponse,
@@ -1211,7 +1211,7 @@ export async function recursiveAfterRequestHookHandler(
       (retryCount ?? 0) + 1 + retryAttemptsMade,
       hookSpanId,
       providerContext,
-      hooksService,
+      hookSpan,
       logObject
     );
   }

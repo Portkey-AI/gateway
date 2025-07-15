@@ -14,6 +14,7 @@ import {
 import { plugins } from '../../../plugins';
 import { Context } from 'hono';
 import { HOOKS_EVENT_TYPE_PRESETS } from './globals';
+import { RequestContext } from '../../handlers/services/requestContext';
 
 export class HookSpan {
   private context: HookSpanContext;
@@ -197,6 +198,46 @@ export class HookSpan {
   } {
     return this.hooksResult;
   }
+
+  hasFailedHooks(hookType: 'beforeRequest' | 'afterRequest' | 'any'): boolean {
+    const hookResults = this.hooksResult;
+    const failedBRH = hookResults?.beforeRequestHooksResult.filter(
+      (hook) => !hook.verdict
+    );
+    const failedARH = hookResults?.afterRequestHooksResult.filter(
+      (hook) => !hook.verdict
+    );
+    if (hookType === 'any') {
+      return (failedBRH?.length ?? 0) > 0 || (failedARH?.length ?? 0) > 0;
+    } else if (hookType === 'beforeRequest') {
+      return (failedBRH?.length ?? 0) > 0;
+    } else if (hookType === 'afterRequest') {
+      return (failedARH?.length ?? 0) > 0;
+    }
+    return false;
+  }
+
+  hasResults(hookType: 'beforeRequest' | 'afterRequest' | 'any'): boolean {
+    const hookResults = this.hooksResult;
+    if (hookType === 'any') {
+      return (
+        (hookResults?.beforeRequestHooksResult.length ?? 0) > 0 ||
+        (hookResults?.afterRequestHooksResult.length ?? 0) > 0
+      );
+    } else if (hookType === 'beforeRequest') {
+      return (hookResults?.beforeRequestHooksResult.length ?? 0) > 0;
+    } else if (hookType === 'afterRequest') {
+      return (hookResults?.afterRequestHooksResult.length ?? 0) > 0;
+    }
+    return false;
+  }
+
+  areSyncHooksAvailable(): boolean {
+    return (
+      this.beforeRequestHooks.some((h) => !h.async) ||
+      this.afterRequestHooks.some((h) => !h.async)
+    );
+  }
 }
 
 export class HooksManager {
@@ -207,26 +248,26 @@ export class HooksManager {
     this.plugins = plugins;
   }
 
-  public createSpan(
-    requestParams: any,
-    metadata: Record<string, string>,
-    provider: string,
-    isStreamingRequest: boolean,
-    beforeRequestHooks: HookObject[],
-    afterRequestHooks: HookObject[],
-    parentHookSpanId: string | null,
-    requestType: string,
-    requestHeaders: Record<string, string>
-  ): HookSpan {
-    const span = new HookSpan(
-      requestParams,
+  public createSpan(requestContext: RequestContext): HookSpan {
+    const {
+      params,
       metadata,
       provider,
-      isStreamingRequest,
+      isStreaming,
       beforeRequestHooks,
       afterRequestHooks,
-      parentHookSpanId,
-      requestType,
+      endpoint,
+      requestHeaders,
+    } = requestContext;
+    const span = new HookSpan(
+      params,
+      metadata,
+      provider,
+      isStreaming,
+      beforeRequestHooks,
+      afterRequestHooks,
+      null,
+      endpoint,
       requestHeaders
     );
 

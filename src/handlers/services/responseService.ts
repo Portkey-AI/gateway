@@ -1,8 +1,8 @@
 // responseService.ts
 
 import { HEADER_KEYS, POWERED_BY, RESPONSE_HEADER_KEYS } from '../../globals';
+import { HookSpan } from '../../middlewares/hooks';
 import { responseHandler } from '../responseHandlers';
-import { HooksService } from './hooksService';
 import { RequestContext } from './requestContext';
 
 interface CreateResponseOptions {
@@ -24,7 +24,7 @@ interface CreateResponseOptions {
 export class ResponseService {
   constructor(
     private context: RequestContext,
-    private hooksService: HooksService
+    private hookSpan: HookSpan
   ) {}
 
   async create(options: CreateResponseOptions): Promise<{
@@ -96,7 +96,7 @@ export class ResponseService {
       this.context.params,
       this.context.strictOpenAiCompliance,
       this.context.honoContext.req.url,
-      this.hooksService.areSyncHooksAvailable
+      this.hookSpan.areSyncHooksAvailable()
     );
   }
 
