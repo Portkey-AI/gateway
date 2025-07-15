@@ -529,9 +529,8 @@ export const BedrockChatCompleteResponseTransform: (
   }
 
   if ('output' in response) {
-    const shouldSendCacheUsage =
-      response.usage.cacheWriteInputTokens ||
-      response.usage.cacheReadInputTokens;
+    const cacheReadInputTokens = response.usage?.cacheReadInputTokens || 0;
+    const cacheWriteInputTokens = response.usage?.cacheWriteInputTokens || 0;
 
     let content: string = '';
     content = response.output.message.content
@@ -565,12 +564,19 @@ export const BedrockChatCompleteResponseTransform: (
         },
       ],
       usage: {
-        prompt_tokens: response.usage.inputTokens,
+        prompt_tokens:
+          response.usage.inputTokens +
+          cacheReadInputTokens +
+          cacheWriteInputTokens,
         completion_tokens: response.usage.outputTokens,
         total_tokens: response.usage.totalTokens, // contains the cache usage as well
-        ...(shouldSendCacheUsage && {
-          cache_read_input_tokens: response.usage.cacheReadInputTokens,
-          cache_creation_input_tokens: response.usage.cacheWriteInputTokens,
+        prompt_tokens_details: {
+          cached_tokens: cacheReadInputTokens,
+        },
+        // we only want to be sending this for anthropic models and this is not openai compliant
+        ...((cacheReadInputTokens > 0 || cacheWriteInputTokens > 0) && {
+          cache_read_input_tokens: cacheReadInputTokens,
+          cache_creation_input_tokens: cacheWriteInputTokens,
         }),
       },
     };
@@ -663,9 +669,9 @@ export const BedrockChatCompleteStreamChunkTransform: (
 
   // final chunk
   if (parsedChunk.usage) {
-    const shouldSendCacheUsage =
-      parsedChunk.usage.cacheWriteInputTokens ||
-      parsedChunk.usage.cacheReadInputTokens;
+    const cacheReadInputTokens = parsedChunk.usage?.cacheReadInputTokens || 0;
+    const cacheWriteInputTokens = parsedChunk.usage?.cacheWriteInputTokens || 0;
+
     return [
       `data: ${JSON.stringify({
         id: fallbackId,
@@ -684,10 +690,17 @@ export const BedrockChatCompleteStreamChunkTransform: (
           },
         ],
         usage: {
-          prompt_tokens: parsedChunk.usage.inputTokens,
+          prompt_tokens:
+            parsedChunk.usage.inputTokens +
+            cacheReadInputTokens +
+            cacheWriteInputTokens,
           completion_tokens: parsedChunk.usage.outputTokens,
           total_tokens: parsedChunk.usage.totalTokens,
-          ...(shouldSendCacheUsage && {
+          prompt_tokens_details: {
+            cached_tokens: cacheReadInputTokens,
+          },
+          // we only want to be sending this for anthropic models and this is not openai compliant
+          ...((cacheReadInputTokens > 0 || cacheWriteInputTokens > 0) && {
             cache_read_input_tokens: parsedChunk.usage.cacheReadInputTokens,
             cache_creation_input_tokens:
               parsedChunk.usage.cacheWriteInputTokens,

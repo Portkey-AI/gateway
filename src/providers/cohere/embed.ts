@@ -50,9 +50,10 @@ export const CohereEmbedConfig: ProviderConfig = {
   encoding_format: {
     param: 'embedding_types',
     required: false,
-    transform: (params: any): string[] => {
+    transform: (params: any): string[] | undefined => {
       if (Array.isArray(params.encoding_format)) return params.encoding_format;
-      return [params.encoding_format];
+      else if (typeof params.encoding_format === 'string')
+        return [params.encoding_format];
     },
   },
   //backwards compatibility
