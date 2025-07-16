@@ -175,7 +175,6 @@ export const retryRequest = async (
         retries: retryCount,
         onRetry: (error: Error, attempt: number) => {
           lastAttempt = attempt;
-          console.warn(`Failed in Retry attempt ${attempt}. Error: ${error}`);
         },
         randomize: false,
       }
@@ -206,9 +205,6 @@ export const retryRequest = async (
         headers: error.headers,
       });
     }
-    console.warn(
-      `Tried ${lastAttempt ?? 1} time(s) but failed. Error: ${JSON.stringify(error)}`
-    );
   }
   return {
     response: lastResponse as Response,
