@@ -79,11 +79,19 @@ export interface BedrockInferenceProfile {
   type: string;
 }
 
-export enum BEDROCK_STOP_REASON {
+export enum BEDROCK_CONVERSE_STOP_REASON {
   end_turn = 'end_turn',
   tool_use = 'tool_use',
   max_tokens = 'max_tokens',
   stop_sequence = 'stop_sequence',
   guardrail_intervened = 'guardrail_intervened',
   content_filtered = 'content_filtered',
+}
+
+export enum TITAN_STOP_REASON {
+  FINISHED = 'FINISHED',
+  LENGTH = 'LENGTH',
+  STOP_CRITERIA_MET = 'STOP_CRITERIA_MET',
+  RAG_QUERY_WHEN_RAG_DISABLED = 'RAG_QUERY_WHEN_RAG_DISABLED',
+  CONTENT_FILTERED = 'CONTENT_FILTERED',
 }
