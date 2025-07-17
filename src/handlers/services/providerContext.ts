@@ -8,11 +8,12 @@ import {
 import Providers from '../../providers';
 import { RequestContext } from './requestContext';
 import { ANTHROPIC, AZURE_OPEN_AI } from '../../globals';
+import { GatewayError } from '../../errors/GatewayError';
 
 export class ProviderContext {
   constructor(private provider: string) {
     if (!Providers[provider]) {
-      throw new Error(`Provider ${provider} not found`);
+      throw new GatewayError(`Provider ${provider} not found`);
     }
   }
 
