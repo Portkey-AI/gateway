@@ -4,7 +4,7 @@ import {
   PluginHandler,
   PluginParameters,
 } from '../types';
-import { post, getText } from '../utils';
+import { post, getText, getCurrentContentPart } from '../utils';
 
 const API_URL = 'https://services.walled.ai/v1/guardrail/moderate';
 
@@ -25,14 +25,15 @@ export const handler: PluginHandler = async (
     };
   }
 
-  const text = getText(context, eventType);
-  if (!text) {
+  const { content, textArray } = getCurrentContentPart(context, eventType);
+  if (!content) {
     return {
-      error: 'request or response text is empty',
+      error: { message: 'request or response json is empty' },
       verdict: true,
-      data,
+      data: null,
     };
   }
+  let text = textArray.filter((text) => text).join('\n');
 
   // Prepare request body
   const requestBody = {
@@ -41,7 +42,6 @@ export const handler: PluginHandler = async (
     generic_safety_check: parameters.generic_safety_check ?? true,
     greetings_list: parameters.greetings_list || ['generalgreetings'],
   };
-
   // Prepare headers
   const requestOptions = {
     headers: {

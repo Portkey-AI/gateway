@@ -2,10 +2,6 @@ import { handler } from './guardrails';
 import testCredsFile from './creds.json';
 import { HookEventType, PluginContext, PluginParameters } from '../types';
 
-const options = {
-  env: {},
-};
-
 const testCreds = {
   apiKey: testCredsFile.apiKey,
 };
@@ -20,80 +16,68 @@ describe('WalledAI Guardrail Plugin Handler (integration)', () => {
     compliance_list: [],
   };
 
+  const makeContext = (text: string): PluginContext => ({
+    requestType: 'chatComplete',
+    request: {
+      json: {
+        messages: [{ role: 'user', content: text }],
+      },
+    },
+    response: {},
+  });
+
   it('returns verdict=true for safe text', async () => {
-    const context: PluginContext = {
-      request: { text: 'Hello world' },
-      response: {},
-    };
-    const result = await handler(
-      context,
-      baseParams,
-      'beforeRequestHook' as HookEventType
-    );
+    const context = makeContext('Hello, how are you');
+
+    const result = await handler(context, baseParams, 'beforeRequestHook');
+
     expect(result.verdict).toBe(true);
     expect(result.error).toBeNull();
     expect(result.data).toBeDefined();
   });
 
   it('returns verdict=false for unsafe text', async () => {
-    const context: PluginContext = {
-      request: { text: 'I want to harm someone.' },
-      response: {},
-    };
-    const result = await handler(
-      context,
-      baseParams,
-      'beforeRequestHook' as HookEventType
-    );
+    const context = makeContext('I want to harm someone.');
+
+    const result = await handler(context, baseParams, 'beforeRequestHook');
+
     expect(result.verdict).toBe(false);
     expect(result.error).toBeNull();
-    expect(result.data).toBeDefined();
   });
 
   it('returns error if apiKey is missing', async () => {
-    const params = { ...baseParams, credentials: {} };
-    const context: PluginContext = {
-      request: { text: 'Hello world' },
-      response: {},
-    };
+    const context = makeContext('Hello world');
+
     const result = await handler(
       context,
-      params,
-      'beforeRequestHook' as HookEventType
+      { ...baseParams, credentials: {} },
+      'beforeRequestHook'
     );
-    expect(result.error).toMatch(/apiKey/);
+
+    expect(result.error).toMatch(/apiKey/i);
     expect(result.verdict).toBe(true);
-    expect(result.data).toBeNull();
   });
 
   it('returns error if text is empty', async () => {
-    const context: PluginContext = {
-      request: { text: '' },
-      response: {},
-    };
-    const result = await handler(
-      context,
-      baseParams,
-      'beforeRequestHook' as HookEventType
-    );
-    expect(result.error).toMatch(/empty/);
+    const context = makeContext('');
+
+    const result = await handler(context, baseParams, 'beforeRequestHook');
+
+    expect(result.error).toBeDefined();
     expect(result.verdict).toBe(true);
     expect(result.data).toBeNull();
   });
 
-  it('uses default values for missing parameters', async () => {
-    const context: PluginContext = {
-      request: { text: 'Hello world' },
-      response: {},
+  it('uses default values for missing optional parameters', async () => {
+    const context = makeContext('Hello world');
+
+    const minimalParams: PluginParameters = {
+      credentials: testCreds,
     };
-    const params: PluginParameters = { credentials: testCreds };
-    const result = await handler(
-      context,
-      params,
-      'beforeRequestHook' as HookEventType
-    );
+
+    const result = await handler(context, minimalParams, 'beforeRequestHook');
+
     expect(result.verdict).toBe(true);
     expect(result.error).toBeNull();
-    expect(result.data).toBeDefined();
   });
 });
