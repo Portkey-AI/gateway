@@ -8,17 +8,10 @@ const AI21APIConfig: ProviderAPIConfig = {
     };
     return headers;
   },
-  getEndpoint: ({ fn, gatewayRequestBodyJSON }) => {
-    const { model } = gatewayRequestBodyJSON;
+  getEndpoint: ({ fn }) => {
     switch (fn) {
-      case 'complete': {
-        return `/${model}/complete`;
-      }
       case 'chatComplete': {
-        return `/${model}/chat`;
-      }
-      case 'embed': {
-        return `/embed`;
+        return `/chat/completions`;
       }
       default:
         return '';

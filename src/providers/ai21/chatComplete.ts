@@ -12,6 +12,10 @@ import {
 import { AI21ErrorResponse } from './complete';
 
 export const AI21ChatCompleteConfig: ProviderConfig = {
+  model: {
+    param: 'model',
+    required: true,
+  },
   messages: [
     {
       param: 'messages',
@@ -47,77 +51,69 @@ export const AI21ChatCompleteConfig: ProviderConfig = {
       },
     },
   ],
+  tools: {
+    param: 'tools',
+  },
   n: {
     param: 'numResults',
     default: 1,
+    min: 1,
+    max: 16,
+  },
+  documents: {
+    param: 'documents',
+  },
+  response_format: {
+    param: 'responseFormat',
   },
   max_tokens: {
     param: 'maxTokens',
     default: 16,
   },
-  max_completion_tokens: {
-    param: 'maxTokens',
-    default: 16,
-  },
-  minTokens: {
-    param: 'minTokens',
-    default: 0,
-  },
   temperature: {
     param: 'temperature',
-    default: 0.7,
+    default: 0.4,
     min: 0,
-    max: 1,
+    max: 2,
   },
   top_p: {
     param: 'topP',
     default: 1,
-  },
-  top_k: {
-    param: 'topKReturn',
-    default: 0,
+    min: 0,
+    max: 1,
   },
   stop: {
     param: 'stopSequences',
   },
-  presence_penalty: {
-    param: 'presencePenalty',
-    transform: (params: Params) => {
-      return {
-        scale: params.presence_penalty,
-      };
-    },
-  },
-  frequency_penalty: {
-    param: 'frequencyPenalty',
-    transform: (params: Params) => {
-      return {
-        scale: params.frequency_penalty,
-      };
-    },
-  },
-  countPenalty: {
-    param: 'countPenalty',
-  },
-  frequencyPenalty: {
-    param: 'frequencyPenalty',
-  },
-  presencePenalty: {
-    param: 'presencePenalty',
+  stream: {
+    param: 'stream',
   },
 };
 
 interface AI21ChatCompleteResponse {
   id: string;
-  outputs: {
-    text: string;
-    role: string;
-    finishReason: {
-      reason: string;
-      length: number | null;
-      sequence: string | null;
+  model: string;
+  choices: {
+    index: {};
+    message: {
+      role: string;
+      content: string;
     };
+    tool_calls?: {
+      id: string;
+      type: 'function';
+      function: {
+        name: string;
+        arguments: Record<string, any>;
+      };
+    }[];
   }[];
+  finish_reason: 'stop' | 'length';
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
 }
 
 export const AI21ErrorResponseTransform: (
@@ -138,28 +134,37 @@ export const AI21ChatCompleteResponseTransform: (
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    const errorResposne = AI21ErrorResponseTransform(
+    const errorResponse = AI21ErrorResponseTransform(
       response as AI21ErrorResponse
     );
-    if (errorResposne) return errorResposne;
+    if (errorResponse) return errorResponse;
   }
 
-  if ('outputs' in response) {
+  if ('choices' in response) {
     return {
       id: response.id,
       object: 'chat.completion',
-      created: Math.floor(Date.now() / 1000),
-      model: '',
-      provider: AI21,
-      choices: response.outputs.map((o, index) => ({
+      model: response.model,
+      choices: response.choices?.map((c, index) => ({
+        index: index,
         message: {
           role: 'assistant',
-          content: o.text,
+          content: c.message.content,
         },
-        index: index,
-        logprobs: null,
-        finish_reason: o.finishReason?.reason,
+        tool_calls: c.tool_calls?.map((toolCall: any) => {
+          return {
+            id: toolCall.id,
+            type: toolCall.type,
+            function: {
+              name: toolCall.function.name,
+              arguments: toolCall.function.arguments,
+            },
+          };
+        }),
       })),
+      finish_reason: response.finish_reason,
+      usage: response.usage,
+      created: Math.floor(Date.now() / 1000),
     };
   }
 

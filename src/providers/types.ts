@@ -200,7 +200,7 @@ export interface GroundingMetadata {
 export interface ChatChoice {
   index: number;
   message: Message;
-  finish_reason: string;
+  finish_reason?: string;
   logprobs?: object | null;
   groundingMetadata?: GroundingMetadata;
 }
