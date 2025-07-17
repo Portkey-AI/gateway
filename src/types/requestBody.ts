@@ -1,3 +1,4 @@
+import { BatchEndpoints } from '../globals';
 import { HookObject } from '../middlewares/hooks/types';
 
 /**
@@ -94,6 +95,7 @@ export interface Options {
   awsBedrockModel?: string;
   awsServerSideEncryption?: string;
   awsServerSideEncryptionKMSKeyId?: string;
+  awsService?: string;
 
   /** Sagemaker specific */
   amznSagemakerCustomAttributes?: string;
@@ -120,6 +122,7 @@ export interface Options {
   vertexServiceAccountJson?: Record<string, any>;
   vertexStorageBucketName?: string;
   vertexModelName?: string;
+  vertexBatchEndpoint?: BatchEndpoints;
 
   // Required for file uploads with google.
   filename?: string;
@@ -143,13 +146,14 @@ export interface Options {
   /** The parameter to determine if extra non-openai compliant fields should be returned in response */
   strictOpenAiCompliance?: boolean;
   /** Parameter to determine if fim/completions endpoint is to be used */
-  mistralFimCompletion?: String;
+  mistralFimCompletion?: string;
   /** Anthropic specific headers */
   anthropicBeta?: string;
   anthropicVersion?: string;
 
   /** Fireworks finetune required fields */
   fireworksAccountId?: string;
+  fireworksFileLength?: string;
 
   /** Cortex specific fields */
   snowflakeAccount?: string;
