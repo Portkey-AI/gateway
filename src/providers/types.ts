@@ -44,6 +44,7 @@ export interface ProviderAPIConfig {
     transformedRequestBody: Record<string, any>;
     transformedRequestUrl: string;
     gatewayRequestBody?: Params;
+    requestHeaders: Record<string, string>;
   }) => Promise<Record<string, any>> | Record<string, any>;
   /** A function to generate the baseURL based on parameters */
   getBaseURL: (args: {
@@ -70,6 +71,7 @@ export interface ProviderAPIConfig {
     reqPath: string;
     reqQuery: string;
   }) => string;
+  getOptions?: () => RequestInit;
 }
 
 export type endpointStrings =

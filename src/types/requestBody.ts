@@ -137,7 +137,7 @@ export interface Options {
   /** Azure Inference Specific */
   azureDeploymentName?: string;
   azureApiVersion?: string;
-  azureExtraParams?: string;
+  azureExtraParameters?: string;
   azureFoundryUrl?: string;
 
   /** The parameter to determine if extra non-openai compliant fields should be returned in response */

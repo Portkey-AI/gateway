@@ -15,6 +15,7 @@ import {
   SAGEMAKER,
   FIREWORKS_AI,
   CORTEX,
+  METRICS_KEYS,
 } from '../globals';
 import { endpointStrings } from '../providers/types';
 import { Options, Params, StrategyModes, Targets } from '../types/requestBody';
@@ -27,6 +28,7 @@ import { ConditionalRouter } from '../services/conditionalRouter';
 import { RouterError } from '../errors/RouterError';
 import { GatewayError } from '../errors/GatewayError';
 import { HookType } from '../middlewares/hooks/types';
+import { logger } from '../apm';
 
 // Services
 import { CacheResponseObject, CacheService } from './services/cacheService';
@@ -36,6 +38,7 @@ import { PreRequestValidatorService } from './services/preRequestValidatorServic
 import { ProviderContext } from './services/providerContext';
 import { RequestContext } from './services/requestContext';
 import { ResponseService } from './services/responseService';
+import { Readable } from 'stream';
 
 function constructRequestBody(
   requestContext: RequestContext,
@@ -51,17 +54,21 @@ function constructRequestBody(
     (requestContext.endpoint == 'proxy' &&
       requestContentType === CONTENT_TYPES.MULTIPART_FORM_DATA);
 
-  const isProxyAudio =
+  const isProxyAudioOrOctetStream =
     requestContext.endpoint == 'proxy' &&
-    requestContentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN);
+    (requestContentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN) ||
+      requestContentType?.startsWith(CONTENT_TYPES.APPLICATION_OCTET_STREAM));
 
   const reqBody = requestContext.transformedRequestBody;
 
   if (isMultiPartRequest) {
     body = reqBody as FormData;
-  } else if (requestContext.requestBody instanceof ReadableStream) {
-    body = requestContext.requestBody;
-  } else if (isProxyAudio) {
+  } else if (
+    requestContext.requestBody instanceof ReadableStream ||
+    requestContext.requestBody instanceof Readable
+  ) {
+    body = requestContext.requestBody as any;
+  } else if (isProxyAudioOrOctetStream) {
     body = reqBody as ArrayBuffer;
   } else if (requestContentType) {
     body = JSON.stringify(reqBody);
@@ -74,10 +81,10 @@ function constructRequestBody(
   return body;
 }
 
-function constructRequestHeaders(
+async function constructRequestHeaders(
   requestContext: RequestContext,
-  providerConfigMappedHeaders: any
-): Record<string, string> {
+  providerContext: ProviderContext
+): Promise<Record<string, string>> {
   const {
     method,
     forwardHeaders,
@@ -117,8 +124,12 @@ function constructRequestHeaders(
     }),
   };
 
-  let headers: Record<string, string> = {};
+  const providerConfigMappedHeaders = await providerContext.getHeaders(
+    requestContext,
+    fn === 'proxy' ? proxyHeaders : requestHeaders
+  );
 
+  let headers: Record<string, string> = {};
   Object.keys(providerConfigMappedHeaders).forEach((h: string) => {
     headers[h.toLowerCase()] = providerConfigMappedHeaders[h];
   });
@@ -172,23 +183,29 @@ export async function constructRequest(
   providerContext: ProviderContext,
   requestContext: RequestContext
 ): Promise<RequestInit> {
-  const providerMappedHeaders =
-    await providerContext.getHeaders(requestContext);
-
-  const headers = constructRequestHeaders(
+  const headers = await constructRequestHeaders(
     requestContext,
-    providerMappedHeaders
+    providerContext
   );
 
-  const fetchOptions: RequestInit = {
+  let fetchOptions: RequestInit = {
     method: requestContext.method,
     headers,
     ...(requestContext.endpoint === 'uploadFile' && { duplex: 'half' }),
   };
 
-  const body = constructRequestBody(requestContext, providerMappedHeaders);
+  const body = constructRequestBody(requestContext, headers);
   if (body) {
     fetchOptions.body = body;
+  }
+
+  const customOptions = providerContext.apiConfig?.getOptions?.();
+
+  if (customOptions) {
+    fetchOptions = {
+      ...fetchOptions,
+      ...customOptions,
+    };
   }
 
   return fetchOptions;
@@ -719,7 +736,7 @@ export async function tryTargetsRecursively(
         metadata = {};
       }
 
-      let params =
+      const params =
         request instanceof FormData ||
         request instanceof ReadableStream ||
         request instanceof ArrayBuffer
@@ -796,13 +813,14 @@ export async function tryTargetsRecursively(
             error instanceof GatewayError
               ? error.message
               : 'Something went wrong';
+          logger.error('Something went wrong', error);
           response = new Response(
             JSON.stringify({
               status: 'failure',
               message: errorMessage,
             }),
             {
-              status: 500,
+              status: error instanceof GatewayError ? error.status : 500,
               headers: {
                 'content-type': 'application/json',
                 // Add this header so that the fallback loop can be interrupted if its an exception.
@@ -862,7 +880,26 @@ export function constructConfigFromRequestHeaders(
     azureApiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
     azureEndpointName: requestHeaders[`x-${POWERED_BY}-azure-endpoint-name`],
     azureFoundryUrl: requestHeaders[`x-${POWERED_BY}-azure-foundry-url`],
-    azureExtraParams: requestHeaders[`x-${POWERED_BY}-azure-extra-params`],
+    azureExtraParameters:
+      requestHeaders[`x-${POWERED_BY}-azure-extra-parameters`],
+  };
+
+  const awsExtraConfig = {
+    awsS3Bucket: requestHeaders[`x-${POWERED_BY}-aws-s3-bucket`],
+    awsS3ObjectKey:
+      requestHeaders[`x-${POWERED_BY}-provider-file-name`] ||
+      requestHeaders[`x-${POWERED_BY}-aws-s3-object-key`],
+    awsBedrockModel:
+      requestHeaders[`x-${POWERED_BY}-provider-model`] ||
+      requestHeaders[`x-${POWERED_BY}-aws-bedrock-model`],
+    awsServerSideEncryption:
+      requestHeaders[`x-${POWERED_BY}-amz-server-side-encryption`],
+    awsServerSideEncryptionKMSKeyId:
+      requestHeaders[
+        `x-${POWERED_BY}-amz-server-side-encryption-aws-kms-key-id`
+      ],
+    // proxy related config.
+    awsService: requestHeaders[`x-${POWERED_BY}-aws-service`],
   };
 
   const awsConfig = {
@@ -873,19 +910,7 @@ export function constructConfigFromRequestHeaders(
     awsRoleArn: requestHeaders[`x-${POWERED_BY}-aws-role-arn`],
     awsAuthType: requestHeaders[`x-${POWERED_BY}-aws-auth-type`],
     awsExternalId: requestHeaders[`x-${POWERED_BY}-aws-external-id`],
-    awsS3Bucket: requestHeaders[`x-${POWERED_BY}-aws-s3-bucket`],
-    awsS3ObjectKey:
-      requestHeaders[`x-${POWERED_BY}-aws-s3-object-key`] ||
-      requestHeaders[`x-${POWERED_BY}-provider-file-name`],
-    awsBedrockModel:
-      requestHeaders[`x-${POWERED_BY}-aws-bedrock-model`] ||
-      requestHeaders[`x-${POWERED_BY}-provider-model`],
-    awsServerSideEncryption:
-      requestHeaders[`x-${POWERED_BY}-amz-server-side-encryption`],
-    awsServerSideEncryptionKMSKeyId:
-      requestHeaders[
-        `x-${POWERED_BY}-amz-server-side-encryption-aws-kms-key-id`
-      ],
+    ...awsExtraConfig,
   };
 
   const sagemakerConfig = {
@@ -927,17 +952,24 @@ export function constructConfigFromRequestHeaders(
     huggingfaceBaseUrl: requestHeaders[`x-${POWERED_BY}-huggingface-base-url`],
   };
 
-  const vertexConfig: Record<string, any> = {
-    vertexProjectId: requestHeaders[`x-${POWERED_BY}-vertex-project-id`],
-    vertexRegion: requestHeaders[`x-${POWERED_BY}-vertex-region`],
+  const vertexExtraConfig = {
     vertexStorageBucketName:
       requestHeaders[`x-${POWERED_BY}-vertex-storage-bucket-name`],
     filename: requestHeaders[`x-${POWERED_BY}-provider-file-name`],
     vertexModelName: requestHeaders[`x-${POWERED_BY}-provider-model`],
+    vertexBatchEndpoint:
+      requestHeaders[`x-${POWERED_BY}-provider-batch-endpoint`], // common header for all supported providers.
+  };
+
+  const vertexConfig: Record<string, any> = {
+    vertexProjectId: requestHeaders[`x-${POWERED_BY}-vertex-project-id`],
+    vertexRegion: requestHeaders[`x-${POWERED_BY}-vertex-region`],
+    ...vertexExtraConfig,
   };
 
   const fireworksConfig = {
     fireworksAccountId: requestHeaders[`x-${POWERED_BY}-fireworks-account-id`],
+    fireworksFileLength: requestHeaders[`x-${POWERED_BY}-file-upload-size`],
   };
 
   const anthropicConfig = {
@@ -1069,7 +1101,7 @@ export function constructConfigFromRequestHeaders(
         };
       }
     }
-    return convertKeysToCamelCase(parsedConfigJson, [
+    const convertedConfig = convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
       'params',
       'checks',
@@ -1080,8 +1112,18 @@ export function constructConfigFromRequestHeaders(
       'output_guardrails',
       'default_input_guardrails',
       'default_output_guardrails',
+      'virtualKeyDetails',
+      'integrationDetails',
       'cb_config',
     ]) as any;
+
+    return {
+      ...convertedConfig,
+      // extra provider Options for endpoints like `batches`, `files` and `finetunes`
+      ...(parsedConfigJson.provider === BEDROCK && awsExtraConfig),
+      ...(parsedConfigJson.provider === GOOGLE_VERTEX_AI && vertexExtraConfig),
+      ...(parsedConfigJson.provider === FIREWORKS_AI && fireworksConfig),
+    };
   }
 
   return {
@@ -1130,6 +1172,7 @@ export async function recursiveAfterRequestHookHandler(
   retryCount: number;
   createdAt: Date;
   originalResponseJson?: Record<string, any> | null;
+  executionTime?: number | null;
 }> {
   const {
     honoContext: c,
@@ -1142,7 +1185,7 @@ export async function recursiveAfterRequestHookHandler(
     retryConfig: retry,
   } = requestContext;
 
-  let response, retryCount, createdAt, retrySkipped;
+  let response, retryCount, createdAt, retrySkipped, executionTime;
 
   const requestHandler = providerContext.getRequestHandler(requestContext);
   const url = requestContext.requestURL;
@@ -1152,6 +1195,7 @@ export async function recursiveAfterRequestHookHandler(
     attempt: retryCount,
     createdAt,
     skip: retrySkipped,
+    executionTime,
   } = await retryRequest(
     url,
     options,
@@ -1162,6 +1206,11 @@ export async function recursiveAfterRequestHookHandler(
     retry.useRetryAfterHeader
   ));
 
+  c.set(
+    METRICS_KEYS.LLM_LATENCY,
+    executionTime + (c.get(METRICS_KEYS.LLM_LATENCY) ?? 0)
+  );
+
   // Check if sync hooks are available
   // This will be used to determine if we need to parse the response body or simply passthrough the response as is
   const areSyncHooksAvailable = hooksService.areSyncHooksAvailable;
@@ -1170,6 +1219,7 @@ export async function recursiveAfterRequestHookHandler(
     response: mappedResponse,
     responseJson: mappedResponseJson,
     originalResponseJson,
+    timeToLastByte,
   } = await responseHandler(
     response,
     isStreamingMode,
@@ -1181,6 +1231,12 @@ export async function recursiveAfterRequestHookHandler(
     strictOpenAiCompliance,
     c.req.url,
     areSyncHooksAvailable
+  );
+
+  c.set(
+    METRICS_KEYS.LLM_LAST_BYTE_DIFF_LATENCY,
+    (timeToLastByte || 0) +
+      (c.get(METRICS_KEYS.LLM_LAST_BYTE_DIFF_LATENCY) ?? 0)
   );
 
   const arhResponse = await afterRequestHookHandler(
@@ -1228,6 +1284,7 @@ export async function recursiveAfterRequestHookHandler(
     mappedResponse: arhResponse,
     retryCount: lastAttempt,
     createdAt,
+    executionTime,
     originalResponseJson,
   };
 }
@@ -1254,6 +1311,7 @@ export async function beforeRequestHookHandler(
     isTransformed = span.getContext().request.isTransformed;
 
     if (hooksResult.shouldDeny) {
+      const end = Date.now();
       return {
         response: new Response(
           JSON.stringify({
@@ -1275,6 +1333,7 @@ export async function beforeRequestHookHandler(
           }
         ),
         createdAt: start,
+        executionTime: end - start.getTime(),
         transformedBody: isTransformed ? span.getContext().request.json : null,
       };
     }

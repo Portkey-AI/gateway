@@ -75,6 +75,7 @@ export const retryRequest = async (
   attempt: number | undefined;
   createdAt: Date;
   skip: boolean;
+  executionTime: number;
 }> => {
   let lastResponse: Response | undefined;
   let lastAttempt: number | undefined;
@@ -214,6 +215,7 @@ export const retryRequest = async (
     response: lastResponse as Response,
     attempt: lastAttempt,
     createdAt: start,
+    executionTime: new Date().getTime() - start.getTime(),
     skip: retrySkipped,
   };
 };

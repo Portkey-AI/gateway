@@ -48,7 +48,10 @@ export async function responseHandler(
   response: Response;
   responseJson: Record<string, any> | null;
   originalResponseJson?: Record<string, any> | null;
+  timeToLastByte?: number | null;
 }> {
+  const startTime = Date.now();
+
   let responseTransformerFunction: Function | undefined;
   const responseContentType = response.headers?.get('content-type');
   const isSuccessStatusCode = [200, 246].includes(response.status);
@@ -140,7 +143,9 @@ export async function responseHandler(
 
   if (
     responseContentType?.startsWith(CONTENT_TYPES.PLAIN_TEXT) ||
-    responseContentType?.startsWith(CONTENT_TYPES.HTML)
+    responseContentType?.startsWith(CONTENT_TYPES.HTML) ||
+    responseContentType?.startsWith(CONTENT_TYPES.XML) ||
+    responseContentType?.toLowerCase()?.includes('xml')
   ) {
     const textResponse = await handleTextResponse(
       response,
@@ -150,6 +155,13 @@ export async function responseHandler(
   }
 
   if (!responseContentType && response.status === 204) {
+    return {
+      response: new Response(response.body, response),
+      responseJson: null,
+    };
+  }
+
+  if (!responseContentType) {
     return {
       response: new Response(response.body, response),
       responseJson: null,
@@ -169,6 +181,9 @@ export async function responseHandler(
     response: nonStreamingResponse.response,
     responseJson: nonStreamingResponse.json,
     originalResponseJson: nonStreamingResponse.originalResponseBodyJson,
+    timeToLastByte: nonStreamingResponse.timeToLastByte
+      ? nonStreamingResponse.timeToLastByte - startTime
+      : null,
   };
 }
 
