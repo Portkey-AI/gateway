@@ -297,7 +297,9 @@ export class RequestContext {
   addMcpTools(mcpTools: LLMFunction[]) {
     if (mcpTools.length > 0) {
       let newParams = { ...this.params };
+      // Remove any existing tool with type `mcp`
       newParams.tools = [...(this.params.tools || []), ...mcpTools];
+      newParams.tools = newParams.tools?.filter((tool) => tool.type !== 'mcp');
       this.params = newParams;
     }
   }

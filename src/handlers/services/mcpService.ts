@@ -331,7 +331,7 @@ class MinimalMCPClient {
 
           // Check if aborted
           if (this.abortController?.signal.aborted) {
-            console.log('SSE stream processing aborted');
+            // console.log('SSE stream processing aborted');
             break;
           }
 
@@ -708,7 +708,7 @@ class MinimalMCPClient {
 
     // For SSE connections, we need to abort any ongoing fetch operations
     if (this.isSSE && this.abortController) {
-      console.log('Aborting SSE connection...');
+      // console.log('Aborting SSE connection...');
       this.abortController.abort();
     }
 
