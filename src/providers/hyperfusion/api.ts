@@ -9,7 +9,7 @@ const HyperfusionAPIConfig: ProviderAPIConfig = {
     }
     
     const headersObj: Record<string, string> = {
-      Authorization: `${providerOptions.apiKey}`,
+      Authorization: `Bearer ${providerOptions.apiKey}`,
     };
 
     return headersObj;
