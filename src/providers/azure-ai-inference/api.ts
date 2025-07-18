@@ -163,6 +163,7 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
       case 'createSpeech':
       case 'createTranscription':
       case 'createTranslation':
+      case 'uploadFile':
       case 'cancelBatch':
       case 'createBatch':
       case 'getBatchOutput':

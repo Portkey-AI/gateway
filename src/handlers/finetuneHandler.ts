@@ -3,6 +3,7 @@ import {
   constructConfigFromRequestHeaders,
   tryTargetsRecursively,
 } from './handlerUtils';
+import { logger } from '../apm';
 
 const getEndpointString = (c: Context) => {
   const jobId = c.req.param('jobId');
@@ -50,7 +51,7 @@ async function finetuneHandler(c: Context) {
 
     return tryTargetsResponse;
   } catch (err: any) {
-    console.error('finetuneHandler error: ', err);
+    logger.error('finetuneHandler error: ', err);
     return new Response(
       JSON.stringify({
         status: 'failure',

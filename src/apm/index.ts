@@ -1,5 +1,6 @@
 export const logger = {
-  error: (message: string, error: any) => {
+  error: (...args: any[]) => {
     // Placeholder for now.
+    console.error(...args);
   },
 };

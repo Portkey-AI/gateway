@@ -4,6 +4,7 @@ import {
   tryTargetsRecursively,
 } from './handlerUtils';
 import { endpointStrings } from '../providers/types';
+import { logger } from '../apm';
 
 function filesHandler(
   endpoint: endpointStrings,
@@ -29,7 +30,7 @@ function filesHandler(
 
       return tryTargetsResponse;
     } catch (err: any) {
-      console.error('filesHandler error: ', err);
+      logger.error('filesHandler error: ', err);
       return new Response(
         JSON.stringify({
           status: 'failure',

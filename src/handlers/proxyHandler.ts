@@ -4,6 +4,7 @@ import {
   constructConfigFromRequestHeaders,
   tryTargetsRecursively,
 } from './handlerUtils';
+import { logger } from '../apm';
 import { RouterError } from '../errors/RouterError';
 
 async function getRequestData(request: Request, contentType: string) {
@@ -16,7 +17,10 @@ async function getRequestData(request: Request, contentType: string) {
     }
   } else if (contentType == CONTENT_TYPES.MULTIPART_FORM_DATA) {
     finalRequest = await request.formData();
-  } else if (contentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)) {
+  } else if (
+    contentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN) ||
+    contentType?.startsWith(CONTENT_TYPES.APPLICATION_OCTET_STREAM)
+  ) {
     finalRequest = await request.arrayBuffer();
   }
 
@@ -25,7 +29,7 @@ async function getRequestData(request: Request, contentType: string) {
 
 export async function proxyHandler(c: Context): Promise<Response> {
   try {
-    let requestHeaders = Object.fromEntries(c.req.raw.headers);
+    const requestHeaders = Object.fromEntries(c.req.raw.headers);
     const requestContentType = requestHeaders['content-type']?.split(';')[0];
 
     const request = await getRequestData(c.req.raw, requestContentType);
@@ -44,7 +48,7 @@ export async function proxyHandler(c: Context): Promise<Response> {
 
     return tryTargetsResponse;
   } catch (err: any) {
-    console.error('proxyHandler error: ', err);
+    logger.error('proxyHandler error: ', err);
     let statusCode = 500;
     let errorMessage = `Proxy error: ${err.message}`;
 

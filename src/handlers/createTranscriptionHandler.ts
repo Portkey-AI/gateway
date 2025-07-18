@@ -1,3 +1,5 @@
+import { logger } from '../apm';
+import { RouterError } from '../errors/RouterError';
 import {
   constructConfigFromRequestHeaders,
   tryTargetsRecursively,
@@ -16,8 +18,8 @@ export async function createTranscriptionHandler(
   c: Context
 ): Promise<Response> {
   try {
-    let request = await c.req.raw.formData();
-    let requestHeaders = Object.fromEntries(c.req.raw.headers);
+    const request = await c.req.raw.formData();
+    const requestHeaders = Object.fromEntries(c.req.raw.headers);
     const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
     const tryTargetsResponse = await tryTargetsRecursively(
       c,
@@ -31,14 +33,21 @@ export async function createTranscriptionHandler(
 
     return tryTargetsResponse;
   } catch (err: any) {
-    console.error('createTranscriptionHandler error: ', err);
+    logger.error('createTranscriptionHandler error: ', err);
+    let statusCode = 500;
+    let errorMessage = 'Something went wrong';
+
+    if (err instanceof RouterError) {
+      statusCode = 400;
+      errorMessage = err.message;
+    }
     return new Response(
       JSON.stringify({
         status: 'failure',
-        message: 'Something went wrong',
+        message: errorMessage,
       }),
       {
-        status: 500,
+        status: statusCode,
         headers: {
           'content-type': 'application/json',
         },

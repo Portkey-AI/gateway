@@ -4,12 +4,13 @@ import {
   tryTargetsRecursively,
 } from './handlerUtils';
 import { endpointStrings } from '../providers/types';
+import { logger } from '../apm';
 
 function batchesHandler(endpoint: endpointStrings, method: 'POST' | 'GET') {
   async function handler(c: Context): Promise<Response> {
     try {
-      let requestHeaders = Object.fromEntries(c.req.raw.headers);
-      let request = endpoint === 'createBatch' ? await c.req.json() : {};
+      const requestHeaders = Object.fromEntries(c.req.raw.headers);
+      const request = endpoint === 'createBatch' ? await c.req.json() : {};
       const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
       const tryTargetsResponse = await tryTargetsRecursively(
         c,
@@ -23,7 +24,7 @@ function batchesHandler(endpoint: endpointStrings, method: 'POST' | 'GET') {
 
       return tryTargetsResponse;
     } catch (err: any) {
-      console.error('batchesHandler error: ', err);
+      logger.error('batchesHandler error: ', err);
       return new Response(
         JSON.stringify({
           status: 'failure',

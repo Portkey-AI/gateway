@@ -4,6 +4,7 @@ import {
   tryTargetsRecursively,
 } from './handlerUtils';
 import { endpointStrings } from '../providers/types';
+import { logger } from '../apm';
 
 function modelResponsesHandler(
   endpoint: endpointStrings,
@@ -11,8 +12,8 @@ function modelResponsesHandler(
 ) {
   async function handler(c: Context): Promise<Response> {
     try {
-      let requestHeaders = Object.fromEntries(c.req.raw.headers);
-      let request = method === 'POST' ? await c.req.json() : {};
+      const requestHeaders = Object.fromEntries(c.req.raw.headers);
+      const request = method === 'POST' ? await c.req.json() : {};
       const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
       const tryTargetsResponse = await tryTargetsRecursively(
         c,
@@ -26,7 +27,7 @@ function modelResponsesHandler(
 
       return tryTargetsResponse;
     } catch (err: any) {
-      console.error('modelResponsesHandler error: ', err);
+      logger.error('modelResponsesHandler error: ', err);
       return new Response(
         JSON.stringify({
           status: 'failure',

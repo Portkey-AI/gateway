@@ -257,7 +257,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
       transform: (params: Params) => {
         let messages: AnthropicMessage[] = [];
         // Transform the chat messages into a simple prompt
-        if (!!params.messages) {
+        if (params.messages) {
           params.messages.forEach((msg: Message & PromptCache) => {
             if (SYSTEM_MESSAGE_ROLES.includes(msg.role)) return;
 
@@ -309,7 +309,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
       transform: (params: Params) => {
         let systemMessages: AnthropicMessageContentItem[] = [];
         // Transform the chat messages into a simple prompt
-        if (!!params.messages) {
+        if (params.messages) {
           params.messages.forEach((msg: Message & PromptCache) => {
             if (
               SYSTEM_MESSAGE_ROLES.includes(msg.role) &&
@@ -549,7 +549,7 @@ export const AnthropicChatCompleteResponseTransform: (
       output_tokens = 0,
       cache_creation_input_tokens,
       cache_read_input_tokens,
-    } = response?.usage;
+    } = response?.usage ?? {};
 
     const shouldSendCacheUsage =
       cache_creation_input_tokens || cache_read_input_tokens;
