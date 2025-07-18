@@ -197,6 +197,7 @@ export interface Targets {
 
   defaultInputGuardrails?: HookObject[];
   defaultOutputGuardrails?: HookObject[];
+  originalIndex?: number;
 }
 
 /**
@@ -358,12 +359,8 @@ export interface Tool extends PromptCache {
   type: Exclude<string, 'mcp'>;
   /** A description of the function. */
   function: Function;
-  computer?: {
-    name: string;
-    display_width_px: number;
-    display_height_px: number;
-    display_number: number;
-  };
+  // this is used to support tools like computer, web_search, etc.
+  [key: string]: any;
 }
 
 /**

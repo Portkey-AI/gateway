@@ -10,7 +10,11 @@ import { GROQ } from '../../globals';
 
 const GroqConfig: ProviderConfigs = {
   api: GroqAPIConfig,
-  chatComplete: chatCompleteParams(['logprobs', 'logits_bias', 'top_logprobs']),
+  chatComplete: chatCompleteParams(
+    ['logprobs', 'logits_bias', 'top_logprobs'],
+    undefined,
+    { service_tier: { param: 'service_tier', required: false } }
+  ),
   createTranscription: {},
   createTranslation: {},
   createSpeech: createSpeechParams([]),
