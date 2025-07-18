@@ -27,13 +27,15 @@ export async function getAccessTokenFromEntraId(
 
     if (!response.ok) {
       const errorMessage = await response.text();
-      console.log({ message: `Error from Entra ${errorMessage}` });
+      console.error('getAccessTokenFromEntraId error: ', {
+        message: `Error from Entra ${errorMessage}`,
+      });
       return undefined;
     }
     const data: { access_token: string } = await response.json();
     return data.access_token;
   } catch (error) {
-    console.log(error);
+    console.error('getAccessTokenFromEntraId error: ', error);
   }
 }
 
@@ -53,13 +55,15 @@ export async function getAzureManagedIdentityToken(
     );
     if (!response.ok) {
       const errorMessage = await response.text();
-      console.log({ message: `Error from Managed ${errorMessage}` });
+      console.error('getAzureManagedIdentityToken error: ', {
+        message: `Error from Managed ${errorMessage}`,
+      });
       return undefined;
     }
     const data: { access_token: string } = await response.json();
     return data.access_token;
   } catch (error) {
-    console.log({ error });
+    console.error('getAzureManagedIdentityToken error: ', error);
   }
 }
 
