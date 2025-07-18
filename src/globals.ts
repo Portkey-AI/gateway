@@ -97,6 +97,7 @@ export const NSCALE: string = 'nscale';
 export const HYPERBOLIC: string = 'hyperbolic';
 export const FEATHERLESS_AI: string = 'featherless-ai';
 export const KRUTRIM: string = 'krutrim';
+export const HYPERFUSION: string = 'hyperfusion';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -159,6 +160,7 @@ export const VALID_PROVIDERS = [
   HYPERBOLIC,
   FEATHERLESS_AI,
   KRUTRIM,
+  HYPERFUSION,
 ];
 
 export const CONTENT_TYPES = {

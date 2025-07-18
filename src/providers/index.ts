@@ -61,6 +61,7 @@ import NscaleConfig from './nscale';
 import HyperbolicConfig from './hyperbolic';
 import { FeatherlessAIConfig } from './featherless-ai';
 import KrutrimConfig from './krutrim';
+import HyperfusionConfig from './hyperfusion';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -122,6 +123,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   hyperbolic: HyperbolicConfig,
   'featherless-ai': FeatherlessAIConfig,
   krutrim: KrutrimConfig,
+  hyperfusion: HyperfusionConfig,
 };
 
 export default Providers;
