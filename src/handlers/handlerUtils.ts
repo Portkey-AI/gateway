@@ -1358,13 +1358,12 @@ export async function beforeRequestHookHandler(
   };
 }
 
-// handlerUtils.ts
 async function handleMcpToolCalls(
   requestContext: RequestContext,
   responseJson: any,
   mcpService: McpService
 ): Promise<{ success: boolean; error?: string }> {
-  let logsService = new LogsService(requestContext.honoContext);
+  const logsService = new LogsService(requestContext.honoContext);
 
   try {
     const toolCalls = responseJson.choices[0].message.tool_calls;
@@ -1373,20 +1372,21 @@ async function handleMcpToolCalls(
     // Add assistant's response with tool calls to conversation
     conversation.push(responseJson.choices[0].message);
 
-    // Execute each tool call and add results to conversation
-    for (const toolCall of toolCalls) {
+    // Execute all tool calls in parallel for better performance
+    const toolCallPromises = toolCalls.map(async (toolCall: any) => {
       const start = new Date().getTime();
+
       try {
         const toolResult = await mcpService.executeTool(
           toolCall.function.name,
           JSON.parse(toolCall.function.arguments)
         );
 
-        conversation.push({
+        const toolResponse = {
           role: 'tool',
           tool_call_id: toolCall.id,
           content: JSON.stringify(toolResult),
-        });
+        };
 
         const toolCallSpan = logsService.createExecuteToolSpan(
           toolCall,
@@ -1397,20 +1397,22 @@ async function handleMcpToolCalls(
         );
 
         logsService.addRequestLog(toolCallSpan);
+
+        return toolResponse;
       } catch (toolError: any) {
         console.error(
           `MCP tool call failed for ${toolCall.function.name}:`,
           toolError
         );
-        // Add error message as tool response
-        conversation.push({
+
+        const errorResponse = {
           role: 'tool',
           tool_call_id: toolCall.id,
           content: JSON.stringify({
             error: 'Tool execution failed',
             details: toolError.message,
           }),
-        });
+        };
 
         const toolCallSpan = logsService.createExecuteToolSpan(
           toolCall,
@@ -1421,8 +1423,16 @@ async function handleMcpToolCalls(
         );
 
         logsService.addRequestLog(toolCallSpan);
+
+        return errorResponse;
       }
-    }
+    });
+
+    // Wait for all tool calls to complete
+    const toolResponses = await Promise.all(toolCallPromises);
+
+    // Add all tool responses to conversation
+    conversation.push(...toolResponses);
 
     // Update the existing context
     requestContext.updateMessages(conversation);
