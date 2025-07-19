@@ -171,7 +171,54 @@ export const CONTENT_TYPES = {
   GENERIC_AUDIO_PATTERN: 'audio',
   PLAIN_TEXT: 'text/plain',
   HTML: 'text/html',
+  XML: 'application/xml',
   GENERIC_IMAGE_PATTERN: 'image/',
+};
+
+export const CACHE_PREFIXES = {
+  API_KEY: 'API_KEY_',
+  API_KEY_ID: 'API_KEY_ID_',
+};
+
+export const AUTH_SCOPES = {
+  LOGS: {
+    READ: 'logs.read',
+    WRITE: 'logs.write',
+    EXPORT: 'logs.export',
+  },
+  COMPLETIONS: {
+    READ: 'completions.read',
+    WRITE: 'completions.write',
+  },
+  FEEDBACKS: {
+    READ: 'feedbacks.read',
+    WRITE: 'feedbacks.write',
+  },
+  PROMPTS: {
+    RENDER: 'prompts.render',
+  },
+};
+
+export const RATE_LIMIT_UNIT_TO_WINDOW_MAPPING: Record<string, number> = {
+  rpd: 86400000,
+  rph: 3600000,
+  rpm: 60000,
+  rps: 1000,
+};
+
+export const METRICS_KEYS = {
+  LLM_LATENCY: 'llmLatency',
+  LLM_LAST_BYTE_DIFF_LATENCY: 'llmLastByteDiffLatency',
+  AUTH_N_MIDDLEWARE_START: 'authNMiddlewareStart',
+  AUTH_N_MIDDLEWARE_END: 'authNMiddlewareEnd',
+  API_KEY_RATE_LIMIT_CHECK_START: 'apiKeyRateLimitCheckStart',
+  API_KEY_RATE_LIMIT_CHECK_END: 'apiKeyRateLimitCheckEnd',
+  PORTKEY_MIDDLEWARE_PRE_REQUEST_START: 'portkeyMiddlewarePreRequestStart',
+  PORTKEY_MIDDLEWARE_PRE_REQUEST_END: 'portkeyMiddlewarePreRequestEnd',
+  PORTKEY_MIDDLEWARE_POST_REQUEST_START: 'portkeyMiddlewarePostRequestStart',
+  PORTKEY_MIDDLEWARE_POST_REQUEST_END: 'portkeyMiddlewarePostRequestEnd',
+  LLM_CACHE_GET_START: 'llmCacheGetStart',
+  LLM_CACHE_GET_END: 'llmCacheGetEnd',
 };
 
 export const MULTIPART_FORM_DATA_ENDPOINTS: endpointStrings[] = [
@@ -229,3 +276,9 @@ export const documentMimeTypes = [
   fileExtensionMimeTypeMap.md,
   fileExtensionMimeTypeMap.txt,
 ];
+
+export enum BatchEndpoints {
+  CHAT_COMPLETIONS = '/v1/chat/completions',
+  COMPLETIONS = '/v1/completions',
+  EMBEDDINGS = '/v1/embeddings',
+}

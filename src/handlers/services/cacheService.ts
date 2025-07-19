@@ -5,12 +5,14 @@ import { HooksService } from './hooksService';
 import { endpointStrings } from '../../providers/types';
 import { env } from 'hono/adapter';
 import { RequestContext } from './requestContext';
+import { METRICS_KEYS } from '../../globals';
 
 export interface CacheResponseObject {
   cacheResponse: Response | undefined;
   cacheStatus: string;
   cacheKey: string | undefined;
   createdAt: Date;
+  executionTime?: number;
 }
 
 export class CacheService {
@@ -61,7 +63,8 @@ export class CacheService {
     cacheStatus: string,
     cacheKey: string,
     createdAt: Date,
-    responseStatus: number
+    responseStatus: number,
+    executionTime?: number
   ): CacheResponseObject {
     return {
       cacheResponse: new Response(cacheResponse, {
@@ -71,6 +74,7 @@ export class CacheService {
       cacheStatus,
       cacheKey,
       createdAt,
+      executionTime,
     };
   }
 
@@ -89,16 +93,20 @@ export class CacheService {
       return this.noCacheObject;
     }
 
+    this.honoContext.set(METRICS_KEYS.LLM_CACHE_GET_START, Date.now());
+
     const [cacheResponse, cacheStatus, cacheKey] =
       await this.getFromCacheFunction(
         env(context.honoContext),
         { ...context.requestHeaders, ...headers },
         context.transformedRequestBody,
-        context.endpoint,
+        context.requestURL,
         this.getCacheIdentifier,
         mode,
         maxAge
       );
+
+    this.honoContext.set(METRICS_KEYS.LLM_CACHE_GET_END, Date.now());
 
     if (!cacheResponse) {
       return {
@@ -130,7 +138,8 @@ export class CacheService {
       cacheStatus,
       cacheKey,
       startTime,
-      responseStatus
+      responseStatus,
+      Date.now() - startTime.getTime()
     );
   }
 }

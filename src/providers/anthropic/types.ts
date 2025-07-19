@@ -1,4 +1,5 @@
 export type AnthropicStreamState = {
+  containsChainOfThoughtMessage?: boolean;
   toolIndex?: number;
   usage?: {
     prompt_tokens?: number;

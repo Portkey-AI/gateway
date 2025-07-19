@@ -20,7 +20,8 @@ export class PreRequestValidatorService {
       this.honoContext,
       this.requestContext.providerOption,
       this.requestContext.requestHeaders,
-      this.requestContext.params
+      this.requestContext.params,
+      this.requestContext.metadata
     );
   }
 }
