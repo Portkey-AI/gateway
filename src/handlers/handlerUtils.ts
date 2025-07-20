@@ -1228,6 +1228,11 @@ export async function recursiveAfterRequestHookHandler(
       //   request: { json: requestContext.params },
       // });
 
+      logObject
+        .updateRequestContext(requestContext, options.headers)
+        .addResponse(mappedResponse, mappedResponseJson)
+        .log();
+
       // Construct the base object for the request
       const fetchOptions: RequestInit = await constructRequest(
         providerContext,
@@ -1358,6 +1363,16 @@ export async function beforeRequestHookHandler(
   };
 }
 
+/**
+ * Handles MCP tool calls for a given request context and response JSON.
+ * This function processes tool calls from the response and executes them using the MCP service.
+ * It updates the request context with the tool responses and transforms the request to the provider's format.
+ *
+ * @param requestContext - The request context containing the conversation and parameters
+ * @param responseJson - The response JSON containing tool calls
+ * @param mcpService - The MCP service for executing tool calls
+ * @returns { success: boolean; error?: string } - The result of the MCP tool calls
+ */
 async function handleMcpToolCalls(
   requestContext: RequestContext,
   responseJson: any,
