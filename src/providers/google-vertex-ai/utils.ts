@@ -9,6 +9,7 @@ import { GOOGLE_VERTEX_AI, fileExtensionMimeTypeMap } from '../../globals';
 import { ErrorResponse, FinetuneRequest, Logprobs } from '../types';
 import { Context } from 'hono';
 import { env } from 'hono/adapter';
+import { JsonSchema } from '../../types/requestBody';
 
 /**
  * Encodes an object as a Base64 URL-encoded string.
@@ -209,7 +210,11 @@ export const derefer = (spec: Record<string, any>, defs = null) => {
     if (key === '$defs') {
       continue;
     }
-    if (typeof object === 'string' || Array.isArray(object)) {
+    if (
+      object === null ||
+      typeof object !== 'object' ||
+      Array.isArray(object)
+    ) {
       continue;
     }
     const ref = object?.['$ref'];
@@ -226,8 +231,63 @@ export const derefer = (spec: Record<string, any>, defs = null) => {
   return original;
 };
 
+export const transformGeminiToolParameters = (
+  parameters: JsonSchema
+): JsonSchema => {
+  if (
+    !parameters ||
+    typeof parameters !== 'object' ||
+    Array.isArray(parameters)
+  ) {
+    return parameters;
+  }
+
+  let schema: JsonSchema = parameters;
+  if ('$defs' in schema && typeof schema.$defs === 'object') {
+    schema = derefer(schema);
+    delete schema.$defs;
+  }
+
+  const transformNode = (node: JsonSchema): JsonSchema => {
+    if (Array.isArray(node)) {
+      return node.map(transformNode);
+    }
+    if (!node || typeof node !== 'object') return node;
+
+    const transformed: JsonSchema = {};
+
+    for (const [key, value] of Object.entries(node)) {
+      if (key === 'enum' && Array.isArray(value)) {
+        transformed.enum = value;
+        transformed.format = 'enum';
+      } else if (
+        key === 'anyOf' &&
+        Array.isArray(value) &&
+        value.length === 2
+      ) {
+        // Convert anyOf with null type to nullable which is a supported param
+        const nonNullItems = value.filter(
+          (item) => !(typeof item === 'object' && item?.type === 'null')
+        );
+        if (nonNullItems.length === 1) {
+          Object.assign(transformed, transformNode(nonNullItems[0]));
+          transformed.nullable = true;
+        } else {
+          // leave true unions as-is which is not supported by Google, let Google raise an error
+          transformed.anyOf = transformNode(value);
+        }
+      } else {
+        transformed[key] = transformNode(value);
+      }
+    }
+    return transformed;
+  };
+
+  return transformNode(schema);
+};
+
 // Vertex AI does not support additionalProperties in JSON Schema
-// https://cloud.google.com/vertex-ai/docs/reference/rest/v1/Schema
+// https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/function-calling#schema
 export const recursivelyDeleteUnsupportedParameters = (obj: any) => {
   if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) return;
   delete obj.additional_properties;
