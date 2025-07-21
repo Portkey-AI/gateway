@@ -52,8 +52,10 @@ export class McpService {
     const toolName = functionName.split('_').slice(1).join('_');
     const client = this.mcpConnections.get(serverName);
     // console.log('Current MCP connections are', this.mcpConnections);
-    if (!client) {
-      throw new Error(`MCP server ${serverName} not found`);
+    if (!client || !this.mcpTools.has(serverName)) {
+      throw new Error(
+        `MCP_SERVER_TOOL_NOT_FOUND: MCP server ${serverName} not found or tool name not loaded in the mcp server`
+      );
     }
     // console.log('Executing tool', toolName, toolArgs);
     return await client.executeTool(toolName, toolArgs);

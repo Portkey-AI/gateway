@@ -1415,6 +1415,10 @@ async function handleMcpToolCalls(
 
         return toolResponse;
       } catch (toolError: any) {
+        if (toolError.message.includes('MCP_SERVER_TOOL_NOT_FOUND')) {
+          throw new Error('MCP_SERVER_TOOL_NOT_FOUND');
+        }
+
         console.error(
           `MCP tool call failed for ${toolCall.function.name}:`,
           toolError
@@ -1455,7 +1459,7 @@ async function handleMcpToolCalls(
 
     return { success: true };
   } catch (error: any) {
-    console.error('Error in handleMcpToolCalls:', error);
+    console.warn('Error in handleMcpToolCalls:', error);
     return { success: false, error: error.message };
   }
 }
