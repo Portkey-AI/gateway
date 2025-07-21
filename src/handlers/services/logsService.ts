@@ -334,13 +334,13 @@ export class LogObjectBuilder {
       throw new Error('Cannot log from a committed log object');
     }
 
-    const result = this.isComplete(this.logData);
-    if (!result) {
-      const parsed = LogObjectSchema.safeParse(this.logData);
-      if (!parsed.success) {
-        console.error('Log data is not complete', parsed.error.issues);
-      }
-    }
+    // const result = this.isComplete(this.logData);
+    // if (!result) {
+    //   const parsed = LogObjectSchema.safeParse(this.logData);
+    //   if (!parsed.success) {
+    //     console.error('Log data is not complete', parsed.error.issues);
+    //   }
+    // }
 
     // Update execution time if we have a createdAt
     if (this.logData.createdAt && this.logData.createdAt instanceof Date) {
