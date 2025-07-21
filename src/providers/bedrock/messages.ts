@@ -9,7 +9,12 @@ import {
   ToolUseBlockParam,
 } from '../../types/MessagesRequest';
 import { ContentBlock, MessagesResponse } from '../../types/messagesResponse';
-import { RawContentBlockDeltaEvent } from '../../types/MessagesStreamResponse';
+import {
+  RawContentBlockDeltaEvent,
+  RawContentBlockStartEvent,
+  RawContentBlockStopEvent,
+} from '../../types/MessagesStreamResponse';
+import { Params } from '../../types/requestBody';
 import {
   ANTHROPIC_CONTENT_BLOCK_START_EVENT,
   ANTHROPIC_CONTENT_BLOCK_STOP_EVENT,
@@ -17,6 +22,10 @@ import {
   ANTHROPIC_MESSAGE_START_EVENT,
   ANTHROPIC_MESSAGE_STOP_EVENT,
 } from '../anthropic-base/constants';
+import {
+  AnthropicMessageDeltaEvent,
+  AnthropicMessageStartEvent,
+} from '../anthropic-base/types';
 import { ErrorResponse, ProviderConfig } from '../types';
 import {
   generateInvalidProviderResponseError,
@@ -525,12 +534,16 @@ export const BedrockConverseMessagesStreamChunkTransform = (
   ) {
     let returnChunk = '';
     if (streamState.currentContentBlockIndex !== -1) {
-      const previousBlockStopEvent = { ...ANTHROPIC_CONTENT_BLOCK_STOP_EVENT };
+      const previousBlockStopEvent: RawContentBlockStopEvent = JSON.parse(
+        ANTHROPIC_CONTENT_BLOCK_STOP_EVENT
+      );
       previousBlockStopEvent.index = parsedChunk.contentBlockIndex - 1;
       returnChunk += `event: content_block_stop\ndata: ${JSON.stringify(previousBlockStopEvent)}\n\n`;
     }
     streamState.currentContentBlockIndex = parsedChunk.contentBlockIndex;
-    const contentBlockStartEvent = { ...ANTHROPIC_CONTENT_BLOCK_START_EVENT };
+    const contentBlockStartEvent: RawContentBlockStartEvent = JSON.parse(
+      ANTHROPIC_CONTENT_BLOCK_START_EVENT
+    );
     contentBlockStartEvent.index = parsedChunk.contentBlockIndex;
     returnChunk += `event: content_block_start\ndata: ${JSON.stringify(contentBlockStartEvent)}\n\n`;
     const contentBlockDeltaEvent = transformContentBlock(parsedChunk);
@@ -548,7 +561,9 @@ export const BedrockConverseMessagesStreamChunkTransform = (
   }
   // message delta and message stop events
   if (parsedChunk.usage) {
-    const messageDeltaEvent = { ...ANTHROPIC_MESSAGE_DELTA_EVENT };
+    const messageDeltaEvent: AnthropicMessageDeltaEvent = JSON.parse(
+      ANTHROPIC_MESSAGE_DELTA_EVENT
+    );
     messageDeltaEvent.usage.input_tokens = parsedChunk.usage.inputTokens;
     messageDeltaEvent.usage.output_tokens = parsedChunk.usage.outputTokens;
     messageDeltaEvent.usage.cache_read_input_tokens =
@@ -558,7 +573,9 @@ export const BedrockConverseMessagesStreamChunkTransform = (
     messageDeltaEvent.delta.stop_reason = transformToAnthropicStopReason(
       streamState.stopReason
     );
-    const contentBlockStopEvent = { ...ANTHROPIC_CONTENT_BLOCK_STOP_EVENT };
+    const contentBlockStopEvent: RawContentBlockStopEvent = JSON.parse(
+      ANTHROPIC_CONTENT_BLOCK_STOP_EVENT
+    );
     contentBlockStopEvent.index = streamState.currentContentBlockIndex;
     let returnChunk = `event: content_block_stop\ndata: ${JSON.stringify(contentBlockStopEvent)}\n\n`;
     returnChunk += `event: message_delta\ndata: ${JSON.stringify(messageDeltaEvent)}\n\n`;
@@ -567,8 +584,10 @@ export const BedrockConverseMessagesStreamChunkTransform = (
   }
 };
 
-function getMessageStartEvent(fallbackId: string, gatewayRequest: Params<any>) {
-  const messageStartEvent = { ...ANTHROPIC_MESSAGE_START_EVENT };
+function getMessageStartEvent(fallbackId: string, gatewayRequest: Params) {
+  const messageStartEvent: AnthropicMessageStartEvent = JSON.parse(
+    ANTHROPIC_MESSAGE_START_EVENT
+  );
   messageStartEvent.message.id = fallbackId;
   messageStartEvent.message.model = gatewayRequest.model as string;
   // bedrock does not send usage in the beginning of the stream
