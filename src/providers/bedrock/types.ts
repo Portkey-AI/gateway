@@ -201,46 +201,6 @@ export interface BedrockChatCompleteStreamChunk {
   };
 }
 
-// export interface BedrockConverseRequestBody {
-//   additionalModelRequestFields?: Record<string, any>;
-//   additionalModelResponseFieldPaths?: string[];
-//   guardrailConfig?: {
-//     guardrailIdentifier: string;
-//     guardrailVersion: string;
-//     trace?: string;
-//   };
-//   inferenceConfig?: {
-//     maxTokens: number;
-//     stopSequences?: string[];
-//     temperature?: number;
-//     topP?: number;
-//   };
-//   messages: Array<{
-//     content: Array<ContentBlock>;
-//     role: string;
-//   }>;
-//   performanceConfig?: {
-//     latency: string;
-//   };
-//   promptVariables?: Record<string, any>;
-//   requestMetadata?: Record<string, string>;
-//   system?: Array<any>;
-//   toolConfig?: {
-//     toolChoice?: any;
-//     tools?: Array<any>;
-//   };
-// }
-
-// interface ContentBlock {
-//   cachePoint? : cachePointBlock;
-//   document: ;
-//   guardContent: ;
-//   image
-// }
-
-// interface cachePointBlock {
-//   type: string;
-// }
 export enum BEDROCK_STOP_REASON {
   end_turn = 'end_turn',
   tool_use = 'tool_use',
