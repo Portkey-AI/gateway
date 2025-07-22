@@ -1213,6 +1213,7 @@ export async function recursiveAfterRequestHookHandler(
     logObject
       .updateRequestContext(requestContext, options.headers)
       .addResponse(arhResponse, originalResponseJson)
+      .addExecutionTime(createdAt)
       .log();
 
     return recursiveAfterRequestHookHandler(
