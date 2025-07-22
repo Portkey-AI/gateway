@@ -25,7 +25,10 @@ export class ProviderContext {
     return this.providerConfig.api;
   }
 
-  async getHeaders(context: RequestContext): Promise<Record<string, any>> {
+  async getHeaders(
+    context: RequestContext,
+    requestHeaders: Record<string, string>
+  ): Promise<Record<string, any>> {
     return await this.apiConfig?.headers({
       c: context.honoContext,
       providerOptions: context.providerOption,
@@ -33,6 +36,7 @@ export class ProviderContext {
       transformedRequestBody: context.transformedRequestBody,
       transformedRequestUrl: context.requestURL,
       gatewayRequestBody: context.params,
+      requestHeaders,
     });
   }
 

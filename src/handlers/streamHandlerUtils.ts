@@ -309,7 +309,7 @@ export function createLineSplitter(): TransformStream {
       leftover = lines.pop() || '';
       for (const line of lines) {
         if (line.trim()) {
-          controller.enqueue(line);
+          controller.enqueue(line.trim());
         }
       }
       return;
@@ -321,3 +321,28 @@ export function createLineSplitter(): TransformStream {
     },
   });
 }
+
+export const nodeLineReader = () => {
+  let leftOver = '';
+  const lineReader = new Transform({
+    transform: function (chunk, encoding, callback) {
+      leftOver += chunk.toString();
+      const lines = leftOver.split('\n');
+      leftOver = lines.pop() || '';
+      for (const line of lines) {
+        if (line.trim()) {
+          this.push(line.trim());
+        }
+      }
+      callback();
+    },
+    flush(callback) {
+      if (leftOver.trim()) {
+        this.push(leftOver.trim());
+      }
+      callback();
+    },
+  });
+
+  return lineReader;
+};

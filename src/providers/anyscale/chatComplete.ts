@@ -1,5 +1,5 @@
 import { ANYSCALE } from '../../globals';
-import { Params } from '../../types/requestBody';
+import { Message, Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -22,7 +22,7 @@ export const AnyscaleChatCompleteConfig: ProviderConfig = {
     param: 'messages',
     default: '',
     transform: (params: Params) => {
-      return params.messages?.map((message) => {
+      return params.messages?.map((message: Message) => {
         if (message.role === 'developer') return { ...message, role: 'system' };
         return message;
       });

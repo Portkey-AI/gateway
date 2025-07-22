@@ -1,4 +1,5 @@
 import { GatewayError } from '../errors/GatewayError';
+import { AZURE_AI_INFERENCE, AZURE_OPEN_AI, FIREWORKS_AI } from '../globals';
 import ProviderConfigs from '../providers';
 import { endpointStrings, ProviderConfig } from '../providers/types';
 import { Options, Params } from '../types/requestBody';
@@ -232,6 +233,19 @@ export const transformToProviderRequest = (
       fn
     );
   }
+
+  if (
+    fn === 'createFinetune' &&
+    [AZURE_OPEN_AI, FIREWORKS_AI, AZURE_AI_INFERENCE].includes(provider)
+  ) {
+    return transformToProviderRequestReadableStream(
+      provider,
+      requestBody as ReadableStream,
+      requestHeaders,
+      fn
+    );
+  }
+
   if (requestBody instanceof FormData || requestBody instanceof ArrayBuffer)
     return requestBody;
 

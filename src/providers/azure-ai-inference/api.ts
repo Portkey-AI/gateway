@@ -39,14 +39,14 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
   headers: async ({ providerOptions, fn }) => {
     const {
       apiKey,
-      azureExtraParams,
+      azureExtraParameters,
       azureDeploymentName,
       azureAdToken,
       azureAuthMode,
     } = providerOptions;
 
     const headers: Record<string, string> = {
-      'extra-parameters': azureExtraParams ?? 'drop',
+      'extra-parameters': azureExtraParameters ?? 'drop',
       ...(azureDeploymentName && {
         'azureml-model-deployment': azureDeploymentName,
       }),
@@ -163,6 +163,7 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
       case 'createSpeech':
       case 'createTranscription':
       case 'createTranslation':
+      case 'uploadFile':
       case 'cancelBatch':
       case 'createBatch':
       case 'getBatchOutput':

@@ -1,4 +1,4 @@
-import { Params } from '../../types/requestBody';
+import { Message, Params } from '../../types/requestBody';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
 import {
   ChatCompletionResponse,
@@ -16,7 +16,7 @@ export const AzureAIInferenceChatCompleteConfig: ProviderConfig = {
     param: 'messages',
     default: '',
     transform: (params: Params) => {
-      return params.messages?.map((message) => {
+      return params.messages?.map((message: Message) => {
         if (message.role === 'developer') return { ...message, role: 'system' };
         return message;
       });
@@ -28,7 +28,7 @@ export const AzureAIInferenceChatCompleteConfig: ProviderConfig = {
     min: 0,
   },
   max_completion_tokens: {
-    param: 'max_tokens',
+    param: 'max_completion_tokens',
     default: 100,
     min: 0,
   },

@@ -1,3 +1,5 @@
+import { logger } from '../apm';
+import { RouterError } from '../errors/RouterError';
 import {
   constructConfigFromRequestHeaders,
   tryTargetsRecursively,
@@ -14,8 +16,8 @@ import { Context } from 'hono';
  */
 export async function createTranslationHandler(c: Context): Promise<Response> {
   try {
-    let request = await c.req.raw.formData();
-    let requestHeaders = Object.fromEntries(c.req.raw.headers);
+    const request = await c.req.raw.formData();
+    const requestHeaders = Object.fromEntries(c.req.raw.headers);
     const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
     const tryTargetsResponse = await tryTargetsRecursively(
       c,
@@ -29,14 +31,21 @@ export async function createTranslationHandler(c: Context): Promise<Response> {
 
     return tryTargetsResponse;
   } catch (err: any) {
-    console.error('createTranslationHandler error: ', err);
+    logger.error('createTranslationHandler error: ', err);
+    let statusCode = 500;
+    let errorMessage = 'Something went wrong';
+
+    if (err instanceof RouterError) {
+      statusCode = 400;
+      errorMessage = err.message;
+    }
     return new Response(
       JSON.stringify({
         status: 'failure',
-        message: 'Something went wrong',
+        message: errorMessage,
       }),
       {
-        status: 500,
+        status: statusCode,
         headers: {
           'content-type': 'application/json',
         },
