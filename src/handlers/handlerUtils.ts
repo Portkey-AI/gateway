@@ -386,7 +386,7 @@ export async function tryPost(
         cacheStatus: cacheResponseObject.cacheStatus,
         cacheKey: cacheResponseObject.cacheKey,
       },
-      isResponseAlreadyMapped: true,
+      isResponseAlreadyMapped: false,
       retryAttempt: 0,
       fetchOptions,
       createdAt: cacheResponseObject.createdAt,
