@@ -247,8 +247,12 @@ export class LogObjectBuilder {
       },
       createdAt: new Date(this.logData.createdAt?.getTime() ?? Date.now()),
       lastUsedOptionIndex: this.logData.lastUsedOptionIndex,
+      cacheKey: this.logData.cacheKey,
       cacheMode: this.logData.cacheMode,
       cacheMaxAge: this.logData.cacheMaxAge,
+      cacheStatus: this.logData.cacheStatus,
+      hookSpanId: this.logData.hookSpanId,
+      executionTime: this.logData.executionTime,
     };
     if (this.logData.transformedRequest) {
       clonedLogData.transformedRequest = {
@@ -266,12 +270,6 @@ export class LogObjectBuilder {
     }
     if (this.logData.response) {
       clonedLogData.response = this.logData.response; // we don't need to clone the response, it's already cloned in the addResponse function
-    }
-    if (this.logData.hookSpanId) {
-      clonedLogData.hookSpanId = this.logData.hookSpanId;
-    }
-    if (this.logData.executionTime) {
-      clonedLogData.executionTime = this.logData.executionTime;
     }
     return clonedLogData;
   }
