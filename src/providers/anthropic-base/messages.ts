@@ -17,8 +17,8 @@ export const messagesBaseConfig: ProviderConfig = {
     param: 'container',
     required: false,
   },
-  max_servers: {
-    param: 'max_servers',
+  mcp_servers: {
+    param: 'mcp_servers',
     required: false,
   },
   metadata: {

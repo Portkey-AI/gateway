@@ -175,4 +175,3 @@ export function* anthropicMessagesJsonToStreamGenerator(
 
   yield MESSAGE_STOP_EVENT;
 }
-``;
