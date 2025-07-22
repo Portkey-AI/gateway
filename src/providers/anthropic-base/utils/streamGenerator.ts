@@ -26,7 +26,7 @@ const getMessageDeltaEvent = (response: MessagesResponse): string => {
   return `event: message_delta\ndata: ${JSON.stringify(messageDeltaEvent)}\n\n`;
 };
 
-const MESSAGE_STOP_EVENT = `event: message_stop\ndata: {type: 'message_stop'}\n\n`;
+const MESSAGE_STOP_EVENT = `event: message_stop\ndata: {"type": "message_stop"}\n\n`;
 
 const textContentBlockStartEvent = (index: number): string => {
   return `event: content_block_start\ndata: ${JSON.stringify({

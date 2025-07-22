@@ -110,10 +110,15 @@ export interface RawContentBlockStopEvent {
   type: 'content_block_stop';
 }
 
+export interface RawPingEvent {
+  type: 'ping';
+}
+
 export type RawMessageStreamEvent =
   | RawMessageStartEvent
   | RawMessageDeltaEvent
   | RawMessageStopEvent
   | RawContentBlockStartEvent
   | RawContentBlockDeltaEvent
-  | RawContentBlockStopEvent;
+  | RawContentBlockStopEvent
+  | RawPingEvent;
