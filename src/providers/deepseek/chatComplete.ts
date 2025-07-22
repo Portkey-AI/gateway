@@ -9,7 +9,9 @@ import {
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
+  transformFinishReason,
 } from '../utils';
+import { DEEPSEEK_STOP_REASON } from './types';
 
 export const DeepSeekChatCompleteConfig: ProviderConfig = {
   model: {
@@ -123,8 +125,15 @@ interface DeepSeekStreamChunk {
 
 export const DeepSeekChatCompleteResponseTransform: (
   response: DeepSeekChatCompleteResponse | DeepSeekErrorResponse,
-  responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean
+) => ChatCompletionResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  strictOpenAiCompliance
+) => {
   if ('message' in response && responseStatus !== 200) {
     return generateErrorResponse(
       {
@@ -150,7 +159,10 @@ export const DeepSeekChatCompleteResponseTransform: (
           role: c.message.role,
           content: c.message.content,
         },
-        finish_reason: c.finish_reason,
+        finish_reason: transformFinishReason(
+          c.finish_reason as DEEPSEEK_STOP_REASON,
+          strictOpenAiCompliance
+        ),
       })),
       usage: {
         prompt_tokens: response.usage?.prompt_tokens,
@@ -164,8 +176,18 @@ export const DeepSeekChatCompleteResponseTransform: (
 };
 
 export const DeepSeekChatCompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+  response: string,
+  fallbackId: string,
+  streamState: any,
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
+) => string | string[] = (
+  responseChunk,
+  fallbackId,
+  _streamState,
+  strictOpenAiCompliance,
+  _gatewayRequest
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
@@ -173,6 +195,12 @@ export const DeepSeekChatCompleteStreamChunkTransform: (
     return `data: ${chunk}\n\n`;
   }
   const parsedChunk: DeepSeekStreamChunk = JSON.parse(chunk);
+  const finishReason = parsedChunk.choices[0].finish_reason
+    ? transformFinishReason(
+        parsedChunk.choices[0].finish_reason as DEEPSEEK_STOP_REASON,
+        strictOpenAiCompliance
+      )
+    : null;
   return (
     `data: ${JSON.stringify({
       id: parsedChunk.id,
@@ -184,7 +212,7 @@ export const DeepSeekChatCompleteStreamChunkTransform: (
         {
           index: parsedChunk.choices[0].index,
           delta: parsedChunk.choices[0].delta,
-          finish_reason: parsedChunk.choices[0].finish_reason,
+          finish_reason: finishReason,
         },
       ],
       usage: parsedChunk.usage,
