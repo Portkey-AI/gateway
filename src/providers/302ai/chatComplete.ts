@@ -1,17 +1,11 @@
 import { THREE_ZERO_TWO_AI } from '../../globals';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
-
 import {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
 } from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
-
-interface AI302ChatCompleteResponse extends ChatCompletionResponse {}
+import { generateInvalidProviderResponseError } from '../utils';
 
 export const AI302ChatCompleteConfig: ProviderConfig = {
   model: {
