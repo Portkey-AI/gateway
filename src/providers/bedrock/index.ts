@@ -111,6 +111,8 @@ const BedrockConfig: ProviderConfigs = {
             responseTransforms: {
               'stream-complete': BedrockAnthropicCompleteStreamChunkTransform,
               complete: BedrockAnthropicCompleteResponseTransform,
+              messages: BedrockMessagesResponseTransform,
+              'stream-messages': BedrockConverseMessagesStreamChunkTransform,
             },
           };
           break;
@@ -210,8 +212,6 @@ const BedrockConfig: ProviderConfigs = {
         config.responseTransforms = {
           ...(config.responseTransforms ?? {}),
           'stream-chatComplete': BedrockChatCompleteStreamChunkTransform,
-          messages: BedrockMessagesResponseTransform,
-          'stream-messages': BedrockConverseMessagesStreamChunkTransform,
         };
       }
       if (!config.responseTransforms?.chatComplete) {
