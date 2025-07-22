@@ -2,10 +2,8 @@ import { ANTHROPIC } from '../../globals';
 import { Params } from '../../types/requestBody';
 import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
-import {
-  AnthropicErrorResponse,
-  AnthropicErrorResponseTransform,
-} from './chatComplete';
+import { AnthropicErrorResponseTransform } from './utils';
+import { AnthropicErrorResponse } from './types';
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -72,11 +70,8 @@ export const AnthropicCompleteResponseTransform: (
   response: AnthropicCompleteResponse | AnthropicErrorResponse,
   responseStatus: number
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if (responseStatus !== 200) {
-    const errorResposne = AnthropicErrorResponseTransform(
-      response as AnthropicErrorResponse
-    );
-    if (errorResposne) return errorResposne;
+  if (responseStatus !== 200 && 'error' in response) {
+    return AnthropicErrorResponseTransform(response);
   }
 
   if ('completion' in response) {
