@@ -323,7 +323,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
         ) {
           systemMessages.push({
             type: 'text',
-            text: `Here is the JSON Schema that defines the structure for this conversation. You must follow this schema strictly and only return the JSON object:\n\n${params.response_format.json_schema}`,
+            text: `Here is the JSON Schema that defines the structure for this conversation. You must follow this schema strictly and only return the JSON object:\n\n${JSON.stringify(params.response_format.json_schema)}`,
           });
         }
         // Transform the chat messages into a simple prompt

@@ -306,7 +306,7 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
         );
         if (params.response_format?.type === 'json_schema') {
           systemMessages.push({
-            text: `Here is the JSON Schema that defines the structure for this conversation. You must follow this schema strictly and only return the JSON object:\n\n${params.response_format.json_schema}`,
+            text: `Here is the JSON Schema that defines the structure for this conversation. You must follow this schema strictly and only return the JSON object:\n\n${JSON.stringify(params.response_format.json_schema)}`,
           });
         }
         if (!systemMessages.length) return;
