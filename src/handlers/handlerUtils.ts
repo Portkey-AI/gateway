@@ -671,7 +671,7 @@ export async function tryTargetsRecursively(
           break;
         }
         if (
-          response?.ok &&
+          currentTarget.strategy?.onStatusCodes?.length &&
           !currentTarget.strategy?.onStatusCodes?.includes(response?.status)
         ) {
           break;
