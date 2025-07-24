@@ -80,6 +80,7 @@ export type endpointStrings =
   | 'moderate'
   | 'stream-complete'
   | 'stream-chatComplete'
+  | 'stream-messages'
   | 'proxy'
   | 'imageGenerate'
   | 'createSpeech'
@@ -103,7 +104,8 @@ export type endpointStrings =
   | 'createModelResponse'
   | 'getModelResponse'
   | 'deleteModelResponse'
-  | 'listResponseInputItems';
+  | 'listResponseInputItems'
+  | 'messages';
 
 /**
  * A collection of API configurations for multiple AI providers.
@@ -154,6 +156,16 @@ export interface CResponse extends BaseResponse {
     prompt_tokens: number;
     completion_tokens: number;
     total_tokens: number;
+    completion_tokens_details?: {
+      accepted_prediction_tokens?: number;
+      audio_tokens?: number;
+      reasoning_tokens?: number;
+      rejected_prediction_tokens?: number;
+    };
+    prompt_tokens_details?: {
+      audio_tokens?: number;
+      cached_tokens?: number;
+    };
     /*
      * Anthropic Prompt cache token usage
      */

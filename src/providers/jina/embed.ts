@@ -19,6 +19,9 @@ export const JinaEmbedConfig: ProviderConfig = {
   encoding_format: {
     param: 'encoding_format',
   },
+  dimensions: {
+    param: 'dimensions',
+  },
 };
 
 interface JinaEmbedResponse extends EmbedResponse {}

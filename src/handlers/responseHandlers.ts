@@ -17,6 +17,7 @@ import {
 import { HookSpan } from '../middlewares/hooks';
 import { env } from 'hono/adapter';
 import { OpenAIModelResponseJSONToStreamGenerator } from '../providers/open-ai-base/createModelResponse';
+import { anthropicMessagesJsonToStreamGenerator } from '../providers/anthropic-base/utils/streamGenerator';
 
 /**
  * Handles various types of responses based on the specified parameters
@@ -80,6 +81,9 @@ export async function responseHandler(
       case 'chatComplete':
         responseTransformerFunction =
           OpenAIChatCompleteJSONToStreamResponseTransform;
+        break;
+      case 'messages':
+        responseTransformerFunction = anthropicMessagesJsonToStreamGenerator;
         break;
       case 'createModelResponse':
         responseTransformerFunction = OpenAIModelResponseJSONToStreamGenerator;
@@ -291,7 +295,7 @@ export async function afterRequestHookHandler(
 
     return createHookResponse(response, responseData, hooksResult);
   } catch (err) {
-    console.error(err);
+    console.error('afterRequestHookHandler error: ', err);
     return response;
   }
 }

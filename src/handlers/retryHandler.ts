@@ -175,7 +175,6 @@ export const retryRequest = async (
         retries: retryCount,
         onRetry: (error: Error, attempt: number) => {
           lastAttempt = attempt;
-          console.warn(`Failed in Retry attempt ${attempt}. Error: ${error}`);
         },
         randomize: false,
       }
@@ -186,13 +185,18 @@ export const retryRequest = async (
       error.cause instanceof Error &&
       error.cause?.name === 'ConnectTimeoutError'
     ) {
-      console.error('ConnectTimeoutError: ', error.cause);
+      console.error(
+        'retryRequest ConnectTimeoutError error:',
+        error.cause,
+        error.message
+      );
       // This error comes in case the host address is unreachable. Empty status code used to get returned
       // from here hence no retry logic used to get called.
       lastResponse = new Response(error.message, {
         status: 503,
       });
     } else if (!error.status || error instanceof TypeError) {
+      console.error('retryRequest error:', error.cause, error.message);
       // The retry handler will always attach status code to the error object
       lastResponse = new Response(
         `Message: ${error.message} Cause: ${error.cause ?? 'NA'} Name: ${error.name}`,
@@ -206,9 +210,6 @@ export const retryRequest = async (
         headers: error.headers,
       });
     }
-    console.warn(
-      `Tried ${lastAttempt ?? 1} time(s) but failed. Error: ${JSON.stringify(error)}`
-    );
   }
   return {
     response: lastResponse as Response,
