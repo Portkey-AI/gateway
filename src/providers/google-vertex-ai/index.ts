@@ -139,9 +139,19 @@ const VertexConfig: ProviderConfigs = {
         };
       case 'endpoints':
         return {
-          chatComplete: chatCompleteParams([], {
-            model: 'meta-llama-3-8b-instruct',
-          }),
+          chatComplete: chatCompleteParams(
+            ['model'],
+            {},
+            {
+              model: {
+                param: 'model',
+                transform: (params: Params) => {
+                  const _model = params.model;
+                  return _model?.replace('endpoints.', '');
+                },
+              },
+            }
+          ),
           createBatch: GoogleBatchCreateConfig,
           api: GoogleApiConfig,
           createFinetune: baseConfig.createFinetune,

@@ -667,13 +667,18 @@ export async function tryTargetsRecursively(
           `${currentJsonPath}.targets[${originalIndex}]`,
           currentInheritedConfig
         );
-        if (response?.headers.get('x-portkey-gateway-exception') === 'true') {
-          break;
-        }
+        const codes = currentTarget.strategy?.onStatusCodes;
+        const gatewayException =
+          response?.headers.get('x-portkey-gateway-exception') === 'true';
         if (
-          response?.ok &&
-          !currentTarget.strategy?.onStatusCodes?.includes(response?.status)
+          // If onStatusCodes is provided, and the response status is not in the list
+          (Array.isArray(codes) && !codes.includes(response?.status)) ||
+          // If onStatusCodes is not provided, and the response is ok
+          (!codes && response?.ok) ||
+          // If the response is a gateway exception
+          gatewayException
         ) {
+          // Skip the fallback
           break;
         }
       }
@@ -790,53 +795,35 @@ export async function tryTargetsRecursively(
         // tryPost always returns a Response.
         // TypeError will check for all unhandled exceptions.
         // GatewayError will check for all handled exceptions which cannot allow the request to proceed.
-        if (
-          error instanceof TypeError ||
-          error instanceof GatewayError ||
-          !error.response ||
-          (error.response && !(error.response instanceof Response))
-        ) {
-          console.error(
-            'tryTargetsRecursively error: ',
-            error.message,
-            error.cause,
-            error.stack
-          );
-          const errorMessage =
-            error instanceof GatewayError
-              ? error.message
-              : 'Something went wrong';
-          response = new Response(
-            JSON.stringify({
-              status: 'failure',
-              message: errorMessage,
-            }),
-            {
-              status: 500,
-              headers: {
-                'content-type': 'application/json',
-                // Add this header so that the fallback loop can be interrupted if its an exception.
-                'x-portkey-gateway-exception': 'true',
-              },
-            }
-          );
-        } else {
-          response = error.response;
-          if (isHandlingCircuitBreaker) {
-            await c.get('recordCircuitBreakerFailure')?.(
-              env(c),
-              currentInheritedConfig.id,
-              currentTarget.cbConfig,
-              currentJsonPath,
-              response.status
-            );
+        console.error(
+          'tryTargetsRecursively error: ',
+          error.message,
+          error.cause,
+          error.stack
+        );
+        const errorMessage =
+          error instanceof GatewayError
+            ? error.message
+            : 'Something went wrong';
+        response = new Response(
+          JSON.stringify({
+            status: 'failure',
+            message: errorMessage,
+          }),
+          {
+            status: 500,
+            headers: {
+              'content-type': 'application/json',
+              // Add this header so that the fallback loop can be interrupted if its an exception.
+              'x-portkey-gateway-exception': 'true',
+            },
           }
-        }
+        );
       }
       break;
   }
 
-  return response;
+  return response!;
 }
 
 export function constructConfigFromRequestHeaders(
@@ -944,10 +931,13 @@ export function constructConfigFromRequestHeaders(
       requestHeaders[`x-${POWERED_BY}-vertex-storage-bucket-name`],
     filename: requestHeaders[`x-${POWERED_BY}-provider-file-name`],
     vertexModelName: requestHeaders[`x-${POWERED_BY}-provider-model`],
+    vertexBatchEndpoint:
+      requestHeaders[`x-${POWERED_BY}-provider-batch-endpoint`],
   };
 
   const fireworksConfig = {
     fireworksAccountId: requestHeaders[`x-${POWERED_BY}-fireworks-account-id`],
+    fireworksFileLength: requestHeaders[`x-${POWERED_BY}-file-upload-size`],
   };
 
   const anthropicConfig = {
