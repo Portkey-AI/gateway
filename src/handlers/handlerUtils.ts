@@ -1080,6 +1080,7 @@ export function constructConfigFromRequestHeaders(
       'output_guardrails',
       'default_input_guardrails',
       'default_output_guardrails',
+      'integrationModelDetails',
       'cb_config',
     ]) as any;
   }
