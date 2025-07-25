@@ -17,7 +17,7 @@ const getProjectRoute = (
     vertexServiceAccountJson,
   } = providerOptions;
   let projectId = inputProjectId;
-  if (vertexServiceAccountJson) {
+  if (vertexServiceAccountJson && vertexServiceAccountJson.project_id) {
     projectId = vertexServiceAccountJson.project_id;
   }
 
