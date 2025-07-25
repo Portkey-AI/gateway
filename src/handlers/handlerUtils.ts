@@ -667,13 +667,18 @@ export async function tryTargetsRecursively(
           `${currentJsonPath}.targets[${originalIndex}]`,
           currentInheritedConfig
         );
-        if (response?.headers.get('x-portkey-gateway-exception') === 'true') {
-          break;
-        }
+        const codes = currentTarget.strategy?.onStatusCodes;
+        const gatewayException =
+          response?.headers.get('x-portkey-gateway-exception') === 'true';
         if (
-          response?.ok &&
-          !currentTarget.strategy?.onStatusCodes?.includes(response?.status)
+          // If onStatusCodes is provided, and the response status is not in the list
+          (Array.isArray(codes) && !codes.includes(response?.status)) ||
+          // If onStatusCodes is not provided, and the response is ok
+          (!codes && response?.ok) ||
+          // If the response is a gateway exception
+          gatewayException
         ) {
+          // Skip the fallback
           break;
         }
       }
