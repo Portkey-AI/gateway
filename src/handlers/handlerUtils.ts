@@ -931,10 +931,13 @@ export function constructConfigFromRequestHeaders(
       requestHeaders[`x-${POWERED_BY}-vertex-storage-bucket-name`],
     filename: requestHeaders[`x-${POWERED_BY}-provider-file-name`],
     vertexModelName: requestHeaders[`x-${POWERED_BY}-provider-model`],
+    vertexBatchEndpoint:
+      requestHeaders[`x-${POWERED_BY}-provider-batch-endpoint`],
   };
 
   const fireworksConfig = {
     fireworksAccountId: requestHeaders[`x-${POWERED_BY}-fireworks-account-id`],
+    fireworksFileLength: requestHeaders[`x-${POWERED_BY}-file-upload-size`],
   };
 
   const anthropicConfig = {
