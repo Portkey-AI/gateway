@@ -232,7 +232,25 @@ export const transformToProviderRequest = (
       fn
     );
   }
-  if (requestBody instanceof FormData || requestBody instanceof ArrayBuffer)
+
+  if (requestBody instanceof FormData) {
+    if (typeof providerOptions.overrideParams === 'undefined') {
+      return requestBody;
+    }
+
+    for (const [k, v] of Object.entries(providerOptions.overrideParams)) {
+      requestBody.delete(k); // If the key already exists, delete it first so we always overwrite.
+
+      // Value can be string, Blob, File, or an array of those.
+      const values = Array.isArray(v) ? v : [v];
+      for (const val of values) {
+        requestBody.append(k, val);
+      }
+    }
+
+    return requestBody;
+
+  } else if (requestBody instanceof ArrayBuffer)
     return requestBody;
 
   if (fn === 'proxy') {
