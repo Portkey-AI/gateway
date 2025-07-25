@@ -795,53 +795,35 @@ export async function tryTargetsRecursively(
         // tryPost always returns a Response.
         // TypeError will check for all unhandled exceptions.
         // GatewayError will check for all handled exceptions which cannot allow the request to proceed.
-        if (
-          error instanceof TypeError ||
-          error instanceof GatewayError ||
-          !error.response ||
-          (error.response && !(error.response instanceof Response))
-        ) {
-          console.error(
-            'tryTargetsRecursively error: ',
-            error.message,
-            error.cause,
-            error.stack
-          );
-          const errorMessage =
-            error instanceof GatewayError
-              ? error.message
-              : 'Something went wrong';
-          response = new Response(
-            JSON.stringify({
-              status: 'failure',
-              message: errorMessage,
-            }),
-            {
-              status: 500,
-              headers: {
-                'content-type': 'application/json',
-                // Add this header so that the fallback loop can be interrupted if its an exception.
-                'x-portkey-gateway-exception': 'true',
-              },
-            }
-          );
-        } else {
-          response = error.response;
-          if (isHandlingCircuitBreaker) {
-            await c.get('recordCircuitBreakerFailure')?.(
-              env(c),
-              currentInheritedConfig.id,
-              currentTarget.cbConfig,
-              currentJsonPath,
-              response.status
-            );
+        console.error(
+          'tryTargetsRecursively error: ',
+          error.message,
+          error.cause,
+          error.stack
+        );
+        const errorMessage =
+          error instanceof GatewayError
+            ? error.message
+            : 'Something went wrong';
+        response = new Response(
+          JSON.stringify({
+            status: 'failure',
+            message: errorMessage,
+          }),
+          {
+            status: 500,
+            headers: {
+              'content-type': 'application/json',
+              // Add this header so that the fallback loop can be interrupted if its an exception.
+              'x-portkey-gateway-exception': 'true',
+            },
           }
-        }
+        );
       }
       break;
   }
 
-  return response;
+  return response!;
 }
 
 export function constructConfigFromRequestHeaders(
