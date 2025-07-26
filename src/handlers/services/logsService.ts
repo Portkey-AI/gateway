@@ -283,7 +283,7 @@ export class LogObjectBuilder {
       body: requestContext.transformedRequestBody,
       headers: (transformedRequestHeaders as Record<string, string>) ?? {},
     };
-    this.logData.requestParams = requestContext.params;
+    this.logData.requestParams = requestContext.transformedRequestBody;
     return this;
   }
 
