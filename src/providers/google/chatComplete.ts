@@ -14,6 +14,7 @@ import {
   derefer,
   getMimeType,
   recursivelyDeleteUnsupportedParameters,
+  transformGeminiToolParameters,
   transformVertexLogprobs,
 } from '../google-vertex-ai/utils';
 import {
@@ -381,6 +382,11 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
           ) {
             tools.push(buildGoogleSearchRetrievalTool(tool));
           } else {
+            if (tool.function?.parameters) {
+              tool.function.parameters = transformGeminiToolParameters(
+                tool.function.parameters
+              );
+            }
             functionDeclarations.push(tool.function);
           }
         }
