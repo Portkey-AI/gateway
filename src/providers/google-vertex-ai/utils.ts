@@ -191,44 +191,48 @@ export const GoogleErrorResponseTransform: (
   return undefined;
 };
 
-const getDefFromRef = (ref: string) => {
-  const refParts = ref.split('/');
-  return refParts.at(-1);
+// Extract definition key from a JSON Schema $ref string
+const getDefFromRef = (ref: string): string | null => {
+  const match = ref.match(/^#\/\$defs\/(.+)$/);
+  return match ? match[1] : null;
 };
 
-const getRefParts = (spec: Record<string, any>, ref: string) => {
-  return spec?.[ref];
-};
+const getDefObject = (
+  defs: Record<string, any> | undefined | null,
+  key: string | null
+): any => (key && defs ? defs[key] : undefined);
 
-export const derefer = (spec: Record<string, any>, defs = null) => {
-  const original = { ...spec };
-
-  const finalDefs = defs ?? original?.['$defs'];
-  const entries = Object.entries(original);
-
-  for (let [key, object] of entries) {
-    if (key === '$defs') {
-      continue;
-    }
-    if (
-      object === null ||
-      typeof object !== 'object' ||
-      Array.isArray(object)
-    ) {
-      continue;
-    }
-    const ref = object?.['$ref'];
-    if (ref) {
-      const def = getDefFromRef(ref);
-      const defData = getRefParts(finalDefs, def ?? '');
-      const newValue = derefer(defData, finalDefs);
-      original[key] = newValue;
-    } else {
-      const newValue = derefer(object, finalDefs);
-      original[key] = newValue;
+// Recursively expands $ref nodes in a JSON Schema object tree
+export const derefer = (
+  schema: any,
+  defs: Record<string, any> | null = null,
+  stack: Set<string> = new Set()
+): any => {
+  if (schema === null || typeof schema !== 'object') return schema;
+  if (Array.isArray(schema))
+    return schema.map((item) => derefer(item, defs, stack));
+  const node = { ...schema };
+  const activeDefs =
+    defs ?? (node.$defs as Record<string, any> | undefined) ?? null;
+  if ('$ref' in node && typeof node.$ref === 'string') {
+    const defKey = getDefFromRef(node.$ref);
+    const target = getDefObject(activeDefs, defKey);
+    if (defKey && target) {
+      if (stack.has(defKey)) return node;
+      stack.add(defKey);
+      const resolved = derefer(target, activeDefs, stack);
+      stack.delete(defKey);
+      const keys = Object.keys(node);
+      if (keys.length === 1) return resolved;
+      const { $ref: _, ...siblings } = node;
+      return derefer({ ...resolved, ...siblings }, activeDefs, stack);
     }
   }
-  return original;
+  for (const [k, v] of Object.entries(node)) {
+    if (k === '$defs') continue;
+    node[k] = derefer(v, activeDefs, stack);
+  }
+  return node;
 };
 
 export const transformGeminiToolParameters = (
@@ -248,6 +252,9 @@ export const transformGeminiToolParameters = (
     delete schema.$defs;
   }
 
+  const isNullTypeNode = (node: any): boolean =>
+    node && typeof node === 'object' && node.type === 'null';
+
   const transformNode = (node: JsonSchema): JsonSchema => {
     if (Array.isArray(node)) {
       return node.map(transformNode);
@@ -260,21 +267,14 @@ export const transformGeminiToolParameters = (
       if (key === 'enum' && Array.isArray(value)) {
         transformed.enum = value;
         transformed.format = 'enum';
-      } else if (
-        key === 'anyOf' &&
-        Array.isArray(value) &&
-        value.length === 2
-      ) {
-        // Convert anyOf with null type to nullable which is a supported param
-        const nonNullItems = value.filter(
-          (item) => !(typeof item === 'object' && item?.type === 'null')
-        );
-        if (nonNullItems.length === 1) {
-          Object.assign(transformed, transformNode(nonNullItems[0]));
+      } else if ((key === 'anyOf' || key === 'oneOf') && Array.isArray(value)) {
+        const nonNullItems = value.filter((item) => !isNullTypeNode(item));
+        if (nonNullItems.length < value.length) {
+          // remove `null` type in schema and set nullable: true
+          transformed[key] = transformNode(nonNullItems);
           transformed.nullable = true;
         } else {
-          // leave true unions as-is which is not supported by Google, let Google raise an error
-          transformed.anyOf = transformNode(value);
+          transformed[key] = transformNode(value);
         }
       } else {
         transformed[key] = transformNode(value);
