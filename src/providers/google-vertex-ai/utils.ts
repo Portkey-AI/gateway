@@ -273,11 +273,15 @@ export const transformGeminiToolParameters = (
       if ((key === 'anyOf' || key === 'oneOf') && Array.isArray(value)) {
         const nonNullItems = value.filter((item) => !isNullTypeNode(item));
         const hadNull = nonNullItems.length < value.length;
+
         if (nonNullItems.length === 1 && hadNull) {
           // Flatten to single schema: get rid of anyOf/oneOf and set nullable: true
           const single = transformNode(nonNullItems[0]);
-          if (single && typeof single === 'object') single.nullable = true;
-          return single;
+          if (single && typeof single === 'object') {
+            Object.assign(transformed, single);
+            transformed.nullable = true;
+          }
+          continue;
         }
 
         transformed[key] = transformNode(hadNull ? nonNullItems : value);
