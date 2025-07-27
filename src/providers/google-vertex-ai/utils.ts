@@ -267,18 +267,25 @@ export const transformGeminiToolParameters = (
       if (key === 'enum' && Array.isArray(value)) {
         transformed.enum = value;
         transformed.format = 'enum';
-      } else if ((key === 'anyOf' || key === 'oneOf') && Array.isArray(value)) {
-        const nonNullItems = value.filter((item) => !isNullTypeNode(item));
-        if (nonNullItems.length < value.length) {
-          // remove `null` type in schema and set nullable: true
-          transformed[key] = transformNode(nonNullItems);
-          transformed.nullable = true;
-        } else {
-          transformed[key] = transformNode(value);
-        }
-      } else {
-        transformed[key] = transformNode(value);
+        continue;
       }
+
+      if ((key === 'anyOf' || key === 'oneOf') && Array.isArray(value)) {
+        const nonNullItems = value.filter((item) => !isNullTypeNode(item));
+        const hadNull = nonNullItems.length < value.length;
+        if (nonNullItems.length === 1 && hadNull) {
+          // Flatten to single schema: get rid of anyOf/oneOf and set nullable: true
+          const single = transformNode(nonNullItems[0]);
+          if (single && typeof single === 'object') single.nullable = true;
+          return single;
+        }
+
+        transformed[key] = transformNode(hadNull ? nonNullItems : value);
+        if (hadNull) transformed.nullable = true;
+        continue;
+      }
+
+      transformed[key] = transformNode(value);
     }
     return transformed;
   };

@@ -11,7 +11,6 @@ import {
 } from '../../types/requestBody';
 import { buildGoogleSearchRetrievalTool } from '../google-vertex-ai/chatComplete';
 import {
-  derefer,
   getMimeType,
   recursivelyDeleteUnsupportedParameters,
   transformGeminiToolParameters,
@@ -63,17 +62,11 @@ const transformGenerationConfig = (params: Params) => {
   }
   if (params?.response_format?.type === 'json_schema') {
     generationConfig['responseMimeType'] = 'application/json';
-    recursivelyDeleteUnsupportedParameters(
-      params?.response_format?.json_schema?.schema
-    );
     let schema =
       params?.response_format?.json_schema?.schema ??
       params?.response_format?.json_schema;
-    if (Object.keys(schema).includes('$defs')) {
-      schema = derefer(schema);
-      delete schema['$defs'];
-    }
-    generationConfig['responseSchema'] = schema;
+    recursivelyDeleteUnsupportedParameters(schema);
+    generationConfig['responseSchema'] = transformGeminiToolParameters(schema);
   }
   if (params?.thinking) {
     const thinkingConfig: Record<string, any> = {};
