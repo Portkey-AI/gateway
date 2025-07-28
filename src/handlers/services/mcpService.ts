@@ -1,10 +1,12 @@
 import { McpServer, McpServerConfig, ToolCall } from '../../types/requestBody';
 import { RequestContext } from './requestContext';
+import { GatewayError } from '../../errors/GatewayError';
 
 // services/mcpService.ts
 export class McpService {
   private mcpConnections = new Map<string, MinimalMCPClient>();
   private mcpTools = new Map<string, LLMFunction[]>();
+  private mcpToolToServerMap = new Map<string, string>();
 
   constructor(private requestContext: RequestContext) {}
 
@@ -13,12 +15,14 @@ export class McpService {
     if (!mcpServers) {
       return;
     }
+    this.validateServerObjects(mcpServers);
     for (const server of mcpServers) {
       try {
         const client = await this.connectToMcpServer(server);
         if (client) {
           this.mcpConnections.set(server.server_label, client);
           let tools = await client.listTools();
+          // console.log('MCP tools', tools);
           if (server.allowed_tools && server.allowed_tools.length) {
             tools = tools.filter((tool) =>
               server.allowed_tools!.includes(tool.name)
@@ -35,29 +39,129 @@ export class McpService {
           `Error connecting to MCP server ${server.server_url}:`,
           error
         );
+        throw new GatewayError(
+          `Error connecting to MCP server \`${server.server_url}\`.`
+        );
       }
     }
     return;
+  }
+
+  private validateServerObjects(servers: McpServer[]): void {
+    if (!servers || servers.length === 0) {
+      return;
+    }
+
+    // Pre-compile regex patterns for better performance
+    const labelRegex = /^[a-zA-Z][a-zA-Z0-9-_]*$/;
+    const urlRegex = /^https?:\/\/[^\s/$.?#].[^\s]*$/i;
+
+    // Private IP ranges and localhost patterns
+    const privatePatterns = [
+      /localhost/i,
+      /127\.0\.0\.1/,
+      /::1/,
+      /0\.0\.0\.0/,
+      // Additional private IP ranges for comprehensive SSRF protection
+      /10\.\d{1,3}\.\d{1,3}\.\d{1,3}/, // 10.0.0.0/8
+      /172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}/, // 172.16.0.0/12
+      /192\.168\.\d{1,3}\.\d{1,3}/, // 192.168.0.0/16
+      /169\.254\.\d{1,3}\.\d{1,3}/, // 169.254.0.0/16 (link-local)
+    ];
+
+    const seenLabels = new Set<string>();
+
+    for (const server of servers) {
+      // Validate required fields exist
+      if (!server.server_label) {
+        throw new GatewayError(
+          'MCP_SERVER_LABEL_NOT_FOUND: MCP server label not found'
+        );
+      }
+
+      if (!server.server_url) {
+        throw new GatewayError(
+          'MCP_SERVER_URL_NOT_FOUND: MCP server URL not found'
+        );
+      }
+
+      // Validate label format
+      if (!labelRegex.test(server.server_label)) {
+        throw new GatewayError(
+          'MCP_SERVER_LABEL_INVALID: MCP server label must start with a letter and can only contain letters, numbers, hyphens and underscores'
+        );
+      }
+
+      // Check label uniqueness (O(1) lookup instead of O(n))
+      if (seenLabels.has(server.server_label)) {
+        throw new GatewayError(
+          'MCP_SERVER_LABEL_NOT_UNIQUE: MCP server label must be unique'
+        );
+      }
+      seenLabels.add(server.server_label);
+
+      // Validate URL format first (fail fast)
+      if (!urlRegex.test(server.server_url)) {
+        throw new GatewayError(
+          'MCP_SERVER_URL_INVALID: MCP server URL must be a valid URL'
+        );
+      }
+
+      // Check for SSRF vulnerabilities
+      if (privatePatterns.some((pattern) => pattern.test(server.server_url))) {
+        throw new GatewayError(
+          'MCP_SERVER_URL_INVALID: MCP server URL must not hit private IPs or localhost'
+        );
+      }
+    }
   }
 
   get tools(): LLMFunction[] {
     return Array.from(this.mcpTools.values()).flat();
   }
 
+  /**
+   * Find MCP tools and non-MCP tools from a list of tool calls
+   * based on the MCP tools loaded in the MCP service
+   * @param toolCalls - Tool calls to find MCP tools for
+   * @returns - MCP tools and non-MCP tools
+   */
+  findMCPTools(toolCalls: ToolCall[]): {
+    mcpToolsMap: Map<string, ToolCall>;
+    nonMcpToolsMap: Map<string, ToolCall>;
+  } {
+    let mcpToolsMap: Map<string, ToolCall> = new Map(),
+      nonMcpToolsMap: Map<string, ToolCall> = new Map();
+    const mcpToolNames = this.tools.map((tool) => tool.function.name);
+    toolCalls.forEach((toolCall: ToolCall) => {
+      if (mcpToolNames.includes(toolCall.function.name)) {
+        mcpToolsMap.set(toolCall.function.name, toolCall);
+      } else {
+        nonMcpToolsMap.set(toolCall.function.name, toolCall);
+      }
+    });
+    return { mcpToolsMap, nonMcpToolsMap };
+  }
+
   async executeTool(
     functionName: string,
     toolArgs: any
   ): Promise<ToolExecutionResult> {
-    const serverName = functionName.split('_')[0];
-    const toolName = functionName.split('_').slice(1).join('_');
+    const serverName = this.mcpToolToServerMap.get(functionName);
+    if (!serverName) {
+      throw new Error(
+        `MCP_SERVER_TOOL_NOT_FOUND: MCP server not found for tool ${functionName}`
+      );
+    }
     const client = this.mcpConnections.get(serverName);
-    // console.log('Current MCP connections are', this.mcpConnections);
+
     if (!client || !this.mcpTools.has(serverName)) {
       throw new Error(
         `MCP_SERVER_TOOL_NOT_FOUND: MCP server ${serverName} not found or tool name not loaded in the mcp server`
       );
     }
-    // console.log('Executing tool', toolName, toolArgs);
+
+    const toolName = functionName.substring(serverName.length + 1);
     return await client.executeTool(toolName, toolArgs);
   }
 
@@ -65,24 +169,28 @@ export class McpService {
     servername: string,
     mcpTools: Tool[]
   ): LLMFunction[] {
-    return mcpTools.map((tool) => ({
-      type: 'function' as const,
-      function: {
-        name: `${servername}_${tool.name}`,
-        description: tool.description,
-        parameters: {
-          type: 'object' as const,
-          properties: tool.inputSchema.properties || {},
-          required: tool.inputSchema.required || [],
-          // Preserve any additional schema properties like additionalProperties, etc.
-          ...Object.fromEntries(
-            Object.entries(tool.inputSchema).filter(
-              ([key]) => !['type', 'properties', 'required'].includes(key)
-            )
-          ),
+    return mcpTools.map((tool) => {
+      const functionName = `${servername}_${tool.name}`;
+      this.mcpToolToServerMap.set(functionName, servername);
+      return {
+        type: 'function' as const,
+        function: {
+          name: functionName,
+          description: tool.description,
+          parameters: {
+            type: 'object' as const,
+            properties: tool.inputSchema.properties || {},
+            required: tool.inputSchema.required || [],
+            // Preserve any additional schema properties like additionalProperties, etc.
+            ...Object.fromEntries(
+              Object.entries(tool.inputSchema).filter(
+                ([key]) => !['type', 'properties', 'required'].includes(key)
+              )
+            ),
+          },
         },
-      },
-    }));
+      };
+    });
   }
 
   private async connectToMcpServer(
@@ -515,6 +623,9 @@ class MinimalMCPClient {
       headers.set('mcp-session-id', this.sessionId);
     }
 
+    // IMPORTANT: Add Accept header for both JSON and SSE
+    headers.set('Accept', 'application/json, text/event-stream');
+
     const response = await fetch(this.url, {
       method: 'POST',
       headers,
@@ -557,42 +668,79 @@ class MinimalMCPClient {
       throw new Error('No response body for SSE stream');
     }
 
-    const reader = response.body
-      .pipeThrough(new TextDecoderStream())
-      .getReader();
+    const requestId = this.messageId; // Store the current request ID for matching
 
-    try {
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
+    return new Promise((resolve, reject) => {
+      const reader = response
+        .body!.pipeThrough(new TextDecoderStream())
+        .getReader();
 
-        // Parse SSE format
-        const lines = value.split('\n');
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            try {
-              const jsonResponse: JSONRPCResponse = JSON.parse(data);
+      const processStream = async () => {
+        try {
+          let buffer = '';
 
-              if (jsonResponse.error) {
-                throw new Error(
-                  `MCP Error ${jsonResponse.error.code}: ${jsonResponse.error.message}`
-                );
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+
+            buffer += value;
+
+            // Process line by line
+            let lineEnd;
+            while ((lineEnd = buffer.indexOf('\n')) !== -1) {
+              const line = buffer.slice(0, lineEnd);
+              buffer = buffer.slice(lineEnd + 1);
+
+              // Remove \r if present (for \r\n line endings)
+              const cleanLine = line.replace(/\r$/, '');
+
+              if (cleanLine.startsWith('data: ')) {
+                const data = cleanLine.slice(6);
+                try {
+                  const jsonResponse: JSONRPCResponse = JSON.parse(data);
+
+                  // Check if this response matches our request
+                  if (jsonResponse.id === requestId) {
+                    if (jsonResponse.error) {
+                      reject(
+                        new Error(
+                          `MCP Error ${jsonResponse.error.code}: ${jsonResponse.error.message}`
+                        )
+                      );
+                    } else {
+                      resolve(jsonResponse.result);
+                    }
+                    return; // Exit the stream processing
+                  }
+
+                  // If it's not our response, it might be a notification
+                  // Pass it to the message handler if available
+                  // if (this.onmessage && (!jsonResponse.id || jsonResponse.id !== requestId)) {
+                  //   this.onmessage(jsonResponse);
+                  // }
+                } catch (e) {
+                  // Ignore parsing errors for non-JSON data lines
+                  continue;
+                }
               }
-
-              return jsonResponse.result;
-            } catch (e) {
-              // Ignore parsing errors for non-JSON data lines
-              continue;
             }
           }
-        }
-      }
-    } finally {
-      reader.releaseLock();
-    }
 
-    throw new Error('No valid response received from SSE stream');
+          // If we reach here without getting our response, it's an error
+          reject(new Error('No matching response received from SSE stream'));
+        } catch (error) {
+          reject(error);
+        } finally {
+          try {
+            reader.releaseLock();
+          } catch (e) {
+            // Reader might already be released
+          }
+        }
+      };
+
+      processStream();
+    });
   }
 
   async initialize(): Promise<InitializeResult> {

@@ -1388,17 +1388,35 @@ async function handleMcpToolCalls(
   responseJson: any,
   mcpService: McpService
 ): Promise<{ success: boolean; error?: string }> {
+  if (requestContext.endpoint !== 'chatComplete') {
+    return {
+      success: false,
+      error: 'MCP tool calls are only supported for /chat/completions endpoint',
+    };
+  }
+
   const logsService = new LogsService(requestContext.honoContext);
 
   try {
     const toolCalls = responseJson.choices[0].message.tool_calls;
-    const conversation = [...(requestContext.params.messages || [])];
+    const conversation: any[] = [...(requestContext.params.messages || [])];
+
+    const { mcpToolsMap, nonMcpToolsMap } = mcpService.findMCPTools(toolCalls);
+
+    if (nonMcpToolsMap.size > 0) {
+      return {
+        success: false,
+        error: 'Exiting, since some tool calls are not MCP tools',
+      };
+    }
+
+    const mcpTools = Array.from(mcpToolsMap.values());
 
     // Add assistant's response with tool calls to conversation
     conversation.push(responseJson.choices[0].message);
 
     // Execute all tool calls in parallel for better performance
-    const toolCallPromises = toolCalls.map(async (toolCall: any) => {
+    const toolCallPromises = mcpTools.map(async (toolCall: any) => {
       const start = new Date().getTime();
 
       try {
@@ -1458,7 +1476,12 @@ async function handleMcpToolCalls(
     });
 
     // Wait for all tool calls to complete
-    const toolResponses = await Promise.all(toolCallPromises);
+    let toolResponses = await Promise.all(toolCallPromises);
+    toolResponses = toolResponses.filter((response: any) => response !== null);
+
+    if (toolResponses.length === 0) {
+      return { success: false, error: 'No tool responses received' };
+    }
 
     // Add all tool responses to conversation
     conversation.push(...toolResponses);
