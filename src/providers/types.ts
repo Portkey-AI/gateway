@@ -80,6 +80,7 @@ export type endpointStrings =
   | 'moderate'
   | 'stream-complete'
   | 'stream-chatComplete'
+  | 'stream-messages'
   | 'proxy'
   | 'imageGenerate'
   | 'createSpeech'
@@ -103,7 +104,8 @@ export type endpointStrings =
   | 'createModelResponse'
   | 'getModelResponse'
   | 'deleteModelResponse'
-  | 'listResponseInputItems';
+  | 'listResponseInputItems'
+  | 'messages';
 
 /**
  * A collection of API configurations for multiple AI providers.

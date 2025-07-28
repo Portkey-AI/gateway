@@ -56,6 +56,17 @@ export const GoogleBatchCreateConfig: ProviderConfig = {
       return crypto.randomUUID();
     },
   },
+  instance_config: {
+    param: 'instanceConfig',
+    required: true,
+    default: () => {
+      return {
+        excludedFields: ['requestId'],
+        includedFields: [],
+        instanceType: 'object',
+      };
+    },
+  },
 };
 
 export const GoogleBatchCreateResponseTransform = (

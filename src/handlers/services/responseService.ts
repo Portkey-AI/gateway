@@ -62,13 +62,6 @@ export class ResponseService {
 
     this.updateHeaders(finalMappedResponse, cache.cacheStatus, retryAttempt);
 
-    if (!finalMappedResponse.ok) {
-      const errorObj: any = new Error(await finalMappedResponse.clone().text());
-      errorObj.status = finalMappedResponse.status;
-      errorObj.response = finalMappedResponse;
-      throw errorObj;
-    }
-
     return {
       response: finalMappedResponse,
       responseJson,

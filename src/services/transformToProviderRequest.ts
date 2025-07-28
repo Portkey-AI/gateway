@@ -1,4 +1,5 @@
 import { GatewayError } from '../errors/GatewayError';
+import { AZURE_OPEN_AI, FIREWORKS_AI } from '../globals';
 import ProviderConfigs from '../providers';
 import { endpointStrings, ProviderConfig } from '../providers/types';
 import { Options, Params } from '../types/requestBody';
@@ -188,7 +189,7 @@ const transformToProviderRequestFormData = (
   return formData;
 };
 
-const transformToProviderRequestReadableStream = (
+const transformToProviderRequestBody = (
   provider: string,
   requestBody: ReadableStream,
   requestHeaders: Record<string, string>,
@@ -225,13 +226,26 @@ export const transformToProviderRequest = (
 ) => {
   // this returns a ReadableStream
   if (fn === 'uploadFile') {
-    return transformToProviderRequestReadableStream(
+    return transformToProviderRequestBody(
       provider,
       requestBody as ReadableStream,
       requestHeaders,
       fn
     );
   }
+
+  if (
+    fn === 'createFinetune' &&
+    [AZURE_OPEN_AI, FIREWORKS_AI].includes(provider)
+  ) {
+    return transformToProviderRequestBody(
+      provider,
+      requestBody as ReadableStream,
+      requestHeaders,
+      fn
+    );
+  }
+
   if (requestBody instanceof FormData || requestBody instanceof ArrayBuffer)
     return requestBody;
 
