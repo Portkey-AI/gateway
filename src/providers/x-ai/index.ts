@@ -1,4 +1,4 @@
-import { ErrorResponse, ProviderConfigs } from '../types';
+import { ProviderConfigs } from '../types';
 import { X_AI } from '../../globals';
 import XAIAPIConfig from './api';
 import {
