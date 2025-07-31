@@ -12,8 +12,6 @@ export function getCustomHttpsAgent(
   options: {
     rejectUnauthorized?: boolean;
     ca?: string | Buffer;
-    cert?: string | Buffer;
-    key?: string | Buffer;
   } = {}
 ): Agent {
   const { rejectUnauthorized = true, ca } = options || {};
