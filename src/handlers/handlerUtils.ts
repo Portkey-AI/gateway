@@ -1,4 +1,5 @@
 import { Context } from 'hono';
+import { Agent } from 'undici/types';
 import {
   AZURE_OPEN_AI,
   BEDROCK,
@@ -27,6 +28,7 @@ import { ConditionalRouter } from '../services/conditionalRouter';
 import { RouterError } from '../errors/RouterError';
 import { GatewayError } from '../errors/GatewayError';
 import { HookType } from '../middlewares/hooks/types';
+import { getCustomHttpsAgent } from '../utils/fetch';
 
 // Services
 import { CacheResponseObject, CacheService } from './services/cacheService';
@@ -177,11 +179,21 @@ export async function constructRequest(
     providerMappedHeaders
   );
 
-  const fetchOptions: RequestInit = {
+  const fetchOptions: RequestInit & { dispatcher?: Agent } = {
     method: requestContext.method,
     headers,
     ...(requestContext.endpoint === 'uploadFile' && { duplex: 'half' }),
   };
+
+  const { tlsOptions } = requestContext.providerOption;
+  if (tlsOptions?.ca || tlsOptions?.rejectUnauthorized === false) {
+    // SECURITY NOTE: The following allows to disable TLS certificate validation
+
+    fetchOptions.dispatcher = getCustomHttpsAgent({
+      rejectUnauthorized: tlsOptions?.rejectUnauthorized,
+      ca: tlsOptions?.ca,
+    });
+  }
 
   const body = constructRequestBody(requestContext, providerMappedHeaders);
   if (body) {
@@ -950,6 +962,15 @@ export function constructConfigFromRequestHeaders(
     anthropicVersion: requestHeaders[`x-${POWERED_BY}-anthropic-version`],
   };
 
+  let tlsOptions = undefined;
+  if (requestHeaders['x-portkey-tls-options']) {
+    try {
+      tlsOptions = JSON.parse(requestHeaders['x-portkey-tls-options']);
+    } catch (e) {
+      console.warn('Failed to parse x-portkey-tls-options:', e);
+    }
+  }
+
   const vertexServiceAccountJson =
     requestHeaders[`x-${POWERED_BY}-vertex-service-account-json`];
 
@@ -1120,6 +1141,7 @@ export function constructConfigFromRequestHeaders(
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === FIREWORKS_AI &&
       fireworksConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === CORTEX && cortexConfig),
+    tlsOptions,
   };
 }
 
