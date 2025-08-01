@@ -60,9 +60,12 @@
               }
             ],
             "items": {
-              "type": "string",
-              "default": ["generalgreetings"]
-            }
+              "type": "string"
+            },
+            "default": [
+              "Casual & Friendly",
+              "Professional & Polite"
+            ]
           },
           "pii_list": {
             "type": "array",
@@ -84,7 +87,16 @@
                 "Unique Id",
                 "Financial Data"
               ]
-            }
+            },
+            "default": [
+              "Person's Name",
+              "Address",
+              "Email Id",
+              "Contact No",
+              "Date Of Birth",
+              "Unique Id",
+              "Financial Data"
+            ]
           },
           "compliance_list": {
             "type": "array",
@@ -97,7 +109,8 @@
             ],
             "items": {
               "type": "string"
-            }
+            },
+            "default": []
           }
         }
       }
