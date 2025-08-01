@@ -1,10 +1,11 @@
+import { BatchEndpoints } from '../globals';
 import { HookObject } from '../middlewares/hooks/types';
 
 /**
  * Settings for retrying requests.
  * @interface
  */
-interface RetrySettings {
+export interface RetrySettings {
   /** The maximum number of retry attempts. */
   attempts: number;
   /** The HTTP status codes on which to retry. */
@@ -13,7 +14,7 @@ interface RetrySettings {
   useRetryAfterHeader?: boolean;
 }
 
-interface CacheSettings {
+export interface CacheSettings {
   mode: string;
   maxAge?: number;
 }
@@ -120,6 +121,7 @@ export interface Options {
   vertexServiceAccountJson?: Record<string, any>;
   vertexStorageBucketName?: string;
   vertexModelName?: string;
+  vertexBatchEndpoint?: BatchEndpoints;
 
   // Required for file uploads with google.
   filename?: string;
@@ -150,6 +152,7 @@ export interface Options {
 
   /** Fireworks finetune required fields */
   fireworksAccountId?: string;
+  fireworksFileLength?: string;
 
   /** Cortex specific fields */
   snowflakeAccount?: string;
@@ -251,6 +254,7 @@ export interface ToolCall {
   function: {
     name: string;
     arguments: string;
+    description?: string;
   };
 }
 

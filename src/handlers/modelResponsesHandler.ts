@@ -26,7 +26,7 @@ function modelResponsesHandler(
 
       return tryTargetsResponse;
     } catch (err: any) {
-      console.error({ message: `${endpoint} error ${err.message}` });
+      console.error('modelResponsesHandler error: ', err);
       return new Response(
         JSON.stringify({
           status: 'failure',
