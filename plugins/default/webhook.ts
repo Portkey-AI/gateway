@@ -106,7 +106,6 @@ export const handler: PluginHandler = async (
       webhookUrl: url,
       responseData: response.data,
       requestContext: {
-        headers,
         timeout: parameters.timeout || 3000,
       },
     };
@@ -123,7 +122,6 @@ export const handler: PluginHandler = async (
       explanation: `Webhook error: ${e.message}`,
       webhookUrl: parameters.webhookURL || 'No URL provided',
       requestContext: {
-        headers: parameters.headers || {},
         timeout: parameters.timeout || 3000,
       },
       // return response body if it's not a ok response and not a timeout error
