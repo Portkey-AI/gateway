@@ -18,10 +18,7 @@ const DEFAULT_PII_LIST = [
   'Financial Data',
 ];
 
-const DEFAULT_GREETINGS_LIST = [
-  'Casual & Friendly',
-  'Professional & Polite',
-];
+const DEFAULT_GREETINGS_LIST = ['Casual & Friendly', 'Professional & Polite'];
 
 export const handler: PluginHandler = async (
   context: PluginContext,

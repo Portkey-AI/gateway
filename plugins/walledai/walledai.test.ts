@@ -89,7 +89,11 @@ describe('WalledAI Guardrail Plugin Handler (integration)', () => {
       compliance_list: ['GDPR', 'PCI-DSS'],
     };
 
-    const result = await handler(context, paramsWithCompliance, 'beforeRequestHook');
+    const result = await handler(
+      context,
+      paramsWithCompliance,
+      'beforeRequestHook'
+    );
 
     expect(result.error).toBeNull();
     expect(result.data).toBeDefined();

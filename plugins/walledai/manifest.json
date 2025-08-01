@@ -62,10 +62,7 @@
             "items": {
               "type": "string"
             },
-            "default": [
-              "Casual & Friendly",
-              "Professional & Polite"
-            ]
+            "default": ["Casual & Friendly", "Professional & Polite"]
           },
           "pii_list": {
             "type": "array",
