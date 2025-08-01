@@ -112,9 +112,6 @@ function constructRequestHeaders(
   }
   const baseHeaders: any = {
     'content-type': 'application/json',
-    ...(requestHeaders['accept-encoding'] && {
-      'accept-encoding': requestHeaders['accept-encoding'],
-    }),
   };
 
   let headers: Record<string, string> = {};
