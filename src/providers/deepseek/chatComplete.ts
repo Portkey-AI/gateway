@@ -27,6 +27,10 @@ export const DeepSeekChatCompleteConfig: ProviderConfig = {
       });
     },
   },
+  response_format: {
+    param: 'response_format',
+    default: null,
+  },
   max_tokens: {
     param: 'max_tokens',
     default: 100,

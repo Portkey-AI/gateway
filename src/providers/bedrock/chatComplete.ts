@@ -28,7 +28,12 @@ import {
   BedrockCohereStreamChunk,
 } from './complete';
 import { BedrockErrorResponse } from './embed';
-import { BEDROCK_STOP_REASON } from './types';
+import {
+  BedrockChatCompleteStreamChunk,
+  BedrockChatCompletionResponse,
+  BedrockContentItem,
+  BedrockStreamState,
+} from './types';
 import {
   getBedrockErrorChunk,
   transformAdditionalModelRequestFields,
@@ -412,63 +417,6 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
   },
 };
 
-type BedrockContentItem = {
-  text?: string;
-  toolUse?: {
-    toolUseId: string;
-    name: string;
-    input: object;
-  };
-  reasoningContent?: {
-    reasoningText?: {
-      signature: string;
-      text: string;
-    };
-    redactedContent?: string;
-  };
-  image?: {
-    source: {
-      bytes: string;
-    };
-    format: string;
-  };
-  document?: {
-    format: string;
-    name: string;
-    source: {
-      bytes?: string;
-      s3Location?: {
-        uri: string;
-      };
-    };
-  };
-  cachePoint?: {
-    type: string;
-  };
-};
-
-interface BedrockChatCompletionResponse {
-  metrics: {
-    latencyMs: number;
-  };
-  output: {
-    message: {
-      role: string;
-      content: BedrockContentItem[];
-    };
-  };
-  stopReason: BEDROCK_STOP_REASON;
-  usage: {
-    inputTokens: number;
-    outputTokens: number;
-    totalTokens: number;
-    cacheReadInputTokenCount?: number;
-    cacheReadInputTokens?: number;
-    cacheWriteInputTokenCount?: number;
-    cacheWriteInputTokens?: number;
-  };
-}
-
 export const BedrockErrorResponseTransform: (
   response: BedrockErrorResponse
 ) => ErrorResponse | undefined = (response) => {
@@ -597,50 +545,6 @@ export const BedrockChatCompleteResponseTransform: (
 
   return generateInvalidProviderResponseError(response, BEDROCK);
 };
-
-export interface BedrockChatCompleteStreamChunk {
-  // this is error message from bedrock
-  message?: string;
-  contentBlockIndex?: number;
-  delta?: {
-    text: string;
-    toolUse: {
-      toolUseId: string;
-      name: string;
-      input: object;
-    };
-    reasoningContent?: {
-      text?: string;
-      signature?: string;
-      redactedContent?: string;
-    };
-  };
-  start?: {
-    toolUse: {
-      toolUseId: string;
-      name: string;
-      input?: object;
-    };
-  };
-  stopReason?: BEDROCK_STOP_REASON;
-  metrics?: {
-    latencyMs: number;
-  };
-  usage?: {
-    inputTokens: number;
-    outputTokens: number;
-    totalTokens: number;
-    cacheReadInputTokenCount?: number;
-    cacheReadInputTokens?: number;
-    cacheWriteInputTokenCount?: number;
-    cacheWriteInputTokens?: number;
-  };
-}
-
-interface BedrockStreamState {
-  stopReason?: BEDROCK_STOP_REASON;
-  currentToolCallIndex?: number;
-}
 
 // refer: https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStream.html
 export const BedrockChatCompleteStreamChunkTransform: (

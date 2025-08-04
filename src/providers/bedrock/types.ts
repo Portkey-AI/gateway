@@ -1,3 +1,5 @@
+import { MessageCreateParamsBase } from '../../types/MessagesRequest';
+
 interface BedrockBatch {
   clientRequestToken: string;
   endTime: string;
@@ -77,6 +79,126 @@ export interface BedrockInferenceProfile {
   inferenceProfileId: string;
   status: string;
   type: string;
+}
+
+export interface BedrockMessagesParams extends MessageCreateParamsBase {
+  additionalModelRequestFields?: Record<string, any>;
+  additional_model_request_fields?: Record<string, any>;
+  additionalModelResponseFieldPaths?: string[];
+  guardrailConfig?: {
+    guardrailIdentifier: string;
+    guardrailVersion: string;
+    trace?: string;
+  };
+  guardrail_config?: {
+    guardrailIdentifier: string;
+    guardrailVersion: string;
+    trace?: string;
+  };
+  anthropic_version?: string;
+  countPenalty?: number;
+}
+export interface BedrockChatCompletionResponse {
+  metrics: {
+    latencyMs: number;
+  };
+  output: {
+    message: {
+      role: string;
+      content: BedrockContentItem[];
+    };
+  };
+  stopReason: BEDROCK_STOP_REASON;
+  usage: {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    cacheReadInputTokenCount?: number;
+    cacheReadInputTokens?: number;
+    cacheWriteInputTokenCount?: number;
+    cacheWriteInputTokens?: number;
+  };
+}
+
+export type BedrockContentItem = {
+  text?: string;
+  toolUse?: {
+    toolUseId: string;
+    name: string;
+    input: object;
+  };
+  reasoningContent?: {
+    reasoningText?: {
+      signature: string;
+      text: string;
+    };
+    redactedContent?: string;
+  };
+  image?: {
+    source: {
+      bytes: string;
+    };
+    format: string;
+  };
+  document?: {
+    format: string;
+    name: string;
+    source: {
+      bytes?: string;
+      s3Location?: {
+        uri: string;
+      };
+    };
+  };
+  cachePoint?: {
+    type: string;
+  };
+};
+
+export interface BedrockStreamState {
+  stopReason?: BEDROCK_STOP_REASON;
+  currentToolCallIndex?: number;
+  currentContentBlockIndex?: number;
+}
+
+export interface BedrockContentBlockDelta {
+  text: string;
+  toolUse: {
+    toolUseId: string;
+    name: string;
+    input: string;
+  };
+  reasoningContent?: {
+    text?: string;
+    signature?: string;
+    redactedContent?: string;
+  };
+}
+
+export interface BedrockChatCompleteStreamChunk {
+  role?: string;
+  contentBlockIndex?: number;
+  delta?: BedrockContentBlockDelta;
+  start?: {
+    toolUse: {
+      toolUseId: string;
+      name: string;
+      input?: object;
+    };
+  };
+  stopReason?: BEDROCK_STOP_REASON;
+  metrics?: {
+    latencyMs: number;
+  };
+  usage?: {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    cacheReadInputTokenCount?: number;
+    cacheReadInputTokens?: number;
+    cacheWriteInputTokenCount?: number;
+    cacheWriteInputTokens?: number;
+  };
 }
 
 export enum BEDROCK_STOP_REASON {
