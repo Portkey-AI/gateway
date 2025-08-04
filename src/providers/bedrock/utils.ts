@@ -433,16 +433,11 @@ export const getInferenceProfile = async (
   c: Context
 ) => {
   if (providerOptions.awsAuthType === 'assumedRole') {
-    const { accessKeyId, secretAccessKey, sessionToken } =
-      (await getAssumedRoleCredentials(
-        c,
-        providerOptions.awsRoleArn || '',
-        providerOptions.awsExternalId || '',
-        providerOptions.awsRegion || ''
-      )) || {};
-    providerOptions.awsAccessKeyId = accessKeyId;
-    providerOptions.awsSecretAccessKey = secretAccessKey;
-    providerOptions.awsSessionToken = sessionToken;
+    try {
+      await providerAssumedRoleCredentials(c, providerOptions);
+    } catch (e) {
+      console.error('getInferenceProfile Error while assuming bedrock role', e);
+    }
   }
 
   const awsRegion = providerOptions.awsRegion || 'us-east-1';

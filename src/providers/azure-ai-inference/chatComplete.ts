@@ -28,7 +28,7 @@ export const AzureAIInferenceChatCompleteConfig: ProviderConfig = {
     min: 0,
   },
   max_completion_tokens: {
-    param: 'max_tokens',
+    param: 'max_completion_tokens',
     default: 100,
     min: 0,
   },
