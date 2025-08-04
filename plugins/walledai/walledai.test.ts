@@ -11,9 +11,9 @@ describe('WalledAI Guardrail Plugin Handler (integration)', () => {
     credentials: testCreds,
     text_type: 'prompt',
     generic_safety_check: true,
-    greetings_list: ['generalgreetings'],
+    greetings_list: ['Casual & Friendly', 'Professional & Polite'],
     pii_list: ["Person's Name", 'Address'],
-    compliance_list: [],
+    compliance_list: ['questions on medicine'],
   };
 
   const makeContext = (text: string): PluginContext => ({
@@ -79,5 +79,24 @@ describe('WalledAI Guardrail Plugin Handler (integration)', () => {
 
     expect(result.verdict).toBe(true);
     expect(result.error).toBeNull();
+  });
+
+  it('handles compliance_list parameter', async () => {
+    const context = makeContext('This is a test for compliance.');
+
+    const paramsWithCompliance: PluginParameters = {
+      ...baseParams,
+      compliance_list: ['GDPR', 'PCI-DSS'],
+    };
+
+    const result = await handler(
+      context,
+      paramsWithCompliance,
+      'beforeRequestHook'
+    );
+
+    expect(result.error).toBeNull();
+    expect(result.data).toBeDefined();
+    // Optionally, check if compliance_list was respected in the response if API supports it
   });
 });

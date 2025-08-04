@@ -8,6 +8,18 @@ import { post, getText, getCurrentContentPart } from '../utils';
 
 const API_URL = 'https://services.walled.ai/v1/guardrail/moderate';
 
+const DEFAULT_PII_LIST = [
+  "Person's Name",
+  'Address',
+  'Email Id',
+  'Contact No',
+  'Date Of Birth',
+  'Unique Id',
+  'Financial Data',
+];
+
+const DEFAULT_GREETINGS_LIST = ['Casual & Friendly', 'Professional & Polite'];
+
 export const handler: PluginHandler = async (
   context: PluginContext,
   parameters: PluginParameters,
@@ -40,13 +52,15 @@ export const handler: PluginHandler = async (
     text: text,
     text_type: parameters.text_type || 'prompt',
     generic_safety_check: parameters.generic_safety_check ?? true,
-    greetings_list: parameters.greetings_list || ['generalgreetings'],
+    greetings_list: parameters.greetings_list || DEFAULT_GREETINGS_LIST,
+    pii_list: parameters.pii_list || DEFAULT_PII_LIST,
+    compliance_list: parameters.compliance_list || [],
   };
   // Prepare headers
   const requestOptions = {
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${parameters.credentials.apiKey}`, // Uncomment if API key is required
+      Authorization: `Bearer ${parameters.credentials.apiKey}`,
     },
   };
 
