@@ -49,6 +49,7 @@ import { handler as promptSecurityProtectResponse } from './promptsecurity/prote
 import { handler as panwPrismaAirsintercept } from './panw-prisma-airs/intercept';
 import { handler as defaultjwt } from './default/jwt';
 import { handler as defaultrequiredMetadataKeys } from './default/requiredMetadataKeys';
+import { handler as walledaiguardrails } from './walledai/guardrails';
 
 export const plugins = {
   default: {
@@ -133,5 +134,8 @@ export const plugins = {
   },
   'panw-prisma-airs': {
     intercept: panwPrismaAirsintercept,
+  },
+  walledai: {
+    guardrails: walledaiguardrails,
   },
 };
