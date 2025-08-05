@@ -57,8 +57,8 @@ async function processLog(c: Context, start: number) {
   }
 
   for (const requestOption of requestOptionsArray) {
-    if (requestOption.type === 'otlp_span') {
-      console.log('otlp_span', JSON.stringify(requestOption));
+    if (requestOption.type === 'otel') {
+      console.log('otel', JSON.stringify(requestOption));
       continue;
     }
 

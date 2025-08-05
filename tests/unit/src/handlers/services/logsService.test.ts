@@ -60,7 +60,7 @@ describe('LogsService', () => {
       );
 
       expect(result).toEqual({
-        type: 'otlp_span',
+        type: 'otel',
         traceId: 'trace-123',
         spanId: 'span-789',
         parentSpanId: 'parent-456',

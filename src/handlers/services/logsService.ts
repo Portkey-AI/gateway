@@ -61,7 +61,7 @@ export interface LogObject {
 }
 
 export interface otlpSpanObject {
-  type: 'otlp_span';
+  type: 'otel';
   traceId: string;
   spanId: string;
   parentSpanId: string;
@@ -103,7 +103,7 @@ export class LogsService {
     spanId?: string
   ) {
     return {
-      type: 'otlp_span',
+      type: 'otel',
       traceId: traceId,
       spanId: spanId ?? crypto.randomUUID(),
       parentSpanId: parentSpanId,
