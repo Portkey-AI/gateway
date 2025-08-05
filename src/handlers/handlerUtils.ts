@@ -1190,7 +1190,7 @@ export async function recursiveAfterRequestHookHandler(
     originalResponseJson,
   } = await responseService.create({
     response: response,
-    responseTransformer: undefined,
+    responseTransformer: requestContext.endpoint,
     isResponseAlreadyMapped: false,
     cache: {
       isCacheHit: false,
