@@ -453,6 +453,8 @@ export async function tryPost(
         providerContext,
         hooksService,
         logObject,
+        responseService,
+        cacheResponseObject,
         mcpService || undefined
       );
 
@@ -472,10 +474,7 @@ export async function tryPost(
         originalResponseJson,
       });
 
-    logObject
-      .updateRequestContext(requestContext, fetchOptions.headers)
-      .addResponse(response, mappedOriginalResponseJson)
-      .log();
+    // The log is handled inside the recursiveAfterRequestHookHandler function
 
     return response;
   } finally {
@@ -1149,6 +1148,8 @@ export async function recursiveAfterRequestHookHandler(
   providerContext: ProviderContext,
   hooksService: HooksService,
   logObject: LogObjectBuilder,
+  responseService: ResponseService,
+  cacheResponseObject: CacheResponseObject,
   mcpService?: McpService
 ): Promise<{
   mappedResponse: Response;
@@ -1158,11 +1159,7 @@ export async function recursiveAfterRequestHookHandler(
 }> {
   const {
     honoContext: c,
-    providerOption,
     isStreaming: isStreamingMode,
-    params: gatewayParams,
-    endpoint: fn,
-    strictOpenAiCompliance,
     requestTimeout,
     retryConfig: retry,
   } = requestContext;
@@ -1187,26 +1184,27 @@ export async function recursiveAfterRequestHookHandler(
     retry.useRetryAfterHeader
   ));
 
-  // Check if sync hooks are available
-  // This will be used to determine if we need to parse the response body or simply passthrough the response as is
-  const areSyncHooksAvailable = hooksService.areSyncHooksAvailable;
-
   const {
-    response: mappedResponse,
+    response: currentResponse,
     responseJson: mappedResponseJson,
     originalResponseJson,
-  } = await responseHandler(
-    response,
-    isStreamingMode,
-    providerOption,
-    fn,
-    url,
-    false,
-    gatewayParams,
-    strictOpenAiCompliance,
-    c.req.url,
-    areSyncHooksAvailable
-  );
+  } = await responseService.create({
+    response: response,
+    responseTransformer: undefined,
+    isResponseAlreadyMapped: false,
+    cache: {
+      isCacheHit: false,
+      cacheStatus: cacheResponseObject.cacheStatus,
+      cacheKey: cacheResponseObject.cacheKey,
+    },
+    retryAttempt: retryCount || 0,
+    createdAt,
+  });
+
+  logObject
+    .updateRequestContext(requestContext, options.headers)
+    .addResponse(currentResponse, originalResponseJson)
+    .log();
 
   if (
     mcpService &&
@@ -1220,17 +1218,6 @@ export async function recursiveAfterRequestHookHandler(
       mcpService
     );
     if (mcpResult.success) {
-      // TODO: the hookspan context might need to be updated here.
-      // Update hook span context for the new request
-      // hooksService.hookSpan.updateContext({
-      //   request: { json: requestContext.params },
-      // });
-
-      logObject
-        .updateRequestContext(requestContext, options.headers)
-        .addResponse(mappedResponse, mappedResponseJson)
-        .log();
-
       // Construct the base object for the request
       const fetchOptions: RequestInit = await constructRequest(
         providerContext,
@@ -1246,6 +1233,8 @@ export async function recursiveAfterRequestHookHandler(
         providerContext,
         hooksService,
         logObject,
+        responseService,
+        cacheResponseObject,
         mcpService
       );
     } else {
@@ -1259,11 +1248,17 @@ export async function recursiveAfterRequestHookHandler(
 
   const arhResponse = await afterRequestHookHandler(
     c,
-    mappedResponse,
+    currentResponse,
     mappedResponseJson,
     hookSpanId,
     retryAttemptsMade
   );
+
+  logObject
+    .updateRequestContext(requestContext, options.headers)
+    .addResponse(arhResponse, originalResponseJson)
+    .addExecutionTime(createdAt)
+    .log();
 
   const remainingRetryCount =
     (retry?.attempts || 0) - (retryCount || 0) - retryAttemptsMade;
@@ -1273,13 +1268,6 @@ export async function recursiveAfterRequestHookHandler(
   );
 
   if (remainingRetryCount > 0 && !retrySkipped && isRetriableStatusCode) {
-    // Log the request here since we're about to retry
-    logObject
-      .updateRequestContext(requestContext, options.headers)
-      .addResponse(arhResponse, originalResponseJson)
-      .addExecutionTime(createdAt)
-      .log();
-
     return recursiveAfterRequestHookHandler(
       requestContext,
       options,
@@ -1287,7 +1275,9 @@ export async function recursiveAfterRequestHookHandler(
       hookSpanId,
       providerContext,
       hooksService,
-      logObject
+      logObject,
+      responseService,
+      cacheResponseObject
     );
   }
 

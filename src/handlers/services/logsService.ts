@@ -90,6 +90,11 @@ export interface otlpSpanObject {
   }[];
 }
 
+function capitaliseSentence(str: string) {
+  // First letter of each word to uppercase
+  return str.replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 export class LogsService {
   constructor(private honoContext: Context) {}
 
@@ -107,12 +112,12 @@ export class LogsService {
       traceId: traceId,
       spanId: spanId ?? crypto.randomUUID(),
       parentSpanId: parentSpanId,
-      name: `execute_tool ${toolCall.function.name}`,
+      name: capitaliseSentence(toolCall.function.name.replaceAll('_', ' ')),
       kind: 'SPAN_KIND_INTERNAL',
       startTimeUnixNano: startTimeUnixNano,
       endTimeUnixNano: endTimeUnixNano,
       status: {
-        code: 'STATUS_CODE_OK',
+        code: 200,
       },
       attributes: [
         {
