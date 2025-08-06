@@ -1,5 +1,5 @@
 import { AI21 } from '../../globals';
-import { Params, SYSTEM_MESSAGE_ROLES } from '../../types/requestBody';
+import { Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -21,33 +21,43 @@ export const AI21ChatCompleteConfig: ProviderConfig = {
       param: 'messages',
       required: true,
       transform: (params: Params) => {
-        let inputMessages: any = [];
+        return params.messages?.map((msg: any) => {
+          let textContent: string = '';
+          if (Array.isArray(msg.content)) {
+            msg.content.map((c: any) => {
+              if (c.type === 'text') {
+                textContent = c.text;
+              }
+            });
+          } else {
+            textContent = msg.content;
+          }
 
-        if (
-          params.messages?.[0]?.role &&
-          SYSTEM_MESSAGE_ROLES.includes(params.messages?.[0]?.role)
-        ) {
-          inputMessages = params.messages.slice(1);
-        } else if (params.messages) {
-          inputMessages = params.messages;
-        }
-
-        return inputMessages.map((msg: any) => ({
-          text: msg.content,
-          role: msg.role,
-        }));
+          return {
+            role: msg.role,
+            content: textContent,
+          };
+        });
       },
     },
     {
-      param: 'system',
-      required: false,
+      param: 'documents',
       transform: (params: Params) => {
-        if (
-          params.messages?.[0]?.role &&
-          SYSTEM_MESSAGE_ROLES.includes(params.messages?.[0]?.role)
-        ) {
-          return params.messages?.[0].content;
-        }
+        const documents: any[] = [];
+        params.messages?.forEach((msg: any) => {
+          if (Array.isArray(msg.content)) {
+            msg.content.forEach((c: any) => {
+              if (c.type !== 'text') {
+                documents.push({
+                  content: c.content,
+                  value: c.type,
+                });
+              }
+            });
+          }
+        });
+
+        return documents.length == 0 ? documents : undefined;
       },
     },
   ],
@@ -59,9 +69,6 @@ export const AI21ChatCompleteConfig: ProviderConfig = {
     default: 1,
     min: 1,
     max: 16,
-  },
-  documents: {
-    param: 'documents',
   },
   response_format: {
     param: 'responseFormat',
