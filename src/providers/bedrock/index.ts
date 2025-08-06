@@ -1,5 +1,4 @@
 import { AI21, ANTHROPIC, COHERE } from '../../globals';
-import { Params } from '../../types/requestBody';
 import { ProviderConfigs } from '../types';
 import BedrockAPIConfig from './api';
 import { BedrockCancelBatchResponseTransform } from './cancelBatch';
@@ -90,13 +89,13 @@ const BedrockConfig: ProviderConfigs = {
     getBatchOutput: BedrockGetBatchOutputRequestHandler,
     retrieveFileContent: BedrockRetrieveFileContentRequestHandler,
   },
-  getConfig: (params: Params) => {
+  getConfig: ({ params, providerOptions }) => {
     // To remove the region in case its a cross-region inference profile ID
     // https://docs.aws.amazon.com/bedrock/latest/userguide/cross-region-inference-support.html
     let config: ProviderConfigs = {};
 
     if (params.model) {
-      let providerModel = params.foundationModel || params.model;
+      let providerModel = providerOptions.foundationModel || params.model;
       providerModel = providerModel.replace(/^(us\.|eu\.)/, '');
       const providerModelArray = providerModel?.split('.');
       const provider = providerModelArray?.[0];
