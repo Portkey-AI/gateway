@@ -503,15 +503,6 @@ describe('transformGeminiToolParameters', () => {
     expect(transformed.$defs).toBeUndefined();
   });
 
-  it('adds format: "enum" for enum fields (status)', () => {
-    expect(transformed.properties.status.enum).toEqual([
-      'ACTIVE',
-      'INACTIVE',
-      'BANNED',
-    ]);
-    expect(transformed.properties.status.format).toBe('enum');
-  });
-
   it('flattens anyOf [string, null] to { type: string, nullable: true } and preserves metadata (notes)', () => {
     expect(transformed.properties.notes).toEqual({
       type: 'string',
@@ -549,21 +540,6 @@ describe('transformGeminiToolParameters', () => {
     expect(identity.nullable).toBeUndefined();
     expect(union[0].type).toBe('object');
     expect(union[1].type).toBe('object');
-  });
-
-  it('adds format: "enum" for nested enums (preferences.notification_frequency, pet.species, social.platform)', () => {
-    const nf =
-      transformed.properties.preferences.properties.notification_frequency;
-    expect(nf.enum).toEqual(['daily', 'weekly', 'monthly']);
-    expect(nf.format).toBe('enum');
-
-    const species = transformed.properties.pets.items.properties.species;
-    expect(species.enum).toEqual(['dog', 'cat', 'bird', 'other']);
-    expect(species.format).toBe('enum');
-
-    const platform = transformed.properties.social.items.properties.platform;
-    expect(platform.enum).toEqual(['twitter', 'linkedin', 'github', 'other']);
-    expect(platform.format).toBe('enum');
   });
 
   it('retains default values/titles when flattening (notes, contact.phone)', () => {

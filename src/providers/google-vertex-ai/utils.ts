@@ -264,12 +264,6 @@ export const transformGeminiToolParameters = (
     const transformed: JsonSchema = {};
 
     for (const [key, value] of Object.entries(node)) {
-      if (key === 'enum' && Array.isArray(value)) {
-        transformed.enum = value;
-        transformed.format = 'enum';
-        continue;
-      }
-
       if ((key === 'anyOf' || key === 'oneOf') && Array.isArray(value)) {
         const nonNullItems = value.filter((item) => !isNullTypeNode(item));
         const hadNull = nonNullItems.length < value.length;
