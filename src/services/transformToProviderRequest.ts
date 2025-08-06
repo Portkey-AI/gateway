@@ -201,15 +201,7 @@ const transformToProviderRequestBody = (
 ) => {
   let providerConfig = ProviderConfigs[provider];
   if (providerConfig.getConfig) {
-    providerConfig = providerConfig.getConfig({ params: {}, providerOptions })[
-      fn
-    ];
-  } else {
-    providerConfig = providerConfig[fn];
-  }
-
-  if (!providerConfig) {
-    throw new GatewayError(`${fn} is not supported by ${provider}`);
+    providerConfig = providerConfig.getConfig({ params: {}, providerOptions });
   }
 
   return providerConfig.requestTransforms[fn](requestBody, requestHeaders);
