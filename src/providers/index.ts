@@ -126,7 +126,6 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'featherless-ai': FeatherlessAIConfig,
   krutrim: KrutrimConfig,
   '302ai': AI302Config,
-
 };
 
 export default Providers;
