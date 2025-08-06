@@ -1,3 +1,4 @@
+import BytezConfig from './bytez';
 import AI21Config from './ai21';
 import AnthropicConfig from './anthropic';
 import AnyscaleConfig from './anyscale';
@@ -121,6 +122,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'kluster-ai': KlusterAIConfig,
   nscale: NscaleConfig,
   hyperbolic: HyperbolicConfig,
+  bytez: BytezConfig,
   'featherless-ai': FeatherlessAIConfig,
   krutrim: KrutrimConfig,
   '302ai': AI302Config,
