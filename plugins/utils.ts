@@ -179,14 +179,14 @@ function setResponseContentPart(
 
   if (requestType === 'chatComplete') {
     updatedJson.choices = [...json.choices];
-    const lastChoice = {
-      ...updatedJson.choices[updatedJson.choices.length - 1],
+    const firstChoice = {
+      ...updatedJson.choices[0],
     };
-    lastChoice.message = {
-      ...lastChoice.message,
-      content: textArray[0] || lastChoice.message.content,
+    firstChoice.message = {
+      ...firstChoice.message,
+      content: textArray[0] || firstChoice.message.content,
     };
-    updatedJson.choices[updatedJson.choices.length - 1] = lastChoice;
+    updatedJson.choices[0] = firstChoice;
   } else if (requestType === 'complete') {
     updatedJson.choices = [...json.choices];
     updatedJson.choices[json.choices.length - 1].text =
