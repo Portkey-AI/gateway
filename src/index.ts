@@ -4,6 +4,7 @@
  * @module index
  */
 
+import './instrument';
 import * as Sentry from '@sentry/node';
 import { Context, Hono } from 'hono';
 import { prettyJSON } from 'hono/pretty-json';
