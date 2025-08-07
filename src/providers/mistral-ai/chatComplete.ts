@@ -143,6 +143,11 @@ interface MistralAIStreamChunk {
     index: number;
     finish_reason: string | null;
   }[];
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
 }
 
 export const MistralAIChatCompleteResponseTransform: (
@@ -212,6 +217,7 @@ export const MistralAIChatCompleteStreamChunkTransform: (
           finish_reason: parsedChunk.choices[0].finish_reason,
         },
       ],
+      ...(parsedChunk.usage ? { usage: parsedChunk.usage } : {}),
     })}` + '\n\n'
   );
 };

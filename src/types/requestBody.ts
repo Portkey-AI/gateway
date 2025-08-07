@@ -1,10 +1,11 @@
+import { BatchEndpoints } from '../globals';
 import { HookObject } from '../middlewares/hooks/types';
 
 /**
  * Settings for retrying requests.
  * @interface
  */
-interface RetrySettings {
+export interface RetrySettings {
   /** The maximum number of retry attempts. */
   attempts: number;
   /** The HTTP status codes on which to retry. */
@@ -13,7 +14,7 @@ interface RetrySettings {
   useRetryAfterHeader?: boolean;
 }
 
-interface CacheSettings {
+export interface CacheSettings {
   mode: string;
   maxAge?: number;
 }
@@ -43,7 +44,7 @@ interface Strategy {
  */
 export interface Options {
   /** The name of the provider. */
-  provider: string | undefined;
+  provider: string;
   /** The name of the API key for the provider. */
   virtualKey?: string;
   /** The API key for the provider. */
@@ -94,6 +95,7 @@ export interface Options {
   awsBedrockModel?: string;
   awsServerSideEncryption?: string;
   awsServerSideEncryptionKMSKeyId?: string;
+  foundationModel?: string;
 
   /** Sagemaker specific */
   amznSagemakerCustomAttributes?: string;
@@ -120,6 +122,7 @@ export interface Options {
   vertexServiceAccountJson?: Record<string, any>;
   vertexStorageBucketName?: string;
   vertexModelName?: string;
+  vertexBatchEndpoint?: BatchEndpoints;
 
   // Required for file uploads with google.
   filename?: string;
@@ -150,6 +153,7 @@ export interface Options {
 
   /** Fireworks finetune required fields */
   fireworksAccountId?: string;
+  fireworksFileLength?: string;
 
   /** Cortex specific fields */
   snowflakeAccount?: string;
@@ -251,6 +255,7 @@ export interface ToolCall {
   function: {
     name: string;
     arguments: string;
+    description?: string;
   };
 }
 
@@ -358,12 +363,8 @@ export interface Tool extends PromptCache {
   type: string;
   /** A description of the function. */
   function: Function;
-  computer?: {
-    name: string;
-    display_width_px: number;
-    display_height_px: number;
-    display_number: number;
-  };
+  // this is used to support tools like computer, web_search, etc.
+  [key: string]: any;
 }
 
 /**

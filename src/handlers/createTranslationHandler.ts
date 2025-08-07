@@ -29,7 +29,7 @@ export async function createTranslationHandler(c: Context): Promise<Response> {
 
     return tryTargetsResponse;
   } catch (err: any) {
-    console.log('createTranslation error', err.message);
+    console.error('createTranslationHandler error: ', err);
     return new Response(
       JSON.stringify({
         status: 'failure',

@@ -47,10 +47,14 @@ import {
 import { GoogleFinetuneRetrieveResponseTransform } from './retrieveFinetune';
 import { GoogleFinetuneListResponseTransform } from './listFinetunes';
 import { GoogleListFilesRequestHandler } from './listFiles';
+import {
+  VertexAnthropicMessagesConfig,
+  VertexAnthropicMessagesResponseTransform,
+} from './messages';
 
 const VertexConfig: ProviderConfigs = {
   api: VertexApiConfig,
-  getConfig: (params: Params) => {
+  getConfig: ({ params }) => {
     const requestConfig = {
       uploadFile: {},
       createBatch: GoogleBatchCreateConfig,
@@ -112,10 +116,12 @@ const VertexConfig: ProviderConfigs = {
           api: GoogleApiConfig,
           createBatch: GoogleBatchCreateConfig,
           createFinetune: baseConfig.createFinetune,
+          messages: VertexAnthropicMessagesConfig,
           responseTransforms: {
             'stream-chatComplete':
               VertexAnthropicChatCompleteStreamChunkTransform,
             chatComplete: VertexAnthropicChatCompleteResponseTransform,
+            messages: VertexAnthropicMessagesResponseTransform,
             ...responseTransforms,
           },
         };
@@ -133,9 +139,19 @@ const VertexConfig: ProviderConfigs = {
         };
       case 'endpoints':
         return {
-          chatComplete: chatCompleteParams([], {
-            model: 'meta-llama-3-8b-instruct',
-          }),
+          chatComplete: chatCompleteParams(
+            ['model'],
+            {},
+            {
+              model: {
+                param: 'model',
+                transform: (params: Params) => {
+                  const _model = params.model;
+                  return _model?.replace('endpoints.', '');
+                },
+              },
+            }
+          ),
           createBatch: GoogleBatchCreateConfig,
           api: GoogleApiConfig,
           createFinetune: baseConfig.createFinetune,

@@ -312,18 +312,22 @@ export function handleStreamingMode(
 
   if (proxyProvider === BEDROCK) {
     (async () => {
-      for await (const chunk of readAWSStream(
-        reader,
-        responseTransformer,
-        fallbackChunkId,
-        strictOpenAiCompliance,
-        gatewayRequest
-      )) {
-        await writer.ready;
-        await writer.write(encoder.encode(chunk));
+      try {
+        for await (const chunk of readAWSStream(
+          reader,
+          responseTransformer,
+          fallbackChunkId,
+          strictOpenAiCompliance,
+          gatewayRequest
+        )) {
+          await writer.ready;
+          await writer.write(encoder.encode(chunk));
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        await writer.close();
       }
-      await writer.ready;
-      await writer.close();
     })()
       .catch((error) => {
         Sentry.captureException(error, {
@@ -337,20 +341,24 @@ export function handleStreamingMode(
       });
   } else {
     (async () => {
-      for await (const chunk of readStream(
-        reader,
-        splitPattern,
-        responseTransformer,
-        isSleepTimeRequired,
-        fallbackChunkId,
-        strictOpenAiCompliance,
-        gatewayRequest
-      )) {
-        await writer.ready;
-        await writer.write(encoder.encode(chunk));
+      try {
+        for await (const chunk of readStream(
+          reader,
+          splitPattern,
+          responseTransformer,
+          isSleepTimeRequired,
+          fallbackChunkId,
+          strictOpenAiCompliance,
+          gatewayRequest
+        )) {
+          await writer.ready;
+          await writer.write(encoder.encode(chunk));
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        await writer.close();
       }
-      await writer.ready;
-      await writer.close();
     })()
       .catch((error) => {
         Sentry.captureException(error, {

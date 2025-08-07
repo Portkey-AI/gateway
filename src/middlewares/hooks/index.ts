@@ -429,9 +429,6 @@ export class HooksManager {
       (context.requestType === 'embed' && hook.type === HookType.MUTATOR) ||
       (hook.eventType === 'afterRequestHook' &&
         context.response.statusCode !== 200) ||
-      (hook.eventType === 'afterRequestHook' &&
-        context.request.isStreamingRequest &&
-        !context.response.text) ||
       (hook.eventType === 'beforeRequestHook' &&
         span.getParentHookSpanId() !== null) ||
       (hook.type === HookType.MUTATOR && !!hook.async)

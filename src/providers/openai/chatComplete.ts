@@ -118,6 +118,9 @@ export const OpenAIChatCompleteConfig: ProviderConfig = {
   reasoning_effort: {
     param: 'reasoning_effort',
   },
+  web_search_options: {
+    param: 'web_search_options',
+  },
 };
 
 export interface OpenAIChatCompleteResponse extends ChatCompletionResponse {

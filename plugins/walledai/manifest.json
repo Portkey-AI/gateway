@@ -1,0 +1,116 @@
+{
+  "id": "walledai",
+  "description": "Walled AI",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "Find your API key in the Walled AI dashboard (https://dev.walled.ai/)",
+        "encrypted": true
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Walled AI Guardrail for checking safety of LLM inputs",
+      "id": "guardrails",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Ensure the safety and compliance of your LLM inputs with Walled AI's advanced guardrail system."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text_type": {
+            "type": "string",
+            "label": "Text Type",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Type of Text , defaults to 'prompt'"
+              }
+            ],
+            "default": "prompt"
+          },
+          "generic_safety_check": {
+            "type": "string",
+            "label": "Generic Safety Check",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Boolean value to enable generic safety checks on the text input. Defaults to 'true'."
+              }
+            ],
+            "default": true
+          },
+          "greetings_list": {
+            "type": "array",
+            "label": "Greetings List",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "List of greetings to be used in the guardrail check. This can help in identifying and handling greetings appropriately."
+              }
+            ],
+            "items": {
+              "type": "string"
+            },
+            "default": ["Casual & Friendly", "Professional & Polite"]
+          },
+          "pii_list": {
+            "type": "array",
+            "label": "PII LIST",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Identify all the PII for only the following types of PII will be checked in the text input. Defaults to empty list"
+              }
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "Person's Name",
+                "Address",
+                "Email Id",
+                "Contact No",
+                "Date Of Birth",
+                "Unique Id",
+                "Financial Data"
+              ]
+            },
+            "default": [
+              "Person's Name",
+              "Address",
+              "Email Id",
+              "Contact No",
+              "Date Of Birth",
+              "Unique Id",
+              "Financial Data"
+            ]
+          },
+          "compliance_list": {
+            "type": "array",
+            "label": "List of Compliance Checks",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "List of compliance checks to be performed on the text input. This can help in ensuring that the text adheres to specific compliance standards. Defaults to empty"
+              }
+            ],
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          }
+        }
+      }
+    }
+  ]
+}

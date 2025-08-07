@@ -16,7 +16,7 @@ const getOutgoingWebSocket = async (url: string, options: RequestInit) => {
     let response = await fetch(url, options);
     outgoingWebSocket = response.webSocket;
   } catch (error) {
-    console.log(error);
+    console.error('getOutgoingWebSocket error: ', error);
   }
 
   if (!outgoingWebSocket) {
@@ -75,7 +75,7 @@ export async function realTimeHandler(c: Context): Promise<Response> {
       webSocket: client,
     });
   } catch (err: any) {
-    console.log('realtimeHandler error', err.message);
+    console.error('realtimeHandler error: ', err.message);
     return new Response(
       JSON.stringify({
         status: 'failure',

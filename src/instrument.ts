@@ -18,4 +18,6 @@ Sentry.init({
   profilesSampleRate: 1.0,
 
   normalizeDepth: 10,
+
+  environment: process.env.NODE_ENV,
 });

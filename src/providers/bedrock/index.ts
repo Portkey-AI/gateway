@@ -1,5 +1,4 @@
 import { AI21, ANTHROPIC, COHERE } from '../../globals';
-import { Params } from '../../types/requestBody';
 import { ProviderConfigs } from '../types';
 import BedrockAPIConfig from './api';
 import { BedrockCancelBatchResponseTransform } from './cancelBatch';
@@ -75,6 +74,13 @@ import {
 } from './uploadFile';
 import { BedrockListFilesResponseTransform } from './listfiles';
 import { BedrockDeleteFileResponseTransform } from './deleteFile';
+import {
+  AnthropicBedrockConverseMessagesConfig as BedrockAnthropicConverseMessagesConfig,
+  BedrockConverseMessagesConfig,
+  BedrockConverseMessagesStreamChunkTransform,
+  BedrockMessagesResponseTransform,
+} from './messages';
+
 const BedrockConfig: ProviderConfigs = {
   api: BedrockAPIConfig,
   requestHandlers: {
@@ -83,13 +89,13 @@ const BedrockConfig: ProviderConfigs = {
     getBatchOutput: BedrockGetBatchOutputRequestHandler,
     retrieveFileContent: BedrockRetrieveFileContentRequestHandler,
   },
-  getConfig: (params: Params) => {
+  getConfig: ({ params, providerOptions }) => {
     // To remove the region in case its a cross-region inference profile ID
     // https://docs.aws.amazon.com/bedrock/latest/userguide/cross-region-inference-support.html
     let config: ProviderConfigs = {};
 
     if (params.model) {
-      let providerModel = params.foundationModel || params.model;
+      let providerModel = providerOptions.foundationModel || params.model;
       providerModel = providerModel.replace(/^(us\.|eu\.)/, '');
       const providerModelArray = providerModel?.split('.');
       const provider = providerModelArray?.[0];
@@ -99,10 +105,13 @@ const BedrockConfig: ProviderConfigs = {
           config = {
             complete: BedrockAnthropicCompleteConfig,
             chatComplete: BedrockConverseAnthropicChatCompleteConfig,
+            messages: BedrockAnthropicConverseMessagesConfig,
             api: BedrockAPIConfig,
             responseTransforms: {
               'stream-complete': BedrockAnthropicCompleteStreamChunkTransform,
               complete: BedrockAnthropicCompleteResponseTransform,
+              messages: BedrockMessagesResponseTransform,
+              'stream-messages': BedrockConverseMessagesStreamChunkTransform,
             },
           };
           break;
@@ -194,6 +203,9 @@ const BedrockConfig: ProviderConfigs = {
       }
       if (!config.chatComplete) {
         config.chatComplete = BedrockConverseChatCompleteConfig;
+      }
+      if (!config.messages) {
+        config.messages = BedrockConverseMessagesConfig;
       }
       if (!config.responseTransforms?.['stream-chatComplete']) {
         config.responseTransforms = {

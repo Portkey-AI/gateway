@@ -31,7 +31,7 @@ export async function createTranscriptionHandler(
 
     return tryTargetsResponse;
   } catch (err: any) {
-    console.log('createTranscription error', err.message);
+    console.error('createTranscriptionHandler error: ', err);
     return new Response(
       JSON.stringify({
         status: 'failure',
