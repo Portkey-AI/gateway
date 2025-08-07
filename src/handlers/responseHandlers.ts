@@ -56,6 +56,10 @@ export async function responseHandler(
   const isSuccessStatusCode = [200, 246].includes(response.status);
   const provider = providerOptions.provider;
 
+  if (typeof provider == 'object') {
+    provider = provider.provider || '';
+  }
+
   if (provider === BEDROCK && gatewayRequest.messages) {
     gatewayRequest.messages = await prefetchImageUrls(gatewayRequest.messages);
   }
