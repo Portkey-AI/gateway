@@ -2,6 +2,8 @@ import * as Sentry from '@sentry/node';
 
 // Ensure to call this before requiring any other modules!
 Sentry.init({
+  enabled: !!process.env.SENTRY_ENABLED,
+
   dsn: 'https://141013471ab85e4a32b5c58d69510742@o1154715.ingest.us.sentry.io/4509125385781248',
   // Set tracesSampleRate to 1.0 to capture 100%
   // of transactions for tracing.
