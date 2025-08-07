@@ -54,7 +54,7 @@ import {
 
 const VertexConfig: ProviderConfigs = {
   api: VertexApiConfig,
-  getConfig: (params: Params) => {
+  getConfig: ({ params }) => {
     const requestConfig = {
       uploadFile: {},
       createBatch: GoogleBatchCreateConfig,
