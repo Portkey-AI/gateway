@@ -328,6 +328,14 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
               inputSchema: { json: tool.function.parameters },
             },
           });
+        } else if (tool.name && tool.description && tool.parameters) {
+          tools.push({
+            toolSpec: {
+              name: tool.name,
+              description: tool.description,
+              inputSchema: { json: tool.parameters },
+            },
+          });
         }
         if (tool.cache_control && !canBeAmazonModel) {
           tools.push({
