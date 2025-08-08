@@ -1,5 +1,8 @@
 import { Params } from '../../types/requestBody';
-import { derefer, recursivelyDeleteUnsupportedParameters } from './utils';
+import {
+  recursivelyDeleteUnsupportedParameters,
+  transformGeminiToolParameters,
+} from './utils';
 import { GoogleEmbedParams } from './embed';
 import { EmbedInstancesData } from './types';
 /**
@@ -39,20 +42,11 @@ export function transformGenerationConfig(params: Params) {
   }
   if (params?.response_format?.type === 'json_schema') {
     generationConfig['responseMimeType'] = 'application/json';
-    recursivelyDeleteUnsupportedParameters(
-      params?.response_format?.json_schema?.schema
-    );
     let schema =
       params?.response_format?.json_schema?.schema ??
       params?.response_format?.json_schema;
-    if (Object.keys(schema).includes('$defs')) {
-      schema = derefer(schema);
-      delete schema['$defs'];
-    }
-    if (Object.hasOwn(schema, '$schema')) {
-      delete schema['$schema'];
-    }
-    generationConfig['responseSchema'] = schema;
+    recursivelyDeleteUnsupportedParameters(schema);
+    generationConfig['responseSchema'] = transformGeminiToolParameters(schema);
   }
 
   if (params?.thinking) {
