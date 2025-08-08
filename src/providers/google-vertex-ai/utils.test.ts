@@ -10,10 +10,16 @@ class StatusEnum(StrEnum):
     INACTIVE = "INACTIVE"
     BANNED = "BANNED"
 
+class PostalAddress(BaseModel):
+    line1: str
+    line2: str | None = None
+    city: str
+    country: str
+
 class ContactInfo(BaseModel):
     email: str = Field(..., description="User's email address")
     phone: str | None = Field(None, description="Phone number (E.164 format)")
-    address: str = Field(..., description="Address")
+    address: PostalAddress = Field(..., description="Address")
 
 class Job(BaseModel):
     title: str
@@ -93,9 +99,8 @@ const userProfileSchema = {
           title: 'Phone',
         },
         address: {
+          $ref: '#/$defs/PostalAddress',
           description: 'Address',
-          title: 'Address',
-          type: 'string',
         },
       },
       required: ['email', 'address'],
@@ -236,6 +241,21 @@ const userProfileSchema = {
       },
       required: ['name', 'species'],
       title: 'Pet',
+      type: 'object',
+    },
+    PostalAddress: {
+      properties: {
+        line1: { title: 'Line1', type: 'string' },
+        line2: {
+          anyOf: [{ type: 'string' }, { type: 'null' }],
+          default: null,
+          title: 'Line2',
+        },
+        city: { title: 'City', type: 'string' },
+        country: { title: 'Country', type: 'string' },
+      },
+      required: ['line1', 'city', 'country'],
+      title: 'PostalAddress',
       type: 'object',
     },
     Preferences: {
@@ -420,7 +440,19 @@ describe('derefer', () => {
   it('inlines $ref for nested object property (contact)', () => {
     expect(derefed.properties.contact.type).toBe('object');
     expect(derefed.properties.contact.properties.email.type).toBe('string');
-    expect(derefed.properties.contact.properties.address.type).toBe('string');
+    expect(derefed.properties.contact.properties.address.type).toBe('object');
+  });
+
+  it('inlines $ref for nested model inside ContactInfo (address -> PostalAddress)', () => {
+    const contact = derefed.properties.contact;
+    expect(contact.type).toBe('object');
+
+    const addr = contact.properties.address;
+    // PostalAddress should be fully inlined
+    expect(addr.type).toBe('object');
+    expect(addr.properties.line1.type).toBe('string');
+    expect(addr.properties.city.type).toBe('string');
+    expect(addr.properties.country.type).toBe('string');
   });
 
   it('inlines $ref for enum via $defs (status)', () => {
@@ -518,6 +550,19 @@ describe('transformGeminiToolParameters', () => {
       nullable: true,
       description: 'Phone number (E.164 format)',
       title: 'Phone',
+      default: null,
+    });
+  });
+
+  it('keeps nested model flattened correctly after deref (contact.address)', () => {
+    const addr = transformed.properties.contact.properties.address;
+    expect(addr.type).toBe('object');
+    expect(addr.properties.line1.type).toBe('string');
+    // line2 remains nullable string
+    expect(addr.properties.line2).toEqual({
+      type: 'string',
+      nullable: true,
+      title: 'Line2',
       default: null,
     });
   });
