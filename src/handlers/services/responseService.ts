@@ -132,7 +132,7 @@ export class ResponseService {
 
     // Remove headers directly
     const encoding = response.headers.get('content-encoding');
-    if (encoding?.includes('br') || getRuntimeKey() == 'node') {
+    if ((encoding && encoding.includes('br')) || getRuntimeKey() === 'node') {
       response.headers.delete('content-encoding');
     }
     response.headers.delete('content-length');
