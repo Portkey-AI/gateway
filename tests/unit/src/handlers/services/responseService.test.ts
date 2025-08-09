@@ -12,7 +12,7 @@ import {
 } from '../../../../../src/globals';
 
 // Mock dependencies
-jest.mock('../../responseHandlers');
+jest.mock('../../../../../src/handlers/responseHandlers');
 jest.mock('hono/adapter');
 
 describe('ResponseService', () => {
@@ -27,6 +27,7 @@ describe('ResponseService', () => {
       index: 0,
       traceId: 'trace-123',
       provider: 'openai',
+      providerOption: { provider: 'openai' },
       isStreaming: false,
       params: { model: 'gpt-4', messages: [] },
       strictOpenAiCompliance: true,
@@ -44,12 +45,7 @@ describe('ResponseService', () => {
 
     mockLogsService = {} as LogsService;
 
-    responseService = new ResponseService(
-      mockRequestContext,
-      mockProviderContext,
-      mockHooksService,
-      mockLogsService
-    );
+    responseService = new ResponseService(mockRequestContext, mockHooksService);
 
     // Reset mocks
     jest.clearAllMocks();
@@ -136,7 +132,7 @@ describe('ResponseService', () => {
       expect(responseHandler).toHaveBeenCalledWith(
         mockResponse,
         mockRequestContext.isStreaming,
-        mockRequestContext.provider,
+        mockRequestContext.providerOption,
         'chatComplete',
         mockRequestContext.requestURL,
         false,
@@ -146,7 +142,7 @@ describe('ResponseService', () => {
         mockHooksService.areSyncHooksAvailable
       );
 
-      expect(result.response).toEqual(mockResponse);
+      expect(result.response).toBe(mappedResponse);
       expect(result.responseJson).toBe(responseJson);
       expect(result.originalResponseJson).toBe(originalJson);
     });
@@ -175,7 +171,7 @@ describe('ResponseService', () => {
       expect(responseHandler).toHaveBeenCalledWith(
         mockResponse,
         mockRequestContext.isStreaming,
-        mockRequestContext.provider,
+        mockRequestContext.providerOption,
         'chatComplete',
         mockRequestContext.requestURL,
         true, // isCacheHit should be true
@@ -258,13 +254,12 @@ describe('ResponseService', () => {
       const contextWithPortkey = {
         ...mockRequestContext,
         provider: POWERED_BY,
+        providerOption: { provider: POWERED_BY },
       } as RequestContext;
 
       const serviceWithPortkey = new ResponseService(
         contextWithPortkey,
-        mockProviderContext,
-        mockHooksService,
-        mockLogsService
+        mockHooksService
       );
 
       const options = {
@@ -305,7 +300,7 @@ describe('ResponseService', () => {
       expect(responseHandler).toHaveBeenCalledWith(
         mockResponse,
         mockRequestContext.isStreaming,
-        mockRequestContext.provider,
+        mockRequestContext.providerOption,
         'chatComplete',
         mockRequestContext.requestURL,
         false,
@@ -322,13 +317,12 @@ describe('ResponseService', () => {
       const streamingContext = {
         ...mockRequestContext,
         isStreaming: true,
+        providerOption: { provider: 'openai' },
       } as RequestContext;
 
       const streamingService = new ResponseService(
         streamingContext,
-        mockProviderContext,
-        mockHooksService,
-        mockLogsService
+        mockHooksService
       );
 
       const mockResponse = new Response('{}');
@@ -343,7 +337,7 @@ describe('ResponseService', () => {
       expect(responseHandler).toHaveBeenCalledWith(
         mockResponse,
         true, // isStreaming should be true
-        streamingContext.provider,
+        streamingContext.providerOption,
         'chatComplete',
         streamingContext.requestURL,
         false,
@@ -367,7 +361,7 @@ describe('ResponseService', () => {
       expect(responseHandler).toHaveBeenCalledWith(
         mockResponse,
         mockRequestContext.isStreaming,
-        mockRequestContext.provider,
+        mockRequestContext.providerOption,
         'chatComplete',
         mockRequestContext.requestURL,
         true, // isCacheHit should be true
@@ -457,13 +451,12 @@ describe('ResponseService', () => {
       const contextWithPortkey = {
         ...mockRequestContext,
         provider: POWERED_BY,
+        providerOption: { provider: POWERED_BY },
       } as RequestContext;
 
       const serviceWithPortkey = new ResponseService(
         contextWithPortkey,
-        mockProviderContext,
-        mockHooksService,
-        mockLogsService
+        mockHooksService
       );
 
       serviceWithPortkey.updateHeaders(mockResponse, 'MISS', 0);
@@ -475,13 +468,12 @@ describe('ResponseService', () => {
       const contextWithEmptyProvider = {
         ...mockRequestContext,
         provider: '',
+        providerOption: { provider: '' },
       } as RequestContext;
 
       const serviceWithEmptyProvider = new ResponseService(
         contextWithEmptyProvider,
-        mockProviderContext,
-        mockHooksService,
-        mockLogsService
+        mockHooksService
       );
 
       serviceWithEmptyProvider.updateHeaders(mockResponse, 'MISS', 0);

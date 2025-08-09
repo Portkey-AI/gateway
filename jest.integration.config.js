@@ -5,6 +5,9 @@ export default {
     '^.+.tsx?$': ['ts-jest', {}],
   },
   testTimeout: 30000, // Set default timeout to 30 seconds
-  // Exclude integration tests by default
-  testPathIgnorePatterns: ['/node_modules/', 'tests/integration/'],
+  // Only run integration tests
+  testMatch: [
+    '**/tests/integration/**/*.test.ts',
+    '**/tests/integration/**/*.test.js',
+  ],
 };

@@ -2,6 +2,7 @@
 
 import { HEADER_KEYS, POWERED_BY, RESPONSE_HEADER_KEYS } from '../../globals';
 import { responseHandler } from '../responseHandlers';
+import { getRuntimeKey } from 'hono/adapter';
 import { HooksService } from './hooksService';
 import { RequestContext } from './requestContext';
 
@@ -48,6 +49,15 @@ export class ResponseService {
     if (isResponseAlreadyMapped) {
       finalMappedResponse = response;
       originalResponseJSON = originalResponseJson;
+
+      // Check for error responses and throw if not ok
+      if (!response.ok) {
+        const errorBody = await response.text();
+        const error = new Error(errorBody);
+        (error as any).status = response.status;
+        (error as any).response = response;
+        throw error;
+      }
     } else {
       ({
         response: finalMappedResponse,
@@ -121,12 +131,12 @@ export class ResponseService {
     }
 
     // Remove headers directly
-    // const encoding = response.headers.get('content-encoding');
-    // if (encoding?.includes('br') || getRuntimeKey() == 'node') {
-    //   response.headers.delete('content-encoding');
-    // }
+    const encoding = response.headers.get('content-encoding');
+    if (encoding?.includes('br') || getRuntimeKey() == 'node') {
+      response.headers.delete('content-encoding');
+    }
     response.headers.delete('content-length');
-    // response.headers.delete('transfer-encoding');
+    response.headers.delete('transfer-encoding');
 
     return response;
   }
