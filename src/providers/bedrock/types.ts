@@ -199,6 +199,7 @@ export interface BedrockChatCompleteStreamChunk {
     cacheWriteInputTokenCount?: number;
     cacheWriteInputTokens?: number;
   };
+  message?: string;
 }
 
 export enum BEDROCK_STOP_REASON {

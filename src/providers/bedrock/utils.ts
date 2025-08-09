@@ -14,6 +14,9 @@ import { BedrockFinetuneRecord, BedrockInferenceProfile } from './types';
 import { FinetuneRequest } from '../types';
 import { BEDROCK } from '../../globals';
 
+export const getAwsEndpointDomain = (c: Context) =>
+  env(c).AWS_ENDPOINT_DOMAIN || 'amazonaws.com';
+
 export const generateAWSHeaders = async (
   body: Record<string, any> | string | undefined,
   headers: Record<string, string>,
