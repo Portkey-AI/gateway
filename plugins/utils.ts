@@ -36,18 +36,19 @@ export class TimeoutError extends Error {
   }
 }
 
+/**
+ * Helper function to get the text from the current content part of a request/response context
+ * @param context - The plugin context containing request/response data
+ * @param eventType - The type of hook event (beforeRequestHook or afterRequestHook)
+ * @returns The text from the current content part of the request/response context
+ */
 export const getText = (
   context: PluginContext,
   eventType: HookEventType
 ): string => {
-  switch (eventType) {
-    case 'beforeRequestHook':
-      return context.request?.text;
-    case 'afterRequestHook':
-      return context.response?.text;
-    default:
-      throw new Error('Invalid hook type');
-  }
+  return getCurrentContentPart(context, eventType)
+    .textArray.filter((text) => text)
+    .join('\n');
 };
 
 /**
@@ -87,6 +88,9 @@ const getRequestContentPart = (json: any, requestType: string) => {
     textArray = Array.isArray(content)
       ? content.map((item: any) => item)
       : [content];
+  } else if (requestType === 'embed') {
+    content = json.input;
+    textArray = Array.isArray(content) ? content : [content];
   }
   return { content, textArray };
 };
@@ -94,6 +98,11 @@ const getRequestContentPart = (json: any, requestType: string) => {
 const getResponseContentPart = (json: any, requestType: string) => {
   let content: Array<any> | string | Record<string, any> | null = null;
   let textArray: Array<string> = [];
+
+  // This can happen for streaming mode.
+  if (!json) {
+    return { content: null, textArray: [] };
+  }
 
   if (requestType === 'chatComplete') {
     content = json.choices[0].message.content as string;
