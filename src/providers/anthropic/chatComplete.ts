@@ -723,16 +723,33 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   const isToolBlockStart: boolean =
     parsedChunk.type === 'content_block_start' &&
     parsedChunk.content_block?.type === 'tool_use';
-  if (isToolBlockStart) {
-    streamState.toolIndex = streamState.toolIndex
-      ? streamState.toolIndex + 1
-      : 0;
-  }
+
   const isToolBlockDelta: boolean =
     parsedChunk.type === 'content_block_delta' &&
     parsedChunk.delta?.partial_json != undefined;
 
+  if (!streamState.toolCalls) {
+    streamState.toolCalls = new Map();
+    streamState.toolIndex = -1;
+  }
+
   if (isToolBlockStart && parsedChunk.content_block) {
+    // Increment toolIndex for new tool
+    streamState.toolIndex = (streamState.toolIndex ?? -1) + 1;
+
+    // Store the new tool call in the map with the content block index as key
+    // Using parsedChunk.index which is the content block index from Anthropic
+    const contentBlockIndex = parsedChunk.index ?? streamState.toolIndex ?? 0;
+    if (parsedChunk.content_block.id && parsedChunk.content_block.name) {
+      streamState.toolCalls.set(contentBlockIndex, {
+        index: streamState.toolIndex, // This is the tool call index for OpenAI format
+        id: parsedChunk.content_block.id,
+        name: parsedChunk.content_block.name,
+        arguments: '',
+      });
+    }
+
+    // Add to the current chunk's tool calls - this is the initial tool call with empty arguments
     toolCalls.push({
       index: streamState.toolIndex,
       id: parsedChunk.content_block.id,
@@ -742,13 +759,26 @@ export const AnthropicChatCompleteStreamChunkTransform: (
         arguments: '',
       },
     });
-  } else if (isToolBlockDelta) {
-    toolCalls.push({
-      index: streamState.toolIndex,
-      function: {
-        arguments: parsedChunk.delta.partial_json,
-      },
-    });
+  } else if (
+    isToolBlockDelta &&
+    parsedChunk.index !== undefined &&
+    parsedChunk.delta?.partial_json
+  ) {
+    // Find the tool call by content block index and append arguments
+    const toolCallEntry = streamState.toolCalls.get(parsedChunk.index);
+
+    if (toolCallEntry) {
+      // Accumulate arguments in the state
+      toolCallEntry.arguments += parsedChunk.delta.partial_json;
+
+      // Send the delta update with the tool call index (not content block index)
+      toolCalls.push({
+        index: toolCallEntry.index,
+        function: {
+          arguments: parsedChunk.delta.partial_json,
+        },
+      });
+    }
   }
 
   const content = parsedChunk.delta?.text;

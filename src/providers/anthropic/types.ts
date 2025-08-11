@@ -1,5 +1,14 @@
 export type AnthropicStreamState = {
   toolIndex?: number;
+  toolCalls?: Map<
+    number,
+    {
+      index: number;
+      id: string;
+      name: string;
+      arguments: string;
+    }
+  >;
   usage?: {
     prompt_tokens?: number;
     completion_tokens?: number;
