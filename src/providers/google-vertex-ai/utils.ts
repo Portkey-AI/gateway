@@ -225,7 +225,8 @@ export const derefer = (
       const keys = Object.keys(node);
       if (keys.length === 1) return resolved;
       const { $ref: _, ...siblings } = node;
-      return derefer({ ...resolved, ...siblings }, activeDefs, stack);
+      for (const key of Object.keys(node)) delete (node as any)[key];
+      Object.assign(node as any, resolved, siblings);
     }
   }
   for (const [k, v] of Object.entries(node)) {
