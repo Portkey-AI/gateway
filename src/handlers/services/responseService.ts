@@ -122,7 +122,7 @@ export class ResponseService {
 
     response.headers.delete('content-encoding');
     response.headers.delete('content-length');
-    // response.headers.delete('transfer-encoding');
+    response.headers.delete('transfer-encoding');
 
     return response;
   }
