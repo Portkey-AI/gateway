@@ -101,7 +101,8 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
             });
           } else if (
             message.role === 'tool' &&
-            typeof message.content === 'string'
+            (typeof message.content === 'string' ||
+              typeof message.content === 'object')
           ) {
             parts.push({
               functionResponse: {

@@ -106,7 +106,7 @@ interface GoogleFunctionResponseMessagePart {
     name: string;
     response: {
       name?: string;
-      content: string;
+      content: string | ContentType[];
     };
   };
 }
