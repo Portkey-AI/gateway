@@ -91,6 +91,9 @@ if (getRuntimeKey() === 'node') {
   app.use(logger());
 }
 
+// Support the /v1/models endpoint
+app.get('/v1/models', modelsHandler);
+
 // Use hooks middleware for all routes
 app.use('*', hooks);
 
@@ -251,9 +254,6 @@ app.post('/v1/prompts/*', requestValidator, (c) => {
     message: 'prompt completions error: Something went wrong',
   });
 });
-
-app.get('/v1/reference/models', modelsHandler);
-app.get('/v1/reference/providers', providersHandler);
 
 // WebSocket route
 if (runtime === 'workerd') {
