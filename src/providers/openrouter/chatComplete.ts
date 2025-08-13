@@ -10,6 +10,7 @@ import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
+import { transformReasoningParams, transformUsageOptions } from './utils';
 
 export const OpenrouterChatCompleteConfig: ProviderConfig = {
   model: {
@@ -48,6 +49,15 @@ export const OpenrouterChatCompleteConfig: ProviderConfig = {
   },
   reasoning: {
     param: 'reasoning',
+    transform: (params: Params) => {
+      return transformReasoningParams(params);
+    },
+  },
+  reasoning_effort: {
+    param: 'reasoning',
+    transform: (params: Params) => {
+      return transformReasoningParams(params);
+    },
   },
   top_p: {
     param: 'top_p',
@@ -72,10 +82,19 @@ export const OpenrouterChatCompleteConfig: ProviderConfig = {
   },
   usage: {
     param: 'usage',
+    transform: (params: Params) => {
+      return transformUsageOptions(params);
+    },
   },
   stream: {
     param: 'stream',
     default: false,
+  },
+  stream_options: {
+    param: 'usage',
+    transform: (params: Params) => {
+      return transformUsageOptions(params);
+    },
   },
   response_format: {
     param: 'response_format',
