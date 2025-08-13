@@ -54,7 +54,6 @@ describe('Azure Plugins', () => {
           messages: [{ role: 'user', content: "hello, I'm a harmless string" }],
         };
         const result = await piiHandler(context, params, 'beforeRequestHook');
-        console.log('result', result);
         expect(result.error).toBeNull();
         expect(result.verdict).toBe(true);
         expect(result.transformed).toBe(false);
@@ -66,7 +65,6 @@ describe('Azure Plugins', () => {
           { ...params, redact: false },
           'beforeRequestHook'
         );
-        console.log('result', result);
         expect(result.error).toBeNull();
         expect(result.verdict).toBe(false);
         expect(result.transformed).toBe(false);

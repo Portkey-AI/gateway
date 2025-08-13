@@ -134,6 +134,9 @@ export const handler: PluginHandler<{ pii: AzureCredentials }> = async (
 
   try {
     const response = await redact(documents, parameters, pluginOptions);
+    if (!response?.results?.documents) {
+      throw new Error('Invalid response from Azure PII API');
+    }
     data = response.results.documents;
     const containsPII =
       data.length > 0 && data.some((doc: any) => doc.entities.length > 0);
@@ -141,12 +144,12 @@ export const handler: PluginHandler<{ pii: AzureCredentials }> = async (
       verdict = false;
     }
     if (parameters.redact && containsPII) {
+      verdict = true;
       const redactedData = (response.results.documents ?? []).map(
         (doc: any) => doc.redactedText
       );
       setCurrentContentPart(context, eventType, transformedData, redactedData);
       transformed = true;
-      verdict = true;
     }
   } catch (e) {
     error = e;
