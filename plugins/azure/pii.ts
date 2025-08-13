@@ -12,7 +12,7 @@ import { getAccessToken } from './utils';
 const redact = async (
   documents: any[],
   parameters: PluginParameters<{ pii: AzureCredentials }>,
-  options?: Record<string, any>
+  pluginOptions?: Record<string, any>
 ) => {
   const body = {
     kind: 'PiiEntityRecognition',
@@ -35,8 +35,8 @@ const redact = async (
   const { token, error: tokenError } = await getAccessToken(
     credentials as any,
     'pii',
-    options,
-    options?.env
+    pluginOptions,
+    pluginOptions?.env
   );
 
   const headers: Record<string, string> = {
@@ -66,12 +66,11 @@ const redact = async (
   }
 
   const timeout = parameters.timeout || 5000;
-  const response = await post(
-    url,
-    body,
-    { headers, dispatcher: agent },
-    timeout
-  );
+  const requestOptions: Record<string, any> = { headers };
+  if (agent) {
+    requestOptions.dispatcher = agent;
+  }
+  const response = await post(url, body, requestOptions, timeout);
   return response;
 };
 
@@ -79,7 +78,7 @@ export const handler: PluginHandler<{ pii: AzureCredentials }> = async (
   context: PluginContext,
   parameters: PluginParameters<{ pii: AzureCredentials }>,
   eventType: HookEventType,
-  options?: Record<string, any>
+  pluginOptions?: Record<string, any>
 ) => {
   let error = null;
   let verdict = true;
@@ -134,9 +133,18 @@ export const handler: PluginHandler<{ pii: AzureCredentials }> = async (
   }));
 
   try {
-    const response = await redact(documents, parameters, options);
+    const response = await redact(documents, parameters, pluginOptions);
+    if (!response?.results?.documents) {
+      throw new Error('Invalid response from Azure PII API');
+    }
     data = response.results.documents;
-    if (parameters.redact) {
+    const containsPII =
+      data.length > 0 && data.some((doc: any) => doc.entities.length > 0);
+    if (containsPII) {
+      verdict = false;
+    }
+    if (parameters.redact && containsPII) {
+      verdict = true;
       const redactedData = (response.results.documents ?? []).map(
         (doc: any) => doc.redactedText
       );
