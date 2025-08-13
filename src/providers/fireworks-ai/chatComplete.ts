@@ -169,7 +169,10 @@ export const FireworksAIErrorResponseTransform: (
       FIREWORKS_AI
     );
   }
-  return generateErrorResponse(response.error, FIREWORKS_AI);
+  if (response.error) {
+    return generateErrorResponse(response.error, FIREWORKS_AI);
+  }
+  return generateInvalidProviderResponseError(response, FIREWORKS_AI);
 };
 
 export const FireworksAIChatCompleteResponseTransform: (
