@@ -12,6 +12,8 @@ export const modelsHandler = async (context: Context, next: Next) => {
   const fetchOptions: Record<string, any> = {};
   fetchOptions['method'] = context.req.method;
 
+  const controlPlaneURL = env(context).ALBUS_BASEPATH;
+
   const headers = Object.fromEntries(context.req.raw.headers);
 
   const authHeader = headers['Authorization'] || headers['authorization'];
@@ -32,13 +34,13 @@ export const modelsHandler = async (context: Context, next: Next) => {
   const containsProvider =
     providerHeader || virtualKey || config?.provider || config?.virtual_key;
 
-  if (containsProvider) {
+  if (containsProvider || !controlPlaneURL) {
     return next();
   }
 
   // Strip gateway endpoint for models endpoint.
   const urlObject = new URL(context.req.url);
-  const requestRoute = `${env(context).ALBUS_BASEPATH}${context.req.path.replace('/v1/', '/v2/')}${urlObject.search}`;
+  const requestRoute = `${controlPlaneURL}${context.req.path.replace('/v1/', '/v2/')}${urlObject.search}`;
   fetchOptions['headers'] = {
     [HEADER_KEYS.API_KEY]: apiKey,
   };
