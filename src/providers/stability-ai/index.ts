@@ -1,6 +1,5 @@
 import { ProviderConfigs } from '../types';
 import StabilityAIAPIConfig from './api';
-import { STABILITY_V1_MODELS } from './constants';
 import {
   StabilityAIImageGenerateV1Config,
   StabilityAIImageGenerateV1ResponseTransform,
@@ -13,7 +12,7 @@ import { isStabilityV1Model } from './utils';
 
 const StabilityAIConfig: ProviderConfigs = {
   api: StabilityAIAPIConfig,
-  getConfig: (params: Params) => {
+  getConfig: ({ params }) => {
     const model = params.model;
     if (typeof model === 'string' && isStabilityV1Model(model)) {
       return {

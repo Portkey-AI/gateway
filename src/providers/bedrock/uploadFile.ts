@@ -142,7 +142,8 @@ class AwsMultipartUploadHandler {
               this,
               partNumber,
               purpose ?? 'batch',
-              modelType ?? 'chat'
+              modelType ?? 'chat',
+              this.providerOptions
             );
           this.contentLength += uploadLength;
           partNumber++;
@@ -251,7 +252,8 @@ const transformAndUploadFileContentParts = async (
   handler: AwsMultipartUploadHandler,
   partNumber: number,
   purpose: string,
-  modelType: string
+  modelType: string,
+  providerOptions: Options
 ): Promise<[string, number]> => {
   let transformedChunkToUpload = '';
   const jsonLines = chunk.split('\n');
@@ -279,7 +281,11 @@ const transformAndUploadFileContentParts = async (
       }
       const transformedLine = {
         recordId: json.custom_id,
-        modelInput: transformUsingProviderConfig(providerConfig, json.body),
+        modelInput: transformUsingProviderConfig(
+          providerConfig,
+          json.body,
+          providerOptions
+        ),
       };
       transformedChunkToUpload += JSON.stringify(transformedLine) + '\r\n';
       buffer = buffer.slice(line.length + 1);

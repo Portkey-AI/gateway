@@ -122,7 +122,8 @@ export const GoogleFileUploadRequestHandler: RequestHandler<
           const toTranspose = purpose === 'batch' ? json.body : json;
           const transformedBody = transformUsingProviderConfig(
             providerConfig,
-            toTranspose
+            toTranspose,
+            providerOptions
           );
 
           delete transformedBody['model'];

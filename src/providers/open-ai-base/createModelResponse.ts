@@ -38,6 +38,10 @@ import {
 } from './helpers';
 
 export const OpenAICreateModelResponseConfig: ProviderConfig = {
+  background: {
+    param: 'background',
+    required: false,
+  },
   input: {
     param: 'input',
     required: true,
@@ -74,6 +78,14 @@ export const OpenAICreateModelResponseConfig: ProviderConfig = {
     param: 'previous_response_id',
     required: false,
   },
+  prompt: {
+    param: 'prompt',
+    required: false,
+  },
+  prompt_cache_key: {
+    param: 'prompt_cache_key',
+    required: false,
+  },
   reasoning: {
     param: 'reasoning',
     required: false,
@@ -84,6 +96,10 @@ export const OpenAICreateModelResponseConfig: ProviderConfig = {
   },
   stream: {
     param: 'stream',
+    required: false,
+  },
+  stream_options: {
+    param: 'stream_options',
     required: false,
   },
   temperature: {
@@ -106,16 +122,16 @@ export const OpenAICreateModelResponseConfig: ProviderConfig = {
     param: 'top_p',
     required: false,
   },
-  user: {
-    param: 'user',
-    required: false,
-  },
   truncation: {
     param: 'truncation',
     required: false,
   },
-  background: {
-    param: 'background',
+  user: {
+    param: 'user',
+    required: false,
+  },
+  verbosity: {
+    param: 'verbosity',
     required: false,
   },
 };
