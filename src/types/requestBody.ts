@@ -44,7 +44,7 @@ interface Strategy {
  */
 export interface Options {
   /** The name of the provider. */
-  provider: string | undefined;
+  provider: string;
   /** The name of the API key for the provider. */
   virtualKey?: string;
   /** The API key for the provider. */
@@ -95,6 +95,7 @@ export interface Options {
   awsBedrockModel?: string;
   awsServerSideEncryption?: string;
   awsServerSideEncryptionKMSKeyId?: string;
+  foundationModel?: string;
 
   /** Sagemaker specific */
   amznSagemakerCustomAttributes?: string;

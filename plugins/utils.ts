@@ -36,18 +36,19 @@ export class TimeoutError extends Error {
   }
 }
 
+/**
+ * Helper function to get the text from the current content part of a request/response context
+ * @param context - The plugin context containing request/response data
+ * @param eventType - The type of hook event (beforeRequestHook or afterRequestHook)
+ * @returns The text from the current content part of the request/response context
+ */
 export const getText = (
   context: PluginContext,
   eventType: HookEventType
 ): string => {
-  switch (eventType) {
-    case 'beforeRequestHook':
-      return context.request?.text;
-    case 'afterRequestHook':
-      return context.response?.text;
-    default:
-      throw new Error('Invalid hook type');
-  }
+  return getCurrentContentPart(context, eventType)
+    .textArray.filter((text) => text)
+    .join('\n');
 };
 
 /**
@@ -66,33 +67,52 @@ export const getCurrentContentPart = (
   // Determine if we're handling request or response data
   const target = eventType === 'beforeRequestHook' ? 'request' : 'response';
   const json = context[target].json;
-  let textArray: Array<string> = [];
-  let content: Array<any> | string | Record<string, any> | null = null;
 
-  // Handle chat completion request/response format
-  if (context.requestType === 'chatComplete') {
-    if (target === 'request') {
-      // Get the last message's content from the chat history
-      content = json.messages[json.messages.length - 1].content;
-      textArray = Array.isArray(content)
-        ? content.map((item: any) => item.text || '')
-        : [content];
-    } else {
-      // Get the content from the last choice in the response
-      content = json.choices[json.choices.length - 1].message.content as string;
-      textArray = [content];
-    }
-  } else if (context.requestType === 'complete') {
-    if (target === 'request') {
-      // Handle completions format
-      content = json.prompt;
-      textArray = Array.isArray(content)
-        ? content.map((item: any) => item)
-        : [content];
-    } else {
-      content = json.choices[json.choices.length - 1].text as string;
-      textArray = [content];
-    }
+  if (target === 'request') {
+    return getRequestContentPart(json, context.requestType!);
+  } else {
+    return getResponseContentPart(json, context.requestType || '');
+  }
+};
+
+const getRequestContentPart = (json: any, requestType: string) => {
+  let content: Array<any> | string | Record<string, any> | null = null;
+  let textArray: Array<string> = [];
+  if (requestType === 'chatComplete' || requestType === 'messages') {
+    content = json.messages[json.messages.length - 1].content;
+    textArray = Array.isArray(content)
+      ? content.map((item: any) => item.text || '')
+      : [content];
+  } else if (requestType === 'complete') {
+    content = json.prompt;
+    textArray = Array.isArray(content)
+      ? content.map((item: any) => item)
+      : [content];
+  } else if (requestType === 'embed') {
+    content = json.input;
+    textArray = Array.isArray(content) ? content : [content];
+  }
+  return { content, textArray };
+};
+
+const getResponseContentPart = (json: any, requestType: string) => {
+  let content: Array<any> | string | Record<string, any> | null = null;
+  let textArray: Array<string> = [];
+
+  // This can happen for streaming mode.
+  if (!json) {
+    return { content: null, textArray: [] };
+  }
+
+  if (requestType === 'chatComplete') {
+    content = json.choices[0].message.content as string;
+    textArray = [content];
+  } else if (requestType === 'complete') {
+    content = json.choices[0].text as string;
+    textArray = [content];
+  } else if (requestType === 'messages') {
+    content = json.content;
+    textArray = (content as Array<any>).map((item: any) => item.text || '');
   }
   return { content, textArray };
 };
@@ -114,58 +134,79 @@ export const setCurrentContentPart = (
   const target = eventType === 'beforeRequestHook' ? 'request' : 'response';
   const json = context[target].json;
 
-  // Create shallow copy of the json
-  const updatedJson = { ...json };
+  if (textArray?.length === 0 || !textArray) {
+    return;
+  }
 
-  // Handle updating text fields if provided
-  if (textArray?.length) {
-    if (requestType === 'chatComplete') {
-      if (target === 'request') {
-        const currentContent =
-          updatedJson.messages[updatedJson.messages.length - 1].content;
-        updatedJson.messages = [...json.messages];
-        updatedJson.messages[updatedJson.messages.length - 1] = {
-          ...updatedJson.messages[updatedJson.messages.length - 1],
-        };
-
-        if (Array.isArray(currentContent)) {
-          updatedJson.messages[updatedJson.messages.length - 1].content =
-            currentContent.map((item: any, index: number) => ({
-              ...item,
-              text: textArray[index] || item.text,
-            }));
-        } else {
-          updatedJson.messages[updatedJson.messages.length - 1].content =
-            textArray[0] || currentContent;
-        }
-        transformedData.request.json = updatedJson;
-      } else {
-        updatedJson.choices = [...json.choices];
-        const lastChoice = {
-          ...updatedJson.choices[updatedJson.choices.length - 1],
-        };
-        lastChoice.message = {
-          ...lastChoice.message,
-          content: textArray[0] || lastChoice.message.content,
-        };
-        updatedJson.choices[updatedJson.choices.length - 1] = lastChoice;
-        transformedData.response.json = updatedJson;
-      }
-    } else {
-      if (target === 'request') {
-        updatedJson.prompt = Array.isArray(updatedJson.prompt)
-          ? textArray.map((text, index) => text || updatedJson.prompt[index])
-          : textArray[0];
-        transformedData.request.json = updatedJson;
-      } else {
-        updatedJson.choices = [...json.choices];
-        updatedJson.choices[json.choices.length - 1].text =
-          textArray[0] || json.choices[json.choices.length - 1].text;
-        transformedData.response.json = updatedJson;
-      }
-    }
+  if (target === 'request') {
+    setRequestContentPart(json, requestType!, textArray, transformedData);
+  } else {
+    setResponseContentPart(json, requestType!, textArray, transformedData);
   }
 };
+
+function setRequestContentPart(
+  json: any,
+  requestType: string,
+  textArray: Array<string | null>,
+  transformedData: Record<string, any>
+) {
+  // Create a safe to use shallow copy of the json
+  const updatedJson = { ...json };
+
+  if (requestType === 'chatComplete' || requestType === 'messages') {
+    updatedJson.messages = [...json.messages];
+    const lastMessage = {
+      ...updatedJson.messages[updatedJson.messages.length - 1],
+    };
+    const originalContent = lastMessage.content;
+    if (Array.isArray(originalContent)) {
+      lastMessage.content = originalContent.map((item: any, index: number) => ({
+        ...item,
+        text: textArray[index] || item.text,
+      }));
+    } else {
+      lastMessage.content = textArray[0] || originalContent;
+    }
+    updatedJson.messages[updatedJson.messages.length - 1] = lastMessage;
+  } else if (requestType === 'complete') {
+    updatedJson.prompt = Array.isArray(updatedJson.prompt)
+      ? textArray.map((text, index) => text || updatedJson.prompt[index])
+      : textArray[0];
+  }
+  transformedData.request.json = updatedJson;
+}
+
+function setResponseContentPart(
+  json: any,
+  requestType: string,
+  textArray: Array<string | null>,
+  transformedData: Record<string, any>
+) {
+  // Create a safe to use shallow copy of the json
+  const updatedJson = { ...json };
+
+  if (requestType === 'chatComplete') {
+    updatedJson.choices = [...json.choices];
+    const firstChoice = {
+      ...updatedJson.choices[0],
+    };
+    firstChoice.message = {
+      ...firstChoice.message,
+      content: textArray[0] || firstChoice.message.content,
+    };
+    updatedJson.choices[0] = firstChoice;
+  } else if (requestType === 'complete') {
+    updatedJson.choices = [...json.choices];
+    updatedJson.choices[json.choices.length - 1].text =
+      textArray[0] || json.choices[json.choices.length - 1].text;
+  } else if (requestType === 'messages') {
+    updatedJson.content = textArray.map(
+      (text, index) => text || updatedJson.content[index]
+    );
+  }
+  transformedData.response.json = updatedJson;
+}
 
 /**
  * Sends a POST request to the specified URL with the given data and timeout.
