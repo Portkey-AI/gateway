@@ -13,6 +13,7 @@ import {
 import { ErrorResponse, FinetuneRequest, Logprobs } from '../types';
 import { Context } from 'hono';
 import { env } from 'hono/adapter';
+import { JsonSchema } from '../../types/requestBody';
 
 /**
  * Encodes an object as a Base64 URL-encoded string.
@@ -194,44 +195,109 @@ export const GoogleErrorResponseTransform: (
   return undefined;
 };
 
-const getDefFromRef = (ref: string) => {
-  const refParts = ref.split('/');
-  return refParts.at(-1);
+// Extract definition key from a JSON Schema $ref string
+const getDefFromRef = (ref: string): string | null => {
+  const match = ref.match(/^#\/\$defs\/(.+)$/);
+  return match ? match[1] : null;
 };
 
-const getRefParts = (spec: Record<string, any>, ref: string) => {
-  return spec?.[ref];
-};
+const getDefObject = (
+  defs: Record<string, any> | undefined | null,
+  key: string | null
+): any => (key && defs ? defs[key] : undefined);
 
-export const derefer = (spec: Record<string, any>, defs = null) => {
-  const original = { ...spec };
-
-  const finalDefs = defs ?? original?.['$defs'];
-  const entries = Object.entries(original);
-
-  for (let [key, object] of entries) {
-    if (key === '$defs') {
-      continue;
-    }
-    if (typeof object === 'string' || Array.isArray(object)) {
-      continue;
-    }
-    const ref = object?.['$ref'];
-    if (ref) {
-      const def = getDefFromRef(ref);
-      const defData = getRefParts(finalDefs, def ?? '');
-      const newValue = derefer(defData, finalDefs);
-      original[key] = newValue;
-    } else {
-      const newValue = derefer(object, finalDefs);
-      original[key] = newValue;
+// Recursively expands $ref nodes in a JSON Schema object tree
+export const derefer = (
+  schema: any,
+  defs: Record<string, any> | null = null,
+  stack: Set<string> = new Set()
+): any => {
+  if (schema === null || typeof schema !== 'object') return schema;
+  if (Array.isArray(schema))
+    return schema.map((item) => derefer(item, defs, stack));
+  const node = { ...schema };
+  const activeDefs =
+    defs ?? (node.$defs as Record<string, any> | undefined) ?? null;
+  if ('$ref' in node && typeof node.$ref === 'string') {
+    const defKey = getDefFromRef(node.$ref);
+    const target = getDefObject(activeDefs, defKey);
+    if (defKey && target) {
+      if (stack.has(defKey)) return node;
+      stack.add(defKey);
+      const resolved = derefer(target, activeDefs, stack);
+      stack.delete(defKey);
+      const keys = Object.keys(node);
+      if (keys.length === 1) return resolved;
+      const { $ref: _, ...siblings } = node;
+      for (const key of Object.keys(node)) delete (node as any)[key];
+      Object.assign(node as any, resolved, siblings);
     }
   }
-  return original;
+  for (const [k, v] of Object.entries(node)) {
+    if (k === '$defs') continue;
+    node[k] = derefer(v, activeDefs, stack);
+  }
+  return node;
+};
+
+export const transformGeminiToolParameters = (
+  parameters: JsonSchema
+): JsonSchema => {
+  if (
+    !parameters ||
+    typeof parameters !== 'object' ||
+    Array.isArray(parameters)
+  ) {
+    return parameters;
+  }
+
+  let schema: JsonSchema = parameters;
+  if ('$defs' in schema && typeof schema.$defs === 'object') {
+    schema = derefer(schema);
+    delete schema.$defs;
+  }
+
+  const isNullTypeNode = (node: any): boolean =>
+    node && typeof node === 'object' && node.type === 'null';
+
+  const transformNode = (node: JsonSchema): JsonSchema => {
+    if (Array.isArray(node)) {
+      return node.map(transformNode);
+    }
+    if (!node || typeof node !== 'object') return node;
+
+    const transformed: JsonSchema = {};
+
+    for (const [key, value] of Object.entries(node)) {
+      if ((key === 'anyOf' || key === 'oneOf') && Array.isArray(value)) {
+        const nonNullItems = value.filter((item) => !isNullTypeNode(item));
+        const hadNull = nonNullItems.length < value.length;
+
+        if (nonNullItems.length === 1 && hadNull) {
+          // Flatten to single schema: get rid of anyOf/oneOf and set nullable: true
+          const single = transformNode(nonNullItems[0]);
+          if (single && typeof single === 'object') {
+            Object.assign(transformed, single);
+            transformed.nullable = true;
+          }
+          continue;
+        }
+
+        transformed[key] = transformNode(hadNull ? nonNullItems : value);
+        if (hadNull) transformed.nullable = true;
+        continue;
+      }
+
+      transformed[key] = transformNode(value);
+    }
+    return transformed;
+  };
+
+  return transformNode(schema);
 };
 
 // Vertex AI does not support additionalProperties in JSON Schema
-// https://cloud.google.com/vertex-ai/docs/reference/rest/v1/Schema
+// https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/function-calling#schema
 export const recursivelyDeleteUnsupportedParameters = (obj: any) => {
   if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) return;
   delete obj.additional_properties;
