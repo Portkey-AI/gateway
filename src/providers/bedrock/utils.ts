@@ -13,6 +13,10 @@ import { GatewayError } from '../../errors/GatewayError';
 import { BedrockFinetuneRecord, BedrockInferenceProfile } from './types';
 import { FinetuneRequest } from '../types';
 import { BEDROCK } from '../../globals';
+import { Environment } from '../../utils/env';
+
+export const getAwsEndpointDomain = (c: Context) =>
+  Environment(c).AWS_ENDPOINT_DOMAIN || 'amazonaws.com';
 
 export const generateAWSHeaders = async (
   body: Record<string, any> | string | undefined,
