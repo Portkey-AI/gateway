@@ -11,6 +11,7 @@ export const POSSIBLE_RETRY_STATUS_HEADERS = [
 ];
 
 export const HEADER_KEYS: Record<string, string> = {
+  API_KEY: `x-${POWERED_BY}-api-key`,
   MODE: `x-${POWERED_BY}-mode`,
   RETRIES: `x-${POWERED_BY}-retry-count`,
   PROVIDER: `x-${POWERED_BY}-provider`,
@@ -23,6 +24,7 @@ export const HEADER_KEYS: Record<string, string> = {
   REQUEST_TIMEOUT: `x-${POWERED_BY}-request-timeout`,
   STRICT_OPEN_AI_COMPLIANCE: `x-${POWERED_BY}-strict-open-ai-compliance`,
   CONTENT_TYPE: `Content-Type`,
+  VIRTUAL_KEY: `x-${POWERED_BY}-virtual-key`,
 };
 
 export const RESPONSE_HEADER_KEYS: Record<string, string> = {
