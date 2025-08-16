@@ -560,8 +560,9 @@ export const BedrockChatCompleteStreamChunkTransform: (
   strictOpenAiCompliance,
   gatewayRequest
 ) => {
-  const parsedChunk: BedrockChatCompleteStreamChunk = JSON.parse(responseChunk);
-  if (parsedChunk.message) {
+  const parsedChunk: BedrockChatCompleteStreamChunk | BedrockErrorResponse =
+    JSON.parse(responseChunk);
+  if ('message' in parsedChunk) {
     return getBedrockErrorChunk(fallbackId, gatewayRequest.model || '');
   }
   if (parsedChunk.stopReason) {

@@ -9,7 +9,7 @@ import {
 } from '../../../../../src/middlewares/hooks/types';
 
 // Mock the HooksManager and HookSpan
-jest.mock('../../../middlewares/hooks');
+jest.mock('../../../../../src/middlewares/hooks');
 
 describe('HooksService', () => {
   let mockRequestContext: RequestContext;
