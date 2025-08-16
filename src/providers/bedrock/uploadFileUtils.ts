@@ -4,6 +4,7 @@ import {
   Message,
   MESSAGE_ROLES,
   Params,
+  Tool,
 } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
@@ -226,6 +227,10 @@ const BedrockAnthropicChatCompleteConfig: ProviderConfig = {
       const tools: AnthropicTool[] = [];
       if (params.tools) {
         params.tools.forEach((tool) => {
+          if (tool.type === 'mcp') {
+            return;
+          }
+          tool = tool as Tool;
           if (tool.function) {
             tools.push({
               name: tool.function.name,

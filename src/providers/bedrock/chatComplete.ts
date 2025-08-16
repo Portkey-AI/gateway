@@ -10,6 +10,7 @@ import {
   ToolCall,
   SYSTEM_MESSAGE_ROLES,
   ContentType,
+  Tool,
 } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
@@ -320,6 +321,10 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
         | { cachePoint: { type: string } }
       > = [];
       params.tools?.forEach((tool) => {
+        if (tool.type === 'mcp') {
+          return;
+        }
+        tool = tool as Tool;
         if (tool.function) {
           tools.push({
             toolSpec: {
