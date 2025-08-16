@@ -4,6 +4,7 @@ import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
+import { getTransformedResponse } from '../../handlers/imageToJsonHandler';
 
 export const SegmindImageGenerateConfig: ProviderConfig = {
   prompt: {
@@ -108,6 +109,17 @@ interface SegmindImageGenerateErrorResponse {
   'html-message'?: string;
   error?: string;
 }
+
+export const SegmindImageToJsonResponseTransform = async (
+  response: Response
+) => {
+  return getTransformedResponse({
+    response,
+    transformer: (base64Image: string) => ({
+      image: base64Image,
+    }),
+  });
+};
 
 export const SegmindImageGenerateResponseTransform: (
   response: SegmindImageGenerateResponse | SegmindImageGenerateErrorResponse,
