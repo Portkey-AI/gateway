@@ -75,7 +75,7 @@ const sessionMiddleware = createMiddleware<Env>(async (c, next) => {
     const session = sessionStore.get(sessionId);
     if (session) {
       logger.debug(
-        `Session ${sessionId} found, initialized: ${session.isInitialized()}`
+        `Session ${sessionId} found, initialized: ${session.isInitialized}`
       );
       c.set('session', session);
     } else {
@@ -130,9 +130,13 @@ app.all('/:serverId/mcp', hydrateContext, sessionMiddleware, async (c) => {
   // Check if this is an initialization request
   if (body && isInitializeRequest(body)) {
     // Determine client transport type from request
-    const clientTransportType: TransportType = isSSERequest
-      ? 'sse'
-      : 'streamable-http';
+    // For now, assume POST with initialize = streamable-http
+    // Real SSE clients would establish the event stream first
+    const clientTransportType: TransportType = 'streamable-http';
+
+    logger.debug(
+      `Initialize request - defaulting to streamable-http transport`
+    );
 
     // Create new session if needed
     if (!session) {
@@ -195,15 +199,35 @@ app.all('/:serverId/mcp', hydrateContext, sessionMiddleware, async (c) => {
     return RESPONSE_ALREADY_SENT;
   }
 
-  // Handle SSE GET requests (for established sessions)
-  if (isSSERequest && session) {
+  // Handle GET requests for established sessions
+  // Both SSE and Streamable HTTP use GET requests with event-stream accept headers
+  if (c.req.method === 'GET' && session) {
+    // Get the transport type that was determined during initialization
+    const clientTransportType = session.getClientTransportType();
+
+    if (!clientTransportType) {
+      logger.error(`Session ${session.id} has no transport type set`);
+      return c.json(
+        {
+          jsonrpc: '2.0',
+          error: {
+            code: -32000,
+            message: 'Session not properly initialized',
+          },
+          id: null,
+        },
+        500
+      );
+    }
+
     // Ensure session is active or can be restored
     try {
-      const clientTransportType = session.getClientTransportType() || 'sse';
       await session.initializeOrRestore(clientTransportType);
-      logger.debug(`Session ${session.id} ready for SSE connection`);
+      logger.debug(
+        `Session ${session.id} ready for ${clientTransportType} connection`
+      );
     } catch (error) {
-      logger.error(`Failed to prepare session ${session.id} for SSE`, error);
+      logger.error(`Failed to prepare session ${session.id}`, error);
       sessionStore.delete(session.id);
 
       return c.json(
@@ -221,9 +245,9 @@ app.all('/:serverId/mcp', hydrateContext, sessionMiddleware, async (c) => {
 
     const { incoming: req, outgoing: res } = c.env as any;
 
-    // For SSE GET requests, we need to set up the SSE stream
-    if (session.getClientTransportType() === 'sse') {
-      // Set up SSE response headers
+    // Route based on the actual transport type, not the accept header
+    if (clientTransportType === 'sse') {
+      // For true SSE clients, set up the SSE stream
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache, no-transform',
@@ -260,7 +284,7 @@ app.all('/:serverId/mcp', hydrateContext, sessionMiddleware, async (c) => {
 
       return RESPONSE_ALREADY_SENT;
     } else {
-      // Regular request handling for non-SSE client sessions
+      // For Streamable HTTP clients, let the transport handle the request
       await session.handleRequest(req, res);
       return RESPONSE_ALREADY_SENT;
     }
@@ -268,9 +292,13 @@ app.all('/:serverId/mcp', hydrateContext, sessionMiddleware, async (c) => {
 
   // For non-initialization requests, require session
   if (!session) {
-    // Special case: SSE GET requests can create a new session
-    if (isSSERequest) {
-      logger.info('Creating new session for SSE GET request');
+    // For GET requests without session, check if it's a true SSE client
+    // True SSE clients will have ONLY text/event-stream in Accept header
+    const isPureSSE =
+      c.req.method === 'GET' && acceptHeader === 'text/event-stream';
+
+    if (isPureSSE) {
+      logger.info('Creating new session for pure SSE client');
       session = new MCPSession(serverConfig);
       sessionStore.set(session.id, session);
       c.set('session', session);

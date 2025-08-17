@@ -155,7 +155,7 @@ export class SessionStore {
             createdAt: session.createdAt,
             lastActivity: session.lastActivity,
             transportCapabilities: session.getTransportCapabilities(),
-            isInitialized: session.isInitialized(),
+            isInitialized: session.isInitialized,
             clientTransportType: session.getClientTransportType(),
             metrics: session.metrics,
             config: session.config,
