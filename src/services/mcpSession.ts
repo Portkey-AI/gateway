@@ -16,16 +16,11 @@ import {
   JSONRPCError,
   CallToolRequest,
   ListToolsRequest,
-  isJSONRPCRequest,
-  isJSONRPCResponse,
-  isJSONRPCError,
-  isInitializeRequest,
   ErrorCode,
   RequestId,
   InitializeRequest,
   InitializeResult,
   Tool,
-  InitializeResultSchema,
 } from '@modelcontextprotocol/sdk/types';
 import { ServerConfig } from '../types/mcp';
 import { createLogger } from '../utils/logger';
