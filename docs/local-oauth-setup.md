@@ -4,7 +4,7 @@ When the Portkey MCP Gateway is deployed without a control plane (`ALBUS_BASEPAT
 
 ## Configuration Files
 
-### 1. OAuth Configuration (`src/config/oauth-config.json`)
+### 1. OAuth Configuration (`data/oauth-config.json`)
 
 This file manages OAuth clients and tokens locally:
 
@@ -40,7 +40,7 @@ This file manages OAuth clients and tokens locally:
 }
 ```
 
-### 2. Server Configuration (`src/config/servers.json`)
+### 2. Server Configuration (`data/servers.json`)
 
 Defines available MCP servers and their default settings:
 
@@ -147,7 +147,7 @@ curl -X POST http://localhost:8787/linear/mcp \
 ## Environment Variables
 
 - `OAUTH_REQUIRED`: Set to `true` to enforce OAuth authentication
-- `SERVERS_CONFIG_PATH`: Path to servers.json (default: `./src/config/servers.json`)
+- `SERVERS_CONFIG_PATH`: Path to servers.json (default: `./data/servers.json`)
 
 ## Security Considerations
 
@@ -182,7 +182,7 @@ The MCP Gateway now supports automatic client registration during the authorizat
 This means:
 - **No pre-registration needed**: Cursor and other MCP clients register themselves on first use
 - **Seamless setup**: Just point Cursor to your gateway URL and approve access
-- **Persistent registration**: Once registered, the client is saved in oauth-config.json
+- **Persistent registration**: Once registered, the client is saved in data/oauth-config.json
 
 ### How It Works
 
@@ -199,7 +199,7 @@ This means:
    - The client is treated as confidential instead of public
    - Solution: The gateway now properly handles public clients without client_secret
 
-2. **Client not in oauth-config.json**: 
+2. **Client not in data/oauth-config.json**: 
    - Dynamic registration now saves clients to the config file
    - Check the file after registration to confirm the client exists
 
@@ -221,7 +221,7 @@ This means:
 
 3. When prompted, approve the OAuth consent in your browser
 
-4. Check `src/config/oauth-config.json` to see the registered Cursor client
+4. Check `data/oauth-config.json` to see the registered Cursor client
 
 ## Troubleshooting
 

@@ -11,7 +11,7 @@ let serverConfigs: any = {};
 const loadServerConfigs = async () => {
   try {
     const serverConfigPath =
-      process.env.SERVERS_CONFIG_PATH || './src/config/servers.json';
+      process.env.SERVERS_CONFIG_PATH || './data/servers.json';
     const fs = await import('fs');
     const path = await import('path');
 
@@ -25,7 +25,7 @@ const loadServerConfigs = async () => {
     );
   } catch (error) {
     logger.warn(
-      'Failed to load server configurations. You can create local server configs at ./src/config/servers.json',
+      'Failed to load server configurations. You can create local server configs at ./data/servers.json',
       error
     );
   }

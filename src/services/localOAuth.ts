@@ -77,7 +77,7 @@ export class LocalOAuthService {
   private configPath: string;
   constructor(configPath?: string) {
     this.configPath =
-      configPath || join(process.cwd(), 'src/config/oauth-config.json');
+      configPath || join(process.cwd(), 'data/oauth-config.json');
     this.loadConfig();
   }
 
@@ -523,7 +523,7 @@ export class LocalOAuthService {
     let availableServers = ['linear', 'deepwiki']; // Default servers
     try {
       const serverConfigPath =
-        process.env.SERVERS_CONFIG_PATH || './src/config/servers.json';
+        process.env.SERVERS_CONFIG_PATH || './data/servers.json';
       const { readFileSync } = await import('fs');
       const { resolve } = await import('path');
       const configPath = resolve(serverConfigPath);
