@@ -1,0 +1,43 @@
+{
+  "clients": {
+    "example-client-id": {
+      "client_secret": "example-client-secret",
+      "name": "Example MCP Client",
+      "allowed_scopes": ["mcp:*"],
+      "allowed_servers": ["linear", "deepwiki"],
+      "server_permissions": {
+        "linear": {
+          "allowed_tools": null,
+          "blocked_tools": ["deleteProject", "deleteIssue"],
+          "rate_limit": {
+            "requests": 100,
+            "window": 60
+          }
+        },
+        "deepwiki": {
+          "allowed_tools": null,
+          "blocked_tools": [],
+          "rate_limit": null
+        }
+      }
+    },
+    "limited-client": {
+      "client_secret": "limited-secret",
+      "name": "Limited Access Client",
+      "allowed_scopes": ["mcp:servers:*", "mcp:tools:list"],
+      "allowed_servers": ["deepwiki"],
+      "server_permissions": {
+        "deepwiki": {
+          "allowed_tools": ["read_wiki_structure", "read_wiki_contents"],
+          "blocked_tools": [],
+          "rate_limit": {
+            "requests": 50,
+            "window": 60
+          }
+        }
+      }
+    }
+  },
+  "tokens": {},
+  "authorization_codes": {}
+}

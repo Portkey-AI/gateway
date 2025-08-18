@@ -144,3 +144,5 @@ plugins/**/creds.json
 plugins/**/.parameters.json
 src/handlers/tests/.creds.json
 data/sessions.json
+src/config/oauth-config.json
+src/config/servers.json

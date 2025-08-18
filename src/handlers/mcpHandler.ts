@@ -21,6 +21,11 @@ type Env = {
   Variables: {
     serverConfig: ServerConfig;
     session?: MCPSession;
+    tokenInfo?: any; // Token introspection response
+    isAuthenticated?: boolean;
+  };
+  Bindings: {
+    ALBUS_BASEPATH?: string;
   };
 };
 
@@ -254,10 +259,15 @@ export async function handleMCPRequest(
   const serverConfig = c.var.serverConfig;
   let session = c.var.session;
 
+  // Check if server config was found (it might be missing due to auth issues)
+  if (!serverConfig) {
+    // This happens when hydrateContext returns early due to auth issues
+    // The response should already be set by hydrateContext
+    return;
+  }
+
   // Detect transport type from headers
   const acceptHeader = c.req.header('Accept');
-  const isSSERequest =
-    c.req.method === 'GET' && acceptHeader?.includes('text/event-stream');
 
   // Parse body for POST requests
   const body = c.req.method === 'POST' ? await c.req.json() : null;
@@ -268,6 +278,7 @@ export async function handleMCPRequest(
     session = await handleInitializeRequest(c, session, sessionStore, body);
 
     if (!session) {
+      logger.error('initializationFailed', body);
       return c.json(
         ErrorResponses.initializationFailed((body as any)?.id),
         500

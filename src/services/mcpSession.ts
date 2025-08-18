@@ -274,6 +274,11 @@ export class MCPSession {
         // Fetch capabilities synchronously during initialization
         await this.fetchUpstreamCapabilities();
 
+        this.logger.debug(
+          'Upstream capabilities (SSE)',
+          this.upstreamCapabilities
+        );
+
         return 'sse';
       } catch (sseError) {
         this.logger.error('Both transports failed', {

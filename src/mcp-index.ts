@@ -15,6 +15,12 @@ import { MCPSession } from './services/mcpSession';
 import { SessionStore } from './services/sessionStore';
 import { createLogger } from './utils/logger';
 import { handleMCPRequest, handleSSEMessages } from './handlers/mcpHandler';
+import { oauthMiddleware } from './middlewares/oauth';
+import { localOAuth } from './services/localOAuth';
+import { hydrateContext } from './middlewares/mcp/hydrateContext';
+import { sessionMiddleware } from './middlewares/mcp/sessionMiddleware';
+import { oauthRoutes } from './routes/oauth';
+import { wellKnownRoutes } from './routes/wellknown';
 
 const logger = createLogger('MCP-Gateway');
 
@@ -22,6 +28,11 @@ type Env = {
   Variables: {
     serverConfig: ServerConfig;
     session?: MCPSession;
+    tokenInfo?: any;
+    isAuthenticated?: boolean;
+  };
+  Bindings: {
+    ALBUS_BASEPATH?: string;
   };
 };
 
@@ -32,57 +43,8 @@ const sessionStore = new SessionStore({
   maxAge: 60 * 60 * 1000, // 1 hour session timeout
 });
 
-const hydrateContext = createMiddleware<Env>(async (c, next) => {
-  const serverId = c.req.param('serverId');
-
-  if (!serverId) {
-    next();
-  }
-
-  // In production, load from database/API
-  // For now, we'll use a hardcoded config
-  const configs: Record<string, ServerConfig> = {
-    linear: {
-      serverId: 'linear',
-      url: process.env.LINEAR_MCP_URL || 'https://mcp.linear.app/sse',
-      headers: {
-        Authorization: `Bearer 51fc2928-f14e-4f24-ae6a-362338d26de7:TNs0lgV03mSevGhi:rukYArsbt0QldSXb4qN8lCUE9049OmxF`,
-      },
-      tools: {
-        blocked: ['deleteProject', 'deleteIssue'], // Block destructive operations
-        rateLimit: { requests: 100, window: 60 },
-        logCalls: true,
-      },
-    },
-    deepwiki: {
-      serverId: 'deepwiki',
-      url: 'https://mcp.deepwiki.com/mcp',
-      headers: {},
-    },
-  };
-
-  c.set('serverConfig', configs[serverId as keyof typeof configs]);
-  await next();
-});
-
-// Middleware to get session from header
-const sessionMiddleware = createMiddleware<Env>(async (c, next) => {
-  const sessionId = c.req.header('mcp-session-id');
-
-  if (sessionId) {
-    const session = sessionStore.get(sessionId);
-    if (session) {
-      logger.debug(
-        `Session ${sessionId} found, initialized: ${session.isInitialized}`
-      );
-      c.set('session', session);
-    } else {
-      logger.warn(`Session ID ${sessionId} provided but not found in store`);
-    }
-  }
-
-  await next();
-});
+// OAuth configuration
+const OAUTH_REQUIRED = process.env.OAUTH_REQUIRED === 'true' || true;
 
 const app = new Hono<Env>();
 
@@ -91,10 +53,20 @@ app.use(
   '*',
   cors({
     origin: '*', // Configure appropriately for production
-    allowHeaders: ['Content-Type', 'mcp-session-id', 'mcp-protocol-version'],
-    exposeHeaders: ['mcp-session-id'],
+    allowHeaders: [
+      'Content-Type',
+      'Authorization',
+      'mcp-session-id',
+      'mcp-protocol-version',
+    ],
+    exposeHeaders: ['mcp-session-id', 'WWW-Authenticate'],
+    credentials: true, // Allow cookies and authorization headers
   })
 );
+
+// Mount route groups
+app.route('/oauth', oauthRoutes);
+app.route('/.well-known', wellKnownRoutes);
 
 app.get('/', (c) => {
   logger.debug('Root endpoint accessed');
@@ -104,6 +76,10 @@ app.get('/', (c) => {
     endpoints: {
       mcp: '/:serverId/mcp',
       health: '/health',
+      oauth: {
+        discovery: '/.well-known/oauth-authorization-server',
+        resource: '/.well-known/oauth-protected-resource',
+      },
     },
   });
 });
@@ -111,9 +87,19 @@ app.get('/', (c) => {
 /**
  * Main MCP endpoint with transport detection
  */
-app.all('/:serverId/mcp', hydrateContext, sessionMiddleware, async (c) => {
-  return handleMCPRequest(c, sessionStore);
-});
+app.all(
+  '/:serverId/mcp',
+  oauthMiddleware({
+    required: OAUTH_REQUIRED,
+    scopes: ['mcp:servers:read'],
+    skipPaths: ['/oauth', '/.well-known'],
+  }),
+  hydrateContext,
+  sessionMiddleware(sessionStore),
+  async (c) => {
+    return handleMCPRequest(c, sessionStore);
+  }
+);
 
 /**
  * SSE endpoint - simple redirect to main MCP endpoint
@@ -132,8 +118,13 @@ app.get('/:serverId/sse', async (c) => {
  */
 app.post(
   '/:serverId/messages',
+  oauthMiddleware({
+    required: OAUTH_REQUIRED,
+    scopes: ['mcp:servers:*', 'mcp:*'],
+    skipPaths: ['/oauth', '/.well-known'],
+  }),
   hydrateContext,
-  sessionMiddleware,
+  sessionMiddleware(sessionStore),
   async (c) => {
     return handleSSEMessages(c, sessionStore);
   }
@@ -166,6 +157,8 @@ app.all('*', (c) => {
  */
 setInterval(async () => {
   await sessionStore.cleanup();
+  // Also clean up expired OAuth tokens
+  localOAuth.cleanupExpiredTokens();
 }, 60 * 1000); // Run every minute
 
 // Load existing sessions on startup
