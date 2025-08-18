@@ -26,7 +26,7 @@ import { imageGenerationsHandler } from './handlers/imageGenerationsHandler';
 import { createSpeechHandler } from './handlers/createSpeechHandler';
 import { createTranscriptionHandler } from './handlers/createTranscriptionHandler';
 import { createTranslationHandler } from './handlers/createTranslationHandler';
-import { modelsHandler, providersHandler } from './handlers/modelsHandler';
+import { modelsHandler } from './handlers/modelsHandler';
 import { realTimeHandler } from './handlers/realtimeHandler';
 import filesHandler from './handlers/filesHandler';
 import batchesHandler from './handlers/batchesHandler';
