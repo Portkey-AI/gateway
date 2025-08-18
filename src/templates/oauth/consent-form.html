@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authorize {{clientName}}</title>
+  <style>
+    :root {
+      --primary-blue: #1a73e8;
+      --primary-blue-hover: #1557b0;
+      --secondary-blue: #e8f0fe;
+      --border-color: #dadce0;
+      --text-primary: #202124;
+      --text-secondary: #5f6368;
+      --text-muted: #9aa0a6;
+      --background: #ffffff;
+      --surface: #f8f9fa;
+      --danger: #d93025;
+      --success: #137333;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--surface);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      line-height: 1.5;
+    }
+
+    .oauth-container {
+      background: var(--background);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      max-width: 450px;
+      width: 100%;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .oauth-header {
+      padding: 48px 40px 0;
+      text-align: center;
+      border-bottom: none;
+    }
+
+    .app-logos {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .app-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+    }
+
+    .app-logo img {
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+    }
+
+    .mcp-logo {
+      background: var(--background);
+    }
+
+    .client-logo {
+      background: var(--secondary-blue);
+      color: var(--primary-blue);
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .connection-arrow {
+      color: var(--text-muted);
+      font-size: 20px;
+    }
+
+    .oauth-title {
+      font-size: 24px;
+      font-weight: 400;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .oauth-subtitle {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+
+    .oauth-content {
+      padding: 0 40px 48px;
+    }
+
+    .app-details {
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 32px;
+    }
+
+    .detail-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .detail-item:last-child {
+      border-bottom: none;
+    }
+
+    .detail-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .detail-value {
+      font-size: 13px;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .detail-link {
+      font-size: 13px;
+      color: var(--primary-blue);
+      text-decoration: none;
+    }
+
+    .detail-link:hover {
+      text-decoration: underline;
+    }
+
+    .permissions-section {
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+    }
+
+    .permissions-list {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--background);
+    }
+
+    .permission-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .permission-item:last-child {
+      border-bottom: none;
+    }
+
+    .permission-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .permission-icon.servers { background: #dbeafe; color: #1d4ed8; }
+    .permission-icon.tools { background: #dcfce7; color: #166534; }
+    .permission-icon.resources { background: #fef3c7; color: #92400e; }
+    .permission-icon.prompts { background: #f3e8ff; color: #7c3aed; }
+    
+    .permission-details {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .permission-details h4 {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .permission-details p {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .permissions-info {
+      background: #fef7e0;
+      border: 1px solid #fdd835;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 24px;
+    }
+
+    .permissions-info-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: #ea8600;
+      margin-bottom: 4px;
+    }
+
+    .permissions-info-text {
+      font-size: 12px;
+      color: #ea8600;
+    }
+
+    .oauth-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 32px;
+    }
+
+    .oauth-btn {
+      flex: 1;
+      padding: 12px 24px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid var(--border-color);
+    }
+
+    .oauth-btn-primary {
+      background: var(--primary-blue);
+      color: white;
+      border-color: var(--primary-blue);
+    }
+
+    .oauth-btn-primary:hover {
+      background: var(--primary-blue-hover);
+      border-color: var(--primary-blue-hover);
+    }
+
+    .oauth-btn-primary:disabled {
+      background: var(--border-color);
+      border-color: var(--border-color);
+      cursor: not-allowed;
+    }
+
+    .oauth-btn-secondary {
+      background: var(--background);
+      color: var(--text-primary);
+    }
+
+    .oauth-btn-secondary:hover {
+      background: var(--surface);
+    }
+
+    .oauth-footer {
+      padding: 16px 40px;
+      border-top: 1px solid var(--border-color);
+      background: var(--surface);
+      text-align: center;
+    }
+
+    .oauth-footer-text {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    @media (max-width: 480px) {
+      .oauth-container {
+        margin: 10px;
+      }
+      
+      .oauth-header, .oauth-content {
+        padding-left: 24px;
+        padding-right: 24px;
+      }
+      
+      .oauth-actions {
+        flex-direction: column;
+      }
+
+      .app-logos {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .connection-arrow {
+        transform: rotate(90deg);
+      }
+
+      .detail-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+
+      .detail-value, .detail-link {
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="oauth-container">
+    <div class="oauth-header">
+      <div class="app-logos">
+        <div class="app-logo client-logo">
+          {{#hasClientLogo}}
+            <img src="{{clientLogoUri}}" alt="{{clientName}}" style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;" />
+          {{/hasClientLogo}}
+          {{^hasClientLogo}}
+            {{clientInitial}}
+          {{/hasClientLogo}}
+        </div>
+        <div class="connection-arrow"><svg class="" style="--icon-color:#5b5b5d" width="16" height="16" viewBox="0 0 16 16" fill="#5b5b5d" role="img" focusable="false" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M5.378 7.5a.6.6 0 0 1 .6.6l-.002 1.774c2.375.224 8.027.917 8.027 1.328 0 .311-2.675.796-8.024 1.453l-.001 1.747a.6.6 0 0 1-.992.454L1.14 11.548a.4.4 0 0 1 0-.607l3.848-3.297a.6.6 0 0 1 .39-.144Zm4.79-6.291a.6.6 0 0 1 .846-.064l3.847 3.309a.4.4 0 0 1 0 .607l-3.848 3.296a.6.6 0 0 1-.99-.455V6.128C7.65 5.904 1.998 5.21 1.998 4.799c0-.31 2.675-.795 8.024-1.452l.001-1.747a.6.6 0 0 1 .145-.391Z"></path></svg></div>
+        <div class="app-logo mcp-logo">
+          <img src="https://cfassets.portkey.ai/logo%2Fdew-color.png" alt="MCP" />
+        </div>
+      </div>
+      <h1 class="oauth-title">{{clientName}} is requesting access</h1>
+    </div>
+
+    <div class="oauth-content">
+      <div class="app-details">
+        <div class="detail-item">
+          <span class="detail-label">Application:</span>
+          <span class="detail-value">{{clientName}}</span>
+        </div>
+        {{#hasClientUri}}
+        <div class="detail-item">
+          <span class="detail-label">Website:</span>
+          <a href="{{clientUri}}" target="_blank" class="detail-link">{{clientUri}}</a>
+        </div>
+        {{/hasClientUri}}
+        {{#hasRedirectUris}}
+        <div class="detail-item">
+          <span class="detail-label">Redirect URIs:</span>
+          <span class="detail-value" title="{{redirectUrisTitle}}">{{redirectUrisDisplay}}</span>
+        </div>
+        {{/hasRedirectUris}}
+      </div>
+
+      <form method="post" action="/oauth/authorize" id="oauth-form">
+        <input type="hidden" name="client_id" value="{{clientId}}">
+        <input type="hidden" name="redirect_uri" value="{{redirectUri}}">
+        <input type="hidden" name="state" value="{{state}}">
+        <input type="hidden" name="scope" value="{{scope}}">
+        {{#hasCodeChallenge}}
+        <input type="hidden" name="code_challenge" value="{{codeChallenge}}">
+        {{/hasCodeChallenge}}
+        {{#hasCodeChallengeMethod}}
+        <input type="hidden" name="code_challenge_method" value="{{codeChallengeMethod}}">
+        {{/hasCodeChallengeMethod}}
+        
+        <div class="permissions-section">
+          <div class="section-title">This will allow {{clientName}} to:</div>
+          <div class="permissions-list">
+            {{#permissions.servers}}
+            <div class="permission-item">
+              <div class="permission-icon servers">🖥️</div>
+              <div class="permission-details">
+                <h4>Connect to MCP servers</h4>
+              </div>
+            </div>
+            {{/permissions.servers}}
+            {{#permissions.tools}}
+            <div class="permission-item">
+              <div class="permission-icon tools">🔧</div>
+              <div class="permission-details">
+                <h4>Execute tools</h4>
+              </div>
+            </div>
+            {{/permissions.tools}}
+            {{#permissions.resources}}
+            <div class="permission-item">
+              <div class="permission-icon resources">📁</div>
+              <div class="permission-details">
+                <h4>Read and access resources</h4>
+              </div>
+            </div>
+            {{/permissions.resources}}
+            {{#permissions.prompts}}
+            <div class="permission-item">
+              <div class="permission-icon prompts">💬</div>
+              <div class="permission-details">
+                <h4>Read and access prompts</h4>
+              </div>
+            </div>
+            {{/permissions.prompts}}
+          </div>
+        </div>
+
+        <div class="oauth-actions">
+          <button type="submit" name="action" value="deny" class="oauth-btn oauth-btn-secondary">
+            Deny
+          </button>
+          <button type="submit" name="action" value="approve" class="oauth-btn oauth-btn-primary">
+            🔒 Approve
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="oauth-footer">
+      <p class="oauth-footer-text">
+        By clicking "Approve", you allow this app to use your information in accordance with their terms of service and privacy policy. You can revoke access at any time.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

@@ -10,13 +10,15 @@ import crypto from 'crypto';
 
 const logger = createLogger('LocalOAuth');
 
-interface OAuthClient {
+export interface OAuthClient {
   client_secret: string;
   name: string;
   allowed_scopes: string[];
   allowed_servers: string[];
   redirect_uris?: string[];
   grant_types?: string[];
+  logo_uri?: string;
+  client_uri?: string;
   server_permissions: Record<
     string,
     {

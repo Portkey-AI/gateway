@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { createLogger } from '../utils/logger';
-import { localOAuth } from '../services/localOAuth';
+import { localOAuth, OAuthClient } from '../services/localOAuth';
 import { OAuthGateway } from '../services/oauthGateway';
+import { oauthMustacheRenderer } from '../utils/mustacheRenderer';
 
 const logger = createLogger('oauth-routes');
 
@@ -102,6 +103,7 @@ oauthRoutes.post('/register', async (c) => {
 
   try {
     const clientData = (await c.req.json()) as any;
+    logger.debug('register client', clientData);
 
     if (controlPlaneUrl) {
       // Use control plane
@@ -140,7 +142,7 @@ oauthRoutes.get('/authorize', async (c) => {
   const clientId = params.client_id;
   const redirectUri = params.redirect_uri;
   const state = params.state;
-  const scope = params.scope || 'mcp:servers:read';
+  const scope = params.scope || 'mcp:*';
   const codeChallenge = params.code_challenge;
   const codeChallengeMethod = params.code_challenge_method;
 
@@ -160,90 +162,50 @@ oauthRoutes.get('/authorize', async (c) => {
     );
   }
 
-  // Check if client exists, if not, dynamically register it
-  let clientInfo = await localOAuth.getClient(clientId);
+  // Validate client exists - OAuth 2.1 requires proper client validation
+  const clientInfo = await localOAuth.getClient(clientId);
   if (!clientInfo) {
-    logger.info(
-      `Client ${clientId} not found, performing dynamic registration`
-    );
+    logger.warn(`Authorization request for unknown client: ${clientId}`);
 
-    // Extract client name from the client_id or redirect_uri
-    const clientName = redirectUri.includes('cursor')
-      ? 'Cursor'
-      : redirectUri.includes('vscode')
-        ? 'VS Code'
-        : 'MCP Client';
-
-    // Register client with the requested ID
-    await localOAuth.registerClient(
-      {
-        client_name: clientName,
-        redirect_uris: [redirectUri],
-        grant_types: ['authorization_code'],
-        token_endpoint_auth_method: 'none', // Public client with PKCE
-        scope: scope || 'mcp:servers:read',
-      },
-      clientId
-    );
-
-    clientInfo = await localOAuth.getClient(clientId);
-    logger.info(`Dynamically registered client: ${clientId} as ${clientName}`);
-  } else if (
-    clientInfo.redirect_uris &&
-    !clientInfo.redirect_uris.includes(redirectUri)
-  ) {
-    // For existing clients, add new redirect URI if needed
-    logger.info(
-      `Adding new redirect_uri for client ${clientId}: ${redirectUri}`
-    );
-    await localOAuth.registerClient(
-      {
-        client_name: clientInfo.name,
-        redirect_uris: [redirectUri],
-      },
-      clientId
-    );
+    // Per OAuth 2.1 spec, return invalid_client error
+    // We can only redirect if we can't trust the redirect_uri, so we return an error page
+    const errorHtml = oauthMustacheRenderer.renderInvalidClientError(clientId);
+    return c.html(errorHtml, 400);
   }
 
-  // In a real implementation, you'd show a consent screen here
-  // For local dev, we'll auto-approve
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Authorize MCP Access</title>
-      <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 40px; max-width: 600px; margin: 0 auto; }
-        h1 { color: #333; }
-        .scope-list { background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0; }
-        .scope-item { margin: 10px 0; }
-        .buttons { margin-top: 30px; }
-        button { padding: 10px 20px; margin-right: 10px; font-size: 16px; border-radius: 4px; border: none; cursor: pointer; }
-        .approve { background: #0066cc; color: white; }
-        .deny { background: #e0e0e0; color: #333; }
-      </style>
-    </head>
-    <body>
-      <h1>Authorize MCP Access</h1>
-      <p><strong>${clientId}</strong> is requesting access to your MCP Gateway resources:</p>
-      <div class="scope-list">
-        <div class="scope-item">📋 Requested permissions: <code>${scope}</code></div>
-      </div>
-      <form method="post" action="/oauth/authorize">
-        <input type="hidden" name="client_id" value="${clientId}">
-        <input type="hidden" name="redirect_uri" value="${redirectUri}">
-        <input type="hidden" name="state" value="${state || ''}">
-        <input type="hidden" name="scope" value="${scope}">
-        ${codeChallenge ? `<input type="hidden" name="code_challenge" value="${codeChallenge}">` : ''}
-        ${codeChallengeMethod ? `<input type="hidden" name="code_challenge_method" value="${codeChallengeMethod}">` : ''}
-        <div class="buttons">
-          <button type="submit" name="action" value="approve" class="approve">Approve</button>
-          <button type="submit" name="action" value="deny" class="deny">Deny</button>
-        </div>
-      </form>
-    </body>
-    </html>
-  `;
+  // Validate redirect_uri matches registered URIs
+  if (
+    clientInfo.redirect_uris &&
+    clientInfo.redirect_uris.length > 0 &&
+    !clientInfo.redirect_uris.includes(redirectUri)
+  ) {
+    logger.warn(
+      `Invalid redirect_uri for client ${clientId}: ${redirectUri}. Registered URIs: ${clientInfo.redirect_uris.join(', ')}`
+    );
+
+    // Per OAuth 2.1, if redirect_uri is invalid, we cannot redirect back
+    // Return error page instead
+    const registeredUris = clientInfo.redirect_uris?.join(', ') || 'None';
+    const errorHtml = oauthMustacheRenderer.renderInvalidRedirectError(
+      redirectUri,
+      registeredUris
+    );
+    return c.html(errorHtml, 400);
+  }
+
+  // Enhanced MCP OAuth consent screen
+  const html = oauthMustacheRenderer.renderConsentForm({
+    clientId,
+    clientName: clientInfo.name,
+    clientLogoUri: clientInfo.logo_uri,
+    clientUri: clientInfo.client_uri,
+    redirectUri,
+    redirectUris: clientInfo.redirect_uris,
+    state,
+    scope,
+    codeChallenge,
+    codeChallengeMethod,
+  });
 
   return c.html(html);
 });
@@ -311,6 +273,22 @@ oauthRoutes.post('/authorize', async (c) => {
     return c.redirect(errorUrl.toString(), 302);
   }
 
+  // Validate redirect_uri matches registered URIs
+  if (
+    client.redirect_uris &&
+    client.redirect_uris.length > 0 &&
+    !client.redirect_uris.includes(redirectUri)
+  ) {
+    logger.error(
+      `Invalid redirect_uri for client ${clientId}: ${redirectUri}. Registered URIs: ${client.redirect_uris.join(', ')}`
+    );
+    const errorUrl = new URL(redirectUri);
+    errorUrl.searchParams.set('error', 'invalid_request');
+    errorUrl.searchParams.set('error_description', 'Invalid redirect_uri');
+    if (state) errorUrl.searchParams.set('state', state);
+    return c.redirect(errorUrl.toString(), 302);
+  }
+
   // User approved - create authorization code
   const code = localOAuth.createAuthorizationCode({
     client_id: clientId,
@@ -324,8 +302,6 @@ oauthRoutes.post('/authorize', async (c) => {
   const approveUrl = new URL(redirectUri);
   approveUrl.searchParams.set('code', code);
   if (state) approveUrl.searchParams.set('state', state);
-
-  console.log('approveUrl', approveUrl.toString());
 
   return c.redirect(approveUrl.toString(), 302);
 });
