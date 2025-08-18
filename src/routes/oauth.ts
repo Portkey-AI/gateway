@@ -99,12 +99,20 @@ oauthRoutes.post('/introspect', async (c) => {
  */
 oauthRoutes.post('/register', async (c) => {
   const controlPlaneUrl = c.env.ALBUS_BASEPATH || process.env.ALBUS_BASEPATH;
-  const gateway = new OAuthGateway(controlPlaneUrl);
 
   try {
     const clientData = (await c.req.json()) as any;
-    const result = await gateway.registerClient(clientData);
-    return c.json(result, 201);
+
+    if (controlPlaneUrl) {
+      // Use control plane
+      const gateway = new OAuthGateway(controlPlaneUrl);
+      const result = await gateway.registerClient(clientData);
+      return c.json(result, 201);
+    } else {
+      // Use local OAuth
+      const result = await localOAuth.registerClient(clientData);
+      return c.json(result, 201);
+    }
   } catch (error) {
     logger.error('Failed to handle registration request', error);
     return c.json(
@@ -166,32 +174,35 @@ oauthRoutes.get('/authorize', async (c) => {
         ? 'VS Code'
         : 'MCP Client';
 
-    // Directly create the client with the requested client_id
-    await localOAuth.createClientWithId(clientId, {
-      client_name: clientName,
-      redirect_uris: [redirectUri],
-      grant_types: ['authorization_code'],
-      token_endpoint_auth_method: 'none', // Public client with PKCE
-      scope: scope || 'mcp:servers:read',
-    });
+    // Register client with the requested ID
+    await localOAuth.registerClient(
+      {
+        client_name: clientName,
+        redirect_uris: [redirectUri],
+        grant_types: ['authorization_code'],
+        token_endpoint_auth_method: 'none', // Public client with PKCE
+        scope: scope || 'mcp:servers:read',
+      },
+      clientId
+    );
 
     clientInfo = await localOAuth.getClient(clientId);
     logger.info(`Dynamically registered client: ${clientId} as ${clientName}`);
-  }
-
-  // Validate redirect_uri if client has registered URIs
-  if (
-    clientInfo &&
+  } else if (
     clientInfo.redirect_uris &&
-    clientInfo.redirect_uris.length > 0
+    !clientInfo.redirect_uris.includes(redirectUri)
   ) {
-    if (!clientInfo.redirect_uris.includes(redirectUri)) {
-      // For dynamic clients, add the new redirect_uri
-      logger.info(
-        `Adding new redirect_uri for client ${clientId}: ${redirectUri}`
-      );
-      await localOAuth.addRedirectUri(clientId, redirectUri);
-    }
+    // For existing clients, add new redirect URI if needed
+    logger.info(
+      `Adding new redirect_uri for client ${clientId}: ${redirectUri}`
+    );
+    await localOAuth.registerClient(
+      {
+        client_name: clientInfo.name,
+        redirect_uris: [redirectUri],
+      },
+      clientId
+    );
   }
 
   // In a real implementation, you'd show a consent screen here

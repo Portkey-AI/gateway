@@ -73,8 +73,6 @@ export class LocalOAuthService {
     authorization_codes: {},
   };
   private configPath: string;
-  private registrationLocks: Map<string, Promise<void>> = new Map();
-
   constructor(configPath?: string) {
     this.configPath =
       configPath || join(process.cwd(), 'src/config/oauth-config.json');
@@ -551,40 +549,64 @@ export class LocalOAuthService {
   }
 
   /**
-   * Register a new client (supports both server and browser flows)
+   * Register a new client or update existing one
    */
-  async registerClient(clientData: {
-    client_name: string;
-    scope?: string;
-    redirect_uris?: string[];
-    grant_types?: string[];
-    token_endpoint_auth_method?: string;
-  }): Promise<any> {
-    logger.info('Client registration request:', {
-      client_name: clientData.client_name,
-      scope: clientData.scope,
-      grant_types: clientData.grant_types,
-      redirect_uris: clientData.redirect_uris,
-      token_endpoint_auth_method: clientData.token_endpoint_auth_method,
-    });
+  async registerClient(
+    clientData: {
+      client_name: string;
+      scope?: string;
+      redirect_uris?: string[];
+      grant_types?: string[];
+      token_endpoint_auth_method?: string;
+    },
+    clientId?: string
+  ): Promise<any> {
+    // Generate ID if not provided
+    const id =
+      clientId || `mcp_client_${crypto.randomBytes(16).toString('hex')}`;
 
-    const clientId = `mcp_client_${crypto.randomBytes(16).toString('hex')}`;
+    // Check if client already exists
+    if (clientId && this.config.clients[id]) {
+      logger.info(
+        `Client ${id} already exists, updating redirect URIs if needed`
+      );
+
+      // For existing clients, just update redirect URIs if provided
+      if (clientData.redirect_uris) {
+        const client = this.config.clients[id];
+        if (!client.redirect_uris) {
+          client.redirect_uris = [];
+        }
+
+        for (const uri of clientData.redirect_uris) {
+          if (!client.redirect_uris.includes(uri)) {
+            client.redirect_uris.push(uri);
+          }
+        }
+        this.saveConfig();
+      }
+
+      return {
+        client_id: id,
+        client_name: this.config.clients[id].name,
+        scope: this.config.clients[id].allowed_scopes.join(' '),
+        redirect_uris: this.config.clients[id].redirect_uris,
+        grant_types: this.config.clients[id].grant_types,
+        token_endpoint_auth_method: this.config.clients[id].client_secret
+          ? 'client_secret_post'
+          : 'none',
+      };
+    }
 
     const grantTypes = clientData.grant_types || ['client_credentials'];
-    const needsRedirectUris = grantTypes.includes('authorization_code');
-
-    // Check if this is a public client (no client_secret)
     const isPublicClient =
       clientData.token_endpoint_auth_method === 'none' ||
       (grantTypes.includes('authorization_code') &&
         !grantTypes.includes('client_credentials'));
 
-    const clientSecret = isPublicClient
-      ? ''
-      : `mcp_secret_${crypto.randomBytes(32).toString('hex')}`;
-
+    // Validate redirect URIs for authorization code flow
     if (
-      needsRedirectUris &&
+      grantTypes.includes('authorization_code') &&
       (!clientData.redirect_uris || clientData.redirect_uris.length === 0)
     ) {
       return {
@@ -594,14 +616,19 @@ export class LocalOAuthService {
       };
     }
 
-    // Get available servers and create permissions
+    // Get default permissions
     const { availableServers, serverPermissions } =
       await this.getDefaultServerPermissions();
 
-    this.config.clients[clientId] = {
+    // Create client
+    const clientSecret = isPublicClient
+      ? ''
+      : `mcp_secret_${crypto.randomBytes(32).toString('hex')}`;
+
+    this.config.clients[id] = {
       client_secret: clientSecret,
       name: clientData.client_name,
-      allowed_scopes: clientData.scope?.split(' ') || ['mcp:*'], // Default to full access for dynamic clients
+      allowed_scopes: clientData.scope?.split(' ') || ['mcp:*'],
       allowed_servers: availableServers,
       redirect_uris: clientData.redirect_uris,
       grant_types: grantTypes,
@@ -611,13 +638,13 @@ export class LocalOAuthService {
     this.saveConfig();
 
     logger.info(
-      `Registered ${isPublicClient ? 'public' : 'confidential'} client ${clientId} with access to servers: ${availableServers.join(', ')}`
+      `Registered ${isPublicClient ? 'public' : 'confidential'} client ${id}`
     );
 
     const response: any = {
-      client_id: clientId,
+      client_id: id,
       client_name: clientData.client_name,
-      scope: this.config.clients[clientId].allowed_scopes.join(' '),
+      scope: this.config.clients[id].allowed_scopes.join(' '),
       redirect_uris: clientData.redirect_uris,
       grant_types: grantTypes,
       token_endpoint_auth_method: isPublicClient
@@ -625,7 +652,6 @@ export class LocalOAuthService {
         : 'client_secret_post',
     };
 
-    // Only include client_secret for confidential clients
     if (!isPublicClient) {
       response.client_secret = clientSecret;
     }
@@ -638,104 +664,6 @@ export class LocalOAuthService {
    */
   async getClient(clientId: string): Promise<OAuthClient | null> {
     return this.config.clients[clientId] || null;
-  }
-
-  /**
-   * Create a client with a specific ID (for dynamic registration)
-   */
-  async createClientWithId(
-    clientId: string,
-    clientData: {
-      client_name: string;
-      scope?: string;
-      redirect_uris?: string[];
-      grant_types?: string[];
-      token_endpoint_auth_method?: string;
-    }
-  ): Promise<void> {
-    // Check if there's already a registration in progress for this client
-    const existingLock = this.registrationLocks.get(clientId);
-    if (existingLock) {
-      logger.info(
-        `Registration already in progress for client ${clientId}, waiting...`
-      );
-      await existingLock;
-      return;
-    }
-
-    // Create a new lock for this registration
-    const lockPromise = this._doCreateClient(clientId, clientData);
-    this.registrationLocks.set(clientId, lockPromise);
-
-    try {
-      await lockPromise;
-    } finally {
-      // Clean up the lock
-      this.registrationLocks.delete(clientId);
-    }
-  }
-
-  private async _doCreateClient(
-    clientId: string,
-    clientData: {
-      client_name: string;
-      scope?: string;
-      redirect_uris?: string[];
-      grant_types?: string[];
-      token_endpoint_auth_method?: string;
-    }
-  ): Promise<void> {
-    // Double-check if client was created while we were waiting
-    if (this.config.clients[clientId]) {
-      logger.info(`Client ${clientId} already exists, skipping creation`);
-      return;
-    }
-
-    const grantTypes = clientData.grant_types || ['authorization_code'];
-    const isPublicClient =
-      clientData.token_endpoint_auth_method === 'none' ||
-      (grantTypes.includes('authorization_code') &&
-        !grantTypes.includes('client_credentials'));
-
-    const clientSecret = isPublicClient
-      ? ''
-      : `mcp_secret_${crypto.randomBytes(32).toString('hex')}`;
-
-    // Get available servers and create permissions
-    const { availableServers, serverPermissions } =
-      await this.getDefaultServerPermissions();
-
-    this.config.clients[clientId] = {
-      client_secret: clientSecret,
-      name: clientData.client_name,
-      allowed_scopes: clientData.scope?.split(' ') || ['mcp:*'], // Default to full access for dynamic clients
-      allowed_servers: availableServers,
-      redirect_uris: clientData.redirect_uris,
-      grant_types: grantTypes,
-      server_permissions: serverPermissions,
-    };
-
-    this.saveConfig();
-    logger.info(
-      `Created ${isPublicClient ? 'public' : 'confidential'} client ${clientId} with access to servers: ${availableServers.join(', ')}`
-    );
-  }
-
-  /**
-   * Add redirect URI to existing client
-   */
-  async addRedirectUri(clientId: string, redirectUri: string): Promise<void> {
-    const client = this.config.clients[clientId];
-    if (client) {
-      if (!client.redirect_uris) {
-        client.redirect_uris = [];
-      }
-      if (!client.redirect_uris.includes(redirectUri)) {
-        client.redirect_uris.push(redirectUri);
-        this.saveConfig();
-        logger.info(`Added redirect URI ${redirectUri} to client ${clientId}`);
-      }
-    }
   }
 
   /**
