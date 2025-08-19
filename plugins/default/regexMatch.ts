@@ -34,7 +34,6 @@ export const handler: PluginHandler = async (
     const redact = parameters.redact || false;
     const redactText = parameters.redactText || '[REDACTED]';
 
-    // Use getCurrentContentPart like PII does
     const { content, textArray } = getCurrentContentPart(context, eventType);
 
     if (!regexPattern) {
@@ -44,6 +43,7 @@ export const handler: PluginHandler = async (
       throw new Error('Missing text to match');
     }
 
+    // Create regex once with appropriate flags
     const regex = new RegExp(regexPattern, redact ? 'g' : '');
 
     // Check for matches across all text
@@ -56,19 +56,21 @@ export const handler: PluginHandler = async (
         return;
       }
 
-      // Check if pattern exists in text
-      const localRegex = new RegExp(regexPattern, 'g');
-      const matches = text.match(localRegex);
+      // Reset regex for each text when using global flag
+      if (redact) {
+        regex.lastIndex = 0;
+      }
 
+      const matches = text.match(regex);
       if (matches && matches.length > 0) {
         hasMatches = true;
+      }
 
-        if (redact) {
-          const redactedText = text.replace(localRegex, redactText);
-          mappedTextArray.push(redactedText);
-        } else {
-          mappedTextArray.push(null);
-        }
+      // If redacting and matches found, replace them
+      if (matches && redact) {
+        regex.lastIndex = 0; // Reset again for replace
+        const redactedText = text.replace(regex, redactText);
+        mappedTextArray.push(redactedText);
       } else {
         mappedTextArray.push(null);
       }
@@ -87,11 +89,15 @@ export const handler: PluginHandler = async (
       transformed = true;
     }
 
+    // This is CORRECT - don't change based on AI review
     verdict = not ? hasMatches : !shouldBlock;
 
     // For backward compatibility, also get single text for matchDetails
     const textToMatch = getText(context, eventType);
-    const singleMatch = new RegExp(regexPattern).exec(textToMatch);
+    if (redact) {
+      regex.lastIndex = 0; // Reset for exec
+    }
+    const singleMatch = regex.exec(textToMatch);
 
     data = {
       regexPattern,
@@ -115,22 +121,22 @@ export const handler: PluginHandler = async (
           }
         : null,
       textExcerpt:
-        textToMatch?.length > 100
+        textToMatch && textToMatch.length > 100
           ? textToMatch.slice(0, 100) + '...'
-          : textToMatch,
+          : textToMatch || '',
     };
   } catch (e: any) {
     error = e;
     let textExcerpt = getText(context, eventType);
     textExcerpt =
-      textExcerpt?.length > 100
+      textExcerpt && textExcerpt.length > 100
         ? textExcerpt.slice(0, 100) + '...'
-        : textExcerpt;
+        : textExcerpt || 'No text available';
     data = {
       explanation: `An error occurred while processing the regex: ${e.message}`,
       regexPattern: parameters.rule,
       not: parameters.not || false,
-      textExcerpt: textExcerpt || 'No text available',
+      textExcerpt: textExcerpt,
     };
   }
 
