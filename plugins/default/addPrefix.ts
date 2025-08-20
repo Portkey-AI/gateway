@@ -4,27 +4,29 @@ import {
   PluginHandler,
   PluginParameters,
 } from '../types';
+import { getCurrentContentPart, setCurrentContentPart } from '../utils';
 
 const addPrefixToCompletion = (
   context: PluginContext,
-  prefix: string
+  prefix: string,
+  eventType: HookEventType
 ): Record<string, any> => {
-  const json = context.request.json;
-  const updatedJson = { ...json };
+  const transformedData: Record<string, any> = {
+    request: { json: null },
+    response: { json: null },
+  };
 
-  // For completion requests, just prepend the prefix to the prompt
-  if (json.prompt) {
-    updatedJson.prompt = prefix + json.prompt;
+  const { content, textArray } = getCurrentContentPart(context, eventType);
+  if (!content) {
+    return transformedData;
   }
 
-  return {
-    request: {
-      json: updatedJson,
-    },
-    response: {
-      json: null,
-    },
-  };
+  const updatedTexts = (
+    Array.isArray(textArray) ? textArray : [String(textArray)]
+  ).map((text, index) => (index === 0 ? `${prefix}${text ?? ''}` : text));
+
+  setCurrentContentPart(context, eventType, transformedData, updatedTexts);
+  return transformedData;
 };
 
 const addPrefixToChatCompletion = (
@@ -32,40 +34,87 @@ const addPrefixToChatCompletion = (
   prefix: string,
   applyToRole: string = 'user',
   addToExisting: boolean = true,
-  onlyIfEmpty: boolean = false
+  onlyIfEmpty: boolean = false,
+  eventType: HookEventType
 ): Record<string, any> => {
   const json = context.request.json;
   const updatedJson = { ...json };
-  const messages = [...json.messages];
+  const messages = Array.isArray(json.messages) ? [...json.messages] : [];
 
   // Find the target role message
   const targetIndex = messages.findIndex((msg) => msg.role === applyToRole);
 
+  // Helper to build a message content with the prefix in both chatComplete and messages formats
+  const buildPrefixedContent = (existing: any): any => {
+    if (existing == null || typeof existing === 'string') {
+      return `${prefix}${existing ?? ''}`;
+    }
+    if (Array.isArray(existing)) {
+      if (existing.length > 0 && existing[0]?.type === 'text') {
+        const cloned = existing.map((item) => ({ ...item }));
+        cloned[0].text = `${prefix}${cloned[0]?.text ?? ''}`;
+        return cloned;
+      }
+      return [{ type: 'text', text: prefix }, ...existing];
+    }
+    return `${prefix}${String(existing)}`;
+  };
+
+  // If the target role exists
   if (targetIndex !== -1) {
-    // Message with target role exists
-    if (onlyIfEmpty) {
-      // Only apply if specifically requested and role exists (don't modify)
+    const targetMsg = messages[targetIndex];
+    const content = targetMsg?.content;
+
+    const isEmptyContent =
+      (typeof content === 'string' && content.trim().length === 0) ||
+      (Array.isArray(content) && content.length === 0);
+
+    if (onlyIfEmpty && !isEmptyContent) {
+      // Respect onlyIfEmpty by skipping modification when non-empty
       return {
-        request: {
-          json: updatedJson,
-        },
-        response: {
-          json: null,
-        },
+        request: { json: updatedJson },
+        response: { json: null },
       };
     }
 
     if (addToExisting) {
-      // Add prefix to existing message
+      // If this is the last message, leverage utils to ensure messages route compatibility
+      if (targetIndex === messages.length - 1) {
+        const transformedData: Record<string, any> = {
+          request: { json: null },
+          response: { json: null },
+        };
+        const { content: currentContent, textArray } = getCurrentContentPart(
+          context,
+          eventType
+        );
+        if (currentContent) {
+          const updatedTexts = (
+            Array.isArray(textArray) ? textArray : [String(textArray)]
+          ).map((text, idx) => (idx === 0 ? `${prefix}${text ?? ''}` : text));
+          setCurrentContentPart(
+            context,
+            eventType,
+            transformedData,
+            updatedTexts
+          );
+        }
+        return transformedData;
+      }
+
+      // Otherwise, modify the specific message inline
       messages[targetIndex] = {
-        ...messages[targetIndex],
-        content: prefix + messages[targetIndex].content,
+        ...targetMsg,
+        content: buildPrefixedContent(targetMsg.content),
       };
     } else {
       // Create new message with prefix before the existing one
       const newMessage = {
         role: applyToRole,
-        content: prefix,
+        content:
+          context.requestType === 'messages'
+            ? [{ type: 'text', text: prefix }]
+            : prefix,
       };
       messages.splice(targetIndex, 0, newMessage);
     }
@@ -73,17 +122,15 @@ const addPrefixToChatCompletion = (
     // No message with target role exists, create one
     const newMessage = {
       role: applyToRole,
-      content: prefix,
+      content:
+        context.requestType === 'messages'
+          ? [{ type: 'text', text: prefix }]
+          : prefix,
     };
 
     if (applyToRole === 'system') {
-      // System messages should go first
       messages.unshift(newMessage);
-    } else if (applyToRole === 'user') {
-      // User messages can go at the end or in logical position
-      messages.push(newMessage);
     } else {
-      // Assistant or other roles
       messages.push(newMessage);
     }
   }
@@ -119,11 +166,12 @@ export const handler: PluginHandler = async (
   let transformed = false;
 
   try {
-    // Only process before request and only for completion/chat completion
+    // Only process before request and only for completion/chat completion/messages
     if (
       eventType !== 'beforeRequestHook' ||
-      (context.requestType !== 'complete' &&
-        context.requestType !== 'chatComplete')
+      !['complete', 'chatComplete', 'messages'].includes(
+        context.requestType || ''
+      )
     ) {
       return {
         error: null,
@@ -159,18 +207,22 @@ export const handler: PluginHandler = async (
 
     let newTransformedData;
 
-    if (context.requestType === 'chatComplete') {
+    if (
+      context.requestType &&
+      ['chatComplete', 'messages'].includes(context.requestType)
+    ) {
       // Handle chat completion
       newTransformedData = addPrefixToChatCompletion(
         context,
         prefix,
         parameters.applyToRole || 'user',
         parameters.addToExisting !== false, // default to true
-        parameters.onlyIfEmpty === true // default to false
+        parameters.onlyIfEmpty === true, // default to false
+        eventType
       );
     } else {
       // Handle regular completion
-      newTransformedData = addPrefixToCompletion(context, prefix);
+      newTransformedData = addPrefixToCompletion(context, prefix, eventType);
     }
 
     Object.assign(transformedData, newTransformedData);
