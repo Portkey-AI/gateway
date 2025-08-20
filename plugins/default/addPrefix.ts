@@ -237,7 +237,10 @@ export const handler: PluginHandler = async (
     };
   } catch (e: any) {
     delete e.stack;
-    error = e;
+    error = {
+      message: `Error in addPrefix plugin: ${e.message || 'Unknown error'}`,
+      originalError: e
+    };
   }
 
   return { error, verdict, data, transformedData, transformed };
