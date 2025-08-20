@@ -17,7 +17,7 @@ export const handler: PluginHandler<{
   context: PluginContext,
   parameters: PluginParameters<{ contentSafety: AzureCredentials }>,
   eventType: HookEventType,
-  options
+  pluginOptions?: Record<string, any>
 ) => {
   let error = null;
   let verdict = true;
@@ -69,8 +69,8 @@ export const handler: PluginHandler<{
   const { token, error: tokenError } = await getAccessToken(
     credentials as any,
     'contentSafety',
-    options,
-    options?.env
+    pluginOptions,
+    pluginOptions?.env
   );
 
   if (tokenError) {
@@ -110,14 +110,13 @@ export const handler: PluginHandler<{
   };
 
   const timeout = parameters.timeout || 5000;
+  const requestOptions: Record<string, any> = { headers };
+  if (agent) {
+    requestOptions.dispatcher = agent;
+  }
   let response;
   try {
-    response = await post(
-      url,
-      request,
-      { headers, dispatcher: agent },
-      timeout
-    );
+    response = await post(url, request, requestOptions, timeout);
   } catch (e) {
     return { error: e, verdict: true, data };
   }

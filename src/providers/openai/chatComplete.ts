@@ -121,6 +121,15 @@ export const OpenAIChatCompleteConfig: ProviderConfig = {
   web_search_options: {
     param: 'web_search_options',
   },
+  prompt_cache_key: {
+    param: 'prompt_cache_key',
+  },
+  safety_identifier: {
+    param: 'safety_identifier',
+  },
+  verbosity: {
+    param: 'verbosity',
+  },
 };
 
 export interface OpenAIChatCompleteResponse extends ChatCompletionResponse {

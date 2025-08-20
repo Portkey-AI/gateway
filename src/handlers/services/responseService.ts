@@ -82,7 +82,7 @@ export class ResponseService {
     return await responseHandler(
       response,
       this.context.isStreaming,
-      this.context.provider,
+      this.context.providerOption,
       responseTransformer,
       url,
       isCacheHit,

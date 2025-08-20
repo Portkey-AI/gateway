@@ -113,7 +113,7 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
             providerOptions
           );
       if (foundationModel) {
-        params.foundationModel = foundationModel;
+        providerOptions.foundationModel = foundationModel;
       }
     }
     if (fn === 'retrieveFile') {
