@@ -80,6 +80,16 @@ const getService = (fn: endpointStrings) => {
     : 'bedrock';
 };
 
+const isBedrockApiKeyBasedAuth = (providerOptions: Options) => {
+  if (
+    !providerOptions.awsAccessKeyId &&
+    !(providerOptions.awsAuthType === 'assumedRole') &&
+    !providerOptions.awsSessionToken
+  )
+    return true;
+  return false;
+};
+
 const setRouteSpecificHeaders = (
   fn: string,
   headers: Record<string, string>,
@@ -152,6 +162,11 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
 
     if (method === 'PUT' || method === 'GET') {
       delete headers['content-type'];
+    }
+
+    if (isBedrockApiKeyBasedAuth(providerOptions)) {
+      headers['Authorization'] = `Bearer ${providerOptions.apiKey}`;
+      return headers;
     }
 
     setRouteSpecificHeaders(fn, headers, providerOptions);
