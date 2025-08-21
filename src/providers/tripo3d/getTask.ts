@@ -33,7 +33,10 @@ export interface Tripo3DTask {
     | 'unknown'
     | 'banned'
     | 'expired';
-  input: any;
+  // Input is always an object but structure varies by task type (13+ different types).
+  // We use Record<string, any> as we're just passing through data without processing it.
+  // Tripo3D validates the actual structure based on the task type.
+  input: Record<string, any>;
   output: Tripo3DTaskOutput;
   progress: number;
   error_code?: number;
