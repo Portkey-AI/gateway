@@ -84,7 +84,8 @@ const isBearerTokenBasedAuth = (providerOptions: Options) => {
   if (
     !providerOptions.awsAccessKeyId &&
     !(providerOptions.awsAuthType === 'assumedRole') &&
-    !providerOptions.awsSessionToken
+    !providerOptions.awsSessionToken &&
+    providerOptions.apiKey
   )
     return true;
   return false;
