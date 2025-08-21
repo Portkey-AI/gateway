@@ -80,7 +80,7 @@ const getService = (fn: endpointStrings) => {
     : 'bedrock';
 };
 
-const isBedrockApiKeyBasedAuth = (providerOptions: Options) => {
+const isBearerTokenBasedAuth = (providerOptions: Options) => {
   if (
     !providerOptions.awsAccessKeyId &&
     !(providerOptions.awsAuthType === 'assumedRole') &&
@@ -164,7 +164,7 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
       delete headers['content-type'];
     }
 
-    if (isBedrockApiKeyBasedAuth(providerOptions)) {
+    if (isBearerTokenBasedAuth(providerOptions)) {
       headers['Authorization'] = `Bearer ${providerOptions.apiKey}`;
       return headers;
     }
