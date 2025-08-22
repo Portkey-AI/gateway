@@ -98,6 +98,16 @@ export async function handleInitializeRequest(
     logger.info(`Creating new session for server: ${c.req.param('serverId')}`);
     const serverConfig = c.var.serverConfig;
     session = new MCPSession(serverConfig);
+
+    // Set token expiration for session lifecycle
+    const tokenInfo = c.var.tokenInfo;
+    if (tokenInfo) {
+      session.setTokenExpiration(tokenInfo);
+      logger.debug(
+        `Session ${session.id} created with token expiration tracking`
+      );
+    }
+
     sessionStore.set(session.id, session);
   }
 
@@ -196,10 +206,20 @@ export async function handleEstablishedSessionGET(
  */
 export async function createSSESession(
   serverConfig: ServerConfig,
-  sessionStore: SessionStore
+  sessionStore: SessionStore,
+  tokenInfo?: any
 ): Promise<MCPSession | undefined> {
   logger.info('Creating new session for pure SSE client');
   const session = new MCPSession(serverConfig);
+
+  // Set token expiration for session lifecycle
+  if (tokenInfo) {
+    session.setTokenExpiration(tokenInfo);
+    logger.debug(
+      `SSE session ${session.id} created with token expiration tracking`
+    );
+  }
+
   sessionStore.set(session.id, session);
 
   try {
@@ -309,7 +329,8 @@ export async function handleMCPRequest(
       c.req.method === 'GET' && acceptHeader === 'text/event-stream';
 
     if (isPureSSE) {
-      session = await createSSESession(serverConfig, sessionStore);
+      const tokenInfo = c.var.tokenInfo;
+      session = await createSSESession(serverConfig, sessionStore, tokenInfo);
       if (!session) {
         return c.json(ErrorResponses.initializationFailed(), 500);
       }
@@ -406,6 +427,23 @@ export async function handleSSEMessages(
   if (!session) {
     logger.warn(`POST /messages: Session ${sessionId} not found`);
     return c.json(ErrorResponses.sessionNotFound(), 404);
+  }
+
+  // Check if session is expired
+  if (session.isTokenExpired()) {
+    logger.info(`SSE session ${sessionId} expired, removing`);
+    sessionStore.delete(sessionId);
+    return c.json(
+      {
+        jsonrpc: '2.0',
+        error: {
+          code: -32001,
+          message: 'Session expired',
+        },
+        id: null,
+      },
+      401
+    );
   }
 
   // Ensure session is ready for SSE messages

@@ -26,6 +26,8 @@ export interface SessionData {
     errors: number;
   };
   config: ServerConfig;
+  // Token expiration for session lifecycle
+  tokenExpiresAt?: number;
 }
 
 export interface SessionStoreOptions {
@@ -149,6 +151,7 @@ export class SessionStore {
       for (const [id, session] of this.sessions.entries()) {
         // Only save sessions that aren't expired
         if (Date.now() - session.lastActivity < this.maxAge) {
+          const tokenExpiration = session.getTokenExpiration();
           sessionData.push({
             id: session.id,
             serverId: session.config.serverId,
@@ -159,6 +162,8 @@ export class SessionStore {
             clientTransportType: session.getClientTransportType(),
             metrics: session.metrics,
             config: session.config,
+            // Include token expiration if present
+            tokenExpiresAt: tokenExpiration.expiresAt,
           });
         }
       }
@@ -264,8 +269,21 @@ export class SessionStore {
     const expiredSessions: string[] = [];
 
     for (const [id, session] of this.sessions.entries()) {
-      if (now - session.lastActivity > this.maxAge) {
+      const isAgeExpired = now - session.lastActivity > this.maxAge;
+      const isTokenExpired = session.isTokenExpired();
+
+      if (isAgeExpired || isTokenExpired) {
         expiredSessions.push(id);
+
+        if (isTokenExpired) {
+          logger.debug(
+            `Session ${id} marked for removal due to token expiration`
+          );
+        } else {
+          logger.debug(
+            `Session ${id} marked for removal due to age expiration`
+          );
+        }
       }
     }
 

@@ -75,6 +75,9 @@ export class MCPSession {
     errors: 0,
   };
 
+  // Session expiration tied to token lifecycle
+  private tokenExpiresAt?: number;
+
   // Rate limiting with pre-allocated array
   private rateLimitWindow: number[] = [];
   private rateLimitCursor = 0;
@@ -399,6 +402,53 @@ export class MCPSession {
   }
 
   /**
+   * Set token expiration for session lifecycle management
+   * Session will be considered expired when token expires
+   */
+  setTokenExpiration(tokenInfo: any): void {
+    if (tokenInfo?.exp) {
+      // Token expiration is in seconds, convert to milliseconds
+      this.tokenExpiresAt = tokenInfo.exp * 1000;
+      this.logger.debug(
+        `Session ${this.id} token expires at ${new Date(this.tokenExpiresAt).toISOString()}`
+      );
+    } else if (tokenInfo?.expires_in) {
+      // Relative expiration in seconds
+      this.tokenExpiresAt = Date.now() + tokenInfo.expires_in * 1000;
+      this.logger.debug(
+        `Session ${this.id} token expires in ${tokenInfo.expires_in} seconds`
+      );
+    }
+  }
+
+  /**
+   * Check if session is expired based on token expiration
+   */
+  isTokenExpired(): boolean {
+    if (!this.tokenExpiresAt) {
+      return false; // No expiration set, rely on session timeout
+    }
+
+    const expired = Date.now() > this.tokenExpiresAt;
+    if (expired) {
+      this.logger.debug(
+        `Session ${this.id} token expired at ${new Date(this.tokenExpiresAt).toISOString()}`
+      );
+    }
+    return expired;
+  }
+
+  /**
+   * Get token expiration info for debugging
+   */
+  getTokenExpiration(): { expiresAt?: number; isExpired: boolean } {
+    return {
+      expiresAt: this.tokenExpiresAt,
+      isExpired: this.isTokenExpired(),
+    };
+  }
+
+  /**
    * Restore session from saved data - only restore basic data, defer full initialization
    */
   async restoreFromData(data: {
@@ -408,12 +458,21 @@ export class MCPSession {
     metrics: any;
     transportCapabilities?: TransportCapabilities;
     clientTransportType?: TransportType;
+    tokenExpiresAt?: number;
   }): Promise<void> {
     // Restore basic properties
     this.id = data.id;
     this.createdAt = data.createdAt;
     this.lastActivity = data.lastActivity;
     this.metrics = data.metrics;
+
+    // Restore token expiration if available
+    if (data.tokenExpiresAt) {
+      this.tokenExpiresAt = data.tokenExpiresAt;
+      this.logger.debug(
+        `Session ${this.id} restored with token expiration: ${new Date(this.tokenExpiresAt).toISOString()}`
+      );
+    }
 
     // Store transport capabilities for later use, but don't initialize yet
     if (data.transportCapabilities && data.clientTransportType) {

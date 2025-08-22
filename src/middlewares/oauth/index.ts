@@ -131,8 +131,11 @@ export function oauthMiddleware(config: OAuthConfig = {}) {
     const token = extractBearerToken(authorization);
 
     // If no token and OAuth is not required, continue
+    // NOTE: For production security, OAuth should always be required
     if (!token && !config.required) {
-      logger.debug(`No token provided for ${path}, continuing without auth`);
+      logger.warn(
+        `No token provided for ${path}, continuing without auth - SECURITY RISK`
+      );
       return next();
     }
 

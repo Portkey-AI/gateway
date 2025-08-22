@@ -43,8 +43,8 @@ const sessionStore = new SessionStore({
   maxAge: 60 * 60 * 1000, // 1 hour session timeout
 });
 
-// OAuth configuration
-const OAUTH_REQUIRED = process.env.OAUTH_REQUIRED === 'true' || true;
+// OAuth configuration - always required for security
+const OAUTH_REQUIRED = true; // Force OAuth for all requests
 
 const app = new Hono<Env>();
 
