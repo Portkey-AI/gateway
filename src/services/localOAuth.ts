@@ -62,10 +62,20 @@ interface AuthorizationCode {
   expires: number;
 }
 
+interface RefreshToken {
+  client_id: string;
+  scope: string;
+  iat: number;
+  exp: number;
+  // Link to track which access tokens were issued from this refresh token
+  access_tokens?: string[];
+}
+
 interface OAuthConfig {
   clients: Record<string, OAuthClient>;
   tokens: Record<string, StoredToken>;
   authorization_codes: Record<string, AuthorizationCode>;
+  refresh_tokens: Record<string, RefreshToken>;
 }
 
 export class LocalOAuthService {
@@ -73,6 +83,7 @@ export class LocalOAuthService {
     clients: {},
     tokens: {},
     authorization_codes: {},
+    refresh_tokens: {},
   };
   private configPath: string;
   constructor(configPath?: string) {
@@ -92,6 +103,7 @@ export class LocalOAuthService {
         if (!this.config.tokens) this.config.tokens = {};
         if (!this.config.authorization_codes)
           this.config.authorization_codes = {};
+        if (!this.config.refresh_tokens) this.config.refresh_tokens = {};
 
         logger.info(
           `Loaded OAuth config with ${Object.keys(this.config.clients).length} clients`
@@ -102,13 +114,19 @@ export class LocalOAuthService {
           clients: {},
           tokens: {},
           authorization_codes: {},
+          refresh_tokens: {},
         };
         this.saveConfig();
         logger.warn('Created new OAuth config file');
       }
     } catch (error) {
       logger.error('Failed to load OAuth config', error);
-      this.config = { clients: {}, tokens: {}, authorization_codes: {} };
+      this.config = {
+        clients: {},
+        tokens: {},
+        authorization_codes: {},
+        refresh_tokens: {},
+      };
     }
   }
 
@@ -329,38 +347,51 @@ export class LocalOAuthService {
       // Clean up used code
       delete this.config.authorization_codes[code];
 
-      // Generate token
-      const token = `mcp_${crypto.randomBytes(32).toString('hex')}`;
+      // Generate tokens
+      const accessToken = `mcp_${crypto.randomBytes(32).toString('hex')}`;
+      const refreshToken = `mcp_refresh_${crypto.randomBytes(32).toString('hex')}`;
       const now = Math.floor(Date.now() / 1000);
-      const expiresIn = 3600;
+      const accessExpiresIn = 3600; // 1 hour
+      const refreshExpiresIn = 30 * 24 * 3600; // 30 days
 
       // Use the scope from the authorization code, or default to allowed scopes
       const tokenScope = authCode.scope || client.allowed_scopes.join(' ');
 
-      logger.info('Issuing token for authorization code:', {
+      logger.info('Issuing tokens for authorization code:', {
         client_id: effectiveClientId,
         scope: tokenScope,
         original_scope: authCode.scope,
       });
 
-      this.config.tokens[token] = {
+      // Store access token
+      this.config.tokens[accessToken] = {
         client_id: effectiveClientId,
         active: true,
         scope: tokenScope,
         iat: now,
-        exp: now + expiresIn,
+        exp: now + accessExpiresIn,
         mcp_permissions: {
           servers: client.server_permissions,
         },
       };
 
+      // Store refresh token
+      this.config.refresh_tokens[refreshToken] = {
+        client_id: effectiveClientId,
+        scope: tokenScope,
+        iat: now,
+        exp: now + refreshExpiresIn,
+        access_tokens: [accessToken],
+      };
+
       this.saveConfig();
 
       return {
-        access_token: token,
+        access_token: accessToken,
         token_type: 'Bearer',
-        expires_in: expiresIn,
+        expires_in: accessExpiresIn,
         scope: tokenScope,
+        refresh_token: refreshToken,
       };
     }
 
@@ -453,10 +484,135 @@ export class LocalOAuthService {
       };
     }
 
+    if (grantType === 'refresh_token') {
+      const refreshToken = params.get('refresh_token');
+
+      if (!refreshToken) {
+        return {
+          error: 'invalid_request',
+          error_description: 'Missing refresh_token parameter',
+        };
+      }
+
+      const storedRefreshToken = this.config.refresh_tokens[refreshToken];
+
+      if (!storedRefreshToken) {
+        return {
+          error: 'invalid_grant',
+          error_description: 'Invalid refresh token',
+        };
+      }
+
+      // Check if refresh token is expired
+      const now = Math.floor(Date.now() / 1000);
+      if (storedRefreshToken.exp < now) {
+        delete this.config.refresh_tokens[refreshToken];
+        this.saveConfig();
+        return {
+          error: 'invalid_grant',
+          error_description: 'Refresh token has expired',
+        };
+      }
+
+      // Validate client if provided
+      if (clientId && clientId !== storedRefreshToken.client_id) {
+        return {
+          error: 'invalid_grant',
+          error_description: 'Refresh token was issued to a different client',
+        };
+      }
+
+      const client = this.config.clients[storedRefreshToken.client_id];
+      if (!client) {
+        return {
+          error: 'invalid_client',
+          error_description: 'Client not found',
+        };
+      }
+
+      // Handle scope parameter - allow narrowing of scope but not expansion
+      let newScope = storedRefreshToken.scope;
+      const requestedScope = params.get('scope');
+
+      if (requestedScope) {
+        const originalScopes = storedRefreshToken.scope.split(' ');
+        const requestedScopes = requestedScope.split(' ');
+
+        // Ensure all requested scopes were in the original grant
+        const validScopes = requestedScopes.filter((scope) =>
+          originalScopes.includes(scope)
+        );
+
+        if (validScopes.length !== requestedScopes.length) {
+          return {
+            error: 'invalid_scope',
+            error_description: 'Requested scope exceeds original grant',
+          };
+        }
+
+        newScope = validScopes.join(' ');
+      }
+
+      // Generate new access token
+      const newAccessToken = `mcp_${crypto.randomBytes(32).toString('hex')}`;
+      const accessExpiresIn = 3600; // 1 hour
+
+      // Store new access token
+      this.config.tokens[newAccessToken] = {
+        client_id: storedRefreshToken.client_id,
+        active: true,
+        scope: newScope,
+        iat: now,
+        exp: now + accessExpiresIn,
+        mcp_permissions: {
+          servers: client.server_permissions,
+        },
+      };
+
+      // Track the new access token in the refresh token
+      if (!storedRefreshToken.access_tokens) {
+        storedRefreshToken.access_tokens = [];
+      }
+      storedRefreshToken.access_tokens.push(newAccessToken);
+
+      // Implement refresh token rotation for enhanced security
+      // Generate a new refresh token and invalidate the old one
+      const newRefreshToken = `mcp_refresh_${crypto.randomBytes(32).toString('hex')}`;
+      const refreshExpiresIn = 30 * 24 * 3600; // 30 days
+
+      // Create new refresh token with updated access tokens list
+      this.config.refresh_tokens[newRefreshToken] = {
+        client_id: storedRefreshToken.client_id,
+        scope: newScope,
+        iat: now,
+        exp: now + refreshExpiresIn,
+        access_tokens: [newAccessToken],
+      };
+
+      // Delete old refresh token
+      delete this.config.refresh_tokens[refreshToken];
+
+      this.saveConfig();
+
+      logger.info('Issued new tokens with refresh token rotation:', {
+        client_id: storedRefreshToken.client_id,
+        scope: newScope,
+        old_refresh_token_age_seconds: now - storedRefreshToken.iat,
+      });
+
+      return {
+        access_token: newAccessToken,
+        token_type: 'Bearer',
+        expires_in: accessExpiresIn,
+        scope: newScope,
+        refresh_token: newRefreshToken,
+      };
+    }
+
     return {
       error: 'unsupported_grant_type',
       error_description:
-        'Only client_credentials and authorization_code grant types are supported',
+        'Only client_credentials, authorization_code, and refresh_token grant types are supported',
     };
   }
 
@@ -503,12 +659,34 @@ export class LocalOAuthService {
   }
 
   /**
-   * Revoke a token
+   * Revoke a token (access or refresh)
    */
   async revokeToken(token: string): Promise<void> {
+    // Check if it's an access token
     if (this.config.tokens[token]) {
       this.config.tokens[token].active = false;
       this.saveConfig();
+      logger.info('Revoked access token');
+      return;
+    }
+
+    // Check if it's a refresh token
+    if (this.config.refresh_tokens[token]) {
+      const refreshToken = this.config.refresh_tokens[token];
+
+      // Also revoke all access tokens issued from this refresh token
+      if (refreshToken.access_tokens) {
+        for (const accessToken of refreshToken.access_tokens) {
+          if (this.config.tokens[accessToken]) {
+            this.config.tokens[accessToken].active = false;
+          }
+        }
+      }
+
+      // Delete the refresh token
+      delete this.config.refresh_tokens[token];
+      this.saveConfig();
+      logger.info('Revoked refresh token and associated access tokens');
     }
   }
 
@@ -669,19 +847,30 @@ export class LocalOAuthService {
   }
 
   /**
-   * Clean up expired tokens and authorization codes
+   * Clean up expired tokens, refresh tokens, and authorization codes
    */
   cleanupExpiredTokens() {
     const now = Math.floor(Date.now() / 1000);
     const nowMs = Date.now();
     let cleanedTokens = 0;
+    let cleanedRefreshTokens = 0;
     let cleanedCodes = 0;
 
-    // Clean expired tokens
+    // Clean expired access tokens
     for (const [token, data] of Object.entries(this.config.tokens)) {
       if (data.exp && data.exp < now) {
         delete this.config.tokens[token];
         cleanedTokens++;
+      }
+    }
+
+    // Clean expired refresh tokens
+    if (this.config.refresh_tokens) {
+      for (const [token, data] of Object.entries(this.config.refresh_tokens)) {
+        if (data.exp && data.exp < now) {
+          delete this.config.refresh_tokens[token];
+          cleanedRefreshTokens++;
+        }
       }
     }
 
@@ -697,10 +886,10 @@ export class LocalOAuthService {
       }
     }
 
-    if (cleanedTokens > 0 || cleanedCodes > 0) {
+    if (cleanedTokens > 0 || cleanedRefreshTokens > 0 || cleanedCodes > 0) {
       this.saveConfig();
       logger.info(
-        `Cleaned up ${cleanedTokens} expired tokens and ${cleanedCodes} expired auth codes`
+        `Cleaned up ${cleanedTokens} expired access tokens, ${cleanedRefreshTokens} expired refresh tokens, and ${cleanedCodes} expired auth codes`
       );
     }
   }
