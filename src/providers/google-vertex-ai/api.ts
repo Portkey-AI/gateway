@@ -1,8 +1,9 @@
+import { GatewayError } from '../../errors/GatewayError';
 import { Options } from '../../types/requestBody';
 import { endpointStrings, ProviderAPIConfig } from '../types';
 import { getModelAndProvider, getAccessToken, getBucketAndFile } from './utils';
 
-const getApiVersion = (provider: string, inputModel: string) => {
+const getApiVersion = (provider: string) => {
   if (provider === 'meta') return 'v1beta1';
   return 'v1';
 };
@@ -17,12 +18,12 @@ const getProjectRoute = (
     vertexServiceAccountJson,
   } = providerOptions;
   let projectId = inputProjectId;
-  if (vertexServiceAccountJson && vertexServiceAccountJson.project_id) {
+  if (vertexServiceAccountJson?.project_id) {
     projectId = vertexServiceAccountJson.project_id;
   }
 
   const { provider } = getModelAndProvider(inputModel as string);
-  let routeVersion = getApiVersion(provider, inputModel as string);
+  const routeVersion = getApiVersion(provider);
   return `/${routeVersion}/projects/${projectId}/locations/${vertexRegion}`;
 };
 
@@ -68,7 +69,6 @@ export const GoogleApiConfig: ProviderAPIConfig = {
     if (vertexServiceAccountJson) {
       authToken = await getAccessToken(c, vertexServiceAccountJson);
     }
-
     return {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${authToken}`,
@@ -99,7 +99,7 @@ export const GoogleApiConfig: ProviderAPIConfig = {
       const jobId = gatewayRequestURL.split('/').at(jobIdIndex);
 
       const url = new URL(gatewayRequestURL);
-      const searchParams = url.searchParams;
+      const searchParams = new URLSearchParams(url.search);
       const pageSize = searchParams.get('limit') ?? 20;
       const after = searchParams.get('after') ?? '';
 
@@ -140,7 +140,13 @@ export const GoogleApiConfig: ProviderAPIConfig = {
         case 'cancelFinetune': {
           return `/v1/projects/${projectId}/locations/${vertexRegion}/tuningJobs/${jobId}:cancel`;
         }
+        default:
+          return '';
       }
+    }
+
+    if (!inputModel) {
+      throw new GatewayError('Model is required', 400);
     }
 
     const { provider, model } = getModelAndProvider(inputModel as string);
@@ -181,6 +187,7 @@ export const GoogleApiConfig: ProviderAPIConfig = {
         } else if (mappedFn === 'messagesCountTokens') {
           return `${projectRoute}/publishers/${provider}/models/count-tokens:rawPredict`;
         }
+        return `${projectRoute}/publishers/${provider}/models/${model}:rawPredict`;
       }
 
       case 'meta': {
