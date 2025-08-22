@@ -291,6 +291,14 @@ export async function tryPost(
   currentIndex: number | string,
   method: string = 'POST'
 ): Promise<Response> {
+  if (
+    providerOption.provider === BEDROCK &&
+    'messages' in requestBody &&
+    requestBody.messages
+  ) {
+    requestBody.messages = await prefetchImageUrls(requestBody.messages);
+  }
+
   const requestContext = new RequestContext(
     c,
     providerOption,
