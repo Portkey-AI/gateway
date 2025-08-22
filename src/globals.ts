@@ -102,6 +102,7 @@ export const FEATHERLESS_AI: string = 'featherless-ai';
 export const KRUTRIM: string = 'krutrim';
 export const QDRANT: string = 'qdrant';
 export const THREE_ZERO_TWO_AI: string = '302ai';
+export const MESHY: string = 'meshy';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -167,6 +168,7 @@ export const VALID_PROVIDERS = [
   KRUTRIM,
   QDRANT,
   THREE_ZERO_TWO_AI,
+  MESHY,
 ];
 
 export const CONTENT_TYPES = {
