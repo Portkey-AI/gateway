@@ -1,1 +1,5 @@
-npm run format:check || (npm run format && return 1)
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Check formatting; if it fails, format and fail the commit so dev can re-stage
+npm run format:check || (npm run format && echo "Prettier formatted files. Please re-stage and commit again." && exit 1)

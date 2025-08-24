@@ -812,6 +812,101 @@
         },
         "required": ["prefix"]
       }
+    },
+    {
+      "name": "Inject Tools",
+      "id": "injectTools",
+      "type": "transformer",
+      "supportedHooks": ["beforeRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Injects one or more tools into the LLM request body under params.tools."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "tools": {
+            "type": "json",
+            "label": "Tools JSON or Array",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Either a single tool object or an array of tool objects (function or built-in)."
+              }
+            ]
+          },
+          "replaceExisting": {
+            "type": "boolean",
+            "label": "Replace Existing",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "When true, replace existing tools. Default false (append)."
+              }
+            ],
+            "default": false
+          },
+          "dedupeByName": {
+            "type": "boolean",
+            "label": "De-duplicate by name",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "When true, remove duplicates by function name/tool identity. Default true."
+              }
+            ],
+            "default": true
+          },
+          "toolChoicePreset": {
+            "type": "string",
+            "label": "Tool choice behavior",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Select how the model should use the injected tools."
+              },
+              {
+                "type": "subHeading",
+                "text": "- add_any: require the model to use any one of the injected tools"
+              },
+              {
+                "type": "subHeading",
+                "text": "- add_all: require the model to use injected tools (provider-specific behavior)"
+              },
+              {
+                "type": "subHeading",
+                "text": "- auto: allow the model to decide whether to use tools"
+              },
+              { "type": "subHeading", "text": "- none: disallow tool usage" }
+            ],
+            "enum": ["add_any", "add_all", "auto", "none"]
+          },
+          "resetToolChoice": {
+            "type": "boolean",
+            "label": "Reset existing tool_choice",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Override any user-defined tool_choice with the selected preset"
+              }
+            ],
+            "default": false
+          },
+          "requiredFunctionName": {
+            "type": "string",
+            "label": "Require specific injected function",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "When set with preset add_any/add_all, enforces this function by name if present; otherwise falls back to 'required' behavior."
+              }
+            ]
+          }
+        },
+        "required": ["tools"]
+      }
     }
   ]
 }
