@@ -7,6 +7,7 @@ import {
   DEEPINFRA,
   SAMBANOVA,
   BEDROCK,
+  BYTEZ,
 } from './globals';
 import { Params } from './types/requestBody';
 
@@ -48,9 +49,13 @@ export const getStreamModeSplitPattern = (
     splitPattern = '\n';
   }
 
+  if (proxyProvider === BYTEZ) {
+    splitPattern = ' ';
+  }
+
   return splitPattern;
 };
-export type SplitPatternType = '\n\n' | '\r\n\r\n' | '\n' | '\r\n';
+export type SplitPatternType = '\n\n' | '\r\n\r\n' | '\n' | '\r\n' | ' ';
 
 export const getStreamingMode = (
   reqBody: Params,

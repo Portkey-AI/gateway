@@ -1,35 +1,131 @@
 import { BEDROCK } from '../../globals';
-import { EmbedResponse } from '../../types/embedRequestBody';
+import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
 import { Params } from '../../types/requestBody';
 import { ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { BedrockErrorResponseTransform } from './chatComplete';
 
 export const BedrockCohereEmbedConfig: ProviderConfig = {
-  input: {
-    param: 'texts',
-    required: true,
-    transform: (params: any): string[] => {
-      if (Array.isArray(params.input)) {
-        return params.input;
-      } else {
-        return [params.input];
-      }
+  input: [
+    {
+      param: 'texts',
+      required: false,
+      transform: (params: EmbedParams): string[] | undefined => {
+        if (typeof params.input === 'string') return [params.input];
+        else if (Array.isArray(params.input) && params.input.length > 0) {
+          const texts: string[] = [];
+          params.input.forEach((item) => {
+            if (typeof item === 'string') {
+              texts.push(item);
+            } else if (item.text) {
+              texts.push(item.text);
+            }
+          });
+          return texts.length > 0 ? texts : undefined;
+        }
+      },
     },
-  },
+    {
+      param: 'images',
+      required: false,
+      transform: (params: EmbedParams): string[] | undefined => {
+        if (Array.isArray(params.input) && params.input.length > 0) {
+          const images: string[] = [];
+          params.input.forEach((item) => {
+            if (typeof item === 'object' && item.image?.base64) {
+              images.push(item.image.base64);
+            }
+          });
+          return images.length > 0 ? images : undefined;
+        }
+      },
+    },
+  ],
   input_type: {
     param: 'input_type',
     required: true,
   },
   truncate: {
     param: 'truncate',
+    required: false,
+  },
+  encoding_format: {
+    param: 'embedding_types',
+    required: false,
+    transform: (params: any): string[] | undefined => {
+      if (Array.isArray(params.encoding_format)) return params.encoding_format;
+      else if (typeof params.encoding_format === 'string')
+        return [params.encoding_format];
+    },
   },
 };
 
 export const BedrockTitanEmbedConfig: ProviderConfig = {
-  input: {
-    param: 'inputText',
-    required: true,
+  input: [
+    {
+      param: 'inputText',
+      required: false,
+      transform: (params: EmbedParams): string | undefined => {
+        if (
+          Array.isArray(params.input) &&
+          typeof params.input[0] === 'object' &&
+          params.input[0].text
+        ) {
+          return params.input[0].text;
+        }
+        if (typeof params.input === 'string') return params.input;
+      },
+    },
+    {
+      param: 'inputImage',
+      required: false,
+      transform: (params: EmbedParams) => {
+        // Titan models only support one image per request
+        if (
+          Array.isArray(params.input) &&
+          typeof params.input[0] === 'object' &&
+          params.input[0].image?.base64
+        ) {
+          return params.input[0].image.base64;
+        }
+      },
+    },
+  ],
+  dimensions: [
+    {
+      param: 'dimensions',
+      required: false,
+      transform: (params: EmbedParams): number | undefined => {
+        if (typeof params.input === 'string') return params.dimensions;
+      },
+    },
+    {
+      param: 'embeddingConfig',
+      required: false,
+      transform: (
+        params: EmbedParams
+      ): { outputEmbeddingLength: number } | undefined => {
+        if (Array.isArray(params.input) && params.dimensions) {
+          return {
+            outputEmbeddingLength: params.dimensions,
+          };
+        }
+      },
+    },
+  ],
+  encoding_format: {
+    param: 'embeddingTypes',
+    required: false,
+    transform: (params: any): string[] | undefined => {
+      if (Array.isArray(params.encoding_format)) return params.encoding_format;
+      else if (typeof params.encoding_format === 'string')
+        return [params.encoding_format];
+    },
+  },
+  // Titan specific parameters
+  normalize: {
+    param: 'normalize',
+    required: false,
   },
 };
 

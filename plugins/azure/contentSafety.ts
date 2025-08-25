@@ -1,3 +1,4 @@
+import { Agent } from 'https';
 import {
   HookEventType,
   PluginContext,
@@ -16,7 +17,7 @@ export const handler: PluginHandler<{
   context: PluginContext,
   parameters: PluginParameters<{ contentSafety: AzureCredentials }>,
   eventType: HookEventType,
-  options
+  pluginOptions?: Record<string, any>
 ) => {
   let error = null;
   let verdict = true;
@@ -63,13 +64,13 @@ export const handler: PluginHandler<{
 
   const apiVersion = parameters.apiVersion || '2024-11-01';
 
-  const url = `https://${credentials.resourceName}.cognitiveservices.azure.com/contentsafety/text:analyze?api-version=${apiVersion}`;
+  const url = `${credentials.customHost || `https://${credentials.resourceName}.cognitiveservices.azure.com`}/contentsafety/text:analyze?api-version=${apiVersion}`;
 
   const { token, error: tokenError } = await getAccessToken(
     credentials as any,
     'contentSafety',
-    options,
-    options?.env
+    pluginOptions,
+    pluginOptions?.env
   );
 
   if (tokenError) {
@@ -78,6 +79,17 @@ export const handler: PluginHandler<{
       verdict: true,
       data,
     };
+  }
+
+  let agent: Agent | null = null;
+  // privatelink doesn't contain a valid certificate, skipping verification if it's customHost.
+  // SECURITY NOTE: The following disables SSL certificate validation for custom hosts.
+  // This is necessary for Azure Private Link endpoints that may use self-signed certificates,
+  // but should only be used with trusted private endpoints.
+  if (credentials.customHost) {
+    agent = new Agent({
+      rejectUnauthorized: false,
+    });
   }
 
   const headers: Record<string, string> = {
@@ -98,9 +110,13 @@ export const handler: PluginHandler<{
   };
 
   const timeout = parameters.timeout || 5000;
+  const requestOptions: Record<string, any> = { headers };
+  if (agent) {
+    requestOptions.dispatcher = agent;
+  }
   let response;
   try {
-    response = await post(url, request, { headers }, timeout);
+    response = await post(url, request, requestOptions, timeout);
   } catch (e) {
     return { error: e, verdict: true, data };
   }

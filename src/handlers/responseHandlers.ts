@@ -17,6 +17,7 @@ import {
 import { HookSpan } from '../middlewares/hooks';
 import { env } from 'hono/adapter';
 import { OpenAIModelResponseJSONToStreamGenerator } from '../providers/open-ai-base/createModelResponse';
+import { anthropicMessagesJsonToStreamGenerator } from '../providers/anthropic-base/utils/streamGenerator';
 
 /**
  * Handles various types of responses based on the specified parameters
@@ -36,7 +37,7 @@ import { OpenAIModelResponseJSONToStreamGenerator } from '../providers/open-ai-b
 export async function responseHandler(
   response: Response,
   streamingMode: boolean,
-  provider: string | Options,
+  providerOptions: Options,
   responseTransformer: string | undefined,
   requestURL: string,
   isCacheHit: boolean = false,
@@ -52,17 +53,16 @@ export async function responseHandler(
   let responseTransformerFunction: Function | undefined;
   const responseContentType = response.headers?.get('content-type');
   const isSuccessStatusCode = [200, 246].includes(response.status);
-
-  if (typeof provider == 'object') {
-    provider = provider.provider || '';
-  }
+  const provider = providerOptions.provider;
 
   const providerConfig = Providers[provider];
   let providerTransformers = Providers[provider]?.responseTransforms;
 
   if (providerConfig?.getConfig) {
-    providerTransformers =
-      providerConfig.getConfig(gatewayRequest).responseTransforms;
+    providerTransformers = providerConfig.getConfig({
+      params: gatewayRequest,
+      providerOptions,
+    }).responseTransforms;
   }
 
   // Checking status 200 so that errors are not considered as stream mode.
@@ -80,6 +80,9 @@ export async function responseHandler(
       case 'chatComplete':
         responseTransformerFunction =
           OpenAIChatCompleteJSONToStreamResponseTransform;
+        break;
+      case 'messages':
+        responseTransformerFunction = anthropicMessagesJsonToStreamGenerator;
         break;
       case 'createModelResponse':
         responseTransformerFunction = OpenAIModelResponseJSONToStreamGenerator;
@@ -291,7 +294,7 @@ export async function afterRequestHookHandler(
 
     return createHookResponse(response, responseData, hooksResult);
   } catch (err) {
-    console.error(err);
+    console.error('afterRequestHookHandler error: ', err);
     return response;
   }
 }

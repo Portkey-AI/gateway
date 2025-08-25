@@ -12,17 +12,24 @@ import {
   ProviderConfig,
 } from '../types';
 import {
+  AnthropicErrorObject,
+  AnthropicErrorResponse,
+  AnthropicStreamState,
+  ANTHROPIC_STOP_REASON,
+} from './types';
+import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
+  transformFinishReason,
 } from '../utils';
-import { AnthropicStreamState } from './types';
+import { AnthropicErrorResponseTransform } from './utils';
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
 interface AnthropicTool extends PromptCache {
   name: string;
-  description: string;
-  input_schema: {
+  description?: string;
+  input_schema?: {
     type: string;
     properties: Record<
       string,
@@ -32,13 +39,27 @@ interface AnthropicTool extends PromptCache {
       }
     >;
     required: string[];
+    $defs: Record<string, any>;
   };
+  type?: string;
+  display_width_px?: number;
+  display_height_px?: number;
+  display_number?: number;
 }
 
 interface AnthropicToolResultContentItem {
   type: 'tool_result';
   tool_use_id: string;
-  content?: string;
+  content?:
+    | {
+        type: string;
+        text?: string;
+        cache_control?: {
+          type: string;
+          ttl?: number;
+        };
+      }[]
+    | string;
 }
 
 interface AnthropicBase64ImageContentItem {
@@ -130,7 +151,12 @@ const transformAssistantMessage = (msg: Message): AnthropicMessage => {
         type: 'tool_use',
         name: toolCall.function.name,
         id: toolCall.id,
-        input: JSON.parse(toolCall.function.arguments),
+        input: toolCall.function.arguments?.length
+          ? JSON.parse(toolCall.function.arguments)
+          : {},
+        ...(toolCall.cache_control && {
+          cache_control: toolCall.cache_control,
+        }),
       });
     });
   }
@@ -148,7 +174,7 @@ const transformToolMessage = (msg: Message): AnthropicMessage => {
       {
         type: 'tool_result',
         tool_use_id,
-        content: msg.content as string,
+        content: msg.content,
       },
     ],
   };
@@ -243,6 +269,9 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
 
             if (msg.role === 'assistant') {
               messages.push(transformAssistantMessage(msg));
+            } else if (msg.role === 'tool') {
+              // even though anthropic supports images in tool results, openai doesn't support it yet
+              messages.push(transformToolMessage(msg));
             } else if (
               msg.content &&
               typeof msg.content === 'object' &&
@@ -268,9 +297,6 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                 }
               });
               messages.push(transformedMessage as AnthropicMessage);
-            } else if (msg.role === 'tool') {
-              // even though anthropic supports images in tool results, openai doesn't support it yet
-              messages.push(transformToolMessage(msg));
             } else {
               messages.push({
                 role: msg.role,
@@ -336,7 +362,18 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                 type: tool.function.parameters?.type || 'object',
                 properties: tool.function.parameters?.properties || {},
                 required: tool.function.parameters?.required || [],
+                $defs: tool.function.parameters?.['$defs'] || {},
               },
+              ...(tool.cache_control && {
+                cache_control: { type: 'ephemeral' },
+              }),
+            });
+          } else if (tool.type) {
+            const toolOptions = tool[tool.type];
+            tools.push({
+              ...(toolOptions && { ...toolOptions }),
+              name: tool.type,
+              type: toolOptions?.name,
               ...(tool.cache_control && {
                 cache_control: { type: 'ephemeral' },
               }),
@@ -401,16 +438,6 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
   },
 };
 
-interface AnthropicErrorObject {
-  type: string;
-  message: string;
-}
-
-export interface AnthropicErrorResponse {
-  type: string;
-  error: AnthropicErrorObject;
-}
-
 interface AnthorpicTextContentItem {
   type: 'text';
   text: string;
@@ -430,7 +457,7 @@ export interface AnthropicChatCompleteResponse {
   type: string;
   role: string;
   content: AnthropicContentItem[];
-  stop_reason: string;
+  stop_reason: ANTHROPIC_STOP_REASON;
   model: string;
   stop_sequence: null | string;
   usage: {
@@ -448,7 +475,7 @@ export interface AnthropicChatCompleteStreamResponse {
     type?: string;
     text?: string;
     partial_json?: string;
-    stop_reason?: string;
+    stop_reason?: ANTHROPIC_STOP_REASON;
   };
   content_block?: {
     type: string;
@@ -475,24 +502,6 @@ export interface AnthropicChatCompleteStreamResponse {
   error?: AnthropicErrorObject;
 }
 
-export const AnthropicErrorResponseTransform: (
-  response: AnthropicErrorResponse
-) => ErrorResponse | undefined = (response) => {
-  if ('error' in response) {
-    return generateErrorResponse(
-      {
-        message: response.error?.message,
-        type: response.error?.type,
-        param: null,
-        code: null,
-      },
-      ANTHROPIC
-    );
-  }
-
-  return undefined;
-};
-
 // TODO: The token calculation is wrong atm
 export const AnthropicChatCompleteResponseTransform: (
   response: AnthropicChatCompleteResponse | AnthropicErrorResponse,
@@ -505,11 +514,8 @@ export const AnthropicChatCompleteResponseTransform: (
   _responseHeaders,
   strictOpenAiCompliance
 ) => {
-  if (responseStatus !== 200) {
-    const errorResposne = AnthropicErrorResponseTransform(
-      response as AnthropicErrorResponse
-    );
-    if (errorResposne) return errorResposne;
+  if (responseStatus !== 200 && 'error' in response) {
+    return AnthropicErrorResponseTransform(response);
   }
 
   if ('content' in response) {
@@ -564,7 +570,10 @@ export const AnthropicChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: response.stop_reason,
+          finish_reason: transformFinishReason(
+            response.stop_reason,
+            strictOpenAiCompliance
+          ),
         },
       ],
       usage: {
@@ -677,6 +686,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
     );
   }
 
+  // final chunk
   if (parsedChunk.type === 'message_delta' && parsedChunk.usage) {
     const totalTokens =
       (streamState?.usage?.prompt_tokens ?? 0) +
@@ -694,7 +704,10 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           {
             index: 0,
             delta: {},
-            finish_reason: parsedChunk.delta?.stop_reason,
+            finish_reason: transformFinishReason(
+              parsedChunk.delta?.stop_reason,
+              strictOpenAiCompliance
+            ),
           },
         ],
         usage: {
@@ -765,7 +778,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: parsedChunk.delta?.stop_reason ?? null,
+          finish_reason: null,
         },
       ],
     })}` + '\n\n'

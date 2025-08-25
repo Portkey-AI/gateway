@@ -1,5 +1,8 @@
 import { Params } from '../../types/requestBody';
-import { derefer, recursivelyDeleteUnsupportedParameters } from './utils';
+import {
+  recursivelyDeleteUnsupportedParameters,
+  transformGeminiToolParameters,
+} from './utils';
 import { GoogleEmbedParams } from './embed';
 import { EmbedInstancesData } from './types';
 /**
@@ -34,28 +37,24 @@ export function transformGenerationConfig(params: Params) {
   if (params['top_logprobs']) {
     generationConfig['logprobs'] = params['top_logprobs']; // range 1-5, openai supports 1-20
   }
+  if (params['seed']) {
+    generationConfig['seed'] = params['seed'];
+  }
   if (params?.response_format?.type === 'json_schema') {
     generationConfig['responseMimeType'] = 'application/json';
-    recursivelyDeleteUnsupportedParameters(
-      params?.response_format?.json_schema?.schema
-    );
     let schema =
       params?.response_format?.json_schema?.schema ??
       params?.response_format?.json_schema;
-    if (Object.keys(schema).includes('$defs')) {
-      schema = derefer(schema);
-      delete schema['$defs'];
-    }
-    if (Object.hasOwn(schema, '$schema')) {
-      delete schema['$schema'];
-    }
-    generationConfig['responseSchema'] = schema;
+    recursivelyDeleteUnsupportedParameters(schema);
+    generationConfig['responseSchema'] = transformGeminiToolParameters(schema);
   }
 
   if (params?.thinking) {
+    const { budget_tokens, type } = params.thinking;
     const thinkingConfig: Record<string, any> = {};
-    thinkingConfig['include_thoughts'] = true;
-    thinkingConfig['thinking_budget'] = params.thinking.budget_tokens;
+    thinkingConfig['include_thoughts'] =
+      type === 'enabled' && budget_tokens ? true : false;
+    thinkingConfig['thinking_budget'] = budget_tokens;
     generationConfig['thinking_config'] = thinkingConfig;
   }
 

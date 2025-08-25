@@ -5,6 +5,7 @@ import { bedrockInvokeModels } from './constants';
 import {
   generateAWSHeaders,
   getAssumedRoleCredentials,
+  getFoundationModelFromInferenceProfile,
   providerAssumedRoleCredentials,
 } from './utils';
 import { GatewayError } from '../../errors/GatewayError';
@@ -101,7 +102,20 @@ const setRouteSpecificHeaders = (
 };
 
 const BedrockAPIConfig: BedrockAPIConfigInterface = {
-  getBaseURL: ({ providerOptions, fn, gatewayRequestURL }) => {
+  getBaseURL: async ({ c, providerOptions, fn, gatewayRequestURL, params }) => {
+    const model = decodeURIComponent(params?.model || '');
+    if (model.includes('arn:aws') && params) {
+      const foundationModel = model.includes('foundation-model/')
+        ? model.split('/').pop()
+        : await getFoundationModelFromInferenceProfile(
+            c,
+            model,
+            providerOptions
+          );
+      if (foundationModel) {
+        providerOptions.foundationModel = foundationModel;
+      }
+    }
     if (fn === 'retrieveFile') {
       const s3URL = decodeURIComponent(
         gatewayRequestURL.split('/v1/files/')[1]
@@ -207,7 +221,10 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
     let endpoint = `/model/${uriEncodedModel}/invoke`;
     let streamEndpoint = `/model/${uriEncodedModel}/invoke-with-response-stream`;
     if (
-      (mappedFn === 'chatComplete' || mappedFn === 'stream-chatComplete') &&
+      (mappedFn === 'chatComplete' ||
+        mappedFn === 'stream-chatComplete' ||
+        mappedFn === 'messages' ||
+        mappedFn === 'stream-messages') &&
       model &&
       !bedrockInvokeModels.includes(model)
     ) {
@@ -219,10 +236,12 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
     const jobId = gatewayRequestURL.split('/').at(jobIdIndex);
 
     switch (mappedFn) {
-      case 'chatComplete': {
+      case 'chatComplete':
+      case 'messages': {
         return endpoint;
       }
-      case 'stream-chatComplete': {
+      case 'stream-chatComplete':
+      case 'stream-messages': {
         return streamEndpoint;
       }
       case 'complete': {

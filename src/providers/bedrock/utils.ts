@@ -8,10 +8,11 @@ import {
   BedrockConverseAnthropicChatCompletionsParams,
   BedrockConverseCohereChatCompletionsParams,
 } from './chatComplete';
-import { Options } from '../../types/requestBody';
+import { Options, Tool } from '../../types/requestBody';
 import { GatewayError } from '../../errors/GatewayError';
-import { BedrockFinetuneRecord } from './types';
+import { BedrockFinetuneRecord, BedrockInferenceProfile } from './types';
 import { FinetuneRequest } from '../types';
+import { BEDROCK } from '../../globals';
 
 export const generateAWSHeaders = async (
   body: Record<string, any> | string | undefined,
@@ -134,6 +135,25 @@ export const transformAnthropicAdditionalModelRequestFields = (
       ];
     } else {
       additionalModelRequestFields['anthropic_beta'] = params['anthropic_beta'];
+    }
+  }
+  if (params.tools && params.tools.length) {
+    const anthropicTools: any[] = [];
+    params.tools.forEach((tool: Tool) => {
+      if (tool.type !== 'function') {
+        const toolOptions = tool[tool.type];
+        anthropicTools.push({
+          ...(toolOptions && { ...toolOptions }),
+          name: tool.type,
+          type: toolOptions?.name,
+          ...(tool.cache_control && {
+            cache_control: { type: 'ephemeral' },
+          }),
+        });
+      }
+    });
+    if (anthropicTools.length) {
+      additionalModelRequestFields['tools'] = anthropicTools;
     }
   }
   return additionalModelRequestFields;
@@ -276,7 +296,7 @@ export async function getAssumedRoleCredentials(
 
     if (!response.ok) {
       const resp = await response.text();
-      console.error({ message: resp });
+      console.error('getAssumedRoleCredentials error: ', { message: resp });
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
@@ -286,7 +306,9 @@ export async function getAssumedRoleCredentials(
       await putInCacheWithValue(env(c), cacheKey, credentials, 300); //5 minutes
     }
   } catch (error) {
-    console.error({ message: `Error assuming role:, ${error}` });
+    console.error('getAssumedRoleCredentials error: ', {
+      message: `Error assuming role:, ${error}`,
+    });
   }
   return credentials;
 }
@@ -403,4 +425,111 @@ export const populateHyperParameters = (value: FinetuneRequest) => {
   }
 
   return hyperParameters;
+};
+
+export const getInferenceProfile = async (
+  inferenceProfileIdentifier: string,
+  providerOptions: Options,
+  c: Context
+) => {
+  if (providerOptions.awsAuthType === 'assumedRole') {
+    try {
+      await providerAssumedRoleCredentials(c, providerOptions);
+    } catch (e) {
+      console.error('getInferenceProfile Error while assuming bedrock role', e);
+    }
+  }
+
+  const awsRegion = providerOptions.awsRegion || 'us-east-1';
+  const awsAccessKeyId = providerOptions.awsAccessKeyId || '';
+  const awsSecretAccessKey = providerOptions.awsSecretAccessKey || '';
+  const awsSessionToken = providerOptions.awsSessionToken || '';
+  const url = `https://bedrock.${awsRegion}.amazonaws.com/inference-profiles/${encodeURIComponent(decodeURIComponent(inferenceProfileIdentifier))}`;
+
+  const headers = await generateAWSHeaders(
+    undefined,
+    { 'content-type': 'application/json' },
+    url,
+    'GET',
+    'bedrock',
+    awsRegion,
+    awsAccessKeyId,
+    awsSecretAccessKey,
+    awsSessionToken
+  );
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to get inference profile: ${response.status} ${response.statusText}`
+      );
+    }
+
+    return (await response.json()) as BedrockInferenceProfile;
+  } catch (error) {
+    console.error('Error getting inference profile:', error);
+    throw error;
+  }
+};
+
+export const getFoundationModelFromInferenceProfile = async (
+  c: Context,
+  inferenceProfileIdentifier: string,
+  providerOptions: Options
+) => {
+  try {
+    const getFromCacheByKey = c.get('getFromCacheByKey');
+    const putInCacheWithValue = c.get('putInCacheWithValue');
+    const cacheKey = `bedrock-inference-profile-${inferenceProfileIdentifier}`;
+    const cachedFoundationModel = getFromCacheByKey
+      ? await getFromCacheByKey(env(c), cacheKey)
+      : null;
+    if (cachedFoundationModel) {
+      return cachedFoundationModel;
+    }
+
+    const inferenceProfile = await getInferenceProfile(
+      inferenceProfileIdentifier || '',
+      { ...providerOptions },
+      c
+    );
+
+    // modelArn is always like arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-v2:1
+    const foundationModel = inferenceProfile?.models?.[0]?.modelArn
+      ?.split('/')
+      ?.pop();
+    if (putInCacheWithValue) {
+      putInCacheWithValue(env(c), cacheKey, foundationModel, 86400);
+    }
+    return foundationModel;
+  } catch (error) {
+    return null;
+  }
+};
+
+export const getBedrockErrorChunk = (id: string, model: string) => {
+  return [
+    `data: ${JSON.stringify({
+      id,
+      object: 'chat.completion.chunk',
+      created: Math.floor(Date.now() / 1000),
+      model: model,
+      provider: BEDROCK,
+      choices: [
+        {
+          index: 0,
+          delta: {
+            role: 'assistant',
+            finish_reason: 'stop',
+          },
+        },
+      ],
+    })}\n\n`,
+    `data: [DONE]\n\n`,
+  ];
 };
