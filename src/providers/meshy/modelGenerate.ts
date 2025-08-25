@@ -41,13 +41,13 @@ export const MeshyModelGenerateResponseTransform: (
     return generateInvalidProviderResponseError(response, MESHY);
   }
 
-  if ('result' in response) {
+  if ('result' in response && typeof response.result === 'string') {
     return {
       result: response.result,
-      id: response.id,
-      status: response.status,
-      created_at: response.created_at,
-      expires_at: response.expires_at,
+      id: response.id ?? undefined,
+      status: response.status ?? undefined,
+      created_at: response.created_at ?? undefined,
+      expires_at: response.expires_at ?? undefined,
     };
   }
 

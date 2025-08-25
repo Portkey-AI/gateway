@@ -12,7 +12,7 @@ const MeshyAPIConfig: ProviderAPIConfig = {
     };
   },
   getEndpoint: ({ fn, gatewayRequestURL }) => {
-    const basePath = gatewayRequestURL.split('/v1')?.[1];
+    const basePath = gatewayRequestURL.split('/v1')?.[1] ?? '';
 
     switch (fn) {
       case 'modelGenerate':
