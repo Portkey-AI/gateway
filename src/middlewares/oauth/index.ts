@@ -6,13 +6,13 @@
  * for MCP server authentication per the Model Context Protocol specification.
  */
 
-import { Context, Next } from 'hono';
 import { createMiddleware } from 'hono/factory';
 import { createLogger } from '../../utils/logger';
 import {
   OAuthGateway,
   TokenIntrospectionResponse,
 } from '../../services/oauthGateway';
+import { getTokenIntrospectionCache } from '../../services/cache/index';
 
 type Env = {
   Variables: {
@@ -27,18 +27,6 @@ type Env = {
 };
 
 const logger = createLogger('OAuth-Middleware');
-
-// Using TokenIntrospectionResponse from OAuthGateway service
-
-// Simple in-memory cache for token introspection results
-// In production, use Redis or similar
-const tokenCache = new Map<
-  string,
-  {
-    response: TokenIntrospectionResponse;
-    expires: number;
-  }
->();
 
 interface OAuthConfig {
   required?: boolean; // Whether OAuth is required for this route
@@ -84,11 +72,12 @@ async function introspectToken(
   token: string,
   controlPlaneUrl: string | null
 ): Promise<TokenIntrospectionResponse> {
-  // Check cache first
-  const cached = tokenCache.get(token);
-  if (cached && cached.expires > Date.now()) {
-    logger.debug('Token found in cache');
-    return cached.response;
+  // Check persistent cache first
+  const cache = getTokenIntrospectionCache();
+  const cached = await cache.get(token);
+  if (cached) {
+    logger.debug('Token found in persistent cache');
+    return cached;
   }
 
   try {
@@ -101,10 +90,7 @@ async function introspectToken(
         ? Math.min(result.exp * 1000 - Date.now(), 5 * 60 * 1000)
         : 5 * 60 * 1000;
 
-      tokenCache.set(token, {
-        response: result,
-        expires: Date.now() + expiresIn,
-      });
+      await cache.set(token, result, { ttl: expiresIn });
     }
 
     return result;
@@ -251,14 +237,4 @@ export function oauthMiddleware(config: OAuthConfig = {}) {
   });
 }
 
-/**
- * Clean up expired tokens from cache periodically
- */
-setInterval(() => {
-  const now = Date.now();
-  for (const [token, data] of tokenCache.entries()) {
-    if (data.expires <= now) {
-      tokenCache.delete(token);
-    }
-  }
-}, 60 * 1000); // Run every minute
+// Note: Cleanup is now handled automatically by the TokenIntrospectionCache service

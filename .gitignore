@@ -147,3 +147,4 @@ src/handlers/tests/.creds.json
 data/sessions.json
 data/servers.json
 data/oauth-config.json
+data/token-cache.json

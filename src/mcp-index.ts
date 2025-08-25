@@ -6,8 +6,7 @@
  * and route to any MCP server with full confidence.
  */
 
-import { Context, Hono } from 'hono';
-import { createMiddleware } from 'hono/factory';
+import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
 import { ServerConfig } from './types/mcp';

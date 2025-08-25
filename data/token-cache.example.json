@@ -1,0 +1,39 @@
+{
+  "tokens": {
+    "https://example-server.com": {
+      "tokens": {
+        "access_token": "example_access_token",
+        "token_type": "Bearer",
+        "expires_in": 3600,
+        "refresh_token": "example_refresh_token",
+        "scope": "read write"
+      },
+      "stored_at": 1700000000000
+    }
+  },
+  "introspection_cache": {
+    "mcp_example_token_hash": {
+      "response": {
+        "active": true,
+        "scope": "mcp:*",
+        "client_id": "mcp_client_example",
+        "username": "Example Client",
+        "exp": 1700003600,
+        "iat": 1700000000,
+        "mcp_permissions": {
+          "servers": {
+            "linear": {
+              "allowed_tools": null,
+              "blocked_tools": ["deleteProject", "deleteIssue"],
+              "rate_limit": {
+                "requests": 100,
+                "window": 60
+              }
+            }
+          }
+        }
+      },
+      "expires": 1700003600000
+    }
+  }
+}

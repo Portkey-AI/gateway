@@ -110,4 +110,35 @@ wellKnownRoutes.get('/oauth-protected-resource', async (c) => {
   });
 });
 
+wellKnownRoutes.get('/oauth-protected-resource/:serverId/mcp', async (c) => {
+  logger.debug(
+    'GET /.well-known/oauth-protected-resource/:serverId/mcp',
+    c.req.param('serverId')
+  );
+  const baseUrl = new URL(c.req.url).origin;
+  const resourceUrl = `${baseUrl}/${c.req.param('serverId')}/mcp`;
+  const controlPlaneUrl = c.env.ALBUS_BASEPATH || process.env.ALBUS_BASEPATH;
+
+  const metadata = {
+    // This MCP gateway acts as a protected resource
+    resource: resourceUrl,
+    // Point to our authorization server (either this gateway or control plane)
+    authorization_servers: [baseUrl],
+    // Scopes required to access this resource
+    scopes_supported: [
+      'mcp:servers:read',
+      'mcp:servers:*',
+      'mcp:tools:list',
+      'mcp:tools:call',
+      'mcp:*',
+    ],
+  };
+
+  logger.debug('Returning OAuth protected resource metadata');
+
+  return c.json(metadata, 200, {
+    'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+  });
+});
+
 export { wellKnownRoutes };
