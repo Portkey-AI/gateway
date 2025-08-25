@@ -13,6 +13,22 @@ import { handler as defaultalluppercase } from './default/alluppercase';
 import { handler as defaultalllowercase } from './default/alllowercase';
 import { handler as defaultendsWith } from './default/endsWith';
 import { handler as defaultmodelWhitelist } from './default/modelWhitelist';
+import { handler as qualifireDangerousContent } from './qualifire/dangerousContent';
+import { handler as qualifireGrounding } from './qualifire/grounding';
+import { handler as qualifireHarrasment } from './qualifire/harrasment';
+import { handler as qualifireInstructionFollowing } from './qualifire/instructionFollowing';
+import { handler as qualifireJson } from './qualifire/json';
+import { handler as qualifirePolicy } from './qualifire/policy';
+import { handler as qualifireSexualContent } from './qualifire/sexualContent';
+import { handler as qualifireToolSelectionQuality } from './qualifire/toolSelectionQuality';
+import { handler as qualifireHallucinations } from './qualifire/hallucinations';
+import { handler as qualifireHateSpeech } from './qualifire/hateSpeech';
+import { handler as qualifireJavascript } from './qualifire/javascript';
+import { handler as qualifireLength } from './qualifire/length';
+import { handler as qualifirePii } from './qualifire/pii';
+import { handler as qualifirePromptInjections } from './qualifire/promptInjections';
+import { handler as qualifireSql } from './qualifire/sql';
+import { handler as qualifireWordCount } from './qualifire/wordCount';
 import { handler as portkeymoderateContent } from './portkey/moderateContent';
 import { handler as portkeylanguage } from './portkey/language';
 import { handler as portkeypii } from './portkey/pii';
@@ -70,6 +86,24 @@ export const plugins = {
     modelWhitelist: defaultmodelWhitelist,
     jwt: defaultjwt,
     requiredMetadataKeys: defaultrequiredMetadataKeys,
+  },
+  qualifire: {
+    dangerousContent: qualifireDangerousContent,
+    grounding: qualifireGrounding,
+    harrasment: qualifireHarrasment,
+    instructionFollowing: qualifireInstructionFollowing,
+    json: qualifireJson,
+    policy: qualifirePolicy,
+    sexualContent: qualifireSexualContent,
+    toolSelectionQuality: qualifireToolSelectionQuality,
+    hallucinations: qualifireHallucinations,
+    hateSpeech: qualifireHateSpeech,
+    javascript: qualifireJavascript,
+    length: qualifireLength,
+    pii: qualifirePii,
+    promptInjections: qualifirePromptInjections,
+    sql: qualifireSql,
+    wordCount: qualifireWordCount,
   },
   portkey: {
     moderateContent: portkeymoderateContent,

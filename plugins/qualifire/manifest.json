@@ -1,0 +1,288 @@
+{
+  "id": "qualifire",
+  "description": "https://qualifire.ai",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "Create your api-key in the Qualifire settings (https://app.qualifire.ai/settings/api-keys/)",
+        "encrypted": true
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Hate Speech Check",
+      "id": "hateSpeech",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks for hate speech in the user input or model output."
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Dangerous Content Check",
+      "id": "dangerousContent",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks for dangerous content in the user input or model output."
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Sexual Content Check",
+      "id": "sexualContent",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks for sexual content in the user input or model output."
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Harassment Check",
+      "id": "harassment",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks for harassment in the user input or model output."
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Instruction Following Check",
+      "id": "instructionFollowing",
+      "supportedHooks": ["afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks that the model followed the instructions provided in the prompt."
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Hallucinations Check",
+      "id": "hallucinations",
+      "supportedHooks": ["afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks that the model did not hallucinate."
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "PII Check",
+      "id": "pii",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks that neither the user nor the model included PIIs."
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Prompt Injections Check",
+      "id": "promptInjections",
+      "supportedHooks": ["beforeRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks that the prompt does not contain any injections to the model."
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Grounding Check",
+      "id": "grounding",
+      "supportedHooks": ["afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks that the model is grounded in the context provided."
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Tool Selection Quality Check",
+      "id": "tsqCheck",
+      "supportedHooks": ["afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks the model's tool selection. Including which tool to use, which parameters to provide, etc."
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Policy Violations Check",
+      "id": "policy",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks that the prompt and response didn't violate any of the given policies."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "policies": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "label": "Policy",
+              "description": [
+                {
+                  "type": "subHeading",
+                  "text": "The policy to check against. (eg: 'The model cannot provide any discount to the user')"
+                }
+              ]
+            }
+          }
+        },
+        "required": ["policies"]
+      }
+    },
+    {
+      "name": "JSON Check",
+      "id": "json",
+      "supportedHooks": ["afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks that the model returnd a valid json object. If provided, also validated agains given json schema."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "jsonSchema": {
+            "type": "string",
+            "label": "JSON Schema",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Optional. The json schema to validate the model's output against."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "Length Check",
+      "id": "length",
+      "supportedHooks": ["afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks that the model's output length based on the given constraint"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "lengthConstraint": {
+            "type": "string",
+            "label": "Length",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "The length constraint. e.g.: '<100', '=100', '>=200', etc. "
+              }
+            ]
+          }
+        },
+        "required": ["lengthConstraint"]
+      }
+    },
+    {
+      "name": "Word Count Check",
+      "id": "wordCount",
+      "supportedHooks": ["afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks that the model's output word count based on the given constraint"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "wordCountConstraint": {
+            "type": "string",
+            "label": "Word Count",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "The word count constraint. e.g.: '<100', '=100', '>=200', etc. "
+              }
+            ]
+          }
+        },
+        "required": ["wordCountConstraint"]
+      }
+    },
+    {
+      "name": "SQL Check",
+      "id": "sql",
+      "supportedHooks": ["afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks that the model returnd a valid sql code."
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Javascript Check",
+      "id": "javascript",
+      "supportedHooks": ["afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks that the model returnd a valid javascript code."
+        }
+      ],
+      "parameters": {}
+    }
+  ]
+}
