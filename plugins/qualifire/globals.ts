@@ -38,11 +38,6 @@ export const postQualifire = async (
   };
 
   const result = await post(BASE_URL, body, options, timeout_millis || 10000);
-
-  console.log('********************************');
-  console.log('result', result);
-  console.log('********************************');
-
   const error = result?.error || null;
   const verdict = result.status === 'success';
   const data = result.evaluationResults;
@@ -122,7 +117,7 @@ export const convertToMessages = (
     return {
       role: role,
       content: content,
-      tool_calls: message.tool_calls ?? undefined,
+      tool_calls: convertToolCalls(message.tool_calls) ?? undefined,
       tool_call_id: message.tool_call_id ?? undefined,
     };
   });
