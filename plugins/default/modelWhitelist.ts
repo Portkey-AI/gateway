@@ -5,6 +5,16 @@ import type {
   PluginParameters,
 } from '../types';
 
+interface WhitelistData {
+  verdict: boolean;
+  not: boolean;
+  mode: 'policy' | 'metadata_rules' | 'base_models';
+  matchedMetadata: Record<string, unknown>;
+  explanation: string;
+  requestedModel: string;
+  allowedModels: string[];
+}
+
 export const handler: PluginHandler = async (
   context: PluginContext,
   parameters: PluginParameters,
@@ -12,15 +22,7 @@ export const handler: PluginHandler = async (
 ) => {
   let error = null;
   let verdict = false;
-  let data: {
-    verdict?: boolean;
-    not?: boolean;
-    mode?: 'policy' | 'metadata_rules' | 'base_models';
-    matchedMetadata?: Record<string, unknown>;
-    explanation?: string;
-    requestedModel?: string;
-    allowedModels?: string[];
-  } | null = null;
+  let data: WhitelistData | null = null;
 
   try {
     const modelList = parameters.models;
@@ -57,22 +59,26 @@ export const handler: PluginHandler = async (
         : undefined;
 
     if (effectivePolicy) {
-      const matched: Set<string> = new Set();
+      const matched = new Set<string>();
       const policyMetadata = effectivePolicy.metadata || {};
-      for (const key of Object.keys(policyMetadata)) {
-        const mapping = policyMetadata[key] || {};
-        const reqVal = (requestMetadata as Record<string, unknown>)[key];
+
+      // Match metadata rules
+      for (const [key, mapping] of Object.entries(policyMetadata)) {
+        const reqVal = requestMetadata[key];
         if (reqVal === undefined || reqVal === null) continue;
-        const reqVals: string[] = Array.isArray(reqVal)
-          ? (reqVal as unknown[]).map((v) => String(v))
+
+        const reqVals = Array.isArray(reqVal)
+          ? reqVal.map((v) => String(v))
           : [String(reqVal)];
+
         for (const val of reqVals) {
-          const models = mapping[String(val)];
+          const models = mapping[val];
           if (Array.isArray(models)) {
             for (const m of models) matched.add(String(m));
           }
         }
       }
+
       allowedSet = Array.from(matched);
       if (allowedSet.length === 0 && Array.isArray(effectivePolicy.defaults)) {
         allowedSet = effectivePolicy.defaults;
@@ -118,9 +124,12 @@ export const handler: PluginHandler = async (
     const err = e as Error;
     error = err;
     data = {
+      verdict: false,
+      not: parameters.not || false,
+      mode: 'base_models',
+      matchedMetadata: context?.metadata || {},
       explanation: `An error occurred while checking model whitelist: ${err.message}`,
       requestedModel: context.request?.json.model || 'No model specified',
-      not: parameters.not || false,
       allowedModels: Array.isArray(parameters?.models)
         ? (parameters.models as string[])
         : [],
