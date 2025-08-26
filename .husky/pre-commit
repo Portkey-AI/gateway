@@ -1,3 +1,1 @@
-. "$(dirname "$0")/_/husky.sh"
-
-npm run format:check || (npm run format && exit 1)
+npm run format:check || (npm run format && return 1)
