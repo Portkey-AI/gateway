@@ -8,7 +8,7 @@ import type {
 interface WhitelistData {
   verdict: boolean;
   not: boolean;
-  mode: 'policy' | 'metadata_rules' | 'base_models';
+  mode: 'json' | 'default';
   matchedMetadata: Record<string, unknown>;
   explanation: string;
   requestedModel: string;
@@ -50,7 +50,7 @@ export const handler: PluginHandler = async (
     // 1) unwrapped defaults/metadata
     // 2) modelList (legacy base)
     let allowedSet: string[] = [];
-    let mode: 'policy' | 'metadata_rules' | 'base_models' = 'base_models';
+    let mode: 'json' | 'default' = 'default';
 
     // Unwrapped policy path
     const effectivePolicy =
@@ -83,13 +83,13 @@ export const handler: PluginHandler = async (
       if (allowedSet.length === 0 && Array.isArray(effectivePolicy.defaults)) {
         allowedSet = effectivePolicy.defaults;
       }
-      mode = 'policy';
+      mode = 'json';
     }
 
     // Fallback to base modelList if no metadata rule matched or no rules configured
     if (allowedSet.length === 0 && Array.isArray(modelList)) {
       allowedSet = modelList;
-      mode = 'base_models';
+      mode = 'default';
     }
 
     // If unwrapped defaults/metadata provided and allowedSet still empty, it's a deny by configuration (no defaults, no match)
@@ -126,7 +126,7 @@ export const handler: PluginHandler = async (
     data = {
       verdict: false,
       not: parameters.not || false,
-      mode: 'base_models',
+      mode: 'default',
       matchedMetadata: context?.metadata || {},
       explanation: `An error occurred while checking model whitelist: ${err.message}`,
       requestedModel: context.request?.json.model || 'No model specified',
