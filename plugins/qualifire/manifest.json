@@ -133,7 +133,7 @@
     },
     {
       "name": "Tool Selection Quality Check",
-      "id": "tsqCheck",
+      "id": "toolSelectionQuality",
       "supportedHooks": ["afterRequestHook"],
       "type": "guardrail",
       "description": [
