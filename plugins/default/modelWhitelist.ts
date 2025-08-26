@@ -13,6 +13,8 @@ interface WhitelistData {
   explanation: string;
   requestedModel: string;
   allowedModels: string[];
+  matchedRules?: string[]; // Which metadata rules were matched
+  fallbackUsed?: boolean; // Whether defaults were used
 }
 
 export const handler: PluginHandler = async (
@@ -41,7 +43,7 @@ export const handler: PluginHandler = async (
     // Check if JSON configuration is provided
     if (jsonConfig && typeof jsonConfig === 'object') {
       const defaults = Array.isArray(jsonConfig.defaults)
-        ? jsonConfig.defaults
+        ? jsonConfig.defaults.map(String)
         : [];
       const metadata =
         jsonConfig.metadata && typeof jsonConfig.metadata === 'object'
@@ -50,6 +52,9 @@ export const handler: PluginHandler = async (
 
       // Match metadata rules
       const matched = new Set<string>();
+      const matchedRules: string[] = [];
+      let fallbackUsed = false;
+
       for (const [key, mapping] of Object.entries(metadata)) {
         const reqVal = requestMetadata[key];
         if (reqVal === undefined || reqVal === null) continue;
@@ -61,7 +66,12 @@ export const handler: PluginHandler = async (
         for (const val of reqVals) {
           const models = mapping[val];
           if (Array.isArray(models)) {
-            for (const m of models) matched.add(String(m));
+            matchedRules.push(`${key}:${val}`);
+            for (const m of models) {
+              if (m && typeof m === 'string') {
+                matched.add(String(m));
+              }
+            }
           }
         }
       }
@@ -69,11 +79,26 @@ export const handler: PluginHandler = async (
       allowedSet = Array.from(matched);
       if (allowedSet.length === 0) {
         allowedSet = defaults;
+        fallbackUsed = true;
       }
+
+      // Store additional metadata for debugging
+      data = {
+        verdict: false, // Will be set later
+        not,
+        mode: 'json',
+        matchedMetadata: requestMetadata,
+        explanation: '', // Will be set later
+        requestedModel: requestModel,
+        allowedModels: allowedSet,
+        matchedRules,
+        fallbackUsed,
+      };
+
       mode = 'json';
     } else if (Array.isArray(modelList)) {
       // Use legacy models list
-      allowedSet = modelList;
+      allowedSet = modelList.map(String).filter(Boolean);
       mode = 'default';
     }
 
@@ -84,21 +109,44 @@ export const handler: PluginHandler = async (
     const inList = allowedSet.includes(requestModel);
     verdict = not ? !inList : inList;
 
-    data = {
-      verdict,
-      not,
-      mode,
-      matchedMetadata: requestMetadata,
-      explanation: verdict
-        ? not
-          ? `Model "${requestModel}" is not in the allowed list as expected.`
-          : `Model "${requestModel}" is allowed.`
-        : not
-          ? `Model "${requestModel}" is in the allowed list when it should not be.`
-          : `Model "${requestModel}" is not in the allowed list.`,
-      requestedModel: requestModel,
-      allowedModels: allowedSet,
-    };
+    let explanation = '';
+    if (verdict) {
+      if (not) {
+        explanation = `Model "${requestModel}" is not in the allowed list as expected.`;
+      } else {
+        explanation = `Model "${requestModel}" is allowed.`;
+        if (mode === 'json' && data?.matchedRules?.length) {
+          explanation += ` (matched rules: ${data.matchedRules.join(', ')})`;
+        } else if (mode === 'json' && data?.fallbackUsed) {
+          explanation += ' (using default models)';
+        }
+      }
+    } else {
+      if (not) {
+        explanation = `Model "${requestModel}" is in the allowed list when it should not be.`;
+      } else {
+        explanation = `Model "${requestModel}" is not in the allowed list.`;
+        if (mode === 'json' && allowedSet.length > 0) {
+          explanation += ` Available models: ${allowedSet.slice(0, 5).join(', ')}${allowedSet.length > 5 ? '...' : ''}`;
+        }
+      }
+    }
+
+    // Update or create data object
+    if (data) {
+      data.verdict = verdict;
+      data.explanation = explanation;
+    } else {
+      data = {
+        verdict,
+        not,
+        mode,
+        matchedMetadata: requestMetadata,
+        explanation,
+        requestedModel: requestModel,
+        allowedModels: allowedSet,
+      };
+    }
   } catch (e) {
     const err = e as Error;
     error = err;

@@ -602,7 +602,11 @@
       "description": [
         {
           "type": "subHeading",
-          "text": "Blocks any request whose model isn’t on this list."
+          "text": "Controls model access with support for metadata-based routing and dynamic model lists."
+        },
+        {
+          "type": "text",
+          "text": "Supports both simple model lists and advanced JSON configuration with metadata-based rules for fine-grained access control."
         }
       ],
       "parameters": {
@@ -631,11 +635,15 @@
               },
               {
                 "type": "text",
-                "text": "Example: {\"defaults\": [\"gpt-4o\"], \"metadata\": {\"user_type\": {\"premium\": [\"gpt-4o\"], \"basic\": [\"gpt-3.5-turbo\"]}}}"
+                "text": "Structure: {\"defaults\": [\"model1\"], \"metadata\": {\"metadata_key\": {\"value1\": [\"allowed_models\"], \"value2\": [\"other_models\"]}}}"
               },
               {
                 "type": "text",
-                "text": "When provided, this overrides the Models field above."
+                "text": "Example: {\"defaults\": [\"gpt-3.5-turbo\"], \"metadata\": {\"user_tier\": {\"premium\": [\"gpt-4o\", \"claude-3-opus\"], \"basic\": [\"gpt-3.5-turbo\"]}, \"environment\": {\"production\": [\"gpt-4o\"], \"staging\": [\"gpt-4\"]}}}"
+              },
+              {
+                "type": "text",
+                "text": "When provided, this overrides the Models field above. Supports multiple metadata keys and array values."
               }
             ]
           },
