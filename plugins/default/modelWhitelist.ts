@@ -47,9 +47,7 @@ export const handler: PluginHandler = async (
       const matchedModels: Set<string> = new Set();
       for (const rule of metadataRules) {
         if (!rule || !rule.metadataKey || !Array.isArray(rule.values)) continue;
-        const reqVal = (requestMetadata as Record<string, unknown>)?.[
-          rule.metadataKey
-        ];
+        const reqVal = requestMetadata?.[rule.metadataKey];
         if (reqVal === undefined || reqVal === null) continue;
 
         const reqVals: string[] = Array.isArray(reqVal)
