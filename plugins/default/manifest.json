@@ -621,58 +621,6 @@
               "type": "string"
             }
           },
-          "metadataRules": {
-            "type": "array",
-            "label": "Metadata-based rules",
-            "description": [
-              {
-                "type": "subHeading",
-                "text": "Map metadata key/value pairs to an explicit list of allowed models. If any rule matches the request's metadata, only the union of matched rule models is allowed; otherwise falls back to the base model list if provided."
-              }
-            ],
-            "items": {
-              "type": "object",
-              "properties": {
-                "metadataKey": {
-                  "type": "string",
-                  "label": "Metadata key",
-                  "description": [
-                    {
-                      "type": "subHeading",
-                      "text": "The metadata key to match on (from request header x-portkey-metadata)."
-                    }
-                  ]
-                },
-                "values": {
-                  "type": "array",
-                  "label": "Allowed metadata values",
-                  "description": [
-                    {
-                      "type": "subHeading",
-                      "text": "If the request's metadata contains any of these values for the given key, this rule applies."
-                    }
-                  ],
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "models": {
-                  "type": "array",
-                  "label": "Allowed models for these values",
-                  "description": [
-                    {
-                      "type": "subHeading",
-                      "text": "Models explicitly allowed when this rule matches."
-                    }
-                  ],
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              },
-              "required": ["metadataKey", "values", "models"]
-            }
-          },
           "not": {
             "type": "boolean",
             "label": "Invert Model Check",
