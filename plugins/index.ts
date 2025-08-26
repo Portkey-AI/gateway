@@ -15,7 +15,7 @@ import { handler as defaultendsWith } from './default/endsWith';
 import { handler as defaultmodelWhitelist } from './default/modelWhitelist';
 import { handler as qualifireDangerousContent } from './qualifire/dangerousContent';
 import { handler as qualifireGrounding } from './qualifire/grounding';
-import { handler as qualifireHarrasment } from './qualifire/harrasment';
+import { handler as qualifireHarassment } from './qualifire/harassment';
 import { handler as qualifireInstructionFollowing } from './qualifire/instructionFollowing';
 import { handler as qualifireJson } from './qualifire/json';
 import { handler as qualifirePolicy } from './qualifire/policy';
@@ -90,7 +90,7 @@ export const plugins = {
   qualifire: {
     dangerousContent: qualifireDangerousContent,
     grounding: qualifireGrounding,
-    harrasment: qualifireHarrasment,
+    harassment: qualifireHarassment,
     instructionFollowing: qualifireInstructionFollowing,
     json: qualifireJson,
     policy: qualifirePolicy,
