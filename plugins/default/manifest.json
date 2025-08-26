@@ -610,7 +610,7 @@
         "properties": {
           "models": {
             "type": "array",
-            "label": "Model List",
+            "label": "Model list",
             "description": [
               {
                 "type": "subHeading",
