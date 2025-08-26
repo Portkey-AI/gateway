@@ -610,7 +610,7 @@
         "properties": {
           "models": {
             "type": "array",
-            "label": "Model list",
+            "label": "Models",
             "description": [
               {
                 "type": "subHeading",
@@ -620,6 +620,24 @@
             "items": {
               "type": "string"
             }
+          },
+          "json": {
+            "type": "json",
+            "label": "JSON Configuration",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Advanced model rules based on metadata key-value pairs"
+              },
+              {
+                "type": "text",
+                "text": "Example: {\"defaults\": [\"gpt-4o\"], \"metadata\": {\"user_type\": {\"premium\": [\"gpt-4o\"], \"basic\": [\"gpt-3.5-turbo\"]}}}"
+              },
+              {
+                "type": "text",
+                "text": "When provided, this overrides the Models field above."
+              }
+            ]
           },
           "not": {
             "type": "boolean",

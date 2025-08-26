@@ -26,18 +26,7 @@ export const handler: PluginHandler = async (
 
   try {
     const modelList = parameters.models;
-    // Support unwrapped JSON: defaults and metadata at top-level
-    const topLevelDefaults = Array.isArray(
-      (parameters as Record<string, unknown>).defaults as unknown[]
-    )
-      ? ((parameters as Record<string, unknown>).defaults as string[])
-      : undefined;
-    const rawMetadata = (parameters as Record<string, unknown>)
-      .metadata as unknown;
-    const topLevelMetadata =
-      rawMetadata && typeof rawMetadata === 'object'
-        ? (rawMetadata as Record<string, Record<string, string[]>>)
-        : undefined;
+    const jsonConfig = parameters.json as Record<string, unknown> | undefined;
     const not = parameters.not || false;
     const requestModel = context.request?.json.model as string | undefined;
     const requestMetadata: Record<string, unknown> = context?.metadata || {};
@@ -46,24 +35,22 @@ export const handler: PluginHandler = async (
       throw new Error('Missing model in request');
     }
 
-    // Build allowed set with precedence:
-    // 1) unwrapped defaults/metadata
-    // 2) modelList (legacy base)
     let allowedSet: string[] = [];
     let mode: 'json' | 'default' = 'default';
 
-    // Unwrapped policy path
-    const effectivePolicy =
-      topLevelDefaults || topLevelMetadata
-        ? { defaults: topLevelDefaults ?? [], metadata: topLevelMetadata ?? {} }
-        : undefined;
-
-    if (effectivePolicy) {
-      const matched = new Set<string>();
-      const policyMetadata = effectivePolicy.metadata || {};
+    // Check if JSON configuration is provided
+    if (jsonConfig && typeof jsonConfig === 'object') {
+      const defaults = Array.isArray(jsonConfig.defaults)
+        ? jsonConfig.defaults
+        : [];
+      const metadata =
+        jsonConfig.metadata && typeof jsonConfig.metadata === 'object'
+          ? (jsonConfig.metadata as Record<string, Record<string, string[]>>)
+          : {};
 
       // Match metadata rules
-      for (const [key, mapping] of Object.entries(policyMetadata)) {
+      const matched = new Set<string>();
+      for (const [key, mapping] of Object.entries(metadata)) {
         const reqVal = requestMetadata[key];
         if (reqVal === undefined || reqVal === null) continue;
 
@@ -80,25 +67,17 @@ export const handler: PluginHandler = async (
       }
 
       allowedSet = Array.from(matched);
-      if (allowedSet.length === 0 && Array.isArray(effectivePolicy.defaults)) {
-        allowedSet = effectivePolicy.defaults;
+      if (allowedSet.length === 0) {
+        allowedSet = defaults;
       }
       mode = 'json';
-    }
-
-    // Fallback to base modelList if no metadata rule matched or no rules configured
-    if (allowedSet.length === 0 && Array.isArray(modelList)) {
+    } else if (Array.isArray(modelList)) {
+      // Use legacy models list
       allowedSet = modelList;
       mode = 'default';
     }
 
-    // If unwrapped defaults/metadata provided and allowedSet still empty, it's a deny by configuration (no defaults, no match)
-    // For legacy models path, empty set indicates misconfiguration
-    const shouldErrorOnEmpty = !effectivePolicy;
-    if (
-      (!Array.isArray(allowedSet) || allowedSet.length === 0) &&
-      shouldErrorOnEmpty
-    ) {
+    if (!Array.isArray(allowedSet) || allowedSet.length === 0) {
       throw new Error('Missing allowed models configuration');
     }
 
