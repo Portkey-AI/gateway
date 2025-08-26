@@ -35,7 +35,6 @@ export const handler: PluginHandler = async (
   try {
     return await postQualifire(evaluationBody, parameters?.credentials?.apiKey);
   } catch (e: any) {
-    console.log(e); // TODO delete me
     delete e.stack;
     error = e;
   }
