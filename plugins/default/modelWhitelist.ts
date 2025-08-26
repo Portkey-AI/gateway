@@ -6,15 +6,7 @@ import type {
 } from '../types';
 
 interface WhitelistData {
-  verdict: boolean;
-  not: boolean;
-  mode: 'json' | 'default';
-  matchedMetadata: Record<string, unknown>;
   explanation: string;
-  requestedModel: string;
-  allowedModels: string[];
-  matchedRules?: string[]; // Which metadata rules were matched
-  fallbackUsed?: boolean; // Whether defaults were used
 }
 
 export const handler: PluginHandler = async (
@@ -28,7 +20,7 @@ export const handler: PluginHandler = async (
 
   try {
     const modelList = parameters.models;
-    const jsonConfig = parameters.json as Record<string, unknown> | undefined;
+    const rulesConfig = parameters.rules as Record<string, unknown> | undefined;
     const not = parameters.not || false;
     const requestModel = context.request?.json.model as string | undefined;
     const requestMetadata: Record<string, unknown> = context?.metadata || {};
@@ -38,22 +30,22 @@ export const handler: PluginHandler = async (
     }
 
     let allowedSet: string[] = [];
-    let mode: 'json' | 'default' = 'default';
+    let mode: 'rules' | 'default' = 'default';
+    const matchedRules: string[] = [];
+    let fallbackUsed = false;
 
-    // Check if JSON configuration is provided
-    if (jsonConfig && typeof jsonConfig === 'object') {
-      const defaults = Array.isArray(jsonConfig.defaults)
-        ? jsonConfig.defaults.map(String)
+    // Check if rules configuration is provided
+    if (rulesConfig && typeof rulesConfig === 'object') {
+      const defaults = Array.isArray(rulesConfig.defaults)
+        ? rulesConfig.defaults.map(String)
         : [];
       const metadata =
-        jsonConfig.metadata && typeof jsonConfig.metadata === 'object'
-          ? (jsonConfig.metadata as Record<string, Record<string, string[]>>)
+        rulesConfig.metadata && typeof rulesConfig.metadata === 'object'
+          ? (rulesConfig.metadata as Record<string, Record<string, string[]>>)
           : {};
 
       // Match metadata rules
       const matched = new Set<string>();
-      const matchedRules: string[] = [];
-      let fallbackUsed = false;
 
       for (const [key, mapping] of Object.entries(metadata)) {
         const reqVal = requestMetadata[key];
@@ -82,20 +74,7 @@ export const handler: PluginHandler = async (
         fallbackUsed = true;
       }
 
-      // Store additional metadata for debugging
-      data = {
-        verdict: false, // Will be set later
-        not,
-        mode: 'json',
-        matchedMetadata: requestMetadata,
-        explanation: '', // Will be set later
-        requestedModel: requestModel,
-        allowedModels: allowedSet,
-        matchedRules,
-        fallbackUsed,
-      };
-
-      mode = 'json';
+      mode = 'rules';
     } else if (Array.isArray(modelList)) {
       // Use legacy models list
       allowedSet = modelList.map(String).filter(Boolean);
@@ -115,9 +94,9 @@ export const handler: PluginHandler = async (
         explanation = `Model "${requestModel}" is not in the allowed list as expected.`;
       } else {
         explanation = `Model "${requestModel}" is allowed.`;
-        if (mode === 'json' && data?.matchedRules?.length) {
-          explanation += ` (matched rules: ${data.matchedRules.join(', ')})`;
-        } else if (mode === 'json' && data?.fallbackUsed) {
+        if (mode === 'rules' && matchedRules.length) {
+          explanation += ` (matched rules: ${matchedRules.join(', ')})`;
+        } else if (mode === 'rules' && fallbackUsed) {
           explanation += ' (using default models)';
         }
       }
@@ -126,40 +105,15 @@ export const handler: PluginHandler = async (
         explanation = `Model "${requestModel}" is in the allowed list when it should not be.`;
       } else {
         explanation = `Model "${requestModel}" is not in the allowed list.`;
-        if (mode === 'json' && allowedSet.length > 0) {
-          explanation += ` Available models: ${allowedSet.slice(0, 5).join(', ')}${allowedSet.length > 5 ? '...' : ''}`;
-        }
       }
     }
 
-    // Update or create data object
-    if (data) {
-      data.verdict = verdict;
-      data.explanation = explanation;
-    } else {
-      data = {
-        verdict,
-        not,
-        mode,
-        matchedMetadata: requestMetadata,
-        explanation,
-        requestedModel: requestModel,
-        allowedModels: allowedSet,
-      };
-    }
+    data = { explanation };
   } catch (e) {
     const err = e as Error;
     error = err;
     data = {
-      verdict: false,
-      not: parameters.not || false,
-      mode: 'default',
-      matchedMetadata: context?.metadata || {},
       explanation: `An error occurred while checking model whitelist: ${err.message}`,
-      requestedModel: context.request?.json.model || 'No model specified',
-      allowedModels: Array.isArray(parameters?.models)
-        ? (parameters.models as string[])
-        : [],
     };
   }
 

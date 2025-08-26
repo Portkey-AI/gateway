@@ -606,7 +606,7 @@
         },
         {
           "type": "text",
-          "text": "Supports both simple model lists and advanced JSON configuration with metadata-based rules for fine-grained access control."
+          "text": "Supports simple model lists or advanced object-based rules using metadata."
         }
       ],
       "parameters": {
@@ -625,25 +625,13 @@
               "type": "string"
             }
           },
-          "json": {
-            "type": "json",
-            "label": "JSON Configuration",
+          "rules": {
+            "type": "object",
+            "label": "Rules (object). Use {\"defaults\": [\"model\"], \"metadata\": {\"key\": {\"value\": [\"models\"]}}}. Overrides Models when present.",
             "description": [
               {
-                "type": "subHeading",
-                "text": "Advanced model rules based on metadata key-value pairs"
-              },
-              {
                 "type": "text",
-                "text": "Structure: {\"defaults\": [\"model1\"], \"metadata\": {\"metadata_key\": {\"value1\": [\"allowed_models\"], \"value2\": [\"other_models\"]}}}"
-              },
-              {
-                "type": "text",
-                "text": "Example: {\"defaults\": [\"gpt-3.5-turbo\"], \"metadata\": {\"user_tier\": {\"premium\": [\"gpt-4o\", \"claude-3-opus\"], \"basic\": [\"gpt-3.5-turbo\"]}, \"environment\": {\"production\": [\"gpt-4o\"], \"staging\": [\"gpt-4\"]}}}"
-              },
-              {
-                "type": "text",
-                "text": "When provided, this overrides the Models field above. Supports multiple metadata keys and array values."
+                "text": "Advanced metadata-based rules in an object."
               }
             ]
           },
@@ -658,7 +646,8 @@
             ],
             "default": false
           }
-        }
+        },
+        "anyOf": [{ "required": ["models"] }, { "required": ["rules"] }]
       }
     },
     {
