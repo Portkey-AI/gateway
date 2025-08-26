@@ -29,7 +29,7 @@ export const handler: PluginHandler = async (
     text = textArray.filter((text) => text).join('\n');
     const not = parameters.not || false;
 
-    const response: any = await fetchPortkey(
+    const { response }: any = await fetchPortkey(
       options?.env || {},
       PORTKEY_ENDPOINTS.GIBBERISH,
       parameters.credentials,

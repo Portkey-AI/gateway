@@ -146,6 +146,13 @@ export interface ProviderConfigs {
   /** The configuration for each provider, indexed by provider name. */
   [key: string]: any;
   requestHandlers?: RequestHandlers;
+  getConfig?: ({
+    params,
+    providerOptions,
+  }: {
+    params: Params;
+    providerOptions: Options;
+  }) => any;
 }
 
 export interface BaseResponse {
