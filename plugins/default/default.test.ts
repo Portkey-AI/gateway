@@ -1957,6 +1957,91 @@ describe('modelWhitelist handler', () => {
     });
   });
 
+  it('should allow model via metadataRules when metadata matches', async () => {
+    const context: PluginContext = {
+      request: { json: { model: 'gpt-4o' } },
+      metadata: { group: 'admins' },
+    };
+    const parameters: PluginParameters = {
+      metadataRules: [
+        {
+          metadataKey: 'group',
+          values: ['admins', 'power-users'],
+          models: ['gpt-4o', 'mixtral-8x7b'],
+        },
+      ],
+      models: ['gemini-1.5-flash-001'],
+      not: false,
+    };
+
+    const result = await modelWhitelistHandler(
+      context,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data?.allowedModels).toEqual(
+      expect.arrayContaining(['gpt-4o', 'mixtral-8x7b'])
+    );
+    expect(result.data?.mode).toBe('metadata_rules');
+  });
+
+  it('should fall back to base models when metadataRules do not match', async () => {
+    const context: PluginContext = {
+      request: { json: { model: 'gemini-1.5-flash-001' } },
+      metadata: { group: 'guests' },
+    };
+    const parameters: PluginParameters = {
+      metadataRules: [
+        {
+          metadataKey: 'group',
+          values: ['admins'],
+          models: ['gpt-4o'],
+        },
+      ],
+      models: ['gemini-1.5-flash-001'],
+      not: false,
+    };
+
+    const result = await modelWhitelistHandler(
+      context,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data?.allowedModels).toEqual(
+      expect.arrayContaining(['gemini-1.5-flash-001'])
+    );
+    expect(result.data?.mode).toBe('metadata_rules');
+  });
+
+  it('should error when neither metadataRules match nor base models provided', async () => {
+    const context: PluginContext = {
+      request: { json: { model: 'gpt-4o' } },
+      metadata: { group: 'guests' },
+    };
+    const parameters: PluginParameters = {
+      metadataRules: [
+        { metadataKey: 'group', values: ['admins'], models: ['gpt-4o'] },
+      ],
+      not: false,
+    } as any;
+
+    const result = await modelWhitelistHandler(
+      context,
+      parameters,
+      mockEventType
+    );
+
+    expect(result.verdict).toBe(false);
+    expect(result.error?.message).toBe('Missing allowed models configuration');
+    expect(result.data?.allowedModels).toEqual(['gpt-4o']);
+  });
+
   it('should handle missing model whitelist', async () => {
     const context: PluginContext = {
       request: { json: { model: 'gemini-1.5-pro-001' } },
