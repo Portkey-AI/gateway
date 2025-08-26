@@ -4,6 +4,7 @@ import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
+import { calculateEstimatedCredits } from './pricing';
 
 export const Tripo3DGetTaskConfig: ProviderConfig = {
   task_id: {
@@ -44,6 +45,8 @@ export interface Tripo3DTask {
   create_time: number;
   running_left_time?: number;
   queuing_num?: number;
+  // Added by Portkey for pricing/usage tracking
+  credits_used?: number;
 }
 
 export interface Tripo3DGetTaskResponse {
@@ -70,9 +73,19 @@ export const Tripo3DGetTaskResponseTransform: (
   }
 
   if (response.data) {
+    const taskData = { ...response.data };
+
+    // Add credits_used for completed tasks
+    if (taskData.status === 'success' && taskData.type && taskData.input) {
+      taskData.credits_used = calculateEstimatedCredits(
+        taskData.type,
+        taskData.input
+      );
+    }
+
     return {
       code: response.code,
-      data: response.data,
+      data: taskData,
       provider: TRIPO3D,
     };
   }
