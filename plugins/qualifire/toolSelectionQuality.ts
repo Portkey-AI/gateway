@@ -4,7 +4,11 @@ import {
   PluginHandler,
   PluginParameters,
 } from '../types';
-import { postQualifire } from './globals';
+import {
+  convertToMessages,
+  parseAvailableTools,
+  postQualifire,
+} from './globals';
 
 export const handler: PluginHandler = async (
   context: PluginContext,
@@ -27,9 +31,8 @@ export const handler: PluginHandler = async (
   }
 
   const evaluationBody: any = {
-    // TODO build correct body
-    input: context.request.text,
-    output: context.response.text,
+    messages: convertToMessages(context.request, context.response),
+    available_tools: parseAvailableTools(context.request),
     tool_selection_quality_check: true,
   };
 
