@@ -52,6 +52,18 @@ import {
   transformVertexLogprobs,
 } from './utils';
 
+const isContentTypeArray = (content: any): content is ContentType[] => {
+  return (
+    Array.isArray(content) &&
+    content.every(
+      (item) =>
+        typeof item === 'object' &&
+        item !== null &&
+        typeof item.type === 'string'
+    )
+  );
+};
+
 export const buildGoogleSearchRetrievalTool = (tool: Tool) => {
   const googleSearchRetrievalTool: GoogleSearchRetrievalTool = {
     googleSearchRetrieval: {},
@@ -102,7 +114,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
           } else if (
             message.role === 'tool' &&
             (typeof message.content === 'string' ||
-              typeof message.content === 'object')
+              isContentTypeArray(message.content))
           ) {
             parts.push({
               functionResponse: {
