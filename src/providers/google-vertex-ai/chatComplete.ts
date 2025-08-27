@@ -792,6 +792,9 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
   streamState,
   strictOpenAiCompliance
 ) => {
+  if (streamState.toolIndex == undefined) {
+    streamState.toolIndex = -1;
+  }
   let chunk = responseChunk.trim();
 
   if (
@@ -899,9 +902,7 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
     parsedChunk.type === 'content_block_start' &&
     parsedChunk.content_block?.type === 'tool_use';
   if (isToolBlockStart) {
-    streamState.toolIndex = streamState.toolIndex
-      ? streamState.toolIndex + 1
-      : 0;
+    streamState.toolIndex = streamState.toolIndex + 1;
   }
   const isToolBlockDelta: boolean =
     parsedChunk.type === 'content_block_delta' &&
