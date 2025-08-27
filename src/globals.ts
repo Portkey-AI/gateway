@@ -215,6 +215,8 @@ export const fileExtensionMimeTypeMap = {
   mpegps: 'video/mpegps',
   flv: 'video/flv',
   webm: 'video/webm',
+  mkv: 'video/mkv',
+  three_gpp: 'video/3gpp',
 };
 
 export const imagesMimeTypes = [
@@ -236,6 +238,19 @@ export const documentMimeTypes = [
   fileExtensionMimeTypeMap.html,
   fileExtensionMimeTypeMap.md,
   fileExtensionMimeTypeMap.txt,
+];
+
+export const videoMimeTypes = [
+  fileExtensionMimeTypeMap.mkv,
+  fileExtensionMimeTypeMap.mov,
+  fileExtensionMimeTypeMap.mp4,
+  fileExtensionMimeTypeMap.webm,
+  fileExtensionMimeTypeMap.flv,
+  fileExtensionMimeTypeMap.mpeg,
+  fileExtensionMimeTypeMap.mpg,
+  fileExtensionMimeTypeMap.wmv,
+  fileExtensionMimeTypeMap.three_gpp,
+  fileExtensionMimeTypeMap.avi,
 ];
 
 export enum BatchEndpoints {
