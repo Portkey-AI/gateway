@@ -216,7 +216,7 @@ export const fileExtensionMimeTypeMap = {
   flv: 'video/flv',
   webm: 'video/webm',
   mkv: 'video/mkv',
-  three_gpp: 'video/3gpp',
+  threegpp: 'video/three_gpp',
 };
 
 export const imagesMimeTypes = [
@@ -249,7 +249,7 @@ export const videoMimeTypes = [
   fileExtensionMimeTypeMap.mpeg,
   fileExtensionMimeTypeMap.mpg,
   fileExtensionMimeTypeMap.wmv,
-  fileExtensionMimeTypeMap.three_gpp,
+  fileExtensionMimeTypeMap.threegpp,
   fileExtensionMimeTypeMap.avi,
 ];
 
