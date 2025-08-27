@@ -1,6 +1,5 @@
 import {
   BEDROCK,
-  documentMimeTypes,
   fileExtensionMimeTypeMap,
   imagesMimeTypes,
   videoMimeTypes,
