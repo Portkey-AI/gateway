@@ -20,6 +20,17 @@ export const handler: PluginHandler = async (
     prompt_injections: true,
   };
 
+  if (eventType !== 'beforeRequestHook') {
+    return {
+      error: {
+        message:
+          'Qualifire Prompt Injections guardrail only supports before_request_hooks.',
+      },
+      verdict,
+      data,
+    };
+  }
+
   try {
     return await postQualifire(evaluationBody, parameters?.credentials?.apiKey);
   } catch (e: any) {

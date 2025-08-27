@@ -39,8 +39,8 @@ export const postQualifire = async (
 
   const result = await post(BASE_URL, body, options, timeout_millis || 10000);
   const error = result?.error || null;
-  const verdict = result.status === 'success';
-  const data = result.evaluationResults;
+  const verdict = result?.status === 'success';
+  const data = result?.evaluationResults;
 
   return { error, verdict, data };
 };
