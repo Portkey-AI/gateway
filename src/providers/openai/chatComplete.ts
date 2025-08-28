@@ -118,6 +118,18 @@ export const OpenAIChatCompleteConfig: ProviderConfig = {
   reasoning_effort: {
     param: 'reasoning_effort',
   },
+  web_search_options: {
+    param: 'web_search_options',
+  },
+  prompt_cache_key: {
+    param: 'prompt_cache_key',
+  },
+  safety_identifier: {
+    param: 'safety_identifier',
+  },
+  verbosity: {
+    param: 'verbosity',
+  },
 };
 
 export interface OpenAIChatCompleteResponse extends ChatCompletionResponse {
@@ -169,7 +181,7 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
   const streamChunkTemplate: Record<string, any> = {
     id,
     object: 'chat.completion.chunk',
-    created: Date.now(),
+    created: Math.floor(Date.now() / 1000),
     model: model || '',
     system_fingerprint: system_fingerprint || null,
     provider,

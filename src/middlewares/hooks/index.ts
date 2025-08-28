@@ -423,15 +423,14 @@ export class HooksManager {
   private shouldSkipHook(span: HookSpan, hook: HookObject): boolean {
     const context = span.getContext();
     return (
-      !['chatComplete', 'complete', 'embed'].includes(context.requestType) ||
+      !['chatComplete', 'complete', 'embed', 'messages'].includes(
+        context.requestType
+      ) ||
       (context.requestType === 'embed' &&
         hook.eventType !== 'beforeRequestHook') ||
       (context.requestType === 'embed' && hook.type === HookType.MUTATOR) ||
       (hook.eventType === 'afterRequestHook' &&
         context.response.statusCode !== 200) ||
-      (hook.eventType === 'afterRequestHook' &&
-        context.request.isStreamingRequest &&
-        !context.response.text) ||
       (hook.eventType === 'beforeRequestHook' &&
         span.getParentHookSpanId() !== null) ||
       (hook.type === HookType.MUTATOR && !!hook.async)

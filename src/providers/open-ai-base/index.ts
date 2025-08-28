@@ -132,6 +132,9 @@ export const chatCompleteParams = (
     stream_options: {
       param: 'stream_options',
     },
+    web_search_options: {
+      param: 'web_search_options',
+    },
   };
 
   // Exclude params that are not needed.

@@ -26,11 +26,12 @@ import { imageGenerationsHandler } from './handlers/imageGenerationsHandler';
 import { createSpeechHandler } from './handlers/createSpeechHandler';
 import { createTranscriptionHandler } from './handlers/createTranscriptionHandler';
 import { createTranslationHandler } from './handlers/createTranslationHandler';
-import { modelsHandler, providersHandler } from './handlers/modelsHandler';
+import { modelsHandler } from './handlers/modelsHandler';
 import { realTimeHandler } from './handlers/realtimeHandler';
 import filesHandler from './handlers/filesHandler';
 import batchesHandler from './handlers/batchesHandler';
 import finetuneHandler from './handlers/finetuneHandler';
+import { messagesHandler } from './handlers/messagesHandler';
 
 // Config
 import conf from '../conf.json';
@@ -90,6 +91,9 @@ if (getRuntimeKey() === 'node') {
   app.use(logger());
 }
 
+// Support the /v1/models endpoint
+app.get('/v1/models', modelsHandler);
+
 // Use hooks middleware for all routes
 app.use('*', hooks);
 
@@ -109,12 +113,18 @@ app.notFound((c) => c.json({ message: 'Not Found', ok: false }, 404));
  * Otherwise, logs the error and returns a JSON response with status code 500.
  */
 app.onError((err, c) => {
+  console.error('Global Error Handler: ', err.message, err.cause, err.stack);
   if (err instanceof HTTPException) {
     return err.getResponse();
   }
   c.status(500);
   return c.json({ status: 'failure', message: err.message });
 });
+
+/**
+ * POST route for '/v1/messages' in anthropic format
+ */
+app.post('/v1/messages', requestValidator, messagesHandler);
 
 /**
  * POST route for '/v1/chat/completions'.
@@ -244,9 +254,6 @@ app.post('/v1/prompts/*', requestValidator, (c) => {
     message: 'prompt completions error: Something went wrong',
   });
 });
-
-app.get('/v1/reference/models', modelsHandler);
-app.get('/v1/reference/providers', providersHandler);
 
 // WebSocket route
 if (runtime === 'workerd') {

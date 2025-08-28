@@ -1,3 +1,4 @@
+import BytezConfig from './bytez';
 import AI21Config from './ai21';
 import AnthropicConfig from './anthropic';
 import AnyscaleConfig from './anyscale';
@@ -60,6 +61,8 @@ import KlusterAIConfig from './kluster-ai';
 import NscaleConfig from './nscale';
 import HyperbolicConfig from './hyperbolic';
 import { FeatherlessAIConfig } from './featherless-ai';
+import KrutrimConfig from './krutrim';
+import AI302Config from './302ai';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -119,7 +122,10 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'kluster-ai': KlusterAIConfig,
   nscale: NscaleConfig,
   hyperbolic: HyperbolicConfig,
+  bytez: BytezConfig,
   'featherless-ai': FeatherlessAIConfig,
+  krutrim: KrutrimConfig,
+  '302ai': AI302Config,
 };
 
 export default Providers;

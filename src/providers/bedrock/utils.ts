@@ -8,7 +8,7 @@ import {
   BedrockConverseAnthropicChatCompletionsParams,
   BedrockConverseCohereChatCompletionsParams,
 } from './chatComplete';
-import { Options } from '../../types/requestBody';
+import { Options, Tool } from '../../types/requestBody';
 import { GatewayError } from '../../errors/GatewayError';
 import { BedrockFinetuneRecord, BedrockInferenceProfile } from './types';
 import { FinetuneRequest } from '../types';
@@ -135,6 +135,25 @@ export const transformAnthropicAdditionalModelRequestFields = (
       ];
     } else {
       additionalModelRequestFields['anthropic_beta'] = params['anthropic_beta'];
+    }
+  }
+  if (params.tools && params.tools.length) {
+    const anthropicTools: any[] = [];
+    params.tools.forEach((tool: Tool) => {
+      if (tool.type !== 'function') {
+        const toolOptions = tool[tool.type];
+        anthropicTools.push({
+          ...(toolOptions && { ...toolOptions }),
+          name: tool.type,
+          type: toolOptions?.name,
+          ...(tool.cache_control && {
+            cache_control: { type: 'ephemeral' },
+          }),
+        });
+      }
+    });
+    if (anthropicTools.length) {
+      additionalModelRequestFields['tools'] = anthropicTools;
     }
   }
   return additionalModelRequestFields;
@@ -277,7 +296,7 @@ export async function getAssumedRoleCredentials(
 
     if (!response.ok) {
       const resp = await response.text();
-      console.error({ message: resp });
+      console.error('getAssumedRoleCredentials error: ', { message: resp });
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
@@ -287,7 +306,9 @@ export async function getAssumedRoleCredentials(
       await putInCacheWithValue(env(c), cacheKey, credentials, 300); //5 minutes
     }
   } catch (error) {
-    console.error({ message: `Error assuming role:, ${error}` });
+    console.error('getAssumedRoleCredentials error: ', {
+      message: `Error assuming role:, ${error}`,
+    });
   }
   return credentials;
 }
@@ -412,16 +433,11 @@ export const getInferenceProfile = async (
   c: Context
 ) => {
   if (providerOptions.awsAuthType === 'assumedRole') {
-    const { accessKeyId, secretAccessKey, sessionToken } =
-      (await getAssumedRoleCredentials(
-        c,
-        providerOptions.awsRoleArn || '',
-        providerOptions.awsExternalId || '',
-        providerOptions.awsRegion || ''
-      )) || {};
-    providerOptions.awsAccessKeyId = accessKeyId;
-    providerOptions.awsSecretAccessKey = secretAccessKey;
-    providerOptions.awsSessionToken = sessionToken;
+    try {
+      await providerAssumedRoleCredentials(c, providerOptions);
+    } catch (e) {
+      console.error('getInferenceProfile Error while assuming bedrock role', e);
+    }
   }
 
   const awsRegion = providerOptions.awsRegion || 'us-east-1';

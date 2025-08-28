@@ -113,7 +113,7 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
             providerOptions
           );
       if (foundationModel) {
-        params.foundationModel = foundationModel;
+        providerOptions.foundationModel = foundationModel;
       }
     }
     if (fn === 'retrieveFile') {
@@ -221,7 +221,10 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
     let endpoint = `/model/${uriEncodedModel}/invoke`;
     let streamEndpoint = `/model/${uriEncodedModel}/invoke-with-response-stream`;
     if (
-      (mappedFn === 'chatComplete' || mappedFn === 'stream-chatComplete') &&
+      (mappedFn === 'chatComplete' ||
+        mappedFn === 'stream-chatComplete' ||
+        mappedFn === 'messages' ||
+        mappedFn === 'stream-messages') &&
       model &&
       !bedrockInvokeModels.includes(model)
     ) {
@@ -233,10 +236,12 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
     const jobId = gatewayRequestURL.split('/').at(jobIdIndex);
 
     switch (mappedFn) {
-      case 'chatComplete': {
+      case 'chatComplete':
+      case 'messages': {
         return endpoint;
       }
-      case 'stream-chatComplete': {
+      case 'stream-chatComplete':
+      case 'stream-messages': {
         return streamEndpoint;
       }
       case 'complete': {

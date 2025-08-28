@@ -15,9 +15,11 @@ import {
   AnthropicChatCompleteConfig,
   AnthropicChatCompleteResponse,
   AnthropicChatCompleteStreamResponse,
-  AnthropicErrorResponse,
 } from '../anthropic/chatComplete';
-import { AnthropicStreamState } from '../anthropic/types';
+import {
+  AnthropicErrorResponse,
+  AnthropicStreamState,
+} from '../anthropic/types';
 import {
   GoogleMessage,
   GoogleMessageRole,
@@ -47,6 +49,7 @@ import type {
 import {
   getMimeType,
   recursivelyDeleteUnsupportedParameters,
+  transformGeminiToolParameters,
   transformVertexLogprobs,
 } from './utils';
 
@@ -299,6 +302,11 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
           ) {
             tools.push(buildGoogleSearchRetrievalTool(tool));
           } else {
+            if (tool.function?.parameters) {
+              tool.function.parameters = transformGeminiToolParameters(
+                tool.function.parameters
+              );
+            }
             functionDeclarations.push(tool.function);
           }
         }
@@ -784,6 +792,9 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
   streamState,
   strictOpenAiCompliance
 ) => {
+  if (streamState.toolIndex == undefined) {
+    streamState.toolIndex = -1;
+  }
   let chunk = responseChunk.trim();
 
   if (
@@ -832,6 +843,10 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
 
   if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
     streamState.model = parsedChunk?.message?.model ?? '';
+
+    streamState.usage = {
+      prompt_tokens: parsedChunk.message.usage?.input_tokens,
+    };
     return (
       `data: ${JSON.stringify({
         id: fallbackId,
@@ -850,7 +865,7 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
           },
         ],
         usage: {
-          prompt_tokens: parsedChunk.message?.usage?.input_tokens,
+          prompt_tokens: streamState.usage.prompt_tokens,
         },
       })}` + '\n\n'
     );
@@ -873,6 +888,10 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
         ],
         usage: {
           completion_tokens: parsedChunk.usage?.output_tokens,
+          prompt_tokens: streamState.usage?.prompt_tokens,
+          total_tokens:
+            (streamState.usage?.prompt_tokens || 0) +
+            (parsedChunk.usage?.output_tokens || 0),
         },
       })}` + '\n\n'
     );
@@ -883,9 +902,7 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
     parsedChunk.type === 'content_block_start' &&
     parsedChunk.content_block?.type === 'tool_use';
   if (isToolBlockStart) {
-    streamState.toolIndex = streamState.toolIndex
-      ? streamState.toolIndex + 1
-      : 0;
+    streamState.toolIndex = streamState.toolIndex + 1;
   }
   const isToolBlockDelta: boolean =
     parsedChunk.type === 'content_block_delta' &&

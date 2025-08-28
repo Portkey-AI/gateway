@@ -12,11 +12,17 @@ import {
   ProviderConfig,
 } from '../types';
 import {
+  AnthropicErrorObject,
+  AnthropicErrorResponse,
+  AnthropicStreamState,
+  ANTHROPIC_STOP_REASON,
+} from './types';
+import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
   transformFinishReason,
 } from '../utils';
-import { ANTHROPIC_STOP_REASON, AnthropicStreamState } from './types';
+import { AnthropicErrorResponseTransform } from './utils';
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -362,11 +368,15 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                 cache_control: { type: 'ephemeral' },
               }),
             });
-          } else if (tool.computer) {
+          } else if (tool.type) {
+            const toolOptions = tool[tool.type];
             tools.push({
-              ...tool.computer,
-              name: 'computer',
-              type: tool.computer.name,
+              ...(toolOptions && { ...toolOptions }),
+              name: tool.type,
+              type: toolOptions?.name,
+              ...(tool.cache_control && {
+                cache_control: { type: 'ephemeral' },
+              }),
             });
           }
         });
@@ -427,16 +437,6 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
     required: false,
   },
 };
-
-interface AnthropicErrorObject {
-  type: string;
-  message: string;
-}
-
-export interface AnthropicErrorResponse {
-  type: string;
-  error: AnthropicErrorObject;
-}
 
 interface AnthorpicTextContentItem {
   type: 'text';
@@ -502,24 +502,6 @@ export interface AnthropicChatCompleteStreamResponse {
   error?: AnthropicErrorObject;
 }
 
-export const AnthropicErrorResponseTransform: (
-  response: AnthropicErrorResponse
-) => ErrorResponse | undefined = (response) => {
-  if ('error' in response) {
-    return generateErrorResponse(
-      {
-        message: response.error?.message,
-        type: response.error?.type,
-        param: null,
-        code: null,
-      },
-      ANTHROPIC
-    );
-  }
-
-  return undefined;
-};
-
 // TODO: The token calculation is wrong atm
 export const AnthropicChatCompleteResponseTransform: (
   response: AnthropicChatCompleteResponse | AnthropicErrorResponse,
@@ -532,11 +514,8 @@ export const AnthropicChatCompleteResponseTransform: (
   _responseHeaders,
   strictOpenAiCompliance
 ) => {
-  if (responseStatus !== 200) {
-    const errorResposne = AnthropicErrorResponseTransform(
-      response as AnthropicErrorResponse
-    );
-    if (errorResposne) return errorResposne;
+  if (responseStatus !== 200 && 'error' in response) {
+    return AnthropicErrorResponseTransform(response);
   }
 
   if ('content' in response) {
@@ -627,6 +606,9 @@ export const AnthropicChatCompleteStreamChunkTransform: (
   streamState,
   strictOpenAiCompliance
 ) => {
+  if (streamState.toolIndex == undefined) {
+    streamState.toolIndex = -1;
+  }
   let chunk = responseChunk.trim();
   if (
     chunk.startsWith('event: ping') ||
@@ -745,9 +727,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
     parsedChunk.type === 'content_block_start' &&
     parsedChunk.content_block?.type === 'tool_use';
   if (isToolBlockStart) {
-    streamState.toolIndex = streamState.toolIndex
-      ? streamState.toolIndex + 1
-      : 0;
+    streamState.toolIndex = streamState.toolIndex + 1;
   }
   const isToolBlockDelta: boolean =
     parsedChunk.type === 'content_block_delta' &&

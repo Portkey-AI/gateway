@@ -45,6 +45,29 @@ describe('Azure Plugins', () => {
         expect(result.error).toBeNull();
         expect(result.verdict).toBe(true);
         expect(result.transformed).toBe(true);
+      }, 10000);
+
+      it('should not redact anything if text has no PII', async () => {
+        const context = structuredClone(mockContext);
+        context.request.text = "hello, I'm a harmless string";
+        context.request.json = {
+          messages: [{ role: 'user', content: "hello, I'm a harmless string" }],
+        };
+        const result = await piiHandler(context, params, 'beforeRequestHook');
+        expect(result.error).toBeNull();
+        expect(result.verdict).toBe(true);
+        expect(result.transformed).toBe(false);
+      });
+
+      it('should not redact anything if redact is false', async () => {
+        const result = await piiHandler(
+          mockContext,
+          { ...params, redact: false },
+          'beforeRequestHook'
+        );
+        expect(result.error).toBeNull();
+        expect(result.verdict).toBe(false);
+        expect(result.transformed).toBe(false);
       });
 
       it('should handle API errors gracefully', async () => {
