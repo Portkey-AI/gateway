@@ -4,8 +4,8 @@ import { HooksService } from '../../../../../src/handlers/services/hooksService'
 import { RequestContext } from '../../../../../src/handlers/services/requestContext';
 import { endpointStrings } from '../../../../../src/providers/types';
 
-// Mock HooksService
-jest.mock('../hooksService');
+// Mock HooksService - Fixed path to match the import
+jest.mock('../../../../../src/handlers/services/hooksService');
 
 // Mock env function
 jest.mock('hono/adapter', () => ({
