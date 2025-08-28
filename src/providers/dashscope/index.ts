@@ -6,7 +6,6 @@ import {
 } from '../open-ai-base';
 import { ProviderConfigs } from '../types';
 import { dashscopeAPIConfig } from './api';
-import { DashScopeRerankConfig } from './rerank';
 
 export const DashScopeConfig: ProviderConfigs = {
   chatComplete: chatCompleteParams(
@@ -34,7 +33,6 @@ export const DashScopeConfig: ProviderConfigs = {
     }
   ),
   embed: embedParams([], { model: 'text-embedding-v1' }),
-  rerank: DashScopeRerankConfig,
   api: dashscopeAPIConfig,
   responseTransforms: responseTransformers(DASHSCOPE, {
     chatComplete: true,

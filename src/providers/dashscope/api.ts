@@ -1,7 +1,7 @@
 import { ProviderAPIConfig } from '../types';
 
 export const dashscopeAPIConfig: ProviderAPIConfig = {
-  getBaseURL: () => 'https://dashscope.aliyuncs.com',
+  getBaseURL: () => 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
   headers({ providerOptions }) {
     const { apiKey } = providerOptions;
     return { Authorization: `Bearer ${apiKey}` };
@@ -9,11 +9,9 @@ export const dashscopeAPIConfig: ProviderAPIConfig = {
   getEndpoint({ fn }) {
     switch (fn) {
       case 'chatComplete':
-        return `/compatible-mode/v1/chat/completions`;
+        return `/chat/completions`;
       case 'embed':
-        return `/compatible-mode/v1/embeddings`;
-      case 'rerank':
-        return `/api/v1/services/rerank/text-rerank/text-rerank`;
+        return `/embeddings`;
       default:
         return '';
     }
