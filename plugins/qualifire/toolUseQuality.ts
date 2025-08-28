@@ -23,7 +23,7 @@ export const handler: PluginHandler = async (
     return {
       error: {
         message:
-          'Qualifire Tool Selection Quality guardrail only supports after_request_hooks.',
+          'Qualifire Tool Use Quality guardrail only supports after_request_hooks.',
       },
       verdict: true,
       data,

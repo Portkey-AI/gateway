@@ -20,7 +20,7 @@ import { handler as qualifireInstructionFollowing } from './qualifire/instructio
 import { handler as qualifireJson } from './qualifire/json';
 import { handler as qualifirePolicy } from './qualifire/policy';
 import { handler as qualifireSexualContent } from './qualifire/sexualContent';
-import { handler as qualifireToolSelectionQuality } from './qualifire/toolSelectionQuality';
+import { handler as qualifireToolUseQuality } from './qualifire/toolUseQuality';
 import { handler as qualifireHallucinations } from './qualifire/hallucinations';
 import { handler as qualifireHateSpeech } from './qualifire/hateSpeech';
 import { handler as qualifireJavascript } from './qualifire/javascript';
@@ -95,7 +95,7 @@ export const plugins = {
     json: qualifireJson,
     policy: qualifirePolicy,
     sexualContent: qualifireSexualContent,
-    toolSelectionQuality: qualifireToolSelectionQuality,
+    toolUseQuality: qualifireToolUseQuality,
     hallucinations: qualifireHallucinations,
     hateSpeech: qualifireHateSpeech,
     javascript: qualifireJavascript,

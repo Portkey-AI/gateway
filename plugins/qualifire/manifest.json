@@ -132,14 +132,14 @@
       "parameters": {}
     },
     {
-      "name": "Tool Selection Quality Check",
-      "id": "toolSelectionQuality",
+      "name": "Tool Use Quality Check",
+      "id": "toolUseQuality",
       "supportedHooks": ["afterRequestHook"],
       "type": "guardrail",
       "description": [
         {
           "type": "subHeading",
-          "text": "Checks the model's tool selection. Including which tool to use, which parameters to provide, etc."
+          "text": "Checks the model's tool use quality. Including correct tool selection, correct tool parameters and values."
         }
       ],
       "parameters": {}
