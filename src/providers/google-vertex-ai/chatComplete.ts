@@ -52,18 +52,6 @@ import {
   transformVertexLogprobs,
 } from './utils';
 
-const isContentTypeArray = (content: any): content is ContentType[] => {
-  return (
-    Array.isArray(content) &&
-    content.every(
-      (item) =>
-        typeof item === 'object' &&
-        item !== null &&
-        typeof item.type === 'string'
-    )
-  );
-};
-
 export const buildGoogleSearchRetrievalTool = (tool: Tool) => {
   const googleSearchRetrievalTool: GoogleSearchRetrievalTool = {
     googleSearchRetrieval: {},
@@ -111,16 +99,12 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
                 },
               });
             });
-          } else if (
-            message.role === 'tool' &&
-            (typeof message.content === 'string' ||
-              isContentTypeArray(message.content))
-          ) {
+          } else if (message.role === 'tool') {
             parts.push({
               functionResponse: {
                 name: message.name ?? 'gateway-tool-filler-name',
                 response: {
-                  content: message.content,
+                  output: message.content,
                 },
               },
             });
