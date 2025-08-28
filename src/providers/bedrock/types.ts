@@ -136,7 +136,11 @@ export type BedrockContentItem = {
   };
   image?: {
     source: {
-      bytes: string;
+      bytes?: string;
+      s3Location?: {
+        uri: string;
+        bucketOwner?: string;
+      };
     };
     format: string;
   };
@@ -147,6 +151,17 @@ export type BedrockContentItem = {
       bytes?: string;
       s3Location?: {
         uri: string;
+        bucketOwner?: string;
+      };
+    };
+  };
+  video?: {
+    format: string;
+    source: {
+      bytes?: string;
+      s3Location?: {
+        uri: string;
+        bucketOwner?: string;
       };
     };
   };
