@@ -31,6 +31,8 @@ const AnthropicAPIConfig: ProviderAPIConfig = {
         return '/messages';
       case 'messages':
         return '/messages';
+      case 'messagesCountTokens':
+        return '/messages/count_tokens';
       default:
         return '';
     }

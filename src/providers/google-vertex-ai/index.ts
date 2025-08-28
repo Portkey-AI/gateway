@@ -51,6 +51,7 @@ import {
   VertexAnthropicMessagesConfig,
   VertexAnthropicMessagesResponseTransform,
 } from './messages';
+import { VertexAnthropicMessagesCountTokensConfig } from './messagesCountTokens';
 
 const VertexConfig: ProviderConfigs = {
   api: VertexApiConfig,
@@ -117,6 +118,7 @@ const VertexConfig: ProviderConfigs = {
           createBatch: GoogleBatchCreateConfig,
           createFinetune: baseConfig.createFinetune,
           messages: VertexAnthropicMessagesConfig,
+          messagesCountTokens: VertexAnthropicMessagesCountTokensConfig,
           responseTransforms: {
             'stream-chatComplete':
               VertexAnthropicChatCompleteStreamChunkTransform,
