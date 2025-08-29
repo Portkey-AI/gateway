@@ -12,7 +12,7 @@
       "description": [
         {
           "type": "subHeading",
-          "text": "Check if the request or response text matches a regex pattern."
+          "text": "Check if the request or response text matches a regex pattern and optionally redact matches."
         }
       ],
       "parameters": {
@@ -27,6 +27,28 @@
                 "text": "Enter the regex pattern"
               }
             ]
+          },
+          "redact": {
+            "type": "boolean",
+            "label": "Redact Matches",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, matching text will be redacted"
+              }
+            ],
+            "default": false
+          },
+          "redactText": {
+            "type": "string",
+            "label": "Replacement Text",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Text to replace matches with (e.g., [REDACTED], *****, [HIDDEN])"
+              }
+            ],
+            "default": "[REDACTED]"
           },
           "not": {
             "type": "boolean",
