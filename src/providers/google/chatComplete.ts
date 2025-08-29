@@ -78,6 +78,11 @@ const transformGenerationConfig = (params: Params) => {
     thinkingConfig['thinking_budget'] = params.thinking.budget_tokens;
     generationConfig['thinking_config'] = thinkingConfig;
   }
+  if (params.modalities) {
+    generationConfig['responseModalities'] = params.modalities.map((modality) =>
+      modality.toUpperCase()
+    );
+  }
   return generationConfig;
 };
 
@@ -425,6 +430,10 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
+  modalities: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
 };
 
 export interface GoogleErrorResponse {
@@ -447,6 +456,10 @@ interface GoogleResponseCandidate {
       text?: string;
       thought?: string; // for models like gemini-2.0-flash-thinking-exp refer: https://ai.google.dev/gemini-api/docs/thinking-mode#streaming_model_thinking
       functionCall?: GoogleGenerateFunctionCall;
+      inlineData?: {
+        mimeType: string;
+        data: string;
+      };
     }[];
   };
   logprobsResult?: {
@@ -560,6 +573,13 @@ export const GoogleChatCompleteResponseTransform: (
                 content = part.text;
                 contentBlocks.push({ type: 'text', text: part.text });
               }
+            } else if (part.inlineData) {
+              contentBlocks.push({
+                type: 'image_url',
+                image_url: {
+                  url: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
+                },
+              });
             }
           }
 
@@ -705,6 +725,23 @@ export const GoogleChatCompleteStreamChunkTransform: (
                   };
                 }
               }),
+            };
+          } else if (generation.content?.parts[0]?.inlineData) {
+            const part = generation.content.parts[0];
+            const contentBlocks = [
+              {
+                index: streamState.containsChainOfThoughtMessage ? 1 : 0,
+                delta: {
+                  type: 'image_url',
+                  image_url: {
+                    url: `data:${part.inlineData?.mimeType};base64,${part.inlineData?.data}`,
+                  },
+                },
+              },
+            ];
+            message = {
+              role: 'assistant',
+              content_blocks: contentBlocks,
             };
           }
           return {
