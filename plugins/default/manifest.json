@@ -602,7 +602,11 @@
       "description": [
         {
           "type": "subHeading",
-          "text": "Blocks any request whose model isn’t on this list."
+          "text": "Controls model access with support for metadata-based routing and dynamic model lists."
+        },
+        {
+          "type": "text",
+          "text": "Supports simple model lists or advanced object-based rules using metadata."
         }
       ],
       "parameters": {
@@ -621,6 +625,16 @@
               "type": "string"
             }
           },
+          "rules": {
+            "type": "object",
+            "label": "Rules (object). Use {\"defaults\": [\"model\"], \"metadata\": {\"key\": {\"value\": [\"models\"]}}}. Overrides Models when present.",
+            "description": [
+              {
+                "type": "text",
+                "text": "Advanced metadata-based rules in an object."
+              }
+            ]
+          },
           "not": {
             "type": "boolean",
             "label": "Invert Model Check",
@@ -633,7 +647,7 @@
             "default": false
           }
         },
-        "required": ["models"]
+        "anyOf": [{ "required": ["models"] }, { "required": ["rules"] }]
       }
     },
     {
