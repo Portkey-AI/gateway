@@ -13,6 +13,8 @@ import { handler as defaultalluppercase } from './default/alluppercase';
 import { handler as defaultalllowercase } from './default/alllowercase';
 import { handler as defaultendsWith } from './default/endsWith';
 import { handler as defaultmodelWhitelist } from './default/modelWhitelist';
+import { handler as defaultaddPrefix } from './default/addPrefix';
+import { handler as defaultinjectTools } from './default/injectTools';
 import { handler as portkeymoderateContent } from './portkey/moderateContent';
 import { handler as portkeylanguage } from './portkey/language';
 import { handler as portkeypii } from './portkey/pii';
@@ -70,6 +72,8 @@ export const plugins = {
     modelWhitelist: defaultmodelWhitelist,
     jwt: defaultjwt,
     requiredMetadataKeys: defaultrequiredMetadataKeys,
+    addPrefix: defaultaddPrefix,
+    injectTools: defaultinjectTools,
   },
   portkey: {
     moderateContent: portkeymoderateContent,
