@@ -685,6 +685,23 @@ export const GoogleChatCompleteStreamChunkTransform: (
               }
             }),
           };
+        } else if (generation.content?.parts[0]?.inlineData) {
+          const part = generation.content.parts[0];
+          const contentBlocks = [
+            {
+              index: streamState.containsChainOfThoughtMessage ? 1 : 0,
+              delta: {
+                type: 'image_url',
+                image_url: {
+                  url: `data:${part.inlineData?.mimeType};base64,${part.inlineData?.data}`,
+                },
+              },
+            },
+          ];
+          message = {
+            role: 'assistant',
+            content_blocks: contentBlocks,
+          };
         }
         return {
           delta: message,
