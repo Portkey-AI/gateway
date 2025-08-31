@@ -1,7 +1,7 @@
 import { BEDROCK } from '../../globals';
-import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
-import { Params } from '../../types/requestBody';
-import { ErrorResponse, ProviderConfig } from '../types';
+import type { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
+import type { Params } from '../../types/requestBody';
+import type { ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { BedrockErrorResponseTransform } from './chatComplete';
 
@@ -12,15 +12,15 @@ export const BedrockCohereEmbedConfig: ProviderConfig = {
       required: false,
       transform: (params: EmbedParams): string[] | undefined => {
         if (typeof params.input === 'string') return [params.input];
-        else if (Array.isArray(params.input) && params.input.length > 0) {
+        if (Array.isArray(params.input) && params.input.length > 0) {
           const texts: string[] = [];
-          params.input.forEach((item) => {
+          for (const item of params.input) {
             if (typeof item === 'string') {
               texts.push(item);
             } else if (item.text) {
               texts.push(item.text);
             }
-          });
+          }
           return texts.length > 0 ? texts : undefined;
         }
       },
@@ -31,11 +31,11 @@ export const BedrockCohereEmbedConfig: ProviderConfig = {
       transform: (params: EmbedParams): string[] | undefined => {
         if (Array.isArray(params.input) && params.input.length > 0) {
           const images: string[] = [];
-          params.input.forEach((item) => {
+          for (const item of params.input) {
             if (typeof item === 'object' && item.image?.base64) {
               images.push(item.image.base64);
             }
-          });
+          }
           return images.length > 0 ? images : undefined;
         }
       },
@@ -52,9 +52,11 @@ export const BedrockCohereEmbedConfig: ProviderConfig = {
   encoding_format: {
     param: 'embedding_types',
     required: false,
-    transform: (params: any): string[] | undefined => {
+    transform: (
+      params: EmbedParams & { encoding_format?: string | string[] }
+    ): string[] | undefined => {
       if (Array.isArray(params.encoding_format)) return params.encoding_format;
-      else if (typeof params.encoding_format === 'string')
+      if (typeof params.encoding_format === 'string')
         return [params.encoding_format];
     },
   },
@@ -116,10 +118,14 @@ export const BedrockTitanEmbedConfig: ProviderConfig = {
   encoding_format: {
     param: 'embeddingTypes',
     required: false,
-    transform: (params: any): string[] | undefined => {
-      if (Array.isArray(params.encoding_format)) return params.encoding_format;
-      else if (typeof params.encoding_format === 'string')
-        return [params.encoding_format];
+    transform: (
+      params: EmbedParams & { encoding_format?: string | string[] }
+    ): string[] | undefined => {
+      const toTitan = (fmt: string) => (fmt === 'base64' ? 'binary' : fmt);
+      if (Array.isArray(params.encoding_format))
+        return params.encoding_format.map((f) => toTitan(f));
+      if (typeof params.encoding_format === 'string')
+        return [toTitan(params.encoding_format)];
     },
   },
   // Titan specific parameters
@@ -130,7 +136,8 @@ export const BedrockTitanEmbedConfig: ProviderConfig = {
 };
 
 interface BedrockTitanEmbedResponse {
-  embedding: number[];
+  embedding?: number[];
+  embeddingsByType?: { binary?: number[]; float?: number[] };
   inputTextTokenCount: number;
 }
 
@@ -161,23 +168,48 @@ export const BedrockTitanEmbedResponseTransform: (
   }
 
   const model = (gatewayRequest.model as string) || '';
-  if ('embedding' in response) {
+  const titanResponse = response as BedrockTitanEmbedResponse;
+  if ('embedding' in titanResponse && titanResponse.embedding) {
     return {
       object: 'list',
       data: [
         {
           object: 'embedding',
-          embedding: response.embedding,
+          embedding: titanResponse.embedding,
           index: 0,
         },
       ],
       provider: BEDROCK,
       model,
       usage: {
-        prompt_tokens: response.inputTextTokenCount,
-        total_tokens: response.inputTextTokenCount,
+        prompt_tokens: titanResponse.inputTextTokenCount,
+        total_tokens: titanResponse.inputTextTokenCount,
       },
     };
+  }
+
+  if (titanResponse.embeddingsByType) {
+    const embeddingVector =
+      titanResponse.embeddingsByType.float ||
+      titanResponse.embeddingsByType.binary;
+    if (embeddingVector) {
+      return {
+        object: 'list',
+        data: [
+          {
+            object: 'embedding',
+            embedding: embeddingVector,
+            index: 0,
+          },
+        ],
+        provider: BEDROCK,
+        model,
+        usage: {
+          prompt_tokens: titanResponse.inputTextTokenCount,
+          total_tokens: titanResponse.inputTextTokenCount,
+        },
+      };
+    }
   }
 
   return generateInvalidProviderResponseError(response, BEDROCK);
