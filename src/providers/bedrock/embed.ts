@@ -1,7 +1,7 @@
 import { BEDROCK } from '../../globals';
-import type { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
-import type { Params } from '../../types/requestBody';
-import type { ErrorResponse, ProviderConfig } from '../types';
+import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
+import { Params } from '../../types/requestBody';
+import { ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { BedrockErrorResponseTransform } from './chatComplete';
 
@@ -12,15 +12,15 @@ export const BedrockCohereEmbedConfig: ProviderConfig = {
       required: false,
       transform: (params: EmbedParams): string[] | undefined => {
         if (typeof params.input === 'string') return [params.input];
-        if (Array.isArray(params.input) && params.input.length > 0) {
+        else if (Array.isArray(params.input) && params.input.length > 0) {
           const texts: string[] = [];
-          for (const item of params.input) {
+          params.input.forEach((item) => {
             if (typeof item === 'string') {
               texts.push(item);
             } else if (item.text) {
               texts.push(item.text);
             }
-          }
+          });
           return texts.length > 0 ? texts : undefined;
         }
       },
@@ -31,11 +31,11 @@ export const BedrockCohereEmbedConfig: ProviderConfig = {
       transform: (params: EmbedParams): string[] | undefined => {
         if (Array.isArray(params.input) && params.input.length > 0) {
           const images: string[] = [];
-          for (const item of params.input) {
+          params.input.forEach((item) => {
             if (typeof item === 'object' && item.image?.base64) {
               images.push(item.image.base64);
             }
-          }
+          });
           return images.length > 0 ? images : undefined;
         }
       },
@@ -52,11 +52,9 @@ export const BedrockCohereEmbedConfig: ProviderConfig = {
   encoding_format: {
     param: 'embedding_types',
     required: false,
-    transform: (
-      params: EmbedParams & { encoding_format?: string | string[] }
-    ): string[] | undefined => {
+    transform: (params: any): string[] | undefined => {
       if (Array.isArray(params.encoding_format)) return params.encoding_format;
-      if (typeof params.encoding_format === 'string')
+      else if (typeof params.encoding_format === 'string')
         return [params.encoding_format];
     },
   },
@@ -118,13 +116,11 @@ export const BedrockTitanEmbedConfig: ProviderConfig = {
   encoding_format: {
     param: 'embeddingTypes',
     required: false,
-    transform: (
-      params: EmbedParams & { encoding_format?: string | string[] }
-    ): string[] | undefined => {
+    transform: (params: any): string[] | undefined => {
       const toTitan = (fmt: string) => (fmt === 'base64' ? 'binary' : fmt);
       if (Array.isArray(params.encoding_format))
-        return params.encoding_format.map((f) => toTitan(f));
-      if (typeof params.encoding_format === 'string')
+        return params.encoding_format.map((f: string) => toTitan(f));
+      else if (typeof params.encoding_format === 'string')
         return [toTitan(params.encoding_format)];
     },
   },
