@@ -90,11 +90,20 @@ const convertToolCalls = (toolCalls: any) => {
     return undefined;
   }
 
-  return toolCalls.map((toolCall: any) => ({
-    id: toolCall.id,
-    name: toolCall.function.name,
-    arguments: JSON.parse(toolCall.function?.arguments ?? '{}'),
-  }));
+  return toolCalls.map((toolCall: any) => {
+    const rawArgs = toolCall.function?.arguments ?? '{}';
+    let parsedArgs: any = rawArgs;
+    try {
+      parsedArgs = typeof rawArgs === 'string' ? JSON.parse(rawArgs) : rawArgs;
+    } catch {
+      // leave as-is
+    }
+    return {
+      id: toolCall.id,
+      name: toolCall.function.name,
+      arguments: parsedArgs,
+    };
+  });
 };
 
 export const convertToMessages = (

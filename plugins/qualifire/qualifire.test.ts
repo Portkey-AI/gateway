@@ -2737,18 +2737,18 @@ describe('policy handler', () => {
   });
 });
 
-describe('toolSelectionQuality handler', () => {
-  // Mock the globals module before importing toolSelectionQuality
+describe('toolUseQuality handler', () => {
+  // Mock the globals module before importing toolUseQuality
   jest.mock('./globals', () => ({
     postQualifire: jest.fn(),
     convertToMessages: jest.fn(),
     parseAvailableTools: jest.fn(),
   }));
 
-  let toolSelectionQualityHandler: any;
+  let toolUseQualityHandler: any;
 
   beforeAll(() => {
-    toolSelectionQualityHandler = require('./toolSelectionQuality').handler;
+    toolUseQualityHandler = require('./toolUseQuality').handler;
   });
 
   const mockContext = {
@@ -2848,7 +2848,7 @@ describe('toolSelectionQuality handler', () => {
         },
       ]);
 
-      const result = await toolSelectionQualityHandler(
+      const result = await toolUseQualityHandler(
         mockContext,
         mockParameters,
         'afterRequestHook' as HookEventType
@@ -2928,7 +2928,7 @@ describe('toolSelectionQuality handler', () => {
         },
       ]);
 
-      const result = await toolSelectionQualityHandler(
+      const result = await toolUseQualityHandler(
         mockContext,
         mockParameters,
         'afterRequestHook' as HookEventType
@@ -2940,7 +2940,7 @@ describe('toolSelectionQuality handler', () => {
 
   describe('when called with unsupported event types', () => {
     it('should return error for beforeRequestHook', async () => {
-      const result = await toolSelectionQualityHandler(
+      const result = await toolUseQualityHandler(
         mockContext,
         mockParameters,
         'beforeRequestHook' as HookEventType
@@ -2949,7 +2949,7 @@ describe('toolSelectionQuality handler', () => {
       expect(result).toEqual({
         error: {
           message:
-            'Qualifire Tool Selection Quality guardrail only supports after_request_hooks.',
+            'Qualifire Tool Use Quality guardrail only supports after_request_hooks.',
         },
         verdict: true,
         data: null,
@@ -2957,7 +2957,7 @@ describe('toolSelectionQuality handler', () => {
     });
 
     it('should return error for other event types', async () => {
-      const result = await toolSelectionQualityHandler(
+      const result = await toolUseQualityHandler(
         mockContext,
         mockParameters,
         'onErrorHook' as HookEventType
@@ -2966,7 +2966,7 @@ describe('toolSelectionQuality handler', () => {
       expect(result).toEqual({
         error: {
           message:
-            'Qualifire Tool Selection Quality guardrail only supports after_request_hooks.',
+            'Qualifire Tool Use Quality guardrail only supports after_request_hooks.',
         },
         verdict: true,
         data: null,
@@ -2989,7 +2989,7 @@ describe('toolSelectionQuality handler', () => {
       (convertToMessages as jest.Mock).mockReturnValue([]);
       (parseAvailableTools as jest.Mock).mockReturnValue([]);
 
-      const result = await toolSelectionQualityHandler(
+      const result = await toolUseQualityHandler(
         mockContext,
         mockParameters,
         'afterRequestHook' as HookEventType

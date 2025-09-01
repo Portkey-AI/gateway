@@ -183,7 +183,7 @@
       "description": [
         {
           "type": "subHeading",
-          "text": "Checks that the model returnd a valid json object. If provided, also validated agains given json schema."
+          "text": "Checks that the model returned a valid json object. If provided, also validates agains the given json schema."
         }
       ],
       "parameters": {
@@ -266,7 +266,7 @@
       "description": [
         {
           "type": "subHeading",
-          "text": "Checks that the model returnd a valid sql code."
+          "text": "Checks that the model returnd valid sql code."
         }
       ],
       "parameters": {}
@@ -279,7 +279,7 @@
       "description": [
         {
           "type": "subHeading",
-          "text": "Checks that the model returnd a valid javascript code."
+          "text": "Checks that the model returnd valid javascript code."
         }
       ],
       "parameters": {}
