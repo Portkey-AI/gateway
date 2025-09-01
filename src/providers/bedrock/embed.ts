@@ -117,11 +117,9 @@ export const BedrockTitanEmbedConfig: ProviderConfig = {
     param: 'embeddingTypes',
     required: false,
     transform: (params: any): string[] | undefined => {
-      const toTitan = (fmt: string) => (fmt === 'base64' ? 'binary' : fmt);
-      if (Array.isArray(params.encoding_format))
-        return params.encoding_format.map((f: string) => toTitan(f));
+      if (Array.isArray(params.encoding_format)) return params.encoding_format;
       else if (typeof params.encoding_format === 'string')
-        return [toTitan(params.encoding_format)];
+        return [params.encoding_format];
     },
   },
   // Titan specific parameters
@@ -132,8 +130,7 @@ export const BedrockTitanEmbedConfig: ProviderConfig = {
 };
 
 interface BedrockTitanEmbedResponse {
-  embedding?: number[];
-  embeddingsByType?: { binary?: number[]; float?: number[] };
+  embedding: number[];
   inputTextTokenCount: number;
 }
 
@@ -164,48 +161,25 @@ export const BedrockTitanEmbedResponseTransform: (
   }
 
   const model = (gatewayRequest.model as string) || '';
-  const titanResponse = response as BedrockTitanEmbedResponse;
-  if ('embedding' in titanResponse && titanResponse.embedding) {
+  if ('embedding' in response) {
     return {
       object: 'list',
       data: [
         {
           object: 'embedding',
-          embedding: titanResponse.embedding,
+          embedding: (response as BedrockTitanEmbedResponse).embedding,
           index: 0,
         },
       ],
       provider: BEDROCK,
       model,
       usage: {
-        prompt_tokens: titanResponse.inputTextTokenCount,
-        total_tokens: titanResponse.inputTextTokenCount,
+        prompt_tokens: (response as BedrockTitanEmbedResponse)
+          .inputTextTokenCount,
+        total_tokens: (response as BedrockTitanEmbedResponse)
+          .inputTextTokenCount,
       },
     };
-  }
-
-  if (titanResponse.embeddingsByType) {
-    const embeddingVector =
-      titanResponse.embeddingsByType.float ||
-      titanResponse.embeddingsByType.binary;
-    if (embeddingVector) {
-      return {
-        object: 'list',
-        data: [
-          {
-            object: 'embedding',
-            embedding: embeddingVector,
-            index: 0,
-          },
-        ],
-        provider: BEDROCK,
-        model,
-        usage: {
-          prompt_tokens: titanResponse.inputTextTokenCount,
-          total_tokens: titanResponse.inputTextTokenCount,
-        },
-      };
-    }
   }
 
   return generateInvalidProviderResponseError(response, BEDROCK);
