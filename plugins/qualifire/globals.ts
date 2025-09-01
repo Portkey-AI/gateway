@@ -1,7 +1,6 @@
 import { post } from '../utils';
 
-// export const BASE_URL = 'https://proxy.qualifire.ai/api/evaluation/evaluate';
-export const BASE_URL = 'http://localhost:8080/api/evaluation/evaluate';
+export const BASE_URL = 'https://proxy.qualifire.ai/api/evaluation/evaluate';
 
 interface AvailableTool {
   name: string;
