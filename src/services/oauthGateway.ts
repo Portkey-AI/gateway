@@ -2,14 +2,51 @@
  * @file src/services/oauthGateway.ts
  * Unified OAuth gateway service that handles both control plane and local OAuth operations
  */
+import crypto from 'crypto';
+import { env } from 'hono/adapter';
+import { Context } from 'hono';
+import * as oidc from 'openid-client';
 
 import { createLogger } from '../utils/logger';
-import { localOAuth } from './localOAuth';
+import { CacheService, getMcpServersCache, getOauthStore } from './cache';
+import { getServerConfig } from '../middlewares/mcp/hydrateContext';
 
 const logger = createLogger('OAuthGateway');
 
+const ACCESS_TOKEN_TTL_SECONDS = 3600; // 1 hour
+const REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 3600; // 30 days
+
+const nowSec = () => Math.floor(Date.now() / 1000);
+
+const b64url = (buf: Buffer) =>
+  buf
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
+
+const sha256b64url = (input: string) =>
+  b64url(crypto.createHash('sha256').update(input).digest());
+
+function verifyCodeChallenge(
+  codeVerifier: string,
+  codeChallenge: string,
+  method: string = 'S256'
+): boolean {
+  if (!codeVerifier || !codeChallenge) return false;
+  if (method === 'plain') {
+    return codeVerifier === codeChallenge;
+  }
+  return sha256b64url(codeVerifier) === codeChallenge;
+}
+
+export type GrantType =
+  | 'authorization_code'
+  | 'refresh_token'
+  | 'client_credentials';
+
 export interface TokenRequest {
-  grant_type: string;
+  grant_type: GrantType;
   client_id?: string;
   client_secret?: string;
   code?: string;
@@ -18,6 +55,25 @@ export interface TokenRequest {
   scope?: string;
 }
 
+export type OAuthError = {
+  error:
+    | 'invalid_request'
+    | 'invalid_grant'
+    | 'invalid_client'
+    | 'server_error';
+  error_description: string;
+};
+
+export interface TokenResponseSuccess {
+  access_token: string;
+  token_type: 'Bearer';
+  expires_in: number;
+  scope?: string;
+  refresh_token?: string;
+}
+
+export type TokenResponse = TokenResponseSuccess | OAuthError;
+
 export interface TokenIntrospectionResponse {
   active: boolean;
   scope?: string;
@@ -25,39 +81,156 @@ export interface TokenIntrospectionResponse {
   username?: string;
   exp?: number;
   iat?: number;
-  mcp_permissions?: {
-    servers: Record<
-      string,
-      {
-        allowed_tools?: string[] | null;
-        blocked_tools?: string[];
-        rate_limit?: {
-          requests: number;
-          window: number;
-        } | null;
-      }
-    >;
-  };
 }
 
-export interface ClientRegistration {
+export interface OAuthClient {
   client_name: string;
   scope?: string;
   redirect_uris?: string[];
-  grant_types?: string[];
-  token_endpoint_auth_method?: string;
+  grant_types?: GrantType[];
+  token_endpoint_auth_method?: 'none' | 'client_secret_post';
+  client_secret?: string;
+  client_uri?: string;
+  logo_uri?: string;
+  client_id?: string;
 }
+
+// Cache shapes
+interface StoredAccessToken {
+  client_id: string;
+  active: true;
+  scope?: string;
+  iat: number;
+  exp: number;
+  user_id?: string;
+}
+
+interface StoredRefreshToken {
+  client_id: string;
+  scope?: string;
+  iat: number;
+  exp: number;
+  access_tokens: string[];
+  user_id?: string;
+}
+
+interface StoredAuthCode {
+  client_id: string;
+  redirect_uri: string;
+  scope?: string;
+  code_challenge?: string;
+  code_challenge_method?: 'S256' | 'plain';
+  resource?: string;
+  user_id: string;
+  /** ms epoch */
+  expires: number;
+}
+
+const oauthStore: CacheService = getOauthStore();
 
 /**
  * Unified OAuth gateway that routes requests to either control plane or local service
  */
 export class OAuthGateway {
   private controlPlaneUrl: string | null;
-  private userAgent = 'Portkey-MCP-Gateway/0.1.0';
+  private c: Context;
+  constructor(c: Context) {
+    this.controlPlaneUrl = env(c).ALBUS_BASEPATH || null;
+    this.c = c;
+  }
 
-  constructor(controlPlaneUrl?: string | null) {
-    this.controlPlaneUrl =
-      controlPlaneUrl || process.env.ALBUS_BASEPATH || null;
+  private getEpochSeconds(): number {
+    return Math.floor(Date.now() / 1000);
+  }
+
+  private parseClientCredentials(
+    headers: Headers,
+    params: URLSearchParams
+  ): { clientId: string; clientSecret: string } {
+    let clientId = '';
+    let clientSecret = '';
+    const authHeader = headers.get('Authorization');
+    if (authHeader?.startsWith('Basic ')) {
+      const base64Credentials = authHeader.slice(6);
+      const credentials = Buffer.from(base64Credentials, 'base64').toString(
+        'utf-8'
+      );
+      [clientId, clientSecret] = credentials.split(':');
+    } else {
+      clientId = params.get('client_id') || '';
+      clientSecret = params.get('client_secret') || '';
+    }
+    return { clientId, clientSecret };
+  }
+
+  private async storeAccessToken(
+    clientId: string,
+    scope?: string,
+    userId?: string
+  ): Promise<{ token: string; expiresIn: number; iat: number; exp: number }> {
+    const token = `mcp_${crypto.randomBytes(32).toString('hex')}`;
+    const iat = nowSec();
+    const exp = iat + ACCESS_TOKEN_TTL_SECONDS;
+    await oauthStore.set<StoredAccessToken>(
+      token,
+      {
+        client_id: clientId,
+        active: true,
+        scope,
+        iat,
+        exp,
+        user_id: userId,
+      },
+      { namespace: 'tokens' }
+    );
+    return {
+      token,
+      expiresIn: ACCESS_TOKEN_TTL_SECONDS,
+      iat,
+      exp,
+    };
+  }
+
+  private async storeRefreshToken(
+    clientId: string,
+    scope: string | undefined,
+    initialAccessToken: string,
+    userId?: string
+  ): Promise<{ refreshToken: string; iat: number; exp: number }> {
+    const refreshToken = `mcp_refresh_${crypto.randomBytes(32).toString('hex')}`;
+    const iat = nowSec();
+    const exp = iat + REFRESH_TOKEN_TTL_SECONDS;
+    await oauthStore.set<StoredRefreshToken>(
+      refreshToken,
+      {
+        client_id: clientId,
+        scope,
+        iat,
+        exp,
+        access_tokens: [initialAccessToken],
+        user_id: userId,
+      },
+      { namespace: 'refresh_tokens' }
+    );
+    return { refreshToken, iat, exp };
+  }
+
+  private errorInvalidRequest(error_description: string) {
+    return { error: 'invalid_request', error_description };
+  }
+
+  private errorInvalidGrant(error_description: string) {
+    return { error: 'invalid_grant', error_description };
+  }
+
+  private errorInvalidClient(error_description: string) {
+    return { error: 'invalid_client', error_description };
+  }
+
+  private isPublicClient(client: any): boolean {
+    return (
+      client?.token_endpoint_auth_method === 'none' || !client?.client_secret
+    );
   }
 
   /**
@@ -70,23 +243,192 @@ export class OAuthGateway {
   /**
    * Handle token request
    */
-  async handleTokenRequest(params: URLSearchParams): Promise<any> {
-    if (!this.isUsingControlPlane) {
-      logger.debug('Using local OAuth service for token request');
-      return await localOAuth.handleTokenRequest(params);
+  async handleTokenRequest(
+    params: URLSearchParams,
+    headers: Headers
+  ): Promise<any> {
+    const { clientId, clientSecret } = this.parseClientCredentials(
+      headers,
+      params
+    );
+
+    const grantType = params.get('grant_type') as GrantType | null;
+
+    if (grantType === 'authorization_code') {
+      const code = params.get('code');
+      const redirectUri = params.get('redirect_uri');
+      const codeVerifier = params.get('code_verifier');
+      if (!code || !redirectUri) {
+        return this.errorInvalidRequest(
+          'Missing required parameters: code and redirect_uri are required'
+        );
+      }
+
+      const authCodeData = await oauthStore.get<StoredAuthCode>(
+        code,
+        'authorization_codes'
+      );
+      if (!authCodeData || authCodeData.expires < Date.now()) {
+        return this.errorInvalidGrant('Invalid or expired authorization code');
+      }
+
+      if (
+        authCodeData.client_id !== clientId ||
+        authCodeData.redirect_uri !== redirectUri
+      ) {
+        return this.errorInvalidGrant('Client or redirect_uri mismatch');
+      }
+
+      // Check if the client exists
+      const client = await oauthStore.get<OAuthClient>(clientId, 'clients');
+      if (!client) {
+        return this.errorInvalidClient('Client not found');
+      }
+
+      if (client.client_secret && client.client_secret !== clientSecret) {
+        return this.errorInvalidClient('Invalid client credentials');
+      }
+
+      if (this.isPublicClient(client) && !authCodeData.code_challenge) {
+        return this.errorInvalidRequest('PKCE required for public clients');
+      }
+
+      if (authCodeData.code_challenge) {
+        if (!codeVerifier) {
+          return {
+            error: 'invalid_request',
+            error_description: 'Code verifier required',
+          };
+        }
+        if (
+          !verifyCodeChallenge(
+            codeVerifier,
+            authCodeData.code_challenge,
+            authCodeData.code_challenge_method || 'S256'
+          )
+        ) {
+          return this.errorInvalidGrant('Invalid code verifier');
+        }
+      }
+
+      // Delete the authorization code
+      await oauthStore.delete(code, 'authorization_codes');
+
+      if (!authCodeData.user_id) {
+        logger.warn('No user ID found in authCodeData');
+        return this.errorInvalidGrant(
+          'User ID not found in authorization code'
+        );
+      }
+
+      // Use the scope from the authorization code, or default to allowed scopes
+      const tokenScope = authCodeData.scope || client.scope;
+
+      // Store access token
+      const access = await this.storeAccessToken(
+        clientId,
+        tokenScope,
+        authCodeData.user_id
+      );
+
+      // Store refresh token
+      const refresh = await this.storeRefreshToken(
+        clientId,
+        tokenScope,
+        access.token,
+        authCodeData.user_id
+      );
+
+      return {
+        access_token: access.token,
+        token_type: 'Bearer',
+        expires_in: access.expiresIn,
+        scope: tokenScope,
+        refresh_token: refresh.refreshToken,
+      };
     }
 
-    logger.debug('Proxying token request to control plane');
-    const response = await fetch(`${this.controlPlaneUrl}/oauth/token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': this.userAgent,
-      },
-      body: params.toString(),
-    });
+    if (grantType === 'refresh_token') {
+      const refreshToken = params.get('refresh_token');
+      if (!refreshToken) {
+        return this.errorInvalidRequest('Missing refresh_token parameter');
+      }
 
-    return await response.json();
+      const storedRefreshToken = await oauthStore.get<StoredRefreshToken>(
+        refreshToken,
+        'refresh_tokens'
+      );
+      if (!storedRefreshToken || storedRefreshToken.exp < nowSec()) {
+        return this.errorInvalidGrant('Invalid or expired refresh token');
+      }
+
+      // Enforce client authentication/match for refresh_token grant
+      const client = await oauthStore.get<OAuthClient>(
+        storedRefreshToken.client_id,
+        'clients'
+      );
+      if (!client) {
+        return this.errorInvalidClient('Client not found');
+      }
+      const isPublic = client.token_endpoint_auth_method === 'none';
+      if (!isPublic) {
+        if (!clientId || clientId !== storedRefreshToken.client_id) {
+          return this.errorInvalidClient('Client mismatch');
+        }
+        if (client.client_secret && client.client_secret !== clientSecret) {
+          return this.errorInvalidClient('Invalid client credentials');
+        }
+      }
+
+      const access = await this.storeAccessToken(
+        storedRefreshToken.client_id,
+        storedRefreshToken.scope,
+        storedRefreshToken.user_id
+      );
+
+      storedRefreshToken.access_tokens.push(access.token);
+      await oauthStore.set<StoredRefreshToken>(
+        refreshToken,
+        storedRefreshToken,
+        {
+          namespace: 'refresh_tokens',
+        }
+      );
+
+      return {
+        access_token: access.token,
+        token_type: 'Bearer',
+        expires_in: access.expiresIn,
+        scope: storedRefreshToken.scope,
+        refresh_token: refreshToken,
+      };
+    }
+
+    if (grantType === 'client_credentials') {
+      // Check if client exists
+      const client = await oauthStore.get<OAuthClient>(clientId, 'clients');
+      if (!client) {
+        return this.errorInvalidClient('Client not found');
+      }
+
+      if (client.client_secret && client.client_secret !== clientSecret) {
+        return this.errorInvalidClient('Invalid client credentials');
+      }
+
+      // Generate tokens
+
+      // Store access token
+      const access = await this.storeAccessToken(clientId, client.scope);
+
+      return {
+        access_token: access.token,
+        token_type: 'Bearer',
+        expires_in: access.expiresIn,
+        scope: client.scope,
+      };
+    }
+
+    return this.errorInvalidGrant('Unsupported grant type');
   }
 
   /**
@@ -94,116 +436,454 @@ export class OAuthGateway {
    */
   async introspectToken(
     token: string,
-    authHeader?: string
+    token_type_hint: 'access_token' | 'refresh_token' | ''
   ): Promise<TokenIntrospectionResponse> {
-    if (!this.isUsingControlPlane) {
-      logger.debug('Using local OAuth service for token introspection');
-      return await localOAuth.introspectToken(token);
-    }
+    if (!token) return { active: false };
 
-    logger.debug('Proxying introspection request to control plane');
-    const response = await fetch(`${this.controlPlaneUrl}/oauth/introspect`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': this.userAgent,
-        ...(authHeader && { Authorization: authHeader }),
-      },
-      body: new URLSearchParams({ token }).toString(),
-    });
+    const fromAccess =
+      !token_type_hint || token_type_hint === 'access_token'
+        ? await oauthStore.get<StoredAccessToken>(token, 'tokens')
+        : null;
+    const fromRefresh =
+      !fromAccess && (!token_type_hint || token_type_hint === 'refresh_token')
+        ? await oauthStore.get<StoredRefreshToken>(token, 'refresh_tokens')
+        : null;
+    const tok = (fromAccess || fromRefresh) as
+      | StoredAccessToken
+      | StoredRefreshToken
+      | null;
+    if (!tok) return { active: false };
 
-    if (!response.ok) {
-      logger.error(`Token introspection failed: ${response.status}`);
-      return { active: false };
-    }
+    const exp = 'exp' in tok ? tok.exp : undefined;
+    if ((exp ?? 0) < nowSec()) return { active: false };
 
-    return await response.json();
+    const client = await oauthStore.get<OAuthClient>(tok.client_id, 'clients');
+    if (!client) return { active: false };
+
+    return {
+      active: true,
+      scope: tok.scope,
+      client_id: tok.client_id,
+      username: tok.user_id,
+      exp: tok.exp,
+      iat: tok.iat,
+    };
   }
 
   /**
    * Register client
    */
-  async registerClient(clientData: ClientRegistration): Promise<any> {
-    if (!this.isUsingControlPlane) {
-      logger.debug('Using local OAuth service for client registration');
-      return await localOAuth.registerClient(clientData);
+  async registerClient(
+    clientData: OAuthClient,
+    clientId?: string
+  ): Promise<any> {
+    logger.debug(`Registering client`, { clientData, clientId });
+
+    const id =
+      clientId || `mcp_client_${crypto.randomBytes(16).toString('hex')}`;
+
+    const existing = await oauthStore.get<OAuthClient>(id, 'clients');
+    if (existing) {
+      if (clientData.redirect_uris?.length) {
+        const merged = Array.from(
+          new Set([
+            ...(existing.redirect_uris || []),
+            ...clientData.redirect_uris,
+          ])
+        );
+        await oauthStore.set<OAuthClient>(
+          id,
+          { ...existing, redirect_uris: merged },
+          { namespace: 'clients' }
+        );
+      }
+
+      return (await oauthStore.get<OAuthClient>(id, 'clients'))!;
     }
 
-    logger.debug('Proxying registration request to control plane');
-    const response = await fetch(`${this.controlPlaneUrl}/oauth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': this.userAgent,
-      },
-      body: JSON.stringify(clientData),
-    });
+    const isPublicClient =
+      clientData.token_endpoint_auth_method === 'none' ||
+      (clientData.grant_types?.includes('authorization_code') &&
+        !clientData.grant_types?.includes('client_credentials'));
 
-    return await response.json();
+    const newClient: OAuthClient = {
+      client_id: id,
+      client_name: clientData.client_name,
+      scope: clientData.scope,
+      redirect_uris: clientData.redirect_uris,
+      grant_types: clientData.grant_types || ['client_credentials'],
+      token_endpoint_auth_method: isPublicClient
+        ? 'none'
+        : 'client_secret_post',
+      client_secret: isPublicClient
+        ? undefined
+        : `mcp_secret_${crypto.randomBytes(32).toString('hex')}`,
+      client_uri: clientData.client_uri,
+      logo_uri: clientData.logo_uri,
+    };
+
+    await oauthStore.set<OAuthClient>(id, newClient, {
+      namespace: 'clients',
+    });
+    logger.debug(`Registered client`, { id });
+    return newClient;
   }
 
   /**
    * Revoke token
    */
-  async revokeToken(token: string, authHeader?: string): Promise<void> {
-    if (!this.isUsingControlPlane) {
-      logger.debug('Using local OAuth service for revocation');
-      await localOAuth.revokeToken(token);
+  async revokeToken(
+    token: string,
+    token_type_hint: string,
+    client_id: string,
+    authHeader?: string
+  ): Promise<void> {
+    let clientId, clientSecret;
+
+    if (authHeader?.startsWith('Basic ')) {
+      const base64Credentials = authHeader.slice(6);
+      const credentials = Buffer.from(base64Credentials, 'base64').toString(
+        'utf-8'
+      );
+      [clientId, clientSecret] = credentials.split(':');
+
+      const client = await oauthStore.get<OAuthClient>(clientId, 'clients');
+      if (!client || client.client_secret !== clientSecret) return;
+    } else if (client_id) {
+      clientId = client_id;
+      const client = await oauthStore.get<OAuthClient>(clientId, 'clients');
+      if (!client || client.token_endpoint_auth_method !== 'none') return;
+    } else {
       return;
     }
 
-    logger.debug('Proxying revocation request to control plane');
-    await fetch(`${this.controlPlaneUrl}/oauth/revoke`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': this.userAgent,
-        ...(authHeader && { Authorization: authHeader }),
-      },
-      body: new URLSearchParams({ token }).toString(),
-    });
+    if (!token) return;
+
+    const tryRevokeAccess = async () => {
+      const tokenData = await oauthStore.get<StoredAccessToken>(
+        token,
+        'tokens'
+      );
+      if (tokenData && tokenData.client_id === clientId) {
+        await oauthStore.delete(token, 'tokens');
+        return true;
+      }
+      return false;
+    };
+
+    const tryRevokeRefresh = async () => {
+      const refresh = await oauthStore.get<StoredRefreshToken>(
+        token,
+        'refresh_tokens'
+      );
+      if (refresh && refresh.client_id === clientId) {
+        for (const at of refresh.access_tokens || [])
+          await oauthStore.delete(at, 'tokens');
+        await oauthStore.delete(token, 'refresh_tokens');
+        return true;
+      }
+      return false;
+    };
+
+    if (token_type_hint === 'access_token') await tryRevokeAccess();
+    else if (token_type_hint === 'refresh_token') await tryRevokeRefresh();
+    else (await tryRevokeAccess()) || (await tryRevokeRefresh());
   }
 
-  /**
-   * Get authorization URL for browser flow (local only)
-   */
-  generateAuthorizationUrl(params: {
-    client_id: string;
-    redirect_uri: string;
-    state?: string;
-    scope?: string;
-    code_challenge?: string;
-    code_challenge_method?: string;
-  }): string | null {
-    if (this.isUsingControlPlane) {
-      // For control plane, just construct the URL
-      const query = new URLSearchParams({
-        response_type: 'code',
-        ...params,
-      });
-      return `${this.controlPlaneUrl}/oauth/authorize?${query}`;
-    }
+  async startAuthorization(): Promise<any> {
+    // TODO: Implement authorization request to control plane
+    // For now, we'll show an HTML page with a form to submit the authorization request
+    const params = this.c.req.query();
+    const clientId = params.client_id;
+    const redirectUri = params.redirect_uri;
+    const state = params.state;
+    const scope = params.scope || 'mcp:*';
+    const codeChallenge = params.code_challenge;
+    const codeChallengeMethod = params.code_challenge_method;
+    const resourceUrl = params.resource;
 
-    // For local, we need to know the gateway URL
-    const baseUrl = process.env.GATEWAY_URL || 'http://localhost:8788';
-    const authUrl = new URL(`${baseUrl}/oauth/authorize`);
-
-    authUrl.searchParams.set('response_type', 'code');
-    authUrl.searchParams.set('client_id', params.client_id);
-    authUrl.searchParams.set('redirect_uri', params.redirect_uri);
-    if (params.state) authUrl.searchParams.set('state', params.state);
-    if (params.scope) authUrl.searchParams.set('scope', params.scope);
-    if (params.code_challenge) {
-      authUrl.searchParams.set('code_challenge', params.code_challenge);
-      authUrl.searchParams.set(
-        'code_challenge_method',
-        params.code_challenge_method || 'S256'
+    if (!resourceUrl) {
+      return this.c.json(
+        this.errorInvalidRequest('Missing resource parameter'),
+        400
       );
     }
 
-    return authUrl.toString();
+    const client = await oauthStore.get<OAuthClient>(clientId, 'clients');
+    if (!client)
+      return this.c.json(this.errorInvalidClient('Client not found'), 400);
+
+    const user_id = 'testuser@portkey.ai';
+
+    let resourceAuthUrl = null;
+    const upstream = await this.checkUpstreamAuth(resourceUrl, user_id);
+    if (upstream.status === 'auth_needed')
+      resourceAuthUrl = upstream.authorizationUrl;
+
+    const authorizationUrl = `/oauth/authorize`;
+
+    return this.c.html(`
+      <html>
+        <body>
+          <h1>Authorization Request</h1>
+          <p>Requesting access to: ${Array.from(resourceUrl.split('/')).at(-2)}</p>
+          <p>Redirect URI: ${redirectUri}</p>
+          ${resourceAuthUrl ? `<p>Please auth to linear first: <a href="${resourceAuthUrl}" target="_blank">${resourceAuthUrl}</a></p>` : ''}
+          <form action="${authorizationUrl}" method="post">
+            <input type="hidden" name="user_id" value="testuser@portkey.ai" />
+            <input type="hidden" name="client_id" value="${clientId}" />
+            <input type="hidden" name="redirect_uri" value="${redirectUri}" />
+            <input type="hidden" name="state" value="${state}" />
+            <input type="hidden" name="scope" value="${scope}" />
+            <input type="hidden" name="code_challenge" value="${codeChallenge}" />
+            <input type="hidden" name="code_challenge_method" value="${codeChallengeMethod}" />
+            <input type="hidden" name="resource" value="${resourceUrl}" />
+            <button type="submit" name="action" value="deny">Deny</button>
+            <button type="submit" name="action" value="approve">
+              🔒 Approve
+            </button>
+          </form>
+          <script></script>
+        </body>
+      </html>
+    `);
+  }
+
+  async completeAuthorization(): Promise<any> {
+    const formData = await this.c.req.formData();
+    const action = formData.get('action');
+    const clientId = formData.get('client_id') as string;
+    const redirectUri = formData.get('redirect_uri') as string;
+    const state = formData.get('state') as string;
+    const scope = (formData.get('scope') as string) || 'mcp:servers:read';
+    const codeChallenge = formData.get('code_challenge') as string;
+    const codeChallengeMethod = formData.get('code_challenge_method') as
+      | 'S256'
+      | 'plain'
+      | undefined;
+    const resourceUrl = formData.get('resource') as string;
+    const user_id = formData.get('user_id') as string;
+
+    if (action === 'deny') {
+      // User denied access
+      const denyUrl = new URL(redirectUri);
+      denyUrl.searchParams.set('error', 'access_denied');
+      if (state) denyUrl.searchParams.set('state', state);
+      return this.c.redirect(denyUrl.toString(), 302);
+    }
+
+    // Create authorization code
+    const authCode = `authz_${crypto.randomBytes(32).toString('hex')}`;
+
+    // Store this authCode to cache mapped to client info
+    await oauthStore.set<StoredAuthCode>(
+      authCode,
+      {
+        client_id: clientId,
+        redirect_uri: redirectUri,
+        scope: scope,
+        code_challenge: codeChallenge,
+        code_challenge_method: codeChallengeMethod,
+        resource: resourceUrl,
+        user_id: user_id,
+        expires: Date.now() + 10 * 60 * 1000, // 10 minutes
+      },
+      { namespace: 'authorization_codes', ttl: 10 * 60 * 1000 }
+    );
+
+    // User approved access
+    const ok = new URL(redirectUri);
+    ok.searchParams.set('code', authCode);
+    if (state) ok.searchParams.set('state', state);
+    return this.c.redirect(ok.toString(), 302);
+  }
+
+  private async buildUpstreamAuthRedirect(
+    serverUrlOrigin: string,
+    redirectUri: string,
+    scope: string | undefined,
+    username: string,
+    serverId: string,
+    existingClientInfo?: any
+  ): Promise<string> {
+    const mcpServerCache = getMcpServersCache();
+
+    let config: oidc.Configuration;
+    let clientInfo: any;
+
+    if (existingClientInfo?.client_id) {
+      clientInfo = existingClientInfo;
+      config = await oidc.discovery(
+        new URL(serverUrlOrigin),
+        clientInfo.client_id
+      );
+    } else {
+      const registration = await oidc.dynamicClientRegistration(
+        new URL(serverUrlOrigin),
+        {
+          client_name: 'Portkey MCP Gateway',
+          redirect_uris: [redirectUri],
+          grant_types: ['authorization_code', 'refresh_token'],
+          response_types: ['code'],
+          token_endpoint_auth_method: 'none',
+          client_uri: 'https://portkey.ai',
+          logo_uri: 'https://cfassets.portkey.ai/logo%2Fdew-color.png',
+          software_version: '0.5.1',
+          software_id: 'portkey-mcp-gateway',
+        },
+        oidc.None(),
+        { algorithm: 'oauth2' }
+      );
+      config = registration;
+      clientInfo = registration.clientMetadata();
+      logger.debug('Client info from dynamic registration', clientInfo);
+    }
+
+    // Always persist durable client info keyed by user+server for reuse
+    const durableKey = `${username}::${serverId}`;
+    await mcpServerCache.set<OAuthClient>(durableKey, clientInfo, {
+      namespace: 'client_info',
+    });
+
+    const state = oidc.randomState();
+    const codeVerifier = oidc.randomPKCECodeVerifier();
+    const codeChallenge = await oidc.calculatePKCECodeChallenge(codeVerifier);
+
+    // Persist round-trip state mapping with context and the client info under state
+    await mcpServerCache.set<OAuthClient>(state, clientInfo, {
+      namespace: 'client_info',
+    });
+    await mcpServerCache.set(
+      state,
+      { codeVerifier, redirectUrl: redirectUri, username, serverId },
+      { namespace: 'state' }
+    );
+
+    const authorizationUrl = oidc.buildAuthorizationUrl(config, {
+      redirect_uri: redirectUri,
+      scope: scope || '',
+      code_challenge: codeChallenge,
+      code_challenge_method: 'S256',
+      state,
+    });
+
+    return authorizationUrl.toString();
+  }
+
+  async checkUpstreamAuth(resourceUrl: string, username: string): Promise<any> {
+    const serverId = Array.from(resourceUrl.split('/')).at(-2);
+    if (!serverId) return false;
+
+    const serverConfig = await getServerConfig(serverId, this.c);
+    if (!serverConfig) return false;
+
+    if (serverConfig.auth_type != 'oauth_auto') {
+      return { status: 'auth_not_needed' };
+    }
+
+    // Check if the server already has tokens for it
+    const mcpServerCache = getMcpServersCache();
+    const tokens = await mcpServerCache.get<StoredAccessToken>(
+      `${username}::${serverId}`,
+      'tokens'
+    );
+    if (tokens) return { status: 'auth_not_needed' };
+
+    const clientInfo = await mcpServerCache.get<OAuthClient>(
+      `${username}::${serverId}`,
+      'client_info'
+    );
+    const serverUrlOrigin = new URL(serverConfig.url).origin;
+    const baseUrl =
+      process.env.BASE_URL || `http://localhost:${process.env.PORT || 8788}`;
+    const redirectUrl = `${baseUrl}/oauth/upstream-callback`;
+
+    const authorizationUrl = await this.buildUpstreamAuthRedirect(
+      serverUrlOrigin,
+      clientInfo?.redirect_uris?.[0] || redirectUrl,
+      clientInfo?.scope,
+      username,
+      serverId,
+      clientInfo
+    );
+
+    return {
+      status: 'auth_needed',
+      authorizationUrl,
+    };
+  }
+
+  async completeUpstreamAuth(): Promise<any> {
+    const code = this.c.req.query('code');
+    const state = this.c.req.query('state');
+    const error = this.c.req.query('error');
+
+    logger.debug('Received upstream OAuth callback', {
+      hasCode: code,
+      hasState: state,
+      error,
+      url: this.c.req.url,
+    });
+
+    if (!state)
+      return {
+        error: 'invalid_state',
+        error_description: 'Invalid state in upstream callback',
+      };
+
+    const mcpServerCache = getMcpServersCache();
+    const authState = await mcpServerCache.get(state, 'state');
+    if (!authState)
+      return {
+        error: 'invalid_state',
+        error_description: 'Auth state not found in cache',
+      };
+
+    const clientInfo = await mcpServerCache.get(state, 'client_info');
+    if (!clientInfo)
+      return {
+        error: 'invalid_state',
+        error_description: 'Client info not found in cache',
+      };
+
+    const serverIdFromState = authState.serverId;
+    const serverConfig = await getServerConfig(serverIdFromState, this.c);
+    if (!serverConfig)
+      return {
+        error: 'invalid_state',
+        error_description: 'Server config not found',
+      };
+
+    const serverUrlOrigin = new URL(serverConfig.url).origin;
+    const config: oidc.Configuration = await oidc.discovery(
+      new URL(serverUrlOrigin),
+      clientInfo.client_id,
+      clientInfo,
+      oidc.None(),
+      { algorithm: 'oauth2' }
+    );
+
+    let tokenResponse;
+    try {
+      // Remove the state parameter from the request URL
+      const url = new URL(this.c.req.url);
+      url.searchParams.delete('state');
+      tokenResponse = await oidc.authorizationCodeGrant(config, url, {
+        pkceCodeVerifier: authState.codeVerifier,
+      });
+    } catch (e) {
+      return {
+        error: 'invalid_state',
+        error_description: 'Error during token exchange',
+      };
+    }
+
+    // Store the token response in the cache under user+server key for reuse
+    const userServerKey = `${authState.username}::${authState.serverId}`;
+    await mcpServerCache.set(userServerKey, tokenResponse, {
+      namespace: 'tokens',
+    });
+
+    return { status: 'auth_completed' };
   }
 }
-
-// Create a singleton instance for convenience
-export const oauthGateway = new OAuthGateway();

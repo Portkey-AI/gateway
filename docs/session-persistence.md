@@ -44,13 +44,19 @@ Environment variables:
 
 ## Migration to Redis
 
-To migrate to Redis, implement the `RedisSessionStore` interface:
+To migrate to Redis, configure the cache service in `src/services/cache/index.ts`:
 
 ```typescript
-const redisStore = new RedisSessionStoreImpl({
-  host: 'redis.example.com',
-  port: 6379
-});
+export function getSessionCache(): CacheService {
+  if (!sessionCache) {
+    sessionCache = new CacheService({
+      backend: 'redis',
+      redisUrl: 'redis://redis.example.com:6379',
+      defaultTtl: 24 * 60 * 60 * 1000, // 1 day
+    });
+  }
+  return sessionCache;
+}
 ```
 
 ## Benefits

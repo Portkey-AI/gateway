@@ -1,14 +1,13 @@
 /**
  * @file src/services/sessionStore.ts
- * Persistent session storage with JSON file backend
- * Designed to be easily migrated to Redis later
+ * Persistent session storage using unified cache service
+ * Supports both in-memory and file-based backends, ready for Redis
  */
 
-import { promises as fs } from 'fs';
-import { join } from 'path';
 import { MCPSession, TransportType, TransportCapabilities } from './mcpSession';
 import { ServerConfig } from '../types/mcp';
 import { createLogger } from '../utils/logger';
+import { getSessionCache } from './cache';
 
 const logger = createLogger('SessionStore');
 
@@ -20,378 +19,307 @@ export interface SessionData {
   transportCapabilities?: TransportCapabilities;
   isInitialized: boolean;
   clientTransportType?: TransportType;
-  metrics: {
-    requests: number;
-    toolCalls: number;
-    errors: number;
-  };
   config: ServerConfig;
   // Token expiration for session lifecycle
   tokenExpiresAt?: number;
+  gatewayToken?: any;
+  upstreamSessionId?: string;
 }
 
 export interface SessionStoreOptions {
-  dataDir?: string;
-  persistInterval?: number; // How often to save to disk (ms)
   maxAge?: number; // Max age for sessions (ms)
 }
 
+const SESSIONS_NAMESPACE = 'sessions';
+
 export class SessionStore {
-  private sessions = new Map<string, MCPSession>();
-  private persistTimer?: NodeJS.Timeout;
-  private readonly dataFile: string;
-  private readonly maxAge: number;
-  private readonly persistInterval: number;
+  private cache = getSessionCache();
+  private activeSessionsMap = new Map<string, MCPSession>(); // Only for active connections
 
   constructor(options: SessionStoreOptions = {}) {
-    const dataDir = options.dataDir || join(process.cwd(), 'data');
-    this.dataFile = join(dataDir, 'sessions.json');
-    this.maxAge = options.maxAge || 30 * 60 * 1000; // 30 minutes default
-    this.persistInterval = options.persistInterval || 30 * 1000; // 30 seconds default
-
-    // Ensure data directory exists
-    this.ensureDataDir(dataDir);
-
-    // Start periodic persistence
-    this.startPersistence();
-  }
-
-  private async ensureDataDir(dataDir: string) {
-    try {
-      await fs.mkdir(dataDir, { recursive: true });
-    } catch (error) {
-      logger.error('Failed to create data directory', error);
-    }
-  }
-
-  /**
-   * Load session metadata from disk on startup as dormant sessions
-   */
-  async loadSessions(): Promise<void> {
-    try {
-      const data = await fs.readFile(this.dataFile, 'utf-8');
-      const sessionData: SessionData[] = JSON.parse(data);
-
-      logger.critical(
-        `Found ${sessionData.length} session records from before restart`
-      );
-
-      // Load sessions as dormant (metadata only, not active connections)
-      for (const data of sessionData) {
-        if (Date.now() - data.lastActivity < this.maxAge) {
-          logger.debug(
-            `Loading dormant session ${data.id} for server ${data.serverId}`
-          );
-
-          try {
-            const session = new MCPSession(data.config);
-
-            // Restore session data but don't initialize connections
-            await session.restoreFromData({
-              id: data.id,
-              createdAt: data.createdAt,
-              lastActivity: data.lastActivity,
-              metrics: data.metrics,
-              transportCapabilities: data.transportCapabilities,
-              clientTransportType: data.clientTransportType,
-            });
-
-            // Store as dormant session (not initialized, waiting for client reconnection)
-            this.sessions.set(data.id, session);
-            logger.debug(
-              `Dormant session ${data.id} loaded - waiting for client reconnection`
-            );
-          } catch (error) {
-            logger.error(`Failed to load dormant session ${data.id}`, error);
-          }
-        } else {
-          logger.debug(`Expired session ${data.id} will be cleaned up`);
-        }
-      }
-
-      logger.critical(
-        `Server restart completed. ${this.sessions.size} dormant sessions available for reconnection.`
-      );
-    } catch (error) {
-      if ((error as any).code === 'ENOENT') {
-        logger.debug('No existing session file found, starting fresh');
-      } else {
-        logger.error('Failed to load session metadata', error);
-      }
-    }
+    // Note: Cleanup is handled by the underlying cache backend automatically
+    // Active sessions are validated on access, so no periodic cleanup needed
   }
 
   /**
    * Get available session metadata for restoration (without creating active session)
    */
-  getSessionMetadata(sessionId: string): SessionData | null {
-    // Load from file and return metadata if exists and not expired
-    try {
-      const data = require('fs').readFileSync(this.dataFile, 'utf-8');
-      const sessionData: SessionData[] = JSON.parse(data);
-
-      const session = sessionData.find((s) => s.id === sessionId);
-      if (session && Date.now() - session.lastActivity < this.maxAge) {
-        return session;
-      }
-    } catch (error) {
-      // File doesn't exist or other error
-    }
-
-    return null;
+  async getSessionMetadata(sessionId: string): Promise<SessionData | null> {
+    // Cache already handles expiration based on TTL
+    return await this.cache.get<SessionData>(sessionId, SESSIONS_NAMESPACE);
   }
 
   /**
-   * Save current sessions to disk
+   * Save session metadata to cache
    */
-  async saveSessions(): Promise<void> {
-    try {
-      const sessionData: SessionData[] = [];
+  private async saveSessionMetadata(session: MCPSession): Promise<void> {
+    const tokenExpiration = session.getTokenExpiration();
+    const sessionData: SessionData = {
+      id: session.id,
+      serverId: session.config.serverId,
+      createdAt: session.createdAt,
+      lastActivity: session.lastActivity,
+      transportCapabilities: session.getTransportCapabilities(),
+      isInitialized: session.isInitialized,
+      clientTransportType: session.getClientTransportType(),
+      config: session.config,
+      tokenExpiresAt: tokenExpiration.expiresAt,
+      gatewayToken: session.gatewayToken,
+      upstreamSessionId: session.upstreamSessionId,
+    };
 
-      for (const [id, session] of this.sessions.entries()) {
-        // Only save sessions that aren't expired
-        if (Date.now() - session.lastActivity < this.maxAge) {
-          const tokenExpiration = session.getTokenExpiration();
-          sessionData.push({
-            id: session.id,
-            serverId: session.config.serverId,
-            createdAt: session.createdAt,
-            lastActivity: session.lastActivity,
-            transportCapabilities: session.getTransportCapabilities(),
-            isInitialized: session.isInitialized,
-            clientTransportType: session.getClientTransportType(),
-            metrics: session.metrics,
-            config: session.config,
-            // Include token expiration if present
-            tokenExpiresAt: tokenExpiration.expiresAt,
-          });
-        }
+    // Save with TTL - cache handles expiration automatically
+    await this.cache.set(session.id, sessionData, {
+      namespace: SESSIONS_NAMESPACE,
+    });
+  }
+
+  /**
+   * Save all active sessions to cache
+   */
+  async saveActiveSessions(): Promise<void> {
+    try {
+      const savePromises: Promise<void>[] = [];
+
+      // Only save currently active sessions
+      for (const [id, session] of this.activeSessionsMap.entries()) {
+        savePromises.push(this.saveSessionMetadata(session));
       }
 
-      await fs.writeFile(this.dataFile, JSON.stringify(sessionData, null, 2));
-      logger.debug(`Saved ${sessionData.length} sessions to disk`);
+      await Promise.all(savePromises);
+      logger.debug(`Saved ${savePromises.length} active sessions to cache`);
     } catch (error) {
-      logger.error('Failed to save sessions', error);
+      logger.error('Failed to save active sessions', error);
     }
   }
 
   /**
-   * Start periodic persistence to disk
-   */
-  private startPersistence(): void {
-    this.persistTimer = setInterval(async () => {
-      await this.saveSessions();
-      await this.cleanup();
-    }, this.persistInterval);
-  }
-
-  /**
-   * Stop periodic persistence
+   * Stop the session store
    */
   async stop(): Promise<void> {
-    if (this.persistTimer) {
-      clearInterval(this.persistTimer);
-      this.persistTimer = undefined;
+    // Save all active sessions one final time
+    await this.saveActiveSessions();
+
+    // Close active sessions
+    for (const session of this.activeSessionsMap.values()) {
+      try {
+        await session.close();
+      } catch (error) {
+        logger.error(`Error closing session ${session.id}`, error);
+      }
     }
 
-    // Save one final time
-    await this.saveSessions();
+    // Note: Don't close the cache here as it's shared across the application
+    // Cache cleanup is handled by the cache backend itself
   }
 
   /**
    * Get a session by ID
    */
-  get(sessionId: string): MCPSession | undefined {
-    const session = this.sessions.get(sessionId);
-    logger.debug(
-      `get(${sessionId}) - found: ${!!session}, total sessions: ${this.sessions.size}`
-    );
+  async get(sessionId: string): Promise<MCPSession | undefined> {
+    // First check active sessions
+    let session = this.activeSessionsMap.get(sessionId);
+
     if (session) {
-      // Update last activity when accessed
+      logger.debug(`Found active session ${sessionId}`);
       session.lastActivity = Date.now();
-      logger.debug(
-        `Session ${sessionId} state: ${(session as any).getState()}`
-      );
+      // Update cache with new last activity
+      await this.saveSessionMetadata(session);
+      return session;
     }
+
+    // Try to restore from cache
+    const sessionData = await this.cache.get<SessionData>(
+      sessionId,
+      SESSIONS_NAMESPACE
+    );
+    if (!sessionData) {
+      logger.debug(`Session ${sessionId} not found in cache`);
+      return undefined;
+    }
+
+    // Restore dormant session
+    logger.debug(`Restoring dormant session ${sessionId} from cache`);
+    session = new MCPSession({
+      config: sessionData.config,
+      sessionId: sessionId,
+      gatewayToken: sessionData.gatewayToken,
+      upstreamSessionId: sessionData.upstreamSessionId,
+    });
+
+    await session.restoreFromData({
+      id: sessionData.id,
+      createdAt: sessionData.createdAt,
+      lastActivity: Date.now(), // Update activity time
+      transportCapabilities: sessionData.transportCapabilities,
+      clientTransportType: sessionData.clientTransportType,
+      tokenExpiresAt: sessionData.tokenExpiresAt,
+      upstreamSessionId: sessionData.upstreamSessionId,
+    });
+
+    // Add to active sessions
+    this.activeSessionsMap.set(sessionId, session);
+
+    // Update cache with new activity time
+    await this.saveSessionMetadata(session);
+
     return session;
   }
 
   /**
    * Set a session
    */
-  set(sessionId: string, session: MCPSession): void {
-    this.sessions.set(sessionId, session);
+  async set(sessionId: string, session: MCPSession): Promise<void> {
+    // Add to active sessions
+    this.activeSessionsMap.set(sessionId, session);
     logger.debug(
-      `set(${sessionId}) - total sessions now: ${this.sessions.size}`
+      `set(${sessionId}) - active sessions: ${this.activeSessionsMap.size}`
     );
+
+    // Save to cache immediately
+    await this.saveSessionMetadata(session);
   }
 
   /**
    * Delete a session
    */
-  delete(sessionId: string): boolean {
-    return this.sessions.delete(sessionId);
+  async delete(sessionId: string): Promise<boolean> {
+    // Remove from active sessions
+    const wasActive = this.activeSessionsMap.delete(sessionId);
+
+    // Always try to delete from cache (might be dormant)
+    const wasInCache = await this.cache.delete(sessionId, SESSIONS_NAMESPACE);
+
+    return wasActive || wasInCache;
   }
 
   /**
    * Get all session IDs
    */
-  keys(): IterableIterator<string> {
-    return this.sessions.keys();
+  async keys(): Promise<string[]> {
+    // Get all keys from cache
+    const cachedKeys = await this.cache.keys(SESSIONS_NAMESPACE);
+    // Also include active sessions that might not be persisted yet
+    const activeKeys = Array.from(this.activeSessionsMap.keys());
+    // Combine and deduplicate
+    return [...new Set([...cachedKeys, ...activeKeys])];
   }
 
   /**
-   * Get all sessions
+   * Get all active sessions
    */
   values(): IterableIterator<MCPSession> {
-    return this.sessions.values();
+    return this.activeSessionsMap.values();
   }
 
   /**
-   * Get all session entries
+   * Get all active session entries
    */
   entries(): IterableIterator<[string, MCPSession]> {
-    return this.sessions.entries();
+    return this.activeSessionsMap.entries();
   }
 
   /**
-   * Get session count
+   * Get total session count (active + dormant)
    */
-  get size(): number {
-    return this.sessions.size;
+  async getTotalSize(): Promise<number> {
+    const cachedKeys = await this.cache.keys(SESSIONS_NAMESPACE);
+    return cachedKeys.length;
   }
 
   /**
-   * Clean up expired sessions
+   * Get active session count
+   */
+  get activeSize(): number {
+    return this.activeSessionsMap.size;
+  }
+
+  /**
+   * Manual cleanup of expired active sessions
+   * Note: This is typically not needed as sessions are validated on access.
+   * Cache handles cleanup of dormant sessions automatically via TTL.
+   * This method is kept for manual cleanup if needed.
    */
   async cleanup(): Promise<void> {
-    const now = Date.now();
     const expiredSessions: string[] = [];
 
-    for (const [id, session] of this.sessions.entries()) {
-      const isAgeExpired = now - session.lastActivity > this.maxAge;
-      const isTokenExpired = session.isTokenExpired();
-
-      if (isAgeExpired || isTokenExpired) {
+    // Only check active sessions for token expiration
+    for (const [id, session] of this.activeSessionsMap.entries()) {
+      if (session.isTokenExpired()) {
         expiredSessions.push(id);
-
-        if (isTokenExpired) {
-          logger.debug(
-            `Session ${id} marked for removal due to token expiration`
-          );
-        } else {
-          logger.debug(
-            `Session ${id} marked for removal due to age expiration`
-          );
-        }
+        logger.debug(
+          `Active session ${id} marked for removal due to token expiration`
+        );
       }
     }
 
+    // Remove expired active sessions
     for (const id of expiredSessions) {
-      const session = this.sessions.get(id);
+      const session = this.activeSessionsMap.get(id);
       if (session) {
-        logger.debug(`Removing expired session: ${id}`);
+        logger.debug(`Removing expired active session: ${id}`);
         try {
           await session.close();
         } catch (error) {
           logger.error(`Error closing session ${id}`, error);
         } finally {
-          this.sessions.delete(id);
+          this.activeSessionsMap.delete(id);
+          // Note: Cache will auto-expire based on TTL
         }
       }
     }
 
     if (expiredSessions.length > 0) {
       logger.info(
-        `Cleanup: Removed ${expiredSessions.length} expired sessions, ${this.sessions.size} remaining`
+        `Cleanup: Removed ${expiredSessions.length} expired active sessions, ${this.activeSessionsMap.size} active remaining`
       );
     }
   }
 
   /**
-   * Get active sessions (those accessed recently)
+   * Get active sessions (those currently in memory)
    */
-  getActiveSessions(activeThreshold: number = 5 * 60 * 1000): MCPSession[] {
-    const now = Date.now();
-    return Array.from(this.sessions.values()).filter(
-      (session) => now - session.lastActivity < activeThreshold
-    );
+  getActiveSessions(): MCPSession[] {
+    return Array.from(this.activeSessionsMap.values());
   }
 
   /**
    * Get session stats
    */
-  getStats() {
+  async getStats() {
     const activeSessions = this.getActiveSessions();
-    const totalRequests = Array.from(this.sessions.values()).reduce(
-      (sum, session) => sum + session.metrics.requests,
-      0
-    );
-    const totalToolCalls = Array.from(this.sessions.values()).reduce(
-      (sum, session) => sum + session.metrics.toolCalls,
-      0
-    );
-    const totalErrors = Array.from(this.sessions.values()).reduce(
-      (sum, session) => sum + session.metrics.errors,
-      0
-    );
+
+    // Get cache stats for complete picture
+    const cacheStats = await this.cache.getStats(SESSIONS_NAMESPACE);
+    const totalSessions = await this.getTotalSize();
 
     return {
-      total: this.sessions.size,
-      active: activeSessions.length,
-      metrics: {
-        totalRequests,
-        totalToolCalls,
-        totalErrors,
+      sessions: {
+        total: totalSessions,
+        active: activeSessions.length,
+        dormant: totalSessions - activeSessions.length,
+      },
+      cache: {
+        size: cacheStats.size,
+        hits: cacheStats.hits,
+        misses: cacheStats.misses,
+        expired: cacheStats.expired,
       },
     };
   }
 }
 
-/**
- * Redis-compatible interface for future migration
- * This interface ensures easy migration to Redis later
- */
-export interface RedisSessionStore {
-  get(sessionId: string): Promise<SessionData | null>;
-  set(sessionId: string, sessionData: SessionData, ttl?: number): Promise<void>;
-  delete(sessionId: string): Promise<boolean>;
-  keys(pattern?: string): Promise<string[]>;
-  cleanup(): Promise<void>;
-  getStats(): Promise<any>;
-}
+// Create singleton instance
+let sessionStoreInstance: SessionStore | null = null;
 
 /**
- * Redis implementation placeholder
- * Implement this when migrating to Redis
+ * Get or create the singleton SessionStore instance
  */
-export class RedisSessionStoreImpl implements RedisSessionStore {
-  // TODO: Implement Redis version
-  async get(sessionId: string): Promise<SessionData | null> {
-    throw new Error('Redis implementation not yet available');
+export function getSessionStore(): SessionStore {
+  if (!sessionStoreInstance) {
+    sessionStoreInstance = new SessionStore({
+      maxAge: parseInt(process.env.SESSION_MAX_AGE || '3600000'), // 1 hour default
+    });
   }
-
-  async set(
-    sessionId: string,
-    sessionData: SessionData,
-    ttl?: number
-  ): Promise<void> {
-    throw new Error('Redis implementation not yet available');
-  }
-
-  async delete(sessionId: string): Promise<boolean> {
-    throw new Error('Redis implementation not yet available');
-  }
-
-  async keys(pattern?: string): Promise<string[]> {
-    throw new Error('Redis implementation not yet available');
-  }
-
-  async cleanup(): Promise<void> {
-    throw new Error('Redis implementation not yet available');
-  }
-
-  async getStats(): Promise<any> {
-    throw new Error('Redis implementation not yet available');
-  }
+  return sessionStoreInstance;
 }

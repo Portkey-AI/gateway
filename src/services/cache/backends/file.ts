@@ -66,7 +66,7 @@ export class FileCacheBackend implements CacheBackend {
       const content = await fs.readFile(this.cacheFile, 'utf-8');
       this.data = JSON.parse(content);
       this.updateStats();
-      logger.debug('Loaded cache from disk');
+      logger.debug('Loaded cache from disk', this.cacheFile);
     } catch (error) {
       // File doesn't exist or is invalid, start with empty cache
       this.data = {};

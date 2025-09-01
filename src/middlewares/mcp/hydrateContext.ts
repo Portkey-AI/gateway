@@ -2,6 +2,8 @@ import { createMiddleware } from 'hono/factory';
 import { ServerConfig } from '../../types/mcp';
 import { createLogger } from '../../utils/logger';
 import { getConfigCache } from '../../services/cache';
+import { env } from 'hono/adapter';
+import { pkFetch } from '../controlPlane';
 
 const logger = createLogger('mcp/hydateContext');
 
@@ -14,8 +16,8 @@ const SERVER_CONFIG_NAMESPACE = 'server_configs';
 /**
  * Check if control plane is available
  */
-const isUsingControlPlane = (): boolean => {
-  return !!process.env.ALBUS_BASEPATH;
+const isUsingControlPlane = (env: any): boolean => {
+  return !!env.ALBUS_BASEPATH;
 };
 
 /**
@@ -23,28 +25,13 @@ const isUsingControlPlane = (): boolean => {
  */
 async function getServerFromControlPlane(
   serverId: string,
-  controlPlaneUrl: string | undefined
+  c: any
 ): Promise<any> {
-  if (!controlPlaneUrl) {
-    throw new Error('Control plane URL not available');
-  }
-
   try {
-    const response = await fetch(
-      `${controlPlaneUrl}/v2/mcp-servers/${serverId}`,
-      {
-        method: 'GET',
-        headers: {
-          'User-Agent': userAgent,
-          'Content-Type': 'application/json',
-          'x-client-id-gateway': '',
-          'x-portkey-api-key': '',
-        },
-      }
-    );
+    const response = await pkFetch(c, `/v2/mcp-servers/${serverId}`, 'GET');
 
     if (!response.ok) {
-      if (response.status === 404) {
+      if (response.status === 404 || response.status === 403) {
         return null; // Server not found
       }
       throw new Error(
@@ -119,12 +106,12 @@ type Env = {
 /**
  * Get server configuration by ID, trying control plane first if available
  */
-const getServerConfig = async (
+export const getServerConfig = async (
   serverId: string,
-  controlPlaneUrl: string | undefined
+  c: any
 ): Promise<any> => {
   // If using control plane, fetch the specific server
-  if (isUsingControlPlane()) {
+  if (isUsingControlPlane(env(c))) {
     // Check cache first for control plane configs
     const cacheKey = `cp_${serverId}`;
     const cached = await configCache.get(cacheKey, SERVER_CONFIG_NAMESPACE);
@@ -135,10 +122,7 @@ const getServerConfig = async (
 
     try {
       logger.debug(`Fetching server ${serverId} from control plane`);
-      const serverInfo = await getServerFromControlPlane(
-        serverId,
-        controlPlaneUrl
-      );
+      const serverInfo = await getServerFromControlPlane(serverId, c);
       if (serverInfo) {
         // Cache for 5 minutes (shorter TTL for control plane configs for security)
         await configCache.set(cacheKey, serverInfo, {
@@ -148,32 +132,30 @@ const getServerConfig = async (
         return serverInfo;
       }
     } catch (error) {
-      logger.warn(
-        `Failed to fetch server ${serverId} from control plane, trying local configs`
-      );
+      logger.warn(`Failed to fetch server ${serverId} from control plane`);
+      return null;
     }
-  }
-
-  // For local configs, load entire file and cache it, then return the specific server
-  try {
-    const localConfigs = await loadLocalServerConfigs();
-    return localConfigs[serverId] || null;
-  } catch (error) {
-    logger.warn('Failed to load local server configurations:', error);
-    return null;
+  } else {
+    // For local configs, load entire file and cache it, then return the specific server
+    try {
+      const localConfigs = await loadLocalServerConfigs();
+      return localConfigs[serverId] || null;
+    } catch (error) {
+      logger.warn('Failed to load local server configurations:', error);
+      return null;
+    }
   }
 };
 
 export const hydrateContext = createMiddleware<Env>(async (c, next) => {
   const serverId = c.req.param('serverId');
-  const controlPlaneUrl = c.env.ALBUS_BASEPATH;
 
   if (!serverId) {
     return next();
   }
 
   // Get server configuration (control plane will handle authorization, local assumes single user)
-  const serverInfo = await getServerConfig(serverId, controlPlaneUrl);
+  const serverInfo = await getServerConfig(serverId, c);
   if (!serverInfo) {
     logger.error(`Server configuration not found for: ${serverId}`);
     return c.json(
@@ -190,7 +172,8 @@ export const hydrateContext = createMiddleware<Env>(async (c, next) => {
   const config: ServerConfig = {
     serverId,
     url: serverInfo.url,
-    headers: serverInfo.default_headers || {},
+    headers:
+      serverInfo.configurations?.headers || serverInfo.default_headers || {},
     auth_type: serverInfo.auth_type || 'headers', // Default to headers for backward compatibility
     tools: serverInfo.default_permissions || {
       allowed: null, // null means all tools allowed

@@ -222,8 +222,8 @@ let defaultCache: CacheService | null = null;
 let tokenCache: CacheService | null = null;
 let sessionCache: CacheService | null = null;
 let configCache: CacheService | null = null;
-let tokenIntrospectionCache: CacheService | null = null;
-
+let oauthStore: CacheService | null = null;
+let mcpServersCache: CacheService | null = null;
 /**
  * Get or create the default cache instance
  */
@@ -232,7 +232,7 @@ export function getDefaultCache(): CacheService {
     defaultCache = new CacheService({
       backend: 'memory',
       defaultTtl: 5 * 60 * 1000, // 5 minutes
-      cleanupInterval: 60 * 1000, // 1 minute
+      cleanupInterval: 5 * 60 * 1000, // 5 minutes
       maxSize: 1000,
     });
   }
@@ -245,12 +245,11 @@ export function getDefaultCache(): CacheService {
 export function getTokenCache(): CacheService {
   if (!tokenCache) {
     tokenCache = new CacheService({
-      backend: 'file',
-      dataDir: 'data',
-      fileName: 'token-cache.json',
+      backend: 'memory',
       defaultTtl: 5 * 60 * 1000, // 5 minutes
       saveInterval: 1000, // 1 second
-      cleanupInterval: 60 * 1000, // 1 minute
+      cleanupInterval: 5 * 60 * 1000, // 5 minutes
+      maxSize: 1000,
     });
   }
   return tokenCache;
@@ -265,12 +264,20 @@ export function getSessionCache(): CacheService {
       backend: 'file',
       dataDir: 'data',
       fileName: 'sessions-cache.json',
-      defaultTtl: 30 * 60 * 1000, // 30 minutes
+      defaultTtl: 7 * 24 * 60 * 60 * 1000, // 7 days
       saveInterval: 5000, // 5 seconds
-      cleanupInterval: 60 * 1000, // 1 minute
+      cleanupInterval: 5 * 60 * 1000, // 5 minutes
     });
   }
   return sessionCache;
+}
+
+/**
+ * Get or create the token introspection cache instance
+ */
+export function getTokenIntrospectionCache(): CacheService {
+  // Use the same cache as tokens, just different namespace
+  return getTokenCache();
 }
 
 /**
@@ -281,25 +288,40 @@ export function getConfigCache(): CacheService {
     configCache = new CacheService({
       backend: 'memory',
       defaultTtl: 10 * 60 * 1000, // 10 minutes
-      cleanupInterval: 60 * 1000, // 1 minute
+      cleanupInterval: 5 * 60 * 1000, // 5 minutes
       maxSize: 100,
     });
   }
   return configCache;
 }
 
-export function getTokenIntrospectionCache(): CacheService {
-  if (!tokenIntrospectionCache) {
-    tokenIntrospectionCache = new CacheService({
+/**
+ * Get or create the oauth store cache instance
+ */
+export function getOauthStore(): CacheService {
+  if (!oauthStore) {
+    oauthStore = new CacheService({
       backend: 'file',
       dataDir: 'data',
-      fileName: 'token-introspection-cache.json',
-      defaultTtl: 5 * 60 * 1000, // 5 minutes
+      fileName: 'oauth-store.json',
       saveInterval: 1000, // 1 second
-      cleanupInterval: 60 * 1000, // 1 minute
+      cleanupInterval: 60 * 10 * 1000, // 10 minutes
     });
   }
-  return tokenIntrospectionCache;
+  return oauthStore;
+}
+
+export function getMcpServersCache(): CacheService {
+  if (!mcpServersCache) {
+    mcpServersCache = new CacheService({
+      backend: 'file',
+      dataDir: 'data',
+      fileName: 'mcp-servers-auth.json',
+      saveInterval: 5000, // 5 seconds
+      cleanupInterval: 5 * 60 * 1000, // 5 minutes
+    });
+  }
+  return mcpServersCache;
 }
 
 /**

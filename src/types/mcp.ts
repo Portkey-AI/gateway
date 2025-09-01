@@ -6,6 +6,9 @@ export interface ServerConfig {
   url: string;
   headers: Record<string, string>;
 
+  // Authentication configuration
+  auth_type?: 'oauth_auto' | 'oauth_client_credentials' | 'headers';
+
   // Tool-specific policies
   tools?: {
     allowed?: string[]; // If specified, only these tools are allowed

@@ -1,60 +1,58 @@
 import { createMiddleware } from 'hono/factory';
 import { MCPSession } from '../../services/mcpSession';
-import { SessionStore } from '../../services/sessionStore';
+import { getSessionStore } from '../../services/sessionStore';
 import { createLogger } from '../../utils/logger';
+import { HEADER_MCP_SESSION_ID } from '../../constants/mcp';
 
 const logger = createLogger('mcp/sessionMiddleware');
 
 type Env = {
   Variables: {
-    serverConfig: any;
     session?: MCPSession;
-    tokenInfo?: any;
-    isAuthenticated?: boolean;
   };
 };
 
-export const sessionMiddleware = (sessionStore: SessionStore) =>
-  createMiddleware<Env>(async (c, next) => {
-    const sessionId = c.req.header('mcp-session-id');
+/**
+ * Fetches a session from the session store if it exists.
+ * If the session is found, it is set in the context.
+ */
+export const sessionMiddleware = createMiddleware<Env>(async (c, next) => {
+  const sessionStore = getSessionStore();
+  const headerSessionId = c.req.header(HEADER_MCP_SESSION_ID);
+  const querySessionId = c.req.query('sessionId');
+  const sessionId = headerSessionId || querySessionId;
 
-    if (sessionId) {
-      const session = sessionStore.get(sessionId);
+  if (sessionId) {
+    const session = await sessionStore.get(sessionId);
 
-      if (session) {
-        // Check if session is expired based on token expiration
-        if (session.isTokenExpired()) {
-          logger.info(
-            `Session ${sessionId} expired due to token expiration, removing`
-          );
-          sessionStore.delete(sessionId);
-          // Don't set session - let handler create new one if needed
-        } else {
-          logger.debug(
-            `Session ${sessionId} found, initialized: ${session.isInitialized}`
-          );
-          c.set('session', session);
-        }
+    if (session) {
+      // Check if session is expired based on token expiration
+      if (session.isTokenExpired()) {
+        logger.debug(
+          `Session ${sessionId} expired due to token expiration, removing`
+        );
+        await sessionStore.delete(sessionId);
       } else {
-        // Log potential session reconnaissance
-        const tokenInfo = c.var.tokenInfo;
-        if (tokenInfo) {
-          logger.warn(
-            `Session not found but user authenticated - possible session probe`,
-            {
-              sessionId,
-              userId: tokenInfo.sub || tokenInfo.user_id,
-              clientId: tokenInfo.client_id,
-              requestPath: c.req.path,
-            }
-          );
-        } else {
-          logger.debug(
-            `Session ID ${sessionId} provided but not found in store`
-          );
-        }
+        logger.debug(
+          `Session ${sessionId} found, initialized: ${session.isInitialized}`
+        );
+        c.set('session', session);
       }
+    } else {
+      logger.debug(`Session ID ${sessionId} provided but not found in store`);
+      return c.json(
+        {
+          jsonrpc: '2.0',
+          error: {
+            code: -32001,
+            message: 'Session not found',
+          },
+          id: null,
+        },
+        404
+      );
     }
+  }
 
-    await next();
-  });
+  await next();
+});

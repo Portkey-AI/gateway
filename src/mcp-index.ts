@@ -6,16 +6,17 @@
  * and route to any MCP server with full confidence.
  */
 
+import 'dotenv/config';
+
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
 import { ServerConfig } from './types/mcp';
 import { MCPSession } from './services/mcpSession';
-import { SessionStore } from './services/sessionStore';
+import { getSessionStore } from './services/sessionStore';
 import { createLogger } from './utils/logger';
 import { handleMCPRequest, handleSSEMessages } from './handlers/mcpHandler';
 import { oauthMiddleware } from './middlewares/oauth';
-import { localOAuth } from './services/localOAuth';
 import { hydrateContext } from './middlewares/mcp/hydrateContext';
 import { sessionMiddleware } from './middlewares/mcp/sessionMiddleware';
 import { oauthRoutes } from './routes/oauth';
@@ -32,15 +33,12 @@ type Env = {
   };
   Bindings: {
     ALBUS_BASEPATH?: string;
+    CLIENT_ID?: string;
   };
 };
 
-// Session storage - persistent across restarts
-const sessionStore = new SessionStore({
-  dataDir: process.env.SESSION_DATA_DIR || './data',
-  persistInterval: 30 * 1000, // Save every 30 seconds
-  maxAge: 60 * 60 * 1000, // 1 hour session timeout
-});
+// Get the singleton session store instance
+const sessionStore = getSessionStore();
 
 // OAuth configuration - always required for security
 const OAUTH_REQUIRED = true; // Force OAuth for all requests
@@ -90,13 +88,12 @@ app.all(
   '/:serverId/mcp',
   oauthMiddleware({
     required: OAUTH_REQUIRED,
-    scopes: ['mcp:servers:read'],
     skipPaths: ['/oauth', '/.well-known'],
   }),
   hydrateContext,
-  sessionMiddleware(sessionStore),
+  sessionMiddleware,
   async (c) => {
-    return handleMCPRequest(c, sessionStore);
+    return handleMCPRequest(c);
   }
 );
 
@@ -123,17 +120,17 @@ app.post(
     skipPaths: ['/oauth', '/.well-known'],
   }),
   hydrateContext,
-  sessionMiddleware(sessionStore),
+  sessionMiddleware,
   async (c) => {
-    return handleSSEMessages(c, sessionStore);
+    return handleSSEMessages(c);
   }
 );
 
 /**
  * Health check endpoint
  */
-app.get('/health', (c) => {
-  const stats = sessionStore.getStats();
+app.get('/health', async (c) => {
+  const stats = await sessionStore.getStats();
   logger.debug('Health check accessed');
 
   return c.json({
@@ -146,41 +143,23 @@ app.get('/health', (c) => {
 
 // Catch-all route for all other requests
 app.all('*', (c) => {
-  logger.debug(`Unhandled route: ${c.req.method} ${c.req.url}`);
+  logger.info(`Unhandled route: ${c.req.method} ${c.req.url}`);
   return c.json({ status: 'not found' }, 404);
 });
 
-/**
- * Clean up inactive sessions periodically
- * Note: SessionStore handles its own cleanup and persistence
- */
-setInterval(async () => {
-  await sessionStore.cleanup();
-  // Also clean up expired OAuth tokens
-  localOAuth.cleanupExpiredTokens();
-}, 60 * 1000); // Run every minute
-
-// Load existing sessions on startup
-sessionStore
-  .loadSessions()
-  .then(() => {
-    logger.critical('Session recovery completed');
-  })
-  .catch((error) => {
-    logger.error('Session recovery failed', error);
-  });
-
-// Graceful shutdown handler
-process.on('SIGINT', async () => {
+async function shutdown() {
   logger.critical('Shutting down gracefully...');
   await sessionStore.stop();
   process.exit(0);
+}
+
+// Graceful shutdown handlers
+process.on('SIGINT', async () => {
+  await shutdown();
 });
 
 process.on('SIGTERM', async () => {
-  logger.critical('Shutting down gracefully...');
-  await sessionStore.stop();
-  process.exit(0);
+  await shutdown();
 });
 
 export default app;

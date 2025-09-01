@@ -12,7 +12,9 @@ import {
   OAuthGateway,
   TokenIntrospectionResponse,
 } from '../../services/oauthGateway';
-import { getTokenIntrospectionCache } from '../../services/cache/index';
+import { getTokenCache } from '../../services/cache/index';
+import { env } from 'hono/adapter';
+import { Context } from 'hono';
 
 type Env = {
   Variables: {
@@ -23,6 +25,7 @@ type Env = {
   };
   Bindings: {
     ALBUS_BASEPATH?: string;
+    CLIENT_ID?: string;
   };
 };
 
@@ -40,7 +43,7 @@ interface OAuthConfig {
 function extractBearerToken(authorization: string | undefined): string | null {
   if (!authorization) return null;
 
-  const match = authorization.match(/^Bearer\s+(.+)$/i);
+  const match = authorization.match(/^(?:Bearer\s+)?(.+)$/i);
   return match ? match[1] : null;
 }
 
@@ -70,19 +73,19 @@ function createWWWAuthenticateHeader(
  */
 async function introspectToken(
   token: string,
-  controlPlaneUrl: string | null
+  c: Context
 ): Promise<TokenIntrospectionResponse> {
   // Check persistent cache first
-  const cache = getTokenIntrospectionCache();
-  const cached = await cache.get(token);
+  const cache = getTokenCache();
+  const cached = await cache.get(token, 'introspection');
   if (cached) {
     logger.debug('Token found in persistent cache');
     return cached;
   }
 
   try {
-    const gateway = new OAuthGateway(controlPlaneUrl);
-    const result = await gateway.introspectToken(token);
+    const gateway = new OAuthGateway(c);
+    const result = await gateway.introspectToken(token, 'access_token');
 
     // Cache the result for 5 minutes or until token expiry
     if (result.active) {
@@ -90,7 +93,10 @@ async function introspectToken(
         ? Math.min(result.exp * 1000 - Date.now(), 5 * 60 * 1000)
         : 5 * 60 * 1000;
 
-      await cache.set(token, result, { ttl: expiresIn });
+      await cache.set(token, result, {
+        ttl: expiresIn,
+        namespace: 'introspection',
+      });
     }
 
     return result;
@@ -113,7 +119,8 @@ export function oauthMiddleware(config: OAuthConfig = {}) {
     }
 
     const baseUrl = new URL(c.req.url).origin;
-    const authorization = c.req.header('Authorization');
+    const authorization =
+      c.req.header('Authorization') || c.req.header('x-portkey-api-key');
     const token = extractBearerToken(authorization);
 
     // If no token and OAuth is not required, continue
@@ -144,11 +151,9 @@ export function oauthMiddleware(config: OAuthConfig = {}) {
       );
     }
 
-    // Validate token with control plane or local service
-    const controlPlaneUrl = c.env?.ALBUS_BASEPATH || process.env.ALBUS_BASEPATH;
-
     // Introspect the token (works with both control plane and local service)
-    const introspection = await introspectToken(token!, controlPlaneUrl!);
+    const controlPlaneUrl = env(c).ALBUS_BASEPATH;
+    const introspection = await introspectToken(token!, c);
 
     if (!introspection.active) {
       logger.warn(`Invalid or expired token for ${path}`);
@@ -168,73 +173,10 @@ export function oauthMiddleware(config: OAuthConfig = {}) {
       );
     }
 
-    // Check required scopes if configured
-    if (config.scopes && config.scopes.length > 0) {
-      const tokenScopes = introspection.scope?.split(' ') || [];
-
-      // Extract server ID from path if it's a server-specific endpoint
-      const serverMatch = path.match(/^\/([^\/]+)\/(mcp|messages)/);
-      const serverId = serverMatch?.[1];
-
-      logger.info('Scope validation:', {
-        path,
-        serverId,
-        required_scopes: config.scopes,
-        token_scopes: tokenScopes,
-        introspection_scope: introspection.scope,
-        client_id: introspection.client_id,
-      });
-
-      const hasRequiredScope = config.scopes.some((required) => {
-        // Check for exact match
-        if (tokenScopes.includes(required)) return true;
-
-        // Check for wildcard match
-        if (tokenScopes.includes('mcp:*')) return true;
-
-        // Check for server-specific wildcard (e.g., mcp:servers:*)
-        if (required === 'mcp:servers:*' && serverId) {
-          return tokenScopes.some(
-            (scope) =>
-              scope === 'mcp:servers:*' ||
-              scope === `mcp:servers:${serverId}` ||
-              scope === 'mcp:*'
-          );
-        }
-
-        return false;
-      });
-
-      if (!hasRequiredScope) {
-        logger.warn(
-          `Token missing required scopes for ${path}. Token scopes: ${tokenScopes.join(', ')}`
-        );
-        return c.json(
-          {
-            error: 'insufficient_scope',
-            error_description: `Required scope: ${config.scopes.join(' or ')}. Token has: ${tokenScopes.join(', ')}`,
-          },
-          403,
-          {
-            'WWW-Authenticate': createWWWAuthenticateHeader(
-              baseUrl,
-              'insufficient_scope',
-              `Required scope: ${config.scopes.join(' or ')}`
-            ),
-          }
-        );
-      }
-    }
-
     // Store token info in context for downstream use
     c.set('tokenInfo', introspection);
     c.set('isAuthenticated', true);
 
-    logger.debug(
-      `Token validated for ${path}, client: ${introspection.client_id}`
-    );
     return next();
   });
 }
-
-// Note: Cleanup is now handled automatically by the TokenIntrospectionCache service
