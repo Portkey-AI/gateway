@@ -21,6 +21,7 @@ import {
   InitializeRequest,
   InitializeResult,
   Tool,
+  EmptyResultSchema,
 } from '@modelcontextprotocol/sdk/types';
 import { ServerConfig } from '../types/mcp';
 import { createLogger } from '../utils/logger';
@@ -303,6 +304,76 @@ class UpstreamManager {
     return this.upstreamClient.listTools();
   }
 
+  async ping(): Promise<any> {
+    if (!this.upstreamClient) {
+      throw new Error('No upstream client available');
+    }
+    return this.upstreamClient.ping();
+  }
+
+  async complete(params: any): Promise<any> {
+    if (!this.upstreamClient) {
+      throw new Error('No upstream client available');
+    }
+    return this.upstreamClient.complete(params);
+  }
+
+  async setLoggingLevel(params: any): Promise<any> {
+    if (!this.upstreamClient) {
+      throw new Error('No upstream client available');
+    }
+    return this.upstreamClient.setLoggingLevel(params.level);
+  }
+
+  async getPrompt(params: any): Promise<any> {
+    if (!this.upstreamClient) {
+      throw new Error('No upstream client available');
+    }
+    return this.upstreamClient.getPrompt(params);
+  }
+
+  async listPrompts(params: any): Promise<any> {
+    if (!this.upstreamClient) {
+      throw new Error('No upstream client available');
+    }
+    return this.upstreamClient.listPrompts(params);
+  }
+
+  async listResources(params: any): Promise<any> {
+    if (!this.upstreamClient) {
+      throw new Error('No upstream client available');
+    }
+    return this.upstreamClient.listResources(params);
+  }
+
+  async listResourceTemplates(params: any): Promise<any> {
+    if (!this.upstreamClient) {
+      throw new Error('No upstream client available');
+    }
+    return this.upstreamClient.listResourceTemplates(params);
+  }
+
+  async readResource(params: any): Promise<any> {
+    if (!this.upstreamClient) {
+      throw new Error('No upstream client available');
+    }
+    return this.upstreamClient.readResource(params);
+  }
+
+  async subscribeResource(params: any): Promise<any> {
+    if (!this.upstreamClient) {
+      throw new Error('No upstream client available');
+    }
+    return this.upstreamClient.subscribeResource(params);
+  }
+
+  async unsubscribeResource(params: any): Promise<any> {
+    if (!this.upstreamClient) {
+      throw new Error('No upstream client available');
+    }
+    return this.upstreamClient.unsubscribeResource(params);
+  }
+
   /**
    * Close the upstream connection
    */
@@ -315,6 +386,21 @@ class UpstreamManager {
    */
   isConnected(): boolean {
     return this.stateManager.hasUpstream;
+  }
+
+  isKnownRequest(method: string): boolean {
+    return [
+      'ping',
+      'completion/complete',
+      'logging/setLevel',
+      'prompts/get',
+      'prompts/list',
+      'resources/list',
+      'resources/templates/list',
+      'resources/read',
+      'resources/subscribe',
+      'resources/unsubscribe',
+    ].includes(method);
   }
 }
 
@@ -1048,6 +1134,8 @@ export class MCPSession {
       await this.handleToolsList(request);
     } else if (method === 'initialize') {
       await this.handleInitialize(request);
+    } else if (this.upstreamManager.isKnownRequest(request.method)) {
+      await this.handleKnownRequests(request);
     } else {
       // Forward all other requests directly to upstream
       this.logger.debug(`Forwarding request: ${method}`);
@@ -1227,6 +1315,62 @@ export class MCPSession {
     }
   }
 
+  private async handleKnownRequests(request: JSONRPCRequest) {
+    let result: any;
+    try {
+      // Ensure upstream connection is established
+      await this.ensureUpstreamConnection();
+
+      switch (request.method) {
+        case 'ping':
+          result = await this.upstreamManager.ping();
+          break;
+        case 'completion/complete':
+          result = await this.upstreamManager.complete(request.params);
+          break;
+        case 'logging/setLevel':
+          result = await this.upstreamManager.setLoggingLevel(request.params);
+          break;
+        case 'prompts/get':
+          result = await this.upstreamManager.getPrompt(request.params);
+          break;
+        case 'prompts/list':
+          result = await this.upstreamManager.listPrompts(request.params);
+          break;
+        case 'resources/list':
+          result = await this.upstreamManager.listResources(request.params);
+          break;
+        case 'resources/templates/list':
+          result = await this.upstreamManager.listResourceTemplates(
+            request.params
+          );
+          break;
+        case 'resources/read':
+          result = await this.upstreamManager.readResource(request.params);
+          break;
+        case 'resources/subscribe':
+          result = await this.upstreamManager.subscribeResource(request.params);
+          break;
+        case 'resources/unsubscribe':
+          result = await this.upstreamManager.unsubscribeResource(
+            request.params
+          );
+          break;
+        default:
+          result = await this.forwardRequest(request);
+          break;
+      }
+
+      await this.sendResult((request as any).id, result);
+    } catch (error) {
+      await this.sendError(
+        request.id!,
+        ErrorCode.InternalError,
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+  }
+
   /**
    * Forward a request directly to upstream
    */
@@ -1237,7 +1381,7 @@ export class MCPSession {
 
       const result = await this.upstreamManager.request(
         request as any,
-        {} as any // Use generic schema for unknown requests
+        EmptyResultSchema
       );
 
       await this.sendResult((request as any).id, result);
