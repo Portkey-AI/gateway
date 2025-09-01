@@ -2,16 +2,9 @@ import { spawn } from 'node:child_process';
 
 console.log('Starting the application...');
 
-// Use a non-default port to avoid conflicts with any local dev server
-const testPort = process.env.PORT || '8790';
-
-const app = spawn(
-  'node',
-  ['build/start-server.js', `--port=${testPort}`, '--headless'],
-  {
-    stdio: 'inherit',
-  }
-);
+const app = spawn('node', ['build/start-server.js', '--headless'], {
+  stdio: 'inherit',
+});
 
 // Listen for errors when spawning the process
 app.on('exit', (err) => {
