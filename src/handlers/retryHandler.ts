@@ -5,10 +5,18 @@ async function fetchWithTimeout(
   url: string,
   options: RequestInit,
   timeout: number,
-  requestHandler?: () => Promise<Response>
+  requestHandler?: () => Promise<Response>,
+  externalAbortSignal?: AbortSignal
 ) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
+  if (externalAbortSignal) {
+    if (externalAbortSignal.aborted) {
+      controller.abort();
+    } else {
+      externalAbortSignal.addEventListener('abort', () => controller.abort());
+    }
+  }
   const timeoutRequestOptions = {
     ...options,
     signal: controller.signal,
@@ -69,7 +77,8 @@ export const retryRequest = async (
   statusCodesToRetry: number[],
   timeout: number | null,
   requestHandler?: () => Promise<Response>,
-  followProviderRetry?: boolean
+  followProviderRetry?: boolean,
+  externalAbortSignal?: AbortSignal
 ): Promise<{
   response: Response;
   attempt: number | undefined;
@@ -93,12 +102,17 @@ export const retryRequest = async (
               url,
               options,
               timeout,
-              requestHandler
+              requestHandler,
+              externalAbortSignal
             );
           } else if (requestHandler) {
             response = await requestHandler();
           } else {
-            response = await fetch(url, options);
+            const noTimeoutOptions = { ...options } as RequestInit;
+            if (externalAbortSignal) {
+              noTimeoutOptions.signal = externalAbortSignal;
+            }
+            response = await fetch(url, noTimeoutOptions);
           }
           if (statusCodesToRetry.includes(response.status)) {
             const errorObj: any = new Error(await response.text());

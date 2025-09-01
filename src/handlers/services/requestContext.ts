@@ -18,6 +18,7 @@ export class RequestContext {
   private _transformedRequestBody: any;
   public readonly providerOption: Options;
   private _requestURL: string = ''; // Is set at the beginning of tryPost()
+  private _externalAbortSignal: AbortSignal | undefined;
 
   constructor(
     public readonly honoContext: Context,
@@ -42,6 +43,14 @@ export class RequestContext {
 
   set requestURL(requestURL: string) {
     this._requestURL = requestURL;
+  }
+
+  get abortSignal(): AbortSignal | undefined {
+    return this._externalAbortSignal;
+  }
+
+  setAbortSignal(signal: AbortSignal) {
+    this._externalAbortSignal = signal;
   }
 
   get overrideParams(): Params {

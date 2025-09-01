@@ -24,11 +24,13 @@ export enum StrategyModes {
   FALLBACK = 'fallback',
   SINGLE = 'single',
   CONDITIONAL = 'conditional',
+  SAMPLE = 'sample',
 }
 
 interface Strategy {
   mode: StrategyModes;
   onStatusCodes?: Array<number>;
+  cancelOthers?: boolean;
   conditions?: {
     query: {
       [key: string]: any;
