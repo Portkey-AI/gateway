@@ -181,7 +181,7 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
   const streamChunkTemplate: Record<string, any> = {
     id,
     object: 'chat.completion.chunk',
-    created: Date.now(),
+    created: Math.floor(Date.now() / 1000),
     model: model || '',
     system_fingerprint: system_fingerprint || null,
     provider,
