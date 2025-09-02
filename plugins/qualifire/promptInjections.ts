@@ -11,10 +11,6 @@ export const handler: PluginHandler = async (
   parameters: PluginParameters,
   eventType: HookEventType
 ) => {
-  let error = null;
-  let verdict = false;
-  let data = null;
-
   const evaluationBody: any = {
     input: context.request.text,
     prompt_injections: true,
@@ -26,8 +22,8 @@ export const handler: PluginHandler = async (
         message:
           'Qualifire Prompt Injections guardrail only supports before_request_hooks.',
       },
-      verdict,
-      data,
+      verdict: false,
+      data: null,
     };
   }
 
@@ -35,8 +31,6 @@ export const handler: PluginHandler = async (
     return await postQualifire(evaluationBody, parameters?.credentials?.apiKey);
   } catch (e: any) {
     delete e.stack;
-    error = e;
+    return { error: e, verdict: false, data: null };
   }
-
-  return { error, verdict, data };
 };

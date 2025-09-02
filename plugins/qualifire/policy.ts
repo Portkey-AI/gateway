@@ -11,17 +11,13 @@ export const handler: PluginHandler = async (
   parameters: PluginParameters,
   eventType: HookEventType
 ) => {
-  let error = null;
-  let verdict = false;
-  let data = null;
-
   if (!parameters?.policies) {
     return {
       error: {
         message: 'Qualifire Policy guardrail requires policies to be provided.',
       },
       verdict: true,
-      data,
+      data: null,
     };
   }
 
@@ -38,8 +34,6 @@ export const handler: PluginHandler = async (
     return await postQualifire(evaluationBody, parameters?.credentials?.apiKey);
   } catch (e: any) {
     delete e.stack;
-    error = e;
+    return { error: e, verdict: false, data: null };
   }
-
-  return { error, verdict, data };
 };

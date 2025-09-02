@@ -2201,7 +2201,7 @@ describe('postQualifire', () => {
             'X-Qualifire-API-Key': 'test-api-key',
           },
         },
-        10000
+        60000
       );
 
       expect(result).toEqual({

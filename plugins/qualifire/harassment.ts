@@ -11,10 +11,6 @@ export const handler: PluginHandler = async (
   parameters: PluginParameters,
   eventType: HookEventType
 ) => {
-  let error = null;
-  let verdict = false;
-  let data = null;
-
   const evaluationBody: any = {
     input: context.request.text,
     harassment_check: true,
@@ -28,8 +24,6 @@ export const handler: PluginHandler = async (
     return await postQualifire(evaluationBody, parameters?.credentials?.apiKey);
   } catch (e: any) {
     delete e.stack;
-    error = e;
+    return { error: e, verdict: false, data: null };
   }
-
-  return { error, verdict, data };
 };
