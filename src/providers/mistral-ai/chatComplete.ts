@@ -17,6 +17,9 @@ export const MistralAIChatCompleteConfig: ProviderConfig = {
     param: 'model',
     required: true,
     default: 'mistral-tiny',
+    transform: (params: Params) => {
+      return params.model?.replace('mistralai.', '');
+    },
   },
   messages: {
     param: 'messages',
@@ -152,104 +155,97 @@ interface MistralAIStreamChunk {
   };
 }
 
-export const MistralAIChatCompleteResponseTransform: (
-  response: MistralAIChatCompleteResponse | MistralAIErrorResponse,
-  responseStatus: number,
-  responseHeaders: Headers,
-  strictOpenAiCompliance: boolean,
-  gatewayRequestUrl: string,
-  gatewayRequest: Params
-) => ChatCompletionResponse | ErrorResponse = (
-  response,
-  responseStatus,
-  responseHeaders,
-  strictOpenAiCompliance,
-  gatewayRequestUrl,
-  gatewayRequest
-) => {
-  if ('message' in response && responseStatus !== 200) {
-    return generateErrorResponse(
-      {
-        message: response.message,
-        type: response.type,
-        param: response.param,
-        code: response.code,
-      },
-      MISTRAL_AI
-    );
-  }
-
-  if ('choices' in response) {
-    return {
-      id: response.id,
-      object: response.object,
-      created: response.created,
-      model: response.model,
-      provider: MISTRAL_AI,
-      choices: response.choices.map((c) => ({
-        index: c.index,
-        message: {
-          role: c.message.role,
-          content: c.message.content,
-          tool_calls: c.message.tool_calls,
+export const GetMistralAIChatCompleteResponseTransform = (provider: string) => {
+  return (
+    response: MistralAIChatCompleteResponse | MistralAIErrorResponse,
+    responseStatus: number,
+    _responseHeaders: Headers,
+    strictOpenAiCompliance: boolean,
+    _gatewayRequestUrl: string,
+    _gatewayRequest: Params
+  ): ChatCompletionResponse | ErrorResponse => {
+    if ('message' in response && responseStatus !== 200) {
+      return generateErrorResponse(
+        {
+          message: response.message,
+          type: response.type,
+          param: response.param,
+          code: response.code,
         },
-        finish_reason: transformFinishReason(
-          c.finish_reason as MISTRAL_AI_FINISH_REASON,
-          strictOpenAiCompliance
-        ),
-      })),
-      usage: {
-        prompt_tokens: response.usage?.prompt_tokens,
-        completion_tokens: response.usage?.completion_tokens,
-        total_tokens: response.usage?.total_tokens,
-      },
-    };
-  }
+        provider
+      );
+    }
 
-  return generateInvalidProviderResponseError(response, MISTRAL_AI);
+    if ('choices' in response) {
+      return {
+        id: response.id,
+        object: response.object,
+        created: response.created,
+        model: response.model,
+        provider: provider,
+        choices: response.choices.map((c) => ({
+          index: c.index,
+          message: {
+            role: c.message.role,
+            content: c.message.content,
+            tool_calls: c.message.tool_calls,
+          },
+          finish_reason: transformFinishReason(
+            c.finish_reason as MISTRAL_AI_FINISH_REASON,
+            strictOpenAiCompliance
+          ),
+        })),
+        usage: {
+          prompt_tokens: response.usage?.prompt_tokens,
+          completion_tokens: response.usage?.completion_tokens,
+          total_tokens: response.usage?.total_tokens,
+        },
+      };
+    }
+
+    return generateInvalidProviderResponseError(response, provider);
+  };
 };
 
-export const MistralAIChatCompleteStreamChunkTransform: (
-  response: string,
-  fallbackId: string,
-  streamState: any,
-  strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
-) => string | string[] = (
-  responseChunk,
-  fallbackId,
-  _streamState,
-  strictOpenAiCompliance,
-  _gatewayRequest
+export const GetMistralAIChatCompleteStreamChunkTransform = (
+  provider: string
 ) => {
-  let chunk = responseChunk.trim();
-  chunk = chunk.replace(/^data: /, '');
-  chunk = chunk.trim();
-  if (chunk === '[DONE]') {
-    return `data: ${chunk}\n\n`;
-  }
-  const parsedChunk: MistralAIStreamChunk = JSON.parse(chunk);
-  const finishReason = parsedChunk.choices[0].finish_reason
-    ? transformFinishReason(
-        parsedChunk.choices[0].finish_reason as MISTRAL_AI_FINISH_REASON,
-        strictOpenAiCompliance
-      )
-    : null;
   return (
-    `data: ${JSON.stringify({
-      id: parsedChunk.id,
-      object: parsedChunk.object,
-      created: parsedChunk.created,
-      model: parsedChunk.model,
-      provider: MISTRAL_AI,
-      choices: [
-        {
-          index: parsedChunk.choices[0].index,
-          delta: parsedChunk.choices[0].delta,
-          finish_reason: finishReason,
-        },
-      ],
-      ...(parsedChunk.usage ? { usage: parsedChunk.usage } : {}),
-    })}` + '\n\n'
-  );
+    responseChunk: string,
+    fallbackId: string,
+    _streamState: any,
+    strictOpenAiCompliance: boolean,
+    _gatewayRequest: Params
+  ) => {
+    let chunk = responseChunk.trim();
+    chunk = chunk.replace(/^data: /, '');
+    chunk = chunk.trim();
+    if (chunk === '[DONE]') {
+      return `data: ${chunk}\n\n`;
+    }
+    const parsedChunk: MistralAIStreamChunk = JSON.parse(chunk);
+    const finishReason = parsedChunk.choices[0].finish_reason
+      ? transformFinishReason(
+          parsedChunk.choices[0].finish_reason as MISTRAL_AI_FINISH_REASON,
+          strictOpenAiCompliance
+        )
+      : null;
+    return (
+      `data: ${JSON.stringify({
+        id: parsedChunk.id,
+        object: parsedChunk.object,
+        created: parsedChunk.created,
+        model: parsedChunk.model,
+        provider: provider,
+        choices: [
+          {
+            index: parsedChunk.choices[0].index,
+            delta: parsedChunk.choices[0].delta,
+            finish_reason: finishReason,
+          },
+        ],
+        ...(parsedChunk.usage ? { usage: parsedChunk.usage } : {}),
+      })}` + '\n\n'
+    );
+  };
 };
