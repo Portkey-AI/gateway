@@ -5,10 +5,7 @@ const Tripo3DAPIConfig: ProviderAPIConfig = {
   headers: ({ providerOptions }) => {
     return { Authorization: `Bearer ${providerOptions.apiKey}` };
   },
-  getEndpoint: ({ gatewayRequestURL }) => {
-    // For passthrough proxy, extract path after /v1
-    return gatewayRequestURL.split('/v1')[1] || '';
-  },
+  getEndpoint: ({ fn }) => '',
 };
 
 export default Tripo3DAPIConfig;
