@@ -1,8 +1,8 @@
 import {
   BEDROCK,
-  documentMimeTypes,
   fileExtensionMimeTypeMap,
   imagesMimeTypes,
+  videoMimeTypes,
 } from '../../globals';
 import {
   Message,
@@ -190,7 +190,16 @@ const getMessageContent = (message: Message) => {
               format: fileFormat,
             },
           });
-        } else if (documentMimeTypes.includes(mimeType)) {
+        } else if (videoMimeTypes.includes(mimeType)) {
+          out.push({
+            video: {
+              format: fileFormat,
+              source: {
+                bytes,
+              },
+            },
+          });
+        } else {
           out.push({
             document: {
               format: fileFormat,
@@ -204,25 +213,46 @@ const getMessageContent = (message: Message) => {
       } else if (item.type === 'file') {
         const mimeType = item.file?.mime_type || fileExtensionMimeTypeMap.pdf;
         const fileFormat = mimeType.split('/')[1];
-        if (item.file?.file_url) {
+        if (imagesMimeTypes.includes(mimeType)) {
           out.push({
-            document: {
-              format: fileFormat,
-              name: item.file.file_name || crypto.randomUUID(),
+            image: {
               source: {
-                s3Location: {
-                  uri: item.file.file_url,
-                },
+                ...(item.file?.file_data && { bytes: item.file.file_data }),
+                ...(item.file?.file_url && {
+                  s3Location: {
+                    uri: item.file.file_url,
+                  },
+                }),
+              },
+              format: fileFormat,
+            },
+          });
+        } else if (videoMimeTypes.includes(mimeType)) {
+          out.push({
+            video: {
+              format: fileFormat,
+              source: {
+                ...(item.file?.file_data && { bytes: item.file.file_data }),
+                ...(item.file?.file_url && {
+                  s3Location: {
+                    uri: item.file.file_url,
+                  },
+                }),
               },
             },
           });
-        } else if (item.file?.file_data) {
+        } else {
           out.push({
             document: {
               format: fileFormat,
-              name: item.file.file_name || crypto.randomUUID(),
+              name: item.file?.file_name || crypto.randomUUID(),
               source: {
-                bytes: item.file.file_data,
+                ...(item.file?.file_data && { bytes: item.file.file_data }),
+                ...(item.file?.file_url && {
+                  s3Location: {
+                    uri: item.file.file_url,
+                  },
+                }),
               },
             },
           });
