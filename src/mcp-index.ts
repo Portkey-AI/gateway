@@ -21,6 +21,7 @@ import { hydrateContext } from './middlewares/mcp/hydrateContext';
 import { sessionMiddleware } from './middlewares/mcp/sessionMiddleware';
 import { oauthRoutes } from './routes/oauth';
 import { wellKnownRoutes } from './routes/wellknown';
+import { controlPlaneMiddleware } from './middlewares/controlPlane';
 
 const logger = createLogger('MCP-Gateway');
 
@@ -60,6 +61,8 @@ app.use(
     credentials: true, // Allow cookies and authorization headers
   })
 );
+
+app.use(controlPlaneMiddleware);
 
 // Mount route groups
 app.route('/oauth', oauthRoutes);

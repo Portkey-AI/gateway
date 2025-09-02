@@ -2,8 +2,6 @@ import { createMiddleware } from 'hono/factory';
 import { ServerConfig } from '../../types/mcp';
 import { createLogger } from '../../utils/logger';
 import { getConfigCache } from '../../services/cache';
-import { env } from 'hono/adapter';
-import { pkFetch } from '../controlPlane';
 
 const logger = createLogger('mcp/hydateContext');
 
@@ -12,43 +10,6 @@ const userAgent = 'Portkey-MCP-Gateway/0.1.0';
 
 const LOCAL_CONFIGS_CACHE_KEY = 'local_server_configs';
 const SERVER_CONFIG_NAMESPACE = 'server_configs';
-
-/**
- * Check if control plane is available
- */
-const isUsingControlPlane = (env: any): boolean => {
-  return !!env.ALBUS_BASEPATH;
-};
-
-/**
- * Fetch a single server configuration from control plane
- */
-async function getServerFromControlPlane(
-  serverId: string,
-  c: any
-): Promise<any> {
-  try {
-    const response = await pkFetch(c, `/v2/mcp-servers/${serverId}`, 'GET');
-
-    if (!response.ok) {
-      if (response.status === 404 || response.status === 403) {
-        return null; // Server not found
-      }
-      throw new Error(
-        `Control plane responded with ${response.status}: ${response.statusText}`
-      );
-    }
-
-    const data = (await response.json()) as any;
-    return data;
-  } catch (error) {
-    logger.warn(
-      `Failed to fetch server ${serverId} from control plane:`,
-      error
-    );
-    throw error;
-  }
-}
 
 /**
  * Load and cache all local server configurations
@@ -111,7 +72,8 @@ export const getServerConfig = async (
   c: any
 ): Promise<any> => {
   // If using control plane, fetch the specific server
-  if (isUsingControlPlane(env(c))) {
+  const CP = c.get('controlPlane');
+  if (CP) {
     // Check cache first for control plane configs
     const cacheKey = `cp_${serverId}`;
     const cached = await configCache.get(cacheKey, SERVER_CONFIG_NAMESPACE);
@@ -122,7 +84,7 @@ export const getServerConfig = async (
 
     try {
       logger.debug(`Fetching server ${serverId} from control plane`);
-      const serverInfo = await getServerFromControlPlane(serverId, c);
+      const serverInfo = await CP.getMCPServer(serverId);
       if (serverInfo) {
         // Cache for 5 minutes (shorter TTL for control plane configs for security)
         await configCache.set(cacheKey, serverInfo, {

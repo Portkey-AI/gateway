@@ -1,43 +1,81 @@
 import { Context } from 'hono';
 import { env } from 'hono/adapter';
+import { createMiddleware } from 'hono/factory';
+import { createLogger } from '../../utils/logger';
 
-async function pkFetch(
-  c: Context,
-  path: string,
-  method: string = 'GET',
-  headers: any = {},
-  body: any = {}
-) {
-  // FOR TESTING ONLY
-  if (path.includes('/mcp-servers/')) {
-    return {
-      ok: true,
-      status: 200,
-      statusText: 'OK',
-      json: () =>
-        Promise.resolve({
-          url: 'https://mcp.linear.app/mcp',
-          name: 'My Linear',
-          auth_type: 'oauth_auto',
-        }),
-    };
-  }
+const logger = createLogger('mcp/controlPlaneMiddleware');
 
-  const controlPlaneUrl = env(c).ALBUS_BASEPATH;
-  let options: any = {
-    method,
-    headers: {
-      ...headers,
+class ControlPlane {
+  private controlPlaneUrl: string;
+  private defaultHeaders: Record<string, string>;
+
+  constructor(private c: Context) {
+    this.controlPlaneUrl = env(c).ALBUS_BASEPATH;
+
+    this.defaultHeaders = {
       'User-Agent': 'Portkey-MCP-Gateway/0.1.0',
       'Content-Type': 'application/json',
       'x-client-id-gateway': env(c).CLIENT_ID,
-    },
-  };
-  if (method === 'POST') {
-    options.body = body;
+    };
   }
-  const response = await fetch(`${controlPlaneUrl}${path}`, options);
-  return response;
+
+  async fetch(
+    path: string,
+    method: string = 'GET',
+    headers: any = {},
+    body: any = {}
+  ) {
+    const reqURL = `${this.controlPlaneUrl}${path}`;
+    const options: RequestInit = {
+      method,
+      headers: {
+        ...this.defaultHeaders,
+        ...headers,
+      },
+    };
+
+    if (method === 'POST') {
+      options.body = body;
+    }
+
+    const response = await fetch(reqURL, options);
+    return response.json();
+  }
+
+  getMCPServer(serverId: string) {
+    return this.fetch(`/v2/mcp-servers/${serverId}`);
+  }
+
+  async introspect(
+    token: string,
+    token_type_hint: 'access_token' | 'refresh_token' | ''
+  ) {
+    const result: any = await this.fetch(`/oauth/introspect`, 'POST', {
+      token: token,
+      token_type_hint: token_type_hint,
+    });
+
+    // TODO: we do this since we use `username` instead of `sub`
+    // We should change that in the future
+    return {
+      active: result.active,
+      scope: result.scope || '',
+      client_id: result.client_id,
+      username: result.sub,
+      exp: result.exp,
+      iat: result.iat,
+    };
+  }
 }
 
-export { pkFetch };
+/**
+ * Fetches a session from the session store if it exists.
+ * If the session is found, it is set in the context.
+ */
+export const controlPlaneMiddleware = createMiddleware(async (c, next) => {
+  if (env(c).ALBUS_BASEPATH) {
+    c.set('controlPlane', new ControlPlane(c));
+  }
+
+  return next();
+});
