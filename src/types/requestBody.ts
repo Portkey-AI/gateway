@@ -157,6 +157,18 @@ export interface Options {
 
   /** Cortex specific fields */
   snowflakeAccount?: string;
+
+  /**
+   * TLS options for outgoing requests. Example:
+   * {
+   *   ca?: string; // CA certificate(s) in PEM format
+   *   rejectUnauthorized?: boolean;
+   * }
+   */
+  tlsOptions?: {
+    ca?: string;
+    rejectUnauthorized?: boolean;
+  };
 }
 
 /**
