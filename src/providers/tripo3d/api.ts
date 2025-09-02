@@ -5,21 +5,9 @@ const Tripo3DAPIConfig: ProviderAPIConfig = {
   headers: ({ providerOptions }) => {
     return { Authorization: `Bearer ${providerOptions.apiKey}` };
   },
-  getEndpoint: ({ fn }) => {
-    switch (fn) {
-      case 'createTask':
-        return '/task';
-      case 'getTask':
-        return '/task';
-      case 'uploadFile':
-        return '/upload';
-      case 'getStsToken':
-        return '/upload/sts/token';
-      case 'getBalance':
-        return '/user/balance';
-      default:
-        return '';
-    }
+  getEndpoint: ({ providerPath }) => {
+    // For passthrough proxy, use the path directly
+    return providerPath || '';
   },
 };
 
