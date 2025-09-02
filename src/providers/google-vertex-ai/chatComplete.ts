@@ -354,6 +354,10 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
+  modalities: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
 };
 
 interface AnthorpicTextContentItem {
@@ -479,6 +483,13 @@ export const GoogleChatCompleteResponseTransform: (
                 content = part.text;
                 contentBlocks.push({ type: 'text', text: part.text });
               }
+            } else if (part.inlineData) {
+              contentBlocks.push({
+                type: 'image_url',
+                image_url: {
+                  url: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
+                },
+              });
             }
           }
 
@@ -673,6 +684,23 @@ export const GoogleChatCompleteStreamChunkTransform: (
                 };
               }
             }),
+          };
+        } else if (generation.content?.parts[0]?.inlineData) {
+          const part = generation.content.parts[0];
+          const contentBlocks = [
+            {
+              index: streamState.containsChainOfThoughtMessage ? 1 : 0,
+              delta: {
+                type: 'image_url',
+                image_url: {
+                  url: `data:${part.inlineData?.mimeType};base64,${part.inlineData?.data}`,
+                },
+              },
+            },
+          ];
+          message = {
+            role: 'assistant',
+            content_blocks: contentBlocks,
           };
         }
         return {
