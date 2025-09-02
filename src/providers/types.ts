@@ -113,11 +113,7 @@ export type endpointStrings =
   | 'getModelResponse'
   | 'deleteModelResponse'
   | 'listResponseInputItems'
-  | 'messages'
-  | 'createTask'
-  | 'getTask'
-  | 'getStsToken'
-  | 'getBalance';
+  | 'messages';
 
 /**
  * A collection of API configurations for multiple AI providers.
