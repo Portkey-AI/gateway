@@ -637,6 +637,45 @@
       }
     },
     {
+      "name": "Model Rules",
+      "id": "modelRules",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Allow requests based on metadata-driven rules mapping to allowed models."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "rules": {
+            "type": "object",
+            "label": "Rules object: {\"defaults\": [\"model\"], \"metadata\": {\"key\": {\"value\": [\"models\"]}}}",
+            "description": [
+              {
+                "type": "text",
+                "text": "Overrides model list using metadata-based routing."
+              }
+            ]
+          },
+          "not": {
+            "type": "boolean",
+            "label": "Invert Model Check",
+            "description": [
+              {
+                "type": "text",
+                "text": "When on, any model resolved by rules is blocked instead of allowed."
+              }
+            ],
+            "default": false
+          }
+        },
+        "required": ["rules"]
+      }
+    },
+    {
       "name": "JWT",
       "id": "jwt",
       "type": "guardrail",

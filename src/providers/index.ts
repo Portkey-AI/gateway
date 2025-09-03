@@ -64,6 +64,7 @@ import { FeatherlessAIConfig } from './featherless-ai';
 import KrutrimConfig from './krutrim';
 import AI302Config from './302ai';
 import MeshyConfig from './meshy';
+import Tripo3DConfig from './tripo3d';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -128,6 +129,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   krutrim: KrutrimConfig,
   '302ai': AI302Config,
   meshy: MeshyConfig,
+  tripo3d: Tripo3DConfig,
 };
 
 export default Providers;
