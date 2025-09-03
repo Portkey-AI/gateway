@@ -38,7 +38,10 @@
             "type": "array",
             "label": "Greetings List",
             "description": "List of greetings to be used in the guardrail check.",
-            "items": { "type": "string" , "enum": ["Casual & Friendly", "Professional & Polite"] },
+            "items": {
+              "type": "string",
+              "enum": ["Casual & Friendly", "Professional & Polite"]
+            },
             "default": ["Casual & Friendly"]
           },
           "pii_list": {
@@ -65,7 +68,7 @@
               "Date Of Birth",
               "Unique Id",
               "Financial Data"
-            ] 
+            ]
           },
           "compliance_list": {
             "type": "array",

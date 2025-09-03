@@ -45,7 +45,10 @@ export const handler: PluginHandler = async (
       data: null,
     };
   }
-  let text = textArray.filter((text) => text).join('\n').trim()
+  let text = textArray
+    .filter((text) => text)
+    .join('\n')
+    .trim();
 
   // Prepare request body
   const requestBody = {
