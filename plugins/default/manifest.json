@@ -602,7 +602,7 @@
       "description": [
         {
           "type": "subHeading",
-          "text": "Allow requests only when the model is in the provided list."
+          "text": "Blocks any request whose model isn’t on this list."
         }
       ],
       "parameters": {
@@ -613,8 +613,8 @@
             "label": "Model list",
             "description": [
               {
-                "type": "text",
-                "text": "e.g. gpt-4o, llama-3-70b, mixtral-8x7b"
+                "type": "subHeading",
+                "text": "Enter the allowed models. e.g. gpt-4o, llama-3-70b, mixtral-8x7b"
               }
             ],
             "items": {
@@ -626,7 +626,7 @@
             "label": "Invert Model Check",
             "description": [
               {
-                "type": "text",
+                "type": "subHeading",
                 "text": "When on, any model in the list is blocked instead of allowed."
               }
             ],
