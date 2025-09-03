@@ -2,6 +2,7 @@
   "plugins_enabled": [
     "default",
     "portkey",
+    "qualifire",
     "aporia",
     "sydelabs",
     "pillar",
