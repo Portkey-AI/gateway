@@ -1,4 +1,4 @@
-import { handler } from './guardrails';
+import { handler } from './walledprotect';
 import testCredsFile from './creds.json';
 import { HookEventType, PluginContext, PluginParameters } from '../types';
 
