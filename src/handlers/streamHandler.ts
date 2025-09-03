@@ -321,9 +321,13 @@ export function handleStreamingMode(
           await writer.write(encoder.encode(chunk));
         }
       } catch (error) {
-        console.error(error);
+        console.error('Error during stream processing:', error);
       } finally {
-        writer.close();
+        try {
+          await writer.close();
+        } catch (closeError) {
+          console.error('Failed to close the writer:', closeError);
+        }
       }
     })();
   } else {
@@ -341,9 +345,13 @@ export function handleStreamingMode(
           await writer.write(encoder.encode(chunk));
         }
       } catch (error) {
-        console.error(error);
+        console.error('Error during stream processing:', error);
       } finally {
-        writer.close();
+        try {
+          await writer.close();
+        } catch (closeError) {
+          console.error('Failed to close the writer:', closeError);
+        }
       }
     })();
   }
