@@ -105,8 +105,7 @@ export type endpointStrings =
   | 'getModelResponse'
   | 'deleteModelResponse'
   | 'listResponseInputItems'
-  | 'messages'
-  | 'modelGenerate';
+  | 'messages';
 
 /**
  * A collection of API configurations for multiple AI providers.

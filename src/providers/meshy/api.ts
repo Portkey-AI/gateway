@@ -11,16 +11,7 @@ const MeshyAPIConfig: ProviderAPIConfig = {
       'Content-Type': 'application/json',
     };
   },
-  getEndpoint: ({ fn, gatewayRequestURL }) => {
-    const basePath = gatewayRequestURL.split('/v1')?.[1] ?? '';
-
-    switch (fn) {
-      case 'modelGenerate':
-        return '/text-to-3d';
-      default:
-        return basePath || '';
-    }
-  },
+  getEndpoint: ({}) => '',
 };
 
 export default MeshyAPIConfig;
