@@ -10,11 +10,9 @@ import { handler as defaultwebhook } from './default/webhook';
 import { handler as defaultlog } from './default/log';
 import { handler as defaultcontainsCode } from './default/containsCode';
 import { handler as defaultalluppercase } from './default/alluppercase';
-import { handler as defaultendsWith } from './default/endsWith';
 import { handler as defaultalllowercase } from './default/alllowercase';
-import { handler as defaultmodelwhitelist } from './default/modelwhitelist';
-import { handler as defaultjwt } from './default/jwt';
-import { handler as defaultrequiredMetadataKeys } from './default/requiredMetadataKeys';
+import { handler as defaultendsWith } from './default/endsWith';
+import { handler as defaultmodelWhitelist } from './default/modelWhitelist';
 import { handler as portkeymoderateContent } from './portkey/moderateContent';
 import { handler as portkeylanguage } from './portkey/language';
 import { handler as portkeypii } from './portkey/pii';
@@ -34,12 +32,25 @@ import { handler as patronusnoRacialBias } from './patronus/noRacialBias';
 import { handler as patronusretrievalAnswerRelevance } from './patronus/retrievalAnswerRelevance';
 import { handler as patronustoxicity } from './patronus/toxicity';
 import { handler as patronuscustom } from './patronus/custom';
+import { mistralGuardrailHandler } from './mistral';
 import { handler as pangeatextGuard } from './pangea/textGuard';
+import { handler as promptfooPii } from './promptfoo/pii';
+import { handler as promptfooHarm } from './promptfoo/harm';
+import { handler as promptfooGuard } from './promptfoo/guard';
 import { handler as pangeapii } from './pangea/pii';
-import { handler as promptsecurityprotectPrompt } from './promptsecurity/protectPrompt';
-import { handler as promptsecurityprotectResponse } from './promptsecurity/protectResponse';
+import { pluginHandler as bedrockHandler } from './bedrock/index';
+import { handler as acuvityScan } from './acuvity/scan';
+import { handler as lassoclassify } from './lasso/classify';
+import { handler as exaonline } from './exa/online';
+import { handler as azurePii } from './azure/pii';
+import { handler as azureContentSafety } from './azure/contentSafety';
+import { handler as promptSecurityProtectPrompt } from './promptsecurity/protectPrompt';
+import { handler as promptSecurityProtectResponse } from './promptsecurity/protectResponse';
 import { handler as panwPrismaAirsintercept } from './panw-prisma-airs/intercept';
-import { handler as walledaiwalledprotect } from './walledai/walledprotect';
+import { handler as defaultjwt } from './default/jwt';
+import { handler as defaultrequiredMetadataKeys } from './default/requiredMetadataKeys';
+import { handler as walledaiguardrails } from './walledai/walledprotect';
+import { handler as defaultregexReplace } from './default/regexReplace';
 
 export const plugins = {
   default: {
@@ -55,11 +66,12 @@ export const plugins = {
     log: defaultlog,
     containsCode: defaultcontainsCode,
     alluppercase: defaultalluppercase,
-    endsWith: defaultendsWith,
     alllowercase: defaultalllowercase,
-    modelwhitelist: defaultmodelwhitelist,
+    endsWith: defaultendsWith,
+    modelWhitelist: defaultmodelWhitelist,
     jwt: defaultjwt,
     requiredMetadataKeys: defaultrequiredMetadataKeys,
+    regexReplace: defaultregexReplace,
   },
   portkey: {
     moderateContent: portkeymoderateContent,
@@ -90,18 +102,42 @@ export const plugins = {
     toxicity: patronustoxicity,
     custom: patronuscustom,
   },
+  mistral: {
+    moderateContent: mistralGuardrailHandler,
+  },
   pangea: {
     textGuard: pangeatextGuard,
     pii: pangeapii,
   },
+  promptfoo: {
+    pii: promptfooPii,
+    harm: promptfooHarm,
+    guard: promptfooGuard,
+  },
+  bedrock: {
+    guard: bedrockHandler,
+  },
+  acuvity: {
+    scan: acuvityScan,
+  },
+  lasso: {
+    classify: lassoclassify,
+  },
+  exa: {
+    online: exaonline,
+  },
+  azure: {
+    pii: azurePii,
+    contentSafety: azureContentSafety,
+  },
   promptsecurity: {
-    protectPrompt: promptsecurityprotectPrompt,
-    protectResponse: promptsecurityprotectResponse,
+    protectPrompt: promptSecurityProtectPrompt,
+    protectResponse: promptSecurityProtectResponse,
   },
   'panw-prisma-airs': {
     intercept: panwPrismaAirsintercept,
   },
   walledai: {
-    walledprotect: walledaiwalledprotect,
+    walledprotect: walledaiguardrails,
   },
 };
