@@ -613,7 +613,7 @@ export class OAuthGateway {
     client_id: string,
     authHeader?: string
   ): Promise<void> {
-    let clientId, clientSecret;
+    let clientId: string, clientSecret: string;
 
     if (authHeader?.startsWith('Basic ')) {
       const base64Credentials = authHeader.slice(6);

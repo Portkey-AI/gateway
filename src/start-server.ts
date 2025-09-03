@@ -159,6 +159,26 @@ if (
   });
 }
 
+// Loading animation function
+async function showLoadingAnimation() {
+  const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+  let i = 0;
+
+  return new Promise((resolve) => {
+    const interval = setInterval(() => {
+      process.stdout.write(`\r${frames[i]} Starting...`);
+      i = (i + 1) % frames.length;
+    }, 80);
+
+    // Stop after 1 second
+    setTimeout(() => {
+      clearInterval(interval);
+      process.stdout.write('\r');
+      resolve(undefined);
+    }, 1000);
+  });
+}
+
 // Clear the console and show animation before main output
 await showLoadingAnimation();
 console.clear();
@@ -193,26 +213,6 @@ if (llmNode) {
   injectWebSocket(server);
   console.log('\x1b[1m%s\x1b[0m', '🚀 AI Gateway is running at:');
   console.log('   ' + '\x1b[1;4;32m%s\x1b[0m', `${url}`);
-}
-
-// Loading animation function
-async function showLoadingAnimation() {
-  const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
-  let i = 0;
-
-  return new Promise((resolve) => {
-    const interval = setInterval(() => {
-      process.stdout.write(`\r${frames[i]} Starting...`);
-      i = (i + 1) % frames.length;
-    }, 80);
-
-    // Stop after 1 second
-    setTimeout(() => {
-      clearInterval(interval);
-      process.stdout.write('\r');
-      resolve(undefined);
-    }, 1000);
-  });
 }
 
 // Secondary information on single lines
