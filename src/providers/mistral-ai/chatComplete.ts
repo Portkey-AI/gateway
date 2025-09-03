@@ -1,4 +1,3 @@
-import { MISTRAL_AI } from '../../globals';
 import { Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
