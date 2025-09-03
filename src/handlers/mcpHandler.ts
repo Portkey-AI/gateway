@@ -6,7 +6,7 @@
  */
 
 import { Context } from 'hono';
-import { isInitializeRequest } from '@modelcontextprotocol/sdk/types';
+import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { RESPONSE_ALREADY_SENT } from '@hono/node-server/utils/response';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse';
 

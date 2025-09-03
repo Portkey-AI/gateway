@@ -22,7 +22,7 @@ import {
   InitializeResult,
   Tool,
   EmptyResultSchema,
-} from '@modelcontextprotocol/sdk/types';
+} from '@modelcontextprotocol/sdk/types.js';
 import { ServerConfig } from '../types/mcp';
 import { createLogger } from '../utils/logger';
 import { GatewayOAuthProvider } from './upstreamOAuth';
