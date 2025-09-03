@@ -230,7 +230,7 @@ export const TogetherAIChatCompleteStreamChunkTransform: (
     return `data: ${chunk}\n\n`;
   }
   const parsedChunk: TogetherAIChatCompletionStreamChunk = JSON.parse(chunk);
-  const finishReason = parsedChunk.choices[0].finish_reason
+  const finishReason = parsedChunk.choices[0]?.finish_reason
     ? transformFinishReason(
         parsedChunk.choices[0].finish_reason,
         strictOpenAiCompliance
