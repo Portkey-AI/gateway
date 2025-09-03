@@ -173,6 +173,7 @@ export class FileCacheBackend implements CacheBackend {
 
     namespaceData[key] = entry;
     this.stats.sets++;
+    await this.saveCache();
     this.updateStats();
     this.scheduleSave();
   }
