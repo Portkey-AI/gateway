@@ -102,6 +102,7 @@ export const FEATHERLESS_AI: string = 'featherless-ai';
 export const KRUTRIM: string = 'krutrim';
 export const QDRANT: string = 'qdrant';
 export const THREE_ZERO_TWO_AI: string = '302ai';
+export const TRIPO3D: string = 'tripo3d';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -167,6 +168,7 @@ export const VALID_PROVIDERS = [
   KRUTRIM,
   QDRANT,
   THREE_ZERO_TWO_AI,
+  TRIPO3D,
 ];
 
 export const CONTENT_TYPES = {
@@ -215,6 +217,8 @@ export const fileExtensionMimeTypeMap = {
   mpegps: 'video/mpegps',
   flv: 'video/flv',
   webm: 'video/webm',
+  mkv: 'video/mkv',
+  threegpp: 'video/three_gpp',
 };
 
 export const imagesMimeTypes = [
@@ -236,6 +240,19 @@ export const documentMimeTypes = [
   fileExtensionMimeTypeMap.html,
   fileExtensionMimeTypeMap.md,
   fileExtensionMimeTypeMap.txt,
+];
+
+export const videoMimeTypes = [
+  fileExtensionMimeTypeMap.mkv,
+  fileExtensionMimeTypeMap.mov,
+  fileExtensionMimeTypeMap.mp4,
+  fileExtensionMimeTypeMap.webm,
+  fileExtensionMimeTypeMap.flv,
+  fileExtensionMimeTypeMap.mpeg,
+  fileExtensionMimeTypeMap.mpg,
+  fileExtensionMimeTypeMap.wmv,
+  fileExtensionMimeTypeMap.threegpp,
+  fileExtensionMimeTypeMap.avi,
 ];
 
 export enum BatchEndpoints {
