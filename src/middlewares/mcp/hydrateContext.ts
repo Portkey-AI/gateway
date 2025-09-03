@@ -68,6 +68,7 @@ type Env = {
  * Get server configuration by ID, trying control plane first if available
  */
 export const getServerConfig = async (
+  workspaceId: string,
   serverId: string,
   c: any
 ): Promise<any> => {
@@ -75,16 +76,20 @@ export const getServerConfig = async (
   const CP = c.get('controlPlane');
   if (CP) {
     // Check cache first for control plane configs
-    const cacheKey = `cp_${serverId}`;
+    const cacheKey = `cp_${workspaceId}_${serverId}`;
     const cached = await configCache.get(cacheKey, SERVER_CONFIG_NAMESPACE);
     if (cached) {
-      logger.debug(`Using cached control plane config for server: ${serverId}`);
+      logger.debug(
+        `Using cached control plane config for server: ${workspaceId}/${serverId}`
+      );
       return cached;
     }
 
     try {
-      logger.debug(`Fetching server ${serverId} from control plane`);
-      const serverInfo = await CP.getMCPServer(serverId);
+      logger.debug(
+        `Fetching server ${workspaceId}/${serverId} from control plane`
+      );
+      const serverInfo = await CP.getMCPServer(workspaceId, serverId);
       if (serverInfo) {
         // Cache for 5 minutes (shorter TTL for control plane configs for security)
         await configCache.set(cacheKey, serverInfo, {
@@ -94,16 +99,21 @@ export const getServerConfig = async (
         return serverInfo;
       }
     } catch (error) {
-      logger.warn(`Failed to fetch server ${serverId} from control plane`);
+      logger.warn(
+        `Failed to fetch server ${workspaceId}/${serverId} from control plane`
+      );
       return null;
     }
   } else {
     // For local configs, load entire file and cache it, then return the specific server
     try {
       const localConfigs = await loadLocalServerConfigs();
-      return localConfigs[serverId] || null;
+      return localConfigs[workspaceId + '/' + serverId] || null;
     } catch (error) {
-      logger.warn('Failed to load local server configurations:', error);
+      logger.warn(
+        `Failed to load local server configurations for ${workspaceId}/${serverId}:`,
+        error
+      );
       return null;
     }
   }
@@ -111,28 +121,32 @@ export const getServerConfig = async (
 
 export const hydrateContext = createMiddleware<Env>(async (c, next) => {
   const serverId = c.req.param('serverId');
+  const workspaceId = c.req.param('workspaceId');
 
-  if (!serverId) {
+  if (!serverId || !workspaceId) {
     return next();
   }
 
   // Get server configuration (control plane will handle authorization, local assumes single user)
-  const serverInfo = await getServerConfig(serverId, c);
+  const serverInfo = await getServerConfig(workspaceId, serverId, c);
   if (!serverInfo) {
-    logger.error(`Server configuration not found for: ${serverId}`);
+    logger.error(
+      `Server configuration not found for: ${workspaceId}/${serverId}`
+    );
     return c.json(
       {
         error: 'not_found',
-        error_description: `Server '${serverId}' not found`,
+        error_description: `Server '${workspaceId}/${serverId}' not found`,
       },
       404
     );
   }
 
-  logger.debug(`Using server config for: ${serverId}`);
+  logger.debug(`Using server config for: ${workspaceId}/${serverId}`);
 
   const config: ServerConfig = {
     serverId,
+    workspaceId,
     url: serverInfo.url,
     headers:
       serverInfo.configurations?.headers || serverInfo.default_headers || {},

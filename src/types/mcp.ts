@@ -3,6 +3,7 @@
  */
 export interface ServerConfig {
   serverId: string;
+  workspaceId: string;
   url: string;
   headers: Record<string, string>;
 

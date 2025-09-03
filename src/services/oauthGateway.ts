@@ -103,6 +103,8 @@ interface StoredAccessToken {
   iat: number;
   exp: number;
   user_id?: string;
+  username?: string;
+  sub?: string;
 }
 
 interface StoredRefreshToken {
@@ -112,6 +114,8 @@ interface StoredRefreshToken {
   exp: number;
   access_tokens: string[];
   user_id?: string;
+  username?: string;
+  sub?: string;
 }
 
 interface StoredAuthCode {
@@ -127,6 +131,58 @@ interface StoredAuthCode {
 }
 
 const oauthStore: CacheService = getOauthStore();
+const mcpServerCache: CacheService = getMcpServersCache();
+const localCache: CacheService = new CacheService({
+  backend: 'memory',
+  defaultTtl: 30 * 1000, // 30 seconds
+  cleanupInterval: 30 * 1000, // 30 seconds
+  maxSize: 100,
+});
+
+// Helper for caching OAuth data
+// Maintain connections with cache store and control plane
+// Control Plane <-> Persistent Cache <-> Memory Cache
+const OAuthGatewayCache = {
+  get: async <T = any | null>(key: string, namespace?: string): Promise<T> => {
+    // Check in memory cache first
+    // const inMemory = await localCache.get(key, namespace);
+    // if (inMemory) {
+    //   return inMemory;
+    // }
+
+    // Then check persistent cache
+    console.log('get in oauthstore', key, namespace);
+    const persistent = await oauthStore.get<T>(key, namespace);
+    if (persistent) {
+      // Store in memory cache
+      await localCache.set(key, persistent, { namespace });
+      return persistent;
+    }
+
+    // TODO: Then check control plane
+
+    return null as T;
+  },
+
+  set: async <T = any>(
+    key: string,
+    value: T,
+    namespace?: string
+  ): Promise<void> => {
+    console.log('set in oauthstore', key, value, namespace);
+    try {
+      await oauthStore.set(key, value, { namespace });
+      await localCache.set(key, value, { namespace });
+    } catch (e) {
+      console.error('Error setting in oauthstore', e);
+    }
+  },
+
+  delete: async <T = any>(key: string, namespace?: string): Promise<void> => {
+    // TODO: If control plane exists, we should never get here
+    await oauthStore.delete(key, namespace);
+  },
+};
 
 /**
  * Unified OAuth gateway that routes requests to either control plane or local service
@@ -137,10 +193,6 @@ export class OAuthGateway {
   constructor(c: Context) {
     this.controlPlaneUrl = env(c).ALBUS_BASEPATH || null;
     this.c = c;
-  }
-
-  private getEpochSeconds(): number {
-    return Math.floor(Date.now() / 1000);
   }
 
   private parseClientCredentials(
@@ -264,7 +316,7 @@ export class OAuthGateway {
         );
       }
 
-      const authCodeData = await oauthStore.get<StoredAuthCode>(
+      const authCodeData = await OAuthGatewayCache.get<StoredAuthCode>(
         code,
         'authorization_codes'
       );
@@ -280,7 +332,10 @@ export class OAuthGateway {
       }
 
       // Check if the client exists
-      const client = await oauthStore.get<OAuthClient>(clientId, 'clients');
+      const client = await OAuthGatewayCache.get<OAuthClient>(
+        clientId,
+        'clients'
+      );
       if (!client) {
         return this.errorInvalidClient('Client not found');
       }
@@ -354,16 +409,17 @@ export class OAuthGateway {
         return this.errorInvalidRequest('Missing refresh_token parameter');
       }
 
-      const storedRefreshToken = await oauthStore.get<StoredRefreshToken>(
-        refreshToken,
-        'refresh_tokens'
-      );
+      const storedRefreshToken =
+        await OAuthGatewayCache.get<StoredRefreshToken>(
+          refreshToken,
+          'refresh_tokens'
+        );
       if (!storedRefreshToken || storedRefreshToken.exp < nowSec()) {
         return this.errorInvalidGrant('Invalid or expired refresh token');
       }
 
       // Enforce client authentication/match for refresh_token grant
-      const client = await oauthStore.get<OAuthClient>(
+      const client = await OAuthGatewayCache.get<OAuthClient>(
         storedRefreshToken.client_id,
         'clients'
       );
@@ -406,7 +462,10 @@ export class OAuthGateway {
 
     if (grantType === 'client_credentials') {
       // Check if client exists
-      const client = await oauthStore.get<OAuthClient>(clientId, 'clients');
+      const client = await OAuthGatewayCache.get<OAuthClient>(
+        clientId,
+        'clients'
+      );
       if (!client) {
         return this.errorInvalidClient('Client not found');
       }
@@ -436,35 +495,51 @@ export class OAuthGateway {
    */
   async introspectToken(
     token: string,
-    token_type_hint: 'access_token' | 'refresh_token' | ''
+    hint: 'access_token' | 'refresh_token' | ''
   ): Promise<TokenIntrospectionResponse> {
     if (!token) return { active: false };
 
     const fromAccess =
-      !token_type_hint || token_type_hint === 'access_token'
-        ? await oauthStore.get<StoredAccessToken>(token, 'tokens')
+      !hint || hint === 'access_token'
+        ? await OAuthGatewayCache.get<StoredAccessToken>(token, 'tokens')
         : null;
     const fromRefresh =
-      !fromAccess && (!token_type_hint || token_type_hint === 'refresh_token')
-        ? await oauthStore.get<StoredRefreshToken>(token, 'refresh_tokens')
+      !fromAccess && (!hint || hint === 'refresh_token')
+        ? await OAuthGatewayCache.get<StoredRefreshToken>(
+            token,
+            'refresh_tokens'
+          )
         : null;
-    const tok = (fromAccess || fromRefresh) as
+    let tok = (fromAccess || fromRefresh) as
       | StoredAccessToken
       | StoredRefreshToken
       | null;
+
+    if (!tok && this.isUsingControlPlane) {
+      const CP = this.c.get('controlPlane');
+      if (CP) {
+        const cpTok = await CP.introspect(token, hint);
+        if (cpTok.active) {
+          tok = cpTok;
+          await OAuthGatewayCache.set(
+            token,
+            tok,
+            hint === 'refresh_token' ? 'refresh_tokens' : 'tokens'
+          );
+        }
+      }
+    }
+
     if (!tok) return { active: false };
 
     const exp = 'exp' in tok ? tok.exp : undefined;
     if ((exp ?? 0) < nowSec()) return { active: false };
 
-    const client = await oauthStore.get<OAuthClient>(tok.client_id, 'clients');
-    if (!client) return { active: false };
-
     return {
       active: true,
       scope: tok.scope,
       client_id: tok.client_id,
-      username: tok.user_id,
+      username: tok.user_id || tok.username || tok.sub,
       exp: tok.exp,
       iat: tok.iat,
     };
@@ -482,7 +557,7 @@ export class OAuthGateway {
     const id =
       clientId || `mcp_client_${crypto.randomBytes(16).toString('hex')}`;
 
-    const existing = await oauthStore.get<OAuthClient>(id, 'clients');
+    const existing = await OAuthGatewayCache.get<OAuthClient>(id, 'clients');
     if (existing) {
       if (clientData.redirect_uris?.length) {
         const merged = Array.from(
@@ -498,7 +573,7 @@ export class OAuthGateway {
         );
       }
 
-      return (await oauthStore.get<OAuthClient>(id, 'clients'))!;
+      return (await OAuthGatewayCache.get<OAuthClient>(id, 'clients'))!;
     }
 
     const isPublicClient =
@@ -547,11 +622,17 @@ export class OAuthGateway {
       );
       [clientId, clientSecret] = credentials.split(':');
 
-      const client = await oauthStore.get<OAuthClient>(clientId, 'clients');
+      const client = await OAuthGatewayCache.get<OAuthClient>(
+        clientId,
+        'clients'
+      );
       if (!client || client.client_secret !== clientSecret) return;
     } else if (client_id) {
       clientId = client_id;
-      const client = await oauthStore.get<OAuthClient>(clientId, 'clients');
+      const client = await OAuthGatewayCache.get<OAuthClient>(
+        clientId,
+        'clients'
+      );
       if (!client || client.token_endpoint_auth_method !== 'none') return;
     } else {
       return;
@@ -560,7 +641,7 @@ export class OAuthGateway {
     if (!token) return;
 
     const tryRevokeAccess = async () => {
-      const tokenData = await oauthStore.get<StoredAccessToken>(
+      const tokenData = await OAuthGatewayCache.get<StoredAccessToken>(
         token,
         'tokens'
       );
@@ -572,7 +653,7 @@ export class OAuthGateway {
     };
 
     const tryRevokeRefresh = async () => {
-      const refresh = await oauthStore.get<StoredRefreshToken>(
+      const refresh = await OAuthGatewayCache.get<StoredRefreshToken>(
         token,
         'refresh_tokens'
       );
@@ -609,7 +690,10 @@ export class OAuthGateway {
       );
     }
 
-    const client = await oauthStore.get<OAuthClient>(clientId, 'clients');
+    const client = await OAuthGatewayCache.get<OAuthClient>(
+      clientId,
+      'clients'
+    );
     if (!client)
       return this.c.json(this.errorInvalidClient('Client not found'), 400);
 
@@ -704,10 +788,9 @@ export class OAuthGateway {
     scope: string | undefined,
     username: string,
     serverId: string,
+    workspaceId: string,
     existingClientInfo?: any
   ): Promise<string> {
-    const mcpServerCache = getMcpServersCache();
-
     let config: oidc.Configuration;
     let clientInfo: any;
 
@@ -740,7 +823,7 @@ export class OAuthGateway {
     }
 
     // Always persist durable client info keyed by user+server for reuse
-    const durableKey = `${username}::${serverId}`;
+    const durableKey = `${username}::${workspaceId}::${serverId}`;
     await mcpServerCache.set<OAuthClient>(durableKey, clientInfo, {
       namespace: 'client_info',
     });
@@ -755,7 +838,13 @@ export class OAuthGateway {
     });
     await mcpServerCache.set(
       state,
-      { codeVerifier, redirectUrl: redirectUri, username, serverId },
+      {
+        codeVerifier,
+        redirectUrl: redirectUri,
+        username,
+        serverId,
+        workspaceId,
+      },
       { namespace: 'state' }
     );
 
@@ -772,9 +861,10 @@ export class OAuthGateway {
 
   async checkUpstreamAuth(resourceUrl: string, username: string): Promise<any> {
     const serverId = Array.from(resourceUrl.split('/')).at(-2);
-    if (!serverId) return false;
+    const workspaceId = Array.from(resourceUrl.split('/')).at(-3);
+    if (!serverId || !workspaceId) return false;
 
-    const serverConfig = await getServerConfig(serverId, this.c);
+    const serverConfig = await getServerConfig(workspaceId, serverId, this.c);
     if (!serverConfig) return false;
 
     if (serverConfig.auth_type != 'oauth_auto') {
@@ -782,15 +872,14 @@ export class OAuthGateway {
     }
 
     // Check if the server already has tokens for it
-    const mcpServerCache = getMcpServersCache();
     const tokens = await mcpServerCache.get<StoredAccessToken>(
-      `${username}::${serverId}`,
+      `${username}::${workspaceId}::${serverId}`,
       'tokens'
     );
     if (tokens) return { status: 'auth_not_needed' };
 
     const clientInfo = await mcpServerCache.get<OAuthClient>(
-      `${username}::${serverId}`,
+      `${username}::${workspaceId}::${serverId}`,
       'client_info'
     );
     const serverUrlOrigin = new URL(serverConfig.url).origin;
@@ -804,6 +893,7 @@ export class OAuthGateway {
       clientInfo?.scope,
       username,
       serverId,
+      workspaceId,
       clientInfo
     );
 
@@ -831,7 +921,6 @@ export class OAuthGateway {
         error_description: 'Invalid state in upstream callback',
       };
 
-    const mcpServerCache = getMcpServersCache();
     const authState = await mcpServerCache.get(state, 'state');
     if (!authState)
       return {
@@ -847,7 +936,12 @@ export class OAuthGateway {
       };
 
     const serverIdFromState = authState.serverId;
-    const serverConfig = await getServerConfig(serverIdFromState, this.c);
+    const workspaceIdFromState = authState.workspaceId;
+    const serverConfig = await getServerConfig(
+      workspaceIdFromState,
+      serverIdFromState,
+      this.c
+    );
     if (!serverConfig)
       return {
         error: 'invalid_state',
@@ -879,7 +973,7 @@ export class OAuthGateway {
     }
 
     // Store the token response in the cache under user+server key for reuse
-    const userServerKey = `${authState.username}::${authState.serverId}`;
+    const userServerKey = `${authState.username}::${authState.workspaceId}::${authState.serverId}`;
     await mcpServerCache.set(userServerKey, tokenResponse, {
       namespace: 'tokens',
     });

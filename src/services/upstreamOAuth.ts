@@ -56,8 +56,12 @@ export class GatewayOAuthProvider implements OAuthClientProvider {
     }
 
     // Try to get from persistent storage
-    if (this.tokenInfo?.username.length > 0 && this.config.serverId) {
-      const cacheKey = `${this.tokenInfo.username}::${this.config.serverId}`;
+    if (
+      this.tokenInfo?.username.length > 0 &&
+      this.config.serverId &&
+      this.config.workspaceId
+    ) {
+      const cacheKey = `${this.tokenInfo.username}::${this.config.workspaceId}::${this.config.serverId}`;
       const clientInfo = await this.mcpServersCache.get(
         cacheKey,
         'client_info'
@@ -79,16 +83,19 @@ export class GatewayOAuthProvider implements OAuthClientProvider {
   ): Promise<void> {
     // Store the client info for later use
     this._clientInfo = clientInfo;
-    logger.debug(`Saving client info for ${this.config.serverId}`, clientInfo);
+    logger.debug(
+      `Saving client info for ${this.config.workspaceId}/${this.config.serverId}`,
+      clientInfo
+    );
 
-    const cacheKey = `${this.tokenInfo.username}::${this.config.serverId}`;
+    const cacheKey = `${this.tokenInfo.username}::${this.config.workspaceId}::${this.config.serverId}`;
     await this.mcpServersCache.set(cacheKey, clientInfo, {
       namespace: 'client_info',
     });
   }
 
   async tokens(): Promise<OAuthTokens | undefined> {
-    const cacheKey = `${this.tokenInfo.username}::${this.config.serverId}`;
+    const cacheKey = `${this.tokenInfo.username}::${this.config.workspaceId}::${this.config.serverId}`;
     const tokens =
       (await this.mcpServersCache.get<OAuthTokens>(cacheKey, 'tokens')) ??
       undefined;
@@ -96,40 +103,45 @@ export class GatewayOAuthProvider implements OAuthClientProvider {
   }
 
   async saveTokens(tokens: OAuthTokens): Promise<void> {
-    logger.debug(`Saving tokens for ${this.config.serverId}`);
+    logger.debug(
+      `Saving tokens for ${this.config.workspaceId}/${this.config.serverId}`
+    );
 
-    const cacheKey = `${this.tokenInfo.username}::${this.config.serverId}`;
+    const cacheKey = `${this.tokenInfo.username}::${this.config.workspaceId}::${this.config.serverId}`;
     await this.mcpServersCache.set(cacheKey, tokens, { namespace: 'tokens' });
   }
 
   async redirectToAuthorization(url: URL): Promise<void> {
-    const state = `${this.tokenInfo?.username}::${this.config.serverId}`;
+    const state = `${this.tokenInfo?.username}::${this.config.workspaceId}::${this.config.serverId}`;
     url.searchParams.set('state', state);
     logger.info(
-      `Authorization redirect requested for ${this.config.serverId}: ${url}`
+      `Authorization redirect requested for ${this.config.workspaceId}/${this.config.serverId}: ${url}`
     );
 
     // Throw a specific error that mcpSession can catch
     const error = new Error(
-      `Authorization required for ${this.config.serverId}`
+      `Authorization required for ${this.config.workspaceId}/${this.config.serverId}`
     );
     (error as any).needsAuthorization = true;
     (error as any).authorizationUrl = url.toString();
-    (error as any).serverId = this.config.serverId;
+    (error as any).serverId = this.config.workspaceId;
+    (error as any).workspaceId = this.config.workspaceId;
     throw error;
   }
 
   async saveCodeVerifier(verifier: string): Promise<void> {
     // For server-to-server, PKCE might not be needed, but we'll support it
-    logger.debug(`Saving code verifier for ${this.config.serverId}`);
-    const cacheKey = `${this.tokenInfo.username}::${this.config.serverId}`;
+    logger.debug(
+      `Saving code verifier for ${this.config.workspaceId}/${this.config.serverId}`
+    );
+    const cacheKey = `${this.tokenInfo.username}::${this.config.workspaceId}::${this.config.serverId}`;
     await this.mcpServersCache.set(cacheKey, verifier, {
       namespace: 'code_verifier',
     });
   }
 
   async codeVerifier(): Promise<string> {
-    const cacheKey = `${this.tokenInfo.username}::${this.config.serverId}`;
+    const cacheKey = `${this.tokenInfo.username}::${this.config.workspaceId}::${this.config.serverId}`;
     const codeVerifier = await this.mcpServersCache.get(
       cacheKey,
       'code_verifier'
@@ -141,7 +153,7 @@ export class GatewayOAuthProvider implements OAuthClientProvider {
     scope: 'all' | 'client' | 'tokens' | 'verifier'
   ): Promise<void> {
     logger.debug(`Invalidating ${scope} credentials for ${this.config.url}`);
-    const cacheKey = `${this.tokenInfo.username}::${this.config.serverId}`;
+    const cacheKey = `${this.tokenInfo.username}::${this.config.workspaceId}::${this.config.serverId}`;
 
     switch (scope) {
       case 'all':

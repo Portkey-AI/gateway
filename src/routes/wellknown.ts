@@ -1,36 +1,28 @@
 // routes/wellknown.ts
-import { Context, Hono } from 'hono';
+import { Hono } from 'hono';
 import { createLogger } from '../utils/logger';
-import { env } from 'hono/adapter';
 
 const logger = createLogger('wellknown-routes');
 
 type Env = {
-  Bindings: {
-    ALBUS_BASEPATH?: string;
+  Variables: {
+    controlPlane?: any;
   };
 };
 
 const wellKnownRoutes = new Hono<Env>();
-
-const checkControlPlaneOAuth = (c: Context) => {
-  const controlPlaneUrl = env(c).ALBUS_BASEPATH;
-  const controlPlaneOauthEnabled = env(c).CONTROL_PLANE_OAUTH;
-
-  return Boolean(controlPlaneUrl && controlPlaneOauthEnabled === 'enabled');
-};
-
 /**
  * OAuth 2.1 Discovery Endpoint
  * Returns the OAuth authorization server metadata for this gateway
  */
 wellKnownRoutes.get('/oauth-authorization-server', async (c) => {
-  if (!checkControlPlaneOAuth(c)) {
-    return c.json({ error: 'not_found' }, 404);
-  }
-
   logger.debug('GET /.well-known/oauth-authorization-server');
-  const baseUrl = new URL(c.req.url).origin;
+
+  let baseUrl = new URL(c.req.url).origin;
+
+  if (c.get('controlPlane')) {
+    baseUrl = c.get('controlPlane').url;
+  }
 
   // OAuth 2.1 Authorization Server Metadata (RFC 8414)
   // https://datatracker.ietf.org/doc/html/rfc8414
@@ -74,23 +66,46 @@ wellKnownRoutes.get('/oauth-authorization-server', async (c) => {
     ui_locales_supported: ['en'],
   };
 
-  logger.debug('Returning OAuth authorization server metadata');
-
   return c.json(metadata, 200, {
     'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
   });
 });
+
+wellKnownRoutes.get(
+  '/oauth-authorization-server/:workspaceId/:serverId',
+  async (c) => {
+    logger.debug(
+      'GET /.well-known/oauth-authorization-server/:workspaceId/:serverId'
+    );
+
+    let baseUrl = new URL(c.req.url).origin;
+
+    if (c.get('controlPlane')) {
+      baseUrl = c.get('controlPlane').url;
+    }
+
+    const metadata = {
+      issuer: baseUrl,
+    };
+
+    return c.json(metadata, 200, {
+      'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+    });
+  }
+);
 
 /**
  * OAuth 2.0 Protected Resource Metadata (RFC 9728)
  * Required for MCP servers to indicate their authorization server
  */
 wellKnownRoutes.get('/oauth-protected-resource', async (c) => {
-  if (!checkControlPlaneOAuth(c)) {
-    return c.json({ error: 'not_found' }, 404);
-  }
   logger.debug('GET /.well-known/oauth-protected-resource');
-  const baseUrl = new URL(c.req.url).origin;
+
+  let baseUrl = new URL(c.req.url).origin;
+
+  if (c.get('controlPlane')) {
+    baseUrl = c.get('controlPlane').url;
+  }
 
   const metadata = {
     // This MCP gateway acts as a protected resource
@@ -107,45 +122,50 @@ wellKnownRoutes.get('/oauth-protected-resource', async (c) => {
     ],
   };
 
-  logger.debug('Returning OAuth protected resource metadata');
-
   return c.json(metadata, 200, {
     'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
   });
 });
 
-wellKnownRoutes.get('/oauth-protected-resource/:serverId/mcp', async (c) => {
-  if (!checkControlPlaneOAuth(c)) {
-    return c.json({ error: 'not_found' }, 404);
+wellKnownRoutes.get(
+  '/oauth-protected-resource/:workspaceId/:serverId/mcp',
+  async (c) => {
+    logger.debug(
+      'GET /.well-known/oauth-protected-resource/:workspaceId/:serverId/mcp',
+      {
+        workspaceId: c.req.param('workspaceId'),
+        serverId: c.req.param('serverId'),
+      }
+    );
+
+    let baseUrl = new URL(c.req.url).origin;
+    const resourceUrl = `${new URL(c.req.url).origin}/${c.req.param('workspaceId')}/${c.req.param('serverId')}/mcp`;
+
+    if (c.get('controlPlane')) {
+      baseUrl = c.get('controlPlane').url;
+    }
+
+    const metadata = {
+      // This MCP gateway acts as a protected resource
+      resource: resourceUrl,
+      // Point to our authorization server (either this gateway or control plane)
+      authorization_servers: [baseUrl],
+      // Scopes required to access this resource
+      scopes_supported: [
+        'mcp:servers:read',
+        'mcp:servers:*',
+        'mcp:tools:list',
+        'mcp:tools:call',
+        'mcp:*',
+      ],
+    };
+
+    console.log('metadata', metadata);
+
+    return c.json(metadata, 200, {
+      'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+    });
   }
-
-  logger.debug(
-    'GET /.well-known/oauth-protected-resource/:serverId/mcp',
-    c.req.param('serverId')
-  );
-  const baseUrl = new URL(c.req.url).origin;
-  const resourceUrl = `${baseUrl}/${c.req.param('serverId')}/mcp`;
-
-  const metadata = {
-    // This MCP gateway acts as a protected resource
-    resource: resourceUrl,
-    // Point to our authorization server (either this gateway or control plane)
-    authorization_servers: [baseUrl],
-    // Scopes required to access this resource
-    scopes_supported: [
-      'mcp:servers:read',
-      'mcp:servers:*',
-      'mcp:tools:list',
-      'mcp:tools:call',
-      'mcp:*',
-    ],
-  };
-
-  logger.debug('Returning OAuth protected resource metadata');
-
-  return c.json(metadata, 200, {
-    'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
-  });
-});
+);
 
 export { wellKnownRoutes };

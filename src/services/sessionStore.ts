@@ -14,6 +14,7 @@ const logger = createLogger('SessionStore');
 export interface SessionData {
   id: string;
   serverId: string;
+  workspaceId: string;
   createdAt: number;
   lastActivity: number;
   transportCapabilities?: TransportCapabilities;
@@ -57,6 +58,7 @@ export class SessionStore {
     const sessionData: SessionData = {
       id: session.id,
       serverId: session.config.serverId,
+      workspaceId: session.config.workspaceId,
       createdAt: session.createdAt,
       lastActivity: session.lastActivity,
       transportCapabilities: session.getTransportCapabilities(),

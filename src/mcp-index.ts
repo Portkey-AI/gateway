@@ -74,7 +74,7 @@ app.get('/', (c) => {
     gateway: 'Portkey MCP Gateway',
     version: '0.1.0',
     endpoints: {
-      mcp: '/:serverId/mcp',
+      mcp: ':workspaceId/:serverId/mcp',
       health: '/health',
       oauth: {
         discovery: '/.well-known/oauth-authorization-server',
@@ -88,7 +88,7 @@ app.get('/', (c) => {
  * Main MCP endpoint with transport detection
  */
 app.all(
-  '/:serverId/mcp',
+  '/:workspaceId/:serverId/mcp',
   oauthMiddleware({
     required: OAUTH_REQUIRED,
     skipPaths: ['/oauth', '/.well-known'],
@@ -104,11 +104,12 @@ app.all(
  * SSE endpoint - simple redirect to main MCP endpoint
  * The main /mcp endpoint already handles SSE through transport detection
  */
-app.get('/:serverId/sse', async (c) => {
+app.get('/:workspaceId/:serverId/sse', async (c) => {
   logger.debug(`SSE GET ${c.req.url}`);
+  const workspaceId = c.req.param('workspaceId');
   const serverId = c.req.param('serverId');
   // Redirect with SSE-compatible headers
-  return c.redirect(`/${serverId}/mcp`, 302);
+  return c.redirect(`/${workspaceId}/${serverId}/mcp`, 302);
 });
 
 /**
@@ -116,7 +117,7 @@ app.get('/:serverId/sse', async (c) => {
  * Handles messages from SSE clients
  */
 app.post(
-  '/:serverId/messages',
+  '/:workspaceId/:serverId/messages',
   oauthMiddleware({
     required: OAUTH_REQUIRED,
     scopes: ['mcp:servers:*', 'mcp:*'],

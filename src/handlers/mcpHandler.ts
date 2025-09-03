@@ -107,12 +107,15 @@ export async function handleInitializeRequest(
   c: Context<Env>,
   session: MCPSession | undefined
 ): Promise<MCPSession | undefined> {
-  // Create new session if needed
+  const serverConfig = c.var.serverConfig;
+
   if (!session) {
-    logger.debug(`Creating new session for server: ${c.req.param('serverId')}`);
+    logger.debug(
+      `Creating new session for server: ${serverConfig.workspaceId}/${serverConfig.serverId}`
+    );
 
     session = new MCPSession({
-      config: c.var.serverConfig,
+      config: serverConfig,
       gatewayToken: c.var.tokenInfo,
     });
 
@@ -303,14 +306,14 @@ export async function handleMCPRequest(c: Context<Env>) {
       // Check if this is an OAuth authorization error
       if (error.authorizationUrl && error.serverId) {
         logger.info(
-          `OAuth authorization required for server ${error.serverId}`
+          `OAuth authorization required for server ${error.workspaceId}/${error.serverId}`
         );
         return c.json(
           {
             jsonrpc: '2.0',
             error: {
               code: -32000,
-              message: `Authorization required for ${error.serverId}. Go to the following URL to complete the OAuth flow: ${error.authorizationUrl}`,
+              message: `Authorization required for ${error.workspaceId}/${error.serverId}. Go to the following URL to complete the OAuth flow: ${error.authorizationUrl}`,
               data: {
                 type: 'oauth_required',
                 authorizationUrl: error.authorizationUrl,

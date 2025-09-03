@@ -42,18 +42,27 @@ class ControlPlane {
     return response.json();
   }
 
-  getMCPServer(serverId: string) {
-    return this.fetch(`/v2/mcp-servers/${serverId}`);
+  getMCPServer(workspaceId: string, serverId: string) {
+    return this.fetch(`/v2/mcp-servers/${workspaceId}/${serverId}`);
+  }
+
+  getMCPServerTokens(workspaceId: string, serverId: string) {
+    return this.fetch(`/v2/mcp-servers/${workspaceId}/${serverId}/tokens`);
   }
 
   async introspect(
     token: string,
     token_type_hint: 'access_token' | 'refresh_token' | ''
   ) {
-    const result: any = await this.fetch(`/oauth/introspect`, 'POST', {
-      token: token,
-      token_type_hint: token_type_hint,
-    });
+    const result: any = await this.fetch(
+      `/oauth/introspect`,
+      'POST',
+      {},
+      JSON.stringify({
+        token: token,
+        token_type_hint: token_type_hint,
+      })
+    );
 
     // TODO: we do this since we use `username` instead of `sub`
     // We should change that in the future
@@ -65,6 +74,10 @@ class ControlPlane {
       exp: result.exp,
       iat: result.iat,
     };
+  }
+
+  get url() {
+    return this.controlPlaneUrl;
   }
 }
 

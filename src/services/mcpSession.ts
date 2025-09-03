@@ -409,6 +409,7 @@ class UpstreamManager {
  */
 class AuthenticationHandler {
   private pendingAuthorizationServerId?: string;
+  private pendingAuthorizationWorkspaceId?: string;
   private authorizationError?: Error;
   private authorizationUrl?: string;
   private logger;
@@ -435,6 +436,7 @@ class AuthenticationHandler {
    */
   getPendingAuthorization(): {
     serverId: string;
+    workspaceId: string;
     authorizationUrl?: string;
   } | null {
     if (!this.pendingAuthorizationServerId || !this.authorizationError) {
@@ -442,6 +444,8 @@ class AuthenticationHandler {
     }
     return {
       serverId: this.pendingAuthorizationServerId,
+      workspaceId:
+        this.pendingAuthorizationWorkspaceId || this.config.workspaceId,
       authorizationUrl: this.authorizationUrl,
     };
   }
@@ -452,9 +456,12 @@ class AuthenticationHandler {
   setPendingAuthorization(error: any): void {
     if (error.needsAuthorization) {
       this.pendingAuthorizationServerId = error.serverId;
+      this.pendingAuthorizationWorkspaceId = error.workspaceId;
       this.authorizationError = error;
       this.authorizationUrl = error.authorizationUrl;
-      this.logger.debug(`Server ${error.serverId} requires authorization`);
+      this.logger.debug(
+        `Server ${error.workspaceId}/${error.serverId} requires authorization`
+      );
     }
   }
 
@@ -463,6 +470,7 @@ class AuthenticationHandler {
    */
   clearPendingAuthorization(): void {
     this.pendingAuthorizationServerId = undefined;
+    this.pendingAuthorizationWorkspaceId = undefined;
     this.authorizationError = undefined;
     this.authorizationUrl = undefined;
   }
@@ -517,8 +525,9 @@ class AuthenticationHandler {
         currentTime: Date.now(),
         username: this.gatewayToken?.username,
         serverId: this.config.serverId,
+        workspaceId: this.config.workspaceId,
       });
-      const cacheKey = `${this.gatewayToken?.username}::${this.config.serverId}`;
+      const cacheKey = `${this.gatewayToken?.username}::${this.config.workspaceId}::${this.config.serverId}`;
       const authorizationCode = await this.mcpServersCache.get(
         cacheKey,
         'authorization_codes'
@@ -898,6 +907,7 @@ export class MCPSession {
    */
   getPendingAuthorization(): {
     serverId: string;
+    workspaceId: string;
     authorizationUrl?: string;
   } | null {
     return this.authHandler.getPendingAuthorization();
@@ -1052,7 +1062,7 @@ export class MCPSession {
    */
   initializeSSETransport(res: any): SSEServerTransport {
     const transport = new SSEServerTransport(
-      `/${this.config.serverId}/messages`,
+      `${this.config.workspaceId}/${this.config.serverId}/messages`,
       res
     );
 
