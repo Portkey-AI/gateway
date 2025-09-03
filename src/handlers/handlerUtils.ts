@@ -734,6 +734,7 @@ export async function tryTargetsRecursively(
         conditionalRouter = new ConditionalRouter(currentTarget, {
           metadata,
           params,
+          url: { pathname: c.req.path },
         });
         finalTarget = conditionalRouter.resolveTarget();
       } catch (conditionalRouter: any) {
