@@ -1,6 +1,6 @@
-import Providers from '../providers';
-import testVariables from './resources/testVariables';
-import { executeChatCompletionEndpointTests } from './routeSpecificTestFunctions.ts/chatCompletion';
+import Providers from '../../../src/providers';
+import testVariables from '../../../src/tests/resources/testVariables';
+import { executeChatCompletionEndpointTests } from '../../../src/tests/routeSpecificTestFunctions.ts/chatCompletion';
 
 for (const provider in testVariables) {
   const variables = testVariables[provider];
