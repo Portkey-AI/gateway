@@ -2,8 +2,9 @@ import {
   GoogleBatchRecord,
   GoogleErrorResponse,
   GoogleFinetuneRecord,
-  GoogleResponseCandidate,
+  GoogleResponseCandidate as VertexResponseCandidate,
 } from './types';
+import { GoogleResponseCandidate } from '../google/chatComplete';
 import { generateErrorResponse } from '../utils';
 import {
   BatchEndpoints,
@@ -513,7 +514,7 @@ export const fetchGoogleCustomEndpoint = async ({
 };
 
 export const transformVertexLogprobs = (
-  generation: GoogleResponseCandidate
+  generation: GoogleResponseCandidate | VertexResponseCandidate
 ) => {
   const logprobsContent: Logprobs[] = [];
   if (!generation.logprobsResult) return null;
