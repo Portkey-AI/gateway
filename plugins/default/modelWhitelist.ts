@@ -1,13 +1,9 @@
-import type {
+import {
   HookEventType,
   PluginContext,
   PluginHandler,
   PluginParameters,
 } from '../types';
-
-interface WhitelistData {
-  explanation: string;
-}
 
 export const handler: PluginHandler = async (
   context: PluginContext,
@@ -16,47 +12,44 @@ export const handler: PluginHandler = async (
 ) => {
   let error = null;
   let verdict = false;
-  let data: WhitelistData | null = null;
+  let data: any = null;
 
   try {
     const modelList = parameters.models;
     const not = parameters.not || false;
-    const requestModel = context.request?.json.model as string | undefined;
-    const requestMetadata: Record<string, unknown> = context?.metadata || {};
+    let requestModel = context.request?.json.model;
+
+    if (!modelList || !Array.isArray(modelList)) {
+      throw new Error('Missing or invalid model whitelist');
+    }
 
     if (!requestModel) {
       throw new Error('Missing model in request');
     }
 
-    // Use explicit models list only
-    const allowedSet = Array.isArray(modelList)
-      ? modelList.map(String).filter(Boolean)
-      : [];
-
-    if (!Array.isArray(allowedSet) || allowedSet.length === 0) {
-      throw new Error('Missing allowed models configuration');
-    }
-
-    const inList = allowedSet.includes(requestModel);
+    const inList = modelList.includes(requestModel);
     verdict = not ? !inList : inList;
 
-    let explanation = '';
-    if (verdict) {
-      explanation = not
-        ? `Model "${requestModel}" is not in the blocked list.`
-        : `Model "${requestModel}" is allowed.`;
-    } else {
-      explanation = not
-        ? `Model "${requestModel}" is in the blocked list.`
-        : `Model "${requestModel}" is not in the allowed list.`;
-    }
-
-    data = { explanation };
-  } catch (e) {
-    const err = e as Error;
-    error = err;
     data = {
-      explanation: `An error occurred while checking model whitelist: ${err.message}`,
+      verdict,
+      not,
+      explanation: verdict
+        ? not
+          ? `Model "${requestModel}" is not in the allowed list as expected.`
+          : `Model "${requestModel}" is allowed.`
+        : not
+          ? `Model "${requestModel}" is in the allowed list when it should not be.`
+          : `Model "${requestModel}" is not in the allowed list.`,
+      requestedModel: requestModel,
+      allowedModels: modelList,
+    };
+  } catch (e: any) {
+    error = e;
+    data = {
+      explanation: `An error occurred while checking model whitelist: ${e.message}`,
+      requestedModel: context.request?.json.model || 'No model specified',
+      not: parameters.not || false,
+      allowedModels: parameters.models || [],
     };
   }
 
