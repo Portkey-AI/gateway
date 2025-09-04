@@ -13,6 +13,7 @@ import {
 import { MemoryCacheBackend } from './backends/memory';
 import { FileCacheBackend } from './backends/file';
 import { createRedisBackend } from './backends/redis';
+import { createCloudflareKVBackend } from './backends/cloudflareKV';
 // Using console.log for now to avoid build issues
 const logger = {
   debug: (msg: string, ...args: any[]) =>
@@ -52,6 +53,18 @@ export class CacheService {
           throw new Error('Redis URL is required for Redis backend');
         }
         return createRedisBackend(config.redisUrl, config.redisOptions);
+
+      case 'cloudflareKV':
+        if (!config.kvBindingName || !config.dbName) {
+          throw new Error(
+            'Cloudflare KV binding name and db name are required for Cloudflare KV backend'
+          );
+        }
+        return createCloudflareKVBackend(
+          config.env,
+          config.kvBindingName,
+          config.dbName
+        );
 
       default:
         throw new Error(`Unsupported cache backend: ${config.backend}`);
@@ -229,12 +242,7 @@ let mcpServersCache: CacheService | null = null;
  */
 export function getDefaultCache(): CacheService {
   if (!defaultCache) {
-    defaultCache = new CacheService({
-      backend: 'memory',
-      defaultTtl: 5 * 60 * 1000, // 5 minutes
-      cleanupInterval: 5 * 60 * 1000, // 5 minutes
-      maxSize: 1000,
-    });
+    throw new Error('Default cache instance not found');
   }
   return defaultCache;
 }
@@ -244,13 +252,7 @@ export function getDefaultCache(): CacheService {
  */
 export function getTokenCache(): CacheService {
   if (!tokenCache) {
-    tokenCache = new CacheService({
-      backend: 'memory',
-      defaultTtl: 5 * 60 * 1000, // 5 minutes
-      saveInterval: 1000, // 1 second
-      cleanupInterval: 5 * 60 * 1000, // 5 minutes
-      maxSize: 1000,
-    });
+    throw new Error('Token cache instance not found');
   }
   return tokenCache;
 }
@@ -260,14 +262,7 @@ export function getTokenCache(): CacheService {
  */
 export function getSessionCache(): CacheService {
   if (!sessionCache) {
-    sessionCache = new CacheService({
-      backend: 'file',
-      dataDir: 'data',
-      fileName: 'sessions-cache.json',
-      defaultTtl: 7 * 24 * 60 * 60 * 1000, // 7 days
-      saveInterval: 5000, // 5 seconds
-      cleanupInterval: 5 * 60 * 1000, // 5 minutes
-    });
+    throw new Error('Session cache instance not found');
   }
   return sessionCache;
 }
@@ -285,12 +280,7 @@ export function getTokenIntrospectionCache(): CacheService {
  */
 export function getConfigCache(): CacheService {
   if (!configCache) {
-    configCache = new CacheService({
-      backend: 'memory',
-      defaultTtl: 10 * 60 * 1000, // 10 minutes
-      cleanupInterval: 5 * 60 * 1000, // 5 minutes
-      maxSize: 100,
-    });
+    throw new Error('Config cache instance not found');
   }
   return configCache;
 }
@@ -300,26 +290,14 @@ export function getConfigCache(): CacheService {
  */
 export function getOauthStore(): CacheService {
   if (!oauthStore) {
-    oauthStore = new CacheService({
-      backend: 'file',
-      dataDir: 'data',
-      fileName: 'oauth-store.json',
-      saveInterval: 1000, // 1 second
-      cleanupInterval: 60 * 10 * 1000, // 10 minutes
-    });
+    throw new Error('Oauth store cache instance not found');
   }
   return oauthStore;
 }
 
 export function getMcpServersCache(): CacheService {
   if (!mcpServersCache) {
-    mcpServersCache = new CacheService({
-      backend: 'file',
-      dataDir: 'data',
-      fileName: 'mcp-servers-auth.json',
-      saveInterval: 5000, // 5 seconds
-      cleanupInterval: 5 * 60 * 1000, // 5 minutes
-    });
+    throw new Error('Mcp servers cache instance not found');
   }
   return mcpServersCache;
 }
@@ -329,6 +307,99 @@ export function getMcpServersCache(): CacheService {
  */
 export function initializeCache(config: CacheConfig): CacheService {
   return new CacheService(config);
+}
+
+export function createCacheBackendsLocal(): void {
+  defaultCache = new CacheService({
+    backend: 'memory',
+    defaultTtl: 5 * 60 * 1000, // 5 minutes
+    cleanupInterval: 5 * 60 * 1000, // 5 minutes
+    maxSize: 1000,
+  });
+
+  tokenCache = new CacheService({
+    backend: 'memory',
+    defaultTtl: 5 * 60 * 1000, // 5 minutes
+    saveInterval: 1000, // 1 second
+    cleanupInterval: 5 * 60 * 1000, // 5 minutes
+    maxSize: 1000,
+  });
+
+  sessionCache = new CacheService({
+    backend: 'file',
+    dataDir: 'data',
+    fileName: 'sessions-cache.json',
+    defaultTtl: 7 * 24 * 60 * 60 * 1000, // 7 days
+    saveInterval: 5000, // 5 seconds
+    cleanupInterval: 5 * 60 * 1000, // 5 minutes
+  });
+
+  configCache = new CacheService({
+    backend: 'memory',
+    defaultTtl: 10 * 60 * 1000, // 10 minutes
+    cleanupInterval: 5 * 60 * 1000, // 5 minutes
+    maxSize: 100,
+  });
+
+  oauthStore = new CacheService({
+    backend: 'file',
+    dataDir: 'data',
+    fileName: 'oauth-store.json',
+    saveInterval: 1000, // 1 second
+    cleanupInterval: 60 * 10 * 1000, // 10 minutes
+  });
+
+  mcpServersCache = new CacheService({
+    backend: 'file',
+    dataDir: 'data',
+    fileName: 'mcp-servers-auth.json',
+    saveInterval: 5000, // 5 seconds
+    cleanupInterval: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+export function createCacheBackendsRedis(): void {
+  throw new Error(
+    'Redis backend not implemented - please install and configure a Redis client library'
+  );
+}
+
+export function createCacheBackendsCF(env: any): void {
+  let commonOptions: CacheConfig = {
+    backend: 'cloudflareKV',
+    env: env,
+    kvBindingName: 'KV_STORE',
+    defaultTtl: 5 * 60 * 1000, // 5 minutes
+  };
+  defaultCache = new CacheService({
+    ...commonOptions,
+    dbName: 'default',
+  });
+
+  tokenCache = new CacheService({
+    ...commonOptions,
+    dbName: 'token',
+  });
+
+  sessionCache = new CacheService({
+    ...commonOptions,
+    dbName: 'session',
+  });
+
+  configCache = new CacheService({
+    ...commonOptions,
+    dbName: 'config',
+  });
+
+  oauthStore = new CacheService({
+    ...commonOptions,
+    dbName: 'oauth',
+  });
+
+  mcpServersCache = new CacheService({
+    ...commonOptions,
+    dbName: 'mcp',
+  });
 }
 
 // Re-export types for convenience

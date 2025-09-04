@@ -130,14 +130,14 @@ interface StoredAuthCode {
   expires: number;
 }
 
-const oauthStore: CacheService = getOauthStore();
-const mcpServerCache: CacheService = getMcpServersCache();
-const localCache: CacheService = new CacheService({
-  backend: 'memory',
-  defaultTtl: 30 * 1000, // 30 seconds
-  cleanupInterval: 30 * 1000, // 30 seconds
-  maxSize: 100,
-});
+let oauthStore: CacheService;
+let mcpServerCache: CacheService;
+// let localCache: CacheService = new CacheService({
+//   backend: 'memory',
+//   defaultTtl: 30 * 1000, // 30 seconds
+//   cleanupInterval: 30 * 1000, // 30 seconds
+//   maxSize: 100,
+// });
 
 // Helper for caching OAuth data
 // Maintain connections with cache store and control plane
@@ -151,11 +151,9 @@ const OAuthGatewayCache = {
     // }
 
     // Then check persistent cache
-    console.log('get in oauthstore', key, namespace);
     const persistent = await oauthStore.get<T>(key, namespace);
     if (persistent) {
       // Store in memory cache
-      await localCache.set(key, persistent, { namespace });
       return persistent;
     }
 
@@ -169,12 +167,10 @@ const OAuthGatewayCache = {
     value: T,
     namespace?: string
   ): Promise<void> => {
-    console.log('set in oauthstore', key, value, namespace);
     try {
       await oauthStore.set(key, value, { namespace });
-      await localCache.set(key, value, { namespace });
     } catch (e) {
-      console.error('Error setting in oauthstore', e);
+      logger.error('Error setting in oauthstore', e);
     }
   },
 
@@ -193,6 +189,14 @@ export class OAuthGateway {
   constructor(c: Context) {
     this.controlPlaneUrl = env(c).ALBUS_BASEPATH || null;
     this.c = c;
+
+    if (!oauthStore) {
+      oauthStore = getOauthStore();
+    }
+
+    if (!mcpServerCache) {
+      mcpServerCache = getMcpServersCache();
+    }
   }
 
   private parseClientCredentials(

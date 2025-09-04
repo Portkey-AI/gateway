@@ -38,7 +38,7 @@ export interface CacheBackend {
 }
 
 export interface CacheConfig {
-  backend: 'memory' | 'file' | 'redis';
+  backend: 'memory' | 'file' | 'redis' | 'cloudflareKV';
   defaultTtl?: number; // Default TTL in milliseconds
   cleanupInterval?: number; // Cleanup interval in milliseconds
   // File backend options
@@ -50,4 +50,8 @@ export interface CacheConfig {
   redisOptions?: any;
   // Memory backend options
   maxSize?: number; // Maximum number of entries
+  // Cloudflare KV backend options
+  env?: any;
+  kvBindingName?: string;
+  dbName?: string;
 }

@@ -30,6 +30,8 @@ interface CloudflareKVClient {
 
 export class CloudflareKVCacheBackend implements CacheBackend {
   private client: CloudflareKVClient;
+  private dbName: string;
+
   private stats: CacheStats = {
     hits: 0,
     misses: 0,
@@ -39,12 +41,15 @@ export class CloudflareKVCacheBackend implements CacheBackend {
     expired: 0,
   };
 
-  constructor(client: CloudflareKVClient) {
+  constructor(client: CloudflareKVClient, dbName: string) {
     this.client = client;
+    this.dbName = dbName;
   }
 
   private getFullKey(key: string, namespace?: string): string {
-    return namespace ? `cache:${namespace}:${key}` : `cache:default:${key}`;
+    return namespace
+      ? `${this.dbName}:${namespace}:${key}`
+      : `${this.dbName}:default:${key}`;
   }
 
   private serializeEntry<T>(entry: CacheEntry<T>): string {
@@ -218,8 +223,9 @@ class CloudflareKVClient implements CloudflareKVClient {
 // Factory function to create Cloudflare KV backend
 export function createCloudflareKVBackend(
   env: any,
-  bindingName: string
+  bindingName: string,
+  dbName: string
 ): CloudflareKVCacheBackend {
   const client = new CloudflareKVClient(env, bindingName);
-  return new CloudflareKVCacheBackend(client);
+  return new CloudflareKVCacheBackend(client, dbName);
 }

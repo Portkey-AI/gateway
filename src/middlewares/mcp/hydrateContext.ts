@@ -1,12 +1,9 @@
 import { createMiddleware } from 'hono/factory';
 import { ServerConfig } from '../../types/mcp';
 import { createLogger } from '../../utils/logger';
-import { getConfigCache } from '../../services/cache';
+import { CacheService, getConfigCache } from '../../services/cache';
 
 const logger = createLogger('mcp/hydateContext');
-
-const configCache = getConfigCache();
-const userAgent = 'Portkey-MCP-Gateway/0.1.0';
 
 const LOCAL_CONFIGS_CACHE_KEY = 'local_server_configs';
 const SERVER_CONFIG_NAMESPACE = 'server_configs';
@@ -14,7 +11,9 @@ const SERVER_CONFIG_NAMESPACE = 'server_configs';
 /**
  * Load and cache all local server configurations
  */
-const loadLocalServerConfigs = async (): Promise<Record<string, any>> => {
+const loadLocalServerConfigs = async (
+  configCache: CacheService
+): Promise<Record<string, any>> => {
   // Check cache first
   const cached = await configCache.get<Record<string, any>>(
     LOCAL_CONFIGS_CACHE_KEY
@@ -72,6 +71,7 @@ export const getServerConfig = async (
   serverId: string,
   c: any
 ): Promise<any> => {
+  const configCache = getConfigCache();
   // If using control plane, fetch the specific server
   const CP = c.get('controlPlane');
   if (CP) {
@@ -107,7 +107,7 @@ export const getServerConfig = async (
   } else {
     // For local configs, load entire file and cache it, then return the specific server
     try {
-      const localConfigs = await loadLocalServerConfigs();
+      const localConfigs = await loadLocalServerConfigs(configCache);
       return localConfigs[workspaceId + '/' + serverId] || null;
     } catch (error) {
       logger.warn(
@@ -120,6 +120,9 @@ export const getServerConfig = async (
 };
 
 export const hydrateContext = createMiddleware<Env>(async (c, next) => {
+  const configCache = getConfigCache();
+  const userAgent = 'Portkey-MCP-Gateway/0.1.0';
+
   const serverId = c.req.param('serverId');
   const workspaceId = c.req.param('workspaceId');
 

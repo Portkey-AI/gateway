@@ -35,10 +35,11 @@ export interface SessionStoreOptions {
 const SESSIONS_NAMESPACE = 'sessions';
 
 export class SessionStore {
-  private cache = getSessionCache();
+  private cache;
   private activeSessionsMap = new Map<string, MCPSession>(); // Only for active connections
 
   constructor(options: SessionStoreOptions = {}) {
+    this.cache = getSessionCache();
     // Note: Cleanup is handled by the underlying cache backend automatically
     // Active sessions are validated on access, so no periodic cleanup needed
   }

@@ -22,6 +22,7 @@ import { sessionMiddleware } from './middlewares/mcp/sessionMiddleware';
 import { oauthRoutes } from './routes/oauth';
 import { wellKnownRoutes } from './routes/wellknown';
 import { controlPlaneMiddleware } from './middlewares/controlPlane';
+import { cacheBackendMiddleware } from './middlewares/cacheBackend';
 
 const logger = createLogger('MCP-Gateway');
 
@@ -37,9 +38,6 @@ type Env = {
     CLIENT_ID?: string;
   };
 };
-
-// Get the singleton session store instance
-const sessionStore = getSessionStore();
 
 // OAuth configuration - always required for security
 const OAUTH_REQUIRED = true; // Force OAuth for all requests
@@ -63,6 +61,7 @@ app.use(
 );
 
 app.use(controlPlaneMiddleware);
+app.use(cacheBackendMiddleware);
 
 // Mount route groups
 app.route('/oauth', oauthRoutes);
@@ -134,6 +133,8 @@ app.post(
  * Health check endpoint
  */
 app.get('/health', async (c) => {
+  // Get the singleton session store instance
+  const sessionStore = getSessionStore();
   const stats = await sessionStore.getStats();
   logger.debug('Health check accessed');
 
@@ -153,6 +154,7 @@ app.all('*', (c) => {
 
 async function shutdown() {
   logger.critical('Shutting down gracefully...');
+  const sessionStore = getSessionStore();
   await sessionStore.stop();
   process.exit(0);
 }
