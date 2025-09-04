@@ -710,28 +710,29 @@ export class OAuthGateway {
 
     return this.c.html(`
       <html>
-        <body>
-          <h1>Authorization Request</h1>
-          <p>Requesting access to: ${Array.from(resourceUrl.split('/')).at(-2)}</p>
-          <p>Redirect URI: ${redirectUri}</p>
-          ${resourceAuthUrl ? `<p>Please auth to linear first: <a href="${resourceAuthUrl}" target="_blank">${resourceAuthUrl}</a></p>` : ''}
-          <form action="${authorizationUrl}" method="post">
-            <input type="hidden" name="user_id" value="portkeydefaultuser" />
-            <input type="hidden" name="client_id" value="${clientId}" />
-            <input type="hidden" name="redirect_uri" value="${redirectUri}" />
-            <input type="hidden" name="state" value="${state}" />
-            <input type="hidden" name="scope" value="${scope}" />
-            <input type="hidden" name="code_challenge" value="${codeChallenge}" />
-            <input type="hidden" name="code_challenge_method" value="${codeChallengeMethod}" />
-            <input type="hidden" name="resource" value="${resourceUrl}" />
-            <button type="submit" name="action" value="deny">Deny</button>
-            <button type="submit" name="action" value="approve">
-              🔒 Approve
-            </button>
-          </form>
-          <script></script>
-        </body>
-      </html>
+<body style="font-family:system-ui,-apple-system,sans-serif;max-width:400px;margin:80px auto;padding:20px;color:#333">
+  <h1 style="font-size:24px;font-weight:500;margin-bottom:30px">Authorization Request</h1>
+  <p style="margin:20px 0;color:#666">Requesting access to: <b>${Array.from(resourceUrl.split('/')).at(-2)}</b></p>
+  <p style="margin:20px 0;color:#666">Redirect URI: ${redirectUri}</p>
+  ${resourceAuthUrl ? `<p style="background:#fffbf0;border-left:3px solid #ffa500;padding:12px;margin:20px 0">Auth to upstream MCP first: <a href="${resourceAuthUrl}" target="_blank" style="color:#0066cc">${resourceAuthUrl}</a></p>` : ''}
+  <form action="${authorizationUrl}" method="post" style="margin-top:40px" onsubmit="setTimeout(()=>window.close(),300)">
+    <input type="hidden" name="user_id" value="portkeydefaultuser" />
+    <input type="hidden" name="client_id" value="${clientId}" />
+    <input type="hidden" name="redirect_uri" value="${redirectUri}" />
+    <input type="hidden" name="state" value="${state}" />
+    <input type="hidden" name="scope" value="${scope}" />
+    <input type="hidden" name="code_challenge" value="${codeChallenge}" />
+    <input type="hidden" name="code_challenge_method" value="${codeChallengeMethod}" />
+    <input type="hidden" name="resource" value="${resourceUrl}" />
+    <div style="text-align:right">
+      <button type="submit" name="action" value="deny" style="padding:10px 20px;margin-right:10px;background:#f5f5f5;border:none;border-radius:4px;cursor:pointer">Deny</button>
+      <button type="submit" name="action" value="approve" style="padding:10px 20px;background:#000;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:500">
+        🔒 Approve
+      </button>
+    </div>
+  </form>
+</body>
+</html>
     `);
   }
 
