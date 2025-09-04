@@ -114,7 +114,7 @@ const defaultConfig: LoggerConfig = {
       LogLevel.ERROR
     : process.env.NODE_ENV === 'production'
       ? LogLevel.ERROR
-      : LogLevel.INFO,
+      : LogLevel.DEBUG,
   timestamp: process.env.LOG_TIMESTAMP !== 'false',
   colors:
     process.env.LOG_COLORS !== 'false' && process.env.NODE_ENV !== 'production',

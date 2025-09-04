@@ -310,52 +310,59 @@ export function initializeCache(config: CacheConfig): CacheService {
 }
 
 export function createCacheBackendsLocal(): void {
-  defaultCache = new CacheService({
-    backend: 'memory',
-    defaultTtl: 5 * 60 * 1000, // 5 minutes
-    cleanupInterval: 5 * 60 * 1000, // 5 minutes
-    maxSize: 1000,
-  });
-
-  tokenCache = new CacheService({
-    backend: 'memory',
-    defaultTtl: 5 * 60 * 1000, // 5 minutes
-    saveInterval: 1000, // 1 second
-    cleanupInterval: 5 * 60 * 1000, // 5 minutes
-    maxSize: 1000,
-  });
-
-  sessionCache = new CacheService({
-    backend: 'file',
-    dataDir: 'data',
-    fileName: 'sessions-cache.json',
-    defaultTtl: 7 * 24 * 60 * 60 * 1000, // 7 days
-    saveInterval: 5000, // 5 seconds
-    cleanupInterval: 5 * 60 * 1000, // 5 minutes
-  });
-
-  configCache = new CacheService({
-    backend: 'memory',
-    defaultTtl: 10 * 60 * 1000, // 10 minutes
-    cleanupInterval: 5 * 60 * 1000, // 5 minutes
-    maxSize: 100,
-  });
-
-  oauthStore = new CacheService({
-    backend: 'file',
-    dataDir: 'data',
-    fileName: 'oauth-store.json',
-    saveInterval: 1000, // 1 second
-    cleanupInterval: 60 * 10 * 1000, // 10 minutes
-  });
-
-  mcpServersCache = new CacheService({
-    backend: 'file',
-    dataDir: 'data',
-    fileName: 'mcp-servers-auth.json',
-    saveInterval: 5000, // 5 seconds
-    cleanupInterval: 5 * 60 * 1000, // 5 minutes
-  });
+  if (!defaultCache) {
+    defaultCache = new CacheService({
+      backend: 'memory',
+      defaultTtl: 5 * 60 * 1000, // 5 minutes
+      cleanupInterval: 5 * 60 * 1000, // 5 minutes
+      maxSize: 1000,
+    });
+  }
+  if (!tokenCache) {
+    tokenCache = new CacheService({
+      backend: 'memory',
+      defaultTtl: 5 * 60 * 1000, // 5 minutes
+      saveInterval: 1000, // 1 second
+      cleanupInterval: 5 * 60 * 1000, // 5 minutes
+      maxSize: 1000,
+    });
+  }
+  if (!sessionCache) {
+    sessionCache = new CacheService({
+      backend: 'file',
+      dataDir: 'data',
+      fileName: 'sessions-cache.json',
+      defaultTtl: 7 * 24 * 60 * 60 * 1000, // 7 days
+      saveInterval: 5000, // 5 seconds
+      cleanupInterval: 5 * 60 * 1000, // 5 minutes
+    });
+  }
+  if (!configCache) {
+    configCache = new CacheService({
+      backend: 'memory',
+      defaultTtl: 10 * 60 * 1000, // 10 minutes
+      cleanupInterval: 5 * 60 * 1000, // 5 minutes
+      maxSize: 100,
+    });
+  }
+  if (!oauthStore) {
+    oauthStore = new CacheService({
+      backend: 'file',
+      dataDir: 'data',
+      fileName: 'oauth-store.json',
+      saveInterval: 1000, // 1 second
+      cleanupInterval: 60 * 10 * 1000, // 10 minutes
+    });
+  }
+  if (!mcpServersCache) {
+    mcpServersCache = new CacheService({
+      backend: 'file',
+      dataDir: 'data',
+      fileName: 'mcp-servers-auth.json',
+      saveInterval: 5000, // 5 seconds
+      cleanupInterval: 5 * 60 * 1000, // 5 minutes
+    });
+  }
 }
 
 export function createCacheBackendsRedis(): void {

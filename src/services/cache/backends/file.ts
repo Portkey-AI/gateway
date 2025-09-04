@@ -30,6 +30,7 @@ export class FileCacheBackend implements CacheBackend {
   private data: FileCacheData = {};
   private saveTimer?: NodeJS.Timeout;
   private cleanupInterval?: NodeJS.Timeout;
+  private loaded: boolean = false;
   private stats: CacheStats = {
     hits: 0,
     misses: 0,
@@ -67,6 +68,7 @@ export class FileCacheBackend implements CacheBackend {
       this.data = JSON.parse(content);
       this.updateStats();
       logger.debug('Loaded cache from disk', this.cacheFile);
+      this.loaded = true;
     } catch (error) {
       // File doesn't exist or is invalid, start with empty cache
       this.data = {};
@@ -135,6 +137,9 @@ export class FileCacheBackend implements CacheBackend {
     key: string,
     namespace?: string
   ): Promise<CacheEntry<T> | null> {
+    if (!this.loaded) {
+      await this.loadCache();
+    }
     const namespaceData = this.getNamespaceData(namespace);
     const entry = namespaceData[key];
 

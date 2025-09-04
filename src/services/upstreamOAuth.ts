@@ -49,29 +49,29 @@ export class GatewayOAuthProvider implements OAuthClientProvider {
 
   async clientInformation(): Promise<OAuthClientInformationFull | undefined> {
     // First check if we have it in memory
-    // if (this._clientInfo) {
-    //   logger.debug(`Returning in-memory client info for ${this.config.url}`, {
-    //     client_id: this._clientInfo.client_id,
-    //   });
-    //   return this._clientInfo;
-    // }
+    if (this._clientInfo) {
+      logger.debug(`Returning in-memory client info for ${this.config.url}`, {
+        client_id: this._clientInfo.client_id,
+      });
+      return this._clientInfo;
+    }
 
-    // // Try to get from persistent storage
-    // if (
-    //   this.tokenInfo?.username.length > 0 &&
-    //   this.config.serverId &&
-    //   this.config.workspaceId
-    // ) {
-    //   const cacheKey = `${this.tokenInfo.username}::${this.config.workspaceId}::${this.config.serverId}`;
-    //   const clientInfo = await this.mcpServersCache.get(
-    //     cacheKey,
-    //     'client_info'
-    //   );
-    //   if (clientInfo) {
-    //     this._clientInfo = clientInfo;
-    //     return clientInfo;
-    //   }
-    // }
+    // Try to get from persistent storage
+    if (
+      this.tokenInfo?.username.length > 0 &&
+      this.config.serverId &&
+      this.config.workspaceId
+    ) {
+      const cacheKey = `${this.tokenInfo.username}::${this.config.workspaceId}::${this.config.serverId}`;
+      const clientInfo = await this.mcpServersCache.get(
+        cacheKey,
+        'client_info'
+      );
+      if (clientInfo) {
+        this._clientInfo = clientInfo;
+        return clientInfo;
+      }
+    }
 
     // For oauth_auto, we don't have pre-registered client info
     // The SDK will handle dynamic client registration
@@ -83,15 +83,15 @@ export class GatewayOAuthProvider implements OAuthClientProvider {
     clientInfo: OAuthClientInformationFull
   ): Promise<void> {
     // Store the client info for later use
-    // this._clientInfo = clientInfo;
-    // logger.debug(
-    //   `Saving client info for ${this.config.workspaceId}/${this.config.serverId}`,
-    //   clientInfo
-    // );
-    // const cacheKey = `${this.tokenInfo.username}::${this.config.workspaceId}::${this.config.serverId}`;
-    // await this.mcpServersCache.set(cacheKey, clientInfo, {
-    //   namespace: 'client_info',
-    // });
+    this._clientInfo = clientInfo;
+    logger.debug(
+      `Saving client info for ${this.config.workspaceId}/${this.config.serverId}`,
+      clientInfo
+    );
+    const cacheKey = `${this.tokenInfo.username}::${this.config.workspaceId}::${this.config.serverId}`;
+    await this.mcpServersCache.set(cacheKey, clientInfo, {
+      namespace: 'client_info',
+    });
   }
 
   async tokens(): Promise<OAuthTokens | undefined> {

@@ -676,8 +676,6 @@ export class OAuthGateway {
   }
 
   async startAuthorization(): Promise<any> {
-    // TODO: Implement authorization request to control plane
-    // For now, we'll show an HTML page with a form to submit the authorization request
     const params = this.c.req.query();
     const clientId = params.client_id;
     const redirectUri = params.redirect_uri;
@@ -701,7 +699,7 @@ export class OAuthGateway {
     if (!client)
       return this.c.json(this.errorInvalidClient('Client not found'), 400);
 
-    const user_id = 'testuser@portkey.ai';
+    const user_id = 'portkeydefaultuser';
 
     let resourceAuthUrl = null;
     const upstream = await this.checkUpstreamAuth(resourceUrl, user_id);
@@ -718,7 +716,7 @@ export class OAuthGateway {
           <p>Redirect URI: ${redirectUri}</p>
           ${resourceAuthUrl ? `<p>Please auth to linear first: <a href="${resourceAuthUrl}" target="_blank">${resourceAuthUrl}</a></p>` : ''}
           <form action="${authorizationUrl}" method="post">
-            <input type="hidden" name="user_id" value="testuser@portkey.ai" />
+            <input type="hidden" name="user_id" value="portkeydefaultuser" />
             <input type="hidden" name="client_id" value="${clientId}" />
             <input type="hidden" name="redirect_uri" value="${redirectUri}" />
             <input type="hidden" name="state" value="${state}" />
