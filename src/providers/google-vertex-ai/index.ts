@@ -51,6 +51,7 @@ import {
   VertexAnthropicMessagesConfig,
   VertexAnthropicMessagesResponseTransform,
 } from './messages';
+import { VertexAnthropicMessagesCountTokensConfig } from './messagesCountTokens';
 import {
   GetMistralAIChatCompleteResponseTransform,
   GetMistralAIChatCompleteStreamChunkTransform,
@@ -122,6 +123,7 @@ const VertexConfig: ProviderConfigs = {
           createBatch: GoogleBatchCreateConfig,
           createFinetune: baseConfig.createFinetune,
           messages: VertexAnthropicMessagesConfig,
+          messagesCountTokens: VertexAnthropicMessagesCountTokensConfig,
           responseTransforms: {
             'stream-chatComplete':
               VertexAnthropicChatCompleteStreamChunkTransform,

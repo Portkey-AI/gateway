@@ -280,6 +280,9 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
       case 'cancelFinetune': {
         return `/model-customization-jobs/${jobId}/stop`;
       }
+      case 'messagesCountTokens': {
+        return `/model/${uriEncodedModel}/count-tokens`;
+      }
       default:
         return '';
     }

@@ -178,6 +178,8 @@ export const GoogleApiConfig: ProviderAPIConfig = {
           mappedFn === 'stream-messages'
         ) {
           return `${projectRoute}/publishers/${provider}/models/${model}:streamRawPredict`;
+        } else if (mappedFn === 'messagesCountTokens') {
+          return `${projectRoute}/publishers/${provider}/models/count-tokens:rawPredict`;
         }
       }
 
