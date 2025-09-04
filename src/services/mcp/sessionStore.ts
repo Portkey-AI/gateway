@@ -5,9 +5,9 @@
  */
 
 import { MCPSession, TransportType, TransportCapabilities } from './mcpSession';
-import { ServerConfig } from '../types/mcp';
-import { createLogger } from '../utils/logger';
-import { getSessionCache } from './cache';
+import { ServerConfig } from '../../types/mcp';
+import { createLogger } from '../../utils/logger';
+import { getSessionCache } from '../cache';
 import { Context } from 'hono';
 
 const logger = createLogger('SessionStore');

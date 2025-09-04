@@ -12,8 +12,8 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
 import { ServerConfig } from './types/mcp';
-import { MCPSession } from './services/mcpSession';
-import { getSessionStore } from './services/sessionStore';
+import { MCPSession } from './services/mcp/mcpSession';
+import { getSessionStore } from './services/mcp/sessionStore';
 import { createLogger } from './utils/logger';
 import { handleMCPRequest, handleSSEMessages } from './handlers/mcpHandler';
 import { oauthMiddleware } from './middlewares/oauth';

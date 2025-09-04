@@ -11,8 +11,8 @@ import { RESPONSE_ALREADY_SENT } from '@hono/node-server/utils/response';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse';
 
 import { ServerConfig } from '../types/mcp';
-import { MCPSession, TransportType } from '../services/mcpSession';
-import { getSessionStore } from '../services/sessionStore';
+import { MCPSession, TransportType } from '../services/mcp/mcpSession';
+import { getSessionStore } from '../services/mcp/sessionStore';
 import { createLogger } from '../utils/logger';
 import { HEADER_MCP_SESSION_ID, HEADER_SSE_SESSION_ID } from '../constants/mcp';
 import { Transport } from '@modelcontextprotocol/sdk/shared/transport';

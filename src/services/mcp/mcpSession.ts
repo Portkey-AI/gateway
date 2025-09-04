@@ -23,10 +23,10 @@ import {
   Tool,
   EmptyResultSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { ServerConfig } from '../types/mcp';
-import { createLogger } from '../utils/logger';
+import { ServerConfig } from '../../types/mcp';
+import { createLogger } from '../../utils/logger';
 import { GatewayOAuthProvider } from './upstreamOAuth';
-import { CacheService, getMcpServersCache } from './cache';
+import { CacheService, getMcpServersCache } from '../cache';
 import { Context } from 'hono';
 
 export type TransportType = 'streamable-http' | 'sse' | 'auth-required';

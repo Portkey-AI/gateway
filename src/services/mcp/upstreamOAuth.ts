@@ -9,9 +9,9 @@ import {
   OAuthClientInformationFull,
   OAuthClientMetadata,
 } from '@modelcontextprotocol/sdk/shared/auth.js';
-import { ServerConfig } from '../types/mcp';
-import { createLogger } from '../utils/logger';
-import { CacheService, getMcpServersCache } from './cache';
+import { ServerConfig } from '../../types/mcp';
+import { createLogger } from '../../utils/logger';
+import { CacheService, getMcpServersCache } from '../cache';
 
 const logger = createLogger('UpstreamOAuth');
 
