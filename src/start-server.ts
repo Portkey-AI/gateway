@@ -14,7 +14,7 @@ import { requestValidator } from './middlewares/requestValidator';
 
 // Extract the port number and flags from command line arguments using minimist
 const defaultPort = 8787;
-const defaultMCPPort = 8788;
+const defaultMCPPort = process.env.PORT || 8788;
 
 const argv = minimist(process.argv.slice(2), {
   default: {
@@ -190,7 +190,7 @@ if (mcpNode) {
     port: mcpPort,
   });
 
-  console.log('\n\x1b[32m MCP Gateway is running at:');
+  console.log('\x1b[1m%s\x1b[0m', '🤯 MCP Gateway is running at:');
   console.log('   ' + '\x1b[1;4;32m%s\x1b[0m', `${mcpUrl}`);
 }
 
