@@ -31,6 +31,7 @@ export class FileCacheBackend implements CacheBackend {
   private saveTimer?: NodeJS.Timeout;
   private cleanupInterval?: NodeJS.Timeout;
   private loaded: boolean = false;
+  private loadPromise: Promise<void>;
   private stats: CacheStats = {
     hits: 0,
     misses: 0,
@@ -40,7 +41,6 @@ export class FileCacheBackend implements CacheBackend {
     expired: 0,
   };
   private saveInterval: number;
-
   constructor(
     dataDir: string = 'data',
     fileName: string = 'cache.json',
@@ -49,8 +49,17 @@ export class FileCacheBackend implements CacheBackend {
   ) {
     this.cacheFile = path.join(process.cwd(), dataDir, fileName);
     this.saveInterval = saveIntervalMs;
-    this.loadCache();
-    this.startCleanup(cleanupIntervalMs);
+    this.loadPromise = this.loadCache();
+    this.loadPromise.then(() => {
+      this.startCleanup(cleanupIntervalMs);
+    });
+  }
+
+  // Ensure cache is loaded before any operation
+  private async ensureLoaded(): Promise<void> {
+    if (!this.loaded) {
+      await this.loadPromise;
+    }
   }
 
   private async ensureDataDir(): Promise<void> {
@@ -137,9 +146,8 @@ export class FileCacheBackend implements CacheBackend {
     key: string,
     namespace?: string
   ): Promise<CacheEntry<T> | null> {
-    if (!this.loaded) {
-      await this.loadCache();
-    }
+    await this.ensureLoaded(); // Wait for load to complete
+
     const namespaceData = this.getNamespaceData(namespace);
     const entry = namespaceData[key];
 
@@ -165,6 +173,8 @@ export class FileCacheBackend implements CacheBackend {
     value: T,
     options: CacheOptions = {}
   ): Promise<void> {
+    await this.ensureLoaded(); // Wait for load to complete
+
     const namespace = options.namespace || 'default';
     const namespaceData = this.getNamespaceData(namespace);
     const now = Date.now();
@@ -178,7 +188,6 @@ export class FileCacheBackend implements CacheBackend {
 
     namespaceData[key] = entry;
     this.stats.sets++;
-    await this.saveCache();
     this.updateStats();
     this.scheduleSave();
   }
@@ -289,6 +298,11 @@ export class FileCacheBackend implements CacheBackend {
       this.scheduleSave();
       logger.debug(`Cleaned up ${expiredCount} expired entries`);
     }
+  }
+
+  // Add method to check if ready
+  async waitForReady(): Promise<void> {
+    await this.loadPromise;
   }
 
   async close(): Promise<void> {

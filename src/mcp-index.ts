@@ -24,6 +24,8 @@ import { wellKnownRoutes } from './routes/wellknown';
 import { controlPlaneMiddleware } from './middlewares/controlPlane';
 import { cacheBackendMiddleware } from './middlewares/cacheBackend';
 import { HTTPException } from 'hono/http-exception';
+import { getRuntimeKey } from 'hono/adapter';
+import { createCacheBackendsLocal } from './services/cache';
 
 const logger = createLogger('MCP-Gateway');
 
@@ -62,7 +64,12 @@ app.use(
 );
 
 app.use(controlPlaneMiddleware);
-app.use(cacheBackendMiddleware);
+
+if (getRuntimeKey() === 'workerd') {
+  app.use(cacheBackendMiddleware);
+} else {
+  createCacheBackendsLocal();
+}
 
 // Mount route groups
 app.route('/oauth', oauthRoutes);

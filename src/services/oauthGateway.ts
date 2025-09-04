@@ -714,7 +714,7 @@ export class OAuthGateway {
   <h1 style="font-size:24px;font-weight:500;margin-bottom:30px">Authorization Request</h1>
   <p style="margin:20px 0;color:#666">Requesting access to: <b>${Array.from(resourceUrl.split('/')).at(-2)}</b></p>
   <p style="margin:20px 0;color:#666">Redirect URI: ${redirectUri}</p>
-  ${resourceAuthUrl ? `<p style="background:#fffbf0;border-left:3px solid #ffa500;padding:12px;margin:20px 0">Auth to upstream MCP first: <a href="${resourceAuthUrl}" target="_blank" style="color:#0066cc">${resourceAuthUrl}</a></p>` : ''}
+  ${resourceAuthUrl ? `<p style="background:#fffbf0;border-left:3px solid #ffa500;padding:12px;margin:20px 0">Auth to upstream MCP first: <a href="${resourceAuthUrl}" target="_blank" style="color:#0066cc">Click here to authorize</a></p>` : ''}
   <form action="${authorizationUrl}" method="post" style="margin-top:40px" onsubmit="setTimeout(()=>window.close(),300)">
     <input type="hidden" name="user_id" value="portkeydefaultuser" />
     <input type="hidden" name="client_id" value="${clientId}" />
@@ -801,7 +801,10 @@ export class OAuthGateway {
       clientInfo = existingClientInfo;
       config = await oidc.discovery(
         new URL(serverUrlOrigin),
-        clientInfo.client_id
+        clientInfo.client_id,
+        {},
+        oidc.None(),
+        { algorithm: 'oauth2' }
       );
     } else {
       const registration = await oidc.dynamicClientRegistration(
@@ -836,9 +839,6 @@ export class OAuthGateway {
     const codeChallenge = await oidc.calculatePKCECodeChallenge(codeVerifier);
 
     // Persist round-trip state mapping with context and the client info under state
-    await mcpServerCache.set<OAuthClient>(state, clientInfo, {
-      namespace: 'client_info',
-    });
     await mcpServerCache.set(
       state,
       {
@@ -847,6 +847,7 @@ export class OAuthGateway {
         username,
         serverId,
         workspaceId,
+        clientInfo,
       },
       { namespace: 'state' }
     );
@@ -931,13 +932,7 @@ export class OAuthGateway {
         error_description: 'Auth state not found in cache',
       };
 
-    const clientInfo = await mcpServerCache.get(state, 'client_info');
-    if (!clientInfo)
-      return {
-        error: 'invalid_state',
-        error_description: 'Client info not found in cache',
-      };
-
+    const clientInfo = authState.clientInfo;
     const serverIdFromState = authState.serverId;
     const workspaceIdFromState = authState.workspaceId;
     const serverConfig = await getServerConfig(

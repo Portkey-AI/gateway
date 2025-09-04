@@ -47,7 +47,15 @@ const loadLocalServerConfigs = async (
 
     Object.keys(serverConfigs).forEach((id: string) => {
       const serverConfig = serverConfigs[id];
-      configCache.set(id, serverConfig, { ttl: TTL });
+      configCache.set(
+        id,
+        {
+          ...serverConfig,
+          workspaceId: id.split('/')[0],
+          serverId: id.split('/')[1],
+        },
+        { ttl: TTL }
+      );
     });
 
     logger.info(`Loaded ${Object.keys(serverConfigs).length} server configs`);
@@ -116,7 +124,7 @@ export const getServerConfig = async (
   c: any
 ): Promise<any> => {
   const configCache = getConfigCache();
-  const cacheKey = `${workspaceId}:${serverId}`;
+  const cacheKey = `${workspaceId}/${serverId}`;
 
   const cached = await configCache.get(cacheKey);
   if (cached) return cached;
@@ -125,7 +133,11 @@ export const getServerConfig = async (
   if (CP) {
     const serverInfo = await getFromCP(CP, workspaceId, serverId);
     if (serverInfo) {
-      await configCache.set(cacheKey, serverInfo, { ttl: TTL });
+      await configCache.set(
+        cacheKey,
+        { ...serverInfo, workspaceId, serverId },
+        { ttl: TTL }
+      );
     }
     return serverInfo; // Return null if not found in CP - don't fallback
   } else {
