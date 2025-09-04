@@ -169,6 +169,7 @@ export const GoogleApiConfig: ProviderAPIConfig = {
         return googleUrlMap.get(mappedFn) || `${projectRoute}`;
       }
 
+      case 'mistralai':
       case 'anthropic': {
         if (mappedFn === 'chatComplete' || mappedFn === 'messages') {
           return `${projectRoute}/publishers/${provider}/models/${model}:rawPredict`;
