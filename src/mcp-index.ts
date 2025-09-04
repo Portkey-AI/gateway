@@ -23,6 +23,7 @@ import { oauthRoutes } from './routes/oauth';
 import { wellKnownRoutes } from './routes/wellknown';
 import { controlPlaneMiddleware } from './middlewares/controlPlane';
 import { cacheBackendMiddleware } from './middlewares/cacheBackend';
+import { HTTPException } from 'hono/http-exception';
 
 const logger = createLogger('MCP-Gateway');
 
@@ -66,6 +67,20 @@ app.use(cacheBackendMiddleware);
 // Mount route groups
 app.route('/oauth', oauthRoutes);
 app.route('/.well-known', wellKnownRoutes);
+
+/**
+ * Global error handler.
+ * If error is instance of HTTPException, returns the custom response.
+ * Otherwise, logs the error and returns a JSON response with status code 500.
+ */
+app.onError((err, c) => {
+  console.error('Global Error Handler: ', err.message, err.cause, err.stack);
+  if (err instanceof HTTPException) {
+    return err.getResponse();
+  }
+  c.status(500);
+  return c.json({ status: 'failure', message: err.message });
+});
 
 app.get('/', (c) => {
   logger.debug('Root endpoint accessed');
