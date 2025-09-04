@@ -16,6 +16,7 @@ import { getSessionStore } from '../services/sessionStore';
 import { createLogger } from '../utils/logger';
 import { HEADER_MCP_SESSION_ID, HEADER_SSE_SESSION_ID } from '../constants/mcp';
 import { Transport } from '@modelcontextprotocol/sdk/shared/transport';
+import { ControlPlane } from '../middlewares/controlPlane';
 
 const logger = createLogger('MCP-Handler');
 
@@ -25,6 +26,7 @@ type Env = {
     session?: MCPSession;
     tokenInfo?: any; // Token introspection response
     isAuthenticated?: boolean;
+    controlPlane?: ControlPlane;
   };
   Bindings: {
     ALBUS_BASEPATH?: string;
@@ -117,6 +119,7 @@ export async function handleInitializeRequest(
     session = new MCPSession({
       config: serverConfig,
       gatewayToken: c.var.tokenInfo,
+      context: c,
     });
 
     await setSession(session.id, session);
@@ -179,9 +182,26 @@ export async function handleEstablishedSessionGET(
   try {
     transport = await session.initializeOrRestore();
     logger.debug(`Session ${session.id} ready`);
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Failed to prepare session ${session.id}`, error);
     await deleteSession(session.id);
+    if (error.needsAuthorization) {
+      return c.json(
+        {
+          jsonrpc: '2.0',
+          error: {
+            code: -32000,
+            message: `Authorization required for ${error.workspaceId}/${error.serverId}. Go to the following URL to complete the OAuth flow: ${error.authorizationUrl}`,
+            data: {
+              type: 'oauth_required',
+              authorizationUrl: error.authorizationUrl,
+            },
+          },
+          id: null,
+        },
+        401
+      );
+    }
     return c.json(ErrorResponses.sessionRestoreFailed(), 500);
   }
 
@@ -207,12 +227,14 @@ export async function handleEstablishedSessionGET(
  */
 export async function createSSESession(
   serverConfig: ServerConfig,
-  tokenInfo?: any
+  tokenInfo?: any,
+  c?: Context<Env>
 ): Promise<MCPSession | undefined> {
   logger.debug('Creating new session for pure SSE client');
   const session = new MCPSession({
     config: serverConfig,
     gatewayToken: tokenInfo,
+    context: c,
   });
 
   try {
@@ -355,7 +377,7 @@ export async function handleMCPRequest(c: Context<Env>) {
     if (isPureSSE) {
       const tokenInfo = c.var.tokenInfo;
 
-      session = await createSSESession(serverConfig, tokenInfo);
+      session = await createSSESession(serverConfig, tokenInfo, c);
       if (!session) {
         return c.json(ErrorResponses.sessionNotInitialized(), 500);
       }

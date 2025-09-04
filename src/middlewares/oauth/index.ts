@@ -153,7 +153,9 @@ export function oauthMiddleware(config: OAuthConfig = {}) {
 
     // Introspect the token (works with both control plane and local service)
     const controlPlaneUrl = env(c).ALBUS_BASEPATH;
-    const introspection = await introspectToken(token!, c);
+    const introspection: any = await introspectToken(token!, c);
+
+    introspection.token = token;
 
     if (!introspection.active) {
       logger.warn(`Invalid or expired token for ${path}`);

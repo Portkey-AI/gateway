@@ -3,12 +3,14 @@ import { MCPSession } from '../../services/mcpSession';
 import { getSessionStore } from '../../services/sessionStore';
 import { createLogger } from '../../utils/logger';
 import { HEADER_MCP_SESSION_ID } from '../../constants/mcp';
+import { ControlPlane } from '../controlPlane';
 
 const logger = createLogger('mcp/sessionMiddleware');
 
 type Env = {
   Variables: {
     session?: MCPSession;
+    controlPlane?: ControlPlane;
   };
 };
 
@@ -23,7 +25,7 @@ export const sessionMiddleware = createMiddleware<Env>(async (c, next) => {
   const sessionId = headerSessionId || querySessionId;
 
   if (sessionId) {
-    const session = await sessionStore.get(sessionId);
+    const session = await sessionStore.get(sessionId, c);
 
     if (session) {
       // Check if session is expired based on token expiration

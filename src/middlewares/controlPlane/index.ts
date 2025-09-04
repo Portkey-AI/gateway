@@ -5,7 +5,7 @@ import { createLogger } from '../../utils/logger';
 
 const logger = createLogger('mcp/controlPlaneMiddleware');
 
-class ControlPlane {
+export class ControlPlane {
   private controlPlaneUrl: string;
   private defaultHeaders: Record<string, string>;
 
@@ -26,6 +26,9 @@ class ControlPlane {
     body: any = {}
   ) {
     const reqURL = `${this.controlPlaneUrl}${path}`;
+    if (this.c.get('tokenInfo')?.token) {
+      headers['Authorization'] = `Bearer ${this.c.get('tokenInfo').token}`;
+    }
     const options: RequestInit = {
       method,
       headers: {
@@ -37,6 +40,8 @@ class ControlPlane {
     if (method === 'POST') {
       options.body = body;
     }
+
+    logger.debug('Making a request to control plane', { reqURL, options });
 
     const response = await fetch(reqURL, options);
     return response.json();

@@ -8,6 +8,7 @@ import { MCPSession, TransportType, TransportCapabilities } from './mcpSession';
 import { ServerConfig } from '../types/mcp';
 import { createLogger } from '../utils/logger';
 import { getSessionCache } from './cache';
+import { Context } from 'hono';
 
 const logger = createLogger('SessionStore');
 
@@ -118,7 +119,7 @@ export class SessionStore {
   /**
    * Get a session by ID
    */
-  async get(sessionId: string): Promise<MCPSession | undefined> {
+  async get(sessionId: string, c?: Context): Promise<MCPSession | undefined> {
     // First check active sessions
     let session = this.activeSessionsMap.get(sessionId);
 
@@ -147,6 +148,7 @@ export class SessionStore {
       sessionId: sessionId,
       gatewayToken: sessionData.gatewayToken,
       upstreamSessionId: sessionData.upstreamSessionId,
+      context: c,
     });
 
     await session.restoreFromData({

@@ -27,6 +27,7 @@ import { ServerConfig } from '../types/mcp';
 import { createLogger } from '../utils/logger';
 import { GatewayOAuthProvider } from './upstreamOAuth';
 import { CacheService, getMcpServersCache } from './cache';
+import { Context } from 'hono';
 
 export type TransportType = 'streamable-http' | 'sse' | 'auth-required';
 
@@ -153,7 +154,7 @@ class UpstreamManager {
       }
 
       // Fall back to SSE
-      this.logger.debug('Streamable HTTP failed, trying SSE');
+      this.logger.debug('Streamable HTTP failed, trying SSE', { error });
       try {
         this.upstreamTransport = new SSEClientTransport(
           upstreamUrl,
@@ -416,12 +417,19 @@ class AuthenticationHandler {
   private mcpServersCache: CacheService;
   private gatewayToken?: any;
   private config: ServerConfig;
+  private context?: Context;
 
-  constructor(config: ServerConfig, gatewayToken?: any, logger?: any) {
+  constructor(
+    config: ServerConfig,
+    gatewayToken?: any,
+    context?: Context,
+    logger?: any
+  ) {
     this.config = config;
     this.gatewayToken = gatewayToken;
     this.logger = logger || createLogger('AuthHandler');
     this.mcpServersCache = getMcpServersCache();
+    this.context = context;
   }
 
   /**
@@ -485,7 +493,8 @@ class AuthenticationHandler {
         return {
           authProvider: new GatewayOAuthProvider(
             this.config,
-            this.gatewayToken
+            this.gatewayToken,
+            this.context?.get('controlPlane')
           ),
         };
 
@@ -688,12 +697,15 @@ export class MCPSession {
   public readonly gatewayToken?: any;
   public upstreamSessionId?: string;
 
+  private context?: Context;
+
   constructor(options: {
     config: ServerConfig;
     gatewayName?: string;
     sessionId?: string;
     gatewayToken?: any;
     upstreamSessionId?: string;
+    context?: Context;
   }) {
     this.config = options.config;
     this.gatewayName = options.gatewayName || 'portkey-mcp-gateway';
@@ -703,9 +715,11 @@ export class MCPSession {
     this.lastActivity = Date.now();
     this.logger = createLogger(`Session:${this.id.substring(0, 8)}`);
     this.upstreamSessionId = options.upstreamSessionId;
+    this.context = options.context;
     this.authHandler = new AuthenticationHandler(
       this.config,
       this.gatewayToken,
+      this.context,
       this.logger
     );
     this.upstreamManager = new UpstreamManager(
