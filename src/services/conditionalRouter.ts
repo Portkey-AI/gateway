@@ -7,6 +7,9 @@ type Query = {
 interface RouterContext {
   metadata?: Record<string, string>;
   params?: Record<string, any>;
+  url?: {
+    pathname: string;
+  };
 }
 
 enum Operator {
