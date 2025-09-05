@@ -34,18 +34,12 @@ export interface TransportCapabilities {
   upstreamTransport: TransportType;
 }
 
-type SessionStatus =
-  | 'new'
-  | 'initializing'
-  | 'initialized'
-  | 'dormant'
-  | 'closed';
-
-interface SessionState {
-  status: SessionStatus;
-  hasUpstream: boolean;
-  hasDownstream: boolean;
-  needsUpstreamAuth: boolean;
+export enum SessionStatus {
+  New = 'new',
+  Initializing = 'initializing',
+  Initialized = 'initialized',
+  Dormant = 'dormant',
+  Closed = 'closed',
 }
 
 /**
@@ -215,104 +209,27 @@ export class AuthenticationHandler {
   }
 }
 
-/**
- * SessionStateManager - Manages the state transitions and state-related logic for MCPSession
- */
 class SessionStateManager {
-  private state: SessionState = {
-    status: 'new',
-    hasUpstream: false,
-    hasDownstream: false,
-    needsUpstreamAuth: false,
-  };
+  private _status: SessionStatus = SessionStatus.New;
+  public hasUpstream: boolean = false;
+  public hasDownstream: boolean = false;
+  public needsUpstreamAuth: boolean = false;
 
-  // Simple state getters
-  get status(): SessionStatus {
-    return this.state.status;
+  get status() {
+    return this._status;
   }
 
-  get isInitializing(): boolean {
-    return this.state.status === 'initializing';
-  }
-
-  get isInitialized(): boolean {
-    return this.state.status === 'initialized';
-  }
-
-  get isClosed(): boolean {
-    return this.state.status === 'closed';
-  }
-
-  get isDormant(): boolean {
-    return this.state.status === 'dormant';
-  }
-
-  get hasUpstream(): boolean {
-    return this.state.hasUpstream;
-  }
-
-  get hasDownstream(): boolean {
-    return this.state.hasDownstream;
-  }
-
-  get needsUpstreamAuth(): boolean {
-    return this.state.needsUpstreamAuth;
-  }
-
-  // State setters
-  setStatus(status: SessionStatus): void {
-    this.state.status = status;
-  }
-
-  setHasUpstream(value: boolean): void {
-    this.state.hasUpstream = value;
-  }
-
-  setHasDownstream(value: boolean): void {
-    this.state.hasDownstream = value;
-  }
-
-  setNeedsUpstreamAuth(value: boolean): void {
-    this.state.needsUpstreamAuth = value;
-  }
-
-  // Composite state checks
-  isActive(): boolean {
+  isActive() {
     return (
-      this.state.status === 'initialized' &&
-      this.state.hasDownstream &&
-      this.state.hasUpstream
+      this._status === SessionStatus.Initialized &&
+      this.hasUpstream &&
+      this.hasDownstream
     );
   }
 
-  // State transitions
-  startInitializing(): void {
-    this.state.status = 'initializing';
-  }
-
-  completeInitialization(): void {
-    this.state.status = 'initialized';
-  }
-
-  markAsClosed(): void {
-    this.state.status = 'closed';
-    this.state.hasUpstream = false;
-    this.state.hasDownstream = false;
-    this.state.needsUpstreamAuth = false;
-  }
-
-  markAsDormant(): void {
-    this.state.status = 'dormant';
-  }
-
-  resetToNew(): void {
-    this.state.status = 'new';
-  }
-
-  // Get current state snapshot
-  getState(): string {
-    if (this.isActive()) return 'active';
-    return this.state.status;
+  set status(next: SessionStatus) {
+    // Optional: enforce legal transitions here
+    this._status = next;
   }
 }
 
@@ -378,33 +295,33 @@ export class MCPSession {
    * Simple state checks
    */
   get isInitializing(): boolean {
-    return this.stateManager.isInitializing;
+    return this.stateManager.status === SessionStatus.Initializing;
   }
 
   get isInitialized(): boolean {
-    return this.stateManager.isInitialized;
+    return this.stateManager.status === SessionStatus.Initialized;
   }
 
   get isClosed(): boolean {
-    return this.stateManager.isClosed;
+    return this.stateManager.status === SessionStatus.Closed;
   }
 
   get isDormantSession(): boolean {
-    return this.stateManager.isDormant;
+    return this.stateManager.status === SessionStatus.Dormant;
   }
 
   set isDormantSession(value: boolean) {
     if (value) {
-      this.stateManager.markAsDormant();
-    } else if (this.stateManager.isDormant) {
+      this.stateManager.status = SessionStatus.Dormant;
+    } else if (this.stateManager.status === SessionStatus.Dormant) {
       // Only change from dormant if we're currently dormant
-      this.stateManager.resetToNew();
+      this.stateManager.status = SessionStatus.New;
     }
   }
 
-  getState(): string {
-    return this.stateManager.getState();
-  }
+  // getState(): string {
+  //   return this.stateManager.getState();
+  // }
 
   /**
    * Initialize or restore session
@@ -455,7 +372,7 @@ export class MCPSession {
   private async initialize(
     clientTransportType: TransportType
   ): Promise<Transport> {
-    this.stateManager.startInitializing();
+    this.stateManager.status = SessionStatus.Initializing;
     try {
       // Try to connect to upstream with best available transport
       this.logger.debug('Connecting to upstream server...');
@@ -480,12 +397,12 @@ export class MCPSession {
       // Create downstream transport for client
       const transport = this.createDownstreamTransport(clientTransportType);
 
-      this.stateManager.completeInitialization();
+      this.stateManager.status = SessionStatus.Initialized;
       this.logger.debug('Session initialization completed');
       return transport;
     } catch (error) {
       this.logger.error('Session initialization failed', error);
-      this.stateManager.resetToNew(); // Reset to new state on failure
+      this.stateManager.status = SessionStatus.New; // Reset to new state on failure
       throw error;
     }
   }
@@ -524,7 +441,7 @@ export class MCPSession {
     // Set message handler directly
     this.downstreamTransport.onmessage = this.handleClientMessage.bind(this);
 
-    this.stateManager.setHasDownstream(true);
+    this.stateManager.hasDownstream = true;
     return this.downstreamTransport;
   }
 
@@ -547,7 +464,7 @@ export class MCPSession {
    */
   isDormant(): boolean {
     return (
-      this.stateManager.isDormant ||
+      this.stateManager.status === SessionStatus.Dormant ||
       (!!this.transportCapabilities &&
         !this.isInitialized &&
         !this.hasUpstreamConnection())
@@ -680,7 +597,7 @@ export class MCPSession {
     }
 
     // Mark as dormant since this is just metadata restoration
-    this.stateManager.markAsDormant();
+    this.stateManager.status = SessionStatus.Dormant;
   }
 
   /**
@@ -1145,7 +1062,7 @@ export class MCPSession {
    * Clean up the session
    */
   async close() {
-    this.stateManager.markAsClosed();
+    this.stateManager.status = SessionStatus.Closed;
     await this.upstream.close();
     await this.downstreamTransport?.close();
   }
