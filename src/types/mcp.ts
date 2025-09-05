@@ -1,3 +1,19 @@
+import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp';
+
+export type ConnectionTypes = 'http-sse' | 'sse-http' | 'http' | 'sse';
+
+export type ClientTransports =
+  | StreamableHTTPClientTransport
+  | SSEClientTransport;
+export type ServerTransports =
+  | StreamableHTTPServerTransport
+  | SSEServerTransport;
+
+export type TransportTypes = 'streamable-http' | 'sse';
+
 /**
  * Server configuration for gateway
  */
@@ -6,6 +22,7 @@ export interface ServerConfig {
   workspaceId: string;
   url: string;
   headers: Record<string, string>;
+  type?: ConnectionTypes;
 
   // Authentication configuration
   auth_type?: 'oauth_auto' | 'oauth_client_credentials' | 'headers';

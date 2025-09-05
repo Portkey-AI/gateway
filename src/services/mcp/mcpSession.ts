@@ -3,12 +3,9 @@
  * MCP session that bridges client and upstream server
  */
 
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import {
   JSONRPCMessage,
   JSONRPCRequest,
@@ -28,6 +25,7 @@ import { createLogger } from '../../utils/logger';
 import { GatewayOAuthProvider } from './upstreamOAuth';
 import { CacheService, getMcpServersCache } from '../cache';
 import { Context } from 'hono';
+import { ConnectResult, Upstream } from './upstream';
 
 export type TransportType = 'streamable-http' | 'sse' | 'auth-required';
 
@@ -51,364 +49,9 @@ interface SessionState {
 }
 
 /**
- * UpstreamManager - Manages upstream server connections and communication
- */
-class UpstreamManager {
-  private upstreamClient?: Client;
-  private upstreamTransport?:
-    | StreamableHTTPClientTransport
-    | SSEClientTransport;
-  private upstreamCapabilities?: any;
-  private availableTools?: Tool[];
-  private logger;
-  private config: ServerConfig;
-  private authHandler: AuthenticationHandler;
-  private stateManager: SessionStateManager;
-  private gatewayName: string;
-  private upstreamSessionId?: string;
-
-  constructor(
-    config: ServerConfig,
-    authHandler: AuthenticationHandler,
-    stateManager: SessionStateManager,
-    gatewayName: string,
-    logger?: any,
-    upstreamSessionId?: string
-  ) {
-    this.config = config;
-    this.authHandler = authHandler;
-    this.stateManager = stateManager;
-    this.gatewayName = gatewayName;
-    this.logger = logger || createLogger('UpstreamManager');
-    this.upstreamSessionId = upstreamSessionId;
-  }
-
-  /**
-   * Connect to upstream server
-   */
-  async connect(): Promise<{ type: TransportType; sessionId?: string }> {
-    const upstreamUrl = new URL(this.config.url);
-    this.logger.debug(
-      `Connecting to ${this.config.url} with auth_type: ${this.config.auth_type}`
-    );
-
-    // Prepare transport options based on auth type
-    const transportOptions = this.authHandler.getTransportOptions();
-
-    // Try Streamable HTTP first (most common)
-    try {
-      this.logger.debug('Trying Streamable HTTP transport', {
-        url: this.config.url,
-        transportOptions,
-      });
-      let httpTransportOptions: any = transportOptions;
-      if (this.upstreamSessionId) {
-        httpTransportOptions = {
-          ...transportOptions,
-          sessionId: this.upstreamSessionId,
-        };
-      }
-      this.upstreamTransport = new StreamableHTTPClientTransport(
-        upstreamUrl,
-        httpTransportOptions
-      );
-
-      this.upstreamClient = new Client({
-        name: `${this.gatewayName}-client`,
-        version: '1.0.0',
-      });
-
-      await this.upstreamClient.connect(this.upstreamTransport);
-      // TODO: store session ID in session cache
-      this.stateManager.setHasUpstream(true);
-
-      this.upstreamSessionId = this.upstreamTransport.sessionId;
-
-      // Fetch capabilities synchronously during initialization
-      await this.fetchCapabilities();
-
-      return {
-        type: 'streamable-http',
-        sessionId: this.upstreamTransport.sessionId || undefined,
-      };
-    } catch (error: any) {
-      // Check if this is an authorization error
-      if (error.needsAuthorization) {
-        this.authHandler.setPendingAuthorization(error);
-
-        // Don't throw if we're in a consent flow context
-        // The session can still be created, just without upstream connection
-        this.stateManager.setNeedsUpstreamAuth(true);
-
-        // Wait for 2 minutes to check if auth can be completed
-        if (
-          await this.authHandler.finishUpstreamAuthAndConnect(
-            this.upstreamTransport
-          )
-        ) {
-          this.stateManager.setNeedsUpstreamAuth(false);
-          return this.connect();
-        }
-
-        throw error;
-      }
-
-      // Fall back to SSE
-      this.logger.debug('Streamable HTTP failed, trying SSE', { error });
-      try {
-        this.upstreamTransport = new SSEClientTransport(
-          upstreamUrl,
-          transportOptions
-        );
-
-        this.upstreamClient = new Client({
-          name: `${this.gatewayName}-client`,
-          version: '1.0.0',
-        });
-
-        await this.upstreamClient.connect(this.upstreamTransport);
-        this.stateManager.setHasUpstream(true);
-
-        // Fetch capabilities synchronously during initialization
-        await this.fetchCapabilities();
-
-        return { type: 'sse' };
-      } catch (sseError: any) {
-        // Check if SSE also failed due to authorization
-        if (sseError.needsAuthorization) {
-          this.authHandler.setPendingAuthorization(sseError);
-
-          // Don't throw if we're in a consent flow context
-          // The session can still be created, just without upstream connection
-          this.stateManager.setNeedsUpstreamAuth(true);
-
-          if (
-            await this.authHandler.finishUpstreamAuthAndConnect(
-              this.upstreamTransport
-            )
-          ) {
-            this.stateManager.setNeedsUpstreamAuth(false);
-            return this.connect();
-          }
-
-          throw sseError;
-        }
-
-        this.logger.error('Both transports failed', {
-          streamableHttp: error,
-          sse: sseError,
-        });
-        throw new Error(`Failed to connect to upstream with any transport`);
-      }
-    }
-  }
-
-  /**
-   * Fetch upstream capabilities
-   */
-  async fetchCapabilities(): Promise<void> {
-    try {
-      this.logger.debug('Fetching upstream capabilities');
-      const toolsResult = await this.upstreamClient!.listTools();
-      this.availableTools = toolsResult.tools;
-
-      // Get server capabilities from the client
-      this.upstreamCapabilities =
-        this.upstreamClient!.getServerCapabilities() || {
-          tools: {},
-        };
-      this.logger.debug(`Found ${this.availableTools.length} tools`);
-    } catch (error) {
-      this.logger.error('Failed to fetch upstream capabilities', error);
-      this.upstreamCapabilities = { tools: {} };
-    }
-  }
-
-  /**
-   * Get upstream capabilities
-   */
-  getCapabilities(): any {
-    return this.upstreamCapabilities;
-  }
-
-  /**
-   * Get available tools
-   */
-  getAvailableTools(): Tool[] | undefined {
-    return this.availableTools;
-  }
-
-  /**
-   * Get the upstream client
-   */
-  getClient(): Client | undefined {
-    return this.upstreamClient;
-  }
-
-  /**
-   * Get the upstream transport
-   */
-  getTransport():
-    | StreamableHTTPClientTransport
-    | SSEClientTransport
-    | undefined {
-    return this.upstreamTransport;
-  }
-
-  /**
-   * Send a message to upstream
-   */
-  async send(message: any): Promise<void> {
-    if (!this.upstreamTransport) {
-      throw new Error('No upstream transport available');
-    }
-    await this.upstreamTransport.send(message);
-  }
-
-  /**
-   * Send a notification to upstream
-   */
-  async notification(message: any): Promise<void> {
-    if (!this.upstreamClient) {
-      throw new Error('No upstream client available');
-    }
-    await this.upstreamClient.notification(message);
-  }
-
-  /**
-   * Forward a request to upstream
-   */
-  async request(request: any, schema?: any): Promise<any> {
-    if (!this.upstreamClient) {
-      throw new Error('No upstream client available');
-    }
-    return this.upstreamClient.request(request, schema || {});
-  }
-
-  /**
-   * Call a tool on upstream
-   */
-  async callTool(params: any): Promise<any> {
-    if (!this.upstreamClient) {
-      throw new Error('No upstream client available');
-    }
-    return this.upstreamClient.callTool(params);
-  }
-
-  /**
-   * List tools from upstream
-   */
-  async listTools(): Promise<any> {
-    if (!this.upstreamClient) {
-      throw new Error('No upstream client available');
-    }
-    return this.upstreamClient.listTools();
-  }
-
-  async ping(): Promise<any> {
-    if (!this.upstreamClient) {
-      throw new Error('No upstream client available');
-    }
-    return this.upstreamClient.ping();
-  }
-
-  async complete(params: any): Promise<any> {
-    if (!this.upstreamClient) {
-      throw new Error('No upstream client available');
-    }
-    return this.upstreamClient.complete(params);
-  }
-
-  async setLoggingLevel(params: any): Promise<any> {
-    if (!this.upstreamClient) {
-      throw new Error('No upstream client available');
-    }
-    return this.upstreamClient.setLoggingLevel(params.level);
-  }
-
-  async getPrompt(params: any): Promise<any> {
-    if (!this.upstreamClient) {
-      throw new Error('No upstream client available');
-    }
-    return this.upstreamClient.getPrompt(params);
-  }
-
-  async listPrompts(params: any): Promise<any> {
-    if (!this.upstreamClient) {
-      throw new Error('No upstream client available');
-    }
-    return this.upstreamClient.listPrompts(params);
-  }
-
-  async listResources(params: any): Promise<any> {
-    if (!this.upstreamClient) {
-      throw new Error('No upstream client available');
-    }
-    return this.upstreamClient.listResources(params);
-  }
-
-  async listResourceTemplates(params: any): Promise<any> {
-    if (!this.upstreamClient) {
-      throw new Error('No upstream client available');
-    }
-    return this.upstreamClient.listResourceTemplates(params);
-  }
-
-  async readResource(params: any): Promise<any> {
-    if (!this.upstreamClient) {
-      throw new Error('No upstream client available');
-    }
-    return this.upstreamClient.readResource(params);
-  }
-
-  async subscribeResource(params: any): Promise<any> {
-    if (!this.upstreamClient) {
-      throw new Error('No upstream client available');
-    }
-    return this.upstreamClient.subscribeResource(params);
-  }
-
-  async unsubscribeResource(params: any): Promise<any> {
-    if (!this.upstreamClient) {
-      throw new Error('No upstream client available');
-    }
-    return this.upstreamClient.unsubscribeResource(params);
-  }
-
-  /**
-   * Close the upstream connection
-   */
-  async close(): Promise<void> {
-    await this.upstreamClient?.close();
-  }
-
-  /**
-   * Check if connected
-   */
-  isConnected(): boolean {
-    return this.stateManager.hasUpstream;
-  }
-
-  isKnownRequest(method: string): boolean {
-    return [
-      'ping',
-      'completion/complete',
-      'logging/setLevel',
-      'prompts/get',
-      'prompts/list',
-      'resources/list',
-      'resources/templates/list',
-      'resources/read',
-      'resources/subscribe',
-      'resources/unsubscribe',
-    ].includes(method);
-  }
-}
-
-/**
  * AuthenticationHandler - Manages authentication flows and authorization state
  */
-class AuthenticationHandler {
+export class AuthenticationHandler {
   private pendingAuthorizationServerId?: string;
   private pendingAuthorizationWorkspaceId?: string;
   private authorizationError?: Error;
@@ -685,7 +328,7 @@ export class MCPSession {
 
   private stateManager = new SessionStateManager();
   private authHandler: AuthenticationHandler;
-  private upstreamManager: UpstreamManager;
+  private upstream: Upstream;
 
   private logger;
 
@@ -722,11 +365,9 @@ export class MCPSession {
       this.context,
       this.logger
     );
-    this.upstreamManager = new UpstreamManager(
+    this.upstream = new Upstream(
       this.config,
       this.authHandler,
-      this.stateManager,
-      this.gatewayName,
       this.logger,
       this.upstreamSessionId
     );
@@ -818,7 +459,11 @@ export class MCPSession {
     try {
       // Try to connect to upstream with best available transport
       this.logger.debug('Connecting to upstream server...');
-      const upstream = await this.upstreamManager.connect();
+      const upstream: ConnectResult = await this.upstream.connect();
+
+      if (!upstream.ok) {
+        throw new Error('Failed to connect to upstream');
+      }
 
       // Store transport capabilities for translation
       this.transportCapabilities = {
@@ -1047,8 +692,10 @@ export class MCPSession {
     }
 
     try {
-      this.logger.debug('**** Establishing upstream connection...');
-      const upstreamTransport = await this.upstreamManager.connect();
+      const upstreamTransport: ConnectResult = await this.upstream.connect();
+      if (!upstreamTransport.ok) {
+        throw new Error('Failed to connect to upstream');
+      }
       this.upstreamSessionId = upstreamTransport.sessionId;
       this.logger.debug('Upstream connection established');
     } catch (error) {
@@ -1116,10 +763,10 @@ export class MCPSession {
         await this.handleClientRequest(message, extra);
       } else if ('result' in message || 'error' in message) {
         // It's a response - forward directly
-        await this.upstreamManager.send(message);
+        await this.upstream.send(message);
       } else if ('method' in message) {
         // It's a notification - forward directly
-        await this.upstreamManager.notification(message);
+        await this.upstream.notification(message);
       }
     } catch (error) {
       // Send error response if this was a request
@@ -1158,7 +805,7 @@ export class MCPSession {
       await this.handleToolsList(request);
     } else if (method === 'initialize') {
       await this.handleInitialize(request);
-    } else if (this.upstreamManager.isKnownRequest(request.method)) {
+    } else if (this.upstream.isKnownRequest(request.method)) {
       await this.handleKnownRequests(request);
     } else {
       // Forward all other requests directly to upstream
@@ -1175,8 +822,8 @@ export class MCPSession {
 
     // Don't forward initialization to upstream - upstream is already connected
     // Instead, respond with our gateway's capabilities based on upstream
-    const upstreamCapabilities = this.upstreamManager.getCapabilities();
-    const availableTools = this.upstreamManager.getAvailableTools();
+    const upstreamCapabilities = this.upstream.serverCapabilities;
+    const availableTools = this.upstream.availableTools;
 
     const gatewayResult: InitializeResult = {
       protocolVersion: request.params.protocolVersion,
@@ -1228,7 +875,7 @@ export class MCPSession {
       });
 
       upstreamResult = await Promise.race([
-        this.upstreamManager.listTools(),
+        this.upstream.listTools(),
         timeoutPromise,
       ]);
       this.logger.debug(
@@ -1305,7 +952,7 @@ export class MCPSession {
     }
 
     // Check if tool exists upstream
-    const availableTools = this.upstreamManager.getAvailableTools();
+    const availableTools = this.upstream.availableTools;
     if (availableTools && !availableTools.find((t) => t.name === toolName)) {
       await this.sendError(
         (request as any).id,
@@ -1321,7 +968,7 @@ export class MCPSession {
 
       this.logger.debug(`Calling upstream tool: ${toolName}`);
       // Forward to upstream using the nice Client API
-      const result = await this.upstreamManager.callTool(request.params);
+      const result = await this.upstream.callTool(request.params);
 
       this.logger.debug(`Tool ${toolName} executed successfully`);
       // Could modify result here if needed
@@ -1347,38 +994,34 @@ export class MCPSession {
 
       switch (request.method) {
         case 'ping':
-          result = await this.upstreamManager.ping();
+          result = await this.upstream.ping();
           break;
         case 'completion/complete':
-          result = await this.upstreamManager.complete(request.params);
+          result = await this.upstream.complete(request.params);
           break;
         case 'logging/setLevel':
-          result = await this.upstreamManager.setLoggingLevel(request.params);
+          result = await this.upstream.setLoggingLevel(request.params);
           break;
         case 'prompts/get':
-          result = await this.upstreamManager.getPrompt(request.params);
+          result = await this.upstream.getPrompt(request.params);
           break;
         case 'prompts/list':
-          result = await this.upstreamManager.listPrompts(request.params);
+          result = await this.upstream.listPrompts(request.params);
           break;
         case 'resources/list':
-          result = await this.upstreamManager.listResources(request.params);
+          result = await this.upstream.listResources(request.params);
           break;
         case 'resources/templates/list':
-          result = await this.upstreamManager.listResourceTemplates(
-            request.params
-          );
+          result = await this.upstream.listResourceTemplates(request.params);
           break;
         case 'resources/read':
-          result = await this.upstreamManager.readResource(request.params);
+          result = await this.upstream.readResource(request.params);
           break;
         case 'resources/subscribe':
-          result = await this.upstreamManager.subscribeResource(request.params);
+          result = await this.upstream.subscribeResource(request.params);
           break;
         case 'resources/unsubscribe':
-          result = await this.upstreamManager.unsubscribeResource(
-            request.params
-          );
+          result = await this.upstream.unsubscribeResource(request.params);
           break;
         default:
           result = await this.forwardRequest(request);
@@ -1403,7 +1046,7 @@ export class MCPSession {
       // Ensure upstream connection is established
       await this.ensureUpstreamConnection();
 
-      const result = await this.upstreamManager.request(
+      const result = await this.upstream.request(
         request as any,
         EmptyResultSchema
       );
@@ -1503,7 +1146,7 @@ export class MCPSession {
    */
   async close() {
     this.stateManager.markAsClosed();
-    await this.upstreamManager.close();
+    await this.upstream.close();
     await this.downstreamTransport?.close();
   }
 }
