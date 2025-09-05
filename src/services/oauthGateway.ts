@@ -18,26 +18,18 @@ const REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 3600; // 30 days
 
 const nowSec = () => Math.floor(Date.now() / 1000);
 
-const b64url = (buf: Buffer) =>
-  buf
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/g, '');
-
-const sha256b64url = (input: string) =>
-  b64url(crypto.createHash('sha256').update(input).digest());
-
-function verifyCodeChallenge(
+async function verifyCodeChallenge(
   codeVerifier: string,
   codeChallenge: string,
   method: string = 'S256'
-): boolean {
+): Promise<boolean> {
   if (!codeVerifier || !codeChallenge) return false;
   if (method === 'plain') {
     return codeVerifier === codeChallenge;
   }
-  return sha256b64url(codeVerifier) === codeChallenge;
+  return (
+    (await oidc.calculatePKCECodeChallenge(codeVerifier)) === codeChallenge
+  );
 }
 
 export type GrantType =
@@ -360,11 +352,11 @@ export class OAuthGateway {
           };
         }
         if (
-          !verifyCodeChallenge(
+          !(await verifyCodeChallenge(
             codeVerifier,
             authCodeData.code_challenge,
             authCodeData.code_challenge_method || 'S256'
-          )
+          ))
         ) {
           return this.errorInvalidGrant('Invalid code verifier');
         }
