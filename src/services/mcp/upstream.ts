@@ -1,15 +1,16 @@
 import {
-  ClientTransports,
+  ClientTransport,
   ConnectionTypes,
   ServerConfig,
   TransportTypes,
 } from '../../types/mcp';
-import { AuthenticationHandler } from './mcpSession';
 import { createLogger } from '../../utils/logger';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { Tool } from '@modelcontextprotocol/sdk/types';
+import { GatewayOAuthProvider } from './upstreamOAuth';
+import { ControlPlane } from '../../middlewares/controlPlane';
 
 type ClientTransportTypes =
   | typeof StreamableHTTPClientTransport
@@ -47,12 +48,14 @@ export class Upstream {
   public connected: boolean = false;
   public availableTools?: Tool[];
   public serverCapabilities?: any;
+  public pendingAuthURL?: string;
 
   constructor(
     private serverConfig: ServerConfig,
-    private auth: AuthenticationHandler,
+    private userId: string,
     private logger = createLogger('UpstreamConnector'),
-    private upstreamSessionId?: string
+    private upstreamSessionId?: string,
+    private controlPlane?: ControlPlane
   ) {
     // TODO: Might need to advertise capabilities
     this.client = new Client({
@@ -62,19 +65,49 @@ export class Upstream {
     });
   }
 
-  private makeOptions() {
-    const base = this.auth.getTransportOptions();
-    return this.upstreamSessionId
-      ? {
-          ...base,
-          sessionId: this.upstreamSessionId,
-        }
-      : base;
+  private getTransportOptions() {
+    let options: any = {};
+    switch (this.serverConfig.auth_type) {
+      case 'oauth_auto':
+        this.logger.debug('Using OAuth auto-discovery for authentication');
+        options = {
+          authProvider: new GatewayOAuthProvider(
+            this.serverConfig,
+            this.userId,
+            this.controlPlane
+          ),
+        };
+        break;
+
+      case 'oauth_client_credentials':
+        // TODO: Implement client credentials flow
+        this.logger.warn(
+          'oauth_client_credentials not yet implemented, falling back to headers'
+        );
+        options = {
+          requestInit: {
+            headers: this.serverConfig.headers,
+          },
+        };
+        break;
+      case 'headers':
+      default:
+        options = {
+          requestInit: {
+            headers: this.serverConfig.headers,
+          },
+        };
+        break;
+    }
+    if (this.upstreamSessionId) {
+      options.sessionId = this.upstreamSessionId;
+    }
+    return options;
   }
 
-  private makeTransport(transportType: ClientTransportTypes): ClientTransports {
+  private makeTransport(transportType: ClientTransportTypes): ClientTransport {
     const upstreamUrl = new URL(this.serverConfig.url);
-    return new transportType(upstreamUrl, this.makeOptions() as any);
+    return new transportType(upstreamUrl, this.getTransportOptions() as any);
   }
 
   private async connectOne(
@@ -97,13 +130,13 @@ export class Upstream {
       };
     } catch (e: any) {
       if (e?.needsAuthorization) {
-        this.auth.setPendingAuthorization(e);
+        this.pendingAuthURL = e.authorizationUrl;
         return {
           ok: false,
           needsAuth: true,
           serverId: this.serverConfig.serverId,
           workspaceId: this.serverConfig.workspaceId,
-          authorizationUrl: this.auth.getAuthorizationUrl(),
+          authorizationUrl: this.pendingAuthURL,
         };
       }
       throw e;
@@ -157,8 +190,8 @@ export class Upstream {
     }
   }
 
-  get transport(): ClientTransports {
-    return this.client?.transport as ClientTransports;
+  get transport(): ClientTransport {
+    return this.client?.transport as ClientTransport;
   }
 
   /**

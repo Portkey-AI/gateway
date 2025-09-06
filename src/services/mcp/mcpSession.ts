@@ -7,10 +7,7 @@ import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import {
-  JSONRPCMessage,
   JSONRPCRequest,
-  JSONRPCResponse,
-  JSONRPCError,
   CallToolRequest,
   ListToolsRequest,
   ErrorCode,
@@ -19,11 +16,13 @@ import {
   InitializeResult,
   Tool,
   EmptyResultSchema,
+  isJSONRPCRequest,
+  isJSONRPCError,
+  isJSONRPCResponse,
+  isJSONRPCNotification,
 } from '@modelcontextprotocol/sdk/types.js';
-import { ServerConfig } from '../../types/mcp';
+import { ServerConfig, ServerTransport } from '../../types/mcp';
 import { createLogger } from '../../utils/logger';
-import { GatewayOAuthProvider } from './upstreamOAuth';
-import { CacheService, getMcpServersCache } from '../cache';
 import { Context } from 'hono';
 import { ConnectResult, Upstream } from './upstream';
 
@@ -42,209 +41,14 @@ export enum SessionStatus {
   Closed = 'closed',
 }
 
-/**
- * AuthenticationHandler - Manages authentication flows and authorization state
- */
-export class AuthenticationHandler {
-  private pendingAuthorizationServerId?: string;
-  private pendingAuthorizationWorkspaceId?: string;
-  private authorizationError?: Error;
-  private authorizationUrl?: string;
-  private logger;
-  private mcpServersCache: CacheService;
-  private gatewayToken?: any;
-  private config: ServerConfig;
-  private context?: Context;
-
-  constructor(
-    config: ServerConfig,
-    gatewayToken?: any,
-    context?: Context,
-    logger?: any
-  ) {
-    this.config = config;
-    this.gatewayToken = gatewayToken;
-    this.logger = logger || createLogger('AuthHandler');
-    this.mcpServersCache = getMcpServersCache();
-    this.context = context;
-  }
-
-  /**
-   * Check if session has a pending authorization
-   */
-  hasPendingAuthorization(): boolean {
-    return this.pendingAuthorizationServerId !== undefined;
-  }
-
-  /**
-   * Get pending authorization details
-   */
-  getPendingAuthorization(): {
-    serverId: string;
-    workspaceId: string;
-    authorizationUrl?: string;
-  } | null {
-    if (!this.pendingAuthorizationServerId || !this.authorizationError) {
-      return null;
-    }
-    return {
-      serverId: this.pendingAuthorizationServerId,
-      workspaceId:
-        this.pendingAuthorizationWorkspaceId || this.config.workspaceId,
-      authorizationUrl: this.authorizationUrl,
-    };
-  }
-
-  /**
-   * Set pending authorization
-   */
-  setPendingAuthorization(error: any): void {
-    if (error.needsAuthorization) {
-      this.pendingAuthorizationServerId = error.serverId;
-      this.pendingAuthorizationWorkspaceId = error.workspaceId;
-      this.authorizationError = error;
-      this.authorizationUrl = error.authorizationUrl;
-      this.logger.debug(
-        `Server ${error.workspaceId}/${error.serverId} requires authorization`
-      );
-    }
-  }
-
-  /**
-   * Clear pending authorization
-   */
-  clearPendingAuthorization(): void {
-    this.pendingAuthorizationServerId = undefined;
-    this.pendingAuthorizationWorkspaceId = undefined;
-    this.authorizationError = undefined;
-    this.authorizationUrl = undefined;
-  }
-
-  /**
-   * Get transport options based on authentication type
-   */
-  getTransportOptions() {
-    switch (this.config.auth_type) {
-      case 'oauth_auto':
-        this.logger.debug('Using OAuth auto-discovery for authentication');
-        return {
-          authProvider: new GatewayOAuthProvider(
-            this.config,
-            this.gatewayToken,
-            this.context?.get('controlPlane')
-          ),
-        };
-
-      case 'oauth_client_credentials':
-        // TODO: Implement client credentials flow
-        this.logger.warn(
-          'oauth_client_credentials not yet implemented, falling back to headers'
-        );
-        return {
-          requestInit: {
-            headers: this.config.headers,
-          },
-        };
-
-      case 'headers':
-      default:
-        return {
-          requestInit: {
-            headers: this.config.headers,
-          },
-        };
-    }
-  }
-
-  /**
-   * Poll for upstream authentication code
-   */
-  async pollForUpstreamAuth(): Promise<string | null> {
-    // Poll every second until clientInfo exists in cache for this user, serverID combination
-    // With a max timeout of 120 seconds
-    const maxTimeout = 120;
-    const startTime = Date.now();
-    while (Date.now() - startTime < maxTimeout * 1000) {
-      this.logger.debug('Polling for authorization code in cache', {
-        startTime,
-        maxTimeout,
-        currentTime: Date.now(),
-        username: this.gatewayToken?.username,
-        serverId: this.config.serverId,
-        workspaceId: this.config.workspaceId,
-      });
-      const cacheKey = `${this.gatewayToken?.username}::${this.config.workspaceId}::${this.config.serverId}`;
-      const authorizationCode = await this.mcpServersCache.get(
-        cacheKey,
-        'authorization_codes'
-      );
-      if (authorizationCode) {
-        this.logger.debug('Authorization code found');
-        return authorizationCode.code;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-    return null;
-  }
-
-  /**
-   * Finish upstream auth and connect
-   */
-  async finishUpstreamAuthAndConnect(upstreamTransport: any): Promise<boolean> {
-    const authCode = await this.pollForUpstreamAuth();
-    if (authCode && upstreamTransport) {
-      this.logger.debug('Found authCode, retrying connection', authCode);
-      await upstreamTransport.finishAuth(authCode);
-      this.clearPendingAuthorization();
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Get authorization URL if pending
-   */
-  getAuthorizationUrl(): string | undefined {
-    return this.authorizationUrl;
-  }
-}
-
-class SessionStateManager {
-  private _status: SessionStatus = SessionStatus.New;
-  public hasUpstream: boolean = false;
-  public hasDownstream: boolean = false;
-  public needsUpstreamAuth: boolean = false;
-
-  get status() {
-    return this._status;
-  }
-
-  isActive() {
-    return (
-      this._status === SessionStatus.Initialized &&
-      this.hasUpstream &&
-      this.hasDownstream
-    );
-  }
-
-  set status(next: SessionStatus) {
-    // Optional: enforce legal transitions here
-    this._status = next;
-  }
-}
-
 export class MCPSession {
   public id: string;
   public createdAt: number;
   public lastActivity: number;
 
-  private downstreamTransport?:
-    | StreamableHTTPServerTransport
-    | SSEServerTransport;
+  private downstreamTransport?: ServerTransport;
   private transportCapabilities?: TransportCapabilities;
 
-  private stateManager = new SessionStateManager();
-  private authHandler: AuthenticationHandler;
   private upstream: Upstream;
 
   private logger;
@@ -253,22 +57,22 @@ export class MCPSession {
   private tokenExpiresAt?: number;
 
   public readonly config: ServerConfig;
-  public readonly gatewayName: string;
   public readonly gatewayToken?: any;
   public upstreamSessionId?: string;
 
   private context?: Context;
 
+  private status: SessionStatus = SessionStatus.New;
+  private hasDownstream: boolean = false;
+
   constructor(options: {
     config: ServerConfig;
-    gatewayName?: string;
     sessionId?: string;
     gatewayToken?: any;
     upstreamSessionId?: string;
     context?: Context;
   }) {
     this.config = options.config;
-    this.gatewayName = options.gatewayName || 'portkey-mcp-gateway';
     this.gatewayToken = options.gatewayToken;
     this.id = options.sessionId || crypto.randomUUID();
     this.createdAt = Date.now();
@@ -276,17 +80,12 @@ export class MCPSession {
     this.logger = createLogger(`Session:${this.id.substring(0, 8)}`);
     this.upstreamSessionId = options.upstreamSessionId;
     this.context = options.context;
-    this.authHandler = new AuthenticationHandler(
-      this.config,
-      this.gatewayToken,
-      this.context,
-      this.logger
-    );
     this.upstream = new Upstream(
       this.config,
-      this.authHandler,
+      this.gatewayToken?.username || '',
       this.logger,
-      this.upstreamSessionId
+      this.upstreamSessionId,
+      this.context?.get('controlPlane')
     );
     this.setTokenExpiration(options.gatewayToken);
   }
@@ -295,33 +94,29 @@ export class MCPSession {
    * Simple state checks
    */
   get isInitializing(): boolean {
-    return this.stateManager.status === SessionStatus.Initializing;
+    return this.status === SessionStatus.Initializing;
   }
 
   get isInitialized(): boolean {
-    return this.stateManager.status === SessionStatus.Initialized;
+    return this.status === SessionStatus.Initialized;
   }
 
   get isClosed(): boolean {
-    return this.stateManager.status === SessionStatus.Closed;
+    return this.status === SessionStatus.Closed;
   }
 
   get isDormantSession(): boolean {
-    return this.stateManager.status === SessionStatus.Dormant;
+    return this.status === SessionStatus.Dormant;
   }
 
   set isDormantSession(value: boolean) {
     if (value) {
-      this.stateManager.status = SessionStatus.Dormant;
-    } else if (this.stateManager.status === SessionStatus.Dormant) {
+      this.status = SessionStatus.Dormant;
+    } else if (this.status === SessionStatus.Dormant) {
       // Only change from dormant if we're currently dormant
-      this.stateManager.status = SessionStatus.New;
+      this.status = SessionStatus.New;
     }
   }
-
-  // getState(): string {
-  //   return this.stateManager.getState();
-  // }
 
   /**
    * Initialize or restore session
@@ -330,38 +125,17 @@ export class MCPSession {
     clientTransportType?: TransportType
   ): Promise<Transport> {
     if (this.isActive()) return this.downstreamTransport!;
-
     if (this.isClosed) throw new Error('Cannot initialize closed session');
 
     // Handle initializing state
     if (this.isInitializing) {
-      // Wait for initialization with timeout
-      const timeout = 30000; // 30 seconds
-      const startTime = Date.now();
-
-      while (this.isInitializing && Date.now() - startTime < timeout) {
-        await new Promise((resolve) => setTimeout(resolve, 100)); // Check every 100ms
-      }
-
-      if (this.isInitializing) {
-        throw new Error('Session initialization timed out after 30 seconds');
-      }
-
-      if (this.downstreamTransport) {
-        return this.downstreamTransport;
-      }
-
-      throw new Error('Session initialization failed');
+      await this.waitForInitialization();
+      if (!this.downstreamTransport)
+        throw new Error('Session initialization failed');
+      return this.downstreamTransport;
     }
 
-    // TODO: check if this is needed
-    if (this.isDormant()) {
-      this.logger.debug(`Restoring dormant session ${this.id}`);
-      this.isDormantSession = true;
-    }
-
-    if (!clientTransportType)
-      clientTransportType = this.getClientTransportType();
+    clientTransportType ??= this.getClientTransportType();
 
     return this.initialize(clientTransportType!);
   }
@@ -372,13 +146,13 @@ export class MCPSession {
   private async initialize(
     clientTransportType: TransportType
   ): Promise<Transport> {
-    this.stateManager.status = SessionStatus.Initializing;
+    this.status = SessionStatus.Initializing;
+
     try {
-      // Try to connect to upstream with best available transport
-      this.logger.debug('Connecting to upstream server...');
       const upstream: ConnectResult = await this.upstream.connect();
 
       if (!upstream.ok) {
+        // TODO: handle case when upstream needs authorization
         throw new Error('Failed to connect to upstream');
       }
 
@@ -397,25 +171,34 @@ export class MCPSession {
       // Create downstream transport for client
       const transport = this.createDownstreamTransport(clientTransportType);
 
-      this.stateManager.status = SessionStatus.Initialized;
+      this.status = SessionStatus.Initialized;
       this.logger.debug('Session initialization completed');
       return transport;
     } catch (error) {
       this.logger.error('Session initialization failed', error);
-      this.stateManager.status = SessionStatus.New; // Reset to new state on failure
+      this.status = SessionStatus.New; // Reset to new state on failure
       throw error;
     }
   }
 
   /**
+   * Wait for ongoing initialization
+   */
+  private async waitForInitialization(timeout = 30000): Promise<void> {
+    const startTime = Date.now();
+    while (this.isInitializing && Date.now() - startTime < timeout) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    if (this.isInitializing) throw new Error('Session initialization timeout');
+  }
+
+  /**
    * Create downstream transport
    */
-  private createDownstreamTransport(
-    clientTransportType: TransportType
-  ): Transport {
-    this.logger.debug(`Creating ${clientTransportType} downstream transport`);
+  private createDownstreamTransport(type: TransportType): ServerTransport {
+    this.logger.debug(`Creating ${type} downstream transport`);
 
-    if (clientTransportType === 'sse') {
+    if (type === 'sse') {
       // For SSE clients, create SSE server transport
       this.downstreamTransport = new SSEServerTransport(
         `/messages?sessionId=${this.id || crypto.randomUUID()}`,
@@ -427,36 +210,70 @@ export class MCPSession {
       this.downstreamTransport = new StreamableHTTPServerTransport({
         sessionIdGenerator: undefined,
       });
-
-      // Handle dormant session restoration inline
-      // if (this.isDormantSession) {
-      //   this.logger.debug(
-      //     'Marking transport as initialized for dormant session'
-      //   );
-      //   (this.downstreamTransport as any)._initialized = true;
-      //   (this.downstreamTransport as any).sessionId = this.id;
-      // }
     }
 
     // Set message handler directly
     this.downstreamTransport.onmessage = this.handleClientMessage.bind(this);
-
-    this.stateManager.hasDownstream = true;
+    this.hasDownstream = true;
     return this.downstreamTransport;
+  }
+
+  /**
+   * Initialize SSE transport with response object
+   */
+  initializeSSETransport(res: any): SSEServerTransport {
+    const transport = new SSEServerTransport(
+      `${this.config.workspaceId}/${this.config.serverId}/messages`,
+      res
+    );
+
+    transport.onmessage = this.handleClientMessage.bind(this);
+
+    this.downstreamTransport = transport;
+    this.id = transport.sessionId;
+    this.hasDownstream = true;
+    return transport;
   }
 
   /**
    * Get the transport capabilities (client and upstream)
    */
-  getTransportCapabilities(): TransportCapabilities | undefined {
-    return this.transportCapabilities;
-  }
+  getTransportCapabilities = () => this.transportCapabilities;
+
+  /**
+   * Get the client transport type
+   */
+  getClientTransportType = () => this.transportCapabilities?.clientTransport;
+
+  /**
+   * Get the upstream transport type
+   */
+  getUpstreamTransportType = () =>
+    this.transportCapabilities?.upstreamTransport;
+
+  /**
+   * Get the downstream transport (for SSE message handling)
+   */
+  getDownstreamTransport = () => this.downstreamTransport;
 
   /**
    * Check if session has upstream connection (needed for tool calls)
    */
   hasUpstreamConnection(): boolean {
-    return this.stateManager.hasUpstream;
+    return this.upstream.connected;
+  }
+
+  /**
+   * Get the SSE session ID from the transport (used for client communication)
+   */
+  getSSESessionId(): string | undefined {
+    if (
+      this.downstreamTransport &&
+      'getSessionId' in this.downstreamTransport
+    ) {
+      return (this.downstreamTransport as any)._sessionId;
+    }
+    return undefined;
   }
 
   /**
@@ -464,7 +281,7 @@ export class MCPSession {
    */
   isDormant(): boolean {
     return (
-      this.stateManager.status === SessionStatus.Dormant ||
+      this.status === SessionStatus.Dormant ||
       (!!this.transportCapabilities &&
         !this.isInitialized &&
         !this.hasUpstreamConnection())
@@ -472,28 +289,21 @@ export class MCPSession {
   }
 
   /**
-   * Check if session has a pending authorization
+   * Check if session is active
    */
-  hasPendingAuthorization(): boolean {
-    return this.authHandler.hasPendingAuthorization();
-  }
-
-  /**
-   * Get pending authorization details
-   */
-  getPendingAuthorization(): {
-    serverId: string;
-    workspaceId: string;
-    authorizationUrl?: string;
-  } | null {
-    return this.authHandler.getPendingAuthorization();
+  isActive(): boolean {
+    return (
+      this.upstream.connected &&
+      this.status === SessionStatus.Initialized &&
+      this.hasDownstream
+    );
   }
 
   /**
    * Check if session needs upstream auth
    */
   needsUpstreamAuth(): boolean {
-    return this.stateManager.needsUpstreamAuth;
+    return this.upstream.pendingAuthURL !== undefined;
   }
 
   /**
@@ -501,15 +311,8 @@ export class MCPSession {
    */
   isUpstreamMethod(method: string): boolean {
     // These methods can be handled locally without upstream
-    const localMethods = ['ping', 'logs/list'];
+    const localMethods = ['logs/list'];
     return !localMethods.includes(method);
-  }
-
-  /**
-   * Check if session is active
-   */
-  isActive(): boolean {
-    return this.stateManager.isActive();
   }
 
   /**
@@ -520,15 +323,9 @@ export class MCPSession {
     if (tokenInfo?.exp) {
       // Token expiration is in seconds, convert to milliseconds
       this.tokenExpiresAt = tokenInfo.exp * 1000;
-      this.logger.debug(
-        `Session ${this.id} token expires at ${new Date(this.tokenExpiresAt).toISOString()}`
-      );
     } else if (tokenInfo?.expires_in) {
       // Relative expiration in seconds
       this.tokenExpiresAt = Date.now() + tokenInfo.expires_in * 1000;
-      this.logger.debug(
-        `Session ${this.id} token expires in ${tokenInfo.expires_in} seconds`
-      );
     }
   }
 
@@ -571,123 +368,54 @@ export class MCPSession {
     tokenExpiresAt?: number;
     upstreamSessionId?: string;
   }): Promise<void> {
-    // Restore basic properties
-    this.id = data.id;
-    this.createdAt = data.createdAt;
-    this.lastActivity = data.lastActivity;
-    this.upstreamSessionId = data.upstreamSessionId;
-
-    // Restore token expiration if available
-    if (data.tokenExpiresAt) {
-      this.tokenExpiresAt = data.tokenExpiresAt;
-      this.logger.debug(
-        `Session ${this.id} restored with token expiration: ${new Date(this.tokenExpiresAt).toISOString()}`
-      );
-    }
-
-    // Store transport capabilities for later use, but don't initialize yet
-    if (data.transportCapabilities && data.clientTransportType) {
-      this.transportCapabilities = data.transportCapabilities;
-      this.isDormantSession = true; // Mark this as a dormant session being restored
-      this.logger.debug(
-        'Session metadata restored, awaiting client reconnection'
-      );
-    } else {
-      this.logger.warn('Session restored but missing transport data');
-    }
-
-    // Mark as dormant since this is just metadata restoration
-    this.stateManager.status = SessionStatus.Dormant;
+    Object.assign(this, {
+      id: data.id,
+      createdAt: data.createdAt,
+      lastActivity: data.lastActivity,
+      upstreamSessionId: data.upstreamSessionId,
+      tokenExpiresAt: data.tokenExpiresAt,
+      transportCapabilities: data.transportCapabilities,
+      clientTransportType: data.clientTransportType,
+      status: SessionStatus.Dormant,
+    });
   }
 
   /**
    * Ensure upstream connection is established
    */
   async ensureUpstreamConnection(): Promise<void> {
-    if (this.hasUpstreamConnection()) {
-      return; // Already connected
+    if (this.hasUpstreamConnection()) return;
+
+    const upstream: ConnectResult = await this.upstream.connect();
+    if (!upstream.ok) {
+      // TODO: handle case when upstream needs authorization
+      throw new Error('Failed to connect to upstream');
     }
-
-    try {
-      const upstreamTransport: ConnectResult = await this.upstream.connect();
-      if (!upstreamTransport.ok) {
-        throw new Error('Failed to connect to upstream');
-      }
-      this.upstreamSessionId = upstreamTransport.sessionId;
-      this.logger.debug('Upstream connection established');
-    } catch (error) {
-      this.logger.error('Failed to establish upstream connection', error);
-      throw error;
-    }
+    this.upstreamSessionId = upstream.sessionId;
+    this.logger.debug('Upstream connection established');
   }
 
   /**
-   * Get the client transport type
-   */
-  getClientTransportType(): TransportType | undefined {
-    return this.transportCapabilities?.clientTransport;
-  }
-
-  /**
-   * Get the upstream transport type
-   */
-  getUpstreamTransportType(): TransportType | undefined {
-    return this.transportCapabilities?.upstreamTransport;
-  }
-
-  /**
-   * Initialize SSE transport with response object
-   */
-  initializeSSETransport(res: any): SSEServerTransport {
-    const transport = new SSEServerTransport(
-      `${this.config.workspaceId}/${this.config.serverId}/messages`,
-      res
-    );
-
-    // Set up message handling
-    transport.onmessage = async (message: JSONRPCMessage, extra: any) => {
-      await this.handleClientMessage(message, extra);
-    };
-
-    this.downstreamTransport = transport;
-    this.id = transport.sessionId;
-    return transport;
-  }
-
-  /**
-   * Get the SSE session ID from the transport (used for client communication)
-   */
-  getSSESessionId(): string | undefined {
-    if (
-      this.downstreamTransport &&
-      'getSessionId' in this.downstreamTransport
-    ) {
-      return (this.downstreamTransport as any)._sessionId;
-    }
-    return undefined;
-  }
-
-  /**
-   * Handle client message - optimized hot path
+   * Handle client message - optimized hot path.
+   * Comes here when there's a message on downstreamTransport
    */
   private async handleClientMessage(message: any, extra?: any) {
     this.lastActivity = Date.now();
 
     try {
-      // Fast type check using property existence
-      if ('method' in message && 'id' in message) {
-        // It's a request - handle directly without type checking functions
+      if (isJSONRPCRequest(message)) {
+        // It's a request - handle directly
         await this.handleClientRequest(message, extra);
-      } else if ('result' in message || 'error' in message) {
+      } else if (isJSONRPCResponse(message) || isJSONRPCError(message)) {
         // It's a response - forward directly
         await this.upstream.send(message);
-      } else if ('method' in message) {
+      } else if (isJSONRPCNotification(message)) {
         // It's a notification - forward directly
         await this.upstream.notification(message);
       }
     } catch (error) {
       // Send error response if this was a request
-      if ('id' in message) {
+      if (isJSONRPCRequest(message)) {
         await this.sendError(
           message.id,
           ErrorCode.InternalError,
@@ -701,34 +429,47 @@ export class MCPSession {
    * Handle requests from the client - optimized with hot paths first
    */
   private async handleClientRequest(request: any, extra?: any) {
-    const method = request.method;
+    const { method } = request;
 
     // Check if we need upstream auth for any upstream-dependent operations
     if (this.needsUpstreamAuth() && this.isUpstreamMethod(method)) {
-      const authDetails = this.getPendingAuthorization();
-      await this.sendError(
-        request.id,
-        ErrorCode.InternalError,
-        `Server ${authDetails?.serverId || this.config.serverId} requires authorization. Please complete the OAuth flow.`,
-        { needsAuth: true, serverId: authDetails?.serverId }
-      );
+      await this.sendAuthError(request.id);
       return;
     }
 
+    // Route to appropriate handler
+    const handlers: Record<string, () => Promise<void>> = {
+      'tools/call': () => this.handleToolCall(request),
+      'tools/list': () => this.handleToolsList(request),
+      initialize: () => this.handleInitialize(request),
+    };
+
+    const handler = handlers[method];
+
     // Direct method handling without switch overhead for hot paths
-    if (method === 'tools/call') {
-      await this.handleToolCall(request);
-    } else if (method === 'tools/list') {
-      await this.handleToolsList(request);
-    } else if (method === 'initialize') {
-      await this.handleInitialize(request);
-    } else if (this.upstream.isKnownRequest(request.method)) {
+    if (handler) {
+      await handler();
+    } else if (this.upstream.isKnownRequest(method)) {
       await this.handleKnownRequests(request);
     } else {
-      // Forward all other requests directly to upstream
-      this.logger.debug(`Forwarding request: ${method}`);
       await this.forwardRequest(request);
     }
+  }
+
+  /**
+   * Send auth error response
+   */
+  private async sendAuthError(requestId: RequestId) {
+    await this.sendError(
+      requestId,
+      ErrorCode.InternalError,
+      `Server ${this.config.serverId} requires authorization. Please complete the OAuth flow: ${this.upstream.pendingAuthURL}`,
+      {
+        needsAuth: true,
+        serverId: this.config.serverId,
+        authorizationUrl: this.upstream.pendingAuthURL,
+      }
+    );
   }
 
   /**
@@ -737,21 +478,11 @@ export class MCPSession {
   private async handleInitialize(request: InitializeRequest) {
     this.logger.debug('Processing initialize request');
 
-    // Don't forward initialization to upstream - upstream is already connected
-    // Instead, respond with our gateway's capabilities based on upstream
-    const upstreamCapabilities = this.upstream.serverCapabilities;
-    const availableTools = this.upstream.availableTools;
-
-    const gatewayResult: InitializeResult = {
+    const result: InitializeResult = {
       protocolVersion: request.params.protocolVersion,
       capabilities: {
-        // Use cached upstream capabilities or default ones
-        ...upstreamCapabilities,
-        // Add tools capability if we have tools available
-        tools:
-          availableTools && availableTools.length > 0
-            ? {} // Empty object indicates tools support
-            : undefined,
+        ...this.upstream.serverCapabilities,
+        tools: this.upstream.availableTools?.length ? {} : undefined,
       },
       serverInfo: {
         name: 'portkey-mcp-gateway',
@@ -760,136 +491,105 @@ export class MCPSession {
     };
 
     this.logger.debug(
-      `Sending initialize response with tools: ${!!gatewayResult.capabilities.tools}`
+      `Sending initialize response with tools: ${!!result.capabilities.tools}`
     );
     // Send gateway response
-    await this.sendResult((request as any).id, gatewayResult);
+    await this.sendResult((request as any).id, result);
+  }
+
+  private validateToolAccess(
+    toolName: string
+  ): 'blocked' | 'not allowed' | 'invalid' | null {
+    const { allowed, blocked } = this.config.tools || {};
+
+    if (blocked?.includes(toolName)) {
+      return 'blocked';
+    }
+
+    if (allowed?.length && !allowed.includes(toolName)) {
+      return 'not allowed';
+    }
+
+    const exists = this.upstream.availableTools?.find(
+      (t) => t.name === toolName
+    );
+    if (!exists) {
+      return 'invalid';
+    }
+
+    return null; // Tool is valid
   }
 
   /**
-   * Handle tools/list request with filtering
+   * Filter tools based on config
+   */
+  private filterTools(tools: Tool[]): Tool[] {
+    const { allowed, blocked } = this.config.tools || {};
+    let filtered = tools;
+
+    if (blocked?.length) {
+      filtered = filtered.filter((tool) => !blocked.includes(tool.name));
+    }
+
+    if (allowed?.length) {
+      filtered = filtered.filter((tool) => allowed.includes(tool.name));
+    }
+
+    return filtered;
+  }
+
+  /**
+   * Handle `tools/list` with filtering
    */
   private async handleToolsList(request: ListToolsRequest) {
-    // Get tools from upstream
-    this.logger.debug('Fetching tools from upstream');
+    this.logger.debug('Fetching upstream tools');
 
-    let upstreamResult;
     try {
-      // Ensure upstream connection is established
       await this.ensureUpstreamConnection();
 
-      // Add timeout to prevent hanging on unresponsive servers
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(
-          () =>
-            reject(
-              new Error(
-                'Timeout: Upstream server did not respond within 10 seconds'
-              )
-            ),
-          10000
-        );
-      });
+      const upstreamResult = await this.upstream.listTools();
+      const tools = this.filterTools(upstreamResult.tools);
+      this.logger.debug(`Received ${tools.length} tools`);
 
-      upstreamResult = await Promise.race([
-        this.upstream.listTools(),
-        timeoutPromise,
-      ]);
-      this.logger.debug(
-        `Received ${upstreamResult.tools.length} tools from upstream`
-      );
+      await this.sendResult((request as any).id, { tools });
     } catch (error) {
-      this.logger.error('Failed to get tools from upstream', error);
+      this.logger.error('Failed to get tools', error);
       await this.sendError(
         (request as any).id,
         ErrorCode.InternalError,
-        `Failed to get tools from upstream: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to get tools: ${error instanceof Error ? error.message : String(error)}`
       );
       return;
     }
-
-    // Apply filtering based on configuration
-    let tools = upstreamResult.tools;
-
-    if (this.config.tools) {
-      const { allowed, blocked } = this.config.tools;
-
-      // Filter blocked tools
-      if (blocked && blocked.length > 0) {
-        tools = tools.filter((tool: Tool) => !blocked.includes(tool.name));
-      }
-
-      // Filter to only allowed tools
-      if (allowed && allowed.length > 0) {
-        tools = tools.filter((tool: Tool) => allowed.includes(tool.name));
-      }
-    }
-
-    // Log filtered tools
-    if (tools.length !== upstreamResult.tools.length) {
-      this.logger.debug(
-        `Filtered tools: ${tools.length} of ${upstreamResult.tools.length} available`
-      );
-    }
-
-    // Send filtered result
-    await this.sendResult((request as any).id, { tools });
   }
 
   /**
    * Handle tools/call request with validation
    */
   private async handleToolCall(request: CallToolRequest) {
-    const toolName = request.params.name;
+    const { name: toolName } = request.params;
+
     this.logger.debug(`Tool call: ${toolName}`);
 
-    // Validate tool access
-    if (this.config.tools) {
-      const { allowed, blocked } = this.config.tools;
+    const validationError = this.validateToolAccess(toolName);
 
-      // Check if tool is blocked
-      if (blocked && blocked.includes(toolName)) {
-        await this.sendError(
-          (request as any).id,
-          ErrorCode.InvalidParams,
-          `Tool '${toolName}' is blocked by a policy`
-        );
-        return;
-      }
-
-      // Check if tool is in allowed list
-      if (allowed && allowed.length > 0 && !allowed.includes(toolName)) {
-        await this.sendError(
-          (request as any).id,
-          ErrorCode.InvalidParams,
-          `Tool '${toolName}' is not in the allowed list`
-        );
-        return;
-      }
-    }
-
-    // Check if tool exists upstream
-    const availableTools = this.upstream.availableTools;
-    if (availableTools && !availableTools.find((t) => t.name === toolName)) {
+    if (validationError) {
       await this.sendError(
         (request as any).id,
         ErrorCode.InvalidParams,
-        `Tool '${toolName}' not found on upstream server`
+        `Tool '${toolName}' is ${validationError}`
       );
       return;
     }
 
     try {
-      // Ensure upstream connection is established
       await this.ensureUpstreamConnection();
 
-      this.logger.debug(`Calling upstream tool: ${toolName}`);
-      // Forward to upstream using the nice Client API
       const result = await this.upstream.callTool(request.params);
 
       this.logger.debug(`Tool ${toolName} executed successfully`);
-      // Could modify result here if needed
-      // For now, just forward it
+
+      // This is where the guardrails would come in.
       await this.sendResult((request as any).id, result);
     } catch (error) {
       // Handle upstream errors
@@ -904,48 +604,34 @@ export class MCPSession {
   }
 
   private async handleKnownRequests(request: JSONRPCRequest) {
-    let result: any;
     try {
-      // Ensure upstream connection is established
       await this.ensureUpstreamConnection();
 
-      switch (request.method) {
-        case 'ping':
-          result = await this.upstream.ping();
-          break;
-        case 'completion/complete':
-          result = await this.upstream.complete(request.params);
-          break;
-        case 'logging/setLevel':
-          result = await this.upstream.setLoggingLevel(request.params);
-          break;
-        case 'prompts/get':
-          result = await this.upstream.getPrompt(request.params);
-          break;
-        case 'prompts/list':
-          result = await this.upstream.listPrompts(request.params);
-          break;
-        case 'resources/list':
-          result = await this.upstream.listResources(request.params);
-          break;
-        case 'resources/templates/list':
-          result = await this.upstream.listResourceTemplates(request.params);
-          break;
-        case 'resources/read':
-          result = await this.upstream.readResource(request.params);
-          break;
-        case 'resources/subscribe':
-          result = await this.upstream.subscribeResource(request.params);
-          break;
-        case 'resources/unsubscribe':
-          result = await this.upstream.unsubscribeResource(request.params);
-          break;
-        default:
-          result = await this.forwardRequest(request);
-          break;
-      }
+      const methodHandlers: Record<string, () => Promise<any>> = {
+        ping: () => this.upstream.ping(),
+        'completion/complete': () => this.upstream.complete(request.params),
+        'logging/setLevel': () => this.upstream.setLoggingLevel(request.params),
+        'prompts/get': () => this.upstream.getPrompt(request.params),
+        'prompts/list': () => this.upstream.listPrompts(request.params),
+        'resources/list': () => this.upstream.listResources(request.params),
+        'resources/templates/list': () =>
+          this.upstream.listResourceTemplates(request.params),
+        'resources/read': () => this.upstream.readResource(request.params),
+        'resources/subscribe': () =>
+          this.upstream.subscribeResource(request.params),
+        'resources/unsubscribe': () =>
+          this.upstream.unsubscribeResource(request.params),
+      };
 
-      await this.sendResult((request as any).id, result);
+      const handler = methodHandlers[request.method];
+
+      if (handler) {
+        const result = await handler();
+        await this.sendResult((request as any).id, result);
+      } else {
+        await this.forwardRequest(request);
+        return;
+      }
     } catch (error) {
       await this.sendError(
         request.id!,
@@ -979,19 +665,18 @@ export class MCPSession {
   }
 
   /**
-   * Send a result response to the client
+   * Send a result response to the downstream client
    */
   private async sendResult(id: RequestId, result: any) {
-    const response: JSONRPCResponse = {
-      jsonrpc: '2.0',
-      id,
-      result,
-    };
     this.logger.debug(`Sending response for request ${id}`, {
       result,
       sessionId: this.downstreamTransport?.sessionId,
     });
-    await this.downstreamTransport!.send(response);
+    await this.downstreamTransport!.send({
+      jsonrpc: '2.0',
+      id,
+      result,
+    });
   }
 
   /**
@@ -1003,21 +688,16 @@ export class MCPSession {
     message: string,
     data?: any
   ) {
-    const response: JSONRPCError = {
+    this.logger.warn(`Sending error response: ${message}`, { id, code });
+    await this.downstreamTransport!.send({
       jsonrpc: '2.0',
       id,
-      error: {
-        code,
-        message,
-        data,
-      },
-    };
-    this.logger.warn(`Sending error response: ${message}`, { id, code });
-    await this.downstreamTransport!.send(response);
+      error: { code, message, data },
+    });
   }
 
   /**
-   * Handle HTTP request - optimized with direct transport calls
+   * Handle HTTP request
    */
   async handleRequest(req: any, res: any, body?: any) {
     this.lastActivity = Date.now();
@@ -1038,13 +718,9 @@ export class MCPSession {
         body
       );
     } else if (req.method === 'GET') {
-      // SSE GET requests should not reach here - they should be handled by handleEstablishedSessionGET
-      this.logger.error(
-        `Unexpected GET request in handleRequest for session ${this.id} with transport ${this.transportCapabilities?.clientTransport}`
-      );
       res
         .writeHead(400)
-        .end('SSE GET requests should use the dedicated SSE endpoint');
+        .end('SSE GET requests should use dedicated SSE endpoint');
       return;
     } else {
       res.writeHead(405).end('Method not allowed');
@@ -1052,17 +728,10 @@ export class MCPSession {
   }
 
   /**
-   * Get the downstream transport (for SSE message handling)
-   */
-  getDownstreamTransport(): Transport | undefined {
-    return this.downstreamTransport;
-  }
-
-  /**
    * Clean up the session
    */
   async close() {
-    this.stateManager.status = SessionStatus.Closed;
+    this.status = SessionStatus.Closed;
     await this.upstream.close();
     await this.downstreamTransport?.close();
   }

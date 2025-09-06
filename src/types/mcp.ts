@@ -5,10 +5,10 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 
 export type ConnectionTypes = 'http-sse' | 'sse-http' | 'http' | 'sse';
 
-export type ClientTransports =
+export type ClientTransport =
   | StreamableHTTPClientTransport
   | SSEClientTransport;
-export type ServerTransports =
+export type ServerTransport =
   | StreamableHTTPServerTransport
   | SSEServerTransport;
 
