@@ -63,6 +63,7 @@ import HyperbolicConfig from './hyperbolic';
 import { FeatherlessAIConfig } from './featherless-ai';
 import KrutrimConfig from './krutrim';
 import AI302Config from './302ai';
+import MeshyConfig from './meshy';
 import Tripo3DConfig from './tripo3d';
 
 const Providers: { [key: string]: ProviderConfigs } = {
@@ -127,6 +128,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'featherless-ai': FeatherlessAIConfig,
   krutrim: KrutrimConfig,
   '302ai': AI302Config,
+  meshy: MeshyConfig,
   tripo3d: Tripo3DConfig,
 };
 

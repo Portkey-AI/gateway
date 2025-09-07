@@ -24,6 +24,7 @@ import { handler as qualifireHallucinations } from './qualifire/hallucinations';
 import { handler as qualifireHateSpeech } from './qualifire/hateSpeech';
 import { handler as qualifirePii } from './qualifire/pii';
 import { handler as qualifirePromptInjections } from './qualifire/promptInjections';
+import { handler as defaultmodelRules } from './default/modelRules';
 import { handler as portkeymoderateContent } from './portkey/moderateContent';
 import { handler as portkeylanguage } from './portkey/language';
 import { handler as portkeypii } from './portkey/pii';
@@ -80,6 +81,7 @@ export const plugins = {
     alllowercase: defaultalllowercase,
     endsWith: defaultendsWith,
     modelWhitelist: defaultmodelWhitelist,
+    modelRules: defaultmodelRules,
     jwt: defaultjwt,
     requiredMetadataKeys: defaultrequiredMetadataKeys,
     regexReplace: defaultregexReplace,
