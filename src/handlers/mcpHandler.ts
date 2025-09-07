@@ -6,7 +6,11 @@
  */
 
 import { Context } from 'hono';
-import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
+import {
+  isInitializeRequest,
+  isJSONRPCRequest,
+  isJSONRPCResponse,
+} from '@modelcontextprotocol/sdk/types.js';
 import { RESPONSE_ALREADY_SENT } from '@hono/node-server/utils/response';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse';
 
@@ -14,7 +18,7 @@ import { ServerConfig } from '../types/mcp';
 import { MCPSession, TransportType } from '../services/mcp/mcpSession';
 import { getSessionStore } from '../services/mcp/sessionStore';
 import { createLogger } from '../utils/logger';
-import { HEADER_MCP_SESSION_ID, HEADER_SSE_SESSION_ID } from '../constants/mcp';
+import { HEADER_MCP_SESSION_ID } from '../constants/mcp';
 import { Transport } from '@modelcontextprotocol/sdk/shared/transport';
 import { ControlPlane } from '../middlewares/controlPlane';
 
@@ -34,70 +38,100 @@ type Env = {
 };
 
 /**
- * Pre-defined error responses to avoid object allocation in hot path
+ * Error response factory
  */
-const ErrorResponses = {
-  serverConfigNotFound: (id: any = null) => ({
-    jsonrpc: '2.0',
-    error: {
-      code: -32001,
-      message: 'Server config not found',
-    },
-    id,
-  }),
-  sessionNotFound: (id: any = null) => ({
-    jsonrpc: '2.0',
-    error: {
-      code: -32001,
-      message: 'Session not found',
-    },
-    id,
-  }),
-  invalidRequest: (id: any = null) => ({
-    jsonrpc: '2.0',
-    error: {
-      code: -32600,
-      message: 'Invalid Request',
-    },
-    id,
-  }),
+const ErrorResponse = {
+  create(code: number, message: string, id: any = null, data?: any) {
+    return {
+      jsonrpc: '2.0',
+      error: { code, message, ...(data && { data }) },
+      id,
+    };
+  },
 
-  parseError: (id: any = null) => ({
-    jsonrpc: '2.0',
-    error: {
-      code: -32700,
-      message: 'Parse error',
-    },
-    id,
-  }),
+  serverConfigNotFound: (id?: any) =>
+    ErrorResponse.create(-32001, 'Server config not found', id),
 
-  invalidParams: (id: any = null) => ({
-    jsonrpc: '2.0',
-    error: {
-      code: -32602,
-      message: 'Invalid params',
-    },
-    id,
-  }),
+  sessionNotFound: (id?: any) =>
+    ErrorResponse.create(-32001, 'Session not found', id),
 
-  sessionNotInitialized: (id: any = null) => ({
-    jsonrpc: '2.0',
-    error: {
-      code: -32000,
-      message: 'Session not properly initialized',
-    },
-    id,
-  }),
+  invalidRequest: (id?: any) =>
+    ErrorResponse.create(-32600, 'Invalid Request', id),
 
-  sessionRestoreFailed: (id: any = null) => ({
-    jsonrpc: '2.0',
-    error: {
-      code: -32000,
-      message: 'Failed to restore session. Please reinitialize.',
-    },
-    id,
-  }),
+  sessionNotInitialized: (id?: any) =>
+    ErrorResponse.create(-32000, 'Session not properly initialized', id),
+
+  sessionRestoreFailed: (id?: any) =>
+    ErrorResponse.create(
+      -32000,
+      'Failed to restore session. Please reinitialize.',
+      id
+    ),
+
+  sessionExpired: (id?: any) =>
+    ErrorResponse.create(-32001, 'Session expired', id),
+
+  missingSessionId: (id?: any) =>
+    ErrorResponse.create(-32000, 'Session ID required in query parameter', id),
+
+  authorizationRequired(
+    id: any,
+    error: { workspaceId: string; serverId: string; authorizationUrl: string }
+  ) {
+    return ErrorResponse.create(
+      -32000,
+      `Authorization required for ${error.workspaceId}/${error.serverId}. Complete it here: ${error.authorizationUrl}`,
+      id,
+      { type: 'oauth_required', authorizationUrl: error.authorizationUrl }
+    );
+  },
 };
+
+/**
+ * Detect transport type from request
+ */
+function detectTransportType(
+  c: Context<Env>,
+  session?: MCPSession
+): TransportType {
+  if (session?.getClientTransportType()) {
+    return session.getClientTransportType()!;
+  }
+
+  const acceptHeader = c.req.header('Accept');
+  return c.req.method === 'GET' && acceptHeader?.includes('text/event-stream')
+    ? 'sse'
+    : 'streamable-http';
+}
+
+/**
+ * Create new session
+ */
+async function createSession(
+  config: ServerConfig,
+  tokenInfo?: any,
+  context?: Context<Env>,
+  transportType?: TransportType
+): Promise<MCPSession> {
+  const session = new MCPSession({
+    config,
+    gatewayToken: tokenInfo,
+    context,
+  });
+
+  if (transportType) {
+    try {
+      await session.initializeOrRestore(transportType);
+      logger.debug(`Session ${session.id} initialized with ${transportType}`);
+    } catch (error) {
+      logger.error(`Failed to initialize session ${session.id}`, error);
+      throw error;
+    }
+  }
+
+  await setSession(session.id, session);
+  return session;
+}
 
 /**
  * Handle initialization request
@@ -105,70 +139,40 @@ const ErrorResponses = {
  * - `session.initializeOrRestore` is then called to initialize or restore the session
  * - If initialize fails, the session is deleted from the store and the error is re-thrown
  */
-export async function handleInitializeRequest(
+export async function handleClientRequest(
   c: Context<Env>,
   session: MCPSession | undefined
-): Promise<MCPSession | undefined> {
-  const serverConfig = c.var.serverConfig;
+) {
+  const { serverConfig, tokenInfo } = c.var;
+  const { workspaceId, serverId } = serverConfig;
 
   if (!session) {
-    logger.debug(
-      `Creating new session for server: ${serverConfig.workspaceId}/${serverConfig.serverId}`
+    logger.debug(`Creating new session for: ${workspaceId}/${serverId}`);
+    session = await createSession(
+      serverConfig,
+      tokenInfo,
+      c,
+      'streamable-http'
     );
-
-    session = new MCPSession({
-      config: serverConfig,
-      gatewayToken: c.var.tokenInfo,
-      context: c,
-    });
-
-    await setSession(session.id, session);
   }
-
-  // This path is only taken for streamable-http clients
-  const clientTransportType: TransportType = 'streamable-http';
-
-  logger.debug(
-    `Session ${session.id}: Client requesting ${clientTransportType} transport`
-  );
 
   try {
-    await session.initializeOrRestore(clientTransportType);
-    return session;
+    await session.initializeOrRestore('streamable-http');
+    session.handleRequest();
+    return RESPONSE_ALREADY_SENT;
   } catch (error: any) {
+    const bodyId = ((await c.req.json()) as any)?.id;
     await deleteSession(session.id);
 
+    // Check if this is an OAuth authorization error
+    if (error.authorizationUrl && error.serverId)
+      return c.json(ErrorResponse.authorizationRequired(bodyId, error), 401);
+
+    // Other errors
     logger.error(`Failed to initialize session ${session.id}`, error);
-    throw error;
+    return c.json(ErrorResponse.sessionRestoreFailed(bodyId), 500);
   }
 }
-
-/**
- * Setup SSE connection for a session
- * Extracted for clarity while maintaining performance
- */
-// export function setupSSEConnection(res: any, session: MCPSession): void {
-//   res.writeHead(200, {
-//     'Content-Type': 'text/event-stream',
-//     'Cache-Control': 'no-cache, no-transform',
-//     Connection: 'keep-alive',
-//     [HEADER_SSE_SESSION_ID]: session.id,
-//     [HEADER_MCP_SESSION_ID]: session.id,
-//   });
-
-//   // Handle connection cleanup on close/error
-//   const cleanupSession = () => {
-//     logger.debug(`SSE connection closed for session ${session.id}`);
-//     deleteSession(session.id);
-//     session.close().catch((err) => logger.error('Error closing session', err));
-//   };
-
-//   res.on('close', cleanupSession);
-//   res.on('error', (error: any) => {
-//     logger.error(`SSE connection error for session ${session.id}`, error);
-//     cleanupSession();
-//   });
-// }
 
 /**
  * Handle GET request for established session
@@ -186,23 +190,9 @@ export async function handleEstablishedSessionGET(
     logger.error(`Failed to prepare session ${session.id}`, error);
     await deleteSession(session.id);
     if (error.needsAuthorization) {
-      return c.json(
-        {
-          jsonrpc: '2.0',
-          error: {
-            code: -32000,
-            message: `Authorization required for ${error.workspaceId}/${error.serverId}. Go to the following URL to complete the OAuth flow: ${error.authorizationUrl}`,
-            data: {
-              type: 'oauth_required',
-              authorizationUrl: error.authorizationUrl,
-            },
-          },
-          id: null,
-        },
-        401
-      );
+      return c.json(ErrorResponse.authorizationRequired(null, error), 401);
     }
-    return c.json(ErrorResponses.sessionRestoreFailed(), 500);
+    return c.json(ErrorResponse.sessionRestoreFailed(), 500);
   }
 
   const { incoming: req, outgoing: res } = c.env as any;
@@ -212,40 +202,10 @@ export async function handleEstablishedSessionGET(
     const transport = session.initializeSSETransport(res);
     await setSession(transport.sessionId, session);
     await transport.start();
-    return RESPONSE_ALREADY_SENT;
   } else {
-    logger.debug(`Session ${session.id} ready for connection`);
-    // For Streamable HTTP clients
-    logger.debug(`Session ${session.id} needs to handle the request`);
-    await session.handleRequest(req, res);
-    return RESPONSE_ALREADY_SENT;
+    await session.handleRequest();
   }
-}
-
-/**
- * Create SSE session for pure SSE clients
- */
-export async function createSSESession(
-  serverConfig: ServerConfig,
-  tokenInfo?: any,
-  c?: Context<Env>
-): Promise<MCPSession | undefined> {
-  logger.debug('Creating new session for pure SSE client');
-  const session = new MCPSession({
-    config: serverConfig,
-    gatewayToken: tokenInfo,
-    context: c,
-  });
-
-  try {
-    await session.initializeOrRestore('sse');
-    logger.debug(`SSE session ${session.id} initialized`);
-    return session;
-  } catch (error) {
-    logger.error(`Failed to initialize SSE session ${session.id}`, error);
-    await deleteSession(session.id);
-    return undefined;
-  }
+  return RESPONSE_ALREADY_SENT;
 }
 
 async function setSession(sessionId: string, session: MCPSession) {
@@ -264,21 +224,10 @@ async function deleteSession(sessionId: string) {
  */
 export async function prepareSessionForRequest(
   c: Context<Env>,
-  session: MCPSession,
-  body: any
+  session: MCPSession
 ): Promise<boolean> {
   try {
-    const clientTransportType = session.getClientTransportType();
-    // Determine transport type
-    const acceptHeader = c.req.header('Accept');
-    const isCurrentSSERequest =
-      c.req.method === 'GET' && acceptHeader?.includes('text/event-stream');
-    const detectedTransportType: TransportType = isCurrentSSERequest
-      ? 'sse'
-      : 'streamable-http';
-
-    const transportType = clientTransportType || detectedTransportType;
-
+    const transportType = detectTransportType(c, session);
     await session.initializeOrRestore(transportType);
     logger.debug(`Session ${session.id} ready for request handling`);
     return true;
@@ -294,148 +243,43 @@ export async function prepareSessionForRequest(
  * This is the optimized entry point that delegates to specific handlers
  */
 export async function handleMCPRequest(c: Context<Env>) {
-  const serverConfig = c.var.serverConfig;
-  let session = c.var.session;
+  const { serverConfig, tokenInfo } = c.var;
+  if (!serverConfig) return c.json(ErrorResponse.serverConfigNotFound(), 500);
+
+  let session: MCPSession | undefined = c.var.session;
   let method = c.req.method;
 
-  // Check if server config was found (it might be missing due to auth issues)
-  if (!serverConfig) return c.json(ErrorResponses.serverConfigNotFound(), 500);
-
   // Handle GET requests for established sessions
-  if (method === 'GET' && session)
-    return handleEstablishedSessionGET(c, session);
-
-  const acceptHeader = c.req.header('Accept');
-  if (method === 'GET' && !session && acceptHeader === 'text/event-stream') {
-    session = await createSSESession(serverConfig, c.var.tokenInfo);
-    if (!session) {
-      return c.json(ErrorResponses.sessionNotInitialized(), 500);
-    }
-    c.set('session', session);
+  if (method === 'GET' && session) {
     return handleEstablishedSessionGET(c, session);
   }
 
-  const body = method === 'POST' ? await c.req.json() : null;
-  logger.debug(
-    `${c.req.method} ${c.req.url} Body: ${body?.method ? body.method : 'null'} Headers: ${JSON.stringify(c.req.raw.headers)}`
-  );
+  return handleClientRequest(c, session);
+}
 
-  // Check if this is an initialization request
-  if (body && isInitializeRequest(body)) {
-    try {
-      session = await handleInitializeRequest(c, session);
-    } catch (error: any) {
-      // Check if this is an OAuth authorization error
-      if (error.authorizationUrl && error.serverId) {
-        logger.info(
-          `OAuth authorization required for server ${error.workspaceId}/${error.serverId}`
-        );
-        return c.json(
-          {
-            jsonrpc: '2.0',
-            error: {
-              code: -32000,
-              message: `Authorization required for ${error.workspaceId}/${error.serverId}. Go to the following URL to complete the OAuth flow: ${error.authorizationUrl}`,
-              data: {
-                type: 'oauth_required',
-                authorizationUrl: error.authorizationUrl,
-              },
-            },
-            id: (body as any)?.id,
-          },
-          401
-        );
-      }
+export async function handleSSERequest(c: Context<Env>) {
+  const { serverConfig, tokenInfo } = c.var;
+  if (!serverConfig) return c.json(ErrorResponse.serverConfigNotFound(), 500);
 
-      // Other errors
-      logger.error('initializationFailed', { body, error });
-    }
+  let session: MCPSession | undefined = c.var.session;
+  let method = c.req.method;
+  const isSSE = c.req.header('Accept') === 'text/event-stream';
 
-    if (!session)
-      return c.json(
-        ErrorResponses.sessionNotInitialized((body as any)?.id),
-        500
-      );
-
-    const { incoming: req, outgoing: res } = c.env as any;
-    logger.debug(`Session ${session.id}: Handling initialize request`);
-
-    // Set session ID header
-    if (res?.setHeader) res.setHeader(HEADER_MCP_SESSION_ID, session.id);
-
-    await session.handleRequest(req, res, body);
-    logger.debug(`Session ${session.id}: Initialize request completed`);
-    return RESPONSE_ALREADY_SENT;
+  if (!isSSE) {
+    return c.json(ErrorResponse.invalidRequest(), 400);
   }
 
-  // For non-initialization requests, require session
   if (!session) {
-    // Detect transport type from headers
-    const acceptHeader = c.req.header('Accept');
-    const isPureSSE = method === 'GET' && acceptHeader === 'text/event-stream';
-
-    if (isPureSSE) {
-      const tokenInfo = c.var.tokenInfo;
-
-      session = await createSSESession(serverConfig, tokenInfo, c);
-      if (!session) {
-        return c.json(ErrorResponses.sessionNotInitialized(), 500);
-      }
-      c.set('session', session);
-
-      // Handle SSE GET request for newly created session
-      return handleEstablishedSessionGET(c, session);
-    } else {
-      logger.warn(
-        `No session found - method: ${method}, sessionId: ${c.req.header(HEADER_MCP_SESSION_ID)}`
-      );
-
-      return c.json(ErrorResponses.sessionNotFound(), 404);
-    }
+    return c.json(ErrorResponse.sessionNotFound(), 404);
   }
-
-  // Ensure session is properly initialized before handling request
-  if (session && !isInitializeRequest(body)) {
-    const isReady = await prepareSessionForRequest(c, session, body);
-    if (!isReady) {
-      return c.json(
-        ErrorResponses.sessionRestoreFailed((body as any)?.id),
-        500
-      );
-    }
-  }
-
-  // Handle request through session
-  const { incoming: req, outgoing: res } = c.env as any;
 
   try {
-    logger.debug(`Session ${session.id}: Handling ${method} request`);
-    await session.handleRequest(req, res, body);
+    await session.handleRequest();
   } catch (error: any) {
-    logger.error(`Error handling request for session ${session.id}`, error);
-
-    if (error?.message?.includes('Session not initialized')) {
-      logger.error(
-        `CRITICAL: Session ${session.id} initialization failed unexpectedly`
-      );
-      await deleteSession(session.id);
-      return c.json(
-        {
-          jsonrpc: '2.0',
-          error: {
-            code: -32000,
-            message:
-              'Session initialization failed in handleRequest. Please reconnect.',
-          },
-          id: body?.id || null,
-        },
-        500
-      );
-    }
-
-    throw error;
+    logger.error(`Error handling SSE request for session ${session.id}`, error);
+    await deleteSession(session.id);
+    return c.json(ErrorResponse.sessionRestoreFailed(), 500);
   }
-
   return RESPONSE_ALREADY_SENT;
 }
 
@@ -449,45 +293,25 @@ export async function handleSSEMessages(c: Context<Env>) {
 
   if (!sessionId) {
     logger.warn('POST /messages: Missing session ID in query');
-    return c.json(
-      {
-        jsonrpc: '2.0',
-        error: {
-          code: -32000,
-          message: 'Session ID required in query parameter',
-        },
-        id: null,
-      },
-      400
-    );
+    return c.json(ErrorResponse.missingSessionId(), 400);
   }
 
   const session = await sessionStore.get(sessionId);
   if (!session) {
     logger.warn(`POST /messages: Session ${sessionId} not found`);
-    return c.json(ErrorResponses.invalidRequest(), 404);
+    return c.json(ErrorResponse.sessionNotFound(), 404);
   }
 
   // Check if session is expired
   if (session.isTokenExpired()) {
     logger.debug(`SSE session ${sessionId} expired, removing`);
     await deleteSession(sessionId);
-    return c.json(
-      {
-        jsonrpc: '2.0',
-        error: {
-          code: -32001,
-          message: 'Session expired',
-        },
-        id: null,
-      },
-      401
-    );
+    return c.json(ErrorResponse.sessionExpired(), 401);
   }
 
   // Ensure session is ready for SSE messages
   try {
-    const transportType = session.getClientTransportType() || 'sse';
+    const transportType = 'sse';
     await session.initializeOrRestore(transportType);
     logger.debug(`Session ${sessionId} ready for SSE messages`);
   } catch (error) {
@@ -496,21 +320,11 @@ export async function handleSSEMessages(c: Context<Env>) {
       error
     );
     await deleteSession(sessionId);
-    return c.json(
-      {
-        jsonrpc: '2.0',
-        error: {
-          code: -32001,
-          message:
-            'Failed to restore session during SSE reconnection. Please reinitialize.',
-        },
-        id: null,
-      },
-      500
-    );
+    return c.json(ErrorResponse.sessionRestoreFailed(), 500);
   }
 
   const body = await c.req.json();
+
   logger.debug(`Session ${sessionId}: Processing ${body.method} message`);
 
   const { incoming: req, outgoing: res } = c.env as any;

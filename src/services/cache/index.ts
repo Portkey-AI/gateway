@@ -346,7 +346,7 @@ export async function createCacheBackendsLocal(): Promise<void> {
 
   configCache = new CacheService({
     backend: 'memory',
-    defaultTtl: 10 * 60 * 1000, // 10 minutes
+    defaultTtl: 30 * 24 * 60 * 60 * 1000, // 30 days
     cleanupInterval: 5 * 60 * 1000, // 5 minutes
     maxSize: 100,
   });

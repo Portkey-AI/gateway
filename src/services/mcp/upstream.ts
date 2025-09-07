@@ -8,7 +8,15 @@ import { createLogger } from '../../utils/logger';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { Tool } from '@modelcontextprotocol/sdk/types';
+import {
+  CompleteRequestSchema,
+  CreateMessageRequestSchema,
+  ElicitRequestSchema,
+  NotificationSchema,
+  RequestSchema,
+  ServerRequestSchema,
+  Tool,
+} from '@modelcontextprotocol/sdk/types';
 import { GatewayOAuthProvider } from './upstreamOAuth';
 import { ControlPlane } from '../../middlewares/controlPlane';
 
@@ -58,11 +66,27 @@ export class Upstream {
     private controlPlane?: ControlPlane
   ) {
     // TODO: Might need to advertise capabilities
-    this.client = new Client({
-      name: `portkey-${this.serverConfig.serverId}-client`,
-      version: '1.0.0',
-      title: 'Portkey MCP Gateway',
-    });
+    this.client = new Client(
+      {
+        name: `portkey-${this.serverConfig.serverId}-client`,
+        version: '1.0.0',
+        title: 'Portkey MCP Gateway',
+      },
+      {
+        capabilities: {
+          tools: true,
+          prompts: true,
+          resources: true,
+          logging: true,
+          elicitation: {},
+          sampling: {},
+          completion: {},
+          roots: {
+            listChanged: false,
+          },
+        },
+      }
+    );
   }
 
   private getTransportOptions() {
@@ -120,8 +144,24 @@ export class Upstream {
 
       this.connected = true;
 
-      // TODO: do we need to fetch capabilities here?
       await this.fetchCapabilities();
+
+      // Sample handlers
+      this.setElicitHandler(async (elicitation, extra) => {
+        console.log('===> TODO: handle elicitation', { elicitation, extra });
+      });
+      this.setSamplingHandler(async (sampling, extra) => {
+        console.log('===> TODO: handle sampling', { sampling, extra });
+      });
+      this.setCompletionHandler(async (completion, extra) => {
+        console.log('===> TODO: handle completion', { completion, extra });
+      });
+      this.setNotificationHandler(async (notification) => {
+        console.log('===> TODO: handle notification', { notification });
+      });
+      this.setRequestHandler(async (request, extra) => {
+        console.log('===> TODO: handle request', { request, extra });
+      });
 
       return {
         ok: true,
@@ -312,6 +352,61 @@ export class Upstream {
       throw new Error('No upstream client available');
     }
     return this.client.unsubscribeResource(params);
+  }
+
+  async setElicitHandler(
+    handler: (elicitation: any, extra: any) => Promise<any>
+  ): Promise<void> {
+    if (!this.client) {
+      throw new Error('No upstream client available');
+    }
+    this.client.setRequestHandler(ElicitRequestSchema, handler);
+  }
+
+  async setSamplingHandler(
+    handler: (sampling: any, extra: any) => Promise<any>
+  ): Promise<void> {
+    if (!this.client) {
+      throw new Error('No upstream client available');
+    }
+    this.client.setRequestHandler(CreateMessageRequestSchema, handler);
+  }
+
+  async setCompletionHandler(
+    handler: (completion: any, extra: any) => Promise<any>
+  ): Promise<void> {
+    if (!this.client) {
+      throw new Error('No upstream client available');
+    }
+    this.client.setRequestHandler(CompleteRequestSchema, handler);
+  }
+
+  /**
+   * Set a handler for ANY notification that doesn't have a specific handler
+   * This acts as a catch-all for all notifications from the upstream server
+   */
+  async setNotificationHandler(
+    handler: (notification: any) => Promise<void>
+  ): Promise<void> {
+    if (!this.client) {
+      throw new Error('No upstream client available');
+    }
+    // Use the fallback handler to catch ALL notifications
+    this.client.fallbackNotificationHandler = handler;
+  }
+
+  /**
+   * Set a handler for ANY request that doesn't have a specific handler
+   * This acts as a catch-all for all requests from the upstream server
+   */
+  async setRequestHandler(
+    handler: (request: any, extra: any) => Promise<any>
+  ): Promise<void> {
+    if (!this.client) {
+      throw new Error('No upstream client available');
+    }
+    // Use the fallback handler to catch ALL requests
+    this.client.fallbackRequestHandler = handler;
   }
 
   /**

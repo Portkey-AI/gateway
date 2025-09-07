@@ -21,10 +21,12 @@ import {
   isJSONRPCResponse,
   isJSONRPCNotification,
 } from '@modelcontextprotocol/sdk/types.js';
-import { ServerConfig, ServerTransport } from '../../types/mcp';
+import { ServerConfig, ServerTransport, TransportTypes } from '../../types/mcp';
 import { createLogger } from '../../utils/logger';
 import { Context } from 'hono';
 import { ConnectResult, Upstream } from './upstream';
+import { Downstream } from './downstream';
+import { HEADER_MCP_SESSION_ID } from '../../constants/mcp';
 
 export type TransportType = 'streamable-http' | 'sse' | 'auth-required';
 
@@ -46,10 +48,10 @@ export class MCPSession {
   public createdAt: number;
   public lastActivity: number;
 
-  private downstreamTransport?: ServerTransport;
   private transportCapabilities?: TransportCapabilities;
 
   private upstream: Upstream;
+  private downstream: Downstream;
 
   private logger;
 
@@ -63,7 +65,6 @@ export class MCPSession {
   private context?: Context;
 
   private status: SessionStatus = SessionStatus.New;
-  private hasDownstream: boolean = false;
 
   constructor(options: {
     config: ServerConfig;
@@ -87,6 +88,10 @@ export class MCPSession {
       this.upstreamSessionId,
       this.context?.get('controlPlane')
     );
+    this.downstream = new Downstream({
+      sessionId: this.id,
+      onMessageHandler: this.handleClientMessage.bind(this),
+    });
     this.setTokenExpiration(options.gatewayToken);
   }
 
@@ -124,19 +129,18 @@ export class MCPSession {
   async initializeOrRestore(
     clientTransportType?: TransportType
   ): Promise<Transport> {
-    if (this.isActive()) return this.downstreamTransport!;
+    if (this.isActive()) return this.downstream.transport!;
     if (this.isClosed) throw new Error('Cannot initialize closed session');
 
     // Handle initializing state
     if (this.isInitializing) {
       await this.waitForInitialization();
-      if (!this.downstreamTransport)
+      if (!this.downstream.transport)
         throw new Error('Session initialization failed');
-      return this.downstreamTransport;
+      return this.downstream.transport;
     }
 
     clientTransportType ??= this.getClientTransportType();
-
     return this.initialize(clientTransportType!);
   }
 
@@ -197,42 +201,16 @@ export class MCPSession {
    */
   private createDownstreamTransport(type: TransportType): ServerTransport {
     this.logger.debug(`Creating ${type} downstream transport`);
-
-    if (type === 'sse') {
-      // For SSE clients, create SSE server transport
-      this.downstreamTransport = new SSEServerTransport(
-        `/messages?sessionId=${this.id || crypto.randomUUID()}`,
-        null as any
-      );
-    } else {
-      // Creating stateless Streamable HTTP server transport
-      // since state management is a pain and is just not ready for production
-      this.downstreamTransport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: undefined,
-      });
-    }
-
-    // Set message handler directly
-    this.downstreamTransport.onmessage = this.handleClientMessage.bind(this);
-    this.hasDownstream = true;
-    return this.downstreamTransport;
+    return this.downstream.create(type as TransportTypes);
   }
 
   /**
    * Initialize SSE transport with response object
    */
   initializeSSETransport(res: any): SSEServerTransport {
-    const transport = new SSEServerTransport(
-      `${this.config.workspaceId}/${this.config.serverId}/messages`,
-      res
-    );
-
-    transport.onmessage = this.handleClientMessage.bind(this);
-
-    this.downstreamTransport = transport;
-    this.id = transport.sessionId;
-    this.hasDownstream = true;
-    return transport;
+    this.downstream.create('sse');
+    this.id = this.downstream.transport!.sessionId!;
+    return this.downstream.transport as SSEServerTransport;
   }
 
   /**
@@ -254,26 +232,13 @@ export class MCPSession {
   /**
    * Get the downstream transport (for SSE message handling)
    */
-  getDownstreamTransport = () => this.downstreamTransport;
+  getDownstreamTransport = () => this.downstream.transport;
 
   /**
    * Check if session has upstream connection (needed for tool calls)
    */
   hasUpstreamConnection(): boolean {
     return this.upstream.connected;
-  }
-
-  /**
-   * Get the SSE session ID from the transport (used for client communication)
-   */
-  getSSESessionId(): string | undefined {
-    if (
-      this.downstreamTransport &&
-      'getSessionId' in this.downstreamTransport
-    ) {
-      return (this.downstreamTransport as any)._sessionId;
-    }
-    return undefined;
   }
 
   /**
@@ -295,7 +260,7 @@ export class MCPSession {
     return (
       this.upstream.connected &&
       this.status === SessionStatus.Initialized &&
-      this.hasDownstream
+      this.downstream.connected
     );
   }
 
@@ -416,7 +381,7 @@ export class MCPSession {
     } catch (error) {
       // Send error response if this was a request
       if (isJSONRPCRequest(message)) {
-        await this.sendError(
+        await this.downstream?.sendError(
           message.id,
           ErrorCode.InternalError,
           error instanceof Error ? error.message : String(error)
@@ -433,7 +398,11 @@ export class MCPSession {
 
     // Check if we need upstream auth for any upstream-dependent operations
     if (this.needsUpstreamAuth() && this.isUpstreamMethod(method)) {
-      await this.sendAuthError(request.id);
+      await this.downstream.sendAuthError(request.id, {
+        serverId: this.config.serverId,
+        workspaceId: this.config.workspaceId,
+        authorizationUrl: this.upstream.pendingAuthURL,
+      });
       return;
     }
 
@@ -454,22 +423,6 @@ export class MCPSession {
     } else {
       await this.forwardRequest(request);
     }
-  }
-
-  /**
-   * Send auth error response
-   */
-  private async sendAuthError(requestId: RequestId) {
-    await this.sendError(
-      requestId,
-      ErrorCode.InternalError,
-      `Server ${this.config.serverId} requires authorization. Please complete the OAuth flow: ${this.upstream.pendingAuthURL}`,
-      {
-        needsAuth: true,
-        serverId: this.config.serverId,
-        authorizationUrl: this.upstream.pendingAuthURL,
-      }
-    );
   }
 
   /**
@@ -494,7 +447,7 @@ export class MCPSession {
       `Sending initialize response with tools: ${!!result.capabilities.tools}`
     );
     // Send gateway response
-    await this.sendResult((request as any).id, result);
+    await this.downstream.sendResult((request as any).id, result);
   }
 
   private validateToolAccess(
@@ -551,10 +504,10 @@ export class MCPSession {
       const tools = this.filterTools(upstreamResult.tools);
       this.logger.debug(`Received ${tools.length} tools`);
 
-      await this.sendResult((request as any).id, { tools });
+      await this.downstream.sendResult((request as any).id, { tools });
     } catch (error) {
       this.logger.error('Failed to get tools', error);
-      await this.sendError(
+      await this.downstream.sendError(
         (request as any).id,
         ErrorCode.InternalError,
         `Failed to get tools: ${error instanceof Error ? error.message : String(error)}`
@@ -574,7 +527,7 @@ export class MCPSession {
     const validationError = this.validateToolAccess(toolName);
 
     if (validationError) {
-      await this.sendError(
+      await this.downstream.sendError(
         (request as any).id,
         ErrorCode.InvalidParams,
         `Tool '${toolName}' is ${validationError}`
@@ -590,12 +543,12 @@ export class MCPSession {
       this.logger.debug(`Tool ${toolName} executed successfully`);
 
       // This is where the guardrails would come in.
-      await this.sendResult((request as any).id, result);
+      await this.downstream.sendResult((request as any).id, result);
     } catch (error) {
       // Handle upstream errors
       this.logger.error(`Tool call failed: ${toolName}`, error);
 
-      await this.sendError(
+      await this.downstream.sendError(
         (request as any).id,
         ErrorCode.InternalError,
         `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`
@@ -627,13 +580,13 @@ export class MCPSession {
 
       if (handler) {
         const result = await handler();
-        await this.sendResult((request as any).id, result);
+        await this.downstream.sendResult((request as any).id, result);
       } else {
         await this.forwardRequest(request);
         return;
       }
     } catch (error) {
-      await this.sendError(
+      await this.downstream.sendError(
         request.id!,
         ErrorCode.InternalError,
         error instanceof Error ? error.message : String(error)
@@ -654,9 +607,9 @@ export class MCPSession {
         EmptyResultSchema
       );
 
-      await this.sendResult((request as any).id, result);
+      await this.downstream.sendResult((request as any).id, result);
     } catch (error) {
-      await this.sendError(
+      await this.downstream.sendError(
         request.id!,
         ErrorCode.InternalError,
         error instanceof Error ? error.message : String(error)
@@ -665,66 +618,21 @@ export class MCPSession {
   }
 
   /**
-   * Send a result response to the downstream client
-   */
-  private async sendResult(id: RequestId, result: any) {
-    this.logger.debug(`Sending response for request ${id}`, {
-      result,
-      sessionId: this.downstreamTransport?.sessionId,
-    });
-    await this.downstreamTransport!.send({
-      jsonrpc: '2.0',
-      id,
-      result,
-    });
-  }
-
-  /**
-   * Send an error response to the client
-   */
-  private async sendError(
-    id: RequestId,
-    code: number,
-    message: string,
-    data?: any
-  ) {
-    this.logger.warn(`Sending error response: ${message}`, { id, code });
-    await this.downstreamTransport!.send({
-      jsonrpc: '2.0',
-      id,
-      error: { code, message, data },
-    });
-  }
-
-  /**
    * Handle HTTP request
    */
-  async handleRequest(req: any, res: any, body?: any) {
+  async handleRequest() {
     this.lastActivity = Date.now();
+    let body: any;
 
-    if (!this.downstreamTransport) {
-      throw new Error('Session not initialized');
+    const { incoming: req, outgoing: res } = this.context?.env as any;
+
+    if (req.method === 'POST') {
+      body = await this.context?.req.json();
     }
 
-    // Direct transport method calls
-    if (this.getClientTransportType() === 'streamable-http') {
-      await (
-        this.downstreamTransport as StreamableHTTPServerTransport
-      ).handleRequest(req, res, body);
-    } else if (req.method === 'POST' && body) {
-      await (this.downstreamTransport as SSEServerTransport).handlePostMessage(
-        req,
-        res,
-        body
-      );
-    } else if (req.method === 'GET') {
-      res
-        .writeHead(400)
-        .end('SSE GET requests should use dedicated SSE endpoint');
-      return;
-    } else {
-      res.writeHead(405).end('Method not allowed');
-    }
+    // if (res?.setHeader) res.setHeader(HEADER_MCP_SESSION_ID, this.id);
+
+    await this.downstream.handleRequest(req, res, body);
   }
 
   /**
@@ -733,6 +641,6 @@ export class MCPSession {
   async close() {
     this.status = SessionStatus.Closed;
     await this.upstream.close();
-    await this.downstreamTransport?.close();
+    await this.downstream.close();
   }
 }
