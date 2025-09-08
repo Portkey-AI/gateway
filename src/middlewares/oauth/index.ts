@@ -55,8 +55,8 @@ function createWWWAuthenticateHeader(
   error?: string,
   errorDescription?: string
 ): string {
-  let header = `Bearer realm="${baseUrl}"`;
-  header += `, as_uri="${baseUrl}/.well-known/oauth-protected-resource"`;
+  let header = `Bearer resource_metadata="${baseUrl}/.well-known/oauth-protected-resource/default/linear/mcp"`;
+  // header += `, as_uri="${baseUrl}/.well-known/oauth-protected-resource"`;
 
   if (error) {
     header += `, error="${error}"`;
