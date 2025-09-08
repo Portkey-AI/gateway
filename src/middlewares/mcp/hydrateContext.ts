@@ -47,15 +47,11 @@ const loadLocalServerConfigs = async (
 
     Object.keys(serverConfigs).forEach((id: string) => {
       const serverConfig = serverConfigs[id];
-      configCache.set(
-        id,
-        {
-          ...serverConfig,
-          workspaceId: id.split('/')[0],
-          serverId: id.split('/')[1],
-        },
-        { ttl: TTL }
-      );
+      configCache.set(id, {
+        ...serverConfig,
+        workspaceId: id.split('/')[0],
+        serverId: id.split('/')[1],
+      });
     });
 
     logger.info(`Loaded ${Object.keys(serverConfigs).length} server configs`);

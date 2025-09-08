@@ -413,16 +413,19 @@ export function createCacheBackendsRedis(redisUrl: string): void {
   configCache = new CacheService({
     ...commonOptions,
     dbName: 'config',
+    defaultTtl: undefined,
   });
 
   oauthStore = new CacheService({
     ...commonOptions,
     dbName: 'oauth',
+    defaultTtl: undefined,
   });
 
   mcpServersCache = new CacheService({
     ...commonOptions,
     dbName: 'mcp',
+    defaultTtl: undefined,
   });
 }
 
@@ -441,6 +444,7 @@ export function createCacheBackendsCF(env: any): void {
   tokenCache = new CacheService({
     ...commonOptions,
     dbName: 'token',
+    defaultTtl: MS['10_MINUTES'],
   });
 
   sessionCache = new CacheService({
@@ -451,16 +455,19 @@ export function createCacheBackendsCF(env: any): void {
   configCache = new CacheService({
     ...commonOptions,
     dbName: 'config',
+    defaultTtl: MS['30_DAYS'],
   });
 
   oauthStore = new CacheService({
     ...commonOptions,
     dbName: 'oauth',
+    defaultTtl: undefined,
   });
 
   mcpServersCache = new CacheService({
     ...commonOptions,
     dbName: 'mcp',
+    defaultTtl: undefined,
   });
 }
 
