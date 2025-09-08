@@ -550,8 +550,15 @@ export class OAuthGateway {
   ): Promise<any> {
     logger.debug(`Registering client`, { clientData, clientId });
 
-    const id =
-      clientId || `mcp_client_${crypto.randomBytes(16).toString('hex')}`;
+    // Create a new client id if not provided by hashing clientData to avoid duplicates
+    if (!clientId) {
+      clientId = crypto
+        .createHash('sha256')
+        .update(JSON.stringify(clientData))
+        .digest('hex');
+    }
+
+    const id = clientId;
 
     const existing = await OAuthGatewayCache.get<OAuthClient>(id, 'clients');
     if (existing) {
