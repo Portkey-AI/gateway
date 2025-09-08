@@ -714,7 +714,7 @@ export class OAuthGateway {
   <p style="margin:20px 0;color:#666">Requesting access to: <b>${Array.from(resourceUrl.split('/')).at(-2)}</b></p>
   <p style="margin:20px 0;color:#666">Redirect URI: ${redirectUri}</p>
   ${resourceAuthUrl ? `<p style="background:#fffbf0;border-left:3px solid #ffa500;padding:12px;margin:20px 0">Auth to upstream MCP first: <a href="${resourceAuthUrl}" target="_blank" style="color:#0066cc">Click here to authorize</a></p>` : ''}
-  <form action="${authorizationUrl}" method="post" style="margin-top:40px" onsubmit="setTimeout(()=>window.close(),300)">
+  <form action="${authorizationUrl}" method="post" style="margin-top:40px">
     <input type="hidden" name="user_id" value="portkeydefaultuser" />
     <input type="hidden" name="client_id" value="${clientId}" />
     <input type="hidden" name="redirect_uri" value="${redirectUri}" />
@@ -755,7 +755,59 @@ export class OAuthGateway {
       const denyUrl = new URL(redirectUri);
       denyUrl.searchParams.set('error', 'access_denied');
       if (state) denyUrl.searchParams.set('state', state);
-      return this.c.redirect(denyUrl.toString(), 302);
+
+      // Always show intermediate page that triggers redirect and attempts to close
+      return this.c.html(`
+        <html>
+          <head><title>Redirecting...</title></head>
+          <body style="font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
+            <div style="text-align:center">
+              <p>Authorization denied. Redirecting...</p>
+              <p style="color:#666;font-size:14px">You may need to allow the redirect in your browser</p>
+              <p style="color:#666;font-size:14px">This window will close automatically after redirect</p>
+              <button onclick="try{window.close()}catch(e){}" style="margin-top:16px;padding:8px 12px;border:1px solid #ccc;border-radius:6px;background:#fff;cursor:pointer">Close window</button>
+            </div>
+            <script>
+              // Trigger the redirect
+              window.location.href = "${denyUrl.toString()}";
+              
+              // For regular URLs, the page will navigate away immediately
+              // For app URIs, we wait for user interaction with the browser prompt
+              
+              let closeAttempted = false;
+              const attemptClose = () => {
+                if (!closeAttempted) {
+                  closeAttempted = true;
+                  try { window.close(); } catch(e) {} 
+                }
+              };
+              
+              // Check if this is likely an app URI
+              const isAppUri = "${denyUrl.toString()}".match(/^[a-z0-9-]+:\\/\\//i) && 
+                              !["http://", "https://", "file://", "ftp://"].some(p => 
+                                "${denyUrl.toString()}".toLowerCase().startsWith(p));
+              
+              if (isAppUri) {
+                // Close when window regains focus or becomes visible again
+                window.addEventListener('focus', () => setTimeout(attemptClose, 300), { once: true });
+                document.addEventListener('visibilitychange', () => {
+                  if (!document.hidden) setTimeout(attemptClose, 300);
+                }, { once: true });
+                // Any user interaction should also close
+                window.addEventListener('keydown', attemptClose, { once: true });
+                window.addEventListener('mousedown', attemptClose, { once: true });
+                window.addEventListener('touchstart', attemptClose, { once: true });
+                // Fallback: close after 5 seconds for app URIs
+                setTimeout(attemptClose, 5000);
+              } else {
+                // For regular URLs, the page should navigate away
+                // If it doesn't after 2 seconds, try to close
+                setTimeout(attemptClose, 2000);
+              }
+            </script>
+          </body>
+        </html>
+      `);
     }
 
     // Create authorization code
@@ -781,7 +833,60 @@ export class OAuthGateway {
     const ok = new URL(redirectUri);
     ok.searchParams.set('code', authCode);
     if (state) ok.searchParams.set('state', state);
-    return this.c.redirect(ok.toString(), 302);
+
+    // Always show intermediate page that triggers redirect and attempts to close
+    return this.c.html(`
+      <html>
+        <head><title>Authorization Complete</title></head>
+        <body style="font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
+          <div style="text-align:center">
+            <h2 style="color:#22c55e">✅ Authorization Complete</h2>
+            <p>Redirecting...</p>
+            <p style="color:#666;font-size:14px">You may need to allow the redirect in your browser</p>
+            <p style="color:#666;font-size:14px">This window will close automatically after redirect</p>
+            <button onclick="try{window.close()}catch(e){}" style="margin-top:16px;padding:8px 12px;border:1px solid #ccc;border-radius:6px;background:#fff;cursor:pointer">Close window</button>
+          </div>
+          <script>
+            // Trigger the redirect
+            window.location.href = "${ok.toString()}";
+            
+            // For regular URLs, the page will navigate away immediately
+            // For app URIs, we wait for user interaction with the browser prompt
+            
+            let closeAttempted = false;
+            const attemptClose = () => {
+              if (!closeAttempted) {
+                closeAttempted = true;
+                try { window.close(); } catch(e) {} 
+              }
+            };
+            
+            // Check if this is likely an app URI
+            const isAppUri = "${ok.toString()}".match(/^[a-z0-9-]+:\\/\\//i) && 
+                            !["http://", "https://", "file://", "ftp://"].some(p => 
+                              "${ok.toString()}".toLowerCase().startsWith(p));
+            
+            if (isAppUri) {
+              // Close when window regains focus or becomes visible again
+              window.addEventListener('focus', () => setTimeout(attemptClose, 300), { once: true });
+              document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) setTimeout(attemptClose, 300);
+              }, { once: true });
+              // Any user interaction should also close
+              window.addEventListener('keydown', attemptClose, { once: true });
+              window.addEventListener('mousedown', attemptClose, { once: true });
+              window.addEventListener('touchstart', attemptClose, { once: true });
+              // Fallback: close after 5 seconds for app URIs
+              setTimeout(attemptClose, 5000);
+            } else {
+              // For regular URLs, the page should navigate away
+              // If it doesn't after 2 seconds, try to close
+              setTimeout(attemptClose, 2000);
+            }
+          </script>
+        </body>
+      </html>
+    `);
   }
 
   private async buildUpstreamAuthRedirect(
