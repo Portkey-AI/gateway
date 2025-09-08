@@ -15,7 +15,11 @@ import { ServerConfig } from './types/mcp';
 import { MCPSession } from './services/mcp/mcpSession';
 import { getSessionStore } from './services/mcp/sessionStore';
 import { createLogger } from './utils/logger';
-import { handleMCPRequest, handleSSEMessages } from './handlers/mcpHandler';
+import {
+  handleMCPRequest,
+  handleSSEMessages,
+  handleSSERequest,
+} from './handlers/mcpHandler';
 import { oauthMiddleware } from './middlewares/oauth';
 import { hydrateContext } from './middlewares/mcp/hydrateContext';
 import { sessionMiddleware } from './middlewares/mcp/sessionMiddleware';
@@ -125,13 +129,18 @@ app.all(
  * SSE endpoint - simple redirect to main MCP endpoint
  * The main /mcp endpoint already handles SSE through transport detection
  */
-app.get('/:workspaceId/:serverId/sse', async (c) => {
-  logger.debug(`SSE GET ${c.req.url}`);
-  const workspaceId = c.req.param('workspaceId');
-  const serverId = c.req.param('serverId');
-  // Redirect with SSE-compatible headers
-  return c.redirect(`/${workspaceId}/${serverId}/mcp`, 302);
-});
+app.get(
+  '/:workspaceId/:serverId/sse',
+  oauthMiddleware({
+    required: OAUTH_REQUIRED,
+    skipPaths: ['/oauth', '/.well-known'],
+  }),
+  hydrateContext,
+  sessionMiddleware,
+  async (c) => {
+    return handleSSERequest(c);
+  }
+);
 
 /**
  * POST endpoint for SSE message handling

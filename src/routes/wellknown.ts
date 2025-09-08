@@ -72,10 +72,10 @@ wellKnownRoutes.get('/oauth-authorization-server', async (c) => {
 });
 
 wellKnownRoutes.get(
-  '/oauth-authorization-server/:workspaceId/:serverId',
+  '/oauth-authorization-server/:workspaceId/:serverId/mcp',
   async (c) => {
     logger.debug(
-      'GET /.well-known/oauth-authorization-server/:workspaceId/:serverId'
+      'GET /.well-known/oauth-authorization-server/:workspaceId/:serverId/mcp'
     );
 
     let baseUrl = new URL(c.req.url).origin;
@@ -140,6 +140,47 @@ wellKnownRoutes.get(
 
     let baseUrl = new URL(c.req.url).origin;
     const resourceUrl = `${new URL(c.req.url).origin}/${c.req.param('workspaceId')}/${c.req.param('serverId')}/mcp`;
+
+    if (c.get('controlPlane')) {
+      baseUrl = c.get('controlPlane').url;
+    }
+
+    const metadata = {
+      // This MCP gateway acts as a protected resource
+      resource: resourceUrl,
+      // Point to our authorization server (either this gateway or control plane)
+      authorization_servers: [baseUrl],
+      // Scopes required to access this resource
+      scopes_supported: [
+        'mcp:servers:read',
+        'mcp:servers:*',
+        'mcp:tools:list',
+        'mcp:tools:call',
+        'mcp:*',
+      ],
+    };
+
+    console.log('metadata', metadata);
+
+    return c.json(metadata, 200, {
+      'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+    });
+  }
+);
+
+wellKnownRoutes.get(
+  '/oauth-protected-resource/:workspaceId/:serverId/sse',
+  async (c) => {
+    logger.debug(
+      'GET /.well-known/oauth-protected-resource/:workspaceId/:serverId/sse',
+      {
+        workspaceId: c.req.param('workspaceId'),
+        serverId: c.req.param('serverId'),
+      }
+    );
+
+    let baseUrl = new URL(c.req.url).origin;
+    const resourceUrl = `${new URL(c.req.url).origin}/${c.req.param('workspaceId')}/${c.req.param('serverId')}/sse`;
 
     if (c.get('controlPlane')) {
       baseUrl = c.get('controlPlane').url;
