@@ -1,8 +1,8 @@
-import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse';
-import { ServerTransport, TransportTypes } from '../../types/mcp';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { ServerTransport, TransportTypes } from '../../types/mcp.js';
 import { createLogger } from '../../utils/logger';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp';
-import { RequestId } from '@modelcontextprotocol/sdk/types';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { RequestId } from '@modelcontextprotocol/sdk/types.js';
 
 export class Downstream {
   public connected: boolean = false;

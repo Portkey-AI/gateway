@@ -12,11 +12,8 @@ import {
   CompleteRequestSchema,
   CreateMessageRequestSchema,
   ElicitRequestSchema,
-  NotificationSchema,
-  RequestSchema,
-  ServerRequestSchema,
   Tool,
-} from '@modelcontextprotocol/sdk/types';
+} from '@modelcontextprotocol/sdk/types.js';
 import { GatewayOAuthProvider } from './upstreamOAuth';
 import { ControlPlane } from '../../middlewares/controlPlane';
 

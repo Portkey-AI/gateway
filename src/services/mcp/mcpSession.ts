@@ -4,14 +4,12 @@
  */
 
 import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import {
   JSONRPCRequest,
   CallToolRequest,
   ListToolsRequest,
   ErrorCode,
-  RequestId,
   InitializeRequest,
   InitializeResult,
   Tool,
@@ -26,7 +24,6 @@ import { createLogger } from '../../utils/logger';
 import { Context } from 'hono';
 import { ConnectResult, Upstream } from './upstream';
 import { Downstream } from './downstream';
-import { HEADER_MCP_SESSION_ID } from '../../constants/mcp';
 
 export type TransportType = 'streamable-http' | 'sse' | 'auth-required';
 
