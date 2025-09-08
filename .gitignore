@@ -145,3 +145,4 @@ plugins/**/.parameters.json
 src/handlers/tests/.creds.json
 
 data/**/*.json
+.cursor/*
