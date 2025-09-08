@@ -216,12 +216,12 @@ export class Upstream {
   async fetchCapabilities(): Promise<void> {
     try {
       this.logger.debug('Fetching upstream capabilities');
-      const toolsResult = await this.client!.listTools();
-      this.availableTools = toolsResult.tools;
+      // const toolsResult = await this.client!.listTools();
+      // this.availableTools = toolsResult.tools;
 
       // Get server capabilities from the client
       this.serverCapabilities = this.client!.getServerCapabilities();
-      this.logger.debug(`Found ${this.availableTools?.length} tools`);
+      // this.logger.debug(`Found ${this.availableTools?.length} tools`);
     } catch (error) {
       this.logger.error('Failed to fetch upstream capabilities', error);
     }
@@ -275,6 +275,7 @@ export class Upstream {
    * List tools from upstream
    */
   async listTools(): Promise<any> {
+    this.logger.debug('Listing tools from upstream');
     if (!this.client) {
       throw new Error('No upstream client available');
     }

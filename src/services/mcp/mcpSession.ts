@@ -426,14 +426,14 @@ export class MCPSession {
    * Handle initialization request
    */
   private async handleInitialize(request: InitializeRequest) {
-    this.logger.debug('Processing initialize request');
+    this.logger.debug(
+      'Processing initialize request',
+      this.upstream.serverCapabilities
+    );
 
     const result: InitializeResult = {
       protocolVersion: request.params.protocolVersion,
-      capabilities: {
-        ...this.upstream.serverCapabilities,
-        tools: this.upstream.availableTools?.length ? {} : undefined,
-      },
+      capabilities: this.upstream.serverCapabilities,
       serverInfo: {
         name: 'portkey-mcp-gateway',
         version: '1.0.0',
@@ -458,13 +458,6 @@ export class MCPSession {
 
     if (allowed?.length && !allowed.includes(toolName)) {
       return 'not allowed';
-    }
-
-    const exists = this.upstream.availableTools?.find(
-      (t) => t.name === toolName
-    );
-    if (!exists) {
-      return 'invalid';
     }
 
     return null; // Tool is valid
