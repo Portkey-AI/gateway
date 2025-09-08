@@ -26,6 +26,18 @@ const logger = {
     console.error(`[CacheService] ${msg}`, ...args),
 };
 
+const MS = {
+  '5_MINUTES': 5 * 60 * 1000,
+  '10_MINUTES': 10 * 60 * 1000,
+  '30_MINUTES': 30 * 60 * 1000,
+  '1_HOUR': 60 * 60 * 1000,
+  '6_HOURS': 6 * 60 * 60 * 1000,
+  '12_HOURS': 12 * 60 * 60 * 1000,
+  '1_DAY': 24 * 60 * 60 * 1000,
+  '7_DAYS': 7 * 24 * 60 * 60 * 1000,
+  '30_DAYS': 30 * 24 * 60 * 60 * 1000,
+};
+
 export class CacheService {
   private backend: CacheBackend;
   private defaultTtl?: number;
@@ -52,7 +64,10 @@ export class CacheService {
         if (!config.redisUrl) {
           throw new Error('Redis URL is required for Redis backend');
         }
-        return createRedisBackend(config.redisUrl, config.redisOptions);
+        return createRedisBackend(config.redisUrl, {
+          ...config.redisOptions,
+          dbName: config.dbName || 'cache',
+        });
 
       case 'cloudflareKV':
         if (!config.kvBindingName || !config.dbName) {
@@ -321,16 +336,16 @@ export function initializeCache(config: CacheConfig): CacheService {
 export async function createCacheBackendsLocal(): Promise<void> {
   defaultCache = new CacheService({
     backend: 'memory',
-    defaultTtl: 5 * 60 * 1000, // 5 minutes
-    cleanupInterval: 5 * 60 * 1000, // 5 minutes
+    defaultTtl: MS['5_MINUTES'],
+    cleanupInterval: MS['5_MINUTES'],
     maxSize: 1000,
   });
 
   tokenCache = new CacheService({
     backend: 'memory',
-    defaultTtl: 5 * 60 * 1000, // 5 minutes
+    defaultTtl: MS['5_MINUTES'],
     saveInterval: 1000, // 1 second
-    cleanupInterval: 5 * 60 * 1000, // 5 minutes
+    cleanupInterval: MS['5_MINUTES'],
     maxSize: 1000,
   });
 
@@ -338,16 +353,16 @@ export async function createCacheBackendsLocal(): Promise<void> {
     backend: 'file',
     dataDir: 'data',
     fileName: 'sessions-cache.json',
-    defaultTtl: 7 * 24 * 60 * 60 * 1000, // 7 days
+    defaultTtl: MS['7_DAYS'],
     saveInterval: 1000, // 5 seconds
-    cleanupInterval: 5 * 60 * 1000, // 5 minutes
+    cleanupInterval: MS['5_MINUTES'],
   });
   await sessionCache.waitForReady();
 
   configCache = new CacheService({
     backend: 'memory',
-    defaultTtl: 30 * 24 * 60 * 60 * 1000, // 30 days
-    cleanupInterval: 5 * 60 * 1000, // 5 minutes
+    defaultTtl: MS['30_DAYS'],
+    cleanupInterval: MS['5_MINUTES'],
     maxSize: 100,
   });
 
@@ -356,7 +371,7 @@ export async function createCacheBackendsLocal(): Promise<void> {
     dataDir: 'data',
     fileName: 'oauth-store.json',
     saveInterval: 1000, // 1 second
-    cleanupInterval: 60 * 10 * 1000, // 10 minutes
+    cleanupInterval: MS['10_MINUTES'],
   });
   await oauthStore.waitForReady();
 
@@ -365,15 +380,50 @@ export async function createCacheBackendsLocal(): Promise<void> {
     dataDir: 'data',
     fileName: 'mcp-servers-auth.json',
     saveInterval: 1000, // 5 seconds
-    cleanupInterval: 5 * 60 * 1000, // 5 minutes
+    cleanupInterval: MS['5_MINUTES'],
   });
   await mcpServersCache.waitForReady();
 }
 
-export function createCacheBackendsRedis(): void {
-  throw new Error(
-    'Redis backend not implemented - please install and configure a Redis client library'
-  );
+export function createCacheBackendsRedis(redisUrl: string): void {
+  let commonOptions: CacheConfig = {
+    backend: 'redis',
+    redisUrl: redisUrl,
+    defaultTtl: MS['5_MINUTES'],
+    cleanupInterval: MS['5_MINUTES'],
+    maxSize: 1000,
+  };
+
+  defaultCache = new CacheService({
+    ...commonOptions,
+    dbName: 'default',
+  });
+
+  tokenCache = new CacheService({
+    ...commonOptions,
+    dbName: 'token',
+    defaultTtl: MS['10_MINUTES'],
+  });
+
+  sessionCache = new CacheService({
+    ...commonOptions,
+    dbName: 'session',
+  });
+
+  configCache = new CacheService({
+    ...commonOptions,
+    dbName: 'config',
+  });
+
+  oauthStore = new CacheService({
+    ...commonOptions,
+    dbName: 'oauth',
+  });
+
+  mcpServersCache = new CacheService({
+    ...commonOptions,
+    dbName: 'mcp',
+  });
 }
 
 export function createCacheBackendsCF(env: any): void {
@@ -381,7 +431,7 @@ export function createCacheBackendsCF(env: any): void {
     backend: 'cloudflareKV',
     env: env,
     kvBindingName: 'KV_STORE',
-    defaultTtl: 5 * 60 * 1000, // 5 minutes
+    defaultTtl: MS['5_MINUTES'],
   };
   defaultCache = new CacheService({
     ...commonOptions,

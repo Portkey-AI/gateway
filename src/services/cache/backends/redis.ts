@@ -2,6 +2,7 @@
  * @file src/services/cache/backends/redis.ts
  * Redis cache backend implementation
  */
+import Redis from 'ioredis';
 
 import { CacheBackend, CacheEntry, CacheOptions, CacheStats } from '../types';
 
@@ -17,19 +18,26 @@ const logger = {
     console.error(`[RedisCache] ${msg}`, ...args),
 };
 
-// Redis client interface - can be implemented with different Redis libraries
+// Redis client interface matching ioredis
 interface RedisClient {
   get(key: string): Promise<string | null>;
-  set(key: string, value: string, options?: { EX?: number }): Promise<void>;
-  del(key: string): Promise<number>;
-  exists(key: string): Promise<number>;
+  set(
+    key: string,
+    value: string,
+    expiryMode?: string | any,
+    time?: number | string
+  ): Promise<'OK' | null>;
+  del(...keys: string[]): Promise<number>;
+  exists(...keys: string[]): Promise<number>;
   keys(pattern: string): Promise<string[]>;
-  flushdb(): Promise<void>;
-  quit(): Promise<void>;
+  flushdb(): Promise<'OK'>;
+  quit(): Promise<'OK'>;
 }
 
 export class RedisCacheBackend implements CacheBackend {
   private client: RedisClient;
+  private dbName: string;
+
   private stats: CacheStats = {
     hits: 0,
     misses: 0,
@@ -39,12 +47,15 @@ export class RedisCacheBackend implements CacheBackend {
     expired: 0,
   };
 
-  constructor(client: RedisClient) {
+  constructor(client: RedisClient, dbName: string) {
     this.client = client;
+    this.dbName = dbName;
   }
 
   private getFullKey(key: string, namespace?: string): string {
-    return namespace ? `cache:${namespace}:${key}` : `cache:default:${key}`;
+    return namespace
+      ? `${this.dbName}:${namespace}:${key}`
+      : `${this.dbName}:default:${key}`;
   }
 
   private serializeEntry<T>(entry: CacheEntry<T>): string {
@@ -112,7 +123,7 @@ export class RedisCacheBackend implements CacheBackend {
       if (options.ttl) {
         // Set with TTL in seconds
         const ttlSeconds = Math.ceil(options.ttl / 1000);
-        await this.client.set(fullKey, serialized, { EX: ttlSeconds });
+        await this.client.set(fullKey, serialized, 'EX', ttlSeconds);
       } else {
         await this.client.set(fullKey, serialized);
       }
@@ -143,13 +154,14 @@ export class RedisCacheBackend implements CacheBackend {
 
   async clear(namespace?: string): Promise<void> {
     try {
-      const pattern = namespace ? `cache:${namespace}:*` : 'cache:*';
+      const pattern = namespace
+        ? `${this.dbName}:${namespace}:*`
+        : `${this.dbName}:*`;
       const keys = await this.client.keys(pattern);
 
       if (keys.length > 0) {
-        for (const key of keys) {
-          await this.client.del(key);
-        }
+        // Use single del call with spread operator for better performance
+        await this.client.del(...keys);
         this.stats.deletes += keys.length;
       }
     } catch (error) {
@@ -171,11 +183,15 @@ export class RedisCacheBackend implements CacheBackend {
 
   async keys(namespace?: string): Promise<string[]> {
     try {
-      const pattern = namespace ? `cache:${namespace}:*` : 'cache:default:*';
+      const pattern = namespace
+        ? `${this.dbName}:${namespace}:*`
+        : `${this.dbName}:default:*`;
       const fullKeys = await this.client.keys(pattern);
 
       // Extract the actual key part (remove the prefix)
-      const prefix = namespace ? `cache:${namespace}:` : 'cache:default:';
+      const prefix = namespace
+        ? `${this.dbName}:${namespace}:`
+        : `${this.dbName}:default:`;
       return fullKeys.map((key) => key.substring(prefix.length));
     } catch (error) {
       logger.error('Redis keys error:', error);
@@ -185,7 +201,9 @@ export class RedisCacheBackend implements CacheBackend {
 
   async getStats(namespace?: string): Promise<CacheStats> {
     try {
-      const pattern = namespace ? `cache:${namespace}:*` : 'cache:*';
+      const pattern = namespace
+        ? `${this.dbName}:${namespace}:*`
+        : `${this.dbName}:*`;
       const keys = await this.client.keys(pattern);
 
       return {
@@ -214,21 +232,21 @@ export class RedisCacheBackend implements CacheBackend {
   }
 }
 
-// Factory function to create Redis backend with different Redis libraries
+// Factory function to create Redis backend with ioredis
 export function createRedisBackend(
   redisUrl: string,
-  options: any = {}
+  options?: any
 ): RedisCacheBackend {
-  // This is a placeholder - in practice, you'd use a specific Redis library
-  // like 'redis', 'ioredis', or '@upstash/redis'
+  // Extract dbName from options or use 'cache' as default
+  const dbName = options?.dbName || 'cache';
 
-  // Example with node_redis:
-  // import { createClient } from 'redis';
-  // const client = createClient({ url: redisUrl, ...options });
-  // await client.connect();
-  // return new RedisCacheBackend(client);
+  // Create ioredis client with URL and any additional options
+  // ioredis supports Redis URL format: redis://[username:password@]host[:port][/db]
+  const client = new Redis(redisUrl, {
+    ...options,
+    // Remove dbName from options as it's not an ioredis option
+    dbName: undefined,
+  });
 
-  throw new Error(
-    'Redis backend not implemented - please install and configure a Redis client library'
-  );
+  return new RedisCacheBackend(client as RedisClient, dbName);
 }

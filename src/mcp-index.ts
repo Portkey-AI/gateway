@@ -29,7 +29,10 @@ import { controlPlaneMiddleware } from './middlewares/controlPlane';
 import { cacheBackendMiddleware } from './middlewares/cacheBackend';
 import { HTTPException } from 'hono/http-exception';
 import { getRuntimeKey } from 'hono/adapter';
-import { createCacheBackendsLocal } from './services/cache';
+import {
+  createCacheBackendsLocal,
+  createCacheBackendsRedis,
+} from './services/cache';
 
 const logger = createLogger('MCP-Gateway');
 
@@ -71,6 +74,8 @@ app.use(controlPlaneMiddleware);
 
 if (getRuntimeKey() === 'workerd') {
   app.use(cacheBackendMiddleware);
+} else if (getRuntimeKey() === 'node' && process.env.REDIS_CONNECTION_STRING) {
+  createCacheBackendsRedis(process.env.REDIS_CONNECTION_STRING);
 } else {
   createCacheBackendsLocal();
 }
