@@ -96,7 +96,7 @@ const BedrockConfig: ProviderConfigs = {
 
     if (params.model) {
       let providerModel = providerOptions.foundationModel || params.model;
-      providerModel = providerModel.replace(/^(us\.|eu\.)/, '');
+      providerModel = providerModel.replace(/^(us\.|eu\.|apac\.)/, '');
       const providerModelArray = providerModel?.split('.');
       const provider = providerModelArray?.[0];
       const model = providerModelArray?.slice(1).join('.');
