@@ -52,10 +52,11 @@ function extractBearerToken(authorization: string | undefined): string | null {
  */
 function createWWWAuthenticateHeader(
   baseUrl: string,
+  path: string,
   error?: string,
   errorDescription?: string
 ): string {
-  let header = `Bearer resource_metadata="${baseUrl}/.well-known/oauth-protected-resource/default/linear/mcp"`;
+  let header = `Bearer resource_metadata="${baseUrl}/.well-known/oauth-protected-resource${path}`;
   // header += `, as_uri="${baseUrl}/.well-known/oauth-protected-resource"`;
 
   if (error) {
@@ -144,6 +145,7 @@ export function oauthMiddleware(config: OAuthConfig = {}) {
         {
           'WWW-Authenticate': createWWWAuthenticateHeader(
             baseUrl,
+            path,
             'invalid_request',
             'Bearer token required'
           ),
