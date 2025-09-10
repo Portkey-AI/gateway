@@ -38,7 +38,7 @@ export const handler: PluginHandler = async (
       throw new Error('Missing text to match');
     }
 
-    const regex = new RegExp(regexPattern, 'g');
+    const regex = new RegExp(regexPattern);
 
     // Process all text items in the array
     let hasMatches = false;
