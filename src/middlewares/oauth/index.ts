@@ -50,21 +50,8 @@ function extractBearerToken(authorization: string | undefined): string | null {
 /**
  * Create WWW-Authenticate header value per RFC 9728
  */
-function createWWWAuthenticateHeader(
-  baseUrl: string,
-  path: string,
-  error?: string,
-  errorDescription?: string
-): string {
+function createWWWAuthenticateHeader(baseUrl: string, path: string): string {
   let header = `Bearer resource_metadata="${baseUrl}/.well-known/oauth-protected-resource${path}`;
-  // header += `, as_uri="${baseUrl}/.well-known/oauth-protected-resource"`;
-
-  if (error) {
-    header += `, error="${error}"`;
-    if (errorDescription) {
-      header += `, error_description="${errorDescription}"`;
-    }
-  }
 
   return header;
 }
@@ -143,12 +130,7 @@ export function oauthMiddleware(config: OAuthConfig = {}) {
         },
         401,
         {
-          'WWW-Authenticate': createWWWAuthenticateHeader(
-            baseUrl,
-            path,
-            'invalid_request',
-            'Bearer token required'
-          ),
+          'WWW-Authenticate': createWWWAuthenticateHeader(baseUrl, path),
         }
       );
     }
@@ -168,11 +150,7 @@ export function oauthMiddleware(config: OAuthConfig = {}) {
         },
         401,
         {
-          'WWW-Authenticate': createWWWAuthenticateHeader(
-            baseUrl,
-            'invalid_token',
-            'Token validation failed'
-          ),
+          'WWW-Authenticate': createWWWAuthenticateHeader(baseUrl, path),
         }
       );
     }
