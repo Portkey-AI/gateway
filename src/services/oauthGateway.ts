@@ -1064,13 +1064,21 @@ export class OAuthGateway {
       // Remove the state parameter from the request URL
       const url = new URL(this.c.req.url);
       url.searchParams.delete('state');
+      logger.debug('Token exchange attempt', {
+        serverUrlOrigin,
+        clientId: clientInfo.client_id,
+        redirectUri: authState.redirectUrl,
+        codeVerifier: authState.codeVerifier,
+        fullCallbackUrl: this.c.req.url,
+      });
       tokenResponse = await oidc.authorizationCodeGrant(config, url, {
         pkceCodeVerifier: authState.codeVerifier,
       });
-    } catch (e) {
+    } catch (e:any) {
+      logger.error('Could not exchange authorization code', { error: e });
       return {
-        error: 'invalid_state',
-        error_description: 'Error during token exchange',
+        error: 'invalid_grant',
+        error_description: e.message || JSON.stringify(e),
       };
     }
 
