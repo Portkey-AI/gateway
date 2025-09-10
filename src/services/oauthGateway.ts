@@ -1063,7 +1063,7 @@ export class OAuthGateway {
     try {
       // Remove the state parameter from the request URL
       const url = new URL(this.c.req.url);
-      url.searchParams.delete('state');
+      // url.searchParams.delete('state');
       logger.debug('Token exchange attempt', {
         serverUrlOrigin,
         clientId: clientInfo.client_id,
@@ -1073,6 +1073,7 @@ export class OAuthGateway {
       });
       tokenResponse = await oidc.authorizationCodeGrant(config, url, {
         pkceCodeVerifier: authState.codeVerifier,
+        expectedState: state,
       });
     } catch (e: any) {
       if (e.cause && e.cause instanceof Response) {
