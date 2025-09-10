@@ -190,9 +190,6 @@ app.all('*', (c) => {
 
 async function shutdown() {
   logger.critical('Shutting down gracefully...');
-  // TODO: need to bring this back
-  // const sessionStore = getSessionStore();
-  // await sessionStore.stop();
   process.exit(0);
 }
 

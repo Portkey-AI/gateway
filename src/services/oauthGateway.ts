@@ -958,7 +958,7 @@ export class OAuthGateway {
 
     const authorizationUrl = oidc.buildAuthorizationUrl(config, {
       redirect_uri: redirectUri,
-      scope: scope || '',
+      scope: scope || clientInfo?.scope || '',
       code_challenge: codeChallenge,
       code_challenge_method: 'S256',
       state,
@@ -997,7 +997,7 @@ export class OAuthGateway {
 
     const authorizationUrl = await this.buildUpstreamAuthRedirect(
       serverUrlOrigin,
-      clientInfo?.redirect_uris?.[0] || redirectUrl,
+      redirectUrl,
       clientInfo?.scope,
       username,
       serverId,

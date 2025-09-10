@@ -186,7 +186,6 @@ oauthRoutes.get('/upstream-callback', async (c) => {
   const result = await gw(c).completeUpstreamAuth();
 
   if (result.error) {
-    // TODO: Handle error case - show error page
     return c.html(`
       <html>
         <head><title>Authorization Failed</title></head>
