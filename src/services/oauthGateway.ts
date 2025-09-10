@@ -1074,11 +1074,31 @@ export class OAuthGateway {
       tokenResponse = await oidc.authorizationCodeGrant(config, url, {
         pkceCodeVerifier: authState.codeVerifier,
       });
-    } catch (e:any) {
-      logger.error('Could not exchange authorization code', { error: e });
+    } catch (e: any) {
+      if (e.cause && e.cause instanceof Response) {
+        try {
+          const errorBody = await e.cause.text();
+          logger.error('Token exchange failed - Server Error', {
+            status: e.cause.status,
+            statusText: e.cause.statusText,
+            url: e.cause.url,
+            body: errorBody, // This should show the actual error message from the server
+            headers: Object.fromEntries(e.cause.headers.entries()),
+          });
+        } catch (readError) {
+          logger.error('Could not read error response', { readError });
+        }
+      } else {
+        logger.error('Token exchange failed', {
+          error: e.message,
+          code: e.code,
+          stack: e.stack,
+        });
+      }
+
       return {
         error: 'invalid_grant',
-        error_description: e.message || JSON.stringify(e),
+        error_description: e.message || 'Failed to exchange authorization code',
       };
     }
 
