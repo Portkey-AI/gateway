@@ -121,6 +121,15 @@ export class GatewayOAuthProvider implements OAuthClientProvider {
       `Saving tokens for ${this.config.workspaceId}/${this.config.serverId}`
     );
 
+    if (tokens && this.controlPlane) {
+      // Save tokens to control plane for persistence
+      await this.controlPlane.saveMCPServerTokens(
+        this.config.workspaceId,
+        this.config.serverId,
+        tokens
+      );
+    }
+
     const cacheKey = `${this.userId}::${this.config.workspaceId}::${this.config.serverId}`;
     await this.mcpServersCache.set(cacheKey, tokens, { namespace: 'tokens' });
   }

@@ -48,11 +48,20 @@ export class ControlPlane {
   }
 
   getMCPServer(workspaceId: string, serverId: string) {
-    return this.fetch(`/v2/mcp-servers/${workspaceId}/${serverId}`);
+    return this.fetch(`/mcp-servers/${workspaceId}/${serverId}`);
   }
 
   getMCPServerTokens(workspaceId: string, serverId: string) {
-    return this.fetch(`/v2/mcp-servers/${workspaceId}/${serverId}/tokens`);
+    return this.fetch(`/mcp-servers/${workspaceId}/${serverId}/tokens`);
+  }
+
+  saveMCPServerTokens(workspaceId: string, serverId: string, tokens: any) {
+    return this.fetch(
+      `/mcp-servers/${workspaceId}/${serverId}/tokens`,
+      'POST',
+      {},
+      JSON.stringify(tokens)
+    );
   }
 
   async introspect(
