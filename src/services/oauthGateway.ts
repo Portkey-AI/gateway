@@ -775,47 +775,14 @@ export class OAuthGateway {
           <body style="font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
             <div style="text-align:center">
               <p>Authorization denied. Redirecting...</p>
-              <p style="color:#666;font-size:14px">You may need to allow the redirect in your browser</p>
+              <p style="color:#666;font-size:14px">You may need to allow the redirect in your browser. You can close window once you have approved the redirect.</p>
               <p style="color:#666;font-size:14px">This window will close automatically after redirect</p>
-              <button onclick="try{window.close()}catch(e){}" style="margin-top:16px;padding:8px 12px;border:1px solid #ccc;border-radius:6px;background:#fff;cursor:pointer">Close window</button>
             </div>
             <script>
               // Trigger the redirect
               window.location.href = "${denyUrl.toString()}";
               
-              // For regular URLs, the page will navigate away immediately
-              // For app URIs, we wait for user interaction with the browser prompt
               
-              let closeAttempted = false;
-              const attemptClose = () => {
-                if (!closeAttempted) {
-                  closeAttempted = true;
-                  try { window.close(); } catch(e) {} 
-                }
-              };
-              
-              // Check if this is likely an app URI
-              const isAppUri = "${denyUrl.toString()}".match(/^[a-z0-9-]+:\\/\\//i) && 
-                              !["http://", "https://", "file://", "ftp://"].some(p => 
-                                "${denyUrl.toString()}".toLowerCase().startsWith(p));
-              
-              if (isAppUri) {
-                // Close when window regains focus or becomes visible again
-                window.addEventListener('focus', () => setTimeout(attemptClose, 300), { once: true });
-                document.addEventListener('visibilitychange', () => {
-                  if (!document.hidden) setTimeout(attemptClose, 300);
-                }, { once: true });
-                // Any user interaction should also close
-                window.addEventListener('keydown', attemptClose, { once: true });
-                window.addEventListener('mousedown', attemptClose, { once: true });
-                window.addEventListener('touchstart', attemptClose, { once: true });
-                // Fallback: close after 5 seconds for app URIs
-                setTimeout(attemptClose, 5000);
-              } else {
-                // For regular URLs, the page should navigate away
-                // If it doesn't after 2 seconds, try to close
-                setTimeout(attemptClose, 2000);
-              }
             </script>
           </body>
         </html>
@@ -854,47 +821,13 @@ export class OAuthGateway {
           <div style="text-align:center">
             <h2 style="color:#22c55e">✅ Authorization Complete</h2>
             <p>Redirecting...</p>
-            <p style="color:#666;font-size:14px">You may need to allow the redirect in your browser</p>
-            <p style="color:#666;font-size:14px">This window will close automatically after redirect</p>
-            <button onclick="try{window.close()}catch(e){}" style="margin-top:16px;padding:8px 12px;border:1px solid #ccc;border-radius:6px;background:#fff;cursor:pointer">Close window</button>
+            <p style="color:#666;font-size:14px">If you're not redirected automatically, <a href="${ok.toString()}" target="_blank">click here</a>.</p>
+            <p style="color:#666;font-size:14px">You can close this window once you have approved the redirect.</p>
           </div>
           <script>
             // Trigger the redirect
             window.location.href = "${ok.toString()}";
             
-            // For regular URLs, the page will navigate away immediately
-            // For app URIs, we wait for user interaction with the browser prompt
-            
-            let closeAttempted = false;
-            const attemptClose = () => {
-              if (!closeAttempted) {
-                closeAttempted = true;
-                try { window.close(); } catch(e) {} 
-              }
-            };
-            
-            // Check if this is likely an app URI
-            const isAppUri = "${ok.toString()}".match(/^[a-z0-9-]+:\\/\\//i) && 
-                            !["http://", "https://", "file://", "ftp://"].some(p => 
-                              "${ok.toString()}".toLowerCase().startsWith(p));
-            
-            if (isAppUri) {
-              // Close when window regains focus or becomes visible again
-              window.addEventListener('focus', () => setTimeout(attemptClose, 300), { once: true });
-              document.addEventListener('visibilitychange', () => {
-                if (!document.hidden) setTimeout(attemptClose, 300);
-              }, { once: true });
-              // Any user interaction should also close
-              window.addEventListener('keydown', attemptClose, { once: true });
-              window.addEventListener('mousedown', attemptClose, { once: true });
-              window.addEventListener('touchstart', attemptClose, { once: true });
-              // Fallback: close after 5 seconds for app URIs
-              setTimeout(attemptClose, 5000);
-            } else {
-              // For regular URLs, the page should navigate away
-              // If it doesn't after 2 seconds, try to close
-              setTimeout(attemptClose, 2000);
-            }
           </script>
         </body>
       </html>
