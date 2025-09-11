@@ -25,7 +25,7 @@ export class ControlPlane {
     headers: any = {},
     body: any = {}
   ) {
-    const reqURL = `${this.controlPlaneUrl}${path}`;
+    const reqURL = `${this.controlPlaneUrl}/v2${path}`;
     if (this.c.get('tokenInfo')?.token) {
       headers['x-portkey-api-key'] = `Bearer ${this.c.get('tokenInfo').token}`;
     }
