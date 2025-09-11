@@ -104,6 +104,19 @@ oauthRoutes.post('/token', async (c) => {
 
     const result = await gw(c).handleTokenRequest(params, c.req.raw.headers);
 
+    if (result.error && result.error === 'invalid_grant') {
+      return c.json(
+        {
+          error: 'unauthorized',
+          error_description: result.error_description ?? 'invalid grant',
+        },
+        401,
+        {
+          'WWW-Authenticate': `Bearer realm="Portkey", error="invalid_token", error_description="${result.error_description ?? 'invalid grant'}"`,
+        }
+      );
+    }
+
     return c.json(result, result.error ? 400 : 200);
   } catch (error) {
     logger.error('Failed to handle token request', error);

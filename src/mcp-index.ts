@@ -94,6 +94,21 @@ app.onError((err, c) => {
   if (err instanceof HTTPException) {
     return err.getResponse();
   }
+  if (err.cause && 'needsAuth' in (err.cause as any)) {
+    const wid = (err.cause as any).workspaceId;
+    const sid = (err.cause as any).serverId;
+    return c.json(
+      {
+        error: 'unauthorized',
+        error_description:
+          'The upstream access token is invalid or has expired',
+      },
+      401,
+      {
+        'WWW-Authenticate': `Bearer resource_metadata="${new URL(c.req.url).origin}/.well-known/oauth-protected-resource/${wid}/${sid}/mcp`,
+      }
+    );
+  }
   c.status(500);
   return c.json({ status: 'failure', message: err.message });
 });

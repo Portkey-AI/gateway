@@ -27,6 +27,7 @@ const logger = {
 };
 
 const MS = {
+  '1_MINUTE': 1 * 60 * 1000,
   '5_MINUTES': 5 * 60 * 1000,
   '10_MINUTES': 10 * 60 * 1000,
   '30_MINUTES': 30 * 60 * 1000,
@@ -401,9 +402,10 @@ export function createCacheBackendsRedis(redisUrl: string): void {
   });
 
   tokenCache = new CacheService({
-    ...commonOptions,
-    dbName: 'token',
-    defaultTtl: MS['10_MINUTES'],
+    backend: 'memory',
+    defaultTtl: MS['1_MINUTE'],
+    cleanupInterval: MS['1_MINUTE'],
+    maxSize: 1000,
   });
 
   sessionCache = new CacheService({

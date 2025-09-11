@@ -268,6 +268,11 @@ export class OAuthGateway {
       },
       { namespace: 'refresh_tokens' }
     );
+
+    // Also store this refresh token against a client_id for fast revocation
+    await oauthStore.set(clientId, refreshToken, {
+      namespace: 'clientid_refresh',
+    });
     return { refreshToken, iat, exp };
   }
 

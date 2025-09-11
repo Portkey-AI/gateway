@@ -21,6 +21,7 @@ import { createLogger } from '../utils/logger';
 import { HEADER_MCP_SESSION_ID } from '../constants/mcp';
 import { Transport } from '@modelcontextprotocol/sdk/shared/transport';
 import { ControlPlane } from '../middlewares/controlPlane';
+import { getOauthStore } from '../services/cache';
 
 const logger = createLogger('MCP-Handler');
 
@@ -104,6 +105,30 @@ function detectTransportType(
     : 'http';
 }
 
+async function purgeOauthTokens(tokenInfo: any) {
+  logger.debug(`Purging OAuth tokens for client_id ${tokenInfo.client_id}`);
+  const oauthCache = getOauthStore();
+  // First get the refresh token for this client_id
+  const refreshToken: string | null = await oauthCache.get(
+    tokenInfo.client_id,
+    'clientid_refresh'
+  );
+
+  if (refreshToken) {
+    // Get all access tokens for this refresh token
+    const refresh = await oauthCache.get(refreshToken, 'refresh_tokens');
+    const accessTokens = refresh?.access_tokens;
+    if (accessTokens) {
+      for (const at of accessTokens) {
+        await oauthCache.delete(at, 'tokens');
+      }
+    }
+    await oauthCache.delete(refreshToken, 'refresh_tokens');
+  }
+
+  return;
+}
+
 /**
  * Create new session
  */
@@ -124,7 +149,11 @@ async function createSession(
       await session.initializeOrRestore(transportType);
       logger.debug(`Session ${session.id} initialized with ${transportType}`);
     } catch (error) {
-      logger.error(`Failed to initialize session ${session.id}`, error);
+      await purgeOauthTokens(tokenInfo);
+      logger.error(
+        `Failed to initialize session (createSession) ${session.id}`,
+        error
+      );
       throw error;
     }
   }
@@ -160,11 +189,16 @@ export async function handleClientRequest(
     await deleteSession(session.id);
 
     // Check if this is an OAuth authorization error
-    if (error.authorizationUrl && error.serverId)
+    if (error.authorizationUrl && error.serverId) {
+      await purgeOauthTokens(tokenInfo);
       return c.json(ErrorResponse.authorizationRequired(bodyId, error), 401);
+    }
 
     // Other errors
-    logger.error(`Failed to initialize session ${session.id}`, error);
+    logger.error(
+      `Failed to initialize session (handleClientRequest) ${session.id}`,
+      error
+    );
     return c.json(ErrorResponse.sessionRestoreFailed(bodyId), 500);
   }
 }

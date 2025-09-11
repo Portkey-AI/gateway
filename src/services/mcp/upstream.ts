@@ -54,6 +54,7 @@ export class Upstream {
   public availableTools?: Tool[];
   public serverCapabilities?: any;
   public pendingAuthURL?: string;
+  public authProvider?: GatewayOAuthProvider;
 
   constructor(
     private serverConfig: ServerConfig,
@@ -91,12 +92,15 @@ export class Upstream {
     switch (this.serverConfig.auth_type) {
       case 'oauth_auto':
         this.logger.debug('Using OAuth auto-discovery for authentication');
-        options = {
-          authProvider: new GatewayOAuthProvider(
+        if (!this.authProvider) {
+          this.authProvider = new GatewayOAuthProvider(
             this.serverConfig,
             this.userId,
             this.controlPlane
-          ),
+          );
+        }
+        options = {
+          authProvider: this.authProvider,
         };
         break;
 
@@ -167,6 +171,8 @@ export class Upstream {
       };
     } catch (e: any) {
       if (e?.needsAuthorization) {
+        this.authProvider?.invalidateCredentials('all');
+        this.authProvider = undefined;
         this.pendingAuthURL = e.authorizationUrl;
         return {
           ok: false,

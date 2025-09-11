@@ -154,8 +154,8 @@ export class MCPSession {
       const upstream: ConnectResult = await this.upstream.connect();
 
       if (!upstream.ok) {
-        // TODO: handle case when upstream needs authorization
-        throw new Error('Failed to connect to upstream');
+        // Handle case when upstream needs authorization
+        throw new Error('Failed to connect to upstream', { cause: upstream });
       }
 
       // Store transport capabilities for translation
