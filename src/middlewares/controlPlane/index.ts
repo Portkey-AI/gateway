@@ -15,7 +15,7 @@ export class ControlPlane {
     this.defaultHeaders = {
       'User-Agent': 'Portkey-MCP-Gateway/0.1.0',
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${env(c).PORTKEY_CLIENT_AUTH}`,
+      Authorization: `${env(c).PORTKEY_CLIENT_AUTH}`,
     };
   }
 
