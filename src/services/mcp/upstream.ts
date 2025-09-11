@@ -163,7 +163,7 @@ export class Upstream {
       return {
         ok: true,
         sessionId: this.upstreamSessionId,
-        type: 'streamable-http',
+        type: 'http',
       };
     } catch (e: any) {
       if (e?.needsAuthorization) {

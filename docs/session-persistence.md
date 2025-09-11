@@ -27,7 +27,7 @@ Environment variables:
   "clientTransportType": "sse",
   "transportCapabilities": {
     "clientTransport": "sse",
-    "upstreamTransport": "streamable-http"
+    "upstreamTransport": "http"
   },
   "metrics": {
     "requests": 10,

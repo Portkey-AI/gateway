@@ -1,52 +1,11 @@
 {
   "servers": {
-    "linear": {
-      "name": "Linear MCP Server",
-      "url": "https://mcp.linear.app/sse",
-      "description": "Linear issue tracking and project management",
-      "default_headers": {
-        "Authorization": "..."
-      },
-      "available_tools": [
-        "list_issues",
-        "get_issue",
-        "create_issue",
-        "update_issue",
-        "create_comment",
-        "list_comments",
-        "list_teams",
-        "get_team",
-        "list_projects",
-        "get_project",
-        "create_project",
-        "update_project",
-        "deleteProject",
-        "deleteIssue"
-      ],
-      "default_permissions": {
-        "allowed_tools": null,
-        "blocked_tools": ["deleteProject", "deleteIssue"],
-        "rate_limit": {
-          "requests": 100,
-          "window": 60
-        }
-      }
-    },
     "deepwiki": {
       "name": "DeepWiki MCP Server",
       "url": "https://mcp.deepwiki.com/mcp",
       "description": "GitHub repository documentation and Q&A",
-      "default_headers": {},
-      "available_tools": [
-        "read_wiki_structure",
-        "read_wiki_contents",
-        "ask_question"
-      ],
-      "default_permissions": {
-        "allowed_tools": null,
-        "blocked_tools": [],
-        "rate_limit": null
-      }
+      "auth_type": "none",
+      "type": "http"
     }
   }
 }

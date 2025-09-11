@@ -21,7 +21,7 @@ export class Downstream {
     this.sessionId = options.sessionId; // Only used in SSE transport
     this.logger = createLogger(`Downstream`);
     this.onMessageHandler = options.onMessageHandler;
-    this.type = 'streamable-http'; // to begin with
+    this.type = 'http'; // to begin with
   }
 
   create(type: TransportTypes): ServerTransport {
@@ -33,7 +33,7 @@ export class Downstream {
         `/messages?sessionId=${this.sessionId || crypto.randomUUID()}`,
         null as any
       );
-    } else if (this.type === 'streamable-http') {
+    } else if (this.type === 'http') {
       this.transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: undefined,
       });
@@ -95,7 +95,7 @@ export class Downstream {
         res,
         body
       );
-    } else if (this.type === 'streamable-http') {
+    } else if (this.type === 'http') {
       return (this.transport as StreamableHTTPServerTransport).handleRequest(
         req,
         res,

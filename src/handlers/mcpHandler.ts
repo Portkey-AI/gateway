@@ -101,7 +101,7 @@ function detectTransportType(
   const acceptHeader = c.req.header('Accept');
   return c.req.method === 'GET' && acceptHeader?.includes('text/event-stream')
     ? 'sse'
-    : 'streamable-http';
+    : 'http';
 }
 
 /**
@@ -148,16 +148,11 @@ export async function handleClientRequest(
 
   if (!session) {
     logger.debug(`Creating new session for: ${workspaceId}/${serverId}`);
-    session = await createSession(
-      serverConfig,
-      tokenInfo,
-      c,
-      'streamable-http'
-    );
+    session = await createSession(serverConfig, tokenInfo, c, 'http');
   }
 
   try {
-    await session.initializeOrRestore('streamable-http');
+    await session.initializeOrRestore('http');
     session.handleRequest();
     return RESPONSE_ALREADY_SENT;
   } catch (error: any) {

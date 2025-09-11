@@ -12,7 +12,7 @@ export type ServerTransport =
   | StreamableHTTPServerTransport
   | SSEServerTransport;
 
-export type TransportTypes = 'streamable-http' | 'sse';
+export type TransportTypes = 'http' | 'sse';
 
 /**
  * Server configuration for gateway
@@ -41,7 +41,7 @@ export interface ServerConfig {
   // Transport configuration
   transport?: {
     // Preferred transport type for upstream connection
-    preferred?: 'streamable-http' | 'sse';
+    preferred?: 'http' | 'sse';
     // Whether to allow fallback to other transports
     allowFallback?: boolean;
   };

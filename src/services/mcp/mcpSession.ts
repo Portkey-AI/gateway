@@ -24,8 +24,9 @@ import { createLogger } from '../../utils/logger';
 import { Context } from 'hono';
 import { ConnectResult, Upstream } from './upstream';
 import { Downstream } from './downstream';
+import { emitLog } from '../../middlewares/log/emitLog';
 
-export type TransportType = 'streamable-http' | 'sse' | 'auth-required';
+export type TransportType = 'http' | 'sse' | 'auth-required';
 
 export interface TransportCapabilities {
   clientTransport: TransportType;
@@ -534,6 +535,7 @@ export class MCPSession {
 
       // This is where the guardrails would come in.
       await this.downstream.sendResult((request as any).id, result);
+      this.logResult(request, result);
     } catch (error) {
       // Handle upstream errors
       this.logger.error(`Tool call failed: ${toolName}`, error);
@@ -623,6 +625,96 @@ export class MCPSession {
     // if (res?.setHeader) res.setHeader(HEADER_MCP_SESSION_ID, this.id);
 
     await this.downstream.handleRequest(req, res, body);
+  }
+
+  async logRequest(request?: JSONRPCRequest) {
+    try {
+      const method = request?.method ?? 'unknown';
+      const isToolCall = method === 'tools/call';
+
+      const reqId = (request?.id ?? '').toString();
+      const toolName = isToolCall
+        ? (request as any)?.params?.name ?? undefined
+        : undefined;
+
+      const attrs: Record<string, string> = {
+        'mcp.server.id': this.config.serverId,
+        'mcp.workspace.id': this.config.workspaceId,
+
+        'mcp.transport.client': this.getClientTransportType() ?? '',
+        'mcp.transport.upstream': this.getUpstreamTransportType() ?? '',
+
+        'mcp.request.method': method,
+        'mcp.request.id': reqId,
+      };
+
+      if (toolName) {
+        attrs['mcp.tool.name'] = toolName;
+        attrs['mcp.tool.params'] = JSON.stringify(request?.params ?? {});
+      }
+    } catch (error) {
+      this.logger.error('Failed to log request', error);
+    }
+  }
+
+  async logResult(
+    request: any,
+    result: unknown,
+    outcome?: {
+      ok: boolean;
+      error?: any;
+      durationMs?: number;
+    }
+  ) {
+    try {
+      const method = request?.method ?? 'unknown';
+      const isToolCall = method === 'tools/call';
+
+      const reqId = (request?.id ?? '').toString();
+      const toolName = isToolCall
+        ? (request as any)?.params?.name ?? undefined
+        : undefined;
+
+      const attrs: Record<string, any> = {
+        'mcp.server.id': this.config.serverId,
+        'mcp.workspace.id': this.config.workspaceId,
+
+        'mcp.transport.client': this.getClientTransportType() ?? '',
+        'mcp.transport.upstream': this.getUpstreamTransportType() ?? '',
+
+        'mcp.request.method': method,
+        'mcp.request.id': reqId,
+      };
+
+      if (toolName) {
+        attrs['mcp.tool.name'] = toolName;
+        console.log(
+          'arguments',
+          typeof (request as CallToolRequest)?.params?.arguments,
+          (request as CallToolRequest)?.params?.arguments
+        );
+        attrs['mcp.tool.params'] =
+          (request as CallToolRequest)?.params?.arguments ?? {};
+        attrs['mcp.tool.result'] = result ?? {};
+      } else {
+        attrs['mcp.result'] = result ?? {};
+      }
+
+      if (outcome?.ok) {
+        attrs['mcp.request.success'] = 'true';
+        attrs['mcp.request.duration_ms'] =
+          outcome?.durationMs?.toString() ?? '';
+      } else {
+        attrs['mcp.request.success'] = 'false';
+        attrs['mcp.request.error'] = outcome?.error
+          ? (outcome.error as Error)?.message ?? 'Unknown error'
+          : 'Unknown error';
+      }
+
+      emitLog({ type: 'mcp.request' }, attrs);
+    } catch (error) {
+      this.logger.error('Failed to log result', error);
+    }
   }
 
   /**
