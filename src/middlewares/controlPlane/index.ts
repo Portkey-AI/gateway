@@ -15,7 +15,7 @@ export class ControlPlane {
     this.defaultHeaders = {
       'User-Agent': 'Portkey-MCP-Gateway/0.1.0',
       'Content-Type': 'application/json',
-      'x-client-id-gateway': env(c).CLIENT_ID,
+      Authorization: `Bearer ${env(c).PORTKEY_CLIENT_AUTH}`,
     };
   }
 
@@ -27,7 +27,7 @@ export class ControlPlane {
   ) {
     const reqURL = `${this.controlPlaneUrl}${path}`;
     if (this.c.get('tokenInfo')?.token) {
-      headers['Authorization'] = `Bearer ${this.c.get('tokenInfo').token}`;
+      headers['x-portkey-api-key'] = `${this.c.get('tokenInfo').token}`;
     }
     const options: RequestInit = {
       method,
