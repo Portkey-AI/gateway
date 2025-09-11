@@ -77,12 +77,14 @@ const getFromCP = async (
       return {
         serverId,
         workspaceId,
-        url: serverInfo.url,
+        url: serverInfo.mcp_integration_details?.url,
         headers:
-          serverInfo.configurations?.headers ||
+          serverInfo.mcp_integration_details?.configurations?.headers ||
           serverInfo.default_headers ||
           {},
-        auth_type: serverInfo.auth_type || 'headers',
+        auth_type: serverInfo.mcp_integration_details?.auth_type || 'headers',
+        type:
+          serverInfo.mcp_integration_details?.transport || 'streamable-http',
       } as ServerConfig;
     }
   } catch (error) {
