@@ -10,10 +10,9 @@ import * as oidc from 'openid-client';
 import { createLogger } from '../utils/logger';
 import { CacheService, getMcpServersCache, getOauthStore } from './cache';
 import { getServerConfig } from '../middlewares/mcp/hydrateContext';
-import { ServerConfig } from '../types/mcp';
 import { GatewayOAuthProvider } from './mcp/upstreamOAuth';
 import { ControlPlane } from '../middlewares/controlPlane';
-import { auth, AuthResult } from '@modelcontextprotocol/sdk/client/auth';
+import { auth, AuthResult } from '@modelcontextprotocol/sdk/client/auth.js';
 
 const logger = createLogger('OAuthGateway');
 
