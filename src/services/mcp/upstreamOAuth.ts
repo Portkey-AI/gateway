@@ -64,10 +64,21 @@ export class GatewayOAuthProvider implements OAuthClientProvider {
       this.config.workspaceId
     ) {
       const cacheKey = `${this.userId}::${this.config.workspaceId}::${this.config.serverId}`;
-      const clientInfo = await this.mcpServersCache.get(
-        cacheKey,
-        'client_info'
-      );
+      let clientInfo = await this.mcpServersCache.get(cacheKey, 'client_info');
+
+      if (!clientInfo && this.controlPlane) {
+        clientInfo = await this.controlPlane.getMCPServerClientInfo(
+          this.config.workspaceId,
+          this.config.serverId
+        );
+
+        if (clientInfo) {
+          await this.mcpServersCache.set(cacheKey, clientInfo, {
+            namespace: 'client_info',
+          });
+        }
+      }
+
       if (clientInfo) {
         this._clientInfo = clientInfo;
         return clientInfo;

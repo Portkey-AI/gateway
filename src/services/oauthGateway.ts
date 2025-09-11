@@ -914,7 +914,7 @@ export class OAuthGateway {
       const registration = await oidc.dynamicClientRegistration(
         new URL(serverUrlOrigin),
         {
-          client_name: 'Portkey MCP Gateway',
+          client_name: `portkey_${workspaceId}_${serverId}`,
           redirect_uris: [redirectUri],
           grant_types: ['authorization_code', 'refresh_token'],
           response_types: ['code'],

@@ -10,6 +10,8 @@ type Env = {
   };
 };
 
+const CACHE_MAX_AGE = 1;
+
 const wellKnownRoutes = new Hono<Env>();
 /**
  * OAuth 2.1 Discovery Endpoint
@@ -67,7 +69,7 @@ wellKnownRoutes.get('/oauth-authorization-server', async (c) => {
   };
 
   return c.json(metadata, 200, {
-    'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+    'Cache-Control': `public, max-age=${CACHE_MAX_AGE}`, // Cache for 1 hour
   });
 });
 
@@ -89,7 +91,7 @@ wellKnownRoutes.get(
     };
 
     return c.json(metadata, 200, {
-      'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+      'Cache-Control': `public, max-age=${CACHE_MAX_AGE}`, // Cache for 1 hour
     });
   }
 );
@@ -123,7 +125,7 @@ wellKnownRoutes.get('/oauth-protected-resource', async (c) => {
   };
 
   return c.json(metadata, 200, {
-    'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+    'Cache-Control': `public, max-age=${CACHE_MAX_AGE}`, // Cache for 1 hour
   });
 });
 
@@ -160,10 +162,8 @@ wellKnownRoutes.get(
       ],
     };
 
-    console.log('metadata', metadata);
-
     return c.json(metadata, 200, {
-      'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+      'Cache-Control': `public, max-age=${CACHE_MAX_AGE}`, // Cache for 1 hour
     });
   }
 );
@@ -201,10 +201,8 @@ wellKnownRoutes.get(
       ],
     };
 
-    console.log('metadata', metadata);
-
     return c.json(metadata, 200, {
-      'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+      'Cache-Control': `public, max-age=${CACHE_MAX_AGE}`, // Cache for 1 hour
     });
   }
 );

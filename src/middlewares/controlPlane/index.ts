@@ -51,6 +51,10 @@ export class ControlPlane {
     return this.fetch(`/mcp-servers/${serverId}?workspace_id=${workspaceId}`);
   }
 
+  getMCPServerClientInfo(workspaceId: string, serverId: string) {
+    return this.fetch(`/mcp-servers/${serverId}/client-info`);
+  }
+
   getMCPServerTokens(workspaceId: string, serverId: string) {
     // Picks workspace_id from the access token we send.
     return this.fetch(`/mcp-servers/${serverId}/tokens`);
