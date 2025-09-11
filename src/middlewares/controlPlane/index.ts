@@ -48,17 +48,18 @@ export class ControlPlane {
   }
 
   getMCPServer(workspaceId: string, serverId: string) {
-    return this.fetch(`/mcp-servers/${workspaceId}/${serverId}`);
+    return this.fetch(`/mcp-servers/${serverId}?workspace_id=${workspaceId}`);
   }
 
   getMCPServerTokens(workspaceId: string, serverId: string) {
-    return this.fetch(`/mcp-servers/${workspaceId}/${serverId}/tokens`);
+    // Picks workspace_id from the access token we send.
+    return this.fetch(`/mcp-servers/${serverId}/tokens`);
   }
 
   saveMCPServerTokens(workspaceId: string, serverId: string, tokens: any) {
     return this.fetch(
-      `/mcp-servers/${workspaceId}/${serverId}/tokens`,
-      'POST',
+      `/mcp-servers/${serverId}/tokens`,
+      'PUT',
       {},
       JSON.stringify(tokens)
     );
