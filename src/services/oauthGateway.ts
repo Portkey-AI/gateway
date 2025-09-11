@@ -10,6 +10,10 @@ import * as oidc from 'openid-client';
 import { createLogger } from '../utils/logger';
 import { CacheService, getMcpServersCache, getOauthStore } from './cache';
 import { getServerConfig } from '../middlewares/mcp/hydrateContext';
+import { ServerConfig } from '../types/mcp';
+import { GatewayOAuthProvider } from './mcp/upstreamOAuth';
+import { ControlPlane } from '../middlewares/controlPlane';
+import { auth, AuthResult } from '@modelcontextprotocol/sdk/client/auth';
 
 const logger = createLogger('OAuthGateway');
 
@@ -189,6 +193,10 @@ export class OAuthGateway {
     if (!mcpServerCache) {
       mcpServerCache = getMcpServersCache();
     }
+  }
+
+  get controlPlane(): ControlPlane | null {
+    return this.c.get('controlPlane');
   }
 
   private parseClientCredentials(
@@ -889,84 +897,6 @@ export class OAuthGateway {
     `);
   }
 
-  private async buildUpstreamAuthRedirect(
-    serverUrlOrigin: string,
-    redirectUri: string,
-    scope: string | undefined,
-    username: string,
-    serverId: string,
-    workspaceId: string,
-    existingClientInfo?: any
-  ): Promise<string> {
-    let config: oidc.Configuration;
-    let clientInfo: any;
-
-    if (existingClientInfo?.client_id) {
-      clientInfo = existingClientInfo;
-      config = await oidc.discovery(
-        new URL(serverUrlOrigin),
-        clientInfo.client_id,
-        {},
-        oidc.None(),
-        { algorithm: 'oauth2' }
-      );
-    } else {
-      const registration = await oidc.dynamicClientRegistration(
-        new URL(serverUrlOrigin),
-        {
-          client_name: `portkey_${workspaceId}_${serverId}`,
-          redirect_uris: [redirectUri],
-          grant_types: ['authorization_code', 'refresh_token'],
-          response_types: ['code'],
-          token_endpoint_auth_method: 'none',
-          client_uri: 'https://portkey.ai',
-          logo_uri: 'https://cfassets.portkey.ai/logo%2Fdew-color.png',
-          software_version: '0.5.1',
-          software_id: 'portkey-mcp-gateway',
-        },
-        oidc.None(),
-        { algorithm: 'oauth2' }
-      );
-      config = registration;
-      clientInfo = registration.clientMetadata();
-      logger.debug('Client info from dynamic registration', clientInfo);
-    }
-
-    // Always persist durable client info keyed by user+server for reuse
-    const durableKey = `${username}::${workspaceId}::${serverId}`;
-    await mcpServerCache.set<OAuthClient>(durableKey, clientInfo, {
-      namespace: 'client_info',
-    });
-
-    const state = oidc.randomState();
-    const codeVerifier = oidc.randomPKCECodeVerifier();
-    const codeChallenge = await oidc.calculatePKCECodeChallenge(codeVerifier);
-
-    // Persist round-trip state mapping with context and the client info under state
-    await mcpServerCache.set(
-      state,
-      {
-        codeVerifier,
-        redirectUrl: redirectUri,
-        username,
-        serverId,
-        workspaceId,
-        clientInfo,
-      },
-      { namespace: 'state' }
-    );
-
-    const authorizationUrl = oidc.buildAuthorizationUrl(config, {
-      redirect_uri: redirectUri,
-      scope: scope || clientInfo?.scope || '',
-      code_challenge: codeChallenge,
-      code_challenge_method: 'S256',
-      state,
-    });
-
-    return authorizationUrl.toString();
-  }
-
   async checkUpstreamAuth(resourceUrl: string, username: string): Promise<any> {
     const serverId = Array.from(resourceUrl.split('/')).at(-2);
     const workspaceId = Array.from(resourceUrl.split('/')).at(-3);
@@ -979,36 +909,32 @@ export class OAuthGateway {
       return { status: 'auth_not_needed' };
     }
 
-    // Check if the server already has tokens for it
-    const tokens = await mcpServerCache.get<StoredAccessToken>(
-      `${username}::${workspaceId}::${serverId}`,
-      'tokens'
+    const provider = new GatewayOAuthProvider(
+      serverConfig,
+      username,
+      this.controlPlane ?? undefined
     );
+
+    // Check if the server already has tokens for it
+    const tokens = await provider.tokens();
     if (tokens) return { status: 'auth_not_needed' };
 
-    const clientInfo = await mcpServerCache.get<OAuthClient>(
-      `${username}::${workspaceId}::${serverId}`,
-      'client_info'
-    );
-    const serverUrlOrigin = new URL(serverConfig.url).origin;
-    const baseUrl =
-      process.env.BASE_URL || `http://localhost:${process.env.PORT || 8788}`;
-    const redirectUrl = `${baseUrl}/oauth/upstream-callback`;
+    try {
+      const result: AuthResult = await auth(provider, {
+        serverUrl: serverConfig.url,
+      });
 
-    const authorizationUrl = await this.buildUpstreamAuthRedirect(
-      serverUrlOrigin,
-      redirectUrl,
-      clientInfo?.scope,
-      username,
-      serverId,
-      workspaceId,
-      clientInfo
-    );
-
-    return {
-      status: 'auth_needed',
-      authorizationUrl,
-    };
+      logger.debug('Auth result', result);
+      return { status: 'auth_not_needed' };
+    } catch (error: any) {
+      if (error.needsAuthorization && error.authorizationUrl) {
+        return {
+          status: 'auth_needed',
+          authorizationUrl: error.authorizationUrl,
+        };
+      }
+      throw error;
+    }
   }
 
   async completeUpstreamAuth(): Promise<any> {
@@ -1029,52 +955,37 @@ export class OAuthGateway {
         error_description: 'Invalid state in upstream callback',
       };
 
-    const authState = await mcpServerCache.get(state, 'state');
-    if (!authState)
+    const [username, workspaceId, serverId] = state.split('::');
+    if (!username || !workspaceId || !serverId)
       return {
         error: 'invalid_state',
-        error_description: 'Auth state not found in cache',
+        error_description: 'Invalid state in upstream callback',
       };
 
-    const clientInfo = authState.clientInfo;
-    const serverIdFromState = authState.serverId;
-    const workspaceIdFromState = authState.workspaceId;
-    const serverConfig = await getServerConfig(
-      workspaceIdFromState,
-      serverIdFromState,
-      this.c
-    );
+    const serverConfig = await getServerConfig(workspaceId, serverId, this.c);
     if (!serverConfig)
       return {
         error: 'invalid_state',
         error_description: 'Server config not found',
       };
 
-    const serverUrlOrigin = new URL(serverConfig.url).origin;
-    const config: oidc.Configuration = await oidc.discovery(
-      new URL(serverUrlOrigin),
-      clientInfo.client_id,
-      clientInfo,
-      oidc.None(),
-      { algorithm: 'oauth2' }
+    const provider = new GatewayOAuthProvider(
+      serverConfig,
+      username,
+      this.controlPlane ?? undefined
     );
 
-    let tokenResponse;
     try {
-      // Remove the state parameter from the request URL
-      const url = new URL(this.c.req.url);
-      // url.searchParams.delete('state');
-      logger.debug('Token exchange attempt', {
-        serverUrlOrigin,
-        clientId: clientInfo.client_id,
-        redirectUri: authState.redirectUrl,
-        codeVerifier: authState.codeVerifier,
-        fullCallbackUrl: this.c.req.url,
+      const result: AuthResult = await auth(provider, {
+        serverUrl: serverConfig.url,
+        authorizationCode: code,
       });
-      tokenResponse = await oidc.authorizationCodeGrant(config, url, {
-        pkceCodeVerifier: authState.codeVerifier,
-        expectedState: state,
-      });
+
+      logger.debug('Auth result', result);
+
+      return {
+        status: result === 'AUTHORIZED' ? 'auth_completed' : 'auth_failed',
+      };
     } catch (e: any) {
       if (e.cause && e.cause instanceof Response) {
         try {
@@ -1102,13 +1013,5 @@ export class OAuthGateway {
         error_description: e.message || 'Failed to exchange authorization code',
       };
     }
-
-    // Store the token response in the cache under user+server key for reuse
-    const userServerKey = `${authState.username}::${authState.workspaceId}::${authState.serverId}`;
-    await mcpServerCache.set(userServerKey, tokenResponse, {
-      namespace: 'tokens',
-    });
-
-    return { status: 'auth_completed' };
   }
 }
