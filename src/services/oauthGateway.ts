@@ -13,6 +13,7 @@ import { getServerConfig } from '../middlewares/mcp/hydrateContext';
 import { GatewayOAuthProvider } from './mcp/upstreamOAuth';
 import { ControlPlane } from '../middlewares/controlPlane';
 import { auth, AuthResult } from '@modelcontextprotocol/sdk/client/auth.js';
+import { revokeOAuthToken } from '../utils/oauthTokenRevocation';
 
 const logger = createLogger('OAuthGateway');
 
@@ -655,35 +656,28 @@ export class OAuthGateway {
 
     if (!token) return;
 
-    const tryRevokeAccess = async () => {
-      const tokenData = await OAuthGatewayCache.get<StoredAccessToken>(
-        token,
-        'tokens'
-      );
-      if (tokenData && tokenData.client_id === clientId) {
-        await oauthStore.delete(token, 'tokens');
-        return true;
+    // Try control plane first if available
+    if (this.isUsingControlPlane && this.controlPlane) {
+      try {
+        await this.controlPlane.revoke(
+          token,
+          token_type_hint as 'access_token' | 'refresh_token' | undefined,
+          clientId
+        );
+      } catch (error) {
+        logger.warn(
+          'Control plane revocation failed, will continue with local',
+          error
+        );
       }
-      return false;
-    };
+    }
 
-    const tryRevokeRefresh = async () => {
-      const refresh = await OAuthGatewayCache.get<StoredRefreshToken>(
-        token,
-        'refresh_tokens'
-      );
-      if (refresh && refresh.client_id === clientId) {
-        for (const at of refresh.access_tokens || [])
-          await oauthStore.delete(at, 'tokens');
-        await oauthStore.delete(token, 'refresh_tokens');
-        return true;
-      }
-      return false;
-    };
-
-    if (token_type_hint === 'access_token') await tryRevokeAccess();
-    else if (token_type_hint === 'refresh_token') await tryRevokeRefresh();
-    else (await tryRevokeAccess()) || (await tryRevokeRefresh());
+    // Always revoke locally (for cache cleanup)
+    await revokeOAuthToken(
+      token,
+      clientId,
+      token_type_hint as 'access_token' | 'refresh_token' | undefined
+    );
   }
 
   async startAuthorization(): Promise<any> {

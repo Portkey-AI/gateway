@@ -6,11 +6,6 @@
  */
 
 import { Context } from 'hono';
-import {
-  isInitializeRequest,
-  isJSONRPCRequest,
-  isJSONRPCResponse,
-} from '@modelcontextprotocol/sdk/types.js';
 import { RESPONSE_ALREADY_SENT } from '@hono/node-server/utils/response';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse';
 
@@ -18,10 +13,9 @@ import { ServerConfig } from '../types/mcp';
 import { MCPSession, TransportType } from '../services/mcp/mcpSession';
 import { getSessionStore } from '../services/mcp/sessionStore';
 import { createLogger } from '../utils/logger';
-import { HEADER_MCP_SESSION_ID } from '../constants/mcp';
 import { Transport } from '@modelcontextprotocol/sdk/shared/transport';
 import { ControlPlane } from '../middlewares/controlPlane';
-import { getOauthStore } from '../services/cache';
+import { revokeAllClientTokens } from '../utils/oauthTokenRevocation';
 
 const logger = createLogger('MCP-Handler');
 
@@ -105,28 +99,17 @@ function detectTransportType(
     : 'http';
 }
 
-async function purgeOauthTokens(tokenInfo: any) {
-  logger.debug(`Purging OAuth tokens for client_id ${tokenInfo.client_id}`);
-  const oauthCache = getOauthStore();
-  // First get the refresh token for this client_id
-  const refreshToken: string | null = await oauthCache.get(
-    tokenInfo.client_id,
-    'clientid_refresh'
-  );
-
-  if (refreshToken) {
-    // Get all access tokens for this refresh token
-    const refresh = await oauthCache.get(refreshToken, 'refresh_tokens');
-    const accessTokens = refresh?.access_tokens;
-    if (accessTokens) {
-      for (const at of accessTokens) {
-        await oauthCache.delete(at, 'tokens');
-      }
-    }
-    await oauthCache.delete(refreshToken, 'refresh_tokens');
+async function purgeOauthTokens(
+  tokenInfo: any,
+  controlPlane?: ControlPlane | null
+) {
+  if (!tokenInfo?.client_id) {
+    logger.debug('No client_id in tokenInfo, skipping OAuth token purge');
+    return;
   }
 
-  return;
+  // Use the utility function to revoke all tokens for this client
+  await revokeAllClientTokens(tokenInfo.client_id, controlPlane);
 }
 
 /**
@@ -149,7 +132,8 @@ async function createSession(
       await session.initializeOrRestore(transportType);
       logger.debug(`Session ${session.id} initialized with ${transportType}`);
     } catch (error) {
-      await purgeOauthTokens(tokenInfo);
+      const controlPlane = context?.get('controlPlane');
+      await purgeOauthTokens(tokenInfo, controlPlane);
       logger.error(
         `Failed to initialize session (createSession) ${session.id}`,
         error
@@ -190,7 +174,8 @@ export async function handleClientRequest(
 
     // Check if this is an OAuth authorization error
     if (error.authorizationUrl && error.serverId) {
-      await purgeOauthTokens(tokenInfo);
+      const controlPlane = c.get('controlPlane');
+      await purgeOauthTokens(tokenInfo, controlPlane);
       return c.json(ErrorResponse.authorizationRequired(bodyId, error), 401);
     }
 

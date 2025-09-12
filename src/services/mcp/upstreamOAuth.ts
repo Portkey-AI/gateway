@@ -180,6 +180,12 @@ export class GatewayOAuthProvider implements OAuthClientProvider {
 
     switch (scope) {
       case 'all':
+        if (this.controlPlane) {
+          await this.controlPlane.deleteMCPServerTokens(
+            this.workspaceId,
+            this.serverId
+          );
+        }
         await this.cache.delete(this.cacheKey, 'tokens');
         await this.cache.delete(this.cacheKey, 'code_verifier');
         break;

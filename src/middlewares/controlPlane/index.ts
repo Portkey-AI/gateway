@@ -37,7 +37,7 @@ export class ControlPlane {
       },
     };
 
-    if (method === 'POST') {
+    if (method === 'POST' || method === 'PUT') {
       options.body = body;
     }
 
@@ -57,7 +57,9 @@ export class ControlPlane {
 
   getMCPServerTokens(workspaceId: string, serverId: string) {
     // Picks workspace_id from the access token we send.
-    return this.fetch(`/mcp-servers/${serverId}/tokens`);
+    return this.fetch(
+      `/mcp-servers/${serverId}/tokens?workspace_id=${workspaceId}`
+    );
   }
 
   saveMCPServerTokens(workspaceId: string, serverId: string, tokens: any) {
@@ -65,7 +67,17 @@ export class ControlPlane {
       `/mcp-servers/${serverId}/tokens`,
       'PUT',
       {},
-      JSON.stringify(tokens)
+      JSON.stringify({
+        ...tokens,
+        workspace_id: workspaceId,
+      })
+    );
+  }
+
+  deleteMCPServerTokens(workspaceId: string, serverId: string) {
+    return this.fetch(
+      `/mcp-servers/${serverId}/tokens?workspace_id=${workspaceId}`,
+      'DELETE'
     );
   }
 
@@ -93,6 +105,23 @@ export class ControlPlane {
       exp: result.exp,
       iat: result.iat,
     };
+  }
+
+  async revoke(
+    token: string,
+    token_type_hint?: 'access_token' | 'refresh_token',
+    client_id?: string
+  ): Promise<void> {
+    await this.fetch(
+      `/oauth/revoke`,
+      'POST',
+      {},
+      JSON.stringify({
+        token: token,
+        token_type_hint: token_type_hint,
+        client_id: client_id,
+      })
+    );
   }
 
   get url() {
