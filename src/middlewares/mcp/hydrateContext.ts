@@ -82,9 +82,8 @@ const getFromCP = async (
           serverInfo.mcp_integration_details?.configurations?.headers ||
           serverInfo.default_headers ||
           {},
-        auth_type: serverInfo.mcp_integration_details?.auth_type || 'headers',
-        type:
-          serverInfo.mcp_integration_details?.transport || 'streamable-http',
+        auth_type: serverInfo.mcp_integration_details?.auth_type || 'none',
+        type: serverInfo.mcp_integration_details?.transport || 'http',
       } as ServerConfig;
     }
   } catch (error) {
