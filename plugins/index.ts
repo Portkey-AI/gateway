@@ -52,6 +52,9 @@ import { handler as defaultjwt } from './default/jwt';
 import { handler as defaultrequiredMetadataKeys } from './default/requiredMetadataKeys';
 import { handler as walledaiguardrails } from './walledai/guardrails';
 import { handler as defaultregexReplace } from './default/regexReplace';
+import { handler as javelintrustsafety } from './javelin/trustsafety';
+import { handler as javelinpromptinjectiondetection } from './javelin/promptinjectiondetection';
+import { handler as javelinlang_detector } from './javelin/lang_detector';
 
 export const plugins = {
   default: {
@@ -141,5 +144,10 @@ export const plugins = {
   },
   walledai: {
     guardrails: walledaiguardrails,
+  },
+  javelin: {
+    trustsafety: javelintrustsafety,
+    promptinjectiondetection: javelinpromptinjectiondetection,
+    lang_detector: javelinlang_detector,
   },
 };

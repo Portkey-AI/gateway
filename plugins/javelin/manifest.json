@@ -1,0 +1,149 @@
+{
+  "id": "javelin",
+  "description": "Javelin's AI security platform provides comprehensive guardrails for trust & safety, prompt injection detection, and language detection",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": [
+          {
+            "type": "subHeading",
+            "text": "Your Javelin API key for authentication"
+          }
+        ]
+      },
+      "domain": {
+        "type": "string",
+        "label": "Domain",
+        "description": [
+          {
+            "type": "subHeading",
+            "text": "Javelin API domain"
+          }
+        ],
+        "default": "api-dev.javelin.live",
+        "required": false
+      },
+      "application": {
+        "type": "string",
+        "label": "Application Name",
+        "description": [
+          {
+            "type": "subHeading",
+            "text": "Optional application name for policy-specific guardrails"
+          }
+        ],
+        "required": false
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Trust & Safety",
+      "id": "trustsafety",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Detect harmful content across multiple categories including violence, weapons, hate speech, crime, sexual content, and profanity"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "threshold": {
+            "type": "number",
+            "label": "Threshold",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Confidence threshold for flagging content (0.0-1.0)"
+              }
+            ],
+            "default": 0.75,
+            "minimum": 0.0,
+            "maximum": 1.0
+          }
+        }
+      }
+    },
+    {
+      "name": "Prompt Injection Detection",
+      "id": "promptinjectiondetection",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Detect prompt injection attempts and jailbreak techniques"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "threshold": {
+            "type": "number",
+            "label": "Threshold",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Confidence threshold for flagging injection attempts (0.0-1.0)"
+              }
+            ],
+            "default": 0.5,
+            "minimum": 0.0,
+            "maximum": 1.0
+          }
+        }
+      }
+    },
+    {
+      "name": "Language Detection",
+      "id": "lang_detector",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Detect the language of input text with confidence scores"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "allowed_languages": {
+            "type": "array",
+            "label": "Allowed Languages",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "List of allowed language codes (e.g., ['en', 'es', 'fr'])"
+              }
+            ],
+            "items": {
+              "type": "string"
+            },
+            "required": false
+          },
+          "min_confidence": {
+            "type": "number",
+            "label": "Minimum Confidence",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Minimum confidence score for language detection (0.0-1.0)"
+              }
+            ],
+            "default": 0.8,
+            "minimum": 0.0,
+            "maximum": 1.0
+          }
+        }
+      }
+    }
+  ]
+}
