@@ -109,7 +109,7 @@ async function purgeOauthTokens(
   }
 
   // Use the utility function to revoke all tokens for this client
-  await revokeAllClientTokens(tokenInfo.client_id, controlPlane);
+  await revokeAllClientTokens(tokenInfo, controlPlane);
 }
 
 /**
