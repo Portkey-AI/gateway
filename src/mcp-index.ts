@@ -6,8 +6,6 @@
  * and route to any MCP server with full confidence.
  */
 
-import 'dotenv/config';
-
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
