@@ -96,6 +96,9 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       case 'imageGenerate': {
         return `/deployments/${deploymentId}/images/generations?api-version=${apiVersion}`;
       }
+      case 'imageEdit': {
+        return `/deployments/${deploymentId}/images/edits?api-version=${apiVersion}`;
+      }
       case 'createSpeech': {
         return `/deployments/${deploymentId}/audio/speech?api-version=${apiVersion}`;
       }
