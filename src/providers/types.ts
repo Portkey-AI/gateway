@@ -91,6 +91,7 @@ export type endpointStrings =
   | 'stream-messages'
   | 'proxy'
   | 'imageGenerate'
+  | 'imageEdit'
   | 'createSpeech'
   | 'createTranscription'
   | 'createTranslation'
