@@ -136,7 +136,6 @@ export const handler: PluginHandler = async (
       };
     }
   } catch (e: any) {
-    delete e.stack;
     error = e;
   }
 
