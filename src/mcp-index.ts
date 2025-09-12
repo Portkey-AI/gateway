@@ -23,6 +23,7 @@ import { hydrateContext } from './middlewares/mcp/hydrateContext';
 import { sessionMiddleware } from './middlewares/mcp/sessionMiddleware';
 import { oauthRoutes } from './routes/oauth';
 import { wellKnownRoutes } from './routes/wellknown';
+import { adminRoutes } from './routes/admin';
 import { controlPlaneMiddleware } from './middlewares/controlPlane';
 import { cacheBackendMiddleware } from './middlewares/cacheBackend';
 import { HTTPException } from 'hono/http-exception';
@@ -81,6 +82,7 @@ if (getRuntimeKey() === 'workerd') {
 // Mount route groups
 app.route('/oauth', oauthRoutes);
 app.route('/.well-known', wellKnownRoutes);
+app.route('/admin', adminRoutes);
 
 /**
  * Global error handler.

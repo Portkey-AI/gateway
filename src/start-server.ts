@@ -66,6 +66,7 @@ if (
 
     // Set up routes
     app.get('/public/logs', serveIndex);
+    app.get('/public/mcp', serveIndex);
     app.get('/public/', serveIndex);
 
     // Redirect `/public` to `/public/`

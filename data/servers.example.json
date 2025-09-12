@@ -1,6 +1,6 @@
 {
   "servers": {
-    "deepwiki": {
+    "default/deepwiki": {
       "name": "DeepWiki MCP Server",
       "url": "https://mcp.deepwiki.com/mcp",
       "description": "GitHub repository documentation and Q&A",
