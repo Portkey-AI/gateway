@@ -1,0 +1,51 @@
+name = "mcp-gateway"
+compatibility_date = "2024-12-05"
+main = "src/mcp-index.ts"
+compatibility_flags = [ "nodejs_compat" ]
+kv_namespaces = [
+  { binding = "KV_STORE", id = "2947280d728245118ef33819d484247a", preview_id = "2947280d728245118ef33819d484247a" }
+]
+
+[vars]
+ENVIRONMENT = 'dev'
+CUSTOM_HEADERS_TO_IGNORE = []
+LOG_LEVEL = 'DEBUG'
+ALBUS_BASEPATH = 'https://albus.portkeydev.com'
+CLIENT_ID = 'rubeus_h.auvP@ggVu_E78Q4dAnzsm8p3H*WBhBXee9'
+
+
+#
+#Configuration for DEVELOPMENT environment
+#
+[env.staging]
+name = "mcp-gateway-dev"
+kv_namespaces = [
+  { binding = "KV_STORE", id = "c8e2099a1b7f4b72b618508d6428e88a", preview_id = "c8e2099a1b7f4b72b618508d6428e88a" }
+]
+routes = [
+  { pattern = "mcp.portkeydev.com/*", zone_name = "portkeydev.com" }
+]
+
+
+[env.staging.observability.logs]
+enabled = true
+invocation_logs = false
+
+[env.staging.vars]
+ENVIRONMENT = 'staging'
+CUSTOM_HEADERS_TO_IGNORE = []
+LOG_LEVEL = 'info'
+ALBUS_BASEPATH = 'https://albus.portkeydev.com'
+CLIENT_ID = 'rubeus_h.auvP@ggVu_E78Q4dAnzsm8p3H*WBhBXee9'
+
+#
+#Configuration for PRODUCTION environment
+#
+[env.production]
+name = "rubeus"
+logpush=true
+
+[env.production.vars]
+ENVIRONMENT = 'production'
+CUSTOM_HEADERS_TO_IGNORE = []
+LOG_LEVEL = 'error'
