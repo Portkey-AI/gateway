@@ -7,11 +7,15 @@ import { env } from 'hono/adapter';
 import { Context } from 'hono';
 import * as oidc from 'openid-client';
 
-import { createLogger } from '../utils/logger';
-import { CacheService, getMcpServersCache, getOauthStore } from './cache';
-import { getServerConfig } from '../middlewares/mcp/hydrateContext';
-import { GatewayOAuthProvider } from './mcp/upstreamOAuth';
-import { ControlPlane } from '../middlewares/controlPlane';
+import { createLogger } from '../../shared/utils/logger';
+import {
+  CacheService,
+  getMcpServersCache,
+  getOauthStore,
+} from '../../shared/services/cache';
+import { getServerConfig } from '../middleware/hydrateContext';
+import { GatewayOAuthProvider } from './upstreamOAuth';
+import { ControlPlane } from '../middleware/controlPlane';
 import { auth, AuthResult } from '@modelcontextprotocol/sdk/client/auth.js';
 import { revokeOAuthToken } from '../utils/oauthTokenRevocation';
 

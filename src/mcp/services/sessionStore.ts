@@ -4,10 +4,14 @@
  * Supports both in-memory and file-based backends, ready for Redis
  */
 
-import { MCPSession, TransportType, TransportCapabilities } from './mcpSession';
-import { ServerConfig } from '../../types/mcp';
-import { createLogger } from '../../utils/logger';
-import { CacheService, getSessionCache } from '../cache';
+import {
+  MCPSession,
+  TransportType,
+  TransportCapabilities,
+} from '../../mcp/services/mcpSession';
+import { ServerConfig } from '../types/mcp';
+import { createLogger } from '../../shared/utils/logger';
+import { CacheService, getSessionCache } from '../../shared/services/cache';
 import { Context } from 'hono';
 
 const logger = createLogger('SessionStore');

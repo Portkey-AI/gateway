@@ -10,28 +10,28 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
 import { ServerConfig } from './types/mcp';
-import { MCPSession } from './services/mcp/mcpSession';
-import { getSessionStore } from './services/mcp/sessionStore';
-import { createLogger } from './utils/logger';
+import { MCPSession } from './services/mcpSession';
+import { getSessionStore } from './services/sessionStore';
+import { createLogger } from '../shared/utils/logger';
 import {
   handleMCPRequest,
   handleSSEMessages,
   handleSSERequest,
 } from './handlers/mcpHandler';
-import { oauthMiddleware } from './middlewares/oauth';
-import { hydrateContext } from './middlewares/mcp/hydrateContext';
-import { sessionMiddleware } from './middlewares/mcp/sessionMiddleware';
+import { oauthMiddleware } from './middleware/oauth';
+import { hydrateContext } from './middleware/hydrateContext';
+import { sessionMiddleware } from './middleware/sessionMiddleware';
 import { oauthRoutes } from './routes/oauth';
 import { wellKnownRoutes } from './routes/wellknown';
 import { adminRoutes } from './routes/admin';
-import { controlPlaneMiddleware } from './middlewares/controlPlane';
-import { cacheBackendMiddleware } from './middlewares/cacheBackend';
+import { controlPlaneMiddleware } from './middleware/controlPlane';
+import { cacheBackendMiddleware } from './middleware/cacheBackend';
 import { HTTPException } from 'hono/http-exception';
 import { getRuntimeKey } from 'hono/adapter';
 import {
   createCacheBackendsLocal,
   createCacheBackendsRedis,
-} from './services/cache';
+} from '../shared/services/cache';
 
 const logger = createLogger('MCP-Gateway');
 

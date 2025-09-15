@@ -7,13 +7,12 @@
  */
 
 import { createMiddleware } from 'hono/factory';
-import { createLogger } from '../../utils/logger';
+import { createLogger } from '../../../shared/utils/logger';
 import {
   OAuthGateway,
   TokenIntrospectionResponse,
 } from '../../services/oauthGateway';
-import { getTokenCache } from '../../services/cache/index';
-import { env } from 'hono/adapter';
+import { getTokenCache } from '../../../shared/services/cache/index';
 import { Context } from 'hono';
 
 type Env = {

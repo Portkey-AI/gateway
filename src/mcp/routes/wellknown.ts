@@ -1,6 +1,6 @@
 // routes/wellknown.ts
 import { Hono } from 'hono';
-import { createLogger } from '../utils/logger';
+import { createLogger } from '../../shared/utils/logger';
 
 const logger = createLogger('wellknown-routes');
 

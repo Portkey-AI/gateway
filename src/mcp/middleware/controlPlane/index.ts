@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 import { env } from 'hono/adapter';
 import { createMiddleware } from 'hono/factory';
-import { createLogger } from '../../utils/logger';
+import { createLogger } from '../../../shared/utils/logger';
 
 const logger = createLogger('mcp/controlPlaneMiddleware');
 

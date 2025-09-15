@@ -4,7 +4,7 @@
  */
 
 import { Hono } from 'hono';
-import { createLogger } from '../utils/logger';
+import { createLogger } from '../../shared/utils/logger';
 import {
   getConfigCache,
   getSessionCache,
@@ -12,7 +12,7 @@ import {
   getDefaultCache,
   getTokenCache,
   getOauthStore,
-} from '../services/cache';
+} from '../../shared/services/cache';
 import { ServerConfig } from '../types/mcp';
 import * as fs from 'fs';
 import * as path from 'path';

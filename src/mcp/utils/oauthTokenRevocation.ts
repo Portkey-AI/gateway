@@ -3,9 +3,9 @@
  * Utility functions for OAuth token revocation
  */
 
-import { getOauthStore } from '../services/cache';
-import { createLogger } from './logger';
-import { ControlPlane } from '../middlewares/controlPlane';
+import { getOauthStore } from '../../shared/services/cache';
+import { createLogger } from '../../shared/utils/logger';
+import { ControlPlane } from '../middleware/controlPlane';
 
 const logger = createLogger('OAuth-Token-Revocation');
 

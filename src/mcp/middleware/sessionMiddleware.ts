@@ -1,9 +1,9 @@
 import { createMiddleware } from 'hono/factory';
-import { MCPSession } from '../../services/mcp/mcpSession';
-import { getSessionStore } from '../../services/mcp/sessionStore';
-import { createLogger } from '../../utils/logger';
-import { HEADER_MCP_SESSION_ID } from '../../constants/mcp';
-import { ControlPlane } from '../controlPlane';
+import { MCPSession } from '../services/mcpSession';
+import { getSessionStore } from '../services/sessionStore';
+import { createLogger } from '../../shared/utils/logger';
+import { HEADER_MCP_SESSION_ID } from '../../mcp/constants/mcp';
+import { ControlPlane } from './controlPlane';
 
 const logger = createLogger('mcp/sessionMiddleware');
 

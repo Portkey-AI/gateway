@@ -7,7 +7,7 @@ import { createNodeWebSocket } from '@hono/node-ws';
 import minimist from 'minimist';
 
 import app from './index';
-import mcpApp from './mcp-index';
+import mcpApp from './mcp/mcp-index';
 
 import { realTimeHandlerNode } from './handlers/realtimeHandlerNode';
 import { requestValidator } from './middlewares/requestValidator';

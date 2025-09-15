@@ -1,6 +1,6 @@
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
-import { ServerTransport, TransportTypes } from '../../types/mcp.js';
-import { createLogger } from '../../utils/logger';
+import { ServerTransport, TransportTypes } from '../types/mcp.js';
+import { createLogger } from '../../shared/utils/logger.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { RequestId } from '@modelcontextprotocol/sdk/types.js';
 

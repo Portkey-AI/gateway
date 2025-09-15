@@ -10,11 +10,11 @@ import { RESPONSE_ALREADY_SENT } from '@hono/node-server/utils/response';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse';
 
 import { ServerConfig } from '../types/mcp';
-import { MCPSession, TransportType } from '../services/mcp/mcpSession';
-import { getSessionStore } from '../services/mcp/sessionStore';
-import { createLogger } from '../utils/logger';
+import { MCPSession, TransportType } from '../services/mcpSession';
+import { getSessionStore } from '../services/sessionStore';
+import { createLogger } from '../../shared/utils/logger';
 import { Transport } from '@modelcontextprotocol/sdk/shared/transport';
-import { ControlPlane } from '../middlewares/controlPlane';
+import { ControlPlane } from '../middleware/controlPlane';
 import { revokeAllClientTokens } from '../utils/oauthTokenRevocation';
 
 const logger = createLogger('MCP-Handler');

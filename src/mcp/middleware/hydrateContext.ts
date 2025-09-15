@@ -1,8 +1,8 @@
 import { createMiddleware } from 'hono/factory';
-import { ServerConfig } from '../../types/mcp';
-import { createLogger } from '../../utils/logger';
-import { CacheService, getConfigCache } from '../../services/cache';
-import { ControlPlane } from '../controlPlane';
+import { ServerConfig } from '../types/mcp';
+import { createLogger } from '../../shared/utils/logger';
+import { CacheService, getConfigCache } from '../../shared/services/cache';
+import { ControlPlane } from './controlPlane';
 import { Context, Next } from 'hono';
 
 const logger = createLogger('mcp/hydrateContext');

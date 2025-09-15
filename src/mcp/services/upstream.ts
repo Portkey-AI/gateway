@@ -3,8 +3,8 @@ import {
   ConnectionTypes,
   ServerConfig,
   TransportTypes,
-} from '../../types/mcp';
-import { createLogger } from '../../utils/logger';
+} from '../types/mcp';
+import { createLogger } from '../../shared/utils/logger';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -15,7 +15,7 @@ import {
   Tool,
 } from '@modelcontextprotocol/sdk/types.js';
 import { GatewayOAuthProvider } from './upstreamOAuth';
-import { ControlPlane } from '../../middlewares/controlPlane';
+import { ControlPlane } from '../middleware/controlPlane';
 
 type ClientTransportTypes =
   | typeof StreamableHTTPClientTransport

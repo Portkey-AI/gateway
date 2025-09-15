@@ -2,7 +2,7 @@
 
 import { Hono } from 'hono';
 
-import { createLogger } from '../utils/logger';
+import { createLogger } from '../../shared/utils/logger';
 import { OAuthGateway } from '../services/oauthGateway';
 
 const logger = createLogger('oauth-routes');

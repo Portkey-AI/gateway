@@ -19,8 +19,8 @@ import {
   isJSONRPCResponse,
   isJSONRPCNotification,
 } from '@modelcontextprotocol/sdk/types.js';
-import { ServerConfig, ServerTransport, TransportTypes } from '../../types/mcp';
-import { createLogger } from '../../utils/logger';
+import { ServerConfig, ServerTransport, TransportTypes } from '../types/mcp';
+import { createLogger } from '../../shared/utils/logger';
 import { Context } from 'hono';
 import { ConnectResult, Upstream } from './upstream';
 import { Downstream } from './downstream';
