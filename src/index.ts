@@ -32,6 +32,7 @@ import filesHandler from './handlers/filesHandler';
 import batchesHandler from './handlers/batchesHandler';
 import finetuneHandler from './handlers/finetuneHandler';
 import { messagesHandler } from './handlers/messagesHandler';
+import { imageEditsHandler } from './handlers/imageEditsHandler';
 
 // Config
 import conf from '../conf.json';
@@ -156,6 +157,12 @@ app.post('/v1/embeddings', requestValidator, embeddingsHandler);
  * Handles requests by passing them to the imageGenerations handler.
  */
 app.post('/v1/images/generations', requestValidator, imageGenerationsHandler);
+
+/**
+ * POST route for '/v1/images/edits'.
+ * Handles requests by passing them to the imageGenerations handler.
+ */
+app.post('/v1/images/edits', requestValidator, imageEditsHandler);
 
 /**
  * POST route for '/v1/audio/speech'.
