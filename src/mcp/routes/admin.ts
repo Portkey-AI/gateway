@@ -14,8 +14,6 @@ import {
   getOauthStore,
 } from '../../shared/services/cache';
 import { ServerConfig } from '../types/mcp';
-import * as fs from 'fs';
-import * as path from 'path';
 
 const logger = createLogger('AdminRoutes');
 

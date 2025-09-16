@@ -387,7 +387,7 @@ export async function createCacheBackendsLocal(): Promise<void> {
 }
 
 export function createCacheBackendsRedis(redisUrl: string): void {
-  console.log('Creating cache backends with Redis', redisUrl);
+  logger.info('Creating cache backends with Redis', redisUrl);
   let commonOptions: CacheConfig = {
     backend: 'redis',
     redisUrl: redisUrl,

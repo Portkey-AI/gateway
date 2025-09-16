@@ -37,7 +37,7 @@ class Logger {
     };
   }
 
-  private formatMessage(level: string, message: string, data?: any): string {
+  private formatMessage(level: string, message: string): string {
     const parts: string[] = [];
 
     if (this.config.timestamp) {
@@ -57,7 +57,7 @@ class Logger {
   private log(level: LogLevel, levelName: string, message: string, data?: any) {
     if (level > this.config.level) return;
 
-    const formattedMessage = this.formatMessage(levelName, message, data);
+    const formattedMessage = this.formatMessage(levelName, message);
     const color = this.config.colors
       ? this.colors[levelName as keyof typeof this.colors]
       : '';

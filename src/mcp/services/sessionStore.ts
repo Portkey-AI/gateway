@@ -40,7 +40,7 @@ export class SessionStore {
   private cache: CacheService;
   private activeSessions = new Map<string, MCPSession>();
 
-  constructor(options: SessionStoreOptions = {}) {
+  constructor() {
     this.cache = getSessionCache();
   }
 
@@ -189,7 +189,7 @@ export class SessionStore {
    */
   async cleanup(): Promise<void> {
     const expired = Array.from(this.activeSessions.entries()).filter(
-      ([_, session]) => session.isTokenExpired()
+      ([, session]) => session.isTokenExpired()
     );
 
     for (const [id, session] of expired) {
@@ -258,9 +258,7 @@ let instance: SessionStore | null = null;
 
 export function getSessionStore(): SessionStore {
   if (!instance) {
-    instance = new SessionStore({
-      maxAge: parseInt(process.env.SESSION_MAX_AGE || '3600000'),
-    });
+    instance = new SessionStore();
   }
   return instance;
 }

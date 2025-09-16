@@ -282,7 +282,7 @@ export class FileCacheBackend implements CacheBackend {
     let expiredCount = 0;
     let hasChanges = false;
 
-    for (const [namespaceName, namespaceData] of Object.entries(this.data)) {
+    for (const [, namespaceData] of Object.entries(this.data)) {
       for (const [key, entry] of Object.entries(namespaceData)) {
         if (this.isExpired(entry)) {
           delete namespaceData[key];

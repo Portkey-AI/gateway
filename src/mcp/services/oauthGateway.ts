@@ -174,7 +174,7 @@ const OAuthGatewayCache = {
     }
   },
 
-  delete: async <T = any>(key: string, namespace?: string): Promise<void> => {
+  delete: async (key: string, namespace?: string): Promise<void> => {
     // TODO: If control plane exists, we should never get here
     await oauthStore.delete(key, namespace);
   },

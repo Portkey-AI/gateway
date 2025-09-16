@@ -193,7 +193,6 @@ export class MemoryCacheBackend implements CacheBackend {
   }
 
   async cleanup(): Promise<void> {
-    const now = Date.now();
     let expiredCount = 0;
 
     for (const [key, entry] of this.cache.entries()) {

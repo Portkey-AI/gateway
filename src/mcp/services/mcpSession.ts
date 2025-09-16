@@ -24,7 +24,7 @@ import { createLogger } from '../../shared/utils/logger';
 import { Context } from 'hono';
 import { ConnectResult, Upstream } from './upstream';
 import { Downstream } from './downstream';
-import { emitLog } from '../../middlewares/log/emitLog';
+import { emitLog } from '../utils/emitLog';
 
 export type TransportType = 'http' | 'sse' | 'auth-required';
 
@@ -205,7 +205,7 @@ export class MCPSession {
   /**
    * Initialize SSE transport with response object
    */
-  initializeSSETransport(res: any): SSEServerTransport {
+  initializeSSETransport(): SSEServerTransport {
     this.downstream.create('sse');
     this.id = this.downstream.transport!.sessionId!;
     return this.downstream.transport as SSEServerTransport;
@@ -362,13 +362,13 @@ export class MCPSession {
    * Handle client message - optimized hot path.
    * Comes here when there's a message on downstreamTransport
    */
-  private async handleClientMessage(message: any, extra?: any) {
+  private async handleClientMessage(message: any) {
     this.lastActivity = Date.now();
 
     try {
       if (isJSONRPCRequest(message)) {
         // It's a request - handle directly
-        await this.handleClientRequest(message, extra);
+        await this.handleClientRequest(message);
       } else if (isJSONRPCResponse(message) || isJSONRPCError(message)) {
         // It's a response - forward directly
         await this.upstream.send(message);
@@ -391,7 +391,8 @@ export class MCPSession {
   /**
    * Handle requests from the client - optimized with hot paths first
    */
-  private async handleClientRequest(request: any, extra?: any) {
+  private async handleClientRequest(request: any) {
+    // eslint-disable-line @typescript-eslint/no-unused-vars
     const { method } = request;
 
     // Check if we need upstream auth for any upstream-dependent operations

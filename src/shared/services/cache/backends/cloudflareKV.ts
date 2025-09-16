@@ -18,18 +18,15 @@ const logger = {
 };
 
 // Cloudflare KV client interface
-interface CloudflareKVClient {
+interface ICloudflareKVClient {
   get(key: string): Promise<string | null>;
   set(key: string, value: string, options?: CacheOptions): Promise<void>;
   del(key: string): Promise<number>;
-  exists(key: string): Promise<number>;
-  keys(pattern: string): Promise<string[]>;
-  flushdb(): Promise<void>;
-  quit(): Promise<void>;
+  keys(prefix: string): Promise<string[]>;
 }
 
 export class CloudflareKVCacheBackend implements CacheBackend {
-  private client: CloudflareKVClient;
+  private client: ICloudflareKVClient;
   private dbName: string;
 
   private stats: CacheStats = {
@@ -41,7 +38,7 @@ export class CloudflareKVCacheBackend implements CacheBackend {
     expired: 0,
   };
 
-  constructor(client: CloudflareKVClient, dbName: string) {
+  constructor(client: ICloudflareKVClient, dbName: string) {
     this.client = client;
     this.dbName = dbName;
   }
@@ -129,7 +126,7 @@ export class CloudflareKVCacheBackend implements CacheBackend {
   }
 
   async clear(namespace?: string): Promise<void> {
-    logger.debug('Cloudflare KV clear not implemented');
+    logger.debug('Cloudflare KV clear not implemented', namespace);
   }
 
   async keys(namespace?: string): Promise<string[]> {
@@ -160,7 +157,7 @@ export class CloudflareKVCacheBackend implements CacheBackend {
   }
 
   async has(key: string, namespace?: string): Promise<boolean> {
-    logger.info('Cloudflare KV has not implemented');
+    logger.info('Cloudflare KV has not implemented', key, namespace);
     return false;
   }
 
@@ -176,7 +173,7 @@ export class CloudflareKVCacheBackend implements CacheBackend {
 }
 
 // Cloudflare KV client implementation
-class CloudflareKVClient implements CloudflareKVClient {
+class CloudflareKVClient implements ICloudflareKVClient {
   private KV: any;
 
   constructor(env: any, kvBindingName: string) {

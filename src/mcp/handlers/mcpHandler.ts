@@ -13,7 +13,6 @@ import { ServerConfig } from '../types/mcp';
 import { MCPSession, TransportType } from '../services/mcpSession';
 import { getSessionStore } from '../services/sessionStore';
 import { createLogger } from '../../shared/utils/logger';
-import { Transport } from '@modelcontextprotocol/sdk/shared/transport';
 import { ControlPlane } from '../middleware/controlPlane';
 import { revokeAllClientTokens } from '../utils/oauthTokenRevocation';
 
@@ -195,10 +194,9 @@ export async function handleEstablishedSessionGET(
   c: Context<Env>,
   session: MCPSession
 ): Promise<any> {
-  let transport: Transport;
   // Ensure session is active or can be restored
   try {
-    transport = await session.initializeOrRestore();
+    await session.initializeOrRestore();
     logger.debug(`Session ${session.id} ready`);
   } catch (error: any) {
     logger.error(`Failed to prepare session ${session.id}`, error);
@@ -209,11 +207,9 @@ export async function handleEstablishedSessionGET(
     return c.json(ErrorResponse.sessionRestoreFailed(), 500);
   }
 
-  const { incoming: req, outgoing: res } = c.env as any;
-
   // Route based on transport type
   if (session.getClientTransportType() === 'sse') {
-    const transport = session.initializeSSETransport(res);
+    const transport = session.initializeSSETransport();
     await setSession(transport.sessionId, session);
     await transport.start();
   } else {
@@ -257,7 +253,7 @@ export async function prepareSessionForRequest(
  * This is the optimized entry point that delegates to specific handlers
  */
 export async function handleMCPRequest(c: Context<Env>) {
-  const { serverConfig, tokenInfo } = c.var;
+  const { serverConfig } = c.var;
   if (!serverConfig) return c.json(ErrorResponse.serverConfigNotFound(), 500);
 
   let session: MCPSession | undefined = c.var.session;
@@ -272,11 +268,10 @@ export async function handleMCPRequest(c: Context<Env>) {
 }
 
 export async function handleSSERequest(c: Context<Env>) {
-  const { serverConfig, tokenInfo } = c.var;
+  const { serverConfig } = c.var;
   if (!serverConfig) return c.json(ErrorResponse.serverConfigNotFound(), 500);
 
   let session: MCPSession | undefined = c.var.session;
-  let method = c.req.method;
   const isSSE = c.req.header('Accept') === 'text/event-stream';
 
   if (!isSSE) {
