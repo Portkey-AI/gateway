@@ -75,6 +75,15 @@ export async function realTimeHandlerNode(
       incomingWebsocket?.close();
     });
 
+    // wait for the upstream websocket to be open
+    const checkWebSocketOpen = new Promise((resolve) => {
+      outgoingWebSocket.addEventListener('open', () => {
+        resolve(true);
+      });
+    });
+
+    await checkWebSocketOpen;
+
     return {
       onOpen(evt, ws) {
         incomingWebsocket = ws;

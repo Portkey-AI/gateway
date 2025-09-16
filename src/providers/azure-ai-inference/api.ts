@@ -65,10 +65,15 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
     }
 
     if (azureAuthMode === 'entra') {
-      const { azureEntraTenantId, azureEntraClientId, azureEntraClientSecret } =
-        providerOptions;
+      const {
+        azureEntraTenantId,
+        azureEntraClientId,
+        azureEntraClientSecret,
+        azureEntraScope,
+      } = providerOptions;
       if (azureEntraTenantId && azureEntraClientId && azureEntraClientSecret) {
-        const scope = 'https://cognitiveservices.azure.com/.default';
+        const scope =
+          azureEntraScope ?? 'https://cognitiveservices.azure.com/.default';
         const accessToken = await getAccessTokenFromEntraId(
           azureEntraTenantId,
           azureEntraClientId,
