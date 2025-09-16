@@ -14,15 +14,20 @@ export const configSchema: any = z
           .string()
           .refine(
             (value) =>
-              ['single', 'loadbalance', 'fallback', 'conditional'].includes(
-                value
-              ),
+              [
+                'single',
+                'loadbalance',
+                'fallback',
+                'conditional',
+                'sample',
+              ].includes(value),
             {
               message:
-                "Invalid 'mode' value. Must be one of: single, loadbalance, fallback, conditional",
+                "Invalid 'mode' value. Must be one of: single, loadbalance, fallback, conditional, sample",
             }
           ),
         on_status_codes: z.array(z.number()).optional(),
+        cancel_others: z.boolean().optional(),
         conditions: z
           .array(
             z.object({
