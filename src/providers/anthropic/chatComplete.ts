@@ -5,6 +5,8 @@ import {
   ContentType,
   SYSTEM_MESSAGE_ROLES,
   PromptCache,
+  McpTool,
+  Tool,
 } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
@@ -353,7 +355,11 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
     transform: (params: Params) => {
       let tools: AnthropicTool[] = [];
       if (params.tools) {
-        params.tools.forEach((tool) => {
+        params.tools.forEach((tool: Tool | McpTool) => {
+          if (tool.type === 'mcp') {
+            return;
+          }
+          tool = tool as Tool;
           if (tool.function) {
             tools.push({
               name: tool.function.name,

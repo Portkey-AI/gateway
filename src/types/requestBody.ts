@@ -363,7 +363,7 @@ export type ToolChoice = ToolChoiceObject | 'none' | 'auto' | 'required';
  */
 export interface Tool extends PromptCache {
   /** The name of the function. */
-  type: string;
+  type: Exclude<string, 'mcp'>;
   /** A description of the function. */
   function: Function;
   // this is used to support tools like computer, web_search, etc.
@@ -398,7 +398,7 @@ export interface Params {
   context?: string;
   examples?: Examples[];
   top_k?: number;
-  tools?: Tool[];
+  tools?: (Tool | McpTool)[];
   tool_choice?: ToolChoice;
   response_format?: {
     type: 'json_object' | 'text' | 'json_schema';
@@ -434,7 +434,38 @@ export interface Params {
   // Embeddings specific
   dimensions?: number;
   parameters?: any;
+  mcp_servers?: McpServerConfig[];
   [key: string]: any;
+}
+
+export interface McpServerConfig {
+  type: 'url' | 'local';
+  url: string;
+  name: string;
+  authorization_token: string;
+  tool_configuration: {
+    enabled: boolean;
+    allowed_tools: string[];
+  };
+}
+
+// A type of tool that is an MCP server
+export interface McpTool {
+  type: 'mcp';
+  server_url: string;
+  server_label: string;
+  allowed_tools?: string[];
+  require_approval?: 'never' | 'always';
+  headers?: Record<string, string>;
+}
+
+// Used to store MCP servers in the request context
+export interface McpServer {
+  server_url: string;
+  server_label: string;
+  allowed_tools?: string[];
+  require_approval?: 'never' | 'always';
+  headers?: Record<string, string>;
 }
 
 interface Examples {
