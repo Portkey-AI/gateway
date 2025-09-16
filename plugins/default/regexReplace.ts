@@ -6,6 +6,24 @@ import {
 } from '../types';
 import { getCurrentContentPart, setCurrentContentPart } from '../utils';
 
+function parseRegex(input: string): RegExp {
+  // Valid JavaScript regex flags
+  const validFlags = /^[gimsuyd]*$/;
+
+  const match = input.match(/^\/(.+?)\/([gimsuyd]*)$/);
+  if (match) {
+    const [, pattern, flags] = match;
+
+    if (flags && !validFlags.test(flags)) {
+      throw new Error(`Invalid regex flags: ${flags}`);
+    }
+
+    return new RegExp(pattern, flags);
+  }
+
+  return new RegExp(input);
+}
+
 export const handler: PluginHandler = async (
   context: PluginContext,
   parameters: PluginParameters,
@@ -38,7 +56,7 @@ export const handler: PluginHandler = async (
       throw new Error('Missing text to match');
     }
 
-    const regex = new RegExp(regexPattern, 'g');
+    const regex = parseRegex(regexPattern);
 
     // Process all text items in the array
     let hasMatches = false;
