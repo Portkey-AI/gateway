@@ -107,7 +107,7 @@ interface GoogleFunctionResponseMessagePart {
     name: string;
     response: {
       name?: string;
-      content: string;
+      content: string | ContentType[];
     };
   };
 }
@@ -201,15 +201,12 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                 },
               });
             });
-          } else if (
-            message.role === 'tool' &&
-            typeof message.content === 'string'
-          ) {
+          } else if (message.role === 'tool') {
             parts.push({
               functionResponse: {
                 name: message.name ?? 'gateway-tool-filler-name',
                 response: {
-                  content: message.content,
+                  output: message.content,
                 },
               },
             });
