@@ -20,7 +20,6 @@ import {
 } from './handlers/mcpHandler';
 import { oauthMiddleware } from './middleware/oauth';
 import { hydrateContext } from './middleware/hydrateContext';
-import { sessionMiddleware } from './middleware/sessionMiddleware';
 import { oauthRoutes } from './routes/oauth';
 import { wellKnownRoutes } from './routes/wellknown';
 import { adminRoutes } from './routes/admin';
@@ -139,7 +138,6 @@ app.all(
     skipPaths: ['/oauth', '/.well-known'],
   }),
   hydrateContext,
-  sessionMiddleware,
   async (c) => {
     return handleMCPRequest(c);
   }
@@ -156,7 +154,6 @@ app.get(
     skipPaths: ['/oauth', '/.well-known'],
   }),
   hydrateContext,
-  sessionMiddleware,
   async (c) => {
     return handleSSERequest(c);
   }
@@ -174,7 +171,6 @@ app.post(
     skipPaths: ['/oauth', '/.well-known'],
   }),
   hydrateContext,
-  sessionMiddleware,
   async (c) => {
     return handleSSEMessages(c);
   }
