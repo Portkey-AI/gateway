@@ -1,6 +1,7 @@
 // routes/wellknown.ts
 import { Hono } from 'hono';
 import { createLogger } from '../../shared/utils/logger';
+import { getBaseUrl } from '../utils/mcp-utils';
 
 const logger = createLogger('wellknown-routes');
 
@@ -20,7 +21,7 @@ const wellKnownRoutes = new Hono<Env>();
 wellKnownRoutes.get('/oauth-authorization-server', async (c) => {
   logger.debug('GET /.well-known/oauth-authorization-server');
 
-  let baseUrl = new URL(c.req.url).origin;
+  let baseUrl = getBaseUrl(c).origin;
 
   if (c.get('controlPlane')) {
     baseUrl = c.get('controlPlane').url;
@@ -80,7 +81,7 @@ wellKnownRoutes.get(
       'GET /.well-known/oauth-authorization-server/:workspaceId/:serverId/mcp'
     );
 
-    let baseUrl = new URL(c.req.url).origin;
+    let baseUrl = getBaseUrl(c).origin;
 
     if (c.get('controlPlane')) {
       baseUrl = c.get('controlPlane').url;
@@ -96,39 +97,6 @@ wellKnownRoutes.get(
   }
 );
 
-/**
- * OAuth 2.0 Protected Resource Metadata (RFC 9728)
- * Required for MCP servers to indicate their authorization server
- */
-wellKnownRoutes.get('/oauth-protected-resource', async (c) => {
-  logger.debug('GET /.well-known/oauth-protected-resource');
-
-  let baseUrl = new URL(c.req.url).origin;
-
-  if (c.get('controlPlane')) {
-    baseUrl = c.get('controlPlane').url;
-  }
-
-  const metadata = {
-    // This MCP gateway acts as a protected resource
-    resource: baseUrl,
-    // Point to our authorization server (either this gateway or control plane)
-    authorization_servers: [baseUrl],
-    // Scopes required to access this resource
-    scopes_supported: [
-      'mcp:servers:read',
-      'mcp:servers:*',
-      'mcp:tools:list',
-      'mcp:tools:call',
-      'mcp:*',
-    ],
-  };
-
-  return c.json(metadata, 200, {
-    'Cache-Control': `public, max-age=${CACHE_MAX_AGE}`, // Cache for 1 hour
-  });
-});
-
 wellKnownRoutes.get(
   '/oauth-protected-resource/:workspaceId/:serverId/mcp',
   async (c) => {
@@ -140,8 +108,8 @@ wellKnownRoutes.get(
       }
     );
 
-    let baseUrl = new URL(c.req.url).origin;
-    const resourceUrl = `${new URL(c.req.url).origin}/${c.req.param('workspaceId')}/${c.req.param('serverId')}/mcp`;
+    let baseUrl = getBaseUrl(c).origin;
+    const resourceUrl = `${baseUrl}/${c.req.param('workspaceId')}/${c.req.param('serverId')}/mcp`;
 
     if (c.get('controlPlane')) {
       baseUrl = c.get('controlPlane').url;
@@ -179,8 +147,8 @@ wellKnownRoutes.get(
       }
     );
 
-    let baseUrl = new URL(c.req.url).origin;
-    const resourceUrl = `${new URL(c.req.url).origin}/${c.req.param('workspaceId')}/${c.req.param('serverId')}/sse`;
+    let baseUrl = getBaseUrl(c).origin;
+    const resourceUrl = `${baseUrl}/${c.req.param('workspaceId')}/${c.req.param('serverId')}/sse`;
 
     if (c.get('controlPlane')) {
       baseUrl = c.get('controlPlane').url;

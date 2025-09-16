@@ -14,8 +14,6 @@ type Env = {
   };
 };
 
-// REMOVED FROM FLOW FOR LATER!!!
-
 /**
  * Fetches a session from the session store if it exists.
  * If the session is found, it is set in the context.

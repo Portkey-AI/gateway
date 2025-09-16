@@ -14,6 +14,7 @@ import {
 } from '../../services/oauthGateway';
 import { getTokenCache } from '../../../shared/services/cache/index';
 import { Context } from 'hono';
+import { getBaseUrl } from '../../utils/mcp-utils';
 
 type Env = {
   Variables: {
@@ -105,7 +106,7 @@ export function oauthMiddleware(config: OAuthConfig = {}) {
       return next();
     }
 
-    const baseUrl = new URL(c.req.url).origin;
+    const baseUrl = getBaseUrl(c).origin;
     const authorization =
       c.req.header('Authorization') || c.req.header('x-portkey-api-key');
     const token = extractBearerToken(authorization);

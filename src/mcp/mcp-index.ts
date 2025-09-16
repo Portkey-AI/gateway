@@ -31,6 +31,7 @@ import {
   createCacheBackendsLocal,
   createCacheBackendsRedis,
 } from '../shared/services/cache';
+import { getBaseUrl } from './utils/mcp-utils';
 
 const logger = createLogger('MCP-Gateway');
 
@@ -104,7 +105,7 @@ app.onError((err, c) => {
       },
       401,
       {
-        'WWW-Authenticate': `Bearer resource_metadata="${new URL(c.req.url).origin}/.well-known/oauth-protected-resource/${wid}/${sid}/mcp`,
+        'WWW-Authenticate': `Bearer resource_metadata="${getBaseUrl(c).origin}/.well-known/oauth-protected-resource/${wid}/${sid}/mcp`,
       }
     );
   }

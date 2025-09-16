@@ -15,8 +15,13 @@ export class ControlPlane {
     this.defaultHeaders = {
       'User-Agent': 'Portkey-MCP-Gateway/0.1.0',
       'Content-Type': 'application/json',
-      Authorization: `${env(c).PORTKEY_CLIENT_AUTH}`,
     };
+
+    if (env(c).CLIENT_ID) {
+      this.defaultHeaders['x-client-id-mcp-gateway'] = `${env(c).CLIENT_ID}`;
+    } else if (env(c).PORTKEY_CLIENT_AUTH) {
+      this.defaultHeaders['Authorization'] = `${env(c).PORTKEY_CLIENT_AUTH}`;
+    }
   }
 
   async fetch(
