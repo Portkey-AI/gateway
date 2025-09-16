@@ -446,7 +446,10 @@ export const GoogleChatCompleteResponseTransform: (
     );
   }
 
-  if ('candidates' in response) {
+  // sometimes vertex gemini returns usageMetadata without candidates
+  const isValidResponse =
+    'candidates' in response || 'usageMetadata' in response;
+  if (isValidResponse) {
     const {
       promptTokenCount = 0,
       candidatesTokenCount = 0,

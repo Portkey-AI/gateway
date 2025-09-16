@@ -104,6 +104,7 @@ export const QDRANT: string = 'qdrant';
 export const THREE_ZERO_TWO_AI: string = '302ai';
 export const MESHY: string = 'meshy';
 export const TRIPO3D: string = 'tripo3d';
+export const NEXTBIT: string = 'nextbit';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -171,6 +172,7 @@ export const VALID_PROVIDERS = [
   THREE_ZERO_TWO_AI,
   MESHY,
   TRIPO3D,
+  NEXTBIT,
 ];
 
 export const CONTENT_TYPES = {

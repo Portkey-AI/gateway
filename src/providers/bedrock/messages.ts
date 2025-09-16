@@ -354,6 +354,10 @@ export const BedrockConverseMessagesConfig: ProviderConfig = {
       return transformInferenceConfig(params);
     },
   },
+  performance_config: {
+    param: 'performanceConfig',
+    required: false,
+  },
 };
 
 export const AnthropicBedrockConverseMessagesConfig: ProviderConfig = {

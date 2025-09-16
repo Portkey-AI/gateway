@@ -37,6 +37,7 @@ import { imageEditsHandler } from './handlers/imageEditsHandler';
 // Config
 import conf from '../conf.json';
 import modelResponsesHandler from './handlers/modelResponsesHandler';
+import { messagesCountTokensHandler } from './handlers/messagesCountTokensHandler';
 
 // Create a new Hono server instance
 const app = new Hono();
@@ -126,6 +127,12 @@ app.onError((err, c) => {
  * POST route for '/v1/messages' in anthropic format
  */
 app.post('/v1/messages', requestValidator, messagesHandler);
+
+app.post(
+  '/v1/messages/count_tokens',
+  requestValidator,
+  messagesCountTokensHandler
+);
 
 /**
  * POST route for '/v1/chat/completions'.

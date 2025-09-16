@@ -157,6 +157,9 @@ export interface Options {
 
   /** Cortex specific fields */
   snowflakeAccount?: string;
+
+  /** Azure entra scope */
+  azureEntraScope?: string;
 }
 
 /**
