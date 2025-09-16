@@ -63,7 +63,6 @@ export class Upstream {
     private upstreamSessionId?: string,
     private controlPlane?: ControlPlane
   ) {
-    // TODO: Might need to advertise capabilities
     this.client = new Client(
       {
         name: `portkey-${this.serverConfig.serverId}-client`,

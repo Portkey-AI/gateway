@@ -354,8 +354,8 @@ export async function createCacheBackendsLocal(): Promise<void> {
     backend: 'file',
     dataDir: 'data',
     fileName: 'sessions-cache.json',
-    defaultTtl: MS['7_DAYS'],
-    saveInterval: 1000, // 5 seconds
+    defaultTtl: MS['30_MINUTES'],
+    saveInterval: 1000, // 1 second
     cleanupInterval: MS['5_MINUTES'],
   });
   await sessionCache.waitForReady();
