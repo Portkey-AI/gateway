@@ -75,6 +75,9 @@ export const OpenAICompleteConfig: ProviderConfig = {
   suffix: {
     param: 'suffix',
   },
+  stream_options: {
+    param: 'stream_options',
+  },
 };
 
 export interface OpenAICompleteResponse extends CompletionResponse {
