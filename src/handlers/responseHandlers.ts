@@ -13,6 +13,7 @@ import {
   handleOctetStreamResponse,
   handleStreamingMode,
   handleTextResponse,
+  handleTextStreamResponse,
 } from './streamHandler';
 import { HookSpan } from '../middlewares/hooks';
 import { env } from 'hono/adapter';
@@ -150,6 +151,10 @@ export async function responseHandler(
       responseTransformerFunction
     );
     return { response: textResponse, responseJson: null };
+  }
+
+  if (responseContentType?.startsWith(CONTENT_TYPES.EVENT_STREAM)) {
+    return { response: handleTextStreamResponse(response), responseJson: null };
   }
 
   if (!responseContentType && response.status === 204) {

@@ -36,17 +36,14 @@ import {
   OpenAIListInputItemsResponseTransformer,
 } from '../open-ai-base';
 import { AZURE_OPEN_AI } from '../../globals';
-import {
-  AzureOpenAIImageEditConfig,
-  AzureOpenAIImageEditResponseTransform,
-} from './imageEdits';
+import { AzureOpenAIImageEditResponseTransform } from './imageEdits';
 
 const AzureOpenAIConfig: ProviderConfigs = {
   complete: AzureOpenAICompleteConfig,
   embed: AzureOpenAIEmbedConfig,
   api: AzureOpenAIAPIConfig,
   imageGenerate: AzureOpenAIImageGenerateConfig,
-  imageEdit: AzureOpenAIImageEditConfig,
+  imageEdit: {},
   chatComplete: AzureOpenAIChatCompleteConfig,
   createSpeech: AzureOpenAICreateSpeechConfig,
   createFinetune: OpenAICreateFinetuneConfig,
