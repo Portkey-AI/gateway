@@ -34,17 +34,6 @@ export const AzureAIInferenceCreateTranscriptionResponseTransform = (
   return { ...response, provider: AZURE_AI_INFERENCE };
 };
 
-export const AzureAIInferenceCreateImageEditResponseTransform = (
-  response: any,
-  responseStatus: number
-) => {
-  if (responseStatus !== 200 && 'error' in response) {
-    return OpenAIErrorResponseTransform(response, AZURE_AI_INFERENCE);
-  }
-
-  return { ...response, provider: AZURE_AI_INFERENCE };
-};
-
 export const AzureAIInferenceCreateTranslationResponseTransform = (
   response: any,
   responseStatus: number

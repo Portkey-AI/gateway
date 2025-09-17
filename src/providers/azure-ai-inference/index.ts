@@ -20,7 +20,6 @@ import { AzureOpenAICreateBatchConfig } from '../azure-openai/createBatch';
 import { AzureAIInferenceGetBatchOutputRequestHandler } from './getBatchOutput';
 import { OpenAIFileUploadRequestTransform } from '../openai/uploadFile';
 import {
-  AzureAIInferenceCreateImageEditResponseTransform,
   AzureAIInferenceCreateSpeechResponseTransform,
   AzureAIInferenceCreateTranscriptionResponseTransform,
   AzureAIInferenceCreateTranslationResponseTransform,
@@ -54,7 +53,6 @@ const AzureAIInferenceAPIConfig: ProviderConfigs = {
       AzureAIInferenceChatCompleteResponseTransform(AZURE_AI_INFERENCE),
     embed: AzureAIInferenceEmbedResponseTransform(AZURE_AI_INFERENCE),
     imageGenerate: AzureAIInferenceResponseTransform,
-    imageEdit: AzureAIInferenceCreateImageEditResponseTransform,
     createSpeech: AzureAIInferenceCreateSpeechResponseTransform,
     createTranscription: AzureAIInferenceCreateTranscriptionResponseTransform,
     createTranslation: AzureAIInferenceCreateTranslationResponseTransform,
