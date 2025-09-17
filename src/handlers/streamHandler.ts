@@ -282,10 +282,6 @@ export function handleOctetStreamResponse(response: Response) {
   return new Response(response.body, response);
 }
 
-export function handleTextStreamResponse(response: Response) {
-  return new Response(response.body, response);
-}
-
 export function handleImageResponse(response: Response) {
   return new Response(response.body, response);
 }
