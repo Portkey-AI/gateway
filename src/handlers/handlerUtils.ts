@@ -866,6 +866,7 @@ export function constructConfigFromRequestHeaders(
     azureEntraClientSecret:
       requestHeaders[`x-${POWERED_BY}-azure-entra-client-secret`],
     azureEntraTenantId: requestHeaders[`x-${POWERED_BY}-azure-entra-tenant-id`],
+    azureEntraScope: requestHeaders[`x-${POWERED_BY}-azure-entra-scope`],
   };
 
   const awsConfig = {

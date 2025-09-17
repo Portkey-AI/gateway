@@ -46,6 +46,10 @@ import {
   OpenAIListInputItemsResponseTransformer,
 } from '../open-ai-base';
 import { OPEN_AI } from '../../globals';
+import {
+  OpenAIImageEditConfig,
+  OpenAIImageEditResponseTransform,
+} from './imageEdits';
 
 const OpenAIConfig: ProviderConfigs = {
   complete: OpenAICompleteConfig,
@@ -53,6 +57,7 @@ const OpenAIConfig: ProviderConfigs = {
   api: OpenAIAPIConfig,
   chatComplete: OpenAIChatCompleteConfig,
   imageGenerate: OpenAIImageGenerateConfig,
+  imageEdit: OpenAIImageEditConfig,
   createSpeech: OpenAICreateSpeechConfig,
   createTranscription: {},
   createTranslation: {},
@@ -77,6 +82,7 @@ const OpenAIConfig: ProviderConfigs = {
     chatComplete: OpenAIChatCompleteResponseTransform,
     // 'stream-chatComplete': OpenAIChatCompleteResponseTransform,
     imageGenerate: OpenAIImageGenerateResponseTransform,
+    imageEdit: OpenAIImageEditResponseTransform,
     createSpeech: OpenAICreateSpeechResponseTransform,
     createTranscription: OpenAICreateTranscriptionResponseTransform,
     createTranslation: OpenAICreateTranslationResponseTransform,

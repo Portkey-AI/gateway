@@ -70,7 +70,7 @@ const getValue = (configParam: string, params: Params, paramConfig: any) => {
 export const transformUsingProviderConfig = (
   providerConfig: ProviderConfig,
   params: Params,
-  providerOptions: Options
+  providerOptions?: Options
 ) => {
   const transformedRequest: { [key: string]: any } = {};
 

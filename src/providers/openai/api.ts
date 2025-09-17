@@ -38,6 +38,8 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
         return '/embeddings';
       case 'imageGenerate':
         return '/images/generations';
+      case 'imageEdit':
+        return '/images/edits';
       case 'createSpeech':
         return '/audio/speech';
       case 'createTranscription':
