@@ -87,6 +87,8 @@ export class RequestContext {
   }
 
   get isStreaming(): boolean {
+    if (this.endpoint === 'imageEdit' && this.requestBody instanceof FormData)
+      return this.requestBody.get('stream') === 'true';
     return this.params.stream === true;
   }
 
