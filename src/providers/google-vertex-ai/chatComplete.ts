@@ -390,6 +390,10 @@ export const VertexAnthropicChatCompleteConfig: ProviderConfig = {
     required: true,
     default: 'vertex-2023-10-16',
   },
+  anthropic_beta: {
+    param: 'anthropic_version',
+    required: false,
+  },
   model: {
     param: 'model',
     required: false,
