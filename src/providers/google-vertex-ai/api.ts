@@ -18,7 +18,7 @@ const getProjectRoute = (
     vertexServiceAccountJson,
   } = providerOptions;
   let projectId = inputProjectId;
-  if (vertexServiceAccountJson?.project_id) {
+  if (vertexServiceAccountJson && vertexServiceAccountJson.project_id) {
     projectId = vertexServiceAccountJson.project_id;
   }
 
@@ -59,8 +59,9 @@ export const GoogleApiConfig: ProviderAPIConfig = {
     }
 
     if (vertexRegion === 'global') {
-      return `https://aiplatform.googleapis.com`;
+      return 'https://aiplatform.googleapis.com';
     }
+
     return `https://${vertexRegion}-aiplatform.googleapis.com`;
   },
   headers: async ({ c, providerOptions }) => {
@@ -88,6 +89,9 @@ export const GoogleApiConfig: ProviderAPIConfig = {
       mappedFn = `stream-${fn}` as endpointStrings;
     }
 
+    const url = new URL(gatewayRequestURL);
+    const searchParams = url.searchParams;
+
     if (NON_INFERENCE_ENDPOINTS.includes(fn)) {
       const jobIdIndex = [
         'cancelBatch',
@@ -99,9 +103,9 @@ export const GoogleApiConfig: ProviderAPIConfig = {
       const jobId = gatewayRequestURL.split('/').at(jobIdIndex);
 
       const url = new URL(gatewayRequestURL);
-      const searchParams = new URLSearchParams(url.search);
-      const pageSize = searchParams.get('limit') ?? 20;
-      const after = searchParams.get('after') ?? '';
+      const params = new URLSearchParams(url.search);
+      const pageSize = params.get('limit') ?? 20;
+      const after = params.get('after') ?? '';
 
       let projectId = vertexProjectId;
       if (!projectId || vertexServiceAccountJson) {
