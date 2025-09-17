@@ -95,6 +95,7 @@ export interface Options {
   awsBedrockModel?: string;
   awsServerSideEncryption?: string;
   awsServerSideEncryptionKMSKeyId?: string;
+  awsService?: string;
   foundationModel?: string;
 
   /** Sagemaker specific */
@@ -131,22 +132,22 @@ export interface Options {
   beforeRequestHooks?: HookObject[];
   defaultInputGuardrails?: HookObject[];
   defaultOutputGuardrails?: HookObject[];
-
   /** OpenAI specific */
   openaiProject?: string;
   openaiOrganization?: string;
   openaiBeta?: string;
-
   /** Azure Inference Specific */
-  azureDeploymentName?: string;
   azureApiVersion?: string;
-  azureExtraParams?: string;
   azureFoundryUrl?: string;
+  azureExtraParameters?: string;
+  azureDeploymentName?: string;
 
   /** The parameter to determine if extra non-openai compliant fields should be returned in response */
   strictOpenAiCompliance?: boolean;
+
   /** Parameter to determine if fim/completions endpoint is to be used */
   mistralFimCompletion?: String;
+
   /** Anthropic specific headers */
   anthropicBeta?: string;
   anthropicVersion?: string;
@@ -425,7 +426,6 @@ export interface Params {
   // Google Vertex AI specific
   safety_settings?: any;
   // Anthropic specific
-  anthropic_beta?: string;
   anthropic_version?: string;
   thinking?: {
     type?: string;

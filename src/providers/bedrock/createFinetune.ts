@@ -46,7 +46,7 @@ export const BedrockCreateFinetuneConfig: ProviderConfig = {
         return undefined;
       }
       return {
-        s3Uri: decodeURIComponent(value.validation_file),
+        s3Uri: decodeURIComponent(value.validation_file ?? ''),
       };
     },
   },
