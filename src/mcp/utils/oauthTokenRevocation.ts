@@ -90,12 +90,15 @@ export async function revokeAllClientTokens(
   );
   const oauthStore = getOauthStore();
 
+  let refreshToken: string | null = null;
+
   if (tokenInfo.refresh_token) {
+    refreshToken = tokenInfo.refresh_token;
     // Try control plane first if available
     if (controlPlane) {
       try {
         await controlPlane.revoke(
-          tokenInfo.refresh_token,
+          refreshToken!,
           'refresh_token',
           tokenInfo.client_id
         );
@@ -109,25 +112,27 @@ export async function revokeAllClientTokens(
         );
       }
     }
-
+  } else {
     // Get the refresh token for this client_id
-    const refreshToken: string | null = await oauthStore.get(
+    refreshToken = await oauthStore.get(
       tokenInfo.client_id,
       'clientid_refresh'
     );
-
-    logger.debug(
-      `Refresh token for client_id ${tokenInfo.client_id} is ${refreshToken}`
-    );
-
-    // Always revoke locally (for cache cleanup)
-    await revokeOAuthToken(
-      tokenInfo.refresh_token,
-      tokenInfo.client_id,
-      'refresh_token'
-    );
-
-    // Clean up the clientid_refresh mapping
-    await oauthStore.delete(tokenInfo.client_id, 'clientid_refresh');
   }
+
+  logger.debug(
+    `Refresh token for client_id ${tokenInfo.client_id} is ${refreshToken}`
+  );
+
+  // Always revoke locally (for cache cleanup)
+  await revokeOAuthToken(
+    tokenInfo.refresh_token,
+    tokenInfo.client_id,
+    'refresh_token'
+  );
+
+  await revokeOAuthToken(tokenInfo.token, tokenInfo.client_id, 'access_token');
+
+  // Clean up the clientid_refresh mapping
+  await oauthStore.delete(tokenInfo.client_id, 'clientid_refresh');
 }
