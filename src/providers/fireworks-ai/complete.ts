@@ -22,6 +22,11 @@ export const FireworksAICompleteConfig: ProviderConfig = {
     default: 16,
     min: 0,
   },
+  max_completion_tokens: {
+    param: 'max_tokens',
+    default: 200,
+    min: 1,
+  },
   logprobs: {
     param: 'logprobs',
     min: 0,
