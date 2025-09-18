@@ -16,7 +16,7 @@
   "functions": [
     {
       "name": "Walled AI Guardrail for checking safety of LLM inputs",
-      "id": "guardrails",
+      "id": "walledprotect",
       "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
       "type": "guardrail",
       "description": [
@@ -28,51 +28,26 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "text_type": {
-            "type": "string",
-            "label": "Text Type",
-            "description": [
-              {
-                "type": "subHeading",
-                "text": "Type of Text , defaults to 'prompt'"
-              }
-            ],
-            "default": "prompt"
-          },
           "generic_safety_check": {
             "type": "string",
             "label": "Generic Safety Check",
-            "description": [
-              {
-                "type": "subHeading",
-                "text": "Boolean value to enable generic safety checks on the text input. Defaults to 'true'."
-              }
-            ],
+            "description": "Boolean value to enable generic safety checks on the text input. Defaults to 'true'.",
             "default": true
           },
           "greetings_list": {
             "type": "array",
             "label": "Greetings List",
-            "description": [
-              {
-                "type": "subHeading",
-                "text": "List of greetings to be used in the guardrail check. This can help in identifying and handling greetings appropriately."
-              }
-            ],
+            "description": "List of greetings to be used in the guardrail check.",
             "items": {
-              "type": "string"
+              "type": "string",
+              "enum": ["Casual & Friendly", "Professional & Polite"]
             },
-            "default": ["Casual & Friendly", "Professional & Polite"]
+            "default": ["Casual & Friendly"]
           },
           "pii_list": {
             "type": "array",
             "label": "PII LIST",
-            "description": [
-              {
-                "type": "subHeading",
-                "text": "Identify all the PII for only the following types of PII will be checked in the text input. Defaults to empty list"
-              }
-            ],
+            "description": "PII types that should be checked in the input text.",
             "items": {
               "type": "string",
               "enum": [
@@ -98,15 +73,8 @@
           "compliance_list": {
             "type": "array",
             "label": "List of Compliance Checks",
-            "description": [
-              {
-                "type": "subHeading",
-                "text": "List of compliance checks to be performed on the text input. This can help in ensuring that the text adheres to specific compliance standards. Defaults to empty"
-              }
-            ],
-            "items": {
-              "type": "string"
-            },
+            "description": "Compliance checks to be performed on the text input.",
+            "items": { "type": "string" },
             "default": []
           }
         }

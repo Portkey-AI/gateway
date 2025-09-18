@@ -1,4 +1,4 @@
-import { handler } from './guardrails';
+import { handler } from './walledprotect';
 import testCredsFile from './creds.json';
 import { HookEventType, PluginContext, PluginParameters } from '../types';
 
@@ -98,5 +98,35 @@ describe('WalledAI Guardrail Plugin Handler (integration)', () => {
     expect(result.error).toBeNull();
     expect(result.data).toBeDefined();
     // Optionally, check if compliance_list was respected in the response if API supports it
+  });
+
+  it('should handle conversational text format', async () => {
+    const context = {
+      requestType: 'chatComplete',
+      request: {
+        json: {
+          messages: [
+            { role: 'user', content: 'Hi' },
+            { role: 'assistant', content: 'Hello, how can I help you?' },
+          ],
+        },
+      },
+      response: {},
+    };
+
+    const parameters = {
+      credentials: testCreds,
+      text_type: 'prompt',
+      generic_safety_check: true,
+      greetings_list: ['Casual & Friendly', 'Professional & Polite'],
+      pii_list: ["Person's Name", 'Address'],
+      compliance_list: ['questions on medicine'],
+    };
+
+    const eventType = 'beforeRequestHook';
+
+    const result = await handler(context as any, parameters, eventType);
+    expect(result).toHaveProperty('verdict');
+    expect(result).toHaveProperty('data');
   });
 });
