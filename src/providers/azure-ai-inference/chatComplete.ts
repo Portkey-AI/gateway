@@ -73,6 +73,56 @@ export const AzureAIInferenceChatCompleteConfig: ProviderConfig = {
   response_format: {
     param: 'response_format',
   },
+  n: {
+    param: 'n',
+    default: 1,
+  },
+  logprobs: {
+    param: 'logprobs',
+    default: false,
+  },
+  top_logprobs: {
+    param: 'top_logprobs',
+  },
+  logit_bias: {
+    param: 'logit_bias',
+  },
+  store: {
+    param: 'store',
+  },
+  metadata: {
+    param: 'metadata',
+  },
+  modalities: {
+    param: 'modalities',
+  },
+  audio: {
+    param: 'audio',
+  },
+  seed: {
+    param: 'seed',
+  },
+  prediction: {
+    param: 'prediction',
+  },
+  reasoning_effort: {
+    param: 'reasoning_effort',
+  },
+  stream_options: {
+    param: 'stream_options',
+  },
+  web_search_options: {
+    param: 'web_search_options',
+  },
+  prompt_cache_key: {
+    param: 'prompt_cache_key',
+  },
+  safety_identifier: {
+    param: 'safety_identifier',
+  },
+  verbosity: {
+    param: 'verbosity',
+  },
 };
 
 interface AzureAIInferenceChatCompleteResponse extends ChatCompletionResponse {}
