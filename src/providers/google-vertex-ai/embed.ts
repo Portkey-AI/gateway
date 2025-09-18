@@ -12,6 +12,7 @@ import {
   transformEmbeddingInputs,
   transformEmbeddingsParameters,
 } from './transformGenerationConfig';
+import { Params } from '../../types/requestBody';
 
 enum TASK_TYPE {
   RETRIEVAL_QUERY = 'RETRIEVAL_QUERY',
@@ -46,6 +47,19 @@ export const GoogleEmbedConfig: ProviderConfig = {
     required: false,
     transform: (params: GoogleEmbedParams) =>
       transformEmbeddingsParameters(params),
+  },
+};
+
+export const VertexBatchEmbedConfig: ProviderConfig = {
+  input: {
+    param: 'content',
+    required: true,
+    transform: (value: EmbedParams) => {
+      if (typeof value.input === 'string') {
+        return value.input;
+      }
+      return value.input.map((item) => item).join('\n');
+    },
   },
 };
 
@@ -119,17 +133,4 @@ export const GoogleEmbedResponseTransform: (
   }
 
   return generateInvalidProviderResponseError(response, GOOGLE_VERTEX_AI);
-};
-
-export const VertexBatchEmbedConfig: ProviderConfig = {
-  input: {
-    param: 'content',
-    required: true,
-    transform: (value: EmbedParams) => {
-      if (typeof value.input === 'string') {
-        return value.input;
-      }
-      return value.input.map((item) => item).join('\n');
-    },
-  },
 };

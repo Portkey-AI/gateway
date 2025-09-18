@@ -44,7 +44,7 @@ export interface GoogleResponseCandidate {
       },
     ];
   };
-  finishReason: VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON;
+  finishReason: string;
   index: 0;
   safetyRatings: {
     category: string;
@@ -202,7 +202,7 @@ export interface GoogleBatchRecord {
   };
   startTime: string;
   endTime: string;
-  completionsStats?: {
+  completionStats?: {
     successfulCount: string;
     failedCount: string;
     incompleteCount: string;
