@@ -35,7 +35,7 @@ const broadcastLog = async (log: any) => {
           ),
         ]);
       } catch (error: any) {
-        console.error(`Failed to send log to client ${id}:`, error.message);
+        console.warn(`Failed to send log to client ${id}:`, error.message);
         deadClients.push(id);
       }
     })
@@ -69,7 +69,7 @@ async function processLog(c: Context, start: number) {
       requestOptionsArray[0].response = response;
     }
   } catch (error) {
-    console.error('Error processing log:', error);
+    console.warn('Error processing log:', error);
   }
 
   await broadcastLog(
