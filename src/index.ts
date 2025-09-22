@@ -8,7 +8,7 @@ import { Context, Hono } from 'hono';
 import { prettyJSON } from 'hono/pretty-json';
 import { HTTPException } from 'hono/http-exception';
 import { compress } from 'hono/compress';
-import { getRuntimeKey } from 'hono/adapter';
+import { env, getRuntimeKey } from 'hono/adapter';
 // import { env } from 'hono/adapter' // Have to set this up for multi-environment deployment
 
 // Middlewares
@@ -36,16 +36,33 @@ import { messagesHandler } from './handlers/messagesHandler';
 // Config
 import conf from '../conf.json';
 import modelResponsesHandler from './handlers/modelResponsesHandler';
+import {
+  createCacheBackendsLocal,
+  createCacheBackendsRedis,
+  createCacheBackendsCF,
+} from './shared/services/cache';
 
 // Create a new Hono server instance
 const app = new Hono();
+const runtime = getRuntimeKey();
+
+// cache beackends will only get created during worker or app initialization depending on the runtime
+if (getRuntimeKey() === 'workerd') {
+  app.use('*', (c: Context, next) => {
+    createCacheBackendsCF(env(c));
+    return next();
+  });
+} else if (getRuntimeKey() === 'node' && process.env.REDIS_CONNECTION_STRING) {
+  createCacheBackendsRedis(process.env.REDIS_CONNECTION_STRING);
+} else {
+  createCacheBackendsLocal();
+}
+
 /**
  * Middleware that conditionally applies compression middleware based on the runtime.
  * Compression is automatically handled for lagon and workerd runtimes
  * This check if its not any of the 2 and then applies the compress middleware to avoid double compression.
  */
-
-const runtime = getRuntimeKey();
 app.use('*', (c, next) => {
   const runtimesThatDontNeedCompression = ['lagon', 'workerd', 'node'];
   if (runtimesThatDontNeedCompression.includes(runtime)) {
