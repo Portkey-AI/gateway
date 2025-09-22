@@ -13,6 +13,7 @@ type Env = {
   };
   Variables: {
     gateway: OAuthGateway;
+    controlPlane?: any;
   };
 };
 
@@ -51,6 +52,9 @@ const jsonError = (
  * Middleware: attach a configured gateway to the context
  */
 oauthRoutes.use('*', async (c, next) => {
+  if (c.get('controlPlane')) {
+    return c.json({ error: 'Not implemented' }, 501);
+  }
   c.set('gateway', new OAuthGateway(c));
   await next();
 });
