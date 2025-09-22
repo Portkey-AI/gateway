@@ -68,15 +68,6 @@ export const VeenaMaxCreateSpeechConfig: ProviderConfig = {
   },
 };
 
-export const VEENAMAX_VOICES = {
-  charu_soft: 'charu_soft',
-  keerti_joy: 'keerti_joy',
-  mohini_whispers: 'mohini_whispers',
-  maitri_connect: 'maitri_connect',
-  soumya_calm: 'soumya_calm',
-  vinaya_assist: 'vinaya_assist',
-};
-
 export const VeenaMaxCreateSpeechResponseTransform = (
   response: VeenaMaxTTSResponse | VeenaMaxErrorResponse | Response,
   responseStatus: number
