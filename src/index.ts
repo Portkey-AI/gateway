@@ -26,16 +26,18 @@ import { imageGenerationsHandler } from './handlers/imageGenerationsHandler';
 import { createSpeechHandler } from './handlers/createSpeechHandler';
 import { createTranscriptionHandler } from './handlers/createTranscriptionHandler';
 import { createTranslationHandler } from './handlers/createTranslationHandler';
-import { modelsHandler, providersHandler } from './handlers/modelsHandler';
+import { modelsHandler } from './handlers/modelsHandler';
 import { realTimeHandler } from './handlers/realtimeHandler';
 import filesHandler from './handlers/filesHandler';
 import batchesHandler from './handlers/batchesHandler';
 import finetuneHandler from './handlers/finetuneHandler';
 import { messagesHandler } from './handlers/messagesHandler';
+import { imageEditsHandler } from './handlers/imageEditsHandler';
 
 // Config
 import conf from '../conf.json';
 import modelResponsesHandler from './handlers/modelResponsesHandler';
+import { messagesCountTokensHandler } from './handlers/messagesCountTokensHandler';
 
 // Create a new Hono server instance
 const app = new Hono();
@@ -91,6 +93,9 @@ if (getRuntimeKey() === 'node') {
   app.use(logger());
 }
 
+// Support the /v1/models endpoint
+app.get('/v1/models', modelsHandler);
+
 // Use hooks middleware for all routes
 app.use('*', hooks);
 
@@ -123,6 +128,12 @@ app.onError((err, c) => {
  */
 app.post('/v1/messages', requestValidator, messagesHandler);
 
+app.post(
+  '/v1/messages/count_tokens',
+  requestValidator,
+  messagesCountTokensHandler
+);
+
 /**
  * POST route for '/v1/chat/completions'.
  * Handles requests by passing them to the chatCompletionsHandler.
@@ -146,6 +157,12 @@ app.post('/v1/embeddings', requestValidator, embeddingsHandler);
  * Handles requests by passing them to the imageGenerations handler.
  */
 app.post('/v1/images/generations', requestValidator, imageGenerationsHandler);
+
+/**
+ * POST route for '/v1/images/edits'.
+ * Handles requests by passing them to the imageGenerations handler.
+ */
+app.post('/v1/images/edits', requestValidator, imageEditsHandler);
 
 /**
  * POST route for '/v1/audio/speech'.
@@ -251,9 +268,6 @@ app.post('/v1/prompts/*', requestValidator, (c) => {
     message: 'prompt completions error: Something went wrong',
   });
 });
-
-app.get('/v1/reference/models', modelsHandler);
-app.get('/v1/reference/providers', providersHandler);
 
 // WebSocket route
 if (runtime === 'workerd') {

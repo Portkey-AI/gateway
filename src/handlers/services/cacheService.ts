@@ -35,6 +35,7 @@ export class CacheService {
       'createFinetune',
       'retrieveFinetune',
       'cancelFinetune',
+      'imageEdit',
     ];
     return !nonCacheEndpoints.includes(endpoint);
   }
