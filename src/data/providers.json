@@ -302,6 +302,13 @@
       "object": "provider",
       "description": "Dashscope provides intelligent analytics solutions designed to help businesses visualize and interpret complex data effectively. Their platform integrates advanced machine learning algorithms to generate real-time insights from diverse datasets, enabling organizations to make informed decisions quickly. Dashscope focuses on enhancing data accessibility and usability, empowering teams to leverage analytics for strategic planning and operational efficiency.",
       "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    },
+    {
+      "id": "veenamax",
+      "name": "VeenaMAX",
+      "object": "provider",
+      "description": "VeenaMAX is an advanced Text-to-Speech (TTS) service by Maya Research, specializing in high-quality multilingual voice synthesis. It supports Hindi, English, and Hinglish with multiple native voice personalities. VeenaMAX provides natural-sounding speech generation with customizable voice characteristics, speed control, and multiple audio formats for diverse applications.",
+      "base_url": "https://flash.mayaresearch.ai"
     }
   ]
 }
