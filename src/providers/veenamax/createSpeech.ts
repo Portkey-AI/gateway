@@ -128,12 +128,9 @@ export const VeenaMaxCreateSpeechResponseTransform = (
     );
   }
 
-  // If VeenaMAX returns a Response object (audio stream), pass it through
-  // VeenaMAX returns WAV format audio data directly
   if (response instanceof Response) {
     return response;
   }
 
-  // If somehow we get an unexpected response format
   return generateInvalidProviderResponseError(response, VEENA_MAX);
 };
