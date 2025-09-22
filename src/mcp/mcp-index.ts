@@ -188,8 +188,6 @@ app.get('/health', async (c) => {
 
   return c.json({
     status: 'healthy',
-    sessions: stats,
-    uptime: process.uptime(),
     timestamp: new Date().toISOString(),
   });
 });
