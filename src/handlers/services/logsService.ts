@@ -183,7 +183,10 @@ export class LogsService {
         body: requestContext.transformedRequestBody,
         headers: fetchOptions.headers,
       },
-      requestParams: requestContext.transformedRequestBody,
+      requestParams: {
+        ...requestContext.transformedRequestBody,
+        ...(requestContext.isStreaming && { stream: true }),
+      },
       finalUntransformedRequest: {
         body: requestContext.params,
       },
@@ -283,7 +286,10 @@ export class LogObjectBuilder {
       body: requestContext.transformedRequestBody,
       headers: (transformedRequestHeaders as Record<string, string>) ?? {},
     };
-    this.logData.requestParams = requestContext.transformedRequestBody;
+    this.logData.requestParams = {
+      ...requestContext.transformedRequestBody,
+      ...(requestContext.isStreaming && { stream: true }),
+    };
     return this;
   }
 
