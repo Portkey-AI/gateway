@@ -36,7 +36,6 @@ let llmGrpc = argv['llm-grpc'];
 
 if (!llmNode && !mcpNode && !llmGrpc) {
   llmNode = true;
-  mcpNode = true;
 }
 
 const isHeadless = argv.headless;
