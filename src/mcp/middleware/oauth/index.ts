@@ -51,7 +51,7 @@ function extractBearerToken(authorization: string | undefined): string | null {
  * Create WWW-Authenticate header value per RFC 9728
  */
 function createWWWAuthenticateHeader(baseUrl: string, path: string): string {
-  let header = `Bearer resource_metadata="${baseUrl}/.well-known/oauth-protected-resource${path}`;
+  let header = `Bearer resource_metadata="${baseUrl}/.well-known/oauth-protected-resource${path}"`;
 
   return header;
 }
