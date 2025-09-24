@@ -513,6 +513,31 @@ const transformContentBlock = (
   return undefined;
 };
 
+function createContentBlockStartEvent(
+  parsedChunk: BedrockChatCompleteStreamChunk
+): RawContentBlockStartEvent {
+  const contentBlockStartEvent: RawContentBlockStartEvent = JSON.parse(
+    ANTHROPIC_CONTENT_BLOCK_START_EVENT
+  );
+
+  if (parsedChunk.start?.toolUse && parsedChunk.start.toolUse.toolUseId) {
+    contentBlockStartEvent.content_block = {
+      type: 'tool_use',
+      id: parsedChunk.start.toolUse.toolUseId,
+      name: parsedChunk.start.toolUse.name,
+      input: {},
+    };
+  } else if (parsedChunk.delta?.reasoningContent?.text) {
+    contentBlockStartEvent.content_block = {
+      type: 'thinking',
+      thinking: '',
+      signature: '',
+    };
+  }
+
+  return contentBlockStartEvent;
+}
+
 export const BedrockConverseMessagesStreamChunkTransform = (
   responseChunk: string,
   fallbackId: string,
@@ -545,17 +570,8 @@ export const BedrockConverseMessagesStreamChunkTransform = (
       returnChunk += `event: content_block_stop\ndata: ${JSON.stringify(previousBlockStopEvent)}\n\n`;
     }
     streamState.currentContentBlockIndex = parsedChunk.contentBlockIndex;
-    const contentBlockStartEvent: RawContentBlockStartEvent = JSON.parse(
-      ANTHROPIC_CONTENT_BLOCK_START_EVENT
-    );
-    if (parsedChunk.start?.toolUse && parsedChunk.start.toolUse.toolUseId) {
-      contentBlockStartEvent.content_block = {
-        type: 'tool_use',
-        id: parsedChunk.start.toolUse.toolUseId,
-        name: parsedChunk.start.toolUse.name,
-        input: {},
-      };
-    }
+    const contentBlockStartEvent: RawContentBlockStartEvent =
+      createContentBlockStartEvent(parsedChunk);
     contentBlockStartEvent.index = parsedChunk.contentBlockIndex;
     returnChunk += `event: content_block_start\ndata: ${JSON.stringify(contentBlockStartEvent)}\n\n`;
     const contentBlockDeltaEvent = transformContentBlock(parsedChunk);
