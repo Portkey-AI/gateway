@@ -51,6 +51,12 @@ import {
   VertexAnthropicMessagesConfig,
   VertexAnthropicMessagesResponseTransform,
 } from './messages';
+import { VertexAnthropicMessagesCountTokensConfig } from './messagesCountTokens';
+import {
+  GetMistralAIChatCompleteResponseTransform,
+  GetMistralAIChatCompleteStreamChunkTransform,
+  MistralAIChatCompleteConfig,
+} from '../mistral-ai/chatComplete';
 
 const VertexConfig: ProviderConfigs = {
   api: VertexApiConfig,
@@ -117,6 +123,7 @@ const VertexConfig: ProviderConfigs = {
           createBatch: GoogleBatchCreateConfig,
           createFinetune: baseConfig.createFinetune,
           messages: VertexAnthropicMessagesConfig,
+          messagesCountTokens: VertexAnthropicMessagesCountTokensConfig,
           responseTransforms: {
             'stream-chatComplete':
               VertexAnthropicChatCompleteStreamChunkTransform,
@@ -160,6 +167,17 @@ const VertexConfig: ProviderConfigs = {
               chatComplete: true,
             }),
             ...responseTransforms,
+          },
+        };
+      case 'mistralai':
+        return {
+          chatComplete: MistralAIChatCompleteConfig,
+          api: GoogleApiConfig,
+          responseTransforms: {
+            chatComplete:
+              GetMistralAIChatCompleteResponseTransform(GOOGLE_VERTEX_AI),
+            'stream-chatComplete':
+              GetMistralAIChatCompleteStreamChunkTransform(GOOGLE_VERTEX_AI),
           },
         };
       default:

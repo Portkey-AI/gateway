@@ -2,8 +2,9 @@ import {
   GoogleBatchRecord,
   GoogleErrorResponse,
   GoogleFinetuneRecord,
-  GoogleResponseCandidate,
+  GoogleResponseCandidate as VertexResponseCandidate,
 } from './types';
+import { GoogleResponseCandidate } from '../google/chatComplete';
 import { generateErrorResponse } from '../utils';
 import {
   BatchEndpoints,
@@ -159,7 +160,9 @@ export const getModelAndProvider = (modelString: string) => {
   const modelStringParts = modelString.split('.');
   if (
     modelStringParts.length > 1 &&
-    ['google', 'anthropic', 'meta', 'endpoints'].includes(modelStringParts[0])
+    ['google', 'anthropic', 'meta', 'endpoints', 'mistralai'].includes(
+      modelStringParts[0]
+    )
   ) {
     provider = modelStringParts[0];
     model = modelStringParts.slice(1).join('.');
@@ -511,7 +514,7 @@ export const fetchGoogleCustomEndpoint = async ({
 };
 
 export const transformVertexLogprobs = (
-  generation: GoogleResponseCandidate
+  generation: GoogleResponseCandidate | VertexResponseCandidate
 ) => {
   const logprobsContent: Logprobs[] = [];
   if (!generation.logprobsResult) return null;

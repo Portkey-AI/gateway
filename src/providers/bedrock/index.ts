@@ -80,6 +80,10 @@ import {
   BedrockConverseMessagesStreamChunkTransform,
   BedrockMessagesResponseTransform,
 } from './messages';
+import {
+  BedrockConverseMessageCountTokensConfig,
+  BedrockConverseMessageCountTokensResponseTransform,
+} from './countTokens';
 
 const BedrockConfig: ProviderConfigs = {
   api: BedrockAPIConfig,
@@ -96,7 +100,7 @@ const BedrockConfig: ProviderConfigs = {
 
     if (params.model) {
       let providerModel = providerOptions.foundationModel || params.model;
-      providerModel = providerModel.replace(/^(us\.|eu\.)/, '');
+      providerModel = providerModel.replace(/^(us\.|eu\.|apac\.)/, '');
       const providerModelArray = providerModel?.split('.');
       const provider = providerModelArray?.[0];
       const model = providerModelArray?.slice(1).join('.');
@@ -110,8 +114,6 @@ const BedrockConfig: ProviderConfigs = {
             responseTransforms: {
               'stream-complete': BedrockAnthropicCompleteStreamChunkTransform,
               complete: BedrockAnthropicCompleteResponseTransform,
-              messages: BedrockMessagesResponseTransform,
-              'stream-messages': BedrockConverseMessagesStreamChunkTransform,
             },
           };
           break;
@@ -201,24 +203,40 @@ const BedrockConfig: ProviderConfigs = {
             },
           };
       }
-      if (!config.chatComplete) {
-        config.chatComplete = BedrockConverseChatCompleteConfig;
-      }
-      if (!config.messages) {
-        config.messages = BedrockConverseMessagesConfig;
-      }
-      if (!config.responseTransforms?.['stream-chatComplete']) {
-        config.responseTransforms = {
-          ...(config.responseTransforms ?? {}),
-          'stream-chatComplete': BedrockChatCompleteStreamChunkTransform,
-        };
-      }
-      if (!config.responseTransforms?.chatComplete) {
-        config.responseTransforms = {
-          ...(config.responseTransforms ?? {}),
+
+      // defaults
+      config = {
+        ...config,
+        ...(!config.chatComplete && {
+          chatComplete: BedrockConverseChatCompleteConfig,
+        }),
+        ...(!config.messages && {
+          messages: BedrockConverseMessagesConfig,
+        }),
+        ...(!config.messagesCountTokens && {
+          messagesCountTokens: BedrockConverseMessageCountTokensConfig,
+        }),
+      };
+
+      config.responseTransforms = {
+        ...(config.responseTransforms ?? {}),
+        ...(!config.responseTransforms?.chatComplete && {
           chatComplete: BedrockChatCompleteResponseTransform,
-        };
-      }
+        }),
+        ...(!config.responseTransforms?.['stream-chatComplete'] && {
+          'stream-chatComplete': BedrockChatCompleteStreamChunkTransform,
+        }),
+        ...(!config.responseTransforms?.messages && {
+          messages: BedrockMessagesResponseTransform,
+        }),
+        ...(!config.responseTransforms?.['stream-messages'] && {
+          'stream-messages': BedrockConverseMessagesStreamChunkTransform,
+        }),
+        ...(!config.responseTransforms?.messagesCountTokens && {
+          messagesCountTokens:
+            BedrockConverseMessageCountTokensResponseTransform,
+        }),
+      };
     }
 
     const commonResponseTransforms = {
