@@ -548,6 +548,14 @@ export const BedrockConverseMessagesStreamChunkTransform = (
     const contentBlockStartEvent: RawContentBlockStartEvent = JSON.parse(
       ANTHROPIC_CONTENT_BLOCK_START_EVENT
     );
+    if (parsedChunk.start?.toolUse) {
+      contentBlockStartEvent.content_block = {
+        type: 'tool_use',
+        id: parsedChunk.start.toolUse.toolUseId,
+        name: parsedChunk.start.toolUse.name,
+        input: parsedChunk.start.toolUse.input || {},
+      };
+    }
     contentBlockStartEvent.index = parsedChunk.contentBlockIndex;
     returnChunk += `event: content_block_start\ndata: ${JSON.stringify(contentBlockStartEvent)}\n\n`;
     const contentBlockDeltaEvent = transformContentBlock(parsedChunk);
