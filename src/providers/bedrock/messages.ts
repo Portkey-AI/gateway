@@ -435,9 +435,9 @@ export const BedrockMessagesResponseTransform = (
   _gatewayRequestUrl: string,
   gatewayRequest: Params
 ): MessagesResponse | ErrorResponse => {
-  if (responseStatus !== 200 && 'error' in response) {
+  if (responseStatus !== 200) {
     return (
-      BedrockErrorResponseTransform(response) ||
+      BedrockErrorResponseTransform(response as BedrockErrorResponse) ||
       generateInvalidProviderResponseError(response, BEDROCK)
     );
   }
