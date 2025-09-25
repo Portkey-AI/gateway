@@ -533,6 +533,11 @@ function createContentBlockStartEvent(
       thinking: '',
       signature: '',
     };
+  } else if (parsedChunk.delta?.reasoningContent?.redactedContent) {
+    contentBlockStartEvent.content_block = {
+      type: 'redacted_thinking',
+      data: parsedChunk.delta.reasoningContent.redactedContent,
+    };
   }
 
   return contentBlockStartEvent;
