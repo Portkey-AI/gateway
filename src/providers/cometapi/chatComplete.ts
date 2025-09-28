@@ -15,7 +15,7 @@ export const CometAPIChatCompleteConfig: ProviderConfig = {
   ...OpenAIChatCompleteConfig,
   model: {
     ...cometAPIModelConfig,
-    default: 'gpt-5-chat-latest',
+    default: 'gpt-3.5-turbo',
   },
 };
 

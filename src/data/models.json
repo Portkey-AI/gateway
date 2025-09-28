@@ -15398,14 +15398,6 @@
       "id": "text-embedding-ada-002",
       "object": "model",
       "provider": {
-        "id": "cometapi"
-      },
-      "name": "Text Embedding Ada 002"
-    },
-    {
-      "id": "text-embedding-ada-002",
-      "object": "model",
-      "provider": {
         "id": "openai"
       },
       "name": "Text Embedding Ada 002"
