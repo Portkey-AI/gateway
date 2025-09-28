@@ -45,7 +45,8 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     if (
       fn === 'createTranscription' ||
       fn === 'createTranslation' ||
-      fn === 'uploadFile'
+      fn === 'uploadFile' ||
+      fn === 'imageEdit'
     ) {
       headersObj['Content-Type'] = 'multipart/form-data';
     }
