@@ -940,6 +940,7 @@ export function constructConfigFromRequestHeaders(
     vertexModelName: requestHeaders[`x-${POWERED_BY}-provider-model`],
     vertexBatchEndpoint:
       requestHeaders[`x-${POWERED_BY}-provider-batch-endpoint`],
+    anthropicBeta: requestHeaders[`x-${POWERED_BY}-anthropic-beta`],
   };
 
   const fireworksConfig = {
