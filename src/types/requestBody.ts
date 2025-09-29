@@ -147,7 +147,7 @@ export interface Options {
 
   /** Parameter to determine if fim/completions endpoint is to be used */
   mistralFimCompletion?: string;
-  
+
   /** Anthropic specific headers */
   anthropicBeta?: string;
   anthropicVersion?: string;
