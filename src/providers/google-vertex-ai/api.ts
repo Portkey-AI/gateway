@@ -73,7 +73,7 @@ export const GoogleApiConfig: ProviderAPIConfig = {
     const anthropicBeta =
       providerOptions?.['anthropicBeta'] ??
       gatewayRequestBody?.['anthropic_beta'];
-    
+
     return {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${authToken}`,
