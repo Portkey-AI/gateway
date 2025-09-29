@@ -146,8 +146,8 @@ export interface Options {
   strictOpenAiCompliance?: boolean;
 
   /** Parameter to determine if fim/completions endpoint is to be used */
-  mistralFimCompletion?: String;
-
+  mistralFimCompletion?: string;
+  
   /** Anthropic specific headers */
   anthropicBeta?: string;
   anthropicVersion?: string;
