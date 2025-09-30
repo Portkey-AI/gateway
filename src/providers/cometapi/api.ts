@@ -3,8 +3,7 @@ import { ProviderAPIConfig } from '../types';
 const DEFAULT_COMETAPI_BASE_URL = 'https://api.cometapi.com/v1';
 
 const CometAPIAPIConfig: ProviderAPIConfig = {
-  getBaseURL: ({ providerOptions }) =>
-    providerOptions.customHost || DEFAULT_COMETAPI_BASE_URL,
+  getBaseURL: () => DEFAULT_COMETAPI_BASE_URL,
   headers: ({ providerOptions }) => {
     return {
       Authorization: `Bearer ${providerOptions.apiKey}`,

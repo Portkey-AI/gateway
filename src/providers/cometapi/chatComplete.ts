@@ -1,13 +1,6 @@
 import { COMETAPI } from '../../globals';
-import {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ParameterConfig,
-  ProviderConfig,
-} from '../types';
-import { OpenAIErrorResponseTransform } from '../openai/utils';
+import { ParameterConfig, ProviderConfig } from '../types';
 import { OpenAIChatCompleteConfig } from '../openai/chatComplete';
-import { generateInvalidProviderResponseError } from '../utils';
 
 const cometAPIModelConfig = OpenAIChatCompleteConfig.model as ParameterConfig;
 
@@ -17,27 +10,6 @@ export const CometAPIChatCompleteConfig: ProviderConfig = {
     ...cometAPIModelConfig,
     default: 'gpt-3.5-turbo',
   },
-};
-
-export const CometAPIChatCompleteResponseTransform: (
-  response: ChatCompletionResponse | ErrorResponse,
-  responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if ('error' in response && responseStatus !== 200) {
-    return OpenAIErrorResponseTransform(response, COMETAPI);
-  }
-
-  if ('choices' in response) {
-    return {
-      ...response,
-      provider: COMETAPI,
-    };
-  }
-
-  return generateInvalidProviderResponseError(
-    response as Record<string, any>,
-    COMETAPI
-  );
 };
 
 interface CometAPIStreamChunk {

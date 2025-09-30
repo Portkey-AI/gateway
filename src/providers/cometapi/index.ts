@@ -1,20 +1,23 @@
+import { COMETAPI } from '../../globals';
+import { responseTransformers } from '../open-ai-base';
 import { ProviderConfigs } from '../types';
 import CometAPIAPIConfig from './api';
 import {
   CometAPIChatCompleteConfig,
-  CometAPIChatCompleteResponseTransform,
   CometAPIChatCompleteStreamChunkTransform,
 } from './chatComplete';
-import { CometAPIEmbedConfig, CometAPIEmbedResponseTransform } from './embed';
+import { CometAPIEmbedConfig } from './embed';
 
 const CometAPIConfig: ProviderConfigs = {
   api: CometAPIAPIConfig,
   chatComplete: CometAPIChatCompleteConfig,
   embed: CometAPIEmbedConfig,
   responseTransforms: {
-    chatComplete: CometAPIChatCompleteResponseTransform,
+    ...responseTransformers(COMETAPI, {
+      chatComplete: true,
+      embed: true,
+    }),
     'stream-chatComplete': CometAPIChatCompleteStreamChunkTransform,
-    embed: CometAPIEmbedResponseTransform,
   },
 };
 
