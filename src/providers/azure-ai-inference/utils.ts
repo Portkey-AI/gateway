@@ -1,6 +1,5 @@
 import { AZURE_AI_INFERENCE } from '../../globals';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
-import { ErrorResponse } from '../types';
 
 export const AzureAIInferenceResponseTransform = (
   response: any,

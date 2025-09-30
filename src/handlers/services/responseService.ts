@@ -122,9 +122,7 @@ export class ResponseService {
     }
 
     // Remove headers directly
-    // TODO: verify a workaround for node environments with brotli encoding
-    const encoding = response.headers.get('content-encoding');
-    if (encoding?.includes('br') || getRuntimeKey() === 'node') {
+    if (getRuntimeKey() == 'node') {
       response.headers.delete('content-encoding');
     }
     response.headers.delete('content-length');

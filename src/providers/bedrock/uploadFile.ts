@@ -7,7 +7,10 @@ import {
 import { transformUsingProviderConfig } from '../../services/transformToProviderRequest';
 import { Context } from 'hono';
 import { BEDROCK, POWERED_BY } from '../../globals';
-import { providerAssumedRoleCredentials } from './utils';
+import {
+  getFoundationModelFromInferenceProfile,
+  providerAssumedRoleCredentials,
+} from './utils';
 import BedrockAPIConfig from './api';
 import { ProviderConfig, RequestHandler } from '../../providers/types';
 import { Options } from '../../types/requestBody';
@@ -315,6 +318,7 @@ const getProviderConfig = (modelSlug: string) => {
   else if (modelSlug.includes('anthropic')) provider = 'anthropic';
   else if (modelSlug.includes('ai21')) provider = 'ai21';
   else if (modelSlug.includes('cohere')) provider = 'cohere';
+  else if (modelSlug.includes('amazon')) provider = 'titan';
   else throw new Error('Invalid model slug');
   return BedrockUploadFileTransformerConfig[provider];
 };
@@ -332,12 +336,16 @@ export const BedrockUploadFileRequestHandler: RequestHandler<
     if (providerOptions.awsAuthType === 'assumedRole') {
       await providerAssumedRoleCredentials(c, providerOptions);
     }
-    const { awsRegion, awsS3Bucket, awsBedrockModel } = providerOptions;
+    const {
+      awsRegion,
+      awsS3Bucket,
+      awsBedrockModel: modelParam,
+    } = providerOptions;
 
     const awsS3ObjectKey =
       providerOptions.awsS3ObjectKey || crypto.randomUUID() + '.jsonl';
 
-    if (!awsS3Bucket || !awsBedrockModel) {
+    if (!awsS3Bucket || !modelParam) {
       return new Response(
         JSON.stringify({
           status: 'failure',
@@ -351,6 +359,21 @@ export const BedrockUploadFileRequestHandler: RequestHandler<
           },
         }
       );
+    }
+
+    let awsBedrockModel = modelParam;
+
+    if (awsBedrockModel.includes('arn:aws')) {
+      const foundationModel = awsBedrockModel.includes('foundation-model/')
+        ? awsBedrockModel.split('/').pop()
+        : await getFoundationModelFromInferenceProfile(
+            c,
+            awsBedrockModel,
+            providerOptions
+          );
+      if (foundationModel) {
+        awsBedrockModel = foundationModel;
+      }
     }
 
     const handler = new AwsMultipartUploadHandler(

@@ -50,9 +50,12 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
       ...(azureDeploymentName && {
         'azureml-model-deployment': azureDeploymentName,
       }),
-      ...(['createTranscription', 'createTranslation', 'uploadFile'].includes(
-        fn
-      )
+      ...([
+        'createTranscription',
+        'createTranslation',
+        'uploadFile',
+        'imageEdit',
+      ].includes(fn)
         ? {
             'Content-Type': 'multipart/form-data',
           }
@@ -65,10 +68,15 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
     }
 
     if (azureAuthMode === 'entra') {
-      const { azureEntraTenantId, azureEntraClientId, azureEntraClientSecret } =
-        providerOptions;
+      const {
+        azureEntraTenantId,
+        azureEntraClientId,
+        azureEntraClientSecret,
+        azureEntraScope,
+      } = providerOptions;
       if (azureEntraTenantId && azureEntraClientId && azureEntraClientSecret) {
-        const scope = 'https://cognitiveservices.azure.com/.default';
+        const scope =
+          azureEntraScope ?? 'https://cognitiveservices.azure.com/.default';
         const accessToken = await getAccessTokenFromEntraId(
           azureEntraTenantId,
           azureEntraClientId,
@@ -114,6 +122,7 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
       embed: '/embeddings',
       realtime: '/realtime',
       imageGenerate: '/images/generations',
+      imageEdit: '/images/edits',
       createSpeech: '/audio/speech',
       createTranscription: '/audio/transcriptions',
       createTranslation: '/audio/translations',
@@ -160,6 +169,7 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
       }
       case 'realtime':
       case 'imageGenerate':
+      case 'imageEdit':
       case 'createSpeech':
       case 'createTranscription':
       case 'createTranslation':

@@ -32,6 +32,7 @@ import filesHandler from './handlers/filesHandler';
 import batchesHandler from './handlers/batchesHandler';
 import finetuneHandler from './handlers/finetuneHandler';
 import { messagesHandler } from './handlers/messagesHandler';
+import { imageEditsHandler } from './handlers/imageEditsHandler';
 
 // Config
 import conf from '../conf.json';
@@ -41,6 +42,7 @@ import {
   createCacheBackendsRedis,
   createCacheBackendsCF,
 } from './shared/services/cache';
+import { messagesCountTokensHandler } from './handlers/messagesCountTokensHandler';
 
 // Create a new Hono server instance
 const app = new Hono();
@@ -143,6 +145,12 @@ app.onError((err, c) => {
  */
 app.post('/v1/messages', requestValidator, messagesHandler);
 
+app.post(
+  '/v1/messages/count_tokens',
+  requestValidator,
+  messagesCountTokensHandler
+);
+
 /**
  * POST route for '/v1/chat/completions'.
  * Handles requests by passing them to the chatCompletionsHandler.
@@ -166,6 +174,12 @@ app.post('/v1/embeddings', requestValidator, embeddingsHandler);
  * Handles requests by passing them to the imageGenerations handler.
  */
 app.post('/v1/images/generations', requestValidator, imageGenerationsHandler);
+
+/**
+ * POST route for '/v1/images/edits'.
+ * Handles requests by passing them to the imageGenerations handler.
+ */
+app.post('/v1/images/edits', requestValidator, imageEditsHandler);
 
 /**
  * POST route for '/v1/audio/speech'.
