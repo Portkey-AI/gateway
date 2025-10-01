@@ -162,9 +162,9 @@ export class CloudflareKVCacheBackend implements CacheBackend {
   }
 
   async cleanup(): Promise<void> {
-    // Redis handles TTL automatically, so this is mostly a no-op
+    // Cloudflare KV handles TTL automatically, so this is mostly a no-op
     // We could scan for entries with manual expiration and clean them up
-    logger.debug('Redis cleanup - TTL handled automatically by Redis');
+    logger.debug('Cloudflare KV cleanup - TTL handled automatically by Cloudflare KV');
   }
 
   async close(): Promise<void> {
