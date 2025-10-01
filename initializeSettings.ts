@@ -44,13 +44,12 @@ const transformIntegrations = (integrations: any) => {
   });
 };
 
-let settings: any = {};
+let settings: any = undefined;
 try {
   // @ts-expect-error
   const settingsFile = await import('./settings.json');
-  if (!settingsFile) {
-    settings = undefined;
-  } else {
+  if (settingsFile) {
+    settings = {};
     settings.organisationDetails = organisationDetails;
     if (settingsFile.integrations) {
       settings.integrations = transformIntegrations(settingsFile.integrations);
