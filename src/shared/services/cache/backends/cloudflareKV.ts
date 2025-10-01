@@ -75,7 +75,7 @@ export class CloudflareKVCacheBackend implements CacheBackend {
       this.stats.hits++;
       return entry;
     } catch (error) {
-      logger.error('Redis get error:', error);
+      logger.error('Cloudflare KV get error:', error);
       this.stats.misses++;
       return null;
     }
