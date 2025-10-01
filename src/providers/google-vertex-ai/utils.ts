@@ -756,6 +756,7 @@ export const OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING = {
   mp3: 'audio/mp3',
   wav: 'audio/wav',
 };
+
 export const transformInputAudioPart = (c: ContentType) => {
   const data = c.input_audio?.data;
   const mimeType =
