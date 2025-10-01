@@ -136,7 +136,7 @@ export class CloudflareKVCacheBackend implements CacheBackend {
 
       return fullKeys.map((key) => key.substring(prefix.length));
     } catch (error) {
-      logger.error('Redis keys error:', error);
+      logger.error('Cloudflare KV keys error:', error);
       return [];
     }
   }
