@@ -151,7 +151,7 @@ export class CloudflareKVCacheBackend implements CacheBackend {
         size: keys.length,
       };
     } catch (error) {
-      logger.error('Redis getStats error:', error);
+      logger.error('Cloudflare KV getStats error:', error);
       return { ...this.stats };
     }
   }
