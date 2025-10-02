@@ -15,6 +15,7 @@ const getModelProvider = (modelId: string) => {
   else if (modelId.includes('anthropic')) provider = 'anthropic';
   else if (modelId.includes('ai21')) provider = 'ai21';
   else if (modelId.includes('cohere')) provider = 'cohere';
+  else if (modelId.includes('amazon')) provider = 'titan';
   else throw new Error('Invalid model slug');
   return provider;
 };
@@ -73,6 +74,24 @@ export const BedrockGetBatchOutputRequestHandler = async ({
       method: 'GET',
       headers: retrieveBatchesHeaders,
     });
+
+    if (!retrieveBatchesResponse.ok) {
+      const error = await retrieveBatchesResponse.text();
+      const _error = {
+        message: error,
+        param: null,
+        type: null,
+      };
+      return new Response(
+        JSON.stringify({ error: _error, provider: BEDROCK }),
+        {
+          status: retrieveBatchesResponse.status,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    }
 
     const batchDetails: BedrockGetBatchResponse =
       await retrieveBatchesResponse.json();
