@@ -445,6 +445,10 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
     transform: (params: BedrockChatCompletionsParams) =>
       transformAdditionalModelRequestFields(params),
   },
+  performance_config: {
+    param: 'performanceConfig',
+    required: false,
+  },
 };
 
 export const BedrockErrorResponseTransform: (

@@ -19,6 +19,7 @@ const AnthropicConfig: ProviderConfigs = {
   complete: AnthropicCompleteConfig,
   chatComplete: AnthropicChatCompleteConfig,
   messages: AnthropicMessagesConfig,
+  messagesCountTokens: AnthropicMessagesConfig,
   api: AnthropicAPIConfig,
   responseTransforms: {
     'stream-complete': AnthropicCompleteStreamChunkTransform,

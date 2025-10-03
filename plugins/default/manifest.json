@@ -44,6 +44,120 @@
       }
     },
     {
+      "name": "Allowed Request Types",
+      "id": "allowedRequestTypes",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Control which request types (endpoints) can be processed. Use either an allowlist or blocklist approach. If no types are specified, all request types are allowed."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "allowedTypes": {
+            "type": "array",
+            "label": "Allowed Request Types (Multi-select)",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Select request types to allow. Can be combined with blockedTypes for refined control. Can also be specified in metadata as 'supported_endpoints'."
+              }
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "complete",
+                "chatComplete",
+                "embed",
+                "rerank",
+                "moderate",
+                "stream-complete",
+                "stream-chatComplete",
+                "stream-messages",
+                "proxy",
+                "imageGenerate",
+                "createSpeech",
+                "createTranscription",
+                "createTranslation",
+                "realtime",
+                "uploadFile",
+                "listFiles",
+                "retrieveFile",
+                "deleteFile",
+                "retrieveFileContent",
+                "createBatch",
+                "retrieveBatch",
+                "cancelBatch",
+                "listBatches",
+                "getBatchOutput",
+                "listFinetunes",
+                "createFinetune",
+                "retrieveFinetune",
+                "cancelFinetune",
+                "createModelResponse",
+                "getModelResponse",
+                "deleteModelResponse",
+                "listResponseInputItems",
+                "messages"
+              ]
+            }
+          },
+          "blockedTypes": {
+            "type": "array",
+            "label": "Blocked Request Types (Multi-select)",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Select request types to block. When combined with allowedTypes, blocked types take precedence. Can also be specified in metadata as 'blocked_endpoints'."
+              }
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "complete",
+                "chatComplete",
+                "embed",
+                "rerank",
+                "moderate",
+                "stream-complete",
+                "stream-chatComplete",
+                "stream-messages",
+                "proxy",
+                "imageGenerate",
+                "createSpeech",
+                "createTranscription",
+                "createTranslation",
+                "realtime",
+                "uploadFile",
+                "listFiles",
+                "retrieveFile",
+                "deleteFile",
+                "retrieveFileContent",
+                "createBatch",
+                "retrieveBatch",
+                "cancelBatch",
+                "listBatches",
+                "getBatchOutput",
+                "listFinetunes",
+                "createFinetune",
+                "retrieveFinetune",
+                "cancelFinetune",
+                "createModelResponse",
+                "getModelResponse",
+                "deleteModelResponse",
+                "listResponseInputItems",
+                "messages"
+              ]
+            }
+          }
+        },
+        "required": []
+      }
+    },
+    {
       "name": "Sentence Count",
       "id": "sentenceCount",
       "type": "guardrail",

@@ -55,6 +55,7 @@ import { handler as defaultregexReplace } from './default/regexReplace';
 import { handler as javelintrustsafety } from './javelin/trustsafety';
 import { handler as javelinpromptinjectiondetection } from './javelin/promptinjectiondetection';
 import { handler as javelinlang_detector } from './javelin/lang_detector';
+import { handler as defaultallowedRequestTypes } from './default/allowedRequestTypes';
 
 export const plugins = {
   default: {
@@ -77,6 +78,7 @@ export const plugins = {
     jwt: defaultjwt,
     requiredMetadataKeys: defaultrequiredMetadataKeys,
     regexReplace: defaultregexReplace,
+    allowedRequestTypes: defaultallowedRequestTypes,
   },
   portkey: {
     moderateContent: portkeymoderateContent,
