@@ -56,32 +56,41 @@ async function processLog(c: Context, start: number) {
     return;
   }
 
-  try {
-    const response = requestOptionsArray[0].requestParams.stream
-      ? { message: 'The response was a stream.' }
-      : await c.res.clone().json();
-
-    const responseString = JSON.stringify(response);
-    if (responseString.length > MAX_RESPONSE_LENGTH) {
-      requestOptionsArray[0].response =
-        responseString.substring(0, MAX_RESPONSE_LENGTH) + '...';
-    } else {
-      requestOptionsArray[0].response = response;
+  for (const requestOption of requestOptionsArray) {
+    if (requestOption.type === 'otel') {
+      console.log('otel', JSON.stringify(requestOption));
+      continue;
     }
-  } catch (error) {
-    console.error('Error processing log:', error);
-  }
 
-  await broadcastLog(
-    JSON.stringify({
-      time: new Date().toLocaleString(),
-      method: c.req.method,
-      endpoint: c.req.url.split(':8787')[1],
-      status: c.res.status,
-      duration: ms,
-      requestOptions: requestOptionsArray,
-    })
-  );
+    console.log(requestOption.type || 'requestOption', requestOption);
+
+    try {
+      const response = requestOption.requestParams.stream
+        ? { message: 'The response was a stream.' }
+        : await c.res.clone().json();
+
+      const responseString = JSON.stringify(response);
+      if (responseString.length > MAX_RESPONSE_LENGTH) {
+        requestOption.response =
+          responseString.substring(0, MAX_RESPONSE_LENGTH) + '...';
+      } else {
+        requestOption.response = response;
+      }
+    } catch (error) {
+      console.error('Error processing log:', error);
+    }
+
+    await broadcastLog(
+      JSON.stringify({
+        time: new Date().toLocaleString(),
+        method: c.req.method,
+        endpoint: c.req.url.split(':8787')[1],
+        status: c.res.status,
+        duration: ms,
+        requestOptions: requestOption,
+      })
+    );
+  }
 }
 
 export const logger = () => {
