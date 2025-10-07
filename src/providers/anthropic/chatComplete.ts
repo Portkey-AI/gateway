@@ -742,9 +742,10 @@ export const AnthropicChatCompleteStreamChunkTransform: (
     parsedChunk.type === 'content_block_start' &&
     parsedChunk.content_block?.type === 'tool_use';
   if (isToolBlockStart) {
-    streamState.toolIndex = streamState.toolIndex
-      ? streamState.toolIndex + 1
-      : 0;
+    streamState.toolIndex =
+      typeof streamState.toolIndex !== 'undefined'
+        ? streamState.toolIndex + 1
+        : 0;
   }
   const isToolBlockDelta: boolean =
     parsedChunk.type === 'content_block_delta' &&
