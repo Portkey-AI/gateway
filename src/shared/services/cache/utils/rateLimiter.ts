@@ -59,6 +59,10 @@ if tokens >= units then
     tokensModified = true
   end
 else
+  if tokens > 0 then
+    tokensModified = true
+  end
+  tokens = 0
   local needed = units - currentTokens
   local rate = capacity / windowSize
   waitTime = (rate > 0) and math.floor(needed / rate) or -1
