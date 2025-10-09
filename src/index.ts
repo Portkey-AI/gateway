@@ -38,7 +38,6 @@ import { imageEditsHandler } from './handlers/imageEditsHandler';
 import conf from '../conf.json';
 import modelResponsesHandler from './handlers/modelResponsesHandler';
 import { messagesCountTokensHandler } from './handlers/messagesCountTokensHandler';
-import { portkey } from './middlewares/portkey';
 
 // Create a new Hono server instance
 const app = new Hono();
@@ -98,7 +97,6 @@ app.get('/v1/models', modelsHandler);
 
 // Use hooks middleware for all routes
 app.use('*', hooks);
-app.use('*', portkey());
 
 if (conf.cache === true) {
   app.use('*', memoryCache());
