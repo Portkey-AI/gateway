@@ -11,13 +11,11 @@
           "type": "requests",
           "unit": "rph",
           "value": 3
-        }
-      ],
-      "usage_limits": [
+        },
         {
           "type": "tokens",
-          "credit_limit": 1000000,
-          "periodic_reset": "weekly"
+          "unit": "rph",
+          "value": 3000
         }
       ],
       "models": [
