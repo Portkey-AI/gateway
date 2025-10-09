@@ -31,10 +31,10 @@ const transformIntegrations = (integrations: any) => {
       slug: integration.slug,
       usage_limits: null,
       status: 'active',
-      integration_id: '1234567890',
+      integration_id: integration.slug,
       object: 'virtual-key',
       integration_details: {
-        id: '1234567890',
+        id: integration.slug,
         slug: integration.slug,
         usage_limits: integration.usage_limits,
         rate_limits: integration.rate_limits,
@@ -46,7 +46,6 @@ const transformIntegrations = (integrations: any) => {
 
 let settings: any = undefined;
 try {
-  // @ts-expect-error
   const settingsFile = await import('./settings.json');
   if (settingsFile) {
     settings = {};
