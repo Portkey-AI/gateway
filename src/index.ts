@@ -8,7 +8,7 @@ import { Context, Hono } from 'hono';
 import { prettyJSON } from 'hono/pretty-json';
 import { HTTPException } from 'hono/http-exception';
 import { compress } from 'hono/compress';
-import { env, getRuntimeKey } from 'hono/adapter';
+import { getRuntimeKey } from 'hono/adapter';
 // import { env } from 'hono/adapter' // Have to set this up for multi-environment deployment
 
 // Middlewares
@@ -38,6 +38,7 @@ import { imageEditsHandler } from './handlers/imageEditsHandler';
 import conf from '../conf.json';
 import modelResponsesHandler from './handlers/modelResponsesHandler';
 import { messagesCountTokensHandler } from './handlers/messagesCountTokensHandler';
+import { portkey } from './middlewares/portkey';
 
 // Create a new Hono server instance
 const app = new Hono();
@@ -97,6 +98,7 @@ app.get('/v1/models', modelsHandler);
 
 // Use hooks middleware for all routes
 app.use('*', hooks);
+app.use('*', portkey());
 
 if (conf.cache === true) {
   app.use('*', memoryCache());
