@@ -86,8 +86,8 @@ async function resetIntegrationRateLimitHandler(c: Context): Promise<Response> {
     const workspaceId = settings.organisationDetails?.workspaceDetails?.id;
     const key = c.req.param('key');
     const rateLimit = settings.integrations
-      .find((integration) => integration.slug === integrationId)?.integration_details
-      ?.rate_limits.find(
+      .find((integration) => integration.slug === integrationId)
+      ?.integration_details?.rate_limits.find(
         (rateLimit) => rateLimit.type === key
       );
     const workspaceKey = `${integrationId}-${workspaceId}`;
