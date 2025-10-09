@@ -1,10 +1,10 @@
-const organisationDetails = {
+export const defaultOrganisationDetails = {
   id: '00000000-0000-0000-0000-000000000000',
   name: 'Portkey self hosted',
   settings: {
     debug_log: 1,
     is_virtual_key_limit_enabled: 1,
-    allowed_guardrails: ['BASIC'],
+    allowed_guardrails: ['BASIC', 'PARTNER', 'PRO'],
   },
   workspaceDetails: {},
   defaults: {
@@ -49,7 +49,7 @@ try {
   const settingsFile = await import('./settings.json');
   if (settingsFile) {
     settings = {};
-    settings.organisationDetails = organisationDetails;
+    settings.organisationDetails = defaultOrganisationDetails;
     if (settingsFile.integrations) {
       settings.integrations = transformIntegrations(settingsFile.integrations);
     }
