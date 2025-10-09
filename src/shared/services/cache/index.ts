@@ -253,6 +253,10 @@ export class CacheService {
     }));
     return Promise.all(promises);
   }
+
+  getClient(): CacheBackend {
+    return this.backend;
+  }
 }
 
 // Default cache instances for different use cases

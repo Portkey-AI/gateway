@@ -38,10 +38,18 @@ import { imageEditsHandler } from './handlers/imageEditsHandler';
 import conf from '../conf.json';
 import modelResponsesHandler from './handlers/modelResponsesHandler';
 import { messagesCountTokensHandler } from './handlers/messagesCountTokensHandler';
+import { portkey } from './middlewares/portkey';
+import { adminRoutesHandler } from './handlers/adminRoutesHandler';
+import { createCacheBackendsRedis } from './shared/services/cache';
 
 // Create a new Hono server instance
 const app = new Hono();
 const runtime = getRuntimeKey();
+
+if (runtime === 'node' && process.env.REDIS_CONNECTION_STRING) {
+  createCacheBackendsRedis(process.env.REDIS_CONNECTION_STRING);
+}
+
 /**
  * Middleware that conditionally applies compression middleware based on the runtime.
  * Compression is automatically handled for lagon and workerd runtimes
@@ -84,6 +92,12 @@ if (runtime === 'node') {
  */
 app.get('/', (c) => c.text('AI Gateway says hey!'));
 
+/**
+ * Admin routes
+ * All /admin/* routes are handled by the admin routes handler
+ */
+app.route('/admin', adminRoutesHandler());
+
 // Use prettyJSON middleware for all routes
 app.use('*', prettyJSON());
 
@@ -97,6 +111,7 @@ app.get('/v1/models', modelsHandler);
 
 // Use hooks middleware for all routes
 app.use('*', hooks);
+app.use('*', portkey());
 
 if (conf.cache === true) {
   app.use('*', memoryCache());

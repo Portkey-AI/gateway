@@ -45,20 +45,30 @@ const transformIntegrations = (integrations: any) => {
 };
 
 let settings: any = undefined;
-try {
-  const settingsFile = await import('./settings.json');
-  if (settingsFile) {
-    settings = {};
-    settings.organisationDetails = defaultOrganisationDetails;
-    if (settingsFile.integrations) {
-      settings.integrations = transformIntegrations(settingsFile.integrations);
+const loadSettings = async () => {
+  try {
+    const settingsFile = await import('./settings.json');
+    if (settingsFile) {
+      settings = {};
+      settings.organisationDetails = defaultOrganisationDetails;
+      if (settingsFile.integrations) {
+        settings.integrations = transformIntegrations(
+          settingsFile.integrations
+        );
+      }
     }
+  } catch (error) {
+    console.log(
+      'WARNING: Unable to import settings from the path, please make sure the file exists',
+      error
+    );
   }
-} catch (error) {
-  console.log(
-    'WARNING: Unable to import settings from the path, please make sure the file exists',
-    error
-  );
-}
+};
 
-export { settings };
+loadSettings();
+
+const refreshSettings = async () => {
+  await loadSettings();
+};
+
+export { settings, refreshSettings };

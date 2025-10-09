@@ -1,5 +1,6 @@
 import { Redis, Cluster } from 'ioredis';
 import { RateLimiterKeyTypes } from '../../../../globals';
+import { RedisCacheBackend } from '../backends/redis';
 
 const RATE_LIMIT_LUA = `
 local tokensKey = KEYS[1]
@@ -81,7 +82,7 @@ return {allowed, waitTime, currentTokens}
 `;
 
 class RedisRateLimiter {
-  private redis: Redis | Cluster;
+  private redis: RedisCacheBackend;
   private capacity: number;
   private windowSize: number;
   private tokensKey: string;
@@ -92,7 +93,7 @@ class RedisRateLimiter {
   private key: string;
 
   constructor(
-    redisClient: Redis | Cluster,
+    redisClient: RedisCacheBackend,
     capacity: number,
     windowSize: number,
     key: string,
@@ -103,8 +104,8 @@ class RedisRateLimiter {
     const tag = `{rate:${key}}`; // ensures same hash slot
     this.capacity = capacity;
     this.windowSize = windowSize;
-    this.tokensKey = `${tag}:tokens`;
-    this.lastRefillKey = `${tag}:lastRefill`;
+    this.tokensKey = `default:default:${tag}:tokens`;
+    this.lastRefillKey = `default:default:${tag}:lastRefill`;
     this.keyTTL = windowSize * ttlFactor; // dynamic TTL
     this.keyType = keyType;
     this.key = key;
@@ -126,12 +127,12 @@ class RedisRateLimiter {
     const sha = await this.loadOrGetScriptSha();
 
     try {
-      return await this.redis.evalsha(sha, keys.length, ...keys, ...args);
+      return await this.redis.evalsha(sha, keys, args);
     } catch (error: any) {
       if (error.message.includes('NOSCRIPT')) {
         // Script not loaded on target node - load it and retry with same SHA
         await this.redis.script('LOAD', RATE_LIMIT_LUA);
-        return await this.redis.evalsha(sha, keys.length, ...keys, ...args);
+        return await this.redis.evalsha(sha, keys, args);
       }
       throw error;
     }
@@ -171,7 +172,8 @@ class RedisRateLimiter {
   }
 
   async getToken(): Promise<string | null> {
-    return this.redis.get(this.tokensKey);
+    const cacheEntry = await this.redis.get(this.tokensKey);
+    return cacheEntry ? cacheEntry.value : null;
   }
 
   async decrementToken(
