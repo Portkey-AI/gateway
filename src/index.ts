@@ -48,18 +48,6 @@ import { messagesCountTokensHandler } from './handlers/messagesCountTokensHandle
 const app = new Hono();
 const runtime = getRuntimeKey();
 
-// cache beackends will only get created during worker or app initialization depending on the runtime
-if (getRuntimeKey() === 'workerd') {
-  app.use('*', (c: Context, next) => {
-    createCacheBackendsCF(env(c));
-    return next();
-  });
-} else if (getRuntimeKey() === 'node' && process.env.REDIS_CONNECTION_STRING) {
-  createCacheBackendsRedis(process.env.REDIS_CONNECTION_STRING);
-} else {
-  createCacheBackendsLocal();
-}
-
 /**
  * Middleware that conditionally applies compression middleware based on the runtime.
  * Compression is automatically handled for lagon and workerd runtimes
