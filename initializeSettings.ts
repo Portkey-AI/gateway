@@ -20,7 +20,7 @@ const organisationDetails = {
 const transformIntegrations = (integrations: any) => {
   return integrations.map((integration: any) => {
     return {
-      id: '1234567890', //need to do consistent hashing for caching
+      id: integration.slug, //need to do consistent hashing for caching
       ai_provider_name: integration.provider,
       model_config: {
         ...integration.credentials,
