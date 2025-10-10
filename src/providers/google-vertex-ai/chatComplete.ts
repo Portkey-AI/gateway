@@ -770,7 +770,21 @@ export const VertexAnthropicChatCompleteResponseTransform: (
   }
 
   if ('content' in response) {
-    const { input_tokens = 0, output_tokens = 0 } = response?.usage ?? {};
+    const {
+      input_tokens = 0,
+      output_tokens = 0,
+      cache_creation_input_tokens = 0,
+      cache_read_input_tokens = 0,
+    } = response?.usage ?? {};
+
+    const totalTokens =
+      input_tokens +
+      output_tokens +
+      cache_creation_input_tokens +
+      cache_read_input_tokens;
+
+    const shouldSendCacheUsage =
+      cache_creation_input_tokens || cache_read_input_tokens;
 
     let content: AnthropicContentItem[] | string = strictOpenAiCompliance
       ? ''
@@ -825,7 +839,11 @@ export const VertexAnthropicChatCompleteResponseTransform: (
       usage: {
         prompt_tokens: input_tokens,
         completion_tokens: output_tokens,
-        total_tokens: input_tokens + output_tokens,
+        total_tokens: totalTokens,
+        ...(shouldSendCacheUsage && {
+          cache_read_input_tokens: cache_read_input_tokens,
+          cache_creation_input_tokens: cache_creation_input_tokens,
+        }),
       },
     };
   }
@@ -894,10 +912,20 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
   }
 
   if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
+    const shouldSendCacheUsage =
+      parsedChunk.message?.usage?.cache_read_input_tokens ||
+      parsedChunk.message?.usage?.cache_creation_input_tokens;
+
     streamState.model = parsedChunk?.message?.model ?? '';
 
     streamState.usage = {
       prompt_tokens: parsedChunk.message.usage?.input_tokens,
+      ...(shouldSendCacheUsage && {
+        cache_read_input_tokens:
+          parsedChunk.message?.usage?.cache_read_input_tokens,
+        cache_creation_input_tokens:
+          parsedChunk.message?.usage?.cache_creation_input_tokens,
+      }),
     };
     return (
       `data: ${JSON.stringify({
@@ -924,6 +952,12 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
   }
 
   if (parsedChunk.type === 'message_delta' && parsedChunk.usage) {
+    const totalTokens =
+      (streamState?.usage?.prompt_tokens ?? 0) +
+      (streamState?.usage?.cache_creation_input_tokens ?? 0) +
+      (streamState?.usage?.cache_read_input_tokens ?? 0) +
+      (parsedChunk.usage.output_tokens ?? 0);
+
     return (
       `data: ${JSON.stringify({
         id: fallbackId,
@@ -943,10 +977,8 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
         ],
         usage: {
           completion_tokens: parsedChunk.usage?.output_tokens,
-          prompt_tokens: streamState.usage?.prompt_tokens,
-          total_tokens:
-            (streamState.usage?.prompt_tokens || 0) +
-            (parsedChunk.usage?.output_tokens || 0),
+          ...streamState.usage,
+          total_tokens: totalTokens,
         },
       })}` + '\n\n'
     );
