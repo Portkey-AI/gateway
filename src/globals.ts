@@ -105,6 +105,7 @@ export const THREE_ZERO_TWO_AI: string = '302ai';
 export const MESHY: string = 'meshy';
 export const TRIPO3D: string = 'tripo3d';
 export const NEXTBIT: string = 'nextbit';
+export const VEENA_MAX: string = 'veenamax';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -173,6 +174,7 @@ export const VALID_PROVIDERS = [
   MESHY,
   TRIPO3D,
   NEXTBIT,
+  VEENA_MAX,
 ];
 
 export const CONTENT_TYPES = {

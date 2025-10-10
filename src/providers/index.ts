@@ -66,6 +66,7 @@ import AI302Config from './302ai';
 import MeshyConfig from './meshy';
 import Tripo3DConfig from './tripo3d';
 import { NextBitConfig } from './nextbit';
+import VeenaMaxConfig from './veenamax';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -132,6 +133,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   meshy: MeshyConfig,
   nextbit: NextBitConfig,
   tripo3d: Tripo3DConfig,
+  veenamax: VeenaMaxConfig,
 };
 
 export default Providers;
