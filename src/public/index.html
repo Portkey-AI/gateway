@@ -910,6 +910,71 @@
       background-color: #dc2626;
     }
 
+    .integration-json-editor {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .json-editor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .json-editor-header h3 {
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .json-editor-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .json-editor-textarea {
+      width: 100%;
+      min-height: 400px;
+      padding: 1rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      background-color: #f9fafb;
+      color: #374151;
+      resize: vertical;
+      transition: border-color 0.2s;
+    }
+
+    .json-editor-textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      background-color: white;
+    }
+
+    .json-editor-help {
+      background-color: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.375rem;
+      padding: 1rem;
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+
+    .json-editor-help p {
+      margin: 0 0 0.5rem 0;
+    }
+
+    .json-editor-help p:last-child {
+      margin-bottom: 0;
+    }
+
     /* Responsive adjustments */
     @media (max-width: 768px) {
       .integrations-header {
@@ -2574,7 +2639,7 @@
             <div class="loading-row">
               <div style="color: #ef4444;">Error loading integrations: ${error.message}</div>
               <div style="color: #6b7280; font-size: 0.875rem; margin-top: 0.5rem;">
-                ${error.message.includes('Admin API Key') ? 'Please refresh the page and enter a valid Admin API Key.' : 'Make sure the settings.json file exists in the project root directory.'}
+                ${error.message.includes('Admin API Key') ? 'Please refresh the page and enter a valid Admin API Key.' : 'Make sure the conf.json file exists in the project root directory.'}
               </div>
             </div>
           `;
@@ -2621,80 +2686,40 @@
               </div>
             </div>
             <div class="integration-content" id="content-${index}">
-              <form class="integration-form" id="form-${index}">
-                <div class="form-row">
-                  <div class="form-group">
-                    <label for="provider-${index}">Provider</label>
-                    <select id="provider-${index}" name="provider" required>
-                      <option value="openai" ${integration.provider === 'openai' ? 'selected' : ''}>OpenAI</option>
-                      <option value="anthropic" ${integration.provider === 'anthropic' ? 'selected' : ''}>Anthropic</option>
-                      <option value="groq" ${integration.provider === 'groq' ? 'selected' : ''}>Groq</option>
-                      <option value="bedrock" ${integration.provider === 'bedrock' ? 'selected' : ''}>Bedrock</option>
-                      <option value="azure-openai" ${integration.provider === 'azure-openai' ? 'selected' : ''}>Azure OpenAI</option>
-                      <option value="cohere" ${integration.provider === 'cohere' ? 'selected' : ''}>Cohere</option>
-                      <option value="together-ai" ${integration.provider === 'together-ai' ? 'selected' : ''}>Together AI</option>
-                      <option value="perplexity-ai" ${integration.provider === 'perplexity-ai' ? 'selected' : ''}>Perplexity AI</option>
-                      <option value="mistral-ai" ${integration.provider === 'mistral-ai' ? 'selected' : ''}>Mistral AI</option>
-                      <option value="vertex-ai" ${integration.provider === 'vertex-ai' ? 'selected' : ''}>Vertex AI</option>
-                      <option value="others" ${integration.provider === 'others' ? 'selected' : ''}>Others</option>
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label for="slug-${index}">Slug</label>
-                    <input type="text" id="slug-${index}" name="slug" value="${integration.slug}" required>
-                  </div>
-                </div>
-                
-                <div class="form-group">
-                  <label>Credentials</label>
-                  <div id="credentials-${index}">
-                    ${renderCredentials(integration.credentials, index)}
-                  </div>
-                </div>
-
-                <div class="rate-limits-section">
-                  <div class="rate-limits-header">
-                    <div class="rate-limits-title">Rate Limits</div>
+              <div class="integration-json-editor">
+                <div class="json-editor-header">
+                  <h3>Integration Configuration</h3>
+                  <div class="json-editor-actions">
                     ${hasRateLimits ? `
-                    <button type="button" class="btn-reset-rate-limits" onclick="resetRateLimits(${index})">
+                    <button type="button" class="btn-reset-rate-limits" onclick="resetAllRateLimits(${index})">
                       Reset All Rate Limits
                     </button>
                     ` : ''}
+                    <button type="button" class="btn btn-save" onclick="saveIntegration(${index})">
+                      Save Changes
+                    </button>
+                    <button type="button" class="btn btn-cancel" onclick="cancelEdit(${index})">
+                      Cancel
+                    </button>
+                    <button type="button" class="btn btn-delete" onclick="deleteIntegration(${index})">
+                      Delete
+                    </button>
                   </div>
-                  <div id="rate-limits-${index}">
-                    ${hasRateLimits ? renderRateLimits(integration.rate_limits, index) : '<div>No rate limits configured</div>'}
-                  </div>
-                  <button type="button" class="btn-add-rate-limit" onclick="addRateLimit(${index})">
-                    Add Rate Limit
-                  </button>
                 </div>
-
-                ${hasModels ? `
-                <div class="models-section">
-                  <div class="models-header">
-                    <div class="models-title">Models</div>
-                  </div>
-                  <div id="models-${index}">
-                    ${renderModels(integration.models, index)}
-                  </div>
-                  <button type="button" class="btn-add-model" onclick="addModel(${index})">
-                    Add Model
-                  </button>
+                <div class="form-group">
+                  <label for="json-editor-${index}">Integration JSON Configuration</label>
+                  <textarea 
+                    id="json-editor-${index}" 
+                    class="json-editor-textarea" 
+                    rows="20"
+                    placeholder="Enter integration configuration as JSON..."
+                  >${JSON.stringify(integration, null, 2)}</textarea>
                 </div>
-                ` : ''}
-
-                <div class="integration-form-actions">
-                  <button type="button" class="btn btn-save" onclick="saveIntegration(${index})">
-                    Save Changes
-                  </button>
-                  <button type="button" class="btn btn-cancel" onclick="cancelEdit(${index})">
-                    Cancel
-                  </button>
-                  <button type="button" class="btn btn-delete" onclick="deleteIntegration(${index})">
-                    Delete
-                  </button>
+                <div class="json-editor-help">
+                  <p><strong>Note:</strong> Edit the JSON configuration above. Make sure the JSON is valid before saving.</p>
+                  <p><strong>Common fields:</strong> provider, slug, credentials, rate_limits, models, allow_all_models</p>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         `;
@@ -2804,12 +2829,10 @@
               function addNewIntegration() {
                 const newIntegration = {
                   provider: 'openai',
-                  slug: 'new-integration',
+                  slug: crypto.randomUUID().substring(0, 8),
                   credentials: {
-                    apiKey: ''
                   },
-                  rate_limits: [],
-                  models: []
+                  allow_all_models: true,
                 };
 
                 integrationsData.push(newIntegration);
@@ -2824,72 +2847,44 @@
 
               // Save integration
               async function saveIntegration(index) {
-                const form = document.getElementById(`form-${index}`);
-                const formData = new FormData(form);
-
-                // Collect form data
-                const integration = {
-                  provider: formData.get('provider'),
-                  slug: formData.get('slug'),
-                  credentials: {},
-                  rate_limits: [],
-                  models: integrationsData[index].models || []
-                };
-
-                // Collect credentials
-                const credentialEntries = [];
-                for (const [key, value] of formData.entries()) {
-                  if (key.startsWith('credentials.')) {
-                    const parts = key.split('.');
-                    const credIndex = parseInt(parts[1]);
-                    const field = parts[2];
-
-                    if (!credentialEntries[credIndex]) {
-                      credentialEntries[credIndex] = {};
-                    }
-                    credentialEntries[credIndex][field] = value;
+                try {
+                  const textarea = document.getElementById(`json-editor-${index}`);
+                  const jsonText = textarea.value.trim();
+                  
+                  if (!jsonText) {
+                    alert('Please enter integration configuration');
+                    return;
                   }
+                  
+                  // Parse and validate JSON
+                  let integration;
+                  try {
+                    integration = JSON.parse(jsonText);
+                  } catch (error) {
+                    alert(`Invalid JSON: ${error.message}`);
+                    return;
+                  }
+                  
+                  // Basic validation
+                  if (!integration.provider || !integration.slug) {
+                    alert('Integration must have provider and slug fields');
+                    return;
+                  }
+                  
+                  // Update the integration data
+                  integrationsData[index] = integration;
+                  
+                  // Save to file
+                  await saveIntegrationsToFile();
+                  
+                  // Re-render the integrations
+                  renderIntegrations();
+                  
+                  alert('Integration saved successfully!');
+                } catch (error) {
+                  console.error('Error saving integration:', error);
+                  alert(`Failed to save integration: ${error.message}`);
                 }
-
-                credentialEntries.forEach(entry => {
-                  if (entry.key && entry.value) {
-                    integration.credentials[entry.key] = entry.value;
-                  }
-                });
-
-                // Collect rate limits
-                const rateLimitEntries = [];
-                for (const [key, value] of formData.entries()) {
-                  if (key.startsWith('rate_limits.')) {
-                    const parts = key.split('.');
-                    const limitIndex = parseInt(parts[1]);
-                    const field = parts[2];
-
-                    if (!rateLimitEntries[limitIndex]) {
-                      rateLimitEntries[limitIndex] = {};
-                    }
-                    rateLimitEntries[limitIndex][field] = value;
-                  }
-                }
-
-                rateLimitEntries.forEach(entry => {
-                  if (entry.type && entry.value && entry.unit) {
-                    integration.rate_limits.push({
-                      type: entry.type,
-                      value: parseInt(entry.value),
-                      unit: entry.unit
-                    });
-                  }
-                });
-
-                // Update the integration data
-                integrationsData[index] = integration;
-
-                // Save to settings.json
-                await saveIntegrationsToFile();
-
-                // Re-render to update the display
-                renderIntegrations();
               }
 
               // Cancel edit
@@ -2997,43 +2992,44 @@
                 }
               }
 
-      // Reset individual rate limit
-      async function resetIndividualRateLimit(integrationIndex, rateLimitIndex) {
-        if (confirm('Are you sure you want to reset this specific rate limit?')) {
-          try {
-            // Get the integration and rate limit info
-            const integration = integrationsData[integrationIndex];
-            const rateLimit = integration.rate_limits[rateLimitIndex];
-            
-            // Create a cache key based on the integration and rate limit
-            // const cacheKey = `rate_limit:${integration.slug}:${rateLimit.type}:${rateLimit.unit}`;
-            
-            // Delete the cache entry for this rate limit
-            const response = await fetch(`/admin/integrations/ratelimit/${integration.slug}/${rateLimit.type}/reset`, {
-              method: 'PUT',
-              headers: {
-                'Authorization': `Bearer ${adminApiKey}`,
-                'x-admin-api-key': adminApiKey
+              // Reset all rate limits for an integration
+              async function resetAllRateLimits(integrationIndex) {
+                if (confirm('Are you sure you want to reset all rate limits for this integration?')) {
+                  try {
+                    const integration = integrationsData[integrationIndex];
+                    
+                    if (!integration.rate_limits || integration.rate_limits.length === 0) {
+                      alert('No rate limits configured for this integration');
+                      return;
+                    }
+
+                    console.log('Resetting rate limits for integration:', integration.slug);
+                    
+                    const response = await fetch(`/admin/integrations/ratelimit/${integration.slug}/reset`, {
+                      method: 'PUT',
+                      headers: {
+                        'Authorization': `Bearer ${adminApiKey}`,
+                        'x-admin-api-key': adminApiKey
+                      }
+                    });
+                    
+                    if (!response.ok) {
+                      if (response.status === 401) {
+                        localStorage.removeItem('adminApiKey');
+                        adminApiKey = '';
+                        throw new Error('Invalid Admin API Key. Please refresh and try again.');
+                      }
+                      throw new Error(`Failed to reset rate limit: ${rateLimit.type}`);
+                    }
+                    
+                    console.log(`All rate limits reset for integration ${integration.slug}`);
+                    alert(`All rate limits reset successfully for ${integration.slug}`);
+                  } catch (error) {
+                    console.error('Error resetting rate limits:', error);
+                    alert(`Failed to reset rate limits: ${error.message}`);
+                  }
+                }
               }
-            });
-            
-            if (!response.ok) {
-              if (response.status === 401) {
-                localStorage.removeItem('adminApiKey');
-                adminApiKey = '';
-                throw new Error('Invalid Admin API Key. Please refresh and try again.');
-              }
-              throw new Error('Failed to reset rate limit cache');
-            }
-            
-            console.log(`Rate limit cache cleared for integration ${integrationIndex}, rate limit ${rateLimitIndex}`);
-            alert(`Rate limit reset successfully for ${integration.slug} (${rateLimit.type} ${rateLimit.unit})`);
-          } catch (error) {
-            console.error('Error resetting rate limit:', error);
-            alert(`Failed to reset rate limit: ${error.message}`);
-          }
-        }
-      }
 
               // Add credential field
               function addCredential(index) {
@@ -3070,7 +3066,7 @@
                 }
               }
 
-              // Save integrations to settings.json file
+              // Save integrations to conf.json file
               async function saveIntegrationsToFile() {
                 try {
                   const settingsData = {

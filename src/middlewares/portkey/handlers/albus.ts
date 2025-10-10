@@ -4,7 +4,7 @@ import { generateV2CacheKey } from './cache';
 import { fetchFromKVStore, putInKVStore } from './kv';
 import { fetchOrganisationProviderFromSlugFromFile } from './configFile';
 
-const isLocalConfigEnabled = process.env.FETCH_SETTINGS_FROM_FILE === 'true';
+const isLocalConfigEnabled = process?.env?.FETCH_SETTINGS_FROM_FILE === 'true';
 
 /**
  * Asynchronously fetch data from Albus.

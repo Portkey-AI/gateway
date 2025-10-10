@@ -83,23 +83,22 @@ async function resetIntegrationRateLimitHandler(c: Context): Promise<Response> {
     const integrationId = c.req.param('integrationId');
     const organisationId = settings.organisationDetails.id;
     const workspaceId = settings.organisationDetails?.workspaceDetails?.id;
-    const key = c.req.param('key');
-    const rateLimit = settings.integrations
-      .find((integration) => integration.slug === integrationId)
-      ?.integration_details?.rate_limits.find(
-        (rateLimit) => rateLimit.type === key
-      );
+    const rateLimits = settings.integrations.find(
+      (integration) => integration.slug === integrationId
+    )?.integration_details?.rate_limits;
     const workspaceKey = `${integrationId}-${workspaceId}`;
-    const rateLimitKey = generateRateLimitKey(
-      organisationId,
-      rateLimit.type,
-      RateLimiterKeyTypes.INTEGRATION_WORKSPACE,
-      workspaceKey,
-      rateLimit.unit
-    );
-    const finalKey = `{rate:${rateLimitKey}}:${key}`;
-    const cache = getDefaultCache();
-    await cache.delete(finalKey);
+    for (const rateLimit of rateLimits) {
+      const rateLimitKey = generateRateLimitKey(
+        organisationId,
+        rateLimit.type,
+        RateLimiterKeyTypes.INTEGRATION_WORKSPACE,
+        workspaceKey,
+        rateLimit.unit
+      );
+      const finalKey = `{rate:${rateLimitKey}}:${rateLimit.type}`;
+      const cache = getDefaultCache();
+      await cache.delete(finalKey);
+    }
     return c.json({ success: true });
   } catch (error) {
     console.error('Error deleting cache:', error);
@@ -118,7 +117,7 @@ export function adminRoutesHandler() {
   adminApp.get('/settings', getSettingsHandler);
   adminApp.put('/settings', putSettingsHandler);
   adminApp.put(
-    '/integrations/ratelimit/:integrationId/:key/reset',
+    '/integrations/ratelimit/:integrationId/reset',
     resetIntegrationRateLimitHandler
   );
 
