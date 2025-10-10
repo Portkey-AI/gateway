@@ -38,10 +38,15 @@ import { imageEditsHandler } from './handlers/imageEditsHandler';
 import conf from '../conf.json';
 import modelResponsesHandler from './handlers/modelResponsesHandler';
 import { messagesCountTokensHandler } from './handlers/messagesCountTokensHandler';
+import { createCacheBackendsRedis } from './shared/services/cache';
 
 // Create a new Hono server instance
 const app = new Hono();
 const runtime = getRuntimeKey();
+
+if (runtime === 'node' && process.env.REDIS_CONNECTION_STRING) {
+  createCacheBackendsRedis(process.env.REDIS_CONNECTION_STRING);
+}
 /**
  * Middleware that conditionally applies compression middleware based on the runtime.
  * Compression is automatically handled for lagon and workerd runtimes

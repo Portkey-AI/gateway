@@ -188,3 +188,11 @@ if (!isHeadless) {
 
 // Single-line ready message
 console.log('\n\x1b[32m✨ Ready for connections!\x1b[0m');
+
+process.on('uncaughtException', (err) => {
+  console.error('Unhandled exception', err);
+});
+
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled rejection', err);
+});
