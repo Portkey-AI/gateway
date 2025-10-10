@@ -75,6 +75,7 @@ export const plugins = {
     jwt: defaultjwt,
     requiredMetadataKeys: defaultrequiredMetadataKeys,
     regexReplace: defaultregexReplace,
+    allowedRequestTypes: defaultallowedRequestTypes,
   },
   portkey: {
     moderateContent: portkeymoderateContent,

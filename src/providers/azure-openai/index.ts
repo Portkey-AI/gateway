@@ -42,6 +42,7 @@ const AzureOpenAIConfig: ProviderConfigs = {
   embed: AzureOpenAIEmbedConfig,
   api: AzureOpenAIAPIConfig,
   imageGenerate: AzureOpenAIImageGenerateConfig,
+  imageEdit: {},
   chatComplete: AzureOpenAIChatCompleteConfig,
   createSpeech: AzureOpenAICreateSpeechConfig,
   createFinetune: OpenAICreateFinetuneConfig,

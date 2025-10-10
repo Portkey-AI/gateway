@@ -146,7 +146,7 @@ export interface Options {
   /** The parameter to determine if extra non-openai compliant fields should be returned in response */
   strictOpenAiCompliance?: boolean;
   /** Parameter to determine if fim/completions endpoint is to be used */
-  mistralFimCompletion?: String;
+  mistralFimCompletion?: string;
   /** Anthropic specific headers */
   anthropicBeta?: string;
   anthropicVersion?: string;
@@ -157,6 +157,9 @@ export interface Options {
 
   /** Cortex specific fields */
   snowflakeAccount?: string;
+
+  /** Azure entra scope */
+  azureEntraScope?: string;
 }
 
 /**

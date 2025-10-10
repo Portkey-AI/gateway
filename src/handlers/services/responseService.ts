@@ -1,5 +1,6 @@
 // responseService.ts
 
+import { getRuntimeKey } from 'hono/adapter';
 import { HEADER_KEYS, POWERED_BY, RESPONSE_HEADER_KEYS } from '../../globals';
 import { responseHandler } from '../responseHandlers';
 import { HooksService } from './hooksService';
@@ -121,10 +122,9 @@ export class ResponseService {
     }
 
     // Remove headers directly
-    // const encoding = response.headers.get('content-encoding');
-    // if (encoding?.includes('br') || getRuntimeKey() == 'node') {
-    //   response.headers.delete('content-encoding');
-    // }
+    if (getRuntimeKey() == 'node') {
+      response.headers.delete('content-encoding');
+    }
     response.headers.delete('content-length');
     // response.headers.delete('transfer-encoding');
 

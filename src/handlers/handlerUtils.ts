@@ -866,6 +866,7 @@ export function constructConfigFromRequestHeaders(
     azureEntraClientSecret:
       requestHeaders[`x-${POWERED_BY}-azure-entra-client-secret`],
     azureEntraTenantId: requestHeaders[`x-${POWERED_BY}-azure-entra-tenant-id`],
+    azureEntraScope: requestHeaders[`x-${POWERED_BY}-azure-entra-scope`],
   };
 
   const awsConfig = {
@@ -939,6 +940,7 @@ export function constructConfigFromRequestHeaders(
     vertexModelName: requestHeaders[`x-${POWERED_BY}-provider-model`],
     vertexBatchEndpoint:
       requestHeaders[`x-${POWERED_BY}-provider-batch-endpoint`],
+    anthropicBeta: requestHeaders[`x-${POWERED_BY}-anthropic-beta`],
   };
 
   const fireworksConfig = {

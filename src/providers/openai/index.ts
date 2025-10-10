@@ -53,6 +53,7 @@ const OpenAIConfig: ProviderConfigs = {
   api: OpenAIAPIConfig,
   chatComplete: OpenAIChatCompleteConfig,
   imageGenerate: OpenAIImageGenerateConfig,
+  imageEdit: {},
   createSpeech: OpenAICreateSpeechConfig,
   createTranscription: {},
   createTranslation: {},
