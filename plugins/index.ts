@@ -52,6 +52,7 @@ import { handler as defaultjwt } from './default/jwt';
 import { handler as defaultrequiredMetadataKeys } from './default/requiredMetadataKeys';
 import { handler as walledaiguardrails } from './walledai/guardrails';
 import { handler as defaultregexReplace } from './default/regexReplace';
+import { handler as defaultallowedRequestTypes } from './default/allowedRequestTypes';
 import { handler as javelinguardrails } from './javelin/guardrails';
 
 export const plugins = {
