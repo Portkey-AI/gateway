@@ -6,6 +6,8 @@ import Redis from 'ioredis';
 
 import { CacheBackend, CacheEntry, CacheOptions, CacheStats } from '../types';
 
+type RedisClient = Redis;
+
 // Using console.log for now to avoid build issues
 const logger = {
   debug: (msg: string, ...args: any[]) =>
@@ -17,22 +19,6 @@ const logger = {
   error: (msg: string, ...args: any[]) =>
     console.error(`[RedisCache] ${msg}`, ...args),
 };
-
-// Redis client interface matching ioredis
-interface RedisClient {
-  get(key: string): Promise<string | null>;
-  set(
-    key: string,
-    value: string,
-    expiryMode?: string | any,
-    time?: number | string
-  ): Promise<'OK' | null>;
-  del(...keys: string[]): Promise<number>;
-  exists(...keys: string[]): Promise<number>;
-  keys(pattern: string): Promise<string[]>;
-  flushdb(): Promise<'OK'>;
-  quit(): Promise<'OK'>;
-}
 
 export class RedisCacheBackend implements CacheBackend {
   private client: RedisClient;
@@ -52,12 +38,6 @@ export class RedisCacheBackend implements CacheBackend {
     this.dbName = dbName;
   }
 
-  private getFullKey(key: string, namespace?: string): string {
-    return namespace
-      ? `${this.dbName}:${namespace}:${key}`
-      : `${this.dbName}:default:${key}`;
-  }
-
   private serializeEntry<T>(entry: CacheEntry<T>): string {
     return JSON.stringify(entry);
   }
@@ -68,6 +48,12 @@ export class RedisCacheBackend implements CacheBackend {
 
   private isExpired(entry: CacheEntry): boolean {
     return entry.expiresAt !== undefined && entry.expiresAt <= Date.now();
+  }
+
+  getFullKey(key: string, namespace?: string): string {
+    return namespace
+      ? `${this.dbName}:${namespace}:${key}`
+      : `${this.dbName}:default:${key}`;
   }
 
   async get<T = any>(
@@ -214,6 +200,14 @@ export class RedisCacheBackend implements CacheBackend {
       logger.error('Redis getStats error:', error);
       return { ...this.stats };
     }
+  }
+
+  async script(mode: 'LOAD' | 'EXISTS', script: string): Promise<unknown> {
+    return await this.client.script('LOAD', script);
+  }
+
+  async evalsha(sha: string, keys: string[], args: string[]): Promise<unknown> {
+    return await this.client.evalsha(sha, keys.length, ...keys, ...args);
   }
 
   async cleanup(): Promise<void> {
