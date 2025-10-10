@@ -455,6 +455,7 @@ export const GoogleChatCompleteResponseTransform: (
       candidatesTokenCount = 0,
       totalTokenCount = 0,
       thoughtsTokenCount = 0,
+      cachedContentTokenCount = 0,
     } = response.usageMetadata;
 
     return {
@@ -534,6 +535,9 @@ export const GoogleChatCompleteResponseTransform: (
         total_tokens: totalTokenCount,
         completion_tokens_details: {
           reasoning_tokens: thoughtsTokenCount,
+        },
+        prompt_tokens_details: {
+          cached_tokens: cachedContentTokenCount,
         },
       },
     };
@@ -627,6 +631,9 @@ export const GoogleChatCompleteStreamChunkTransform: (
       total_tokens: parsedChunk.usageMetadata.totalTokenCount,
       completion_tokens_details: {
         reasoning_tokens: parsedChunk.usageMetadata.thoughtsTokenCount ?? 0,
+      },
+      prompt_tokens_details: {
+        cached_tokens: parsedChunk.usageMetadata.cachedContentTokenCount,
       },
     };
   }
