@@ -1,7 +1,6 @@
 import { Context, Hono } from 'hono';
-import { refreshSettings } from '../../initializeSettings';
 import { getDefaultCache } from '../shared/services/cache';
-import { settings } from '../../initializeSettings';
+import { getSettings } from '../../initializeSettings';
 import { generateRateLimitKey } from '../middlewares/portkey/handlers/rateLimits';
 import { RateLimiterKeyTypes } from '../globals';
 
@@ -12,7 +11,7 @@ async function authenticateAdmin(c: Context): Promise<boolean> {
   try {
     const fs = await import('fs/promises');
     const path = await import('path');
-    const settingsPath = path.join(process.cwd(), 'settings.json');
+    const settingsPath = path.join(process.cwd(), 'conf.json');
     const settingsData = await fs.readFile(settingsPath, 'utf-8');
     const settings = JSON.parse(settingsData);
 
@@ -41,11 +40,11 @@ async function getSettingsHandler(c: Context): Promise<Response> {
   try {
     const fs = await import('fs/promises');
     const path = await import('path');
-    const settingsPath = path.join(process.cwd(), 'settings.json');
+    const settingsPath = path.join(process.cwd(), 'conf.json');
     const settingsData = await fs.readFile(settingsPath, 'utf-8');
     return c.json(JSON.parse(settingsData));
   } catch (error) {
-    console.error('Error reading settings.json:', error);
+    console.error('Error reading conf.json:', error);
     return c.json({ error: 'Settings file not found' }, 404);
   }
 }
@@ -63,13 +62,12 @@ async function putSettingsHandler(c: Context): Promise<Response> {
   try {
     const fs = await import('fs/promises');
     const path = await import('path');
-    const settingsPath = path.join(process.cwd(), 'settings.json');
+    const settingsPath = path.join(process.cwd(), 'conf.json');
     const body = await c.req.json();
     await fs.writeFile(settingsPath, JSON.stringify(body, null, 2));
-    await refreshSettings();
     return c.json({ success: true });
   } catch (error) {
-    console.error('Error writing settings.json:', error);
+    console.error('Error writing conf.json:', error);
     return c.json({ error: 'Failed to save settings' }, 500);
   }
 }
@@ -81,6 +79,7 @@ async function resetIntegrationRateLimitHandler(c: Context): Promise<Response> {
   }
 
   try {
+    const settings = await getSettings();
     const integrationId = c.req.param('integrationId');
     const organisationId = settings.organisationDetails.id;
     const workspaceId = settings.organisationDetails?.workspaceDetails?.id;

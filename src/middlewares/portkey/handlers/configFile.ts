@@ -1,11 +1,12 @@
 import {
-  settings,
+  getSettings,
   defaultOrganisationDetails,
 } from '../../../../initializeSettings';
 
 export const fetchOrganisationProviderFromSlugFromFile = async (
   url: string
 ) => {
+  const settings = await getSettings();
   const virtualKeySlug = url.split('/').pop()?.split('?')[0];
   return settings.integrations.find(
     (integration: any) => integration.slug === virtualKeySlug
@@ -33,6 +34,7 @@ export const fetchOrganisationProviderFromSlugFromFile = async (
 // };
 
 export const fetchOrganisationDetailsFromFile = async () => {
+  const settings = await getSettings();
   return settings?.organisationDetails ?? defaultOrganisationDetails;
 };
 

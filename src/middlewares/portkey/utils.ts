@@ -23,10 +23,9 @@ import {
 import { checkRateLimits, getRateLimit } from './handlers/helpers';
 import { preRequestUsageValidator } from './handlers/usage';
 import {
-  handleIntegrationRequestRateLimits,
+  handleIntegrationTokenRateLimits,
   preRequestRateLimitValidator,
 } from './handlers/rateLimits';
-import { settings } from '../../../initializeSettings';
 
 const runtime = getRuntimeKey();
 
@@ -63,7 +62,7 @@ export function getPortkeyHeaders(
 export async function postResponseHandler(
   winkyBaseLog: WinkyLogObject,
   responseBodyJson: Record<string, any>,
-  env: Env
+  env: any
 ): Promise<void> {
   const cacheResponseBody = { ...responseBodyJson };
   // Put in Cache if needed
@@ -104,8 +103,8 @@ export async function postResponseHandler(
   // Log this request
   if (env.WINKY_WORKER_BASEPATH) {
     await forwardToWinky(env, winkyBaseLog);
-  } else if (settings) {
-    await handleTokenRateLimit(winkyBaseLog, responseBodyJson, env);
+  } else if (env.FETCH_SETTINGS_FROM_FILE) {
+    handleTokenRateLimit(winkyBaseLog, responseBodyJson, env);
     // TODO: make logs endpoint configurable
   }
   return;
@@ -351,7 +350,7 @@ async function validateEntityStatus(
           message: `Model ${model} is not allowed for this integration`,
           type: 'model_not_allowed_error',
           param: null,
-          code: null,
+          code: 400,
         },
       })
     );
@@ -712,6 +711,6 @@ export const handleTokenRateLimit = (
         totalTokens = 0;
     }
     // do not await results
-    handleIntegrationRequestRateLimits(env, winkyBaseLog, totalTokens);
+    handleIntegrationTokenRateLimits(env, winkyBaseLog, totalTokens);
   }
 };

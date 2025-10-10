@@ -1,5 +1,5 @@
 export const defaultOrganisationDetails = {
-  id: '00000000-0000-0000-0000-000000000000',
+  id: 'self-hosted-organisation',
   name: 'Portkey self hosted',
   settings: {
     debug_log: 1,
@@ -39,36 +39,38 @@ const transformIntegrations = (integrations: any) => {
         usage_limits: integration.usage_limits,
         rate_limits: integration.rate_limits,
         models: integration.models,
+        allow_all_models: integration.allow_all_models,
       },
     };
   });
 };
 
-let settings: any = undefined;
-const loadSettings = async () => {
+export const getSettings = async () => {
   try {
-    const settingsFile = await import('./settings.json');
-    if (settingsFile) {
+    const isFetchSettingsFromFile =
+      process?.env?.FETCH_SETTINGS_FROM_FILE === 'true';
+    if (!isFetchSettingsFromFile) {
+      return undefined;
+    }
+    let settings: any = undefined;
+    const { readFile } = await import('fs/promises');
+    const settingsFile = await readFile('./conf.json', 'utf-8');
+    const settingsFileJson = JSON.parse(settingsFile);
+
+    if (settingsFileJson) {
       settings = {};
       settings.organisationDetails = defaultOrganisationDetails;
-      if (settingsFile.integrations) {
+      if (settingsFileJson.integrations) {
         settings.integrations = transformIntegrations(
-          settingsFile.integrations
+          settingsFileJson.integrations
         );
       }
+      return settings;
     }
   } catch (error) {
     console.log(
-      'WARNING: Unable to import settings from the path, please make sure the file exists',
+      'WARNING: unable to load settings from your conf.json file',
       error
     );
   }
 };
-
-loadSettings();
-
-const refreshSettings = async () => {
-  await loadSettings();
-};
-
-export { settings, refreshSettings };

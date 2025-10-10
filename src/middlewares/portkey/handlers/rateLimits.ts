@@ -191,7 +191,7 @@ export const decrementRateLimits = async (
   };
 };
 
-export const handleIntegrationRequestRateLimits = async (
+export const handleIntegrationTokenRateLimits = async (
   env: any,
   chLogObject: WinkyLogObject,
   units: number
@@ -207,41 +207,43 @@ export const handleIntegrationRequestRateLimits = async (
       ? JSON.parse(integrationDetails)
       : integrationDetails;
   const rateLimits = integrationDetailsObj.rate_limits ?? [];
-  const tokenRateLimit = rateLimits?.filter(
+  const tokenRateLimits = rateLimits?.filter(
     (rl: any) => rl.type === RateLimiterTypes.TOKENS
-  )?.[0];
-  const key = `${integrationDetailsObj.id}-${organisationDetails.workspaceDetails?.id}`;
-  const rateLimitKey = generateRateLimitKey(
-    organisationDetails.id,
-    tokenRateLimit.type,
-    RateLimiterKeyTypes.INTEGRATION_WORKSPACE,
-    key,
-    tokenRateLimit.unit
   );
-  if (tokenRateLimit) {
-    const vkRateLimits =
-      typeof rateLimits === 'string' ? JSON.parse(rateLimits) : rateLimits;
-    const requestsRateLimit = vkRateLimits?.filter(
-      (rl: any) => rl.type === RateLimiterTypes.TOKENS
-    )?.[0];
-    const isCacheHit = [CACHE_STATUS.HIT, CACHE_STATUS.SEMANTIC_HIT].includes(
-      chLogObject.config.cacheStatus
+  for (const tokenRateLimit of tokenRateLimits) {
+    const key = `${integrationDetailsObj.id}-${organisationDetails.workspaceDetails?.id}`;
+    const rateLimitKey = generateRateLimitKey(
+      organisationDetails.id,
+      tokenRateLimit.type,
+      RateLimiterKeyTypes.INTEGRATION_WORKSPACE,
+      key,
+      tokenRateLimit.unit
     );
-    if (!isCacheHit && requestsRateLimit) {
-      const virtualKey =
-        chLogObject.config.portkeyHeaders?.[HEADER_KEYS.VIRTUAL_KEY];
-      const requestRateLimitCheckObject = {
-        value: virtualKey,
-        rateLimits: requestsRateLimit,
-      };
-      await decrementRateLimits(
-        env,
-        chLogObject.config.organisationDetails.id,
-        requestRateLimitCheckObject.rateLimits,
-        rateLimitKey,
-        RateLimiterKeyTypes.INTEGRATION_WORKSPACE,
-        units
+    if (tokenRateLimit) {
+      const vkRateLimits =
+        typeof rateLimits === 'string' ? JSON.parse(rateLimits) : rateLimits;
+      const requestsRateLimit = vkRateLimits?.filter(
+        (rl: any) => rl.type === RateLimiterTypes.TOKENS
+      )?.[0];
+      const isCacheHit = [CACHE_STATUS.HIT, CACHE_STATUS.SEMANTIC_HIT].includes(
+        chLogObject.config.cacheStatus
       );
+      if (!isCacheHit && requestsRateLimit) {
+        const virtualKey =
+          chLogObject.config.portkeyHeaders?.[HEADER_KEYS.VIRTUAL_KEY];
+        const requestRateLimitCheckObject = {
+          value: virtualKey,
+          rateLimits: requestsRateLimit,
+        };
+        await decrementRateLimits(
+          env,
+          chLogObject.config.organisationDetails.id,
+          requestRateLimitCheckObject.rateLimits,
+          rateLimitKey,
+          RateLimiterKeyTypes.INTEGRATION_WORKSPACE,
+          units
+        );
+      }
     }
   }
 };
