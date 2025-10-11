@@ -10,6 +10,7 @@ export const BedrockListFinetuneResponseTransform: (
   if (responseStatus !== 200) {
     return BedrockErrorResponseTransform(response) || response;
   }
+
   const records =
     response?.modelCustomizationJobSummaries as BedrockFinetuneRecord[];
   const openaiRecords = records.map(bedrockFinetuneToOpenAI);
