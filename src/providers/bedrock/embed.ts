@@ -66,12 +66,10 @@ export const BedrockTitanEmbedConfig: ProviderConfig = {
       param: 'inputText',
       required: false,
       transform: (params: EmbedParams): string | undefined => {
-        if (
-          Array.isArray(params.input) &&
-          typeof params.input[0] === 'object' &&
-          params.input[0].text
-        ) {
-          return params.input[0].text;
+        if (Array.isArray(params.input)) {
+          if (typeof params.input[0] === 'object' && params.input[0].text)
+            return params.input[0].text;
+          else if (typeof params.input[0] === 'string') return params.input[0];
         }
         if (typeof params.input === 'string') return params.input;
       },
