@@ -814,7 +814,8 @@ export const VertexAnthropicChatCompleteResponseTransform: (
       cache_read_input_tokens;
 
     const shouldSendCacheUsage =
-      cache_creation_input_tokens || cache_read_input_tokens;
+      !strictOpenAiCompliance &&
+      (cache_creation_input_tokens || cache_read_input_tokens);
 
     let content: AnthropicContentItem[] | string = strictOpenAiCompliance
       ? ''
@@ -870,6 +871,9 @@ export const VertexAnthropicChatCompleteResponseTransform: (
         prompt_tokens: input_tokens,
         completion_tokens: output_tokens,
         total_tokens: totalTokens,
+        prompt_tokens_details: {
+          cached_tokens: cache_read_input_tokens,
+        },
         ...(shouldSendCacheUsage && {
           cache_read_input_tokens: cache_read_input_tokens,
           cache_creation_input_tokens: cache_creation_input_tokens,
@@ -1006,9 +1010,12 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
           },
         ],
         usage: {
-          completion_tokens: parsedChunk.usage?.output_tokens,
           ...streamState.usage,
+          completion_tokens: parsedChunk.usage?.output_tokens,
           total_tokens: totalTokens,
+          prompt_tokens_details: {
+            cached_tokens: streamState.usage?.cache_read_input_tokens ?? 0,
+          },
         },
       })}` + '\n\n'
     );
