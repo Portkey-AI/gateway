@@ -40,12 +40,13 @@ import {
   transformFinishReason,
 } from '../utils';
 import { transformGenerationConfig } from './transformGenerationConfig';
-import type {
-  GoogleErrorResponse,
-  GoogleGenerateContentResponse,
-  VertexLlamaChatCompleteStreamChunk,
-  VertexLLamaChatCompleteResponse,
-  GoogleSearchRetrievalTool,
+import {
+  type GoogleErrorResponse,
+  type GoogleGenerateContentResponse,
+  type VertexLlamaChatCompleteStreamChunk,
+  type VertexLLamaChatCompleteResponse,
+  type GoogleSearchRetrievalTool,
+  VERTEX_MODALITY,
 } from './types';
 import {
   getMimeType,
@@ -456,7 +457,17 @@ export const GoogleChatCompleteResponseTransform: (
       totalTokenCount = 0,
       thoughtsTokenCount = 0,
       cachedContentTokenCount = 0,
+      promptTokensDetails = [],
+      candidatesTokensDetails = [],
     } = response.usageMetadata;
+    const inputAudioTokens = promptTokensDetails.reduce((acc, curr) => {
+      if (curr.modality === VERTEX_MODALITY.AUDIO) return acc + curr.tokenCount;
+      return acc;
+    }, 0);
+    const outputAudioTokens = candidatesTokensDetails.reduce((acc, curr) => {
+      if (curr.modality === VERTEX_MODALITY.AUDIO) return acc + curr.tokenCount;
+      return acc;
+    }, 0);
 
     return {
       id: 'portkey-' + crypto.randomUUID(),
@@ -535,9 +546,11 @@ export const GoogleChatCompleteResponseTransform: (
         total_tokens: totalTokenCount,
         completion_tokens_details: {
           reasoning_tokens: thoughtsTokenCount,
+          audio_tokens: outputAudioTokens,
         },
         prompt_tokens_details: {
           cached_tokens: cachedContentTokenCount,
+          audio_tokens: inputAudioTokens,
         },
       },
     };
@@ -631,9 +644,29 @@ export const GoogleChatCompleteStreamChunkTransform: (
       total_tokens: parsedChunk.usageMetadata.totalTokenCount,
       completion_tokens_details: {
         reasoning_tokens: parsedChunk.usageMetadata.thoughtsTokenCount ?? 0,
+        audio_tokens:
+          parsedChunk.usageMetadata?.candidatesTokensDetails?.reduce(
+            (acc, curr) => {
+              if (curr.modality === VERTEX_MODALITY.AUDIO)
+                return acc + curr.tokenCount;
+              return acc;
+            },
+            0
+          ),
       },
       prompt_tokens_details: {
         cached_tokens: parsedChunk.usageMetadata.cachedContentTokenCount,
+        audio_tokens: parsedChunk.usageMetadata?.promptTokensDetails?.reduce(
+          (
+            acc: number,
+            curr: { modality: VERTEX_MODALITY; tokenCount: number }
+          ) => {
+            if (curr.modality === VERTEX_MODALITY.AUDIO)
+              return acc + curr.tokenCount;
+            return acc;
+          },
+          0
+        ),
       },
     };
   }
