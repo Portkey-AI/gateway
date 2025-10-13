@@ -657,10 +657,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
       prompt_tokens_details: {
         cached_tokens: parsedChunk.usageMetadata.cachedContentTokenCount,
         audio_tokens: parsedChunk.usageMetadata?.promptTokensDetails?.reduce(
-          (
-            acc: number,
-            curr: { modality: VERTEX_MODALITY; tokenCount: number }
-          ) => {
+          (acc, curr) => {
             if (curr.modality === VERTEX_MODALITY.AUDIO)
               return acc + curr.tokenCount;
             return acc;
