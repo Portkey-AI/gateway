@@ -14,6 +14,7 @@ import {
   getMimeType,
   recursivelyDeleteUnsupportedParameters,
   transformGeminiToolParameters,
+  transformInputAudioPart,
   transformVertexLogprobs,
 } from '../google-vertex-ai/utils';
 import {
@@ -219,8 +220,9 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                 parts.push({
                   text: c.text,
                 });
-              }
-              if (c.type === 'image_url') {
+              } else if (c.type === 'input_audio') {
+                parts.push(transformInputAudioPart(c));
+              } else if (c.type === 'image_url') {
                 const { url, mime_type: passedMimeType } = c.image_url || {};
                 if (!url) return;
 
