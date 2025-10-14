@@ -7,7 +7,7 @@ export const VertexAnthropicMessagesCountTokensConfig = {
     param: 'model',
     required: true,
     transform: (params: MessageCreateParamsBase) => {
-      let model = params.model ?? '';
+      const model = params.model ?? '';
       return model.replace('anthropic.', '');
     },
   },
