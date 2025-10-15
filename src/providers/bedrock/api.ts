@@ -143,6 +143,7 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
     transformedRequestBody,
     transformedRequestUrl,
   }) => {
+    const { awsAuthType } = providerOptions;
     const method = getMethod(fn as endpointStrings, transformedRequestUrl);
     const service = getService(fn as endpointStrings);
 
@@ -156,7 +157,11 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
 
     setRouteSpecificHeaders(fn, headers, providerOptions);
 
-    if (providerOptions.awsAuthType === 'assumedRole') {
+    if (awsAuthType === 'assumedRole') {
+      await providerAssumedRoleCredentials(c, providerOptions);
+    }
+
+    if (awsAuthType === 'assumedRole') {
       await providerAssumedRoleCredentials(c, providerOptions);
     }
 
