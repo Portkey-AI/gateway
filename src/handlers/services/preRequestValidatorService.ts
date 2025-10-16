@@ -23,15 +23,9 @@ export class PreRequestValidatorService {
       this.requestContext.params
     );
 
-    if (
-      result &&
-      typeof result === 'object' &&
-      'modelPricingConfig' in result
-    ) {
-      if (result.modelPricingConfig) {
-        this.requestContext.providerOption.modelPricingConfig =
-          result.modelPricingConfig;
-      }
+    if (result && typeof result === 'object' && result.modelPricingConfig) {
+      this.requestContext.providerOption.modelPricingConfig =
+        result.modelPricingConfig;
     }
     return result?.response;
   }
