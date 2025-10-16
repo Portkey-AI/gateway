@@ -37,6 +37,7 @@ export interface LogObject {
   providerOptions: {
     requestURL: string;
     rubeusURL: string;
+    modelPricingConfig?: Record<string, any> | undefined;
   };
   transformedRequest: {
     body: any;
@@ -284,6 +285,13 @@ export class LogObjectBuilder {
       headers: (transformedRequestHeaders as Record<string, string>) ?? {},
     };
     this.logData.requestParams = requestContext.transformedRequestBody;
+    if (
+      requestContext.providerOption.modelPricingConfig &&
+      this.logData.providerOptions
+    ) {
+      this.logData.providerOptions.modelPricingConfig =
+        requestContext.providerOption.modelPricingConfig;
+    }
     return this;
   }
 
