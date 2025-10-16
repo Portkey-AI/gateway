@@ -406,8 +406,12 @@ export async function tryPost(
     c,
     requestContext
   );
-  const preRequestValidatorResponse =
+  const { response: preRequestValidatorResponse, modelPricingConfig } =
     await preRequestValidatorService.getResponse();
+
+  if (modelPricingConfig) {
+    requestContext.updateModelPricingConfig(modelPricingConfig);
+  }
   if (preRequestValidatorResponse) {
     const { response, originalResponseJson } = await responseService.create({
       response: preRequestValidatorResponse,
