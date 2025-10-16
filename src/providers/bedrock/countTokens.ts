@@ -36,6 +36,7 @@ export const BedrockAnthropicMessageCountTokensConfig: ProviderConfig = {
       delete anthropicParams.model;
       anthropicParams.anthropic_version =
         params.anthropic_version || 'bedrock-2023-05-31';
+      anthropicParams.max_tokens = anthropicParams.max_tokens || 10;
       return {
         invokeModel: {
           body: Buffer.from(
