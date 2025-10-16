@@ -50,7 +50,7 @@ import { handler as promptSecurityProtectResponse } from './promptsecurity/prote
 import { handler as panwPrismaAirsintercept } from './panw-prisma-airs/intercept';
 import { handler as defaultjwt } from './default/jwt';
 import { handler as defaultrequiredMetadataKeys } from './default/requiredMetadataKeys';
-import { handler as walledaiguardrails } from './walledai/guardrails';
+import { handler as walledaiguardrails } from './walledai/walledprotect';
 import { handler as defaultregexReplace } from './default/regexReplace';
 import { handler as defaultallowedRequestTypes } from './default/allowedRequestTypes';
 import { handler as javelinguardrails } from './javelin/guardrails';
@@ -143,7 +143,7 @@ export const plugins = {
     intercept: panwPrismaAirsintercept,
   },
   walledai: {
-    guardrails: walledaiguardrails,
+    walledprotect: walledaiguardrails,
   },
   javelin: {
     guardrails: javelinguardrails,
