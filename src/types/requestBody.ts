@@ -160,6 +160,9 @@ export interface Options {
 
   /** Azure entra scope */
   azureEntraScope?: string;
+
+  /** Model pricing config */
+  modelPricingConfig?: Record<string, any>;
 }
 
 /**

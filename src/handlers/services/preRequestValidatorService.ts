@@ -16,11 +16,23 @@ export class PreRequestValidatorService {
     if (!this.preRequestValidator) {
       return undefined;
     }
-    return await this.preRequestValidator(
+    const result = await this.preRequestValidator(
       this.honoContext,
       this.requestContext.providerOption,
       this.requestContext.requestHeaders,
       this.requestContext.params
     );
+
+    if (
+      result &&
+      typeof result === 'object' &&
+      'modelPricingConfig' in result
+    ) {
+      if (result.modelPricingConfig) {
+        this.requestContext.providerOption.modelPricingConfig =
+          result.modelPricingConfig;
+      }
+    }
+    return result?.response;
   }
 }
