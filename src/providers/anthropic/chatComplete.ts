@@ -337,6 +337,9 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
               typeof msg.content === 'string'
             ) {
               systemMessages.push({
+                ...(msg?.cache_control && {
+                  cache_control: { type: 'ephemeral' },
+                }),
                 text: msg.content,
                 type: 'text',
               });
