@@ -1,7 +1,7 @@
 import { ProviderAPIConfig } from '../types';
 
 const CohereAPIConfig: ProviderAPIConfig = {
-  getBaseURL: () => 'https://api.cohere.ai/v1',
+  getBaseURL: () => 'https://api.cohere.ai/v2',
   headers: ({ providerOptions, fn }) => {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${providerOptions.apiKey}`,
