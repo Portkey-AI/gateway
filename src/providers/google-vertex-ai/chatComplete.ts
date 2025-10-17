@@ -40,12 +40,13 @@ import {
   transformFinishReason,
 } from '../utils';
 import { transformGenerationConfig } from './transformGenerationConfig';
-import type {
-  GoogleErrorResponse,
-  GoogleGenerateContentResponse,
-  VertexLlamaChatCompleteStreamChunk,
-  VertexLLamaChatCompleteResponse,
-  GoogleSearchRetrievalTool,
+import {
+  type GoogleErrorResponse,
+  type GoogleGenerateContentResponse,
+  type VertexLlamaChatCompleteStreamChunk,
+  type VertexLLamaChatCompleteResponse,
+  type GoogleSearchRetrievalTool,
+  VERTEX_MODALITY,
 } from './types';
 import {
   getMimeType,
@@ -455,7 +456,18 @@ export const GoogleChatCompleteResponseTransform: (
       candidatesTokenCount = 0,
       totalTokenCount = 0,
       thoughtsTokenCount = 0,
+      cachedContentTokenCount = 0,
+      promptTokensDetails = [],
+      candidatesTokensDetails = [],
     } = response.usageMetadata;
+    const inputAudioTokens = promptTokensDetails.reduce((acc, curr) => {
+      if (curr.modality === VERTEX_MODALITY.AUDIO) return acc + curr.tokenCount;
+      return acc;
+    }, 0);
+    const outputAudioTokens = candidatesTokensDetails.reduce((acc, curr) => {
+      if (curr.modality === VERTEX_MODALITY.AUDIO) return acc + curr.tokenCount;
+      return acc;
+    }, 0);
 
     return {
       id: 'portkey-' + crypto.randomUUID(),
@@ -534,6 +546,11 @@ export const GoogleChatCompleteResponseTransform: (
         total_tokens: totalTokenCount,
         completion_tokens_details: {
           reasoning_tokens: thoughtsTokenCount,
+          audio_tokens: outputAudioTokens,
+        },
+        prompt_tokens_details: {
+          cached_tokens: cachedContentTokenCount,
+          audio_tokens: inputAudioTokens,
         },
       },
     };
@@ -627,6 +644,26 @@ export const GoogleChatCompleteStreamChunkTransform: (
       total_tokens: parsedChunk.usageMetadata.totalTokenCount,
       completion_tokens_details: {
         reasoning_tokens: parsedChunk.usageMetadata.thoughtsTokenCount ?? 0,
+        audio_tokens:
+          parsedChunk.usageMetadata?.candidatesTokensDetails?.reduce(
+            (acc, curr) => {
+              if (curr.modality === VERTEX_MODALITY.AUDIO)
+                return acc + curr.tokenCount;
+              return acc;
+            },
+            0
+          ),
+      },
+      prompt_tokens_details: {
+        cached_tokens: parsedChunk.usageMetadata.cachedContentTokenCount,
+        audio_tokens: parsedChunk.usageMetadata?.promptTokensDetails?.reduce(
+          (acc, curr) => {
+            if (curr.modality === VERTEX_MODALITY.AUDIO)
+              return acc + curr.tokenCount;
+            return acc;
+          },
+          0
+        ),
       },
     };
   }
@@ -763,7 +800,22 @@ export const VertexAnthropicChatCompleteResponseTransform: (
   }
 
   if ('content' in response) {
-    const { input_tokens = 0, output_tokens = 0 } = response?.usage ?? {};
+    const {
+      input_tokens = 0,
+      output_tokens = 0,
+      cache_creation_input_tokens = 0,
+      cache_read_input_tokens = 0,
+    } = response?.usage ?? {};
+
+    const totalTokens =
+      input_tokens +
+      output_tokens +
+      cache_creation_input_tokens +
+      cache_read_input_tokens;
+
+    const shouldSendCacheUsage =
+      !strictOpenAiCompliance &&
+      (cache_creation_input_tokens || cache_read_input_tokens);
 
     let content: AnthropicContentItem[] | string = strictOpenAiCompliance
       ? ''
@@ -818,7 +870,14 @@ export const VertexAnthropicChatCompleteResponseTransform: (
       usage: {
         prompt_tokens: input_tokens,
         completion_tokens: output_tokens,
-        total_tokens: input_tokens + output_tokens,
+        total_tokens: totalTokens,
+        prompt_tokens_details: {
+          cached_tokens: cache_read_input_tokens,
+        },
+        ...(shouldSendCacheUsage && {
+          cache_read_input_tokens: cache_read_input_tokens,
+          cache_creation_input_tokens: cache_creation_input_tokens,
+        }),
       },
     };
   }
@@ -887,10 +946,20 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
   }
 
   if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
+    const shouldSendCacheUsage =
+      parsedChunk.message?.usage?.cache_read_input_tokens ||
+      parsedChunk.message?.usage?.cache_creation_input_tokens;
+
     streamState.model = parsedChunk?.message?.model ?? '';
 
     streamState.usage = {
       prompt_tokens: parsedChunk.message.usage?.input_tokens,
+      ...(shouldSendCacheUsage && {
+        cache_read_input_tokens:
+          parsedChunk.message?.usage?.cache_read_input_tokens,
+        cache_creation_input_tokens:
+          parsedChunk.message?.usage?.cache_creation_input_tokens,
+      }),
     };
     return (
       `data: ${JSON.stringify({
@@ -917,6 +986,12 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
   }
 
   if (parsedChunk.type === 'message_delta' && parsedChunk.usage) {
+    const totalTokens =
+      (streamState?.usage?.prompt_tokens ?? 0) +
+      (streamState?.usage?.cache_creation_input_tokens ?? 0) +
+      (streamState?.usage?.cache_read_input_tokens ?? 0) +
+      (parsedChunk.usage.output_tokens ?? 0);
+
     return (
       `data: ${JSON.stringify({
         id: fallbackId,
@@ -935,11 +1010,12 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
           },
         ],
         usage: {
+          ...streamState.usage,
           completion_tokens: parsedChunk.usage?.output_tokens,
-          prompt_tokens: streamState.usage?.prompt_tokens,
-          total_tokens:
-            (streamState.usage?.prompt_tokens || 0) +
-            (parsedChunk.usage?.output_tokens || 0),
+          total_tokens: totalTokens,
+          prompt_tokens_details: {
+            cached_tokens: streamState.usage?.cache_read_input_tokens ?? 0,
+          },
         },
       })}` + '\n\n'
     );
