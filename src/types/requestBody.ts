@@ -251,7 +251,7 @@ export interface ContentType extends PromptCache {
   };
   input_audio?: {
     data: string;
-    format: string; //defaults to auto
+    format: 'mp3' | 'wav' | string; //defaults to auto
   };
 }
 
