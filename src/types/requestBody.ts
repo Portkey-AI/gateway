@@ -161,6 +161,9 @@ export interface Options {
 
   /** Azure entra scope */
   azureEntraScope?: string;
+
+  /** Model pricing config */
+  modelPricingConfig?: Record<string, any>;
 }
 
 /**
@@ -249,7 +252,7 @@ export interface ContentType extends PromptCache {
   };
   input_audio?: {
     data: string;
-    format: string; //defaults to auto
+    format: 'mp3' | 'wav' | string; //defaults to auto
   };
 }
 
