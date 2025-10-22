@@ -85,10 +85,10 @@ export const transformInferenceConfig = (
   if (params['stop']) {
     inferenceConfig['stopSequences'] = params['stop'];
   }
-  if (params['temperature']) {
+  if (params['temperature'] !== null && params['temperature'] !== undefined) {
     inferenceConfig['temperature'] = params['temperature'];
   }
-  if (params['top_p']) {
+  if (params['top_p'] !== null && params['top_p'] !== undefined) {
     inferenceConfig['topP'] = params['top_p'];
   }
   return inferenceConfig;
@@ -101,7 +101,7 @@ export const transformAdditionalModelRequestFields = (
     params.additionalModelRequestFields ||
     params.additional_model_request_fields ||
     {};
-  if (params['top_k']) {
+  if (params['top_k'] !== null && params['top_k'] !== undefined) {
     additionalModelRequestFields['top_k'] = params['top_k'];
   }
   if (params['response_format']) {
@@ -117,7 +117,7 @@ export const transformAnthropicAdditionalModelRequestFields = (
     params.additionalModelRequestFields ||
     params.additional_model_request_fields ||
     {};
-  if (params['top_k']) {
+  if (params['top_k'] !== null && params['top_k'] !== undefined) {
     additionalModelRequestFields['top_k'] = params['top_k'];
   }
   if (params['anthropic_version']) {
