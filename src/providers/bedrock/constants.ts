@@ -1,3 +1,15 @@
+export const BEDROCK_STABILITY_V1_MODELS = [
+  'stable-diffusion-xl-v0',
+  'stable-diffusion-xl-v1',
+];
+
+export const bedrockInvokeModels = [
+  'cohere.command-light-text-v14',
+  'cohere.command-text-v14',
+  'ai21.j2-mid-v1',
+  'ai21.j2-ultra-v1',
+];
+
 export const LLAMA_2_SPECIAL_TOKENS = {
   BEGINNING_OF_SENTENCE: '<s>',
   END_OF_SENTENCE: '</s>',
@@ -34,15 +46,3 @@ export const MISTRAL_CONTROL_TOKENS = {
   MIDDLE: '[MIDDLE]',
   SUFFIX: '[SUFFIX]',
 };
-
-export const BEDROCK_STABILITY_V1_MODELS = [
-  'stable-diffusion-xl-v0',
-  'stable-diffusion-xl-v1',
-];
-
-export const bedrockInvokeModels = [
-  'cohere.command-light-text-v14',
-  'cohere.command-text-v14',
-  'ai21.j2-mid-v1',
-  'ai21.j2-ultra-v1',
-];

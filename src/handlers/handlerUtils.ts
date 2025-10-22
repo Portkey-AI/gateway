@@ -864,7 +864,6 @@ export function constructConfigFromRequestHeaders(
     azureApiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
     azureEndpointName: requestHeaders[`x-${POWERED_BY}-azure-endpoint-name`],
     azureFoundryUrl: requestHeaders[`x-${POWERED_BY}-azure-foundry-url`],
-    azureExtraParams: requestHeaders[`x-${POWERED_BY}-azure-extra-params`],
     azureAdToken: requestHeaders[`x-${POWERED_BY}-azure-ad-token`],
     azureAuthMode: requestHeaders[`x-${POWERED_BY}-azure-auth-mode`],
     azureManagedClientId:
@@ -874,6 +873,7 @@ export function constructConfigFromRequestHeaders(
       requestHeaders[`x-${POWERED_BY}-azure-entra-client-secret`],
     azureEntraTenantId: requestHeaders[`x-${POWERED_BY}-azure-entra-tenant-id`],
     azureEntraScope: requestHeaders[`x-${POWERED_BY}-azure-entra-scope`],
+    azureExtraParameters: requestHeaders[`x-${POWERED_BY}-azure-extra-params`],
   };
 
   const awsConfig = {
