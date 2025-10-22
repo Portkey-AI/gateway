@@ -53,6 +53,7 @@ import { handler as defaultrequiredMetadataKeys } from './default/requiredMetada
 import { handler as walledaiguardrails } from './walledai/guardrails';
 import { handler as defaultregexReplace } from './default/regexReplace';
 import { handler as defaultallowedRequestTypes } from './default/allowedRequestTypes';
+import { handler as javelinguardrails } from './javelin/guardrails';
 
 export const plugins = {
   default: {
@@ -143,5 +144,8 @@ export const plugins = {
   },
   walledai: {
     guardrails: walledaiguardrails,
+  },
+  javelin: {
+    guardrails: javelinguardrails,
   },
 };
