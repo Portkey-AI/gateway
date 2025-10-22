@@ -816,7 +816,7 @@ export async function tryTargetsRecursively(
             message: errorMessage,
           }),
           {
-            status: 500,
+            status: error instanceof GatewayError ? error.status : 500,
             headers: {
               'content-type': 'application/json',
               // Add this header so that the fallback loop can be interrupted if its an exception.
