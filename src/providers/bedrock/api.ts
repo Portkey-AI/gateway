@@ -161,8 +161,9 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
       await providerAssumedRoleCredentials(c, providerOptions);
     }
 
-    if (awsAuthType === 'assumedRole') {
-      await providerAssumedRoleCredentials(c, providerOptions);
+    if (awsAuthType === 'apiKey') {
+      headers['Authorization'] = `Bearer ${providerOptions.apiKey}`;
+      return headers;
     }
 
     let finalRequestBody = transformedRequestBody;
