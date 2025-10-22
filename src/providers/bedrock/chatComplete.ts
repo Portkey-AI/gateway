@@ -62,7 +62,7 @@ export interface BedrockChatCompletionsParams extends Params {
 }
 
 export interface BedrockConverseAnthropicChatCompletionsParams
-  extends BedrockChatCompletionsParams {
+  extends Omit<BedrockChatCompletionsParams, 'anthropic_beta'> {
   anthropic_version?: string;
   user?: string;
   thinking?: {
