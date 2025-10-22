@@ -14,6 +14,7 @@ import {
   getMimeType,
   recursivelyDeleteUnsupportedParameters,
   transformGeminiToolParameters,
+  transformInputAudioPart,
   transformVertexLogprobs,
 } from '../google-vertex-ai/utils';
 import {
@@ -26,7 +27,9 @@ import {
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
+  transformFinishReason,
 } from '../utils';
+import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from './types';
 
 const transformGenerationConfig = (params: Params) => {
   const generationConfig: Record<string, any> = {};
@@ -75,6 +78,11 @@ const transformGenerationConfig = (params: Params) => {
       type === 'enabled' && budget_tokens ? true : false;
     thinkingConfig['thinking_budget'] = params.thinking.budget_tokens;
     generationConfig['thinking_config'] = thinkingConfig;
+  }
+  if (params.modalities) {
+    generationConfig['responseModalities'] = params.modalities.map((modality) =>
+      modality.toUpperCase()
+    );
   }
   return generationConfig;
 };
@@ -212,8 +220,9 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                 parts.push({
                   text: c.text,
                 });
-              }
-              if (c.type === 'image_url') {
+              } else if (c.type === 'input_audio') {
+                parts.push(transformInputAudioPart(c));
+              } else if (c.type === 'image_url') {
                 const { url, mime_type: passedMimeType } = c.image_url || {};
                 if (!url) return;
 
@@ -423,6 +432,10 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
+  modalities: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
 };
 
 export interface GoogleErrorResponse {
@@ -439,12 +452,16 @@ interface GoogleGenerateFunctionCall {
   args: Record<string, any>;
 }
 
-interface GoogleResponseCandidate {
+export interface GoogleResponseCandidate {
   content: {
     parts: {
       text?: string;
       thought?: string; // for models like gemini-2.0-flash-thinking-exp refer: https://ai.google.dev/gemini-api/docs/thinking-mode#streaming_model_thinking
       functionCall?: GoogleGenerateFunctionCall;
+      inlineData?: {
+        mimeType: string;
+        data: string;
+      };
     }[];
   };
   logprobsResult?: {
@@ -465,7 +482,7 @@ interface GoogleResponseCandidate {
       },
     ];
   };
-  finishReason: string;
+  finishReason: GOOGLE_GENERATE_CONTENT_FINISH_REASON;
   index: 0;
   safetyRatings: {
     category: string;
@@ -558,6 +575,13 @@ export const GoogleChatCompleteResponseTransform: (
                 content = part.text;
                 contentBlocks.push({ type: 'text', text: part.text });
               }
+            } else if (part.inlineData) {
+              contentBlocks.push({
+                type: 'image_url',
+                image_url: {
+                  url: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
+                },
+              });
             }
           }
 
@@ -580,7 +604,10 @@ export const GoogleChatCompleteResponseTransform: (
             message: message,
             logprobs,
             index: generation.index ?? idx,
-            finish_reason: generation.finishReason,
+            finish_reason: transformFinishReason(
+              generation.finishReason,
+              strictOpenAiCompliance
+            ),
             ...(!strictOpenAiCompliance && generation.groundingMetadata
               ? { groundingMetadata: generation.groundingMetadata }
               : {}),
@@ -654,6 +681,12 @@ export const GoogleChatCompleteStreamChunkTransform: (
       choices:
         parsedChunk.candidates?.map((generation, index) => {
           let message: any = { role: 'assistant', content: '' };
+          const finishReason = generation.finishReason
+            ? transformFinishReason(
+                generation.finishReason,
+                strictOpenAiCompliance
+              )
+            : null;
           if (generation.content?.parts[0]?.text) {
             const contentBlocks = [];
             let content = '';
@@ -695,11 +728,28 @@ export const GoogleChatCompleteStreamChunkTransform: (
                 }
               }),
             };
+          } else if (generation.content?.parts[0]?.inlineData) {
+            const part = generation.content.parts[0];
+            const contentBlocks = [
+              {
+                index: streamState.containsChainOfThoughtMessage ? 1 : 0,
+                delta: {
+                  type: 'image_url',
+                  image_url: {
+                    url: `data:${part.inlineData?.mimeType};base64,${part.inlineData?.data}`,
+                  },
+                },
+              },
+            ];
+            message = {
+              role: 'assistant',
+              content_blocks: contentBlocks,
+            };
           }
           return {
             delta: message,
             index: generation.index ?? index,
-            finish_reason: generation.finishReason,
+            finish_reason: finishReason,
             ...(!strictOpenAiCompliance && generation.groundingMetadata
               ? { groundingMetadata: generation.groundingMetadata }
               : {}),

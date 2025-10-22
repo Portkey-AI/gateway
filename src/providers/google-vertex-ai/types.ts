@@ -20,6 +20,10 @@ export interface GoogleResponseCandidate {
       text?: string;
       thought?: string; // for models like gemini-2.0-flash-thinking-exp refer: https://ai.google.dev/gemini-api/docs/thinking-mode#streaming_model_thinking
       functionCall?: GoogleGenerateFunctionCall;
+      inlineData?: {
+        mimeType: string;
+        data: string;
+      };
     }[];
   };
   logprobsResult?: {
@@ -40,7 +44,7 @@ export interface GoogleResponseCandidate {
       },
     ];
   };
-  finishReason: string;
+  finishReason: VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON;
   index: 0;
   safetyRatings: {
     category: string;
@@ -242,4 +246,16 @@ export interface GoogleFinetuneRecord {
       adapterSize: number;
     };
   };
+}
+
+export enum VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON {
+  FINISH_REASON_UNSPECIFIED = 'FINISH_REASON_UNSPECIFIED',
+  STOP = 'STOP',
+  MAX_TOKENS = 'MAX_TOKENS',
+  SAFETY = 'SAFETY',
+  RECITATION = 'RECITATION',
+  OTHER = 'OTHER',
+  BLOCKLIST = 'BLOCKLIST',
+  PROHIBITED_CONTENT = 'PROHIBITED_CONTENT',
+  SPII = 'SPII',
 }

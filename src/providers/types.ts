@@ -1,7 +1,15 @@
 import { Context } from 'hono';
 import { Message, Options, Params } from '../types/requestBody';
 import { ANTHROPIC_STOP_REASON } from './anthropic/types';
-import { BEDROCK_STOP_REASON } from './bedrock/types';
+import {
+  BEDROCK_CONVERSE_STOP_REASON,
+  TITAN_STOP_REASON,
+} from './bedrock/types';
+import { VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON } from './google-vertex-ai/types';
+import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from './google/types';
+import { DEEPSEEK_STOP_REASON } from './deepseek/types';
+import { MISTRAL_AI_FINISH_REASON } from './mistral-ai/types';
+import { TOGETHER_AI_FINISH_REASON } from './together-ai/types';
 
 /**
  * Configuration for a parameter.
@@ -83,6 +91,7 @@ export type endpointStrings =
   | 'stream-messages'
   | 'proxy'
   | 'imageGenerate'
+  | 'imageEdit'
   | 'createSpeech'
   | 'createTranscription'
   | 'createTranslation'
@@ -105,7 +114,8 @@ export type endpointStrings =
   | 'getModelResponse'
   | 'deleteModelResponse'
   | 'listResponseInputItems'
-  | 'messages';
+  | 'messages'
+  | 'messagesCountTokens';
 
 /**
  * A collection of API configurations for multiple AI providers.
@@ -432,4 +442,10 @@ export enum FINISH_REASON {
 
 export type PROVIDER_FINISH_REASON =
   | ANTHROPIC_STOP_REASON
-  | BEDROCK_STOP_REASON;
+  | BEDROCK_CONVERSE_STOP_REASON
+  | VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON
+  | GOOGLE_GENERATE_CONTENT_FINISH_REASON
+  | TITAN_STOP_REASON
+  | DEEPSEEK_STOP_REASON
+  | MISTRAL_AI_FINISH_REASON
+  | TOGETHER_AI_FINISH_REASON;

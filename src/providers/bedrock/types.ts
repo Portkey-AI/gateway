@@ -81,6 +81,16 @@ export interface BedrockInferenceProfile {
   type: string;
 }
 
+// https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html#API_runtime_Converse_ResponseSyntax
+export enum BEDROCK_STOP_REASON {
+  end_turn = 'end_turn',
+  tool_use = 'tool_use',
+  max_tokens = 'max_tokens',
+  stop_sequence = 'stop_sequence',
+  guardrail_intervened = 'guardrail_intervened',
+  content_filtered = 'content_filtered',
+}
+
 export interface BedrockMessagesParams extends MessageCreateParamsBase {
   additionalModelRequestFields?: Record<string, any>;
   additional_model_request_fields?: Record<string, any>;
@@ -108,7 +118,7 @@ export interface BedrockChatCompletionResponse {
       content: BedrockContentItem[];
     };
   };
-  stopReason: BEDROCK_STOP_REASON;
+  stopReason: BEDROCK_CONVERSE_STOP_REASON;
   usage: {
     inputTokens: number;
     outputTokens: number;
@@ -136,7 +146,11 @@ export type BedrockContentItem = {
   };
   image?: {
     source: {
-      bytes: string;
+      bytes?: string;
+      s3Location?: {
+        uri: string;
+        bucketOwner?: string;
+      };
     };
     format: string;
   };
@@ -147,6 +161,17 @@ export type BedrockContentItem = {
       bytes?: string;
       s3Location?: {
         uri: string;
+        bucketOwner?: string;
+      };
+    };
+  };
+  video?: {
+    format: string;
+    source: {
+      bytes?: string;
+      s3Location?: {
+        uri: string;
+        bucketOwner?: string;
       };
     };
   };
@@ -156,7 +181,7 @@ export type BedrockContentItem = {
 };
 
 export interface BedrockStreamState {
-  stopReason?: BEDROCK_STOP_REASON;
+  stopReason?: BEDROCK_CONVERSE_STOP_REASON;
   currentToolCallIndex?: number;
   currentContentBlockIndex?: number;
 }
@@ -186,7 +211,7 @@ export interface BedrockChatCompleteStreamChunk {
       input?: object;
     };
   };
-  stopReason?: BEDROCK_STOP_REASON;
+  stopReason?: BEDROCK_CONVERSE_STOP_REASON;
   metrics?: {
     latencyMs: number;
   };
@@ -199,13 +224,22 @@ export interface BedrockChatCompleteStreamChunk {
     cacheWriteInputTokenCount?: number;
     cacheWriteInputTokens?: number;
   };
+  message?: string;
 }
 
-export enum BEDROCK_STOP_REASON {
+export enum BEDROCK_CONVERSE_STOP_REASON {
   end_turn = 'end_turn',
   tool_use = 'tool_use',
   max_tokens = 'max_tokens',
   stop_sequence = 'stop_sequence',
   guardrail_intervened = 'guardrail_intervened',
   content_filtered = 'content_filtered',
+}
+
+export enum TITAN_STOP_REASON {
+  FINISHED = 'FINISHED',
+  LENGTH = 'LENGTH',
+  STOP_CRITERIA_MET = 'STOP_CRITERIA_MET',
+  RAG_QUERY_WHEN_RAG_DISABLED = 'RAG_QUERY_WHEN_RAG_DISABLED',
+  CONTENT_FILTERED = 'CONTENT_FILTERED',
 }

@@ -1,7 +1,7 @@
 import { ProviderAPIConfig } from '../types';
 
 export const dashscopeAPIConfig: ProviderAPIConfig = {
-  getBaseURL: () => 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+  getBaseURL: () => 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
   headers({ providerOptions }) {
     const { apiKey } = providerOptions;
     return { Authorization: `Bearer ${apiKey}` };

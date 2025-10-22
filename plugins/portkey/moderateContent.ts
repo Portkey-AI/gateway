@@ -30,7 +30,7 @@ export const handler: PluginHandler = async (
     const categories = parameters.categories;
     const not = parameters.not || false;
 
-    const result: any = await fetchPortkey(
+    const { response: result }: any = await fetchPortkey(
       options?.env || {},
       PORTKEY_ENDPOINTS.MODERATIONS,
       parameters.credentials,

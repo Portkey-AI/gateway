@@ -8,7 +8,9 @@ import {
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
+  transformFinishReason,
 } from '../utils';
+import { TOGETHER_AI_FINISH_REASON } from './types';
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -103,6 +105,7 @@ export interface TogetherAIChatCompletionStreamChunk {
     delta: {
       content: string;
     };
+    finish_reason: TOGETHER_AI_FINISH_REASON;
   }[];
 }
 
@@ -148,8 +151,19 @@ export const TogetherAIChatCompleteResponseTransform: (
     | TogetherAIChatCompleteResponse
     | TogetherAIErrorResponse
     | TogetherAIOpenAICompatibleErrorResponse,
-  responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
+) => ChatCompletionResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  _gatewayRequest
+) => {
   if (responseStatus !== 200) {
     const errorResponse = TogetherAIErrorResponseTransform(
       response as TogetherAIErrorResponse
@@ -179,7 +193,10 @@ export const TogetherAIChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: choice.finish_reason,
+          finish_reason: transformFinishReason(
+            choice.finish_reason as TOGETHER_AI_FINISH_REASON,
+            strictOpenAiCompliance
+          ),
         };
       }),
       usage: {
@@ -194,8 +211,18 @@ export const TogetherAIChatCompleteResponseTransform: (
 };
 
 export const TogetherAIChatCompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+  response: string,
+  fallbackId: string,
+  streamState: any,
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
+) => string = (
+  responseChunk,
+  fallbackId,
+  streamState,
+  strictOpenAiCompliance,
+  gatewayRequest
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
@@ -203,6 +230,12 @@ export const TogetherAIChatCompleteStreamChunkTransform: (
     return `data: ${chunk}\n\n`;
   }
   const parsedChunk: TogetherAIChatCompletionStreamChunk = JSON.parse(chunk);
+  const finishReason = parsedChunk.choices[0]?.finish_reason
+    ? transformFinishReason(
+        parsedChunk.choices[0].finish_reason,
+        strictOpenAiCompliance
+      )
+    : null;
   return (
     `data: ${JSON.stringify({
       id: parsedChunk.id,
@@ -216,7 +249,7 @@ export const TogetherAIChatCompleteStreamChunkTransform: (
             content: parsedChunk.choices[0]?.delta.content,
           },
           index: 0,
-          finish_reason: '',
+          finish_reason: finishReason,
         },
       ],
     })}` + '\n\n'

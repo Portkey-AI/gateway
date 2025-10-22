@@ -12,15 +12,23 @@ export class PreRequestValidatorService {
     this.preRequestValidator = this.honoContext.get('preRequestValidator');
   }
 
-  async getResponse(): Promise<Response | undefined> {
+  async getResponse(): Promise<{
+    response: Response | undefined;
+    modelPricingConfig: Record<string, any> | undefined;
+  }> {
     if (!this.preRequestValidator) {
-      return undefined;
+      return { response: undefined, modelPricingConfig: undefined };
     }
-    return await this.preRequestValidator(
+    const result = await this.preRequestValidator(
       this.honoContext,
       this.requestContext.providerOption,
       this.requestContext.requestHeaders,
       this.requestContext.params
     );
+
+    return {
+      response: result?.response,
+      modelPricingConfig: result?.modelPricingConfig,
+    };
   }
 }

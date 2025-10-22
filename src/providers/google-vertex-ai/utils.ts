@@ -2,8 +2,9 @@ import {
   GoogleBatchRecord,
   GoogleErrorResponse,
   GoogleFinetuneRecord,
-  GoogleResponseCandidate,
+  GoogleResponseCandidate as VertexResponseCandidate,
 } from './types';
+import { GoogleResponseCandidate } from '../google/chatComplete';
 import { generateErrorResponse } from '../utils';
 import {
   BatchEndpoints,
@@ -13,7 +14,7 @@ import {
 import { ErrorResponse, FinetuneRequest, Logprobs } from '../types';
 import { Context } from 'hono';
 import { env } from 'hono/adapter';
-import { JsonSchema } from '../../types/requestBody';
+import { ContentType, JsonSchema } from '../../types/requestBody';
 
 /**
  * Encodes an object as a Base64 URL-encoded string.
@@ -159,7 +160,9 @@ export const getModelAndProvider = (modelString: string) => {
   const modelStringParts = modelString.split('.');
   if (
     modelStringParts.length > 1 &&
-    ['google', 'anthropic', 'meta', 'endpoints'].includes(modelStringParts[0])
+    ['google', 'anthropic', 'meta', 'endpoints', 'mistralai'].includes(
+      modelStringParts[0]
+    )
   ) {
     provider = modelStringParts[0];
     model = modelStringParts.slice(1).join('.');
@@ -511,7 +514,7 @@ export const fetchGoogleCustomEndpoint = async ({
 };
 
 export const transformVertexLogprobs = (
-  generation: GoogleResponseCandidate
+  generation: GoogleResponseCandidate | VertexResponseCandidate
 ) => {
   const logprobsContent: Logprobs[] = [];
   if (!generation.logprobsResult) return null;
@@ -747,4 +750,23 @@ export const generateSignedURL = async (
   // Construct the final URL
   const schemeAndHost = `https://${host}`;
   return `${schemeAndHost}${canonicalUri}?${canonicalQueryString}&x-goog-signature=${signatureHex}`;
+};
+
+export const OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING = {
+  mp3: 'audio/mp3',
+  wav: 'audio/wav',
+};
+
+export const transformInputAudioPart = (c: ContentType) => {
+  const data = c.input_audio?.data;
+  const mimeType =
+    OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING[
+      c.input_audio?.format as 'mp3' | 'wav'
+    ];
+  return {
+    inlineData: {
+      data,
+      mimeType,
+    },
+  };
 };

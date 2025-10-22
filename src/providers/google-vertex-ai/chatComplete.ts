@@ -37,6 +37,7 @@ import {
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
+  transformFinishReason,
 } from '../utils';
 import { transformGenerationConfig } from './transformGenerationConfig';
 import type {
@@ -50,6 +51,7 @@ import {
   getMimeType,
   recursivelyDeleteUnsupportedParameters,
   transformGeminiToolParameters,
+  transformInputAudioPart,
   transformVertexLogprobs,
 } from './utils';
 
@@ -118,8 +120,9 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
                 parts.push({
                   text: c.text,
                 });
-              }
-              if (c.type === 'image_url') {
+              } else if (c.type === 'input_audio') {
+                parts.push(transformInputAudioPart(c));
+              } else if (c.type === 'image_url') {
                 const { url, mime_type: passedMimeType } = c.image_url || {};
 
                 if (!url) {
@@ -353,6 +356,10 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
+  modalities: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
 };
 
 interface AnthorpicTextContentItem {
@@ -441,7 +448,10 @@ export const GoogleChatCompleteResponseTransform: (
     );
   }
 
-  if ('candidates' in response) {
+  // sometimes vertex gemini returns usageMetadata without candidates
+  const isValidResponse =
+    'candidates' in response || 'usageMetadata' in response;
+  if (isValidResponse) {
     const {
       promptTokenCount = 0,
       candidatesTokenCount = 0,
@@ -478,6 +488,13 @@ export const GoogleChatCompleteResponseTransform: (
                 content = part.text;
                 contentBlocks.push({ type: 'text', text: part.text });
               }
+            } else if (part.inlineData) {
+              contentBlocks.push({
+                type: 'image_url',
+                image_url: {
+                  url: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
+                },
+              });
             }
           }
 
@@ -500,7 +517,10 @@ export const GoogleChatCompleteResponseTransform: (
           return {
             message: message,
             index: index,
-            finish_reason: generation.finishReason,
+            finish_reason: transformFinishReason(
+              generation.finishReason,
+              strictOpenAiCompliance
+            ),
             logprobs,
             ...(!strictOpenAiCompliance && {
               safetyRatings: generation.safetyRatings,
@@ -621,6 +641,13 @@ export const GoogleChatCompleteStreamChunkTransform: (
     provider: GOOGLE_VERTEX_AI,
     choices:
       parsedChunk.candidates?.map((generation, index) => {
+        const finishReason = generation.finishReason
+          ? transformFinishReason(
+              parsedChunk.candidates[0].finishReason,
+              strictOpenAiCompliance
+            )
+          : null;
+
         let message: any = { role: 'assistant', content: '' };
         if (generation.content?.parts[0]?.text) {
           const contentBlocks = [];
@@ -663,11 +690,28 @@ export const GoogleChatCompleteStreamChunkTransform: (
               }
             }),
           };
+        } else if (generation.content?.parts[0]?.inlineData) {
+          const part = generation.content.parts[0];
+          const contentBlocks = [
+            {
+              index: streamState.containsChainOfThoughtMessage ? 1 : 0,
+              delta: {
+                type: 'image_url',
+                image_url: {
+                  url: `data:${part.inlineData?.mimeType};base64,${part.inlineData?.data}`,
+                },
+              },
+            },
+          ];
+          message = {
+            role: 'assistant',
+            content_blocks: contentBlocks,
+          };
         }
         return {
           delta: message,
           index: index,
-          finish_reason: generation.finishReason,
+          finish_reason: finishReason,
           ...(!strictOpenAiCompliance && {
             safetyRatings: generation.safetyRatings,
           }),
@@ -767,7 +811,10 @@ export const VertexAnthropicChatCompleteResponseTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: response.stop_reason,
+          finish_reason: transformFinishReason(
+            response.stop_reason,
+            strictOpenAiCompliance
+          ),
         },
       ],
       usage: {
@@ -792,6 +839,9 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
   streamState,
   strictOpenAiCompliance
 ) => {
+  if (streamState.toolIndex == undefined) {
+    streamState.toolIndex = -1;
+  }
   let chunk = responseChunk.trim();
 
   if (
@@ -880,7 +930,10 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
           {
             index: 0,
             delta: {},
-            finish_reason: parsedChunk.delta?.stop_reason,
+            finish_reason: transformFinishReason(
+              parsedChunk.delta?.stop_reason,
+              strictOpenAiCompliance
+            ),
           },
         ],
         usage: {
@@ -899,9 +952,7 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
     parsedChunk.type === 'content_block_start' &&
     parsedChunk.content_block?.type === 'tool_use';
   if (isToolBlockStart) {
-    streamState.toolIndex = streamState.toolIndex
-      ? streamState.toolIndex + 1
-      : 0;
+    streamState.toolIndex = streamState.toolIndex + 1;
   }
   const isToolBlockDelta: boolean =
     parsedChunk.type === 'content_block_delta' &&

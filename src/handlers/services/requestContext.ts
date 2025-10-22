@@ -87,6 +87,8 @@ export class RequestContext {
   }
 
   get isStreaming(): boolean {
+    if (this.endpoint === 'imageEdit' && this.requestBody instanceof FormData)
+      return this.requestBody.get('stream') === 'true';
     return this.params.stream === true;
   }
 
@@ -226,5 +228,9 @@ export class RequestContext {
       ...this.requestOptions,
       requestOptions,
     ]);
+  }
+
+  updateModelPricingConfig(modelPricingConfig: Record<string, any>) {
+    this.providerOption.modelPricingConfig = modelPricingConfig;
   }
 }
