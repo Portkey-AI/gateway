@@ -15145,6 +15145,262 @@
         "id": "jina"
       },
       "name": "Jina Embeddings v3"
+    },
+    {
+      "id": "gpt-5-chat-latest",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "GPT-5 Chat Latest"
+    },
+    {
+      "id": "chatgpt-4o-latest",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "ChatGPT 4o Latest"
+    },
+    {
+      "id": "gpt-5-mini",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "GPT-5 Mini"
+    },
+    {
+      "id": "gpt-5-nano",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "GPT-5 Nano"
+    },
+    {
+      "id": "gpt-5",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "GPT-5"
+    },
+    {
+      "id": "gpt-4.1",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "GPT-4.1"
+    },
+    {
+      "id": "gpt-4o-mini",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "GPT-4o Mini"
+    },
+    {
+      "id": "o4-mini-2025-04-16",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "O4 Mini (April 16, 2025)"
+    },
+    {
+      "id": "o3-pro-2025-06-10",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "O3 Pro (June 10, 2025)"
+    },
+    {
+      "id": "claude-opus-4-1-20250805",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "Claude Opus 4.1 (August 5, 2025)"
+    },
+    {
+      "id": "claude-opus-4-1-20250805-thinking",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "Claude Opus 4.1 Thinking (August 5, 2025)"
+    },
+    {
+      "id": "claude-sonnet-4-20250514",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "Claude Sonnet 4 (May 14, 2025)"
+    },
+    {
+      "id": "claude-sonnet-4-20250514-thinking",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "Claude Sonnet 4 Thinking (May 14, 2025)"
+    },
+    {
+      "id": "claude-3-7-sonnet-latest",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "Claude 3.7 Sonnet Latest"
+    },
+    {
+      "id": "claude-3-5-haiku-latest",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "Claude 3.5 Haiku Latest"
+    },
+    {
+      "id": "gemini-2.5-pro",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "Gemini 2.5 Pro"
+    },
+    {
+      "id": "gemini-2.5-flash",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "Gemini 2.5 Flash"
+    },
+    {
+      "id": "gemini-2.5-flash-lite",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "Gemini 2.5 Flash Lite"
+    },
+    {
+      "id": "gemini-2.0-flash",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "Gemini 2.0 Flash"
+    },
+    {
+      "id": "grok-4-0709",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "Grok-4 (July 9, 2025)"
+    },
+    {
+      "id": "grok-4-fast-non-reasoning",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "Grok-4 Fast Non-Reasoning"
+    },
+    {
+      "id": "grok-4-fast-reasoning",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "Grok-4 Fast Reasoning"
+    },
+    {
+      "id": "deepseek-v3.1",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "DeepSeek V3.1"
+    },
+    {
+      "id": "deepseek-v3",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "DeepSeek V3"
+    },
+    {
+      "id": "deepseek-r1-0528",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "DeepSeek R1 0528"
+    },
+    {
+      "id": "deepseek-chat",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "DeepSeek Chat"
+    },
+    {
+      "id": "deepseek-reasoner",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "DeepSeek Reasoner"
+    },
+    {
+      "id": "qwen3-30b-a3b",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "Qwen3 30B A3B"
+    },
+    {
+      "id": "qwen3-coder-plus-2025-07-22",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "Qwen3 Coder Plus (July 22, 2025)"
+    },
+    {
+      "id": "text-embedding-3-small",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "Text Embedding 3 Small"
+    },
+    {
+      "id": "text-embedding-3-large",
+      "object": "model",
+      "provider": {
+        "id": "cometapi"
+      },
+      "name": "Text Embedding 3 Large"
+    },
+    {
+      "id": "text-embedding-ada-002",
+      "object": "model",
+      "provider": {
+        "id": "openai"
+      },
+      "name": "Text Embedding Ada 002"
     }
   ]
 }

@@ -13,6 +13,7 @@ import { handler as defaultalluppercase } from './default/alluppercase';
 import { handler as defaultalllowercase } from './default/alllowercase';
 import { handler as defaultendsWith } from './default/endsWith';
 import { handler as defaultmodelWhitelist } from './default/modelWhitelist';
+import { handler as defaultaddPrefix } from './default/addPrefix';
 import { handler as defaultmodelRules } from './default/modelRules';
 import { handler as portkeymoderateContent } from './portkey/moderateContent';
 import { handler as portkeylanguage } from './portkey/language';
@@ -53,6 +54,7 @@ import { handler as defaultrequiredMetadataKeys } from './default/requiredMetada
 import { handler as walledaiguardrails } from './walledai/guardrails';
 import { handler as defaultregexReplace } from './default/regexReplace';
 import { handler as defaultallowedRequestTypes } from './default/allowedRequestTypes';
+import { handler as javelinguardrails } from './javelin/guardrails';
 
 export const plugins = {
   default: {
@@ -74,6 +76,7 @@ export const plugins = {
     modelRules: defaultmodelRules,
     jwt: defaultjwt,
     requiredMetadataKeys: defaultrequiredMetadataKeys,
+    addPrefix: defaultaddPrefix,
     regexReplace: defaultregexReplace,
     allowedRequestTypes: defaultallowedRequestTypes,
   },
@@ -143,5 +146,8 @@ export const plugins = {
   },
   walledai: {
     guardrails: walledaiguardrails,
+  },
+  javelin: {
+    guardrails: javelinguardrails,
   },
 };
