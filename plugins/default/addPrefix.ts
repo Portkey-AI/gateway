@@ -88,7 +88,7 @@ const addPrefixToChatCompletion = (
           context,
           eventType
         );
-        if (currentContent) {
+        if (currentContent !== null) {
           const updatedTexts = (
             Array.isArray(textArray) ? textArray : [String(textArray)]
           ).map((text, idx) => (idx === 0 ? `${prefix}${text ?? ''}` : text));
