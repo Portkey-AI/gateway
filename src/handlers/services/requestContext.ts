@@ -229,4 +229,8 @@ export class RequestContext {
       requestOptions,
     ]);
   }
+
+  updateModelPricingConfig(modelPricingConfig: Record<string, any>) {
+    this.providerOption.modelPricingConfig = modelPricingConfig;
+  }
 }
