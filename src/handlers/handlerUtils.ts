@@ -260,7 +260,7 @@ export function convertHooksShorthand(
 
     // Now, add all the checks to the checks array
     hooksObject.checks = Object.keys(hook).map((key) => {
-      const id = hook[key].id;
+      const id = hook[key].id ?? key;
       return {
         id: id.includes('.') ? id : `default.${id}`,
         parameters: hook[key],
