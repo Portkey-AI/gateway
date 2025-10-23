@@ -153,7 +153,7 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
     gatewayRequestBody, // for proxy use the passed body blindly
     headers: requestHeaders,
   }) => {
-    const { awsService } = providerOptions;
+    const { awsAuthType, awsService } = providerOptions;
     const method =
       c.get('method') || // method set specifically into context
       getMethod(fn as endpointStrings, transformedRequestUrl, c); // method calculated
@@ -175,8 +175,13 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
 
     setRouteSpecificHeaders(fn, headers, providerOptions);
 
-    if (providerOptions.awsAuthType === 'assumedRole') {
+    if (awsAuthType === 'assumedRole') {
       await providerAssumedRoleCredentials(c, providerOptions);
+    }
+
+    if (awsAuthType === 'apiKey') {
+      headers['Authorization'] = `Bearer ${providerOptions.apiKey}`;
+      return headers;
     }
 
     let finalRequestBody =
