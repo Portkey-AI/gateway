@@ -1,10 +1,10 @@
 import { Context } from 'hono';
-import { Options } from '../../types/requestBody';
+import { Options, Params } from '../../types/requestBody';
 import { endpointStrings, ProviderAPIConfig } from '../types';
 import { bedrockInvokeModels } from './constants';
 import {
+  getAwsEndpointDomain,
   generateAWSHeaders,
-  getAssumedRoleCredentials,
   getFoundationModelFromInferenceProfile,
   providerAssumedRoleCredentials,
 } from './utils';
@@ -18,6 +18,7 @@ interface BedrockAPIConfigInterface extends Omit<ProviderAPIConfig, 'headers'> {
     transformedRequestBody: Record<string, any> | string;
     transformedRequestUrl: string;
     gatewayRequestBody?: Params;
+    headers?: Record<string, string>;
   }) => Promise<Record<string, any>> | Record<string, any>;
 }
 
@@ -66,7 +67,14 @@ const ENDPOINTS_TO_ROUTE_TO_S3 = [
   'initiateMultipartUpload',
 ];
 
-const getMethod = (fn: endpointStrings, transformedRequestUrl: string) => {
+const getMethod = (
+  fn: endpointStrings,
+  transformedRequestUrl: string,
+  c: Context
+) => {
+  if (fn === 'proxy') {
+    return c.req.method;
+  }
   if (fn === 'uploadFile') {
     const url = new URL(transformedRequestUrl);
     return url.searchParams.get('partNumber') ? 'PUT' : 'POST';
@@ -121,20 +129,20 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
         gatewayRequestURL.split('/v1/files/')[1]
       );
       const bucketName = s3URL.replace('s3://', '').split('/')[0];
-      return `https://${bucketName}.s3.${providerOptions.awsRegion || 'us-east-1'}.amazonaws.com`;
+      return `https://${bucketName}.s3.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain(c)}`;
     }
     if (fn === 'retrieveFileContent') {
       const s3URL = decodeURIComponent(
         gatewayRequestURL.split('/v1/files/')[1]
       );
       const bucketName = s3URL.replace('s3://', '').split('/')[0];
-      return `https://${bucketName}.s3.${providerOptions.awsRegion || 'us-east-1'}.amazonaws.com`;
+      return `https://${bucketName}.s3.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain(c)}`;
     }
     if (fn === 'uploadFile')
-      return `https://${providerOptions.awsS3Bucket}.s3.${providerOptions.awsRegion || 'us-east-1'}.amazonaws.com`;
+      return `https://${providerOptions.awsS3Bucket}.s3.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain(c)}`;
     const isAWSControlPlaneEndpoint =
       fn && AWS_CONTROL_PLANE_ENDPOINTS.includes(fn);
-    return `https://${isAWSControlPlaneEndpoint ? 'bedrock' : 'bedrock-runtime'}.${providerOptions.awsRegion || 'us-east-1'}.amazonaws.com`;
+    return `https://${isAWSControlPlaneEndpoint ? 'bedrock' : 'bedrock-runtime'}.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain(c)}`;
   },
   headers: async ({
     c,
@@ -142,25 +150,42 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
     providerOptions,
     transformedRequestBody,
     transformedRequestUrl,
+    gatewayRequestBody, // for proxy use the passed body blindly
+    headers: requestHeaders,
   }) => {
-    const method = getMethod(fn as endpointStrings, transformedRequestUrl);
-    const service = getService(fn as endpointStrings);
+    const { awsAuthType, awsService } = providerOptions;
+    const method =
+      c.get('method') || // method set specifically into context
+      getMethod(fn as endpointStrings, transformedRequestUrl, c); // method calculated
+    const service = awsService || getService(fn as endpointStrings);
 
-    const headers: Record<string, string> = {
-      'content-type': 'application/json',
-    };
+    let headers: Record<string, string> = {};
 
-    if (method === 'PUT' || method === 'GET') {
+    if (fn === 'proxy' && service !== 'bedrock') {
+      headers = { ...(requestHeaders ?? {}) };
+    } else {
+      headers = {
+        'content-type': 'application/json',
+      };
+    }
+
+    if ((method === 'PUT' || method === 'GET') && fn !== 'proxy') {
       delete headers['content-type'];
     }
 
     setRouteSpecificHeaders(fn, headers, providerOptions);
 
-    if (providerOptions.awsAuthType === 'assumedRole') {
+    if (awsAuthType === 'assumedRole') {
       await providerAssumedRoleCredentials(c, providerOptions);
     }
 
-    let finalRequestBody = transformedRequestBody;
+    if (awsAuthType === 'apiKey') {
+      headers['Authorization'] = `Bearer ${providerOptions.apiKey}`;
+      return headers;
+    }
+
+    let finalRequestBody =
+      fn === 'proxy' ? gatewayRequestBody : transformedRequestBody;
 
     if (['cancelFinetune', 'cancelBatch'].includes(fn as endpointStrings)) {
       // Cancel doesn't require any body, but fetch is sending empty body, to match the signature this block is required.
@@ -183,7 +208,6 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
     fn,
     gatewayRequestBodyJSON: gatewayRequestBody,
     gatewayRequestURL,
-    c,
   }) => {
     if (fn === 'retrieveFile') {
       const fileId = decodeURIComponent(

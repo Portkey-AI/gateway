@@ -192,6 +192,13 @@
       "base_url": "https://api.openai.com/v1"
     },
     {
+      "id": "cometapi",
+      "name": "CometAPI",
+      "object": "provider",
+      "description": "CometAPI offers an OpenAI-compatible API that unifies access to 500+ foundation models across chat, reasoning, and multimodal workloads. It emphasizes straightforward migrations from OpenAI SDKs, competitive pricing, and additional tooling for multimodal generation spanning images, audio, and video.",
+      "base_url": "https://api.cometapi.com/v1"
+    },
+    {
       "id": "openrouter",
       "name": "OpenRouter",
       "object": "provider",

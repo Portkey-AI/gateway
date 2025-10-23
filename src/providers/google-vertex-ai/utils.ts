@@ -1,10 +1,9 @@
 import {
-  GoogleBatchRecord,
   GoogleErrorResponse,
+  GoogleResponseCandidate,
+  GoogleBatchRecord,
   GoogleFinetuneRecord,
-  GoogleResponseCandidate as VertexResponseCandidate,
 } from './types';
-import { GoogleResponseCandidate } from '../google/chatComplete';
 import { generateErrorResponse } from '../utils';
 import {
   BatchEndpoints,
@@ -14,7 +13,7 @@ import {
 import { ErrorResponse, FinetuneRequest, Logprobs } from '../types';
 import { Context } from 'hono';
 import { env } from 'hono/adapter';
-import { JsonSchema } from '../../types/requestBody';
+import { ContentType, JsonSchema } from '../../types/requestBody';
 
 /**
  * Encodes an object as a Base64 URL-encoded string.
@@ -300,7 +299,7 @@ export const transformGeminiToolParameters = (
 };
 
 // Vertex AI does not support additionalProperties in JSON Schema
-// https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/function-calling#schema
+// https://cloud.google.com/vertex-ai/docs/reference/rest/v1/Schema
 export const recursivelyDeleteUnsupportedParameters = (obj: any) => {
   if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) return;
   delete obj.additional_properties;
@@ -422,7 +421,7 @@ const getTimeKey = (status: GoogleBatchRecord['state'], value: string) => {
 
 export const GoogleToOpenAIBatch = (response: GoogleBatchRecord) => {
   const jobId = response.name.split('/').at(-1);
-  const total = Object.values(response.completionsStats ?? {}).reduce(
+  const total = Object.values(response.completionStats ?? {}).reduce(
     (acc, current) => acc + Number.parseInt(current),
     0
   );
@@ -431,7 +430,6 @@ export const GoogleToOpenAIBatch = (response: GoogleBatchRecord) => {
     ? BatchEndpoints.EMBEDDINGS
     : BatchEndpoints.CHAT_COMPLETIONS;
 
-  // Embeddings file is `000000000000.jsonl`, for inference the output is at `predictions.jsonl`
   const fileSuffix =
     endpoint === BatchEndpoints.EMBEDDINGS
       ? '000000000000.jsonl'
@@ -461,8 +459,8 @@ export const GoogleToOpenAIBatch = (response: GoogleBatchRecord) => {
     ...getTimeKey(response.state, response.updateTime),
     request_counts: {
       total: total,
-      completed: response.completionsStats?.successfulCount,
-      failed: response.completionsStats?.failedCount,
+      completed: response.completionStats?.successfulCount,
+      failed: response.completionStats?.failedCount,
     },
     ...(response.error && {
       errors: {
@@ -473,48 +471,8 @@ export const GoogleToOpenAIBatch = (response: GoogleBatchRecord) => {
   };
 };
 
-export const fetchGoogleCustomEndpoint = async ({
-  authorization,
-  method,
-  url,
-  body,
-}: {
-  url: string;
-  body?: ReadableStream | Record<string, unknown>;
-  authorization: string;
-  method: string;
-}) => {
-  const result = { response: null, error: null, status: null };
-  try {
-    const options = {
-      ...(method !== 'GET' &&
-        body && {
-          body: typeof body === 'object' ? JSON.stringify(body) : body,
-        }),
-      method: method,
-      headers: {
-        Authorization: authorization,
-        'Content-Type': 'application/json',
-      },
-    };
-
-    const request = await fetch(url, options);
-    if (!request.ok) {
-      const error = await request.text();
-      result.error = error as any;
-      result.status = request.status as any;
-    }
-
-    const response = await request.json();
-    result.response = response as any;
-  } catch (error) {
-    result.error = error as any;
-  }
-  return result;
-};
-
 export const transformVertexLogprobs = (
-  generation: GoogleResponseCandidate | VertexResponseCandidate
+  generation: GoogleResponseCandidate
 ) => {
   const logprobsContent: Logprobs[] = [];
   if (!generation.logprobsResult) return null;
@@ -636,9 +594,6 @@ export const vertexRequestLineHandler = (
       return transformedBody;
   }
 };
-export const isEmbeddingModel = (modelName: string) => {
-  return modelName.includes('embedding');
-};
 
 export const generateSignedURL = async (
   serviceAccountInfo: Record<string, any>,
@@ -750,4 +705,27 @@ export const generateSignedURL = async (
   // Construct the final URL
   const schemeAndHost = `https://${host}`;
   return `${schemeAndHost}${canonicalUri}?${canonicalQueryString}&x-goog-signature=${signatureHex}`;
+};
+
+export const isEmbeddingModel = (modelName: string) => {
+  return modelName.includes('embedding');
+};
+
+export const OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING = {
+  mp3: 'audio/mp3',
+  wav: 'audio/wav',
+};
+
+export const transformInputAudioPart = (c: ContentType) => {
+  const data = c.input_audio?.data;
+  const mimeType =
+    OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING[
+      c.input_audio?.format as 'mp3' | 'wav'
+    ];
+  return {
+    inlineData: {
+      data,
+      mimeType,
+    },
+  };
 };

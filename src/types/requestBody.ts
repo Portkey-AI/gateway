@@ -95,6 +95,7 @@ export interface Options {
   awsBedrockModel?: string;
   awsServerSideEncryption?: string;
   awsServerSideEncryptionKMSKeyId?: string;
+  awsService?: string;
   foundationModel?: string;
 
   /** Sagemaker specific */
@@ -131,22 +132,22 @@ export interface Options {
   beforeRequestHooks?: HookObject[];
   defaultInputGuardrails?: HookObject[];
   defaultOutputGuardrails?: HookObject[];
-
   /** OpenAI specific */
   openaiProject?: string;
   openaiOrganization?: string;
   openaiBeta?: string;
-
   /** Azure Inference Specific */
-  azureDeploymentName?: string;
   azureApiVersion?: string;
-  azureExtraParams?: string;
   azureFoundryUrl?: string;
+  azureExtraParameters?: string;
+  azureDeploymentName?: string;
 
   /** The parameter to determine if extra non-openai compliant fields should be returned in response */
   strictOpenAiCompliance?: boolean;
+
   /** Parameter to determine if fim/completions endpoint is to be used */
   mistralFimCompletion?: string;
+
   /** Anthropic specific headers */
   anthropicBeta?: string;
   anthropicVersion?: string;
@@ -160,6 +161,9 @@ export interface Options {
 
   /** Azure entra scope */
   azureEntraScope?: string;
+
+  /** Model pricing config */
+  modelPricingConfig?: Record<string, any>;
 }
 
 /**
@@ -248,7 +252,7 @@ export interface ContentType extends PromptCache {
   };
   input_audio?: {
     data: string;
-    format: string; //defaults to auto
+    format: 'mp3' | 'wav' | string; //defaults to auto
   };
 }
 
