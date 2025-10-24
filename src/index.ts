@@ -6,6 +6,7 @@
 
 import { Context, Hono } from 'hono';
 import { prettyJSON } from 'hono/pretty-json';
+import { contextStorage } from 'hono/context-storage';
 import { HTTPException } from 'hono/http-exception';
 import { compress } from 'hono/compress';
 import { getRuntimeKey } from 'hono/adapter';
@@ -55,6 +56,11 @@ app.use('*', (c, next) => {
   }
   return compress()(c, next);
 });
+
+// Allows to use context in outside of the request
+if (runtime === 'workerd') {
+  app.use('*', contextStorage());
+}
 
 if (runtime === 'node') {
   app.use('*', async (c: Context, next) => {

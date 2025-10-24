@@ -71,6 +71,17 @@ const nodeEnv = {
     process.env.AWS_ASSUME_ROLE_REGION
   ),
   AWS_REGION: getValueOrFileContents(process.env.AWS_REGION),
+  AWS_DEFAULT_REGION: getValueOrFileContents(process.env.AWS_DEFAULT_REGION),
+  HOME: getValueOrFileContents(process.env.HOME, true),
+  USERPROFILE: getValueOrFileContents(process.env.USERPROFILE, true),
+  ECS_CONTAINER_METADATA_URI_V4: getValueOrFileContents(
+    process.env.ECS_CONTAINER_METADATA_URI_V4,
+    true
+  ),
+  ECS_CONTAINER_METADATA_URI: getValueOrFileContents(
+    process.env.ECS_CONTAINER_METADATA_URI,
+    true
+  ),
   AWS_ENDPOINT_DOMAIN: getValueOrFileContents(process.env.AWS_ENDPOINT_DOMAIN),
   AWS_IMDS_V1: getValueOrFileContents(process.env.AWS_IMDS_V1),
 
@@ -121,12 +132,12 @@ const nodeEnv = {
   HTTPS_PROXY: getValueOrFileContents(process.env.HTTPS_PROXY),
 };
 
-export const Environment = (c?: Context) => {
+export const Environment = (env?: Record<string, any>) => {
   if (isNodeInstance) {
     return nodeEnv;
   }
-  if (c) {
-    return env(c);
+  if (env) {
+    return env;
   }
   return {};
 };

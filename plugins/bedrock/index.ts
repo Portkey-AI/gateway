@@ -1,4 +1,5 @@
-import { PluginHandler } from '../types';
+import { getRuntimeKey } from 'hono/adapter';
+import { PluginHandler, PluginOptions } from '../types';
 import {
   getCurrentContentPart,
   HttpError,
@@ -13,6 +14,8 @@ const REQUIRED_CREDENTIAL_KEYS = [
   'awsRegion',
 ];
 
+const runtime = getRuntimeKey();
+
 export const validateCreds = (
   credentials?: BedrockParameters['credentials']
 ) => {
@@ -22,52 +25,72 @@ export const validateCreds = (
 };
 
 export const handleCredentials = async (
-  options: Record<string, any>,
-  credentials: BedrockParameters['credentials'] | null
+  credentials: BedrockParameters['credentials'] | null,
+  options?: PluginOptions
 ) => {
   const finalCredentials = {} as BedrockAccessKeyCreds;
   if (credentials?.awsAuthType === 'assumedRole') {
-    try {
-      // Assume the role in the source account
-      const sourceRoleCredentials = await getAssumedRoleCredentials(
-        options.getFromCacheByKey,
-        options.putInCacheWithValue,
-        options.env,
-        options.env.AWS_ASSUME_ROLE_SOURCE_ARN, // Role ARN in the source account
-        options.env.AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID || '', // External ID for source role (if needed)
-        credentials.awsRegion || ''
-      );
+    if (runtime === 'workerd') {
+      try {
+        // Assume the role in the source account
+        const sourceRoleCredentials = await getAssumedRoleCredentials(
+          options?.env.AWS_ASSUME_ROLE_SOURCE_ARN, // Role ARN in the source account
+          options?.env.AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID || '', // External ID for source role (if needed)
+          credentials.awsRegion || '',
+          undefined,
+          options
+        );
 
-      if (!sourceRoleCredentials) {
-        throw new Error('Failed to assume internal role');
+        if (!sourceRoleCredentials) {
+          throw new Error('Failed to assume internal role');
+        }
+
+        // Assume role in destination account using temporary creds obtained in first step
+        const destinationCredentials =
+          (await getAssumedRoleCredentials(
+            credentials.awsRoleArn || '',
+            credentials.awsExternalId || '',
+            credentials.awsRegion || '',
+            {
+              accessKeyId: sourceRoleCredentials.accessKeyId,
+              secretAccessKey: sourceRoleCredentials.secretAccessKey,
+              sessionToken: sourceRoleCredentials.sessionToken,
+            },
+            options
+          )) || {};
+        if (!destinationCredentials) {
+          throw new Error('Failed to assume destination role');
+        }
+        finalCredentials.awsAccessKeyId = destinationCredentials.accessKeyId;
+        finalCredentials.awsSecretAccessKey =
+          destinationCredentials.secretAccessKey;
+        finalCredentials.awsSessionToken = destinationCredentials.sessionToken;
+        finalCredentials.awsRegion = credentials.awsRegion || '';
+      } catch {
+        throw new Error('Error while assuming role');
       }
-
-      // Assume role in destination account using temporary creds obtained in first step
-      const destinationCredentials =
+    }
+    if (runtime === 'node') {
+      const { accessKeyId, secretAccessKey, sessionToken } =
         (await getAssumedRoleCredentials(
-          options.getFromCacheByKey,
-          options.putInCacheWithValue,
-          options.env,
           credentials.awsRoleArn || '',
           credentials.awsExternalId || '',
-          credentials.awsRegion || '',
-          {
-            accessKeyId: sourceRoleCredentials.accessKeyId,
-            secretAccessKey: sourceRoleCredentials.secretAccessKey,
-            sessionToken: sourceRoleCredentials.sessionToken,
-          }
+          credentials.awsRegion || ''
         )) || {};
-      if (!destinationCredentials) {
-        throw new Error('Failed to assume destination role');
-      }
-      finalCredentials.awsAccessKeyId = destinationCredentials.accessKeyId;
-      finalCredentials.awsSecretAccessKey =
-        destinationCredentials.secretAccessKey;
-      finalCredentials.awsSessionToken = destinationCredentials.sessionToken;
-      finalCredentials.awsRegion = credentials.awsRegion || '';
-    } catch {
-      throw new Error('Error while assuming role');
+
+      finalCredentials.awsAccessKeyId = accessKeyId;
+      finalCredentials.awsSecretAccessKey = secretAccessKey;
+      finalCredentials.awsSessionToken = sessionToken;
+      finalCredentials.awsRegion = credentials?.awsRegion;
     }
+  } else if (credentials?.awsAuthType === 'serviceRole' && runtime === 'node') {
+    const { accessKeyId, secretAccessKey, sessionToken, awsRegion } =
+      await getAssumedRoleCredentials();
+
+    finalCredentials.awsAccessKeyId = accessKeyId;
+    finalCredentials.awsSecretAccessKey = secretAccessKey;
+    finalCredentials.awsSessionToken = sessionToken;
+    finalCredentials.awsRegion = awsRegion;
   } else {
     finalCredentials.awsAccessKeyId = credentials?.awsAccessKeyId || '';
     finalCredentials.awsSecretAccessKey = credentials?.awsSecretAccessKey || '';
@@ -102,10 +125,7 @@ export const pluginHandler: PluginHandler<
 
   try {
     const credentials = parameters.credentials || null;
-    const finalCredentials = await handleCredentials(
-      options as Record<string, any>,
-      credentials
-    );
+    const finalCredentials = await handleCredentials(credentials, options);
     const validate = validateCreds(finalCredentials);
 
     const guardrailVersion = parameters.guardrailVersion;
@@ -152,7 +172,7 @@ export const pluginHandler: PluginHandler<
     const interventionData = results.find(
       (result) => result && result.action === 'GUARDRAIL_INTERVENED'
     );
-    if (interventionData) {
+    if (interventionData?.action) {
       verdict = false;
     }
 
@@ -168,9 +188,8 @@ export const pluginHandler: PluginHandler<
       if (result.assessments[0]?.wordPolicy) {
         flaggedCategories.add('wordFilter');
       }
-
       if (hasTriggeredPII) {
-        continue;
+        break;
       }
 
       const sensitiveInfo = result.assessments[0]?.sensitiveInformationPolicy;

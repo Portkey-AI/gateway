@@ -7,8 +7,11 @@ export type BedrockAccessKeyCreds = {
 };
 
 export type BedrockAssumedRoleCreds = {
-  awsAuthType: 'assumedRole';
+  awsAuthType: 'assumedRole' | 'serviceRole';
   awsRoleArn: string;
+  awsAccessKeyId: string;
+  awsSecretAccessKey: string;
+  awsSessionToken?: string;
   awsExternalId: string;
   awsRegion: string;
 };
