@@ -1,7 +1,7 @@
 import { ProviderAPIConfig } from '../types';
 
 const CohereAPIConfig: ProviderAPIConfig = {
-  getBaseURL: () => 'https://api.cohere.ai/v1',
+  getBaseURL: () => 'https://api.cohere.ai',
   headers: ({ providerOptions, fn }) => {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${providerOptions.apiKey}`,
@@ -14,27 +14,27 @@ const CohereAPIConfig: ProviderAPIConfig = {
   getEndpoint: ({ fn, gatewayRequestURL }) => {
     switch (fn) {
       case 'chatComplete':
-        return '/chat';
+        return '/v2/chat';
       case 'complete':
-        return '/generate';
+        return '/v1/generate';
       case 'embed':
-        return '/embed';
+        return '/v2/embed';
       case 'uploadFile':
-        return `/datasets?name=portkey-${crypto.randomUUID()}&type=embed-input&keep_fields=custom_id,id`;
+        return `/v1/datasets?name=portkey-${crypto.randomUUID()}&type=embed-input&keep_fields=custom_id,id`;
       case 'listFiles':
-        return '/datasets';
+        return '/v1/datasets';
       case 'retrieveFile':
-        return `/datasets/${gatewayRequestURL.split('/').pop()}`;
+        return `/v1/datasets/${gatewayRequestURL.split('/').pop()}`;
       case 'deleteFile':
-        return `/datasets/${gatewayRequestURL.split('/').pop()}`;
+        return `/v1/datasets/${gatewayRequestURL.split('/').pop()}`;
       case 'createBatch':
-        return '/embed-jobs';
+        return '/v1/embed-jobs';
       case 'listBatches':
-        return '/embed-jobs';
+        return '/v1/embed-jobs';
       case 'retrieveBatch':
-        return `/embed-jobs/${gatewayRequestURL.split('/').pop()}`;
+        return `/v1/embed-jobs/${gatewayRequestURL.split('/').pop()}`;
       case 'cancelBatch':
-        return `/embed-jobs/${gatewayRequestURL.split('batches/').pop()}`;
+        return `/v1/embed-jobs/${gatewayRequestURL.split('batches/').pop()}`;
       default:
         return '';
     }
