@@ -17,8 +17,8 @@ import {
   AnthropicChatCompleteStreamResponse,
 } from '../anthropic/chatComplete';
 import {
-  AnthropicErrorResponse,
   AnthropicStreamState,
+  AnthropicErrorResponse,
 } from '../anthropic/types';
 import {
   GoogleMessage,
@@ -28,6 +28,7 @@ import {
   transformOpenAIRoleToGoogleRole,
   transformToolChoiceForGemini,
 } from '../google/chatComplete';
+import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from '../google/types';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -297,7 +298,13 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
           delete tool.function?.strict;
 
           if (['googleSearch', 'google_search'].includes(tool.function.name)) {
-            tools.push({ googleSearch: {} });
+            const timeRangeFilter = tool.function.parameters?.timeRangeFilter;
+            tools.push({
+              googleSearch: {
+                // allow null
+                ...(timeRangeFilter !== undefined && { timeRangeFilter }),
+              },
+            });
           } else if (
             ['googleSearchRetrieval', 'google_search_retrieval'].includes(
               tool.function.name
@@ -518,7 +525,7 @@ export const GoogleChatCompleteResponseTransform: (
             message: message,
             index: index,
             finish_reason: transformFinishReason(
-              generation.finishReason,
+              generation.finishReason as GOOGLE_GENERATE_CONTENT_FINISH_REASON,
               strictOpenAiCompliance
             ),
             logprobs,
@@ -643,11 +650,11 @@ export const GoogleChatCompleteStreamChunkTransform: (
       parsedChunk.candidates?.map((generation, index) => {
         const finishReason = generation.finishReason
           ? transformFinishReason(
-              parsedChunk.candidates[0].finishReason,
+              parsedChunk.candidates[0]
+                .finishReason as GOOGLE_GENERATE_CONTENT_FINISH_REASON,
               strictOpenAiCompliance
             )
           : null;
-
         let message: any = { role: 'assistant', content: '' };
         if (generation.content?.parts[0]?.text) {
           const contentBlocks = [];
