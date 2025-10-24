@@ -1096,6 +1096,8 @@ export function constructConfigFromRequestHeaders(
       'default_input_guardrails',
       'default_output_guardrails',
       'integrationModelDetails',
+      'integrationDetails',
+      'virtualKeyDetails',
       'cb_config',
     ]) as any;
   }
