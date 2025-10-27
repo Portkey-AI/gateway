@@ -1,6 +1,8 @@
+import { Environment } from '../utils/env.js';
+
 let _logger: any;
 
-if (process && process.env.logger === 'loki') {
+if (Environment().APM_LOGGER === 'loki') {
   const { LokiLogger } = await import('./loki/logger.js');
   _logger = LokiLogger;
 } else {
