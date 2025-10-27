@@ -3,12 +3,10 @@ import {
   MatterAIChatCompleteConfig,
   MatterAIChatCompleteStreamChunkTransform,
 } from './chatComplete';
-import { MatterAIEmbedConfig } from './embed';
 
 const MatterAIConfig = {
   api: MatterAIAPIConfig,
   chatComplete: MatterAIChatCompleteConfig,
-  embed: MatterAIEmbedConfig,
   streamChunkTransform: MatterAIChatCompleteStreamChunkTransform,
 };
 
