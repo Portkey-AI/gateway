@@ -15,7 +15,7 @@ const GroqConfig: ProviderConfigs = {
     undefined,
     {
       service_tier: { param: 'service_tier', required: false },
-      reasoning_effort: { param: 'reasoning_effort', required: false  }
+      reasoning_effort: { param: 'reasoning_effort', required: false },
     }
   ),
   createTranscription: {},
