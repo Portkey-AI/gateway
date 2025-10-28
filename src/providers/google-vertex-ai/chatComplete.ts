@@ -777,7 +777,7 @@ export const VertexAnthropicChatCompleteResponseTransform: (
       output_tokens = 0,
       cache_creation_input_tokens,
       cache_read_input_tokens,
-    } = response?.usage;
+    } = response?.usage ?? {};
 
     const shouldSendCacheUsage =
       cache_creation_input_tokens || cache_read_input_tokens;
