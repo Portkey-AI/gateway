@@ -1,0 +1,48 @@
+{
+  "plugins_enabled": [
+    "default",
+    "portkey",
+    "aporia",
+    "sydelabs",
+    "pillar",
+    "patronus",
+    "pangea",
+    "promptsecurity",
+    "panw-prisma-airs",
+    "walledai"
+  ],
+  "credentials": {
+    "portkey": {
+      "apiKey": "..."
+    }
+  },
+  "cache": false,
+  "integrations": [
+    {
+      "provider": "anthropic",
+      "slug": "dev_team_anthropic",
+      "credentials": {
+        "apiKey": "sk-ant-"
+      },
+      "rate_limits": [
+        {
+          "type": "requests",
+          "unit": "rph",
+          "value": 3
+        },
+        {
+          "type": "tokens",
+          "unit": "rph",
+          "value": 3000
+        }
+      ],
+      "models": [
+        {
+          "slug": "claude-3-7-sonnet-20250219",
+          "status": "active",
+          "pricing_config": null
+        }
+      ]
+    }
+  ]
+}
