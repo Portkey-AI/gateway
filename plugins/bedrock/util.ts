@@ -702,69 +702,69 @@ export async function getAssumedRoleCredentials(
     Environment(options?.env).AWS_ASSUME_ROLE_SECRET_ACCESS_KEY;
   let sessionToken;
 
-  // if it's worker, support only assumed role
-  if (runtime === 'workerd') {
-    if (!awsRoleArn) {
-      return {
-        accessKeyId,
-        secretAccessKey,
-        sessionToken,
-        awsRegion,
-        awsRoleArn,
-      };
-    }
+  // except assumed role others are only supported in node runtime
+  if (runtime === 'node') {
+    if (!accessKeyId && !secretAccessKey) {
+      // check Environment first
+      let credentials = getCredentialsFromEnvironment(options);
+      if (!credentials) {
+        credentials = await getCredentialsFromSharedCredentialsFile(options);
+      }
+      if (!credentials) {
+        credentials = await getCredentialsFromAwsConfigFile(options);
+      }
 
-    return getSTSAssumedCredentials(
-      awsRoleArn,
-      awsExternalId,
-      awsRegion,
+      if (!credentials) {
+        try {
+          credentials = await getIRSACredentials(awsRegion, options);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      if (!credentials) {
+        try {
+          credentials = await getCredentialsFromECSContainer(options);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      if (!credentials) {
+        try {
+          credentials = await getIMDSAssumedCredentials(options);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+      if (!awsRoleArn || credentials?.awsRoleArn === awsRoleArn) {
+        return credentials;
+      }
+      accessKeyId = credentials?.accessKeyId;
+      secretAccessKey = credentials?.secretAccessKey;
+      sessionToken = credentials?.sessionToken;
+    }
+  }
+
+  if (!awsRoleArn) {
+    return {
       accessKeyId,
       secretAccessKey,
       sessionToken,
-      options
-    );
+      awsRegion,
+      awsRoleArn,
+    };
   }
 
-  if (!accessKeyId && !secretAccessKey) {
-    // check Environment first
-    let credentials = getCredentialsFromEnvironment(options);
-    if (!credentials) {
-      credentials = await getCredentialsFromSharedCredentialsFile(options);
-    }
-    if (!credentials) {
-      credentials = await getCredentialsFromAwsConfigFile(options);
-    }
-
-    if (!credentials) {
-      try {
-        credentials = await getIRSACredentials(awsRegion, options);
-      } catch (error) {
-        console.error(error);
-      }
-    }
-
-    if (!credentials) {
-      try {
-        credentials = await getCredentialsFromECSContainer(options);
-      } catch (error) {
-        console.error(error);
-      }
-    }
-
-    if (!credentials) {
-      try {
-        credentials = await getIMDSAssumedCredentials(options);
-      } catch (error) {
-        console.error(error);
-      }
-    }
-    if (!awsRoleArn || credentials?.awsRoleArn === awsRoleArn) {
-      return credentials;
-    }
-    accessKeyId = credentials?.accessKeyId;
-    secretAccessKey = credentials?.secretAccessKey;
-    sessionToken = credentials?.sessionToken;
-  }
+  return getSTSAssumedCredentials(
+    awsRoleArn,
+    awsExternalId,
+    awsRegion,
+    accessKeyId,
+    secretAccessKey,
+    sessionToken,
+    options
+  );
 }
 
 function parseXml(xml: string) {
