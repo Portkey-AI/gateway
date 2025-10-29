@@ -15,6 +15,7 @@ import {
 import { getTokenCache } from '../../../shared/services/cache/index';
 import { Context } from 'hono';
 import { getBaseUrl } from '../../utils/mcp-utils';
+import { PORTKEY_HEADER_KEYS } from '../../../middlewares/portkey/globals';
 
 type Env = {
   Variables: {
@@ -22,6 +23,7 @@ type Env = {
     session?: any;
     tokenInfo?: any;
     isAuthenticated?: boolean;
+    headersObj?: any;
   };
   Bindings: {
     ALBUS_BASEPATH?: string;
@@ -51,7 +53,7 @@ function extractBearerToken(authorization: string | undefined): string | null {
  * Create WWW-Authenticate header value per RFC 9728
  */
 function createWWWAuthenticateHeader(baseUrl: string, path: string): string {
-  let header = `Bearer resource_metadata="${baseUrl}/.well-known/oauth-protected-resource${path}"`;
+  let header = `Bearer resource_metadata="${baseUrl}/.well-known/oauth-protected-resource${path}`;
 
   return header;
 }
@@ -158,6 +160,68 @@ export function oauthMiddleware(config: OAuthConfig = {}) {
     c.set('tokenInfo', introspection);
     c.set('isAuthenticated', true);
 
+    return next();
+  });
+}
+
+/**
+ * Middleware that converts Portkey API key details to OAuth tokenInfo format
+ * Should be used after authN middleware
+ */
+export function apiKeyToTokenMapper() {
+  return createMiddleware<Env>(async (c: Context, next) => {
+    const headersObj = c.get('headersObj');
+
+    if (!headersObj) {
+      logger.warn('No headersObj found in context, skipping token mapping');
+      return next();
+    }
+
+    const organisationDetailsStr =
+      headersObj[PORTKEY_HEADER_KEYS.ORGANISATION_DETAILS];
+
+    if (!organisationDetailsStr) {
+      logger.warn(
+        'No organisation details found in headers, skipping token mapping'
+      );
+      return next();
+    }
+
+    try {
+      const organisationDetails = JSON.parse(organisationDetailsStr);
+      if (
+        c.req.param('workspaceId') !== undefined &&
+        organisationDetails.workspaceDetails.slug !== c.req.param('workspaceId')
+      ) {
+        return c.json(
+          {
+            error: 'forbidden',
+            error_description: 'You do not have access to this resource',
+          },
+          403
+        );
+      }
+
+      const tokenInfo = {
+        active: true,
+        token_type: 'api_key',
+        token: organisationDetails.apiKeyDetails.key,
+        scope: '',
+        aud: organisationDetails.id,
+        sub: organisationDetails.apiKeyDetails.id,
+        workspace_id: organisationDetails.workspaceDetails.slug,
+        organisation_id: organisationDetails.id,
+      };
+
+      c.set('tokenInfo', tokenInfo);
+      c.set('isAuthenticated', true);
+
+      logger.debug(
+        `Mapped API key to tokenInfo for org: ${organisationDetails.id}`
+      );
+    } catch (error) {
+      logger.error('Failed to map API key to tokenInfo', error);
+    }
     return next();
   });
 }

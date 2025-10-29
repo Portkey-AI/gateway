@@ -13,6 +13,8 @@ import { ServerConfig } from '../types/mcp';
 import { createLogger } from '../../shared/utils/logger';
 import { CacheService, getMcpServersCache } from '../../shared/services/cache';
 import { ControlPlane } from '../middleware/controlPlane';
+import crypto from 'crypto';
+import { Environment } from '../../utils/env';
 
 const logger = createLogger('UpstreamOAuth');
 
@@ -21,21 +23,36 @@ export class GatewayOAuthProvider implements OAuthClientProvider {
   private cache: CacheService;
   private workspaceId: string;
   private serverId: string;
+  private stateKey: string;
+  private resumeStateKey: string;
 
   constructor(
     config: ServerConfig,
     private userId: string,
-    private controlPlane?: ControlPlane
+    private controlPlane?: ControlPlane,
+    stateKey?: string,
+    resumeStateKey?: string
   ) {
     this.cache = getMcpServersCache();
     this.workspaceId = config.workspaceId;
     this.serverId = config.serverId;
+    if (stateKey) {
+      this.stateKey = stateKey;
+    } else {
+      this.stateKey = crypto.randomBytes(32).toString('hex');
+    }
+    this.resumeStateKey = resumeStateKey || '';
+  }
+
+  state(): string {
+    return this.stateKey;
   }
 
   get redirectUrl(): string {
     // Use our upstream callback handler
     const baseUrl =
-      process.env.BASE_URL || `http://localhost:${process.env.PORT || 8788}`;
+      Environment({}).MCP_GATEWAY_BASE_URL ||
+      `http://localhost:${Environment({}).MCP_PORT}`;
     return `${baseUrl}/oauth/upstream-callback`;
   }
 
@@ -57,8 +74,11 @@ export class GatewayOAuthProvider implements OAuthClientProvider {
   }
 
   async clientInformation(): Promise<OAuthClientInformationFull | undefined> {
-    // First check if we have it in memory
-    if (this._clientInfo) return this._clientInfo;
+    // Try to get from state cache first
+    const stateCache = await this.cache.get(this.stateKey, 'upstream_state');
+    if (stateCache?.client_metadata) {
+      return stateCache.client_metadata;
+    }
 
     // Try to get from persistent storage
     if (this.userId.length > 0 && this.serverId && this.workspaceId) {
@@ -77,10 +97,7 @@ export class GatewayOAuthProvider implements OAuthClientProvider {
         }
       }
 
-      if (clientInfo) {
-        this._clientInfo = clientInfo;
-        return clientInfo;
-      }
+      return clientInfo;
     }
 
     // For oauth_auto, we don't have pre-registered client info
@@ -95,11 +112,23 @@ export class GatewayOAuthProvider implements OAuthClientProvider {
     clientInfo: OAuthClientInformationFull
   ): Promise<void> {
     // Store the client info for later use
-    this._clientInfo = clientInfo;
     logger.debug(
       `Saving client info for ${this.workspaceId}/${this.serverId}`,
       clientInfo
     );
+
+    await this.cache.set(
+      this.stateKey,
+      {
+        client_metadata: clientInfo,
+        resume_state_key: this.resumeStateKey,
+      },
+      {
+        namespace: 'upstream_state',
+        ttl: 10 * 60 * 1000, // 10 minutes
+      }
+    );
+
     await this.cache.set(this.cacheKey, clientInfo, {
       namespace: 'client_info',
     });
@@ -125,50 +154,114 @@ export class GatewayOAuthProvider implements OAuthClientProvider {
   }
 
   async saveTokens(tokens: OAuthTokens): Promise<void> {
-    logger.debug(`Saving tokens for ${this.workspaceId}/${this.serverId}`);
+    logger.debug(
+      `Saving upstream tokens for ${this.workspaceId}/${this.serverId}`
+    );
 
-    if (tokens && this.controlPlane) {
-      // Save tokens to control plane for persistence
-      await this.controlPlane.saveMCPServerTokens(
-        this.workspaceId,
-        this.serverId,
-        tokens
+    // Get the state cache to find the auth_code
+    const stateCache = await this.cache.get(this.stateKey, 'upstream_state');
+
+    if (stateCache?.auth_code) {
+      // Store tokens temporarily against the client's auth_code
+      // They will be persisted when the client exchanges the auth_code
+      stateCache.upstream_tokens = tokens;
+
+      await this.cache.set(this.stateKey, stateCache, {
+        namespace: 'upstream_state',
+        ttl: 10 * 60 * 1000,
+      });
+
+      // Also store directly by auth_code for easy retrieval during token exchange
+      await this.cache.set(
+        `upstream_tokens:${stateCache.auth_code}`,
+        {
+          tokens,
+          workspace_id: this.workspaceId,
+          server_id: this.serverId,
+          user_id: this.userId,
+        },
+        { ttl: 10 * 60 * 1000 }
       );
-    }
 
-    await this.cache.set(this.cacheKey, tokens, { namespace: 'tokens' });
+      logger.info('Upstream tokens stored temporarily against auth_code', {
+        auth_code: stateCache.auth_code,
+      });
+    } else {
+      logger.warn('No auth_code in state cache, saving tokens directly');
+      if (tokens && this.controlPlane) {
+        // Save tokens to control plane for persistence
+        await this.controlPlane.saveMCPServerTokens(
+          this.workspaceId,
+          this.serverId,
+          tokens
+        );
+      }
+      // Fallback: save directly (for non-delegated flows)
+      await this.cache.set(this.cacheKey, tokens, {
+        namespace: 'tokens',
+      });
+    }
   }
 
   async redirectToAuthorization(url: URL): Promise<void> {
-    url.searchParams.set('state', this.cacheKey);
+    // Set state in URL
+    url.searchParams.set('state', this.stateKey);
+
+    // Store code challenge/method from the URL in state cache
+    const codeChallenge = url.searchParams.get('code_challenge');
+    const codeChallengeMethod = url.searchParams.get('code_challenge_method');
+
+    const stateCache = await this.cache.get(this.stateKey, 'upstream_state');
+
+    if (!stateCache) {
+      throw new Error('State cache not found');
+    }
+
+    if (codeChallenge) stateCache.code_challenge = codeChallenge;
+    if (codeChallengeMethod)
+      stateCache.code_challenge_method = codeChallengeMethod;
+
+    await this.cache.set(this.stateKey, stateCache, {
+      namespace: 'upstream_state',
+      ttl: 10 * 60 * 1000, // 10 minutes
+    });
+
     logger.info(
-      `Authorization redirect requested for ${this.workspaceId}/${this.serverId}: ${url}`
+      `Authorization redirect for ${this.workspaceId}/${this.serverId}`,
+      { url: url.toString(), state: this.stateKey }
     );
 
-    // Throw a specific error that mcpSession can catch
     const error = new Error(
       `Authorization required for ${this.workspaceId}/${this.serverId}`
     );
     (error as any).needsAuthorization = true;
     (error as any).authorizationUrl = url.toString();
-    (error as any).serverId = this.workspaceId;
+    (error as any).serverId = this.serverId;
     (error as any).workspaceId = this.workspaceId;
     throw error;
   }
 
   async saveCodeVerifier(verifier: string): Promise<void> {
-    // For server-to-server, PKCE might not be needed, but we'll support it
     logger.debug(
       `Saving code verifier for ${this.workspaceId}/${this.serverId}`
     );
-    await this.cache.set(this.cacheKey, verifier, {
-      namespace: 'code_verifier',
-    });
+
+    const stateCache = await this.cache.get(this.stateKey, 'upstream_state');
+    if (stateCache) {
+      stateCache.code_verifier = verifier;
+      await this.cache.set(this.stateKey, stateCache, {
+        namespace: 'upstream_state',
+        ttl: 10 * 60 * 1000,
+      });
+    }
   }
 
   async codeVerifier(): Promise<string> {
-    const codeVerifier = await this.cache.get(this.cacheKey, 'code_verifier');
-    return codeVerifier || '';
+    const stateCache = await this.cache.get(this.stateKey, 'upstream_state');
+    if (!stateCache) {
+      throw new Error('State cache not found');
+    }
+    return stateCache.code_verifier;
   }
 
   async invalidateCredentials(

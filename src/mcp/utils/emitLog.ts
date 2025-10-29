@@ -1,3 +1,6 @@
+import { Env } from 'hono';
+import { forwardMCPLogToWinky } from '../../middlewares/portkey/handlers/logger';
+
 type OtlpKeyValue = {
   key: string;
   value: {
@@ -19,23 +22,40 @@ type OTLPRecord = {
   name: string;
 };
 
-const BATCH_MAX = 100;
-const FLUSH_INTERVAL = 3000; // 3 seconds
+// const BATCH_MAX = 100;
+// const FLUSH_INTERVAL = 3000; // 3 seconds
 
-const buffer: OTLPRecord[] = [];
-let timer: NodeJS.Timeout | null = null;
+// const buffer: OTLPRecord[] = [];
+// let timer: NodeJS.Timeout | null = null;
 
 export function emitLog(
   body: string | Record<string, unknown>,
-  attributes?: Record<string, unknown>,
+  attributes: Record<string, unknown>,
+  env: Env,
   // optional trace context for correlation in backends
   trace?: { traceId?: string; spanId?: string; flags?: number }
 ) {
   try {
     const nowNs = Date.now() * 1_000_000;
+
+    // Separate heavy fields that don't need OTEL wrapping
+    const heavyFields = ['mcp.tool.params', 'mcp.tool.result', 'mcp.result'];
+    const lightAttributes: Record<string, unknown> = {};
+    const unwrappedAttributes: Record<string, unknown> = {};
+
+    for (const [key, value] of Object.entries(attributes)) {
+      if (heavyFields.includes(key)) {
+        // Store heavy fields unwrapped for direct use
+        unwrappedAttributes[key] = value;
+      } else {
+        // Wrap light metadata in OTEL format
+        lightAttributes[key] = value;
+      }
+    }
+
     const record: OTLPRecord = {
       timeUnixNano: String(nowNs),
-      attributes: toKv(attributes),
+      attributes: toKv(lightAttributes),
       traceId: trace?.traceId ?? undefined,
       spanId: trace?.spanId ?? undefined,
       status: {
@@ -43,38 +63,43 @@ export function emitLog(
       },
       name: 'mcp.request',
     };
-    buffer.push(record);
-    if (buffer.length >= BATCH_MAX) void flush();
-    else schedule();
+
+    // Attach unwrapped heavy fields directly to record for easy access
+    (record as any)._unwrapped = unwrappedAttributes;
+
+    forwardMCPLogToWinky(env, record);
+    // buffer.push(record);
+    // if (buffer.length >= BATCH_MAX) void flush();
+    // else schedule();
   } catch {
     /* never throw from logging */
   }
 }
 
-function schedule() {
-  if (timer) return;
-  timer = setTimeout(() => {
-    timer = null;
-    void flush();
-  }, FLUSH_INTERVAL);
-}
+// function schedule() {
+//   if (timer) return;
+//   timer = setTimeout(() => {
+//     timer = null;
+//     void flush();
+//   }, FLUSH_INTERVAL);
+// }
 
-function flush() {
-  if (buffer.length === 0) return;
+// function flush() {
+//   if (buffer.length === 0) return;
 
-  const batch = buffer.splice(0, buffer.length);
-  const payload = buildPayload(batch);
+//   const batch = buffer.splice(0, buffer.length);
+//   const payload = buildPayload(batch);
 
-  console.log(
-    'TODO: flush logs. Length:',
-    JSON.stringify(payload, null, 2).length
-  );
+//   console.log(
+//     'TODO: flush logs. Length:',
+//     JSON.stringify(payload, null, 2).length
+//   );
 
-  // fetch('/v1/logs', {
-  //     method: 'POST',
-  //     body: JSON.stringify(payload),
-  // });
-}
+//   // fetch('/v1/logs', {
+//   //     method: 'POST',
+//   //     body: JSON.stringify(payload),
+//   // });
+// }
 
 function toKv(attrs?: Record<string, unknown>): OtlpKeyValue[] | undefined {
   if (!attrs) return undefined;
@@ -95,7 +120,6 @@ function toAnyValue(v: unknown): any {
     if (typeof v === 'boolean') return { boolValue: v };
     if (Array.isArray(v)) return { arrayValue: { values: v.map(toAnyValue) } };
     if (typeof v === 'object') {
-      console.log('object', v);
       return {
         kvlistValue: {
           values: Object.entries(v as Record<string, unknown>).map(
@@ -110,26 +134,26 @@ function toAnyValue(v: unknown): any {
   }
 }
 
-function buildPayload(logRecords: OTLPRecord[]) {
-  return {
-    resourceSpans: [
-      {
-        resource: {
-          attributes: toKv({
-            'service.name': 'mcp-gateway',
-          }),
-        },
-        scopeSpans: [
-          {
-            scope: {
-              attributes: toKv({
-                name: 'mcp',
-              }),
-            },
-            spans: logRecords,
-          },
-        ],
-      },
-    ],
-  };
-}
+// function buildPayload(logRecords: OTLPRecord[]) {
+//   return {
+//     resourceSpans: [
+//       {
+//         resource: {
+//           attributes: toKv({
+//             'service.name': 'mcp-gateway',
+//           }),
+//         },
+//         scopeSpans: [
+//           {
+//             scope: {
+//               attributes: toKv({
+//                 name: 'mcp',
+//               }),
+//             },
+//             spans: logRecords,
+//           },
+//         ],
+//       },
+//     ],
+//   };
+// }

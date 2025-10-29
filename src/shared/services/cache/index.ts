@@ -355,7 +355,7 @@ export async function createCacheBackendsLocal(): Promise<void> {
     dataDir: 'data',
     fileName: 'sessions-cache.json',
     defaultTtl: MS['30_MINUTES'],
-    saveInterval: 1000, // 1 second
+    saveInterval: 1000, // 5 seconds
     cleanupInterval: MS['5_MINUTES'],
   });
   await sessionCache.waitForReady();
@@ -391,8 +391,8 @@ export function createCacheBackendsRedis(redisUrl: string): void {
   let commonOptions: CacheConfig = {
     backend: 'redis',
     redisUrl: redisUrl,
-    defaultTtl: MS['5_MINUTES'],
-    cleanupInterval: MS['5_MINUTES'],
+    defaultTtl: MS['1_MINUTE'],
+    cleanupInterval: MS['1_MINUTE'],
     maxSize: 1000,
   };
 

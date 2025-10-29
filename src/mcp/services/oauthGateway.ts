@@ -18,6 +18,7 @@ import { GatewayOAuthProvider } from './upstreamOAuth';
 import { ControlPlane } from '../middleware/controlPlane';
 import { auth, AuthResult } from '@modelcontextprotocol/sdk/client/auth.js';
 import { revokeOAuthToken } from '../utils/oauthTokenRevocation';
+import { ServerConfig } from '../types/mcp';
 
 const logger = createLogger('OAuthGateway');
 
@@ -81,6 +82,8 @@ export interface TokenIntrospectionResponse {
   username?: string;
   exp?: number;
   iat?: number;
+  workspace_id?: string;
+  organisation_id?: string;
 }
 
 export interface OAuthClient {
@@ -105,6 +108,8 @@ interface StoredAccessToken {
   user_id?: string;
   username?: string;
   sub?: string;
+  workspace_id?: string;
+  organisation_id?: string;
 }
 
 interface StoredRefreshToken {
@@ -116,6 +121,8 @@ interface StoredRefreshToken {
   user_id?: string;
   username?: string;
   sub?: string;
+  workspace_id?: string;
+  organisation_id?: string;
 }
 
 interface StoredAuthCode {
@@ -312,6 +319,13 @@ export class OAuthGateway {
     params: URLSearchParams,
     headers: Headers
   ): Promise<any> {
+    if (this.isUsingControlPlane) {
+      const CP = this.c.get('controlPlane');
+      if (CP) {
+        return CP.token(params, headers, oauthStore);
+      }
+    }
+
     const { clientId, clientSecret } = this.parseClientCredentials(
       headers,
       params
@@ -555,6 +569,8 @@ export class OAuthGateway {
       username: tok.user_id || tok.username || tok.sub,
       exp: tok.exp,
       iat: tok.iat,
+      workspace_id: tok.workspace_id,
+      organisation_id: tok.organisation_id,
     };
   }
 
@@ -566,6 +582,12 @@ export class OAuthGateway {
     clientId?: string
   ): Promise<any> {
     logger.debug(`Registering client`, { clientData, clientId });
+    if (this.isUsingControlPlane) {
+      const CP = this.c.get('controlPlane');
+      if (CP) {
+        return CP.register(clientData);
+      }
+    }
 
     // Create a new client id if not provided by hashing clientData to avoid duplicates
     if (!clientId) {
@@ -685,10 +707,37 @@ export class OAuthGateway {
   }
 
   async startAuthorization(): Promise<any> {
+    const gatewayState = crypto.randomBytes(16).toString('hex');
+    const resourceId = this.c.req.param('resourceId');
+    const redirectUri = this.c.req.query('redirect_uri');
+    const state = this.c.req.query('state');
+    const clientId = this.c.req.query('client_id');
+
+    const stateData = {
+      gateway_state: gatewayState,
+      server_id: resourceId,
+      redirect_uri: redirectUri,
+      client_id: clientId,
+      state: state,
+    };
+
+    await oauthStore.set(gatewayState, stateData, {
+      namespace: 'gateway_state',
+      ttl: 10 * 60 * 1000,
+    });
+
+    if (this.isUsingControlPlane) {
+      const CP = this.c.get('controlPlane');
+      if (CP) {
+        const result = await CP.authorize(gatewayState, resourceId);
+        if (result.status >= 300 && result.status < 400) {
+          return this.c.redirect(result.location, result.status as any);
+        }
+        return result;
+      }
+    }
+
     const params = this.c.req.query();
-    const clientId = params.client_id;
-    const redirectUri = params.redirect_uri;
-    const state = params.state;
     const scope = params.scope || 'mcp:*';
     const codeChallenge = params.code_challenge;
     const codeChallengeMethod = params.code_challenge_method;
@@ -708,12 +757,11 @@ export class OAuthGateway {
     if (!client)
       return this.c.json(this.errorInvalidClient('Client not found'), 400);
 
-    const user_id = 'portkeydefaultuser';
-
     let resourceAuthUrl = null;
-    const upstream = await this.checkUpstreamAuth(resourceUrl, user_id);
-    if (upstream.status === 'auth_needed')
-      resourceAuthUrl = upstream.authorizationUrl;
+    // const user_id = 'portkeydefaultuser';
+    // const upstream = await this.checkUpstreamAuth(resourceUrl, user_id);
+    // if (upstream.status === 'auth_needed')
+    //   resourceAuthUrl = upstream.authorizationUrl;
 
     const authorizationUrl = `/oauth/authorize`;
 
@@ -745,7 +793,107 @@ export class OAuthGateway {
     `);
   }
 
+  async postAuthorize(oauthStore: CacheService) {
+    logger.debug('Post authorize called');
+    const {
+      gateway_state: gatewayState,
+      resource_id: serverId,
+      workspace_id,
+      code,
+      state,
+      upstream_auth_needed,
+      organisation_id,
+      user_id,
+    } = this.c.req.query();
+    if (!gatewayState) {
+      return this.c.json({ error: 'invalid_request' }, 400);
+    }
+
+    const resumeData = await oauthStore.get(gatewayState, 'gateway_state');
+    if (!resumeData) {
+      return this.c.json({ error: 'invalid_request' }, 400);
+    }
+
+    await oauthStore.delete(gatewayState, 'gateway_state');
+
+    if (resumeData.state && resumeData.state !== state) {
+      return this.c.json({ error: 'invalid_request' }, 400);
+    }
+    if (resumeData.server_id !== serverId) {
+      return this.c.json({ error: 'invalid_request' }, 400);
+    }
+
+    if (upstream_auth_needed) {
+      const serverConfig: ServerConfig = await getServerConfig(
+        workspace_id,
+        serverId,
+        this.c,
+        organisation_id
+      );
+      const provider = new GatewayOAuthProvider(
+        serverConfig,
+        user_id,
+        this.c.get('controlPlane') ?? undefined,
+        '',
+        gatewayState
+      );
+
+      // Check if the server already has tokens for it
+      const tokens = await provider.tokens();
+      if (tokens) return { status: 'auth_not_needed' };
+
+      try {
+        const result: AuthResult = await auth(provider, {
+          serverUrl: new URL(serverConfig.url),
+        });
+
+        logger.debug('Auth result', result);
+        return { status: 'auth_not_needed' };
+      } catch (error: any) {
+        if (error.needsAuthorization && error.authorizationUrl) {
+          await oauthStore.set(
+            gatewayState,
+            {
+              ...resumeData,
+              server_id: serverId,
+              workspace_id: workspace_id,
+              organisation_id: organisation_id,
+              user_id: user_id,
+              code: code,
+              state: state,
+            },
+            { namespace: 'gateway_state', ttl: 10 * 60 * 1000 }
+          );
+
+          return {
+            status: 'auth_needed',
+            authorizationUrl: error.authorizationUrl,
+          };
+        }
+        throw error;
+      }
+    }
+  }
+
+  async handleUpstreamAuth(): Promise<any> {
+    const result = await this.postAuthorize(oauthStore);
+    logger.debug('Handle upstream auth returned', { result });
+    if (
+      result &&
+      'status' in result &&
+      result.status === 'auth_needed' &&
+      'authorizationUrl' in result &&
+      result.authorizationUrl
+    ) {
+      return this.c.redirect(result.authorizationUrl as string, 302);
+    }
+    return result;
+  }
+
   async completeAuthorization(): Promise<any> {
+    if (this.isUsingControlPlane) {
+      throw new Error('Control plane not supported');
+    }
     const formData = await this.c.req.formData();
     const action = formData.get('action');
     const clientId = formData.get('client_id') as string;
@@ -811,6 +959,33 @@ export class OAuthGateway {
     ok.searchParams.set('code', authCode);
     if (state) ok.searchParams.set('state', state);
 
+    // Check if upstream auth is needed
+    // const user_id = 'portkeydefaultuser';
+    const upstream = await this.checkUpstreamAuth(resourceUrl, user_id);
+    if (upstream.status === 'auth_needed') {
+      logger.debug('Upstream auth needed, redirecting to upstream auth');
+      const gatewayRedirectUrl = new URL(
+        `${gateway_base_url}/oauth/upstream-auth`
+      );
+      gatewayRedirectUrl.searchParams.set('code', authCode);
+      gatewayRedirectUrl.searchParams.set('resource_id', upstream.serverId);
+      gatewayRedirectUrl.searchParams.set('resource_type', `mcp_servers`);
+      gatewayRedirectUrl.searchParams.set('state', state);
+      gatewayRedirectUrl.searchParams.set('gateway_state', gatewayState);
+      gatewayRedirectUrl.searchParams.set('upstream_auth_needed', 'true');
+      gatewayRedirectUrl.searchParams.set('workspace_id', workspaceId);
+      gatewayRedirectUrl.searchParams.set(
+        'organisation_id',
+        store.organisationId
+      );
+      gatewayRedirectUrl.searchParams.set('user_id', store.userId);
+
+      return res.json({
+        redirect_uri: gatewayRedirectUrl.toString(),
+      });
+      return this.c.redirect(upstream.authorizationUrl as string, 302);
+    }
+
     // Always show intermediate page that triggers redirect and attempts to close
     return this.c.html(`
       <html>
@@ -866,6 +1041,8 @@ export class OAuthGateway {
         return {
           status: 'auth_needed',
           authorizationUrl: error.authorizationUrl,
+          serverId: serverId,
+          workspaceId: workspaceId,
         };
       }
       throw error;
@@ -890,14 +1067,29 @@ export class OAuthGateway {
         error_description: 'Invalid state in upstream callback',
       };
 
-    const [username, workspaceId, serverId] = state.split('::');
-    if (!username || !workspaceId || !serverId)
+    const stateCache = await mcpServerCache.get(state, 'upstream_state');
+    if (!stateCache)
       return {
         error: 'invalid_state',
         error_description: 'Invalid state in upstream callback',
       };
 
-    const serverConfig = await getServerConfig(workspaceId, serverId, this.c);
+    const resumeStateCache = await oauthStore.get(
+      stateCache.resume_state_key,
+      'gateway_state'
+    );
+    if (!resumeStateCache)
+      return {
+        error: 'invalid_state',
+        error_description: 'Invalid resume state in upstream callback',
+      };
+    await oauthStore.delete(stateCache.resume_state_key, 'gateway_state');
+    const serverConfig = await getServerConfig(
+      resumeStateCache.workspace_id,
+      resumeStateCache.server_id,
+      this.c,
+      resumeStateCache.organisation_id
+    );
     if (!serverConfig)
       return {
         error: 'invalid_state',
@@ -906,8 +1098,9 @@ export class OAuthGateway {
 
     const provider = new GatewayOAuthProvider(
       serverConfig,
-      username,
-      this.controlPlane ?? undefined
+      resumeStateCache.user_id,
+      this.controlPlane ?? undefined,
+      state
     );
 
     try {
@@ -917,11 +1110,31 @@ export class OAuthGateway {
       });
 
       logger.debug('Auth result', result);
+      // User approved access
+      const ok = new URL(resumeStateCache.redirect_uri);
+      ok.searchParams.set('code', resumeStateCache.code);
+      if (resumeStateCache.state)
+        ok.searchParams.set('state', resumeStateCache.state);
 
+      await oauthStore.set(
+        resumeStateCache.code,
+        {
+          ...resumeStateCache,
+          tokens: await provider.tokens(),
+          client_metadata: await stateCache.client_metadata,
+        },
+        {
+          namespace: 'auth_codes',
+          ttl: 5 * 60 * 1000,
+        }
+      );
+      await mcpServerCache.delete(state, 'upstream_state');
       return {
         status: result === 'AUTHORIZED' ? 'auth_completed' : 'auth_failed',
+        location: ok.toString(),
       };
     } catch (e: any) {
+      await mcpServerCache.delete(state, 'upstream_state');
       if (e.cause && e.cause instanceof Response) {
         try {
           const errorBody = await e.cause.text();

@@ -13,7 +13,7 @@ type Env = {
   };
   Variables: {
     gateway: OAuthGateway;
-    controlPlane?: any;
+    controlPlane: any;
   };
 };
 
@@ -52,9 +52,6 @@ const jsonError = (
  * Middleware: attach a configured gateway to the context
  */
 oauthRoutes.use('*', async (c, next) => {
-  if (c.get('controlPlane')) {
-    return c.json({ error: 'Not implemented' }, 501);
-  }
   c.set('gateway', new OAuthGateway(c));
   await next();
 });
@@ -88,11 +85,35 @@ oauthRoutes.get('/authorize', async (c) => {
 });
 
 /**
+ * OAuth 2.1 Authorization Endpoint
+ * Handles browser-based authorization flow
+ */
+oauthRoutes.get('/:workspaceId/:resourceId/authorize', async (c) => {
+  logger.debug('oauth/:workspaceId/:resourceId/authorize GET', {
+    url: c.req.url,
+  });
+  return await gw(c).startAuthorization();
+});
+
+/**
+ * OAuth 2.1 Authorization Endpoint
+ * Handles browser-based authorization flow
+ */
+oauthRoutes.get('/:resourceId/authorize', async (c) => {
+  logger.debug('oauth/:resourceId/authorize GET', { url: c.req.url });
+  return await gw(c).startAuthorization();
+});
+
+/**
  * OAuth 2.1 Authorization Endpoint (POST)
  * Handles consent form submission
  */
 oauthRoutes.post('/authorize', async (c) => {
   return gw(c).completeAuthorization();
+});
+
+oauthRoutes.get('/upstream-auth', async (c) => {
+  return await gw(c).handleUpstreamAuth();
 });
 
 /**
@@ -197,10 +218,14 @@ oauthRoutes.get('/upstream-callback', async (c) => {
   });
 
   if (!state) {
-    return c.html('Invalid state in upstream callback', 400);
+    return c.html('Invalid state parameter', 400);
   }
 
   const result = await gw(c).completeUpstreamAuth();
+
+  if (result.location) {
+    return c.redirect(result.location, 302);
+  }
 
   if (result.error) {
     return c.html(`

@@ -22,6 +22,7 @@ export interface ServerConfig {
   workspaceId: string;
   url: string;
   headers: Record<string, string>;
+  passthroughHeaders?: Record<string, string>;
   type?: ConnectionTypes;
 
   // Authentication configuration

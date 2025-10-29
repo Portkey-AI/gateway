@@ -2,9 +2,10 @@
  * @file src/services/cache/backends/redis.ts
  * Redis cache backend implementation
  */
-import Redis from 'ioredis';
+import Redis, { Cluster } from 'ioredis';
 
 import { CacheBackend, CacheEntry, CacheOptions, CacheStats } from '../types';
+import { redisClient } from '../../../../data-stores/redis';
 
 // Using console.log for now to avoid build issues
 const logger = {
@@ -68,6 +69,30 @@ export class RedisCacheBackend implements CacheBackend {
 
   private isExpired(entry: CacheEntry): boolean {
     return entry.expiresAt !== undefined && entry.expiresAt <= Date.now();
+  }
+
+  private async getKeysByPattern(pattern: string) {
+    const keys = [];
+
+    let masters: Redis[] = [this.client as Redis];
+    if (this.client instanceof Cluster) {
+      masters = (this.client as Cluster).nodes('master');
+    }
+    for (const master of masters) {
+      let cursor = '0';
+      do {
+        const [newCursor, scanKeys] = await master.scan(
+          cursor,
+          'MATCH',
+          pattern,
+          'COUNT',
+          100
+        );
+        cursor = newCursor;
+        keys.push(...scanKeys);
+      } while (cursor !== '0');
+    }
+    return keys;
   }
 
   async get<T = any>(
@@ -157,7 +182,7 @@ export class RedisCacheBackend implements CacheBackend {
       const pattern = namespace
         ? `${this.dbName}:${namespace}:*`
         : `${this.dbName}:*`;
-      const keys = await this.client.keys(pattern);
+      const keys = await this.getKeysByPattern(pattern);
 
       if (keys.length > 0) {
         // Use single del call with spread operator for better performance
@@ -186,7 +211,7 @@ export class RedisCacheBackend implements CacheBackend {
       const pattern = namespace
         ? `${this.dbName}:${namespace}:*`
         : `${this.dbName}:default:*`;
-      const fullKeys = await this.client.keys(pattern);
+      const fullKeys = await this.getKeysByPattern(pattern);
 
       // Extract the actual key part (remove the prefix)
       const prefix = namespace
@@ -204,7 +229,7 @@ export class RedisCacheBackend implements CacheBackend {
       const pattern = namespace
         ? `${this.dbName}:${namespace}:*`
         : `${this.dbName}:*`;
-      const keys = await this.client.keys(pattern);
+      const keys = await this.getKeysByPattern(pattern);
 
       return {
         ...this.stats,
@@ -239,14 +264,5 @@ export function createRedisBackend(
 ): RedisCacheBackend {
   // Extract dbName from options or use 'cache' as default
   const dbName = options?.dbName || 'cache';
-
-  // Create ioredis client with URL and any additional options
-  // ioredis supports Redis URL format: redis://[username:password@]host[:port][/db]
-  const client = new Redis(redisUrl, {
-    ...options,
-    // Remove dbName from options as it's not an ioredis option
-    dbName: undefined,
-  });
-
-  return new RedisCacheBackend(client as RedisClient, dbName);
+  return new RedisCacheBackend(redisClient, dbName);
 }

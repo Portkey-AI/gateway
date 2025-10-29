@@ -2,6 +2,7 @@
 import { Hono } from 'hono';
 import { createLogger } from '../../shared/utils/logger';
 import { getBaseUrl } from '../utils/mcp-utils';
+import { Environment } from '../../utils/env';
 
 const logger = createLogger('wellknown-routes');
 
@@ -11,6 +12,7 @@ type Env = {
   };
 };
 
+const MCP_GATEWAY_BASE_URL = Environment({}).MCP_GATEWAY_BASE_URL;
 const CACHE_MAX_AGE = 1;
 
 const wellKnownRoutes = new Hono<Env>();
@@ -21,11 +23,7 @@ const wellKnownRoutes = new Hono<Env>();
 wellKnownRoutes.get('/oauth-authorization-server', async (c) => {
   logger.debug('GET /.well-known/oauth-authorization-server');
 
-  let baseUrl = getBaseUrl(c).origin;
-
-  if (c.get('controlPlane')) {
-    baseUrl = c.get('controlPlane').url;
-  }
+  const baseUrl = MCP_GATEWAY_BASE_URL || getBaseUrl(c).origin;
 
   // OAuth 2.1 Authorization Server Metadata (RFC 8414)
   // https://datatracker.ietf.org/doc/html/rfc8414
@@ -81,14 +79,24 @@ wellKnownRoutes.get(
       'GET /.well-known/oauth-authorization-server/:workspaceId/:serverId/mcp'
     );
 
-    let baseUrl = getBaseUrl(c).origin;
-
-    if (c.get('controlPlane')) {
-      baseUrl = c.get('controlPlane').url;
-    }
+    const baseUrl = MCP_GATEWAY_BASE_URL || getBaseUrl(c).origin;
 
     const metadata = {
       issuer: baseUrl,
+      authorization_endpoint: `${baseUrl}/oauth/${c.req.param('workspaceId')}/${c.req.param('serverId')}/authorize`,
+      token_endpoint: `${baseUrl}/oauth/token`,
+      introspection_endpoint: `${baseUrl}/oauth/introspect`,
+      introspection_endpoint_auth_methods_supported: ['none'],
+      revocation_endpoint: `${baseUrl}/oauth/revoke`,
+      revocation_endpoint_auth_methods_supported: ['none'],
+      registration_endpoint: `${baseUrl}/oauth/register`,
+      response_types_supported: ['code'],
+      grant_types_supported: ['authorization_code', 'refresh_token'],
+      response_modes_supported: ['query', 'fragment'],
+      token_endpoint_auth_methods_supported: ['none'],
+      code_challenge_methods_supported: ['S256'],
+      service_documentation: 'https://portkey.ai/docs/mcp-gateway',
+      ui_locales_supported: ['en'],
     };
 
     return c.json(metadata, 200, {
@@ -96,6 +104,34 @@ wellKnownRoutes.get(
     });
   }
 );
+
+wellKnownRoutes.get('/oauth-authorization-server/:serverId/mcp', async (c) => {
+  logger.debug('GET /.well-known/oauth-authorization-server/:serverId/mcp');
+
+  const baseUrl = MCP_GATEWAY_BASE_URL || getBaseUrl(c).origin;
+
+  const metadata = {
+    issuer: baseUrl,
+    authorization_endpoint: `${baseUrl}/oauth/${c.req.param('serverId')}/authorize`,
+    token_endpoint: `${baseUrl}/oauth/token`,
+    introspection_endpoint: `${baseUrl}/oauth/introspect`,
+    introspection_endpoint_auth_methods_supported: ['none'],
+    revocation_endpoint: `${baseUrl}/oauth/revoke`,
+    revocation_endpoint_auth_methods_supported: ['none'],
+    registration_endpoint: `${baseUrl}/oauth/register`,
+    response_types_supported: ['code'],
+    grant_types_supported: ['authorization_code', 'refresh_token'],
+    response_modes_supported: ['query', 'fragment'],
+    token_endpoint_auth_methods_supported: ['none'],
+    code_challenge_methods_supported: ['S256'],
+    service_documentation: 'https://portkey.ai/docs/mcp-gateway',
+    ui_locales_supported: ['en'],
+  };
+
+  return c.json(metadata, 200, {
+    'Cache-Control': `public, max-age=${CACHE_MAX_AGE}`, // Cache for 1 hour
+  });
+});
 
 wellKnownRoutes.get(
   '/oauth-protected-resource/:workspaceId/:serverId/mcp',
@@ -108,18 +144,14 @@ wellKnownRoutes.get(
       }
     );
 
-    let baseUrl = getBaseUrl(c).origin;
+    const baseUrl = MCP_GATEWAY_BASE_URL || getBaseUrl(c).origin;
     const resourceUrl = `${baseUrl}/${c.req.param('workspaceId')}/${c.req.param('serverId')}/mcp`;
-
-    if (c.get('controlPlane')) {
-      baseUrl = c.get('controlPlane').url;
-    }
 
     const metadata = {
       // This MCP gateway acts as a protected resource
       resource: resourceUrl,
       // Point to our authorization server (either this gateway or control plane)
-      authorization_servers: [baseUrl],
+      authorization_servers: [resourceUrl],
       // Scopes required to access this resource
       scopes_supported: [
         'mcp:servers:read',
@@ -135,6 +167,34 @@ wellKnownRoutes.get(
     });
   }
 );
+
+wellKnownRoutes.get('/oauth-protected-resource/:serverId/mcp', async (c) => {
+  logger.debug('GET /.well-known/oauth-protected-resource/:serverId/mcp', {
+    serverId: c.req.param('serverId'),
+  });
+
+  const baseUrl = MCP_GATEWAY_BASE_URL || getBaseUrl(c).origin;
+  const resourceUrl = `${baseUrl}/${c.req.param('serverId')}/mcp`;
+
+  const metadata = {
+    // This MCP gateway acts as a protected resource
+    resource: resourceUrl,
+    // Point to our authorization server (either this gateway or control plane)
+    authorization_servers: [resourceUrl],
+    // Scopes required to access this resource
+    scopes_supported: [
+      'mcp:servers:read',
+      'mcp:servers:*',
+      'mcp:tools:list',
+      'mcp:tools:call',
+      'mcp:*',
+    ],
+  };
+
+  return c.json(metadata, 200, {
+    'Cache-Control': `public, max-age=${CACHE_MAX_AGE}`, // Cache for 1 hour
+  });
+});
 
 wellKnownRoutes.get(
   '/oauth-protected-resource/:workspaceId/:serverId/sse',
@@ -147,12 +207,8 @@ wellKnownRoutes.get(
       }
     );
 
-    let baseUrl = getBaseUrl(c).origin;
+    const baseUrl = MCP_GATEWAY_BASE_URL || getBaseUrl(c).origin;
     const resourceUrl = `${baseUrl}/${c.req.param('workspaceId')}/${c.req.param('serverId')}/sse`;
-
-    if (c.get('controlPlane')) {
-      baseUrl = c.get('controlPlane').url;
-    }
 
     const metadata = {
       // This MCP gateway acts as a protected resource
@@ -174,5 +230,33 @@ wellKnownRoutes.get(
     });
   }
 );
+
+wellKnownRoutes.get('/oauth-protected-resource/:serverId/sse', async (c) => {
+  logger.debug('GET /.well-known/oauth-protected-resource/:serverId/sse', {
+    serverId: c.req.param('serverId'),
+  });
+
+  const baseUrl = MCP_GATEWAY_BASE_URL || getBaseUrl(c).origin;
+  const resourceUrl = `${baseUrl}/${c.req.param('serverId')}/sse`;
+
+  const metadata = {
+    // This MCP gateway acts as a protected resource
+    resource: resourceUrl,
+    // Point to our authorization server (either this gateway or control plane)
+    authorization_servers: [baseUrl],
+    // Scopes required to access this resource
+    scopes_supported: [
+      'mcp:servers:read',
+      'mcp:servers:*',
+      'mcp:tools:list',
+      'mcp:tools:call',
+      'mcp:*',
+    ],
+  };
+
+  return c.json(metadata, 200, {
+    'Cache-Control': `public, max-age=${CACHE_MAX_AGE}`, // Cache for 1 hour
+  });
+});
 
 export { wellKnownRoutes };

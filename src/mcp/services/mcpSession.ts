@@ -25,6 +25,7 @@ import { Context } from 'hono';
 import { ConnectResult, Upstream } from './upstream';
 import { Downstream } from './downstream';
 import { emitLog } from '../utils/emitLog';
+import { env } from 'hono/adapter';
 
 export type TransportType = 'http' | 'sse' | 'auth-required';
 
@@ -530,13 +531,15 @@ export class MCPSession {
     try {
       await this.ensureUpstreamConnection();
 
+      const startTime = Date.now();
       const result = await this.upstream.callTool(request.params);
+      const durationMs = Date.now() - startTime;
 
       this.logger.debug(`Tool ${toolName} executed successfully`);
 
       // This is where the guardrails would come in.
       await this.downstream.sendResult((request as any).id, result);
-      this.logResult(request, result);
+      this.logResult(request, result, { ok: true, durationMs });
     } catch (error) {
       // Handle upstream errors
       this.logger.error(`Tool call failed: ${toolName}`, error);
@@ -546,6 +549,9 @@ export class MCPSession {
         ErrorCode.InternalError,
         `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`
       );
+
+      // Log the error
+      this.logResult(request, null, { ok: false, error });
     }
   }
 
@@ -685,15 +691,16 @@ export class MCPSession {
 
         'mcp.request.method': method,
         'mcp.request.id': reqId,
+
+        // Add organisation and workspace info from gatewayToken
+        organisation_id: this.gatewayToken?.organisation_id || '',
+        workspace_slug: this.gatewayToken?.workspace_id || '',
+        user_id:
+          this.gatewayToken?.user_id || this.gatewayToken?.username || '',
       };
 
       if (toolName) {
         attrs['mcp.tool.name'] = toolName;
-        console.log(
-          'arguments',
-          typeof (request as CallToolRequest)?.params?.arguments,
-          (request as CallToolRequest)?.params?.arguments
-        );
         attrs['mcp.tool.params'] =
           (request as CallToolRequest)?.params?.arguments ?? {};
         attrs['mcp.tool.result'] = result ?? {};
@@ -703,16 +710,16 @@ export class MCPSession {
 
       if (outcome?.ok) {
         attrs['mcp.request.success'] = 'true';
-        attrs['mcp.request.duration_ms'] =
-          outcome?.durationMs?.toString() ?? '';
+        attrs['mcp.request.duration_ms'] = outcome?.durationMs || 0;
       } else {
         attrs['mcp.request.success'] = 'false';
         attrs['mcp.request.error'] = outcome?.error
           ? (outcome.error as Error)?.message ?? 'Unknown error'
           : 'Unknown error';
+        attrs['mcp.request.duration_ms'] = outcome?.durationMs || 0;
       }
 
-      emitLog({ type: 'mcp.request' }, attrs);
+      emitLog({ type: 'mcp.request' }, attrs, env(this.context as Context));
     } catch (error) {
       this.logger.error('Failed to log result', error);
     }

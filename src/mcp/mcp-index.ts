@@ -6,19 +6,18 @@
  * and route to any MCP server with full confidence.
  */
 
-import { Hono } from 'hono';
+import { Context, Hono } from 'hono';
 import { cors } from 'hono/cors';
 
 import { ServerConfig } from './types/mcp';
 import { MCPSession } from './services/mcpSession';
-import { getSessionStore } from './services/sessionStore';
 import { createLogger } from '../shared/utils/logger';
 import {
   handleMCPRequest,
   handleSSEMessages,
   handleSSERequest,
 } from './handlers/mcpHandler';
-import { oauthMiddleware } from './middleware/oauth';
+import { apiKeyToTokenMapper, oauthMiddleware } from './middleware/oauth';
 import { hydrateContext } from './middleware/hydrateContext';
 import { oauthRoutes } from './routes/oauth';
 import { wellKnownRoutes } from './routes/wellknown';
@@ -32,6 +31,8 @@ import {
   createCacheBackendsRedis,
 } from '../shared/services/cache';
 import { getBaseUrl } from './utils/mcp-utils';
+import { redisClient } from '../data-stores/redis';
+import { Environment } from '../utils/env';
 
 const logger = createLogger('MCP-Gateway');
 
@@ -53,6 +54,27 @@ const OAUTH_REQUIRED = true; // Force OAuth for all requests
 
 const app = new Hono<Env>();
 
+logger.info('Waiting for Redis client to be ready...');
+await new Promise<void>((resolve) => {
+  if (
+    redisClient &&
+    (redisClient.status === 'ready' || redisClient.status === 'connect')
+  ) {
+    resolve();
+  } else {
+    const checkInterval = setInterval(() => {
+      if (
+        redisClient &&
+        (redisClient.status === 'ready' || redisClient.status === 'connect')
+      ) {
+        clearInterval(checkInterval);
+        resolve();
+      }
+    }, 100);
+  }
+});
+logger.info('Redis client is ready');
+
 // CORS setup for browser clients
 app.use(
   '*',
@@ -73,8 +95,8 @@ app.use(controlPlaneMiddleware);
 
 if (getRuntimeKey() === 'workerd') {
   app.use(cacheBackendMiddleware);
-} else if (getRuntimeKey() === 'node' && process.env.REDIS_CONNECTION_STRING) {
-  createCacheBackendsRedis(process.env.REDIS_CONNECTION_STRING);
+} else if (getRuntimeKey() === 'node' && Environment({}).REDIS_URL) {
+  createCacheBackendsRedis(Environment({}).REDIS_URL);
 } else {
   createCacheBackendsLocal();
 }
@@ -130,14 +152,62 @@ app.get('/', (c) => {
 });
 
 /**
+ * Health check endpoint
+ */
+app.get('/health', async (c) => {
+  logger.debug('Health check accessed');
+
+  return c.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.get('/v1/health', async (c) => {
+  logger.debug('Health check accessed');
+
+  return c.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+/**
  * Main MCP endpoint with transport detection
  */
 app.all(
   '/:workspaceId/:serverId/mcp',
-  oauthMiddleware({
-    required: OAUTH_REQUIRED,
-    skipPaths: ['/oauth', '/.well-known'],
-  }),
+  async (c: Context, next) => {
+    if (c.req.header('x-portkey-api-key')) {
+      return apiKeyToTokenMapper()(c, next);
+    } else {
+      return oauthMiddleware({
+        required: OAUTH_REQUIRED,
+        skipPaths: ['/oauth', '/.well-known'],
+      })(c, next);
+    }
+  },
+  hydrateContext,
+  async (c) => {
+    return handleMCPRequest(c);
+  }
+);
+
+/**
+ * Main MCP endpoint with transport detection
+ */
+app.all(
+  '/:serverId/mcp',
+  async (c: Context, next) => {
+    if (c.req.header('x-portkey-api-key')) {
+      return apiKeyToTokenMapper()(c, next);
+    } else {
+      return oauthMiddleware({
+        required: OAUTH_REQUIRED,
+        skipPaths: ['/oauth', '/.well-known'],
+      })(c, next);
+    }
+  },
   hydrateContext,
   async (c) => {
     return handleMCPRequest(c);
@@ -150,10 +220,38 @@ app.all(
  */
 app.get(
   '/:workspaceId/:serverId/sse',
-  oauthMiddleware({
-    required: OAUTH_REQUIRED,
-    skipPaths: ['/oauth', '/.well-known'],
-  }),
+  async (c: Context, next) => {
+    if (c.req.header('x-portkey-api-key')) {
+      return apiKeyToTokenMapper()(c, next);
+    } else {
+      return oauthMiddleware({
+        required: OAUTH_REQUIRED,
+        skipPaths: ['/oauth', '/.well-known'],
+      })(c, next);
+    }
+  },
+  hydrateContext,
+  async (c) => {
+    return handleSSERequest(c);
+  }
+);
+
+/**
+ * SSE endpoint - simple redirect to main MCP endpoint
+ * The main /mcp endpoint already handles SSE through transport detection
+ */
+app.get(
+  '/:serverId/sse',
+  async (c: Context, next) => {
+    if (c.req.header('x-portkey-api-key')) {
+      return apiKeyToTokenMapper()(c, next);
+    } else {
+      return oauthMiddleware({
+        required: OAUTH_REQUIRED,
+        skipPaths: ['/oauth', '/.well-known'],
+      })(c, next);
+    }
+  },
   hydrateContext,
   async (c) => {
     return handleSSERequest(c);
@@ -166,11 +264,16 @@ app.get(
  */
 app.post(
   '/:workspaceId/:serverId/messages',
-  oauthMiddleware({
-    required: OAUTH_REQUIRED,
-    scopes: ['mcp:servers:*', 'mcp:*'],
-    skipPaths: ['/oauth', '/.well-known'],
-  }),
+  async (c: Context, next) => {
+    if (c.req.header('x-portkey-api-key')) {
+      return apiKeyToTokenMapper()(c, next);
+    } else {
+      return oauthMiddleware({
+        required: OAUTH_REQUIRED,
+        skipPaths: ['/oauth', '/.well-known'],
+      })(c, next);
+    }
+  },
   hydrateContext,
   async (c) => {
     return handleSSEMessages(c);
@@ -178,19 +281,26 @@ app.post(
 );
 
 /**
- * Health check endpoint
+ * POST endpoint for SSE message handling
+ * Handles messages from SSE clients
  */
-app.get('/health', async (c) => {
-  // Get the singleton session store instance
-  const sessionStore = getSessionStore();
-  const stats = await sessionStore.getStats();
-  logger.debug('Health check accessed');
-
-  return c.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-  });
-});
+app.post(
+  '/:serverId/messages',
+  async (c: Context, next) => {
+    if (c.req.header('x-portkey-api-key')) {
+      return apiKeyToTokenMapper()(c, next);
+    } else {
+      return oauthMiddleware({
+        required: OAUTH_REQUIRED,
+        skipPaths: ['/oauth', '/.well-known'],
+      })(c, next);
+    }
+  },
+  hydrateContext,
+  async (c) => {
+    return handleSSEMessages(c);
+  }
+);
 
 // Catch-all route for all other requests
 app.all('*', (c) => {

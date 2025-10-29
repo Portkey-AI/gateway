@@ -66,12 +66,17 @@ const loadLocalServerConfigs = async (
 const getFromCP = async (
   cp: ControlPlane,
   workspaceId: string,
-  serverId: string
+  serverId: string,
+  organisationId?: string
 ) => {
   try {
     logger.debug(`Fetching server from control plane`);
 
-    const serverInfo: any = await cp.getMCPServer(workspaceId, serverId);
+    const serverInfo: any = await cp.getMCPServer(
+      workspaceId,
+      serverId,
+      organisationId
+    );
 
     if (serverInfo) {
       return {
@@ -82,6 +87,9 @@ const getFromCP = async (
           serverInfo.mcp_integration_details?.configurations?.headers ||
           serverInfo.default_headers ||
           {},
+        passthroughHeaders:
+          serverInfo.mcp_integration_details?.configurations
+            ?.passthrough_headers || undefined,
         auth_type: serverInfo.mcp_integration_details?.auth_type || 'none',
         type: serverInfo.mcp_integration_details?.transport || 'http',
       } as ServerConfig;
@@ -118,7 +126,8 @@ const error = (c: Context, workspaceId: string, serverId: string) => {
 export const getServerConfig = async (
   workspaceId: string,
   serverId: string,
-  c: any
+  c: any,
+  organisationId?: string
 ): Promise<any> => {
   const configCache = getConfigCache();
   const cacheKey = `${workspaceId}/${serverId}`;
@@ -128,7 +137,12 @@ export const getServerConfig = async (
 
   const CP = c.get('controlPlane');
   if (CP) {
-    const serverInfo = await getFromCP(CP, workspaceId, serverId);
+    const serverInfo = await getFromCP(
+      CP,
+      workspaceId,
+      serverId,
+      organisationId
+    );
     if (serverInfo) {
       await configCache.set(
         cacheKey,
@@ -148,7 +162,10 @@ export const getServerConfig = async (
 
 export const hydrateContext = createMiddleware<Env>(async (c, next) => {
   const serverId = c.req.param('serverId');
-  const workspaceId = c.req.param('workspaceId');
+  const workspaceId =
+    c.req.param('workspaceId') !== undefined
+      ? c.req.param('workspaceId')
+      : c.get('tokenInfo')?.workspace_id;
 
   if (!serverId || !workspaceId) {
     return next();

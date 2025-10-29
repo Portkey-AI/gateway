@@ -16,6 +16,8 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { GatewayOAuthProvider } from './upstreamOAuth';
 import { ControlPlane } from '../middleware/controlPlane';
+import { Readable } from 'stream';
+import { externalServiceFetchWithNodeFetch } from '../../utils/fetch';
 
 type ClientTransportTypes =
   | typeof StreamableHTTPClientTransport
@@ -127,6 +129,38 @@ export class Upstream {
     if (this.upstreamSessionId) {
       options.sessionId = this.upstreamSessionId;
     }
+    if (this.serverConfig.passthroughHeaders) {
+      if (!options.requestInit) {
+        options.requestInit = {};
+      }
+      if (!options.requestInit.headers) {
+        options.requestInit.headers = {};
+      }
+      options.requestInit.headers = {
+        ...options.requestInit.headers,
+        ...this.serverConfig.passthroughHeaders,
+      };
+    }
+
+    options.fetch = async (url: any, init: any) => {
+      const response = await externalServiceFetchWithNodeFetch(
+        url.toString(),
+        init
+      );
+
+      // Convert Node.js stream to Web stream if needed
+      if (response.body && !(response.body instanceof ReadableStream)) {
+        const webStream = Readable.toWeb(response.body as any);
+
+        return new Response(webStream as ReadableStream, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers as any,
+        });
+      }
+
+      return response;
+    };
     return options;
   }
 
@@ -148,20 +182,20 @@ export class Upstream {
       await this.fetchCapabilities();
 
       // Sample handlers
-      this.setElicitHandler(async (elicitation, extra) => {
-        console.log('===> TODO: handle elicitation', { elicitation, extra });
+      this.setElicitHandler(async () => {
+        this.logger.warn('===> TODO: handle elicitation');
       });
-      this.setSamplingHandler(async (sampling, extra) => {
-        console.log('===> TODO: handle sampling', { sampling, extra });
+      this.setSamplingHandler(async () => {
+        this.logger.warn('===> TODO: handle sampling');
       });
-      this.setCompletionHandler(async (completion, extra) => {
-        console.log('===> TODO: handle completion', { completion, extra });
+      this.setCompletionHandler(async () => {
+        this.logger.warn('===> TODO: handle completion');
       });
-      this.setNotificationHandler(async (notification) => {
-        console.log('===> TODO: handle notification', { notification });
+      this.setNotificationHandler(async () => {
+        this.logger.warn('===> TODO: handle notification');
       });
-      this.setRequestHandler(async (request, extra) => {
-        console.log('===> TODO: handle request', { request, extra });
+      this.setRequestHandler(async () => {
+        this.logger.warn('===> TODO: handle request');
       });
 
       return {
