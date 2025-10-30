@@ -1,9 +1,20 @@
 import { ErrorResponse, ProviderConfig } from '../types';
-import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
-import { generateErrorResponse } from '../utils';
+import {
+  EmbedParams,
+  EmbedResponse,
+  EmbedResponseData,
+} from '../../types/embedRequestBody';
+import {
+  generateErrorResponse,
+  generateInvalidProviderResponseError,
+} from '../utils';
 import { COHERE } from '../../globals';
 
 export const CohereEmbedConfig: ProviderConfig = {
+  model: {
+    param: 'model',
+    required: false,
+  },
   input: [
     {
       param: 'texts',
@@ -56,11 +67,6 @@ export const CohereEmbedConfig: ProviderConfig = {
         return [params.encoding_format];
     },
   },
-  //backwards compatibility
-  embedding_types: {
-    param: 'embedding_types',
-    required: false,
-  },
 };
 
 /**
@@ -79,6 +85,19 @@ export interface ApiVersion {
 export interface EmbedMeta {
   /** The API version used. */
   api_version: ApiVersion;
+  billed_units: {
+    images: number;
+    input_tokens: number;
+    output_tokens: number;
+    search_units: number;
+    classifications: number;
+  };
+  tokens: {
+    input_tokens: number;
+    output_tokens: number;
+  };
+  cached_tokens: number;
+  warnings: string[];
 }
 
 /**
@@ -93,7 +112,7 @@ export interface CohereEmbedResponse {
   texts: string[];
 
   /** A 2D array of floating point numbers representing the embeddings. */
-  embeddings: number[][];
+  embeddings: number[][] | { float: number[][] };
 
   /** An `EmbedMeta` object which contains metadata about the response. */
   meta: EmbedMeta;
@@ -128,19 +147,40 @@ export const CohereEmbedResponseTransform: (
     );
   }
 
-  return {
-    object: 'list',
-    data: response.embeddings.map((embedding, index) => ({
-      object: 'embedding',
-      embedding: embedding,
-      index: index,
-    })),
-    model: (gatewayRequest.model as string) || '',
-    usage: {
-      prompt_tokens: -1,
-      total_tokens: -1,
-    },
-  };
+  const model = (gatewayRequest.model as string) || '';
+
+  // portkey only supports float embeddings for cohere to confirm to openai signature
+  if ('embeddings' in response) {
+    let data: EmbedResponseData[] = [];
+    if (response?.embeddings && 'float' in response.embeddings) {
+      data = response.embeddings.float.map((embedding, index) => ({
+        object: 'embedding',
+        embedding: embedding,
+        index: index,
+      }));
+    }
+    const inputTokens =
+      response.meta?.tokens?.input_tokens ??
+      response.meta?.billed_units?.input_tokens ??
+      0;
+    const outputTokens =
+      response.meta?.tokens?.output_tokens ??
+      response.meta?.billed_units?.output_tokens ??
+      0;
+    const totalTokens = inputTokens + outputTokens;
+    return {
+      object: 'list',
+      data,
+      provider: COHERE,
+      model,
+      usage: {
+        prompt_tokens: inputTokens,
+        total_tokens: totalTokens,
+      },
+    };
+  }
+
+  return generateInvalidProviderResponseError(response, COHERE);
 };
 
 interface CohereEmbedResponseBatch {

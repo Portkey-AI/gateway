@@ -9,6 +9,7 @@ import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from '../google/types';
 import { DEEPSEEK_STOP_REASON } from '../deepseek/types';
 import { MISTRAL_AI_FINISH_REASON } from '../mistral-ai/types';
 import { TOGETHER_AI_FINISH_REASON } from '../together-ai/types';
+import { COHERE_STOP_REASON } from '../cohere/types';
 
 // TODO: rename this to OpenAIFinishReasonMap
 export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
@@ -111,6 +112,13 @@ export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   [TOGETHER_AI_FINISH_REASON.LENGTH, FINISH_REASON.length],
   [TOGETHER_AI_FINISH_REASON.TOOL_CALLS, FINISH_REASON.tool_calls],
   [TOGETHER_AI_FINISH_REASON.FUNCTION_CALL, FINISH_REASON.function_call],
+  // https://docs.cohere.com/reference/chat#response.body.finish_reason
+  [COHERE_STOP_REASON.complete, FINISH_REASON.stop],
+  [COHERE_STOP_REASON.stop_sequence, FINISH_REASON.stop],
+  [COHERE_STOP_REASON.max_tokens, FINISH_REASON.length],
+  [COHERE_STOP_REASON.tool_call, FINISH_REASON.tool_calls],
+  [COHERE_STOP_REASON.error, FINISH_REASON.stop],
+  [COHERE_STOP_REASON.timeout, FINISH_REASON.stop],
 ]);
 
 export const AnthropicFinishReasonMap = new Map<
