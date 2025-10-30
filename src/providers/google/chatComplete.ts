@@ -9,11 +9,12 @@ import {
   SYSTEM_MESSAGE_ROLES,
   MESSAGE_ROLES,
 } from '../../types/requestBody';
-import { buildGoogleSearchRetrievalTool } from '../google-vertex-ai/chatComplete';
 import {
   getMimeType,
+  googleTools,
   recursivelyDeleteUnsupportedParameters,
   transformGeminiToolParameters,
+  transformGoogleTools,
   transformInputAudioPart,
   transformVertexLogprobs,
 } from '../google-vertex-ai/utils';
@@ -374,15 +375,8 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
           // these are not supported by google
           recursivelyDeleteUnsupportedParameters(tool.function?.parameters);
           delete tool.function?.strict;
-
-          if (['googleSearch', 'google_search'].includes(tool.function.name)) {
-            tools.push({ googleSearch: {} });
-          } else if (
-            ['googleSearchRetrieval', 'google_search_retrieval'].includes(
-              tool.function.name
-            )
-          ) {
-            tools.push(buildGoogleSearchRetrievalTool(tool));
+          if (googleTools.includes(tool.function.name)) {
+            tools.push(...transformGoogleTools(tool));
           } else {
             if (tool.function?.parameters) {
               tool.function.parameters = transformGeminiToolParameters(
