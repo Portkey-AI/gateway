@@ -771,6 +771,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
         {
           delta: {
             content,
+            role: 'assistant',
             tool_calls: toolCalls.length ? toolCalls : undefined,
             ...(!strictOpenAiCompliance &&
               !toolCalls.length && {
