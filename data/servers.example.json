@@ -1,0 +1,11 @@
+{
+  "servers": {
+    "default/deepwiki": {
+      "name": "DeepWiki MCP Server",
+      "url": "https://mcp.deepwiki.com/mcp",
+      "description": "GitHub repository documentation and Q&A",
+      "auth_type": "none",
+      "type": "http"
+    }
+  }
+}

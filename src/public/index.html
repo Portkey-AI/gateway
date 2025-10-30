@@ -26,7 +26,7 @@
     }
 
     .btn:hover {
-      background-color: rgba(24, 24, 27,0.9)
+      background-color: rgba(24, 24, 27, 0.9)
     }
 
     .btn-outline {
@@ -120,9 +120,17 @@
     }
 
     @keyframes blink {
-      0% { opacity: 0; }
-      50% { opacity: 1; }
-      100% { opacity: 0; }
+      0% {
+        opacity: 0;
+      }
+
+      50% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0;
+      }
     }
 
     .header-links {
@@ -263,10 +271,12 @@
           background-color: rgba(253, 224, 71, 0.2);
           transform: scale(1);
       }
+
       20% {
           background-color: rgba(253, 224, 71, 1);
           transform: scale(1.05);
       }
+
       100% {
           background-color: rgba(253, 224, 71, 0.2);
           transform: scale(1);
@@ -431,6 +441,7 @@
       margin-right: 8px;
       vertical-align: middle;
     }
+
     @keyframes spin {
       to {
           transform: rotate(360deg);
@@ -440,11 +451,13 @@
     .new-row {
       animation: fadeInSlideDown 0.2s ease-out;
     }
+
     @keyframes fadeInSlideDown {
       from {
           opacity: 0;
           transform: translateY(-20px);
       }
+
       to {
           opacity: 1;
           transform: translateY(0);
@@ -606,7 +619,7 @@
       border-radius: 0.75rem;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
       padding: 1.5rem;
-      max-width: 600px;
+      max-width: 800px;
         margin: 0rem auto 2rem auto;
     }
 
@@ -745,6 +758,7 @@
 
     /* Responsive adjustments */
     @media (max-width: 768px) {
+
       .features-grid,
       .next-steps-grid {
           grid-template-columns: 1fr;
@@ -854,11 +868,14 @@
   </style>
 
   <!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-KX3PMNVR');</script>
+  <script>(function (w, d, s, l, i) {
+      w[l] = w[l] || []; w[l].push({
+        'gtm.start':
+          new Date().getTime(), event: 'gtm.js'
+      }); var f = d.getElementsByTagName(s)[0],
+        j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+          'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+    })(window, document, 'script', 'dataLayer', 'GTM-KX3PMNVR');</script>
   <!-- End Google Tag Manager -->
 
   <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css"> -->
@@ -869,8 +886,8 @@
 
 <body>
   <!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KX3PMNVR"
-  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KX3PMNVR" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
   <header>
     <div class="container">
@@ -885,6 +902,7 @@
       <nav class="tabs-container">
         <button class="tab-button active" data-tab="main" id="main-tab-button">Gateway</button>
         <button class="tab-button" data-tab="logs" id="logs-tab-button">Logs<span class="badge">1</span></button>
+        <button class="tab-button" data-tab="mcp" id="mcp-tab-button">MCP</button>
       </nav>
       <a class="github-button" href="https://github.com/portkey-ai/gateway"
               data-color-scheme="no-preference: light; light: light; dark: dark;" data-icon="octicon-star" data-size="large"
@@ -934,7 +952,8 @@
 
       <div class="card routing-config">
         <h2>2. Create a routing config</h2>
-        <div class="card-subtitle">Gateway configs allow you to route requests to different providers and models. You can load balance, set fallbacks, and configure automatic retries & timeouts. <a href="#">Learn more</a></div>
+        <div class="card-subtitle">Gateway configs allow you to route requests to different providers and models. You
+          can load balance, set fallbacks, and configure automatic retries & timeouts. <a href="#">Learn more</a></div>
         <div class="tabs routing-config-tabs">
           <div class="tab active" data-tab="simple">Simple Config</div>
           <div class="tab" data-tab="loadBalancing">Load Balancing</div>
@@ -1091,6 +1110,80 @@
       </div>
     </div>
 
+    <div id="mcp-tab" class="main-tab-content">
+      <div class="card">
+        <h2>MCP (Model Context Protocol) Management</h2>
+        <div class="card-subtitle">Manage MCP servers, view cache data, and monitor system health.</div>
+
+        <div class="tabs mcp-subtabs">
+          <div class="tab active" data-tab="servers">MCP Servers</div>
+          <div class="tab" data-tab="cache">Cache Management</div>
+        </div>
+
+        <!-- MCP Servers Tab -->
+        <div class="tab-content active" id="serversContent">
+          <div class="servers-header"
+            style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+            <h3>MCP Servers</h3>
+            <button class="btn" id="addServerBtn">Add Server</button>
+          </div>
+
+          <div class="servers-table-container">
+            <table class="servers-table"
+              style="width: 100%; border-collapse: separate; border-spacing: 0; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);">
+              <thead>
+                <tr style="background-color: #f3f4f6;">
+                  <th
+                    style="padding: 0.75rem; text-align: left; font-weight: 600; color: #374151; font-size: 12px; text-transform: uppercase;">
+                    ID</th>
+                  <th
+                    style="padding: 0.75rem; text-align: left; font-weight: 600; color: #374151; font-size: 12px; text-transform: uppercase;">
+                    Name</th>
+                  <th
+                    style="padding: 0.75rem; text-align: left; font-weight: 600; color: #374151; font-size: 12px; text-transform: uppercase;">
+                    URL</th>
+                  <th
+                    style="padding: 0.75rem; text-align: left; font-weight: 600; color: #374151; font-size: 12px; text-transform: uppercase;">
+                    Type</th>
+                  <th
+                    style="padding: 0.75rem; text-align: left; font-weight: 600; color: #374151; font-size: 12px; text-transform: uppercase;">
+                    Status</th>
+                  <th
+                    style="padding: 0.75rem; text-align: left; font-weight: 600; color: #374151; font-size: 12px; text-transform: uppercase;">
+                    Actions</th>
+                </tr>
+              </thead>
+              <tbody id="serversTableBody">
+                <tr class="loading-row">
+                  <td colspan="6" style="padding: 0.75rem; color: #6b7280; font-style: italic;">
+                    <div class="loading-animation"></div>
+                    Loading MCP servers...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Cache Management Tab -->
+        <div class="tab-content" id="cacheContent">
+          <div class="cache-header"
+            style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+            <h3>Cache Management</h3>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn" id="refreshCacheBtn">Refresh All</button>
+              <button class="btn" id="purgeAllCacheBtn" style="background-color: #dc2626;">Purge All Cache</button>
+            </div>
+          </div>
+
+          <div class="cache-namespaces-grid"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem;">
+            <!-- Cache namespace cards will be populated here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="modal" id="logDetailsModal">
       <div class="modal-content">
           <span class="close">&times;</span>
@@ -1139,10 +1232,71 @@
       </div> -->
     </div>
 
+    <!-- MCP Server Dialog -->
+    <div class="dialog-overlay" id="mcpServerDialog" style="display: none;">
+      <div class="dialog" style="max-width: 600px;">
+        <h3 id="serverDialogTitle">Add MCP Server</h3>
+        <p>Configure an MCP server connection.</p>
+        <form id="mcpServerForm">
+          <label for="serverWorkspaceId">Workspace ID</label>
+          <input type="text" id="serverWorkspaceId" class="input" placeholder="default" required>
+
+          <label for="serverServerId">Server ID</label>
+          <input type="text" id="serverServerId" class="input" placeholder="my-server" required>
+
+          <label for="serverName">Name</label>
+          <input type="text" id="serverName" class="input" placeholder="My MCP Server">
+
+          <label for="serverUrl">URL</label>
+          <input type="url" id="serverUrl" class="input" placeholder="https://example.com/mcp" required>
+
+          <label for="serverDescription">Description</label>
+          <input type="text" id="serverDescription" class="input" placeholder="Server description">
+
+          <label for="serverType">Connection Type</label>
+          <select id="serverType" class="select">
+            <option value="http">HTTP</option>
+            <option value="sse">Server-Sent Events</option>
+          </select>
+
+          <label for="serverAuthType">Authentication Type</label>
+          <select id="serverAuthType" class="select">
+            <option value="none">None</option>
+            <option value="oauth_auto">OAuth Auto</option>
+            <option value="oauth_client_credentials">OAuth Client Credentials</option>
+            <option value="headers">Headers</option>
+          </select>
+
+          <div id="serverHeadersSection" style="display: none;">
+            <label>Headers (JSON format)</label>
+            <textarea id="serverHeaders" class="input" style="height: 100px; font-family: monospace;"
+              placeholder='{"Authorization": "Bearer token", "Custom-Header": "value"}'></textarea>
+          </div>
+        </form>
+        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+          <button class="btn" id="saveMcpServerBtn">Save Server</button>
+          <button class="btn btn-outline" id="cancelMcpServerBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cache Entry Dialog -->
+    <div class="dialog-overlay" id="cacheEntryDialog" style="display: none;">
+      <div class="dialog" style="max-width: 600px;">
+        <h3>Cache Entry Details</h3>
+        <div id="cacheEntryContent"
+          style="background: #f3f4f6; padding: 1rem; border-radius: 4px; font-family: monospace; white-space: pre-wrap; max-height: 400px; overflow-y: auto;">
+        </div>
+        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+          <button class="btn btn-outline" id="closeCacheEntryBtn">Close</button>
+        </div>
+      </div>
+    </div>
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <script async defer src="https://buttons.github.io/buttons.js"></script>
     <script>
-      const configs = {"nodejs": {}, "python": {}, "curl": {}}
+      const configs = { "nodejs": {}, "python": {}, "curl": {} }
 
       // Node.js - Simple
       configs["nodejs"]["simple"] = `
@@ -1551,14 +1705,14 @@
 
       <span class="hljs-keyword">const</span> portkey = <span class="hljs-keyword">new</span> Portkey({
         <span class="hljs-attr">provider</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.provider ? 'filled' : 'empty'}" id="providerValue">${vars.provider || '[Click to edit]'}</span>"</span>${vars.provider != 'bedrock' ? `,
-        <span class="hljs-attr">Authorization</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.apiKey ? 'filled' : 'empty'}" id="apiKeyValue">${vars.providerDetails?.apiKey || '[Click to edit]'}</span>"</span>`: ''}${vars.provider === 'azure-openai' ? `${generateConfig('azure', 'node', vars)}` : ''}${vars.provider === 'bedrock' ? `${generateConfig('bedrock', 'node', vars)}` : ''}
+        <span class="hljs-attr">Authorization</span>: <span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.apiKey ? 'filled' : 'empty'}" id="apiKeyValue">${vars.providerDetails?.apiKey || '[Click to edit]'}</span>"</span>` : ''}${vars.provider === 'azure-openai' ? `${generateConfig('azure', 'node', vars)}` : ''}${vars.provider === 'bedrock' ? `${generateConfig('bedrock', 'node', vars)}` : ''}
       })
 
       <span class="hljs-comment">// Example: Send a chat completion request</span>
       const response = <span class="hljs-keyword">await</span> portkey.chat.completions.<span class="hljs-title function_">create</span>({
         <span class="hljs-attr">messages</span>: [{ <span class="hljs-attr">role</span>: <span class="hljs-string">'user'</span>, <span class="hljs-attr">content</span>: <span class="hljs-string">'Hello, how are you?'</span> }],
-        <span class="hljs-attr">model</span>: <span class="hljs-string">"${modelMap[vars.provider] || ''}"</span>${vars.provider=="anthropic"?`,
-        <span class="hljs-attr">max_tokens</span>: <span class="hljs-number">40</span>`:''}
+        <span class="hljs-attr">model</span>: <span class="hljs-string">"${modelMap[vars.provider] || ''}"</span>${vars.provider == "anthropic" ? `,
+        <span class="hljs-attr">max_tokens</span>: <span class="hljs-number">40</span>`: ''}
       })
       <span class="hljs-built_in">console</span>.<span class="hljs-title function_">log</span>(response.choices[<span class="hljs-number">0</span>].message.content)`.trim();
 
@@ -1568,7 +1722,7 @@
 
       client = Portkey(
           <span class="hljs-attr">provider</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.provider ? 'filled' : 'empty'}" id="providerValue">${vars.provider || '[Click to edit]'}</span>"</span>${vars.provider != 'bedrock' ? `,
-          <span class="hljs-attr">Authorization</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.apiKey ? 'filled' : 'empty'}" id="apiKeyValue">${vars.providerDetails?.apiKey || '[Click to edit]'}</span>"</span>`: ''}${vars.provider === 'azure-openai' ? `${generateConfig('azure', 'python', vars)}` : ''}${vars.provider === 'bedrock' ? `${generateConfig('bedrock', 'python', vars)}` : ''}
+          <span class="hljs-attr">Authorization</span>=<span class="hljs-string">"<span class="highlighted-value ${vars.providerDetails?.apiKey ? 'filled' : 'empty'}" id="apiKeyValue">${vars.providerDetails?.apiKey || '[Click to edit]'}</span>"</span>` : ''}${vars.provider === 'azure-openai' ? `${generateConfig('azure', 'python', vars)}` : ''}${vars.provider === 'bedrock' ? `${generateConfig('bedrock', 'python', vars)}` : ''}
       )
 
       <span class="hljs-comment"># Example: Send a chat completion request</span>
@@ -1583,7 +1737,7 @@
       ${location.origin}/v1/chat/completions \\
       -H <span class="hljs-string">"Content-Type: application/json"</span> \\
       -H <span class="hljs-string">"x-portkey-provider: <span class="highlighted-value ${vars.provider ? 'filled' : 'empty'}" id="providerValue">${vars.provider || '[Click to edit]'}</span>"</span> \\${vars.provider != 'bedrock' ? `
-      -H <span class="hljs-string">"Authorization: <span class="highlighted-value ${vars.providerDetails?.apiKey ? 'filled' : 'empty'}" id="apiKeyValue">${vars.providerDetails?.apiKey || '[Click to edit]'}</span>"</span> \\`: '' }${vars.provider === 'azure-openai' ? `${generateConfig('azure', 'curl', vars)}` : ''}${vars.provider === 'bedrock' ? `${generateConfig('bedrock', 'curl', vars)}` : ''}
+      -H <span class="hljs-string">"Authorization: <span class="highlighted-value ${vars.providerDetails?.apiKey ? 'filled' : 'empty'}" id="apiKeyValue">${vars.providerDetails?.apiKey || '[Click to edit]'}</span>"</span> \\` : ''}${vars.provider === 'azure-openai' ? `${generateConfig('azure', 'curl', vars)}` : ''}${vars.provider === 'bedrock' ? `${generateConfig('bedrock', 'curl', vars)}` : ''}
       <span class="hljs-string">-d '{
         "messages": [
             { "role": "user", "content": "Hello, how are you?" }
@@ -1599,7 +1753,7 @@
       }
 
       // Needed for highlight.js
-      const lngMap = {"nodejs": "js", "python": "py", "curl": "sh"}
+      const lngMap = { "nodejs": "js", "python": "py", "curl": "sh" }
 
       // Initialize Lucide icons
       lucide.createIcons();
@@ -1644,12 +1798,12 @@
           myHeaders.append("x-portkey-provider", provider);
 
           const raw = JSON.stringify({
-            "messages": [{"role": "user","content": "How are you?"}],
+          "messages": [{ "role": "user", "content": "How are you?" }],
             "model": modelMap[provider],
             "max_tokens": 40
           });
 
-          const requestOptions = {method: "POST", headers: myHeaders, body: raw};
+        const requestOptions = { method: "POST", headers: myHeaders, body: raw };
 
           // Add loading class to testRequestBtn
           testRequestBtn.classList.add('loading');
@@ -1706,7 +1860,7 @@
       function updateAllCommands() {
         ["nodejs", "python", "curl"].forEach(language => {
           const command = document.getElementById(`${language}Command`);
-          const code = getTestRequestCodeBlock(language, {provider, providerDetails});
+          const code = getTestRequestCodeBlock(language, { provider, providerDetails });
           command.innerHTML = code;
           if (provider) {
             const docsLink = document.querySelector('.docs-link');
@@ -1727,7 +1881,7 @@
       }
 
       function getProviderFields(provider) {
-        switch(provider) {
+        switch (provider) {
             case 'openai':
             case 'anthropic':
             case 'groq':
@@ -1784,7 +1938,7 @@
           switchTab(document.querySelector('.test-request-tabs'), language, false);
 
           const code = getRoutingConfigCodeBlock(language, activeTab);
-          codeElement.innerHTML = hljs.highlight(code, {language: lngMap[language]}).value;
+        codeElement.innerHTML = hljs.highlight(code, { language: lngMap[language] }).value;
       }
 
       function addClickListeners() {
@@ -1839,7 +1993,7 @@
           highlightElement(document.getElementById('providerValue'));
           // Find if there are any provider details in localStorage for this provider
           let localDetails = localStorage.getItem(`providerDetails-${provider}`);
-          if(localDetails) {
+        if (localDetails) {
             console.log('Provider details found in localStorage', localDetails);
             providerDetails = JSON.parse(localDetails);
             updateAllCommands();
@@ -1881,6 +2035,8 @@
               providerDialog.style.display = 'none';
               apiKeyDialog.style.display = 'none';
               logDetailsModal.style.display = 'none';
+          document.getElementById('mcpServerDialog').style.display = 'none';
+          document.getElementById('cacheEntryDialog').style.display = 'none';
           }
       });
 
@@ -1889,7 +2045,7 @@
       const tabContents = document.querySelectorAll('.main-tab-content');
 
       function mainTabFocus(tabName) {
-        if(tabName === 'logs') {
+        if (tabName === 'logs') {
           resetLogCounter();
         }
         tabButtons.forEach(btn => btn.classList.remove('active'));
@@ -1903,15 +2059,19 @@
           button.addEventListener('click', (e) => {
             e.preventDefault();
             let tabName = button.getAttribute('data-tab');
-            const href = tabName === 'logs' ? '/public/logs' : '/public/';
+          let href = '/public/';
+          if (tabName === 'logs') href = '/public/logs';
+          else if (tabName === 'mcp') href = '/public/mcp';
             history.pushState(null, '', href);
             mainTabFocus(tabName);
           });
       });
 
       function managePage() {
-        if(window.location.pathname === '/public/logs') {
+        if (window.location.pathname === '/public/logs') {
           mainTabFocus('logs');
+        } else if (window.location.pathname === '/public/mcp') {
+          mainTabFocus('mcp');
         } else {
           mainTabFocus('main');
         }
@@ -1920,8 +2080,6 @@
       window.addEventListener('popstate', () => {
         managePage()
       });
-
-      managePage()
 
       // Logs functionality
       const logsTableBody = document.getElementById('logsTableBody');
@@ -1984,7 +2142,7 @@
               <td class="log-time">${time}</td>
               <td class="log-method"><span class="log-method-value">${method}</span></td>
               <td class="log-endpoint">${endpoint}</td>
-              <td class="log-status"><span class="${status>=200 && status<300 ? 'success' : 'error'}">${status}</span></td>
+              <td class="log-status"><span class="${status >= 200 && status < 300 ? 'success' : 'error'}">${status}</span></td>
               <td class="log-duration">${duration}ms</td>
               <td><button class="btn-view-details">View Details</button></td>
           `;
@@ -2039,7 +2197,7 @@
       }
 
       function incrementLogCounter() {
-        if(window.location.pathname != '/public/logs') {
+        if (window.location.pathname != '/public/logs') {
           logCounter++;
           const badge = document.querySelector('header .badge');
           badge.textContent = logCounter;
@@ -2068,10 +2226,622 @@
       window.addEventListener('beforeunload', cleanupLogSource);
       window.addEventListener('unload', cleanupLogSource);
 
+      // Cache namespace definitions - each namespace is treated as a separate cache store
+      const cacheNamespaces = [
+        // OAuth namespaces
+        { id: 'oauth:clientid_refresh', label: 'OAuth Client ID Refresh', backend: 'oauth', namespace: 'clientid_refresh' },
+        { id: 'oauth:clients', label: 'OAuth Clients', backend: 'oauth', namespace: 'clients' },
+        { id: 'oauth:tokens', label: 'OAuth Access Tokens', backend: 'oauth', namespace: 'tokens' },
+        { id: 'oauth:refresh_tokens', label: 'OAuth Refresh Tokens', backend: 'oauth', namespace: 'refresh_tokens' },
 
-      window.onload = function() {
+        // MCP namespaces
+        { id: 'mcpServers:client_info', label: 'MCP Client Info', backend: 'mcpServers', namespace: 'client_info' },
+        { id: 'mcpServers:tokens', label: 'MCP Tokens', backend: 'mcpServers', namespace: 'tokens' },
+        { id: 'mcpServers:code_verifier', label: 'MCP Code Verifier', backend: 'mcpServers', namespace: 'code_verifier' },
+
+        // Session namespace
+        { id: 'session:sessions', label: 'MCP Sessions', backend: 'session', namespace: 'sessions' },
+
+        // Non-namespaced caches
+        { id: 'config', label: 'Server Config Cache', backend: 'config', namespace: null },
+        { id: 'default', label: 'Default Cache', backend: 'default', namespace: null },
+        { id: 'token', label: 'Token Cache', backend: 'token', namespace: null }
+      ];
+
+      // MCP Management functionality
+      let currentEditingServerId = null;
+      let currentCachePage = 0;
+      const cachePageSize = 20;
+      let cacheEntryData = {}; // Store cache entry data for viewing
+
+      // Determine MCP server URL based on current environment
+      const getMcpServerUrl = () => {
+        // Check if we're in development (localhost) or production
+        const currentHost = window.location.hostname;
+        const currentProtocol = window.location.protocol;
+
+        if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
+          // Development: Use localhost with MCP port 8788
+          return `${currentProtocol}//localhost:8788`;
+        } else {
+          // Production: Assume MCP server is on same host with different port or path
+          // This can be customized based on deployment setup
+          return `${currentProtocol}//${currentHost}:8788`;
+        }
+      };
+
+      // MCP Servers Management
+      async function loadMcpServers() {
+        try {
+          const response = await fetch(`${getMcpServerUrl()}/admin/mcp/servers`);
+          const data = await response.json();
+
+          const tbody = document.getElementById('serversTableBody');
+          tbody.innerHTML = '';
+
+          if (data.servers && data.servers.length > 0) {
+            data.servers.forEach(server => {
+              const tr = document.createElement('tr');
+              tr.style.borderBottom = '1px solid #e5e7eb';
+              // Generate the gateway URL pattern using MCP server URL
+              const mcpBaseUrl = getMcpServerUrl(); // This gives us the correct MCP server URL
+              const gatewayUrl = `${mcpBaseUrl}/${server.workspaceId || server.id.split('/')[0]}/${server.serverId || server.id.split('/')[1]}/mcp`;
+              
+              tr.innerHTML = `
+                <td style="padding: 0.75rem;">${server.id}</td>
+                <td style="padding: 0.75rem;">${server.name || '-'}</td>
+                <td style="padding: 0.75rem;">
+                  <div style="font-size: 0.875rem;">
+                    <div><a href="${gatewayUrl}" target="_blank" style="color: #2563eb; font-weight: 500;">${gatewayUrl}</a></div>
+                    <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;">Upstream: ${server.url}</div>
+                  </div>
+                </td>
+                <td style="padding: 0.75rem;">${server.type || 'http'}</td>
+                <td style="padding: 0.75rem;">
+                  <span style="padding: 0.25rem 0.5rem; background: ${server.cached ? '#10b981' : '#f59e0b'}; color: white; border-radius: 4px; font-size: 0.75rem;">
+                    ${server.cached ? 'Cached' : 'File Only'}
+                  </span>
+                </td>
+                <td style="padding: 0.75rem;">
+                  <button class="btn-view-details" onclick="editMcpServer('${server.id}')" style="margin-right: 0.5rem;">✏️</button>
+                  <button class="btn-view-details" onclick="deleteMcpServer('${server.id}')" style="background-color: #ef4444;">🗑️</button>
+                </td>
+              `;
+              tbody.appendChild(tr);
+            });
+          } else {
+            tbody.innerHTML = '<tr><td colspan="6" style="padding: 1rem; text-align: center; color: #6b7280;">No MCP servers configured</td></tr>';
+          }
+        } catch (error) {
+          console.error('Failed to load MCP servers:', error);
+          document.getElementById('serversTableBody').innerHTML =
+            '<tr><td colspan="6" style="padding: 1rem; text-align: center; color: #ef4444;">Failed to load servers</td></tr>';
+        }
+      }
+
+      async function editMcpServer(serverId) {
+        try {
+          const response = await fetch(`${getMcpServerUrl()}/admin/mcp/servers/${encodeURIComponent(serverId)}`);
+          const data = await response.json();
+
+          if (data.server) {
+            currentEditingServerId = serverId;
+            document.getElementById('serverDialogTitle').textContent = 'Edit MCP Server';
+            document.getElementById('serverWorkspaceId').value = data.server.workspaceId || '';
+            document.getElementById('serverServerId').value = data.server.serverId || '';
+            document.getElementById('serverName').value = data.server.name || '';
+            document.getElementById('serverUrl').value = data.server.url || '';
+            document.getElementById('serverDescription').value = data.server.description || '';
+            document.getElementById('serverType').value = data.server.type || 'http';
+            document.getElementById('serverAuthType').value = data.server.auth_type || 'none';
+
+            if (data.server.headers) {
+              document.getElementById('serverHeaders').value = JSON.stringify(data.server.headers, null, 2);
+              document.getElementById('serverHeadersSection').style.display = 'block';
+            }
+
+            document.getElementById('mcpServerDialog').style.display = 'flex';
+          }
+        } catch (error) {
+          console.error('Failed to load server details:', error);
+          alert('Failed to load server details');
+        }
+      }
+
+      async function deleteMcpServer(serverId) {
+        if (!confirm(`Are you sure you want to delete server "${serverId}"?`)) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`${getMcpServerUrl()}/admin/mcp/servers/${encodeURIComponent(serverId)}`, {
+            method: 'DELETE'
+          });
+
+          if (response.ok) {
+            loadMcpServers();
+          } else {
+            alert('Failed to delete server');
+          }
+        } catch (error) {
+          console.error('Failed to delete server:', error);
+          alert('Failed to delete server');
+        }
+      }
+
+      // Helper function to get cache info by ID
+      function getCacheInfo(cacheId) {
+        return cacheNamespaces.find(cache => cache.id === cacheId);
+      }
+
+
+      // Cache Management - Combined Stats and Entries
+      async function loadCacheManagement() {
+        try {
+          const grid = document.querySelector('.cache-namespaces-grid');
+          grid.innerHTML = '';
+
+          // Load each cache namespace individually for accurate stats
+          for (const cache of cacheNamespaces) {
+            await loadCacheCard(cache);
+          }
+        } catch (error) {
+          console.error('Failed to load cache management:', error);
+        }
+      }
+
+      async function loadCacheCard(cache) {
+        try {
+          // Get specific stats for this cache/namespace combination
+          const namespaceParam = cache.namespace ? `?namespace=${encodeURIComponent(cache.namespace)}` : '';
+          const response = await fetch(`${getMcpServerUrl()}/admin/cache/${cache.backend}/stats${namespaceParam}`);
+          const data = await response.json();
+
+          console.log(`Stats for ${cache.id}:`, data); // Debug log
+
+          const grid = document.querySelector('.cache-namespaces-grid');
+          const card = document.createElement('div');
+          card.style.cssText = 'background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); overflow: hidden;';
+          card.id = `cache-card-${cache.id}`;
+
+          if (data.error) {
+            card.innerHTML = `
+              <div style="padding: 1.5rem;">
+                <h4 style="margin: 0 0 0.5rem 0; font-size: 1.125rem;">${cache.label}</h4>
+                <p style="color: #ef4444; margin: 0; font-size: 0.875rem;">Error: ${data.error}</p>
+              </div>
+            `;
+          } else {
+            const stats = data.stats;
+            const namespaceKeyCount = stats.keyCount || 0;
+            const hasEntries = namespaceKeyCount > 0;
+
+            card.innerHTML = `
+              <div style="padding: 1.5rem; border-bottom: 1px solid #f3f4f6;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                  <h4 style="margin: 0; font-size: 1.125rem; font-weight: 600;">${cache.label}</h4>
+                  <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-outline" onclick="toggleCacheEntries('${cache.id}')" style="font-size: 0.75rem;" ${!hasEntries ? 'disabled' : ''}>${hasEntries ? 'View Entries' : 'No Entries'}</button>
+                    <button class="btn" onclick="purgeCacheNamespace('${cache.id}')" style="background-color: #ef4444; font-size: 0.75rem;" ${!hasEntries ? 'disabled' : ''}>Purge</button>
+                  </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem;">
+                  <div style="background: #f8fafc; padding: 0.75rem; border-radius: 6px;">
+                    <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 500;">Keys</div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: #1e293b;">${namespaceKeyCount}</div>
+                  </div>
+                  <div style="background: #f8fafc; padding: 0.75rem; border-radius: 6px;">
+                    <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 500;">Hit Rate</div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: #1e293b;">${calculateHitRate(stats)}%</div>
+                  </div>
+                </div>
+                
+                <div style="font-size: 0.875rem; color: #64748b;">
+                  <div>Backend: <span style="color: #374151; font-weight: 500;">${cache.backend}</span></div>
+                  ${cache.namespace ? `<div>Namespace: <span style="color: #374151; font-weight: 500;">${cache.namespace}</span></div>` : ''}
+                  <div>Hits: ${stats.hits || 0} | Misses: ${stats.misses || 0}</div>
+                </div>
+              </div>
+              
+              <div id="cache-entries-${cache.id}" style="display: none;">
+                <div style="padding: 1rem;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h5 style="margin: 0; font-size: 0.875rem; font-weight: 600; color: #374151;">Entries</h5>
+                    <div style="display: flex; gap: 0.5rem;">
+                      <button class="btn btn-outline" onclick="refreshCacheEntries('${cache.id}')" style="font-size: 0.75rem;">Refresh</button>
+                      <span id="cache-pagination-${cache.id}" style="font-size: 0.75rem; color: #64748b;"></span>
+                    </div>
+                  </div>
+                  
+                  <div id="cache-entries-list-${cache.id}" style="max-height: 300px; overflow-y: auto;">
+                    <!-- Entries will be loaded here -->
+                  </div>
+                  
+                  <div id="cache-pagination-controls-${cache.id}" style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 1rem;">
+                    <!-- Pagination controls will be added here -->
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+
+          grid.appendChild(card);
+        } catch (error) {
+          console.error(`Failed to load cache card for ${cache.id}:`, error);
+
+          const grid = document.querySelector('.cache-namespaces-grid');
+          const card = document.createElement('div');
+          card.style.cssText = 'background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); overflow: hidden;';
+          card.innerHTML = `
+            <div style="padding: 1.5rem;">
+              <h4 style="margin: 0 0 0.5rem 0; font-size: 1.125rem;">${cache.label}</h4>
+              <p style="color: #ef4444; margin: 0; font-size: 0.875rem;">Failed to load: ${error.message}</p>
+            </div>
+          `;
+          grid.appendChild(card);
+        }
+      }
+
+      function calculateHitRate(stats) {
+        const total = (stats.hits || 0) + (stats.misses || 0);
+        if (total === 0) return 0;
+        return Math.round(((stats.hits || 0) / total) * 100);
+      }
+
+      async function toggleCacheEntries(cacheId) {
+        const entriesDiv = document.getElementById(`cache-entries-${cacheId}`);
+        const isVisible = entriesDiv.style.display !== 'none';
+
+        if (isVisible) {
+          // Hide entries
+          entriesDiv.style.display = 'none';
+          const button = document.querySelector(`#cache-card-${cacheId} button[onclick*="toggleCacheEntries"]`);
+          if (button) button.textContent = 'View Entries';
+        } else {
+          // Show entries and load data
+          entriesDiv.style.display = 'block';
+          const button = document.querySelector(`#cache-card-${cacheId} button[onclick*="toggleCacheEntries"]`);
+          if (button) button.textContent = 'Hide Entries';
+
+          await loadCacheEntries(cacheId, 0);
+        }
+      }
+
+      async function refreshCacheEntries(cacheId) {
+        await loadCacheEntries(cacheId, 0);
+      }
+
+      async function loadCacheEntries(cacheId, page = 0) {
+        try {
+          const cacheInfo = getCacheInfo(cacheId);
+          if (!cacheInfo) {
+            console.error('Unknown cache ID:', cacheId);
+            return;
+          }
+
+          const namespaceParam = cacheInfo.namespace ? `&namespace=${encodeURIComponent(cacheInfo.namespace)}` : '';
+          const response = await fetch(`${getMcpServerUrl()}/admin/cache/${cacheInfo.backend}?limit=10&offset=${page * 10}${namespaceParam}`);
+          const data = await response.json();
+
+          const entriesList = document.getElementById(`cache-entries-list-${cacheId}`);
+          const paginationSpan = document.getElementById(`cache-pagination-${cacheId}`);
+          const paginationControls = document.getElementById(`cache-pagination-controls-${cacheId}`);
+
+          if (!entriesList) return;
+
+          entriesList.innerHTML = '';
+
+          if (data.entries && data.entries.length > 0) {
+            data.entries.forEach((entry, index) => {
+              // Handle potential errors in cache entry
+              const hasError = entry.error;
+
+              // Show namespace info if key is namespaced (but simplified since we're already in the right namespace)
+              const displayKey = entry.key.includes(':') ? entry.key.split(':', 2)[1] : entry.key;
+
+              // Store cache entry data for viewing
+              const entryId = `${cacheId}_${page}_${index}`;
+              cacheEntryData[entryId] = {
+                key: entry.key,
+                value: entry.value,
+                metadata: entry.metadata,
+                createdAt: entry.createdAt,
+                expiresAt: entry.expiresAt
+              };
+
+              const entryDiv = document.createElement('div');
+              entryDiv.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-bottom: 1px solid #f1f5f9; font-size: 0.875rem;';
+
+              const createdDate = entry.createdAt ? new Date(entry.createdAt).toLocaleString() : '-';
+              const expiresDate = entry.expiresAt ? new Date(entry.expiresAt).toLocaleString() : 'Never';
+
+              entryDiv.innerHTML = `
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-family: monospace; font-weight: 500; color: #1e293b; overflow: hidden; text-overflow: ellipsis;">${displayKey}</div>
+                  <div style="font-size: 0.75rem; color: #64748b;">Created: ${createdDate}${entry.expiresAt ? ` | Expires: ${expiresDate}` : ''}</div>
+                  ${hasError ? `<div style="color: #ef4444; font-size: 0.75rem;">Error: ${entry.error}</div>` : ''}
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                  <button class="btn-view-details" onclick="viewCacheEntry('${entryId}')" style="font-size: 0.75rem;" ${hasError ? 'disabled' : ''}>View</button>
+                  <button class="btn-view-details" onclick="deleteCacheEntry('${cacheId}', '${entry.key.replace(/'/g, "\\'")}')"; style="background-color: #ef4444; font-size: 0.75rem;">Delete</button>
+                </div>
+              `;
+
+              entriesList.appendChild(entryDiv);
+            });
+
+            // Update pagination
+            const totalPages = Math.ceil(data.total / 10);
+            paginationSpan.textContent = `${data.entries.length} of ${data.total} entries`;
+
+            if (totalPages > 1) {
+              paginationControls.innerHTML = `
+                <button class="btn btn-outline" onclick="loadCacheEntries('${cacheId}', ${page - 1})" style="font-size: 0.75rem;" ${page === 0 ? 'disabled' : ''}>Previous</button>
+                <span style="font-size: 0.75rem; color: #64748b;">Page ${page + 1} of ${totalPages}</span>
+                <button class="btn btn-outline" onclick="loadCacheEntries('${cacheId}', ${page + 1})" style="font-size: 0.75rem;" ${page >= totalPages - 1 ? 'disabled' : ''}>Next</button>
+              `;
+            } else {
+              paginationControls.innerHTML = '';
+            }
+          } else {
+            entriesList.innerHTML = '<div style="padding: 1rem; text-align: center; color: #6b7280; font-style: italic;">No entries found</div>';
+            paginationSpan.textContent = '0 entries';
+            paginationControls.innerHTML = '';
+          }
+        } catch (error) {
+          console.error('Failed to load cache entries:', error);
+          const entriesList = document.getElementById(`cache-entries-list-${cacheId}`);
+          if (entriesList) {
+            entriesList.innerHTML = '<div style="padding: 1rem; text-align: center; color: #ef4444;">Failed to load entries</div>';
+          }
+        }
+      }
+
+      function viewCacheEntry(entryId) {
+        const entry = cacheEntryData[entryId];
+        if (!entry) {
+          console.error('Cache entry not found:', entryId);
+          return;
+        }
+
+        // Create detailed view of the cache entry
+        const details = {
+          key: entry.key,
+          value: entry.value,
+          metadata: entry.metadata || null,
+          createdAt: entry.createdAt ? new Date(entry.createdAt).toISOString() : null,
+          expiresAt: entry.expiresAt ? new Date(entry.expiresAt).toISOString() : null
+        };
+
+        document.getElementById('cacheEntryContent').textContent = JSON.stringify(details, null, 2);
+        document.getElementById('cacheEntryDialog').style.display = 'flex';
+      }
+
+      async function deleteCacheEntry(cacheId, key) {
+        if (!confirm(`Are you sure you want to delete cache entry "${key}"?`)) {
+          return;
+        }
+
+        try {
+          const cacheInfo = getCacheInfo(cacheId);
+          if (!cacheInfo) return;
+
+          const response = await fetch(`${getMcpServerUrl()}/admin/cache/${cacheInfo.backend}/${encodeURIComponent(key)}`, {
+            method: 'DELETE'
+          });
+
+          if (response.ok) {
+            // Refresh the specific cache card
+            loadCacheManagement();
+
+            // If entries are currently visible, refresh them
+            const entriesDiv = document.getElementById(`cache-entries-${cacheId}`);
+            if (entriesDiv && entriesDiv.style.display !== 'none') {
+              await loadCacheEntries(cacheId, 0);
+            }
+          } else {
+            alert('Failed to delete cache entry');
+          }
+        } catch (error) {
+          console.error('Failed to delete cache entry:', error);
+          alert('Failed to delete cache entry');
+        }
+      }
+
+      async function purgeCacheNamespace(cacheId) {
+        const cacheInfo = getCacheInfo(cacheId);
+        if (!cacheInfo) return;
+
+        const confirmMessage = cacheInfo.namespace ?
+          `Are you sure you want to purge all entries in the "${cacheInfo.namespace}" namespace? This will delete ALL data in ${cacheInfo.label}.` :
+          `Are you sure you want to purge all entries in ${cacheInfo.label}? This will delete ALL data in this cache.`;
+
+        if (!confirm(confirmMessage)) {
+          return;
+        }
+
+        try {
+          // If it's a namespaced cache, we need to delete the specific namespace
+          const url = cacheInfo.namespace ?
+            `${getMcpServerUrl()}/admin/cache/${cacheInfo.backend}?namespace=${encodeURIComponent(cacheInfo.namespace)}` :
+            `${getMcpServerUrl()}/admin/cache/${cacheInfo.backend}`;
+
+          const response = await fetch(url, {
+            method: 'DELETE'
+          });
+
+          if (response.ok) {
+            // Refresh the cache management view
+            loadCacheManagement();
+            alert(`Successfully purged ${cacheInfo.label}`);
+          } else {
+            alert('Failed to purge cache namespace');
+          }
+        } catch (error) {
+          console.error('Failed to purge cache namespace:', error);
+          alert('Failed to purge cache namespace');
+        }
+      }
+
+      async function purgeAllCache() {
+        const confirmMessage = `⚠️ DANGER: Are you sure you want to purge ALL cache data across ALL namespaces and backends? 
+
+This will delete:
+• All OAuth tokens and client data
+• All MCP session data
+• All server configurations
+• All cached responses
+
+This action cannot be undone!
+
+Type "PURGE ALL" to confirm:`;
+
+        const userInput = prompt(confirmMessage);
+        if (userInput !== 'PURGE ALL') {
+          return;
+        }
+
+        try {
+          // Get all unique backends
+          const backends = [...new Set(cacheNamespaces.map(cache => cache.backend))];
+          const results = [];
+          
+          for (const backend of backends) {
+            try {
+              const response = await fetch(`${getMcpServerUrl()}/admin/cache/${backend}`, {
+                method: 'DELETE'
+              });
+              
+              if (response.ok) {
+                results.push(`✅ ${backend} cache cleared`);
+              } else {
+                results.push(`❌ Failed to clear ${backend} cache`);
+              }
+            } catch (error) {
+              results.push(`❌ Error clearing ${backend} cache: ${error.message}`);
+            }
+          }
+          
+          // Show results
+          alert(`Purge All Cache Results:\n\n${results.join('\n')}`);
+          
+          // Refresh the cache management view
+          loadCacheManagement();
+        } catch (error) {
+          console.error('Failed to purge all caches:', error);
+          alert('Failed to purge all caches');
+        }
+      }
+
+      // Event Listeners for MCP
+      document.getElementById('addServerBtn').addEventListener('click', () => {
+        currentEditingServerId = null;
+        document.getElementById('serverDialogTitle').textContent = 'Add MCP Server';
+        document.getElementById('mcpServerForm').reset();
+        document.getElementById('serverHeadersSection').style.display = 'none';
+        document.getElementById('mcpServerDialog').style.display = 'flex';
+      });
+
+      document.getElementById('serverAuthType').addEventListener('change', (e) => {
+        const headersSection = document.getElementById('serverHeadersSection');
+        headersSection.style.display = e.target.value === 'headers' ? 'block' : 'none';
+      });
+
+      document.getElementById('saveMcpServerBtn').addEventListener('click', async () => {
+        const form = document.getElementById('mcpServerForm');
+        const formData = new FormData(form);
+
+        const serverConfig = {
+          workspaceId: document.getElementById('serverWorkspaceId').value,
+          serverId: document.getElementById('serverServerId').value,
+          name: document.getElementById('serverName').value,
+          url: document.getElementById('serverUrl').value,
+          description: document.getElementById('serverDescription').value,
+          type: document.getElementById('serverType').value,
+          auth_type: document.getElementById('serverAuthType').value
+        };
+
+        // Add headers if auth type is headers
+        if (serverConfig.auth_type === 'headers') {
+          try {
+            serverConfig.headers = JSON.parse(document.getElementById('serverHeaders').value || '{}');
+          } catch (error) {
+            alert('Invalid JSON format in headers field');
+            return;
+          }
+        }
+
+        try {
+          const response = await fetch(`${getMcpServerUrl()}/admin/mcp/servers`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(serverConfig)
+          });
+
+          if (response.ok) {
+            document.getElementById('mcpServerDialog').style.display = 'none';
+            loadMcpServers();
+          } else {
+            const error = await response.json();
+            alert(`Failed to save server: ${error.error || 'Unknown error'}`);
+          }
+        } catch (error) {
+          console.error('Failed to save server:', error);
+          alert('Failed to save server');
+        }
+      });
+
+      document.getElementById('cancelMcpServerBtn').addEventListener('click', () => {
+        document.getElementById('mcpServerDialog').style.display = 'none';
+      });
+
+      document.getElementById('refreshCacheBtn').addEventListener('click', loadCacheManagement);
+
+      document.getElementById('purgeAllCacheBtn').addEventListener('click', purgeAllCache);
+
+      document.getElementById('closeCacheEntryBtn').addEventListener('click', () => {
+        document.getElementById('cacheEntryDialog').style.display = 'none';
+      });
+
+      // MCP sub-tabs functionality
+      document.querySelectorAll('.mcp-subtabs .tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.mcp-subtabs .tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('#mcp-tab .tab-content').forEach(content => content.classList.remove('active'));
+
+          tab.classList.add('active');
+          document.getElementById(tab.dataset.tab + 'Content').classList.add('active');
+
+          // Load data when switching tabs
+          if (tab.dataset.tab === 'servers') {
+            loadMcpServers();
+          } else if (tab.dataset.tab === 'cache') {
+            loadCacheManagement();
+          }
+        });
+      });
+
+      // Update main tab functionality to handle MCP
+      function mainTabFocus(tabName) {
+        if (tabName === 'logs') {
+          resetLogCounter();
+        } else if (tabName === 'mcp') {
+          // Load MCP data when tab is opened
+          loadMcpServers();
+          loadCacheManagement();
+        }
+
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        tabContents.forEach(content => content.classList.remove('active'));
+
+        document.getElementById(`${tabName}-tab-button`).classList.add('active');
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+      }
+
+      window.onload = function () {
         // Run the confetti function only once by storing the state in localStorage
-        if(!localStorage.getItem('confettiRun')) {
+        if (!localStorage.getItem('confettiRun')) {
           setTimeout(() => {
             confetti();
             localStorage.setItem('confettiRun', 'true');
@@ -2083,6 +2853,9 @@
         //     origin: { y: 0.6 }
         // });
       };
+
+      // Initialize page after all functions and variables are defined
+      managePage();
     </script>
 </body>
 

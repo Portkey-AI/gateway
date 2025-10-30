@@ -1,21 +1,44 @@
 #!/usr/bin/env node
 
+import { Context } from 'hono';
+import { streamSSE } from 'hono/streaming';
 import { serve } from '@hono/node-server';
+import { createNodeWebSocket } from '@hono/node-ws';
+import minimist from 'minimist';
 
 import app from './index';
-import { streamSSE } from 'hono/streaming';
-import { Context } from 'hono';
-import { createNodeWebSocket } from '@hono/node-ws';
+import mcpApp from './mcp/mcp-index';
+
 import { realTimeHandlerNode } from './handlers/realtimeHandlerNode';
 import { requestValidator } from './middlewares/requestValidator';
 
-// Extract the port number from the command line arguments
+// Extract the port number and flags from command line arguments using minimist
 const defaultPort = 8787;
-const args = process.argv.slice(2);
-const portArg = args.find((arg) => arg.startsWith('--port='));
-const port = portArg ? parseInt(portArg.split('=')[1]) : defaultPort;
+const defaultMCPPort = process.env.PORT || 8788;
 
-const isHeadless = args.includes('--headless');
+const argv = minimist(process.argv.slice(2), {
+  default: {
+    port: defaultPort,
+    'mcp-port': defaultMCPPort,
+  },
+  boolean: ['llm-node', 'mcp-node', 'llm-grpc', 'headless'],
+});
+
+const port = argv.port;
+const mcpPort = argv['mcp-port'];
+
+// Add flags to choose what all to start (llm-node, llm-grpc, mcp-node)
+// Default starts both llm-node and mcp-node
+
+let llmNode = argv['llm-node'];
+let mcpNode = argv['mcp-node'];
+let llmGrpc = argv['llm-grpc'];
+
+if (!llmNode && !mcpNode && !llmGrpc) {
+  llmNode = true;
+}
+
+const isHeadless = argv.headless;
 
 // Setup static file serving only if not in headless mode
 if (
@@ -42,6 +65,7 @@ if (
 
     // Set up routes
     app.get('/public/logs', serveIndex);
+    app.get('/public/mcp', serveIndex);
     app.get('/public/', serveIndex);
 
     // Redirect `/public` to `/public/`
@@ -135,23 +159,6 @@ if (
   });
 }
 
-const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
-
-app.get(
-  '/v1/realtime',
-  requestValidator,
-  upgradeWebSocket(realTimeHandlerNode)
-);
-
-const server = serve({
-  fetch: app.fetch,
-  port: port,
-});
-
-const url = `http://localhost:${port}`;
-
-injectWebSocket(server);
-
 // Loading animation function
 async function showLoadingAnimation() {
   const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
@@ -159,7 +166,7 @@ async function showLoadingAnimation() {
 
   return new Promise((resolve) => {
     const interval = setInterval(() => {
-      process.stdout.write(`\r${frames[i]} Starting AI Gateway...`);
+      process.stdout.write(`\r${frames[i]} Starting...`);
       i = (i + 1) % frames.length;
     }, 80);
 
@@ -173,12 +180,40 @@ async function showLoadingAnimation() {
 }
 
 // Clear the console and show animation before main output
-console.clear();
 await showLoadingAnimation();
+console.clear();
 
-// Main server information with minimal spacing
-console.log('\x1b[1m%s\x1b[0m', '🚀 Your AI Gateway is running at:');
-console.log('   ' + '\x1b[1;4;32m%s\x1b[0m', `${url}`);
+if (mcpNode) {
+  const mcpUrl = `http://localhost:${mcpPort}`;
+  const mcpServer = serve({
+    fetch: mcpApp.fetch,
+    port: mcpPort,
+  });
+
+  console.log('\x1b[1m%s\x1b[0m', '🤯 MCP Gateway is running at:');
+  console.log('   ' + '\x1b[1;4;32m%s\x1b[0m', `${mcpUrl}`);
+}
+
+const url = `http://localhost:${port}`;
+
+if (llmNode) {
+  const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
+
+  app.get(
+    '/v1/realtime',
+    requestValidator,
+    upgradeWebSocket(realTimeHandlerNode)
+  );
+
+  const server = serve({
+    fetch: app.fetch,
+    port: port,
+  });
+
+  injectWebSocket(server);
+  console.log('\x1b[1m%s\x1b[0m', '🚀 AI Gateway is running at:');
+  console.log('   ' + '\x1b[1;4;32m%s\x1b[0m', `${url}`);
+}
 
 // Secondary information on single lines
 if (!isHeadless) {
