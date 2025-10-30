@@ -21,7 +21,7 @@ import { proxyHandler } from './handlers/proxyHandler';
 import { chatCompletionsHandler } from './handlers/chatCompletionsHandler';
 import { completionsHandler } from './handlers/completionsHandler';
 import { embeddingsHandler } from './handlers/embeddingsHandler';
-import { logger } from './middlewares/log';
+import { logHandler } from './middlewares/log';
 import { imageGenerationsHandler } from './handlers/imageGenerationsHandler';
 import { createSpeechHandler } from './handlers/createSpeechHandler';
 import { createTranscriptionHandler } from './handlers/createTranscriptionHandler';
@@ -33,11 +33,13 @@ import batchesHandler from './handlers/batchesHandler';
 import finetuneHandler from './handlers/finetuneHandler';
 import { messagesHandler } from './handlers/messagesHandler';
 import { imageEditsHandler } from './handlers/imageEditsHandler';
+import { messagesCountTokensHandler } from './handlers/messagesCountTokensHandler';
+import modelResponsesHandler from './handlers/modelResponsesHandler';
 
+// utils
+import { logger } from './apm';
 // Config
 import conf from '../conf.json';
-import modelResponsesHandler from './handlers/modelResponsesHandler';
-import { messagesCountTokensHandler } from './handlers/messagesCountTokensHandler';
 
 // Create a new Hono server instance
 const app = new Hono();
@@ -90,7 +92,7 @@ app.use('*', prettyJSON());
 
 // Use logger middleware for all routes
 if (getRuntimeKey() === 'node') {
-  app.use(logger());
+  app.use(logHandler());
 }
 
 // Support the /v1/models endpoint
@@ -115,7 +117,7 @@ app.notFound((c) => c.json({ message: 'Not Found', ok: false }, 404));
  * Otherwise, logs the error and returns a JSON response with status code 500.
  */
 app.onError((err, c) => {
-  console.error('Global Error Handler: ', err.message, err.cause, err.stack);
+  logger.error('Global Error Handler: ', err.message, err.cause, err.stack);
   if (err instanceof HTTPException) {
     return err.getResponse();
   }
