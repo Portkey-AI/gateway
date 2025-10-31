@@ -103,6 +103,7 @@ export const KRUTRIM: string = 'krutrim';
 export const QDRANT: string = 'qdrant';
 export const THREE_ZERO_TWO_AI: string = '302ai';
 export const COMETAPI: string = 'cometapi';
+export const MATTERAI: string = 'matterai';
 export const MESHY: string = 'meshy';
 export const TRIPO3D: string = 'tripo3d';
 export const NEXTBIT: string = 'nextbit';
@@ -172,6 +173,7 @@ export const VALID_PROVIDERS = [
   QDRANT,
   THREE_ZERO_TWO_AI,
   COMETAPI,
+  MATTERAI,
   MESHY,
   TRIPO3D,
   NEXTBIT,

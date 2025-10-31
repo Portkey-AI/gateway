@@ -3,6 +3,13 @@
   "version": "1.0.0",
   "data": [
     {
+      "id": "matterai",
+      "name": "MatterAI",
+      "object": "provider",
+      "description": "MatterAI provides access to advanced AI models including Axon series for various applications such as text generation, coding assistance, and more. Built for performance and scalability.",
+      "base_url": "https://api.matterai.so/v1"
+    },
+    {
       "id": "ai21",
       "name": "AI21",
       "object": "provider",

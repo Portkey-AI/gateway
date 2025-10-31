@@ -3,6 +3,30 @@
   "version": "1.0.0",
   "data": [
     {
+      "id": "axon",
+      "object": "model",
+      "provider": {
+        "id": "matterai"
+      },
+      "name": "Axon"
+    },
+    {
+      "id": "axon-mini",
+      "object": "model",
+      "provider": {
+        "id": "matterai"
+      },
+      "name": "Axon Mini"
+    },
+    {
+      "id": "axon-code",
+      "object": "model",
+      "provider": {
+        "id": "matterai"
+      },
+      "name": "Axon Code"
+    },
+    {
       "id": "meta-llama/llama-3.1-70b-instruct/fp-8",
       "object": "model",
       "provider": {
