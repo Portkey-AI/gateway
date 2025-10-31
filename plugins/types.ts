@@ -21,13 +21,20 @@ export interface PluginHandlerResponse {
 
 export type HookEventType = 'beforeRequestHook' | 'afterRequestHook';
 
+export type PluginOptions = {
+  env: Record<string, any>;
+  getFromCacheByKey?: (env: Record<string, any>, key: string) => Promise<any>;
+  putInCacheWithValue?: (
+    env: Record<string, any>,
+    key: string,
+    value: any,
+    ttl: number
+  ) => Promise<any>;
+};
+
 export type PluginHandler<P = Record<string, string>> = (
   context: PluginContext,
   parameters: PluginParameters<P>,
   eventType: HookEventType,
-  options?: {
-    env: Record<string, any>;
-    getFromCacheByKey?: (key: string) => Promise<any>;
-    putInCacheWithValue?: (key: string, value: any) => Promise<any>;
-  }
+  options?: PluginOptions
 ) => Promise<PluginHandlerResponse>;
