@@ -12,13 +12,17 @@ import { PluginOptions } from '../types';
 const runtime = getRuntimeKey();
 
 const getRuntimeContext = () => {
+  const defaultContext = { env: {} as Record<string, any> };
   return runtime === 'workerd'
     ? getContext<Record<string, any>>()
-    : { env: {} as Record<string, any> };
+    : defaultContext;
 };
 
-export const awsEndpointDomain =
-  Environment(getRuntimeContext()?.env).AWS_ENDPOINT_DOMAIN || 'amazonaws.com';
+export const getAwsEndpointDomain = () => {
+  return (
+    Environment(getRuntimeContext()?.env).AWS_ENDPOINT_DOMAIN || 'amazonaws.com'
+  );
+};
 // Define a proper credentials type
 interface AWSCredentials {
   source: string;
@@ -244,13 +248,16 @@ async function assumeRoleWithWebIdentity(
 
   const region =
     awsRegion || Environment(options?.env).AWS_REGION || 'us-east-1';
-  const response = await fetch(`https://sts.${region}.${awsEndpointDomain}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: params.toString(),
-  });
+  const response = await fetch(
+    `https://sts.${region}.${getAwsEndpointDomain()}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params.toString(),
+    }
+  );
 
   if (!response.ok) {
     const errorMessage = await response.text();
@@ -633,7 +640,7 @@ async function getSTSAssumedCredentials(
     getRegionFromEnv(options) ||
     'us-east-1';
   const service = 'sts';
-  const hostname = `sts.${region}.${awsEndpointDomain}`;
+  const hostname = `sts.${region}.${getAwsEndpointDomain()}`;
   const signer = new SignatureV4({
     service,
     region,
@@ -700,7 +707,7 @@ export async function getAssumedRoleCredentials(
   let secretAccessKey =
     creds?.secretAccessKey ||
     Environment(options?.env).AWS_ASSUME_ROLE_SECRET_ACCESS_KEY;
-  let sessionToken;
+  let sessionToken = creds?.sessionToken;
 
   // except assumed role others are only supported in node runtime
   if (runtime === 'node') {
@@ -798,7 +805,7 @@ export const bedrockPost = async (
   body: BedrockBody,
   timeout?: number
 ) => {
-  const url = `https://bedrock-runtime.${credentials?.awsRegion}.${awsEndpointDomain}/guardrail/${credentials?.guardrailId}/version/${credentials?.guardrailVersion}/apply`;
+  const url = `https://bedrock-runtime.${credentials?.awsRegion}.${getAwsEndpointDomain()}/guardrail/${credentials?.guardrailId}/version/${credentials?.guardrailVersion}/apply`;
 
   const headers = await generateAWSHeaders(
     body,
