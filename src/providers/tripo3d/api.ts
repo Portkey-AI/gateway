@@ -5,7 +5,7 @@ const Tripo3DAPIConfig: ProviderAPIConfig = {
   headers: ({ providerOptions }) => {
     return { Authorization: `Bearer ${providerOptions.apiKey}` };
   },
-  getEndpoint: ({ fn }) => '',
+  getEndpoint: () => '',
 };
 
 export default Tripo3DAPIConfig;

@@ -139,7 +139,7 @@ const transformToProviderRequestJSON = (
   // Get the configuration for the specified provider
   let providerConfig = ProviderConfigs[provider];
   if (providerConfig.getConfig) {
-    providerConfig = providerConfig.getConfig({ params, providerOptions })[fn];
+    providerConfig = providerConfig.getConfig(params)[fn];
   } else {
     providerConfig = providerConfig[fn];
   }
@@ -159,7 +159,7 @@ const transformToProviderRequestFormData = (
 ): FormData => {
   let providerConfig = ProviderConfigs[provider];
   if (providerConfig.getConfig) {
-    providerConfig = providerConfig.getConfig({ params, providerOptions })[fn];
+    providerConfig = providerConfig.getConfig(params)[fn];
   } else {
     providerConfig = providerConfig[fn];
   }
@@ -201,7 +201,7 @@ const transformToProviderRequestBody = (
 ) => {
   let providerConfig = ProviderConfigs[provider];
   if (providerConfig.getConfig) {
-    providerConfig = providerConfig.getConfig({ params: {}, providerOptions });
+    providerConfig = providerConfig.getConfig({});
   }
 
   return providerConfig.requestTransforms[fn](requestBody, requestHeaders);

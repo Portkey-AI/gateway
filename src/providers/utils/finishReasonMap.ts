@@ -10,7 +10,6 @@ import { DEEPSEEK_STOP_REASON } from '../deepseek/types';
 import { MISTRAL_AI_FINISH_REASON } from '../mistral-ai/types';
 import { TOGETHER_AI_FINISH_REASON } from '../together-ai/types';
 
-// TODO: rename this to OpenAIFinishReasonMap
 export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   // https://docs.anthropic.com/en/api/messages#response-stop-reason
   [ANTHROPIC_STOP_REASON.stop_sequence, FINISH_REASON.stop],
