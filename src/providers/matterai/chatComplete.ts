@@ -49,24 +49,16 @@ export const MatterAIChatCompleteStreamChunkTransform: (
     return `data: ${chunk}\n\n`;
   }
 
-  try {
-    const parsedChunk: MatterAIStreamChunk = JSON.parse(chunk);
+  const parsedChunk: MatterAIStreamChunk = JSON.parse(chunk);
 
-    if (!parsedChunk?.choices?.length) {
-      return `data: ${chunk}\n\n`;
-    }
-
-    return (
-      `data: ${JSON.stringify({
-        ...parsedChunk,
-        provider: MATTERAI,
-      })}` + '\n\n'
-    );
-  } catch (error) {
-    const globalConsole = (globalThis as Record<string, any>).console;
-    if (typeof globalConsole?.error === 'function') {
-      globalConsole.error('Error parsing MatterAI stream chunk:', error);
-    }
+  if (!parsedChunk?.choices?.length) {
     return `data: ${chunk}\n\n`;
   }
+
+  return (
+    `data: ${JSON.stringify({
+      ...parsedChunk,
+      provider: MATTERAI,
+    })}` + '\n\n'
+  );
 };
