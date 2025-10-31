@@ -15,7 +15,7 @@ type OpenrouterReasoningParam = {
 };
 
 export const transformReasoningParams = (params: OpenRouterParams) => {
-  let reasoning: OpenrouterReasoningParam = { ...params.reasoning };
+  const reasoning: OpenrouterReasoningParam = { ...params.reasoning };
   if (params.reasoning_effort) {
     reasoning.effort = params.reasoning_effort;
   }
@@ -23,7 +23,7 @@ export const transformReasoningParams = (params: OpenRouterParams) => {
 };
 
 export const transformUsageOptions = (params: OpenRouterParams) => {
-  let usage: OpenrouterUsageParam = { ...params.usage };
+  const usage: OpenrouterUsageParam = { ...params.usage };
   if (params.stream_options?.include_usage) {
     usage.include = params.stream_options?.include_usage;
   }
