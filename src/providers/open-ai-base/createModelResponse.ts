@@ -42,6 +42,10 @@ export const OpenAICreateModelResponseConfig: ProviderConfig = {
     param: 'background',
     required: false,
   },
+  conversation: {
+    param: 'conversation',
+    required: false,
+  },
   input: {
     param: 'input',
     required: true,
@@ -56,6 +60,10 @@ export const OpenAICreateModelResponseConfig: ProviderConfig = {
   },
   instructions: {
     param: 'instructions',
+    required: false,
+  },
+  max_tool_calls: {
+    param: 'max_tool_calls',
     required: false,
   },
   max_output_tokens: {
@@ -90,6 +98,14 @@ export const OpenAICreateModelResponseConfig: ProviderConfig = {
     param: 'reasoning',
     required: false,
   },
+  safety_identifier: {
+    param: 'safety_identifier',
+    required: false,
+  },
+  service_tier: {
+    param: 'service_tier',
+    required: false,
+  },
   store: {
     param: 'store',
     required: false,
@@ -116,6 +132,10 @@ export const OpenAICreateModelResponseConfig: ProviderConfig = {
   },
   tools: {
     param: 'tools',
+    required: false,
+  },
+  top_logprobs: {
+    param: 'top_logprobs',
     required: false,
   },
   top_p: {
