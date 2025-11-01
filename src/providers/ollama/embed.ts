@@ -1,5 +1,6 @@
 import { OLLAMA } from '../../globals';
 import { EmbedResponse } from '../../types/embedRequestBody';
+import { Params } from '../../types/requestBody';
 import { ErrorResponse, ProviderConfig } from '../types';
 import {
   generateErrorResponse,
@@ -25,6 +26,7 @@ interface OllamaEmbedResponse extends EmbedResponse {
 interface OllamaErrorResponse {
   error: string;
 }
+
 export const OllamaEmbedResponseTransform: (
   response: OllamaEmbedResponse | OllamaErrorResponse,
   responseStatus: number,
@@ -46,8 +48,8 @@ export const OllamaEmbedResponseTransform: (
       OLLAMA
     );
   }
+  const model = response.model || gatewayRequest.model || '';
 
-  const model = response.model || (gatewayRequest.model as string) || '';
   if ('embedding' in response) {
     return {
       object: 'list',

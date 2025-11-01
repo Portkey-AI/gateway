@@ -59,10 +59,8 @@ export async function responseHandler(
   let providerTransformers = Providers[provider]?.responseTransforms;
 
   if (providerConfig?.getConfig) {
-    providerTransformers = providerConfig.getConfig({
-      params: gatewayRequest,
-      providerOptions,
-    }).responseTransforms;
+    providerTransformers =
+      providerConfig.getConfig(gatewayRequest).responseTransforms;
   }
 
   // Checking status 200 so that errors are not considered as stream mode.
