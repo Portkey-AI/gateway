@@ -5,9 +5,9 @@ import {
   BEDROCK_CONVERSE_STOP_REASON,
   TITAN_STOP_REASON,
 } from './bedrock/types';
+import { DEEPSEEK_STOP_REASON } from './deepseek/types';
 import { VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON } from './google-vertex-ai/types';
 import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from './google/types';
-import { DEEPSEEK_STOP_REASON } from './deepseek/types';
 import { MISTRAL_AI_FINISH_REASON } from './mistral-ai/types';
 import { TOGETHER_AI_FINISH_REASON } from './together-ai/types';
 
@@ -19,7 +19,7 @@ export interface ParameterConfig {
   /** The name of the parameter. */
   param: string;
   /** The default value of the parameter, if not provided in the request. */
-  default?: any;
+  default?: unknown | ((config: any, options?: Options) => any);
   /** The minimum value of the parameter. */
   min?: number;
   /** The maximum value of the parameter. */
@@ -51,7 +51,8 @@ export interface ProviderAPIConfig {
     fn: string;
     transformedRequestBody: Record<string, any>;
     transformedRequestUrl: string;
-    gatewayRequestBody?: Params;
+    gatewayRequestBody?: Params | ArrayBuffer;
+    headers?: Record<string, string>;
   }) => Promise<Record<string, any>> | Record<string, any>;
   /** A function to generate the baseURL based on parameters */
   getBaseURL: (args: {
@@ -78,6 +79,7 @@ export interface ProviderAPIConfig {
     reqPath: string;
     reqQuery: string;
   }) => string;
+  getOptions?: () => RequestInit;
 }
 
 export type endpointStrings =
@@ -140,6 +142,13 @@ export type RequestHandlers = Partial<
   Record<endpointStrings, RequestHandler<any>>
 >;
 
+export type RequestTransforms = Partial<
+  Record<
+    endpointStrings,
+    (requestBody: any, requestHeaders: Record<string, string>) => any
+  >
+>;
+
 /**
  * A collection of configurations for multiple AI providers.
  * @interface
@@ -148,13 +157,8 @@ export interface ProviderConfigs {
   /** The configuration for each provider, indexed by provider name. */
   [key: string]: any;
   requestHandlers?: RequestHandlers;
-  getConfig?: ({
-    params,
-    providerOptions,
-  }: {
-    params: Params;
-    providerOptions: Options;
-  }) => any;
+  requestTransforms?: RequestTransforms;
+  getConfig?: (params: Params, fn?: endpointStrings) => ProviderConfigs;
 }
 
 export interface BaseResponse {
@@ -183,12 +187,12 @@ export interface CResponse extends BaseResponse {
       audio_tokens?: number;
       cached_tokens?: number;
     };
+    num_search_queries?: number;
     /*
      * Anthropic Prompt cache token usage
      */
     cache_read_input_tokens?: number;
     cache_creation_input_tokens?: number;
-    num_search_queries?: number;
   };
 }
 
@@ -203,25 +207,6 @@ export interface CompletionResponse extends CResponse {
     logprobs: null;
     finish_reason: string;
   }[];
-}
-
-export interface GroundingMetadata {
-  webSearchQueries?: string[];
-  searchEntryPoint?: {
-    renderedContent: string;
-  };
-  groundingSupports?: Array<{
-    segment: {
-      startIndex: number;
-      endIndex: number;
-      text: string;
-    };
-    groundingChunkIndices: number[];
-    confidenceScores: number[];
-  }>;
-  retrievalMetadata?: {
-    webDynamicRetrievalScore: number;
-  };
 }
 
 /**
@@ -245,6 +230,25 @@ export interface Logprobs {
     logprob: number;
     bytes: number[];
   }[];
+}
+
+export interface GroundingMetadata {
+  webSearchQueries?: string[];
+  searchEntryPoint?: {
+    renderedContent: string;
+  };
+  groundingSupports?: Array<{
+    segment: {
+      startIndex: number;
+      endIndex: number;
+      text: string;
+    };
+    groundingChunkIndices: number[];
+    confidenceScores: number[];
+  }>;
+  retrievalMetadata?: {
+    webDynamicRetrievalScore: number;
+  };
 }
 
 /**
@@ -387,7 +391,7 @@ interface FinetuneProviderOptions {
 export interface FinetuneRequest {
   model: string;
   suffix: string;
-  provider_options: FinetuneProviderOptions;
+  provider_options?: FinetuneProviderOptions;
   training_file: string;
   validation_file?: string;
   model_type?: string;

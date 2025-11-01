@@ -9,7 +9,7 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     const { resourceName } = providerOptions;
     return `https://${resourceName}.openai.azure.com/openai`;
   },
-  headers: async ({ providerOptions, fn }) => {
+  headers: async ({ providerOptions, fn, c }) => {
     const { apiKey, azureAdToken, azureAuthMode } = providerOptions;
     if (azureAdToken) {
       return {
@@ -37,6 +37,7 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       const { azureManagedClientId } = providerOptions;
       const resource = 'https://cognitiveservices.azure.com/';
       const accessToken = await getAzureManagedIdentityToken(
+        c,
         resource,
         azureManagedClientId
       );

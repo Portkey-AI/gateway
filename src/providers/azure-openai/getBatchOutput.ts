@@ -3,6 +3,7 @@ import AzureOpenAIAPIConfig from './api';
 import { Options } from '../../types/requestBody';
 import { RetrieveBatchResponse } from '../types';
 import { AZURE_OPEN_AI } from '../../globals';
+import { externalServiceFetch } from '../../utils/fetch';
 
 // Return a ReadableStream containing batches output data
 export const AzureOpenAIGetBatchOutputRequestHandler = async ({
@@ -42,7 +43,7 @@ export const AzureOpenAIGetBatchOutputRequestHandler = async ({
     transformedRequestUrl: retrieveBatchURL,
     gatewayRequestBody: {},
   });
-  const retrieveBatchesResponse = await fetch(retrieveBatchURL, {
+  const retrieveBatchesResponse = await externalServiceFetch(retrieveBatchURL, {
     method: 'GET',
     headers: retrieveBatchesHeaders,
   });
@@ -89,7 +90,7 @@ export const AzureOpenAIGetBatchOutputRequestHandler = async ({
     transformedRequestUrl: retrieveFileContentURL,
     gatewayRequestBody: {},
   });
-  const response = fetch(retrieveFileContentURL, {
+  const response = externalServiceFetch(retrieveFileContentURL, {
     method: 'GET',
     headers: retrieveFileContentHeaders,
   });
