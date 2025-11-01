@@ -1,5 +1,5 @@
 import { COHERE } from '../../globals';
-import { Message, Params } from '../../types/requestBody';
+import { Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
