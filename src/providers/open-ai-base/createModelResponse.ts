@@ -62,6 +62,10 @@ export const OpenAICreateModelResponseConfig: ProviderConfig = {
     param: 'instructions',
     required: false,
   },
+  max_tool_calls: {
+    param: 'max_tool_calls',
+    required: false,
+  },
   max_output_tokens: {
     param: 'max_output_tokens',
     required: false,
