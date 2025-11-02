@@ -10,10 +10,11 @@ import {
   GOOGLE_VERTEX_AI,
   fileExtensionMimeTypeMap,
 } from '../../globals';
+import { getFromKV, putInKV } from '../../services/kvstore';
 import { ErrorResponse, FinetuneRequest, Logprobs } from '../types';
-import { Context } from 'hono';
-import { env } from 'hono/adapter';
+import { externalServiceFetch } from '../../utils/fetch';
 import { ContentType, JsonSchema } from '../../types/requestBody';
+import { logger } from '../../apm';
 
 /**
  * Encodes an object as a Base64 URL-encoded string.
@@ -87,21 +88,15 @@ async function importPrivateKey(pem: string): Promise<CryptoKey> {
 }
 
 export const getAccessToken = async (
-  c: Context,
   serviceAccountInfo: Record<string, any>
 ): Promise<string> => {
   try {
-    let cacheKey = `${serviceAccountInfo.project_id}/${serviceAccountInfo.private_key_id}/${serviceAccountInfo.client_email}`;
+    const cacheKey = `${serviceAccountInfo.project_id}/${serviceAccountInfo.private_key_id}/${serviceAccountInfo.client_email}`;
     // try to get from cache
-    try {
-      const getFromCacheByKey = c.get('getFromCacheByKey');
-      const resp = getFromCacheByKey
-        ? await getFromCacheByKey(env(c), cacheKey)
-        : null;
-      if (resp) {
-        return resp;
-      }
-    } catch (err) {}
+    const resp = await getFromKV(cacheKey, true);
+    if (resp) {
+      return resp;
+    }
 
     const scope = 'https://www.googleapis.com/auth/cloud-platform';
     const iat = Math.floor(Date.now() / 1000);
@@ -135,16 +130,16 @@ export const getAccessToken = async (
       assertion: jwtToken,
     });
 
-    const tokenResponse = await fetch(tokenUrl, {
+    const tokenResponse = await externalServiceFetch(tokenUrl, {
       headers: tokenHeaders,
       body: tokenData,
       method: 'POST',
     });
 
     const tokenJson: Record<string, any> = await tokenResponse.json();
-    const putInCacheWithValue = c.get('putInCacheWithValue');
-    if (putInCacheWithValue && cacheKey) {
-      await putInCacheWithValue(env(c), cacheKey, tokenJson.access_token, 3000); // 50 minutes
+
+    if (cacheKey) {
+      await putInKV(cacheKey, tokenJson.access_token, 3000); // 50 minutes
     }
 
     return tokenJson.access_token;
@@ -152,6 +147,102 @@ export const getAccessToken = async (
     return '';
   }
 };
+
+export async function getModelProviderFromModelID(
+  model: string,
+  options: {
+    vertexRegion?: string;
+    vertexProjectId?: string;
+    vertexServiceAccountJson?: Record<string, any>;
+    apiKey?: string;
+  }
+) {
+  const cacheKey = `${model}-vertex-base-model-id`;
+  const cachedModel = await getFromKV(cacheKey, true, 604800);
+  if (cachedModel) {
+    return cachedModel.model;
+  }
+
+  const projectId =
+    options.vertexProjectId || options.vertexServiceAccountJson?.project_id;
+  const region = options.vertexRegion;
+
+  // prefer service account over api-key
+  const vertexAccessToken = options.vertexServiceAccountJson
+    ? await getAccessToken(options.vertexServiceAccountJson ?? {})
+    : options.apiKey;
+
+  const endpoint = await externalServiceFetch(
+    `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/models/${model}`,
+    {
+      headers: {
+        Authorization: `Bearer ${vertexAccessToken}`,
+      },
+    }
+  );
+
+  try {
+    const data = (await endpoint.json()) as Record<string, any>;
+    const labels = (data.labels as Record<string, string>) ?? {};
+    const finetuneModelId = labels['google-vertex-llm-tuning-base-model-id'];
+
+    // If fine-tune-id is found in the model label.
+    if (finetuneModelId) {
+      const finetuneModel = await externalServiceFetch(
+        `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/tuningJobs/${finetuneModelId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${vertexAccessToken}`,
+          },
+        }
+      );
+
+      const finetuneModelData = (await finetuneModel.json()) as Record<
+        string,
+        unknown
+      >;
+      const finetuneModelName =
+        finetuneModelData.baseModel ??
+        (finetuneModelData.source_model as any)?.baseModel;
+
+      if (!finetuneModelName) {
+        return null;
+      }
+
+      await putInKV(cacheKey, { model: finetuneModelName }, 604800);
+      return finetuneModelName;
+    }
+
+    const modelType = data?.modelSourceInfo?.sourceType || 'GENIE';
+
+    const baseModelSource = data.baseModelSource || {};
+    if (modelType === 'GENIE') {
+      // const baseModel = baseModelSource.genieSource?.baseModelUri;
+      return null;
+    } else {
+      // Custom models are from model-garden (https://docs.cloud.google.com/vertex-ai/docs/reference/rest/v1/projects.locations.models#Model.ModelGardenSource)
+      const baseModel = baseModelSource.modelGardenSource?.publicModelName; // Ex: publishers/qwen/models/qwen3, take the provider.
+      if (!baseModel) {
+        return model; // Return default model
+      }
+      const modelProvider = baseModel.split('/')?.at(1); //provider
+      const modelVersion = baseModelSource.modelGardenSource?.versionId;
+      if (modelProvider && modelVersion) {
+        //publishers/anthropic/models/claude-sonnet-4-5 -> ex: anthropic.claude-sonnet-4-5@version
+        const modelFromURI = `${modelProvider}.${modelVersion}`;
+        return modelFromURI;
+      }
+      return model;
+    }
+  } catch (error) {
+    logger.error('Unable to fetch base model from endpoint.', {
+      error,
+      model,
+      options,
+    });
+    return null;
+  }
+}
 
 export const getModelAndProvider = (modelString: string) => {
   let provider = 'google';
@@ -462,6 +553,7 @@ export const GoogleToOpenAIBatch = (response: GoogleBatchRecord) => {
       completed: response.completionStats?.successfulCount,
       failed: response.completionStats?.failedCount,
     },
+    model: response?.model,
     ...(response.error && {
       errors: {
         object: 'list',
