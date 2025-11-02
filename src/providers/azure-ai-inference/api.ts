@@ -35,7 +35,7 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
     }
     return '';
   },
-  headers: async ({ providerOptions, fn }) => {
+  headers: async ({ providerOptions, fn, c }) => {
     const {
       apiKey,
       azureExtraParameters,
@@ -90,6 +90,7 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
       const { azureManagedClientId } = providerOptions;
       const resource = 'https://cognitiveservices.azure.com/';
       const accessToken = await getAzureManagedIdentityToken(
+        c,
         resource,
         azureManagedClientId
       );

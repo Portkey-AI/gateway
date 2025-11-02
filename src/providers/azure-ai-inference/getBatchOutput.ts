@@ -44,10 +44,13 @@ export const AzureAIInferenceGetBatchOutputRequestHandler = async ({
     gatewayRequestBody: {},
   });
   try {
-    const retrieveBatchesResponse = await externalServiceFetch(retrieveBatchURL, {
-      method: 'GET',
-      headers: retrieveBatchesHeaders,
-    });
+    const retrieveBatchesResponse = await externalServiceFetch(
+      retrieveBatchURL,
+      {
+        method: 'GET',
+        headers: retrieveBatchesHeaders,
+      }
+    );
 
     if (!retrieveBatchesResponse.ok) {
       const error = await retrieveBatchesResponse.text();
