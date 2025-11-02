@@ -452,7 +452,7 @@ interface GoogleGenerateFunctionCall {
   args: Record<string, any>;
 }
 
-export interface GoogleResponseCandidate {
+interface GoogleResponseCandidate {
   content: {
     parts: {
       text?: string;
