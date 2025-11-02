@@ -3,7 +3,7 @@ import { constructConfigFromRequestHeaders } from '../../handlers/handlerUtils';
 import { transformUsingProviderConfig } from '../../services/transformToProviderRequest';
 import { Options } from '../../types/requestBody';
 import { FinetuneRequest, ProviderConfig } from '../types';
-import { fireworkFinetuneToOpenAIFinetune } from './utils';
+import { fireworkFinetuneToOpenAIFinetune } from './util';
 
 export const getHyperparameters = (value: FinetuneRequest) => {
   let hyperparameters = value?.hyperparameters;
