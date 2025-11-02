@@ -204,7 +204,12 @@ const transformToProviderRequestBody = (
     providerConfig = providerConfig.getConfig({});
   }
 
-  return providerConfig.requestTransforms[fn](requestBody, requestHeaders);
+  const responseTransform =
+    providerConfig.requestTransforms?.[fn as endpointStrings];
+  if (!responseTransform) {
+    throw new GatewayError(`${fn} is not supported by ${provider}`);
+  }
+  return responseTransform(requestBody, requestHeaders);
 };
 
 /**

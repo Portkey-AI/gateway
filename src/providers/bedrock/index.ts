@@ -39,7 +39,6 @@ import { BEDROCK_STABILITY_V1_MODELS } from './constants';
 import {
   BedrockCreateBatchConfig,
   BedrockCreateBatchResponseTransform,
-  BedrockCreateRequestBodyTransform,
 } from './createBatch';
 import {
   BedrockCreateFinetuneConfig,
@@ -269,10 +268,6 @@ const BedrockConfig: ProviderConfigs = {
     config.createFinetune = BedrockCreateFinetuneConfig;
     config.cancelBatch = {};
     config.cancelFinetune = {};
-    config.requestTransforms = {
-      ...(config.requestTransforms ?? {}),
-      createBatch: BedrockCreateRequestBodyTransform,
-    };
     return config;
   },
 };

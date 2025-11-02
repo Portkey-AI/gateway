@@ -1,4 +1,5 @@
 import { ProviderAPIConfig } from '../types';
+import { Params } from '../../types/requestBody';
 
 const AnthropicAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.anthropic.com/v1',
@@ -16,15 +17,15 @@ const AnthropicAPIConfig: ProviderAPIConfig = {
 
     const betaHeader =
       providerOptions?.['anthropicBeta'] ??
-      gatewayRequestBody?.['anthropic_beta'] ??
+      (gatewayRequestBody as Params)?.['anthropic_beta'] ??
       'messages-2023-12-15';
     const version =
       providerOptions?.['anthropicVersion'] ??
-      gatewayRequestBody?.['anthropic_version'] ??
+      (gatewayRequestBody as Params)?.['anthropic_version'] ??
       '2023-06-01';
 
     if (fn === 'chatComplete') {
-      headers['anthropic-beta'] = betaHeader;
+      headers['anthropic-beta'] = betaHeader as string;
     }
     headers['anthropic-version'] = version;
     return headers;
