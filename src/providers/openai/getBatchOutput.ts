@@ -2,6 +2,8 @@ import { Context } from 'hono';
 import OpenAIAPIConfig from './api';
 import { Options } from '../../types/requestBody';
 import { RetrieveBatchResponse } from '../types';
+import { OPEN_AI } from '../../globals';
+import { externalServiceFetch } from '../../utils/fetch';
 
 // Return a ReadableStream containing batches output data
 export const OpenAIGetBatchOutputRequestHandler = async ({
@@ -32,14 +34,15 @@ export const OpenAIGetBatchOutputRequestHandler = async ({
     transformedRequestUrl: retrieveBatchURL,
     gatewayRequestBody: {},
   });
-  const retrieveBatchesResponse = await fetch(retrieveBatchURL, {
+  const retrieveBatchesResponse = await externalServiceFetch(retrieveBatchURL, {
     method: 'GET',
     headers: retrieveBatchesHeaders,
   });
 
   const batchDetails: RetrieveBatchResponse =
     await retrieveBatchesResponse.json();
-  const outputFileId = batchDetails.output_file_id;
+  const outputFileId =
+    batchDetails.output_file_id || batchDetails.error_file_id;
   if (!outputFileId) {
     const errors = batchDetails.errors;
     if (errors) {
@@ -47,6 +50,16 @@ export const OpenAIGetBatchOutputRequestHandler = async ({
         status: 200,
       });
     }
+    return new Response(
+      JSON.stringify({
+        error: 'invalid response output format',
+        provider_response: batchDetails,
+        provider: OPEN_AI,
+      }),
+      {
+        status: 400,
+      }
+    );
   }
   const retrieveFileContentURL = `${baseUrl}/files/${outputFileId}/content`;
   const retrieveFileContentHeaders = await OpenAIAPIConfig.headers({
@@ -57,7 +70,7 @@ export const OpenAIGetBatchOutputRequestHandler = async ({
     transformedRequestUrl: retrieveFileContentURL,
     gatewayRequestBody: {},
   });
-  const response = fetch(retrieveFileContentURL, {
+  const response = externalServiceFetch(retrieveFileContentURL, {
     method: 'GET',
     headers: retrieveFileContentHeaders,
   });
