@@ -274,9 +274,7 @@ export async function afterRequestHookHandler(
           statusText: 'Hooks failed',
         });
       }
-      return new Response(response.body, {
-        ...response,
-      });
+      return response;
     }
 
     if (shouldDeny) {
