@@ -137,6 +137,39 @@ export type BedrockContentItem = {
     name: string;
     input: object;
   };
+  toolResult?: {
+    content: any;
+    toolUseId: string;
+    status: 'success' | 'error';
+  };
+  citationsContent?: {
+    citations?: {
+      location?: {
+        documentChar?: {
+          documentIndex: number;
+          end: number;
+          start: number;
+        };
+        documentChunk?: {
+          documentIndex: number;
+          end: number;
+          start: number;
+        };
+        documentPage?: {
+          documentIndex: number;
+          end: number;
+          start: number;
+        };
+      };
+      sourceContent?: {
+        text?: string;
+      }[];
+      title?: string;
+    }[];
+    content?: {
+      text?: string;
+    }[];
+  };
   reasoningContent?: {
     reasoningText?: {
       signature: string;
