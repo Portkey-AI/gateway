@@ -263,9 +263,6 @@ export async function afterRequestHookHandler(
 
     if (!responseJSON) {
       // For streaming responses, check if beforeRequestHooks failed without deny enabled.
-      const additionalHeaders = {
-        'x-portkey-hook-results': JSON.stringify(hooksResult),
-      };
       if (
         (failedBeforeRequestHooks.length || failedAfterRequestHooks.length) &&
         response.status === 200
@@ -275,12 +272,10 @@ export async function afterRequestHookHandler(
           ...response,
           status: 246,
           statusText: 'Hooks failed',
-          headers: { ...response.headers, ...additionalHeaders },
         });
       }
       return new Response(response.body, {
         ...response,
-        headers: { ...response.headers, ...additionalHeaders },
       });
     }
 
