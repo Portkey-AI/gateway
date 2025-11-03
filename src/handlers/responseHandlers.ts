@@ -18,6 +18,7 @@ import { HookSpan } from '../middlewares/hooks';
 import { env } from 'hono/adapter';
 import { OpenAIModelResponseJSONToStreamGenerator } from '../providers/open-ai-base/createModelResponse';
 import { anthropicMessagesJsonToStreamGenerator } from '../providers/anthropic-base/utils/streamGenerator';
+import { endpointStrings } from '../providers/types';
 
 /**
  * Handles various types of responses based on the specified parameters
@@ -35,6 +36,7 @@ import { anthropicMessagesJsonToStreamGenerator } from '../providers/anthropic-b
  * @returns {Promise<{response: Response, json?: any}>} - The mapped response.
  */
 export async function responseHandler(
+  c: Context,
   response: Response,
   streamingMode: boolean,
   providerOptions: Options,
@@ -44,7 +46,8 @@ export async function responseHandler(
   gatewayRequest: Params,
   strictOpenAiCompliance: boolean,
   gatewayRequestUrl: string,
-  areSyncHooksAvailable: boolean
+  areSyncHooksAvailable: boolean,
+  hookSpanId: string
 ): Promise<{
   response: Response;
   responseJson: Record<string, any> | null;
@@ -110,6 +113,9 @@ export async function responseHandler(
     return { response: streamingResponse, responseJson: null };
   }
   if (streamingMode && isSuccessStatusCode) {
+    const hooksManager = c.get('hooksManager');
+    const span = hooksManager.getSpan(hookSpanId) as HookSpan;
+    const hooksResult = span.getHooksResult();
     return {
       response: handleStreamingMode(
         response,
@@ -117,7 +123,9 @@ export async function responseHandler(
         responseTransformerFunction,
         requestURL,
         strictOpenAiCompliance,
-        gatewayRequest
+        gatewayRequest,
+        responseTransformer as endpointStrings,
+        hooksResult
       ),
       responseJson: null,
     };

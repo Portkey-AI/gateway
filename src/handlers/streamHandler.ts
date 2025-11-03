@@ -8,9 +8,11 @@ import {
   PRECONDITION_CHECK_FAILED_STATUS_CODE,
   GOOGLE_VERTEX_AI,
 } from '../globals';
+import { HookSpan } from '../middlewares/hooks';
 import { VertexLlamaChatCompleteStreamChunkTransform } from '../providers/google-vertex-ai/chatComplete';
 import { OpenAIChatCompleteResponse } from '../providers/openai/chatComplete';
 import { OpenAICompleteResponse } from '../providers/openai/complete';
+import { endpointStrings } from '../providers/types';
 import { Params } from '../types/requestBody';
 import { getStreamModeSplitPattern, type SplitPatternType } from '../utils';
 
@@ -292,7 +294,9 @@ export function handleStreamingMode(
   responseTransformer: Function | undefined,
   requestURL: string,
   strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  gatewayRequest: Params,
+  fn: endpointStrings,
+  hooksResult: HookSpan['hooksResult']
 ): Response {
   const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);
   // If the provider doesn't supply completion id,
@@ -311,6 +315,12 @@ export function handleStreamingMode(
   if (proxyProvider === BEDROCK) {
     (async () => {
       try {
+        if (!strictOpenAiCompliance) {
+          const hookResultChunk = constructHookResultChunk(hooksResult, fn);
+          if (hookResultChunk) {
+            await writer.write(encoder.encode(hookResultChunk));
+          }
+        }
         for await (const chunk of readAWSStream(
           reader,
           responseTransformer,
@@ -337,6 +347,12 @@ export function handleStreamingMode(
   } else {
     (async () => {
       try {
+        if (!strictOpenAiCompliance) {
+          const hookResultChunk = constructHookResultChunk(hooksResult, fn);
+          if (hookResultChunk) {
+            await writer.write(encoder.encode(hookResultChunk));
+          }
+        }
         for await (const chunk of readStream(
           reader,
           splitPattern,
@@ -434,3 +450,23 @@ export async function handleJSONToStreamResponse(
     statusText: response.statusText,
   });
 }
+
+const constructHookResultChunk = (
+  hooksResult: HookSpan['hooksResult'],
+  fn: endpointStrings
+) => {
+  if (fn === 'chatComplete' || fn === 'complete' || fn === 'embed') {
+    return `data: ${JSON.stringify({
+      hook_results: {
+        before_request_hooks: hooksResult.beforeRequestHooksResult,
+      },
+    })}\n\n`;
+  } else if (fn === 'messages') {
+    return `event: hook_results\ndata: ${JSON.stringify({
+      hook_results: {
+        before_request_hooks: hooksResult.beforeRequestHooksResult,
+      },
+    })}\n\n`;
+  }
+  return null;
+};

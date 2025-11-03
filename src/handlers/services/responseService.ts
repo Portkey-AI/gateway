@@ -81,6 +81,7 @@ export class ResponseService {
   }> {
     const url = this.context.requestURL;
     return await responseHandler(
+      this.context.honoContext,
       response,
       this.context.isStreaming,
       this.context.providerOption,
@@ -90,7 +91,8 @@ export class ResponseService {
       this.context.params,
       this.context.strictOpenAiCompliance,
       this.context.honoContext.req.url,
-      this.hooksService.areSyncHooksAvailable
+      this.hooksService.areSyncHooksAvailable,
+      this.hooksService.hookSpan?.id as string
     );
   }
 
