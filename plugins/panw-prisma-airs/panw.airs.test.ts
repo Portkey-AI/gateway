@@ -219,4 +219,32 @@ describe('PANW Prisma AIRS Guardrail', () => {
     expect(result.data).toBeNull();
     expect(mockPost).toHaveBeenCalledTimes(1);
   });
+
+  it('should use x-portkey-trace-id as tr_id when available', async () => {
+    const traceId = '38d838c3-2151-4f40-9729-9607f34ea446';
+    const mockContextWithTraceId = {
+      request: {
+        text: 'This is a test prompt.',
+        headers: { 'x-portkey-trace-id': traceId },
+      },
+      response: { text: 'This is a test response.' },
+    };
+
+    mockPost.mockResolvedValue({ action: 'allow' });
+
+    await panwPrismaAirsHandler(
+      mockContextWithTraceId,
+      params,
+      'beforeRequestHook'
+    );
+
+    // Verify the post call was made with the correct tr_id
+    expect(mockPost).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        tr_id: traceId,
+      }),
+      expect.any(Object)
+    );
+  });
 });

@@ -43,11 +43,15 @@ export const handler: PluginHandler = async (
   try {
     const text = getText(ctx, hook); // prompt or response
 
+    // Extract Portkey's trace ID from request headers to use as AIRS tr_id (AI Session ID)
+    const traceId =
+      ctx?.request?.headers?.['x-portkey-trace-id'] ||
+      (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : Math.random().toString(36).substring(2) + Date.now().toString(36));
+
     const payload: any = {
-      tr_id:
-        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-          ? crypto.randomUUID()
-          : Math.random().toString(36).substring(2) + Date.now().toString(36),
+      tr_id: traceId, // Use Portkey's trace ID as AIRS AI Session ID
       metadata: {
         ai_model: params.ai_model ?? 'unknown-model',
         app_user: params.app_user ?? 'portkey-gateway',
