@@ -3,13 +3,18 @@ import { ProviderAPIConfig } from '../types';
 const AnthropicAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.anthropic.com/v1',
 
-  headers: ({ providerOptions, fn, headers: requestHeaders, gatewayRequestBody }) => {
+  headers: ({
+    providerOptions,
+    fn,
+    headers: requestHeaders,
+    gatewayRequestBody,
+  }) => {
     const apiKey =
       providerOptions.apiKey || requestHeaders?.['x-api-key'] || '';
     const headers: Record<string, string> = {
       'X-API-Key': apiKey,
     };
-  
+
     // Accept anthropic_beta and anthropic_version in body to support enviroments which cannot send it in headers.
     const betaHeader =
       providerOptions?.['anthropicBeta'] ??
