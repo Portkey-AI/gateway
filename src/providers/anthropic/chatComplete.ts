@@ -337,6 +337,9 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
               typeof msg.content === 'string'
             ) {
               systemMessages.push({
+                ...(msg?.cache_control && {
+                  cache_control: { type: 'ephemeral' },
+                }),
                 text: msg.content,
                 type: 'text',
               });
@@ -679,6 +682,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           {
             delta: {
               content: '',
+              role: 'assistant',
             },
             index: 0,
             logprobs: null,
