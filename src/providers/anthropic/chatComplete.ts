@@ -679,6 +679,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           {
             delta: {
               content: '',
+              role: 'assistant',
             },
             index: 0,
             logprobs: null,
@@ -771,7 +772,6 @@ export const AnthropicChatCompleteStreamChunkTransform: (
         {
           delta: {
             content,
-            role: 'assistant',
             tool_calls: toolCalls.length ? toolCalls : undefined,
             ...(!strictOpenAiCompliance &&
               !toolCalls.length && {
