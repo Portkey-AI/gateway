@@ -405,7 +405,10 @@ export function handleStreamingMode(
 export async function handleJSONToStreamResponse(
   response: Response,
   provider: string,
-  responseTransformerFunction: Function
+  responseTransformerFunction: Function,
+  strictOpenAiCompliance: boolean,
+  fn: endpointStrings,
+  hooksResult: HookSpan['hooksResult']
 ): Promise<Response> {
   const { readable, writable } = new TransformStream();
   const writer = writable.getWriter();
@@ -419,6 +422,12 @@ export async function handleJSONToStreamResponse(
   ) {
     const generator = responseTransformerFunction(responseJSON, provider);
     (async () => {
+      if (!strictOpenAiCompliance) {
+        const hookResultChunk = constructHookResultChunk(hooksResult, fn);
+        if (hookResultChunk) {
+          await writer.write(encoder.encode(hookResultChunk));
+        }
+      }
       while (true) {
         const chunk = generator.next();
         if (chunk.done) {
@@ -434,6 +443,12 @@ export async function handleJSONToStreamResponse(
       provider
     );
     (async () => {
+      if (!strictOpenAiCompliance) {
+        const hookResultChunk = constructHookResultChunk(hooksResult, fn);
+        if (hookResultChunk) {
+          await writer.write(encoder.encode(hookResultChunk));
+        }
+      }
       for (const chunk of streamChunkArray) {
         await writer.write(encoder.encode(chunk));
       }

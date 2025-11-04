@@ -99,23 +99,21 @@ export async function responseHandler(
     responseTransformerFunction = undefined;
   }
 
-  if (
-    streamingMode &&
-    isSuccessStatusCode &&
-    isCacheHit &&
-    responseTransformerFunction
-  ) {
-    const streamingResponse = await handleJSONToStreamResponse(
-      response,
-      provider,
-      responseTransformerFunction
-    );
-    return { response: streamingResponse, responseJson: null };
-  }
   if (streamingMode && isSuccessStatusCode) {
     const hooksManager = c.get('hooksManager');
     const span = hooksManager.getSpan(hookSpanId) as HookSpan;
     const hooksResult = span.getHooksResult();
+    if (isCacheHit && responseTransformerFunction) {
+      const streamingResponse = await handleJSONToStreamResponse(
+        response,
+        provider,
+        responseTransformerFunction,
+        strictOpenAiCompliance,
+        responseTransformer as endpointStrings,
+        hooksResult
+      );
+      return { response: streamingResponse, responseJson: null };
+    }
     return {
       response: handleStreamingMode(
         response,
