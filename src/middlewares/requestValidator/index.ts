@@ -1,11 +1,12 @@
 import { Context } from 'hono';
 import { CONTENT_TYPES, POWERED_BY, VALID_PROVIDERS } from '../../globals';
 import { configSchema } from './schema/config';
+import { Environment } from '../../utils/env';
 
 // Parse allowed custom hosts from environment variable
 // Format: comma-separated list of domains/IPs (e.g., "localhost,127.0.0.1,example.com")
-const ALLOWED_CUSTOM_HOSTS = (() => {
-  const envVar = process.env.ALLOWED_CUSTOM_HOSTS;
+const ALLOWED_CUSTOM_HOSTS = (c: Context) => {
+  const envVar = Environment(c)?.ALLOWED_CUSTOM_HOSTS;
   if (!envVar) {
     // Default allowed hosts for local development
     return new Set(['localhost', '127.0.0.1', '::1', 'host.docker.internal']);
@@ -13,10 +14,10 @@ const ALLOWED_CUSTOM_HOSTS = (() => {
   return new Set(
     envVar
       .split(',')
-      .map((h) => h.trim().toLowerCase())
-      .filter((h) => h.length > 0)
+      .map((h: string) => h.trim().toLowerCase())
+      .filter((h: string) => h.length > 0)
   );
-})();
+};
 
 export const requestValidator = (c: Context, next: any) => {
   const requestHeaders = Object.fromEntries(c.req.raw.headers);
@@ -82,7 +83,7 @@ export const requestValidator = (c: Context, next: any) => {
   }
 
   const customHostHeader = requestHeaders[`x-${POWERED_BY}-custom-host`];
-  if (customHostHeader && !isValidCustomHost(customHostHeader)) {
+  if (customHostHeader && !isValidCustomHost(c, customHostHeader)) {
     return new Response(
       JSON.stringify({
         status: 'failure',
@@ -170,7 +171,7 @@ export const requestValidator = (c: Context, next: any) => {
   return next();
 };
 
-function isValidCustomHost(customHost: string) {
+function isValidCustomHost(c: Context, customHost: string) {
   try {
     const value = customHost.trim().toLowerCase();
 
@@ -212,11 +213,12 @@ function isValidCustomHost(customHost: string) {
     // Block trailing dots in hostname (can cause DNS rebinding issues)
     if (host.endsWith('.')) return false;
 
+    const allowedHosts = ALLOWED_CUSTOM_HOSTS(c);
     // Check against configurable allowed hosts (for local development or trusted domains)
     const isAllowedHost =
-      ALLOWED_CUSTOM_HOSTS.has(host) ||
+      allowedHosts.has(host) ||
       // Allow subdomains of .localhost
-      (ALLOWED_CUSTOM_HOSTS.has('localhost') && host.endsWith('.localhost'));
+      (allowedHosts.has('localhost') && host.endsWith('.localhost'));
 
     if (isAllowedHost) {
       // Still validate port range if provided
