@@ -66,6 +66,7 @@ import AI302Config from './302ai';
 import MeshyConfig from './meshy';
 import Tripo3DConfig from './tripo3d';
 import { NextBitConfig } from './nextbit';
+import CometAPIConfig from './cometapi';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -129,6 +130,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'featherless-ai': FeatherlessAIConfig,
   krutrim: KrutrimConfig,
   '302ai': AI302Config,
+  cometapi: CometAPIConfig,
   meshy: MeshyConfig,
   nextbit: NextBitConfig,
   tripo3d: Tripo3DConfig,

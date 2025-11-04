@@ -34,6 +34,7 @@ import {
   OpenAIDeleteModelResponseTransformer,
   OpenAIGetModelResponseTransformer,
   OpenAIListInputItemsResponseTransformer,
+  OpenAIResponseTransform,
 } from '../open-ai-base';
 import { AZURE_OPEN_AI } from '../../globals';
 
@@ -68,12 +69,12 @@ const AzureOpenAIConfig: ProviderConfigs = {
     createTranscription: AzureOpenAICreateTranscriptionResponseTransform,
     createTranslation: AzureOpenAICreateTranslationResponseTransform,
     realtime: {},
-    uploadFile: AzureOpenAIResponseTransform,
-    listFiles: AzureOpenAIResponseTransform,
-    retrieveFile: AzureOpenAIResponseTransform,
-    deleteFile: AzureOpenAIResponseTransform,
-    retrieveFileContent: AzureOpenAIResponseTransform,
-    createFinetune: AzureOpenAIResponseTransform,
+    uploadFile: OpenAIResponseTransform,
+    listFiles: OpenAIResponseTransform,
+    retrieveFile: OpenAIResponseTransform,
+    deleteFile: OpenAIResponseTransform,
+    retrieveFileContent: OpenAIResponseTransform,
+    createFinetune: OpenAIResponseTransform,
     retrieveFinetune: AzureOpenAIFinetuneResponseTransform,
     createBatch: AzureOpenAIResponseTransform,
     retrieveBatch: AzureOpenAIResponseTransform,

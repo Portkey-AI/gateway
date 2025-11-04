@@ -511,9 +511,6 @@ export const BedrockChatCompleteResponseTransform: (
   }
 
   if ('output' in response) {
-    const cacheReadInputTokens = response.usage?.cacheReadInputTokens || 0;
-    const cacheWriteInputTokens = response.usage?.cacheWriteInputTokens || 0;
-
     let content: string = '';
     content = response.output.message.content
       .filter((item) => item.text)
@@ -522,6 +519,9 @@ export const BedrockChatCompleteResponseTransform: (
     const contentBlocks = !strictOpenAiCompliance
       ? transformContentBlocks(response.output.message.content)
       : undefined;
+
+    const cacheReadInputTokens = response.usage?.cacheReadInputTokens || 0;
+    const cacheWriteInputTokens = response.usage?.cacheWriteInputTokens || 0;
 
     const responseObj: ChatCompletionResponse = {
       id: Date.now().toString(),
@@ -605,7 +605,6 @@ export const BedrockChatCompleteStreamChunkTransform: (
     streamState.currentToolCallIndex = -1;
   }
 
-  // final chunk
   if (parsedChunk.usage) {
     const cacheReadInputTokens = parsedChunk.usage?.cacheReadInputTokens || 0;
     const cacheWriteInputTokens = parsedChunk.usage?.cacheWriteInputTokens || 0;
@@ -639,9 +638,8 @@ export const BedrockChatCompleteStreamChunkTransform: (
           },
           // we only want to be sending this for anthropic models and this is not openai compliant
           ...((cacheReadInputTokens > 0 || cacheWriteInputTokens > 0) && {
-            cache_read_input_tokens: parsedChunk.usage.cacheReadInputTokens,
-            cache_creation_input_tokens:
-              parsedChunk.usage.cacheWriteInputTokens,
+            cache_read_input_tokens: cacheReadInputTokens,
+            cache_creation_input_tokens: cacheWriteInputTokens,
           }),
         },
       })}\n\n`,
