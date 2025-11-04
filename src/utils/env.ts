@@ -120,8 +120,8 @@ const nodeEnv = {
   HTTP_PROXY: getValueOrFileContents(process.env.HTTP_PROXY),
   HTTPS_PROXY: getValueOrFileContents(process.env.HTTPS_PROXY),
 
-  ALLOWED_CUSTOM_HOSTS: getValueOrFileContents(
-    process.env.ALLOWED_CUSTOM_HOSTS
+  TRUSTED_CUSTOM_HOSTS: getValueOrFileContents(
+    process.env.TRUSTED_CUSTOM_HOSTS
   ),
 };
 

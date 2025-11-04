@@ -5,8 +5,8 @@ import { Environment } from '../../utils/env';
 
 // Parse allowed custom hosts from environment variable
 // Format: comma-separated list of domains/IPs (e.g., "localhost,127.0.0.1,example.com")
-const ALLOWED_CUSTOM_HOSTS = (c: Context) => {
-  const envVar = Environment(c)?.ALLOWED_CUSTOM_HOSTS;
+const TRUSTED_CUSTOM_HOSTS = (c: Context) => {
+  const envVar = Environment(c)?.TRUSTED_CUSTOM_HOSTS;
   if (!envVar) {
     // Default allowed hosts for local development
     return new Set(['localhost', '127.0.0.1', '::1', 'host.docker.internal']);
@@ -213,14 +213,14 @@ function isValidCustomHost(c: Context, customHost: string) {
     // Block trailing dots in hostname (can cause DNS rebinding issues)
     if (host.endsWith('.')) return false;
 
-    const allowedHosts = ALLOWED_CUSTOM_HOSTS(c);
+    const trustedHosts = TRUSTED_CUSTOM_HOSTS(c);
     // Check against configurable allowed hosts (for local development or trusted domains)
-    const isAllowedHost =
-      allowedHosts.has(host) ||
+    const isTrustedHost =
+      trustedHosts.has(host) ||
       // Allow subdomains of .localhost
-      (allowedHosts.has('localhost') && host.endsWith('.localhost'));
+      (trustedHosts.has('localhost') && host.endsWith('.localhost'));
 
-    if (isAllowedHost) {
+    if (isTrustedHost) {
       // Still validate port range if provided
       if (url.port) {
         const p = parseInt(url.port, 10);
