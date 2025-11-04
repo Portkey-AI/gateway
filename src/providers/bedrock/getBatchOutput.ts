@@ -5,6 +5,7 @@ import { BedrockGetBatchResponse } from './types';
 import { getOctetStreamToOctetStreamTransformer } from '../../handlers/streamHandlerUtils';
 import { BedrockUploadFileResponseTransforms } from './uploadFileUtils';
 import { BEDROCK } from '../../globals';
+import { generateErrorResponse } from '../utils';
 
 const getModelProvider = (modelId: string) => {
   let provider = '';
@@ -77,19 +78,14 @@ export const BedrockGetBatchOutputRequestHandler = async ({
 
     if (!retrieveBatchesResponse.ok) {
       const error = await retrieveBatchesResponse.text();
-      const _error = {
-        message: error,
-        param: null,
-        type: null,
-      };
-      return new Response(
-        JSON.stringify({ error: _error, provider: BEDROCK }),
+      return generateErrorResponse(
         {
-          status: retrieveBatchesResponse.status,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
+          message: error,
+          type: null,
+          param: null,
+          code: null,
+        },
+        BEDROCK
       );
     }
 
