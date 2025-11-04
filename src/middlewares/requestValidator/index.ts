@@ -3,6 +3,48 @@ import { CONTENT_TYPES, POWERED_BY, VALID_PROVIDERS } from '../../globals';
 import { configSchema } from './schema/config';
 import { Environment } from '../../utils/env';
 
+// Regex patterns for validation (defined once for reusability)
+const VALIDATION_PATTERNS = {
+  CONTROL_CHARS: /[\x00-\x1F\x7F]/,
+  SUSPICIOUS_CHARS: /[\s<>{}|\\^`]/,
+  DIGITS_1_3: /^\d{1,3}$/,
+  DIGITS_1_10: /^\d{1,10}$/,
+  DIGITS_ONLY: /^\d+$/,
+  HEX_IP: /^0x[0-9a-f]{1,8}$/i,
+  ALTERNATIVE_IP_PART: /^0[0-9a-fx]/i, // Starts with 0 followed by digits or x (octal or hex)
+  IPV6_MAPPED_IPV4: /::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i,
+  IPV6_EMBEDDED_IPV4: /::(\d{1,3}(?:\.\d{1,3}){3})$/i,
+  HOMOGRAPH_ATTACK: /^[a-z0-9.-]+$/,
+};
+
+// Disallowed URL schemes
+const DISALLOWED_SCHEMES = ['file://', 'data:', 'gopher:', 'ftp://', 'ftps://'];
+
+// Blocked hosts (cloud metadata endpoints and internal IPs)
+const BLOCKED_HOSTS = [
+  '0.0.0.0',
+  '169.254.169.254', // AWS, Azure, GCP metadata (IPv4)
+  'metadata.google.internal', // GCP metadata
+  'metadata', // Kubernetes metadata
+  'metadata.azure.com', // Azure instance metadata
+  'instance-data', // AWS instance metadata alt
+];
+
+// Blocked TLDs for SSRF protection
+const BLOCKED_TLDS = [
+  '.local',
+  '.localdomain',
+  '.internal',
+  '.intranet',
+  '.lan',
+  '.home',
+  '.corp',
+  '.test',
+  '.invalid',
+  '.onion',
+  '.localhost',
+];
+
 // Parse allowed custom hosts from environment variable
 // Format: comma-separated list of domains/IPs (e.g., "localhost,127.0.0.1,example.com")
 const TRUSTED_CUSTOM_HOSTS = (c: Context) => {
@@ -17,6 +59,22 @@ const TRUSTED_CUSTOM_HOSTS = (c: Context) => {
       .map((h: string) => h.trim().toLowerCase())
       .filter((h: string) => h.length > 0)
   );
+};
+
+// Pre-computed IPv4 range boundaries for performance optimization
+const IPV4_RANGES = {
+  PRIVATE: [
+    { start: ipv4ToInt('10.0.0.0'), end: ipv4ToInt('10.255.255.255') }, // 10/8
+    { start: ipv4ToInt('172.16.0.0'), end: ipv4ToInt('172.31.255.255') }, // 172.16/12
+    { start: ipv4ToInt('192.168.0.0'), end: ipv4ToInt('192.168.255.255') }, // 192.168/16
+  ],
+  RESERVED: [
+    { start: ipv4ToInt('127.0.0.0'), end: ipv4ToInt('127.255.255.255') }, // loopback
+    { start: ipv4ToInt('169.254.0.0'), end: ipv4ToInt('169.254.255.255') }, // link-local
+    { start: ipv4ToInt('100.64.0.0'), end: ipv4ToInt('100.127.255.255') }, // CGNAT
+    { start: ipv4ToInt('0.0.0.0'), end: ipv4ToInt('0.255.255.255') }, // "this" network
+    { start: ipv4ToInt('224.0.0.0'), end: ipv4ToInt('255.255.255.255') }, // multicast/reserved/broadcast
+  ],
 };
 
 export const requestValidator = (c: Context, next: any) => {
@@ -170,27 +228,23 @@ export const requestValidator = (c: Context, next: any) => {
   }
   return next();
 };
-
 function isValidCustomHost(c: Context, customHost: string) {
   try {
     const value = customHost.trim().toLowerCase();
 
     // Block empty or whitespace-only hosts
-    if (!value || value.length === 0) return false;
+    if (!value) return false;
 
     // Block URLs with control characters or excessive whitespace
-    if (/[\x00-\x1F\x7F]/.test(customHost)) return false;
+    if (VALIDATION_PATTERNS.CONTROL_CHARS.test(customHost)) return false;
 
     // Project-specific and obvious disallowed schemes/hosts
     if (value.indexOf('api.portkey') > -1) return false;
-    if (value.startsWith('file://')) return false;
-    if (value.startsWith('data:')) return false;
-    if (value.startsWith('gopher:')) return false;
-    if (value.startsWith('ftp://')) return false;
-    if (value.startsWith('ftps://')) return false;
+    if (DISALLOWED_SCHEMES.some((scheme) => value.startsWith(scheme)))
+      return false;
 
     const url = new URL(customHost);
-    const protocol = url.protocol.toLowerCase();
+    const protocol = url.protocol;
 
     // Allow only HTTP(S)
     if (protocol !== 'http:' && protocol !== 'https:') return false;
@@ -199,19 +253,30 @@ function isValidCustomHost(c: Context, customHost: string) {
     if (url.username || url.password) return false;
     if (customHost.includes('@')) return false;
 
-    const host = url.hostname.toLowerCase();
+    const host = url.hostname;
 
     // Block empty hostname
-    if (!host || host.length === 0) return false;
+    if (!host) return false;
 
     // Block URLs with encoded characters in hostname (potential bypass attempt)
     if (host.includes('%')) return false;
 
     // Block suspicious characters that might indicate injection attempts
-    if (/[\s<>{}|\\^`]/.test(host)) return false;
+    if (VALIDATION_PATTERNS.SUSPICIOUS_CHARS.test(host)) return false;
+
+    // Block non-ASCII characters in hostname (homograph attack protection)
+    // Prevents Unicode lookalike characters from spoofing legitimate domains
+    if (!VALIDATION_PATTERNS.HOMOGRAPH_ATTACK.test(host)) return false;
 
     // Block trailing dots in hostname (can cause DNS rebinding issues)
     if (host.endsWith('.')) return false;
+
+    // Split hostname once for reuse in multiple checks
+    const hostParts = host.split('.');
+
+    // Block excessive subdomain depth (potential DNS rebinding attack)
+    // Limits the number of labels to prevent abuse
+    if (hostParts.length > 10) return false;
 
     const trustedHosts = TRUSTED_CUSTOM_HOSTS(c);
     // Check against configurable allowed hosts (for local development or trusted domains)
@@ -222,25 +287,12 @@ function isValidCustomHost(c: Context, customHost: string) {
 
     if (isTrustedHost) {
       // Still validate port range if provided
-      if (url.port) {
-        const p = parseInt(url.port, 10);
-        if (!(p > 0 && p <= 65535)) return false;
-      }
+      if (url.port && !isValidPort(url.port)) return false;
       return true;
     }
 
     // Block obvious internal/unsafe hosts and cloud metadata endpoints
-    const blockedHosts = [
-      '0.0.0.0',
-      '169.254.169.254', // AWS, Azure, GCP metadata (IPv4)
-      'metadata.google.internal', // GCP metadata
-      'metadata', // Kubernetes metadata
-      'metadata.azure.com', // Azure instance metadata
-      'instance-data', // AWS instance metadata alt
-    ];
-    if (blockedHosts.includes(host)) {
-      return false;
-    }
+    if (BLOCKED_HOSTS.includes(host as any)) return false;
 
     // Block AWS IMDSv2 endpoint variations
     if (host.startsWith('169.254.169.') || host.startsWith('fd00:ec2::')) {
@@ -248,52 +300,37 @@ function isValidCustomHost(c: Context, customHost: string) {
     }
 
     // Block internal/special-use TLDs often used in SSRF attempts
-    const blockedTlds = [
-      '.local',
-      '.localdomain',
-      '.internal',
-      '.intranet',
-      '.lan',
-      '.home',
-      '.corp',
-      '.test',
-      '.invalid',
-      '.onion',
-      '.localhost', // Block nested localhost subdomains for non-exact matches
-    ];
-    if (blockedTlds.some((tld) => host.endsWith(tld) && host !== 'localhost')) {
+    if (
+      BLOCKED_TLDS.some((tld) => host.endsWith(tld) && host !== 'localhost')
+    ) {
       return false;
     }
 
     // Block private/reserved IPs (IPv4)
-    if (isIPv4(host)) {
-      if (isPrivateIPv4(host) || isReservedIPv4(host)) return false;
+    if (isIPv4(hostParts) && (isPrivateIPv4(host) || isReservedIPv4(host))) {
+      return false;
     }
 
     // Check for alternative IP representations (decimal, hex, octal)
-    if (isAlternativeIPRepresentation(host)) return false;
+    if (isAlternativeIPRepresentation(host, hostParts)) return false;
 
     // Block private/reserved IPv6 and IPv4-mapped IPv6
     if (host.includes(':')) {
       if (isLocalOrPrivateIPv6(host)) return false;
-      const mapped = host.match(/::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i);
-      if (mapped) {
-        const ip4 = mapped[1];
-        if (isPrivateIPv4(ip4) || isReservedIPv4(ip4)) return false;
-      }
-      // Also check for other IPv4-embedded IPv6 formats
-      const embeddedIPv4 = host.match(/::(\d{1,3}(?:\.\d{1,3}){3})$/i);
-      if (embeddedIPv4) {
-        const ip4 = embeddedIPv4[1];
+
+      // Check both IPv6-mapped and embedded IPv4 patterns
+      const ipv4Match =
+        host.match(VALIDATION_PATTERNS.IPV6_MAPPED_IPV4) ||
+        host.match(VALIDATION_PATTERNS.IPV6_EMBEDDED_IPV4);
+
+      if (ipv4Match) {
+        const ip4 = ipv4Match[1];
         if (isPrivateIPv4(ip4) || isReservedIPv4(ip4)) return false;
       }
     }
 
     // Validate port if present
-    if (url.port) {
-      const p = parseInt(url.port, 10);
-      if (!(p > 0 && p <= 65535)) return false;
-    }
+    if (url.port && !isValidPort(url.port)) return false;
 
     return true;
   } catch {
@@ -301,12 +338,32 @@ function isValidCustomHost(c: Context, customHost: string) {
   }
 }
 
-function isIPv4(ip: string): boolean {
-  const parts = ip.split('.');
+// Helper function to convert integer to IPv4 dotted decimal notation
+function intToIPv4(num: number): string {
+  const a = (num >>> 24) & 0xff;
+  const b = (num >>> 16) & 0xff;
+  const c = (num >>> 8) & 0xff;
+  const d = num & 0xff;
+  return `${a}.${b}.${c}.${d}`;
+}
+
+// Helper function to convert IPv4 dotted decimal to integer
+function ipv4ToInt(ip: string): number {
+  const [a, b, c, d] = ip.split('.').map((n) => Number(n));
+  return ((a << 24) >>> 0) + (b << 16) + (c << 8) + d;
+}
+
+// Helper function to validate port numbers
+function isValidPort(port: string): boolean {
+  const p = parseInt(port, 10);
+  return p > 0 && p <= 65535;
+}
+
+function isIPv4(parts: string[]): boolean {
   if (parts.length !== 4) return false;
   return parts.every((part) => {
     // Must be 1-3 digits
-    if (!/^\d{1,3}$/.test(part)) return false;
+    if (!VALIDATION_PATTERNS.DIGITS_1_3.test(part)) return false;
 
     const num = Number(part);
 
@@ -321,31 +378,17 @@ function isIPv4(ip: string): boolean {
   });
 }
 
-function ipv4ToInt(ip: string): number {
-  const [a, b, c, d] = ip.split('.').map((n) => Number(n));
-  return ((a << 24) >>> 0) + (b << 16) + (c << 8) + d;
-}
-
-function inRange(ip: string, start: string, end: string): boolean {
-  const x = ipv4ToInt(ip);
-  return x >= ipv4ToInt(start) && x <= ipv4ToInt(end);
-}
-
 function isPrivateIPv4(ip: string): boolean {
-  return (
-    inRange(ip, '10.0.0.0', '10.255.255.255') || // 10/8
-    inRange(ip, '172.16.0.0', '172.31.255.255') || // 172.16/12
-    inRange(ip, '192.168.0.0', '192.168.255.255') // 192.168/16
+  const ipInt = ipv4ToInt(ip);
+  return IPV4_RANGES.PRIVATE.some(
+    (range) => ipInt >= range.start && ipInt <= range.end
   );
 }
 
 function isReservedIPv4(ip: string): boolean {
-  return (
-    inRange(ip, '127.0.0.0', '127.255.255.255') || // loopback
-    inRange(ip, '169.254.0.0', '169.254.255.255') || // link-local
-    inRange(ip, '100.64.0.0', '100.127.255.255') || // CGNAT
-    inRange(ip, '0.0.0.0', '0.255.255.255') || // "this" network
-    inRange(ip, '224.0.0.0', '255.255.255.255') // multicast/reserved/broadcast
+  const ipInt = ipv4ToInt(ip);
+  return IPV4_RANGES.RESERVED.some(
+    (range) => ipInt >= range.start && ipInt <= range.end
   );
 }
 
@@ -358,18 +401,14 @@ function isLocalOrPrivateIPv6(host: string): boolean {
   return false;
 }
 
-function isAlternativeIPRepresentation(host: string): boolean {
+function isAlternativeIPRepresentation(host: string, parts: string[]): boolean {
   // Check for decimal IP (e.g., 2130706433 for 127.0.0.1)
   // Valid range: 0 to 4294967295 (2^32 - 1)
-  if (/^\d{1,10}$/.test(host)) {
+  if (VALIDATION_PATTERNS.DIGITS_1_10.test(host)) {
     const num = parseInt(host, 10);
     if (num >= 0 && num <= 0xffffffff) {
       // Convert to dotted decimal and check if it's private/reserved
-      const a = (num >>> 24) & 0xff;
-      const b = (num >>> 16) & 0xff;
-      const c = (num >>> 8) & 0xff;
-      const d = num & 0xff;
-      const ip = `${a}.${b}.${c}.${d}`;
+      const ip = intToIPv4(num);
       // Block if it resolves to a private or reserved IP
       if (isPrivateIPv4(ip) || isReservedIPv4(ip)) return true;
       // Also block public IPs in decimal format to prevent confusion
@@ -378,34 +417,29 @@ function isAlternativeIPRepresentation(host: string): boolean {
   }
 
   // Check for hex IP (e.g., 0x7f000001 for 127.0.0.1)
-  if (/^0x[0-9a-f]{1,8}$/i.test(host)) {
+  if (VALIDATION_PATTERNS.HEX_IP.test(host)) {
     const num = parseInt(host, 16);
     if (num >= 0 && num <= 0xffffffff) {
-      const a = (num >>> 24) & 0xff;
-      const b = (num >>> 16) & 0xff;
-      const c = (num >>> 8) & 0xff;
-      const d = num & 0xff;
-      const ip = `${a}.${b}.${c}.${d}`;
-      return true; // Block all hex IPs
+      return true; // Block all hex IPs (no need to convert)
     }
   }
 
-  // Check for octal IP parts (e.g., 0177.0.0.1 for 127.0.0.1)
-  const parts = host.split('.');
-  if (parts.length === 4 && parts.some((p) => /^0\d+$/.test(p))) {
-    // Has octal notation - block it
-    return true;
-  }
-
-  // Check for mixed hex notation (e.g., 0x7f.0.0.1)
-  if (parts.length === 4 && parts.some((p) => /^0x[0-9a-f]+$/i.test(p))) {
-    // Has hex notation - block it
+  // Check for octal or hex notation in any part (e.g., 0177.0.0.1 or 0x7f.0.0.1)
+  if (
+    parts.length === 4 &&
+    parts.some((p) => VALIDATION_PATTERNS.ALTERNATIVE_IP_PART.test(p))
+  ) {
+    // Has octal or hex notation - block it
     return true;
   }
 
   // Check for shortened IP formats (e.g., 127.1 -> 127.0.0.1)
   if (parts.length >= 2 && parts.length < 4) {
-    if (parts.every((p) => /^\d+$/.test(p) && Number(p) <= 255)) {
+    if (
+      parts.every(
+        (p) => VALIDATION_PATTERNS.DIGITS_ONLY.test(p) && Number(p) <= 255
+      )
+    ) {
       // Looks like a shortened IP format - block it
       return true;
     }
