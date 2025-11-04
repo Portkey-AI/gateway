@@ -60,18 +60,22 @@ export const BedrockCohereEmbedConfig: ProviderConfig = {
   },
 };
 
+const g1EmbedModels = [
+  'amazon.titan-embed-g1-text-02',
+  'amazon.titan-embed-text-v1',
+  'amazon.titan-embed-image-v1',
+];
+
 export const BedrockTitanEmbedConfig: ProviderConfig = {
   input: [
     {
       param: 'inputText',
       required: false,
       transform: (params: EmbedParams): string | undefined => {
-        if (
-          Array.isArray(params.input) &&
-          typeof params.input[0] === 'object' &&
-          params.input[0].text
-        ) {
-          return params.input[0].text;
+        if (Array.isArray(params.input)) {
+          if (typeof params.input[0] === 'object' && params.input[0].text)
+            return params.input[0].text;
+          else if (typeof params.input[0] === 'string') return params.input[0];
         }
         if (typeof params.input === 'string') return params.input;
       },
@@ -117,6 +121,8 @@ export const BedrockTitanEmbedConfig: ProviderConfig = {
     param: 'embeddingTypes',
     required: false,
     transform: (params: any): string[] | undefined => {
+      const model = params.foundationModel || params.model || '';
+      if (g1EmbedModels.includes(model)) return undefined;
       if (Array.isArray(params.encoding_format)) return params.encoding_format;
       else if (typeof params.encoding_format === 'string')
         return [params.encoding_format];

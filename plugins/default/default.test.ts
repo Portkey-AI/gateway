@@ -11,11 +11,12 @@ import { handler as logHandler } from './log';
 import { handler as allUppercaseHandler } from './alluppercase';
 import { handler as endsWithHandler } from './endsWith';
 import { handler as allLowerCaseHandler } from './alllowercase';
-import { handler as modelWhitelistHandler } from './modelwhitelist';
+import { handler as modelWhitelistHandler } from './modelWhitelist';
 import { handler as characterCountHandler } from './characterCount';
 import { handler as jwtHandler } from './jwt';
 import { handler as allowedRequestTypesHandler } from './allowedRequestTypes';
 import { PluginContext, PluginParameters } from '../types';
+import { handler as addPrefixHandler } from './addPrefix';
 
 describe('Regex Matcher Plugin', () => {
   const mockContext: PluginContext = {
@@ -2573,7 +2574,7 @@ describe('Allowed Request Types Plugin', () => {
       const mockContext: PluginContext = {
         requestType: 'complete',
         metadata: {
-          supported_endpoints: ['complete', 'chatComplete'],
+          supported_endpoints: 'complete, chatComplete',
         },
       };
       const parameters: PluginParameters = {};
@@ -2612,7 +2613,7 @@ describe('Allowed Request Types Plugin', () => {
       const mockContext: PluginContext = {
         requestType: 'embed',
         metadata: {
-          supported_endpoints: ['complete', 'chatComplete'],
+          supported_endpoints: 'complete, chatComplete',
         },
       };
       const parameters: PluginParameters = {
@@ -2965,6 +2966,671 @@ describe('Allowed Request Types Plugin', () => {
       expect(result.verdict).toBe(false);
       expect(result.data.explanation).toContain('stream-chatComplete');
       expect(result.data.explanation).toContain('blocked');
+    });
+  });
+});
+
+describe('addPrefix handler', () => {
+  const mockEventType = 'beforeRequestHook';
+
+  describe('Chat Completion (chatComplete)', () => {
+    it('should add prefix to user message with string content', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [
+              { role: 'system', content: 'You are a helpful assistant.' },
+              { role: 'user', content: 'Hello, how are you?' },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'IMPORTANT: ',
+        applyToRole: 'user',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.verdict).toBe(true);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages[1].content).toBe(
+        'IMPORTANT: Hello, how are you?'
+      );
+      expect(result.data).toEqual({
+        prefix: 'IMPORTANT: ',
+        requestType: 'chatComplete',
+        applyToRole: 'user',
+        addToExisting: true,
+        onlyIfEmpty: false,
+      });
+    });
+
+    it('should add prefix to system message', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [
+              { role: 'system', content: 'You are a helpful assistant.' },
+              { role: 'user', content: 'Hello!' },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'CRITICAL: ',
+        applyToRole: 'system',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.verdict).toBe(true);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages[0].content).toBe(
+        'CRITICAL: You are a helpful assistant.'
+      );
+    });
+
+    it('should create new user message when role does not exist', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [
+              { role: 'system', content: 'You are a helpful assistant.' },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+        applyToRole: 'user',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.verdict).toBe(true);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages).toHaveLength(2);
+      expect(result.transformedData.request.json.messages[1]).toEqual({
+        role: 'user',
+        content: 'PREFIX: ',
+      });
+    });
+
+    it('should create new system message at the beginning when role does not exist', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [{ role: 'user', content: 'Hello!' }],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'SYSTEM PREFIX: ',
+        applyToRole: 'system',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages).toHaveLength(2);
+      expect(result.transformedData.request.json.messages[0]).toEqual({
+        role: 'system',
+        content: 'SYSTEM PREFIX: ',
+      });
+    });
+
+    it('should insert new message before existing when addToExisting is false', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [
+              { role: 'system', content: 'You are a helpful assistant.' },
+              { role: 'user', content: 'Hello!' },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+        applyToRole: 'user',
+        addToExisting: false,
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages).toHaveLength(3);
+      expect(result.transformedData.request.json.messages[1]).toEqual({
+        role: 'user',
+        content: 'PREFIX: ',
+      });
+      expect(result.transformedData.request.json.messages[2]).toEqual({
+        role: 'user',
+        content: 'Hello!',
+      });
+    });
+
+    it('should only add prefix if content is empty when onlyIfEmpty is true', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [{ role: 'user', content: 'Existing content' }],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+        applyToRole: 'user',
+        onlyIfEmpty: true,
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      // Content should remain unchanged
+      expect(result.transformedData.request.json.messages[0].content).toBe(
+        'Existing content'
+      );
+    });
+
+    it('should add prefix when content is empty and onlyIfEmpty is true', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [{ role: 'user', content: '' }],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+        applyToRole: 'user',
+        onlyIfEmpty: true,
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages[0].content).toBe(
+        'PREFIX: '
+      );
+    });
+  });
+
+  describe('Messages (Anthropic format)', () => {
+    it('should add prefix to user message with array content', async () => {
+      const context: PluginContext = {
+        requestType: 'messages',
+        request: {
+          json: {
+            model: 'claude-3-opus-20240229',
+            messages: [
+              {
+                role: 'user',
+                content: [{ type: 'text', text: 'Hello, Claude!' }],
+              },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'IMPORTANT: ',
+        applyToRole: 'user',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.verdict).toBe(true);
+      expect(result.transformed).toBe(true);
+      expect(
+        result.transformedData.request.json.messages[0].content[0].text
+      ).toBe('IMPORTANT: Hello, Claude!');
+    });
+
+    it('should add prefix to message with multiple content blocks', async () => {
+      const context: PluginContext = {
+        requestType: 'messages',
+        request: {
+          json: {
+            model: 'claude-3-opus-20240229',
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  { type: 'text', text: 'First block' },
+                  { type: 'text', text: 'Second block' },
+                ],
+              },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+        applyToRole: 'user',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(
+        result.transformedData.request.json.messages[0].content[0].text
+      ).toBe('PREFIX: First block');
+      // Second block should remain unchanged
+      expect(
+        result.transformedData.request.json.messages[0].content[1].text
+      ).toBe('Second block');
+    });
+
+    it('should prepend prefix block when content array has non-text first element', async () => {
+      const context: PluginContext = {
+        requestType: 'messages',
+        request: {
+          json: {
+            model: 'claude-3-opus-20240229',
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  {
+                    type: 'image',
+                    source: {
+                      type: 'url',
+                      url: 'https://example.com/image.jpg',
+                    },
+                  },
+                  { type: 'text', text: 'What is in this image?' },
+                ],
+              },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'Analyze carefully: ',
+        applyToRole: 'user',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(
+        result.transformedData.request.json.messages[0].content[0]
+      ).toEqual({
+        type: 'text',
+        text: 'Analyze carefully: ',
+      });
+      expect(
+        result.transformedData.request.json.messages[0].content
+      ).toHaveLength(3);
+    });
+
+    it('should create new message with array content when role does not exist', async () => {
+      const context: PluginContext = {
+        requestType: 'messages',
+        request: {
+          json: {
+            model: 'claude-3-opus-20240229',
+            system: 'You are a helpful assistant.',
+            messages: [],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'User instruction: ',
+        applyToRole: 'user',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages).toHaveLength(1);
+      expect(result.transformedData.request.json.messages[0]).toEqual({
+        role: 'user',
+        content: [{ type: 'text', text: 'User instruction: ' }],
+      });
+    });
+
+    it('should not add prefix to non-empty array content when onlyIfEmpty is true', async () => {
+      const context: PluginContext = {
+        requestType: 'messages',
+        request: {
+          json: {
+            model: 'claude-3-opus-20240229',
+            messages: [
+              {
+                role: 'user',
+                content: [{ type: 'text', text: 'Existing content' }],
+              },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+        applyToRole: 'user',
+        onlyIfEmpty: true,
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      // Content should remain unchanged
+      expect(result.transformedData.request.json.messages[0].content).toEqual([
+        { type: 'text', text: 'Existing content' },
+      ]);
+    });
+
+    it('should insert new message before existing when addToExisting is false', async () => {
+      const context: PluginContext = {
+        requestType: 'messages',
+        request: {
+          json: {
+            model: 'claude-3-opus-20240229',
+            messages: [
+              {
+                role: 'user',
+                content: [{ type: 'text', text: 'Original message' }],
+              },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'Prefix message',
+        applyToRole: 'user',
+        addToExisting: false,
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages).toHaveLength(2);
+      expect(result.transformedData.request.json.messages[0]).toEqual({
+        role: 'user',
+        content: [{ type: 'text', text: 'Prefix message' }],
+      });
+      expect(result.transformedData.request.json.messages[1].content).toEqual([
+        { type: 'text', text: 'Original message' },
+      ]);
+    });
+  });
+
+  describe('Regular Completion (complete)', () => {
+    it('should add prefix to completion prompt', async () => {
+      const context: PluginContext = {
+        requestType: 'complete',
+        request: {
+          json: {
+            model: 'gpt-3.5-turbo-instruct',
+            prompt: 'Write a story about a dog.',
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'IMPORTANT: ',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.verdict).toBe(true);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.prompt).toBe(
+        'IMPORTANT: Write a story about a dog.'
+      );
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should return error when prefix is missing', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [{ role: 'user', content: 'Hello!' }],
+          },
+        },
+      };
+      const parameters: PluginParameters = {};
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).not.toBe(null);
+      expect(result.error.message).toBe(
+        'Prefix parameter is required and must be a string'
+      );
+      expect(result.verdict).toBe(true);
+      expect(result.transformed).toBe(false);
+    });
+
+    it('should return error when prefix is not a string', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [{ role: 'user', content: 'Hello!' }],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 123 as any,
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).not.toBe(null);
+      expect(result.error.message).toBe(
+        'Prefix parameter is required and must be a string'
+      );
+      expect(result.verdict).toBe(true);
+      expect(result.transformed).toBe(false);
+    });
+
+    it('should return error when request JSON is missing', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {},
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).not.toBe(null);
+      expect(result.error.message).toBe('Request JSON is empty or missing');
+      expect(result.verdict).toBe(true);
+      expect(result.transformed).toBe(false);
+    });
+
+    it('should skip processing for afterRequestHook', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [{ role: 'user', content: 'Hello!' }],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+      };
+
+      const result = await addPrefixHandler(
+        context,
+        parameters,
+        'afterRequestHook'
+      );
+
+      expect(result.error).toBe(null);
+      expect(result.verdict).toBe(true);
+      expect(result.transformed).toBe(false);
+      expect(result.data).toBe(null);
+    });
+
+    it('should skip processing for unsupported request types', async () => {
+      const context: PluginContext = {
+        requestType: 'embed' as any,
+        request: {
+          json: {
+            model: 'text-embedding-ada-002',
+            input: 'Hello world',
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.verdict).toBe(true);
+      expect(result.transformed).toBe(false);
+      expect(result.data).toBe(null);
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should handle multiple user messages and target the first one', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [
+              { role: 'user', content: 'First message' },
+              { role: 'assistant', content: 'Response' },
+              { role: 'user', content: 'Second message' },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+        applyToRole: 'user',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages[0].content).toBe(
+        'PREFIX: First message'
+      );
+      expect(result.transformedData.request.json.messages[2].content).toBe(
+        'Second message'
+      );
+    });
+
+    it('should handle assistant role prefix', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [
+              { role: 'user', content: 'Hello' },
+              { role: 'assistant', content: 'Hi there!' },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'As an AI assistant: ',
+        applyToRole: 'assistant',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages[1].content).toBe(
+        'As an AI assistant: Hi there!'
+      );
+    });
+
+    it('should default applyToRole to user when not specified', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [{ role: 'user', content: 'Hello!' }],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(result.data.applyToRole).toBe('user');
+      expect(result.transformedData.request.json.messages[0].content).toBe(
+        'PREFIX: Hello!'
+      );
+    });
+
+    it('should preserve other message fields', async () => {
+      const context: PluginContext = {
+        requestType: 'messages',
+        request: {
+          json: {
+            model: 'claude-3-opus-20240229',
+            messages: [
+              {
+                role: 'user',
+                content: [{ type: 'text', text: 'Hello!' }],
+                metadata: { custom: 'value' },
+              },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages[0].metadata).toEqual({
+        custom: 'value',
+      });
     });
   });
 });

@@ -81,6 +81,7 @@ import {
   BedrockMessagesResponseTransform,
 } from './messages';
 import {
+  BedrockAnthropicMessageCountTokensConfig,
   BedrockConverseMessageCountTokensConfig,
   BedrockConverseMessageCountTokensResponseTransform,
 } from './countTokens';
@@ -110,6 +111,7 @@ const BedrockConfig: ProviderConfigs = {
             complete: BedrockAnthropicCompleteConfig,
             chatComplete: BedrockConverseAnthropicChatCompleteConfig,
             messages: BedrockAnthropicConverseMessagesConfig,
+            messagesCountTokens: BedrockAnthropicMessageCountTokensConfig,
             api: BedrockAPIConfig,
             responseTransforms: {
               'stream-complete': BedrockAnthropicCompleteStreamChunkTransform,

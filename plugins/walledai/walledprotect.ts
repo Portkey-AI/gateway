@@ -6,7 +6,7 @@ import {
 } from '../types';
 import { post, getText, getCurrentContentPart } from '../utils';
 
-const API_URL = 'https://services.walled.ai/v1/guardrail/moderate';
+const API_URL = 'https://services.walled.ai/v1/walled-protect';
 
 const DEFAULT_PII_LIST = [
   "Person's Name",
@@ -18,7 +18,7 @@ const DEFAULT_PII_LIST = [
   'Financial Data',
 ];
 
-const DEFAULT_GREETINGS_LIST = ['Casual & Friendly', 'Professional & Polite'];
+const DEFAULT_GREETINGS_LIST = ['Casual & Friendly'];
 
 export const handler: PluginHandler = async (
   context: PluginContext,
@@ -45,12 +45,14 @@ export const handler: PluginHandler = async (
       data: null,
     };
   }
-  let text = textArray.filter((text) => text).join('\n');
+  let text = textArray
+    .filter((text) => text)
+    .join('\n')
+    .trim();
 
   // Prepare request body
   const requestBody = {
     text: text,
-    text_type: parameters.text_type || 'prompt',
     generic_safety_check: parameters.generic_safety_check ?? true,
     greetings_list: parameters.greetings_list || DEFAULT_GREETINGS_LIST,
     pii_list: parameters.pii_list || DEFAULT_PII_LIST,
@@ -60,7 +62,7 @@ export const handler: PluginHandler = async (
   const requestOptions = {
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${parameters.credentials.apiKey}`,
+      'x-api-key': parameters.credentials.apiKey,
     },
   };
 
