@@ -21,9 +21,15 @@ import { chatCompleteParams, responseTransformers } from '../open-ai-base';
 import { GOOGLE_VERTEX_AI } from '../../globals';
 import { Params } from '../../types/requestBody';
 import {
+  GoogleFileUploadRequestHandler,
+  GoogleFileUploadResponseTransform,
+} from './uploadFile';
+import {
   GoogleBatchCreateConfig,
+  GoogleBatchCreateRequestTransform,
   GoogleBatchCreateResponseTransform,
 } from './createBatch';
+import { GoogleRetrieveBatchResponseTransform } from './retrieveBatch';
 import {
   BatchOutputRequestHandler,
   BatchOutputResponseTransform,
@@ -31,26 +37,22 @@ import {
 import { GoogleListBatchesResponseTransform } from './listBatches';
 import { GoogleCancelBatchResponseTransform } from './cancelBatch';
 import {
-  GoogleFileUploadRequestHandler,
-  GoogleFileUploadResponseTransform,
-} from './uploadFile';
-import { GoogleRetrieveBatchResponseTransform } from './retrieveBatch';
-import {
   GoogleFinetuneCreateResponseTransform,
   GoogleVertexFinetuneConfig,
 } from './createFinetune';
-import { GoogleRetrieveFileContentResponseTransform } from './retrieveFileContent';
+import { GoogleListFilesRequestHandler } from './listFiles';
 import {
   GoogleRetrieveFileRequestHandler,
   GoogleRetrieveFileResponseTransform,
 } from './retrieveFile';
-import { GoogleFinetuneRetrieveResponseTransform } from './retrieveFinetune';
 import { GoogleFinetuneListResponseTransform } from './listFinetunes';
-import { GoogleListFilesRequestHandler } from './listFiles';
+import { GoogleFinetuneRetrieveResponseTransform } from './retrieveFinetune';
+import { GoogleRetrieveFileContentResponseTransform } from './retrieveFileContent';
 import {
   VertexAnthropicMessagesConfig,
   VertexAnthropicMessagesResponseTransform,
 } from './messages';
+import { VertexAnthropicMessagesCountTokensConfig } from './messagesCountTokens';
 import {
   GetMistralAIChatCompleteResponseTransform,
   GetMistralAIChatCompleteStreamChunkTransform,
@@ -75,20 +77,25 @@ const VertexConfig: ProviderConfigs = {
     const responseTransforms = {
       uploadFile: GoogleFileUploadResponseTransform,
       retrieveBatch: GoogleRetrieveBatchResponseTransform,
+      retrieveFile: GoogleRetrieveFileResponseTransform,
       getBatchOutput: BatchOutputResponseTransform,
       listBatches: GoogleListBatchesResponseTransform,
       cancelBatch: GoogleCancelBatchResponseTransform,
-      createBatch: GoogleBatchCreateResponseTransform,
-      retrieveFileContent: GoogleRetrieveFileContentResponseTransform,
-      retrieveFile: GoogleRetrieveFileResponseTransform,
       createFinetune: GoogleFinetuneCreateResponseTransform,
       retrieveFinetune: GoogleFinetuneRetrieveResponseTransform,
       listFinetunes: GoogleFinetuneListResponseTransform,
+      createBatch: GoogleBatchCreateResponseTransform,
+      retrieveFileContent: GoogleRetrieveFileContentResponseTransform,
+    };
+
+    const requestTransforms = {
+      createBatch: GoogleBatchCreateRequestTransform,
     };
 
     const baseConfig = {
       ...requestConfig,
       responseTransforms,
+      requestTransforms,
     };
 
     const providerModel = params?.model;
@@ -114,6 +121,9 @@ const VertexConfig: ProviderConfigs = {
             imageGenerate: GoogleImageGenResponseTransform,
             ...responseTransforms,
           },
+          requestTransforms: {
+            ...baseConfig.requestTransforms,
+          },
         };
       case 'anthropic':
         return {
@@ -122,6 +132,7 @@ const VertexConfig: ProviderConfigs = {
           createBatch: GoogleBatchCreateConfig,
           createFinetune: baseConfig.createFinetune,
           messages: VertexAnthropicMessagesConfig,
+          messagesCountTokens: VertexAnthropicMessagesCountTokensConfig,
           responseTransforms: {
             'stream-chatComplete':
               VertexAnthropicChatCompleteStreamChunkTransform,
@@ -129,17 +140,23 @@ const VertexConfig: ProviderConfigs = {
             messages: VertexAnthropicMessagesResponseTransform,
             ...responseTransforms,
           },
+          requestTransforms: {
+            ...baseConfig.requestTransforms,
+          },
         };
       case 'meta':
         return {
           chatComplete: VertexLlamaChatCompleteConfig,
-          createBatch: GoogleBatchCreateConfig,
           api: GoogleApiConfig,
+          createBatch: GoogleBatchCreateConfig,
           createFinetune: baseConfig.createFinetune,
           responseTransforms: {
             chatComplete: VertexLlamaChatCompleteResponseTransform,
             'stream-chatComplete': VertexLlamaChatCompleteStreamChunkTransform,
             ...responseTransforms,
+          },
+          requestTransforms: {
+            ...baseConfig.requestTransforms,
           },
         };
       case 'endpoints':
@@ -158,13 +175,16 @@ const VertexConfig: ProviderConfigs = {
             }
           ),
           createBatch: GoogleBatchCreateConfig,
-          api: GoogleApiConfig,
           createFinetune: baseConfig.createFinetune,
+          api: GoogleApiConfig,
           responseTransforms: {
             ...responseTransformers(GOOGLE_VERTEX_AI, {
               chatComplete: true,
             }),
             ...responseTransforms,
+          },
+          requestTransforms: {
+            ...baseConfig.requestTransforms,
           },
         };
       case 'mistralai':

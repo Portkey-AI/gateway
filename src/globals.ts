@@ -102,8 +102,10 @@ export const FEATHERLESS_AI: string = 'featherless-ai';
 export const KRUTRIM: string = 'krutrim';
 export const QDRANT: string = 'qdrant';
 export const THREE_ZERO_TWO_AI: string = '302ai';
+export const COMETAPI: string = 'cometapi';
 export const MESHY: string = 'meshy';
 export const TRIPO3D: string = 'tripo3d';
+export const NEXTBIT: string = 'nextbit';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -169,8 +171,10 @@ export const VALID_PROVIDERS = [
   KRUTRIM,
   QDRANT,
   THREE_ZERO_TWO_AI,
+  COMETAPI,
   MESHY,
   TRIPO3D,
+  NEXTBIT,
 ];
 
 export const CONTENT_TYPES = {

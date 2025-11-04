@@ -10,7 +10,12 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     return `https://${resourceName}.openai.azure.com/openai`;
   },
   headers: async ({ providerOptions, fn }) => {
-    const { apiKey, azureAuthMode } = providerOptions;
+    const { apiKey, azureAdToken, azureAuthMode } = providerOptions;
+    if (azureAdToken) {
+      return {
+        Authorization: `Bearer ${azureAdToken?.replace('Bearer ', '')}`,
+      };
+    }
 
     if (azureAuthMode === 'entra') {
       const { azureEntraTenantId, azureEntraClientId, azureEntraClientSecret } =
@@ -45,7 +50,8 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     if (
       fn === 'createTranscription' ||
       fn === 'createTranslation' ||
-      fn === 'uploadFile'
+      fn === 'uploadFile' ||
+      fn === 'imageEdit'
     ) {
       headersObj['Content-Type'] = 'multipart/form-data';
     }
@@ -95,6 +101,9 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       }
       case 'imageGenerate': {
         return `/deployments/${deploymentId}/images/generations?api-version=${apiVersion}`;
+      }
+      case 'imageEdit': {
+        return `/deployments/${deploymentId}/images/edits?api-version=${apiVersion}`;
       }
       case 'createSpeech': {
         return `/deployments/${deploymentId}/audio/speech?api-version=${apiVersion}`;

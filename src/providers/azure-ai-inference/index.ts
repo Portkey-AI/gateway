@@ -32,6 +32,7 @@ const AzureAIInferenceAPIConfig: ProviderConfigs = {
   api: AzureAIInferenceAPI,
   chatComplete: AzureAIInferenceChatCompleteConfig,
   imageGenerate: AzureOpenAIImageGenerateConfig,
+  imageEdit: {},
   createSpeech: AzureOpenAICreateSpeechConfig,
   createFinetune: OpenAICreateFinetuneConfig,
   createTranscription: {},

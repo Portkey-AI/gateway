@@ -13,7 +13,10 @@ const GroqConfig: ProviderConfigs = {
   chatComplete: chatCompleteParams(
     ['logprobs', 'logits_bias', 'top_logprobs'],
     undefined,
-    { service_tier: { param: 'service_tier', required: false } }
+    {
+      service_tier: { param: 'service_tier', required: false },
+      reasoning_effort: { param: 'reasoning_effort', required: false },
+    }
   ),
   createTranscription: {},
   createTranslation: {},

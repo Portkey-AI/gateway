@@ -1,3 +1,6 @@
+import { constructConfigFromRequestHeaders } from '../../handlers/handlerUtils';
+import { transformUsingProviderConfig } from '../../services/transformToProviderRequest';
+import { Options } from '../../types/requestBody';
 import { ProviderConfig } from '../types';
 import { GoogleBatchRecord } from './types';
 import { getModelAndProvider, GoogleToOpenAIBatch } from './utils';
@@ -67,6 +70,27 @@ export const GoogleBatchCreateConfig: ProviderConfig = {
       };
     },
   },
+};
+
+export const GoogleBatchCreateRequestTransform = (
+  requestBody: any,
+  requestHeaders: Record<string, string>
+) => {
+  const providerOptions = constructConfigFromRequestHeaders(requestHeaders);
+
+  const baseConfig = transformUsingProviderConfig(
+    GoogleBatchCreateConfig,
+    requestBody,
+    providerOptions as Options
+  );
+
+  const finalBody = {
+    // Contains extra fields like tags etc, also might contains model etc, so order is important to override the fields with params created using config.
+    ...requestBody?.provider_options,
+    ...baseConfig,
+  };
+
+  return finalBody;
 };
 
 export const GoogleBatchCreateResponseTransform = (
