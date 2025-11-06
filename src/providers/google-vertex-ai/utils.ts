@@ -3,6 +3,7 @@ import {
   GoogleResponseCandidate,
   GoogleBatchRecord,
   GoogleFinetuneRecord,
+  GoogleSearchRetrievalTool,
 } from './types';
 import { generateErrorResponse } from '../utils';
 import {
@@ -13,8 +14,10 @@ import {
 import { getFromKV, putInKV } from '../../services/kvstore';
 import { ErrorResponse, FinetuneRequest, Logprobs } from '../types';
 import { externalServiceFetch } from '../../utils/fetch';
-import { ContentType, JsonSchema } from '../../types/requestBody';
 import { logger } from '../../apm';
+import { Context } from 'hono';
+import { env } from 'hono/adapter';
+import { ContentType, JsonSchema, Tool } from '../../types/requestBody';
 
 /**
  * Encodes an object as a Base64 URL-encoded string.
@@ -820,4 +823,52 @@ export const transformInputAudioPart = (c: ContentType) => {
       mimeType,
     },
   };
+};
+
+export const googleTools = [
+  'googleSearch',
+  'google_search',
+  'googleSearchRetrieval',
+  'google_search_retrieval',
+  'computerUse',
+  'computer_use',
+];
+
+export const transformGoogleTools = (tool: Tool) => {
+  const tools: any = [];
+  if (['googleSearch', 'google_search'].includes(tool.function.name)) {
+    const timeRangeFilter = tool.function.parameters?.timeRangeFilter;
+    tools.push({
+      googleSearch: {
+        // allow null
+        ...(timeRangeFilter !== undefined && { timeRangeFilter }),
+      },
+    });
+  } else if (
+    ['googleSearchRetrieval', 'google_search_retrieval'].includes(
+      tool.function.name
+    )
+  ) {
+    tools.push(buildGoogleSearchRetrievalTool(tool));
+  } else if (['computerUse', 'computer_use'].includes(tool.function.name)) {
+    tools.push({
+      computerUse: {
+        environment: tool.function.parameters?.environment,
+        excludedPredefinedFunctions:
+          tool.function.parameters?.excluded_predefined_functions,
+      },
+    });
+  }
+  return tools;
+};
+
+export const buildGoogleSearchRetrievalTool = (tool: Tool) => {
+  const googleSearchRetrievalTool: GoogleSearchRetrievalTool = {
+    googleSearchRetrieval: {},
+  };
+  if (tool.function.parameters?.dynamicRetrievalConfig) {
+    googleSearchRetrievalTool.googleSearchRetrieval.dynamicRetrievalConfig =
+      tool.function.parameters.dynamicRetrievalConfig;
+  }
+  return googleSearchRetrievalTool;
 };

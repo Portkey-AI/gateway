@@ -42,6 +42,10 @@ export const OpenAICreateModelResponseConfig: ProviderConfig = {
     param: 'background',
     required: false,
   },
+  conversation: {
+    param: 'conversation',
+    required: false,
+  },
   input: {
     param: 'input',
     required: true,
@@ -56,6 +60,10 @@ export const OpenAICreateModelResponseConfig: ProviderConfig = {
   },
   instructions: {
     param: 'instructions',
+    required: false,
+  },
+  max_tool_calls: {
+    param: 'max_tool_calls',
     required: false,
   },
   max_output_tokens: {
