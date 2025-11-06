@@ -1,4 +1,5 @@
 import { Context } from 'hono';
+import { addBackgroundTask } from '../utils/misc';
 
 export class RealtimeLlmEventParser {
   private sessionState: any;
@@ -48,7 +49,8 @@ export class RealtimeLlmEventParser {
     this.sessionState.sessionDetails = { ...data.session };
     const realtimeEventParser = c.get('realtimeEventParser');
     if (realtimeEventParser) {
-      c.executionCtx.waitUntil(
+      addBackgroundTask(
+        c,
         realtimeEventParser(
           c,
           sessionOptions,
@@ -69,7 +71,8 @@ export class RealtimeLlmEventParser {
     this.sessionState.sessionDetails = { ...data.session };
     const realtimeEventParser = c.get('realtimeEventParser');
     if (realtimeEventParser) {
-      c.executionCtx.waitUntil(
+      addBackgroundTask(
+        c,
         realtimeEventParser(
           c,
           sessionOptions,
@@ -106,7 +109,8 @@ export class RealtimeLlmEventParser {
       const itemSequence = this.rebuildConversationSequence(
         this.sessionState.conversation.items
       );
-      c.executionCtx.waitUntil(
+      addBackgroundTask(
+        c,
         realtimeEventParser(
           c,
           sessionOptions,
@@ -128,7 +132,8 @@ export class RealtimeLlmEventParser {
   private handleError(c: Context, data: any, sessionOptions: any): void {
     const realtimeEventParser = c.get('realtimeEventParser');
     if (realtimeEventParser) {
-      c.executionCtx.waitUntil(
+      addBackgroundTask(
+        c,
         realtimeEventParser(c, sessionOptions, {}, data, data.type)
       );
     }

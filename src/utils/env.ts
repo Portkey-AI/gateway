@@ -130,6 +130,8 @@ const nodeEnv = {
 
   HTTP_PROXY: getValueOrFileContents(process.env.HTTP_PROXY),
   HTTPS_PROXY: getValueOrFileContents(process.env.HTTPS_PROXY),
+
+  APM_LOGGER: getValueOrFileContents(process.env.APM_LOGGER),
 };
 
 export const Environment = (env?: Record<string, any>) => {

@@ -6,7 +6,6 @@ import {
   ContentType,
   Message,
   Params,
-  Tool,
   ToolCall,
   SYSTEM_MESSAGE_ROLES,
   MESSAGE_ROLES,
@@ -46,26 +45,15 @@ import type {
   GoogleGenerateContentResponse,
   VertexLlamaChatCompleteStreamChunk,
   VertexLLamaChatCompleteResponse,
-  GoogleSearchRetrievalTool,
 } from './types';
 import {
   getMimeType,
+  googleTools,
   recursivelyDeleteUnsupportedParameters,
-  transformGeminiToolParameters,
+  transformGoogleTools,
   transformInputAudioPart,
   transformVertexLogprobs,
 } from './utils';
-
-export const buildGoogleSearchRetrievalTool = (tool: Tool) => {
-  const googleSearchRetrievalTool: GoogleSearchRetrievalTool = {
-    googleSearchRetrieval: {},
-  };
-  if (tool.function.parameters?.dynamicRetrievalConfig) {
-    googleSearchRetrievalTool.googleSearchRetrieval.dynamicRetrievalConfig =
-      tool.function.parameters.dynamicRetrievalConfig;
-  }
-  return googleSearchRetrievalTool;
-};
 
 export const VertexGoogleChatCompleteConfig: ProviderConfig = {
   // https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning#gemini-model-versions
@@ -296,27 +284,9 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
           // these are not supported by google
           recursivelyDeleteUnsupportedParameters(tool.function?.parameters);
           delete tool.function?.strict;
-
-          if (['googleSearch', 'google_search'].includes(tool.function.name)) {
-            const timeRangeFilter = tool.function.parameters?.timeRangeFilter;
-            tools.push({
-              googleSearch: {
-                // allow null
-                ...(timeRangeFilter !== undefined && { timeRangeFilter }),
-              },
-            });
-          } else if (
-            ['googleSearchRetrieval', 'google_search_retrieval'].includes(
-              tool.function.name
-            )
-          ) {
-            tools.push(buildGoogleSearchRetrievalTool(tool));
+          if (googleTools.includes(tool.function.name)) {
+            tools.push(...transformGoogleTools(tool));
           } else {
-            if (tool.function?.parameters) {
-              tool.function.parameters = transformGeminiToolParameters(
-                tool.function.parameters
-              );
-            }
             functionDeclarations.push(tool.function);
           }
         }
@@ -359,11 +329,11 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
-  seed: {
+  modalities: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
-  modalities: {
+  seed: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
