@@ -23,7 +23,8 @@
     "build/public"
   ],
   "scripts": {
-    "dev": "wrangler dev src/index.ts",
+    "uninstall-workerd-unsupported-packages": "npm uninstall winston winston-loki prom-client --no-save",
+    "dev": "npm run dev:workerd",
     "dev:node": "tsx src/start-server.ts",
     "dev:workerd": "wrangler dev src/index.ts",
     "deploy": "wrangler deploy --minify src/index.ts",
@@ -53,6 +54,9 @@
     "ioredis": "^5.8.0",
     "hono": "^4.9.7",
     "jose": "^6.0.11",
+    "prom-client": "^15.1.3",
+    "winston": "^3.18.3",
+    "winston-loki": "^6.1.3",
     "patch-package": "^8.0.1",
     "ws": "^8.18.0",
     "zod": "^3.22.4"
