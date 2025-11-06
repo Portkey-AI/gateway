@@ -5,6 +5,7 @@ import {
 } from './utils';
 import { GoogleEmbedParams } from './embed';
 import { EmbedInstancesData } from './types';
+
 /**
  * @see https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/gemini#request_body
  */

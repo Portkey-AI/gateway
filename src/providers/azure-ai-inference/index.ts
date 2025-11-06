@@ -13,18 +13,21 @@ import {
   AzureAIInferenceChatCompleteResponseTransform,
 } from './chatComplete';
 import { AZURE_AI_INFERENCE, GITHUB } from '../../globals';
-import { AzureOpenAIImageGenerateConfig } from '../azure-openai/imageGenerate';
-import { AzureOpenAICreateSpeechConfig } from '../azure-openai/createSpeech';
+import {
+  AzureOpenAIImageGenerateConfig,
+  AzureOpenAIImageGenerateResponseTransform,
+} from '../azure-openai/imageGenerate';
+import {
+  AzureOpenAICreateSpeechConfig,
+  AzureOpenAICreateSpeechResponseTransform,
+} from '../azure-openai/createSpeech';
+import { AzureOpenAICreateTranscriptionResponseTransform } from '../azure-openai/createTranscription';
+import { AzureOpenAICreateTranslationResponseTransform } from '../azure-openai/createTranslation';
 import { OpenAICreateFinetuneConfig } from '../openai/createFinetune';
 import { AzureOpenAICreateBatchConfig } from '../azure-openai/createBatch';
-import { AzureAIInferenceGetBatchOutputRequestHandler } from './getBatchOutput';
+import { AzureOpenAIResponseTransform } from '../azure-openai/chatComplete';
 import { OpenAIFileUploadRequestTransform } from '../openai/uploadFile';
-import {
-  AzureAIInferenceCreateSpeechResponseTransform,
-  AzureAIInferenceCreateTranscriptionResponseTransform,
-  AzureAIInferenceCreateTranslationResponseTransform,
-  AzureAIInferenceResponseTransform,
-} from './utils';
+import { AzureAIInferenceGetBatchOutputRequestHandler } from './getBatchOutput';
 
 const AzureAIInferenceAPIConfig: ProviderConfigs = {
   complete: AzureAIInferenceCompleteConfig,
@@ -52,20 +55,20 @@ const AzureAIInferenceAPIConfig: ProviderConfigs = {
     chatComplete:
       AzureAIInferenceChatCompleteResponseTransform(AZURE_AI_INFERENCE),
     embed: AzureAIInferenceEmbedResponseTransform(AZURE_AI_INFERENCE),
-    imageGenerate: AzureAIInferenceResponseTransform,
-    createSpeech: AzureAIInferenceCreateSpeechResponseTransform,
-    createTranscription: AzureAIInferenceCreateTranscriptionResponseTransform,
-    createTranslation: AzureAIInferenceCreateTranslationResponseTransform,
+    imageGenerate: AzureOpenAIImageGenerateResponseTransform,
+    createSpeech: AzureOpenAICreateSpeechResponseTransform,
+    createTranscription: AzureOpenAICreateTranscriptionResponseTransform,
+    createTranslation: AzureOpenAICreateTranslationResponseTransform,
     realtime: {},
-    createBatch: AzureAIInferenceResponseTransform,
-    retrieveBatch: AzureAIInferenceResponseTransform,
-    cancelBatch: AzureAIInferenceResponseTransform,
-    listBatches: AzureAIInferenceResponseTransform,
-    uploadFile: AzureAIInferenceResponseTransform,
-    listFiles: AzureAIInferenceResponseTransform,
-    retrieveFile: AzureAIInferenceResponseTransform,
-    deleteFile: AzureAIInferenceResponseTransform,
-    retrieveFileContent: AzureAIInferenceResponseTransform,
+    createBatch: AzureOpenAIResponseTransform,
+    retrieveBatch: AzureOpenAIResponseTransform,
+    cancelBatch: AzureOpenAIResponseTransform,
+    listBatches: AzureOpenAIResponseTransform,
+    uploadFile: AzureOpenAIResponseTransform,
+    listFiles: AzureOpenAIResponseTransform,
+    retrieveFile: AzureOpenAIResponseTransform,
+    deleteFile: AzureOpenAIResponseTransform,
+    retrieveFileContent: AzureOpenAIResponseTransform,
   },
 };
 

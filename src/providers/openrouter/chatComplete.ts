@@ -156,16 +156,12 @@ export const OpenrouterChatCompleteResponseTransform: (
   response: OpenrouterChatCompleteResponse | OpenrouterErrorResponse,
   responseStatus: number,
   _responseHeaders: Headers,
-  strictOpenAiCompliance: boolean,
-  _gatewayRequestUrl: string,
-  _gatewayRequest: Params
+  strictOpenAiCompliance: boolean
 ) => ChatCompletionResponse | ErrorResponse = (
   response,
   responseStatus,
   _responseHeaders,
-  strictOpenAiCompliance,
-  _gatewayRequestUrl,
-  _gatewayRequest
+  strictOpenAiCompliance
 ) => {
   if ('message' in response && responseStatus !== 200) {
     return generateErrorResponse(

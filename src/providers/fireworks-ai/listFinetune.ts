@@ -1,5 +1,5 @@
-import { FinetuneResponse } from './types';
-import { fireworkFinetuneToOpenAIFinetune } from './utils';
+import { FinetuneResponse } from './type';
+import { fireworkFinetuneToOpenAIFinetune } from './util';
 
 export const FireworkListFinetuneResponseTransform = (
   response: any,

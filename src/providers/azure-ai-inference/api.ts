@@ -33,10 +33,9 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
     if (azureFoundryUrl) {
       return azureFoundryUrl;
     }
-
     return '';
   },
-  headers: async ({ providerOptions, fn }) => {
+  headers: async ({ providerOptions, fn, c }) => {
     const {
       apiKey,
       azureExtraParameters,
@@ -91,6 +90,7 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
       const { azureManagedClientId } = providerOptions;
       const resource = 'https://cognitiveservices.azure.com/';
       const accessToken = await getAzureManagedIdentityToken(
+        c,
         resource,
         azureManagedClientId
       );
@@ -167,24 +167,54 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
           ? ENDPOINT_MAPPING[mappedFn]
           : `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
       }
-      case 'realtime':
-      case 'imageGenerate':
-      case 'imageEdit':
-      case 'createSpeech':
-      case 'createTranscription':
-      case 'createTranslation':
-      case 'cancelBatch':
-      case 'createBatch':
-      case 'getBatchOutput':
-      case 'retrieveBatch':
-      case 'listBatches':
-      case 'retrieveFile':
-      case 'listFiles':
-      case 'deleteFile':
+      case 'realtime': {
+        return `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
+      }
+      case 'imageGenerate': {
+        return `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
+      }
+      case 'imageEdit': {
+        return `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
+      }
+      case 'createSpeech': {
+        return `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
+      }
+      case 'createTranscription': {
+        return `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
+      }
+      case 'createTranslation': {
+        return `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
+      }
+      case 'uploadFile': {
+        return `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
+      }
+      case 'retrieveFile': {
+        return `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
+      }
+      case 'listFiles': {
+        return `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
+      }
+      case 'deleteFile': {
+        return `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
+      }
       case 'retrieveFileContent': {
         return `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
       }
-
+      case 'listBatches': {
+        return `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
+      }
+      case 'retrieveBatch': {
+        return `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
+      }
+      case 'cancelBatch': {
+        return `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
+      }
+      case 'getBatchOutput': {
+        return `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
+      }
+      case 'createBatch': {
+        return `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
+      }
       default:
         return '';
     }

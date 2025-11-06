@@ -40,15 +40,23 @@ import modelResponsesHandler from './handlers/modelResponsesHandler';
 import { logger } from './apm';
 // Config
 import conf from '../conf.json';
-import { createCacheBackendsRedis } from './shared/services/cache';
+import {
+  createCacheBackendsCF,
+  createCacheBackendsLocal,
+  createCacheBackendsRedis,
+} from './shared/services/cache';
+import { Environment } from './utils/env';
 
 // Create a new Hono server instance
 const app = new Hono();
 const runtime = getRuntimeKey();
 
-if (runtime === 'node' && process.env.REDIS_CONNECTION_STRING) {
-  createCacheBackendsRedis(process.env.REDIS_CONNECTION_STRING);
+if (Environment().CACHE_BACKEND === 'redis') {
+  createCacheBackendsRedis(Environment().REDIS_CONNECTION_STRING);
+} else if (Environment().CACHE_BACKEND === 'memcache') {
+  createCacheBackendsLocal();
 }
+
 /**
  * Middleware that conditionally applies compression middleware based on the runtime.
  * Compression is automatically handled for lagon and workerd runtimes
@@ -56,6 +64,10 @@ if (runtime === 'node' && process.env.REDIS_CONNECTION_STRING) {
  */
 app.use('*', (c, next) => {
   const runtimesThatDontNeedCompression = ['lagon', 'workerd', 'node'];
+  if (runtime === 'workerd') {
+    if (Environment(c).KV_STORE_WORKER_BASEPATH) return next();
+    createCacheBackendsCF(Environment(c));
+  }
   if (runtimesThatDontNeedCompression.includes(runtime)) {
     return next();
   }

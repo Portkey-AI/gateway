@@ -25,8 +25,8 @@ const AnthropicConfig: ProviderConfigs = {
     'stream-complete': AnthropicCompleteStreamChunkTransform,
     complete: AnthropicCompleteResponseTransform,
     chatComplete: AnthropicChatCompleteResponseTransform,
-    'stream-chatComplete': AnthropicChatCompleteStreamChunkTransform,
     messages: AnthropicMessagesResponseTransform,
+    'stream-chatComplete': AnthropicChatCompleteStreamChunkTransform,
   },
 };
 

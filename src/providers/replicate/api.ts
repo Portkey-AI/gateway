@@ -5,7 +5,7 @@ const ReplicateApiConfig: ProviderAPIConfig = {
   headers: ({ providerOptions }) => {
     return { Authorization: `Bearer ${providerOptions.apiKey}` };
   },
-  getEndpoint: ({ fn }) => '',
+  getEndpoint: () => '',
 };
 
 export default ReplicateApiConfig;

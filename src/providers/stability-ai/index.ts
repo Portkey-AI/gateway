@@ -12,7 +12,7 @@ import { isStabilityV1Model } from './utils';
 
 const StabilityAIConfig: ProviderConfigs = {
   api: StabilityAIAPIConfig,
-  getConfig: ({ params }) => {
+  getConfig: (params: Params) => {
     const model = params.model;
     if (typeof model === 'string' && isStabilityV1Model(model)) {
       return {

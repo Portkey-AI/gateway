@@ -1,10 +1,10 @@
-import { FinetuneResponse, FinetuneState, FireworksFile } from './types';
+import { externalServiceFetch } from '../../utils/fetch';
+import { FinetuneResponse, FinetuneState, FireworksFile } from './type';
 
 export const fireworksDatasetToOpenAIFile = (dataset: FireworksFile) => {
   const name = dataset.displayName || dataset.name;
   const id = name.split('/').at(-1);
   const state = dataset.state.toLowerCase();
-
   return {
     id: id,
     filename: `${id}.jsonl`,
@@ -42,7 +42,7 @@ export const getUploadEndpoint = async ({
   };
 
   try {
-    const response = await fetch(
+    const response = await externalServiceFetch(
       `${baseURL}/datasets/${datasetId}:getUploadEndpoint`,
       {
         method: 'POST',
@@ -81,7 +81,7 @@ export const createDataset = async ({
     created: false,
     error: null,
   };
-  const response = await fetch(`${baseURL}/datasets`, {
+  const response = await externalServiceFetch(`${baseURL}/datasets`, {
     method: 'POST',
     headers: headers,
     body: JSON.stringify({
@@ -112,7 +112,7 @@ export const validateDataset = async ({
   headers: Record<string, string>;
   baseURL: string;
 }) => {
-  const response = await fetch(
+  const response = await externalServiceFetch(
     `${baseURL}/datasets/${datasetId}:validateUpload`,
     {
       method: 'POST',

@@ -64,15 +64,15 @@ export const GoogleApiConfig: ProviderAPIConfig = {
 
     return `https://${vertexRegion}-aiplatform.googleapis.com`;
   },
-  headers: async ({ c, providerOptions, gatewayRequestBody }) => {
+  headers: async ({ providerOptions, gatewayRequestBody }) => {
     const { apiKey, vertexServiceAccountJson } = providerOptions;
     let authToken = apiKey;
     if (vertexServiceAccountJson) {
-      authToken = await getAccessToken(c, vertexServiceAccountJson);
+      authToken = await getAccessToken(vertexServiceAccountJson);
     }
     const anthropicBeta =
       providerOptions?.['anthropicBeta'] ??
-      gatewayRequestBody?.['anthropic_beta'];
+      (gatewayRequestBody as Params)?.['anthropic_beta'];
 
     return {
       'Content-Type': 'application/json',

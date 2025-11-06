@@ -1,5 +1,5 @@
 import { TOGETHER_AI } from '../../globals';
-import { Params } from '../../types/requestBody';
+import { Message, Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -25,7 +25,7 @@ export const TogetherAIChatCompleteConfig: ProviderConfig = {
     required: true,
     default: '',
     transform: (params: Params) => {
-      return params.messages?.map((message) => {
+      return params.messages?.map((message: Message) => {
         if (message.role === 'developer') return { ...message, role: 'system' };
         return message;
       });
@@ -153,16 +153,12 @@ export const TogetherAIChatCompleteResponseTransform: (
     | TogetherAIOpenAICompatibleErrorResponse,
   responseStatus: number,
   responseHeaders: Headers,
-  strictOpenAiCompliance: boolean,
-  gatewayRequestUrl: string,
-  gatewayRequest: Params
+  strictOpenAiCompliance: boolean
 ) => ChatCompletionResponse | ErrorResponse = (
   response,
   responseStatus,
   _responseHeaders,
-  strictOpenAiCompliance,
-  _gatewayRequestUrl,
-  _gatewayRequest
+  strictOpenAiCompliance
 ) => {
   if (responseStatus !== 200) {
     const errorResponse = TogetherAIErrorResponseTransform(
@@ -214,14 +210,12 @@ export const TogetherAIChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
   streamState: any,
-  strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  strictOpenAiCompliance: boolean
 ) => string = (
   responseChunk,
   fallbackId,
   streamState,
-  strictOpenAiCompliance,
-  gatewayRequest
+  strictOpenAiCompliance
 ) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');

@@ -3,6 +3,7 @@ import AzureAIInferenceAPI from './api';
 import { Options } from '../../types/requestBody';
 import { RetrieveBatchResponse } from '../types';
 import { AZURE_OPEN_AI } from '../../globals';
+import { externalServiceFetch } from '../../utils/fetch';
 
 // Return a ReadableStream containing batches output data
 export const AzureAIInferenceGetBatchOutputRequestHandler = async ({
@@ -43,10 +44,13 @@ export const AzureAIInferenceGetBatchOutputRequestHandler = async ({
     gatewayRequestBody: {},
   });
   try {
-    const retrieveBatchesResponse = await fetch(retrieveBatchURL, {
-      method: 'GET',
-      headers: retrieveBatchesHeaders,
-    });
+    const retrieveBatchesResponse = await externalServiceFetch(
+      retrieveBatchURL,
+      {
+        method: 'GET',
+        headers: retrieveBatchesHeaders,
+      }
+    );
 
     if (!retrieveBatchesResponse.ok) {
       const error = await retrieveBatchesResponse.text();
@@ -104,7 +108,7 @@ export const AzureAIInferenceGetBatchOutputRequestHandler = async ({
       transformedRequestUrl: retrieveFileContentURL,
       gatewayRequestBody: {},
     });
-    const response = fetch(retrieveFileContentURL, {
+    const response = externalServiceFetch(retrieveFileContentURL, {
       method: 'GET',
       headers: retrieveFileContentHeaders,
     });

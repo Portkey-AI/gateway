@@ -1,5 +1,5 @@
-import { FireworksFile } from './types';
-import { fireworksDatasetToOpenAIFile } from './utils';
+import { FireworksFile } from './type';
+import { fireworksDatasetToOpenAIFile } from './util';
 
 export const FireworksFileRetrieveResponseTransform = (
   response: FireworksFile,

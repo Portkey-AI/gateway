@@ -444,6 +444,7 @@ export function createCacheBackendsCF(env: any): void {
     kvBindingName: 'KV_STORE',
     defaultTtl: MS['5_MINUTES'],
   };
+
   defaultCache = new CacheService({
     ...commonOptions,
     dbName: 'default',
