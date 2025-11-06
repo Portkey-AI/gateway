@@ -57,6 +57,14 @@ const nodeEnv = {
     process.env.AWS_WEB_IDENTITY_TOKEN_FILE,
     true
   ),
+  AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE: getValueOrFileContents(
+    process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE,
+    true
+  ),
+  AWS_CONTAINER_CREDENTIALS_FULL_URI: getValueOrFileContents(
+    process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
+    true
+  ),
   AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: getValueOrFileContents(
     process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI,
     true

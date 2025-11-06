@@ -384,12 +384,20 @@ const runtime = getRuntimeKey();
 export const getCacheUtils = (options?: PluginOptions) => {
   if (runtime === 'workerd') {
     return {
-      putInKV: (key: string, value: any, ttl: number) => {
-        options?.putInCacheWithValue?.(options?.env || {}, key, value, ttl);
+      putInKV: async (key: string, value: any, ttl: number) => {
+        await options?.putInCacheWithValue?.(
+          options?.env || {},
+          key,
+          value,
+          ttl
+        );
         return;
       },
-      getFromKV: (key: string) => {
-        const resp = options?.getFromCacheByKey?.(options?.env || {}, key);
+      getFromKV: async (key: string) => {
+        const resp = await options?.getFromCacheByKey?.(
+          options?.env || {},
+          key
+        );
         return resp;
       },
     };

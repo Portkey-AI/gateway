@@ -66,7 +66,7 @@ async function parseIniFile(filePath: string) {
   return result;
 }
 
-function getRegionFromEnv(options?: PluginOptions): string {
+export function getRegionFromEnv(options?: PluginOptions): string {
   return (
     Environment(options?.env).AWS_REGION ||
     Environment(options?.env).AWS_DEFAULT_REGION
@@ -74,7 +74,7 @@ function getRegionFromEnv(options?: PluginOptions): string {
 }
 
 export const generateAWSHeaders = async (
-  body: Record<string, any>,
+  body: Record<string, any> | undefined,
   headers: Record<string, string>,
   url: string,
   method: string,
@@ -270,6 +270,30 @@ async function assumeRoleWithWebIdentity(
   return parseXml(data);
 }
 
+async function assumeRoleWithPodIdentity(
+  token: string,
+  credentialFullUri: string
+) {
+  const response = await fetch(credentialFullUri, {
+    method: 'GET',
+    headers: {
+      Authorization: token,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Pod Identity request failed: ${response.status}`);
+  }
+
+  const data: any = await response.json();
+  return {
+    accessKeyId: data.AccessKeyId,
+    secretAccessKey: data.SecretAccessKey,
+    sessionToken: data.Token,
+    expiration: data.Expiration,
+  };
+}
+
 async function getAssumedWebIdentityCredentials(
   awsRegion?: string,
   options?: PluginOptions
@@ -316,6 +340,55 @@ async function getAssumedWebIdentityCredentials(
   return null;
 }
 
+async function getPodIdentityCredentials(
+  awsRegion?: string,
+  options?: PluginOptions
+) {
+  const { getFromKV, putInKV } = getCacheUtils(options);
+  if (
+    Environment(options?.env).AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE &&
+    Environment(options?.env).AWS_CONTAINER_CREDENTIALS_FULL_URI
+  ) {
+    try {
+      const effectiveRegion =
+        awsRegion || getRegionFromEnv(options) || 'us-east-1';
+      const credentialFullUri = Environment(
+        options?.env
+      ).AWS_CONTAINER_CREDENTIALS_FULL_URI;
+      const cacheKey = `assumed-pod-identity-${Environment(options?.env).AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE}-region-${effectiveRegion}`;
+      const resp = await getFromKV(cacheKey);
+      if (resp) {
+        return resp;
+      }
+
+      const token = await fs.readFile(
+        Environment(options?.env).AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE,
+        'utf8'
+      );
+
+      const credentials = await assumeRoleWithPodIdentity(
+        token.trim(),
+        credentialFullUri
+      );
+
+      if (credentials) {
+        const result = {
+          source: 'EKS Pod Identity',
+          ...credentials,
+          awsRegion: effectiveRegion,
+        };
+
+        await putInKV(cacheKey, result, 300);
+        return result;
+      }
+    } catch (error) {
+      console.error('Failed to get Pod Identity credentials:', error);
+      return null;
+    }
+  }
+  return null;
+}
+
 async function getIRSACredentials(awsRegion?: string, options?: PluginOptions) {
   // get from web identity
   return getAssumedWebIdentityCredentials(awsRegion, options);
@@ -347,8 +420,8 @@ async function getCredentialsFromECSContainer(options?: PluginOptions) {
 
     const derivedRoleArn =
       credentials.RoleArn ||
-      (await getECSTaskRoleArnFromMetadata()) ||
-      Environment(options?.env).AWS_ROLE_ARN;
+      Environment(options?.env).AWS_ROLE_ARN ||
+      (await getECSTaskRoleArnFromMetadata());
 
     await putInKV(
       cacheKey,
@@ -726,6 +799,14 @@ export async function getAssumedRoleCredentials(
           credentials = await getIRSACredentials(awsRegion, options);
         } catch (error) {
           console.error(error);
+        }
+      }
+
+      if (!credentials) {
+        try {
+          credentials = await getPodIdentityCredentials(awsRegion);
+        } catch (error) {
+          console.log(error);
         }
       }
 

@@ -6,7 +6,12 @@ import {
   setCurrentContentPart,
 } from '../utils';
 import { BedrockAccessKeyCreds, BedrockBody, BedrockParameters } from './type';
-import { bedrockPost, getAssumedRoleCredentials, redactPii } from './util';
+import {
+  bedrockPost,
+  getAssumedRoleCredentials,
+  getRegionFromEnv,
+  redactPii,
+} from './util';
 
 const REQUIRED_CREDENTIAL_KEYS = [
   'awsAccessKeyId',
@@ -97,6 +102,11 @@ export const handleCredentials = async (
     finalCredentials.awsSessionToken = credentials?.awsSessionToken || '';
     finalCredentials.awsRegion = credentials?.awsRegion || '';
   }
+
+  if (!finalCredentials.awsRegion) {
+    finalCredentials.awsRegion = getRegionFromEnv(options);
+  }
+
   return finalCredentials;
 };
 
