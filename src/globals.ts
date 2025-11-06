@@ -266,3 +266,16 @@ export enum BatchEndpoints {
   COMPLETIONS = '/v1/completions',
   EMBEDDINGS = '/v1/embeddings',
 }
+
+export const AtomicOperations = {
+  GET: 'GET',
+  RESET: 'RESET',
+  INCREMENT: 'INCREMENT',
+  DECREMENT: 'DECREMENT',
+};
+
+export enum RateLimiterKeyTypes {
+  VIRTUAL_KEY = 'VIRTUAL_KEY',
+  API_KEY = 'API_KEY',
+  INTEGRATION_WORKSPACE = 'INTEGRATION_WORKSPACE',
+}
