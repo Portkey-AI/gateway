@@ -1,6 +1,7 @@
 import { ErrorResponse, FinetuneRequest, ProviderConfig } from '../types';
 import { BedrockErrorResponseTransform } from './chatComplete';
 import { BedrockErrorResponse } from './embed';
+import { populateHyperParameters } from './utils';
 
 export const BedrockCreateFinetuneConfig: ProviderConfig = {
   model: {
@@ -15,10 +16,10 @@ export const BedrockCreateFinetuneConfig: ProviderConfig = {
     param: 'hyperParameters',
     required: false,
     transform: (value: FinetuneRequest) => {
-      const epochCount = value.hyperparameters?.n_epochs;
-      const learningRateMultiplier =
-        value.hyperparameters?.learning_rate_multiplier;
-      const batchSize = value.hyperparameters?.batch_size;
+      const hyperParameters = populateHyperParameters(value);
+      const epochCount = hyperParameters.n_epochs;
+      const learningRateMultiplier = hyperParameters.learning_rate_multiplier;
+      const batchSize = hyperParameters.batch_size;
       return {
         epochCount: epochCount ? String(epochCount) : undefined,
         learningRateMultiplier: learningRateMultiplier
@@ -45,7 +46,7 @@ export const BedrockCreateFinetuneConfig: ProviderConfig = {
         return undefined;
       }
       return {
-        s3Uri: decodeURIComponent(value.validation_file),
+        s3Uri: decodeURIComponent(value.validation_file ?? ''),
       };
     },
   },

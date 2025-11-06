@@ -1,35 +1,71 @@
 import { ErrorResponse, ProviderConfig } from '../types';
-import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
-import { generateErrorResponse } from '../utils';
+import {
+  EmbedParams,
+  EmbedResponse,
+  EmbedResponseData,
+} from '../../types/embedRequestBody';
+import {
+  generateErrorResponse,
+  generateInvalidProviderResponseError,
+} from '../utils';
 import { COHERE } from '../../globals';
 
 export const CohereEmbedConfig: ProviderConfig = {
-  input: {
-    param: 'texts',
-    required: true,
-    transform: (params: EmbedParams): string[] => {
-      if (Array.isArray(params.input)) {
-        return params.input;
-      } else {
-        return [params.input];
-      }
-    },
-  },
   model: {
     param: 'model',
-    default: 'embed-english-light-v2.0',
+    required: false,
   },
+  input: [
+    {
+      param: 'texts',
+      required: false,
+      transform: (params: EmbedParams): string[] | undefined => {
+        if (typeof params.input === 'string') return [params.input];
+        else if (Array.isArray(params.input) && params.input.length > 0) {
+          const texts: string[] = [];
+          params.input.forEach((item) => {
+            if (typeof item === 'string') {
+              texts.push(item);
+            } else if (item.text) {
+              texts.push(item.text);
+            }
+          });
+          return texts.length > 0 ? texts : undefined;
+        }
+      },
+    },
+    {
+      param: 'images',
+      required: false,
+      transform: (params: EmbedParams): string[] | undefined => {
+        if (Array.isArray(params.input) && params.input.length > 0) {
+          const images: string[] = [];
+          params.input.forEach((item) => {
+            if (typeof item === 'object' && item.image?.base64) {
+              images.push(item.image.base64);
+            }
+          });
+          return images.length > 0 ? images : undefined;
+        }
+      },
+    },
+  ],
   input_type: {
     param: 'input_type',
-    required: false,
-  },
-  embedding_types: {
-    param: 'embedding_types',
-    required: false,
+    required: true,
   },
   truncate: {
     param: 'truncate',
     required: false,
+  },
+  encoding_format: {
+    param: 'embedding_types',
+    required: false,
+    transform: (params: any): string[] | undefined => {
+      if (Array.isArray(params.encoding_format)) return params.encoding_format;
+      else if (typeof params.encoding_format === 'string')
+        return [params.encoding_format];
+    },
   },
 };
 
@@ -49,6 +85,19 @@ export interface ApiVersion {
 export interface EmbedMeta {
   /** The API version used. */
   api_version: ApiVersion;
+  billed_units: {
+    images: number;
+    input_tokens: number;
+    output_tokens: number;
+    search_units: number;
+    classifications: number;
+  };
+  tokens: {
+    input_tokens: number;
+    output_tokens: number;
+  };
+  cached_tokens: number;
+  warnings: string[];
 }
 
 /**
@@ -63,7 +112,7 @@ export interface CohereEmbedResponse {
   texts: string[];
 
   /** A 2D array of floating point numbers representing the embeddings. */
-  embeddings: number[][];
+  embeddings: number[][] | { float: number[][] };
 
   /** An `EmbedMeta` object which contains metadata about the response. */
   meta: EmbedMeta;
@@ -73,8 +122,19 @@ export interface CohereEmbedResponse {
 
 export const CohereEmbedResponseTransform: (
   response: CohereEmbedResponse,
-  responseStatus: number
-) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
+) => EmbedResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
+) => {
   if (responseStatus !== 200) {
     return generateErrorResponse(
       {
@@ -87,19 +147,40 @@ export const CohereEmbedResponseTransform: (
     );
   }
 
-  return {
-    object: 'list',
-    data: response.embeddings.map((embedding, index) => ({
-      object: 'embedding',
-      embedding: embedding,
-      index: index,
-    })),
-    model: '', // Todo: find a way to send the cohere embedding model name back
-    usage: {
-      prompt_tokens: -1,
-      total_tokens: -1,
-    },
-  };
+  const model = (gatewayRequest.model as string) || '';
+
+  // portkey only supports float embeddings for cohere to confirm to openai signature
+  if ('embeddings' in response) {
+    let data: EmbedResponseData[] = [];
+    if (response?.embeddings && 'float' in response.embeddings) {
+      data = response.embeddings.float.map((embedding, index) => ({
+        object: 'embedding',
+        embedding: embedding,
+        index: index,
+      }));
+    }
+    const inputTokens =
+      response.meta?.tokens?.input_tokens ??
+      response.meta?.billed_units?.input_tokens ??
+      0;
+    const outputTokens =
+      response.meta?.tokens?.output_tokens ??
+      response.meta?.billed_units?.output_tokens ??
+      0;
+    const totalTokens = inputTokens + outputTokens;
+    return {
+      object: 'list',
+      data,
+      provider: COHERE,
+      model,
+      usage: {
+        prompt_tokens: inputTokens,
+        total_tokens: totalTokens,
+      },
+    };
+  }
+
+  return generateInvalidProviderResponseError(response, COHERE);
 };
 
 interface CohereEmbedResponseBatch {

@@ -2,22 +2,17 @@ import { Context } from 'hono';
 import { getRuntimeKey } from 'hono/adapter';
 
 let logId = 0;
+const MAX_RESPONSE_LENGTH = 100000;
 
 // Map to store all connected log clients
 const logClients: Map<string | number, any> = new Map();
 
 const addLogClient = (clientId: any, client: any) => {
   logClients.set(clientId, client);
-  // console.log(
-  //   `New client ${clientId} connected. Total clients: ${logClients.size}`
-  // );
 };
 
 const removeLogClient = (clientId: any) => {
   logClients.delete(clientId);
-  // console.log(
-  //   `Client ${clientId} disconnected. Total clients: ${logClients.size}`
-  // );
 };
 
 const broadcastLog = async (log: any) => {
@@ -61,18 +56,20 @@ async function processLog(c: Context, start: number) {
     return;
   }
 
-  if (requestOptionsArray[0].requestParams.stream) {
-    requestOptionsArray[0].response = {
-      message: 'The response was a stream.',
-    };
-  } else {
-    const response = await c.res.clone().json();
-    const maxLength = 1000; // Set a reasonable limit for the response length
+  try {
+    const response = requestOptionsArray[0].requestParams.stream
+      ? { message: 'The response was a stream.' }
+      : await c.res.clone().json();
+
     const responseString = JSON.stringify(response);
-    requestOptionsArray[0].response =
-      responseString.length > maxLength
-        ? JSON.parse(responseString.substring(0, maxLength) + '...')
-        : response;
+    if (responseString.length > MAX_RESPONSE_LENGTH) {
+      requestOptionsArray[0].response =
+        responseString.substring(0, MAX_RESPONSE_LENGTH) + '...';
+    } else {
+      requestOptionsArray[0].response = response;
+    }
+  } catch (error) {
+    console.error('Error processing log:', error);
   }
 
   await broadcastLog(
@@ -87,7 +84,7 @@ async function processLog(c: Context, start: number) {
   );
 }
 
-export const logger = () => {
+export const logHandler = () => {
   return async (c: Context, next: any) => {
     c.set('addLogClient', addLogClient);
     c.set('removeLogClient', removeLogClient);

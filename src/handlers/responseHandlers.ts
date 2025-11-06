@@ -16,6 +16,8 @@ import {
 } from './streamHandler';
 import { HookSpan } from '../middlewares/hooks';
 import { env } from 'hono/adapter';
+import { OpenAIModelResponseJSONToStreamGenerator } from '../providers/open-ai-base/createModelResponse';
+import { anthropicMessagesJsonToStreamGenerator } from '../providers/anthropic-base/utils/streamGenerator';
 
 /**
  * Handles various types of responses based on the specified parameters
@@ -35,37 +37,36 @@ import { env } from 'hono/adapter';
 export async function responseHandler(
   response: Response,
   streamingMode: boolean,
-  provider: string | Options,
+  providerOptions: Options,
   responseTransformer: string | undefined,
   requestURL: string,
   isCacheHit: boolean = false,
   gatewayRequest: Params,
   strictOpenAiCompliance: boolean,
-  gatewayRequestUrl: string
+  gatewayRequestUrl: string,
+  areSyncHooksAvailable: boolean
 ): Promise<{
   response: Response;
   responseJson: Record<string, any> | null;
-  originalResponseJson?: Record<string, any>;
+  originalResponseJson?: Record<string, any> | null;
 }> {
   let responseTransformerFunction: Function | undefined;
-  let providerOption: Options | undefined;
   const responseContentType = response.headers?.get('content-type');
-
-  if (typeof provider == 'object') {
-    providerOption = { ...provider };
-    provider = provider.provider || '';
-  }
+  const isSuccessStatusCode = [200, 246].includes(response.status);
+  const provider = providerOptions.provider;
 
   const providerConfig = Providers[provider];
   let providerTransformers = Providers[provider]?.responseTransforms;
 
   if (providerConfig?.getConfig) {
-    providerTransformers =
-      providerConfig.getConfig(gatewayRequest).responseTransforms;
+    providerTransformers = providerConfig.getConfig({
+      params: gatewayRequest,
+      providerOptions,
+    }).responseTransforms;
   }
 
   // Checking status 200 so that errors are not considered as stream mode.
-  if (responseTransformer && streamingMode && response.status === 200) {
+  if (responseTransformer && streamingMode && isSuccessStatusCode) {
     responseTransformerFunction =
       providerTransformers?.[`stream-${responseTransformer}`];
   } else if (responseTransformer) {
@@ -75,17 +76,29 @@ export async function responseHandler(
   // JSON to text/event-stream conversion is only allowed for unified routes: chat completions and completions.
   // Set the transformer to OpenAI json to stream convertor function in that case.
   if (responseTransformer && streamingMode && isCacheHit) {
-    responseTransformerFunction =
-      responseTransformer === 'chatComplete'
-        ? OpenAIChatCompleteJSONToStreamResponseTransform
-        : OpenAICompleteJSONToStreamResponseTransform;
+    switch (responseTransformer) {
+      case 'chatComplete':
+        responseTransformerFunction =
+          OpenAIChatCompleteJSONToStreamResponseTransform;
+        break;
+      case 'messages':
+        responseTransformerFunction = anthropicMessagesJsonToStreamGenerator;
+        break;
+      case 'createModelResponse':
+        responseTransformerFunction = OpenAIModelResponseJSONToStreamGenerator;
+        break;
+      default:
+        responseTransformerFunction =
+          OpenAICompleteJSONToStreamResponseTransform;
+        break;
+    }
   } else if (responseTransformer && !streamingMode && isCacheHit) {
     responseTransformerFunction = undefined;
   }
 
   if (
     streamingMode &&
-    response.status === 200 &&
+    isSuccessStatusCode &&
     isCacheHit &&
     responseTransformerFunction
   ) {
@@ -96,14 +109,15 @@ export async function responseHandler(
     );
     return { response: streamingResponse, responseJson: null };
   }
-  if (streamingMode && response.status === 200) {
+  if (streamingMode && isSuccessStatusCode) {
     return {
       response: handleStreamingMode(
         response,
         provider,
         responseTransformerFunction,
         requestURL,
-        strictOpenAiCompliance
+        strictOpenAiCompliance,
+        gatewayRequest
       ),
       responseJson: null,
     };
@@ -149,7 +163,9 @@ export async function responseHandler(
     response,
     responseTransformerFunction,
     strictOpenAiCompliance,
-    gatewayRequestUrl
+    gatewayRequestUrl,
+    gatewayRequest,
+    areSyncHooksAvailable
   );
 
   return {
@@ -228,12 +244,31 @@ export async function afterRequestHookHandler(
       }
     );
 
-    if (!responseJSON) {
-      return response;
-    }
-
     const span = hooksManager.getSpan(hookSpanId) as HookSpan;
     const hooksResult = span.getHooksResult();
+
+    const failedBeforeRequestHooks =
+      hooksResult.beforeRequestHooksResult.filter((h) => !h.verdict);
+    const failedAfterRequestHooks = hooksResult.afterRequestHooksResult.filter(
+      (h) => !h.verdict
+    );
+
+    if (!responseJSON) {
+      // For streaming responses, check if beforeRequestHooks failed without deny enabled.
+      if (
+        (failedBeforeRequestHooks.length || failedAfterRequestHooks.length) &&
+        response.status === 200
+      ) {
+        // This should not be a major performance bottleneck as it is just copying the headers and using the body as is.
+        return new Response(response.body, {
+          ...response,
+          status: 246,
+          statusText: 'Hooks failed',
+          headers: response.headers,
+        });
+      }
+      return response;
+    }
 
     if (shouldDeny) {
       return createHookResponse(response, {}, hooksResult, {
@@ -243,17 +278,14 @@ export async function afterRequestHookHandler(
       });
     }
 
-    const failedBeforeRequestHooks =
-      hooksResult.beforeRequestHooksResult.filter((h) => !h.verdict);
-    const failedAfterRequestHooks = hooksResult.afterRequestHooksResult.filter(
-      (h) => !h.verdict
-    );
-
     const responseData = span.getContext().response.isTransformed
       ? span.getContext().response.json
       : responseJSON;
 
-    if (failedBeforeRequestHooks.length || failedAfterRequestHooks.length) {
+    if (
+      (failedBeforeRequestHooks.length || failedAfterRequestHooks.length) &&
+      response.status === 200
+    ) {
       return createHookResponse(response, responseData, hooksResult, {
         status: 246,
         statusText: 'Hooks failed',
@@ -262,7 +294,7 @@ export async function afterRequestHookHandler(
 
     return createHookResponse(response, responseData, hooksResult);
   } catch (err) {
-    console.error(err);
+    console.error('afterRequestHookHandler error: ', err);
     return response;
   }
 }

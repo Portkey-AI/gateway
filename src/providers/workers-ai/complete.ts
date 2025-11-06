@@ -1,10 +1,11 @@
 import { Params } from '../../types/requestBody';
 import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { WORKERS_AI } from '../../globals';
+import { generateInvalidProviderResponseError } from '../utils';
 import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+  WorkersAiErrorResponse,
+  WorkersAiErrorResponseTransform,
+} from './utils';
 
 export const WorkersAiCompleteConfig: ProviderConfig = {
   prompt: {
@@ -24,16 +25,6 @@ export const WorkersAiCompleteConfig: ProviderConfig = {
   },
 };
 
-export interface WorkersAiErrorObject {
-  code: string;
-  message: string;
-}
-
-interface WorkersAiErrorResponse {
-  success: boolean;
-  errors: WorkersAiErrorObject[];
-}
-
 interface WorkersAiCompleteResponse {
   result: {
     response: string;
@@ -48,30 +39,21 @@ interface WorkersAiCompleteStreamResponse {
   p?: string;
 }
 
-export const WorkersAiErrorResponseTransform: (
-  response: WorkersAiErrorResponse
-) => ErrorResponse | undefined = (response) => {
-  if ('errors' in response) {
-    return generateErrorResponse(
-      {
-        message: response.errors
-          ?.map((error) => `Error ${error.code}:${error.message}`)
-          .join(', '),
-        type: null,
-        param: null,
-        code: null,
-      },
-      WORKERS_AI
-    );
-  }
-
-  return undefined;
-};
-
 export const WorkersAiCompleteResponseTransform: (
   response: WorkersAiCompleteResponse | WorkersAiErrorResponse,
-  responseStatus: number
-) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
+  responseStatus: number,
+  responseHeaders: Headers,
+  strictOpenAiCompliance: boolean,
+  gatewayRequestUrl: string,
+  gatewayRequest: Params
+) => CompletionResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  _responseHeaders,
+  _strictOpenAiCompliance,
+  _gatewayRequestUrl,
+  gatewayRequest
+) => {
   if (responseStatus !== 200) {
     const errorResponse = WorkersAiErrorResponseTransform(
       response as WorkersAiErrorResponse
@@ -84,7 +66,7 @@ export const WorkersAiCompleteResponseTransform: (
       id: Date.now().toString(),
       object: 'text_completion',
       created: Math.floor(Date.now() / 1000),
-      model: '',
+      model: gatewayRequest.model || '',
       provider: WORKERS_AI,
       choices: [
         {
@@ -101,8 +83,18 @@ export const WorkersAiCompleteResponseTransform: (
 };
 
 export const WorkersAiCompleteStreamChunkTransform: (
-  response: string
-) => string | undefined = (responseChunk) => {
+  response: string,
+  fallbackId: string,
+  _streamState: Record<string, any>,
+  strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
+) => string | undefined = (
+  responseChunk,
+  fallbackId,
+  _streamState,
+  strictOpenAiCompliance,
+  gatewayRequest
+) => {
   let chunk = responseChunk.trim();
 
   if (chunk.startsWith('data: [DONE]')) {
@@ -115,10 +107,10 @@ export const WorkersAiCompleteStreamChunkTransform: (
   const parsedChunk: WorkersAiCompleteStreamResponse = JSON.parse(chunk);
   return (
     `data: ${JSON.stringify({
-      id: '',
+      id: fallbackId,
       object: 'text_completion',
       created: Math.floor(Date.now() / 1000),
-      model: '', // TODO: find a way to send the cohere embedding model name back
+      model: gatewayRequest.model || '',
       provider: WORKERS_AI,
       choices: [
         {

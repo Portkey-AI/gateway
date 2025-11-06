@@ -1,5 +1,4 @@
 import { AI21, ANTHROPIC, COHERE } from '../../globals';
-import { Params } from '../../types/requestBody';
 import { ProviderConfigs } from '../types';
 import BedrockAPIConfig from './api';
 import { BedrockCancelBatchResponseTransform } from './cancelBatch';
@@ -75,6 +74,18 @@ import {
 } from './uploadFile';
 import { BedrockListFilesResponseTransform } from './listfiles';
 import { BedrockDeleteFileResponseTransform } from './deleteFile';
+import {
+  AnthropicBedrockConverseMessagesConfig as BedrockAnthropicConverseMessagesConfig,
+  BedrockConverseMessagesConfig,
+  BedrockConverseMessagesStreamChunkTransform,
+  BedrockMessagesResponseTransform,
+} from './messages';
+import {
+  BedrockAnthropicMessageCountTokensConfig,
+  BedrockConverseMessageCountTokensConfig,
+  BedrockConverseMessageCountTokensResponseTransform,
+} from './countTokens';
+
 const BedrockConfig: ProviderConfigs = {
   api: BedrockAPIConfig,
   requestHandlers: {
@@ -83,13 +94,14 @@ const BedrockConfig: ProviderConfigs = {
     getBatchOutput: BedrockGetBatchOutputRequestHandler,
     retrieveFileContent: BedrockRetrieveFileContentRequestHandler,
   },
-  getConfig: (params: Params) => {
+  getConfig: ({ params, providerOptions }) => {
     // To remove the region in case its a cross-region inference profile ID
     // https://docs.aws.amazon.com/bedrock/latest/userguide/cross-region-inference-support.html
     let config: ProviderConfigs = {};
 
     if (params.model) {
-      const providerModel = params?.model?.replace(/^(us\.|eu\.)/, '');
+      let providerModel = providerOptions.foundationModel || params.model;
+      providerModel = providerModel.replace(/^(us\.|eu\.|apac\.)/, '');
       const providerModelArray = providerModel?.split('.');
       const provider = providerModelArray?.[0];
       const model = providerModelArray?.slice(1).join('.');
@@ -98,6 +110,8 @@ const BedrockConfig: ProviderConfigs = {
           config = {
             complete: BedrockAnthropicCompleteConfig,
             chatComplete: BedrockConverseAnthropicChatCompleteConfig,
+            messages: BedrockAnthropicConverseMessagesConfig,
+            messagesCountTokens: BedrockAnthropicMessageCountTokensConfig,
             api: BedrockAPIConfig,
             responseTransforms: {
               'stream-complete': BedrockAnthropicCompleteStreamChunkTransform,
@@ -191,17 +205,40 @@ const BedrockConfig: ProviderConfigs = {
             },
           };
       }
-      if (!config.chatComplete) {
-        config.chatComplete = BedrockConverseChatCompleteConfig;
-      }
-      if (!config.responseTransforms?.['stream-chatComplete']) {
-        config.responseTransforms['stream-chatComplete'] =
-          BedrockChatCompleteStreamChunkTransform;
-      }
-      if (!config.responseTransforms?.chatComplete) {
-        config.responseTransforms.chatComplete =
-          BedrockChatCompleteResponseTransform;
-      }
+
+      // defaults
+      config = {
+        ...config,
+        ...(!config.chatComplete && {
+          chatComplete: BedrockConverseChatCompleteConfig,
+        }),
+        ...(!config.messages && {
+          messages: BedrockConverseMessagesConfig,
+        }),
+        ...(!config.messagesCountTokens && {
+          messagesCountTokens: BedrockConverseMessageCountTokensConfig,
+        }),
+      };
+
+      config.responseTransforms = {
+        ...(config.responseTransforms ?? {}),
+        ...(!config.responseTransforms?.chatComplete && {
+          chatComplete: BedrockChatCompleteResponseTransform,
+        }),
+        ...(!config.responseTransforms?.['stream-chatComplete'] && {
+          'stream-chatComplete': BedrockChatCompleteStreamChunkTransform,
+        }),
+        ...(!config.responseTransforms?.messages && {
+          messages: BedrockMessagesResponseTransform,
+        }),
+        ...(!config.responseTransforms?.['stream-messages'] && {
+          'stream-messages': BedrockConverseMessagesStreamChunkTransform,
+        }),
+        ...(!config.responseTransforms?.messagesCountTokens && {
+          messagesCountTokens:
+            BedrockConverseMessageCountTokensResponseTransform,
+        }),
+      };
     }
 
     const commonResponseTransforms = {

@@ -44,6 +44,120 @@
       }
     },
     {
+      "name": "Allowed Request Types",
+      "id": "allowedRequestTypes",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Control which request types (endpoints) can be processed. Use either an allowlist or blocklist approach. If no types are specified, all request types are allowed."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "allowedTypes": {
+            "type": "array",
+            "label": "Allowed Request Types (Multi-select)",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Select request types to allow. Can be combined with blockedTypes for refined control. Can also be specified in metadata as 'supported_endpoints'."
+              }
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "complete",
+                "chatComplete",
+                "embed",
+                "rerank",
+                "moderate",
+                "stream-complete",
+                "stream-chatComplete",
+                "stream-messages",
+                "proxy",
+                "imageGenerate",
+                "createSpeech",
+                "createTranscription",
+                "createTranslation",
+                "realtime",
+                "uploadFile",
+                "listFiles",
+                "retrieveFile",
+                "deleteFile",
+                "retrieveFileContent",
+                "createBatch",
+                "retrieveBatch",
+                "cancelBatch",
+                "listBatches",
+                "getBatchOutput",
+                "listFinetunes",
+                "createFinetune",
+                "retrieveFinetune",
+                "cancelFinetune",
+                "createModelResponse",
+                "getModelResponse",
+                "deleteModelResponse",
+                "listResponseInputItems",
+                "messages"
+              ]
+            }
+          },
+          "blockedTypes": {
+            "type": "array",
+            "label": "Blocked Request Types (Multi-select)",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Select request types to block. When combined with allowedTypes, blocked types take precedence. Can also be specified in metadata as 'blocked_endpoints'."
+              }
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "complete",
+                "chatComplete",
+                "embed",
+                "rerank",
+                "moderate",
+                "stream-complete",
+                "stream-chatComplete",
+                "stream-messages",
+                "proxy",
+                "imageGenerate",
+                "createSpeech",
+                "createTranscription",
+                "createTranslation",
+                "realtime",
+                "uploadFile",
+                "listFiles",
+                "retrieveFile",
+                "deleteFile",
+                "retrieveFileContent",
+                "createBatch",
+                "retrieveBatch",
+                "cancelBatch",
+                "listBatches",
+                "getBatchOutput",
+                "listFinetunes",
+                "createFinetune",
+                "retrieveFinetune",
+                "cancelFinetune",
+                "createModelResponse",
+                "getModelResponse",
+                "deleteModelResponse",
+                "listResponseInputItems",
+                "messages"
+              ]
+            }
+          }
+        },
+        "required": []
+      }
+    },
+    {
       "name": "Sentence Count",
       "id": "sentenceCount",
       "type": "guardrail",
@@ -595,14 +709,14 @@
       }
     },
     {
-      "name": "Model whitelisting",
+      "name": "Allowed Models",
       "id": "modelwhitelist",
       "type": "guardrail",
       "supportedHooks": ["beforeRequestHook"],
       "description": [
         {
           "type": "subHeading",
-          "text": "Check if the model in the request is part of the allowed model list."
+          "text": "Blocks any request whose model isn’t on this list."
         }
       ],
       "parameters": {
@@ -614,7 +728,7 @@
             "description": [
               {
                 "type": "subHeading",
-                "text": "Enter the allowed models."
+                "text": "Enter the allowed models. e.g. gpt-4o, llama-3-70b, mixtral-8x7b"
               }
             ],
             "items": {
@@ -627,13 +741,229 @@
             "description": [
               {
                 "type": "subHeading",
-                "text": "If true, the verdict will be true when model is not in the list"
+                "text": "When on, any model in the list is blocked instead of allowed."
               }
             ],
             "default": false
           }
         },
         "required": ["models"]
+      }
+    },
+    {
+      "name": "Model Rules",
+      "id": "modelRules",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Allow requests based on metadata-driven rules mapping to allowed models."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "rules": {
+            "type": "object",
+            "label": "Rules object: {\"defaults\": [\"model\"], \"metadata\": {\"key\": {\"value\": [\"models\"]}}}",
+            "description": [
+              {
+                "type": "text",
+                "text": "Overrides model list using metadata-based routing."
+              }
+            ]
+          },
+          "not": {
+            "type": "boolean",
+            "label": "Invert Model Check",
+            "description": [
+              {
+                "type": "text",
+                "text": "When on, any model resolved by rules is blocked instead of allowed."
+              }
+            ],
+            "default": false
+          }
+        },
+        "required": ["rules"]
+      }
+    },
+    {
+      "name": "JWT",
+      "id": "jwt",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Check if the JWT token is valid."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "jwksUri": {
+            "type": "string",
+            "label": "JWKS URI",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enter the JWKS URI of the JWT token."
+              }
+            ]
+          },
+          "headerKey": {
+            "type": "string",
+            "label": "Header Key",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enter the header key to check for the JWT token."
+              }
+            ]
+          },
+          "cacheMaxAge": {
+            "type": "number",
+            "label": "Cache Max Age",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enter the cache max age in seconds."
+              }
+            ],
+            "default": 86400
+          },
+          "clockTolerance": {
+            "type": "number",
+            "label": "Clock Tolerance",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enter the clock tolerance in seconds."
+              }
+            ],
+            "default": 5
+          },
+          "maxTokenAge": {
+            "type": "string",
+            "label": "Max Token Age",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enter the max token age."
+              }
+            ],
+            "default": "1d"
+          }
+        },
+        "required": ["jwksUri", "headerKey"]
+      }
+    },
+    {
+      "name": "Required Metadata Keys",
+      "id": "requiredMetadataKeys",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks if the metadata contains all the required keys"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "metadataKeys": {
+            "type": "array",
+            "label": "Metadata Keys",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enter the metadata keys to check for."
+              }
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "operator": {
+            "type": "string",
+            "label": "Operator",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Select the operator to use."
+              }
+            ],
+            "enum": ["all", "any", "none"],
+            "default": "all"
+          }
+        },
+        "required": ["metadataKeys", "operator"]
+      }
+    },
+    {
+      "name": "Add Prefix",
+      "id": "addPrefix",
+      "type": "transformer",
+      "supportedHooks": ["beforeRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Adds a configurable prefix to the user's prompt or messages before sending to the AI model"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prefix": {
+            "type": "string",
+            "label": "Prefix Text",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "The text to prepend to the user's prompt or message"
+              }
+            ],
+            "default": "Please respond helpfully and accurately to the following: "
+          },
+          "applyToRole": {
+            "type": "string",
+            "label": "Apply to Role",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "For chat completions, which message role to apply the prefix to"
+              }
+            ],
+            "enum": ["user", "system", "assistant"],
+            "default": "user"
+          },
+          "addToExisting": {
+            "type": "boolean",
+            "label": "Add to Existing Message",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, adds prefix to existing message. If false, creates new message with prefix"
+              }
+            ],
+            "default": true
+          },
+          "onlyIfEmpty": {
+            "type": "boolean",
+            "label": "Only Apply If Role Empty",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Only apply prefix if no message exists for the specified role (useful for system messages)"
+              }
+            ],
+            "default": false
+          }
+        },
+        "required": ["prefix"]
       }
     }
   ]

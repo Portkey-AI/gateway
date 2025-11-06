@@ -1,6 +1,6 @@
 import { GOOGLE_VERTEX_AI } from '../../globals';
-import { generateInvalidProviderResponseError } from '../utils';
 import { GoogleBatchRecord, GoogleErrorResponse } from './types';
+import { generateInvalidProviderResponseError } from '../utils';
 import { GoogleToOpenAIBatch } from './utils';
 
 type GoogleListBatchesResponse = {

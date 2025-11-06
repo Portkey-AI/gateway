@@ -11,8 +11,13 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     const { resourceName } = providerOptions;
     return `https://${resourceName}.openai.azure.com/openai`;
   },
-  headers: async ({ c, providerOptions, fn }) => {
-    const { apiKey, azureAuthMode } = providerOptions;
+  headers: async ({ providerOptions, fn, c }) => {
+    const { apiKey, azureAdToken, azureAuthMode } = providerOptions;
+    if (azureAdToken) {
+      return {
+        Authorization: `Bearer ${azureAdToken?.replace('Bearer ', '')}`,
+      };
+    }
 
     if (azureAuthMode === 'entra') {
       const { azureEntraTenantId, azureEntraClientId, azureEntraClientSecret } =
@@ -81,7 +86,8 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     if (
       fn === 'createTranscription' ||
       fn === 'createTranslation' ||
-      fn === 'uploadFile'
+      fn === 'uploadFile' ||
+      fn === 'imageEdit'
     ) {
       headersObj['Content-Type'] = 'multipart/form-data';
     }
@@ -112,7 +118,12 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       }
     }
 
-    const path = gatewayRequestURL.split('/v1')?.[1];
+    const urlObj = new URL(gatewayRequestURL);
+    const pathname = urlObj.pathname.replace('/v1', '');
+    const searchParams = urlObj.searchParams;
+    if (apiVersion) {
+      searchParams.set('api-version', apiVersion);
+    }
 
     switch (mappedFn) {
       case 'complete': {
@@ -127,6 +138,9 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       case 'imageGenerate': {
         return `/deployments/${deploymentId}/images/generations?api-version=${apiVersion}`;
       }
+      case 'imageEdit': {
+        return `/deployments/${deploymentId}/images/edits?api-version=${apiVersion}`;
+      }
       case 'createSpeech': {
         return `/deployments/${deploymentId}/audio/speech?api-version=${apiVersion}`;
       }
@@ -139,32 +153,32 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       case 'realtime': {
         return `/realtime?api-version=${apiVersion}&deployment=${deploymentId}`;
       }
+      case 'createModelResponse': {
+        return `${pathname}?${searchParams.toString()}`;
+      }
+      case 'getModelResponse': {
+        return `${pathname}?${searchParams.toString()}`;
+      }
+      case 'deleteModelResponse': {
+        return `${pathname}?${searchParams.toString()}`;
+      }
+      case 'listResponseInputItems': {
+        return `${pathname}?${searchParams.toString()}`;
+      }
       case 'uploadFile':
-        return `${path}?api-version=${apiVersion}`;
       case 'retrieveFile':
-        return `${path}?api-version=${apiVersion}`;
       case 'listFiles':
-        return `${path}?api-version=${apiVersion}`;
       case 'deleteFile':
-        return `${path}?api-version=${apiVersion}`;
       case 'retrieveFileContent':
-        return `${path}?api-version=${apiVersion}`;
       case 'createFinetune':
-        return `${path}?api-version=${apiVersion}`;
       case 'retrieveFinetune':
-        return `${path}?api-version=${apiVersion}`;
       case 'listFinetunes':
-        return `${path}?api-version=${apiVersion}`;
       case 'cancelFinetune':
-        return `${path}?api-version=${apiVersion}`;
       case 'createBatch':
-        return `${path}?api-version=${apiVersion}`;
       case 'retrieveBatch':
-        return `${path}?api-version=${apiVersion}`;
       case 'cancelBatch':
-        return `${path}?api-version=${apiVersion}`;
       case 'listBatches':
-        return `${path}?api-version=${apiVersion}`;
+        return `${pathname}?api-version=${apiVersion}`;
       default:
         return '';
     }

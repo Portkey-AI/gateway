@@ -1,0 +1,89 @@
+{
+  "id": "panwPrismaAirs",
+  "name": "PANW Prisma AIRS Guardrail",
+  "description": "Palo Alto Networks Prisma AI Runtime Security provides real-time scanning for prompt injections, malicious content, PII leakage, and policy violations. Blocks requests or responses when action=block is returned.",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "AIRS_API_KEY": {
+        "type": "string",
+        "label": "AIRS API Key",
+        "description": "API key for Palo Alto Networks Prisma AI Runtime Security. Find your API key in Strata Cloud Manager.",
+        "encrypted": true
+      }
+    },
+    "required": ["AIRS_API_KEY"]
+  },
+  "functions": [
+    {
+      "id": "intercept",
+      "name": "PANW Prisma AIRS Guardrail",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Scan prompts and responses for security threats using Prisma AIRS profiles linked to your API key."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "profile_name": {
+            "type": "string",
+            "label": "Profile Name",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "AI security profile name from Prisma AIRS. Leave empty to use the profile linked to your API key in Strata Cloud Manager."
+              }
+            ]
+          },
+          "profile_id": {
+            "type": "string",
+            "label": "Profile ID",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "AI security profile ID. Can be used instead of or in addition to profile_name."
+              }
+            ]
+          },
+          "ai_model": {
+            "type": "string",
+            "label": "AI Model",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "The AI model being used (e.g., gpt-4, claude-3-5-sonnet). Used for tracking and reporting."
+              }
+            ],
+            "default": "unknown-model"
+          },
+          "app_user": {
+            "type": "string",
+            "label": "Application User",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "User identifier for tracking purposes. Useful for audit logs and user-level analytics."
+              }
+            ],
+            "default": "portkey-gateway"
+          },
+          "app_name": {
+            "type": "string",
+            "label": "Application Name",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Custom application name for tracking. Will be prefixed with 'Portkey-' (e.g., 'Portkey-chatbot')."
+              }
+            ]
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}

@@ -17,7 +17,8 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
     if (
       fn === 'createTranscription' ||
       fn === 'createTranslation' ||
-      fn === 'uploadFile'
+      fn === 'uploadFile' ||
+      fn === 'imageEdit'
     )
       headersObj['Content-Type'] = 'multipart/form-data';
 
@@ -38,6 +39,8 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
         return '/embeddings';
       case 'imageGenerate':
         return '/images/generations';
+      case 'imageEdit':
+        return '/images/edits';
       case 'createSpeech':
         return '/audio/speech';
       case 'createTranscription':
@@ -71,6 +74,14 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
       case 'cancelBatch':
         return basePath;
       case 'listBatches':
+        return basePath;
+      case 'createModelResponse':
+        return basePath;
+      case 'getModelResponse':
+        return basePath;
+      case 'deleteModelResponse':
+        return basePath;
+      case 'listResponseInputItems':
         return basePath;
       default:
         return '';

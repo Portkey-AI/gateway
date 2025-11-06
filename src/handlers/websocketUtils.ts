@@ -16,16 +16,27 @@ export const addListeners = (
       const parsedData = JSON.parse(event.data as string);
       eventParser.handleEvent(c, parsedData, sessionOptions);
     } catch (err) {
-      console.log('outgoingWebSocket message parse error', event);
+      console.error('outgoingWebSocket message parse error: ', event);
     }
   });
 
+  const errorListener = (event: ErrorEvent) => {
+    console.error('outgoingWebSocket error: ', event);
+    server?.close();
+  };
+
   outgoingWebSocket.addEventListener('close', (event) => {
+    // 1005 is a normal close event.
+    server.removeEventListener('error', errorListener);
+    if (event.code === 1005) {
+      server?.close();
+      return;
+    }
     server?.close(event.code, event.reason);
   });
 
   outgoingWebSocket.addEventListener('error', (event) => {
-    console.log('outgoingWebSocket error', event);
+    console.error('outgoingWebSocket error: ', event);
     server?.close();
   });
 
@@ -37,10 +48,7 @@ export const addListeners = (
     outgoingWebSocket?.close();
   });
 
-  server.addEventListener('error', (event) => {
-    console.log('serverWebSocket error', event);
-    outgoingWebSocket?.close();
-  });
+  server.addEventListener('error', errorListener);
 };
 
 export const getOptionsForOutgoingConnection = async (

@@ -1,0 +1,145 @@
+{
+  "name": "azure-ai",
+  "version": "1.0.0",
+  "description": "Azure AI Content Safety and PII Detection plugins for content moderation",
+  "author": "Portkey AI",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "pii": {
+        "$ref": "#/definitions/credentials"
+      },
+      "contentSafety": {
+        "$ref": "#/definitions/credentials"
+      }
+    }
+  },
+  "functions": [
+    {
+      "name": "Content Safety",
+      "id": "contentSafety",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "parameters": {
+        "contentSafety": {
+          "blocklistNames": {
+            "type": "array",
+            "description": "Array of blocklist names to check against",
+            "default": []
+          },
+          "timeout": {
+            "type": "number",
+            "description": "Timeout in milliseconds for the API request",
+            "default": 5000
+          },
+          "apiVersion": {
+            "type": "string",
+            "description": "API version for the Content Safety API",
+            "default": "2024-11-01"
+          },
+          "severity": {
+            "type": "number",
+            "description": "Severity threshold for the Content Safety API",
+            "default": 2
+          },
+          "categories": {
+            "type": "array",
+            "description": "Categories to check against",
+            "default": ["Hate", "SelfHarm", "Sexual", "Violence"],
+            "enum": ["Hate", "SelfHarm", "Sexual", "Violence"]
+          }
+        }
+      }
+    },
+    {
+      "name": "PII Detection",
+      "id": "pii",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "Domain for PII detection ('none' or 'healthcare')",
+            "default": "none"
+          },
+          "modelVersion": {
+            "type": "string",
+            "description": "Version of the PII detection model to use",
+            "default": "latest"
+          },
+          "apiVersion": {
+            "type": "string",
+            "description": "API version for the Content Safety API",
+            "default": "2024-11-01"
+          },
+          "timeout": {
+            "type": "number",
+            "description": "Timeout in milliseconds for the API request",
+            "default": 5000
+          },
+          "redact": {
+            "type": "boolean",
+            "description": "Whether to redact the PII detected",
+            "default": false
+          },
+          "language": {
+            "type": "string",
+            "description": "Language for PII detection",
+            "default": "en"
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "credentials": {
+      "type": "object",
+      "properties": {
+        "azureAuthMode": {
+          "type": "string",
+          "description": "Authentication mode for Azure AI services",
+          "default": "apiKey",
+          "enum": ["apiKey", "entra", "managed"]
+        },
+        "resourceName": {
+          "type": "string",
+          "description": "Azure Cognitive Services resource name (e.g., https://<your-resource-name>.cognitiveservices.azure.com)",
+          "required": true
+        },
+        "apiKey": {
+          "type": "string",
+          "description": "Azure API key"
+        },
+        "clientId": {
+          "type": "string",
+          "description": "Client ID for Azure Entra ID or Managed Identity authentication"
+        },
+        "clientSecret": {
+          "type": "string",
+          "description": "Client Secret for Azure Entra ID authentication"
+        },
+        "tenantId": {
+          "type": "string",
+          "description": "Tenant ID for Azure Entra ID authentication"
+        },
+        "customHost": {
+          "type": "string",
+          "description": "Custom host for Azure AI services (Private Link etc.)"
+        }
+      },
+      "anyOf": [
+        {
+          "required": ["apiKey", "azureAuthMode"]
+        },
+        {
+          "required": ["clientId", "clientSecret", "tenantId", "azureAuthMode"]
+        },
+        {
+          "required": ["clientId", "azureAuthMode"]
+        }
+      ]
+    }
+  }
+}

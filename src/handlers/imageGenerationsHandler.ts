@@ -31,7 +31,7 @@ export async function imageGenerationsHandler(c: Context): Promise<Response> {
 
     return tryTargetsResponse;
   } catch (err: any) {
-    console.log('imageGenerate error', err.message);
+    console.error('imageGenerate error: ', err);
     let statusCode = 500;
     let errorMessage = 'Something went wrong';
 

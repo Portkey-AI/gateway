@@ -48,13 +48,6 @@ export const AzureOpenAIChatCompleteConfig: ProviderConfig = {
     param: 'n',
     default: 1,
   },
-  logprobs: {
-    param: 'logprobs',
-    default: false,
-  },
-  top_logprobs: {
-    param: 'top_logprobs',
-  },
   stream: {
     param: 'stream',
     default: false,
@@ -110,6 +103,25 @@ export const AzureOpenAIChatCompleteConfig: ProviderConfig = {
   },
   stream_options: {
     param: 'stream_options',
+  },
+  logprobs: {
+    param: 'logprobs',
+    default: false,
+  },
+  top_logprobs: {
+    param: 'top_logprobs',
+  },
+  web_search_options: {
+    param: 'web_search_options',
+  },
+  prompt_cache_key: {
+    param: 'prompt_cache_key',
+  },
+  safety_identifier: {
+    param: 'safety_identifier',
+  },
+  verbosity: {
+    param: 'verbosity',
   },
 };
 

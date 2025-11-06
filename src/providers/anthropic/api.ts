@@ -29,6 +29,10 @@ const AnthropicAPIConfig: ProviderAPIConfig = {
         return '/complete';
       case 'chatComplete':
         return '/messages';
+      case 'messages':
+        return '/messages';
+      case 'messagesCountTokens':
+        return '/messages/count_tokens';
       default:
         return '';
     }

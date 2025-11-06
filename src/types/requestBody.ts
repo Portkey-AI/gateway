@@ -1,17 +1,20 @@
+import { BatchEndpoints } from '../globals';
 import { HookObject } from '../middlewares/hooks/types';
 
 /**
  * Settings for retrying requests.
  * @interface
  */
-interface RetrySettings {
+export interface RetrySettings {
   /** The maximum number of retry attempts. */
   attempts: number;
   /** The HTTP status codes on which to retry. */
   onStatusCodes: number[];
+  /** Whether to use the provider's retry wait. */
+  useRetryAfterHeader?: boolean;
 }
 
-interface CacheSettings {
+export interface CacheSettings {
   mode: string;
   maxAge?: number;
 }
@@ -41,7 +44,7 @@ interface Strategy {
  */
 export interface Options {
   /** The name of the provider. */
-  provider: string | undefined;
+  provider: string;
   /** The name of the API key for the provider. */
   virtualKey?: string;
   /** The API key for the provider. */
@@ -91,6 +94,10 @@ export interface Options {
   awsS3Bucket?: string;
   awsS3ObjectKey?: string;
   awsBedrockModel?: string;
+  awsServerSideEncryption?: string;
+  awsServerSideEncryptionKMSKeyId?: string;
+  awsService?: string;
+  foundationModel?: string;
 
   /** Sagemaker specific */
   amznSagemakerCustomAttributes?: string;
@@ -117,35 +124,47 @@ export interface Options {
   vertexServiceAccountJson?: Record<string, any>;
   vertexStorageBucketName?: string;
   vertexModelName?: string;
+  vertexBatchEndpoint?: BatchEndpoints;
 
   // Required for file uploads with google.
   filename?: string;
 
   afterRequestHooks?: HookObject[];
   beforeRequestHooks?: HookObject[];
+  defaultInputGuardrails?: HookObject[];
+  defaultOutputGuardrails?: HookObject[];
   /** OpenAI specific */
   openaiProject?: string;
   openaiOrganization?: string;
   openaiBeta?: string;
-
   /** Azure Inference Specific */
-  azureRegion?: string;
-  azureDeploymentName?: string;
-  azureDeploymentType?: 'managed' | 'serverless';
-  azureEndpointName?: string;
   azureApiVersion?: string;
-  azureExtraParams?: string;
+  azureFoundryUrl?: string;
+  azureExtraParameters?: string;
+  azureDeploymentName?: string;
 
   /** The parameter to determine if extra non-openai compliant fields should be returned in response */
   strictOpenAiCompliance?: boolean;
+
   /** Parameter to determine if fim/completions endpoint is to be used */
-  mistralFimCompletion?: String;
+  mistralFimCompletion?: string;
+
   /** Anthropic specific headers */
   anthropicBeta?: string;
   anthropicVersion?: string;
 
   /** Fireworks finetune required fields */
   fireworksAccountId?: string;
+  fireworksFileLength?: string;
+
+  /** Cortex specific fields */
+  snowflakeAccount?: string;
+
+  /** Azure entra scope */
+  azureEntraScope?: string;
+
+  /** Model pricing config */
+  modelPricingConfig?: Record<string, any>;
 }
 
 /**
@@ -187,6 +206,10 @@ export interface Targets {
 
   /** This is used to determine if the request should be transformed to formData Example: Stability V2 */
   transformToFormData?: boolean;
+
+  defaultInputGuardrails?: HookObject[];
+  defaultOutputGuardrails?: HookObject[];
+  originalIndex?: number;
 }
 
 /**
@@ -206,15 +229,31 @@ export interface Config {
 }
 
 /**
+ * TODO: make this a union type
  * A message content type.
  * @interface
  */
-export interface ContentType {
+export interface ContentType extends PromptCache {
   type: string;
   text?: string;
+  thinking?: string;
+  signature?: string;
   image_url?: {
     url: string;
     detail?: string;
+    mime_type?: string;
+  };
+  data?: string;
+  file?: {
+    file_data?: string;
+    file_id?: string;
+    file_name?: string;
+    file_url?: string;
+    mime_type?: string;
+  };
+  input_audio?: {
+    data: string;
+    format: 'mp3' | 'wav' | string; //defaults to auto
   };
 }
 
@@ -224,6 +263,7 @@ export interface ToolCall {
   function: {
     name: string;
     arguments: string;
+    description?: string;
   };
 }
 
@@ -246,6 +286,11 @@ export type OpenAIMessageRole =
   | 'tool'
   | 'developer';
 
+export interface ContentBlockChunk extends Omit<ContentType, 'type'> {
+  index: number;
+  type?: string;
+}
+
 /**
  * A message in the conversation.
  * @interface
@@ -255,6 +300,8 @@ export interface Message {
   role: OpenAIMessageRole;
   /** The content of the message. */
   content?: string | ContentType[];
+  /** The content blocks of the message. */
+  content_blocks?: ContentType[];
   /** The name of the function to call, if any. */
   name?: string;
   /** The function call to make, if any. */
@@ -264,7 +311,7 @@ export interface Message {
   citationMetadata?: CitationMetadata;
 }
 
-export interface AnthropicPromptCache {
+export interface PromptCache {
   cache_control?: { type: 'ephemeral' };
 }
 
@@ -319,11 +366,13 @@ export type ToolChoice = ToolChoiceObject | 'none' | 'auto' | 'required';
  *
  * @interface
  */
-export interface Tool extends AnthropicPromptCache {
+export interface Tool extends PromptCache {
   /** The name of the function. */
   type: string;
   /** A description of the function. */
   function: Function;
+  // this is used to support tools like computer, web_search, etc.
+  [key: string]: any;
 }
 
 /**
@@ -383,6 +432,14 @@ export interface Params {
   // Anthropic specific
   anthropic_beta?: string;
   anthropic_version?: string;
+  thinking?: {
+    type?: string;
+    budget_tokens: number;
+  };
+  // Embeddings specific
+  dimensions?: number;
+  parameters?: any;
+  [key: string]: any;
 }
 
 interface Examples {

@@ -1,0 +1,19 @@
+{
+  "azure": {
+    "apiKey": "YOUR_AZURE_API_KEY"
+  },
+  "aws": {
+    "accessKeyId": "YOUR_AWS_ACCESS_KEY_ID",
+    "secretAccessKey": "YOUR_AWS_SECRET_ACCESS_KEY",
+    "region": "YOUR_AWS_REGION"
+  },
+  "openai": {
+    "apiKey": "YOUR_OPENAI_API_KEY"
+  },
+  "anthropic": {
+    "apiKey": "YOUR_ANTHROPIC_API_KEY"
+  },
+  "portkey": {
+    "apiKey": "YOUR_PORTKEY_API_KEY"
+  }
+}

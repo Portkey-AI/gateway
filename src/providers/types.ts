@@ -1,5 +1,16 @@
 import { Context } from 'hono';
 import { Message, Options, Params } from '../types/requestBody';
+import { ANTHROPIC_STOP_REASON } from './anthropic/types';
+import {
+  BEDROCK_CONVERSE_STOP_REASON,
+  TITAN_STOP_REASON,
+} from './bedrock/types';
+import { VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON } from './google-vertex-ai/types';
+import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from './google/types';
+import { DEEPSEEK_STOP_REASON } from './deepseek/types';
+import { MISTRAL_AI_FINISH_REASON } from './mistral-ai/types';
+import { TOGETHER_AI_FINISH_REASON } from './together-ai/types';
+import { COHERE_STOP_REASON } from './cohere/types';
 
 /**
  * Configuration for a parameter.
@@ -50,6 +61,7 @@ export interface ProviderAPIConfig {
     requestHeaders?: Record<string, string>;
     c: Context;
     gatewayRequestURL: string;
+    params?: Params;
   }) => Promise<string> | string;
   /** A function to generate the endpoint based on parameters */
   getEndpoint: (args: {
@@ -77,8 +89,10 @@ export type endpointStrings =
   | 'moderate'
   | 'stream-complete'
   | 'stream-chatComplete'
+  | 'stream-messages'
   | 'proxy'
   | 'imageGenerate'
+  | 'imageEdit'
   | 'createSpeech'
   | 'createTranscription'
   | 'createTranslation'
@@ -96,7 +110,13 @@ export type endpointStrings =
   | 'listFinetunes'
   | 'createFinetune'
   | 'retrieveFinetune'
-  | 'cancelFinetune';
+  | 'cancelFinetune'
+  | 'createModelResponse'
+  | 'getModelResponse'
+  | 'deleteModelResponse'
+  | 'listResponseInputItems'
+  | 'messages'
+  | 'messagesCountTokens';
 
 /**
  * A collection of API configurations for multiple AI providers.
@@ -129,6 +149,13 @@ export interface ProviderConfigs {
   /** The configuration for each provider, indexed by provider name. */
   [key: string]: any;
   requestHandlers?: RequestHandlers;
+  getConfig?: ({
+    params,
+    providerOptions,
+  }: {
+    params: Params;
+    providerOptions: Options;
+  }) => any;
 }
 
 export interface BaseResponse {
@@ -147,11 +174,22 @@ export interface CResponse extends BaseResponse {
     prompt_tokens: number;
     completion_tokens: number;
     total_tokens: number;
+    completion_tokens_details?: {
+      accepted_prediction_tokens?: number;
+      audio_tokens?: number;
+      reasoning_tokens?: number;
+      rejected_prediction_tokens?: number;
+    };
+    prompt_tokens_details?: {
+      audio_tokens?: number;
+      cached_tokens?: number;
+    };
     /*
      * Anthropic Prompt cache token usage
      */
     cache_read_input_tokens?: number;
     cache_creation_input_tokens?: number;
+    num_search_queries?: number;
   };
 }
 
@@ -168,6 +206,25 @@ export interface CompletionResponse extends CResponse {
   }[];
 }
 
+export interface GroundingMetadata {
+  webSearchQueries?: string[];
+  searchEntryPoint?: {
+    renderedContent: string;
+  };
+  groundingSupports?: Array<{
+    segment: {
+      startIndex: number;
+      endIndex: number;
+      text: string;
+    };
+    groundingChunkIndices: number[];
+    confidenceScores: number[];
+  }>;
+  retrievalMetadata?: {
+    webDynamicRetrievalScore: number;
+  };
+}
+
 /**
  * The structure of a choice in a chat completion response.
  * @interface
@@ -177,6 +234,7 @@ export interface ChatChoice {
   message: Message;
   finish_reason: string;
   logprobs?: object | null;
+  groundingMetadata?: GroundingMetadata;
 }
 
 export interface Logprobs {
@@ -197,6 +255,7 @@ export interface Logprobs {
 export interface ChatCompletionResponse extends CResponse {
   choices: ChatChoice[];
   provider?: string;
+  citations?: string[];
 }
 
 /**
@@ -363,3 +422,32 @@ export interface CreateBatchRequest {
   endpoint: string;
   completion_window: string;
 }
+
+export interface StreamContentBlock {
+  index: number;
+  delta: {
+    text?: string;
+    thinking?: string;
+    signature?: string;
+    data?: string;
+  };
+}
+
+export enum FINISH_REASON {
+  stop = 'stop',
+  length = 'length',
+  tool_calls = 'tool_calls',
+  content_filter = 'content_filter',
+  function_call = 'function_call',
+}
+
+export type PROVIDER_FINISH_REASON =
+  | ANTHROPIC_STOP_REASON
+  | BEDROCK_CONVERSE_STOP_REASON
+  | VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON
+  | GOOGLE_GENERATE_CONTENT_FINISH_REASON
+  | TITAN_STOP_REASON
+  | DEEPSEEK_STOP_REASON
+  | MISTRAL_AI_FINISH_REASON
+  | TOGETHER_AI_FINISH_REASON
+  | COHERE_STOP_REASON;

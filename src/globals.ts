@@ -2,7 +2,16 @@ import { endpointStrings } from './providers/types';
 
 export const POWERED_BY: string = 'portkey';
 
+export const MAX_RETRY_LIMIT_MS = 60 * 1000; // 60 seconds
+
+export const POSSIBLE_RETRY_STATUS_HEADERS = [
+  'retry-after-ms',
+  'x-ms-retry-after-ms',
+  'retry-after',
+];
+
 export const HEADER_KEYS: Record<string, string> = {
+  API_KEY: `x-${POWERED_BY}-api-key`,
   MODE: `x-${POWERED_BY}-mode`,
   RETRIES: `x-${POWERED_BY}-retry-count`,
   PROVIDER: `x-${POWERED_BY}-provider`,
@@ -15,6 +24,7 @@ export const HEADER_KEYS: Record<string, string> = {
   REQUEST_TIMEOUT: `x-${POWERED_BY}-request-timeout`,
   STRICT_OPEN_AI_COMPLIANCE: `x-${POWERED_BY}-strict-open-ai-compliance`,
   CONTENT_TYPE: `Content-Type`,
+  VIRTUAL_KEY: `x-${POWERED_BY}-virtual-key`,
 };
 
 export const RESPONSE_HEADER_KEYS: Record<string, string> = {
@@ -45,6 +55,7 @@ export const PERPLEXITY_AI: string = 'perplexity-ai';
 export const REKA_AI: string = 'reka-ai';
 export const MISTRAL_AI: string = 'mistral-ai';
 export const DEEPINFRA: string = 'deepinfra';
+export const NCOMPASS: string = 'ncompass';
 export const STABILITY_AI: string = 'stability-ai';
 export const NOMIC: string = 'nomic';
 export const OLLAMA: string = 'ollama';
@@ -76,11 +87,26 @@ export const UPSTAGE: string = 'upstage';
 export const LAMBDA: string = 'lambda';
 export const DASHSCOPE: string = 'dashscope';
 export const X_AI: string = 'x-ai';
+export const CORTEX: string = 'cortex';
 export const SAGEMAKER: string = 'sagemaker';
 export const NEBIUS: string = 'nebius';
 export const RECRAFTAI: string = 'recraft-ai';
 export const MILVUS: string = 'milvus';
 export const REPLICATE: string = 'replicate';
+export const LEPTON: string = 'lepton';
+export const KLUSTER_AI: string = 'kluster-ai';
+export const NSCALE: string = 'nscale';
+export const HYPERBOLIC: string = 'hyperbolic';
+export const BYTEZ: string = 'bytez';
+export const FEATHERLESS_AI: string = 'featherless-ai';
+export const KRUTRIM: string = 'krutrim';
+export const QDRANT: string = 'qdrant';
+export const THREE_ZERO_TWO_AI: string = '302ai';
+export const COMETAPI: string = 'cometapi';
+export const MATTERAI: string = 'matterai';
+export const MESHY: string = 'meshy';
+export const TRIPO3D: string = 'tripo3d';
+export const NEXTBIT: string = 'nextbit';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -96,6 +122,7 @@ export const VALID_PROVIDERS = [
   REKA_AI,
   TOGETHER_AI,
   DEEPINFRA,
+  NCOMPASS,
   STABILITY_AI,
   NOMIC,
   OLLAMA,
@@ -129,12 +156,27 @@ export const VALID_PROVIDERS = [
   LAMBDA,
   DASHSCOPE,
   X_AI,
+  CORTEX,
   SAGEMAKER,
   NEBIUS,
   RECRAFTAI,
   MILVUS,
   REPLICATE,
   POWERED_BY,
+  LEPTON,
+  KLUSTER_AI,
+  NSCALE,
+  HYPERBOLIC,
+  BYTEZ,
+  FEATHERLESS_AI,
+  KRUTRIM,
+  QDRANT,
+  THREE_ZERO_TWO_AI,
+  COMETAPI,
+  MATTERAI,
+  MESHY,
+  TRIPO3D,
+  NEXTBIT,
 ];
 
 export const CONTENT_TYPES = {
@@ -183,6 +225,8 @@ export const fileExtensionMimeTypeMap = {
   mpegps: 'video/mpegps',
   flv: 'video/flv',
   webm: 'video/webm',
+  mkv: 'video/mkv',
+  threegpp: 'video/three_gpp',
 };
 
 export const imagesMimeTypes = [
@@ -205,3 +249,35 @@ export const documentMimeTypes = [
   fileExtensionMimeTypeMap.md,
   fileExtensionMimeTypeMap.txt,
 ];
+
+export const videoMimeTypes = [
+  fileExtensionMimeTypeMap.mkv,
+  fileExtensionMimeTypeMap.mov,
+  fileExtensionMimeTypeMap.mp4,
+  fileExtensionMimeTypeMap.webm,
+  fileExtensionMimeTypeMap.flv,
+  fileExtensionMimeTypeMap.mpeg,
+  fileExtensionMimeTypeMap.mpg,
+  fileExtensionMimeTypeMap.wmv,
+  fileExtensionMimeTypeMap.threegpp,
+  fileExtensionMimeTypeMap.avi,
+];
+
+export enum BatchEndpoints {
+  CHAT_COMPLETIONS = '/v1/chat/completions',
+  COMPLETIONS = '/v1/completions',
+  EMBEDDINGS = '/v1/embeddings',
+}
+
+export const AtomicOperations = {
+  GET: 'GET',
+  RESET: 'RESET',
+  INCREMENT: 'INCREMENT',
+  DECREMENT: 'DECREMENT',
+};
+
+export enum RateLimiterKeyTypes {
+  VIRTUAL_KEY = 'VIRTUAL_KEY',
+  API_KEY = 'API_KEY',
+  INTEGRATION_WORKSPACE = 'INTEGRATION_WORKSPACE',
+}
