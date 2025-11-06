@@ -1,4 +1,5 @@
-import { HookEventType, PluginContext } from './types';
+import { getRuntimeKey } from 'hono/adapter';
+import { HookEventType, PluginContext, PluginOptions } from './types';
 
 interface PostOptions extends RequestInit {
   headers?: Record<string, string>;
@@ -373,3 +374,36 @@ export async function postWithCloudflareServiceBinding<T = any>(
     throw error;
   }
 }
+
+export const putInKV = async (key: string, value: any, ttl: number) => {};
+
+export const getFromKV = async (key: string) => {};
+
+const runtime = getRuntimeKey();
+
+export const getCacheUtils = (options?: PluginOptions) => {
+  if (runtime === 'workerd') {
+    return {
+      putInKV: async (key: string, value: any, ttl: number) => {
+        await options?.putInCacheWithValue?.(
+          options?.env || {},
+          key,
+          value,
+          ttl
+        );
+        return;
+      },
+      getFromKV: async (key: string) => {
+        const resp = await options?.getFromCacheByKey?.(
+          options?.env || {},
+          key
+        );
+        return resp;
+      },
+    };
+  }
+  return {
+    putInKV: putInKV,
+    getFromKV: getFromKV,
+  };
+};
