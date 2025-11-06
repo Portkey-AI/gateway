@@ -682,6 +682,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           {
             delta: {
               content: '',
+              role: 'assistant',
             },
             index: 0,
             logprobs: null,
