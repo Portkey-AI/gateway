@@ -95,13 +95,13 @@ export async function getAzureWorkloadIdentityToken(
 
     if (!response.ok) {
       const errorMessage = await response.text();
-      console.log({ message: `Error from Entra ${errorMessage}` });
+      console.error({ message: `Error from Entra ${errorMessage}` });
       return undefined;
     }
     const data: { access_token: string } = await response.json();
     return data.access_token;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
 
