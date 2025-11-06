@@ -8,6 +8,7 @@ import { Environment } from '../../src/utils/env';
 import { getRuntimeKey } from 'hono/adapter';
 import { getContext } from 'hono/context-storage';
 import { PluginOptions } from '../types';
+import { logger } from '../../src/apm';
 
 const runtime = getRuntimeKey();
 
@@ -261,7 +262,7 @@ async function assumeRoleWithWebIdentity(
 
   if (!response.ok) {
     const errorMessage = await response.text();
-    console.error({ message: `STS error ${errorMessage}` });
+    logger.error({ message: `STS error ${errorMessage}` });
     throw new Error(`STS request failed: ${response.status}`);
   }
 
@@ -332,7 +333,7 @@ async function getAssumedWebIdentityCredentials(
         return merged;
       }
     } catch (error) {
-      console.error({
+      logger.error({
         message: `Error from getAssumedWebIdentityCredentials: ${error}`,
       });
     }
@@ -382,7 +383,7 @@ async function getPodIdentityCredentials(
         return result;
       }
     } catch (error) {
-      console.error('Failed to get Pod Identity credentials:', error);
+      logger.error('Failed to get Pod Identity credentials:', error);
       return null;
     }
   }
@@ -408,7 +409,7 @@ async function getCredentialsFromECSContainer(options?: PluginOptions) {
     });
     if (!response.ok) {
       const error = await response.text();
-      console.error({ message: `Failed to get FromECSContainer: ${error}` });
+      logger.error({ message: `Failed to get FromECSContainer: ${error}` });
       return;
     }
     const credentials: any = await response.json();
@@ -458,7 +459,7 @@ async function getIMDSv2Token() {
 
   if (!response.ok) {
     const error = await response.text();
-    console.error({ message: `Failed to get IMDSv2 token: ${error}` });
+    logger.error({ message: `Failed to get IMDSv2 token: ${error}` });
     throw new Error(error);
   }
   const imdsv2Token = await response.text();
@@ -518,7 +519,7 @@ async function getIMDSRoleCredentials(awsRoleArn?: string, token?: string) {
   );
   if (!response.ok) {
     const error = await response.text();
-    console.error({ message: `Failed to get credentials: ${error}` });
+    logger.error({ message: `Failed to get credentials: ${error}` });
     throw new Error(error);
   }
 
@@ -748,7 +749,7 @@ async function getSTSAssumedCredentials(
 
     if (!response.ok) {
       const resp = await response.text();
-      console.error({ message: resp });
+      logger.error({ message: resp });
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
@@ -798,7 +799,7 @@ export async function getAssumedRoleCredentials(
         try {
           credentials = await getIRSACredentials(awsRegion, options);
         } catch (error) {
-          console.error(error);
+          logger.error(error);
         }
       }
 
@@ -806,7 +807,7 @@ export async function getAssumedRoleCredentials(
         try {
           credentials = await getPodIdentityCredentials(awsRegion);
         } catch (error) {
-          console.log(error);
+          logger.log(error);
         }
       }
 
@@ -814,7 +815,7 @@ export async function getAssumedRoleCredentials(
         try {
           credentials = await getCredentialsFromECSContainer(options);
         } catch (error) {
-          console.error(error);
+          logger.error(error);
         }
       }
 
@@ -822,7 +823,7 @@ export async function getAssumedRoleCredentials(
         try {
           credentials = await getIMDSAssumedCredentials(options);
         } catch (error) {
-          console.error(error);
+          logger.error(error);
         }
       }
       if (!awsRoleArn || credentials?.awsRoleArn === awsRoleArn) {
