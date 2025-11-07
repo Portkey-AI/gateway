@@ -102,6 +102,8 @@ export const FEATHERLESS_AI: string = 'featherless-ai';
 export const KRUTRIM: string = 'krutrim';
 export const QDRANT: string = 'qdrant';
 export const THREE_ZERO_TWO_AI: string = '302ai';
+export const COMETAPI: string = 'cometapi';
+export const MATTERAI: string = 'matterai';
 export const MESHY: string = 'meshy';
 export const TRIPO3D: string = 'tripo3d';
 export const NEXTBIT: string = 'nextbit';
@@ -170,6 +172,8 @@ export const VALID_PROVIDERS = [
   KRUTRIM,
   QDRANT,
   THREE_ZERO_TWO_AI,
+  COMETAPI,
+  MATTERAI,
   MESHY,
   TRIPO3D,
   NEXTBIT,
@@ -263,4 +267,17 @@ export enum BatchEndpoints {
   CHAT_COMPLETIONS = '/v1/chat/completions',
   COMPLETIONS = '/v1/completions',
   EMBEDDINGS = '/v1/embeddings',
+}
+
+export const AtomicOperations = {
+  GET: 'GET',
+  RESET: 'RESET',
+  INCREMENT: 'INCREMENT',
+  DECREMENT: 'DECREMENT',
+};
+
+export enum RateLimiterKeyTypes {
+  VIRTUAL_KEY = 'VIRTUAL_KEY',
+  API_KEY = 'API_KEY',
+  INTEGRATION_WORKSPACE = 'INTEGRATION_WORKSPACE',
 }

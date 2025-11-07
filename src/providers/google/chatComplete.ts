@@ -13,8 +13,11 @@ import { buildGoogleSearchRetrievalTool } from '../google-vertex-ai/chatComplete
 import { VERTEX_MODALITY } from '../google-vertex-ai/types';
 import {
   getMimeType,
+  googleTools,
   recursivelyDeleteUnsupportedParameters,
   transformGeminiToolParameters,
+  transformGoogleTools,
+  transformInputAudioPart,
   transformVertexLogprobs,
 } from '../google-vertex-ai/utils';
 import {
@@ -108,7 +111,7 @@ interface GoogleFunctionResponseMessagePart {
     name: string;
     response: {
       name?: string;
-      content: string;
+      content: string | ContentType[];
     };
   };
 }
@@ -202,15 +205,12 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                 },
               });
             });
-          } else if (
-            message.role === 'tool' &&
-            typeof message.content === 'string'
-          ) {
+          } else if (message.role === 'tool') {
             parts.push({
               functionResponse: {
                 name: message.name ?? 'gateway-tool-filler-name',
                 response: {
-                  content: message.content,
+                  output: message.content,
                 },
               },
             });
@@ -220,8 +220,9 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                 parts.push({
                   text: c.text,
                 });
-              }
-              if (c.type === 'image_url') {
+              } else if (c.type === 'input_audio') {
+                parts.push(transformInputAudioPart(c));
+              } else if (c.type === 'image_url') {
                 const { url, mime_type: passedMimeType } = c.image_url || {};
                 if (!url) return;
 
@@ -373,15 +374,8 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
           // these are not supported by google
           recursivelyDeleteUnsupportedParameters(tool.function?.parameters);
           delete tool.function?.strict;
-
-          if (['googleSearch', 'google_search'].includes(tool.function.name)) {
-            tools.push({ googleSearch: {} });
-          } else if (
-            ['googleSearchRetrieval', 'google_search_retrieval'].includes(
-              tool.function.name
-            )
-          ) {
-            tools.push(buildGoogleSearchRetrievalTool(tool));
+          if (googleTools.includes(tool.function.name)) {
+            tools.push(...transformGoogleTools(tool));
           } else {
             if (tool.function?.parameters) {
               tool.function.parameters = transformGeminiToolParameters(

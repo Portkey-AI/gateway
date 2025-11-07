@@ -16,12 +16,11 @@ export const AzureOpenAIEmbedConfig: ProviderConfig = {
   user: {
     param: 'user',
   },
-  encoding_format: {
-    param: 'encoding_format',
-    required: false,
-  },
   dimensions: {
     param: 'dimensions',
+  },
+  encoding_format: {
+    param: 'encoding_format',
   },
 };
 

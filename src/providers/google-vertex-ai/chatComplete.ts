@@ -6,7 +6,6 @@ import {
   ContentType,
   Message,
   Params,
-  Tool,
   ToolCall,
   SYSTEM_MESSAGE_ROLES,
   MESSAGE_ROLES,
@@ -17,8 +16,8 @@ import {
   AnthropicChatCompleteStreamResponse,
 } from '../anthropic/chatComplete';
 import {
-  AnthropicErrorResponse,
   AnthropicStreamState,
+  AnthropicErrorResponse,
 } from '../anthropic/types';
 import {
   GoogleMessage,
@@ -28,6 +27,7 @@ import {
   transformOpenAIRoleToGoogleRole,
   transformToolChoiceForGemini,
 } from '../google/chatComplete';
+import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from '../google/types';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -41,30 +41,21 @@ import {
 } from '../utils';
 import { transformGenerationConfig } from './transformGenerationConfig';
 import {
-  type GoogleErrorResponse,
-  type GoogleGenerateContentResponse,
-  type VertexLlamaChatCompleteStreamChunk,
-  type VertexLLamaChatCompleteResponse,
-  type GoogleSearchRetrievalTool,
+  GoogleErrorResponse,
+  GoogleGenerateContentResponse,
+  VertexLlamaChatCompleteStreamChunk,
+  VertexLLamaChatCompleteResponse,
+  GoogleSearchRetrievalTool,
   VERTEX_MODALITY,
 } from './types';
 import {
   getMimeType,
+  googleTools,
   recursivelyDeleteUnsupportedParameters,
-  transformGeminiToolParameters,
+  transformGoogleTools,
+  transformInputAudioPart,
   transformVertexLogprobs,
 } from './utils';
-
-export const buildGoogleSearchRetrievalTool = (tool: Tool) => {
-  const googleSearchRetrievalTool: GoogleSearchRetrievalTool = {
-    googleSearchRetrieval: {},
-  };
-  if (tool.function.parameters?.dynamicRetrievalConfig) {
-    googleSearchRetrievalTool.googleSearchRetrieval.dynamicRetrievalConfig =
-      tool.function.parameters.dynamicRetrievalConfig;
-  }
-  return googleSearchRetrievalTool;
-};
 
 export const VertexGoogleChatCompleteConfig: ProviderConfig = {
   // https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning#gemini-model-versions
@@ -102,15 +93,12 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
                 },
               });
             });
-          } else if (
-            message.role === 'tool' &&
-            typeof message.content === 'string'
-          ) {
+          } else if (message.role === 'tool') {
             parts.push({
               functionResponse: {
                 name: message.name ?? 'gateway-tool-filler-name',
                 response: {
-                  content: message.content,
+                  output: message.content,
                 },
               },
             });
@@ -120,8 +108,9 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
                 parts.push({
                   text: c.text,
                 });
-              }
-              if (c.type === 'image_url') {
+              } else if (c.type === 'input_audio') {
+                parts.push(transformInputAudioPart(c));
+              } else if (c.type === 'image_url') {
                 const { url, mime_type: passedMimeType } = c.image_url || {};
 
                 if (!url) {
@@ -294,21 +283,9 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
           // these are not supported by google
           recursivelyDeleteUnsupportedParameters(tool.function?.parameters);
           delete tool.function?.strict;
-
-          if (['googleSearch', 'google_search'].includes(tool.function.name)) {
-            tools.push({ googleSearch: {} });
-          } else if (
-            ['googleSearchRetrieval', 'google_search_retrieval'].includes(
-              tool.function.name
-            )
-          ) {
-            tools.push(buildGoogleSearchRetrievalTool(tool));
+          if (googleTools.includes(tool.function.name)) {
+            tools.push(...transformGoogleTools(tool));
           } else {
-            if (tool.function?.parameters) {
-              tool.function.parameters = transformGeminiToolParameters(
-                tool.function.parameters
-              );
-            }
             functionDeclarations.push(tool.function);
           }
         }
@@ -351,11 +328,11 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
-  seed: {
+  modalities: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
-  modalities: {
+  seed: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
@@ -528,7 +505,7 @@ export const GoogleChatCompleteResponseTransform: (
             message: message,
             index: index,
             finish_reason: transformFinishReason(
-              generation.finishReason,
+              generation.finishReason as GOOGLE_GENERATE_CONTENT_FINISH_REASON,
               strictOpenAiCompliance
             ),
             logprobs,
@@ -678,11 +655,11 @@ export const GoogleChatCompleteStreamChunkTransform: (
       parsedChunk.candidates?.map((generation, index) => {
         const finishReason = generation.finishReason
           ? transformFinishReason(
-              parsedChunk.candidates[0].finishReason,
+              parsedChunk.candidates[0]
+                .finishReason as GOOGLE_GENERATE_CONTENT_FINISH_REASON,
               strictOpenAiCompliance
             )
           : null;
-
         let message: any = { role: 'assistant', content: '' };
         if (generation.content?.parts[0]?.text) {
           const contentBlocks = [];

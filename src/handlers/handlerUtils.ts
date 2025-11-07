@@ -259,11 +259,14 @@ export function convertHooksShorthand(
     hooksObject = convertKeysToCamelCase(hooksObject);
 
     // Now, add all the checks to the checks array
-    hooksObject.checks = Object.keys(hook).map((key) => ({
-      id: key.includes('.') ? key : `default.${key}`,
-      parameters: hook[key],
-      is_enabled: hook[key].is_enabled,
-    }));
+    hooksObject.checks = Object.keys(hook).map((key) => {
+      const id = hook[key].id ?? key;
+      return {
+        id: id.includes('.') ? id : `default.${id}`,
+        parameters: hook[key],
+        is_enabled: hook[key].is_enabled,
+      };
+    });
 
     return hooksObject;
   });
@@ -403,8 +406,12 @@ export async function tryPost(
     c,
     requestContext
   );
-  const preRequestValidatorResponse =
+  const { response: preRequestValidatorResponse, modelPricingConfig } =
     await preRequestValidatorService.getResponse();
+
+  if (modelPricingConfig) {
+    requestContext.updateModelPricingConfig(modelPricingConfig);
+  }
   if (preRequestValidatorResponse) {
     const { response, originalResponseJson } = await responseService.create({
       response: preRequestValidatorResponse,
@@ -809,7 +816,7 @@ export async function tryTargetsRecursively(
             message: errorMessage,
           }),
           {
-            status: 500,
+            status: error instanceof GatewayError ? error.status : 500,
             headers: {
               'content-type': 'application/json',
               // Add this header so that the fallback loop can be interrupted if its an exception.
@@ -835,6 +842,8 @@ export function constructConfigFromRequestHeaders(
     azureAuthMode: requestHeaders[`x-${POWERED_BY}-azure-auth-mode`],
     azureManagedClientId:
       requestHeaders[`x-${POWERED_BY}-azure-managed-client-id`],
+    azureWorkloadClientId:
+      requestHeaders[`x-${POWERED_BY}-azure-workload-client-id`],
     azureEntraClientId: requestHeaders[`x-${POWERED_BY}-azure-entra-client-id`],
     azureEntraClientSecret:
       requestHeaders[`x-${POWERED_BY}-azure-entra-client-secret`],
@@ -857,7 +866,6 @@ export function constructConfigFromRequestHeaders(
     azureApiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
     azureEndpointName: requestHeaders[`x-${POWERED_BY}-azure-endpoint-name`],
     azureFoundryUrl: requestHeaders[`x-${POWERED_BY}-azure-foundry-url`],
-    azureExtraParams: requestHeaders[`x-${POWERED_BY}-azure-extra-params`],
     azureAdToken: requestHeaders[`x-${POWERED_BY}-azure-ad-token`],
     azureAuthMode: requestHeaders[`x-${POWERED_BY}-azure-auth-mode`],
     azureManagedClientId:
@@ -867,6 +875,7 @@ export function constructConfigFromRequestHeaders(
       requestHeaders[`x-${POWERED_BY}-azure-entra-client-secret`],
     azureEntraTenantId: requestHeaders[`x-${POWERED_BY}-azure-entra-tenant-id`],
     azureEntraScope: requestHeaders[`x-${POWERED_BY}-azure-entra-scope`],
+    azureExtraParameters: requestHeaders[`x-${POWERED_BY}-azure-extra-params`],
   };
 
   const awsConfig = {
@@ -1089,6 +1098,8 @@ export function constructConfigFromRequestHeaders(
       'default_input_guardrails',
       'default_output_guardrails',
       'integrationModelDetails',
+      'integrationDetails',
+      'virtualKeyDetails',
       'cb_config',
     ]) as any;
   }

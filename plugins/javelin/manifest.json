@@ -1,0 +1,61 @@
+{
+  "id": "javelin",
+  "description": "Javelin's AI security platform provides comprehensive guardrails for trust & safety, prompt injection detection, and language detection. Applies all enabled guardrails configured in your Javelin application policy.",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": [
+          {
+            "type": "subHeading",
+            "text": "Your Javelin API key for authentication"
+          }
+        ]
+      },
+      "domain": {
+        "type": "string",
+        "label": "Domain",
+        "description": [
+          {
+            "type": "subHeading",
+            "text": "Javelin API domain"
+          }
+        ],
+        "default": "api-dev.javelin.live",
+        "required": false
+      },
+      "application": {
+        "type": "string",
+        "label": "Application Name",
+        "description": [
+          {
+            "type": "subHeading",
+            "text": "Application name for policy-specific guardrails (required)"
+          }
+        ],
+        "required": true
+      }
+    },
+    "required": ["apiKey", "application"]
+  },
+  "functions": [
+    {
+      "name": "Javelin Guardrails",
+      "id": "guardrails",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Auto-applies all enabled guardrails in your Javelin application policy including trust & safety, prompt injection detection, language detection, and more"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ]
+}
