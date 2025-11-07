@@ -291,8 +291,8 @@ export const CohereChatCompleteStreamChunkTransform: (
           index: streamState.lastIndex,
           delta: {
             role: 'assistant',
-            content: parsedChunk.delta?.message?.content?.text ?? '',
-            tool_calls: parsedChunk.delta?.message?.tool_calls,
+            content: (parsedChunk as any).delta?.message?.content?.text ?? '',
+            tool_calls: (parsedChunk as any).delta?.message?.tool_calls,
           },
           logprobs: null,
           finish_reason: null,

@@ -8,7 +8,7 @@ const requiredEnvVars = [
 ];
 
 export const loadAndValidateEnv = (): { [key: string]: string } => {
-  const env = Environment({}) as Record<string, string>;
+  const env = Environment() as Record<string, string>;
   requiredEnvVars.forEach((varName) => {
     if (!env[varName]) {
       console.error(`Missing required environment variable: ${varName}`);

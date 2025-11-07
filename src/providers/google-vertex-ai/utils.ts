@@ -15,6 +15,7 @@ import { ErrorResponse, FinetuneRequest, Logprobs } from '../types';
 import { Context } from 'hono';
 import { env } from 'hono/adapter';
 import { ContentType, JsonSchema, Tool } from '../../types/requestBody';
+import { GoogleMessagePart } from '../google/chatComplete';
 
 /**
  * Encodes an object as a Base64 URL-encoded string.
@@ -717,7 +718,7 @@ export const OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING = {
   wav: 'audio/wav',
 };
 
-export const transformInputAudioPart = (c: ContentType) => {
+export const transformInputAudioPart = (c: ContentType): GoogleMessagePart => {
   const data = c.input_audio?.data;
   const mimeType =
     OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING[
@@ -725,7 +726,7 @@ export const transformInputAudioPart = (c: ContentType) => {
     ];
   return {
     inlineData: {
-      data,
+      data: data ?? '',
       mimeType,
     },
   };

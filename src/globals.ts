@@ -279,5 +279,19 @@ export const AtomicOperations = {
 export enum RateLimiterKeyTypes {
   VIRTUAL_KEY = 'VIRTUAL_KEY',
   API_KEY = 'API_KEY',
+  WORKSPACE = 'WORKSPACE',
   INTEGRATION_WORKSPACE = 'INTEGRATION_WORKSPACE',
 }
+
+export const METRICS_KEYS = {
+  AUTH_N_MIDDLEWARE_START: 'authNMiddlewareStart',
+  AUTH_N_MIDDLEWARE_END: 'authNMiddlewareEnd',
+  API_KEY_RATE_LIMIT_CHECK_START: 'apiKeyRateLimitCheckStart',
+  API_KEY_RATE_LIMIT_CHECK_END: 'apiKeyRateLimitCheckEnd',
+  PORTKEY_MIDDLEWARE_PRE_REQUEST_START: 'portkeyMiddlewarePreRequestStart',
+  PORTKEY_MIDDLEWARE_PRE_REQUEST_END: 'portkeyMiddlewarePreRequestEnd',
+  PORTKEY_MIDDLEWARE_POST_REQUEST_START: 'portkeyMiddlewarePostRequestStart',
+  PORTKEY_MIDDLEWARE_POST_REQUEST_END: 'portkeyMiddlewarePostRequestEnd',
+  LLM_CACHE_GET_START: 'llmCacheGetStart',
+  LLM_CACHE_GET_END: 'llmCacheGetEnd',
+};

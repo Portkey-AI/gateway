@@ -3,7 +3,7 @@ import { Environment } from '../../utils/env';
 const requiredEnvVars = ['NODE_ENV', 'SERVICE_NAME', 'LOKI_AUTH', 'LOKI_HOST'];
 
 export const loadAndValidateEnv = () => {
-  const env = Environment({}) as Record<string, string>;
+  const env = Environment() as Record<string, string>;
   requiredEnvVars.forEach((varName) => {
     if (!env[varName]) {
       console.error(`Missing required environment variable: ${varName}`);

@@ -53,6 +53,7 @@ export interface ProviderAPIConfig {
     transformedRequestBody: Record<string, any>;
     transformedRequestUrl: string;
     gatewayRequestBody?: Params;
+    headers?: Record<string, string>;
   }) => Promise<Record<string, any>> | Record<string, any>;
   /** A function to generate the baseURL based on parameters */
   getBaseURL: (args: {

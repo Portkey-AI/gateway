@@ -23,7 +23,7 @@ client.collectDefaultMetrics({
 
 const loadMetadataKeys = () => {
   return (
-    Environment({})
+    Environment()
       .PROMETHEUS_LABELS_METADATA_ALLOWED_KEYS?.replaceAll(' ', '')
       .split(',') ?? []
   ).map((key: string) => `metadata_${key}`);
@@ -305,7 +305,7 @@ export const llmCacheProcessingDurationMilliseconds = new client.Histogram({
 export const getCustomLabels = (metadata: string | undefined) => {
   let customLabels: Record<string, any> = {};
   const allowedKeys =
-    Environment({}).PROMETHEUS_LABELS_METADATA_ALLOWED_KEYS?.split(',') ?? [];
+    Environment().PROMETHEUS_LABELS_METADATA_ALLOWED_KEYS?.split(',') ?? [];
   if (typeof metadata === 'string') {
     try {
       const parsedMetadata = JSON.parse(metadata);

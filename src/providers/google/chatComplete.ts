@@ -9,7 +9,6 @@ import {
   SYSTEM_MESSAGE_ROLES,
   MESSAGE_ROLES,
 } from '../../types/requestBody';
-import { buildGoogleSearchRetrievalTool } from '../google-vertex-ai/chatComplete';
 import { VERTEX_MODALITY } from '../google-vertex-ai/types';
 import {
   getMimeType,
@@ -111,16 +110,31 @@ interface GoogleFunctionResponseMessagePart {
     name: string;
     response: {
       name?: string;
-      content: string | ContentType[];
+      output: string | ContentType[];
     };
   };
 }
 
-type GoogleMessagePart =
+export type GoogleMessagePart =
   | GoogleFunctionCallMessagePart
   | GoogleFunctionResponseMessagePart
+  | GoogleInlineDataMessagePart
+  | GoogleFileDataMessagePart
   | { text: string };
 
+export interface GoogleInlineDataMessagePart {
+  inlineData: {
+    mimeType?: string;
+    data: string;
+  };
+}
+
+export interface GoogleFileDataMessagePart {
+  fileData: {
+    mimeType?: string;
+    fileUri: string;
+  };
+}
 export interface GoogleMessage {
   role: GoogleMessageRole;
   parts: GoogleMessagePart[];
@@ -210,7 +224,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
               functionResponse: {
                 name: message.name ?? 'gateway-tool-filler-name',
                 response: {
-                  output: message.content,
+                  output: message.content ?? '',
                 },
               },
             });
