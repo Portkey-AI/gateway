@@ -115,11 +115,26 @@ interface GoogleFunctionResponseMessagePart {
   };
 }
 
-type GoogleMessagePart =
+export type GoogleMessagePart =
   | GoogleFunctionCallMessagePart
   | GoogleFunctionResponseMessagePart
+  | GoogleInlineDataMessagePart
+  | GoogleFileDataMessagePart
   | { text: string };
 
+export interface GoogleInlineDataMessagePart {
+  inlineData: {
+    mimeType?: string;
+    data: string;
+  };
+}
+
+export interface GoogleFileDataMessagePart {
+  fileData: {
+    mimeType?: string;
+    fileUri: string;
+  };
+}
 export interface GoogleMessage {
   role: GoogleMessageRole;
   parts: GoogleMessagePart[];

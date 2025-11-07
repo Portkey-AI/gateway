@@ -21,6 +21,7 @@ import {
 } from '../anthropic/types';
 import {
   GoogleMessage,
+  GoogleMessagePart,
   GoogleMessageRole,
   GoogleToolConfig,
   SYSTEM_INSTRUCTION_DISABLED_MODELS,
@@ -82,7 +83,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
             return;
 
           const role = transformOpenAIRoleToGoogleRole(message.role);
-          let parts = [];
+          let parts: GoogleMessagePart[] = [];
 
           if (message.role === 'assistant' && message.tool_calls) {
             message.tool_calls.forEach((tool_call: ToolCall) => {
@@ -106,7 +107,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
             message.content.forEach((c: ContentType) => {
               if (c.type === 'text') {
                 parts.push({
-                  text: c.text,
+                  text: c.text ?? '',
                 });
               } else if (c.type === 'input_audio') {
                 parts.push(transformInputAudioPart(c));
@@ -149,7 +150,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
                   parts.push({
                     inlineData: {
                       mimeType: 'image/jpeg',
-                      data: c.image_url?.url,
+                      data: c.image_url?.url ?? '',
                     },
                   });
                 }
