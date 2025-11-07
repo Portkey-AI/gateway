@@ -98,7 +98,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
               functionResponse: {
                 name: message.name ?? 'gateway-tool-filler-name',
                 response: {
-                  output: message.content,
+                  output: message.content ?? '',
                 },
               },
             });

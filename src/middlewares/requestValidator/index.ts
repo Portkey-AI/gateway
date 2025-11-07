@@ -47,7 +47,7 @@ const BLOCKED_TLDS = [
 
 // Parse allowed custom hosts from environment variable
 // Format: comma-separated list of domains/IPs (e.g., "localhost,127.0.0.1,example.com")
-const TRUSTED_CUSTOM_HOSTS = (c: Context) => {
+const TRUSTED_CUSTOM_HOSTS = (c?: Context) => {
   const envVar = Environment(c)?.TRUSTED_CUSTOM_HOSTS;
   if (!envVar) {
     // Default allowed hosts for local development

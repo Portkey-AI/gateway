@@ -4,7 +4,7 @@ let LokiLogger: any;
 
 try {
   const { createLogger, transports, format } = await import('winston');
-  const LokiTransport = await import('winston-loki');
+  const LokiTransport = (await import('winston-loki')).default;
 
   const envVars = loadAndValidateEnv();
 
