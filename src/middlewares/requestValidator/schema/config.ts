@@ -6,6 +6,7 @@ import {
   TRITON,
   AZURE_OPEN_AI,
 } from '../../../globals';
+import { isValidCustomHost } from '..';
 
 export const configSchema: any = z
   .object({
@@ -154,7 +155,7 @@ export const configSchema: any = z
   .refine(
     (value) => {
       const customHost = value.custom_host;
-      if (customHost && customHost.indexOf('api.portkey') > -1) {
+      if (customHost && !isValidCustomHost(customHost)) {
         return false;
       }
       return true;

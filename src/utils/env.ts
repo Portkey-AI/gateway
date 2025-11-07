@@ -129,6 +129,10 @@ const nodeEnv = {
   HTTPS_PROXY: getValueOrFileContents(process.env.HTTPS_PROXY),
 
   APM_LOGGER: getValueOrFileContents(process.env.APM_LOGGER),
+
+  TRUSTED_CUSTOM_HOSTS: getValueOrFileContents(
+    process.env.TRUSTED_CUSTOM_HOSTS
+  ),
 };
 
 export const Environment = (c?: Context) => {
