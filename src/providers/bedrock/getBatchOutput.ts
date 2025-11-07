@@ -51,7 +51,7 @@ export const BedrockGetBatchOutputRequestHandler = async ({
   c: Context;
   providerOptions: Options;
   requestURL: string;
-}) => {
+}): Promise<Response> => {
   try {
     // get s3 file id from batch details
     // get file from s3
@@ -79,7 +79,7 @@ export const BedrockGetBatchOutputRequestHandler = async ({
 
     if (!retrieveBatchesResponse.ok) {
       const error = await retrieveBatchesResponse.text();
-      return generateErrorResponse(
+      const _response = generateErrorResponse(
         {
           message: error,
           type: null,
@@ -88,6 +88,13 @@ export const BedrockGetBatchOutputRequestHandler = async ({
         },
         BEDROCK
       );
+
+      return new Response(JSON.stringify(_response), {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
     }
 
     const batchDetails: BedrockGetBatchResponse =
