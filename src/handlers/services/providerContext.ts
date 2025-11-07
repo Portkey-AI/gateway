@@ -9,6 +9,7 @@ import Providers from '../../providers';
 import { RequestContext } from './requestContext';
 import { ANTHROPIC, AZURE_OPEN_AI } from '../../globals';
 import { GatewayError } from '../../errors/GatewayError';
+import { isValidCustomHost } from '../../middlewares/requestValidator';
 
 export class ProviderContext {
   constructor(private provider: string) {
@@ -94,6 +95,10 @@ export class ProviderContext {
   }
 
   async getFullURL(context: RequestContext): Promise<string> {
+    const customHost = context.customHost;
+    if (customHost && !isValidCustomHost(customHost, context.honoContext)) {
+      throw new GatewayError('Invalid custom host');
+    }
     const baseURL = context.customHost || (await this.getBaseURL(context));
     let url: string;
     if (context.endpoint === 'proxy') {

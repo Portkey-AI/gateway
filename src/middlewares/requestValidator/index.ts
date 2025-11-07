@@ -141,7 +141,7 @@ export const requestValidator = (c: Context, next: any) => {
   }
 
   const customHostHeader = requestHeaders[`x-${POWERED_BY}-custom-host`];
-  if (customHostHeader && !isValidCustomHost(c, customHostHeader)) {
+  if (customHostHeader && !isValidCustomHost(customHostHeader, c)) {
     return new Response(
       JSON.stringify({
         status: 'failure',
@@ -228,7 +228,8 @@ export const requestValidator = (c: Context, next: any) => {
   }
   return next();
 };
-function isValidCustomHost(c: Context, customHost: string) {
+
+export function isValidCustomHost(customHost: string, c?: Context) {
   try {
     const value = customHost.trim().toLowerCase();
 
