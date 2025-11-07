@@ -3,9 +3,6 @@ compatibility_date = "2024-12-05"
 main = "src/index.ts"
 compatibility_flags = [ "nodejs_compat" ]
 
-[build]
-command = "npm run uninstall-workerd-unsupported-packages && npm run build"
-
 [vars]
 ENVIRONMENT = 'dev'
 CUSTOM_HEADERS_TO_IGNORE = []
