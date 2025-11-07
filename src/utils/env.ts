@@ -97,6 +97,14 @@ const nodeEnv = {
   AZURE_MANAGED_IDENTITY_HEADER: getValueOrFileContents(
     process.env.IDENTITY_HEADER
   ),
+  AZURE_AUTHORITY_HOST: getValueOrFileContents(
+    process.env.AZURE_AUTHORITY_HOST
+  ),
+  AZURE_TENANT_ID: getValueOrFileContents(process.env.AZURE_TENANT_ID),
+  AZURE_CLIENT_ID: getValueOrFileContents(process.env.AZURE_CLIENT_ID),
+  AZURE_FEDERATED_TOKEN_FILE: getValueOrFileContents(
+    process.env.AZURE_FEDERATED_TOKEN_FILE
+  ),
 
   SSE_ENCRYPTION_TYPE: getValueOrFileContents(process.env.SSE_ENCRYPTION_TYPE),
   KMS_KEY_ID: getValueOrFileContents(process.env.KMS_KEY_ID),
