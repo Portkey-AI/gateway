@@ -10,10 +10,13 @@ import {
   MESSAGE_ROLES,
 } from '../../types/requestBody';
 import { buildGoogleSearchRetrievalTool } from '../google-vertex-ai/chatComplete';
+import { VERTEX_MODALITY } from '../google-vertex-ai/types';
 import {
   getMimeType,
+  googleTools,
   recursivelyDeleteUnsupportedParameters,
   transformGeminiToolParameters,
+  transformGoogleTools,
   transformInputAudioPart,
   transformVertexLogprobs,
 } from '../google-vertex-ai/utils';
@@ -108,7 +111,7 @@ interface GoogleFunctionResponseMessagePart {
     name: string;
     response: {
       name?: string;
-      content: string;
+      content: string | ContentType[];
     };
   };
 }
@@ -202,15 +205,12 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                 },
               });
             });
-          } else if (
-            message.role === 'tool' &&
-            typeof message.content === 'string'
-          ) {
+          } else if (message.role === 'tool') {
             parts.push({
               functionResponse: {
                 name: message.name ?? 'gateway-tool-filler-name',
                 response: {
-                  content: message.content,
+                  output: message.content,
                 },
               },
             });
@@ -374,15 +374,8 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
           // these are not supported by google
           recursivelyDeleteUnsupportedParameters(tool.function?.parameters);
           delete tool.function?.strict;
-
-          if (['googleSearch', 'google_search'].includes(tool.function.name)) {
-            tools.push({ googleSearch: {} });
-          } else if (
-            ['googleSearchRetrieval', 'google_search_retrieval'].includes(
-              tool.function.name
-            )
-          ) {
-            tools.push(buildGoogleSearchRetrievalTool(tool));
+          if (googleTools.includes(tool.function.name)) {
+            tools.push(...transformGoogleTools(tool));
           } else {
             if (tool.function?.parameters) {
               tool.function.parameters = transformGeminiToolParameters(
@@ -505,6 +498,15 @@ interface GoogleGenerateContentResponse {
     candidatesTokenCount: number;
     totalTokenCount: number;
     thoughtsTokenCount?: number;
+    cachedContentTokenCount?: number;
+    promptTokensDetails: {
+      modality: VERTEX_MODALITY;
+      tokenCount: number;
+    }[];
+    candidatesTokensDetails: {
+      modality: VERTEX_MODALITY;
+      tokenCount: number;
+    }[];
   };
 }
 
@@ -546,6 +548,24 @@ export const GoogleChatCompleteResponseTransform: (
   }
 
   if ('candidates' in response) {
+    const {
+      promptTokenCount = 0,
+      candidatesTokenCount = 0,
+      totalTokenCount = 0,
+      thoughtsTokenCount = 0,
+      cachedContentTokenCount = 0,
+      promptTokensDetails = [],
+      candidatesTokensDetails = [],
+    } = response.usageMetadata;
+    const inputAudioTokens = promptTokensDetails.reduce((acc, curr) => {
+      if (curr.modality === VERTEX_MODALITY.AUDIO) return acc + curr.tokenCount;
+      return acc;
+    }, 0);
+    const outputAudioTokens = candidatesTokensDetails.reduce((acc, curr) => {
+      if (curr.modality === VERTEX_MODALITY.AUDIO) return acc + curr.tokenCount;
+      return acc;
+    }, 0);
+
     return {
       id: 'portkey-' + crypto.randomUUID(),
       object: 'chat.completion',
@@ -614,11 +634,16 @@ export const GoogleChatCompleteResponseTransform: (
           };
         }) ?? [],
       usage: {
-        prompt_tokens: response.usageMetadata.promptTokenCount,
-        completion_tokens: response.usageMetadata.candidatesTokenCount,
-        total_tokens: response.usageMetadata.totalTokenCount,
+        prompt_tokens: promptTokenCount,
+        completion_tokens: candidatesTokenCount,
+        total_tokens: totalTokenCount,
         completion_tokens_details: {
-          reasoning_tokens: response.usageMetadata.thoughtsTokenCount ?? 0,
+          reasoning_tokens: thoughtsTokenCount,
+          audio_tokens: outputAudioTokens,
+        },
+        prompt_tokens_details: {
+          cached_tokens: cachedContentTokenCount,
+          audio_tokens: inputAudioTokens,
         },
       },
     };
@@ -667,6 +692,26 @@ export const GoogleChatCompleteStreamChunkTransform: (
       total_tokens: parsedChunk.usageMetadata.totalTokenCount,
       completion_tokens_details: {
         reasoning_tokens: parsedChunk.usageMetadata.thoughtsTokenCount ?? 0,
+        audio_tokens:
+          parsedChunk.usageMetadata?.candidatesTokensDetails?.reduce(
+            (acc, curr) => {
+              if (curr.modality === VERTEX_MODALITY.AUDIO)
+                return acc + curr.tokenCount;
+              return acc;
+            },
+            0
+          ),
+      },
+      prompt_tokens_details: {
+        cached_tokens: parsedChunk.usageMetadata.cachedContentTokenCount,
+        audio_tokens: parsedChunk.usageMetadata?.promptTokensDetails?.reduce(
+          (acc, curr) => {
+            if (curr.modality === VERTEX_MODALITY.AUDIO)
+              return acc + curr.tokenCount;
+            return acc;
+          },
+          0
+        ),
       },
     };
   }

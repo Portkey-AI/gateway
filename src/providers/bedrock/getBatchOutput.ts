@@ -5,6 +5,7 @@ import { BedrockGetBatchResponse } from './types';
 import { getOctetStreamToOctetStreamTransformer } from '../../handlers/streamHandlerUtils';
 import { BedrockUploadFileResponseTransforms } from './uploadFileUtils';
 import { BEDROCK } from '../../globals';
+import { generateErrorResponse } from '../utils';
 import { getAwsEndpointDomain } from './utils';
 
 const getModelProvider = (modelId: string) => {
@@ -16,6 +17,7 @@ const getModelProvider = (modelId: string) => {
   else if (modelId.includes('anthropic')) provider = 'anthropic';
   else if (modelId.includes('ai21')) provider = 'ai21';
   else if (modelId.includes('cohere')) provider = 'cohere';
+  else if (modelId.includes('amazon')) provider = 'titan';
   else throw new Error('Invalid model slug');
   return provider;
 };
@@ -74,6 +76,19 @@ export const BedrockGetBatchOutputRequestHandler = async ({
       method: 'GET',
       headers: retrieveBatchesHeaders,
     });
+
+    if (!retrieveBatchesResponse.ok) {
+      const error = await retrieveBatchesResponse.text();
+      return generateErrorResponse(
+        {
+          message: error,
+          type: null,
+          param: null,
+          code: null,
+        },
+        BEDROCK
+      );
+    }
 
     const batchDetails: BedrockGetBatchResponse =
       await retrieveBatchesResponse.json();
