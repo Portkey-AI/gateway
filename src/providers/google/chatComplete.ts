@@ -9,11 +9,14 @@ import {
   SYSTEM_MESSAGE_ROLES,
   MESSAGE_ROLES,
 } from '../../types/requestBody';
-import { buildGoogleSearchRetrievalTool } from '../google-vertex-ai/chatComplete';
+import { VERTEX_MODALITY } from '../google-vertex-ai/types';
 import {
   getMimeType,
+  googleTools,
   recursivelyDeleteUnsupportedParameters,
   transformGeminiToolParameters,
+  transformGoogleTools,
+  transformInputAudioPart,
   transformVertexLogprobs,
 } from '../google-vertex-ai/utils';
 import {
@@ -78,6 +81,11 @@ const transformGenerationConfig = (params: Params) => {
     thinkingConfig['thinking_budget'] = params.thinking.budget_tokens;
     generationConfig['thinking_config'] = thinkingConfig;
   }
+  if (params.modalities) {
+    generationConfig['responseModalities'] = params.modalities.map((modality) =>
+      modality.toUpperCase()
+    );
+  }
   return generationConfig;
 };
 
@@ -102,16 +110,31 @@ interface GoogleFunctionResponseMessagePart {
     name: string;
     response: {
       name?: string;
-      content: string;
+      output: string | ContentType[];
     };
   };
 }
 
-type GoogleMessagePart =
+export type GoogleMessagePart =
   | GoogleFunctionCallMessagePart
   | GoogleFunctionResponseMessagePart
+  | GoogleInlineDataMessagePart
+  | GoogleFileDataMessagePart
   | { text: string };
 
+export interface GoogleInlineDataMessagePart {
+  inlineData: {
+    mimeType?: string;
+    data: string;
+  };
+}
+
+export interface GoogleFileDataMessagePart {
+  fileData: {
+    mimeType?: string;
+    fileUri: string;
+  };
+}
 export interface GoogleMessage {
   role: GoogleMessageRole;
   parts: GoogleMessagePart[];
@@ -196,15 +219,12 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                 },
               });
             });
-          } else if (
-            message.role === 'tool' &&
-            typeof message.content === 'string'
-          ) {
+          } else if (message.role === 'tool') {
             parts.push({
               functionResponse: {
                 name: message.name ?? 'gateway-tool-filler-name',
                 response: {
-                  content: message.content,
+                  output: message.content ?? '',
                 },
               },
             });
@@ -214,8 +234,9 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                 parts.push({
                   text: c.text,
                 });
-              }
-              if (c.type === 'image_url') {
+              } else if (c.type === 'input_audio') {
+                parts.push(transformInputAudioPart(c));
+              } else if (c.type === 'image_url') {
                 const { url, mime_type: passedMimeType } = c.image_url || {};
                 if (!url) return;
 
@@ -367,15 +388,8 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
           // these are not supported by google
           recursivelyDeleteUnsupportedParameters(tool.function?.parameters);
           delete tool.function?.strict;
-
-          if (['googleSearch', 'google_search'].includes(tool.function.name)) {
-            tools.push({ googleSearch: {} });
-          } else if (
-            ['googleSearchRetrieval', 'google_search_retrieval'].includes(
-              tool.function.name
-            )
-          ) {
-            tools.push(buildGoogleSearchRetrievalTool(tool));
+          if (googleTools.includes(tool.function.name)) {
+            tools.push(...transformGoogleTools(tool));
           } else {
             if (tool.function?.parameters) {
               tool.function.parameters = transformGeminiToolParameters(
@@ -425,6 +439,10 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
+  modalities: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
 };
 
 export interface GoogleErrorResponse {
@@ -441,12 +459,16 @@ interface GoogleGenerateFunctionCall {
   args: Record<string, any>;
 }
 
-interface GoogleResponseCandidate {
+export interface GoogleResponseCandidate {
   content: {
     parts: {
       text?: string;
       thought?: string; // for models like gemini-2.0-flash-thinking-exp refer: https://ai.google.dev/gemini-api/docs/thinking-mode#streaming_model_thinking
       functionCall?: GoogleGenerateFunctionCall;
+      inlineData?: {
+        mimeType: string;
+        data: string;
+      };
     }[];
   };
   logprobsResult?: {
@@ -490,6 +512,15 @@ interface GoogleGenerateContentResponse {
     candidatesTokenCount: number;
     totalTokenCount: number;
     thoughtsTokenCount?: number;
+    cachedContentTokenCount?: number;
+    promptTokensDetails: {
+      modality: VERTEX_MODALITY;
+      tokenCount: number;
+    }[];
+    candidatesTokensDetails: {
+      modality: VERTEX_MODALITY;
+      tokenCount: number;
+    }[];
   };
 }
 
@@ -531,6 +562,24 @@ export const GoogleChatCompleteResponseTransform: (
   }
 
   if ('candidates' in response) {
+    const {
+      promptTokenCount = 0,
+      candidatesTokenCount = 0,
+      totalTokenCount = 0,
+      thoughtsTokenCount = 0,
+      cachedContentTokenCount = 0,
+      promptTokensDetails = [],
+      candidatesTokensDetails = [],
+    } = response.usageMetadata;
+    const inputAudioTokens = promptTokensDetails.reduce((acc, curr) => {
+      if (curr.modality === VERTEX_MODALITY.AUDIO) return acc + curr.tokenCount;
+      return acc;
+    }, 0);
+    const outputAudioTokens = candidatesTokensDetails.reduce((acc, curr) => {
+      if (curr.modality === VERTEX_MODALITY.AUDIO) return acc + curr.tokenCount;
+      return acc;
+    }, 0);
+
     return {
       id: 'portkey-' + crypto.randomUUID(),
       object: 'chat.completion',
@@ -560,6 +609,13 @@ export const GoogleChatCompleteResponseTransform: (
                 content = part.text;
                 contentBlocks.push({ type: 'text', text: part.text });
               }
+            } else if (part.inlineData) {
+              contentBlocks.push({
+                type: 'image_url',
+                image_url: {
+                  url: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
+                },
+              });
             }
           }
 
@@ -592,11 +648,16 @@ export const GoogleChatCompleteResponseTransform: (
           };
         }) ?? [],
       usage: {
-        prompt_tokens: response.usageMetadata.promptTokenCount,
-        completion_tokens: response.usageMetadata.candidatesTokenCount,
-        total_tokens: response.usageMetadata.totalTokenCount,
+        prompt_tokens: promptTokenCount,
+        completion_tokens: candidatesTokenCount,
+        total_tokens: totalTokenCount,
         completion_tokens_details: {
-          reasoning_tokens: response.usageMetadata.thoughtsTokenCount ?? 0,
+          reasoning_tokens: thoughtsTokenCount,
+          audio_tokens: outputAudioTokens,
+        },
+        prompt_tokens_details: {
+          cached_tokens: cachedContentTokenCount,
+          audio_tokens: inputAudioTokens,
         },
       },
     };
@@ -645,6 +706,26 @@ export const GoogleChatCompleteStreamChunkTransform: (
       total_tokens: parsedChunk.usageMetadata.totalTokenCount,
       completion_tokens_details: {
         reasoning_tokens: parsedChunk.usageMetadata.thoughtsTokenCount ?? 0,
+        audio_tokens:
+          parsedChunk.usageMetadata?.candidatesTokensDetails?.reduce(
+            (acc, curr) => {
+              if (curr.modality === VERTEX_MODALITY.AUDIO)
+                return acc + curr.tokenCount;
+              return acc;
+            },
+            0
+          ),
+      },
+      prompt_tokens_details: {
+        cached_tokens: parsedChunk.usageMetadata.cachedContentTokenCount,
+        audio_tokens: parsedChunk.usageMetadata?.promptTokensDetails?.reduce(
+          (acc, curr) => {
+            if (curr.modality === VERTEX_MODALITY.AUDIO)
+              return acc + curr.tokenCount;
+            return acc;
+          },
+          0
+        ),
       },
     };
   }
@@ -705,6 +786,23 @@ export const GoogleChatCompleteStreamChunkTransform: (
                   };
                 }
               }),
+            };
+          } else if (generation.content?.parts[0]?.inlineData) {
+            const part = generation.content.parts[0];
+            const contentBlocks = [
+              {
+                index: streamState.containsChainOfThoughtMessage ? 1 : 0,
+                delta: {
+                  type: 'image_url',
+                  image_url: {
+                    url: `data:${part.inlineData?.mimeType};base64,${part.inlineData?.data}`,
+                  },
+                },
+              },
+            ];
+            message = {
+              role: 'assistant',
+              content_blocks: contentBlocks,
             };
           }
           return {

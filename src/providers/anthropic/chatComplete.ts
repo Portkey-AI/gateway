@@ -337,6 +337,9 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
               typeof msg.content === 'string'
             ) {
               systemMessages.push({
+                ...(msg?.cache_control && {
+                  cache_control: { type: 'ephemeral' },
+                }),
                 text: msg.content,
                 type: 'text',
               });
@@ -584,6 +587,9 @@ export const AnthropicChatCompleteResponseTransform: (
           output_tokens +
           (cache_creation_input_tokens ?? 0) +
           (cache_read_input_tokens ?? 0),
+        prompt_tokens_details: {
+          cached_tokens: cache_read_input_tokens ?? 0,
+        },
         ...(shouldSendCacheUsage && {
           cache_read_input_tokens: cache_read_input_tokens,
           cache_creation_input_tokens: cache_creation_input_tokens,
@@ -679,6 +685,7 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           {
             delta: {
               content: '',
+              role: 'assistant',
             },
             index: 0,
             logprobs: null,
@@ -714,9 +721,12 @@ export const AnthropicChatCompleteStreamChunkTransform: (
           },
         ],
         usage: {
-          completion_tokens: parsedChunk.usage?.output_tokens,
           ...streamState.usage,
+          completion_tokens: parsedChunk.usage?.output_tokens,
           total_tokens: totalTokens,
+          prompt_tokens_details: {
+            cached_tokens: streamState.usage?.cache_read_input_tokens ?? 0,
+          },
         },
       })}` + '\n\n'
     );

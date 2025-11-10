@@ -4,7 +4,9 @@ import {
   VALID_PROVIDERS,
   GOOGLE_VERTEX_AI,
   TRITON,
+  AZURE_OPEN_AI,
 } from '../../../globals';
+import { isValidCustomHost } from '..';
 
 export const configSchema: any = z
   .object({
@@ -113,6 +115,7 @@ export const configSchema: any = z
     openai_organization: z.string().optional(),
     // AzureOpenAI specific
     azure_model_name: z.string().optional(),
+    azure_auth_mode: z.string().optional(),
     strict_open_ai_compliance: z.boolean().optional(),
   })
   .refine(
@@ -129,6 +132,8 @@ export const configSchema: any = z
         (value.vertex_service_account_json || value.vertex_project_id);
       const hasAWSDetails =
         value.aws_access_key_id && value.aws_secret_access_key;
+      const hasAzureAuth =
+        value.provider == AZURE_OPEN_AI && value.azure_auth_mode;
 
       return (
         hasProviderApiKey ||
@@ -143,7 +148,8 @@ export const configSchema: any = z
         value.after_request_hooks ||
         value.before_request_hooks ||
         value.input_guardrails ||
-        value.output_guardrails
+        value.output_guardrails ||
+        hasAzureAuth
       );
     },
     {
@@ -154,7 +160,7 @@ export const configSchema: any = z
   .refine(
     (value) => {
       const customHost = value.custom_host;
-      if (customHost && customHost.indexOf('api.portkey') > -1) {
+      if (customHost && !isValidCustomHost(customHost)) {
         return false;
       }
       return true;

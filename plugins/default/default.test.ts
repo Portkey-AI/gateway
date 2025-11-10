@@ -14,7 +14,9 @@ import { handler as allLowerCaseHandler } from './alllowercase';
 import { handler as modelWhitelistHandler } from './modelWhitelist';
 import { handler as characterCountHandler } from './characterCount';
 import { handler as jwtHandler } from './jwt';
+import { handler as allowedRequestTypesHandler } from './allowedRequestTypes';
 import { PluginContext, PluginParameters } from '../types';
+import { handler as addPrefixHandler } from './addPrefix';
 
 describe('Regex Matcher Plugin', () => {
   const mockContext: PluginContext = {
@@ -2464,6 +2466,1171 @@ describe('jwt handler', () => {
     expect(result.data).toMatchObject({
       verdict: false,
       explanation: expect.stringContaining('JWT validation error'),
+    });
+  });
+});
+
+describe('Allowed Request Types Plugin', () => {
+  const mockEventType = 'beforeRequestHook';
+
+  describe('Using parameters', () => {
+    it('should allow request when type is in allowed list', async () => {
+      const mockContext: PluginContext = {
+        requestType: 'chatComplete',
+      };
+      const parameters: PluginParameters = {
+        allowedTypes: ['chatComplete', 'complete', 'embed'],
+      };
+
+      const result = await allowedRequestTypesHandler(
+        mockContext,
+        parameters,
+        mockEventType
+      );
+
+      expect(result.verdict).toBe(true);
+      expect(result.error).toBeNull();
+      expect(result.data.explanation).toContain(
+        'Request type "chatComplete" is allowed'
+      );
+      expect(result.data.source).toBe('parameters');
+    });
+
+    it('should reject request when type is not in allowed list', async () => {
+      const mockContext: PluginContext = {
+        requestType: 'complete',
+        // Using a context property to test with imageGenerate
+        actualRequestType: 'imageGenerate',
+      };
+      const parameters: PluginParameters = {
+        allowedTypes: ['chatComplete', 'complete', 'embed'],
+      };
+
+      // Override the requestType in context for testing
+      mockContext.requestType = mockContext.actualRequestType as any;
+
+      const result = await allowedRequestTypesHandler(
+        mockContext,
+        parameters,
+        mockEventType
+      );
+
+      expect(result.verdict).toBe(false);
+      expect(result.error).toBeNull();
+      expect(result.data.explanation).toContain(
+        'Request type "imageGenerate" is not allowed'
+      );
+      expect(result.data.explanation).toContain(
+        'chatComplete, complete, embed'
+      );
+    });
+
+    it('should handle comma-separated string for allowedTypes', async () => {
+      const mockContext: PluginContext = {
+        requestType: 'embed',
+      };
+      const parameters: PluginParameters = {
+        allowedTypes: 'chatComplete, complete, embed',
+      };
+
+      const result = await allowedRequestTypesHandler(
+        mockContext,
+        parameters,
+        mockEventType
+      );
+
+      expect(result.verdict).toBe(true);
+      expect(result.data.allowedTypes).toEqual([
+        'chatComplete',
+        'complete',
+        'embed',
+      ]);
+    });
+
+    it('should handle streaming request types', async () => {
+      const mockContext: PluginContext = {
+        requestType: 'complete',
+      };
+      // Override with stream type for testing
+      (mockContext as any).requestType = 'stream-chatComplete';
+
+      const parameters: PluginParameters = {
+        allowedTypes: ['stream-chatComplete', 'stream-complete'],
+      };
+
+      const result = await allowedRequestTypesHandler(
+        mockContext,
+        parameters,
+        mockEventType
+      );
+
+      expect(result.verdict).toBe(true);
+      expect(result.data.currentRequestType).toBe('stream-chatComplete');
+    });
+  });
+
+  describe('Using metadata', () => {
+    it('should use metadata when parameters are not provided', async () => {
+      const mockContext: PluginContext = {
+        requestType: 'complete',
+        metadata: {
+          supported_endpoints: 'complete, chatComplete',
+        },
+      };
+      const parameters: PluginParameters = {};
+
+      const result = await allowedRequestTypesHandler(
+        mockContext,
+        parameters,
+        mockEventType
+      );
+
+      expect(result.verdict).toBe(true);
+      expect(result.data.source).toBe('metadata');
+      expect(result.data.allowedTypes).toEqual(['complete', 'chatComplete']);
+    });
+
+    it('should handle comma-separated string in metadata', async () => {
+      const mockContext: PluginContext = {
+        requestType: 'embed',
+        metadata: {
+          supported_endpoints: 'embed, rerank, moderate',
+        },
+      };
+      const parameters: PluginParameters = {};
+
+      const result = await allowedRequestTypesHandler(
+        mockContext,
+        parameters,
+        mockEventType
+      );
+
+      expect(result.verdict).toBe(true);
+      expect(result.data.allowedTypes).toEqual(['embed', 'rerank', 'moderate']);
+    });
+
+    it('should prioritize parameters over metadata', async () => {
+      const mockContext: PluginContext = {
+        requestType: 'embed',
+        metadata: {
+          supported_endpoints: 'complete, chatComplete',
+        },
+      };
+      const parameters: PluginParameters = {
+        allowedTypes: ['embed', 'rerank'],
+      };
+
+      const result = await allowedRequestTypesHandler(
+        mockContext,
+        parameters,
+        mockEventType
+      );
+
+      expect(result.verdict).toBe(true);
+      expect(result.data.source).toBe('parameters');
+      expect(result.data.allowedTypes).toEqual(['embed', 'rerank']);
+    });
+  });
+
+  describe('Default behavior', () => {
+    it('should allow all request types when no allowed types are specified', async () => {
+      const mockContext: PluginContext = {
+        requestType: 'chatComplete',
+      };
+      const parameters: PluginParameters = {};
+
+      const result = await allowedRequestTypesHandler(
+        mockContext,
+        parameters,
+        mockEventType
+      );
+
+      expect(result.verdict).toBe(true);
+      expect(result.error).toBeNull();
+      expect(result.data.allowedTypes).toEqual(['all']);
+      expect(result.data.explanation).toContain('no restrictions configured');
+      expect(result.data.source).toBe('default');
+    });
+
+    it('should allow any request type when no restrictions are configured', async () => {
+      // Test various request types to ensure all are allowed
+      const requestTypes = ['complete', 'chatComplete', 'embed', 'messages'];
+
+      for (const requestType of requestTypes) {
+        const mockContext: PluginContext = {
+          requestType: requestType as any,
+        };
+        const parameters: PluginParameters = {};
+
+        const result = await allowedRequestTypesHandler(
+          mockContext,
+          parameters,
+          mockEventType
+        );
+
+        expect(result.verdict).toBe(true);
+        expect(result.data.currentRequestType).toBe(requestType);
+        expect(result.data.allowedTypes).toEqual(['all']);
+      }
+    });
+  });
+
+  describe('Error handling', () => {
+    it('should handle missing requestType in context', async () => {
+      const mockContext: PluginContext = {};
+      const parameters: PluginParameters = {
+        allowedTypes: ['chatComplete'],
+      };
+
+      const result = await allowedRequestTypesHandler(
+        mockContext,
+        parameters,
+        mockEventType
+      );
+
+      expect(result.verdict).toBe(false);
+      expect(result.error).not.toBeNull();
+      expect(result.error.message).toContain(
+        'Request type not found in context'
+      );
+    });
+  });
+
+  describe('Complex scenarios', () => {
+    it('should handle multiple allowed types with rejection', async () => {
+      const mockContext: PluginContext = {
+        requestType: 'complete',
+      };
+      // Override for testing other endpoint types
+      (mockContext as any).requestType = 'deleteFile';
+
+      const parameters: PluginParameters = {
+        allowedTypes: [
+          'uploadFile',
+          'listFiles',
+          'retrieveFile',
+          'retrieveFileContent',
+        ],
+      };
+
+      const result = await allowedRequestTypesHandler(
+        mockContext,
+        parameters,
+        mockEventType
+      );
+
+      expect(result.verdict).toBe(false);
+      expect(result.data.explanation).toContain('deleteFile');
+      expect(result.data.explanation).toContain('not allowed');
+    });
+
+    it('should handle various endpoint types', async () => {
+      // Test with the allowed types from the PluginContext interface
+      const allowedEndpoints = [
+        'complete',
+        'chatComplete',
+        'embed',
+        'messages',
+      ];
+
+      for (const endpoint of allowedEndpoints) {
+        const mockContext: PluginContext = {
+          requestType: endpoint as any,
+        };
+        const parameters: PluginParameters = {
+          allowedTypes: [endpoint],
+        };
+
+        const result = await allowedRequestTypesHandler(
+          mockContext,
+          parameters,
+          mockEventType
+        );
+
+        expect(result.verdict).toBe(true);
+        expect(result.data.currentRequestType).toBe(endpoint);
+      }
+    });
+  });
+
+  describe('Blocklist functionality', () => {
+    it('should block request types in blocklist', async () => {
+      const mockContext: PluginContext = {
+        requestType: 'complete',
+      };
+      // Override to test blocked type
+      (mockContext as any).requestType = 'imageGenerate';
+
+      const parameters: PluginParameters = {
+        blockedTypes: ['imageGenerate', 'createSpeech', 'deleteFile'],
+      };
+
+      const result = await allowedRequestTypesHandler(
+        mockContext,
+        parameters,
+        mockEventType
+      );
+
+      expect(result.verdict).toBe(false);
+      expect(result.error).toBeNull();
+      expect(result.data.explanation).toContain(
+        'Request type "imageGenerate" is blocked'
+      );
+      expect(result.data.mode).toBe('blocklist');
+      expect(result.data.blockedTypes).toEqual([
+        'imageGenerate',
+        'createSpeech',
+        'deleteFile',
+      ]);
+    });
+
+    it('should allow request types not in blocklist', async () => {
+      const mockContext: PluginContext = {
+        requestType: 'chatComplete',
+      };
+
+      const parameters: PluginParameters = {
+        blockedTypes: ['imageGenerate', 'createSpeech', 'deleteFile'],
+      };
+
+      const result = await allowedRequestTypesHandler(
+        mockContext,
+        parameters,
+        mockEventType
+      );
+
+      expect(result.verdict).toBe(true);
+      expect(result.data.explanation).toContain(
+        'Request type "chatComplete" is allowed (not in blocklist)'
+      );
+      expect(result.data.mode).toBe('blocklist');
+    });
+
+    it('should handle comma-separated string for blockedTypes', async () => {
+      const mockContext: PluginContext = {
+        requestType: 'embed',
+      };
+
+      const parameters: PluginParameters = {
+        blockedTypes: 'imageGenerate, createSpeech, deleteFile',
+      };
+
+      const result = await allowedRequestTypesHandler(
+        mockContext,
+        parameters,
+        mockEventType
+      );
+
+      expect(result.verdict).toBe(true);
+      expect(result.data.blockedTypes).toEqual([
+        'imageGenerate',
+        'createSpeech',
+        'deleteFile',
+      ]);
+    });
+
+    it('should use blocked_endpoints from metadata', async () => {
+      const mockContext: PluginContext = {
+        requestType: 'complete',
+        metadata: {
+          blocked_endpoints: ['complete', 'embed'],
+        },
+      };
+
+      const parameters: PluginParameters = {};
+
+      const result = await allowedRequestTypesHandler(
+        mockContext,
+        parameters,
+        mockEventType
+      );
+
+      expect(result.verdict).toBe(false);
+      expect(result.data.source).toBe('metadata');
+      expect(result.data.mode).toBe('blocklist');
+      expect(result.data.blockedTypes).toEqual(['complete', 'embed']);
+    });
+
+    it('should prioritize parameter blockedTypes over metadata', async () => {
+      const mockContext: PluginContext = {
+        requestType: 'chatComplete',
+        metadata: {
+          blocked_endpoints: ['chatComplete', 'complete'],
+        },
+      };
+
+      const parameters: PluginParameters = {
+        blockedTypes: ['embed', 'messages'],
+      };
+
+      const result = await allowedRequestTypesHandler(
+        mockContext,
+        parameters,
+        mockEventType
+      );
+
+      expect(result.verdict).toBe(true);
+      expect(result.data.source).toBe('parameters');
+      expect(result.data.blockedTypes).toEqual(['embed', 'messages']);
+    });
+
+    it('should allow combining allowedTypes and blockedTypes when no conflicts', async () => {
+      const mockContext: PluginContext = {
+        requestType: 'chatComplete',
+      };
+
+      const parameters: PluginParameters = {
+        allowedTypes: ['chatComplete', 'complete', 'embed'],
+        blockedTypes: ['imageGenerate', 'createSpeech'],
+      };
+
+      const result = await allowedRequestTypesHandler(
+        mockContext,
+        parameters,
+        mockEventType
+      );
+
+      expect(result.verdict).toBe(true);
+      expect(result.error).toBeNull();
+      expect(result.data.mode).toBe('combined');
+      expect(result.data.explanation).toContain('in allowlist and not blocked');
+    });
+
+    it('should block types in blocklist even if in allowlist mode', async () => {
+      const mockContext: PluginContext = {
+        requestType: 'complete',
+      };
+      // Override to test blocked type
+      (mockContext as any).requestType = 'imageGenerate';
+
+      const parameters: PluginParameters = {
+        allowedTypes: ['chatComplete', 'complete', 'embed'],
+        blockedTypes: ['imageGenerate', 'createSpeech'],
+      };
+
+      const result = await allowedRequestTypesHandler(
+        mockContext,
+        parameters,
+        mockEventType
+      );
+
+      expect(result.verdict).toBe(false);
+      expect(result.data.explanation).toContain('explicitly blocked');
+      expect(result.data.mode).toBe('combined');
+    });
+
+    it('should error when there are conflicts between allowedTypes and blockedTypes', async () => {
+      const mockContext: PluginContext = {
+        requestType: 'chatComplete',
+      };
+
+      const parameters: PluginParameters = {
+        allowedTypes: ['chatComplete', 'complete', 'embed'],
+        blockedTypes: ['complete', 'embed', 'imageGenerate'],
+      };
+
+      const result = await allowedRequestTypesHandler(
+        mockContext,
+        parameters,
+        mockEventType
+      );
+
+      expect(result.verdict).toBe(false);
+      expect(result.error).not.toBeNull();
+      expect(result.error.message).toContain('Conflict detected');
+      expect(result.error.message).toContain('complete');
+      expect(result.error.message).toContain('embed');
+    });
+
+    it('should handle blocklist with streaming endpoints', async () => {
+      const mockContext: PluginContext = {
+        requestType: 'complete',
+      };
+      // Override with stream type
+      (mockContext as any).requestType = 'stream-chatComplete';
+
+      const parameters: PluginParameters = {
+        blockedTypes: [
+          'stream-chatComplete',
+          'stream-complete',
+          'stream-messages',
+        ],
+      };
+
+      const result = await allowedRequestTypesHandler(
+        mockContext,
+        parameters,
+        mockEventType
+      );
+
+      expect(result.verdict).toBe(false);
+      expect(result.data.explanation).toContain('stream-chatComplete');
+      expect(result.data.explanation).toContain('blocked');
+    });
+  });
+});
+
+describe('addPrefix handler', () => {
+  const mockEventType = 'beforeRequestHook';
+
+  describe('Chat Completion (chatComplete)', () => {
+    it('should add prefix to user message with string content', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [
+              { role: 'system', content: 'You are a helpful assistant.' },
+              { role: 'user', content: 'Hello, how are you?' },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'IMPORTANT: ',
+        applyToRole: 'user',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.verdict).toBe(true);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages[1].content).toBe(
+        'IMPORTANT: Hello, how are you?'
+      );
+      expect(result.data).toEqual({
+        prefix: 'IMPORTANT: ',
+        requestType: 'chatComplete',
+        applyToRole: 'user',
+        addToExisting: true,
+        onlyIfEmpty: false,
+      });
+    });
+
+    it('should add prefix to system message', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [
+              { role: 'system', content: 'You are a helpful assistant.' },
+              { role: 'user', content: 'Hello!' },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'CRITICAL: ',
+        applyToRole: 'system',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.verdict).toBe(true);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages[0].content).toBe(
+        'CRITICAL: You are a helpful assistant.'
+      );
+    });
+
+    it('should create new user message when role does not exist', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [
+              { role: 'system', content: 'You are a helpful assistant.' },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+        applyToRole: 'user',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.verdict).toBe(true);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages).toHaveLength(2);
+      expect(result.transformedData.request.json.messages[1]).toEqual({
+        role: 'user',
+        content: 'PREFIX: ',
+      });
+    });
+
+    it('should create new system message at the beginning when role does not exist', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [{ role: 'user', content: 'Hello!' }],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'SYSTEM PREFIX: ',
+        applyToRole: 'system',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages).toHaveLength(2);
+      expect(result.transformedData.request.json.messages[0]).toEqual({
+        role: 'system',
+        content: 'SYSTEM PREFIX: ',
+      });
+    });
+
+    it('should insert new message before existing when addToExisting is false', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [
+              { role: 'system', content: 'You are a helpful assistant.' },
+              { role: 'user', content: 'Hello!' },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+        applyToRole: 'user',
+        addToExisting: false,
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages).toHaveLength(3);
+      expect(result.transformedData.request.json.messages[1]).toEqual({
+        role: 'user',
+        content: 'PREFIX: ',
+      });
+      expect(result.transformedData.request.json.messages[2]).toEqual({
+        role: 'user',
+        content: 'Hello!',
+      });
+    });
+
+    it('should only add prefix if content is empty when onlyIfEmpty is true', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [{ role: 'user', content: 'Existing content' }],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+        applyToRole: 'user',
+        onlyIfEmpty: true,
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      // Content should remain unchanged
+      expect(result.transformedData.request.json.messages[0].content).toBe(
+        'Existing content'
+      );
+    });
+
+    it('should add prefix when content is empty and onlyIfEmpty is true', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [{ role: 'user', content: '' }],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+        applyToRole: 'user',
+        onlyIfEmpty: true,
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages[0].content).toBe(
+        'PREFIX: '
+      );
+    });
+  });
+
+  describe('Messages (Anthropic format)', () => {
+    it('should add prefix to user message with array content', async () => {
+      const context: PluginContext = {
+        requestType: 'messages',
+        request: {
+          json: {
+            model: 'claude-3-opus-20240229',
+            messages: [
+              {
+                role: 'user',
+                content: [{ type: 'text', text: 'Hello, Claude!' }],
+              },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'IMPORTANT: ',
+        applyToRole: 'user',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.verdict).toBe(true);
+      expect(result.transformed).toBe(true);
+      expect(
+        result.transformedData.request.json.messages[0].content[0].text
+      ).toBe('IMPORTANT: Hello, Claude!');
+    });
+
+    it('should add prefix to message with multiple content blocks', async () => {
+      const context: PluginContext = {
+        requestType: 'messages',
+        request: {
+          json: {
+            model: 'claude-3-opus-20240229',
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  { type: 'text', text: 'First block' },
+                  { type: 'text', text: 'Second block' },
+                ],
+              },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+        applyToRole: 'user',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(
+        result.transformedData.request.json.messages[0].content[0].text
+      ).toBe('PREFIX: First block');
+      // Second block should remain unchanged
+      expect(
+        result.transformedData.request.json.messages[0].content[1].text
+      ).toBe('Second block');
+    });
+
+    it('should prepend prefix block when content array has non-text first element', async () => {
+      const context: PluginContext = {
+        requestType: 'messages',
+        request: {
+          json: {
+            model: 'claude-3-opus-20240229',
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  {
+                    type: 'image',
+                    source: {
+                      type: 'url',
+                      url: 'https://example.com/image.jpg',
+                    },
+                  },
+                  { type: 'text', text: 'What is in this image?' },
+                ],
+              },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'Analyze carefully: ',
+        applyToRole: 'user',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(
+        result.transformedData.request.json.messages[0].content[0]
+      ).toEqual({
+        type: 'text',
+        text: 'Analyze carefully: ',
+      });
+      expect(
+        result.transformedData.request.json.messages[0].content
+      ).toHaveLength(3);
+    });
+
+    it('should create new message with array content when role does not exist', async () => {
+      const context: PluginContext = {
+        requestType: 'messages',
+        request: {
+          json: {
+            model: 'claude-3-opus-20240229',
+            system: 'You are a helpful assistant.',
+            messages: [],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'User instruction: ',
+        applyToRole: 'user',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages).toHaveLength(1);
+      expect(result.transformedData.request.json.messages[0]).toEqual({
+        role: 'user',
+        content: [{ type: 'text', text: 'User instruction: ' }],
+      });
+    });
+
+    it('should not add prefix to non-empty array content when onlyIfEmpty is true', async () => {
+      const context: PluginContext = {
+        requestType: 'messages',
+        request: {
+          json: {
+            model: 'claude-3-opus-20240229',
+            messages: [
+              {
+                role: 'user',
+                content: [{ type: 'text', text: 'Existing content' }],
+              },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+        applyToRole: 'user',
+        onlyIfEmpty: true,
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      // Content should remain unchanged
+      expect(result.transformedData.request.json.messages[0].content).toEqual([
+        { type: 'text', text: 'Existing content' },
+      ]);
+    });
+
+    it('should insert new message before existing when addToExisting is false', async () => {
+      const context: PluginContext = {
+        requestType: 'messages',
+        request: {
+          json: {
+            model: 'claude-3-opus-20240229',
+            messages: [
+              {
+                role: 'user',
+                content: [{ type: 'text', text: 'Original message' }],
+              },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'Prefix message',
+        applyToRole: 'user',
+        addToExisting: false,
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages).toHaveLength(2);
+      expect(result.transformedData.request.json.messages[0]).toEqual({
+        role: 'user',
+        content: [{ type: 'text', text: 'Prefix message' }],
+      });
+      expect(result.transformedData.request.json.messages[1].content).toEqual([
+        { type: 'text', text: 'Original message' },
+      ]);
+    });
+  });
+
+  describe('Regular Completion (complete)', () => {
+    it('should add prefix to completion prompt', async () => {
+      const context: PluginContext = {
+        requestType: 'complete',
+        request: {
+          json: {
+            model: 'gpt-3.5-turbo-instruct',
+            prompt: 'Write a story about a dog.',
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'IMPORTANT: ',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.verdict).toBe(true);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.prompt).toBe(
+        'IMPORTANT: Write a story about a dog.'
+      );
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should return error when prefix is missing', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [{ role: 'user', content: 'Hello!' }],
+          },
+        },
+      };
+      const parameters: PluginParameters = {};
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).not.toBe(null);
+      expect(result.error.message).toBe(
+        'Prefix parameter is required and must be a string'
+      );
+      expect(result.verdict).toBe(true);
+      expect(result.transformed).toBe(false);
+    });
+
+    it('should return error when prefix is not a string', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [{ role: 'user', content: 'Hello!' }],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 123 as any,
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).not.toBe(null);
+      expect(result.error.message).toBe(
+        'Prefix parameter is required and must be a string'
+      );
+      expect(result.verdict).toBe(true);
+      expect(result.transformed).toBe(false);
+    });
+
+    it('should return error when request JSON is missing', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {},
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).not.toBe(null);
+      expect(result.error.message).toBe('Request JSON is empty or missing');
+      expect(result.verdict).toBe(true);
+      expect(result.transformed).toBe(false);
+    });
+
+    it('should skip processing for afterRequestHook', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [{ role: 'user', content: 'Hello!' }],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+      };
+
+      const result = await addPrefixHandler(
+        context,
+        parameters,
+        'afterRequestHook'
+      );
+
+      expect(result.error).toBe(null);
+      expect(result.verdict).toBe(true);
+      expect(result.transformed).toBe(false);
+      expect(result.data).toBe(null);
+    });
+
+    it('should skip processing for unsupported request types', async () => {
+      const context: PluginContext = {
+        requestType: 'embed' as any,
+        request: {
+          json: {
+            model: 'text-embedding-ada-002',
+            input: 'Hello world',
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.verdict).toBe(true);
+      expect(result.transformed).toBe(false);
+      expect(result.data).toBe(null);
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should handle multiple user messages and target the first one', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [
+              { role: 'user', content: 'First message' },
+              { role: 'assistant', content: 'Response' },
+              { role: 'user', content: 'Second message' },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+        applyToRole: 'user',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages[0].content).toBe(
+        'PREFIX: First message'
+      );
+      expect(result.transformedData.request.json.messages[2].content).toBe(
+        'Second message'
+      );
+    });
+
+    it('should handle assistant role prefix', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [
+              { role: 'user', content: 'Hello' },
+              { role: 'assistant', content: 'Hi there!' },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'As an AI assistant: ',
+        applyToRole: 'assistant',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages[1].content).toBe(
+        'As an AI assistant: Hi there!'
+      );
+    });
+
+    it('should default applyToRole to user when not specified', async () => {
+      const context: PluginContext = {
+        requestType: 'chatComplete',
+        request: {
+          json: {
+            model: 'gpt-4',
+            messages: [{ role: 'user', content: 'Hello!' }],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(result.data.applyToRole).toBe('user');
+      expect(result.transformedData.request.json.messages[0].content).toBe(
+        'PREFIX: Hello!'
+      );
+    });
+
+    it('should preserve other message fields', async () => {
+      const context: PluginContext = {
+        requestType: 'messages',
+        request: {
+          json: {
+            model: 'claude-3-opus-20240229',
+            messages: [
+              {
+                role: 'user',
+                content: [{ type: 'text', text: 'Hello!' }],
+                metadata: { custom: 'value' },
+              },
+            ],
+          },
+        },
+      };
+      const parameters: PluginParameters = {
+        prefix: 'PREFIX: ',
+      };
+
+      const result = await addPrefixHandler(context, parameters, mockEventType);
+
+      expect(result.error).toBe(null);
+      expect(result.transformed).toBe(true);
+      expect(result.transformedData.request.json.messages[0].metadata).toEqual({
+        custom: 'value',
+      });
     });
   });
 });

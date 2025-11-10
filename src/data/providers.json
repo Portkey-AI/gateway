@@ -3,6 +3,13 @@
   "version": "1.0.0",
   "data": [
     {
+      "id": "matterai",
+      "name": "MatterAI",
+      "object": "provider",
+      "description": "MatterAI provides access to advanced AI models including Axon series for various applications such as text generation, coding assistance, and more. Built for performance and scalability.",
+      "base_url": "https://api.matterai.so/v1"
+    },
+    {
       "id": "ai21",
       "name": "AI21",
       "object": "provider",
@@ -190,6 +197,13 @@
       "object": "provider",
       "description": "OpenAI is renowned for its development of advanced artificial intelligence technologies, including the GPT series of large language models. They focus on ensuring safe deployment practices while advancing the state-of-the-art in natural language understanding and generation across various domains.",
       "base_url": "https://api.openai.com/v1"
+    },
+    {
+      "id": "cometapi",
+      "name": "CometAPI",
+      "object": "provider",
+      "description": "CometAPI offers an OpenAI-compatible API that unifies access to 500+ foundation models across chat, reasoning, and multimodal workloads. It emphasizes straightforward migrations from OpenAI SDKs, competitive pricing, and additional tooling for multimodal generation spanning images, audio, and video.",
+      "base_url": "https://api.cometapi.com/v1"
     },
     {
       "id": "openrouter",

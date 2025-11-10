@@ -20,6 +20,10 @@ export interface GoogleResponseCandidate {
       text?: string;
       thought?: string; // for models like gemini-2.0-flash-thinking-exp refer: https://ai.google.dev/gemini-api/docs/thinking-mode#streaming_model_thinking
       functionCall?: GoogleGenerateFunctionCall;
+      inlineData?: {
+        mimeType: string;
+        data: string;
+      };
     }[];
   };
   logprobsResult?: {
@@ -40,7 +44,7 @@ export interface GoogleResponseCandidate {
       },
     ];
   };
-  finishReason: VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON;
+  finishReason: string;
   index: 0;
   safetyRatings: {
     category: string;
@@ -66,6 +70,15 @@ export interface GoogleGenerateContentResponse {
     candidatesTokenCount: number;
     totalTokenCount: number;
     thoughtsTokenCount?: number;
+    cachedContentTokenCount?: number;
+    promptTokensDetails: {
+      modality: VERTEX_MODALITY;
+      tokenCount: number;
+    }[];
+    candidatesTokensDetails: {
+      modality: VERTEX_MODALITY;
+      tokenCount: number;
+    }[];
   };
 }
 
@@ -198,7 +211,7 @@ export interface GoogleBatchRecord {
   };
   startTime: string;
   endTime: string;
-  completionsStats?: {
+  completionStats?: {
     successfulCount: string;
     failedCount: string;
     incompleteCount: string;
@@ -254,4 +267,11 @@ export enum VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON {
   BLOCKLIST = 'BLOCKLIST',
   PROHIBITED_CONTENT = 'PROHIBITED_CONTENT',
   SPII = 'SPII',
+}
+
+export enum VERTEX_MODALITY {
+  MODALITY_UNSPECIFIED = 'MODALITY_UNSPECIFIED',
+  TEXT = 'TEXT',
+  IMAGE = 'IMAGE',
+  AUDIO = 'AUDIO',
 }

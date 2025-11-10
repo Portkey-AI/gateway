@@ -67,6 +67,44 @@ export async function getAzureManagedIdentityToken(
   }
 }
 
+export async function getAzureWorkloadIdentityToken(
+  authorityHost: string,
+  tenantId: string,
+  clientId: string,
+  federatedToken: string,
+  scope = 'https://cognitiveservices.azure.com/.default'
+) {
+  try {
+    const url = `${authorityHost}/${tenantId}/oauth2/v2.0/token`;
+    const params = new URLSearchParams({
+      client_id: clientId,
+      client_assertion: federatedToken,
+      client_assertion_type:
+        'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+      scope: scope,
+      grant_type: 'client_credentials',
+    });
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params,
+    });
+
+    if (!response.ok) {
+      const errorMessage = await response.text();
+      console.error({ message: `Error from Entra ${errorMessage}` });
+      return undefined;
+    }
+    const data: { access_token: string } = await response.json();
+    return data.access_token;
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 export const AzureOpenAIFinetuneResponseTransform = (
   response: Response | ErrorResponse,
   responseStatus: number

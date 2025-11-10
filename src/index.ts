@@ -21,7 +21,7 @@ import { proxyHandler } from './handlers/proxyHandler';
 import { chatCompletionsHandler } from './handlers/chatCompletionsHandler';
 import { completionsHandler } from './handlers/completionsHandler';
 import { embeddingsHandler } from './handlers/embeddingsHandler';
-import { logger } from './middlewares/log';
+import { logHandler } from './middlewares/log';
 import { imageGenerationsHandler } from './handlers/imageGenerationsHandler';
 import { createSpeechHandler } from './handlers/createSpeechHandler';
 import { createTranscriptionHandler } from './handlers/createTranscriptionHandler';
@@ -32,20 +32,28 @@ import filesHandler from './handlers/filesHandler';
 import batchesHandler from './handlers/batchesHandler';
 import finetuneHandler from './handlers/finetuneHandler';
 import { messagesHandler } from './handlers/messagesHandler';
+import { imageEditsHandler } from './handlers/imageEditsHandler';
+import { messagesCountTokensHandler } from './handlers/messagesCountTokensHandler';
+import modelResponsesHandler from './handlers/modelResponsesHandler';
 
+// utils
+import { logger } from './apm';
 // Config
 import conf from '../conf.json';
-import modelResponsesHandler from './handlers/modelResponsesHandler';
+import { createCacheBackendsRedis } from './shared/services/cache';
 
 // Create a new Hono server instance
 const app = new Hono();
+const runtime = getRuntimeKey();
+
+if (runtime === 'node' && process.env.REDIS_CONNECTION_STRING) {
+  createCacheBackendsRedis(process.env.REDIS_CONNECTION_STRING);
+}
 /**
  * Middleware that conditionally applies compression middleware based on the runtime.
  * Compression is automatically handled for lagon and workerd runtimes
  * This check if its not any of the 2 and then applies the compress middleware to avoid double compression.
  */
-
-const runtime = getRuntimeKey();
 app.use('*', (c, next) => {
   const runtimesThatDontNeedCompression = ['lagon', 'workerd', 'node'];
   if (runtimesThatDontNeedCompression.includes(runtime)) {
@@ -88,7 +96,7 @@ app.use('*', prettyJSON());
 
 // Use logger middleware for all routes
 if (getRuntimeKey() === 'node') {
-  app.use(logger());
+  app.use(logHandler());
 }
 
 // Support the /v1/models endpoint
@@ -113,7 +121,7 @@ app.notFound((c) => c.json({ message: 'Not Found', ok: false }, 404));
  * Otherwise, logs the error and returns a JSON response with status code 500.
  */
 app.onError((err, c) => {
-  console.error('Global Error Handler: ', err.message, err.cause, err.stack);
+  logger.error('Global Error Handler: ', err.message, err.cause, err.stack);
   if (err instanceof HTTPException) {
     return err.getResponse();
   }
@@ -125,6 +133,12 @@ app.onError((err, c) => {
  * POST route for '/v1/messages' in anthropic format
  */
 app.post('/v1/messages', requestValidator, messagesHandler);
+
+app.post(
+  '/v1/messages/count_tokens',
+  requestValidator,
+  messagesCountTokensHandler
+);
 
 /**
  * POST route for '/v1/chat/completions'.
@@ -149,6 +163,12 @@ app.post('/v1/embeddings', requestValidator, embeddingsHandler);
  * Handles requests by passing them to the imageGenerations handler.
  */
 app.post('/v1/images/generations', requestValidator, imageGenerationsHandler);
+
+/**
+ * POST route for '/v1/images/edits'.
+ * Handles requests by passing them to the imageGenerations handler.
+ */
+app.post('/v1/images/edits', requestValidator, imageEditsHandler);
 
 /**
  * POST route for '/v1/audio/speech'.

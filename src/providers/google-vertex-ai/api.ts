@@ -1,8 +1,9 @@
+import { GatewayError } from '../../errors/GatewayError';
 import { Options } from '../../types/requestBody';
 import { endpointStrings, ProviderAPIConfig } from '../types';
 import { getModelAndProvider, getAccessToken, getBucketAndFile } from './utils';
 
-const getApiVersion = (provider: string, inputModel: string) => {
+const getApiVersion = (provider: string) => {
   if (provider === 'meta') return 'v1beta1';
   return 'v1';
 };
@@ -22,7 +23,7 @@ const getProjectRoute = (
   }
 
   const { provider } = getModelAndProvider(inputModel as string);
-  let routeVersion = getApiVersion(provider, inputModel as string);
+  const routeVersion = getApiVersion(provider);
   return `/${routeVersion}/projects/${projectId}/locations/${vertexRegion}`;
 };
 
@@ -58,20 +59,27 @@ export const GoogleApiConfig: ProviderAPIConfig = {
     }
 
     if (vertexRegion === 'global') {
-      return `https://aiplatform.googleapis.com`;
+      return 'https://aiplatform.googleapis.com';
     }
+
     return `https://${vertexRegion}-aiplatform.googleapis.com`;
   },
-  headers: async ({ c, providerOptions }) => {
+  headers: async ({ c, providerOptions, gatewayRequestBody }) => {
     const { apiKey, vertexServiceAccountJson } = providerOptions;
     let authToken = apiKey;
     if (vertexServiceAccountJson) {
       authToken = await getAccessToken(c, vertexServiceAccountJson);
     }
+    const anthropicBeta =
+      providerOptions?.['anthropicBeta'] ??
+      gatewayRequestBody?.['anthropic_beta'];
 
     return {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${authToken}`,
+      ...(anthropicBeta && {
+        'anthropic-beta': anthropicBeta,
+      }),
     };
   },
   getEndpoint: ({
@@ -88,6 +96,9 @@ export const GoogleApiConfig: ProviderAPIConfig = {
       mappedFn = `stream-${fn}` as endpointStrings;
     }
 
+    const url = new URL(gatewayRequestURL);
+    const searchParams = url.searchParams;
+
     if (NON_INFERENCE_ENDPOINTS.includes(fn)) {
       const jobIdIndex = [
         'cancelBatch',
@@ -99,9 +110,9 @@ export const GoogleApiConfig: ProviderAPIConfig = {
       const jobId = gatewayRequestURL.split('/').at(jobIdIndex);
 
       const url = new URL(gatewayRequestURL);
-      const searchParams = url.searchParams;
-      const pageSize = searchParams.get('limit') ?? 20;
-      const after = searchParams.get('after') ?? '';
+      const params = new URLSearchParams(url.search);
+      const pageSize = params.get('limit') ?? 20;
+      const after = params.get('after') ?? '';
 
       let projectId = vertexProjectId;
       if (!projectId || vertexServiceAccountJson) {
@@ -140,7 +151,13 @@ export const GoogleApiConfig: ProviderAPIConfig = {
         case 'cancelFinetune': {
           return `/v1/projects/${projectId}/locations/${vertexRegion}/tuningJobs/${jobId}:cancel`;
         }
+        default:
+          return '';
       }
+    }
+
+    if (!inputModel) {
+      throw new GatewayError('Model is required', 400);
     }
 
     const { provider, model } = getModelAndProvider(inputModel as string);
@@ -169,6 +186,7 @@ export const GoogleApiConfig: ProviderAPIConfig = {
         return googleUrlMap.get(mappedFn) || `${projectRoute}`;
       }
 
+      case 'mistralai':
       case 'anthropic': {
         if (mappedFn === 'chatComplete' || mappedFn === 'messages') {
           return `${projectRoute}/publishers/${provider}/models/${model}:rawPredict`;
@@ -177,7 +195,10 @@ export const GoogleApiConfig: ProviderAPIConfig = {
           mappedFn === 'stream-messages'
         ) {
           return `${projectRoute}/publishers/${provider}/models/${model}:streamRawPredict`;
+        } else if (mappedFn === 'messagesCountTokens') {
+          return `${projectRoute}/publishers/${provider}/models/count-tokens:rawPredict`;
         }
+        return `${projectRoute}/publishers/${provider}/models/${model}:rawPredict`;
       }
 
       case 'meta': {

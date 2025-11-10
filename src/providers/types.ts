@@ -10,6 +10,7 @@ import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from './google/types';
 import { DEEPSEEK_STOP_REASON } from './deepseek/types';
 import { MISTRAL_AI_FINISH_REASON } from './mistral-ai/types';
 import { TOGETHER_AI_FINISH_REASON } from './together-ai/types';
+import { COHERE_STOP_REASON } from './cohere/types';
 
 /**
  * Configuration for a parameter.
@@ -52,6 +53,7 @@ export interface ProviderAPIConfig {
     transformedRequestBody: Record<string, any>;
     transformedRequestUrl: string;
     gatewayRequestBody?: Params;
+    headers?: Record<string, string>;
   }) => Promise<Record<string, any>> | Record<string, any>;
   /** A function to generate the baseURL based on parameters */
   getBaseURL: (args: {
@@ -91,6 +93,7 @@ export type endpointStrings =
   | 'stream-messages'
   | 'proxy'
   | 'imageGenerate'
+  | 'imageEdit'
   | 'createSpeech'
   | 'createTranscription'
   | 'createTranslation'
@@ -113,7 +116,8 @@ export type endpointStrings =
   | 'getModelResponse'
   | 'deleteModelResponse'
   | 'listResponseInputItems'
-  | 'messages';
+  | 'messages'
+  | 'messagesCountTokens';
 
 /**
  * A collection of API configurations for multiple AI providers.
@@ -446,4 +450,5 @@ export type PROVIDER_FINISH_REASON =
   | TITAN_STOP_REASON
   | DEEPSEEK_STOP_REASON
   | MISTRAL_AI_FINISH_REASON
-  | TOGETHER_AI_FINISH_REASON;
+  | TOGETHER_AI_FINISH_REASON
+  | COHERE_STOP_REASON;

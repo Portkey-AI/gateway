@@ -30,7 +30,9 @@ export async function chatCompletionsHandler(c: Context): Promise<Response> {
 
     return tryTargetsResponse;
   } catch (err: any) {
-    console.error('chatCompletionsHandler error: ', err);
+    console.error(
+      `chatCompletionsHandler error: ${err.message} \n\n stackTrace: ${err.stack}`
+    );
     let statusCode = 500;
     let errorMessage = 'Something went wrong';
 

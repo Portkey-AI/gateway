@@ -5,6 +5,8 @@ import { BedrockGetBatchResponse } from './types';
 import { getOctetStreamToOctetStreamTransformer } from '../../handlers/streamHandlerUtils';
 import { BedrockUploadFileResponseTransforms } from './uploadFileUtils';
 import { BEDROCK } from '../../globals';
+import { generateErrorResponse } from '../utils';
+import { getAwsEndpointDomain } from './utils';
 
 const getModelProvider = (modelId: string) => {
   let provider = '';
@@ -15,6 +17,7 @@ const getModelProvider = (modelId: string) => {
   else if (modelId.includes('anthropic')) provider = 'anthropic';
   else if (modelId.includes('ai21')) provider = 'ai21';
   else if (modelId.includes('cohere')) provider = 'cohere';
+  else if (modelId.includes('amazon')) provider = 'titan';
   else throw new Error('Invalid model slug');
   return provider;
 };
@@ -48,7 +51,7 @@ export const BedrockGetBatchOutputRequestHandler = async ({
   c: Context;
   providerOptions: Options;
   requestURL: string;
-}) => {
+}): Promise<Response> => {
   try {
     // get s3 file id from batch details
     // get file from s3
@@ -74,6 +77,26 @@ export const BedrockGetBatchOutputRequestHandler = async ({
       headers: retrieveBatchesHeaders,
     });
 
+    if (!retrieveBatchesResponse.ok) {
+      const error = await retrieveBatchesResponse.text();
+      const _response = generateErrorResponse(
+        {
+          message: error,
+          type: null,
+          param: null,
+          code: null,
+        },
+        BEDROCK
+      );
+
+      return new Response(JSON.stringify(_response), {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+
     const batchDetails: BedrockGetBatchResponse =
       await retrieveBatchesResponse.json();
     const outputFileId = batchDetails.outputDataConfig.s3OutputDataConfig.s3Uri;
@@ -89,7 +112,7 @@ export const BedrockGetBatchOutputRequestHandler = async ({
     const awsS3ObjectKey = `${primaryKey}${jobId}/${inputS3URIParts[inputS3URIParts.length - 1]}.out`;
     const awsModelProvider = batchDetails.modelId;
 
-    const s3FileURL = `https://${awsS3Bucket}.s3.${awsRegion}.amazonaws.com/${awsS3ObjectKey}`;
+    const s3FileURL = `https://${awsS3Bucket}.s3.${awsRegion}.${getAwsEndpointDomain(c)}/${awsS3ObjectKey}`;
     const s3FileHeaders = await BedrockAPIConfig.headers({
       c,
       providerOptions,
