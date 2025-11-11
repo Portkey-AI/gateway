@@ -106,6 +106,7 @@ export const COMETAPI: string = 'cometapi';
 export const MESHY: string = 'meshy';
 export const TRIPO3D: string = 'tripo3d';
 export const NEXTBIT: string = 'nextbit';
+export const Z_AI: string = 'z-ai';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -175,6 +176,7 @@ export const VALID_PROVIDERS = [
   MESHY,
   TRIPO3D,
   NEXTBIT,
+  Z_AI,
 ];
 
 export const CONTENT_TYPES = {
