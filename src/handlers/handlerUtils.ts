@@ -842,6 +842,8 @@ export function constructConfigFromRequestHeaders(
     azureAuthMode: requestHeaders[`x-${POWERED_BY}-azure-auth-mode`],
     azureManagedClientId:
       requestHeaders[`x-${POWERED_BY}-azure-managed-client-id`],
+    azureWorkloadClientId:
+      requestHeaders[`x-${POWERED_BY}-azure-workload-client-id`],
     azureEntraClientId: requestHeaders[`x-${POWERED_BY}-azure-entra-client-id`],
     azureEntraClientSecret:
       requestHeaders[`x-${POWERED_BY}-azure-entra-client-secret`],

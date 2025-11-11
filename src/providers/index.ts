@@ -68,6 +68,7 @@ import Tripo3DConfig from './tripo3d';
 import { NextBitConfig } from './nextbit';
 import CometAPIConfig from './cometapi';
 import ZAIConfig from './z-ai';
+import MatterAIConfig from './matterai';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -132,6 +133,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   krutrim: KrutrimConfig,
   '302ai': AI302Config,
   cometapi: CometAPIConfig,
+  matterai: MatterAIConfig,
   meshy: MeshyConfig,
   nextbit: NextBitConfig,
   tripo3d: Tripo3DConfig,
