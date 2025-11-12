@@ -1,13 +1,19 @@
 export interface PluginContext {
   [key: string]: any;
-  requestType?: 'complete' | 'chatComplete' | 'embed' | 'messages';
+  requestType?:
+    | 'complete'
+    | 'chatComplete'
+    | 'embed'
+    | 'createBatch'
+    | 'createFinetune'
+    | 'messages';
   provider?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string>;
 }
 
-export interface PluginParameters<K = Record<string, string>> {
+export interface PluginParameters<T = Record<string, string>> {
   [key: string]: any;
-  credentials?: K;
+  credentials?: T;
 }
 
 export interface PluginHandlerResponse {
@@ -21,9 +27,9 @@ export interface PluginHandlerResponse {
 
 export type HookEventType = 'beforeRequestHook' | 'afterRequestHook';
 
-export type PluginHandler<P = Record<string, string>> = (
+export type PluginHandler<T = Record<string, string>> = (
   context: PluginContext,
-  parameters: PluginParameters<P>,
+  parameters: PluginParameters<T>,
   eventType: HookEventType,
   options?: {
     env: Record<string, any>;

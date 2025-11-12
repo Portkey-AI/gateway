@@ -204,7 +204,7 @@ describe('utils', () => {
     });
   });
 
-  describe.only('setCurrentContentPart', () => {
+  describe('setCurrentContentPart', () => {
     test('chatComplete string request content: should set the current content part', () => {
       const transformedData: Record<string, any> = {
         request: {
