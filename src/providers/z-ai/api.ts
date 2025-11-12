@@ -1,7 +1,7 @@
 import { ProviderAPIConfig } from '../types';
 
 const ZAIAPIConfig: ProviderAPIConfig = {
-  getBaseURL: () => 'https://api.z.ai/api/paas/v4/',
+  getBaseURL: () => 'https://api.z.ai/api/paas/v4',
   headers: ({ providerOptions }) => {
     return { Authorization: `Bearer ${providerOptions.apiKey}` };
   },
@@ -9,8 +9,6 @@ const ZAIAPIConfig: ProviderAPIConfig = {
     switch (fn) {
       case 'chatComplete':
         return '/chat/completions';
-      case 'complete':
-        return '/completions';
       default:
         return '';
     }
