@@ -67,6 +67,7 @@ import MeshyConfig from './meshy';
 import Tripo3DConfig from './tripo3d';
 import { NextBitConfig } from './nextbit';
 import CometAPIConfig from './cometapi';
+import ZAIConfig from './z-ai';
 import MatterAIConfig from './matterai';
 
 const Providers: { [key: string]: ProviderConfigs } = {
@@ -136,6 +137,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   meshy: MeshyConfig,
   nextbit: NextBitConfig,
   tripo3d: Tripo3DConfig,
+  'z-ai': ZAIConfig,
 };
 
 export default Providers;
