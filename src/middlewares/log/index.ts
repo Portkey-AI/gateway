@@ -125,12 +125,6 @@ async function processLog(c: Context, start: number) {
 
       // Log incoming client request (Client -> Gateway)
       console.log('\nINCOMING REQUEST (Client -> Gateway):');
-      console.log('\nClient Headers:');
-      const headers: Record<string, string> = {};
-      c.req.raw.headers.forEach((value, key) => {
-        headers[key] = value;
-      });
-      console.log(JSON.stringify(headers, null, 2));
 
       // Log original request body if available
       // Note: Client request body is the same across all attempts, so we can use any element
@@ -182,12 +176,6 @@ async function processLog(c: Context, start: number) {
       console.log('\n' + '-'.repeat(80));
       console.log('\nOUTGOING RESPONSE (Gateway -> Client):');
       console.log(`\nStatus: ${c.res.status}`);
-      console.log('\nResponse Headers:');
-      const responseHeaders: Record<string, string> = {};
-      c.res.headers.forEach((value, key) => {
-        responseHeaders[key] = value;
-      });
-      console.log(JSON.stringify(responseHeaders, null, 2));
 
       // Log the actual response body sent to client
       if (finalClientResponse) {
