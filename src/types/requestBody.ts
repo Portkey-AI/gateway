@@ -62,6 +62,7 @@ export interface Options {
   deploymentId?: string;
   apiVersion?: string;
   adAuth?: string;
+  /** Azure authentication mode: 'apiKey' | 'entra' | 'managed' | 'workload' | 'azure_cli' */
   azureAuthMode?: string;
   azureManagedClientId?: string;
   azureWorkloadClientId?: string;
@@ -193,6 +194,7 @@ export interface Targets {
   deploymentId?: string;
   apiVersion?: string;
   adAuth?: string;
+  /** Azure authentication mode: 'apiKey' | 'entra' | 'managed' | 'workload' | 'azure_cli' */
   azureAuthMode?: string;
   azureManagedClientId?: string;
   azureEntraClientId?: string;
@@ -475,6 +477,7 @@ export interface ShortConfig {
   deploymentId?: string;
   workersAiAccountId?: string;
   apiVersion?: string;
+  /** Azure authentication mode: 'apiKey' | 'entra' | 'managed' | 'workload' | 'azure_cli' */
   azureAuthMode?: string;
   azureManagedClientId?: string;
   azureEntraClientId?: string;

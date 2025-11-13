@@ -105,6 +105,27 @@ export async function getAzureWorkloadIdentityToken(
   }
 }
 
+export function getAzureCliToken(
+  scope = 'https://cognitiveservices.azure.com/.default'
+): string | undefined {
+  try {
+    const { execSync } = require('child_process');
+
+    // Execute Azure CLI command to get access token
+    const command = `az account get-access-token --resource ${scope.replace('/.default', '')}`;
+    const output = execSync(command, { encoding: 'utf-8' });
+
+    const tokenData = JSON.parse(output);
+    return tokenData.accessToken;
+  } catch (error: any) {
+    console.error('getAzureCliToken error: ', error?.message || error);
+    console.error(
+      'Make sure Azure CLI is installed and you are logged in using "az login"'
+    );
+    return undefined;
+  }
+}
+
 export const AzureOpenAIFinetuneResponseTransform = (
   response: Response | ErrorResponse,
   responseStatus: number

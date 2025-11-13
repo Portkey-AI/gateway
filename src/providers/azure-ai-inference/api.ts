@@ -5,6 +5,7 @@ import {
   getAccessTokenFromEntraId,
   getAzureManagedIdentityToken,
   getAzureWorkloadIdentityToken,
+  getAzureCliToken,
 } from '../azure-openai/utils';
 import { ProviderAPIConfig } from '../types';
 
@@ -128,6 +129,16 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
             Authorization: `Bearer ${accessToken}`,
           };
         }
+      }
+    }
+
+    // Azure CLI authentication mode - only available in Node.js runtime
+    if (azureAuthMode === 'azure_cli' && runtime === 'node') {
+      const scope = 'https://cognitiveservices.azure.com/.default';
+      const accessToken = getAzureCliToken(scope);
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+        return headers;
       }
     }
 

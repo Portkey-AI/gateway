@@ -102,6 +102,42 @@ export async function getAzureManagedIdentityToken(
   return result;
 }
 
+export function getAzureCliToken(
+  scope = 'https://cognitiveservices.azure.com/.default',
+  check: string
+): { token: string; error: string | null } {
+  const result: { token: string; error: string | null } = {
+    token: '',
+    error: null,
+  };
+
+  try {
+    // Note: Azure CLI auth only works in Node.js runtime
+    // This will not work in Cloudflare Workers or other edge runtimes
+    if (typeof process === 'undefined' || !process.versions?.node) {
+      result.error = 'Azure CLI authentication requires Node.js runtime';
+      return result;
+    }
+
+    const { execSync } = require('child_process');
+
+    // Execute Azure CLI command to get access token
+    const command = `az account get-access-token --resource ${scope.replace('/.default', '')}`;
+    const output = execSync(command, { encoding: 'utf-8' });
+
+    const tokenData = JSON.parse(output);
+    result.token = tokenData.accessToken;
+  } catch (error: any) {
+    result.error = error?.message || String(error);
+    console.error('getAzureCliToken error: ', result.error);
+    console.error(
+      'Make sure Azure CLI is installed and you are logged in using "az login"'
+    );
+  }
+
+  return result;
+}
+
 export const getAccessToken = async (
   credentials: AzureCredentials,
   check: string,
@@ -140,6 +176,10 @@ export const getAccessToken = async (
       options,
       env
     );
+  }
+
+  if (azureAuthMode === 'azure_cli') {
+    tokenResult = getAzureCliToken(scope, check);
   }
 
   return tokenResult;

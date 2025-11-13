@@ -4,6 +4,7 @@ import {
   getAccessTokenFromEntraId,
   getAzureManagedIdentityToken,
   getAzureWorkloadIdentityToken,
+  getAzureCliToken,
 } from './utils';
 import { getRuntimeKey } from 'hono/adapter';
 
@@ -75,6 +76,16 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
             Authorization: `Bearer ${accessToken}`,
           };
         }
+      }
+    }
+    // Azure CLI authentication mode - only available in Node.js runtime
+    if (azureAuthMode === 'azure_cli' && runtime === 'node') {
+      const scope = 'https://cognitiveservices.azure.com/.default';
+      const accessToken = getAzureCliToken(scope);
+      if (accessToken) {
+        return {
+          Authorization: `Bearer ${accessToken}`,
+        };
       }
     }
     const headersObj: Record<string, string> = {
