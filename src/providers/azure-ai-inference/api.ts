@@ -1,7 +1,10 @@
+import { getRuntimeKey } from 'hono/adapter';
 import { GITHUB } from '../../globals';
+import { Environment } from '../../utils/env';
 import {
   getAccessTokenFromEntraId,
   getAzureManagedIdentityToken,
+  getAzureWorkloadIdentityToken,
 } from '../azure-openai/utils';
 import { ProviderAPIConfig } from '../types';
 
@@ -17,6 +20,8 @@ const NON_INFERENCE_ENDPOINTS = [
   'deleteFile',
   'retrieveFileContent',
 ];
+
+const runtime = getRuntimeKey();
 
 const AzureAIInferenceAPI: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions, fn }) => {
@@ -36,7 +41,7 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
 
     return '';
   },
-  headers: async ({ providerOptions, fn }) => {
+  headers: async ({ providerOptions, fn, c }) => {
     const {
       apiKey,
       azureExtraParameters,
@@ -96,6 +101,34 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
       );
       headers['Authorization'] = `Bearer ${accessToken}`;
       return headers;
+    }
+
+    if (azureAuthMode === 'workload' && runtime === 'node') {
+      const { azureWorkloadClientId } = providerOptions;
+
+      const authorityHost = Environment(c).AZURE_AUTHORITY_HOST;
+      const tenantId = Environment(c).AZURE_TENANT_ID;
+      const clientId = azureWorkloadClientId || Environment(c).AZURE_CLIENT_ID;
+      const federatedTokenFile = Environment(c).AZURE_FEDERATED_TOKEN_FILE;
+
+      if (authorityHost && tenantId && clientId && federatedTokenFile) {
+        const fs = await import('fs');
+        const federatedToken = fs.readFileSync(federatedTokenFile, 'utf8');
+
+        if (federatedToken) {
+          const scope = 'https://cognitiveservices.azure.com/.default';
+          const accessToken = await getAzureWorkloadIdentityToken(
+            authorityHost,
+            tenantId,
+            clientId,
+            federatedToken,
+            scope
+          );
+          return {
+            Authorization: `Bearer ${accessToken}`,
+          };
+        }
+      }
     }
 
     if (apiKey) {
