@@ -1,6 +1,7 @@
 import { AZURE_OPEN_AI } from '../../globals';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
 import { ErrorResponse } from '../types';
+import { execSync } from 'child_process';
 
 export async function getAccessTokenFromEntraId(
   tenantId: string,
@@ -109,8 +110,6 @@ export function getAzureCliToken(
   scope = 'https://cognitiveservices.azure.com/.default'
 ): string | undefined {
   try {
-    const { execSync } = require('child_process');
-
     // Execute Azure CLI command to get access token
     const command = `az account get-access-token --resource ${scope.replace('/.default', '')}`;
     const output = execSync(command, { encoding: 'utf-8' });
