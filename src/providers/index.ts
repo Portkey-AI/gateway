@@ -69,6 +69,7 @@ import { NextBitConfig } from './nextbit';
 import CometAPIConfig from './cometapi';
 import ZAIConfig from './z-ai';
 import MatterAIConfig from './matterai';
+import ModalConfig from './modal';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -137,6 +138,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   meshy: MeshyConfig,
   nextbit: NextBitConfig,
   tripo3d: Tripo3DConfig,
+  modal: ModalConfig,
   'z-ai': ZAIConfig,
 };
 
