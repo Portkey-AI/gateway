@@ -1191,6 +1191,7 @@ export async function recursiveAfterRequestHookHandler(
     responseJson: mappedResponseJson,
     originalResponseJson,
   } = await responseHandler(
+    c,
     response,
     isStreamingMode,
     providerOption,
@@ -1200,7 +1201,8 @@ export async function recursiveAfterRequestHookHandler(
     gatewayParams,
     strictOpenAiCompliance,
     c.req.url,
-    areSyncHooksAvailable
+    areSyncHooksAvailable,
+    hookSpanId
   );
 
   const arhResponse = await afterRequestHookHandler(
