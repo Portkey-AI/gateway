@@ -26,6 +26,15 @@ function readUInt32BE(buffer: Uint8Array, offset: number) {
   ); // Ensure the result is an unsigned integer
 }
 
+const shouldSendHookResultChunk = (
+  strictOpenAiCompliance: boolean,
+  hooksResult: HookSpan['hooksResult']
+) => {
+  return (
+    !strictOpenAiCompliance && hooksResult?.beforeRequestHooksResult?.length > 0
+  );
+};
+
 function getPayloadFromAWSChunk(chunk: Uint8Array): string {
   const decoder = new TextDecoder();
   const chunkLength = readUInt32BE(chunk, 0);
@@ -315,7 +324,7 @@ export function handleStreamingMode(
   if (proxyProvider === BEDROCK) {
     (async () => {
       try {
-        if (!strictOpenAiCompliance) {
+        if (shouldSendHookResultChunk(strictOpenAiCompliance, hooksResult)) {
           const hookResultChunk = constructHookResultChunk(hooksResult, fn);
           if (hookResultChunk) {
             await writer.write(encoder.encode(hookResultChunk));
@@ -347,7 +356,7 @@ export function handleStreamingMode(
   } else {
     (async () => {
       try {
-        if (!strictOpenAiCompliance) {
+        if (shouldSendHookResultChunk(strictOpenAiCompliance, hooksResult)) {
           const hookResultChunk = constructHookResultChunk(hooksResult, fn);
           if (hookResultChunk) {
             await writer.write(encoder.encode(hookResultChunk));
@@ -422,7 +431,7 @@ export async function handleJSONToStreamResponse(
   ) {
     const generator = responseTransformerFunction(responseJSON, provider);
     (async () => {
-      if (!strictOpenAiCompliance) {
+      if (shouldSendHookResultChunk(strictOpenAiCompliance, hooksResult)) {
         const hookResultChunk = constructHookResultChunk(hooksResult, fn);
         if (hookResultChunk) {
           await writer.write(encoder.encode(hookResultChunk));
@@ -443,7 +452,7 @@ export async function handleJSONToStreamResponse(
       provider
     );
     (async () => {
-      if (!strictOpenAiCompliance) {
+      if (shouldSendHookResultChunk(strictOpenAiCompliance, hooksResult)) {
         const hookResultChunk = constructHookResultChunk(hooksResult, fn);
         if (hookResultChunk) {
           await writer.write(encoder.encode(hookResultChunk));
@@ -470,18 +479,16 @@ const constructHookResultChunk = (
   hooksResult: HookSpan['hooksResult'],
   fn: endpointStrings
 ) => {
-  if (fn === 'chatComplete' || fn === 'complete' || fn === 'embed') {
-    return `data: ${JSON.stringify({
-      hook_results: {
-        before_request_hooks: hooksResult.beforeRequestHooksResult,
-      },
-    })}\n\n`;
-  } else if (fn === 'messages') {
+  if (fn === 'messages') {
     return `event: hook_results\ndata: ${JSON.stringify({
       hook_results: {
         before_request_hooks: hooksResult.beforeRequestHooksResult,
       },
     })}\n\n`;
   }
-  return null;
+  return `data: ${JSON.stringify({
+    hook_results: {
+      before_request_hooks: hooksResult.beforeRequestHooksResult,
+    },
+  })}\n\n`;
 };
