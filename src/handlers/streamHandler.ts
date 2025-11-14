@@ -8,9 +8,11 @@ import {
   PRECONDITION_CHECK_FAILED_STATUS_CODE,
   GOOGLE_VERTEX_AI,
 } from '../globals';
+import { HookSpan } from '../middlewares/hooks';
 import { VertexLlamaChatCompleteStreamChunkTransform } from '../providers/google-vertex-ai/chatComplete';
 import { OpenAIChatCompleteResponse } from '../providers/openai/chatComplete';
 import { OpenAICompleteResponse } from '../providers/openai/complete';
+import { endpointStrings } from '../providers/types';
 import { Params } from '../types/requestBody';
 import { getStreamModeSplitPattern, type SplitPatternType } from '../utils';
 
@@ -23,6 +25,15 @@ function readUInt32BE(buffer: Uint8Array, offset: number) {
     0
   ); // Ensure the result is an unsigned integer
 }
+
+const shouldSendHookResultChunk = (
+  strictOpenAiCompliance: boolean,
+  hooksResult: HookSpan['hooksResult']
+) => {
+  return (
+    !strictOpenAiCompliance && hooksResult?.beforeRequestHooksResult?.length > 0
+  );
+};
 
 function getPayloadFromAWSChunk(chunk: Uint8Array): string {
   const decoder = new TextDecoder();
@@ -292,7 +303,9 @@ export function handleStreamingMode(
   responseTransformer: Function | undefined,
   requestURL: string,
   strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  gatewayRequest: Params,
+  fn: endpointStrings,
+  hooksResult: HookSpan['hooksResult']
 ): Response {
   const splitPattern = getStreamModeSplitPattern(proxyProvider, requestURL);
   // If the provider doesn't supply completion id,
@@ -311,6 +324,12 @@ export function handleStreamingMode(
   if (proxyProvider === BEDROCK) {
     (async () => {
       try {
+        if (shouldSendHookResultChunk(strictOpenAiCompliance, hooksResult)) {
+          const hookResultChunk = constructHookResultChunk(hooksResult, fn);
+          if (hookResultChunk) {
+            await writer.write(encoder.encode(hookResultChunk));
+          }
+        }
         for await (const chunk of readAWSStream(
           reader,
           responseTransformer,
@@ -337,6 +356,12 @@ export function handleStreamingMode(
   } else {
     (async () => {
       try {
+        if (shouldSendHookResultChunk(strictOpenAiCompliance, hooksResult)) {
+          const hookResultChunk = constructHookResultChunk(hooksResult, fn);
+          if (hookResultChunk) {
+            await writer.write(encoder.encode(hookResultChunk));
+          }
+        }
         for await (const chunk of readStream(
           reader,
           splitPattern,
@@ -389,7 +414,10 @@ export function handleStreamingMode(
 export async function handleJSONToStreamResponse(
   response: Response,
   provider: string,
-  responseTransformerFunction: Function
+  responseTransformerFunction: Function,
+  strictOpenAiCompliance: boolean,
+  fn: endpointStrings,
+  hooksResult: HookSpan['hooksResult']
 ): Promise<Response> {
   const { readable, writable } = new TransformStream();
   const writer = writable.getWriter();
@@ -403,6 +431,12 @@ export async function handleJSONToStreamResponse(
   ) {
     const generator = responseTransformerFunction(responseJSON, provider);
     (async () => {
+      if (shouldSendHookResultChunk(strictOpenAiCompliance, hooksResult)) {
+        const hookResultChunk = constructHookResultChunk(hooksResult, fn);
+        if (hookResultChunk) {
+          await writer.write(encoder.encode(hookResultChunk));
+        }
+      }
       while (true) {
         const chunk = generator.next();
         if (chunk.done) {
@@ -418,6 +452,12 @@ export async function handleJSONToStreamResponse(
       provider
     );
     (async () => {
+      if (shouldSendHookResultChunk(strictOpenAiCompliance, hooksResult)) {
+        const hookResultChunk = constructHookResultChunk(hooksResult, fn);
+        if (hookResultChunk) {
+          await writer.write(encoder.encode(hookResultChunk));
+        }
+      }
       for (const chunk of streamChunkArray) {
         await writer.write(encoder.encode(chunk));
       }
@@ -434,3 +474,21 @@ export async function handleJSONToStreamResponse(
     statusText: response.statusText,
   });
 }
+
+const constructHookResultChunk = (
+  hooksResult: HookSpan['hooksResult'],
+  fn: endpointStrings
+) => {
+  if (fn === 'messages') {
+    return `event: hook_results\ndata: ${JSON.stringify({
+      hook_results: {
+        before_request_hooks: hooksResult.beforeRequestHooksResult,
+      },
+    })}\n\n`;
+  }
+  return `data: ${JSON.stringify({
+    hook_results: {
+      before_request_hooks: hooksResult.beforeRequestHooksResult,
+    },
+  })}\n\n`;
+};

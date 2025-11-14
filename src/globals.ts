@@ -107,6 +107,7 @@ export const MATTERAI: string = 'matterai';
 export const MESHY: string = 'meshy';
 export const TRIPO3D: string = 'tripo3d';
 export const NEXTBIT: string = 'nextbit';
+export const MODAL: string = 'modal';
 export const Z_AI: string = 'z-ai';
 
 export const VALID_PROVIDERS = [
@@ -178,6 +179,7 @@ export const VALID_PROVIDERS = [
   MESHY,
   TRIPO3D,
   NEXTBIT,
+  MODAL,
   Z_AI,
 ];
 

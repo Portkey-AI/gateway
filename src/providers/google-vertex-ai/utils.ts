@@ -716,13 +716,23 @@ export const isEmbeddingModel = (modelName: string) => {
 export const OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING = {
   mp3: 'audio/mp3',
   wav: 'audio/wav',
+  opus: 'audio/ogg',
+  flac: 'audio/flac',
+  pcm16: 'audio/pcm',
+  'x-aac': 'audio/aac',
+  'x-m4a': 'audio/m4a',
+  mpeg: 'audio/mpeg',
+  mpga: 'audio/mpga',
+  mp4: 'audio/mp4',
+  webm: 'audio/webm',
 };
 
 export const transformInputAudioPart = (c: ContentType): GoogleMessagePart => {
   const data = c.input_audio?.data;
   const mimeType =
     OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING[
-      c.input_audio?.format as 'mp3' | 'wav'
+      c.input_audio
+        ?.format as keyof typeof OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING
     ];
   return {
     inlineData: {
