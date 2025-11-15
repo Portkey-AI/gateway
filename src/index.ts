@@ -11,12 +11,13 @@ import { prettyJSON } from 'hono/pretty-json';
 import { HTTPException } from 'hono/http-exception';
 import { compress } from 'hono/compress';
 import { getRuntimeKey } from 'hono/adapter';
-import { logger } from 'hono/logger';
+import { logger as honoLogger } from 'hono/logger';
 
 // import { env } from 'hono/adapter' // Have to set this up for multi-environment deployment
 
 // Middlewares
 import { requestValidator } from './middlewares/requestValidator';
+import { logger as customLogger } from './middlewares/log';
 import { hooks } from './middlewares/hooks';
 import { memoryCache } from './middlewares/cache';
 import { protection } from './utils/ecs/protection';
@@ -92,7 +93,8 @@ app.use('*', prettyJSON());
 
 // Use logger middleware for all routes
 if (getRuntimeKey() === 'node') {
-  app.use(logger());
+  app.use(honoLogger()); // Simple logs: <-- POST /v1/endpoint
+  app.use(customLogger()); // Verbose logs with full request/response
   app.use(protection());
 }
 
