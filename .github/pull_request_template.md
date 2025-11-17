@@ -1,7 +1,4 @@
-**Title:** 
-- Brief Description of Changes
-
-**Description:** (optional)
+**Description:** (required)
 - Detailed change 1
 - Detailed change 2
 
