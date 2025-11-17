@@ -6,7 +6,10 @@ import {
   OpenAIResponse,
   ModelResponseDeleteResponse,
 } from '../../types/modelResponses';
-import { OpenAIChatCompleteResponse } from '../openai/chatComplete';
+import {
+  OpenAIChatCompleteConfig,
+  OpenAIChatCompleteResponse,
+} from '../openai/chatComplete';
 import { OpenAICompleteResponse } from '../openai/complete';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
 import { ErrorResponse, ProviderConfig } from '../types';
@@ -50,11 +53,7 @@ export const chatCompleteParams = (
   extra?: ProviderConfig
 ): ProviderConfig => {
   const baseParams: ProviderConfig = {
-    model: {
-      param: 'model',
-      required: true,
-      ...(defaultValues?.model && { default: defaultValues.model }),
-    },
+    ...OpenAIChatCompleteConfig,
     messages: {
       param: 'messages',
       default: '',
@@ -66,76 +65,13 @@ export const chatCompleteParams = (
         });
       },
     },
-    functions: {
-      param: 'functions',
-    },
-    function_call: {
-      param: 'function_call',
-    },
-    max_tokens: {
-      param: 'max_tokens',
-      ...(defaultValues?.max_tokens && { default: defaultValues.max_tokens }),
-      min: 0,
-    },
-    temperature: {
-      param: 'temperature',
-      ...(defaultValues?.temperature && { default: defaultValues.temperature }),
-      min: 0,
-      max: 2,
-    },
-    top_p: {
-      param: 'top_p',
-      ...(defaultValues?.top_p && { default: defaultValues.top_p }),
-      min: 0,
-      max: 1,
-    },
-    n: {
-      param: 'n',
-      default: 1,
-    },
-    stream: {
-      param: 'stream',
-      ...(defaultValues?.stream && { default: defaultValues.stream }),
-    },
-    presence_penalty: {
-      param: 'presence_penalty',
-      min: -2,
-      max: 2,
-    },
-    frequency_penalty: {
-      param: 'frequency_penalty',
-      min: -2,
-      max: 2,
-    },
-    logit_bias: {
-      param: 'logit_bias',
-    },
-    user: {
-      param: 'user',
-    },
-    seed: {
-      param: 'seed',
-    },
-    tools: {
-      param: 'tools',
-    },
-    tool_choice: {
-      param: 'tool_choice',
-    },
-    response_format: {
-      param: 'response_format',
-    },
-    logprobs: {
-      param: 'logprobs',
-      ...(defaultValues?.logprobs && { default: defaultValues?.logprobs }),
-    },
-    stream_options: {
-      param: 'stream_options',
-    },
-    web_search_options: {
-      param: 'web_search_options',
-    },
   };
+
+  Object.keys(defaultValues ?? {}).forEach((key) => {
+    if (Object.hasOwn(baseParams, key) && !Array.isArray(baseParams[key])) {
+      baseParams[key].default = defaultValues?.[key];
+    }
+  });
 
   // Exclude params that are not needed.
   excludeObjectKeys(exclude, baseParams);
