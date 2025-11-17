@@ -129,6 +129,15 @@ function constructRequestHeaders(
         requestHeaders[lowerCaseHeaderKey];
   });
 
+  // Auto-forward all anthropic-* headers when using Anthropic provider
+  if (requestContext.provider === ANTHROPIC) {
+    Object.keys(requestHeaders).forEach((key: string) => {
+      if (key.toLowerCase().startsWith('anthropic-')) {
+        forwardHeadersMap[key.toLowerCase()] = requestHeaders[key];
+      }
+    });
+  }
+
   // Add any headers that the model might need
   headers = {
     ...baseHeaders,
