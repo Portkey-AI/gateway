@@ -85,6 +85,7 @@ import {
   BedrockConverseMessageCountTokensConfig,
   BedrockConverseMessageCountTokensResponseTransform,
 } from './countTokens';
+import { getBedrockModelWithoutRegion } from './utils';
 
 const BedrockConfig: ProviderConfigs = {
   api: BedrockAPIConfig,
@@ -101,7 +102,7 @@ const BedrockConfig: ProviderConfigs = {
 
     if (params.model) {
       let providerModel = providerOptions.foundationModel || params.model;
-      providerModel = providerModel.replace(/^(us\.|eu\.|apac\.)/, '');
+      providerModel = getBedrockModelWithoutRegion(providerModel);
       const providerModelArray = providerModel?.split('.');
       const provider = providerModelArray?.[0];
       const model = providerModelArray?.slice(1).join('.');
