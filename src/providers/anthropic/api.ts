@@ -10,7 +10,7 @@ const AnthropicAPIConfig: ProviderAPIConfig = {
     gatewayRequestBody,
   }) => {
     const apiKey =
-      providerOptions.apiKey || requestHeaders?.['x-api-key'] || '';
+      providerOptions.apiKey || providerOptions.anthropicApiKey || '';
     const headers: Record<string, string> = {
       'X-API-Key': apiKey,
     };
