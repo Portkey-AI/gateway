@@ -129,16 +129,6 @@ function constructRequestHeaders(
         requestHeaders[lowerCaseHeaderKey];
   });
 
-  // Auto-forward all anthropic-* headers when using Anthropic provider
-  if (requestContext.provider === ANTHROPIC) {
-    Object.keys(requestHeaders).forEach((key: string) => {
-      const lowerCaseKey = key.toLowerCase();
-      if (lowerCaseKey.startsWith('anthropic-')) {
-        forwardHeadersMap[lowerCaseKey] = requestHeaders[key];
-      }
-    });
-  }
-
   // Add any headers that the model might need
   headers = {
     ...baseHeaders,
@@ -959,7 +949,9 @@ export function constructConfigFromRequestHeaders(
     vertexModelName: requestHeaders[`x-${POWERED_BY}-provider-model`],
     vertexBatchEndpoint:
       requestHeaders[`x-${POWERED_BY}-provider-batch-endpoint`],
-    anthropicBeta: requestHeaders[`x-${POWERED_BY}-anthropic-beta`],
+    anthropicBeta:
+      requestHeaders[`x-${POWERED_BY}-anthropic-beta`] ||
+      requestHeaders[`anthropic-beta`],
   };
 
   const fireworksConfig = {
@@ -967,9 +959,14 @@ export function constructConfigFromRequestHeaders(
     fireworksFileLength: requestHeaders[`x-${POWERED_BY}-file-upload-size`],
   };
 
+  // we also support the anthropic headers without the x-${POWERED_BY}- prefix for claude code support
   const anthropicConfig = {
-    anthropicBeta: requestHeaders[`x-${POWERED_BY}-anthropic-beta`],
-    anthropicVersion: requestHeaders[`x-${POWERED_BY}-anthropic-version`],
+    anthropicBeta:
+      requestHeaders[`x-${POWERED_BY}-anthropic-beta`] ||
+      requestHeaders[`anthropic-beta`],
+    anthropicVersion:
+      requestHeaders[`x-${POWERED_BY}-anthropic-version`] ||
+      requestHeaders[`anthropic-version`],
     anthropicApiKey: requestHeaders[`x-api-key`],
   };
 
