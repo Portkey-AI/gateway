@@ -969,6 +969,7 @@ export function constructConfigFromRequestHeaders(
   const anthropicConfig = {
     anthropicBeta: requestHeaders[`x-${POWERED_BY}-anthropic-beta`],
     anthropicVersion: requestHeaders[`x-${POWERED_BY}-anthropic-version`],
+    anthropicApiKey: requestHeaders[`x-api-key`],
   };
 
   const vertexServiceAccountJson =
