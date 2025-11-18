@@ -3,12 +3,7 @@ import { ProviderAPIConfig } from '../types';
 const AnthropicAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.anthropic.com/v1',
 
-  headers: ({
-    providerOptions,
-    fn,
-    headers: requestHeaders,
-    gatewayRequestBody,
-  }) => {
+  headers: ({ providerOptions, fn, gatewayRequestBody }) => {
     const apiKey =
       providerOptions.apiKey || providerOptions.anthropicApiKey || '';
     const headers: Record<string, string> = {
