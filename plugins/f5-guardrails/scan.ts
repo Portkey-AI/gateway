@@ -93,6 +93,7 @@ export const handler: PluginHandler = async (
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${credentials.apiKey}`,
+            'User-Agent': 'portkey-ai-plugin/1.0.0',
           },
         };
 
