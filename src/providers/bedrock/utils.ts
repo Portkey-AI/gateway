@@ -537,3 +537,7 @@ export const getBedrockErrorChunk = (id: string, model: string) => {
     `data: [DONE]\n\n`,
   ];
 };
+
+export const getBedrockModelWithoutRegion = (model: string) => {
+  return model.replace(/^(us\.|eu\.|apac\.|au\.|ca\.|jp\.|global\.)/, '');
+};
