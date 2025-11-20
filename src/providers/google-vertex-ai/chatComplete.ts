@@ -91,6 +91,9 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
                 functionCall: {
                   name: tool_call.function.name,
                   args: JSON.parse(tool_call.function.arguments),
+                  ...(tool_call.function.thought_signature && {
+                    thought_signature: tool_call.function.thought_signature,
+                  }),
                 },
               });
             });
@@ -467,6 +470,10 @@ export const GoogleChatCompleteResponseTransform: (
                 function: {
                   name: part.functionCall.name,
                   arguments: JSON.stringify(part.functionCall.args),
+                  ...(!strictOpenAiCompliance &&
+                    part.thoughtSignature && {
+                      thought_signature: part.thoughtSignature,
+                    }),
                 },
               });
             } else if (part.text) {
@@ -698,6 +705,10 @@ export const GoogleChatCompleteStreamChunkTransform: (
                   function: {
                     name: part.functionCall.name,
                     arguments: JSON.stringify(part.functionCall.args),
+                    ...(!strictOpenAiCompliance &&
+                      part.thoughtSignature && {
+                        thought_signature: part.thoughtSignature,
+                      }),
                   },
                 };
               }
