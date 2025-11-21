@@ -437,6 +437,7 @@ export interface Params {
   thinking?: {
     type?: string;
     budget_tokens: number;
+    thinking_level?: string;
   };
   // Embeddings specific
   dimensions?: number;
