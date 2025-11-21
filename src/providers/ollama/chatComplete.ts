@@ -74,6 +74,15 @@ export const OllamaChatCompleteConfig: ProviderConfig = {
   tools: {
     param: 'tools',
   },
+  think: {
+    param: 'thinking',
+    transform: (params: Params) => {
+      if (params.thinking?.type === 'disabled') {
+        return false;
+      }
+      return true;
+    },
+  },
 };
 
 export interface OllamaChatCompleteResponse extends ChatCompletionResponse {
