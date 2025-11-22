@@ -162,6 +162,19 @@
       "parameters": {}
     },
     {
+      "name": "Retrieval Hallucination",
+      "id": "retrievalHallucination",
+      "supportedHooks": ["afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks whether the model output contains hallucinated information not supported by the retrieved context."
+        }
+      ],
+      "parameters": {}
+    },
+    {
       "name": "Detect Toxicity",
       "id": "toxicity",
       "supportedHooks": ["afterRequestHook"],

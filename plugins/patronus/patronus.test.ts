@@ -3,6 +3,7 @@ import { handler as phiHandler } from './phi';
 import { handler as piiHandler } from './pii';
 import { handler as toxicityHandler } from './toxicity';
 import { handler as retrievalAnswerRelevanceHandler } from './retrievalAnswerRelevance';
+import { handler as retrievalHallucinationHandler } from './retrievalHallucination';
 import { handler as customHandler } from './custom';
 import { PluginContext } from '../types';
 
@@ -540,6 +541,67 @@ describe('custom handler (is-concise)', () => {
     };
 
     const result = await customHandler(context, parameters, eventType);
+    expect(result).toBeDefined();
+    expect(result.verdict).toBe(false);
+    expect(result.error).toBeNull();
+    expect(result.data).toBeDefined();
+  }, 10000);
+});
+
+describe('retrieval hallucination handler', () => {
+  it('should fail if beforeRequestHook is used', async () => {
+    const eventType = 'beforeRequestHook';
+    const context = {
+      request: { text: 'this is a test string for moderations' },
+    };
+    const parameters = { credentials: testCreds };
+
+    const result = await retrievalHallucinationHandler(
+      context,
+      parameters,
+      eventType
+    );
+    expect(result).toBeDefined();
+    expect(result.error).toBeDefined();
+    expect(result.data).toBeNull();
+  });
+
+  it('should pass when answer is grounded in context', async () => {
+    const eventType = 'afterRequestHook';
+    const context = {
+      request: { text: 'What is the capital of France?' },
+      response: {
+        text: `The capital of France is Paris.`,
+      },
+    };
+
+    const parameters = { credentials: testCreds };
+
+    const result = await retrievalHallucinationHandler(
+      context,
+      parameters,
+      eventType
+    );
+    expect(result).toBeDefined();
+    expect(result.verdict).toBe(true);
+    expect(result.error).toBeNull();
+    expect(result.data).toBeDefined();
+  }, 10000);
+
+  it('should fail when answer contains hallucinated information', async () => {
+    const eventType = 'afterRequestHook';
+    const context = {
+      request: { text: `What color is the sky?` },
+      response: { text: `The sky is green and made of cheese.` },
+    };
+
+    const parameters = { credentials: testCreds };
+
+    const result = await retrievalHallucinationHandler(
+      context,
+      parameters,
+      eventType
+    );
     expect(result).toBeDefined();
     expect(result.verdict).toBe(false);
     expect(result.error).toBeNull();
