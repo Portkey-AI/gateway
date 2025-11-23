@@ -1,0 +1,274 @@
+import { ORACLE } from '../../globals';
+import type { CustomToolChoice, Params } from '../../types/requestBody';
+import {
+  ChatCompletionResponse,
+  ErrorResponse,
+  ProviderConfig,
+} from '../types';
+import {
+  generateErrorResponse,
+  generateInvalidProviderResponseError,
+} from '../utils';
+import {
+  ChatContent,
+  Message,
+  OracleMessageRole,
+  ToolDefinition,
+} from './types/ChatDetails';
+import {
+  ChatChoice,
+  GenericChatResponse,
+  OracleChatCompleteResponse,
+  OracleErrorResponse,
+  ToolCall,
+} from './types/GenericChatResponse';
+import { openAIToOracleRoleMap, oracleToOpenAIRoleMap } from './utils';
+
+// transforms from openai format to oracle format for chat completions request
+export const OracleChatCompleteConfig: ProviderConfig = {
+  frequency_penalty: {
+    param: 'frequencyPenalty',
+    min: -2,
+    max: 2,
+  },
+  model: {
+    param: 'model',
+    required: true,
+  },
+  messages: {
+    param: 'messages',
+    default: '',
+    transform: (params: Params): Message[] => {
+      const transformedMessages: Message[] = [];
+      for (const message of params.messages || []) {
+        const role = openAIToOracleRoleMap[message.role];
+        const content: ChatContent[] = [];
+        if (typeof message.content === 'string') {
+          content.push({
+            type: 'TEXT',
+            text: message.content,
+          });
+        } else if (Array.isArray(message.content)) {
+          for (const item of message.content) {
+            if (typeof item === 'string') {
+              content.push({
+                type: 'TEXT',
+                text: item,
+              });
+            } else if (item.type === 'image_url' && item.image_url?.url) {
+              content.push({
+                type: 'IMAGE',
+                imageUrl: {
+                  url: item.image_url.url,
+                  detail: item.image_url.detail,
+                },
+              });
+            } else if (item.type === 'input_audio' && item.input_audio?.data) {
+              content.push({
+                type: 'AUDIO',
+                audioUrl: {
+                  url: item.input_audio.data,
+                },
+              });
+            }
+          }
+        }
+        const toolCalls: ToolCall[] = [];
+        if (message.tool_calls) {
+          for (const toolCall of message.tool_calls) {
+            if (toolCall.type === 'function') {
+              toolCalls.push({
+                id: toolCall.id,
+                type: 'FUNCTION',
+                arguments: toolCall.function.arguments,
+                name: toolCall.function.name,
+              });
+            } else if (toolCall.type === 'custom') {
+              toolCalls.push({
+                id: toolCall.id,
+                type: 'FUNCTION',
+                name: toolCall.custom.name,
+                arguments: toolCall.custom.input,
+              });
+            }
+          }
+        }
+        transformedMessages.push({
+          role,
+          content,
+        });
+      }
+      return transformedMessages;
+    },
+  },
+  max_tokens: {
+    param: 'maxTokens',
+    default: 100,
+    min: 0,
+  },
+  max_completion_tokens: {
+    param: 'maxTokens',
+    default: 100,
+    min: 0,
+  },
+  n: {
+    param: 'numGenerations',
+  },
+  temperature: {
+    param: 'temperature',
+    default: 1,
+    min: 0,
+    max: 2,
+  },
+  tool_choice: {
+    param: 'toolChoice',
+    required: false,
+    transform: (params: Params) => {
+      if (typeof params.tool_choice === 'string') {
+        return {
+          type: params.tool_choice.toUpperCase(),
+        };
+      } else if (typeof params.tool_choice === 'object') {
+        if (params.tool_choice?.type === 'custom') {
+          return {
+            type: 'FUNCTION',
+            name: (params.tool_choice as CustomToolChoice)?.custom?.name,
+          };
+        } else if (params.tool_choice?.type === 'function') {
+          return {
+            type: 'FUNCTION',
+            name: params.tool_choice?.function?.name,
+          };
+        }
+      }
+    },
+  },
+  tools: {
+    param: 'tools',
+    transform: (params: Params): ToolDefinition[] | undefined => {
+      if (!params.tools) return undefined;
+      const transformedTools: ToolDefinition[] = [];
+      for (const tool of params.tools) {
+        if (tool.type === 'function') {
+          transformedTools.push({
+            type: 'FUNCTION',
+            description: tool.function.description,
+            parameters: tool.function.parameters,
+            name: tool.function.name,
+          });
+        } else if (tool.type === 'custom') {
+          transformedTools.push({
+            type: 'FUNCTION',
+            description: tool.custom.description,
+            name: tool.custom.name,
+          });
+        }
+      }
+      return transformedTools.length > 0 ? transformedTools : undefined;
+    },
+  },
+  top_p: {
+    param: 'topP',
+    default: 1,
+    min: 0,
+    max: 1,
+  },
+  logit_bias: {
+    param: 'logitBias',
+  },
+  logprobs: {
+    param: 'logProbs',
+  },
+  presence_penalty: {
+    param: 'presencePenalty',
+    min: -2,
+    max: 2,
+  },
+  seed: {
+    param: 'seed',
+  },
+  stream: {
+    param: 'isStream',
+    default: false,
+  },
+  stop: {
+    param: 'stop',
+    transform: (params: Params) => {
+      if (params.stop && !Array.isArray(params.stop)) {
+        return [params.stop];
+      }
+      return params.stop;
+    },
+  },
+  // oracle specific
+  compartment_id: {
+    param: 'compartmentId',
+    required: false,
+  },
+  serving_mode: {
+    param: 'servingMode',
+    required: false,
+  },
+  api_format: {
+    param: 'apiFormat',
+    default: 'GENERIC',
+    required: true,
+  },
+  is_echo: {
+    param: 'isEcho',
+  },
+  top_k: {
+    param: 'topK',
+  },
+};
+
+export const OracleChatCompleteResponseTransform: (
+  response: OracleChatCompleteResponse | OracleErrorResponse,
+  responseStatus: number,
+  responseHeaders: Headers
+) => ChatCompletionResponse | ErrorResponse = (
+  response,
+  responseStatus,
+  responseHeaders
+) => {
+  if (responseStatus !== 200 && 'code' in response) {
+    return generateErrorResponse(
+      {
+        message: response.message || 'Unknown error',
+        type: response.code?.toString() || null,
+        param: null,
+        code: response.code?.toString() || null,
+      },
+      ORACLE
+    );
+  }
+
+  if ('chatResponse' in response) {
+    return {
+      id: responseHeaders.get('opc-request-id') || crypto.randomUUID(),
+      object: 'chat.completion',
+      created:
+        response.chatResponse.timeCreated.getTime() / 1000 ||
+        Math.floor(Date.now() / 1000),
+      model: response.modelId,
+      provider: ORACLE,
+      choices: response.chatResponse.choices.map((choice: ChatChoice) => {
+        const content = choice.message?.content?.find(
+          (item) => item.type === 'TEXT'
+        )?.text;
+        return {
+          index: choice.index,
+          message: {
+            role: oracleToOpenAIRoleMap[
+              choice.message.role as OracleMessageRole
+            ],
+            content,
+          },
+          finish_reason: choice.finishReason,
+        };
+      }),
+    };
+  }
+
+  return generateInvalidProviderResponseError(response, ORACLE);
+};

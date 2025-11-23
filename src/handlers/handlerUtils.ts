@@ -15,6 +15,7 @@ import {
   SAGEMAKER,
   FIREWORKS_AI,
   CORTEX,
+  ORACLE,
 } from '../globals';
 import { endpointStrings } from '../providers/types';
 import { Options, Params, StrategyModes, Targets } from '../types/requestBody';
@@ -987,6 +988,11 @@ export function constructConfigFromRequestHeaders(
     snowflakeAccount: requestHeaders[`x-${POWERED_BY}-snowflake-account`],
   };
 
+  const oracleConfig = {
+    oracleApiVersion: requestHeaders[`x-${POWERED_BY}-oracle-api-version`],
+    oracleRegion: requestHeaders[`x-${POWERED_BY}-oracle-region`],
+  };
+
   const defaultsConfig = {
     input_guardrails: requestHeaders[`x-portkey-default-input-guardrails`]
       ? JSON.parse(requestHeaders[`x-portkey-default-input-guardrails`])
@@ -1093,6 +1099,12 @@ export function constructConfigFromRequestHeaders(
           ...cortexConfig,
         };
       }
+      if (parsedConfigJson.provider === ORACLE) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...oracleConfig,
+        };
+      }
     }
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
@@ -1142,6 +1154,7 @@ export function constructConfigFromRequestHeaders(
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === FIREWORKS_AI &&
       fireworksConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === CORTEX && cortexConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === ORACLE && oracleConfig),
   };
 }
 

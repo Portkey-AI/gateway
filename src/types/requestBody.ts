@@ -164,6 +164,10 @@ export interface Options {
   /** Azure entra scope */
   azureEntraScope?: string;
 
+  // Oracle specific fields
+  oracleApiVersion?: string; // example: 20160918
+  oracleRegion?: string; // example: us-ashburn-1
+
   /** Model pricing config */
   modelPricingConfig?: Record<string, any>;
 }
@@ -359,7 +363,19 @@ export interface ToolChoiceObject {
   };
 }
 
-export type ToolChoice = ToolChoiceObject | 'none' | 'auto' | 'required';
+export interface CustomToolChoice {
+  type: 'custom';
+  custom: {
+    name?: string;
+  };
+}
+
+export type ToolChoice =
+  | ToolChoiceObject
+  | CustomToolChoice
+  | 'none'
+  | 'auto'
+  | 'required';
 
 /**
  * A tool in the conversation.
@@ -441,7 +457,6 @@ export interface Params {
   // Embeddings specific
   dimensions?: number;
   parameters?: any;
-  [key: string]: any;
 }
 
 interface Examples {
