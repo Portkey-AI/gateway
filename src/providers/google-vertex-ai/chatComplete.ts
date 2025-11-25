@@ -280,7 +280,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
       const functionDeclarations: any = [];
       const tools: any = [];
       params.tools?.forEach((tool) => {
-        if (tool.type === 'function') {
+        if (tool.type === 'function' && tool.function) {
           // these are not supported by google
           recursivelyDeleteUnsupportedParameters(tool.function?.parameters);
           delete tool.function?.strict;
