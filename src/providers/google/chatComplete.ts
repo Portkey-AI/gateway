@@ -9,6 +9,7 @@ import {
   SYSTEM_MESSAGE_ROLES,
   MESSAGE_ROLES,
 } from '../../types/requestBody';
+import { openaiReasoningEffortToVertexThinkingLevel } from '../google-vertex-ai/transformGenerationConfig';
 import { VERTEX_MODALITY } from '../google-vertex-ai/types';
 import {
   getMimeType,
@@ -88,6 +89,16 @@ const transformGenerationConfig = (params: Params) => {
     generationConfig['responseModalities'] = params.modalities.map((modality) =>
       modality.toUpperCase()
     );
+  }
+  if (params.reasoning_effort && params.reasoning_effort !== 'none') {
+    const thinkingLevel = openaiReasoningEffortToVertexThinkingLevel(
+      params.reasoning_effort
+    );
+    if (thinkingLevel) {
+      generationConfig['thinkingConfig'] = {
+        thinkingLevel,
+      };
+    }
   }
   return generationConfig;
 };
@@ -446,6 +457,10 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
     transform: (params: Params) => transformGenerationConfig(params),
   },
   modalities: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
+  reasoning_effort: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
