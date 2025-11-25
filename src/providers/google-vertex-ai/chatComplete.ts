@@ -91,10 +91,10 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
                 functionCall: {
                   name: tool_call.function.name,
                   args: JSON.parse(tool_call.function.arguments),
-                  ...(tool_call.function.thought_signature && {
-                    thought_signature: tool_call.function.thought_signature,
-                  }),
                 },
+                ...(tool_call.function.thought_signature && {
+                  thoughtSignature: tool_call.function.thought_signature,
+                }),
               });
             });
           } else if (message.role === 'tool') {
