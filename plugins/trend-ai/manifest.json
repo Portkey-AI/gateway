@@ -1,0 +1,50 @@
+{
+  "id": "trend-ai",
+  "description": "Trend AI Guard for scanning LLM inputs and outputs",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "v1ApiKey": {
+        "type": "string",
+        "label": "Trend AI Token",
+        "description": "Trend AI Guard token Get setup here (https://docs.trendmicro.com/en-us/documentation/article/trend-vision-one-ai-scanner-ai-guard)",
+        "encrypted": true
+      },
+      "v1Url": {
+        "type": "string",
+        "label": "Trend AI URL",
+        "description": "Trend AI Guard URL (e.g., https://api.xdr.trendmicro.com/v3.0/aiSecurity/applyGuardrails)"
+      }
+    },
+    "required": ["v1Url", "apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Trend AI Guard for scanning LLM inputs and outputs",
+      "id": "aiGuard",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Analyze and scan text for security threats and policy violations using Trend AI Guard services."
+        }
+      ],
+      "parameters": {
+        "prefer": {
+          "type": "string",
+          "label": "Response Detail Level",
+          "description": "Controls the level of detail in the response. 'return=representation' returns detailed response with scanner results, 'return=minimal' returns short response with only action and reasons.",
+          "enum": ["return=representation", "return=minimal"],
+          "default": "return=minimal"
+        },
+        "applicationName": {
+          "type": "string",
+          "label": "Application Name",
+          "description": "The name of the AI application whose prompts are being evaluated. Must contain only letters, numbers, hyphens, and underscores."
+        },
+        "required": ["applicationName"]
+      }
+    }
+  ]
+}

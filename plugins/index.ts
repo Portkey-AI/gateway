@@ -67,6 +67,8 @@ import { handler as defaultregexReplace } from './default/regexReplace';
 import { handler as defaultallowedRequestTypes } from './default/allowedRequestTypes';
 import { handler as javelinguardrails } from './javelin/guardrails';
 import { handler as f5GuardrailsScan } from './f5-guardrails/scan';
+import { handler as trendAiGuard } from './trend-ai/guard';
+
 export const plugins = {
   default: {
     regexMatch: defaultregexMatch,
@@ -176,5 +178,8 @@ export const plugins = {
   },
   'f5-guardrails': {
     scan: f5GuardrailsScan,
+  },
+  'trend-ai': {
+    guard: trendAiGuard,
   },
 };
