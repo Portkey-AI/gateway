@@ -5,20 +5,23 @@ export async function loadExternalPlugins(pluginsDirs: string[]) {
   const externalPlugins: Record<string, any> = {};
 
   for (const dir of pluginsDirs) {
-    if (!fs.existsSync(dir)) {
-      console.warn(`⚠️  Plugin directory not found: ${dir}`);
+    // Resolve to absolute path - handles both relative and absolute paths
+    const absoluteDir = path.resolve(dir);
+
+    if (!fs.existsSync(absoluteDir)) {
+      console.warn(`⚠️  Plugin directory not found: ${absoluteDir}`);
       continue;
     }
 
     try {
       // Scan directory for plugin folders
-      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      const entries = fs.readdirSync(absoluteDir, { withFileTypes: true });
 
       for (const entry of entries) {
         if (!entry.isDirectory()) continue;
 
-        const pluginPath = path.join(dir, entry.name);
-        const manifestPath = path.join(pluginPath, 'manifest.json');
+        const pluginPath = path.resolve(absoluteDir, entry.name);
+        const manifestPath = path.resolve(pluginPath, 'manifest.json');
 
         if (!fs.existsSync(manifestPath)) {
           console.warn(`⚠️  Skipping ${entry.name}: no manifest.json found`);
@@ -33,13 +36,12 @@ export async function loadExternalPlugins(pluginsDirs: string[]) {
 
           // Load each function handler
           for (const func of manifest.functions || []) {
-            // Try .ts first, then .js
-            let funcPath = path.join(pluginPath, `${func.id}.ts`);
+            // Only support .js files for external plugins (should be pre-transpiled)
+            const funcPath = path.resolve(pluginPath, `${func.id}.js`);
             if (!fs.existsSync(funcPath)) {
-              funcPath = path.join(pluginPath, `${func.id}.js`);
-            }
-            if (!fs.existsSync(funcPath)) {
-              console.warn(`⚠️  Function ${func.id} not found in ${pluginId}`);
+              console.warn(
+                `⚠️  Function ${func.id} not found in ${pluginId} (expected ${func.id}.js)`
+              );
               continue;
             }
 

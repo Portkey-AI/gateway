@@ -50,10 +50,23 @@ if (middlewaresDir) {
   console.log('⚙️  Loading external middlewares from:', middlewaresDir);
   try {
     const externalMiddlewares = await loadExternalMiddlewares([middlewaresDir]);
-    // Register external middlewares to app after built-in ones
+
+    // Phase 1: Apply app wrappers FIRST (they modify app behavior)
     for (const mw of externalMiddlewares) {
-      app.use(mw.pattern || '*', mw.handler);
+      if (mw.type === 'wrapper' && mw.wrapApp) {
+        console.log(`  ↳ Applying app wrapper: ${mw.name}`);
+        mw.wrapApp(app);
+      }
     }
+
+    // Phase 2: Register standard middlewares
+    for (const mw of externalMiddlewares) {
+      if (mw.type === 'standard' && mw.handler) {
+        console.log(`  ↳ Registering middleware: ${mw.name}`);
+        app.use(mw.pattern || '*', mw.handler);
+      }
+    }
+
     console.log('✓ External middlewares loaded\n');
   } catch (error: any) {
     console.error('❌ Error loading middlewares:', error.message);
