@@ -19,6 +19,7 @@ import { env } from 'hono/adapter';
 import { OpenAIModelResponseJSONToStreamGenerator } from '../providers/open-ai-base/createModelResponse';
 import { anthropicMessagesJsonToStreamGenerator } from '../providers/anthropic-base/utils/streamGenerator';
 import { endpointStrings } from '../providers/types';
+import { mapProviderError } from '../errors/mapProviderError';
 
 /**
  * Handles various types of responses based on the specified parameters
@@ -163,6 +164,19 @@ export async function responseHandler(
       response: new Response(response.body, response),
       responseJson: null,
     };
+  }
+
+  // If the status code is not successful, map the error and throw it.
+  if (!isSuccessStatusCode) {
+    const errorBody = await response
+      .clone()
+      .json()
+      .catch(() => ({}));
+    throw mapProviderError(
+      providerOptions.provider,
+      response.status,
+      errorBody
+    );
   }
 
   const nonStreamingResponse = await handleNonStreamingMode(

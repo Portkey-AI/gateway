@@ -10,6 +10,8 @@ import { HTTPException } from 'hono/http-exception';
 import { compress } from 'hono/compress';
 import { getRuntimeKey } from 'hono/adapter';
 // import { env } from 'hono/adapter' // Have to set this up for multi-environment deployment
+import { PortkeyError } from './errors/PortkeyError';
+import { ProviderError } from './errors/ProviderError';
 
 // Middlewares
 import { requestValidator } from './middlewares/requestValidator';
@@ -121,6 +123,19 @@ app.notFound((c) => c.json({ message: 'Not Found', ok: false }, 404));
  * Otherwise, logs the error and returns a JSON response with status code 500.
  */
 app.onError((err, c) => {
+  if (err instanceof PortkeyError) {
+    return c.json(
+      {
+        success: false,
+        error: {
+          code: err.code,
+          message: err.message,
+          ...(err instanceof ProviderError && { provider: err.provider }),
+        },
+      },
+      err.status as any
+    );
+  }
   logger.error('Global Error Handler: ', err.message, err.cause, err.stack);
   if (err instanceof HTTPException) {
     return err.getResponse();

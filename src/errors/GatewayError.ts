@@ -1,11 +1,14 @@
-export class GatewayError extends Error {
+import { PortkeyError } from './PortkeyError';
+import { ERROR_CODES } from './errorConstants';
+
+export class GatewayError extends PortkeyError {
   constructor(
     message: string,
-    public status: number = 500,
+    status?: number,
+    code: string = ERROR_CODES.GATEWAY_INTERNAL_ERROR,
     public cause?: Error
   ) {
-    super(message);
+    super(code, message, status);
     this.name = 'GatewayError';
-    this.status = status;
   }
 }

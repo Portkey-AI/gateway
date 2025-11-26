@@ -26,6 +26,7 @@ import { HookSpan } from '../middlewares/hooks';
 import { ConditionalRouter } from '../services/conditionalRouter';
 import { RouterError } from '../errors/RouterError';
 import { GatewayError } from '../errors/GatewayError';
+import { ERROR_CODES, ERROR_MESSAGES } from '../errors/errorConstants';
 import { HookType } from '../middlewares/hooks/types';
 
 // Services
@@ -89,7 +90,7 @@ function constructRequestHeaders(
   const proxyHeaders: Record<string, string> = {};
   // Handle proxy headers
   if (fn === 'proxy') {
-    const poweredByHeadersPattern = `x-${POWERED_BY}-`;
+    const poweredByHeadersPattern = `x - ${POWERED_BY} -`;
     const headersToAvoidForCloudflare = ['expect'];
     const headersToIgnore = [
       ...(env(c).CUSTOM_HEADERS_TO_IGNORE ?? []),
@@ -147,9 +148,9 @@ function constructRequestHeaders(
     delete headers['content-type'];
     if (fn === 'uploadFile') {
       headers['Content-Type'] = requestHeaders['content-type'];
-      if (requestHeaders[`x-${POWERED_BY}-file-purpose`]) {
-        headers[`x-${POWERED_BY}-file-purpose`] =
-          requestHeaders[`x-${POWERED_BY}-file-purpose`];
+      if (requestHeaders[`x - ${POWERED_BY} -file - purpose`]) {
+        headers[`x - ${POWERED_BY} -file - purpose`] =
+          requestHeaders[`x - ${POWERED_BY} -file - purpose`];
       }
     }
   }
@@ -237,7 +238,7 @@ export function convertHooksShorthand(
   return hooksArr.map((hook: any) => {
     let hooksObject: any = {
       type: hookType,
-      id: `${type}_guardrail_${Math.random().toString(36).substring(2, 5)}`,
+      id: `${type}_guardrail_${Math.random().toString(36).substring(2, 5)} `,
     };
 
     // if the deny key is present (true or false), add it to hooksObject and remove it from guardrails
@@ -262,7 +263,7 @@ export function convertHooksShorthand(
     hooksObject.checks = Object.keys(hook).map((key) => {
       const id = hook[key].id ?? key;
       return {
-        id: id.includes('.') ? id : `default.${id}`,
+        id: id.includes('.') ? id : `default.${id} `,
         parameters: hook[key],
         is_enabled: hook[key].is_enabled,
       };
@@ -806,14 +807,31 @@ export async function tryTargetsRecursively(
           error.cause,
           error.stack
         );
-        const errorMessage =
+        let errorMessage =
           error instanceof GatewayError
             ? error.message
             : 'Something went wrong';
+        let errorCode =
+          error instanceof GatewayError
+            ? error.code
+            : ERROR_CODES.GATEWAY_INTERNAL_ERROR;
+
+        if (
+          error.name === 'AbortError' ||
+          error.name === 'TimeoutError' ||
+          error.message?.includes('timeout')
+        ) {
+          errorMessage = ERROR_MESSAGES[ERROR_CODES.GATEWAY_TIMEOUT];
+          errorCode = ERROR_CODES.GATEWAY_TIMEOUT;
+        }
+
         response = new Response(
           JSON.stringify({
-            status: 'failure',
-            message: errorMessage,
+            success: false,
+            error: {
+              code: errorCode,
+              message: errorMessage,
+            },
           }),
           {
             status: error instanceof GatewayError ? error.status : 500,
@@ -828,150 +846,178 @@ export async function tryTargetsRecursively(
       break;
   }
 
-  return response!;
+  if (!response) {
+    throw new GatewayError(
+      ERROR_MESSAGES[ERROR_CODES.NO_HEALTHY_TARGETS],
+      undefined,
+      ERROR_CODES.NO_HEALTHY_TARGETS
+    );
+  }
+
+  return response;
 }
 
 export function constructConfigFromRequestHeaders(
   requestHeaders: Record<string, any>
 ): Options | Targets {
   const azureConfig = {
-    resourceName: requestHeaders[`x-${POWERED_BY}-azure-resource-name`],
-    deploymentId: requestHeaders[`x-${POWERED_BY}-azure-deployment-id`],
-    apiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
-    azureAdToken: requestHeaders[`x-${POWERED_BY}-azure-ad-token`],
-    azureAuthMode: requestHeaders[`x-${POWERED_BY}-azure-auth-mode`],
+    resourceName: requestHeaders[`x - ${POWERED_BY} -azure - resource - name`],
+    deploymentId: requestHeaders[`x - ${POWERED_BY} -azure - deployment - id`],
+    apiVersion: requestHeaders[`x - ${POWERED_BY} -azure - api - version`],
+    azureAdToken: requestHeaders[`x - ${POWERED_BY} -azure - ad - token`],
+    azureAuthMode: requestHeaders[`x - ${POWERED_BY} -azure - auth - mode`],
     azureManagedClientId:
-      requestHeaders[`x-${POWERED_BY}-azure-managed-client-id`],
+      requestHeaders[`x - ${POWERED_BY} -azure - managed - client - id`],
     azureWorkloadClientId:
-      requestHeaders[`x-${POWERED_BY}-azure-workload-client-id`],
-    azureEntraClientId: requestHeaders[`x-${POWERED_BY}-azure-entra-client-id`],
+      requestHeaders[`x - ${POWERED_BY} -azure - workload - client - id`],
+    azureEntraClientId:
+      requestHeaders[`x - ${POWERED_BY} -azure - entra - client - id`],
     azureEntraClientSecret:
-      requestHeaders[`x-${POWERED_BY}-azure-entra-client-secret`],
-    azureEntraTenantId: requestHeaders[`x-${POWERED_BY}-azure-entra-tenant-id`],
-    azureModelName: requestHeaders[`x-${POWERED_BY}-azure-model-name`],
+      requestHeaders[`x - ${POWERED_BY} -azure - entra - client - secret`],
+    azureEntraTenantId:
+      requestHeaders[`x - ${POWERED_BY} -azure - entra - tenant - id`],
+    azureModelName: requestHeaders[`x - ${POWERED_BY} -azure - model - name`],
     openaiBeta:
-      requestHeaders[`x-${POWERED_BY}-openai-beta`] ||
-      requestHeaders[`openai-beta`],
+      requestHeaders[`x - ${POWERED_BY} -openai - beta`] ||
+      requestHeaders[`openai - beta`],
   };
 
   const stabilityAiConfig = {
-    stabilityClientId: requestHeaders[`x-${POWERED_BY}-stability-client-id`],
+    stabilityClientId:
+      requestHeaders[`x - ${POWERED_BY} -stability - client - id`],
     stabilityClientUserId:
-      requestHeaders[`x-${POWERED_BY}-stability-client-user-id`],
+      requestHeaders[`x - ${POWERED_BY} -stability - client - user - id`],
     stabilityClientVersion:
-      requestHeaders[`x-${POWERED_BY}-stability-client-version`],
+      requestHeaders[`x - ${POWERED_BY} -stability - client - version`],
   };
 
   const azureAiInferenceConfig = {
-    azureApiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
-    azureEndpointName: requestHeaders[`x-${POWERED_BY}-azure-endpoint-name`],
-    azureFoundryUrl: requestHeaders[`x-${POWERED_BY}-azure-foundry-url`],
-    azureAdToken: requestHeaders[`x-${POWERED_BY}-azure-ad-token`],
-    azureAuthMode: requestHeaders[`x-${POWERED_BY}-azure-auth-mode`],
+    azureApiVersion: requestHeaders[`x - ${POWERED_BY} -azure - api - version`],
+    azureEndpointName:
+      requestHeaders[`x - ${POWERED_BY} -azure - endpoint - name`],
+    azureFoundryUrl: requestHeaders[`x - ${POWERED_BY} -azure - foundry - url`],
+    azureAdToken: requestHeaders[`x - ${POWERED_BY} -azure - ad - token`],
+    azureAuthMode: requestHeaders[`x - ${POWERED_BY} -azure - auth - mode`],
     azureManagedClientId:
-      requestHeaders[`x-${POWERED_BY}-azure-managed-client-id`],
-    azureEntraClientId: requestHeaders[`x-${POWERED_BY}-azure-entra-client-id`],
+      requestHeaders[`x - ${POWERED_BY} -azure - managed - client - id`],
+    azureEntraClientId:
+      requestHeaders[`x - ${POWERED_BY} -azure - entra - client - id`],
     azureEntraClientSecret:
-      requestHeaders[`x-${POWERED_BY}-azure-entra-client-secret`],
-    azureEntraTenantId: requestHeaders[`x-${POWERED_BY}-azure-entra-tenant-id`],
-    azureEntraScope: requestHeaders[`x-${POWERED_BY}-azure-entra-scope`],
-    azureExtraParameters: requestHeaders[`x-${POWERED_BY}-azure-extra-params`],
+      requestHeaders[`x - ${POWERED_BY} -azure - entra - client - secret`],
+    azureEntraTenantId:
+      requestHeaders[`x - ${POWERED_BY} -azure - entra - tenant - id`],
+    azureEntraScope: requestHeaders[`x - ${POWERED_BY} -azure - entra - scope`],
+    azureExtraParameters:
+      requestHeaders[`x - ${POWERED_BY} -azure - extra - params`],
   };
 
   const awsConfig = {
-    awsAccessKeyId: requestHeaders[`x-${POWERED_BY}-aws-access-key-id`],
-    awsSecretAccessKey: requestHeaders[`x-${POWERED_BY}-aws-secret-access-key`],
-    awsSessionToken: requestHeaders[`x-${POWERED_BY}-aws-session-token`],
-    awsRegion: requestHeaders[`x-${POWERED_BY}-aws-region`],
-    awsRoleArn: requestHeaders[`x-${POWERED_BY}-aws-role-arn`],
-    awsAuthType: requestHeaders[`x-${POWERED_BY}-aws-auth-type`],
-    awsExternalId: requestHeaders[`x-${POWERED_BY}-aws-external-id`],
-    awsS3Bucket: requestHeaders[`x-${POWERED_BY}-aws-s3-bucket`],
+    awsAccessKeyId:
+      requestHeaders[`x - ${POWERED_BY} -aws - access - key - id`],
+    awsSecretAccessKey:
+      requestHeaders[`x - ${POWERED_BY} -aws - secret - access - key`],
+    awsSessionToken: requestHeaders[`x - ${POWERED_BY} -aws - session - token`],
+    awsRegion: requestHeaders[`x - ${POWERED_BY} -aws - region`],
+    awsRoleArn: requestHeaders[`x - ${POWERED_BY} -aws - role - arn`],
+    awsAuthType: requestHeaders[`x - ${POWERED_BY} -aws - auth - type`],
+    awsExternalId: requestHeaders[`x - ${POWERED_BY} -aws - external - id`],
+    awsS3Bucket: requestHeaders[`x - ${POWERED_BY} -aws - s3 - bucket`],
     awsS3ObjectKey:
-      requestHeaders[`x-${POWERED_BY}-aws-s3-object-key`] ||
-      requestHeaders[`x-${POWERED_BY}-provider-file-name`],
+      requestHeaders[`x - ${POWERED_BY} -aws - s3 - object - key`] ||
+      requestHeaders[`x - ${POWERED_BY} -provider - file - name`],
     awsBedrockModel:
-      requestHeaders[`x-${POWERED_BY}-aws-bedrock-model`] ||
-      requestHeaders[`x-${POWERED_BY}-provider-model`],
+      requestHeaders[`x - ${POWERED_BY} -aws - bedrock - model`] ||
+      requestHeaders[`x - ${POWERED_BY} -provider - model`],
     awsServerSideEncryption:
-      requestHeaders[`x-${POWERED_BY}-amz-server-side-encryption`],
+      requestHeaders[`x - ${POWERED_BY} -amz - server - side - encryption`],
     awsServerSideEncryptionKMSKeyId:
       requestHeaders[
-        `x-${POWERED_BY}-amz-server-side-encryption-aws-kms-key-id`
+        `x - ${POWERED_BY} -amz - server - side - encryption - aws - kms - key - id`
       ],
   };
 
   const sagemakerConfig = {
     amznSagemakerCustomAttributes:
-      requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-custom-attributes`],
+      requestHeaders[
+        `x - ${POWERED_BY} -amzn - sagemaker - custom - attributes`
+      ],
     amznSagemakerTargetModel:
-      requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-target-model`],
+      requestHeaders[`x - ${POWERED_BY} -amzn - sagemaker - target - model`],
     amznSagemakerTargetVariant:
-      requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-target-variant`],
+      requestHeaders[`x - ${POWERED_BY} -amzn - sagemaker - target - variant`],
     amznSagemakerTargetContainerHostname:
       requestHeaders[
-        `x-${POWERED_BY}-amzn-sagemaker-target-container-hostname`
+        `x - ${POWERED_BY} -amzn - sagemaker - target - container - hostname`
       ],
     amznSagemakerInferenceId:
-      requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-inference-id`],
+      requestHeaders[`x - ${POWERED_BY} -amzn - sagemaker - inference - id`],
     amznSagemakerEnableExplanations:
-      requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-enable-explanations`],
+      requestHeaders[
+        `x - ${POWERED_BY} -amzn - sagemaker - enable - explanations`
+      ],
     amznSagemakerInferenceComponent:
-      requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-inference-component`],
+      requestHeaders[
+        `x - ${POWERED_BY} -amzn - sagemaker - inference - component`
+      ],
     amznSagemakerSessionId:
-      requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-session-id`],
+      requestHeaders[`x - ${POWERED_BY} -amzn - sagemaker - session - id`],
     amznSagemakerModelName:
-      requestHeaders[`x-${POWERED_BY}-amzn-sagemaker-model-name`],
+      requestHeaders[`x - ${POWERED_BY} -amzn - sagemaker - model - name`],
   };
 
   const workersAiConfig = {
-    workersAiAccountId: requestHeaders[`x-${POWERED_BY}-workers-ai-account-id`],
+    workersAiAccountId:
+      requestHeaders[`x - ${POWERED_BY} -workers - ai - account - id`],
   };
 
   const openAiConfig = {
-    openaiOrganization: requestHeaders[`x-${POWERED_BY}-openai-organization`],
-    openaiProject: requestHeaders[`x-${POWERED_BY}-openai-project`],
+    openaiOrganization:
+      requestHeaders[`x - ${POWERED_BY} -openai - organization`],
+    openaiProject: requestHeaders[`x - ${POWERED_BY} -openai - project`],
     openaiBeta:
-      requestHeaders[`x-${POWERED_BY}-openai-beta`] ||
-      requestHeaders[`openai-beta`],
+      requestHeaders[`x - ${POWERED_BY} -openai - beta`] ||
+      requestHeaders[`openai - beta`],
   };
 
   const huggingfaceConfig = {
-    huggingfaceBaseUrl: requestHeaders[`x-${POWERED_BY}-huggingface-base-url`],
+    huggingfaceBaseUrl:
+      requestHeaders[`x - ${POWERED_BY} -huggingface - base - url`],
   };
 
   const vertexConfig: Record<string, any> = {
-    vertexProjectId: requestHeaders[`x-${POWERED_BY}-vertex-project-id`],
-    vertexRegion: requestHeaders[`x-${POWERED_BY}-vertex-region`],
+    vertexProjectId: requestHeaders[`x - ${POWERED_BY} -vertex - project - id`],
+    vertexRegion: requestHeaders[`x - ${POWERED_BY} -vertex - region`],
     vertexStorageBucketName:
-      requestHeaders[`x-${POWERED_BY}-vertex-storage-bucket-name`],
-    filename: requestHeaders[`x-${POWERED_BY}-provider-file-name`],
-    vertexModelName: requestHeaders[`x-${POWERED_BY}-provider-model`],
+      requestHeaders[`x - ${POWERED_BY} -vertex - storage - bucket - name`],
+    filename: requestHeaders[`x - ${POWERED_BY} -provider - file - name`],
+    vertexModelName: requestHeaders[`x - ${POWERED_BY} -provider - model`],
     vertexBatchEndpoint:
-      requestHeaders[`x-${POWERED_BY}-provider-batch-endpoint`],
+      requestHeaders[`x - ${POWERED_BY} -provider - batch - endpoint`],
     anthropicBeta:
-      requestHeaders[`x-${POWERED_BY}-anthropic-beta`] ||
-      requestHeaders[`anthropic-beta`],
+      requestHeaders[`x - ${POWERED_BY} -anthropic - beta`] ||
+      requestHeaders[`anthropic - beta`],
   };
 
   const fireworksConfig = {
-    fireworksAccountId: requestHeaders[`x-${POWERED_BY}-fireworks-account-id`],
-    fireworksFileLength: requestHeaders[`x-${POWERED_BY}-file-upload-size`],
+    fireworksAccountId:
+      requestHeaders[`x - ${POWERED_BY} -fireworks - account - id`],
+    fireworksFileLength:
+      requestHeaders[`x - ${POWERED_BY} -file - upload - size`],
   };
 
   // we also support the anthropic headers without the x-${POWERED_BY}- prefix for claude code support
   const anthropicConfig = {
     anthropicBeta:
-      requestHeaders[`x-${POWERED_BY}-anthropic-beta`] ||
-      requestHeaders[`anthropic-beta`],
+      requestHeaders[`x - ${POWERED_BY} -anthropic - beta`] ||
+      requestHeaders[`anthropic - beta`],
     anthropicVersion:
-      requestHeaders[`x-${POWERED_BY}-anthropic-version`] ||
-      requestHeaders[`anthropic-version`],
-    anthropicApiKey: requestHeaders[`x-api-key`],
+      requestHeaders[`x - ${POWERED_BY} -anthropic - version`] ||
+      requestHeaders[`anthropic - version`],
+    anthropicApiKey: requestHeaders[`x - api - key`],
   };
 
   const vertexServiceAccountJson =
-    requestHeaders[`x-${POWERED_BY}-vertex-service-account-json`];
+    requestHeaders[`x - ${POWERED_BY} -vertex - service - account - json`];
 
   if (vertexServiceAccountJson) {
     try {
@@ -984,26 +1030,30 @@ export function constructConfigFromRequestHeaders(
   }
 
   const cortexConfig = {
-    snowflakeAccount: requestHeaders[`x-${POWERED_BY}-snowflake-account`],
+    snowflakeAccount: requestHeaders[`x - ${POWERED_BY} -snowflake - account`],
   };
 
   const defaultsConfig = {
-    input_guardrails: requestHeaders[`x-portkey-default-input-guardrails`]
-      ? JSON.parse(requestHeaders[`x-portkey-default-input-guardrails`])
+    input_guardrails: requestHeaders[`x - portkey -default -input - guardrails`]
+      ? JSON.parse(requestHeaders[`x - portkey -default -input - guardrails`])
       : [],
-    output_guardrails: requestHeaders[`x-portkey-default-output-guardrails`]
-      ? JSON.parse(requestHeaders[`x-portkey-default-output-guardrails`])
+    output_guardrails: requestHeaders[
+      `x - portkey -default -output - guardrails`
+    ]
+      ? JSON.parse(requestHeaders[`x - portkey -default -output - guardrails`])
       : [],
   };
 
-  if (requestHeaders[`x-${POWERED_BY}-config`]) {
-    let parsedConfigJson = JSON.parse(requestHeaders[`x-${POWERED_BY}-config`]);
+  if (requestHeaders[`x - ${POWERED_BY} -config`]) {
+    let parsedConfigJson = JSON.parse(
+      requestHeaders[`x - ${POWERED_BY} -config`]
+    );
     parsedConfigJson.default_input_guardrails = defaultsConfig.input_guardrails;
     parsedConfigJson.default_output_guardrails =
       defaultsConfig.output_guardrails;
 
     if (!parsedConfigJson.provider && !parsedConfigJson.targets) {
-      parsedConfigJson.provider = requestHeaders[`x-${POWERED_BY}-provider`];
+      parsedConfigJson.provider = requestHeaders[`x - ${POWERED_BY} -provider`];
       parsedConfigJson.api_key = requestHeaders['authorization']?.replace(
         'Bearer ',
         ''
@@ -1113,35 +1163,37 @@ export function constructConfigFromRequestHeaders(
   }
 
   return {
-    provider: requestHeaders[`x-${POWERED_BY}-provider`],
+    provider: requestHeaders[`x - ${POWERED_BY} -provider`],
     apiKey: requestHeaders['authorization']?.replace('Bearer ', ''),
     defaultInputGuardrails: defaultsConfig.input_guardrails,
     defaultOutputGuardrails: defaultsConfig.output_guardrails,
-    ...(requestHeaders[`x-${POWERED_BY}-provider`] === AZURE_OPEN_AI &&
+    ...(requestHeaders[`x - ${POWERED_BY} -provider`] === AZURE_OPEN_AI &&
       azureConfig),
     ...([BEDROCK, SAGEMAKER].includes(
-      requestHeaders[`x-${POWERED_BY}-provider`]
+      requestHeaders[`x - ${POWERED_BY} -provider`]
     ) && awsConfig),
-    ...(requestHeaders[`x-${POWERED_BY}-provider`] === SAGEMAKER &&
+    ...(requestHeaders[`x - ${POWERED_BY} -provider`] === SAGEMAKER &&
       sagemakerConfig),
-    ...(requestHeaders[`x-${POWERED_BY}-provider`] === WORKERS_AI &&
+    ...(requestHeaders[`x - ${POWERED_BY} -provider`] === WORKERS_AI &&
       workersAiConfig),
-    ...(requestHeaders[`x-${POWERED_BY}-provider`] === GOOGLE_VERTEX_AI &&
+    ...(requestHeaders[`x - ${POWERED_BY} -provider`] === GOOGLE_VERTEX_AI &&
       vertexConfig),
-    ...(requestHeaders[`x-${POWERED_BY}-provider`] === AZURE_AI_INFERENCE &&
+    ...(requestHeaders[`x - ${POWERED_BY} -provider`] === AZURE_AI_INFERENCE &&
       azureAiInferenceConfig),
-    ...(requestHeaders[`x-${POWERED_BY}-provider`] === OPEN_AI && openAiConfig),
-    ...(requestHeaders[`x-${POWERED_BY}-provider`] === ANTHROPIC &&
+    ...(requestHeaders[`x - ${POWERED_BY} -provider`] === OPEN_AI &&
+      openAiConfig),
+    ...(requestHeaders[`x - ${POWERED_BY} -provider`] === ANTHROPIC &&
       anthropicConfig),
-    ...(requestHeaders[`x-${POWERED_BY}-provider`] === HUGGING_FACE &&
+    ...(requestHeaders[`x - ${POWERED_BY} -provider`] === HUGGING_FACE &&
       huggingfaceConfig),
     mistralFimCompletion:
-      requestHeaders[`x-${POWERED_BY}-mistral-fim-completion`],
-    ...(requestHeaders[`x-${POWERED_BY}-provider`] === STABILITY_AI &&
+      requestHeaders[`x - ${POWERED_BY} -mistral - fim - completion`],
+    ...(requestHeaders[`x - ${POWERED_BY} -provider`] === STABILITY_AI &&
       stabilityAiConfig),
-    ...(requestHeaders[`x-${POWERED_BY}-provider`] === FIREWORKS_AI &&
+    ...(requestHeaders[`x - ${POWERED_BY} -provider`] === FIREWORKS_AI &&
       fireworksConfig),
-    ...(requestHeaders[`x-${POWERED_BY}-provider`] === CORTEX && cortexConfig),
+    ...(requestHeaders[`x - ${POWERED_BY} -provider`] === CORTEX &&
+      cortexConfig),
   };
 }
 

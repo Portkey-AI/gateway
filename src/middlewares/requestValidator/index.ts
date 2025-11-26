@@ -2,6 +2,8 @@ import { Context } from 'hono';
 import { CONTENT_TYPES, POWERED_BY, VALID_PROVIDERS } from '../../globals';
 import { configSchema } from './schema/config';
 import { Environment } from '../../utils/env';
+import { PortkeyError } from '../../errors/PortkeyError';
+import { ERROR_CODES, ERROR_MESSAGES } from '../../errors/errorConstants';
 
 // Regex patterns for validation (defined once for reusability)
 const VALIDATION_PATTERNS = {
@@ -89,17 +91,9 @@ export const requestValidator = (c: Context, next: any) => {
     ].includes(requestHeaders['content-type'].split(';')[0]) &&
     !contentType.split(';')[0]?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
   ) {
-    return new Response(
-      JSON.stringify({
-        status: 'failure',
-        message: `Invalid content type passed`,
-      }),
-      {
-        status: 400,
-        headers: {
-          'content-type': 'application/json',
-        },
-      }
+    throw new PortkeyError(
+      ERROR_CODES.INVALID_CONTENT_TYPE,
+      ERROR_MESSAGES[ERROR_CODES.INVALID_CONTENT_TYPE]
     );
   }
 
@@ -109,50 +103,26 @@ export const requestValidator = (c: Context, next: any) => {
       requestHeaders[`x-${POWERED_BY}-provider`]
     )
   ) {
-    return new Response(
-      JSON.stringify({
-        status: 'failure',
-        message: `Either x-${POWERED_BY}-config or x-${POWERED_BY}-provider header is required`,
-      }),
-      {
-        status: 400,
-        headers: {
-          'content-type': 'application/json',
-        },
-      }
+    throw new PortkeyError(
+      ERROR_CODES.MISSING_REQUIRED_HEADER,
+      ERROR_MESSAGES[ERROR_CODES.MISSING_REQUIRED_HEADER](POWERED_BY)
     );
   }
   if (
     requestHeaders[`x-${POWERED_BY}-provider`] &&
     !VALID_PROVIDERS.includes(requestHeaders[`x-${POWERED_BY}-provider`])
   ) {
-    return new Response(
-      JSON.stringify({
-        status: 'failure',
-        message: `Invalid provider passed`,
-      }),
-      {
-        status: 400,
-        headers: {
-          'content-type': 'application/json',
-        },
-      }
+    throw new PortkeyError(
+      ERROR_CODES.INVALID_PROVIDER,
+      ERROR_MESSAGES[ERROR_CODES.INVALID_PROVIDER]
     );
   }
 
   const customHostHeader = requestHeaders[`x-${POWERED_BY}-custom-host`];
   if (customHostHeader && !isValidCustomHost(customHostHeader, c)) {
-    return new Response(
-      JSON.stringify({
-        status: 'failure',
-        message: `Invalid custom host`,
-      }),
-      {
-        status: 400,
-        headers: {
-          'content-type': 'application/json',
-        },
-      }
+    throw new PortkeyError(
+      ERROR_CODES.INVALID_CUSTOM_HOST,
+      ERROR_MESSAGES[ERROR_CODES.INVALID_CUSTOM_HOST]
     );
   }
 
@@ -163,66 +133,37 @@ export const requestValidator = (c: Context, next: any) => {
         !requestHeaders[`x-${POWERED_BY}-provider`] &&
         !(parsedConfig.provider || parsedConfig.targets)
       ) {
-        return new Response(
-          JSON.stringify({
-            status: 'failure',
-            message: `Either x-${POWERED_BY}-provider needs to be passed. Or the x-${POWERED_BY}-config header should have a valid config with provider details in it.`,
-          }),
-          {
-            status: 400,
-            headers: {
-              'content-type': 'application/json',
-            },
-          }
+        throw new PortkeyError(
+          ERROR_CODES.MISSING_REQUIRED_HEADER,
+          ERROR_MESSAGES[ERROR_CODES.MISSING_PROVIDER_IN_CONFIG](POWERED_BY)
         );
       }
 
       const validatedConfig = configSchema.safeParse(parsedConfig);
 
       if (!validatedConfig.success && validatedConfig.error?.issues?.length) {
-        return new Response(
-          JSON.stringify({
-            status: 'failure',
-            message: `Invalid config passed`,
-            errors: validatedConfig.error.issues.map(
-              (e: any) => `path: ${e.path}, message: ${e.message}`
-            ),
-          }),
-          {
-            status: 400,
-            headers: {
-              'content-type': 'application/json',
-            },
-          }
+        // TODO: Add specific error messages for validation failures
+        throw new PortkeyError(
+          ERROR_CODES.INVALID_CONFIG,
+          `Invalid config passed: ${validatedConfig.error.issues
+            .map((e: any) => `path: ${e.path}, message: ${e.message}`)
+            .join(', ')}`
         );
       }
 
       if (parsedConfig.options) {
-        return new Response(
-          JSON.stringify({
-            status: 'failure',
-            message: `This version of config is not supported in this route. Please migrate to the latest version`,
-          }),
-          {
-            status: 400,
-            headers: {
-              'content-type': 'application/json',
-            },
-          }
+        throw new PortkeyError(
+          ERROR_CODES.UNSUPPORTED_CONFIG_VERSION,
+          ERROR_MESSAGES[ERROR_CODES.UNSUPPORTED_CONFIG_VERSION]
         );
       }
     } catch (e) {
-      return new Response(
-        JSON.stringify({
-          status: 'failure',
-          message: `Invalid config passed. You need to pass a valid json`,
-        }),
-        {
-          status: 400,
-          headers: {
-            'content-type': 'application/json',
-          },
-        }
+      if (e instanceof PortkeyError) {
+        throw e;
+      }
+      throw new PortkeyError(
+        ERROR_CODES.INVALID_CONFIG,
+        ERROR_MESSAGES[ERROR_CODES.INVALID_CONFIG]
       );
     }
   }
