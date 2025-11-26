@@ -64,8 +64,25 @@ The [**AI Gateway**](https://portkey.wiki/gh-10) is designed for fast, reliable 
 npx @portkey-ai/gateway
 ```
 > The Gateway is running on `http://localhost:8787/v1`
-> 
+>
 > The Gateway Console is running on `http://localhost:8787/public/`
+
+**With Custom Plugins & Middlewares (npm):**
+```bash
+# Load custom guardrails and middlewares
+npx @portkey-ai/gateway -- --plugins-dir=./my-plugins --middlewares-dir=./my-middlewares --port=8787
+```
+
+**Available CLI Options:**
+```bash
+npx @portkey-ai/gateway [options]
+
+Options:
+  --port              Port to run the gateway on (default: 8787)
+  --headless          Run in headless mode (no console UI)
+  --plugins-dir       Directory containing custom plugins
+  --middlewares-dir   Directory containing custom middlewares
+```
 
 <sup>
 Deployment guides:
@@ -224,6 +241,24 @@ Insights from analyzing 2 trillion+ tokens, across 90+ regions and 650+ teams in
 <sup>
 *&nbsp;Available in hosted and enterprise versions
 </sup>
+
+<br>
+
+## Extensibility
+
+### Custom Plugins & Middlewares
+Extend the AI Gateway with your own custom plugins and middlewares without modifying the core codebase:
+
+- **[Custom Guardrail Plugins](./external-examples/plugins/default-external/)**: Create custom validation and transformation plugins using the same structure as built-in plugins. Load them at runtime with `--plugins-dir` flag.
+- **[Custom Middlewares](./external-examples/middlewares/)**: Add custom request/response middleware for authentication, logging, transformation, and more.
+
+**Quick Start:**
+```bash
+# Load custom plugins and middlewares
+npx @portkey-ai/gateway --plugins-dir=./my-plugins --middlewares-dir=./my-middlewares --port=8787
+```
+
+See the [Plugin Development Guide](./plugins/README.md) for detailed instructions on creating custom plugins.
 
 <br>
 
