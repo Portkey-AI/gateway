@@ -8,6 +8,9 @@ import { Context } from 'hono';
 import { createNodeWebSocket } from '@hono/node-ws';
 import { realTimeHandlerNode } from './handlers/realtimeHandlerNode';
 import { requestValidator } from './middlewares/requestValidator';
+import { plugins } from '../plugins';
+import { loadExternalPlugins, mergePlugins } from './loaders/pluginLoader';
+import { loadExternalMiddlewares } from './loaders/middlewareLoader';
 
 // Extract the port number from the command line arguments
 const defaultPort = 8787;
@@ -16,6 +19,47 @@ const portArg = args.find((arg) => arg.startsWith('--port='));
 const port = portArg ? parseInt(portArg.split('=')[1]) : defaultPort;
 
 const isHeadless = args.includes('--headless');
+
+// Parse external plugin and middleware directories
+const pluginsDirArg = args.find((arg) => arg.startsWith('--plugins-dir='));
+const pluginsDir = pluginsDirArg ? pluginsDirArg.split('=')[1] : null;
+
+const middlewaresDirArg = args.find((arg) =>
+  arg.startsWith('--middlewares-dir=')
+);
+const middlewaresDir = middlewaresDirArg
+  ? middlewaresDirArg.split('=')[1]
+  : null;
+
+// Load external plugins if specified
+if (pluginsDir) {
+  console.log('🔌 Loading external plugins from:', pluginsDir);
+  try {
+    const externalPlugins = await loadExternalPlugins([pluginsDir]);
+    const merged = mergePlugins(plugins, externalPlugins);
+    Object.assign(plugins, merged);
+    console.log('✓ External plugins loaded\n');
+  } catch (error: any) {
+    console.error('❌ Error loading plugins:', error.message);
+    process.exit(1);
+  }
+}
+
+// Load external middlewares if specified
+if (middlewaresDir) {
+  console.log('⚙️  Loading external middlewares from:', middlewaresDir);
+  try {
+    const externalMiddlewares = await loadExternalMiddlewares([middlewaresDir]);
+    // Register external middlewares to app after built-in ones
+    for (const mw of externalMiddlewares) {
+      app.use(mw.pattern || '*', mw.handler);
+    }
+    console.log('✓ External middlewares loaded\n');
+  } catch (error: any) {
+    console.error('❌ Error loading middlewares:', error.message);
+    process.exit(1);
+  }
+}
 
 // Setup static file serving only if not in headless mode
 if (
