@@ -15,6 +15,8 @@ export const ERROR_CODES = {
   NO_HEALTHY_TARGETS: 'NO_HEALTHY_TARGETS',
   GATEWAY_TIMEOUT: 'GATEWAY_TIMEOUT',
   GATEWAY_INTERNAL_ERROR: 'GATEWAY_INTERNAL_ERROR',
+  INVALID_API_KEY: 'INVALID_API_KEY',
+  INVALID_PROMPT_ID: 'INVALID_PROMPT_ID',
 } as const;
 
 export const ERROR_MESSAGES = {
@@ -40,6 +42,8 @@ export const ERROR_MESSAGES = {
     'No healthy targets found to process the request',
   [ERROR_CODES.GATEWAY_TIMEOUT]: 'Gateway timeout',
   [ERROR_CODES.GATEWAY_INTERNAL_ERROR]: 'Gateway internal server error',
+  [ERROR_CODES.INVALID_API_KEY]: 'Invalid API key passed',
+  [ERROR_CODES.INVALID_PROMPT_ID]: 'Invalid prompt id passed',
 } as const;
 
 export const ERROR_STATUSES = {
@@ -59,4 +63,6 @@ export const ERROR_STATUSES = {
   [ERROR_CODES.NO_HEALTHY_TARGETS]: 500,
   [ERROR_CODES.GATEWAY_TIMEOUT]: 504,
   [ERROR_CODES.GATEWAY_INTERNAL_ERROR]: 500,
+  [ERROR_CODES.INVALID_API_KEY]: 401,
+  [ERROR_CODES.INVALID_PROMPT_ID]: 400,
 } as const;

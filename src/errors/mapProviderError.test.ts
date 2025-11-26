@@ -8,7 +8,7 @@ describe('mapProviderError', () => {
       error: { message: 'Invalid API key' },
     });
     expect(error).toBeInstanceOf(ProviderError);
-    expect(error.code).toBe(ERROR_CODES.PROVIDER_AUTHENTICATION_ERROR);
+    expect(error.code).toBe(ERROR_CODES.INVALID_API_KEY);
     expect(error.status).toBe(401);
     expect(error.provider).toBe('openai');
     expect(error.message).toContain('Invalid API key');

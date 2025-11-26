@@ -12,6 +12,7 @@ import { getRuntimeKey } from 'hono/adapter';
 // import { env } from 'hono/adapter' // Have to set this up for multi-environment deployment
 import { PortkeyError } from './errors/PortkeyError';
 import { ProviderError } from './errors/ProviderError';
+import { ERROR_CODES, ERROR_MESSAGES } from './errors/errorConstants';
 
 // Middlewares
 import { requestValidator } from './middlewares/requestValidator';
@@ -283,11 +284,10 @@ app.post('/v1/prompts/*', requestValidator, (c) => {
   } else if (c.req.url.endsWith('/v1/completions')) {
     return completionsHandler(c);
   }
-  c.status(500);
-  return c.json({
-    status: 'failure',
-    message: 'prompt completions error: Something went wrong',
-  });
+  throw new PortkeyError(
+    ERROR_CODES.INVALID_PROMPT_ID,
+    ERROR_MESSAGES[ERROR_CODES.INVALID_PROMPT_ID]
+  );
 });
 
 // WebSocket route

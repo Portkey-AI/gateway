@@ -19,6 +19,13 @@ export const mapProviderError = (
     case 403:
       code = ERROR_CODES.PROVIDER_AUTHENTICATION_ERROR;
       message = ERROR_MESSAGES[ERROR_CODES.PROVIDER_AUTHENTICATION_ERROR];
+      if (
+        rawError?.error?.message?.toLowerCase()?.includes('invalid api key') ||
+        rawError?.message?.toLowerCase()?.includes('invalid api key')
+      ) {
+        code = ERROR_CODES.INVALID_API_KEY;
+        message = ERROR_MESSAGES[ERROR_CODES.INVALID_API_KEY];
+      }
       break;
     case 404:
       code = ERROR_CODES.PROVIDER_NOT_FOUND;
