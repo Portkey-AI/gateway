@@ -90,7 +90,7 @@ function constructRequestHeaders(
   const proxyHeaders: Record<string, string> = {};
   // Handle proxy headers
   if (fn === 'proxy') {
-    const poweredByHeadersPattern = `x - ${POWERED_BY} -`;
+    const poweredByHeadersPattern = `x-${POWERED_BY}-`;
     const headersToAvoidForCloudflare = ['expect'];
     const headersToIgnore = [
       ...(env(c).CUSTOM_HEADERS_TO_IGNORE ?? []),
@@ -148,9 +148,9 @@ function constructRequestHeaders(
     delete headers['content-type'];
     if (fn === 'uploadFile') {
       headers['Content-Type'] = requestHeaders['content-type'];
-      if (requestHeaders[`x - ${POWERED_BY} -file - purpose`]) {
-        headers[`x - ${POWERED_BY} -file - purpose`] =
-          requestHeaders[`x - ${POWERED_BY} -file - purpose`];
+      if (requestHeaders[`x-${POWERED_BY}-file-purpose`]) {
+        headers[`x-${POWERED_BY}-file-purpose`] =
+          requestHeaders[`x-${POWERED_BY}-file-purpose`];
       }
     }
   }
@@ -238,7 +238,7 @@ export function convertHooksShorthand(
   return hooksArr.map((hook: any) => {
     let hooksObject: any = {
       type: hookType,
-      id: `${type}_guardrail_${Math.random().toString(36).substring(2, 5)} `,
+      id: `${type}_guardrail_${Math.random().toString(36).substring(2, 5)}`,
     };
 
     // if the deny key is present (true or false), add it to hooksObject and remove it from guardrails
@@ -263,7 +263,7 @@ export function convertHooksShorthand(
     hooksObject.checks = Object.keys(hook).map((key) => {
       const id = hook[key].id ?? key;
       return {
-        id: id.includes('.') ? id : `default.${id} `,
+        id: id.includes('.') ? id : `default.${id}`,
         parameters: hook[key],
         is_enabled: hook[key].is_enabled,
       };

@@ -40,16 +40,12 @@ describe('ResponseService', () => {
 
     mockHooksService = {
       areSyncHooksAvailable: false,
+      hookSpan: { id: 'hook-span-123' },
     } as unknown as HooksService;
 
     mockLogsService = {} as LogsService;
 
-    responseService = new ResponseService(
-      mockRequestContext,
-      mockProviderContext,
-      mockHooksService,
-      mockLogsService
-    );
+    responseService = new ResponseService(mockRequestContext, mockHooksService);
 
     // Reset mocks
     jest.clearAllMocks();
@@ -134,16 +130,18 @@ describe('ResponseService', () => {
       const result = await responseService.create(options);
 
       expect(responseHandler).toHaveBeenCalledWith(
+        mockRequestContext.honoContext,
         mockResponse,
         mockRequestContext.isStreaming,
-        mockRequestContext.provider,
+        mockRequestContext.providerOption,
         'chatComplete',
         mockRequestContext.requestURL,
         false,
         mockRequestContext.params,
         mockRequestContext.strictOpenAiCompliance,
         mockRequestContext.honoContext.req.url,
-        mockHooksService.areSyncHooksAvailable
+        mockHooksService.areSyncHooksAvailable,
+        'hook-span-123'
       );
 
       expect(result.response).toEqual(mockResponse);
@@ -173,16 +171,18 @@ describe('ResponseService', () => {
       const result = await responseService.create(options);
 
       expect(responseHandler).toHaveBeenCalledWith(
+        mockRequestContext.honoContext,
         mockResponse,
         mockRequestContext.isStreaming,
-        mockRequestContext.provider,
+        mockRequestContext.providerOption,
         'chatComplete',
         mockRequestContext.requestURL,
         true, // isCacheHit should be true
         mockRequestContext.params,
         mockRequestContext.strictOpenAiCompliance,
         mockRequestContext.honoContext.req.url,
-        mockHooksService.areSyncHooksAvailable
+        mockHooksService.areSyncHooksAvailable,
+        'hook-span-123'
       );
 
       expect(mockResponse.headers.get(RESPONSE_HEADER_KEYS.CACHE_STATUS)).toBe(
@@ -262,9 +262,7 @@ describe('ResponseService', () => {
 
       const serviceWithPortkey = new ResponseService(
         contextWithPortkey,
-        mockProviderContext,
-        mockHooksService,
-        mockLogsService
+        mockHooksService
       );
 
       const options = {
@@ -326,9 +324,7 @@ describe('ResponseService', () => {
 
       const streamingService = new ResponseService(
         streamingContext,
-        mockProviderContext,
-        mockHooksService,
-        mockLogsService
+        mockHooksService
       );
 
       const mockResponse = new Response('{}');
@@ -341,16 +337,18 @@ describe('ResponseService', () => {
       await streamingService.getResponse(mockResponse, 'chatComplete', false);
 
       expect(responseHandler).toHaveBeenCalledWith(
+        streamingContext.honoContext,
         mockResponse,
         true, // isStreaming should be true
-        streamingContext.provider,
+        streamingContext.providerOption,
         'chatComplete',
         streamingContext.requestURL,
         false,
         streamingContext.params,
         streamingContext.strictOpenAiCompliance,
         streamingContext.honoContext.req.url,
-        mockHooksService.areSyncHooksAvailable
+        mockHooksService.areSyncHooksAvailable,
+        'hook-span-123'
       );
     });
 
@@ -365,16 +363,18 @@ describe('ResponseService', () => {
       await responseService.getResponse(mockResponse, 'chatComplete', true);
 
       expect(responseHandler).toHaveBeenCalledWith(
+        mockRequestContext.honoContext,
         mockResponse,
         mockRequestContext.isStreaming,
-        mockRequestContext.provider,
+        mockRequestContext.providerOption,
         'chatComplete',
         mockRequestContext.requestURL,
         true, // isCacheHit should be true
         mockRequestContext.params,
         mockRequestContext.strictOpenAiCompliance,
         mockRequestContext.honoContext.req.url,
-        mockHooksService.areSyncHooksAvailable
+        mockHooksService.areSyncHooksAvailable,
+        'hook-span-123'
       );
     });
   });
@@ -461,9 +461,7 @@ describe('ResponseService', () => {
 
       const serviceWithPortkey = new ResponseService(
         contextWithPortkey,
-        mockProviderContext,
-        mockHooksService,
-        mockLogsService
+        mockHooksService
       );
 
       serviceWithPortkey.updateHeaders(mockResponse, 'MISS', 0);
@@ -479,9 +477,7 @@ describe('ResponseService', () => {
 
       const serviceWithEmptyProvider = new ResponseService(
         contextWithEmptyProvider,
-        mockProviderContext,
-        mockHooksService,
-        mockLogsService
+        mockHooksService
       );
 
       serviceWithEmptyProvider.updateHeaders(mockResponse, 'MISS', 0);
