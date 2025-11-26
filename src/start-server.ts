@@ -51,19 +51,17 @@ if (middlewaresDir) {
   try {
     const externalMiddlewares = await loadExternalMiddlewares([middlewaresDir]);
 
-    // Phase 1: Apply app wrappers FIRST (they modify app behavior)
     for (const mw of externalMiddlewares) {
-      if (mw.type === 'wrapper' && mw.wrapApp) {
-        console.log(`  ↳ Applying app wrapper: ${mw.name}`);
-        mw.wrapApp(app);
-      }
-    }
-
-    // Phase 2: Register standard middlewares
-    for (const mw of externalMiddlewares) {
-      if (mw.type === 'standard' && mw.handler) {
-        console.log(`  ↳ Registering middleware: ${mw.name}`);
-        app.use(mw.pattern || '*', mw.handler);
+      console.log(`  ↳ Registering middleware: ${mw.name}`);
+      if (mw.isPlugin) {
+        // Plugin-style middleware: receives app instance and can register routes
+        (mw.handler as (app: any) => void)(app);
+      } else {
+        // Standard middleware: register as request handler
+        app.use(
+          mw.pattern || '*',
+          mw.handler as (c: any, next: any) => Promise<any>
+        );
       }
     }
 

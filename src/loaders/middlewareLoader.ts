@@ -2,11 +2,10 @@ import fs from 'fs';
 import path from 'path';
 
 export interface LoadedMiddleware {
-  handler?: (c: any, next: any) => Promise<any>; // Standard middleware
-  wrapApp?: (app: any) => void; // App wrapper function
+  handler: ((c: any, next: any) => Promise<any>) | ((app: any) => void);
   name: string;
   pattern?: string;
-  type: 'standard' | 'wrapper';
+  isPlugin: boolean; // true if middleware() returns (app) => void, false if it's (c, next) => Promise
 }
 
 export async function loadExternalMiddlewares(
@@ -36,32 +35,46 @@ export async function loadExternalMiddlewares(
           const module = await import(filePath);
           const metadata = module.metadata || {};
 
-          // Check if it's an app wrapper (priority over standard middleware)
-          if (typeof module.wrapApp === 'function') {
-            middlewares.push({
-              wrapApp: module.wrapApp,
-              name: metadata.name || file.replace(/\.(ts|js)$/, ''),
-              type: 'wrapper',
-            });
-          }
-          // Otherwise, treat as standard middleware
-          else {
-            const middleware = module.middleware || module.default;
+          const middleware = module.middleware || module.default;
 
-            if (typeof middleware !== 'function') {
-              console.warn(
-                `⚠️  Skipping ${file}: no middleware or wrapApp function found`
-              );
-              continue;
+          if (typeof middleware !== 'function') {
+            console.warn(`⚠️  Skipping ${file}: no middleware function found`);
+            continue;
+          }
+
+          // Check if it's a plugin-style middleware
+          // Plugin: middleware() returns (app) => void
+          // Standard: middleware is (c, next) => Promise<any>
+          let isPlugin = false;
+          let handler = middleware;
+
+          // If middleware is a function that returns a function, it's a plugin
+          if (middleware.length === 0) {
+            // No parameters - likely middleware() that returns a function
+            try {
+              const result = middleware();
+              if (typeof result === 'function') {
+                // It's a plugin - the result is the app handler
+                isPlugin = true;
+                handler = result;
+              } else {
+                // middleware() returned non-function, use original middleware
+                isPlugin = false;
+                handler = middleware;
+              }
+            } catch (e) {
+              // If calling middleware() throws, treat as standard middleware
+              isPlugin = false;
+              handler = middleware;
             }
-
-            middlewares.push({
-              handler: middleware,
-              name: metadata.name || file.replace(/\.(ts|js)$/, ''),
-              pattern: metadata.pattern || '*',
-              type: 'standard',
-            });
           }
+
+          middlewares.push({
+            handler,
+            name: metadata.name || file.replace(/\.(ts|js)$/, ''),
+            pattern: metadata.pattern || '*',
+            isPlugin,
+          });
         } catch (error: any) {
           console.warn(
             `⚠️  Error loading middleware ${file}: ${error.message}`
