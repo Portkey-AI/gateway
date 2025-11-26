@@ -1,44 +1,4 @@
 import { BedrockMessagesParams } from '../types';
-import { ToolUnion } from '../../../types/MessagesRequest';
-
-// Beta header for advanced tool use features
-const ADVANCED_TOOL_USE_BETA = 'advanced-tool-use-2025-11-20';
-
-// Tool types that require the advanced tool use beta
-const ADVANCED_TOOL_TYPES = [
-  'tool_search_tool_regex_20251119',
-  'tool_search_tool_bm25_20251119',
-  'code_execution_20250825',
-  'mcp_toolset',
-];
-
-/**
- * Check if the request uses advanced tool use features that require the beta header.
- */
-function requiresAdvancedToolUseBeta(tools?: ToolUnion[]): boolean {
-  if (!tools) return false;
-
-  return tools.some((tool) => {
-    // Check for advanced tool types
-    if (tool.type && ADVANCED_TOOL_TYPES.includes(tool.type)) {
-      return true;
-    }
-    // Check for advanced tool use properties (only present on Tool type)
-    const toolWithAdvanced = tool as {
-      defer_loading?: boolean;
-      allowed_callers?: string[];
-      input_examples?: Record<string, unknown>[];
-    };
-    if (
-      toolWithAdvanced.defer_loading !== undefined ||
-      toolWithAdvanced.allowed_callers ||
-      toolWithAdvanced.input_examples
-    ) {
-      return true;
-    }
-    return false;
-  });
-}
 
 export const transformInferenceConfig = (params: BedrockMessagesParams) => {
   const inferenceConfig: Record<string, any> = {};
@@ -74,29 +34,15 @@ export const transformAnthropicAdditionalModelRequestFields = (
   if (params['thinking']) {
     additionalModelRequestFields['thinking'] = params['thinking'];
   }
-
-  // Handle anthropic_beta header, adding advanced tool use beta if needed
-  let betaHeaders: string[] = [];
   if (params['anthropic_beta']) {
     if (typeof params['anthropic_beta'] === 'string') {
-      betaHeaders = [params['anthropic_beta']];
+      additionalModelRequestFields['anthropic_beta'] = [
+        params['anthropic_beta'],
+      ];
     } else {
-      betaHeaders = params['anthropic_beta'];
+      additionalModelRequestFields['anthropic_beta'] = params['anthropic_beta'];
     }
   }
-
-  // Add advanced tool use beta if features are used
-  if (
-    requiresAdvancedToolUseBeta(params.tools) &&
-    !betaHeaders.includes(ADVANCED_TOOL_USE_BETA)
-  ) {
-    betaHeaders.push(ADVANCED_TOOL_USE_BETA);
-  }
-
-  if (betaHeaders.length) {
-    additionalModelRequestFields['anthropic_beta'] = betaHeaders;
-  }
-
   return additionalModelRequestFields;
 };
 
@@ -129,7 +75,7 @@ export const transformToolsConfig = (params: BedrockMessagesParams) => {
           description: tool.description,
         };
 
-        // Add advanced tool use properties
+        // Add advanced tool use properties (from tool object in Messages API format)
         if (tool.defer_loading !== undefined) {
           toolSpec.defer_loading = tool.defer_loading;
         }
@@ -154,3 +100,4 @@ export const transformToolsConfig = (params: BedrockMessagesParams) => {
   }
   return { tools, toolChoice };
 };
+

@@ -348,6 +348,24 @@ export interface Function {
   parameters?: JsonSchema;
   /** Whether to enable strict schema adherence when generating the function call. If set to true, the model will follow the exact schema defined in the parameters field. Only a subset of JSON Schema is supported when strict is true */
   strict?: boolean;
+  /**
+   * When true, this tool is not loaded into context initially.
+   * Claude discovers it via Tool Search Tool on-demand.
+   * Part of Anthropic's advanced tool use beta features.
+   */
+  defer_loading?: boolean;
+  /**
+   * List of tool types that can call this tool programmatically.
+   * E.g., ["code_execution_20250825"] enables Programmatic Tool Calling.
+   * Part of Anthropic's advanced tool use beta features.
+   */
+  allowed_callers?: string[];
+  /**
+   * Example inputs demonstrating how to use this tool.
+   * Helps Claude understand usage patterns beyond JSON schema.
+   * Part of Anthropic's advanced tool use beta features.
+   */
+  input_examples?: Record<string, any>[];
 }
 
 export interface ToolChoiceObject {
@@ -371,24 +389,6 @@ export interface Tool extends PromptCache {
   type: string;
   /** A description of the function. */
   function?: Function;
-  /**
-   * When true, this tool is not loaded into context initially.
-   * Claude discovers it via Tool Search Tool on-demand.
-   * Part of Anthropic's advanced tool use beta features.
-   */
-  defer_loading?: boolean;
-  /**
-   * List of tool types that can call this tool programmatically.
-   * E.g., ["code_execution_20250825"] enables Programmatic Tool Calling.
-   * Part of Anthropic's advanced tool use beta features.
-   */
-  allowed_callers?: string[];
-  /**
-   * Example inputs demonstrating how to use this tool.
-   * Helps Claude understand usage patterns beyond JSON schema.
-   * Part of Anthropic's advanced tool use beta features.
-   */
-  input_examples?: Record<string, any>[];
   // this is used to support tools like computer, web_search, etc.
   [key: string]: any;
 }

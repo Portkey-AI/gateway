@@ -110,40 +110,6 @@ export const transformAdditionalModelRequestFields = (
   return additionalModelRequestFields;
 };
 
-// Beta header for advanced tool use features
-const ADVANCED_TOOL_USE_BETA = 'advanced-tool-use-2025-11-20';
-
-// Tool types that require the advanced tool use beta
-const ADVANCED_TOOL_TYPES = [
-  'tool_search_tool_regex_20251119',
-  'tool_search_tool_bm25_20251119',
-  'code_execution_20250825',
-  'mcp_toolset',
-];
-
-/**
- * Check if the request uses advanced tool use features that require the beta header.
- */
-function requiresAdvancedToolUseBeta(tools?: Tool[]): boolean {
-  if (!tools) return false;
-
-  return tools.some((tool) => {
-    // Check for advanced tool types
-    if (tool.type && ADVANCED_TOOL_TYPES.includes(tool.type)) {
-      return true;
-    }
-    // Check for advanced tool use properties
-    if (
-      tool.defer_loading !== undefined ||
-      tool.allowed_callers ||
-      tool.input_examples
-    ) {
-      return true;
-    }
-    return false;
-  });
-}
-
 export const transformAnthropicAdditionalModelRequestFields = (
   params: BedrockConverseAnthropicChatCompletionsParams
 ) => {
@@ -166,29 +132,15 @@ export const transformAnthropicAdditionalModelRequestFields = (
   if (params['thinking']) {
     additionalModelRequestFields['thinking'] = params['thinking'];
   }
-
-  // Handle anthropic_beta header, adding advanced tool use beta if needed
-  let betaHeaders: string[] = [];
   if (params['anthropic_beta']) {
     if (typeof params['anthropic_beta'] === 'string') {
-      betaHeaders = [params['anthropic_beta']];
+      additionalModelRequestFields['anthropic_beta'] = [
+        params['anthropic_beta'],
+      ];
     } else {
-      betaHeaders = params['anthropic_beta'];
+      additionalModelRequestFields['anthropic_beta'] = params['anthropic_beta'];
     }
   }
-
-  // Add advanced tool use beta if features are used
-  if (
-    requiresAdvancedToolUseBeta(params.tools) &&
-    !betaHeaders.includes(ADVANCED_TOOL_USE_BETA)
-  ) {
-    betaHeaders.push(ADVANCED_TOOL_USE_BETA);
-  }
-
-  if (betaHeaders.length) {
-    additionalModelRequestFields['anthropic_beta'] = betaHeaders;
-  }
-
   if (params.tools && params.tools.length) {
     const anthropicTools: any[] = [];
     params.tools.forEach((tool: Tool) => {
@@ -200,16 +152,6 @@ export const transformAnthropicAdditionalModelRequestFields = (
           type: toolOptions?.name,
           ...(tool.cache_control && {
             cache_control: { type: 'ephemeral' },
-          }),
-          // Advanced tool use properties
-          ...(tool.defer_loading !== undefined && {
-            defer_loading: tool.defer_loading,
-          }),
-          ...(tool.allowed_callers && {
-            allowed_callers: tool.allowed_callers,
-          }),
-          ...(tool.input_examples && {
-            input_examples: tool.input_examples,
           }),
         });
       }
@@ -595,3 +537,4 @@ export const getBedrockErrorChunk = (id: string, model: string) => {
     `data: [DONE]\n\n`,
   ];
 };
+

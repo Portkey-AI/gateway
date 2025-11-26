@@ -384,19 +384,19 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
               ...(tool.cache_control && {
                 cache_control: { type: 'ephemeral' },
               }),
-              // Advanced tool use properties
-              ...(tool.defer_loading !== undefined && {
-                defer_loading: tool.defer_loading,
+              // Advanced tool use properties (nested in function object per OpenAI format)
+              ...(tool.function.defer_loading !== undefined && {
+                defer_loading: tool.function.defer_loading,
               }),
-              ...(tool.allowed_callers && {
-                allowed_callers: tool.allowed_callers,
+              ...(tool.function.allowed_callers && {
+                allowed_callers: tool.function.allowed_callers,
               }),
-              ...(tool.input_examples && {
-                input_examples: tool.input_examples,
+              ...(tool.function.input_examples && {
+                input_examples: tool.function.input_examples,
               }),
             });
           } else if (tool.type) {
-            // Handle special tool types (tool_search, code_execution, mcp_toolset, etc.)
+            // Handle special tool types (tool search tools, code_execution, mcp_toolset, etc.)
             const toolOptions = tool[tool.type];
             tools.push({
               ...(toolOptions && { ...toolOptions }),
@@ -404,16 +404,6 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
               type: toolOptions?.name,
               ...(tool.cache_control && {
                 cache_control: { type: 'ephemeral' },
-              }),
-              // Advanced tool use properties for special tools
-              ...(tool.defer_loading !== undefined && {
-                defer_loading: tool.defer_loading,
-              }),
-              ...(tool.allowed_callers && {
-                allowed_callers: tool.allowed_callers,
-              }),
-              ...(tool.input_examples && {
-                input_examples: tool.input_examples,
               }),
             });
           }
