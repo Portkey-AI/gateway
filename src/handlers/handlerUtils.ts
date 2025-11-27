@@ -235,6 +235,18 @@ export function convertHooksShorthand(
   hookType: HookType
 ) {
   return hooksArr.map((hook: any) => {
+    // Check if hook is already in proper format (has checks array or has both id and type)
+    if (hook.checks && Array.isArray(hook.checks)) {
+      // Hook is already properly formatted, just return it as-is after camelCase conversion
+      return convertKeysToCamelCase(hook);
+    }
+
+    if (hook.id && hook.type) {
+      // Hook has explicit id and type, it's already formatted
+      return convertKeysToCamelCase(hook);
+    }
+
+    // Otherwise, convert from shorthand format
     let hooksObject: any = {
       type: hookType,
       id: `${type}_guardrail_${Math.random().toString(36).substring(2, 5)}`,
@@ -998,9 +1010,8 @@ export function constructConfigFromRequestHeaders(
 
   if (requestHeaders[`x-${POWERED_BY}-config`]) {
     let parsedConfigJson = JSON.parse(requestHeaders[`x-${POWERED_BY}-config`]);
-    parsedConfigJson.default_input_guardrails = defaultsConfig.input_guardrails;
-    parsedConfigJson.default_output_guardrails =
-      defaultsConfig.output_guardrails;
+    parsedConfigJson.defaultInputGuardrails = defaultsConfig.input_guardrails;
+    parsedConfigJson.defaultOutputGuardrails = defaultsConfig.output_guardrails;
 
     if (!parsedConfigJson.provider && !parsedConfigJson.targets) {
       parsedConfigJson.provider = requestHeaders[`x-${POWERED_BY}-provider`];
@@ -1103,8 +1114,6 @@ export function constructConfigFromRequestHeaders(
       'conditions',
       'input_guardrails',
       'output_guardrails',
-      'default_input_guardrails',
-      'default_output_guardrails',
       'integrationModelDetails',
       'integrationDetails',
       'virtualKeyDetails',
