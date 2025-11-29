@@ -10,19 +10,22 @@ import { EmbedInstancesData } from './types';
  */
 export function transformGenerationConfig(params: Params) {
   const generationConfig: Record<string, any> = {};
-  if (params['temperature']) {
+  if (params['temperature'] != null && params['temperature'] != undefined) {
     generationConfig['temperature'] = params['temperature'];
   }
-  if (params['top_p']) {
+  if (params['top_p'] != null && params['top_p'] != undefined) {
     generationConfig['topP'] = params['top_p'];
   }
-  if (params['top_k']) {
+  if (params['top_k'] != null && params['top_k'] != undefined) {
     generationConfig['topK'] = params['top_k'];
   }
-  if (params['max_tokens']) {
+  if (params['max_tokens'] != null && params['max_tokens'] != undefined) {
     generationConfig['maxOutputTokens'] = params['max_tokens'];
   }
-  if (params['max_completion_tokens']) {
+  if (
+    params['max_completion_tokens'] != null &&
+    params['max_completion_tokens'] != undefined
+  ) {
     generationConfig['maxOutputTokens'] = params['max_completion_tokens'];
   }
   if (params['stop']) {
@@ -34,10 +37,10 @@ export function transformGenerationConfig(params: Params) {
   if (params['logprobs']) {
     generationConfig['responseLogprobs'] = params['logprobs'];
   }
-  if (params['top_logprobs']) {
+  if (params['top_logprobs'] != null && params['top_logprobs'] != undefined) {
     generationConfig['logprobs'] = params['top_logprobs']; // range 1-5, openai supports 1-20
   }
-  if (params['seed']) {
+  if (params['seed'] != null && params['seed'] != undefined) {
     generationConfig['seed'] = params['seed'];
   }
   if (params?.response_format?.type === 'json_schema') {
