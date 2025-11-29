@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 
 import { serve } from '@hono/node-server';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import app from './index';
 import { streamSSE } from 'hono/streaming';
@@ -11,6 +14,7 @@ import { requestValidator } from './middlewares/requestValidator';
 import { plugins } from '../plugins';
 import { loadExternalPlugins, mergePlugins } from './loaders/pluginLoader';
 import { loadExternalMiddlewares } from './loaders/middlewareLoader';
+import { installExternalDependencies } from './utils/externalDependencyInstaller';
 
 // Extract the port number from the command line arguments
 const defaultPort = 8787;
@@ -30,6 +34,82 @@ const middlewaresDirArg = args.find((arg) =>
 const middlewaresDir = middlewaresDirArg
   ? middlewaresDirArg.split('=')[1]
   : null;
+
+// Install external dependencies if external plugins/middlewares are specified
+const dirsToInstallDeps: string[] = [];
+if (pluginsDir) dirsToInstallDeps.push(pluginsDir);
+if (middlewaresDir) dirsToInstallDeps.push(middlewaresDir);
+
+if (dirsToInstallDeps.length > 0) {
+  console.log('📦 Installing external dependencies...');
+  try {
+    // Read gateway's package.json from the file system
+    let packageJsonPath: string;
+
+    // Get current directory in ES modules
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+
+    // Try multiple possible locations for package.json
+    const possiblePaths = [
+      path.resolve('./package.json'),
+      path.resolve('../package.json'),
+      path.resolve(__dirname, '../../package.json'),
+      path.resolve(process.cwd(), 'package.json'),
+    ];
+
+    let gatewayPackageJson: Record<string, any> | null = null;
+    for (const tryPath of possiblePaths) {
+      if (fs.existsSync(tryPath)) {
+        try {
+          const content = fs.readFileSync(tryPath, 'utf-8');
+          gatewayPackageJson = JSON.parse(content);
+          packageJsonPath = tryPath;
+          break;
+        } catch {
+          // Continue to next path
+        }
+      }
+    }
+
+    if (!gatewayPackageJson) {
+      throw new Error(
+        'Could not find gateway package.json in any expected location'
+      );
+    }
+
+    const installResult = await installExternalDependencies(
+      dirsToInstallDeps,
+      gatewayPackageJson
+    );
+
+    // Report installation status
+    if (Object.keys(installResult.installed).length > 0) {
+      console.log('✓ Dependencies installed for external packages\n');
+    }
+
+    if (Object.keys(installResult.peerDependencyMismatches).length > 0) {
+      console.error('\n❌ Peer dependency mismatches detected:');
+      for (const [dir, error] of Object.entries(
+        installResult.peerDependencyMismatches
+      )) {
+        console.error(`  ${dir}: ${error}`);
+      }
+      process.exit(1);
+    }
+
+    if (Object.keys(installResult.failed).length > 0) {
+      console.error('\n❌ Failed to install dependencies:');
+      for (const [dir, error] of Object.entries(installResult.failed)) {
+        console.error(`  ${dir}: ${error}`);
+      }
+      process.exit(1);
+    }
+  } catch (error: any) {
+    console.error('❌ Error installing external dependencies:', error.message);
+    process.exit(1);
+  }
+}
 
 // Load external plugins if specified
 if (pluginsDir) {

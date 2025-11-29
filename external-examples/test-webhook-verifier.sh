@@ -37,21 +37,27 @@ run_test() {
 
   echo -e "${YELLOW}Test: $test_name${NC}"
 
-  # Build curl command
-  local curl_cmd="curl -s -w '\n%{http_code}' -X $method"
+  # Build curl arguments array to avoid eval
+  local curl_args=('-s' '-w' $'\n%{http_code}' '-X' "$method")
 
+  # Add headers if provided
   if [ -n "$headers" ]; then
-    curl_cmd="$curl_cmd $headers"
+    # Parse headers safely without eval
+    local IFS=' '
+    read -ra header_array <<<"$headers"
+    curl_args+=("${header_array[@]}")
   fi
 
+  # Add data if provided
   if [ -n "$data" ]; then
-    curl_cmd="$curl_cmd -d '$data'"
+    curl_args+=('-d' "$data")
   fi
 
-  curl_cmd="$curl_cmd '$BASE_URL$url'"
+  # Add URL
+  curl_args+=("$BASE_URL$url")
 
-  # Run the test
-  local response=$(eval $curl_cmd)
+  # Run the test safely without eval
+  local response=$(curl "${curl_args[@]}")
   local status_code=$(echo "$response" | tail -1)
   local body=$(echo "$response" | sed '$d')
 

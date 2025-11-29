@@ -42,30 +42,33 @@ export async function loadExternalMiddlewares(
             continue;
           }
 
-          // Check if it's a plugin-style middleware
-          // Plugin: middleware() returns (app) => void
-          // Standard: middleware is (c, next) => Promise<any>
-          let isPlugin = false;
+          // Check if it's a plugin-style middleware using metadata
+          // Plugin: metadata.isPlugin === true, and middleware() returns (app) => void
+          // Standard: metadata.isPlugin === false or not set, and middleware is (c, next) => Promise<any>
+          let isPlugin = metadata.isPlugin === true;
           let handler = middleware;
 
-          // If middleware is a function that returns a function, it's a plugin
-          if (middleware.length === 0) {
-            // No parameters - likely middleware() that returns a function
+          // If metadata declares it's a plugin, execute middleware() to get the app handler
+          if (isPlugin) {
             try {
               const result = middleware();
               if (typeof result === 'function') {
                 // It's a plugin - the result is the app handler
-                isPlugin = true;
                 handler = result;
               } else {
-                // middleware() returned non-function, use original middleware
+                // Metadata said plugin but didn't return function - fall back to standard
+                console.warn(
+                  `⚠️  ${file} marked as plugin but middleware() didn't return a function`
+                );
                 isPlugin = false;
                 handler = middleware;
               }
             } catch (e) {
-              // If calling middleware() throws, treat as standard middleware
-              isPlugin = false;
-              handler = middleware;
+              // If calling middleware() throws, log error and skip
+              console.warn(
+                `⚠️  Error executing plugin ${file}: ${(e as any).message}`
+              );
+              continue;
             }
           }
 
