@@ -94,10 +94,45 @@ export async function installExternalDependencies(
     // Install dependencies
     try {
       console.log(`  📦 Installing dependencies in ${dir}...`);
+      console.log(`     Working directory: ${absoluteDir}`);
+
+      // Check npm availability
+      try {
+        const npmVersion = execSync('npm --version', {
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+        }).trim();
+        console.log(`     npm version available: ${npmVersion}`);
+      } catch (npmCheckError) {
+        console.warn(`     ⚠️  Could not check npm version: ${npmCheckError}`);
+      }
+
+      // Log files before installation
+      const filesBefore = fs.readdirSync(absoluteDir);
+      console.log(`     Files before install: ${filesBefore.length} items`);
+
       const npmOutput = execSync('npm install --no-save 2>&1', {
         cwd: absoluteDir,
         encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
       });
+
+      console.log(`     npm output length: ${npmOutput.length} characters`);
+      if (npmOutput.length > 0) {
+        console.log(
+          `     npm output (first 200 chars): ${npmOutput.substring(0, 200)}`
+        );
+      } else {
+        console.log(`     npm output was empty`);
+      }
+
+      // Log files after installation
+      const filesAfter = fs.readdirSync(absoluteDir);
+      console.log(`     Files after install: ${filesAfter.length} items`);
+      const hasNodeModules = fs.existsSync(
+        path.join(absoluteDir, 'node_modules')
+      );
+      console.log(`     node_modules exists: ${hasNodeModules}`);
 
       // Check if there were any significant errors in the output
       if (npmOutput.includes('ERR!') || npmOutput.includes('error')) {
@@ -106,6 +141,15 @@ export async function installExternalDependencies(
         result.success = false;
         console.error(`  ✗ Failed to install dependencies in ${dir}`);
         console.error('    ' + npmOutput.split('\n').slice(-5).join('\n    '));
+      } else if (!hasNodeModules) {
+        // npm succeeded but node_modules wasn't created
+        result.failed[dir] =
+          'npm install completed but node_modules was not created';
+        result.success = false;
+        console.error(
+          `  ✗ npm install completed but node_modules not created in ${dir}`
+        );
+        console.error(`     Full npm output: ${npmOutput}`);
       } else {
         result.installed[dir] = 'Successfully installed';
         console.log(`  ✓ Dependencies installed in ${dir}`);
@@ -114,10 +158,18 @@ export async function installExternalDependencies(
       result.failed[dir] = error.toString() || 'npm install failed';
       result.success = false;
       console.error(`  ✗ Failed to install dependencies in ${dir}`);
+      console.error(`     Error: ${error.toString()}`);
       // Print last few lines of error output
       if (error.stdout) {
         console.error(
-          '    ' + error.stdout.toString().split('\n').slice(-3).join('\n    ')
+          '    stdout: ' +
+            error.stdout.toString().split('\n').slice(-3).join('\n    ')
+        );
+      }
+      if (error.stderr) {
+        console.error(
+          '    stderr: ' +
+            error.stderr.toString().split('\n').slice(-3).join('\n    ')
         );
       }
     }

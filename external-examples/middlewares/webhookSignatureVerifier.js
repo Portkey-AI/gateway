@@ -14,7 +14,7 @@
  *     -d '{"event":"order.created","data":{"orderId":"123"}}'
  */
 
-import { createHmac } from 'node:crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || 'demo-secret-key';
 
@@ -85,9 +85,16 @@ export const middleware = () => {
         const expectedSignature = computeSignature(body, WEBHOOK_SECRET);
 
         // 4. Verify signature (constant-time comparison to prevent timing attacks)
-        const isValid =
-          providedSignature.length === expectedSignature.length &&
-          Buffer.from(providedSignature).equals(Buffer.from(expectedSignature));
+        let isValid = false;
+        try {
+          isValid = timingSafeEqual(
+            Buffer.from(expectedSignature),
+            Buffer.from(providedSignature)
+          );
+        } catch {
+          // Length mismatch throws - this is also constant-time via exception
+          isValid = false;
+        }
 
         if (!isValid) {
           console.log('[WebhookVerifier] Invalid signature detected', {
@@ -174,4 +181,5 @@ export const metadata = {
   version: '1.0.0',
   author: 'Portkey Team',
   pattern: '/webhooks/*',
+  isPlugin: true,
 };
