@@ -14,6 +14,8 @@ import { requestValidator } from './middlewares/requestValidator';
 import { plugins } from '../plugins';
 import { loadExternalPlugins, mergePlugins } from './loaders/pluginLoader';
 import { loadExternalMiddlewares } from './loaders/middlewareLoader';
+import { loadExternalProviders } from './loaders/providerLoader';
+import { registerProvider } from './providers';
 import { installExternalDependencies } from './utils/externalDependencyInstaller';
 
 // Extract the port number from the command line arguments
@@ -35,10 +37,14 @@ const middlewaresDir = middlewaresDirArg
   ? middlewaresDirArg.split('=')[1]
   : null;
 
-// Install external dependencies if external plugins/middlewares are specified
+const providersDirArg = args.find((arg) => arg.startsWith('--providers-dir='));
+const providersDir = providersDirArg ? providersDirArg.split('=')[1] : null;
+
+// Install external dependencies if external plugins/middlewares/providers are specified
 const dirsToInstallDeps: string[] = [];
 if (pluginsDir) dirsToInstallDeps.push(pluginsDir);
 if (middlewaresDir) dirsToInstallDeps.push(middlewaresDir);
+if (providersDir) dirsToInstallDeps.push(providersDir);
 
 if (dirsToInstallDeps.length > 0) {
   console.log('📦 Installing external dependencies...');
@@ -107,6 +113,25 @@ if (dirsToInstallDeps.length > 0) {
     }
   } catch (error: any) {
     console.error('❌ Error installing external dependencies:', error.message);
+    process.exit(1);
+  }
+}
+
+// Load external providers if specified
+if (providersDir) {
+  console.log('🔗 Loading external providers from:', providersDir);
+  try {
+    const externalProviders = await loadExternalProviders([providersDir]);
+
+    for (const { name, config } of externalProviders) {
+      registerProvider(name, config);
+    }
+
+    if (externalProviders.length > 0) {
+      console.log('✓ External providers loaded\n');
+    }
+  } catch (error: any) {
+    console.error('❌ Error loading providers:', error.message);
     process.exit(1);
   }
 }

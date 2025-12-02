@@ -75,4 +75,4 @@ async function handler(context, parameters, eventType) {
   return { error, verdict, data };
 }
 
-module.exports = { handler };
+export { handler };
