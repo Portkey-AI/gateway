@@ -300,16 +300,10 @@ export namespace GenericChatResponse {
     isParentJsonObj?: boolean
   ): object {
     const jsonObj = {
-      ...(isParentJsonObj
-        ? obj
-        : (BaseChatResponse.getJsonObj(obj) as GenericChatResponse)),
+      ...(isParentJsonObj ? obj : (obj as GenericChatResponse)),
       ...{
-        choices: obj.choices
-          ? obj.choices.map((item) => {
-              return ChatChoice.getJsonObj(item);
-            })
-          : undefined,
-        usage: obj.usage ? Usage.getJsonObj(obj.usage) : undefined,
+        choices: obj.choices || undefined,
+        usage: obj.usage || undefined,
       },
     };
 
@@ -321,18 +315,10 @@ export namespace GenericChatResponse {
     isParentJsonObj?: boolean
   ): object {
     const jsonObj = {
-      ...(isParentJsonObj
-        ? obj
-        : (BaseChatResponse.getDeserializedJsonObj(
-            obj
-          ) as GenericChatResponse)),
+      ...(isParentJsonObj ? obj : (obj as GenericChatResponse)),
       ...{
-        choices: obj.choices
-          ? obj.choices.map((item) => {
-              return ChatChoice.getDeserializedJsonObj(item);
-            })
-          : undefined,
-        usage: obj.usage ? Usage.getDeserializedJsonObj(obj.usage) : undefined,
+        choices: obj.choices || undefined,
+        usage: obj.usage || undefined,
       },
     };
 

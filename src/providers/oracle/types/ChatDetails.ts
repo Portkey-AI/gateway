@@ -191,6 +191,10 @@ export interface WebSearchOptions {
   userLocation?: ApproximateLocation;
 }
 
+export namespace WebSearchOptions {
+  export type SearchContextSize = 'HIGH' | 'MEDIUM' | 'LOW';
+}
+
 export interface BaseChatRequest {
   apiFormat: string;
 }
@@ -322,6 +326,12 @@ Example: '{\"6395\": 2, \"8134\": 1, \"21943\": 0.5, \"5923\": -100}'
   apiFormat: string;
 }
 
+export namespace GenericChatRequest {
+  export type ReasoningEffort = 'minimal' | 'low' | 'medium' | 'high';
+  export type Verbosity = number;
+  export type ServiceTier = string;
+}
+
 export interface CohereMessage {
   role: string;
 }
@@ -341,6 +351,12 @@ export interface CohereResponseJsonFormat extends CohereResponseFormat {
   schema?: any;
 
   type: string;
+}
+
+export interface CohereParameterDefinition {
+  description?: string;
+  type?: string;
+  required?: boolean;
 }
 
 export interface CohereTool {
@@ -510,17 +526,19 @@ Similar to frequency penalty, a penalty is applied to previously present tokens,
   apiFormat: string;
 }
 
+export namespace CohereChatRequest {
+  export type PromptTruncation = 'AUTO_PRESERVE_ORDER' | 'OFF';
+  export type CitationQuality = 'FAST' | 'ACCURATE';
+  export type SafetyMode = 'CONTEXTUAL' | 'STRICT' | 'OFF';
+}
+
 export namespace ChatDetails {
   export function getJsonObj(obj: ChatDetails): object {
     const jsonObj = {
       ...obj,
       ...{
-        servingMode: obj.servingMode
-          ? ServingMode.getJsonObj(obj.servingMode)
-          : undefined,
-        chatRequest: obj.chatRequest
-          ? BaseChatRequest.getJsonObj(obj.chatRequest)
-          : undefined,
+        servingMode: obj.servingMode || undefined,
+        chatRequest: obj.chatRequest || undefined,
       },
     };
 
@@ -530,12 +548,8 @@ export namespace ChatDetails {
     const jsonObj = {
       ...obj,
       ...{
-        servingMode: obj.servingMode
-          ? ServingMode.getDeserializedJsonObj(obj.servingMode)
-          : undefined,
-        chatRequest: obj.chatRequest
-          ? BaseChatRequest.getDeserializedJsonObj(obj.chatRequest)
-          : undefined,
+        servingMode: obj.servingMode || undefined,
+        chatRequest: obj.chatRequest || undefined,
       },
     };
 
