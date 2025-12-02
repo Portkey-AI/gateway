@@ -1,5 +1,10 @@
 import { ORACLE } from '../../globals';
-import type { CustomToolChoice, Params } from '../../types/requestBody';
+import { transformUsingProviderConfig } from '../../services/transformToProviderRequest';
+import type {
+  CustomToolChoice,
+  Options,
+  Params,
+} from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -26,14 +31,40 @@ import { openAIToOracleRoleMap, oracleToOpenAIRoleMap } from './utils';
 
 // transforms from openai format to oracle format for chat completions request
 export const OracleChatCompleteConfig: ProviderConfig = {
+  model: [
+    {
+      param: 'chatRequest',
+      required: true,
+      transform: (params: Params) => {
+        return transformUsingProviderConfig(OracleChatDetailsConfig, params);
+      },
+    },
+    {
+      param: 'compartmentId',
+      required: true,
+      transform: (_: Params, providerOptions: Options) => {
+        return providerOptions?.oracleCompartmentId;
+      },
+    },
+    {
+      param: 'servingMode',
+      required: true,
+      default: 'ON_DEMAND', // supported values: ON_DEMAND, DEDICATED
+      transform: (params: Params, providerOptions: Options) => {
+        return {
+          servingType: providerOptions.oracleServingMode || 'ON_DEMAND',
+          modelId: params.model,
+        };
+      },
+    },
+  ],
+};
+
+export const OracleChatDetailsConfig: ProviderConfig = {
   frequency_penalty: {
     param: 'frequencyPenalty',
     min: -2,
     max: 2,
-  },
-  model: {
-    param: 'model',
-    required: true,
   },
   messages: {
     param: 'messages',
@@ -248,7 +279,7 @@ export const OracleChatCompleteResponseTransform: (
       id: responseHeaders.get('opc-request-id') || crypto.randomUUID(),
       object: 'chat.completion',
       created:
-        response.chatResponse.timeCreated.getTime() / 1000 ||
+        new Date(response.chatResponse.timeCreated).getTime() / 1000 ||
         Math.floor(Date.now() / 1000),
       model: response.modelId,
       provider: ORACLE,

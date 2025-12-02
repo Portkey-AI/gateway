@@ -1,18 +1,31 @@
 import { ProviderAPIConfig } from '../types';
+import { OCIRequestSigner } from './utils';
 
 const OracleAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
     // Oracle Generative AI Inference API base URL
     return `https://inference.generativeai.${providerOptions.oracleRegion}.oci.oraclecloud.com`;
   },
-  headers: ({ providerOptions }) => {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
+  headers: async ({
+    providerOptions,
+    transformedRequestUrl,
+    transformedRequestBody,
+  }) => {
+    const signer = new OCIRequestSigner({
+      tenancy: providerOptions.oracleTenancy || '',
+      user: providerOptions.oracleUser || '',
+      fingerprint: providerOptions.oracleFingerprint || '',
+      privateKey: providerOptions.oraclePrivateKey || '',
+      keyPassphrase: providerOptions.oracleKeyPassphrase,
+      region: providerOptions.oracleRegion || '',
+    });
 
-    if (providerOptions.apiKey) {
-      headers['Authorization'] = `Bearer ${providerOptions.apiKey}`;
-    }
+    const headers = await signer.signRequest(
+      'POST',
+      transformedRequestUrl,
+      JSON.stringify(transformedRequestBody),
+      {}
+    );
 
     return headers;
   },
@@ -27,7 +40,7 @@ const OracleAPIConfig: ProviderAPIConfig = {
       default:
         return '';
     }
-    return `${oracleApiVersion}${endpoint}`;
+    return `/${oracleApiVersion}${endpoint}`;
   },
 };
 

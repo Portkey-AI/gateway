@@ -991,6 +991,15 @@ export function constructConfigFromRequestHeaders(
   const oracleConfig = {
     oracleApiVersion: requestHeaders[`x-${POWERED_BY}-oracle-api-version`],
     oracleRegion: requestHeaders[`x-${POWERED_BY}-oracle-region`],
+    oracleCompartmentId:
+      requestHeaders[`x-${POWERED_BY}-oracle-compartment-id`],
+    oracleServingMode: requestHeaders[`x-${POWERED_BY}-oracle-serving-mode`],
+    oracleTenancy: requestHeaders[`x-${POWERED_BY}-oracle-tenancy`],
+    oracleUser: requestHeaders[`x-${POWERED_BY}-oracle-user`],
+    oracleFingerprint: requestHeaders[`x-${POWERED_BY}-oracle-fingerprint`],
+    oraclePrivateKey: requestHeaders[`x-${POWERED_BY}-oracle-private-key`],
+    oracleKeyPassphrase:
+      requestHeaders[`x-${POWERED_BY}-oracle-key-passphrase`],
   };
 
   const defaultsConfig = {
