@@ -303,3 +303,73 @@ export const OracleChatCompleteResponseTransform: (
 
   return generateInvalidProviderResponseError(response, ORACLE);
 };
+
+export const OracleChatCompleteStreamChunkTransform: (
+  response: string,
+  fallbackId: string,
+  streamState: any,
+  _strictOpenAiCompliance: boolean,
+  gatewayRequest: Params
+) => string | undefined = (
+  responseChunk,
+  fallbackId,
+  streamState,
+  strictOpenAiCompliance,
+  gatewayRequest
+) => {
+  let chunk = responseChunk.trim();
+  if (chunk.startsWith('event: ping')) {
+    return;
+  }
+
+  chunk = chunk.replace(/^data: /, '');
+  chunk = chunk.trim();
+  if (chunk === '[DONE]') {
+    return chunk;
+  }
+  const parsedChunk: ChatChoice = JSON.parse(chunk);
+
+  if (parsedChunk.finishReason) {
+    return (
+      `data: ${JSON.stringify({
+        id: fallbackId,
+        object: 'chat.completion.chunk',
+        created: Math.floor(Date.now() / 1000),
+        model: gatewayRequest.model || '',
+        choices: [
+          {
+            index: 0,
+            delta: {},
+            finish_reason: parsedChunk.finishReason,
+          },
+        ],
+        provider: ORACLE,
+      })}` +
+      '\n\n' +
+      'data: [DONE]\n\n'
+    );
+  }
+
+  return (
+    `data: ${JSON.stringify({
+      id: fallbackId,
+      object: 'chat.completion.chunk',
+      created: Math.floor(Date.now() / 1000),
+      model: gatewayRequest.model || '',
+      provider: ORACLE,
+      choices: [
+        {
+          index: parsedChunk.index,
+          delta: {
+            role: oracleToOpenAIRoleMap[
+              parsedChunk.message.role as OracleMessageRole
+            ],
+            content: parsedChunk.message?.content?.find(
+              (item) => item.type === 'TEXT'
+            )?.text,
+          },
+        },
+      ],
+    })}` + '\n\n'
+  );
+};
