@@ -164,6 +164,10 @@ export interface Logprobs {
 
 export interface CompletionTokensDetails {
   /**
+   * Audio tokens present in the completion. Note: Numbers greater than Number.MAX_SAFE_INTEGER will result in rounding issues.
+   */
+  audioTokens?: number;
+  /**
    * When using Predicted Outputs, the number of tokens in the prediction that appeared in the completion.
    *  Note: Numbers greater than Number.MAX_SAFE_INTEGER will result in rounding issues.
    */
@@ -183,6 +187,10 @@ export interface PromptTokensDetails {
    * Cached tokens present in the prompt. Note: Numbers greater than Number.MAX_SAFE_INTEGER will result in rounding issues.
    */
   cachedTokens?: number;
+  /**
+   * Audio tokens present in the prompt. Note: Numbers greater than Number.MAX_SAFE_INTEGER will result in rounding issues.
+   */
+  audioTokens?: number;
 }
 
 export interface Usage {

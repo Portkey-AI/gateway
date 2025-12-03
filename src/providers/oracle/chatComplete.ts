@@ -22,7 +22,6 @@ import {
 } from './types/ChatDetails';
 import {
   ChatChoice,
-  GenericChatResponse,
   OracleChatCompleteResponse,
   OracleErrorResponse,
   ToolCall,
@@ -298,6 +297,28 @@ export const OracleChatCompleteResponseTransform: (
           finish_reason: choice.finishReason,
         };
       }),
+      usage: {
+        prompt_tokens: response.chatResponse.usage?.promptTokens ?? 0,
+        completion_tokens: response.chatResponse.usage?.completionTokens ?? 0,
+        total_tokens: response.chatResponse.usage?.totalTokens ?? 0,
+        completion_tokens_details: {
+          accepted_prediction_tokens:
+            response.chatResponse.usage?.completionTokensDetails
+              ?.acceptedPredictionTokens ?? 0,
+          audio_tokens:
+            response.chatResponse.usage?.completionTokensDetails?.audioTokens ??
+            0,
+          rejected_prediction_tokens:
+            response.chatResponse.usage?.completionTokensDetails
+              ?.rejectedPredictionTokens ?? 0,
+        },
+        prompt_tokens_details: {
+          audio_tokens:
+            response.chatResponse.usage?.promptTokensDetails?.audioTokens ?? 0,
+          cached_tokens:
+            response.chatResponse.usage?.promptTokensDetails?.cachedTokens ?? 0,
+        },
+      },
     };
   }
 
