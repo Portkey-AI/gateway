@@ -91,6 +91,30 @@ export async function installExternalDependencies(
       continue;
     }
 
+    // Check if dependencies are already installed or not needed
+    const nodeModulesPath = path.join(absoluteDir, 'node_modules');
+    const deps = packageJson.dependencies || {};
+    const depNames = Object.keys(deps);
+
+    // Skip if no dependencies defined
+    if (depNames.length === 0) {
+      console.log(`  ✓ No dependencies in ${dir}, skipping`);
+      result.installed[dir] = 'No dependencies (skipped)';
+      continue;
+    }
+
+    // Skip if all dependencies already installed
+    if (fs.existsSync(nodeModulesPath)) {
+      const hasAllDeps = depNames.every((dep) =>
+        fs.existsSync(path.join(nodeModulesPath, dep))
+      );
+      if (hasAllDeps) {
+        console.log(`  ✓ Dependencies already installed in ${dir}, skipping`);
+        result.installed[dir] = 'Already installed (skipped)';
+        continue;
+      }
+    }
+
     // Install dependencies
     try {
       console.log(`  📦 Installing dependencies in ${dir}...`);

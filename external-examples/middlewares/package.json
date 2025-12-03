@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Example external middlewares for Portkey Gateway",
   "type": "module",
+  "dependencies": {
+    "dotenv": "^16.0.0"
+  },
   "peerDependencies": {
     "portkey-ai": "^1.9.1"
   }
