@@ -2,6 +2,35 @@ import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 
+/**
+ * Detect available package manager (prefers bun over npm)
+ */
+function detectPackageManager(): 'bun' | 'npm' | null {
+  // Try bun first
+  try {
+    execSync('bun --version', {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    return 'bun';
+  } catch {
+    // bun not available
+  }
+
+  // Try npm
+  try {
+    execSync('npm --version', {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    return 'npm';
+  } catch {
+    // npm not available
+  }
+
+  return null;
+}
+
 export interface DependencyInstallResult {
   success: boolean;
   installed: Record<string, string>;
@@ -39,22 +68,43 @@ export async function installExternalDependencies(
     ...(gatewayPackageJson.devDependencies || {}),
   };
 
+  // Collect all directories with package.json (including subdirectories)
+  const dirsToProcess: string[] = [];
+
   for (const dir of directories) {
     const absoluteDir = path.resolve(dir);
 
-    // Check if directory exists
     if (!fs.existsSync(absoluteDir)) {
       result.failed[dir] = `Directory not found: ${absoluteDir}`;
       result.success = false;
       continue;
     }
 
-    // Check if package.json exists in this directory
-    const packageJsonPath = path.join(absoluteDir, 'package.json');
-    if (!fs.existsSync(packageJsonPath)) {
-      // No package.json in this directory - skip (external package may not have dependencies)
-      continue;
+    // Check top-level directory
+    if (fs.existsSync(path.join(absoluteDir, 'package.json'))) {
+      dirsToProcess.push(absoluteDir);
     }
+
+    // Also scan subdirectories (for plugins structure)
+    try {
+      const entries = fs.readdirSync(absoluteDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.isDirectory() && entry.name !== 'node_modules') {
+          const subdir = path.join(absoluteDir, entry.name);
+          if (fs.existsSync(path.join(subdir, 'package.json'))) {
+            dirsToProcess.push(subdir);
+          }
+        }
+      }
+    } catch {
+      // Ignore errors scanning subdirectories
+    }
+  }
+
+  // Process each directory with package.json
+  for (const absoluteDir of dirsToProcess) {
+    const dir = absoluteDir; // For logging consistency
+    const packageJsonPath = path.join(absoluteDir, 'package.json');
 
     // Read package.json
     let packageJson: Record<string, any>;
@@ -120,34 +170,40 @@ export async function installExternalDependencies(
       console.log(`  📦 Installing dependencies in ${dir}...`);
       console.log(`     Working directory: ${absoluteDir}`);
 
-      // Check npm availability
-      try {
-        const npmVersion = execSync('npm --version', {
-          encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe'],
-        }).trim();
-        console.log(`     npm version available: ${npmVersion}`);
-      } catch (npmCheckError) {
-        console.warn(`     ⚠️  Could not check npm version: ${npmCheckError}`);
+      // Detect package manager
+      const packageManager = detectPackageManager();
+      if (!packageManager) {
+        result.failed[dir] = 'No package manager available (bun or npm)';
+        result.success = false;
+        console.error(`  ✗ No package manager found for ${dir}`);
+        continue;
       }
+      console.log(`     Using package manager: ${packageManager}`);
 
       // Log files before installation
       const filesBefore = fs.readdirSync(absoluteDir);
       console.log(`     Files before install: ${filesBefore.length} items`);
 
-      const npmOutput = execSync('npm install --no-save 2>&1', {
+      const installCmd =
+        packageManager === 'bun'
+          ? 'bun install --no-save 2>&1'
+          : 'npm install --no-save 2>&1';
+
+      const installOutput = execSync(installCmd, {
         cwd: absoluteDir,
         encoding: 'utf-8',
         stdio: ['pipe', 'pipe', 'pipe'],
       });
 
-      console.log(`     npm output length: ${npmOutput.length} characters`);
-      if (npmOutput.length > 0) {
+      console.log(
+        `     ${packageManager} output length: ${installOutput.length} characters`
+      );
+      if (installOutput.length > 0) {
         console.log(
-          `     npm output (first 200 chars): ${npmOutput.substring(0, 200)}`
+          `     ${packageManager} output (first 200 chars): ${installOutput.substring(0, 200)}`
         );
       } else {
-        console.log(`     npm output was empty`);
+        console.log(`     ${packageManager} output was empty`);
       }
 
       // Log files after installation
@@ -159,27 +215,30 @@ export async function installExternalDependencies(
       console.log(`     node_modules exists: ${hasNodeModules}`);
 
       // Check if there were any significant errors in the output
-      if (npmOutput.includes('ERR!') || npmOutput.includes('error')) {
+      if (installOutput.includes('ERR!') || installOutput.includes('error')) {
         result.failed[dir] =
-          'npm install reported errors: ' + npmOutput.split('\n')[0];
+          `${packageManager} install reported errors: ` +
+          installOutput.split('\n')[0];
         result.success = false;
         console.error(`  ✗ Failed to install dependencies in ${dir}`);
-        console.error('    ' + npmOutput.split('\n').slice(-5).join('\n    '));
+        console.error(
+          '    ' + installOutput.split('\n').slice(-5).join('\n    ')
+        );
       } else if (!hasNodeModules) {
-        // npm succeeded but node_modules wasn't created
+        // Install succeeded but node_modules wasn't created
         result.failed[dir] =
-          'npm install completed but node_modules was not created';
+          `${packageManager} install completed but node_modules was not created`;
         result.success = false;
         console.error(
-          `  ✗ npm install completed but node_modules not created in ${dir}`
+          `  ✗ ${packageManager} install completed but node_modules not created in ${dir}`
         );
-        console.error(`     Full npm output: ${npmOutput}`);
+        console.error(`     Full output: ${installOutput}`);
       } else {
-        result.installed[dir] = 'Successfully installed';
+        result.installed[dir] = `Successfully installed (${packageManager})`;
         console.log(`  ✓ Dependencies installed in ${dir}`);
       }
     } catch (error: any) {
-      result.failed[dir] = error.toString() || 'npm install failed';
+      result.failed[dir] = error.toString() || 'install failed';
       result.success = false;
       console.error(`  ✗ Failed to install dependencies in ${dir}`);
       console.error(`     Error: ${error.toString()}`);
