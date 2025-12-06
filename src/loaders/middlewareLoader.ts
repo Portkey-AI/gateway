@@ -5,7 +5,7 @@ export interface LoadedMiddleware {
   handler: ((c: any, next: any) => Promise<any>) | ((app: any) => void);
   name: string;
   pattern?: string;
-  isPlugin: boolean; // true if middleware() returns (app) => void, false if it's (c, next) => Promise
+  appExtension: boolean; // true if middleware modifies app instance (wraps fetch, adds routes), false if it's standard request middleware
 }
 
 export async function loadExternalMiddlewares(
@@ -42,31 +42,31 @@ export async function loadExternalMiddlewares(
             continue;
           }
 
-          // Check if it's a plugin-style middleware using metadata
-          // Plugin: metadata.isPlugin === true, and middleware() returns (app) => void
-          // Standard: metadata.isPlugin === false or not set, and middleware is (c, next) => Promise<any>
-          let isPlugin = metadata.isPlugin === true;
+          // Check if it's an app extension middleware using metadata
+          // App Extension: metadata.appExtension === true, and middleware() returns (app) => void
+          // Standard: metadata.appExtension === false or not set, and middleware is (c, next) => Promise<any>
+          let appExtension = metadata.appExtension === true;
           let handler = middleware;
 
-          // If metadata declares it's a plugin, execute middleware() to get the app handler
-          if (isPlugin) {
+          // If metadata declares it's an app extension, execute middleware() to get the app handler
+          if (appExtension) {
             try {
               const result = middleware();
               if (typeof result === 'function') {
-                // It's a plugin - the result is the app handler
+                // It's an app extension - the result is the app handler
                 handler = result;
               } else {
-                // Metadata said plugin but didn't return function - fall back to standard
+                // Metadata said appExtension but didn't return function - fall back to standard
                 console.warn(
-                  `⚠️  ${file} marked as plugin but middleware() didn't return a function`
+                  `⚠️  ${file} marked as appExtension but middleware() didn't return a function`
                 );
-                isPlugin = false;
+                appExtension = false;
                 handler = middleware;
               }
             } catch (e) {
               // If calling middleware() throws, log error and skip
               console.warn(
-                `⚠️  Error executing plugin ${file}: ${(e as any).message}`
+                `⚠️  Error executing appExtension ${file}: ${(e as any).message}`
               );
               continue;
             }
@@ -76,7 +76,7 @@ export async function loadExternalMiddlewares(
             handler,
             name: metadata.name || file.replace(/\.(ts|js)$/, ''),
             pattern: metadata.pattern || '*',
-            isPlugin,
+            appExtension,
           });
         } catch (error: any) {
           console.warn(

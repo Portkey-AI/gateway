@@ -158,8 +158,8 @@ if (middlewaresDir) {
 
     for (const mw of externalMiddlewares) {
       console.log(`  ↳ Registering middleware: ${mw.name}`);
-      if (mw.isPlugin) {
-        // Plugin-style middleware: receives app instance and can register routes
+      if (mw.appExtension) {
+        // App extension middleware: receives app instance and can register routes
         (mw.handler as (app: any) => void)(app);
       } else {
         // Standard middleware: register as request handler

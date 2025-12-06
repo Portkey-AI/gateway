@@ -181,5 +181,5 @@ export const metadata = {
   version: '1.0.0',
   author: 'Portkey Team',
   pattern: '/webhooks/*',
-  isPlugin: true,
+  appExtension: true,
 };
