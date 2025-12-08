@@ -407,6 +407,7 @@ export interface Params {
   top_k?: number;
   tools?: Tool[];
   tool_choice?: ToolChoice;
+  reasoning_effort?: 'none' | 'minimal' | 'low' | 'medium' | 'high' | string;
   response_format?: {
     type: 'json_object' | 'text' | 'json_schema';
     json_schema?: any;
