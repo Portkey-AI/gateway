@@ -311,7 +311,7 @@ export interface Message {
   tool_calls?: any;
   tool_call_id?: string;
   citationMetadata?: CitationMetadata;
-    /** Reasoning details for models that support extended thinking/reasoning. (Gemini) */
+  /** Reasoning details for models that support extended thinking/reasoning. (Gemini) */
   reasoning_details?: any[];
 }
 
