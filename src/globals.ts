@@ -109,6 +109,7 @@ export const TRIPO3D: string = 'tripo3d';
 export const NEXTBIT: string = 'nextbit';
 export const MODAL: string = 'modal';
 export const Z_AI: string = 'z-ai';
+export const IO_INTELLIGENCE: string = 'iointelligence';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -181,6 +182,7 @@ export const VALID_PROVIDERS = [
   NEXTBIT,
   MODAL,
   Z_AI,
+  IO_INTELLIGENCE,
 ];
 
 export const CONTENT_TYPES = {
