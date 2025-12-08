@@ -876,6 +876,7 @@ export function constructConfigFromRequestHeaders(
     azureEntraTenantId: requestHeaders[`x-${POWERED_BY}-azure-entra-tenant-id`],
     azureEntraScope: requestHeaders[`x-${POWERED_BY}-azure-entra-scope`],
     azureExtraParameters: requestHeaders[`x-${POWERED_BY}-azure-extra-params`],
+    anthropicVersion: requestHeaders[`x-${POWERED_BY}-anthropic-version`],
   };
 
   const awsConfig = {
