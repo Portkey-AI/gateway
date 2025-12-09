@@ -75,7 +75,8 @@ export const transformToolsConfig = (params: BedrockMessagesParams) => {
           description: tool.description,
         };
 
-        // Add advanced tool use properties (from tool object in Messages API format)
+        // Pass through advanced tool use properties if present
+        // Users must provide appropriate beta header (e.g., tool-search-tool-2025-10-19)
         if (tool.defer_loading !== undefined) {
           toolSpec.defer_loading = tool.defer_loading;
         }
@@ -103,4 +104,3 @@ export const transformToolsConfig = (params: BedrockMessagesParams) => {
   }
   return { tools, toolChoice };
 };
-

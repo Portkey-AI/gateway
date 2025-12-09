@@ -471,7 +471,7 @@ export interface Tool {
    * Helps Claude understand usage patterns beyond JSON schema.
    * Part of Anthropic's advanced tool use beta (advanced-tool-use-2025-11-20).
    */
-  input_examples?: Array<Record<string, unknown>>;
+  input_examples?: Record<string, any>[];
 }
 
 export interface ToolBash20250124 {
