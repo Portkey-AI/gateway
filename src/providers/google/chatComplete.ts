@@ -632,7 +632,7 @@ export const GoogleChatCompleteResponseTransform: (
               if (part.thought) {
                 contentBlocks.push({ type: 'thinking', thinking: part.text });
               } else {
-                content = part.text;
+                content = content ? content + part.text : part.text;
                 contentBlocks.push({ type: 'text', text: part.text });
               }
             } else if (part.inlineData) {
@@ -783,7 +783,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
                 });
                 streamState.containsChainOfThoughtMessage = true;
               } else {
-                content = part.text ?? '';
+                content += part.text ?? '';
                 contentBlocks.push({
                   index: streamState.containsChainOfThoughtMessage ? 1 : 0,
                   delta: { text: part.text },
