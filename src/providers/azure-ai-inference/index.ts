@@ -28,6 +28,7 @@ import {
 import {
   AnthropicChatCompleteConfig,
   AnthropicChatCompleteResponseTransform,
+  AnthropicChatCompleteStreamChunkTransform,
 } from '../anthropic/chatComplete';
 import {
   AzureAIInferenceMessagesConfig,
@@ -68,6 +69,9 @@ const AzureAIInferenceAPIConfig: ProviderConfigs = {
       },
       responseTransforms: {
         complete: AzureAIInferenceCompleteResponseTransform(AZURE_AI_INFERENCE),
+        ...(isAnthropicModel && {
+          'stream-chatComplete': AnthropicChatCompleteStreamChunkTransform,
+        }),
         chatComplete: chatCompleteResponseTransform,
         messages: AzureAIInferenceMessagesResponseTransform,
         embed: AzureAIInferenceEmbedResponseTransform(AZURE_AI_INFERENCE),
