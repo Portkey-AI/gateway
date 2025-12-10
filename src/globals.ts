@@ -112,6 +112,7 @@ export const Z_AI: string = 'z-ai';
 export const ORACLE: string = 'oracle';
 export const IO_INTELLIGENCE: string = 'iointelligence';
 export const AIBADGR: string = 'aibadgr';
+export const OVHCLOUD: string = 'ovhcloud';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -187,6 +188,7 @@ export const VALID_PROVIDERS = [
   ORACLE,
   IO_INTELLIGENCE,
   AIBADGR,
+  OVHCLOUD,
 ];
 
 export const CONTENT_TYPES = {
