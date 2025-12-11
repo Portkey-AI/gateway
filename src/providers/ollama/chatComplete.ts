@@ -74,8 +74,8 @@ export const OllamaChatCompleteConfig: ProviderConfig = {
   tools: {
     param: 'tools',
   },
-  think: {
-    param: 'thinking',
+  thinking: {
+    param: 'think',
     transform: (params: Params) => {
       if (params.thinking?.type === 'disabled') {
         return false;
