@@ -1,4 +1,3 @@
-import { ANTHROPIC } from '../../globals';
 import { ErrorResponse } from '../types';
 import { generateErrorResponse } from '../utils';
 import { AnthropicErrorResponse } from './types';
