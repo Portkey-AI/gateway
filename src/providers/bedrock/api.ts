@@ -7,6 +7,7 @@ import {
   generateAWSHeaders,
   getFoundationModelFromInferenceProfile,
   providerAssumedRoleCredentials,
+  getBedrockModelWithoutRegion,
 } from './utils';
 import { GatewayError } from '../../errors/GatewayError';
 
@@ -234,7 +235,10 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
       return `/model-invocation-job/${batchId}/stop`;
     }
     const { model, stream } = gatewayRequestBody;
-    const uriEncodedModel = encodeURIComponent(decodeURIComponent(model ?? ''));
+    const decodedModel = decodeURIComponent(model ?? '');
+    const uriEncodedModel = encodeURIComponent(decodedModel);
+    const modelWithoutRegion = getBedrockModelWithoutRegion(decodedModel);
+    const uriEncodedModelWithoutRegion = encodeURIComponent(modelWithoutRegion);
     if (!model && !BEDROCK_NO_MODEL_ENDPOINTS.includes(fn as endpointStrings)) {
       throw new GatewayError('Model is required');
     }
@@ -305,7 +309,7 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
         return `/model-customization-jobs/${jobId}/stop`;
       }
       case 'messagesCountTokens': {
-        return `/model/${uriEncodedModel}/count-tokens`;
+        return `/model/${uriEncodedModelWithoutRegion}/count-tokens`;
       }
       default:
         return '';

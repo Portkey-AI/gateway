@@ -1,15 +1,20 @@
+import { Environment } from '../../utils/env';
 import { ProviderAPIConfig } from '../types';
 import {
   getAccessTokenFromEntraId,
   getAzureManagedIdentityToken,
+  getAzureWorkloadIdentityToken,
 } from './utils';
+import { getRuntimeKey } from 'hono/adapter';
+
+const runtime = getRuntimeKey();
 
 const AzureOpenAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
     const { resourceName } = providerOptions;
     return `https://${resourceName}.openai.azure.com/openai`;
   },
-  headers: async ({ providerOptions, fn }) => {
+  headers: async ({ providerOptions, fn, c }) => {
     const { apiKey, azureAdToken, azureAuthMode } = providerOptions;
     if (azureAdToken) {
       return {
@@ -43,6 +48,34 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       return {
         Authorization: `Bearer ${accessToken}`,
       };
+    }
+    // `AZURE_FEDERATED_TOKEN_FILE` is injected by runtime, skipping serverless for now.
+    if (azureAuthMode === 'workload' && runtime === 'node') {
+      const { azureWorkloadClientId } = providerOptions;
+
+      const authorityHost = Environment(c).AZURE_AUTHORITY_HOST;
+      const tenantId = Environment(c).AZURE_TENANT_ID;
+      const clientId = azureWorkloadClientId || Environment(c).AZURE_CLIENT_ID;
+      const federatedTokenFile = Environment(c).AZURE_FEDERATED_TOKEN_FILE;
+
+      if (authorityHost && tenantId && clientId && federatedTokenFile) {
+        const fs = await import('fs');
+        const federatedToken = fs.readFileSync(federatedTokenFile, 'utf8');
+
+        if (federatedToken) {
+          const scope = 'https://cognitiveservices.azure.com/.default';
+          const accessToken = await getAzureWorkloadIdentityToken(
+            authorityHost,
+            tenantId,
+            clientId,
+            federatedToken,
+            scope
+          );
+          return {
+            Authorization: `Bearer ${accessToken}`,
+          };
+        }
+      }
     }
     const headersObj: Record<string, string> = {
       'api-key': `${apiKey}`,

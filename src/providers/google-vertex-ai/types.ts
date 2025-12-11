@@ -24,6 +24,7 @@ export interface GoogleResponseCandidate {
         mimeType: string;
         data: string;
       };
+      thoughtSignature?: string;
     }[];
   };
   logprobsResult?: {
@@ -70,6 +71,15 @@ export interface GoogleGenerateContentResponse {
     candidatesTokenCount: number;
     totalTokenCount: number;
     thoughtsTokenCount?: number;
+    cachedContentTokenCount?: number;
+    promptTokensDetails: {
+      modality: VERTEX_MODALITY;
+      tokenCount: number;
+    }[];
+    candidatesTokensDetails: {
+      modality: VERTEX_MODALITY;
+      tokenCount: number;
+    }[];
   };
 }
 
@@ -258,4 +268,11 @@ export enum VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON {
   BLOCKLIST = 'BLOCKLIST',
   PROHIBITED_CONTENT = 'PROHIBITED_CONTENT',
   SPII = 'SPII',
+}
+
+export enum VERTEX_MODALITY {
+  MODALITY_UNSPECIFIED = 'MODALITY_UNSPECIFIED',
+  TEXT = 'TEXT',
+  IMAGE = 'IMAGE',
+  AUDIO = 'AUDIO',
 }

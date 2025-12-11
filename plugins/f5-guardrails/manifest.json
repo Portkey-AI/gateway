@@ -1,0 +1,74 @@
+{
+  "id": "f5-guardrails",
+  "description": "F5 Guardrails Plugin - Partner guardrail powered by F5 Guardrails",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "Your F5 Guardrails API key for authentication",
+        "encrypted": true
+      },
+      "calypsoUrl": {
+        "type": "string",
+        "label": "F5 Guardrails URL",
+        "description": "The base URL for F5 Guardrails API. Defaults to https://us1.calypsoai.app",
+        "default": "https://us1.calypsoai.app"
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "F5 Guardrails",
+      "id": "scan",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "F5 Guardrails powered by F5 Guardrails provides advanced content moderation and PII detection capabilities for your LLM inputs and outputs."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "redact": {
+            "type": "boolean",
+            "label": "Redact",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Whether to redact PII data detected by the F5 guardrail. When enabled, detected PII will be masked in the content."
+              }
+            ],
+            "default": false
+          },
+          "projectId": {
+            "type": "string",
+            "label": "Project-Id",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Your F5 Guardrails project identifier"
+              }
+            ]
+          },
+          "timeout": {
+            "type": "number",
+            "label": "Timeout",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "The timeout in milliseconds for the F5 guardrail scan. Defaults to 5000."
+              }
+            ],
+            "default": 5000
+          }
+        }
+      },
+      "required": ["projectId"]
+    }
+  ]
+}

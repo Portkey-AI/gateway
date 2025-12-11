@@ -86,5 +86,8 @@ export const transformToolsConfig = (params: BedrockMessagesParams) => {
       }
     }
   }
+  if (tools.length === 0) {
+    return null;
+  }
   return { tools, toolChoice };
 };

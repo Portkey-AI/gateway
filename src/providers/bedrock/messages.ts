@@ -623,7 +623,5 @@ function getMessageStartEvent(fallbackId: string, gatewayRequest: Params) {
   );
   messageStartEvent.message.id = fallbackId;
   messageStartEvent.message.model = gatewayRequest.model as string;
-  // bedrock does not send usage in the beginning of the stream
-  delete messageStartEvent.message.usage;
   return `event: message_start\ndata: ${JSON.stringify(messageStartEvent)}\n\n`;
 }

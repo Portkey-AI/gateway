@@ -842,6 +842,8 @@ export function constructConfigFromRequestHeaders(
     azureAuthMode: requestHeaders[`x-${POWERED_BY}-azure-auth-mode`],
     azureManagedClientId:
       requestHeaders[`x-${POWERED_BY}-azure-managed-client-id`],
+    azureWorkloadClientId:
+      requestHeaders[`x-${POWERED_BY}-azure-workload-client-id`],
     azureEntraClientId: requestHeaders[`x-${POWERED_BY}-azure-entra-client-id`],
     azureEntraClientSecret:
       requestHeaders[`x-${POWERED_BY}-azure-entra-client-secret`],
@@ -874,6 +876,7 @@ export function constructConfigFromRequestHeaders(
     azureEntraTenantId: requestHeaders[`x-${POWERED_BY}-azure-entra-tenant-id`],
     azureEntraScope: requestHeaders[`x-${POWERED_BY}-azure-entra-scope`],
     azureExtraParameters: requestHeaders[`x-${POWERED_BY}-azure-extra-params`],
+    anthropicVersion: requestHeaders[`x-${POWERED_BY}-anthropic-version`],
   };
 
   const awsConfig = {
@@ -947,7 +950,9 @@ export function constructConfigFromRequestHeaders(
     vertexModelName: requestHeaders[`x-${POWERED_BY}-provider-model`],
     vertexBatchEndpoint:
       requestHeaders[`x-${POWERED_BY}-provider-batch-endpoint`],
-    anthropicBeta: requestHeaders[`x-${POWERED_BY}-anthropic-beta`],
+    anthropicBeta:
+      requestHeaders[`x-${POWERED_BY}-anthropic-beta`] ||
+      requestHeaders[`anthropic-beta`],
   };
 
   const fireworksConfig = {
@@ -955,9 +960,15 @@ export function constructConfigFromRequestHeaders(
     fireworksFileLength: requestHeaders[`x-${POWERED_BY}-file-upload-size`],
   };
 
+  // we also support the anthropic headers without the x-${POWERED_BY}- prefix for claude code support
   const anthropicConfig = {
-    anthropicBeta: requestHeaders[`x-${POWERED_BY}-anthropic-beta`],
-    anthropicVersion: requestHeaders[`x-${POWERED_BY}-anthropic-version`],
+    anthropicBeta:
+      requestHeaders[`x-${POWERED_BY}-anthropic-beta`] ||
+      requestHeaders[`anthropic-beta`],
+    anthropicVersion:
+      requestHeaders[`x-${POWERED_BY}-anthropic-version`] ||
+      requestHeaders[`anthropic-version`],
+    anthropicApiKey: requestHeaders[`x-api-key`],
   };
 
   const vertexServiceAccountJson =
@@ -1189,6 +1200,7 @@ export async function recursiveAfterRequestHookHandler(
     responseJson: mappedResponseJson,
     originalResponseJson,
   } = await responseHandler(
+    c,
     response,
     isStreamingMode,
     providerOption,
@@ -1198,7 +1210,8 @@ export async function recursiveAfterRequestHookHandler(
     gatewayParams,
     strictOpenAiCompliance,
     c.req.url,
-    areSyncHooksAvailable
+    areSyncHooksAvailable,
+    hookSpanId
   );
 
   const arhResponse = await afterRequestHookHandler(

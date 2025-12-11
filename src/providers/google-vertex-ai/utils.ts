@@ -3,6 +3,7 @@ import {
   GoogleResponseCandidate,
   GoogleBatchRecord,
   GoogleFinetuneRecord,
+  GoogleSearchRetrievalTool,
 } from './types';
 import { generateErrorResponse } from '../utils';
 import {
@@ -13,7 +14,8 @@ import {
 import { ErrorResponse, FinetuneRequest, Logprobs } from '../types';
 import { Context } from 'hono';
 import { env } from 'hono/adapter';
-import { ContentType, JsonSchema } from '../../types/requestBody';
+import { ContentType, JsonSchema, Tool } from '../../types/requestBody';
+import { GoogleMessagePart } from '../google/chatComplete';
 
 /**
  * Encodes an object as a Base64 URL-encoded string.
@@ -714,18 +716,76 @@ export const isEmbeddingModel = (modelName: string) => {
 export const OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING = {
   mp3: 'audio/mp3',
   wav: 'audio/wav',
+  opus: 'audio/ogg',
+  flac: 'audio/flac',
+  pcm16: 'audio/pcm',
+  'x-aac': 'audio/aac',
+  'x-m4a': 'audio/m4a',
+  mpeg: 'audio/mpeg',
+  mpga: 'audio/mpga',
+  mp4: 'audio/mp4',
+  webm: 'audio/webm',
 };
 
-export const transformInputAudioPart = (c: ContentType) => {
+export const transformInputAudioPart = (c: ContentType): GoogleMessagePart => {
   const data = c.input_audio?.data;
   const mimeType =
     OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING[
-      c.input_audio?.format as 'mp3' | 'wav'
+      c.input_audio
+        ?.format as keyof typeof OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING
     ];
   return {
     inlineData: {
-      data,
+      data: data ?? '',
       mimeType,
     },
   };
+};
+
+export const googleTools = [
+  'googleSearch',
+  'google_search',
+  'googleSearchRetrieval',
+  'google_search_retrieval',
+  'computerUse',
+  'computer_use',
+];
+
+export const transformGoogleTools = (tool: Tool) => {
+  const tools: any = [];
+  if (['googleSearch', 'google_search'].includes(tool.function.name)) {
+    const timeRangeFilter = tool.function.parameters?.timeRangeFilter;
+    tools.push({
+      googleSearch: {
+        // allow null
+        ...(timeRangeFilter !== undefined && { timeRangeFilter }),
+      },
+    });
+  } else if (
+    ['googleSearchRetrieval', 'google_search_retrieval'].includes(
+      tool.function.name
+    )
+  ) {
+    tools.push(buildGoogleSearchRetrievalTool(tool));
+  } else if (['computerUse', 'computer_use'].includes(tool.function.name)) {
+    tools.push({
+      computerUse: {
+        environment: tool.function.parameters?.environment,
+        excludedPredefinedFunctions:
+          tool.function.parameters?.excluded_predefined_functions,
+      },
+    });
+  }
+  return tools;
+};
+
+export const buildGoogleSearchRetrievalTool = (tool: Tool) => {
+  const googleSearchRetrievalTool: GoogleSearchRetrievalTool = {
+    googleSearchRetrieval: {},
+  };
+  if (tool.function.parameters?.dynamicRetrievalConfig) {
+    googleSearchRetrievalTool.googleSearchRetrieval.dynamicRetrievalConfig =
+      tool.function.parameters.dynamicRetrievalConfig;
+  }
+  return googleSearchRetrievalTool;
 };

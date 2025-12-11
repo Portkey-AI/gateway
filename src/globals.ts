@@ -103,9 +103,13 @@ export const KRUTRIM: string = 'krutrim';
 export const QDRANT: string = 'qdrant';
 export const THREE_ZERO_TWO_AI: string = '302ai';
 export const COMETAPI: string = 'cometapi';
+export const MATTERAI: string = 'matterai';
 export const MESHY: string = 'meshy';
 export const TRIPO3D: string = 'tripo3d';
 export const NEXTBIT: string = 'nextbit';
+export const MODAL: string = 'modal';
+export const Z_AI: string = 'z-ai';
+export const IO_INTELLIGENCE: string = 'iointelligence';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -172,9 +176,13 @@ export const VALID_PROVIDERS = [
   QDRANT,
   THREE_ZERO_TWO_AI,
   COMETAPI,
+  MATTERAI,
   MESHY,
   TRIPO3D,
   NEXTBIT,
+  MODAL,
+  Z_AI,
+  IO_INTELLIGENCE,
 ];
 
 export const CONTENT_TYPES = {
@@ -266,3 +274,30 @@ export enum BatchEndpoints {
   COMPLETIONS = '/v1/completions',
   EMBEDDINGS = '/v1/embeddings',
 }
+
+export const AtomicOperations = {
+  GET: 'GET',
+  RESET: 'RESET',
+  INCREMENT: 'INCREMENT',
+  DECREMENT: 'DECREMENT',
+};
+
+export enum RateLimiterKeyTypes {
+  VIRTUAL_KEY = 'VIRTUAL_KEY',
+  API_KEY = 'API_KEY',
+  WORKSPACE = 'WORKSPACE',
+  INTEGRATION_WORKSPACE = 'INTEGRATION_WORKSPACE',
+}
+
+export const METRICS_KEYS = {
+  AUTH_N_MIDDLEWARE_START: 'authNMiddlewareStart',
+  AUTH_N_MIDDLEWARE_END: 'authNMiddlewareEnd',
+  API_KEY_RATE_LIMIT_CHECK_START: 'apiKeyRateLimitCheckStart',
+  API_KEY_RATE_LIMIT_CHECK_END: 'apiKeyRateLimitCheckEnd',
+  PORTKEY_MIDDLEWARE_PRE_REQUEST_START: 'portkeyMiddlewarePreRequestStart',
+  PORTKEY_MIDDLEWARE_PRE_REQUEST_END: 'portkeyMiddlewarePreRequestEnd',
+  PORTKEY_MIDDLEWARE_POST_REQUEST_START: 'portkeyMiddlewarePostRequestStart',
+  PORTKEY_MIDDLEWARE_POST_REQUEST_END: 'portkeyMiddlewarePostRequestEnd',
+  LLM_CACHE_GET_START: 'llmCacheGetStart',
+  LLM_CACHE_GET_END: 'llmCacheGetEnd',
+};

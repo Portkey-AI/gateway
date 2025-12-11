@@ -66,7 +66,7 @@ import { handler as walledaiguardrails } from './walledai/walledprotect';
 import { handler as defaultregexReplace } from './default/regexReplace';
 import { handler as defaultallowedRequestTypes } from './default/allowedRequestTypes';
 import { handler as javelinguardrails } from './javelin/guardrails';
-
+import { handler as f5GuardrailsScan } from './f5-guardrails/scan';
 export const plugins = {
   default: {
     regexMatch: defaultregexMatch,
@@ -173,5 +173,8 @@ export const plugins = {
   },
   javelin: {
     guardrails: javelinguardrails,
+  },
+  'f5-guardrails': {
+    scan: f5GuardrailsScan,
   },
 };

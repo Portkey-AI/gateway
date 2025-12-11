@@ -1,5 +1,9 @@
 import { BEDROCK } from '../../globals';
-import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
+import {
+  EmbedParams,
+  EmbedResponse,
+  EmbedResponseData,
+} from '../../types/embedRequestBody';
 import { Params } from '../../types/requestBody';
 import { ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
@@ -190,7 +194,7 @@ export const BedrockTitanEmbedResponseTransform: (
 };
 
 interface BedrockCohereEmbedResponse {
-  embeddings: number[][];
+  embeddings: number[][] | { float: number[][] };
   id: string;
   texts: string[];
 }
@@ -220,13 +224,23 @@ export const BedrockCohereEmbedResponseTransform: (
   const model = (gatewayRequest.model as string) || '';
 
   if ('embeddings' in response) {
-    return {
-      object: 'list',
-      data: response.embeddings.map((embedding, index) => ({
+    let data: EmbedResponseData[] = [];
+    if (response?.embeddings && 'float' in response.embeddings) {
+      data = response.embeddings.float.map((embedding, index) => ({
         object: 'embedding',
         embedding: embedding,
         index: index,
-      })),
+      }));
+    } else if (Array.isArray(response.embeddings)) {
+      data = response.embeddings.map((embedding, index) => ({
+        object: 'embedding',
+        embedding: embedding,
+        index: index,
+      }));
+    }
+    return {
+      object: 'list',
+      data,
       provider: BEDROCK,
       model,
       usage: {
