@@ -4,8 +4,9 @@ import { generateErrorResponse } from '../utils';
 import { AnthropicErrorResponse } from './types';
 
 export const AnthropicErrorResponseTransform: (
-  response: AnthropicErrorResponse
-) => ErrorResponse = (response) => {
+  response: AnthropicErrorResponse,
+  provider: string
+) => ErrorResponse = (response, provider) => {
   return generateErrorResponse(
     {
       message: response.error?.message,
@@ -13,6 +14,6 @@ export const AnthropicErrorResponseTransform: (
       param: null,
       code: null,
     },
-    ANTHROPIC
+    provider
   );
 };

@@ -518,7 +518,7 @@ export const getAnthropicChatCompleteResponseTransform = (provider: string) => {
     strictOpenAiCompliance
   ) => {
     if (responseStatus !== 200 && 'error' in response) {
-      return AnthropicErrorResponseTransform(response);
+      return AnthropicErrorResponseTransform(response, provider);
     }
 
     if ('content' in response) {
