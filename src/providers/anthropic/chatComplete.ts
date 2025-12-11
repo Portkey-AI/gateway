@@ -1,4 +1,4 @@
-import { ANTHROPIC, fileExtensionMimeTypeMap } from '../../globals';
+import { fileExtensionMimeTypeMap } from '../../globals';
 import {
   Params,
   Message,
