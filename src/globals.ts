@@ -110,6 +110,7 @@ export const NEXTBIT: string = 'nextbit';
 export const MODAL: string = 'modal';
 export const Z_AI: string = 'z-ai';
 export const IO_INTELLIGENCE: string = 'iointelligence';
+export const AIBADGR: string = 'aibadgr';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -183,6 +184,7 @@ export const VALID_PROVIDERS = [
   MODAL,
   Z_AI,
   IO_INTELLIGENCE,
+  AIBADGR,
 ];
 
 export const CONTENT_TYPES = {
