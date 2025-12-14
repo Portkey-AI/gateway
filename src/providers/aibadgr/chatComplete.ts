@@ -50,7 +50,12 @@ export const AIBadgrChatCompleteStreamChunkTransform = (
       })}` + '\n\n'
     );
   } catch (error) {
-    console.error('Error parsing AI Badgr stream chunk:', error);
+    console.error(
+      'Error parsing AI Badgr stream chunk:',
+      error,
+      'Chunk:',
+      chunk
+    );
     return `data: ${chunk}\n\n`;
   }
 };
