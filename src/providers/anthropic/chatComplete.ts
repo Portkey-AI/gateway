@@ -457,6 +457,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
     param: 'stream',
     default: false,
   },
+  // anthropic specific fields
   user: {
     param: 'metadata.user_id',
   },

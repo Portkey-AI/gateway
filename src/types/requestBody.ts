@@ -164,6 +164,17 @@ export interface Options {
   /** Azure entra scope */
   azureEntraScope?: string;
 
+  // Oracle specific fields
+  oracleApiVersion?: string; // example: 20160918
+  oracleRegion?: string; // example: us-ashburn-1
+  oracleCompartmentId?: string; // example: ocid1.compartment.oc1..aaaaaaaab7x77777777777777777
+  oracleServingMode?: string; // supported values: ON_DEMAND, DEDICATED
+  oracleTenancy?: string; // example: ocid1.tenancy.oc1..aaaaaaaab7x77777777777777777
+  oracleUser?: string; // example: ocid1.user.oc1..aaaaaaaab7x77777777777777777
+  oracleFingerprint?: string; // example: 12:34:56:78:90:ab:cd:ef:12:34:56:78:90:ab:cd:ef
+  oraclePrivateKey?: string; // example: -----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...
+  oracleKeyPassphrase?: string; // example: password
+
   /** Model pricing config */
   modelPricingConfig?: Record<string, any>;
 }
@@ -379,7 +390,19 @@ export interface ToolChoiceObject {
   };
 }
 
-export type ToolChoice = ToolChoiceObject | 'none' | 'auto' | 'required';
+export interface CustomToolChoice {
+  type: 'custom';
+  custom: {
+    name?: string;
+  };
+}
+
+export type ToolChoice =
+  | ToolChoiceObject
+  | CustomToolChoice
+  | 'none'
+  | 'auto'
+  | 'required';
 
 /**
  * A tool in the conversation.
@@ -462,7 +485,6 @@ export interface Params {
   // Embeddings specific
   dimensions?: number;
   parameters?: any;
-  [key: string]: any;
 }
 
 interface Examples {

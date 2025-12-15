@@ -17,7 +17,7 @@ import { COHERE_STOP_REASON } from './cohere/types';
  * @interface
  */
 export interface ParameterConfig {
-  /** The name of the parameter. */
+  /** corresponding provider parameter key in the transformed request body */
   param: string;
   /** The default value of the parameter, if not provided in the request. */
   default?: any;
