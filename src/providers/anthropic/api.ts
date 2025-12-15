@@ -20,9 +20,7 @@ const AnthropicAPIConfig: ProviderAPIConfig = {
       gatewayRequestBody?.['anthropic_version'] ??
       '2023-06-01';
 
-    if (fn === 'chatComplete') {
-      headers['anthropic-beta'] = betaHeader;
-    }
+    headers['anthropic-beta'] = betaHeader;
     headers['anthropic-version'] = version;
     return headers;
   },
