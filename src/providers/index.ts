@@ -71,6 +71,7 @@ import ZAIConfig from './z-ai';
 import MatterAIConfig from './matterai';
 import ModalConfig from './modal';
 import IOIntelligenceConfig from './iointelligence';
+import AIBadgrConfig from './aibadgr';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -142,6 +143,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   modal: ModalConfig,
   'z-ai': ZAIConfig,
   iointelligence: IOIntelligenceConfig,
+  aibadgr: AIBadgrConfig,
 };
 
 export default Providers;
