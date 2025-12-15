@@ -33,7 +33,8 @@ export const handler: PluginHandler = async (
   if (!profileOrCriteria) {
     return {
       error: {
-        message: 'Profile parameter is required. Format: "evaluator:criteria" (e.g., "judge:my-custom-criteria") or shorthand "my-custom" (defaults to judge evaluator)',
+        message:
+          'Profile parameter is required. Format: "evaluator:criteria" (e.g., "judge:my-custom-criteria") or shorthand "my-custom" (defaults to judge evaluator)',
       },
       verdict: true,
       data,
