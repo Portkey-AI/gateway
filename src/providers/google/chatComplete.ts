@@ -9,6 +9,7 @@ import {
   SYSTEM_MESSAGE_ROLES,
   MESSAGE_ROLES,
 } from '../../types/requestBody';
+import { openaiReasoningEffortToVertexThinkingLevel } from '../google-vertex-ai/transformGenerationConfig';
 import { VERTEX_MODALITY } from '../google-vertex-ai/types';
 import {
   getMimeType,
@@ -88,6 +89,16 @@ const transformGenerationConfig = (params: Params) => {
     generationConfig['responseModalities'] = params.modalities.map((modality) =>
       modality.toUpperCase()
     );
+  }
+  if (params.reasoning_effort && params.reasoning_effort !== 'none') {
+    const thinkingLevel = openaiReasoningEffortToVertexThinkingLevel(
+      params.reasoning_effort
+    );
+    if (thinkingLevel) {
+      generationConfig['thinkingConfig'] = {
+        thinkingLevel,
+      };
+    }
   }
   return generationConfig;
 };
@@ -220,6 +231,9 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                   name: tool_call.function.name,
                   args: JSON.parse(tool_call.function.arguments),
                 },
+                ...(tool_call.function.thought_signature && {
+                  thoughtSignature: tool_call.function.thought_signature,
+                }),
               });
             });
           } else if (message.role === 'tool') {
@@ -387,7 +401,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
       const functionDeclarations: any = [];
       const tools: any = [];
       params.tools?.forEach((tool) => {
-        if (tool.type === 'function') {
+        if (tool.type === 'function' && tool.function) {
           // these are not supported by google
           recursivelyDeleteUnsupportedParameters(tool.function?.parameters);
           delete tool.function?.strict;
@@ -446,6 +460,10 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
+  reasoning_effort: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
 };
 
 export interface GoogleErrorResponse {
@@ -472,6 +490,7 @@ export interface GoogleResponseCandidate {
         mimeType: string;
         data: string;
       };
+      thoughtSignature?: string;
     }[];
   };
   logprobsResult?: {
@@ -603,13 +622,17 @@ export const GoogleChatCompleteResponseTransform: (
                 function: {
                   name: part.functionCall.name,
                   arguments: JSON.stringify(part.functionCall.args),
+                  ...(!strictOpenAiCompliance &&
+                    part.thoughtSignature && {
+                      thought_signature: part.thoughtSignature,
+                    }),
                 },
               });
             } else if (part.text) {
               if (part.thought) {
                 contentBlocks.push({ type: 'thinking', thinking: part.text });
               } else {
-                content = part.text;
+                content = content ? content + part.text : part.text;
                 contentBlocks.push({ type: 'text', text: part.text });
               }
             } else if (part.inlineData) {
@@ -760,7 +783,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
                 });
                 streamState.containsChainOfThoughtMessage = true;
               } else {
-                content = part.text ?? '';
+                content += part.text ?? '';
                 contentBlocks.push({
                   index: streamState.containsChainOfThoughtMessage ? 1 : 0,
                   delta: { text: part.text },
@@ -785,6 +808,10 @@ export const GoogleChatCompleteStreamChunkTransform: (
                     function: {
                       name: part.functionCall.name,
                       arguments: JSON.stringify(part.functionCall.args),
+                      ...(!strictOpenAiCompliance &&
+                        part.thoughtSignature && {
+                          thought_signature: part.thoughtSignature,
+                        }),
                     },
                   };
                 }

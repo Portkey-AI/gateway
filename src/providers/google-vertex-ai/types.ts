@@ -24,6 +24,7 @@ export interface GoogleResponseCandidate {
         mimeType: string;
         data: string;
       };
+      thoughtSignature?: string;
     }[];
   };
   logprobsResult?: {

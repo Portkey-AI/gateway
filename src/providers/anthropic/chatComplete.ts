@@ -45,6 +45,20 @@ interface AnthropicTool extends PromptCache {
   display_width_px?: number;
   display_height_px?: number;
   display_number?: number;
+  /**
+   * When true, this tool is not loaded into context initially.
+   * Claude discovers it via Tool Search Tool on-demand.
+   */
+  defer_loading?: boolean;
+  /**
+   * List of tool types that can call this tool programmatically.
+   * E.g., ["code_execution_20250825"] enables Programmatic Tool Calling.
+   */
+  allowed_callers?: string[];
+  /**
+   * Example inputs demonstrating how to use this tool.
+   */
+  input_examples?: Record<string, any>[];
 }
 
 interface AnthropicToolResultContentItem {
@@ -370,8 +384,19 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
               ...(tool.cache_control && {
                 cache_control: { type: 'ephemeral' },
               }),
+              // Advanced tool use properties (nested in function object per OpenAI format)
+              ...(tool.function.defer_loading !== undefined && {
+                defer_loading: tool.function.defer_loading,
+              }),
+              ...(tool.function.allowed_callers && {
+                allowed_callers: tool.function.allowed_callers,
+              }),
+              ...(tool.function.input_examples && {
+                input_examples: tool.function.input_examples,
+              }),
             });
           } else if (tool.type) {
+            // Handle special tool types (tool search tools, code_execution, mcp_toolset, etc.)
             const toolOptions = tool[tool.type];
             tools.push({
               ...(toolOptions && { ...toolOptions }),
@@ -432,6 +457,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
     param: 'stream',
     default: false,
   },
+  // anthropic specific fields
   user: {
     param: 'metadata.user_id',
   },
