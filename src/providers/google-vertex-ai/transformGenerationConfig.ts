@@ -5,6 +5,17 @@ import {
 } from './utils';
 import { GoogleEmbedParams } from './embed';
 import { EmbedInstancesData } from './types';
+
+export const openaiReasoningEffortToVertexThinkingLevel = (
+  reasoningEffort: string
+) => {
+  if (['minimal', 'low'].includes(reasoningEffort)) {
+    return 'low';
+  } else if (['medium', 'high'].includes(reasoningEffort)) {
+    return 'high';
+  }
+};
+
 /**
  * @see https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/gemini#request_body
  */
@@ -64,6 +75,16 @@ export function transformGenerationConfig(params: Params) {
     generationConfig['responseModalities'] = params.modalities.map((modality) =>
       modality.toUpperCase()
     );
+  }
+  if (params.reasoning_effort && params.reasoning_effort !== 'none') {
+    const thinkingLevel = openaiReasoningEffortToVertexThinkingLevel(
+      params.reasoning_effort
+    );
+    if (thinkingLevel) {
+      generationConfig['thinkingConfig'] = {
+        thinkingLevel,
+      };
+    }
   }
 
   return generationConfig;
