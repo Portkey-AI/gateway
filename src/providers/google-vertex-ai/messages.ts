@@ -23,7 +23,8 @@ export const VertexAnthropicMessagesResponseTransform = (
 ): MessagesResponse | ErrorResponse => {
   if (responseStatus !== 200) {
     const errorResposne = AnthropicErrorResponseTransform(
-      response as AnthropicErrorResponse
+      response as AnthropicErrorResponse,
+      GOOGLE_VERTEX_AI
     );
     if (errorResposne) return errorResposne;
   }

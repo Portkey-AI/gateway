@@ -14,7 +14,8 @@ export const AzureAIInferenceMessagesResponseTransform = (
 ): MessagesResponse | ErrorResponse => {
   if (responseStatus !== 200) {
     const errorResposne = AnthropicErrorResponseTransform(
-      response as AnthropicErrorResponse
+      response as AnthropicErrorResponse,
+      AZURE_AI_INFERENCE
     );
     if (errorResposne) return errorResposne;
   }

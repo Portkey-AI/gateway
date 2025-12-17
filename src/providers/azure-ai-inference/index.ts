@@ -27,7 +27,8 @@ import {
 } from './utils';
 import {
   AnthropicChatCompleteConfig,
-  AnthropicChatCompleteResponseTransform,
+  getAnthropicChatCompleteResponseTransform,
+  getAnthropicStreamChunkTransform,
 } from '../anthropic/chatComplete';
 import {
   AzureAIInferenceMessagesConfig,
@@ -43,7 +44,7 @@ const AzureAIInferenceAPIConfig: ProviderConfigs = {
       ? AnthropicChatCompleteConfig
       : AzureAIInferenceChatCompleteConfig;
     const chatCompleteResponseTransform = isAnthropicModel
-      ? AnthropicChatCompleteResponseTransform
+      ? getAnthropicChatCompleteResponseTransform(AZURE_AI_INFERENCE)
       : AzureAIInferenceChatCompleteResponseTransform(AZURE_AI_INFERENCE);
     return {
       complete: AzureAIInferenceCompleteConfig,
@@ -68,6 +69,10 @@ const AzureAIInferenceAPIConfig: ProviderConfigs = {
       },
       responseTransforms: {
         complete: AzureAIInferenceCompleteResponseTransform(AZURE_AI_INFERENCE),
+        ...(isAnthropicModel && {
+          'stream-chatComplete':
+            getAnthropicStreamChunkTransform(AZURE_AI_INFERENCE),
+        }),
         chatComplete: chatCompleteResponseTransform,
         messages: AzureAIInferenceMessagesResponseTransform,
         embed: AzureAIInferenceEmbedResponseTransform(AZURE_AI_INFERENCE),
