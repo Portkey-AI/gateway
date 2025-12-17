@@ -34,7 +34,14 @@ import {
 } from '../utils';
 import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from './types';
 
-const transformGenerationConfig = (params: Params) => {
+interface PortkeyGeminiParams extends Params {
+  image_config?: {
+    aspect_ratio: string; // '16:9', '4:3', '1:1'
+    image_size: string; // '2K', '4K', '8K'
+  };
+}
+
+const transformGenerationConfig = (params: PortkeyGeminiParams) => {
   const generationConfig: Record<string, any> = {};
   if (params['temperature'] != null && params['temperature'] != undefined) {
     generationConfig['temperature'] = params['temperature'];
@@ -99,6 +106,12 @@ const transformGenerationConfig = (params: Params) => {
         thinkingLevel,
       };
     }
+  }
+  if (params.image_config) {
+    generationConfig['imageConfig'] = {
+      aspectRatio: params.image_config.aspect_ratio,
+      imageSize: params.image_config.image_size,
+    };
   }
   return generationConfig;
 };
@@ -461,6 +474,10 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
     transform: (params: Params) => transformGenerationConfig(params),
   },
   reasoning_effort: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
+  image_config: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
