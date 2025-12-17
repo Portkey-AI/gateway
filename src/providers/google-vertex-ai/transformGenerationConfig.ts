@@ -87,8 +87,12 @@ export function transformGenerationConfig(params: PortkeyGeminiParams) {
   }
   if (params.image_config) {
     generationConfig['imageConfig'] = {
-      aspectRatio: params.image_config.aspect_ratio,
-      imageSize: params.image_config.image_size,
+      ...(params.image_config.aspect_ratio && {
+        aspectRatio: params.image_config.aspect_ratio,
+      }),
+      ...(params.image_config.image_size && {
+        imageSize: params.image_config.image_size,
+      }),
     };
   }
   return generationConfig;
