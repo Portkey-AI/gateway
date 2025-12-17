@@ -108,6 +108,34 @@ export interface BedrockMessagesParams extends MessageCreateParamsBase {
   anthropic_version?: string;
   countPenalty?: number;
 }
+
+/**
+ * Tool parameter interface for Bedrock Messages API.
+ * Includes advanced tool use properties supported via Invoke API
+ * with appropriate beta headers (e.g., tool-search-tool-2025-10-19).
+ */
+export interface BedrockMessagesToolParam {
+  name: string;
+  description?: string;
+  input_schema?: Record<string, any>;
+  type?: string;
+  cache_control?: { type: string };
+  /**
+   * When true, this tool is not loaded into context initially.
+   * Requires beta header: tool-search-tool-2025-10-19 (Bedrock Invoke API only)
+   */
+  defer_loading?: boolean;
+  /**
+   * List of tool types that can call this tool programmatically.
+   * Requires appropriate beta header.
+   */
+  allowed_callers?: string[];
+  /**
+   * Example inputs demonstrating how to use this tool.
+   * Requires beta header: tool-examples-2025-10-29 (Bedrock Invoke API only)
+   */
+  input_examples?: Record<string, any>[];
+}
 export interface BedrockChatCompletionResponse {
   metrics: {
     latencyMs: number;

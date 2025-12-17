@@ -25,7 +25,10 @@ import { AzureOpenAICreateTranslationResponseTransform } from './createTranslati
 import { OpenAICreateFinetuneConfig } from '../openai/createFinetune';
 import { AzureTransformFinetuneBody } from './createFinetune';
 import { OpenAIFileUploadRequestTransform } from '../openai/uploadFile';
-import { AzureOpenAIFinetuneResponseTransform } from './utils';
+import {
+  AzureOpenAIFinetuneResponseTransform,
+  getAzureModelValue,
+} from './utils';
 import { AzureOpenAICreateBatchConfig } from './createBatch';
 import { AzureOpenAIGetBatchOutputRequestHandler } from './getBatchOutput';
 import {
@@ -53,7 +56,16 @@ const AzureOpenAIConfig: ProviderConfigs = {
   cancelFinetune: {},
   cancelBatch: {},
   createBatch: AzureOpenAICreateBatchConfig,
-  createModelResponse: createModelResponseParams([]),
+  createModelResponse: createModelResponseParams(
+    [],
+    {},
+    {
+      model: {
+        param: 'model',
+        transform: getAzureModelValue,
+      },
+    }
+  ),
   getModelResponse: {},
   deleteModelResponse: {},
   listModelsResponse: {},

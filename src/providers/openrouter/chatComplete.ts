@@ -123,7 +123,12 @@ interface OpenrouterChatCompleteResponse extends ChatCompletionResponse {
   object: string;
   created: number;
   model: string;
-  choices: (ChatChoice & { message: Message & { reasoning: string } })[];
+  choices: (ChatChoice & {
+    message: Message & {
+      reasoning: string;
+      reasoning_details?: any[];
+    };
+  })[];
   usage: OpenrouterUsageDetails;
 }
 
@@ -194,6 +199,9 @@ export const OpenrouterChatCompleteResponseTransform: (
             content_blocks.push({
               type: 'thinking',
               thinking: c.message.reasoning,
+              ...(c.message.reasoning_details && {
+                reasoning_details: c.message.reasoning_details,
+              }),
             });
           }
 
@@ -210,6 +218,9 @@ export const OpenrouterChatCompleteResponseTransform: (
             content: c.message.content,
             ...(content_blocks.length && { content_blocks }),
             ...(c.message.tool_calls && { tool_calls: c.message.tool_calls }),
+            ...(c.message.reasoning_details && {
+              reasoning_details: c.message.reasoning_details,
+            }),
           },
           finish_reason: c.finish_reason,
         };

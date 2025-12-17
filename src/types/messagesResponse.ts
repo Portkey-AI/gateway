@@ -73,6 +73,23 @@ export interface TextBlock {
   type: 'text';
 }
 
+/**
+ * Indicates the tool was called from within a code execution context.
+ * Present when using Programmatic Tool Calling.
+ * Part of Anthropic's advanced tool use beta (advanced-tool-use-2025-11-20).
+ */
+export interface ToolUseCaller {
+  /**
+   * The type of caller (e.g., "code_execution_20250825").
+   */
+  type: string;
+
+  /**
+   * The ID of the server tool use block that initiated this call.
+   */
+  tool_id: string;
+}
+
 export interface ToolUseBlock {
   id: string;
 
@@ -81,6 +98,12 @@ export interface ToolUseBlock {
   name: string;
 
   type: 'tool_use';
+
+  /**
+   * Present when this tool was invoked from within a code execution context.
+   * Part of Anthropic's advanced tool use beta (advanced-tool-use-2025-11-20).
+   */
+  caller?: ToolUseCaller;
 }
 
 export interface ServerToolUseBlock {
@@ -128,6 +151,64 @@ export interface WebSearchToolResultBlock {
   type: 'web_search_tool_result';
 }
 
+/**
+ * Error codes for code execution tool results.
+ */
+export type CodeExecutionToolResultErrorCode =
+  | 'invalid_tool_input'
+  | 'unavailable'
+  | 'too_many_requests'
+  | 'execution_time_exceeded';
+
+/**
+ * Error result from code execution.
+ */
+export interface CodeExecutionToolResultError {
+  error_code: CodeExecutionToolResultErrorCode;
+
+  type: 'code_execution_tool_result_error';
+}
+
+/**
+ * Output file from code execution.
+ */
+export interface CodeExecutionOutputBlock {
+  file_id: string;
+
+  type: 'code_execution_output';
+}
+
+/**
+ * Successful result from code execution.
+ */
+export interface CodeExecutionResultBlock {
+  content: Array<CodeExecutionOutputBlock>;
+
+  return_code: number;
+
+  stderr: string;
+
+  stdout: string;
+
+  type: 'code_execution_result';
+}
+
+export type CodeExecutionToolResultBlockContent =
+  | CodeExecutionToolResultError
+  | CodeExecutionResultBlock;
+
+/**
+ * Result block from Programmatic Tool Calling code execution.
+ * Part of Anthropic's advanced tool use beta (advanced-tool-use-2025-11-20).
+ */
+export interface CodeExecutionToolResultBlock {
+  content: CodeExecutionToolResultBlockContent;
+
+  tool_use_id: string;
+
+  type: 'code_execution_tool_result';
+}
+
 export interface ThinkingBlock {
   signature: string;
 
@@ -147,6 +228,7 @@ export type ContentBlock =
   | ToolUseBlock
   | ServerToolUseBlock
   | WebSearchToolResultBlock
+  | CodeExecutionToolResultBlock
   | ThinkingBlock
   | RedactedThinkingBlock;
 

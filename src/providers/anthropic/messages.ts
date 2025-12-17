@@ -13,7 +13,7 @@ export const AnthropicMessagesResponseTransform = (
   responseStatus: number
 ): MessagesResponse | ErrorResponse => {
   if (responseStatus !== 200 && 'error' in response) {
-    return AnthropicErrorResponseTransform(response);
+    return AnthropicErrorResponseTransform(response, ANTHROPIC);
   }
 
   if ('model' in response) return response;
