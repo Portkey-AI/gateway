@@ -250,6 +250,7 @@ export function convertHooksShorthand(
       'id',
       'type',
       'guardrail_version_id',
+      'sequential',
     ].forEach((key) => {
       if (hook.hasOwnProperty(key)) {
         hooksObject[key] = hook[key];
