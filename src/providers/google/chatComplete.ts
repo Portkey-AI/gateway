@@ -32,14 +32,10 @@ import {
   generateInvalidProviderResponseError,
   transformFinishReason,
 } from '../utils';
-import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from './types';
-
-interface PortkeyGeminiParams extends Params {
-  image_config?: {
-    aspect_ratio: string; // '16:9', '4:3', '1:1'
-    image_size: string; // '2K', '4K', '8K'
-  };
-}
+import {
+  GOOGLE_GENERATE_CONTENT_FINISH_REASON,
+  PortkeyGeminiParams,
+} from './types';
 
 const transformGenerationConfig = (params: PortkeyGeminiParams) => {
   const generationConfig: Record<string, any> = {};
