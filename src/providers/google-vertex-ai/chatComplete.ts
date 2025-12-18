@@ -599,6 +599,10 @@ export const VertexLlamaChatCompleteConfig: ProviderConfig = {
     param: 'stream',
     default: false,
   },
+  image_config: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
 };
 
 export const GoogleChatCompleteStreamChunkTransform: (

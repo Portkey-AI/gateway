@@ -32,9 +32,12 @@ import {
   generateInvalidProviderResponseError,
   transformFinishReason,
 } from '../utils';
-import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from './types';
+import {
+  GOOGLE_GENERATE_CONTENT_FINISH_REASON,
+  PortkeyGeminiParams,
+} from './types';
 
-const transformGenerationConfig = (params: Params) => {
+const transformGenerationConfig = (params: PortkeyGeminiParams) => {
   const generationConfig: Record<string, any> = {};
   if (params['temperature'] != null && params['temperature'] != undefined) {
     generationConfig['temperature'] = params['temperature'];
@@ -99,6 +102,16 @@ const transformGenerationConfig = (params: Params) => {
         thinkingLevel,
       };
     }
+  }
+  if (params.image_config) {
+    generationConfig['imageConfig'] = {
+      ...(params.image_config.aspect_ratio && {
+        aspectRatio: params.image_config.aspect_ratio,
+      }),
+      ...(params.image_config.image_size && {
+        imageSize: params.image_config.image_size,
+      }),
+    };
   }
   return generationConfig;
 };
@@ -461,6 +474,10 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
     transform: (params: Params) => transformGenerationConfig(params),
   },
   reasoning_effort: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
+  image_config: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
