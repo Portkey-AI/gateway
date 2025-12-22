@@ -454,7 +454,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
       );
       if (googleMapsTool) {
         toolConfig.retrievalConfig =
-          googleMapsTool.function?.parameters?.retrieval_config;
+          googleMapsTool.function?.parameters?.retrievalConfig;
         return toolConfig;
       }
       return;
@@ -485,7 +485,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
       );
       if (googleMapsTool) {
         toolConfig.retrievalConfig =
-          googleMapsTool.function?.parameters?.retrieval_config;
+          googleMapsTool.function?.parameters?.retrievalConfig;
       }
       return toolConfig;
     },

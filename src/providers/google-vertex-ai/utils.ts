@@ -783,7 +783,7 @@ export const transformGoogleTools = (tool: Tool) => {
   } else if (['googleMaps', 'google_maps'].includes(tool.function.name)) {
     tools.push({
       googleMaps: {
-        enableWidget: tool.function.parameters?.enable_widget,
+        enableWidget: tool.function.parameters?.enableWidget,
       },
     });
   }
