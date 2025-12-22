@@ -186,9 +186,9 @@ export const OracleChatDetailsConfig: ProviderConfig = {
         if (tool.type === 'function') {
           transformedTools.push({
             type: 'FUNCTION',
-            description: tool.function.description,
-            parameters: tool.function.parameters,
-            name: tool.function.name,
+            description: tool.function?.description,
+            parameters: tool.function?.parameters,
+            name: tool.function?.name,
           });
         } else if (tool.type === 'custom') {
           transformedTools.push({
