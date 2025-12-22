@@ -445,8 +445,22 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
   },
   tool_choice: {
     param: 'tool_config',
-    default: '',
+    default: (params: Params) => {
+      const toolConfig = {} as GoogleToolConfig;
+      const googleMapsTool = params.tools?.find(
+        (tool) =>
+          tool.function?.name === 'googleMaps' ||
+          tool.function?.name === 'google_maps'
+      );
+      if (googleMapsTool) {
+        toolConfig.retrievalConfig =
+          googleMapsTool.function?.parameters?.retrieval_config;
+      }
+      return toolConfig;
+    },
+    required: true,
     transform: (params: Params) => {
+      const toolConfig = {} as GoogleToolConfig;
       if (params.tool_choice) {
         const allowedFunctionNames: string[] = [];
         if (
@@ -455,17 +469,24 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
         ) {
           allowedFunctionNames.push(params.tool_choice.function.name);
         }
-        const toolConfig: GoogleToolConfig = {
-          function_calling_config: {
-            mode: transformToolChoiceForGemini(params.tool_choice),
-          },
+        toolConfig.function_calling_config = {
+          mode: transformToolChoiceForGemini(params.tool_choice),
         };
         if (allowedFunctionNames.length > 0) {
           toolConfig.function_calling_config.allowed_function_names =
             allowedFunctionNames;
         }
-        return toolConfig;
       }
+      const googleMapsTool = params.tools?.find(
+        (tool) =>
+          tool.function?.name === 'googleMaps' ||
+          tool.function?.name === 'google_maps'
+      );
+      if (googleMapsTool) {
+        toolConfig.retrievalConfig =
+          googleMapsTool.function?.parameters?.retrieval_config;
+      }
+      return toolConfig;
     },
   },
   thinking: {
