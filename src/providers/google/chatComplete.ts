@@ -172,6 +172,13 @@ export interface GoogleToolConfig {
     mode: GoogleToolChoiceType | undefined;
     allowed_function_names?: string[];
   };
+  retrievalConfig?: {
+    latLng: {
+      latitude: number;
+      longitude: number;
+    };
+    languageCode?: string;
+  };
 }
 
 export const transformOpenAIRoleToGoogleRole = (

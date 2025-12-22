@@ -302,8 +302,30 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
   },
   tool_choice: {
     param: 'tool_config',
-    default: '',
+    default: (params: Params) => {
+      const toolConfig = {} as GoogleToolConfig;
+      const googleMapsTool = params.tools?.find(
+        (tool) =>
+          tool.function?.name === 'googleMaps' ||
+          tool.function?.name === 'google_maps'
+      );
+      if (googleMapsTool) {
+        const latitude = googleMapsTool.function?.parameters?.latitude;
+        const longitude = googleMapsTool.function?.parameters?.longitude;
+        if (latitude || longitude) {
+          toolConfig.retrievalConfig = {
+            latLng: {
+              latitude: latitude ?? undefined,
+              longitude: longitude ?? undefined,
+            },
+          };
+        }
+      }
+      return toolConfig;
+    },
+    required: true,
     transform: (params: Params) => {
+      const toolConfig = {} as GoogleToolConfig;
       if (params.tool_choice) {
         const allowedFunctionNames: string[] = [];
         if (
@@ -312,10 +334,8 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
         ) {
           allowedFunctionNames.push(params.tool_choice.function.name);
         }
-        const toolConfig: GoogleToolConfig = {
-          function_calling_config: {
-            mode: transformToolChoiceForGemini(params.tool_choice),
-          },
+        toolConfig.function_calling_config = {
+          mode: transformToolChoiceForGemini(params.tool_choice),
         };
         if (allowedFunctionNames.length > 0) {
           toolConfig.function_calling_config.allowed_function_names =
@@ -323,6 +343,21 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
         }
         return toolConfig;
       }
+      const googleMapsTool = params.tools?.find(
+        (tool) =>
+          tool.function?.name === 'googleMaps' ||
+          tool.function?.name === 'google_maps'
+      );
+      if (googleMapsTool) {
+        toolConfig.retrievalConfig = {
+          latLng: {
+            latitude: googleMapsTool.function?.parameters?.latitude,
+            longitude: googleMapsTool.function?.parameters?.longitude,
+          },
+          languageCode: googleMapsTool.function?.parameters?.language_code,
+        };
+      }
+      return toolConfig;
     },
   },
   labels: {
