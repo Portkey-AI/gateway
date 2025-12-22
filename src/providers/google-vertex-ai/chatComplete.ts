@@ -312,8 +312,9 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
       if (googleMapsTool) {
         toolConfig.retrievalConfig =
           googleMapsTool.function?.parameters?.retrieval_config;
+        return toolConfig;
       }
-      return toolConfig;
+      return;
     },
     required: true,
     transform: (params: Params) => {
