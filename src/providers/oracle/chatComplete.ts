@@ -34,8 +34,12 @@ export const OracleChatCompleteConfig: ProviderConfig = {
     {
       param: 'chatRequest',
       required: true,
-      transform: (params: Params) => {
-        return transformUsingProviderConfig(OracleChatDetailsConfig, params);
+      transform: (params: Params, providerOptions: Options) => {
+        return transformUsingProviderConfig(
+          OracleChatDetailsConfig,
+          params,
+          providerOptions
+        );
       },
     },
     {
