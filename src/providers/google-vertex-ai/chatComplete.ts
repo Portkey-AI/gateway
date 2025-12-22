@@ -310,16 +310,8 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
           tool.function?.name === 'google_maps'
       );
       if (googleMapsTool) {
-        const latitude = googleMapsTool.function?.parameters?.latitude;
-        const longitude = googleMapsTool.function?.parameters?.longitude;
-        if (latitude || longitude) {
-          toolConfig.retrievalConfig = {
-            latLng: {
-              latitude: latitude ?? undefined,
-              longitude: longitude ?? undefined,
-            },
-          };
-        }
+        toolConfig.retrievalConfig =
+          googleMapsTool.function?.parameters?.retrieval_config;
       }
       return toolConfig;
     },
@@ -349,13 +341,8 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
           tool.function?.name === 'google_maps'
       );
       if (googleMapsTool) {
-        toolConfig.retrievalConfig = {
-          latLng: {
-            latitude: googleMapsTool.function?.parameters?.latitude,
-            longitude: googleMapsTool.function?.parameters?.longitude,
-          },
-          languageCode: googleMapsTool.function?.parameters?.language_code,
-        };
+        toolConfig.retrievalConfig =
+          googleMapsTool.function?.parameters?.retrieval_config;
       }
       return toolConfig;
     },
