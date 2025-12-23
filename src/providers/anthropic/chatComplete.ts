@@ -5,6 +5,7 @@ import {
   ContentType,
   SYSTEM_MESSAGE_ROLES,
   PromptCache,
+  ToolChoiceObject,
 } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
@@ -422,7 +423,10 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
           else if (params.tool_choice === 'auto') return { type: 'auto' };
           else if (params.tool_choice === 'none') return { type: 'none' };
         } else if (typeof params.tool_choice === 'object') {
-          return { type: 'tool', name: params.tool_choice.function.name };
+          return {
+            type: 'tool',
+            name: (params.tool_choice as ToolChoiceObject).function.name,
+          };
         }
       }
       return null;

@@ -6,6 +6,10 @@ interface OpenrouterUsageParam {
 
 interface OpenRouterParams extends Params {
   reasoning?: OpenrouterReasoningParam;
+  usage?: OpenrouterUsageParam;
+  stream_options?: {
+    include_usage?: boolean;
+  };
 }
 
 type OpenrouterReasoningParam = {

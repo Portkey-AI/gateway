@@ -10,6 +10,7 @@ import {
   ToolCall,
   SYSTEM_MESSAGE_ROLES,
   ContentType,
+  ToolChoiceObject,
 } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
@@ -375,7 +376,7 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
         if (typeof params.tool_choice === 'object') {
           toolChoice = {
             tool: {
-              name: params.tool_choice.function.name,
+              name: (params.tool_choice as ToolChoiceObject).function.name,
             },
           };
         } else if (typeof params.tool_choice === 'string') {
