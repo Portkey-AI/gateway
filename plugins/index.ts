@@ -13,6 +13,7 @@ import { handler as defaultalluppercase } from './default/alluppercase';
 import { handler as defaultalllowercase } from './default/alllowercase';
 import { handler as defaultendsWith } from './default/endsWith';
 import { handler as defaultmodelWhitelist } from './default/modelWhitelist';
+import { handler as defaultnotNull } from './default/notNull';
 import { handler as qualifireDangerousContent } from './qualifire/dangerousContent';
 import { handler as qualifireGrounding } from './qualifire/grounding';
 import { handler as qualifireHarassment } from './qualifire/harassment';
@@ -90,6 +91,7 @@ export const plugins = {
     addPrefix: defaultaddPrefix,
     regexReplace: defaultregexReplace,
     allowedRequestTypes: defaultallowedRequestTypes,
+    notNull: defaultnotNull,
   },
   qualifire: {
     dangerousContent: qualifireDangerousContent,
