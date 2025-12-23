@@ -749,6 +749,8 @@ export const googleTools = [
   'google_search_retrieval',
   'computerUse',
   'computer_use',
+  'googleMaps',
+  'google_maps',
 ];
 
 export const transformGoogleTools = (tool: Tool) => {
@@ -776,6 +778,12 @@ export const transformGoogleTools = (tool: Tool) => {
         environment: tool.function.parameters?.environment,
         excludedPredefinedFunctions:
           tool.function.parameters?.excluded_predefined_functions,
+      },
+    });
+  } else if (['googleMaps', 'google_maps'].includes(tool.function.name)) {
+    tools.push({
+      googleMaps: {
+        enableWidget: tool.function.parameters?.enableWidget,
       },
     });
   }
