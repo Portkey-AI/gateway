@@ -13,7 +13,6 @@ const OVHcloudAPIConfig: ProviderAPIConfig = {
   getEndpoint: ({ fn }) => {
     switch (fn) {
       case 'chatComplete':
-      case 'stream-chatComplete':
         return '/chat/completions';
       default:
         return '';
