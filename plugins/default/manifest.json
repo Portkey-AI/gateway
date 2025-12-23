@@ -965,6 +965,34 @@
         },
         "required": ["prefix"]
       }
+    },
+    {
+      "name": "Not Null",
+      "id": "notNull",
+      "type": "guardrail",
+      "supportedHooks": ["afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks if the response content is not null, undefined, or empty. Useful for detecting when an AI model returns no content."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "not": {
+            "type": "boolean",
+            "label": "Invert Check",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the verdict will be true when content IS null (inverts the check)"
+              }
+            ],
+            "default": false
+          }
+        }
+      }
     }
   ]
 }

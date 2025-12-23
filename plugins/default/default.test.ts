@@ -17,6 +17,7 @@ import { handler as jwtHandler } from './jwt';
 import { handler as allowedRequestTypesHandler } from './allowedRequestTypes';
 import { PluginContext, PluginParameters } from '../types';
 import { handler as addPrefixHandler } from './addPrefix';
+import { handler as notNullHandler } from './notNull';
 
 describe('Regex Matcher Plugin', () => {
   const mockContext: PluginContext = {
@@ -3632,5 +3633,257 @@ describe('addPrefix handler', () => {
         custom: 'value',
       });
     });
+  });
+});
+
+describe('Not Null Plugin', () => {
+  const mockEventType = 'afterRequestHook';
+
+  it('should pass when response content exists', async () => {
+    const context: PluginContext = {
+      requestType: 'chatComplete',
+      response: {
+        json: {
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: 'Hello! How can I help you?',
+              },
+            },
+          ],
+        },
+      },
+    };
+    const parameters: PluginParameters = {};
+
+    const result = await notNullHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data.isNull).toBe(false);
+    expect(result.data.explanation).toContain('exists and is not null');
+  });
+
+  it('should fail when response content is null', async () => {
+    const context: PluginContext = {
+      requestType: 'chatComplete',
+      response: {
+        json: {
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: null,
+              },
+            },
+          ],
+        },
+      },
+    };
+    const parameters: PluginParameters = {};
+
+    const result = await notNullHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data.isNull).toBe(true);
+    expect(result.data.explanation).toContain('null, undefined, or empty');
+  });
+
+  it('should fail when response content is empty string', async () => {
+    const context: PluginContext = {
+      requestType: 'chatComplete',
+      response: {
+        json: {
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: '',
+              },
+            },
+          ],
+        },
+      },
+    };
+    const parameters: PluginParameters = {};
+
+    const result = await notNullHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data.isNull).toBe(true);
+  });
+
+  it('should fail when response content is whitespace only', async () => {
+    const context: PluginContext = {
+      requestType: 'chatComplete',
+      response: {
+        json: {
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: '   ',
+              },
+            },
+          ],
+        },
+      },
+    };
+    const parameters: PluginParameters = {};
+
+    const result = await notNullHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data.isNull).toBe(true);
+  });
+
+  it('should invert check when not parameter is true', async () => {
+    const context: PluginContext = {
+      requestType: 'chatComplete',
+      response: {
+        json: {
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: null,
+              },
+            },
+          ],
+        },
+      },
+    };
+    const parameters: PluginParameters = { not: true };
+
+    const result = await notNullHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true); // Should pass because content IS null and not=true
+    expect(result.data.isNull).toBe(true);
+  });
+
+  it('should fail inverted check when content exists', async () => {
+    const context: PluginContext = {
+      requestType: 'chatComplete',
+      response: {
+        json: {
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: 'Hello!',
+              },
+            },
+          ],
+        },
+      },
+    };
+    const parameters: PluginParameters = { not: true };
+
+    const result = await notNullHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false); // Should fail because content exists and not=true
+    expect(result.data.isNull).toBe(false);
+  });
+
+  it('should handle complete request type', async () => {
+    const context: PluginContext = {
+      requestType: 'complete',
+      response: {
+        json: {
+          choices: [
+            {
+              text: 'Generated text response',
+            },
+          ],
+        },
+      },
+    };
+    const parameters: PluginParameters = {};
+
+    const result = await notNullHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data.isNull).toBe(false);
+  });
+
+  it('should fail when complete response text is null', async () => {
+    const context: PluginContext = {
+      requestType: 'complete',
+      response: {
+        json: {
+          choices: [
+            {
+              text: null,
+            },
+          ],
+        },
+      },
+    };
+    const parameters: PluginParameters = {};
+
+    const result = await notNullHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data.isNull).toBe(true);
+  });
+
+  it('should handle messages request type', async () => {
+    const context: PluginContext = {
+      requestType: 'messages',
+      response: {
+        json: {
+          content: [{ type: 'text', text: 'Hello from Claude!' }],
+        },
+      },
+    };
+    const parameters: PluginParameters = {};
+
+    const result = await notNullHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data.isNull).toBe(false);
+  });
+
+  it('should fail when messages response has empty content array', async () => {
+    const context: PluginContext = {
+      requestType: 'messages',
+      response: {
+        json: {
+          content: [],
+        },
+      },
+    };
+    const parameters: PluginParameters = {};
+
+    const result = await notNullHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data.isNull).toBe(true);
+  });
+
+  it('should handle streaming mode with no response json', async () => {
+    const context: PluginContext = {
+      requestType: 'chatComplete',
+      response: {
+        json: null,
+      },
+    };
+    const parameters: PluginParameters = {};
+
+    const result = await notNullHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data.isNull).toBe(true);
   });
 });
