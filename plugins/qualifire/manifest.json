@@ -15,66 +15,14 @@
   },
   "functions": [
     {
-      "name": "Hate Speech Check",
-      "id": "hateSpeech",
+      "name": "Content Moderation Check",
+      "id": "contentModeration",
       "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
       "type": "guardrail",
       "description": [
         {
           "type": "subHeading",
-          "text": "Checks for hate speech in the user input or model output."
-        }
-      ],
-      "parameters": {}
-    },
-    {
-      "name": "Dangerous Content Check",
-      "id": "dangerousContent",
-      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
-      "type": "guardrail",
-      "description": [
-        {
-          "type": "subHeading",
-          "text": "Checks for dangerous content in the user input or model output."
-        }
-      ],
-      "parameters": {}
-    },
-    {
-      "name": "Sexual Content Check",
-      "id": "sexualContent",
-      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
-      "type": "guardrail",
-      "description": [
-        {
-          "type": "subHeading",
-          "text": "Checks for sexual content in the user input or model output."
-        }
-      ],
-      "parameters": {}
-    },
-    {
-      "name": "Harassment Check",
-      "id": "harassment",
-      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
-      "type": "guardrail",
-      "description": [
-        {
-          "type": "subHeading",
-          "text": "Checks for harassment in the user input or model output."
-        }
-      ],
-      "parameters": {}
-    },
-    {
-      "name": "Instruction Following Check",
-      "id": "instructionFollowing",
-      "supportedHooks": ["afterRequestHook"],
-      "type": "guardrail",
-      "description": [
-        {
-          "type": "subHeading",
-          "text": "Checks that the model followed the instructions provided in the prompt."
+          "text": "Checks for dangerous content, sexual content, harassment, and dangerous content in the user input or model output."
         }
       ],
       "parameters": {}
@@ -90,7 +38,18 @@
           "text": "Checks that the model did not hallucinate."
         }
       ],
-      "parameters": {}
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "label": "Mode",
+            "description": "The mode to use for the check",
+            "enum": ["speed", "balanced", "quality"],
+            "default": "balanced"
+          }
+        }
+      }
     },
     {
       "name": "PII Check",
@@ -129,7 +88,18 @@
           "text": "Checks that the model is grounded in the context provided."
         }
       ],
-      "parameters": {}
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "label": "Mode",
+            "description": "The mode to use for the check",
+            "enum": ["speed", "balanced", "quality"],
+            "default": "balanced"
+          }
+        }
+      }
     },
     {
       "name": "Tool Use Quality Check",
@@ -142,7 +112,18 @@
           "text": "Checks the model's tool use quality. Including correct tool selection, correct tool parameters and values."
         }
       ],
-      "parameters": {}
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "label": "Mode",
+            "description": "The mode to use for the check",
+            "enum": ["speed", "balanced", "quality"],
+            "default": "balanced"
+          }
+        }
+      }
     },
     {
       "name": "Policy Violations Check",
@@ -170,6 +151,20 @@
                 }
               ]
             }
+          },
+          "mode": {
+            "type": "string",
+            "label": "Mode",
+            "description": "The mode to use for the check",
+            "enum": ["speed", "balanced", "quality"],
+            "default": "balanced"
+          },
+          "policy_target": {
+            "type": "string",
+            "label": "Policy Target",
+            "description": "Where to apply the policy check",
+            "enum": ["input", "output", "both"],
+            "default": "both"
           }
         },
         "required": ["policies"]

@@ -14,15 +14,11 @@ import { handler as defaultalllowercase } from './default/alllowercase';
 import { handler as defaultendsWith } from './default/endsWith';
 import { handler as defaultmodelWhitelist } from './default/modelWhitelist';
 import { handler as defaultnotNull } from './default/notNull';
-import { handler as qualifireDangerousContent } from './qualifire/dangerousContent';
+import { handler as qualifireContentModeration } from './qualifire/contentModeration';
 import { handler as qualifireGrounding } from './qualifire/grounding';
-import { handler as qualifireHarassment } from './qualifire/harassment';
-import { handler as qualifireInstructionFollowing } from './qualifire/instructionFollowing';
 import { handler as qualifirePolicy } from './qualifire/policy';
-import { handler as qualifireSexualContent } from './qualifire/sexualContent';
 import { handler as qualifireToolUseQuality } from './qualifire/toolUseQuality';
 import { handler as qualifireHallucinations } from './qualifire/hallucinations';
-import { handler as qualifireHateSpeech } from './qualifire/hateSpeech';
 import { handler as qualifirePii } from './qualifire/pii';
 import { handler as qualifirePromptInjections } from './qualifire/promptInjections';
 import { handler as defaultaddPrefix } from './default/addPrefix';
@@ -94,15 +90,11 @@ export const plugins = {
     notNull: defaultnotNull,
   },
   qualifire: {
-    dangerousContent: qualifireDangerousContent,
+    contentModeration: qualifireContentModeration,
     grounding: qualifireGrounding,
-    harassment: qualifireHarassment,
-    instructionFollowing: qualifireInstructionFollowing,
     policy: qualifirePolicy,
-    sexualContent: qualifireSexualContent,
     toolUseQuality: qualifireToolUseQuality,
     hallucinations: qualifireHallucinations,
-    hateSpeech: qualifireHateSpeech,
     pii: qualifirePii,
     promptInjections: qualifirePromptInjections,
   },
