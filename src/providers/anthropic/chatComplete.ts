@@ -569,7 +569,7 @@ export const getAnthropicChatCompleteResponseTransform = (provider: string) => {
         }
       });
 
-      let toolCalls: any = [];
+      const toolCalls: any = [];
       response.content.forEach((item) => {
         if (item.type === 'tool_use') {
           toolCalls.push({
@@ -582,6 +582,12 @@ export const getAnthropicChatCompleteResponseTransform = (provider: string) => {
           });
         }
       });
+
+      const promptTokens =
+        input_tokens +
+        (cache_read_input_tokens ?? 0) +
+        (cache_creation_input_tokens ?? 0);
+      const totalTokens = promptTokens + output_tokens;
 
       return {
         id: response.id,
@@ -610,13 +616,9 @@ export const getAnthropicChatCompleteResponseTransform = (provider: string) => {
           },
         ],
         usage: {
-          prompt_tokens: input_tokens,
+          prompt_tokens: promptTokens,
           completion_tokens: output_tokens,
-          total_tokens:
-            input_tokens +
-            output_tokens +
-            (cache_creation_input_tokens ?? 0) +
-            (cache_read_input_tokens ?? 0),
+          total_tokens: totalTokens,
           prompt_tokens_details: {
             cached_tokens: cache_read_input_tokens ?? 0,
           },
@@ -692,21 +694,8 @@ export const getAnthropicStreamChunkTransform = (provider: string) => {
       );
     }
 
-    const shouldSendCacheUsage =
-      parsedChunk.message?.usage?.cache_read_input_tokens ||
-      parsedChunk.message?.usage?.cache_creation_input_tokens;
-
     if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
       streamState.model = parsedChunk?.message?.model ?? '';
-      streamState.usage = {
-        prompt_tokens: parsedChunk.message?.usage?.input_tokens,
-        ...(shouldSendCacheUsage && {
-          cache_read_input_tokens:
-            parsedChunk.message?.usage?.cache_read_input_tokens,
-          cache_creation_input_tokens:
-            parsedChunk.message?.usage?.cache_creation_input_tokens,
-        }),
-      };
       return (
         `data: ${JSON.stringify({
           id: fallbackId,
@@ -731,11 +720,19 @@ export const getAnthropicStreamChunkTransform = (provider: string) => {
 
     // final chunk
     if (parsedChunk.type === 'message_delta' && parsedChunk.usage) {
-      const totalTokens =
-        (streamState?.usage?.prompt_tokens ?? 0) +
-        (streamState?.usage?.cache_creation_input_tokens ?? 0) +
-        (streamState?.usage?.cache_read_input_tokens ?? 0) +
-        (parsedChunk.usage.output_tokens ?? 0);
+      const {
+        input_tokens = 0,
+        output_tokens = 0,
+        cache_creation_input_tokens,
+        cache_read_input_tokens,
+      } = parsedChunk.usage;
+      const promptTokens =
+        input_tokens +
+        (cache_read_input_tokens ?? 0) +
+        (cache_creation_input_tokens ?? 0);
+      const totalTokens = promptTokens + output_tokens;
+      const shouldSendCacheUsage =
+        cache_read_input_tokens || cache_creation_input_tokens;
       return (
         `data: ${JSON.stringify({
           id: fallbackId,
@@ -754,12 +751,16 @@ export const getAnthropicStreamChunkTransform = (provider: string) => {
             },
           ],
           usage: {
-            ...streamState.usage,
-            completion_tokens: parsedChunk.usage?.output_tokens,
+            prompt_tokens: promptTokens,
+            completion_tokens: output_tokens,
             total_tokens: totalTokens,
             prompt_tokens_details: {
-              cached_tokens: streamState.usage?.cache_read_input_tokens ?? 0,
+              cached_tokens: cache_read_input_tokens ?? 0,
             },
+            ...(shouldSendCacheUsage && {
+              cache_read_input_tokens: cache_read_input_tokens,
+              cache_creation_input_tokens: cache_creation_input_tokens,
+            }),
           },
         })}` + '\n\n'
       );
