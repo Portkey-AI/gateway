@@ -9,7 +9,6 @@ import {
   SYSTEM_MESSAGE_ROLES,
   MESSAGE_ROLES,
 } from '../../types/requestBody';
-import { openaiReasoningEffortToVertexThinkingLevel } from '../google-vertex-ai/transformGenerationConfig';
 import { VERTEX_MODALITY } from '../google-vertex-ai/types';
 import {
   getMimeType,
@@ -94,9 +93,7 @@ const transformGenerationConfig = (params: PortkeyGeminiParams) => {
     );
   }
   if (params.reasoning_effort && params.reasoning_effort !== 'none') {
-    const thinkingLevel = openaiReasoningEffortToVertexThinkingLevel(
-      params.reasoning_effort
-    );
+    const thinkingLevel = params.reasoning_effort;
     if (thinkingLevel) {
       generationConfig['thinkingConfig'] = {
         thinkingLevel,
