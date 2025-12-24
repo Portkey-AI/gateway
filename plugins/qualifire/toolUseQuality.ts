@@ -26,10 +26,13 @@ export const handler: PluginHandler = async (
     };
   }
 
+  const mode = parameters?.mode || 'balanced';
+
   const evaluationBody: any = {
     messages: convertToMessages(context.request, context.response),
     available_tools: parseAvailableTools(context.request),
     tool_selection_quality_check: true,
+    tsq_mode: mode,
   };
 
   try {

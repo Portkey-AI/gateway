@@ -519,7 +519,7 @@ describe('grounding handler', () => {
       },
     ];
 
-    it('should handle successful evaluation for afterRequestHook', async () => {
+    it('should handle successful evaluation for afterRequestHook with default mode', async () => {
       const { postQualifire } = require('./globals');
       (postQualifire as jest.Mock).mockResolvedValue(testCases[0].mockResponse);
 
@@ -534,6 +534,7 @@ describe('grounding handler', () => {
           input: 'What is the capital of France?',
           output: 'The capital of France is Paris.',
           grounding_check: true,
+          grounding_mode: 'balanced',
         },
         'test-api-key'
       );
@@ -555,10 +556,38 @@ describe('grounding handler', () => {
           input: 'What is the capital of France?',
           output: 'The capital of France is Paris.',
           grounding_check: true,
+          grounding_mode: 'balanced',
         },
         'test-api-key'
       );
       expect(result).toEqual(testCases[1].mockResponse);
+    });
+
+    it('should use custom mode when provided', async () => {
+      const { postQualifire } = require('./globals');
+      (postQualifire as jest.Mock).mockResolvedValue(testCases[0].mockResponse);
+
+      const customParameters = {
+        ...mockParameters,
+        mode: 'quality',
+      };
+
+      const result = await groundingHandler(
+        mockContext,
+        customParameters,
+        'afterRequestHook' as HookEventType
+      );
+
+      expect(postQualifire).toHaveBeenCalledWith(
+        {
+          input: 'What is the capital of France?',
+          output: 'The capital of France is Paris.',
+          grounding_check: true,
+          grounding_mode: 'quality',
+        },
+        'test-api-key'
+      );
+      expect(result).toEqual(testCases[0].mockResponse);
     });
   });
 
@@ -662,7 +691,7 @@ describe('hallucinations handler', () => {
       },
     ];
 
-    it('should handle successful evaluation for afterRequestHook', async () => {
+    it('should handle successful evaluation for afterRequestHook with default mode', async () => {
       const { postQualifire } = require('./globals');
       (postQualifire as jest.Mock).mockResolvedValue(testCases[0].mockResponse);
 
@@ -678,6 +707,7 @@ describe('hallucinations handler', () => {
           output:
             'Quantum computing features include superposition, entanglement, and quantum interference.',
           hallucinations_check: true,
+          hallucinations_mode: 'balanced',
         },
         'test-api-key'
       );
@@ -700,10 +730,39 @@ describe('hallucinations handler', () => {
           output:
             'Quantum computing features include superposition, entanglement, and quantum interference.',
           hallucinations_check: true,
+          hallucinations_mode: 'balanced',
         },
         'test-api-key'
       );
       expect(result).toEqual(testCases[1].mockResponse);
+    });
+
+    it('should use custom mode when provided', async () => {
+      const { postQualifire } = require('./globals');
+      (postQualifire as jest.Mock).mockResolvedValue(testCases[0].mockResponse);
+
+      const customParameters = {
+        ...mockParameters,
+        mode: 'speed',
+      };
+
+      const result = await hallucinationsHandler(
+        mockContext,
+        customParameters,
+        'afterRequestHook' as HookEventType
+      );
+
+      expect(postQualifire).toHaveBeenCalledWith(
+        {
+          input: 'What are the main features of quantum computing?',
+          output:
+            'Quantum computing features include superposition, entanglement, and quantum interference.',
+          hallucinations_check: true,
+          hallucinations_mode: 'speed',
+        },
+        'test-api-key'
+      );
+      expect(result).toEqual(testCases[0].mockResponse);
     });
   });
 
@@ -1679,7 +1738,7 @@ describe('policy handler', () => {
       },
     ];
 
-    it('should handle successful evaluation for beforeRequestHook', async () => {
+    it('should handle successful evaluation for beforeRequestHook with default parameters', async () => {
       const { postQualifire } = require('./globals');
       (postQualifire as jest.Mock).mockResolvedValue(testCases[0].mockResponse);
 
@@ -1696,6 +1755,7 @@ describe('policy handler', () => {
             'The response must be polite',
             "The assistant isn't allowed to provide any discounts, promotions or free items.",
           ],
+          assertions_mode: 'balanced',
         },
         'test-api-key'
       );
@@ -1719,13 +1779,14 @@ describe('policy handler', () => {
             'The response must be polite',
             "The assistant isn't allowed to provide any discounts, promotions or free items.",
           ],
+          assertions_mode: 'balanced',
         },
         'test-api-key'
       );
       expect(result).toEqual(testCases[1].mockResponse);
     });
 
-    it('should handle successful evaluation for afterRequestHook', async () => {
+    it('should handle successful evaluation for afterRequestHook with default parameters', async () => {
       const { postQualifire } = require('./globals');
       (postQualifire as jest.Mock).mockResolvedValue(testCases[0].mockResponse);
 
@@ -1744,6 +1805,7 @@ describe('policy handler', () => {
             'The response must be polite',
             "The assistant isn't allowed to provide any discounts, promotions or free items.",
           ],
+          assertions_mode: 'balanced',
         },
         'test-api-key'
       );
@@ -1769,10 +1831,130 @@ describe('policy handler', () => {
             'The response must be polite',
             "The assistant isn't allowed to provide any discounts, promotions or free items.",
           ],
+          assertions_mode: 'balanced',
         },
         'test-api-key'
       );
       expect(result).toEqual(testCases[1].mockResponse);
+    });
+
+    it('should use custom mode when provided', async () => {
+      const { postQualifire } = require('./globals');
+      (postQualifire as jest.Mock).mockResolvedValue(testCases[0].mockResponse);
+
+      const customParameters = {
+        ...mockParametersWithPolicies,
+        mode: 'quality',
+      };
+
+      const result = await policyHandler(
+        mockContext,
+        customParameters,
+        'beforeRequestHook' as HookEventType
+      );
+
+      expect(postQualifire).toHaveBeenCalledWith(
+        {
+          input: 'Can I get a discount?',
+          assertions: [
+            'The response must be polite',
+            "The assistant isn't allowed to provide any discounts, promotions or free items.",
+          ],
+          assertions_mode: 'quality',
+        },
+        'test-api-key'
+      );
+      expect(result).toEqual(testCases[0].mockResponse);
+    });
+
+    it('should only check input when policy_target is "input"', async () => {
+      const { postQualifire } = require('./globals');
+      (postQualifire as jest.Mock).mockResolvedValue(testCases[0].mockResponse);
+
+      const customParameters = {
+        ...mockParametersWithPolicies,
+        policy_target: 'input',
+      };
+
+      const result = await policyHandler(
+        mockContext,
+        customParameters,
+        'afterRequestHook' as HookEventType
+      );
+
+      expect(postQualifire).toHaveBeenCalledWith(
+        {
+          input: 'Can I get a discount?',
+          assertions: [
+            'The response must be polite',
+            "The assistant isn't allowed to provide any discounts, promotions or free items.",
+          ],
+          assertions_mode: 'balanced',
+        },
+        'test-api-key'
+      );
+      expect(result).toEqual(testCases[0].mockResponse);
+    });
+
+    it('should only check output when policy_target is "output"', async () => {
+      const { postQualifire } = require('./globals');
+      (postQualifire as jest.Mock).mockResolvedValue(testCases[0].mockResponse);
+
+      const customParameters = {
+        ...mockParametersWithPolicies,
+        policy_target: 'output',
+      };
+
+      const result = await policyHandler(
+        mockContext,
+        customParameters,
+        'afterRequestHook' as HookEventType
+      );
+
+      expect(postQualifire).toHaveBeenCalledWith(
+        {
+          output:
+            "I apologize, but I'm not able to provide any discounts, promotions, or free items. I'd be happy to help you with other questions or information about our products and services.",
+          assertions: [
+            'The response must be polite',
+            "The assistant isn't allowed to provide any discounts, promotions or free items.",
+          ],
+          assertions_mode: 'balanced',
+        },
+        'test-api-key'
+      );
+      expect(result).toEqual(testCases[0].mockResponse);
+    });
+
+    it('should check both input and output when policy_target is "both"', async () => {
+      const { postQualifire } = require('./globals');
+      (postQualifire as jest.Mock).mockResolvedValue(testCases[0].mockResponse);
+
+      const customParameters = {
+        ...mockParametersWithPolicies,
+        policy_target: 'both',
+      };
+
+      const result = await policyHandler(
+        mockContext,
+        customParameters,
+        'afterRequestHook' as HookEventType
+      );
+
+      expect(postQualifire).toHaveBeenCalledWith(
+        {
+          input: 'Can I get a discount?',
+          output:
+            "I apologize, but I'm not able to provide any discounts, promotions, or free items. I'd be happy to help you with other questions or information about our products and services.",
+          assertions: [
+            'The response must be polite',
+            "The assistant isn't allowed to provide any discounts, promotions or free items.",
+          ],
+          assertions_mode: 'balanced',
+        },
+        'test-api-key'
+      );
+      expect(result).toEqual(testCases[0].mockResponse);
     });
   });
 
@@ -1957,7 +2139,7 @@ describe('toolUseQuality handler', () => {
       },
     ];
 
-    it('should handle successful evaluation for afterRequestHook', async () => {
+    it('should handle successful evaluation for afterRequestHook with default mode', async () => {
       const {
         postQualifire,
         convertToMessages,
@@ -2031,6 +2213,7 @@ describe('toolUseQuality handler', () => {
             },
           ],
           tool_selection_quality_check: true,
+          tsq_mode: 'balanced',
         },
         'test-api-key'
       );
@@ -2078,6 +2261,87 @@ describe('toolUseQuality handler', () => {
       );
 
       expect(result).toEqual(testCases[1].mockResponse);
+    });
+
+    it('should use custom mode when provided', async () => {
+      const {
+        postQualifire,
+        convertToMessages,
+        parseAvailableTools,
+      } = require('./globals');
+      (postQualifire as jest.Mock).mockResolvedValue(testCases[0].mockResponse);
+      (convertToMessages as jest.Mock).mockReturnValue([
+        { role: 'user', content: "What's the weather like in New York?" },
+        {
+          role: 'assistant',
+          content: null,
+          tool_calls: [
+            {
+              id: 'call_123',
+              name: 'get_weather',
+              arguments: { location: 'New York' },
+            },
+          ],
+        },
+      ]);
+      (parseAvailableTools as jest.Mock).mockReturnValue([
+        {
+          name: 'get_weather',
+          description: 'Get weather information for a location',
+          parameters: {
+            type: 'object',
+            properties: {
+              location: { type: 'string' },
+            },
+          },
+        },
+      ]);
+
+      const customParameters = {
+        ...mockParameters,
+        mode: 'speed',
+      };
+
+      const result = await toolUseQualityHandler(
+        mockContext,
+        customParameters,
+        'afterRequestHook' as HookEventType
+      );
+
+      expect(postQualifire).toHaveBeenCalledWith(
+        {
+          messages: [
+            { role: 'user', content: "What's the weather like in New York?" },
+            {
+              role: 'assistant',
+              content: null,
+              tool_calls: [
+                {
+                  id: 'call_123',
+                  name: 'get_weather',
+                  arguments: { location: 'New York' },
+                },
+              ],
+            },
+          ],
+          available_tools: [
+            {
+              name: 'get_weather',
+              description: 'Get weather information for a location',
+              parameters: {
+                type: 'object',
+                properties: {
+                  location: { type: 'string' },
+                },
+              },
+            },
+          ],
+          tool_selection_quality_check: true,
+          tsq_mode: 'speed',
+        },
+        'test-api-key'
+      );
+      expect(result).toEqual(testCases[0].mockResponse);
     });
   });
 

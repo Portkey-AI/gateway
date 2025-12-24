@@ -22,10 +22,13 @@ export const handler: PluginHandler = async (
     };
   }
 
+  const mode = parameters?.mode || 'balanced';
+
   const evaluationBody: any = {
     input: context.request.text,
     output: context.response.text,
     hallucinations_check: true,
+    hallucinations_mode: mode,
   };
 
   try {
