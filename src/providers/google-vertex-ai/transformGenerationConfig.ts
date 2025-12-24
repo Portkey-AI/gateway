@@ -66,12 +66,9 @@ export function transformGenerationConfig(params: PortkeyGeminiParams) {
     );
   }
   if (params.reasoning_effort && params.reasoning_effort !== 'none') {
-    const thinkingLevel = params.reasoning_effort;
-    if (thinkingLevel) {
-      generationConfig['thinkingConfig'] = {
-        thinkingLevel,
-      };
-    }
+    generationConfig['thinkingConfig'] = {
+      thinkingLevel: params.reasoning_effort,
+    };
   }
   if (params.image_config) {
     generationConfig['imageConfig'] = {
