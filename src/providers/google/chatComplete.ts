@@ -31,9 +31,12 @@ import {
   generateInvalidProviderResponseError,
   transformFinishReason,
 } from '../utils';
-import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from './types';
+import {
+  GOOGLE_GENERATE_CONTENT_FINISH_REASON,
+  PortkeyGeminiParams,
+} from './types';
 
-const transformGenerationConfig = (params: Params) => {
+const transformGenerationConfig = (params: PortkeyGeminiParams) => {
   const generationConfig: Record<string, any> = {};
   if (params['temperature'] != null && params['temperature'] != undefined) {
     generationConfig['temperature'] = params['temperature'];
@@ -88,6 +91,21 @@ const transformGenerationConfig = (params: Params) => {
     generationConfig['responseModalities'] = params.modalities.map((modality) =>
       modality.toUpperCase()
     );
+  }
+  if (params.reasoning_effort && params.reasoning_effort !== 'none') {
+    generationConfig['thinkingConfig'] = {
+      thinkingLevel: params.reasoning_effort,
+    };
+  }
+  if (params.image_config) {
+    generationConfig['imageConfig'] = {
+      ...(params.image_config.aspect_ratio && {
+        aspectRatio: params.image_config.aspect_ratio,
+      }),
+      ...(params.image_config.image_size && {
+        imageSize: params.image_config.image_size,
+      }),
+    };
   }
   return generationConfig;
 };
@@ -147,6 +165,13 @@ export interface GoogleToolConfig {
   function_calling_config: {
     mode: GoogleToolChoiceType | undefined;
     allowed_function_names?: string[];
+  };
+  retrievalConfig?: {
+    latLng: {
+      latitude: number;
+      longitude: number;
+    };
+    languageCode?: string;
   };
 }
 
@@ -390,7 +415,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
       const functionDeclarations: any = [];
       const tools: any = [];
       params.tools?.forEach((tool) => {
-        if (tool.type === 'function') {
+        if (tool.type === 'function' && tool.function) {
           // these are not supported by google
           recursivelyDeleteUnsupportedParameters(tool.function?.parameters);
           delete tool.function?.strict;
@@ -414,8 +439,23 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
   },
   tool_choice: {
     param: 'tool_config',
-    default: '',
+    default: (params: Params) => {
+      const toolConfig = {} as GoogleToolConfig;
+      const googleMapsTool = params.tools?.find(
+        (tool) =>
+          tool.function?.name === 'googleMaps' ||
+          tool.function?.name === 'google_maps'
+      );
+      if (googleMapsTool) {
+        toolConfig.retrievalConfig =
+          googleMapsTool.function?.parameters?.retrievalConfig;
+        return toolConfig;
+      }
+      return;
+    },
+    required: true,
     transform: (params: Params) => {
+      const toolConfig = {} as GoogleToolConfig;
       if (params.tool_choice) {
         const allowedFunctionNames: string[] = [];
         if (
@@ -424,17 +464,24 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
         ) {
           allowedFunctionNames.push(params.tool_choice.function.name);
         }
-        const toolConfig: GoogleToolConfig = {
-          function_calling_config: {
-            mode: transformToolChoiceForGemini(params.tool_choice),
-          },
+        toolConfig.function_calling_config = {
+          mode: transformToolChoiceForGemini(params.tool_choice),
         };
         if (allowedFunctionNames.length > 0) {
           toolConfig.function_calling_config.allowed_function_names =
             allowedFunctionNames;
         }
-        return toolConfig;
       }
+      const googleMapsTool = params.tools?.find(
+        (tool) =>
+          tool.function?.name === 'googleMaps' ||
+          tool.function?.name === 'google_maps'
+      );
+      if (googleMapsTool) {
+        toolConfig.retrievalConfig =
+          googleMapsTool.function?.parameters?.retrievalConfig;
+      }
+      return toolConfig;
     },
   },
   thinking: {
@@ -446,6 +493,14 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
     transform: (params: Params) => transformGenerationConfig(params),
   },
   modalities: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
+  reasoning_effort: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
+  image_config: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
@@ -617,7 +672,7 @@ export const GoogleChatCompleteResponseTransform: (
               if (part.thought) {
                 contentBlocks.push({ type: 'thinking', thinking: part.text });
               } else {
-                content = part.text;
+                content = content ? content + part.text : part.text;
                 contentBlocks.push({ type: 'text', text: part.text });
               }
             } else if (part.inlineData) {
@@ -768,7 +823,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
                 });
                 streamState.containsChainOfThoughtMessage = true;
               } else {
-                content = part.text ?? '';
+                content += part.text ?? '';
                 contentBlocks.push({
                   index: streamState.containsChainOfThoughtMessage ? 1 : 0,
                   delta: { text: part.text },

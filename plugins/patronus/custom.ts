@@ -15,9 +15,6 @@ export const handler: PluginHandler = async (
   let verdict = false;
   let data = null;
 
-  const evaluator = 'judge';
-  const criteria = parameters.criteria;
-
   if (eventType !== 'afterRequestHook') {
     return {
       error: {
@@ -27,6 +24,33 @@ export const handler: PluginHandler = async (
       data,
     };
   }
+
+  // Validate and parse profile format
+  // Supports: "evaluator:criteria" (e.g., "judge:my-custom-criteria", "glider:custom")
+  // Or shorthand: "my-custom" defaults to "judge:my-custom" since judge is most common
+  const profileOrCriteria = parameters.profile || parameters.criteria;
+
+  if (!profileOrCriteria) {
+    return {
+      error: {
+        message:
+          'Profile parameter is required. Format: "evaluator:criteria" (e.g., "judge:my-custom-criteria") or shorthand "my-custom" (defaults to judge evaluator)',
+      },
+      verdict: true,
+      data,
+    };
+  }
+
+  let evaluator = 'judge';
+  let criteria = profileOrCriteria;
+
+  // Parse profile format if it contains ':'
+  if (profileOrCriteria.includes(':')) {
+    const parts = profileOrCriteria.split(':');
+    evaluator = parts[0];
+    criteria = parts.slice(1).join(':'); // Join remaining parts in case criteria contains ':'
+  }
+  // Otherwise use default 'judge' evaluator with profileOrCriteria as criteria
 
   const evaluationBody: any = {
     input: context.request.text,

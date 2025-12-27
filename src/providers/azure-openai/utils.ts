@@ -1,4 +1,5 @@
 import { AZURE_OPEN_AI } from '../../globals';
+import { Options } from '../../types/requestBody';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
 import { ErrorResponse } from '../types';
 
@@ -120,4 +121,16 @@ export const AzureOpenAIFinetuneResponseTransform = (
   }
 
   return _response;
+};
+
+export const getAzureModelValue = (
+  params: Params,
+  providerOptions?: Options
+) => {
+  const { apiVersion: azureApiVersion, deploymentId: azureDeploymentName } =
+    providerOptions ?? {};
+  if (azureApiVersion && azureApiVersion.trim() === 'v1') {
+    return azureDeploymentName;
+  }
+  return params.model || '';
 };

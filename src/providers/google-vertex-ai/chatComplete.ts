@@ -283,7 +283,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
       const functionDeclarations: any = [];
       const tools: any = [];
       params.tools?.forEach((tool) => {
-        if (tool.type === 'function') {
+        if (tool.type === 'function' && tool.function) {
           // these are not supported by google
           recursivelyDeleteUnsupportedParameters(tool.function?.parameters);
           delete tool.function?.strict;
@@ -302,8 +302,23 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
   },
   tool_choice: {
     param: 'tool_config',
-    default: '',
+    default: (params: Params) => {
+      const toolConfig = {} as GoogleToolConfig;
+      const googleMapsTool = params.tools?.find(
+        (tool) =>
+          tool.function?.name === 'googleMaps' ||
+          tool.function?.name === 'google_maps'
+      );
+      if (googleMapsTool) {
+        toolConfig.retrievalConfig =
+          googleMapsTool.function?.parameters?.retrievalConfig;
+        return toolConfig;
+      }
+      return;
+    },
+    required: true,
     transform: (params: Params) => {
+      const toolConfig = {} as GoogleToolConfig;
       if (params.tool_choice) {
         const allowedFunctionNames: string[] = [];
         if (
@@ -312,10 +327,8 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
         ) {
           allowedFunctionNames.push(params.tool_choice.function.name);
         }
-        const toolConfig: GoogleToolConfig = {
-          function_calling_config: {
-            mode: transformToolChoiceForGemini(params.tool_choice),
-          },
+        toolConfig.function_calling_config = {
+          mode: transformToolChoiceForGemini(params.tool_choice),
         };
         if (allowedFunctionNames.length > 0) {
           toolConfig.function_calling_config.allowed_function_names =
@@ -323,6 +336,16 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
         }
         return toolConfig;
       }
+      const googleMapsTool = params.tools?.find(
+        (tool) =>
+          tool.function?.name === 'googleMaps' ||
+          tool.function?.name === 'google_maps'
+      );
+      if (googleMapsTool) {
+        toolConfig.retrievalConfig =
+          googleMapsTool.function?.parameters?.retrievalConfig;
+      }
+      return toolConfig;
     },
   },
   labels: {
@@ -337,6 +360,10 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
     transform: (params: Params) => transformGenerationConfig(params),
   },
   seed: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
+  reasoning_effort: {
     param: 'generationConfig',
     transform: (params: Params) => transformGenerationConfig(params),
   },
@@ -480,7 +507,7 @@ export const GoogleChatCompleteResponseTransform: (
               if (part.thought) {
                 contentBlocks.push({ type: 'thinking', thinking: part.text });
               } else {
-                content = part.text;
+                content = content ? content + part.text : part.text;
                 contentBlocks.push({ type: 'text', text: part.text });
               }
             } else if (part.inlineData) {
@@ -595,6 +622,10 @@ export const VertexLlamaChatCompleteConfig: ProviderConfig = {
     param: 'stream',
     default: false,
   },
+  image_config: {
+    param: 'generationConfig',
+    transform: (params: Params) => transformGenerationConfig(params),
+  },
 };
 
 export const GoogleChatCompleteStreamChunkTransform: (
@@ -680,7 +711,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
               });
               streamState.containsChainOfThoughtMessage = true;
             } else {
-              content = part.text ?? '';
+              content += part.text ?? '';
               contentBlocks.push({
                 index: streamState.containsChainOfThoughtMessage ? 1 : 0,
                 delta: { text: part.text },

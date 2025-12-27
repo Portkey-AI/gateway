@@ -1,14 +1,14 @@
-import { Params } from '../../types/requestBody';
 import {
   recursivelyDeleteUnsupportedParameters,
   transformGeminiToolParameters,
 } from './utils';
 import { GoogleEmbedParams } from './embed';
-import { EmbedInstancesData } from './types';
+import { EmbedInstancesData, PortkeyGeminiParams } from './types';
+
 /**
  * @see https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/gemini#request_body
  */
-export function transformGenerationConfig(params: Params) {
+export function transformGenerationConfig(params: PortkeyGeminiParams) {
   const generationConfig: Record<string, any> = {};
   if (params['temperature'] != null && params['temperature'] != undefined) {
     generationConfig['temperature'] = params['temperature'];
@@ -65,7 +65,21 @@ export function transformGenerationConfig(params: Params) {
       modality.toUpperCase()
     );
   }
-
+  if (params.reasoning_effort && params.reasoning_effort !== 'none') {
+    generationConfig['thinkingConfig'] = {
+      thinkingLevel: params.reasoning_effort,
+    };
+  }
+  if (params.image_config) {
+    generationConfig['imageConfig'] = {
+      ...(params.image_config.aspect_ratio && {
+        aspectRatio: params.image_config.aspect_ratio,
+      }),
+      ...(params.image_config.image_size && {
+        imageSize: params.image_config.image_size,
+      }),
+    };
+  }
   return generationConfig;
 }
 

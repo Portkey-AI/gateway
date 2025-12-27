@@ -749,10 +749,15 @@ export const googleTools = [
   'google_search_retrieval',
   'computerUse',
   'computer_use',
+  'googleMaps',
+  'google_maps',
 ];
 
 export const transformGoogleTools = (tool: Tool) => {
   const tools: any = [];
+  // This function is called only when tool.function exists
+  if (!tool.function) return tools;
+
   if (['googleSearch', 'google_search'].includes(tool.function.name)) {
     const timeRangeFilter = tool.function.parameters?.timeRangeFilter;
     tools.push({
@@ -775,6 +780,12 @@ export const transformGoogleTools = (tool: Tool) => {
           tool.function.parameters?.excluded_predefined_functions,
       },
     });
+  } else if (['googleMaps', 'google_maps'].includes(tool.function.name)) {
+    tools.push({
+      googleMaps: {
+        enableWidget: tool.function.parameters?.enableWidget,
+      },
+    });
   }
   return tools;
 };
@@ -783,7 +794,8 @@ export const buildGoogleSearchRetrievalTool = (tool: Tool) => {
   const googleSearchRetrievalTool: GoogleSearchRetrievalTool = {
     googleSearchRetrieval: {},
   };
-  if (tool.function.parameters?.dynamicRetrievalConfig) {
+  // This function is called only when tool.function exists
+  if (tool.function?.parameters?.dynamicRetrievalConfig) {
     googleSearchRetrievalTool.googleSearchRetrieval.dynamicRetrievalConfig =
       tool.function.parameters.dynamicRetrievalConfig;
   }

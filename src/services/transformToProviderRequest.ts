@@ -25,12 +25,17 @@ function setNestedProperty(obj: any, path: string, value: any) {
   current[parts[parts.length - 1]] = value;
 }
 
-const getValue = (configParam: string, params: Params, paramConfig: any) => {
+const getValue = (
+  configParam: string,
+  params: Params,
+  paramConfig: any,
+  providerOptions: Options
+) => {
   let value = params[configParam as keyof typeof params];
 
   // If a transformation is defined for this parameter, apply it
   if (paramConfig.transform) {
-    value = paramConfig.transform(params);
+    value = paramConfig.transform(params, providerOptions);
   }
 
   if (
@@ -70,7 +75,7 @@ const getValue = (configParam: string, params: Params, paramConfig: any) => {
 export const transformUsingProviderConfig = (
   providerConfig: ProviderConfig,
   params: Params,
-  providerOptions?: Options
+  providerOptions: Options
 ) => {
   const transformedRequest: { [key: string]: any } = {};
 
@@ -86,7 +91,12 @@ export const transformUsingProviderConfig = (
       // If the parameter is present in the incoming request body
       if (configParam in params) {
         // Get the value for this parameter
-        const value = getValue(configParam, params, paramConfig);
+        const value = getValue(
+          configParam,
+          params,
+          paramConfig,
+          providerOptions
+        );
 
         // Set the transformed parameter to the validated value
         setNestedProperty(
@@ -171,7 +181,12 @@ const transformToProviderRequestFormData = (
     }
     for (const paramConfig of paramConfigs) {
       if (configParam in params) {
-        const value = getValue(configParam, params, paramConfig);
+        const value = getValue(
+          configParam,
+          params,
+          paramConfig,
+          providerOptions
+        );
 
         formData.append(paramConfig.param, value);
       } else if (

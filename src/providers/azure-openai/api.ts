@@ -116,39 +116,51 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     }
 
     const urlObj = new URL(gatewayRequestURL);
-    const pathname = urlObj.pathname.replace('/v1', '');
     const searchParams = urlObj.searchParams;
     if (apiVersion) {
       searchParams.set('api-version', apiVersion);
     }
 
+    let prefix = `/deployments/${deploymentId}`;
+    const isAzureV1API = apiVersion?.trim() === 'v1';
+
+    const pathname = !isAzureV1API
+      ? urlObj.pathname.replace('/v1', '')
+      : urlObj.pathname;
+
+    if (isAzureV1API) {
+      prefix = '/v1';
+      searchParams.delete('api-version');
+    }
+
     switch (mappedFn) {
       case 'complete': {
-        return `/deployments/${deploymentId}/completions?api-version=${apiVersion}`;
+        return `${prefix}/completions?${searchParams.toString()}`;
       }
       case 'chatComplete': {
-        return `/deployments/${deploymentId}/chat/completions?api-version=${apiVersion}`;
+        return `${prefix}/chat/completions?${searchParams.toString()}`;
       }
       case 'embed': {
-        return `/deployments/${deploymentId}/embeddings?api-version=${apiVersion}`;
+        return `${prefix}/embeddings?${searchParams.toString()}`;
       }
       case 'imageGenerate': {
-        return `/deployments/${deploymentId}/images/generations?api-version=${apiVersion}`;
+        return `${prefix}/images/generations?${searchParams.toString()}`;
       }
       case 'imageEdit': {
-        return `/deployments/${deploymentId}/images/edits?api-version=${apiVersion}`;
+        return `${prefix}/images/edits?${searchParams.toString()}`;
       }
       case 'createSpeech': {
-        return `/deployments/${deploymentId}/audio/speech?api-version=${apiVersion}`;
+        return `${prefix}/audio/speech?${searchParams.toString()}`;
       }
       case 'createTranscription': {
-        return `/deployments/${deploymentId}/audio/transcriptions?api-version=${apiVersion}`;
+        return `${prefix}/audio/transcriptions?${searchParams.toString()}`;
       }
       case 'createTranslation': {
-        return `/deployments/${deploymentId}/audio/translations?api-version=${apiVersion}`;
+        return `${prefix}/audio/translations?${searchParams.toString()}`;
       }
       case 'realtime': {
-        return `/realtime?api-version=${apiVersion}&deployment=${deploymentId}`;
+        searchParams.set('deployment', deploymentId || '');
+        return `${isAzureV1API ? prefix : ''}/realtime?${searchParams.toString()}`;
       }
       case 'createModelResponse': {
         return `${pathname}?${searchParams.toString()}`;
@@ -175,14 +187,20 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       case 'retrieveBatch':
       case 'cancelBatch':
       case 'listBatches':
-        return `${pathname}?api-version=${apiVersion}`;
+        return `${pathname}?${searchParams.toString()}`;
       default:
         return '';
     }
   },
   getProxyEndpoint: ({ reqPath, reqQuery, providerOptions }) => {
     const { apiVersion } = providerOptions;
-    if (!apiVersion) return `${reqPath}${reqQuery}`;
+    const defaultEndpoint = `${reqPath}${reqQuery}`;
+    if (!apiVersion) {
+      return defaultEndpoint; // append /v1 to the request path
+    }
+    if (apiVersion?.trim() === 'v1') {
+      return `/v1${reqPath}${reqQuery}`;
+    }
     if (!reqQuery?.includes('api-version')) {
       let _reqQuery = reqQuery;
       if (!reqQuery) {

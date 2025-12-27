@@ -1,7 +1,8 @@
 {
   "name": "@portkey-ai/gateway",
-  "version": "1.14.3",
-  "description": "A fast AI gateway with 250+ LLM integrations, custom plugins, and guardrails by Portkey",
+
+  "version": "1.15.1",
+  "description": "A fast AI gateway by Portkey",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Portkey-AI/gateway.git"
