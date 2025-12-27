@@ -17,6 +17,10 @@
   - [Building Plugins into Your Gateway](#building-plugins-into-your-gateway)
   - [Using Plugins](#using-plugins)
   - [Testing Plugins](#testing-plugins)
+  - [Creating Custom External Plugins and Middlewares](#creating-custom-external-plugins-and-middlewares)
+    - [External Plugin Directory Structure](#external-plugin-directory-structure)
+    - [External Middleware Directory Structure](#external-middleware-directory-structure)
+    - [Running the Gateway with External Plugins and Middlewares](#running-the-gateway-with-external-plugins-and-middlewares)
 
 ## Introduction
 
@@ -212,3 +216,189 @@ npx jest
 ```
 
 This command will execute the test files in the plugins repository, allowing you to verify that your guardrail plugins are functioning correctly.
+
+## Creating Custom External Plugins and Middlewares
+
+You can extend the Portkey Gateway without modifying its core code by creating external plugins and middlewares in separate directories. This approach is ideal for:
+
+- Distributing custom plugins as separate packages
+- Keeping your plugins independent from the Gateway codebase
+- Sharing plugins across multiple Gateway instances
+
+### External Plugin Directory Structure
+
+External plugins follow the same structure as built-in plugins but are loaded from an external directory specified via the `--plugins-dir` CLI flag.
+
+```
+/your-custom-plugins
+  /my-guardrail
+    - manifest.json
+    - myFunction.ts (or .js)
+    - myFunction.test.ts (optional)
+```
+
+**manifest.json Example:**
+```json
+{
+  "id": "my-custom-guardrail",
+  "name": "My Custom Guardrail",
+  "description": "A custom guardrail for your specific use case",
+  "functions": [
+    {
+      "name": "Custom Check",
+      "id": "customCheck",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Performs custom validation logic"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "threshold": {
+            "type": "number",
+            "label": "Threshold",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Custom threshold value"
+              }
+            ]
+          }
+        },
+        "required": ["threshold"]
+      }
+    }
+  ]
+}
+```
+
+**Handler Function (TypeScript or JavaScript):**
+
+You can write handlers in either TypeScript (.ts) or JavaScript (.js). The function should export a `handler` function:
+
+```typescript
+import { HookEventType, PluginContext, PluginHandler, PluginParameters } from '../types';
+
+export const handler: PluginHandler = async (
+  context: PluginContext,
+  parameters: PluginParameters,
+  eventType: HookEventType
+) => {
+  // Your custom guardrail logic
+  const { threshold } = parameters;
+  const text = eventType === 'beforeRequestHook'
+    ? context.request.body
+    : context.response.body;
+
+  const result = performCustomCheck(text, threshold);
+
+  return {
+    error: null,
+    verdict: result,
+    data: { checkedAt: new Date().toISOString() }
+  };
+};
+
+function performCustomCheck(text: string, threshold: number): boolean {
+  // Implement your check logic here
+  return true;
+}
+```
+
+### External Middleware Directory Structure
+
+External middlewares are standalone functions that intercept requests at any point in the request pipeline. They can be written as TypeScript or JavaScript files.
+
+```
+/your-custom-middlewares
+  - loggerCustom.ts (or .js)
+  - authCustom.ts (or .js)
+```
+
+**Middleware Function Example:**
+
+```typescript
+import { Context } from 'hono';
+
+export const middleware = async (c: Context, next: any) => {
+  const startTime = Date.now();
+  const { method, path } = c.req;
+
+  console.log(`[CustomMiddleware] Incoming: ${method} ${path}`);
+
+  await next();
+
+  const duration = Date.now() - startTime;
+  console.log(`[CustomMiddleware] Response: ${c.res.status} (${duration}ms)`);
+};
+
+// Optional: metadata for organizing middlewares
+export const metadata = {
+  name: 'loggerCustom',
+  description: 'Custom request/response logger',
+  pattern: '*', // Apply to all routes
+};
+```
+
+**Key Points:**
+- Export your middleware function as `middleware` (or `default`)
+- Optionally export `metadata` with `name`, `description`, and `pattern` properties
+- The `pattern` property follows Hono routing patterns (e.g., `/v1/*`, `*`)
+- Middlewares are registered in the order they're loaded
+
+### Running the Gateway with External Plugins and Middlewares
+
+Once you've created your external plugins and middlewares, you can load them when starting the Gateway using CLI flags:
+
+**Basic Syntax:**
+```bash
+npm run start:node -- --plugins-dir=./path/to/plugins --middlewares-dir=./path/to/middlewares
+```
+
+**Full Example:**
+```bash
+npm run start:node -- --port=8787 --plugins-dir=./my-plugins --middlewares-dir=./my-middlewares
+```
+
+**With npx:**
+```bash
+npx @portkey-ai/gateway -- --plugins-dir=./my-plugins --middlewares-dir=./my-middlewares
+```
+
+**Multiple Plugin/Middleware Directories:**
+
+Currently, one directory path is supported per flag. To use multiple plugin sources, organize them within a single directory:
+
+```
+/plugins
+  /guardrail-set-1/
+    manifest.json
+    func1.ts
+  /guardrail-set-2/
+    manifest.json
+    func2.ts
+```
+
+**Verification:**
+
+After starting the Gateway, look for log messages confirming the plugins and middlewares were loaded:
+
+```
+🔌 Loading external plugins from: ./my-plugins
+✓ External plugins loaded
+
+⚙️  Loading external middlewares from: ./my-middlewares
+✓ External middlewares loaded
+```
+
+**Example Files:**
+
+See the `external-examples/` directory in the Gateway repository for working examples:
+- `external-examples/plugins/default-external/` - Example external plugin
+- `external-examples/middlewares/` - Example external middlewares
+
+These examples demonstrate the correct structure and can serve as templates for your custom implementations.
