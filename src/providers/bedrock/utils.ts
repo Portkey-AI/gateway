@@ -111,18 +111,20 @@ export const transformAdditionalModelRequestFields = (
 };
 
 export const transformAnthropicAdditionalModelRequestFields = (
-  params: BedrockConverseAnthropicChatCompletionsParams
+  params: BedrockConverseAnthropicChatCompletionsParams,
+  providerOptions?: Options
 ) => {
   const additionalModelRequestFields: Record<string, any> =
     params.additionalModelRequestFields ||
     params.additional_model_request_fields ||
     {};
-  if (params['top_k'] !== null && params['top_k'] !== undefined) {
+  if (params['top_k'] !== undefined && params['top_k'] !== null) {
     additionalModelRequestFields['top_k'] = params['top_k'];
   }
-  if (params['anthropic_version']) {
-    additionalModelRequestFields['anthropic_version'] =
-      params['anthropic_version'];
+  const anthropicVersion =
+    providerOptions?.anthropicVersion || params['anthropic_version'];
+  if (anthropicVersion) {
+    additionalModelRequestFields['anthropic_version'] = anthropicVersion;
   }
   if (params['user']) {
     additionalModelRequestFields['metadata'] = {
@@ -132,13 +134,13 @@ export const transformAnthropicAdditionalModelRequestFields = (
   if (params['thinking']) {
     additionalModelRequestFields['thinking'] = params['thinking'];
   }
-  if (params['anthropic_beta']) {
-    if (typeof params['anthropic_beta'] === 'string') {
-      additionalModelRequestFields['anthropic_beta'] = [
-        params['anthropic_beta'],
-      ];
+  const anthropicBeta =
+    providerOptions?.anthropicBeta || params['anthropic_beta'];
+  if (anthropicBeta) {
+    if (typeof anthropicBeta === 'string') {
+      additionalModelRequestFields['anthropic_beta'] = [anthropicBeta];
     } else {
-      additionalModelRequestFields['anthropic_beta'] = params['anthropic_beta'];
+      additionalModelRequestFields['anthropic_beta'] = anthropicBeta;
     }
   }
   if (params.tools && params.tools.length) {

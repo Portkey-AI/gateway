@@ -14,7 +14,7 @@ import {
   RawContentBlockStartEvent,
   RawContentBlockStopEvent,
 } from '../../types/MessagesStreamResponse';
-import { Params } from '../../types/requestBody';
+import { Options, Params } from '../../types/requestBody';
 import {
   ANTHROPIC_CONTENT_BLOCK_START_EVENT,
   ANTHROPIC_CONTENT_BLOCK_STOP_EVENT,
@@ -364,33 +364,33 @@ export const AnthropicBedrockConverseMessagesConfig: ProviderConfig = {
   ...BedrockConverseMessagesConfig,
   additional_model_request_fields: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockMessagesParams) =>
-      transformAnthropicAdditionalModelRequestFields(params),
+    transform: (params: BedrockMessagesParams, providerOptions?: Options) =>
+      transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
   top_k: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockMessagesParams) =>
-      transformAnthropicAdditionalModelRequestFields(params),
+    transform: (params: BedrockMessagesParams, providerOptions?: Options) =>
+      transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
   anthropic_version: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockMessagesParams) =>
-      transformAnthropicAdditionalModelRequestFields(params),
+    transform: (params: BedrockMessagesParams, providerOptions?: Options) =>
+      transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
   user: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockMessagesParams) =>
-      transformAnthropicAdditionalModelRequestFields(params),
+    transform: (params: BedrockMessagesParams, providerOptions?: Options) =>
+      transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
   thinking: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockMessagesParams) =>
-      transformAnthropicAdditionalModelRequestFields(params),
+    transform: (params: BedrockMessagesParams, providerOptions?: Options) =>
+      transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
   anthropic_beta: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockMessagesParams) =>
-      transformAnthropicAdditionalModelRequestFields(params),
+    transform: (params: BedrockMessagesParams, providerOptions?: Options) =>
+      transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
 };
 
