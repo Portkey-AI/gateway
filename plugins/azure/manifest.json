@@ -91,6 +91,50 @@
           }
         }
       }
+    },
+    {
+      "name": "Shield Prompt",
+      "id": "shieldPrompt",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook"],
+      "description": "Detects jailbreak and prompt injection attacks using Azure AI Content Safety Prompt Shields API",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "timeout": {
+            "type": "number",
+            "description": "Timeout in milliseconds for the API request",
+            "default": 5000
+          },
+          "apiVersion": {
+            "type": "string",
+            "description": "API version for the Content Safety API",
+            "default": "2024-09-01"
+          }
+        }
+      }
+    },
+    {
+      "name": "Protected Material",
+      "id": "protectedMaterial",
+      "type": "guardrail",
+      "supportedHooks": ["afterRequestHook"],
+      "description": "Detects known protected/copyrighted text content in LLM outputs using Azure AI Content Safety Protected Material Detection API",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "timeout": {
+            "type": "number",
+            "description": "Timeout in milliseconds for the API request",
+            "default": 5000
+          },
+          "apiVersion": {
+            "type": "string",
+            "description": "API version for the Content Safety API",
+            "default": "2024-09-01"
+          }
+        }
+      }
     }
   ],
   "definitions": {

@@ -29,7 +29,7 @@ const getValue = (
   configParam: string,
   params: Params,
   paramConfig: any,
-  providerOptions?: Options
+  providerOptions: Options
 ) => {
   let value = params[configParam as keyof typeof params];
 
@@ -75,7 +75,7 @@ const getValue = (
 export const transformUsingProviderConfig = (
   providerConfig: ProviderConfig,
   params: Params,
-  providerOptions?: Options
+  providerOptions: Options
 ) => {
   const transformedRequest: { [key: string]: any } = {};
 

@@ -4,6 +4,7 @@ import {
   Message,
   MESSAGE_ROLES,
   Params,
+  ToolChoiceObject,
 } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
@@ -252,7 +253,10 @@ const BedrockAnthropicChatCompleteConfig: ProviderConfig = {
           if (params.tool_choice === 'required') return { type: 'any' };
           else if (params.tool_choice === 'auto') return { type: 'auto' };
         } else if (typeof params.tool_choice === 'object') {
-          return { type: 'tool', name: params.tool_choice.function.name };
+          return {
+            type: 'tool',
+            name: (params.tool_choice as ToolChoiceObject).function.name,
+          };
         }
       }
       return null;

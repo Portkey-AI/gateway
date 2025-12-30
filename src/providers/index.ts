@@ -73,6 +73,7 @@ import ModalConfig from './modal';
 import OracleConfig from './oracle';
 import IOIntelligenceConfig from './iointelligence';
 import AIBadgrConfig from './aibadgr';
+import OVHcloudConfig from './ovhcloud';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -146,6 +147,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   oracle: OracleConfig,
   iointelligence: IOIntelligenceConfig,
   aibadgr: AIBadgrConfig,
+  ovhcloud: OVHcloudConfig,
 };
 
 export default Providers;

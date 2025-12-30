@@ -5,6 +5,7 @@ import {
   ContentType,
   SYSTEM_MESSAGE_ROLES,
   PromptCache,
+  ToolChoiceObject,
 } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
@@ -412,7 +413,6 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
       return tools;
     },
   },
-  // None is not supported by Anthropic, defaults to auto
   tool_choice: {
     param: 'tool_choice',
     required: false,
@@ -421,8 +421,12 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
         if (typeof params.tool_choice === 'string') {
           if (params.tool_choice === 'required') return { type: 'any' };
           else if (params.tool_choice === 'auto') return { type: 'auto' };
+          else if (params.tool_choice === 'none') return { type: 'none' };
         } else if (typeof params.tool_choice === 'object') {
-          return { type: 'tool', name: params.tool_choice.function.name };
+          return {
+            type: 'tool',
+            name: (params.tool_choice as ToolChoiceObject).function.name,
+          };
         }
       }
       return null;

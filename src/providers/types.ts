@@ -28,7 +28,7 @@ export interface ParameterConfig {
   /** Whether the parameter is required. */
   required?: boolean;
   /** A function to transform the value of the parameter. */
-  transform?: (params: Params, providerOptions?: Options) => any;
+  transform?: (params: any, providerOptions: Options) => any;
 }
 
 /**
