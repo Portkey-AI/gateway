@@ -1,5 +1,9 @@
 import { BEDROCK } from '../../globals';
-import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
+import {
+  EmbedParams,
+  EmbedResponse,
+  EmbedResponseData,
+} from '../../types/embedRequestBody';
 import { Params } from '../../types/requestBody';
 import { ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
@@ -60,18 +64,22 @@ export const BedrockCohereEmbedConfig: ProviderConfig = {
   },
 };
 
+const g1EmbedModels = [
+  'amazon.titan-embed-g1-text-02',
+  'amazon.titan-embed-text-v1',
+  'amazon.titan-embed-image-v1',
+];
+
 export const BedrockTitanEmbedConfig: ProviderConfig = {
   input: [
     {
       param: 'inputText',
       required: false,
       transform: (params: EmbedParams): string | undefined => {
-        if (
-          Array.isArray(params.input) &&
-          typeof params.input[0] === 'object' &&
-          params.input[0].text
-        ) {
-          return params.input[0].text;
+        if (Array.isArray(params.input)) {
+          if (typeof params.input[0] === 'object' && params.input[0].text)
+            return params.input[0].text;
+          else if (typeof params.input[0] === 'string') return params.input[0];
         }
         if (typeof params.input === 'string') return params.input;
       },
@@ -117,6 +125,8 @@ export const BedrockTitanEmbedConfig: ProviderConfig = {
     param: 'embeddingTypes',
     required: false,
     transform: (params: any): string[] | undefined => {
+      const model = params.foundationModel || params.model || '';
+      if (g1EmbedModels.includes(model)) return undefined;
       if (Array.isArray(params.encoding_format)) return params.encoding_format;
       else if (typeof params.encoding_format === 'string')
         return [params.encoding_format];
@@ -184,7 +194,7 @@ export const BedrockTitanEmbedResponseTransform: (
 };
 
 interface BedrockCohereEmbedResponse {
-  embeddings: number[][];
+  embeddings: number[][] | { float: number[][] };
   id: string;
   texts: string[];
 }
@@ -214,13 +224,23 @@ export const BedrockCohereEmbedResponseTransform: (
   const model = (gatewayRequest.model as string) || '';
 
   if ('embeddings' in response) {
-    return {
-      object: 'list',
-      data: response.embeddings.map((embedding, index) => ({
+    let data: EmbedResponseData[] = [];
+    if (response?.embeddings && 'float' in response.embeddings) {
+      data = response.embeddings.float.map((embedding, index) => ({
         object: 'embedding',
         embedding: embedding,
         index: index,
-      })),
+      }));
+    } else if (Array.isArray(response.embeddings)) {
+      data = response.embeddings.map((embedding, index) => ({
+        object: 'embedding',
+        embedding: embedding,
+        index: index,
+      }));
+    }
+    return {
+      object: 'list',
+      data,
       provider: BEDROCK,
       model,
       usage: {

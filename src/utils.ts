@@ -22,7 +22,7 @@ export const getStreamModeSplitPattern = (
   }
 
   if (proxyProvider === COHERE) {
-    splitPattern = '\n';
+    splitPattern = requestURL.includes('/chat') ? '\n\n' : '\n';
   }
 
   if (proxyProvider === GOOGLE) {

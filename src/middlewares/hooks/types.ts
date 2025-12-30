@@ -19,6 +19,7 @@ export interface HookObject {
   id: string;
   checks?: Check[];
   async?: boolean;
+  sequential?: boolean;
   onFail?: HookOnFailObject;
   onSuccess?: HookOnSuccessObject;
   deny?: boolean;

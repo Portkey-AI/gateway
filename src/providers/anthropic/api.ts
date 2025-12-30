@@ -2,9 +2,12 @@ import { ProviderAPIConfig } from '../types';
 
 const AnthropicAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.anthropic.com/v1',
+
   headers: ({ providerOptions, fn, gatewayRequestBody }) => {
+    const apiKey =
+      providerOptions.apiKey || providerOptions.anthropicApiKey || '';
     const headers: Record<string, string> = {
-      'X-API-Key': `${providerOptions.apiKey}`,
+      'X-API-Key': apiKey,
     };
 
     // Accept anthropic_beta and anthropic_version in body to support enviroments which cannot send it in headers.
@@ -17,9 +20,7 @@ const AnthropicAPIConfig: ProviderAPIConfig = {
       gatewayRequestBody?.['anthropic_version'] ??
       '2023-06-01';
 
-    if (fn === 'chatComplete') {
-      headers['anthropic-beta'] = betaHeader;
-    }
+    headers['anthropic-beta'] = betaHeader;
     headers['anthropic-version'] = version;
     return headers;
   },

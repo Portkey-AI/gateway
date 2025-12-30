@@ -1,4 +1,4 @@
-import { ProviderConfig } from '../types';
+import { ParameterConfig, ProviderConfig } from '../types';
 
 export const messagesBaseConfig: ProviderConfig = {
   model: {
@@ -82,7 +82,7 @@ export const getMessagesConfig = ({
   if (defaultValues) {
     Object.keys(defaultValues).forEach((key) => {
       if (!Array.isArray(baseParams[key])) {
-        baseParams[key].default = defaultValues[key];
+        (baseParams[key] as ParameterConfig).default = defaultValues[key];
       }
     });
   }

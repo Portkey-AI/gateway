@@ -4,6 +4,7 @@ import {
   Message,
   MESSAGE_ROLES,
   Params,
+  ToolChoiceObject,
 } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
@@ -252,7 +253,10 @@ const BedrockAnthropicChatCompleteConfig: ProviderConfig = {
           if (params.tool_choice === 'required') return { type: 'any' };
           else if (params.tool_choice === 'auto') return { type: 'auto' };
         } else if (typeof params.tool_choice === 'object') {
-          return { type: 'tool', name: params.tool_choice.function.name };
+          return {
+            type: 'tool',
+            name: (params.tool_choice as ToolChoiceObject).function.name,
+          };
         }
       }
       return null;
@@ -830,6 +834,10 @@ interface BedrockAnthropicChatCompleteResponse {
   stop_reason: string;
   model: string;
   stop_sequence: null | string;
+  usage: {
+    input_tokens: number;
+    output_tokens: number;
+  };
 }
 
 export const BedrockAnthropicChatCompleteResponseTransform: (
@@ -874,9 +882,10 @@ export const BedrockAnthropicChatCompleteResponseTransform: (
         },
       ],
       usage: {
-        prompt_tokens: 0,
-        completion_tokens: 0,
-        total_tokens: 0,
+        prompt_tokens: response.usage.input_tokens,
+        completion_tokens: response.usage.output_tokens,
+        total_tokens:
+          response.usage.input_tokens + response.usage.output_tokens,
       },
     };
   }
@@ -933,6 +942,7 @@ export const BedrockMistralChatCompleteResponseTransform: (
           finish_reason: response.outputs[0].stop_reason,
         },
       ],
+      // mistral not sending usage.
       usage: {
         prompt_tokens: 0,
         completion_tokens: 0,

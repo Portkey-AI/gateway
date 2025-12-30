@@ -3,6 +3,13 @@
   "version": "1.0.0",
   "data": [
     {
+      "id": "matterai",
+      "name": "MatterAI",
+      "object": "provider",
+      "description": "MatterAI provides access to advanced AI models including Axon series for various applications such as text generation, coding assistance, and more. Built for performance and scalability.",
+      "base_url": "https://api.matterai.so/v1"
+    },
+    {
       "id": "ai21",
       "name": "AI21",
       "object": "provider",
@@ -192,11 +199,25 @@
       "base_url": "https://api.openai.com/v1"
     },
     {
+      "id": "cometapi",
+      "name": "CometAPI",
+      "object": "provider",
+      "description": "CometAPI offers an OpenAI-compatible API that unifies access to 500+ foundation models across chat, reasoning, and multimodal workloads. It emphasizes straightforward migrations from OpenAI SDKs, competitive pricing, and additional tooling for multimodal generation spanning images, audio, and video.",
+      "base_url": "https://api.cometapi.com/v1"
+    },
+    {
       "id": "openrouter",
       "name": "OpenRouter",
       "object": "provider",
       "description": "OpenRouter is an innovative platform that provides unified access to multiple large language models through a single interface. It enables businesses and developers to integrate diverse AI capabilities efficiently while focusing on scalability and cost-effectiveness in their applications.",
       "base_url": "https://openrouter.ai/api"
+    },
+    {
+      "id": "ovhcloud",
+      "name": "OVHcloud AI Endpoints",
+      "object": "provider",
+      "description": "OVHcloud AI Endpoints offers powerful, secure, and easy-to-integrate generative AI APIs to enhance your applications, in the Europe leader cloud infrastructure. Your data is neither reused nor kept.",
+      "base_url": "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1"
     },
     {
       "id": "perplexity-ai",

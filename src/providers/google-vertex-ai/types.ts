@@ -1,3 +1,4 @@
+import { Params } from '../../types/requestBody';
 import { ChatCompletionResponse, GroundingMetadata } from '../types';
 
 export interface GoogleErrorResponse {
@@ -24,6 +25,7 @@ export interface GoogleResponseCandidate {
         mimeType: string;
         data: string;
       };
+      thoughtSignature?: string;
     }[];
   };
   logprobsResult?: {
@@ -44,7 +46,7 @@ export interface GoogleResponseCandidate {
       },
     ];
   };
-  finishReason: VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON;
+  finishReason: string;
   index: 0;
   safetyRatings: {
     category: string;
@@ -70,6 +72,15 @@ export interface GoogleGenerateContentResponse {
     candidatesTokenCount: number;
     totalTokenCount: number;
     thoughtsTokenCount?: number;
+    cachedContentTokenCount?: number;
+    promptTokensDetails: {
+      modality: VERTEX_MODALITY;
+      tokenCount: number;
+    }[];
+    candidatesTokensDetails: {
+      modality: VERTEX_MODALITY;
+      tokenCount: number;
+    }[];
   };
 }
 
@@ -202,7 +213,7 @@ export interface GoogleBatchRecord {
   };
   startTime: string;
   endTime: string;
-  completionsStats?: {
+  completionStats?: {
     successfulCount: string;
     failedCount: string;
     incompleteCount: string;
@@ -258,4 +269,17 @@ export enum VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON {
   BLOCKLIST = 'BLOCKLIST',
   PROHIBITED_CONTENT = 'PROHIBITED_CONTENT',
   SPII = 'SPII',
+}
+
+export enum VERTEX_MODALITY {
+  MODALITY_UNSPECIFIED = 'MODALITY_UNSPECIFIED',
+  TEXT = 'TEXT',
+  IMAGE = 'IMAGE',
+  AUDIO = 'AUDIO',
+}
+export interface PortkeyGeminiParams extends Params {
+  image_config?: {
+    aspect_ratio: string; // '16:9', '4:3', '1:1'
+    image_size: string; // '2K', '4K', '8K'
+  };
 }

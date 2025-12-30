@@ -1,3 +1,6 @@
+# Local configuration file
+conf.json
+
 # Logs
 logs
 *.log
@@ -143,3 +146,4 @@ plugins/**/.creds.json
 plugins/**/creds.json
 plugins/**/.parameters.json
 src/handlers/tests/.creds.json
+.cursor/

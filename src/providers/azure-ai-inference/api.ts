@@ -1,7 +1,10 @@
+import { getRuntimeKey } from 'hono/adapter';
 import { GITHUB } from '../../globals';
+import { Environment } from '../../utils/env';
 import {
   getAccessTokenFromEntraId,
   getAzureManagedIdentityToken,
+  getAzureWorkloadIdentityToken,
 } from '../azure-openai/utils';
 import { ProviderAPIConfig } from '../types';
 
@@ -17,6 +20,8 @@ const NON_INFERENCE_ENDPOINTS = [
   'deleteFile',
   'retrieveFileContent',
 ];
+
+const runtime = getRuntimeKey();
 
 const AzureAIInferenceAPI: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions, fn }) => {
@@ -36,17 +41,29 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
 
     return '';
   },
-  headers: async ({ providerOptions, fn }) => {
+  headers: async ({ providerOptions, fn, c }) => {
     const {
       apiKey,
-      azureExtraParams,
+      azureExtraParameters,
       azureDeploymentName,
       azureAdToken,
       azureAuthMode,
+      azureFoundryUrl,
+      urlToFetch,
     } = providerOptions;
 
+    const isAnthropicModel =
+      azureFoundryUrl?.includes('anthropic') ||
+      urlToFetch?.includes('anthropic');
+    if (isAnthropicModel && !providerOptions.anthropicVersion) {
+      providerOptions.anthropicVersion = '2023-06-01';
+    }
+
     const headers: Record<string, string> = {
-      'extra-parameters': azureExtraParams ?? 'drop',
+      ...(isAnthropicModel && {
+        'anthropic-version': providerOptions.anthropicVersion,
+      }),
+      'extra-parameters': azureExtraParameters ?? 'drop',
       ...(azureDeploymentName && {
         'azureml-model-deployment': azureDeploymentName,
       }),
@@ -62,8 +79,12 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
         : {}),
     };
     if (azureAdToken) {
-      headers['Authorization'] =
-        `Bearer ${azureAdToken?.replace('Bearer ', '')}`;
+      if (isAnthropicModel) {
+        headers['x-api-key'] = `${apiKey}`;
+      } else {
+        headers['Authorization'] =
+          `Bearer ${azureAdToken?.replace('Bearer ', '')}`;
+      }
       return headers;
     }
 
@@ -83,7 +104,11 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
           azureEntraClientSecret,
           scope
         );
-        headers['Authorization'] = `Bearer ${accessToken}`;
+        if (isAnthropicModel) {
+          headers['x-api-key'] = `${apiKey}`;
+        } else {
+          headers['Authorization'] = `Bearer ${accessToken}`;
+        }
         return headers;
       }
     }
@@ -94,18 +119,58 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
         resource,
         azureManagedClientId
       );
-      headers['Authorization'] = `Bearer ${accessToken}`;
+      if (isAnthropicModel) {
+        headers['x-api-key'] = `${apiKey}`;
+      } else {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+      }
       return headers;
     }
 
+    if (azureAuthMode === 'workload' && runtime === 'node') {
+      const { azureWorkloadClientId } = providerOptions;
+
+      const authorityHost = Environment(c).AZURE_AUTHORITY_HOST;
+      const tenantId = Environment(c).AZURE_TENANT_ID;
+      const clientId = azureWorkloadClientId || Environment(c).AZURE_CLIENT_ID;
+      const federatedTokenFile = Environment(c).AZURE_FEDERATED_TOKEN_FILE;
+
+      if (authorityHost && tenantId && clientId && federatedTokenFile) {
+        const fs = await import('fs');
+        const federatedToken = fs.readFileSync(federatedTokenFile, 'utf8');
+
+        if (federatedToken) {
+          const scope = 'https://cognitiveservices.azure.com/.default';
+          const accessToken = await getAzureWorkloadIdentityToken(
+            authorityHost,
+            tenantId,
+            clientId,
+            federatedToken,
+            scope
+          );
+          if (isAnthropicModel) return { 'x-api-key': `${apiKey}` };
+          return {
+            Authorization: `Bearer ${accessToken}`,
+          };
+        }
+      }
+    }
+
     if (apiKey) {
-      headers['Authorization'] = `Bearer ${apiKey}`;
+      if (isAnthropicModel) {
+        headers['x-api-key'] = `${apiKey}`;
+      } else {
+        headers['Authorization'] = `Bearer ${apiKey}`;
+      }
       return headers;
     }
     return headers;
   },
   getEndpoint: ({ providerOptions, fn, gatewayRequestURL }) => {
-    const { azureApiVersion, urlToFetch } = providerOptions;
+    const { azureApiVersion, urlToFetch, azureFoundryUrl } = providerOptions;
+    const isAnthropicModel =
+      azureFoundryUrl?.includes('anthropic') ||
+      urlToFetch?.includes('anthropic');
     let mappedFn = fn;
 
     const urlObj = new URL(gatewayRequestURL);
@@ -118,7 +183,8 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
 
     const ENDPOINT_MAPPING: Record<string, string> = {
       complete: '/completions',
-      chatComplete: '/chat/completions',
+      chatComplete: isAnthropicModel ? '/v1/messages' : '/chat/completions',
+      messages: '/v1/messages',
       embed: '/embeddings',
       realtime: '/realtime',
       imageGenerate: '/images/generations',
@@ -161,6 +227,9 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
         return isGithub
           ? ENDPOINT_MAPPING[mappedFn]
           : `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
+      }
+      case 'messages': {
+        return `${ENDPOINT_MAPPING[mappedFn]}`;
       }
       case 'embed': {
         return isGithub

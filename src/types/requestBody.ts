@@ -64,6 +64,7 @@ export interface Options {
   adAuth?: string;
   azureAuthMode?: string;
   azureManagedClientId?: string;
+  azureWorkloadClientId?: string;
   azureEntraClientId?: string;
   azureEntraClientSecret?: string;
   azureEntraTenantId?: string;
@@ -95,6 +96,7 @@ export interface Options {
   awsBedrockModel?: string;
   awsServerSideEncryption?: string;
   awsServerSideEncryptionKMSKeyId?: string;
+  awsService?: string;
   foundationModel?: string;
 
   /** Sagemaker specific */
@@ -131,25 +133,26 @@ export interface Options {
   beforeRequestHooks?: HookObject[];
   defaultInputGuardrails?: HookObject[];
   defaultOutputGuardrails?: HookObject[];
-
   /** OpenAI specific */
   openaiProject?: string;
   openaiOrganization?: string;
   openaiBeta?: string;
-
   /** Azure Inference Specific */
-  azureDeploymentName?: string;
   azureApiVersion?: string;
-  azureExtraParams?: string;
   azureFoundryUrl?: string;
+  azureExtraParameters?: string;
+  azureDeploymentName?: string;
 
   /** The parameter to determine if extra non-openai compliant fields should be returned in response */
   strictOpenAiCompliance?: boolean;
+
   /** Parameter to determine if fim/completions endpoint is to be used */
   mistralFimCompletion?: string;
+
   /** Anthropic specific headers */
   anthropicBeta?: string;
   anthropicVersion?: string;
+  anthropicApiKey?: string;
 
   /** Fireworks finetune required fields */
   fireworksAccountId?: string;
@@ -160,6 +163,20 @@ export interface Options {
 
   /** Azure entra scope */
   azureEntraScope?: string;
+
+  // Oracle specific fields
+  oracleApiVersion?: string; // example: 20160918
+  oracleRegion?: string; // example: us-ashburn-1
+  oracleCompartmentId?: string; // example: ocid1.compartment.oc1..aaaaaaaab7x77777777777777777
+  oracleServingMode?: string; // supported values: ON_DEMAND, DEDICATED
+  oracleTenancy?: string; // example: ocid1.tenancy.oc1..aaaaaaaab7x77777777777777777
+  oracleUser?: string; // example: ocid1.user.oc1..aaaaaaaab7x77777777777777777
+  oracleFingerprint?: string; // example: 12:34:56:78:90:ab:cd:ef:12:34:56:78:90:ab:cd:ef
+  oraclePrivateKey?: string; // example: -----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...
+  oracleKeyPassphrase?: string; // example: password
+
+  /** Model pricing config */
+  modelPricingConfig?: Record<string, any>;
 }
 
 /**
@@ -248,7 +265,7 @@ export interface ContentType extends PromptCache {
   };
   input_audio?: {
     data: string;
-    format: string; //defaults to auto
+    format: 'mp3' | 'wav' | string; //defaults to auto
   };
 }
 
@@ -259,6 +276,7 @@ export interface ToolCall {
     name: string;
     arguments: string;
     description?: string;
+    thought_signature?: string;
   };
 }
 
@@ -304,6 +322,8 @@ export interface Message {
   tool_calls?: any;
   tool_call_id?: string;
   citationMetadata?: CitationMetadata;
+  /** Reasoning details for models that support extended thinking/reasoning. (Gemini) */
+  reasoning_details?: any[];
 }
 
 export interface PromptCache {
@@ -343,6 +363,24 @@ export interface Function {
   parameters?: JsonSchema;
   /** Whether to enable strict schema adherence when generating the function call. If set to true, the model will follow the exact schema defined in the parameters field. Only a subset of JSON Schema is supported when strict is true */
   strict?: boolean;
+  /**
+   * When true, this tool is not loaded into context initially.
+   * Claude discovers it via Tool Search Tool on-demand.
+   * Part of Anthropic's advanced tool use beta features.
+   */
+  defer_loading?: boolean;
+  /**
+   * List of tool types that can call this tool programmatically.
+   * E.g., ["code_execution_20250825"] enables Programmatic Tool Calling.
+   * Part of Anthropic's advanced tool use beta features.
+   */
+  allowed_callers?: string[];
+  /**
+   * Example inputs demonstrating how to use this tool.
+   * Helps Claude understand usage patterns beyond JSON schema.
+   * Part of Anthropic's advanced tool use beta features.
+   */
+  input_examples?: Record<string, any>[];
 }
 
 export interface ToolChoiceObject {
@@ -352,7 +390,19 @@ export interface ToolChoiceObject {
   };
 }
 
-export type ToolChoice = ToolChoiceObject | 'none' | 'auto' | 'required';
+export interface CustomToolChoice {
+  type: 'custom';
+  custom: {
+    name?: string;
+  };
+}
+
+export type ToolChoice =
+  | ToolChoiceObject
+  | CustomToolChoice
+  | 'none'
+  | 'auto'
+  | 'required';
 
 /**
  * A tool in the conversation.
@@ -365,7 +415,7 @@ export interface Tool extends PromptCache {
   /** The name of the function. */
   type: string;
   /** A description of the function. */
-  function: Function;
+  function?: Function;
   // this is used to support tools like computer, web_search, etc.
   [key: string]: any;
 }
@@ -400,6 +450,7 @@ export interface Params {
   top_k?: number;
   tools?: Tool[];
   tool_choice?: ToolChoice;
+  reasoning_effort?: 'none' | 'minimal' | 'low' | 'medium' | 'high' | string;
   response_format?: {
     type: 'json_object' | 'text' | 'json_schema';
     json_schema?: any;
@@ -434,7 +485,6 @@ export interface Params {
   // Embeddings specific
   dimensions?: number;
   parameters?: any;
-  [key: string]: any;
 }
 
 interface Examples {
