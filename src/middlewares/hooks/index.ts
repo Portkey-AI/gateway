@@ -365,26 +365,28 @@ export class HooksManager {
     if (hook.type === HookType.GUARDRAIL && hook.checks) {
       if (hook.sequential) {
         // execute checks sequentially and update the context after each check
-        for (const check of hook.checks) {
-          const result = await this.executeFunction(
-            span.getContext(),
-            check,
-            hook.eventType,
-            options
-          );
-          if (
-            result.transformedData &&
-            (result.transformedData.response.json ||
-              result.transformedData.request.json)
-          ) {
-            span.setContextAfterTransform(
-              result.transformedData.response.json,
-              result.transformedData.request.json
+        hook.checks
+          .filter((check: Check) => check.is_enabled !== false)
+          .forEach(async (check: Check) => {
+            const result = await this.executeFunction(
+              span.getContext(),
+              check,
+              hook.eventType,
+              options
             );
-          }
-          delete result.transformedData;
-          checkResults.push(result);
-        }
+            if (
+              result.transformedData &&
+              (result.transformedData.response.json ||
+                result.transformedData.request.json)
+            ) {
+              span.setContextAfterTransform(
+                result.transformedData.response.json,
+                result.transformedData.request.json
+              );
+            }
+            delete result.transformedData;
+            checkResults.push(result);
+          });
       } else {
         checkResults = await Promise.all(
           hook.checks
