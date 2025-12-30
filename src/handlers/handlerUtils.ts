@@ -292,7 +292,8 @@ export async function tryPost(
   requestHeaders: Record<string, string>,
   fn: endpointStrings,
   currentIndex: number | string,
-  method: string = 'POST'
+  method: string = 'POST',
+  abortSignal?: AbortSignal
 ): Promise<Response> {
   const requestContext = new RequestContext(
     c,
@@ -303,6 +304,9 @@ export async function tryPost(
     method,
     currentIndex as number
   );
+  if (abortSignal) {
+    requestContext.setAbortSignal(abortSignal);
+  }
   const hooksService = new HooksService(requestContext);
   const providerContext = new ProviderContext(requestContext.provider);
   const logsService = new LogsService(c);
@@ -481,7 +485,8 @@ export async function tryTargetsRecursively(
   fn: endpointStrings,
   method: string,
   jsonPath: string,
-  inheritedConfig: Record<string, any> = {}
+  inheritedConfig: Record<string, any> = {},
+  abortSignal?: AbortSignal
 ): Promise<Response> {
   const currentTarget: any = { ...targetGroup };
   let currentJsonPath = jsonPath;
@@ -671,7 +676,8 @@ export async function tryTargetsRecursively(
           fn,
           method,
           `${currentJsonPath}.targets[${originalIndex}]`,
-          currentInheritedConfig
+          currentInheritedConfig,
+          abortSignal
         );
         const codes = currentTarget.strategy?.onStatusCodes;
         const gatewayException =
@@ -714,13 +720,130 @@ export async function tryTargetsRecursively(
             fn,
             method,
             currentJsonPath,
-            currentInheritedConfig
+            currentInheritedConfig,
+            abortSignal
           );
           break;
         }
         randomWeight -= provider.weight;
       }
       break;
+
+    case StrategyModes.SAMPLE: {
+      const targets = currentTarget.targets || [];
+      const onStatusCodes = currentTarget.strategy?.onStatusCodes;
+      const cancelOthers = currentTarget.strategy?.cancelOthers;
+
+      // v1 limitation: do not support sampling when request body is a ReadableStream
+      if (request instanceof ReadableStream) {
+        response = new Response(
+          JSON.stringify({
+            status: 'failure',
+            message:
+              'Strategy "sample" does not support streaming request bodies in v1',
+          }),
+          { status: 400, headers: { 'content-type': 'application/json' } }
+        );
+        break;
+      }
+
+      // Fire all requests in parallel; pick first-success
+      let winnerResolved = false;
+      let resolveWinner: (value: Response) => void = () => {};
+      const winnerPromise = new Promise<Response>((resolve) => {
+        resolveWinner = resolve;
+      });
+
+      const controllers: AbortController[] = [];
+      const pendingPromises: Array<
+        Promise<{ resp: Response; idx: number; abort: AbortController }>
+      > = targets.map((t: Targets, index: number) => {
+        const originalIndex = (t.originalIndex as number | undefined) ?? index;
+        const controller = new AbortController();
+        controllers.push(controller);
+        return tryTargetsRecursively(
+          c,
+          t,
+          request,
+          requestHeaders,
+          fn,
+          method,
+          `${currentJsonPath}.targets[${originalIndex}]`,
+          currentInheritedConfig,
+          controller.signal
+        ).then((resp) => ({ resp, idx: originalIndex, abort: controller }));
+      });
+
+      // Resolve on first-success
+      for (const p of pendingPromises) {
+        p.then(({ resp, abort }) => {
+          if (winnerResolved) return;
+          const gatewayException =
+            resp?.headers.get('x-portkey-gateway-exception') === 'true';
+          const isSuccess =
+            (Array.isArray(onStatusCodes) &&
+              !onStatusCodes.includes(resp?.status)) ||
+            (!onStatusCodes && resp?.ok) ||
+            gatewayException;
+          if (isSuccess && !winnerResolved) {
+            winnerResolved = true;
+            resolveWinner(resp);
+            if (cancelOthers) {
+              for (const ctl of controllers) {
+                try {
+                  ctl.abort();
+                } catch {}
+              }
+            }
+          }
+        }).catch(() => {
+          // Ignore individual errors; overall fallback handled below
+        });
+      }
+
+      // If none succeed, return the last completed response
+      (async () => {
+        const results = await Promise.allSettled(pendingPromises);
+        if (winnerResolved) return;
+        const fulfilled = results.filter(
+          (
+            r
+          ): r is PromiseFulfilledResult<{
+            resp: Response;
+            idx: number;
+            abort: AbortController;
+          }> => r.status === 'fulfilled'
+        );
+        if (fulfilled.length) {
+          const { resp } = fulfilled[fulfilled.length - 1].value;
+          winnerResolved = true;
+          resolveWinner(resp);
+          if (cancelOthers) {
+            for (const ctl of controllers) {
+              try {
+                ctl.abort();
+              } catch {}
+            }
+          }
+        } else {
+          // If all rejected (shouldn't generally happen because tryTargetsRecursively guards), pick a generic 500
+          winnerResolved = true;
+          resolveWinner(
+            new Response(
+              JSON.stringify({
+                status: 'failure',
+                message: 'All sample targets failed',
+              }),
+              { status: 500, headers: { 'content-type': 'application/json' } }
+            )
+          );
+        }
+      })();
+
+      response = await winnerPromise;
+      // Note: cancelOthers is a no-op for now; underlying fetch cancellation will be wired in a later update
+      break;
+    }
 
     case StrategyModes.CONDITIONAL: {
       let metadata: Record<string, string>;
@@ -759,7 +882,8 @@ export async function tryTargetsRecursively(
         fn,
         method,
         `${currentJsonPath}.targets[${originalIndex}]`,
-        currentInheritedConfig
+        currentInheritedConfig,
+        abortSignal
       );
       break;
     }
@@ -774,7 +898,8 @@ export async function tryTargetsRecursively(
         fn,
         method,
         `${currentJsonPath}.targets[${originalIndex}]`,
-        currentInheritedConfig
+        currentInheritedConfig,
+        abortSignal
       );
       break;
 
@@ -787,7 +912,8 @@ export async function tryTargetsRecursively(
           requestHeaders,
           fn,
           currentJsonPath,
-          method
+          method,
+          abortSignal
         );
         if (isHandlingCircuitBreaker) {
           await c.get('handleCircuitBreakerResponse')?.(
@@ -1211,7 +1337,8 @@ export async function recursiveAfterRequestHookHandler(
     retry.onStatusCodes,
     requestTimeout,
     requestHandler,
-    retry.useRetryAfterHeader
+    retry.useRetryAfterHeader,
+    requestContext.abortSignal
   ));
 
   // Check if sync hooks are available
