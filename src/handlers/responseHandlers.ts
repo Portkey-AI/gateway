@@ -230,10 +230,19 @@ export async function afterRequestHookHandler(
   try {
     const hooksManager = c.get('hooksManager');
 
+    // Convert Headers object to plain Record<string, string>
+    const responseHeaders: Record<string, string> = {};
+    if (response.headers) {
+      response.headers.forEach((value: string, key: string) => {
+        responseHeaders[key] = value;
+      });
+    }
+
     hooksManager.setSpanContextResponse(
       hookSpanId,
       responseJSON,
-      response.status
+      response.status,
+      responseHeaders
     );
 
     if (retryAttemptsMade > 0) {
