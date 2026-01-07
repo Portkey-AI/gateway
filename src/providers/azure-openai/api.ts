@@ -23,10 +23,15 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     }
 
     if (azureAuthMode === 'entra') {
-      const { azureEntraTenantId, azureEntraClientId, azureEntraClientSecret } =
-        providerOptions;
+      const {
+        azureEntraTenantId,
+        azureEntraClientId,
+        azureEntraClientSecret,
+        azureEntraScope,
+      } = providerOptions;
       if (azureEntraTenantId && azureEntraClientId && azureEntraClientSecret) {
-        const scope = 'https://cognitiveservices.azure.com/.default';
+        const scope =
+          azureEntraScope || 'https://cognitiveservices.azure.com/.default';
         const accessToken = await getAccessTokenFromEntraId(
           azureEntraTenantId,
           azureEntraClientId,
@@ -39,8 +44,9 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       }
     }
     if (azureAuthMode === 'managed') {
-      const { azureManagedClientId } = providerOptions;
-      const resource = 'https://cognitiveservices.azure.com/';
+      const { azureManagedClientId, azureEntraScope } = providerOptions;
+      const resource =
+        azureEntraScope || 'https://cognitiveservices.azure.com/';
       const accessToken = await getAzureManagedIdentityToken(
         resource,
         azureManagedClientId
@@ -51,7 +57,7 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     }
     // `AZURE_FEDERATED_TOKEN_FILE` is injected by runtime, skipping serverless for now.
     if (azureAuthMode === 'workload' && runtime === 'node') {
-      const { azureWorkloadClientId } = providerOptions;
+      const { azureWorkloadClientId, azureEntraScope } = providerOptions;
 
       const authorityHost = Environment(c).AZURE_AUTHORITY_HOST;
       const tenantId = Environment(c).AZURE_TENANT_ID;
@@ -63,7 +69,8 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
         const federatedToken = fs.readFileSync(federatedTokenFile, 'utf8');
 
         if (federatedToken) {
-          const scope = 'https://cognitiveservices.azure.com/.default';
+          const scope =
+            azureEntraScope || 'https://cognitiveservices.azure.com/.default';
           const accessToken = await getAzureWorkloadIdentityToken(
             authorityHost,
             tenantId,
