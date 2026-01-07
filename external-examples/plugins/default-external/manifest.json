@@ -1,0 +1,98 @@
+{
+  "id": "default-external",
+  "name": "Default External (Proof of Concept)",
+  "description": "External plugin example - copy of default plugin with renamed IDs",
+  "credentials": [],
+  "functions": [
+    {
+      "name": "Regex Match External",
+      "id": "regexMatchExternal",
+      "_filename": "regexMatchExternal.js",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Check if the request or response text matches a regex pattern. (EXTERNAL EXAMPLE)"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "rule": {
+            "type": "string",
+            "label": "Regex Rule",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enter the regex pattern"
+              }
+            ]
+          },
+          "not": {
+            "type": "boolean",
+            "label": "Invert Match",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the verdict will be inverted"
+              }
+            ],
+            "default": false
+          }
+        },
+        "required": ["rule"]
+      }
+    },
+    {
+      "name": "Word Count External",
+      "id": "wordCountExternal",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Checks if the content contains a certain number of words. Ranges allowed. (EXTERNAL EXAMPLE)"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "minWords": {
+            "type": "number",
+            "label": "Minimum Word Count",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enter the minimum number of words to allow."
+              }
+            ],
+            "default": 0
+          },
+          "maxWords": {
+            "type": "number",
+            "label": "Maximum Word Count",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enter the maximum number of words to allow."
+              }
+            ],
+            "default": 99999
+          },
+          "not": {
+            "type": "boolean",
+            "label": "Invert Range Check",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, the verdict will be true when count is outside the range"
+              }
+            ],
+            "default": false
+          }
+        }
+      }
+    }
+  ]
+}

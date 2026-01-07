@@ -59,6 +59,26 @@ export class HookSpan {
       afterRequestHooksResult: [],
     };
     this.id = crypto.randomUUID();
+    if (process.env.DEBUG_HOOKS) {
+      console.log('[HookSpan] Created with:', {
+        beforeRequestHooks: beforeRequestHooks.length,
+        afterRequestHooks: afterRequestHooks.length,
+        beforeRequestHooksDetail: beforeRequestHooks.map((h) => ({
+          id: h.id,
+          checks: h.checks,
+          checkIds: h.checks?.map((c) =>
+            typeof c === 'string' ? `(string)"${c}"` : `(object)${c.id}`
+          ),
+        })),
+        afterRequestHooksDetail: afterRequestHooks.map((h) => ({
+          id: h.id,
+          checks: h.checks,
+          checkIds: h.checks?.map((c) =>
+            typeof c === 'string' ? `(string)"${c}"` : `(object)${c.id}`
+          ),
+        })),
+      });
+    }
   }
 
   private createContext(
@@ -205,6 +225,18 @@ export class HooksManager {
 
   constructor() {
     this.plugins = plugins;
+    if (process.env.DEBUG_HOOKS) {
+      console.log(
+        '[HooksManager] Available plugins:',
+        Object.keys(this.plugins)
+      );
+      for (const [name, plugin] of Object.entries(this.plugins)) {
+        console.log(
+          `[HooksManager] ${name} plugin functions:`,
+          Object.keys(plugin as object)
+        );
+      }
+    }
   }
 
   public createSpan(
@@ -286,6 +318,15 @@ export class HooksManager {
     options: HandlerOptions
   ): Promise<GuardrailCheckResult> {
     const [source, fn] = check.id.split('.');
+    if (process.env.DEBUG_HOOKS) {
+      console.log(`[executeFunction] Attempting to call ${source}.${fn}`);
+      console.log(`[executeFunction] Source exists: ${!!this.plugins[source]}`);
+      if (this.plugins[source]) {
+        console.log(
+          `[executeFunction] Function exists: ${!!this.plugins[source][fn]}`
+        );
+      }
+    }
     const createdAt = new Date();
     try {
       const result = await this.plugins[source][fn](
