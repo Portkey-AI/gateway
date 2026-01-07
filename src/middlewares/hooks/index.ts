@@ -114,18 +114,51 @@ export class HookSpan {
     hooks: HookObject[],
     eventType: EventType
   ): HookObject[] {
-    return hooks.map((hook) => ({ ...hook, eventType }));
+    return hooks.map((hook) => {
+      // Normalize hooks from config: if hook has an 'id' that contains '.' (plugin format like 'levo.observability')
+      // but no 'checks' array, convert it to proper HookObject structure
+      if (
+        hook.id &&
+        hook.id.includes('.') &&
+        (!hook.checks || hook.checks.length === 0)
+      ) {
+        const { id, type, ...rest } = hook;
+        // Extract plugin ID (e.g., 'levo.observability')
+        const pluginId = id;
+        // Default to GUARDRAIL if type not specified
+        const hookType = type || HookType.GUARDRAIL;
+        // All other properties become parameters
+        return {
+          id: `hook_${Math.random().toString(36).substring(2, 9)}`,
+          type: hookType,
+          checks: [
+            {
+              id: pluginId,
+              parameters: rest,
+              is_enabled: true,
+            },
+          ],
+          eventType,
+          async: hook.async || false,
+          deny: hook.deny || false,
+        } as HookObject;
+      }
+      // Already normalized hook, just add eventType
+      return { ...hook, eventType };
+    });
   }
 
   public setContextResponse(
     responseJSON: Record<string, any>,
-    responseStatus: number
+    responseStatus: number,
+    responseHeaders?: Record<string, string>
   ): void {
     const responseText = this.extractResponseText(responseJSON);
     this.context.response = {
       json: responseJSON,
       text: responseText,
       statusCode: responseStatus,
+      headers: responseHeaders || {},
       isTransformed: this.context.response.isTransformed || false,
     };
   }
@@ -237,10 +270,11 @@ export class HooksManager {
   public setSpanContextResponse(
     spanId: string,
     responseJson: Record<string, any>,
-    responseStatusCode: number
+    responseStatusCode: number,
+    responseHeaders?: Record<string, string>
   ): void {
     const span = this.getSpan(spanId);
-    span.setContextResponse(responseJson, responseStatusCode);
+    span.setContextResponse(responseJson, responseStatusCode, responseHeaders);
   }
 
   public async executeHooks(
@@ -251,6 +285,20 @@ export class HooksManager {
     const span = this.getSpan(spanId);
 
     const hooksToExecute = this.getHooksToExecute(span, eventTypePresets);
+
+    console.log(
+      `[HooksManager] executeHooks: spanId=${spanId}, eventTypePresets=${eventTypePresets.join(',')}, hooksToExecute=${hooksToExecute.length}`
+    );
+    if (hooksToExecute.length > 0) {
+      console.log(
+        `[HooksManager] Hooks to execute:`,
+        hooksToExecute.map((h) => ({
+          id: h.id,
+          type: h.type,
+          checks: h.checks?.length || 0,
+        }))
+      );
+    }
 
     if (hooksToExecute.length === 0) {
       return { results: [], shouldDeny: false };
@@ -335,14 +383,30 @@ export class HooksManager {
     let checkResults: GuardrailCheckResult[] = [];
     const createdAt = new Date();
 
+    console.log(
+      `[HooksManager] executeEachHook: id=${hook.id}, type=${hook.type}, checks=${hook.checks?.length || 0}, eventType=${hook.eventType}`
+    );
+    if (!hook.checks || hook.checks.length === 0) {
+      console.log(
+        `[HooksManager] ⚠️  Hook ${hook.id} has no checks array! Hook structure:`,
+        JSON.stringify(hook, null, 2)
+      );
+    }
+
     if (this.shouldSkipHook(span, hook)) {
       return { ...hookResult, skipped: true };
     }
 
     if (hook.type === HookType.MUTATOR && hook.checks) {
+      // Add hookSpanId to context for plugins that need it
+      const contextWithSpanId = {
+        ...span.getContext(),
+        hookSpanId: spanId,
+      };
+
       for (const check of hook.checks) {
         const result = await this.executeFunction(
-          span.getContext(),
+          contextWithSpanId,
           check,
           hook.eventType,
           options
@@ -363,11 +427,17 @@ export class HooksManager {
     }
 
     if (hook.type === HookType.GUARDRAIL && hook.checks) {
+      // Add hookSpanId to context for plugins that need it
+      const contextWithSpanId = {
+        ...span.getContext(),
+        hookSpanId: spanId,
+      };
+
       if (hook.sequential) {
         // execute checks sequentially and update the context after each check
         for (const check of hook.checks) {
           const result = await this.executeFunction(
-            span.getContext(),
+            contextWithSpanId,
             check,
             hook.eventType,
             options
@@ -386,12 +456,18 @@ export class HooksManager {
           checkResults.push(result);
         }
       } else {
+        // Add hookSpanId to context for plugins that need it
+        const contextWithSpanId = {
+          ...span.getContext(),
+          hookSpanId: spanId,
+        };
+
         checkResults = await Promise.all(
           hook.checks
             .filter((check: Check) => check.is_enabled !== false)
             .map((check: Check) =>
               this.executeFunction(
-                span.getContext(),
+                contextWithSpanId,
                 check,
                 hook.eventType,
                 options
