@@ -370,6 +370,8 @@ interface Batch {
     failed: number;
   };
   metadata?: Record<string, any>;
+  output_blob?: string;
+  error_blob?: string;
 }
 
 export interface CreateBatchResponse extends Batch {}
