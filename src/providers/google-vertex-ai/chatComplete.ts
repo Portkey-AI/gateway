@@ -9,6 +9,7 @@ import {
   ToolCall,
   SYSTEM_MESSAGE_ROLES,
   MESSAGE_ROLES,
+  Options,
 } from '../../types/requestBody';
 import {
   AnthropicChatCompleteConfig,
@@ -398,6 +399,13 @@ export const VertexAnthropicChatCompleteConfig: ProviderConfig = {
     param: 'anthropic_version',
     required: true,
     default: 'vertex-2023-10-16',
+    transform: (params: Params, providerOptions?: Options) => {
+      return (
+        providerOptions?.anthropicVersion ||
+        params.anthropic_version ||
+        'vertex-2023-10-16'
+      );
+    },
   },
   model: {
     param: 'model',
