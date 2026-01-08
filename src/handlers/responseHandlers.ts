@@ -54,7 +54,6 @@ export async function responseHandler(
   originalResponseJson?: Record<string, any> | null;
 }> {
   let responseTransformerFunction: Function | undefined;
-  const responseContentType = response.headers?.get('content-type');
   const isSuccessStatusCode = [200, 246].includes(response.status);
   const provider = providerOptions.provider;
 
@@ -75,6 +74,22 @@ export async function responseHandler(
   } else if (responseTransformer) {
     responseTransformerFunction = providerTransformers?.[responseTransformer];
   }
+
+  // if the original response is an image, convert it to JSON if the provider has a transformer
+  if (
+    responseTransformer === 'imageGenerate' && // check that we are on the imageGenerate route
+    responseTransformerFunction && // check that we have a transformer for this provider
+    providerTransformers?.[`imageToJson`] && // check that we have a 'imageToJson" transformer for this provider
+    response.headers
+      ?.get('content-type')
+      ?.startsWith(CONTENT_TYPES.GENERIC_IMAGE_PATTERN) // check that the original response content type is an image
+  ) {
+    // transformers are async, because we read the body as an array buffer
+    response = await providerTransformers?.[`imageToJson`](response);
+  }
+
+  // read the final content type after transformations
+  const responseContentType = response.headers?.get('content-type');
 
   // JSON to text/event-stream conversion is only allowed for unified routes: chat completions and completions.
   // Set the transformer to OpenAI json to stream convertor function in that case.
