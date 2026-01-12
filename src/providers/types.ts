@@ -28,7 +28,7 @@ export interface ParameterConfig {
   /** Whether the parameter is required. */
   required?: boolean;
   /** A function to transform the value of the parameter. */
-  transform?: (params: Params, providerOptions?: Options) => any;
+  transform?: (params: any, providerOptions: Options) => any;
 }
 
 /**
@@ -370,6 +370,8 @@ interface Batch {
     failed: number;
   };
   metadata?: Record<string, any>;
+  output_blob?: string;
+  error_blob?: string;
 }
 
 export interface CreateBatchResponse extends Batch {}

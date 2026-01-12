@@ -170,31 +170,6 @@ The enterprise deployment architecture for supported platforms is available here
 
 <br>
 
-<hr>
-
-### AI Engineering Hours
-
-Join weekly community calls every Friday (8 AM PT) to kickstart your AI Gateway implementation! [Happening every Friday](https://portkey.wiki/gh-35)
-
-<a href="https://portkey.wiki/gh-35"><img width="500" src="https://github.com/user-attachments/assets/c2885699-f197-4289-b819-21eb839fbae1" /></a>
-
-Minutes of Meetings [published here](https://portkey.wiki/gh-36).
-
-
-<hr>
-
-### LLMs in Prod'25
-
-Insights from analyzing 2 trillion+ tokens, across 90+ regions and 650+ teams in production. What to expect from this report:
-- Trends shaping AI adoption and LLM provider growth.
-- Benchmarks to optimize speed, cost and reliability.
-- Strategies to scale production-grade AI systems.
-
-<a href="https://portkey.sh/report-github"><img width="500" src="https://raw.githubusercontent.com/siddharthsambharia-portkey/Portkey-Product-Images/refs/heads/main/LLM%20Report%20Campaign%20Image.png" /></a>
-
-<a href="https://portkey.sh/report-github">**Get the Report**</a>
-<hr>
-
 
 ## Core Features
 ### Reliable Routing

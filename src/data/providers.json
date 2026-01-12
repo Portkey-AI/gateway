@@ -213,6 +213,13 @@
       "base_url": "https://openrouter.ai/api"
     },
     {
+      "id": "ovhcloud",
+      "name": "OVHcloud AI Endpoints",
+      "object": "provider",
+      "description": "OVHcloud AI Endpoints offers powerful, secure, and easy-to-integrate generative AI APIs to enhance your applications, in the Europe leader cloud infrastructure. Your data is neither reused nor kept.",
+      "base_url": "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1"
+    },
+    {
       "id": "perplexity-ai",
       "name": "Perplexity AI",
       "object": "provider",
