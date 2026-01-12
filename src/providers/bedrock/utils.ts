@@ -137,7 +137,9 @@ export const transformAnthropicAdditionalModelRequestFields = (
     providerOptions?.anthropicBeta || params['anthropic_beta'];
   if (anthropicBeta) {
     if (typeof anthropicBeta === 'string') {
-      additionalModelRequestFields['anthropic_beta'] = [anthropicBeta];
+      additionalModelRequestFields['anthropic_beta'] = anthropicBeta
+        .split(',')
+        .map((beta: string) => beta.trim());
     } else {
       additionalModelRequestFields['anthropic_beta'] = anthropicBeta;
     }
