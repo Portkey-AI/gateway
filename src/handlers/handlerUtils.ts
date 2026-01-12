@@ -903,6 +903,12 @@ export function constructConfigFromRequestHeaders(
       requestHeaders[
         `x-${POWERED_BY}-amz-server-side-encryption-aws-kms-key-id`
       ],
+    anthropicBeta:
+      requestHeaders[`x-${POWERED_BY}-anthropic-beta`] ||
+      requestHeaders[`anthropic-beta`],
+    anthropicVersion:
+      requestHeaders[`x-${POWERED_BY}-anthropic-version`] ||
+      requestHeaders[`anthropic-version`],
   };
 
   const sagemakerConfig = {
@@ -956,6 +962,9 @@ export function constructConfigFromRequestHeaders(
     anthropicBeta:
       requestHeaders[`x-${POWERED_BY}-anthropic-beta`] ||
       requestHeaders[`anthropic-beta`],
+    anthropicVersion:
+      requestHeaders[`x-${POWERED_BY}-anthropic-version`] ||
+      requestHeaders[`anthropic-version`],
   };
 
   const fireworksConfig = {
