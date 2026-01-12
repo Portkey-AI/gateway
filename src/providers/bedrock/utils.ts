@@ -121,10 +121,9 @@ export const transformAnthropicAdditionalModelRequestFields = (
   if (params['top_k'] !== undefined && params['top_k'] !== null) {
     additionalModelRequestFields['top_k'] = params['top_k'];
   }
-  const anthropicVersion =
-    providerOptions?.anthropicVersion || params['anthropic_version'];
-  if (anthropicVersion) {
-    additionalModelRequestFields['anthropic_version'] = anthropicVersion;
+  if (params['anthropic_version']) {
+    additionalModelRequestFields['anthropic_version'] =
+      params['anthropic_version'];
   }
   if (params['user']) {
     additionalModelRequestFields['metadata'] = {
