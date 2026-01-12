@@ -854,6 +854,7 @@ export function constructConfigFromRequestHeaders(
     openaiBeta:
       requestHeaders[`x-${POWERED_BY}-openai-beta`] ||
       requestHeaders[`openai-beta`],
+    azureEntraScope: requestHeaders[`x-${POWERED_BY}-azure-entra-scope`],
   };
 
   const stabilityAiConfig = {
