@@ -21,12 +21,24 @@ export const handler: PluginHandler = async (
     };
   }
 
+  const mode = parameters?.mode || 'balanced';
+  const policyTarget = parameters?.policy_target || 'both';
+
   const evaluationBody: any = {
-    input: context.request.text,
     assertions: parameters?.policies,
+    assertions_mode: mode,
   };
 
-  if (eventType === 'afterRequestHook') {
+  // Add input based on policy_target
+  if (policyTarget === 'input' || policyTarget === 'both') {
+    evaluationBody.input = context.request.text;
+  }
+
+  // Add output based on policy_target and hook type
+  if (
+    eventType === 'afterRequestHook' &&
+    (policyTarget === 'output' || policyTarget === 'both')
+  ) {
     evaluationBody.output = context.response.text;
   }
 
