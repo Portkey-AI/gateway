@@ -5,6 +5,9 @@
 
 <div align="center">
 
+🆕 **[Portkey Models](https://github.com/Portkey-AI/models)** - Open-source LLM pricing for 2,300+ models across 40+ providers. [Explore →](https://portkey.ai/models)
+
+
 # AI Gateway
 #### Route to 250+ LLMs with 1 fast & friendly API
 
@@ -196,6 +199,13 @@ The enterprise deployment architecture for supported platforms is available here
 <sup>
 *&nbsp;Available in hosted and enterprise versions
 </sup>
+
+<br>
+
+## Portkey Models
+Open-source LLM pricing database for 40+ providers - used by the Gateway for cost tracking.
+
+[GitHub](https://github.com/Portkey-AI/models) | [Model Explorer](https://portkey.ai/models)
 
 <br>
 

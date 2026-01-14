@@ -20,6 +20,10 @@ export const OpenAICreateBatchConfig: ProviderConfig = {
     param: 'metadata',
     required: false,
   },
+  output_expires_after: {
+    param: 'output_expires_after',
+    required: false,
+  },
 };
 
 export const OpenAICreateBatchResponseTransform: (
