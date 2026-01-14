@@ -371,13 +371,20 @@ describe('RequestContext', () => {
       expect(requestContext.metadata).toEqual({ userId: 'user123' });
     });
 
-    it('should return empty object for invalid JSON', () => {
+    it('should merge provider metadata with header metadata', () => {
+      const providerOptionWithMetadata = {
+        ...mockProviderOption,
+        metadata: { region: 'us-east-1', environment: 'prod', team: 'ai' },
+      };
       const headers = {
-        [HEADER_KEYS.METADATA]: '{invalid json}',
+        [HEADER_KEYS.METADATA]: JSON.stringify({
+          userId: 'user123',
+          team: 'overridden',
+        }),
       };
       const context = new RequestContext(
         mockContext,
-        mockProviderOption,
+        providerOptionWithMetadata,
         'chatComplete' as endpointStrings,
         headers,
         {},
@@ -385,10 +392,60 @@ describe('RequestContext', () => {
         0
       );
 
-      expect(context.metadata).toEqual({});
+      expect(context.metadata).toEqual({
+        region: 'us-east-1',
+        environment: 'prod',
+        team: 'overridden', // Header metadata wins
+        userId: 'user123',
+      });
     });
 
-    it('should return empty object when no metadata header', () => {
+    it('should return provider metadata when no header metadata', () => {
+      const providerOptionWithMetadata = {
+        ...mockProviderOption,
+        metadata: { region: 'us-east-1', environment: 'prod' },
+      };
+      const context = new RequestContext(
+        mockContext,
+        providerOptionWithMetadata,
+        'chatComplete' as endpointStrings,
+        {},
+        {},
+        'POST',
+        0
+      );
+
+      expect(context.metadata).toEqual({
+        region: 'us-east-1',
+        environment: 'prod',
+      });
+    });
+
+    it('should fallback to provider metadata for invalid JSON header', () => {
+      const providerOptionWithMetadata = {
+        ...mockProviderOption,
+        metadata: { region: 'us-east-1', fallback: 'true' },
+      };
+      const headers = {
+        [HEADER_KEYS.METADATA]: '{invalid json}',
+      };
+      const context = new RequestContext(
+        mockContext,
+        providerOptionWithMetadata,
+        'chatComplete' as endpointStrings,
+        headers,
+        {},
+        'POST',
+        0
+      );
+
+      expect(context.metadata).toEqual({
+        region: 'us-east-1',
+        fallback: 'true',
+      });
+    });
+
+    it('should return empty object when no metadata header and no provider metadata', () => {
       const context = new RequestContext(
         mockContext,
         mockProviderOption,
