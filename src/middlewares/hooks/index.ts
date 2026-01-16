@@ -406,7 +406,9 @@ export class HooksManager {
     if (hook.type === HookType.GUARDRAIL && hook.checks) {
       if (hook.sequential) {
         // execute checks sequentially and update the context after each check
-        for (const check of hook.checks) {
+        for (const check of hook.checks.filter(
+          (check: Check) => check.is_enabled !== false
+        )) {
           const result = await this.executeFunction(
             span.getContext(),
             check,

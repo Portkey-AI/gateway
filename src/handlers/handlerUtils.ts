@@ -866,6 +866,7 @@ export function constructConfigFromRequestHeaders(
     openaiBeta:
       requestHeaders[`x-${POWERED_BY}-openai-beta`] ||
       requestHeaders[`openai-beta`],
+    azureEntraScope: requestHeaders[`x-${POWERED_BY}-azure-entra-scope`],
   };
 
   const stabilityAiConfig = {
@@ -914,6 +915,12 @@ export function constructConfigFromRequestHeaders(
       requestHeaders[
         `x-${POWERED_BY}-amz-server-side-encryption-aws-kms-key-id`
       ],
+    anthropicBeta:
+      requestHeaders[`x-${POWERED_BY}-anthropic-beta`] ||
+      requestHeaders[`anthropic-beta`],
+    anthropicVersion:
+      requestHeaders[`x-${POWERED_BY}-anthropic-version`] ||
+      requestHeaders[`anthropic-version`],
   };
 
   const sagemakerConfig = {
@@ -967,6 +974,9 @@ export function constructConfigFromRequestHeaders(
     anthropicBeta:
       requestHeaders[`x-${POWERED_BY}-anthropic-beta`] ||
       requestHeaders[`anthropic-beta`],
+    anthropicVersion:
+      requestHeaders[`x-${POWERED_BY}-anthropic-version`] ||
+      requestHeaders[`anthropic-version`],
   };
 
   const fireworksConfig = {

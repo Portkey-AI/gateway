@@ -11,6 +11,7 @@ import {
   SYSTEM_MESSAGE_ROLES,
   ContentType,
   ToolChoiceObject,
+  Options,
 } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
@@ -718,38 +719,59 @@ export const BedrockConverseAnthropicChatCompleteConfig: ProviderConfig = {
   ...BedrockConverseChatCompleteConfig,
   additionalModelRequestFields: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
-      transformAnthropicAdditionalModelRequestFields(params),
+    transform: (
+      params: BedrockConverseAnthropicChatCompletionsParams,
+      providerOptions?: Options
+    ) =>
+      transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
   additional_model_request_fields: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
-      transformAnthropicAdditionalModelRequestFields(params),
+    transform: (
+      params: BedrockConverseAnthropicChatCompletionsParams,
+      providerOptions?: Options
+    ) =>
+      transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
   top_k: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
-      transformAnthropicAdditionalModelRequestFields(params),
+    transform: (
+      params: BedrockConverseAnthropicChatCompletionsParams,
+      providerOptions?: Options
+    ) =>
+      transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
   anthropic_version: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
-      transformAnthropicAdditionalModelRequestFields(params),
+    transform: (
+      params: BedrockConverseAnthropicChatCompletionsParams,
+      providerOptions?: Options
+    ) =>
+      transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
   user: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
-      transformAnthropicAdditionalModelRequestFields(params),
+    transform: (
+      params: BedrockConverseAnthropicChatCompletionsParams,
+      providerOptions?: Options
+    ) =>
+      transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
   thinking: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
-      transformAnthropicAdditionalModelRequestFields(params),
+    transform: (
+      params: BedrockConverseAnthropicChatCompletionsParams,
+      providerOptions?: Options
+    ) =>
+      transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
   anthropic_beta: {
     param: 'additionalModelRequestFields',
-    transform: (params: BedrockConverseAnthropicChatCompletionsParams) =>
-      transformAnthropicAdditionalModelRequestFields(params),
+    transform: (
+      params: BedrockConverseAnthropicChatCompletionsParams,
+      providerOptions?: Options
+    ) =>
+      transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
 };
 
