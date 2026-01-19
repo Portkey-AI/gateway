@@ -1,3 +1,4 @@
+import { Options } from '../../../types/requestBody';
 import { BedrockMessagesParams } from '../types';
 
 export const transformInferenceConfig = (params: BedrockMessagesParams) => {
@@ -18,7 +19,8 @@ export const transformInferenceConfig = (params: BedrockMessagesParams) => {
 };
 
 export const transformAnthropicAdditionalModelRequestFields = (
-  params: BedrockMessagesParams
+  params: BedrockMessagesParams,
+  providerOptions?: Options
 ) => {
   const additionalModelRequestFields: Record<string, any> =
     params.additionalModelRequestFields ||
@@ -34,13 +36,15 @@ export const transformAnthropicAdditionalModelRequestFields = (
   if (params['thinking']) {
     additionalModelRequestFields['thinking'] = params['thinking'];
   }
-  if (params['anthropic_beta']) {
-    if (typeof params['anthropic_beta'] === 'string') {
-      additionalModelRequestFields['anthropic_beta'] = [
-        params['anthropic_beta'],
-      ];
+  const anthropicBeta =
+    providerOptions?.anthropicBeta || params['anthropic_beta'];
+  if (anthropicBeta) {
+    if (typeof anthropicBeta === 'string') {
+      additionalModelRequestFields['anthropic_beta'] = anthropicBeta
+        .split(',')
+        .map((beta: string) => beta.trim());
     } else {
-      additionalModelRequestFields['anthropic_beta'] = params['anthropic_beta'];
+      additionalModelRequestFields['anthropic_beta'] = anthropicBeta;
     }
   }
   return additionalModelRequestFields;
