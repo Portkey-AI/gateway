@@ -1,25 +1,36 @@
+import { DATABRICKS_AI } from '../../globals';
+import {
+  chatCompleteParams,
+  completeParams,
+  embedParams,
+  responseTransformers,
+} from '../open-ai-base';
 import { ProviderConfigs } from '../types';
-import {
-  OpenAICompleteConfig,
-  OpenAICompleteResponseTransform,
-} from './complete';
-import { OpenAIEmbedConfig, OpenAIEmbedResponseTransform } from './embed';
 import DatabricksAPIConfig from './api';
-import {
-  OpenAIChatCompleteConfig,
-  OpenAIChatCompleteResponseTransform,
-} from './chatComplete';
 
 const DatabricksConfig: ProviderConfigs = {
-  complete: OpenAICompleteConfig,
-  embed: OpenAIEmbedConfig,
+  complete: completeParams([]),
+  embed: embedParams(['model', 'dimensions', 'encoding_format', 'user']),
   api: DatabricksAPIConfig,
-  chatComplete: OpenAIChatCompleteConfig,
-  responseTransforms: {
-    complete: OpenAICompleteResponseTransform,
-    chatComplete: OpenAIChatCompleteResponseTransform,
-    embed: OpenAIEmbedResponseTransform,
-  },
+  chatComplete: chatCompleteParams(
+    [],
+    {},
+    {
+      thinking: {
+        param: 'thinking',
+        required: false,
+      },
+      reasoning_effort: {
+        param: 'reasoning_effort',
+        required: false,
+      },
+    }
+  ),
+  responseTransforms: responseTransformers(DATABRICKS_AI, {
+    complete: true,
+    chatComplete: true,
+    embed: true,
+  }),
 };
 
 export default DatabricksConfig;

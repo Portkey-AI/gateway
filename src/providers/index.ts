@@ -150,6 +150,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   iointelligence: IOIntelligenceConfig,
   aibadgr: AIBadgrConfig,
   ovhcloud: OVHcloudConfig,
+  'databricks-ai': DatabricksConfig,
 };
 
 export default Providers;

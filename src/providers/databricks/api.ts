@@ -19,14 +19,15 @@ const DatabricksAPIConfig: ProviderAPIConfig = {
 
     return headersObj;
   },
-  getEndpoint: ({ fn }) => {
+  getEndpoint: ({ fn, gatewayRequestBodyJSON }) => {
+    const { model } = gatewayRequestBodyJSON;
     // Databricks uses /invocations for all endpoints
     // The base URL should include the model name: /serving-endpoints/{model}/invocations
     switch (fn) {
       case 'complete':
       case 'chatComplete':
       case 'embed':
-        return '/invocations';
+        return `/${model}/invocations`;
       default:
         return '';
     }

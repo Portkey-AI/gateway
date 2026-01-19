@@ -16,6 +16,7 @@ import {
   FIREWORKS_AI,
   CORTEX,
   ORACLE,
+  DATABRICKS_AI,
 } from '../globals';
 import { endpointStrings } from '../providers/types';
 import { Options, Params, StrategyModes, Targets } from '../types/requestBody';
@@ -1004,6 +1005,11 @@ export function constructConfigFromRequestHeaders(
       requestHeaders[`x-${POWERED_BY}-oracle-key-passphrase`],
   };
 
+  const databricksConfig = {
+    databricksBaseURL: requestHeaders[`x-${POWERED_BY}-databricks-base-url`],
+    databricksWorkspace: requestHeaders[`x-${POWERED_BY}-databricks-workspace`],
+  };
+
   const defaultsConfig = {
     input_guardrails: requestHeaders[`x-portkey-default-input-guardrails`]
       ? JSON.parse(requestHeaders[`x-portkey-default-input-guardrails`])
@@ -1116,6 +1122,12 @@ export function constructConfigFromRequestHeaders(
           ...oracleConfig,
         };
       }
+      if (parsedConfigJson.provider === DATABRICKS_AI) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...databricksConfig,
+        };
+      }
     }
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
@@ -1166,6 +1178,8 @@ export function constructConfigFromRequestHeaders(
       fireworksConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === CORTEX && cortexConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === ORACLE && oracleConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === DATABRICKS_AI &&
+      databricksConfig),
   };
 }
 
