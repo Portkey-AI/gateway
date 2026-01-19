@@ -13,7 +13,7 @@ export const handler: PluginHandler = async (
 ) => {
   const evaluationBody: any = {
     input: context.request.text,
-    hate_speech_check: true,
+    content_moderation_check: true,
   };
 
   if (eventType === 'afterRequestHook') {
