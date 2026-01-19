@@ -1006,7 +1006,6 @@ export function constructConfigFromRequestHeaders(
   };
 
   const databricksConfig = {
-    databricksBaseURL: requestHeaders[`x-${POWERED_BY}-databricks-base-url`],
     databricksWorkspace: requestHeaders[`x-${POWERED_BY}-databricks-workspace`],
   };
 

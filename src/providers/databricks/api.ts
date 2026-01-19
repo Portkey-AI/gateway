@@ -2,10 +2,6 @@ import { ProviderAPIConfig } from '../types';
 
 const DatabricksAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
-    // Support custom base URL or construct from workspace
-    if (providerOptions.databricksBaseURL) {
-      return providerOptions.databricksBaseURL;
-    }
     const workspace = providerOptions.databricksWorkspace;
     if (!workspace) {
       throw new Error('Databricks workspace or base URL must be provided');

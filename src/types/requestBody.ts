@@ -175,7 +175,6 @@ export interface Options {
   oraclePrivateKey?: string; // example: -----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...
   oracleKeyPassphrase?: string; // example: password
 
-  databricksBaseURL?: string;
   databricksWorkspace?: string;
 
   /** Model pricing config */
