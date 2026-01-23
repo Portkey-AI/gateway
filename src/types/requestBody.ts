@@ -24,6 +24,20 @@ export enum StrategyModes {
   FALLBACK = 'fallback',
   SINGLE = 'single',
   CONDITIONAL = 'conditional',
+  LEAST_LATENCY = 'least_latency',
+}
+
+/**
+ * Configuration for the least_latency routing strategy.
+ * @interface
+ */
+export interface LeastLatencyConfig {
+  /** Rolling window size for latency samples (default: 100) */
+  windowSize?: number;
+  /** Minimum samples before using latency for selection (default: 3) */
+  minSamples?: number;
+  /** Probability of random exploration (default: 0.1 = 10%) */
+  explorationRate?: number;
 }
 
 interface Strategy {
@@ -36,6 +50,8 @@ interface Strategy {
     then: string;
   }[];
   default?: string;
+  /** Configuration for least_latency strategy */
+  leastLatencyConfig?: LeastLatencyConfig;
 }
 
 /**

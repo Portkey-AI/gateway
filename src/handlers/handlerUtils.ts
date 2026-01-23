@@ -25,6 +25,10 @@ import { env } from 'hono/adapter';
 import { afterRequestHookHandler, responseHandler } from './responseHandlers';
 import { HookSpan } from '../middlewares/hooks';
 import { ConditionalRouter } from '../services/conditionalRouter';
+import {
+  LatencyTracker,
+  recordTargetLatency,
+} from '../services/latencyTracker';
 import { RouterError } from '../errors/RouterError';
 import { GatewayError } from '../errors/GatewayError';
 import { HookType } from '../middlewares/hooks/types';
@@ -721,6 +725,57 @@ export async function tryTargetsRecursively(
         randomWeight -= provider.weight;
       }
       break;
+
+    case StrategyModes.LEAST_LATENCY: {
+      // Initialize latency tracker with config
+      const leastLatencyConfig = currentTarget.strategy?.leastLatencyConfig;
+      const latencyTracker = new LatencyTracker(leastLatencyConfig);
+
+      // Get request params for model identification
+      const llParams =
+        request instanceof FormData ||
+        request instanceof ReadableStream ||
+        request instanceof ArrayBuffer
+          ? {}
+          : request;
+
+      // Select the best target based on latency
+      const { target: selectedTarget, index: selectedIndex } =
+        latencyTracker.selectTarget(
+          currentTarget.targets,
+          currentJsonPath,
+          llParams as Params
+        );
+
+      const llOriginalIndex = selectedTarget.originalIndex ?? selectedIndex;
+      const targetKey = LatencyTracker.getTargetKey(
+        `${currentJsonPath}.targets[${llOriginalIndex}]`,
+        selectedTarget.provider,
+        (llParams as Params).model
+      );
+
+      // Track start time for latency measurement
+      const startTime = Date.now();
+
+      response = await tryTargetsRecursively(
+        c,
+        selectedTarget,
+        request,
+        requestHeaders,
+        fn,
+        method,
+        `${currentJsonPath}.targets[${llOriginalIndex}]`,
+        currentInheritedConfig
+      );
+
+      // Record latency for successful responses only
+      if (response?.ok) {
+        const latency = Date.now() - startTime;
+        recordTargetLatency(targetKey, latency, leastLatencyConfig);
+      }
+
+      break;
+    }
 
     case StrategyModes.CONDITIONAL: {
       let metadata: Record<string, string>;

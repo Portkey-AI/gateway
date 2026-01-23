@@ -16,12 +16,16 @@ export const configSchema: any = z
           .string()
           .refine(
             (value) =>
-              ['single', 'loadbalance', 'fallback', 'conditional'].includes(
-                value
-              ),
+              [
+                'single',
+                'loadbalance',
+                'fallback',
+                'conditional',
+                'least_latency',
+              ].includes(value),
             {
               message:
-                "Invalid 'mode' value. Must be one of: single, loadbalance, fallback, conditional",
+                "Invalid 'mode' value. Must be one of: single, loadbalance, fallback, conditional, least_latency",
             }
           ),
         on_status_codes: z.array(z.number()).optional(),
@@ -34,6 +38,13 @@ export const configSchema: any = z
           )
           .optional(),
         default: z.string().optional(),
+        least_latency_config: z
+          .object({
+            window_size: z.number().min(1).max(1000).optional(),
+            min_samples: z.number().min(1).max(100).optional(),
+            exploration_rate: z.number().min(0).max(1).optional(),
+          })
+          .optional(),
       })
       .optional(),
     provider: z
