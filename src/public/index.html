@@ -508,6 +508,500 @@
       }
     }
 
+    /* integrations.css */
+    /* Integrations styles */
+    .card.integrations-card {
+      margin-top: 1rem;
+      max-width: 1000px;
+    }
+
+    .integrations-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .integrations-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .integration-item {
+      background-color: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .integration-item:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .integration-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background-color: #f9fafb;
+      cursor: pointer;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .integration-header:hover {
+      background-color: #f3f4f6;
+    }
+
+    .integration-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .integration-provider {
+      background-color: #3b82f6;
+      color: white;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .integration-slug {
+      color: #6b7280;
+      font-size: 0.875rem;
+    }
+
+    .integration-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .integration-toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.25rem;
+      color: #6b7280;
+      transition: color 0.2s;
+    }
+
+    .integration-toggle:hover {
+      color: #374151;
+    }
+
+    .integration-toggle.expanded {
+      transform: rotate(180deg);
+    }
+
+    .integration-content {
+      display: none;
+      padding: 1rem;
+    }
+
+    .integration-content.expanded {
+      display: block;
+    }
+
+    .integration-form {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .form-group label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #374151;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 0.5rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .rate-limits-section {
+      background-color: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.375rem;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    .rate-limits-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .rate-limits-title {
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .rate-limit-item {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 1rem;
+      align-items: end;
+      margin-bottom: 0.5rem;
+    }
+
+    .rate-limit-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .rate-limit-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .btn-reset-rate-limit {
+      background-color: #f59e0b;
+      color: white;
+      border: none;
+      border-radius: 0.25rem;
+      padding: 0.5rem;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: background-color 0.2s;
+    }
+
+    .btn-reset-rate-limit:hover {
+      background-color: #d97706;
+    }
+
+    .btn-remove-rate-limit {
+      background-color: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 0.25rem;
+      padding: 0.5rem;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: background-color 0.2s;
+    }
+
+    .btn-remove-rate-limit:hover {
+      background-color: #dc2626;
+    }
+
+    .btn-add-rate-limit {
+      background-color: #10b981;
+      color: white;
+      border: none;
+      border-radius: 0.25rem;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      transition: background-color 0.2s;
+    }
+
+    .btn-add-rate-limit:hover {
+      background-color: #059669;
+    }
+
+    .btn-reset-rate-limits {
+      background-color: #f59e0b;
+      color: white;
+      border: none;
+      border-radius: 0.25rem;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: background-color 0.2s;
+    }
+
+    .btn-reset-rate-limits:hover {
+      background-color: #d97706;
+    }
+
+    .models-section {
+      background-color: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.375rem;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    .models-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .models-title {
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .model-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1rem;
+      align-items: center;
+      padding: 0.5rem;
+      background-color: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.25rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .model-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .model-slug {
+      font-weight: 500;
+      color: #374151;
+    }
+
+    .model-status {
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .model-status.active {
+      background-color: #dcfce7;
+      color: #166534;
+    }
+
+    .model-status.inactive {
+      background-color: #fee2e2;
+      color: #991b1b;
+    }
+
+    .btn-add-model {
+      background-color: #10b981;
+      color: white;
+      border: none;
+      border-radius: 0.25rem;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      transition: background-color 0.2s;
+    }
+
+    .btn-add-model:hover {
+      background-color: #059669;
+    }
+
+    .integration-form-actions {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .btn-save {
+      background-color: #3b82f6;
+      color: white;
+    }
+
+    .btn-save:hover {
+      background-color: #2563eb;
+    }
+
+    .btn-cancel {
+      background-color: #6b7280;
+      color: white;
+    }
+
+    .btn-cancel:hover {
+      background-color: #4b5563;
+    }
+
+    .btn-delete {
+      background-color: #ef4444;
+      color: white;
+    }
+
+    .btn-delete:hover {
+      background-color: #dc2626;
+    }
+
+    .credential-item {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 1rem;
+      align-items: end;
+      margin-bottom: 0.5rem;
+      padding: 1rem;
+      background-color: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.375rem;
+    }
+
+    .credential-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .btn-add-credential {
+      background-color: #10b981;
+      color: white;
+      border: none;
+      border-radius: 0.25rem;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      transition: background-color 0.2s;
+    }
+
+    .btn-add-credential:hover {
+      background-color: #059669;
+    }
+
+    .btn-remove-credential {
+      background-color: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 0.25rem;
+      padding: 0.5rem;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: background-color 0.2s;
+    }
+
+    .btn-remove-credential:hover {
+      background-color: #dc2626;
+    }
+
+    .integration-json-editor {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .json-editor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .json-editor-header h3 {
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .json-editor-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .json-editor-textarea {
+      width: 100%;
+      min-height: 400px;
+      padding: 1rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      background-color: #f9fafb;
+      color: #374151;
+      resize: vertical;
+      transition: border-color 0.2s;
+    }
+
+    .json-editor-textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      background-color: white;
+    }
+
+    .json-editor-help {
+      background-color: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.375rem;
+      padding: 1rem;
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+
+    .json-editor-help p {
+      margin: 0 0 0.5rem 0;
+    }
+
+    .json-editor-help p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .integrations-header {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 1rem;
+      }
+
+      .form-row {
+          grid-template-columns: 1fr;
+      }
+
+      .rate-limit-item {
+          grid-template-columns: 1fr;
+          gap: 0.5rem;
+      }
+
+      .credential-item {
+          grid-template-columns: 1fr;
+          gap: 0.5rem;
+      }
+
+      .integration-form-actions {
+          flex-direction: column;
+      }
+    }
+
     /* modal.css */
     /* Modal styles */
     .modal {
@@ -885,6 +1379,7 @@
       <nav class="tabs-container">
         <button class="tab-button active" data-tab="main" id="main-tab-button">Gateway</button>
         <button class="tab-button" data-tab="logs" id="logs-tab-button">Logs<span class="badge">1</span></button>
+        <button class="tab-button" data-tab="integrations" id="integrations-tab-button">Integrations</button>
       </nav>
       <a class="github-button" href="https://github.com/portkey-ai/gateway"
               data-color-scheme="no-preference: light; light: light; dark: dark;" data-icon="octicon-star" data-size="large"
@@ -1087,6 +1582,23 @@
               <!-- Log entries will be dynamically added here -->
             </tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="integrations-tab" class="main-tab-content">
+      <div class="card integrations-card">
+        <div class="integrations-header">
+          <h2>Integrations</h2>
+          <button class="btn" id="addIntegrationBtn">
+            <span class="btn-text">Add Integration</span>
+          </button>
+        </div>
+        <div class="integrations-list" id="integrationsList">
+          <div class="loading-row">
+            <div class="loading-animation"></div>
+            Loading integrations...
+          </div>
         </div>
       </div>
     </div>
@@ -1891,6 +2403,8 @@
       function mainTabFocus(tabName) {
         if(tabName === 'logs') {
           resetLogCounter();
+        } else if (tabName === 'integrations') {
+          loadIntegrations();
         }
         tabButtons.forEach(btn => btn.classList.remove('active'));
         tabContents.forEach(content => content.classList.remove('active'));
@@ -1903,7 +2417,12 @@
           button.addEventListener('click', (e) => {
             e.preventDefault();
             let tabName = button.getAttribute('data-tab');
-            const href = tabName === 'logs' ? '/public/logs' : '/public/';
+            let href = '/public/';
+            if (tabName === 'logs') {
+              href = '/public/logs';
+            } else if (tabName === 'integrations') {
+              href = '/public/integrations';
+            }
             history.pushState(null, '', href);
             mainTabFocus(tabName);
           });
@@ -1912,6 +2431,8 @@
       function managePage() {
         if(window.location.pathname === '/public/logs') {
           mainTabFocus('logs');
+        } else if (window.location.pathname === '/public/integrations') {
+          mainTabFocus('integrations');
         } else {
           mainTabFocus('main');
         }
@@ -2068,6 +2589,527 @@
       window.addEventListener('beforeunload', cleanupLogSource);
       window.addEventListener('unload', cleanupLogSource);
 
+              // Integrations functionality
+              let integrationsData = [];
+              let editingIntegration = null;
+              let adminApiKey = '';
+
+              // DOM Elements for integrations
+              const addIntegrationBtn = document.getElementById('addIntegrationBtn');
+              const integrationsList = document.getElementById('integrationsList');
+
+              // Load integrations data
+              async function loadIntegrations() {
+                try {
+                  // First, try to get adminApiKey from localStorage or prompt user
+                  if (!adminApiKey) {
+                    adminApiKey = localStorage.getItem('adminApiKey') || '';
+                    if (!adminApiKey) {
+                      adminApiKey = prompt('Enter Admin API Key:');
+                      if (adminApiKey) {
+                        localStorage.setItem('adminApiKey', adminApiKey);
+                      } else {
+                        throw new Error('Admin API Key required');
+                      }
+                    }
+                  }
+
+          const response = await fetch('/admin/settings', {
+            headers: {
+              'Authorization': `Bearer ${adminApiKey}`,
+              'x-admin-api-key': adminApiKey
+            }
+          });
+
+                  if (!response.ok) {
+                    if (response.status === 401) {
+                      localStorage.removeItem('adminApiKey');
+                      adminApiKey = '';
+                      throw new Error('Invalid Admin API Key. Please try again.');
+                    }
+                    throw new Error(`Failed to load integrations: ${response.status} ${response.statusText}`);
+                  }
+
+                  const data = await response.json();
+                  integrationsData = data.integrations || [];
+                  renderIntegrations();
+                } catch (error) {
+                  console.error('Error loading integrations:', error);
+                  integrationsList.innerHTML = `
+            <div class="loading-row">
+              <div style="color: #ef4444;">Error loading integrations: ${error.message}</div>
+              <div style="color: #6b7280; font-size: 0.875rem; margin-top: 0.5rem;">
+                ${error.message.includes('Admin API Key') ? 'Please refresh the page and enter a valid Admin API Key.' : 'Make sure the conf.json file exists in the project root directory.'}
+              </div>
+            </div>
+          `;
+                }
+              }
+
+              // Render integrations list
+              function renderIntegrations() {
+                if (integrationsData.length === 0) {
+                  integrationsList.innerHTML = `
+            <div class="loading-row">
+              No integrations found. Click "Add Integration" to create one.
+            </div>
+          `;
+                  return;
+                }
+
+                integrationsList.innerHTML = integrationsData.map((integration, index) =>
+                  createIntegrationHTML(integration, index)
+                ).join('');
+
+                // Add event listeners to the rendered integrations
+                addIntegrationEventListeners();
+              }
+
+              // Create HTML for a single integration
+              function createIntegrationHTML(integration, index) {
+                const hasRateLimits = integration.rate_limits && integration.rate_limits.length > 0;
+                const hasModels = integration.models && integration.models.length > 0;
+
+                return `
+          <div class="integration-item" data-index="${index}">
+            <div class="integration-header" onclick="toggleIntegration(${index})">
+              <div class="integration-title">
+                <span class="integration-provider">${integration.provider}</span>
+                <span class="integration-slug">${integration.slug}</span>
+              </div>
+              <div class="integration-actions">
+                <button class="integration-toggle" id="toggle-${index}">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6,9 12,15 18,9"></polyline>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="integration-content" id="content-${index}">
+              <div class="integration-json-editor">
+                <div class="json-editor-header">
+                  <h3>Integration Configuration</h3>
+                  <div class="json-editor-actions">
+                    ${hasRateLimits ? `
+                    <button type="button" class="btn-reset-rate-limits" onclick="resetAllRateLimits(${index})">
+                      Reset All Rate Limits
+                    </button>
+                    ` : ''}
+                    <button type="button" class="btn btn-save" onclick="saveIntegration(${index})">
+                      Save Changes
+                    </button>
+                    <button type="button" class="btn btn-cancel" onclick="cancelEdit(${index})">
+                      Cancel
+                    </button>
+                    <button type="button" class="btn btn-delete" onclick="deleteIntegration(${index})">
+                      Delete
+                    </button>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="json-editor-${index}">Integration JSON Configuration</label>
+                  <textarea 
+                    id="json-editor-${index}" 
+                    class="json-editor-textarea" 
+                    rows="20"
+                    placeholder="Enter integration configuration as JSON..."
+                  >${JSON.stringify(integration, null, 2)}</textarea>
+                </div>
+                <div class="json-editor-help">
+                  <p><strong>Note:</strong> Edit the JSON configuration above. Make sure the JSON is valid before saving.</p>
+                  <p><strong>Common fields:</strong> provider, slug, credentials, rate_limits, models, allow_all_models</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+              }
+
+              // Render credentials based on provider
+              function renderCredentials(credentials, index) {
+                if (!credentials) credentials = {};
+
+                const credentialEntries = Object.entries(credentials);
+                const credentialFields = credentialEntries.map(([key, value], credIndex) => `
+          <div class="credential-item">
+            <div class="form-group">
+              <label for="cred-key-${index}-${credIndex}">Key</label>
+              <input type="text" id="cred-key-${index}-${credIndex}" name="credentials.${credIndex}.key" value="${key}" required>
+            </div>
+            <div class="form-group">
+              <label for="cred-value-${index}-${credIndex}">Value</label>
+              <input type="password" id="cred-value-${index}-${credIndex}" name="credentials.${credIndex}.value" value="${value}" required>
+            </div>
+            <button type="button" class="btn-remove-credential" onclick="removeCredential(${index}, ${credIndex})">
+              Remove
+            </button>
+          </div>
+        `).join('');
+
+                return `
+          <div id="credentials-${index}">
+            ${credentialFields}
+            <button type="button" class="btn-add-credential" onclick="addCredential(${index})">
+              Add Credential Field
+            </button>
+          </div>
+        `;
+              }
+
+              // Render rate limits
+              function renderRateLimits(rateLimits, index) {
+                if (!rateLimits || rateLimits.length === 0) return '<div>No rate limits configured</div>';
+
+                return rateLimits.map((limit, limitIndex) => `
+          <div class="rate-limit-item">
+            <div class="form-group">
+              <label>Type</label>
+              <select name="rate_limits.${limitIndex}.type">
+                <option value="requests" ${limit.type === 'requests' ? 'selected' : ''}>Requests</option>
+                <option value="tokens" ${limit.type === 'tokens' ? 'selected' : ''}>Tokens</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Value</label>
+              <input type="number" name="rate_limits.${limitIndex}.value" value="${limit.value}" required>
+            </div>
+            <div class="form-group">
+              <label>Unit</label>
+              <select name="rate_limits.${limitIndex}.unit">
+                <option value="rph" ${limit.unit === 'rph' ? 'selected' : ''}>Requests per hour</option>
+                <option value="rpm" ${limit.unit === 'rpm' ? 'selected' : ''}>Requests per minute</option>
+                <option value="tph" ${limit.unit === 'tph' ? 'selected' : ''}>Tokens per hour</option>
+                <option value="tpm" ${limit.unit === 'tpm' ? 'selected' : ''}>Tokens per minute</option>
+              </select>
+            </div>
+            <div class="rate-limit-actions">
+              <button type="button" class="btn-reset-rate-limit" onclick="resetIndividualRateLimit(${index}, ${limitIndex})">
+                Reset
+              </button>
+              <button type="button" class="btn-remove-rate-limit" onclick="removeRateLimit(${index}, ${limitIndex})">
+                Remove
+              </button>
+            </div>
+          </div>
+        `).join('');
+              }
+
+              // Render models
+              function renderModels(models, index) {
+                if (!models || models.length === 0) return '<div>No models configured</div>';
+
+                return models.map((model, modelIndex) => `
+          <div class="model-item">
+            <div class="model-slug">${model.slug}</div>
+            <div class="model-status ${model.status}">${model.status}</div>
+          </div>
+        `).join('');
+              }
+
+              // Toggle integration expansion
+              function toggleIntegration(index) {
+                const content = document.getElementById(`content-${index}`);
+                const toggle = document.getElementById(`toggle-${index}`);
+
+                if (content.classList.contains('expanded')) {
+                  content.classList.remove('expanded');
+                  toggle.classList.remove('expanded');
+                } else {
+                  content.classList.add('expanded');
+                  toggle.classList.add('expanded');
+                }
+              }
+
+              // Add event listeners to integration elements
+              function addIntegrationEventListeners() {
+                // Event listeners are added via onclick attributes in the HTML
+              }
+
+              // Add new integration
+              function addNewIntegration() {
+                const newIntegration = {
+                  provider: 'openai',
+                  slug: crypto.randomUUID().substring(0, 8),
+                  credentials: {
+                  },
+                  allow_all_models: true,
+                };
+
+                integrationsData.push(newIntegration);
+                renderIntegrations();
+
+                // Expand the new integration
+                const newIndex = integrationsData.length - 1;
+                setTimeout(() => {
+                  toggleIntegration(newIndex);
+                }, 100);
+              }
+
+              // Save integration
+              async function saveIntegration(index) {
+                try {
+                  const textarea = document.getElementById(`json-editor-${index}`);
+                  const jsonText = textarea.value.trim();
+                  
+                  if (!jsonText) {
+                    alert('Please enter integration configuration');
+                    return;
+                  }
+                  
+                  // Parse and validate JSON
+                  let integration;
+                  try {
+                    integration = JSON.parse(jsonText);
+                  } catch (error) {
+                    alert(`Invalid JSON: ${error.message}`);
+                    return;
+                  }
+                  
+                  // Basic validation
+                  if (!integration.provider || !integration.slug) {
+                    alert('Integration must have provider and slug fields');
+                    return;
+                  }
+                  
+                  // Update the integration data
+                  integrationsData[index] = integration;
+                  
+                  // Save to file
+                  await saveIntegrationsToFile();
+                  
+                  // Re-render the integrations
+                  renderIntegrations();
+                  
+                  alert('Integration saved successfully!');
+                } catch (error) {
+                  console.error('Error saving integration:', error);
+                  alert(`Failed to save integration: ${error.message}`);
+                }
+              }
+
+              // Cancel edit
+              function cancelEdit(index) {
+                renderIntegrations();
+              }
+
+              // Delete integration
+              async function deleteIntegration(index) {
+                if (confirm('Are you sure you want to delete this integration?')) {
+                  integrationsData.splice(index, 1);
+                  await saveIntegrationsToFile();
+                  renderIntegrations();
+                }
+              }
+
+      // Add rate limit
+      function addRateLimit(index) {
+        const rateLimitsContainer = document.getElementById(`rate-limits-${index}`);
+        
+        // Count existing rate limit items (excluding the "No rate limits configured" message)
+        const existingItems = rateLimitsContainer.querySelectorAll('.rate-limit-item');
+        const rateLimitCount = existingItems.length;
+        
+        // If this is the first rate limit, clear the "No rate limits configured" message
+        if (rateLimitCount === 0) {
+          rateLimitsContainer.innerHTML = '';
+        }
+        
+        const newRateLimitHTML = `
+          <div class="rate-limit-item">
+            <div class="form-group">
+              <label>Type</label>
+              <select name="rate_limits.${rateLimitCount}.type">
+                <option value="requests">Requests</option>
+                <option value="tokens">Tokens</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Value</label>
+              <input type="number" name="rate_limits.${rateLimitCount}.value" required>
+            </div>
+            <div class="form-group">
+              <label>Unit</label>
+              <select name="rate_limits.${rateLimitCount}.unit">
+                <option value="rph">Requests per hour</option>
+                <option value="rpm">Requests per minute</option>
+                <option value="tph">Tokens per hour</option>
+                <option value="tpm">Tokens per minute</option>
+              </select>
+            </div>
+            <div class="rate-limit-actions">
+              <button type="button" class="btn-reset-rate-limit" onclick="resetIndividualRateLimit(${index}, ${rateLimitCount})">
+                Reset
+              </button>
+              <button type="button" class="btn-remove-rate-limit" onclick="removeRateLimit(${index}, ${rateLimitCount})">
+                Remove
+              </button>
+            </div>
+          </div>
+        `;
+        
+        rateLimitsContainer.insertAdjacentHTML('beforeend', newRateLimitHTML);
+      }
+
+      // Remove rate limit
+      function removeRateLimit(integrationIndex, rateLimitIndex) {
+        const rateLimitsContainer = document.getElementById(`rate-limits-${integrationIndex}`);
+        const rateLimitItems = rateLimitsContainer.querySelectorAll('.rate-limit-item');
+        
+        if (rateLimitItems[rateLimitIndex]) {
+          rateLimitItems[rateLimitIndex].remove();
+          
+          // If no rate limits remain, show the "No rate limits configured" message
+          const remainingItems = rateLimitsContainer.querySelectorAll('.rate-limit-item');
+          if (remainingItems.length === 0) {
+            rateLimitsContainer.innerHTML = '<div>No rate limits configured</div>';
+          }
+        }
+      }
+
+              // Add model
+              function addModel(index) {
+                const modelsContainer = document.getElementById(`models-${index}`);
+                const newModel = {
+                  slug: 'new-model',
+                  status: 'active',
+                  pricing_config: null
+                };
+
+                if (!integrationsData[index].models) {
+                  integrationsData[index].models = [];
+                }
+
+                integrationsData[index].models.push(newModel);
+                renderIntegrations();
+              }
+
+              // Reset rate limits (placeholder function)
+              function resetRateLimits(index) {
+                if (confirm('Are you sure you want to reset the rate limits for this integration?')) {
+                  // Placeholder function - you can implement the actual reset logic later
+                  alert('Rate limits reset functionality will be implemented later.');
+                  console.log('Resetting rate limits for integration:', index);
+                }
+              }
+
+              // Reset all rate limits for an integration
+              async function resetAllRateLimits(integrationIndex) {
+                if (confirm('Are you sure you want to reset all rate limits for this integration?')) {
+                  try {
+                    const integration = integrationsData[integrationIndex];
+                    
+                    if (!integration.rate_limits || integration.rate_limits.length === 0) {
+                      alert('No rate limits configured for this integration');
+                      return;
+                    }
+
+                    console.log('Resetting rate limits for integration:', integration.slug);
+                    
+                    const response = await fetch(`/admin/integrations/ratelimit/${integration.slug}/reset`, {
+                      method: 'PUT',
+                      headers: {
+                        'Authorization': `Bearer ${adminApiKey}`,
+                        'x-admin-api-key': adminApiKey
+                      }
+                    });
+                    
+                    if (!response.ok) {
+                      if (response.status === 401) {
+                        localStorage.removeItem('adminApiKey');
+                        adminApiKey = '';
+                        throw new Error('Invalid Admin API Key. Please refresh and try again.');
+                      }
+                      throw new Error(`Failed to reset rate limit: ${rateLimit.type}`);
+                    }
+                    
+                    console.log(`All rate limits reset for integration ${integration.slug}`);
+                    alert(`All rate limits reset successfully for ${integration.slug}`);
+                  } catch (error) {
+                    console.error('Error resetting rate limits:', error);
+                    alert(`Failed to reset rate limits: ${error.message}`);
+                  }
+                }
+              }
+
+              // Add credential field
+              function addCredential(index) {
+                const credentialsContainer = document.getElementById(`credentials-${index}`);
+                const credentialCount = credentialsContainer.querySelectorAll('.credential-item').length;
+
+                const newCredentialHTML = `
+          <div class="credential-item">
+            <div class="form-group">
+              <label for="cred-key-${index}-${credentialCount}">Key</label>
+              <input type="text" id="cred-key-${index}-${credentialCount}" name="credentials.${credentialCount}.key" required>
+            </div>
+            <div class="form-group">
+              <label for="cred-value-${index}-${credentialCount}">Value</label>
+              <input type="password" id="cred-value-${index}-${credentialCount}" name="credentials.${credentialCount}.value" required>
+            </div>
+            <button type="button" class="btn-remove-credential" onclick="removeCredential(${index}, ${credentialCount})">
+              Remove
+            </button>
+          </div>
+        `;
+
+                const addButton = credentialsContainer.querySelector('.btn-add-credential');
+                addButton.insertAdjacentHTML('beforebegin', newCredentialHTML);
+              }
+
+              // Remove credential field
+              function removeCredential(integrationIndex, credentialIndex) {
+                const credentialsContainer = document.getElementById(`credentials-${integrationIndex}`);
+                const credentialItems = credentialsContainer.querySelectorAll('.credential-item');
+
+                if (credentialItems[credentialIndex]) {
+                  credentialItems[credentialIndex].remove();
+                }
+              }
+
+              // Save integrations to conf.json file
+              async function saveIntegrationsToFile() {
+                try {
+                  const settingsData = {
+                    adminApiKey: adminApiKey,
+                    integrations: integrationsData
+                  };
+
+          const response = await fetch('/admin/settings', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${adminApiKey}`,
+              'x-admin-api-key': adminApiKey
+            },
+            body: JSON.stringify(settingsData, null, 2)
+          });
+
+                  if (!response.ok) {
+                    if (response.status === 401) {
+                      localStorage.removeItem('adminApiKey');
+                      adminApiKey = '';
+                      throw new Error('Invalid Admin API Key. Please refresh and try again.');
+                    }
+                    throw new Error('Failed to save integrations');
+                  }
+
+                  console.log('Integrations saved successfully');
+                } catch (error) {
+                  console.error('Error saving integrations:', error);
+                  alert(`Failed to save integrations: ${error.message}`);
+                }
+              }
+
+              // Event listeners for integrations
+              addIntegrationBtn.addEventListener('click', addNewIntegration);
+
+              // Load integrations when the integrations tab is focused
+              function loadIntegrationsIfNeeded() {
+                if (window.location.pathname === '/public/integrations' ||
+                  document.getElementById('integrations-tab').classList.contains('active')) {
+                  loadIntegrations();
+                }
+              }
 
       window.onload = function() {
         // Run the confetti function only once by storing the state in localStorage
