@@ -61,7 +61,11 @@ export class ResponseService {
       ));
     }
 
-    this.updateHeaders(finalMappedResponse, cache.cacheStatus, retryAttempt);
+    finalMappedResponse = this.updateHeaders(
+      finalMappedResponse,
+      cache.cacheStatus,
+      retryAttempt
+    );
 
     return {
       response: finalMappedResponse,
@@ -101,6 +105,13 @@ export class ResponseService {
     cacheStatus: string | undefined,
     retryAttempt: number
   ) {
+    // Clone response and headers to work around `immutable` header guard
+    response = new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: new Headers(response.headers),
+    });
+
     // Append headers directly
     response.headers.append(
       RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX,
