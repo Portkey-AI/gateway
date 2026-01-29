@@ -171,6 +171,7 @@ export interface BaseResponse {
 export interface CResponse extends BaseResponse {
   id: string;
   created: number;
+  service_tier?: string | null;
   usage?: {
     prompt_tokens: number;
     completion_tokens: number;

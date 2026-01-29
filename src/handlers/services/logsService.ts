@@ -39,6 +39,7 @@ export interface LogObject {
     rubeusURL: string;
     modelPricingConfig?: Record<string, any> | undefined;
   };
+  serviceTier?: string | null;
   transformedRequest: {
     body: any;
     headers: Record<string, string>;
@@ -200,6 +201,7 @@ export class LogsService {
       cacheMaxAge: requestContext.cacheConfig.maxAge,
       hookSpanId: hookSpanId,
       executionTime: executionTime,
+      serviceTier: originalResponseJSON?.service_tier ?? null,
     };
   }
 
@@ -254,6 +256,7 @@ export class LogObjectBuilder {
       cacheStatus: this.logData.cacheStatus,
       hookSpanId: this.logData.hookSpanId,
       executionTime: this.logData.executionTime,
+      serviceTier: this.logData.serviceTier,
     };
     if (this.logData.transformedRequest) {
       clonedLogData.transformedRequest = {
@@ -303,6 +306,10 @@ export class LogObjectBuilder {
     this.logData.originalResponse = {
       body: originalResponseJson,
     };
+    // Capture service_tier from the provider response for pricing attribution
+    if (originalResponseJson?.service_tier !== undefined) {
+      this.logData.serviceTier = originalResponseJson.service_tier;
+    }
     return this;
   }
 
