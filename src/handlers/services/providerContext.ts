@@ -12,13 +12,13 @@ import { GatewayError } from '../../errors/GatewayError';
 
 export class ProviderContext {
   constructor(private provider: string) {
-    if (!Providers[provider]) {
+    if (!Providers[provider] && !Providers['custom-host']) {
       throw new GatewayError(`Provider ${provider} not found`);
     }
   }
 
   get providerConfig(): ProviderConfigs {
-    return Providers[this.provider];
+    return Providers[this.provider] || Providers['custom-host'];
   }
 
   get apiConfig(): ProviderAPIConfig {

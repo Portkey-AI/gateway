@@ -18,6 +18,8 @@ async function getRequestData(request: Request, contentType: string) {
     finalRequest = await request.formData();
   } else if (contentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)) {
     finalRequest = await request.arrayBuffer();
+  } else {
+    finalRequest = {};
   }
 
   return finalRequest;
