@@ -57,9 +57,30 @@ async function processLog(c: Context, start: number) {
   }
 
   try {
-    const response = requestOptionsArray[0].requestParams.stream
-      ? { message: 'The response was a stream.' }
-      : await c.res.clone().json();
+    let response;
+    if (requestOptionsArray[0].requestParams.stream) {
+      response = { message: 'The response was a stream.' };
+    } else {
+      const clonedResponse = c.res.clone();
+      const contentType = clonedResponse.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          response = await clonedResponse.json();
+        } catch (jsonError) {
+          const text = await clonedResponse.text();
+          response = {
+            message: 'Failed to parse JSON response',
+            text: text.substring(0, 1000),
+          };
+        }
+      } else {
+        const text = await clonedResponse.text();
+        response = {
+          message: 'Non-JSON response',
+          text: text.substring(0, 1000),
+        };
+      }
+    }
 
     const responseString = JSON.stringify(response);
     if (responseString.length > MAX_RESPONSE_LENGTH) {

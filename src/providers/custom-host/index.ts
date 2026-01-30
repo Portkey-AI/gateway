@@ -1,9 +1,9 @@
 import { ProviderConfigs } from '../types';
-import CustomHostApiConfig from './api';
+import CustomHostAPIConfig from './api';
 
 const CustomHostConfig: ProviderConfigs = {
-    api: CustomHostApiConfig,
-    responseTransforms: {},
+  api: CustomHostAPIConfig,
+  responseTransforms: {},
 };
 
 export default CustomHostConfig;

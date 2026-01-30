@@ -74,7 +74,6 @@ export interface Options {
   workersAiAccountId?: string;
   /** The parameter to set custom base url */
   customHost?: string;
-  custom_host?: string;
   /** The parameter to set list of headers to be forwarded as-is to the provider */
   forwardHeaders?: string[];
   /** provider option index picked based on weight in loadbalance mode */
@@ -468,11 +467,11 @@ export interface Params {
   prediction?: {
     type: string;
     content:
-    | {
-      type: string;
-      text: string;
-    }[]
-    | string;
+      | {
+          type: string;
+          text: string;
+        }[]
+      | string;
   };
   // Google Vertex AI specific
   safety_settings?: any;
