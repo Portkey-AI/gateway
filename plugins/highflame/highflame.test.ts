@@ -2,7 +2,7 @@
 global.fetch = jest.fn();
 import { handler as guardrailsHandler } from './guardrails';
 
-describe('Javelin Guardrails Tests', () => {
+describe('Highflame Guardrails Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -159,7 +159,7 @@ describe('Javelin Guardrails Tests', () => {
       expect(result.data.reject_prompt).toBe(
         'Unable to complete request, trust & safety violation detected'
       );
-      expect(result.data.javelin_response).toEqual(mockResponse);
+      expect(result.data.highflame_response).toEqual(mockResponse);
       expect(result.data.flagged_assessments).toHaveLength(1);
       expect(result.data.flagged_assessments[0].type).toBe('trustsafety');
       expect(result.data.flagged_assessments[0].request_reject).toBe(true);
@@ -424,7 +424,7 @@ describe('Javelin Guardrails Tests', () => {
 
       expect(result.verdict).toBe(false);
       expect(result.error).toBe(
-        'Request blocked by Javelin guardrails due to policy violation'
+        'Request blocked by Highflame guardrails due to policy violation'
       );
     });
 
