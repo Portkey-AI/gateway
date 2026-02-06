@@ -38,6 +38,7 @@ export interface HookSpanContextResponse {
   text: string;
   json: any;
   statusCode: number | null;
+  headers?: Record<string, string>; // Add headers field
   isTransformed: boolean;
 }
 
