@@ -1,0 +1,66 @@
+name: Dev Workflow
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  build-and-push:
+    name: Build and push to ACR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Login via Azure CLI
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CSPX_GITHUB_DEPLOY }}
+
+      - name: Login to ACR
+        uses: azure/docker-login@v2
+        with:
+          login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.REGISTRY_LOGIN_SERVER }}/lucio-portkey-gateway:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  restart-portkey:
+    name: Restart ${{ matrix.app }}
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # - app: lucio-in-dev1-portkey
+          #   rg: lucio-in-dev-rg
+          - app: lucio-in-dev2-portkey
+            rg: lucio-in-dev-rg
+          # - app: lucio-in-dev3-portkey
+          #   rg: lucio-in-dev-rg
+          # - app: lucio-in-uat-portkey
+          #   rg: lucio-in-uat-rg
+    steps:
+      - name: Login via Azure CLI
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CSPX_GITHUB_DEPLOY }}
+
+      - name: Restart container app
+        run: |
+          revision=$(az containerapp revision list -n ${{ matrix.app }} -g ${{ matrix.rg }} --query "[0].name" -o tsv)
+          echo "Restarting ${{ matrix.app }} revision $revision"
+          az containerapp revision restart -n ${{ matrix.app }} -g ${{ matrix.rg }} --revision $revision
