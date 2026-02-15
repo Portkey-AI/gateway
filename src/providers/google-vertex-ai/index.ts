@@ -54,6 +54,10 @@ import {
 } from './messages';
 import { VertexAnthropicMessagesCountTokensConfig } from './messagesCountTokens';
 import {
+  VertexGeminiCountTokensConfig,
+  VertexGeminiCountTokensResponseTransform,
+} from './geminiCountTokens';
+import {
   GetMistralAIChatCompleteResponseTransform,
   GetMistralAIChatCompleteStreamChunkTransform,
   MistralAIChatCompleteConfig,
@@ -112,6 +116,7 @@ const VertexConfig: ProviderConfigs = {
           api: GoogleApiConfig,
           embed: GoogleEmbedConfig,
           imageGenerate: GoogleImageGenConfig,
+          messagesCountTokens: VertexGeminiCountTokensConfig,
           createBatch: GoogleBatchCreateConfig,
           createFinetune: baseConfig.createFinetune,
           responseTransforms: {
@@ -119,6 +124,7 @@ const VertexConfig: ProviderConfigs = {
             chatComplete: GoogleChatCompleteResponseTransform,
             embed: GoogleEmbedResponseTransform,
             imageGenerate: GoogleImageGenResponseTransform,
+            messagesCountTokens: VertexGeminiCountTokensResponseTransform,
             ...responseTransforms,
           },
           requestTransforms: {
