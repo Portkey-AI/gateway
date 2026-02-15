@@ -1,0 +1,57 @@
+{
+  "id": "akto",
+  "description": "Akto API Security - Guardrail plugin for API security and threat detection",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "Your Akto API key for authentication",
+        "encrypted": true
+      },
+      "baseUrl": {
+        "type": "string",
+        "label": "Base URL",
+        "description": "The base URL for Akto API. Defaults to https://1726615470-guardrails.akto.io",
+        "default": "https://1726615470-guardrails.akto.io"
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Akto Guardrail",
+      "id": "scan",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Akto API Security provides advanced threat detection and security scanning for your LLM inputs and outputs."
+        },
+        {
+          "type": "subHeading",
+          "text": "Protect your AI applications from prompt injection, sensitive data leakage, and other security threats."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "timeout": {
+            "type": "number",
+            "label": "Timeout",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "The timeout in milliseconds for the Akto guardrail scan. Defaults to 5000."
+              }
+            ],
+            "default": 5000
+          }
+        }
+      },
+      "deny": true
+    }
+  ]
+}

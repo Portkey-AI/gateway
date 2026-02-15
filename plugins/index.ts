@@ -1,4 +1,5 @@
 import { handler as defaultregexMatch } from './default/regexMatch';
+import { handler as defaultallowedRequestTypes } from './default/allowedRequestTypes';
 import { handler as defaultsentenceCount } from './default/sentenceCount';
 import { handler as defaultwordCount } from './default/wordCount';
 import { handler as defaultcharacterCount } from './default/characterCount';
@@ -10,23 +11,25 @@ import { handler as defaultwebhook } from './default/webhook';
 import { handler as defaultlog } from './default/log';
 import { handler as defaultcontainsCode } from './default/containsCode';
 import { handler as defaultalluppercase } from './default/alluppercase';
-import { handler as defaultalllowercase } from './default/alllowercase';
 import { handler as defaultendsWith } from './default/endsWith';
-import { handler as defaultmodelWhitelist } from './default/modelWhitelist';
-import { handler as defaultnotNull } from './default/notNull';
-import { handler as qualifireContentModeration } from './qualifire/contentModeration';
-import { handler as qualifireGrounding } from './qualifire/grounding';
-import { handler as qualifirePolicy } from './qualifire/policy';
-import { handler as qualifireToolUseQuality } from './qualifire/toolUseQuality';
-import { handler as qualifireHallucinations } from './qualifire/hallucinations';
-import { handler as qualifirePii } from './qualifire/pii';
-import { handler as qualifirePromptInjections } from './qualifire/promptInjections';
-import { handler as defaultaddPrefix } from './default/addPrefix';
+import { handler as defaultalllowercase } from './default/alllowercase';
+import { handler as defaultmodelwhitelist } from './default/modelwhitelist';
 import { handler as defaultmodelRules } from './default/modelRules';
+import { handler as defaultjwt } from './default/jwt';
+import { handler as defaultrequiredMetadataKeys } from './default/requiredMetadataKeys';
+import { handler as defaultaddPrefix } from './default/addPrefix';
+import { handler as defaultnotNull } from './default/notNull';
 import { handler as portkeymoderateContent } from './portkey/moderateContent';
 import { handler as portkeylanguage } from './portkey/language';
 import { handler as portkeypii } from './portkey/pii';
 import { handler as portkeygibberish } from './portkey/gibberish';
+import { handler as qualifirecontentModeration } from './qualifire/contentModeration';
+import { handler as qualifirehallucinations } from './qualifire/hallucinations';
+import { handler as qualifirepii } from './qualifire/pii';
+import { handler as qualifirepromptInjections } from './qualifire/promptInjections';
+import { handler as qualifiregrounding } from './qualifire/grounding';
+import { handler as qualifiretoolUseQuality } from './qualifire/toolUseQuality';
+import { handler as qualifirepolicy } from './qualifire/policy';
 import { handler as aporiavalidateProject } from './aporia/validateProject';
 import { handler as sydelabssydeguard } from './sydelabs/sydeguard';
 import { handler as pillarscanPrompt } from './pillar/scanPrompt';
@@ -40,36 +43,21 @@ import { handler as patronusnoApologies } from './patronus/noApologies';
 import { handler as patronusnoGenderBias } from './patronus/noGenderBias';
 import { handler as patronusnoRacialBias } from './patronus/noRacialBias';
 import { handler as patronusretrievalAnswerRelevance } from './patronus/retrievalAnswerRelevance';
+import { handler as patronusretrievalHallucination } from './patronus/retrievalHallucination';
 import { handler as patronustoxicity } from './patronus/toxicity';
 import { handler as patronuscustom } from './patronus/custom';
-import { mistralGuardrailHandler } from './mistral';
 import { handler as pangeatextGuard } from './pangea/textGuard';
-import { handler as promptfooPii } from './promptfoo/pii';
-import { handler as promptfooHarm } from './promptfoo/harm';
-import { handler as promptfooGuard } from './promptfoo/guard';
 import { handler as pangeapii } from './pangea/pii';
-import { pluginHandler as bedrockHandler } from './bedrock/index';
-import { handler as acuvityScan } from './acuvity/scan';
-import { handler as lassoclassify } from './lasso/classify';
-import { handler as exaonline } from './exa/online';
-import { handler as azurePii } from './azure/pii';
-import { handler as azureContentSafety } from './azure/contentSafety';
-import { handler as promptSecurityProtectPrompt } from './promptsecurity/protectPrompt';
-import { handler as promptSecurityProtectResponse } from './promptsecurity/protectResponse';
+import { handler as promptsecurityprotectPrompt } from './promptsecurity/protectPrompt';
+import { handler as promptsecurityprotectResponse } from './promptsecurity/protectResponse';
 import { handler as panwPrismaAirsintercept } from './panw-prisma-airs/intercept';
-import { handler as defaultjwt } from './default/jwt';
-import { handler as defaultrequiredMetadataKeys } from './default/requiredMetadataKeys';
-import { handler as walledaiguardrails } from './walledai/walledprotect';
-import { handler as defaultregexReplace } from './default/regexReplace';
-import { handler as defaultallowedRequestTypes } from './default/allowedRequestTypes';
-import { handler as javelinguardrails } from './javelin/guardrails';
-import { handler as f5GuardrailsScan } from './f5-guardrails/scan';
-import { handler as azureShieldPrompt } from './azure/shieldPrompt';
-import { handler as azureProtectedMaterial } from './azure/protectedMaterial';
+import { handler as walledaiwalledprotect } from './walledai/walledprotect';
+import { handler as aktoscan } from './akto/scan';
 
 export const plugins = {
   default: {
     regexMatch: defaultregexMatch,
+    allowedRequestTypes: defaultallowedRequestTypes,
     sentenceCount: defaultsentenceCount,
     wordCount: defaultwordCount,
     characterCount: defaultcharacterCount,
@@ -81,31 +69,29 @@ export const plugins = {
     log: defaultlog,
     containsCode: defaultcontainsCode,
     alluppercase: defaultalluppercase,
-    alllowercase: defaultalllowercase,
     endsWith: defaultendsWith,
-    modelWhitelist: defaultmodelWhitelist,
+    alllowercase: defaultalllowercase,
+    modelwhitelist: defaultmodelwhitelist,
     modelRules: defaultmodelRules,
     jwt: defaultjwt,
     requiredMetadataKeys: defaultrequiredMetadataKeys,
     addPrefix: defaultaddPrefix,
-    regexReplace: defaultregexReplace,
-    allowedRequestTypes: defaultallowedRequestTypes,
     notNull: defaultnotNull,
-  },
-  qualifire: {
-    contentModeration: qualifireContentModeration,
-    grounding: qualifireGrounding,
-    policy: qualifirePolicy,
-    toolUseQuality: qualifireToolUseQuality,
-    hallucinations: qualifireHallucinations,
-    pii: qualifirePii,
-    promptInjections: qualifirePromptInjections,
   },
   portkey: {
     moderateContent: portkeymoderateContent,
     language: portkeylanguage,
     pii: portkeypii,
     gibberish: portkeygibberish,
+  },
+  qualifire: {
+    contentModeration: qualifirecontentModeration,
+    hallucinations: qualifirehallucinations,
+    pii: qualifirepii,
+    promptInjections: qualifirepromptInjections,
+    grounding: qualifiregrounding,
+    toolUseQuality: qualifiretoolUseQuality,
+    policy: qualifirepolicy,
   },
   aporia: {
     validateProject: aporiavalidateProject,
@@ -127,53 +113,25 @@ export const plugins = {
     noGenderBias: patronusnoGenderBias,
     noRacialBias: patronusnoRacialBias,
     retrievalAnswerRelevance: patronusretrievalAnswerRelevance,
+    retrievalHallucination: patronusretrievalHallucination,
     toxicity: patronustoxicity,
     custom: patronuscustom,
-  },
-  mistral: {
-    moderateContent: mistralGuardrailHandler,
   },
   pangea: {
     textGuard: pangeatextGuard,
     pii: pangeapii,
   },
-  promptfoo: {
-    pii: promptfooPii,
-    harm: promptfooHarm,
-    guard: promptfooGuard,
-  },
-  bedrock: {
-    guard: bedrockHandler,
-  },
-  acuvity: {
-    scan: acuvityScan,
-  },
-  lasso: {
-    classify: lassoclassify,
-  },
-  exa: {
-    online: exaonline,
-  },
-  azure: {
-    pii: azurePii,
-    contentSafety: azureContentSafety,
-    shieldPrompt: azureShieldPrompt,
-    protectedMaterial: azureProtectedMaterial,
-  },
   promptsecurity: {
-    protectPrompt: promptSecurityProtectPrompt,
-    protectResponse: promptSecurityProtectResponse,
+    protectPrompt: promptsecurityprotectPrompt,
+    protectResponse: promptsecurityprotectResponse,
   },
   'panw-prisma-airs': {
     intercept: panwPrismaAirsintercept,
   },
   walledai: {
-    walledprotect: walledaiguardrails,
+    walledprotect: walledaiwalledprotect,
   },
-  javelin: {
-    guardrails: javelinguardrails,
-  },
-  'f5-guardrails': {
-    scan: f5GuardrailsScan,
+  akto: {
+    scan: aktoscan,
   },
 };
