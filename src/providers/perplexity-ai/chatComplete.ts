@@ -207,7 +207,30 @@ export const PerplexityAIChatCompleteStreamChunkTransform: (
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
 
+  if (chunk === '[DONE]') {
+    return `data: [DONE]\n\n`;
+  }
+
   const parsedChunk: PerplexityAIChatCompletionStreamChunk = JSON.parse(chunk);
+
+  // Handle chunks with empty or missing choices (e.g., intermediate events
+  // from Sonar Deep Research models during searching/thinking phases)
+  if (!parsedChunk.choices || parsedChunk.choices.length === 0) {
+    return (
+      `data: ${JSON.stringify({
+        id: parsedChunk.id ?? fallbackId,
+        object: parsedChunk.object,
+        created: Math.floor(Date.now() / 1000),
+        model: parsedChunk.model,
+        provider: PERPLEXITY_AI,
+        ...(!strictOpenAiCompliance && {
+          citations: parsedChunk.citations,
+        }),
+        choices: [],
+      })}` + '\n\n'
+    );
+  }
+
   let returnChunk =
     `data: ${JSON.stringify({
       id: parsedChunk.id,
@@ -221,8 +244,8 @@ export const PerplexityAIChatCompleteStreamChunkTransform: (
       choices: [
         {
           delta: {
-            role: parsedChunk.choices[0]?.delta.role,
-            content: parsedChunk.choices[0]?.delta.content,
+            role: parsedChunk.choices[0]?.delta?.role,
+            content: parsedChunk.choices[0]?.delta?.content,
           },
           index: 0,
           finish_reason: parsedChunk.choices[0]?.finish_reason,
