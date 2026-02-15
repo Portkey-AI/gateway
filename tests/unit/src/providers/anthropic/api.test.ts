@@ -1,5 +1,5 @@
-import AnthropicAPIConfig from './api';
-import { version as packageVersion } from '../../../package.json';
+import AnthropicAPIConfig from '../../../../../src/providers/anthropic/api';
+import { version as packageVersion } from '../../../../../package.json';
 
 describe('AnthropicAPIConfig', () => {
   describe('headers', () => {
