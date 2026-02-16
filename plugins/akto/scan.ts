@@ -71,7 +71,9 @@ export const handler: PluginHandler = async (
   };
   let transformed = false;
 
-  const credentials = parameters.credentials as unknown as AktoCredentials | undefined;
+  const credentials = parameters.credentials as unknown as
+    | AktoCredentials
+    | undefined;
 
   // Validate credentials
   // We require either apiDomain or baseUrl, and apiKey
@@ -86,10 +88,14 @@ export const handler: PluginHandler = async (
   } else if (credentials.apiDomain) {
     // If apiDomain is provided, construct the URL
     // Handle cases where apiDomain might include protocol or trailing slash
-    let domain = credentials.apiDomain.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    let domain = credentials.apiDomain
+      .replace(/^https?:\/\//, '')
+      .replace(/\/$/, '');
     apiUrl = `https://${domain}${API_ENDPOINT}`;
   } else {
-    return createErrorResponse('Missing required credentials: apiDomain or baseUrl');
+    return createErrorResponse(
+      'Missing required credentials: apiDomain or baseUrl'
+    );
   }
 
   // Extract content
@@ -162,7 +168,10 @@ export const handler: PluginHandler = async (
     } else if (e instanceof TimeoutError) {
       error = `Request timeout after ${timeout}ms: Akto scan took too long`;
     } else {
-      error = e instanceof Error ? e.message : 'Unknown error occurred during Akto scan';
+      error =
+        e instanceof Error
+          ? e.message
+          : 'Unknown error occurred during Akto scan';
     }
 
     // Fail open on errors to prevent blocking legitimate requests due to plugin failure

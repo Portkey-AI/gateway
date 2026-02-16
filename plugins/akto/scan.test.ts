@@ -61,7 +61,9 @@ describe('aktoScan', () => {
       );
 
       expect(result.verdict).toBe(true);
-      expect(result.error).toBe('Missing required credentials: apiDomain or baseUrl');
+      expect(result.error).toBe(
+        'Missing required credentials: apiDomain or baseUrl'
+      );
       expect(mockPost).not.toHaveBeenCalled();
     });
 
@@ -350,7 +352,7 @@ describe('aktoScan', () => {
       // credentials with domain having slash at end and protocol
       const credentials = {
         apiKey: 'test-api-key',
-        apiDomain: 'https://api.akto.io/'
+        apiDomain: 'https://api.akto.io/',
       };
 
       await handler(
@@ -426,7 +428,7 @@ describe('aktoScan', () => {
 
       const credentialsWithoutBaseUrl = {
         apiKey: 'test-api-key',
-        apiDomain: '1726615470-guardrails.akto.io'
+        apiDomain: '1726615470-guardrails.akto.io',
       };
 
       await handler(
