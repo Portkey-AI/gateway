@@ -19,7 +19,7 @@
     },
     "akto": {
       "apiKey": "your-akto-api-key",
-      "baseUrl": "https://1726615470-guardrails.akto.io"
+      "baseUrl": "https://guardrails.akto.io"
     }
   },
   "cache": false
