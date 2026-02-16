@@ -4,20 +4,19 @@
   "credentials": {
     "type": "object",
     "properties": {
+      "apiDomain": {
+        "type": "string",
+        "label": "API Domain",
+        "description": "The domain of your Akto API instance (e.g., guardrails.akto.io)"
+      },
       "apiKey": {
         "type": "string",
         "label": "API Key",
         "description": "Your Akto API key for authentication",
         "encrypted": true
-      },
-      "baseUrl": {
-        "type": "string",
-        "label": "Base URL",
-        "description": "The base URL for Akto API. Defaults to https://1726615470-guardrails.akto.io",
-        "default": "https://1726615470-guardrails.akto.io"
       }
     },
-    "required": ["apiKey"]
+    "required": ["apiDomain", "apiKey"]
   },
   "functions": [
     {

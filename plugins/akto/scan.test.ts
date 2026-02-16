@@ -10,8 +10,8 @@ jest.mock('../utils', () => ({
 
 describe('aktoScan', () => {
   const mockCredentials = {
+    apiDomain: 'guardrails.akto.io',
     apiKey: 'test-api-key',
-    baseUrl: 'https://test.akto.io',
   };
 
   const mockPost = utils.post as jest.MockedFunction<typeof utils.post>;
@@ -34,12 +34,34 @@ describe('aktoScan', () => {
 
       const result = await handler(
         context as PluginContext,
-        { credentials: {} },
+        { credentials: { apiDomain: 'test.com' } }, // Missing apiKey
         'beforeRequestHook'
       );
 
       expect(result.verdict).toBe(true);
-      expect(result.error).toBe('Missing required API key');
+      expect(result.error).toBe('Missing required credentials: apiKey');
+      expect(mockPost).not.toHaveBeenCalled();
+    });
+
+    it('Should return error when apiDomain and baseUrl are missing', async () => {
+      const context = {
+        request: {
+          json: {
+            messages: [{ role: 'user', content: 'Test' }],
+            model: 'gpt-4',
+          },
+        },
+        requestType: 'chatComplete',
+      };
+
+      const result = await handler(
+        context as PluginContext,
+        { credentials: { apiKey: 'test-key' } }, // Missing apiDomain/baseUrl
+        'beforeRequestHook'
+      );
+
+      expect(result.verdict).toBe(true);
+      expect(result.error).toBe('Missing required credentials: apiDomain or baseUrl');
       expect(mockPost).not.toHaveBeenCalled();
     });
 
@@ -97,7 +119,7 @@ describe('aktoScan', () => {
       expect(result.error).toBeNull();
       expect(result.data).toBeDefined();
       expect(mockPost).toHaveBeenCalledWith(
-        'https://test.akto.io/api/validate/request',
+        'https://guardrails.akto.io/api/validate/request',
         expect.objectContaining({
           payload: expect.any(String),
         }),
@@ -140,7 +162,7 @@ describe('aktoScan', () => {
       expect(result.verdict).toBe(false);
       expect(result.error).toBeNull();
       expect(result.data).toBeDefined();
-      expect((result.data as any).blockReason).toContain(
+      expect((result.data as any).Reason).toContain(
         'Prompt injection detected'
       );
     });
@@ -209,7 +231,7 @@ describe('aktoScan', () => {
       );
 
       expect(result.verdict).toBe(true); // Fail open
-      expect(result.error).toContain('authentication failed');
+      expect(result.error).toContain('Authentication failed');
       expect(result.data).toBeNull();
     });
 
@@ -239,7 +261,7 @@ describe('aktoScan', () => {
       );
 
       expect(result.verdict).toBe(true); // Fail open
-      expect(result.error).toContain('rate limit');
+      expect(result.error).toContain('Rate limit exceeded');
       expect(result.data).toBeNull();
     });
 
@@ -300,13 +322,13 @@ describe('aktoScan', () => {
       );
 
       expect(result.verdict).toBe(true); // Fail open
-      expect(result.error).toContain('temporarily unavailable');
+      expect(result.error).toContain('Service unavailable');
       expect(result.data).toBeNull();
     });
   });
 
   describe('URL Construction', () => {
-    it('Should use default URL when baseUrl is not provided', async () => {
+    it('Should not add redundant slashes', async () => {
       const context = {
         request: {
           json: {
@@ -325,23 +347,27 @@ describe('aktoScan', () => {
         Metadata: {},
       });
 
-      const credentialsWithoutBaseUrl = { apiKey: 'test-api-key' };
+      // credentials with domain having slash at end and protocol
+      const credentials = {
+        apiKey: 'test-api-key',
+        apiDomain: 'https://api.akto.io/'
+      };
 
       await handler(
         context as PluginContext,
-        { credentials: credentialsWithoutBaseUrl },
+        { credentials },
         'beforeRequestHook'
       );
 
       expect(mockPost).toHaveBeenCalledWith(
-        'https://1726615470-guardrails.akto.io/api/validate/request',
+        'https://api.akto.io/api/validate/request',
         expect.any(Object),
         expect.any(Object),
         5000
       );
     });
 
-    it('Should handle baseUrl that already includes endpoint', async () => {
+    it('Should use baseUrl when provided', async () => {
       const context = {
         request: {
           json: {
@@ -373,6 +399,44 @@ describe('aktoScan', () => {
 
       expect(mockPost).toHaveBeenCalledWith(
         'https://custom.akto.io/api/validate/request',
+        expect.any(Object),
+        expect.any(Object),
+        5000
+      );
+    });
+
+    it('Should use default URL when baseUrl is not provided', async () => {
+      const context = {
+        request: {
+          json: {
+            messages: [{ role: 'user', content: 'Test' }],
+            model: 'gpt-4',
+          },
+        },
+        requestType: 'chatComplete',
+      };
+
+      mockPost.mockResolvedValueOnce({
+        Allowed: true,
+        Modified: false,
+        ModifiedPayload: '',
+        Reason: '',
+        Metadata: {},
+      });
+
+      const credentialsWithoutBaseUrl = {
+        apiKey: 'test-api-key',
+        apiDomain: '1726615470-guardrails.akto.io'
+      };
+
+      await handler(
+        context as PluginContext,
+        { credentials: credentialsWithoutBaseUrl },
+        'beforeRequestHook'
+      );
+
+      expect(mockPost).toHaveBeenCalledWith(
+        'https://1726615470-guardrails.akto.io/api/validate/request',
         expect.any(Object),
         expect.any(Object),
         5000
