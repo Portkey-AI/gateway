@@ -1,13 +1,13 @@
 {
   "id": "akto",
-  "description": "Akto API Security - Guardrail plugin for API security and threat detection",
+  "description": "Akto Agentic Security - Guardrail plugin for Agentic security",
   "credentials": {
     "type": "object",
     "properties": {
       "apiDomain": {
         "type": "string",
         "label": "API Domain",
-        "description": "The domain of your Akto API instance (e.g., guardrails.akto.io)"
+        "description": "The domain of your Akto Agentic "
       },
       "apiKey": {
         "type": "string",
@@ -27,7 +27,7 @@
       "description": [
         {
           "type": "subHeading",
-          "text": "Akto API Security provides advanced threat detection and security scanning for your LLM inputs and outputs."
+          "text": "Akto Agentic Security provides advanced threat detection and security scanning for your LLM inputs and outputs."
         },
         {
           "type": "subHeading",
