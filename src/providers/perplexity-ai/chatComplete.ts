@@ -129,12 +129,12 @@ export interface PerplexityAIChatCompletionStreamChunk {
   object: string;
   created: number;
   citations?: string[];
-  usage: {
+  usage?: {
     prompt_tokens: number;
     completion_tokens: number;
     total_tokens: number;
   };
-  choices: PerplexityAIChatChoice[];
+  choices?: PerplexityAIChatChoice[];
 }
 
 export const PerplexityAIChatCompleteResponseTransform: (
@@ -207,33 +207,50 @@ export const PerplexityAIChatCompleteStreamChunkTransform: (
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
 
-  const parsedChunk: PerplexityAIChatCompletionStreamChunk = JSON.parse(chunk);
-  let returnChunk =
-    `data: ${JSON.stringify({
-      id: parsedChunk.id,
-      object: parsedChunk.object,
-      created: Math.floor(Date.now() / 1000),
-      model: parsedChunk.model,
-      provider: PERPLEXITY_AI,
-      ...(!strictOpenAiCompliance && {
-        citations: parsedChunk.citations,
-      }),
-      choices: [
-        {
-          delta: {
-            role: parsedChunk.choices[0]?.delta.role,
-            content: parsedChunk.choices[0]?.delta.content,
+  if (chunk === '[DONE]') {
+    return `data: [DONE]\n\n`;
+  }
+
+  try {
+    const parsedChunk: PerplexityAIChatCompletionStreamChunk =
+      JSON.parse(chunk);
+
+    const choice = parsedChunk.choices?.[0];
+
+    const returnChunk =
+      `data: ${JSON.stringify({
+        id: parsedChunk.id,
+        object: parsedChunk.object,
+        created: Math.floor(Date.now() / 1000),
+        model: parsedChunk.model,
+        provider: PERPLEXITY_AI,
+        ...(!strictOpenAiCompliance && {
+          citations: parsedChunk.citations,
+        }),
+        choices: [
+          {
+            delta: {
+              role: choice?.delta?.role,
+              content: choice?.delta?.content,
+            },
+            index: 0,
+            finish_reason: choice?.finish_reason ?? null,
           },
-          index: 0,
-          finish_reason: parsedChunk.choices[0]?.finish_reason,
-        },
-      ],
-      ...(parsedChunk.usage &&
-        parsedChunk.choices[0]?.finish_reason && { usage: parsedChunk.usage }),
-    })}` + '\n\n';
+        ],
+        ...(parsedChunk.usage &&
+          choice?.finish_reason && { usage: parsedChunk.usage }),
+      })}` + '\n\n';
 
-  if (parsedChunk.choices[0]?.finish_reason)
-    return returnChunk + `data: [DONE]\n\n`;
+    if (choice?.finish_reason) return returnChunk + `data: [DONE]\n\n`;
 
-  return returnChunk;
+    return returnChunk;
+  } catch (error) {
+    console.error(
+      'Error parsing Perplexity AI stream chunk:',
+      error,
+      'Raw chunk:',
+      chunk
+    );
+    return '';
+  }
 };
