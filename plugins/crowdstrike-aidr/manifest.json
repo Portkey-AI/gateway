@@ -1,0 +1,35 @@
+{
+  "id": "crowdstrike-aidr",
+  "description": "CrowdStrike AIDR for scanning LLM inputs and outputs",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "AIDR API token",
+        "description": "AIDR Token. Get your token from the Falcon console.",
+        "encrypted": true
+      },
+      "baseUrl": {
+        "type": "string",
+        "label": "Base url",
+        "description": "Base URL"
+      }
+    },
+    "required": ["baseUrl", "apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Guard Chat Completions",
+      "id": "guardChatCompletions",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Pass LLM Input and Output to the guard_chat_completions endpoint. Able to block or sanitize text depending on configured rules."
+        }
+      ]
+    }
+  ]
+}
