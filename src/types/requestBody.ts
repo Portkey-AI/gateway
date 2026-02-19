@@ -5,7 +5,7 @@ import { HookObject } from '../middlewares/hooks/types';
  * Settings for retrying requests.
  * @interface
  */
-export interface RetrySettings {
+interface RetrySettings {
   /** The maximum number of retry attempts. */
   attempts: number;
   /** The HTTP status codes on which to retry. */
@@ -14,7 +14,7 @@ export interface RetrySettings {
   useRetryAfterHeader?: boolean;
 }
 
-export interface CacheSettings {
+interface CacheSettings {
   mode: string;
   maxAge?: number;
 }
@@ -24,6 +24,19 @@ export enum StrategyModes {
   FALLBACK = 'fallback',
   SINGLE = 'single',
   CONDITIONAL = 'conditional',
+}
+
+/**
+ * Configuration for sticky sessions in load balancing.
+ * @interface
+ */
+export interface StickyConfig {
+  /** Whether sticky sessions are enabled. */
+  enabled: boolean;
+  /** Metadata fields to include in the sticky session identifier (in addition to API key). */
+  hash_fields?: string[];
+  /** Time-to-live for sticky sessions in seconds. Defaults to 300 (5 minutes). */
+  ttl?: number;
 }
 
 interface Strategy {
@@ -36,6 +49,8 @@ interface Strategy {
     then: string;
   }[];
   default?: string;
+  /** Configuration for sticky sessions (only applicable for loadbalance mode). */
+  sticky?: StickyConfig;
 }
 
 /**
@@ -44,7 +59,7 @@ interface Strategy {
  */
 export interface Options {
   /** The name of the provider. */
-  provider: string;
+  provider: string | undefined;
   /** The name of the API key for the provider. */
   virtualKey?: string;
   /** The API key for the provider. */
@@ -64,12 +79,12 @@ export interface Options {
   adAuth?: string;
   azureAuthMode?: string;
   azureManagedClientId?: string;
-  azureWorkloadClientId?: string;
   azureEntraClientId?: string;
   azureEntraClientSecret?: string;
   azureEntraTenantId?: string;
   azureAdToken?: string;
   azureModelName?: string;
+  azureWorkloadClientId?: string;
   /** Workers AI specific */
   workersAiAccountId?: string;
   /** The parameter to set custom base url */
@@ -97,7 +112,6 @@ export interface Options {
   awsServerSideEncryption?: string;
   awsServerSideEncryptionKMSKeyId?: string;
   awsService?: string;
-  foundationModel?: string;
 
   /** Sagemaker specific */
   amznSagemakerCustomAttributes?: string;
@@ -117,7 +131,6 @@ export interface Options {
 
   /** Hugging Face specific */
   huggingfaceBaseUrl?: string;
-
   /** Google Vertex AI specific */
   vertexRegion?: string;
   vertexProjectId?: string;
@@ -125,10 +138,7 @@ export interface Options {
   vertexStorageBucketName?: string;
   vertexModelName?: string;
   vertexBatchEndpoint?: BatchEndpoints;
-
-  // Required for file uploads with google.
-  filename?: string;
-
+  vertexAuthType?: string;
   afterRequestHooks?: HookObject[];
   beforeRequestHooks?: HookObject[];
   defaultInputGuardrails?: HookObject[];
@@ -142,6 +152,7 @@ export interface Options {
   azureFoundryUrl?: string;
   azureExtraParameters?: string;
   azureDeploymentName?: string;
+  filename?: string;
 
   /** The parameter to determine if extra non-openai compliant fields should be returned in response */
   strictOpenAiCompliance?: boolean;
@@ -161,7 +172,7 @@ export interface Options {
   /** Cortex specific fields */
   snowflakeAccount?: string;
 
-  /** Azure entra scope */
+  // Scope to generate entra token
   azureEntraScope?: string;
 
   // Oracle specific fields
@@ -175,8 +186,7 @@ export interface Options {
   oraclePrivateKey?: string; // example: -----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...
   oracleKeyPassphrase?: string; // example: password
 
-  /** Model pricing config */
-  modelPricingConfig?: Record<string, any>;
+  databricksWorkspace?: string;
 }
 
 /**
@@ -215,10 +225,8 @@ export interface Targets {
   index?: number;
   cache?: CacheSettings | string;
   targets?: Targets[];
-
   /** This is used to determine if the request should be transformed to formData Example: Stability V2 */
   transformToFormData?: boolean;
-
   defaultInputGuardrails?: HookObject[];
   defaultOutputGuardrails?: HookObject[];
   originalIndex?: number;
@@ -241,7 +249,6 @@ export interface Config {
 }
 
 /**
- * TODO: make this a union type
  * A message content type.
  * @interface
  */
@@ -254,6 +261,7 @@ export interface ContentType extends PromptCache {
     url: string;
     detail?: string;
     mime_type?: string;
+    media_resolution?: string;
   };
   data?: string;
   file?: {
@@ -265,7 +273,7 @@ export interface ContentType extends PromptCache {
   };
   input_audio?: {
     data: string;
-    format: 'mp3' | 'wav' | string; //defaults to auto
+    format: string; //defaults to auto
   };
 }
 
@@ -275,8 +283,7 @@ export interface ToolCall {
   function: {
     name: string;
     arguments: string;
-    description?: string;
-    thought_signature?: string;
+    thought_signature?: string; // for gemini models like gemini 3.0 pro
   };
 }
 
@@ -313,7 +320,6 @@ export interface Message {
   role: OpenAIMessageRole;
   /** The content of the message. */
   content?: string | ContentType[];
-  /** The content blocks of the message. */
   content_blocks?: ContentType[];
   /** The name of the function to call, if any. */
   name?: string;
@@ -322,8 +328,6 @@ export interface Message {
   tool_calls?: any;
   tool_call_id?: string;
   citationMetadata?: CitationMetadata;
-  /** Reasoning details for models that support extended thinking/reasoning. (Gemini) */
-  reasoning_details?: any[];
 }
 
 export interface PromptCache {
@@ -363,24 +367,7 @@ export interface Function {
   parameters?: JsonSchema;
   /** Whether to enable strict schema adherence when generating the function call. If set to true, the model will follow the exact schema defined in the parameters field. Only a subset of JSON Schema is supported when strict is true */
   strict?: boolean;
-  /**
-   * When true, this tool is not loaded into context initially.
-   * Claude discovers it via Tool Search Tool on-demand.
-   * Part of Anthropic's advanced tool use beta features.
-   */
-  defer_loading?: boolean;
-  /**
-   * List of tool types that can call this tool programmatically.
-   * E.g., ["code_execution_20250825"] enables Programmatic Tool Calling.
-   * Part of Anthropic's advanced tool use beta features.
-   */
-  allowed_callers?: string[];
-  /**
-   * Example inputs demonstrating how to use this tool.
-   * Helps Claude understand usage patterns beyond JSON schema.
-   * Part of Anthropic's advanced tool use beta features.
-   */
-  input_examples?: Record<string, any>[];
+  [key: string]: any;
 }
 
 export interface ToolChoiceObject {
@@ -415,7 +402,7 @@ export interface Tool extends PromptCache {
   /** The name of the function. */
   type: string;
   /** A description of the function. */
-  function?: Function;
+  function: Function;
   // this is used to support tools like computer, web_search, etc.
   [key: string]: any;
 }
@@ -457,11 +444,11 @@ export interface Params {
   };
   seed?: number;
   store?: boolean;
-  metadata?: object;
+  metadata?: Record<string, string>;
   modalities?: string[];
   audio?: {
     voice: string;
-    format: string;
+    format: 'mp3' | 'wav' | string;
   };
   service_tier?: string;
   prediction?: {
@@ -475,16 +462,14 @@ export interface Params {
   };
   // Google Vertex AI specific
   safety_settings?: any;
-  // Anthropic specific
-  anthropic_beta?: string;
-  anthropic_version?: string;
-  thinking?: {
-    type?: string;
-    budget_tokens: number;
-  };
   // Embeddings specific
   dimensions?: number;
   parameters?: any;
+  thinking?: {
+    type?: string;
+    budget_tokens?: number;
+  };
+  [key: string]: any;
 }
 
 interface Examples {

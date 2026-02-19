@@ -1,0 +1,735 @@
+{
+  "default": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0
+        },
+        "response_token": {
+          "price": 0
+        }
+      },
+      "calculate": {
+        "request": {
+          "operation": "multiply",
+          "operands": [
+            {
+              "value": "input_tokens"
+            },
+            {
+              "value": "rates.request_token"
+            }
+          ]
+        },
+        "response": {
+          "operation": "multiply",
+          "operands": [
+            {
+              "value": "output_tokens"
+            },
+            {
+              "value": "rates.response_token"
+            }
+          ]
+        }
+      },
+      "currency": "USD"
+    }
+  },
+  "qvq-max": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00012
+        },
+        "response_token": {
+          "price": 0.00048
+        }
+      }
+    }
+  },
+  "qwen-coder": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00003
+        },
+        "response_token": {
+          "price": 0.00015
+        }
+      }
+    }
+  },
+  "qwen-flash": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000005
+        },
+        "response_token": {
+          "price": 0.00004
+        }
+      }
+    }
+  },
+  "qwen-flash-2025-07-28": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000005
+        },
+        "response_token": {
+          "price": 0.00004
+        }
+      }
+    }
+  },
+  "qwen-max": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00016
+        },
+        "response_token": {
+          "price": 0.00064
+        }
+      }
+    }
+  },
+  "qwen-mt-plus": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000246
+        },
+        "response_token": {
+          "price": 0.000737
+        }
+      }
+    }
+  },
+  "qwen-mt-turbo": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000016
+        },
+        "response_token": {
+          "price": 0.000049
+        }
+      }
+    }
+  },
+  "qwen-omni-turbo": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000007
+        },
+        "response_token": {
+          "price": 0.000027
+        },
+        "request_audio_token": {
+          "price": 0.000444
+        },
+        "response_audio_token": {
+          "price": 0.000889
+        }
+      }
+    }
+  },
+  "qwen-omni-turbo-realtime": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000027
+        },
+        "response_token": {
+          "price": 0.000107
+        },
+        "request_audio_token": {
+          "price": 0.000444
+        },
+        "response_audio_token": {
+          "price": 0.000889
+        }
+      }
+    }
+  },
+  "qwen-plus": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00004
+        },
+        "response_token": {
+          "price": 0.00012
+        },
+        "reasoning_token": {
+          "price": 0.0004
+        }
+      }
+    }
+  },
+  "qwen-plus-2025-01-25": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00004
+        },
+        "response_token": {
+          "price": 0.00012
+        }
+      }
+    }
+  },
+  "qwen-plus-2025-04-28": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00004
+        },
+        "response_token": {
+          "price": 0.00012
+        }
+      }
+    }
+  },
+  "qwen-plus-2025-07-14": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00004
+        },
+        "response_token": {
+          "price": 0.00012
+        }
+      }
+    }
+  },
+  "qwen-plus-2025-07-28": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00004
+        },
+        "response_token": {
+          "price": 0.00012
+        }
+      }
+    }
+  },
+  "qwen-plus-2025-09-11": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00004
+        },
+        "response_token": {
+          "price": 0.00012
+        }
+      }
+    }
+  },
+  "qwen-plus-character-ja": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00005
+        },
+        "response_token": {
+          "price": 0.00014
+        }
+      }
+    }
+  },
+  "qwen-plus-latest": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00004
+        },
+        "response_token": {
+          "price": 0.00012
+        }
+      }
+    }
+  },
+  "qwen-turbo": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000005
+        },
+        "response_token": {
+          "price": 0.00002
+        },
+        "reasoning_token": {
+          "price": 0.00005
+        }
+      }
+    }
+  },
+  "qwen-turbo-2024-11-01": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000005
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "qwen-turbo-2025-04-28": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000005
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "qwen-turbo-latest": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000005
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "qwen-vl-max": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00008
+        },
+        "response_token": {
+          "price": 0.00032
+        }
+      }
+    }
+  },
+  "qwen-vl-ocr": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000072
+        },
+        "response_token": {
+          "price": 0.000072
+        }
+      }
+    }
+  },
+  "qwen-vl-plus": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000021
+        },
+        "response_token": {
+          "price": 0.000063
+        }
+      }
+    }
+  },
+  "qwen2-5-14b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000035
+        },
+        "response_token": {
+          "price": 0.00014
+        }
+      }
+    }
+  },
+  "qwen2-5-32b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00007
+        },
+        "response_token": {
+          "price": 0.00028
+        }
+      }
+    }
+  },
+  "qwen2-5-72b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00014
+        },
+        "response_token": {
+          "price": 0.00056
+        }
+      }
+    }
+  },
+  "qwen2-5-7b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0000175
+        },
+        "response_token": {
+          "price": 0.00007
+        }
+      }
+    }
+  },
+  "qwen2-5-omni-7b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00001
+        },
+        "response_token": {
+          "price": 0.00004
+        },
+        "request_audio_token": {
+          "price": 0.000676
+        }
+      }
+    }
+  },
+  "qwen2-5-vl-72b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00028
+        },
+        "response_token": {
+          "price": 0.00084
+        }
+      }
+    }
+  },
+  "qwen2-5-vl-7b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000035
+        },
+        "response_token": {
+          "price": 0.000105
+        }
+      }
+    }
+  },
+  "qwen3-14b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000035
+        },
+        "response_token": {
+          "price": 0.00014
+        },
+        "reasoning_token": {
+          "price": 0.00042
+        }
+      }
+    }
+  },
+  "qwen3-235b-a22b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00007
+        },
+        "response_token": {
+          "price": 0.00028
+        },
+        "reasoning_token": {
+          "price": 0.00084
+        }
+      }
+    }
+  },
+  "qwen3-32b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00007
+        },
+        "response_token": {
+          "price": 0.00028
+        },
+        "reasoning_token": {
+          "price": 0.00084
+        }
+      }
+    }
+  },
+  "qwen3-8b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000018
+        },
+        "response_token": {
+          "price": 0.00007
+        },
+        "reasoning_token": {
+          "price": 0.00021
+        }
+      }
+    }
+  },
+  "qwen3-asr-flash": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0000035
+        },
+        "response_token": {
+          "price": 0.0000035
+        }
+      }
+    }
+  },
+  "qwen3-coder-30b-a3b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000045
+        },
+        "response_token": {
+          "price": 0.000225
+        }
+      }
+    }
+  },
+  "qwen3-coder-480b-a35b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00015
+        },
+        "response_token": {
+          "price": 0.00075
+        }
+      }
+    }
+  },
+  "qwen3-coder-flash": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00003
+        },
+        "response_token": {
+          "price": 0.00015
+        }
+      }
+    }
+  },
+  "qwen3-coder-flash-2025-07-28": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00003
+        },
+        "response_token": {
+          "price": 0.00015
+        }
+      }
+    }
+  },
+  "qwen3-coder-plus": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.0005
+        }
+      }
+    }
+  },
+  "qwen3-coder-plus-2025-07-22": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.0005
+        }
+      }
+    }
+  },
+  "qwen3-livetranslate-flash-realtime": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.001
+        },
+        "response_token": {
+          "price": 0.001
+        },
+        "request_audio_token": {
+          "price": 0.001
+        },
+        "response_audio_token": {
+          "price": 0.0038
+        }
+      }
+    }
+  },
+  "qwen3-max": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00012
+        },
+        "response_token": {
+          "price": 0.0006
+        }
+      }
+    }
+  },
+  "qwen3-max-preview": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00012
+        },
+        "response_token": {
+          "price": 0.0006
+        }
+      }
+    }
+  },
+  "qwen3-next-80b-a3b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00005
+        },
+        "response_token": {
+          "price": 0.0002
+        }
+      }
+    }
+  },
+  "qwen3-next-80b-a3b-thinking": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00005
+        },
+        "response_token": {
+          "price": 0.0006
+        }
+      }
+    }
+  },
+  "qwen3-omni-flash": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000043
+        },
+        "response_token": {
+          "price": 0.000166
+        },
+        "request_audio_token": {
+          "price": 0.000381
+        },
+        "response_audio_token": {
+          "price": 0.001511
+        }
+      }
+    }
+  },
+  "qwen3-omni-flash-realtime": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000052
+        },
+        "response_token": {
+          "price": 0.000199
+        },
+        "request_audio_token": {
+          "price": 0.000457
+        },
+        "response_audio_token": {
+          "price": 0.001813
+        }
+      }
+    }
+  },
+  "qwen3-vl-235b-a22b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00007
+        },
+        "response_token": {
+          "price": 0.00028
+        },
+        "reasoning_token": {
+          "price": 0.00084
+        }
+      }
+    }
+  },
+  "qwen3-vl-30b-a3b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00008
+        },
+        "reasoning_token": {
+          "price": 0.00024
+        }
+      }
+    }
+  },
+  "qwen3-vl-plus": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00016
+        },
+        "reasoning_token": {
+          "price": 0.00048
+        }
+      }
+    }
+  },
+  "qwq-plus": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00008
+        },
+        "response_token": {
+          "price": 0.00024
+        }
+      }
+    }
+  }
+}

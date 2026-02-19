@@ -2,7 +2,8 @@ import { Context } from 'hono';
 import AzureAIInferenceAPI from './api';
 import { Options } from '../../types/requestBody';
 import { RetrieveBatchResponse } from '../types';
-import { AZURE_OPEN_AI } from '../../globals';
+import { AZURE_AI_INFERENCE, AZURE_OPEN_AI } from '../../globals';
+import { externalServiceFetch } from '../../utils/fetch';
 
 // Return a ReadableStream containing batches output data
 export const AzureAIInferenceGetBatchOutputRequestHandler = async ({
@@ -43,17 +44,21 @@ export const AzureAIInferenceGetBatchOutputRequestHandler = async ({
     gatewayRequestBody: {},
   });
   try {
-    const retrieveBatchesResponse = await fetch(retrieveBatchURL, {
-      method: 'GET',
-      headers: retrieveBatchesHeaders,
-    });
+    const retrieveBatchesResponse = await externalServiceFetch(
+      retrieveBatchURL,
+      {
+        method: 'GET',
+        headers: retrieveBatchesHeaders,
+      }
+    );
 
     if (!retrieveBatchesResponse.ok) {
       const error = await retrieveBatchesResponse.text();
+
       return new Response(
         JSON.stringify({
           error: error || 'error fetching batch output',
-          provider: AZURE_OPEN_AI,
+          provider: AZURE_AI_INFERENCE,
           param: null,
         }),
         {
@@ -104,16 +109,16 @@ export const AzureAIInferenceGetBatchOutputRequestHandler = async ({
       transformedRequestUrl: retrieveFileContentURL,
       gatewayRequestBody: {},
     });
-    const response = fetch(retrieveFileContentURL, {
+    const response = externalServiceFetch(retrieveFileContentURL, {
       method: 'GET',
       headers: retrieveFileContentHeaders,
     });
     return response;
-  } catch (e) {
+  } catch (error: any) {
     return new Response(
       JSON.stringify({
         error: 'error fetching batch output',
-        provider: AZURE_OPEN_AI,
+        provider: AZURE_AI_INFERENCE,
         param: null,
       }),
       {

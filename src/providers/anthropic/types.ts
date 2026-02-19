@@ -1,16 +1,28 @@
 export type AnthropicStreamState = {
+  containsChainOfThoughtMessage?: boolean;
   toolIndex?: number;
   usage?: {
-    prompt_tokens?: number;
+    input_tokens?: number;
+    completion_tokens?: number;
     prompt_tokens_details?: {
       cached_tokens?: number;
     };
-    completion_tokens?: number;
     cache_read_input_tokens?: number;
     cache_creation_input_tokens?: number;
   };
   model?: string;
 };
+
+// https://docs.anthropic.com/en/api/messages#response-stop-reason
+export enum ANTHROPIC_STOP_REASON {
+  max_tokens = 'max_tokens',
+  stop_sequence = 'stop_sequence',
+  tool_use = 'tool_use',
+  end_turn = 'end_turn',
+  pause_turn = 'pause_turn',
+  refusal = 'refusal',
+  model_context_window_exceeded = 'model_context_window_exceeded',
+}
 
 export interface AnthropicErrorObject {
   type: string;
@@ -20,13 +32,4 @@ export interface AnthropicErrorObject {
 export interface AnthropicErrorResponse {
   type: string;
   error: AnthropicErrorObject;
-}
-
-// https://docs.anthropic.com/en/api/messages#response-stop-reason
-export enum ANTHROPIC_STOP_REASON {
-  max_tokens = 'max_tokens',
-  stop_sequence = 'stop_sequence',
-  tool_use = 'tool_use',
-  end_turn = 'end_turn',
-  pause_turn = 'pause_turn',
 }

@@ -10,6 +10,7 @@ import {
   NovitaAICompleteResponseTransform,
   NovitaAICompleteStreamChunkTransform,
 } from './complete';
+import { NovitaLogConfig } from './pricing';
 
 const NovitaAIConfig: ProviderConfigs = {
   complete: NovitaAICompleteConfig,
@@ -21,6 +22,7 @@ const NovitaAIConfig: ProviderConfigs = {
     chatComplete: NovitaAIChatCompleteResponseTransform,
     'stream-chatComplete': NovitaAIChatCompleteStreamChunkTransform,
   },
+  pricing: NovitaLogConfig,
 };
 
 export default NovitaAIConfig;

@@ -1,34 +1,43 @@
 import { Context } from 'hono';
-import { constructConfigFromRequestHeaders } from './handlerUtils';
+import { constructConfigFromRequestHeaders } from '../utils/request';
 import WebSocket from 'ws';
 import { ProviderAPIConfig } from '../providers/types';
 import Providers from '../providers';
 import { Options } from '../types/requestBody';
-import { RealtimeLlmEventParser } from '../services/realtimeLlmEventParser';
+import { RealTimeLLMEventParser } from '../services/realtimeLLMEventParser';
+import { logger } from '../apm';
 import { WSContext, WSEvents } from 'hono/ws';
+import { getExternalNodeFetchAgentForUrl } from '../agentStore';
 
 export async function realTimeHandlerNode(
   c: Context
 ): Promise<WSEvents<unknown>> {
   try {
     let incomingWebsocket: WSContext<unknown> | null = null;
-    const requestHeaders = Object.fromEntries(c.req.raw.headers);
+    const requestHeaders = c.get('mappedHeaders');
     const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
 
     const provider = camelCaseConfig?.provider ?? '';
     const apiConfig: ProviderAPIConfig = Providers[provider].api;
     const providerOptions = camelCaseConfig as Options;
+    const urlObject = new URL(c.req.url);
+    const model = urlObject.searchParams.get('model');
+    if (model && model.startsWith('@')) {
+      urlObject.searchParams.set('model', model.replace(/@[^/]+\//, ''));
+    }
+    const incomingUrl = urlObject.toString();
+
     const baseUrl = apiConfig.getBaseURL({
       providerOptions,
       c,
-      gatewayRequestURL: c.req.url,
+      gatewayRequestURL: incomingUrl,
     });
     const endpoint = apiConfig.getEndpoint({
       c,
       providerOptions,
       fn: 'realtime',
       gatewayRequestBodyJSON: {},
-      gatewayRequestURL: c.req.url,
+      gatewayRequestURL: incomingUrl,
     });
     let url = `${baseUrl}${endpoint}`;
     url = url.replace('https://', 'wss://');
@@ -51,10 +60,14 @@ export async function realTimeHandlerNode(
       requestParams: {},
     };
 
+    // Get agent for WebSocket connection (handles proxy/timeout/TLS automatically)
+    const agent = getExternalNodeFetchAgentForUrl(url);
+
     const outgoingWebSocket = new WebSocket(url, {
       headers,
+      ...(agent ? { agent } : {}),
     });
-    const eventParser = new RealtimeLlmEventParser();
+    const eventParser = new RealTimeLLMEventParser();
 
     outgoingWebSocket.addEventListener('message', (event) => {
       incomingWebsocket?.send(event.data as string);
@@ -62,7 +75,7 @@ export async function realTimeHandlerNode(
         const parsedData = JSON.parse(event.data as string);
         eventParser.handleEvent(c, parsedData, sessionOptions);
       } catch (err: any) {
-        console.error(`eventParser.handleEvent error: ${err.message}`);
+        logger.error(`eventParser.handleEvent error:`, err);
       }
     });
 
@@ -71,7 +84,7 @@ export async function realTimeHandlerNode(
     });
 
     outgoingWebSocket.addEventListener('error', (event) => {
-      console.error(`outgoingWebSocket error: ${event.message}`);
+      logger.error(`outgoingWebSocket error:`, event);
       incomingWebsocket?.close();
     });
 
@@ -92,7 +105,7 @@ export async function realTimeHandlerNode(
         outgoingWebSocket?.send(event.data as string);
       },
       onError(evt) {
-        console.error(`incomingWebsocket error: ${evt.type}`);
+        logger.error(`incomingWebsocket error:`, evt);
         outgoingWebSocket?.close();
       },
       onClose() {
@@ -100,6 +113,7 @@ export async function realTimeHandlerNode(
       },
     };
   } catch (err) {
+    console.log('err-catch', err);
     c.set('websocketError', true);
     return {
       onOpen() {},

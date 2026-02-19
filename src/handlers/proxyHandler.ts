@@ -1,23 +1,28 @@
 import { Context } from 'hono';
+import { tryTargetsRecursively } from './handlerUtils';
+import { logger } from '../apm';
 import { CONTENT_TYPES } from '../globals';
-import {
-  constructConfigFromRequestHeaders,
-  tryTargetsRecursively,
-} from './handlerUtils';
-import { RouterError } from '../errors/RouterError';
+import { constructConfigFromRequestHeaders } from '../utils/request';
 
-async function getRequestData(request: Request, contentType: string) {
+async function getRequestData(
+  requestBodyData: Record<string, any>,
+  contentType: string,
+  method: string
+) {
   let finalRequest: any;
   if (contentType == CONTENT_TYPES.APPLICATION_JSON) {
-    if (['GET', 'DELETE'].includes(request.method)) {
+    if (['GET', 'DELETE'].includes(method)) {
       finalRequest = {};
     } else {
-      finalRequest = await request.json();
+      finalRequest = requestBodyData.bodyJSON;
     }
   } else if (contentType == CONTENT_TYPES.MULTIPART_FORM_DATA) {
-    finalRequest = await request.formData();
-  } else if (contentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)) {
-    finalRequest = await request.arrayBuffer();
+    finalRequest = requestBodyData.bodyFormData;
+  } else if (
+    contentType?.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN) ||
+    contentType?.startsWith(CONTENT_TYPES.APPLICATION_OCTET_STREAM)
+  ) {
+    finalRequest = requestBodyData.requestBinary;
   }
 
   return finalRequest;
@@ -25,10 +30,13 @@ async function getRequestData(request: Request, contentType: string) {
 
 export async function proxyHandler(c: Context): Promise<Response> {
   try {
-    let requestHeaders = Object.fromEntries(c.req.raw.headers);
+    const requestHeaders = c.get('mappedHeaders');
     const requestContentType = requestHeaders['content-type']?.split(';')[0];
-
-    const request = await getRequestData(c.req.raw, requestContentType);
+    const request = await getRequestData(
+      c.get('requestBodyData'),
+      requestContentType,
+      c.req.method
+    );
 
     const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
 
@@ -44,22 +52,14 @@ export async function proxyHandler(c: Context): Promise<Response> {
 
     return tryTargetsResponse;
   } catch (err: any) {
-    console.error('proxyHandler error: ', err);
-    let statusCode = 500;
-    let errorMessage = `Proxy error: ${err.message}`;
-
-    if (err instanceof RouterError) {
-      statusCode = 400;
-      errorMessage = err.message;
-    }
-
+    logger.error(`proxy error:`, err);
     return new Response(
       JSON.stringify({
         status: 'failure',
-        message: errorMessage,
+        message: 'Something went wrong',
       }),
       {
-        status: statusCode,
+        status: 500,
         headers: {
           'content-type': 'application/json',
         },

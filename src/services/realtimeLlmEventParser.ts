@@ -1,7 +1,6 @@
 import { Context } from 'hono';
-import { addBackgroundTask } from '../utils/misc';
 
-export class RealtimeLlmEventParser {
+export class RealTimeLLMEventParser {
   private sessionState: any;
 
   constructor() {
@@ -23,7 +22,13 @@ export class RealtimeLlmEventParser {
       case 'session.updated':
         this.handleSessionUpdated(c, event, sessionOptions);
         break;
+      case 'conversation.created':
+        // xAI sends this event when a conversation is initialized
+        this.handleConversationCreated(c, event, sessionOptions);
+        break;
       case 'conversation.item.created':
+      case 'conversation.item.added':
+        // Handle both OpenAI and xAI event naming conventions
         this.handleConversationItemCreated(c, event);
         break;
       case 'conversation.item.deleted':
@@ -36,7 +41,7 @@ export class RealtimeLlmEventParser {
         this.handleError(c, event, sessionOptions);
         break;
       default:
-        break;
+      // console.warn(`Unhandled event type: ${event.type}`);
     }
   }
 
@@ -49,15 +54,12 @@ export class RealtimeLlmEventParser {
     this.sessionState.sessionDetails = { ...data.session };
     const realtimeEventParser = c.get('realtimeEventParser');
     if (realtimeEventParser) {
-      addBackgroundTask(
+      realtimeEventParser(
         c,
-        realtimeEventParser(
-          c,
-          sessionOptions,
-          {},
-          { ...data.session },
-          data.type
-        )
+        sessionOptions,
+        {},
+        { ...data.session },
+        data.type
       );
     }
   }
@@ -71,15 +73,34 @@ export class RealtimeLlmEventParser {
     this.sessionState.sessionDetails = { ...data.session };
     const realtimeEventParser = c.get('realtimeEventParser');
     if (realtimeEventParser) {
-      addBackgroundTask(
+      realtimeEventParser(
         c,
-        realtimeEventParser(
-          c,
-          sessionOptions,
-          {},
-          { ...data.session },
-          data.type
-        )
+        sessionOptions,
+        {},
+        { ...data.session },
+        data.type
+      );
+    }
+  }
+
+  // Handle `conversation.created` event (xAI specific)
+  private handleConversationCreated(
+    c: Context,
+    data: any,
+    sessionOptions: any
+  ): void {
+    // Store conversation details if provided
+    if (data.conversation) {
+      this.sessionState.conversationId = data.conversation.id;
+    }
+    const realtimeEventParser = c.get('realtimeEventParser');
+    if (realtimeEventParser) {
+      realtimeEventParser(
+        c,
+        sessionOptions,
+        {},
+        { ...data.conversation },
+        data.type
       );
     }
   }
@@ -109,22 +130,16 @@ export class RealtimeLlmEventParser {
       const itemSequence = this.rebuildConversationSequence(
         this.sessionState.conversation.items
       );
-      addBackgroundTask(
+      realtimeEventParser(
         c,
-        realtimeEventParser(
-          c,
-          sessionOptions,
-          {
-            conversation: {
-              items: this.getOrderedConversationItems(itemSequence).slice(
-                0,
-                -1
-              ),
-            },
+        sessionOptions,
+        {
+          conversation: {
+            items: this.getOrderedConversationItems(itemSequence).slice(0, -1),
           },
-          data,
-          data.type
-        )
+        },
+        data,
+        data.type
       );
     }
   }
@@ -132,10 +147,7 @@ export class RealtimeLlmEventParser {
   private handleError(c: Context, data: any, sessionOptions: any): void {
     const realtimeEventParser = c.get('realtimeEventParser');
     if (realtimeEventParser) {
-      addBackgroundTask(
-        c,
-        realtimeEventParser(c, sessionOptions, {}, data, data.type)
-      );
+      realtimeEventParser(c, sessionOptions, {}, data, data.type);
     }
   }
 

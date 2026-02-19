@@ -3,6 +3,7 @@ import { Options } from '../../types/requestBody';
 import BedrockAPIConfig from './api';
 import { getOctetStreamToOctetStreamTransformer } from '../../handlers/streamHandlerUtils';
 import { BEDROCK } from '../../globals';
+import { externalServiceFetch } from '../../utils/fetch';
 
 const getRowTransform = () => {
   return (row: Record<string, any>) => row;
@@ -45,7 +46,7 @@ export const BedrockRetrieveFileContentRequestHandler = async ({
     });
 
     // make the request
-    const response = await fetch(url, {
+    const response = await externalServiceFetch(url, {
       method: 'GET',
       headers,
     });

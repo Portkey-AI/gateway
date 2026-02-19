@@ -1,0 +1,33 @@
+import { ProviderAPIConfig } from '../types';
+
+const DatabricksAPIConfig: ProviderAPIConfig = {
+  getBaseURL: ({ providerOptions }) => {
+    const workspace = providerOptions.databricksWorkspace;
+    if (!workspace) {
+      throw new Error('Databricks workspace or base URL must be provided');
+    }
+    return `https://${workspace}.cloud.databricks.com/serving-endpoints`;
+  },
+  headers: ({ providerOptions }) => {
+    const headersObj: Record<string, string> = {
+      Authorization: `Bearer ${providerOptions.apiKey}`,
+    };
+
+    return headersObj;
+  },
+  getEndpoint: ({ fn, gatewayRequestBodyJSON }) => {
+    const { model } = gatewayRequestBodyJSON;
+    // Databricks uses /invocations for all endpoints
+    // The base URL should include the model name: /serving-endpoints/{model}/invocations
+    switch (fn) {
+      case 'complete':
+      case 'chatComplete':
+      case 'embed':
+        return `/${model}/invocations`;
+      default:
+        return '';
+    }
+  },
+};
+
+export default DatabricksAPIConfig;

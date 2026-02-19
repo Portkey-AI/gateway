@@ -1,8 +1,7 @@
+import { logger } from '../apm';
 import { RouterError } from '../errors/RouterError';
-import {
-  constructConfigFromRequestHeaders,
-  tryTargetsRecursively,
-} from './handlerUtils';
+import { tryTargetsRecursively } from './handlerUtils';
+import { constructConfigFromRequestHeaders } from '../utils/request';
 import { Context } from 'hono';
 
 /**
@@ -15,13 +14,13 @@ import { Context } from 'hono';
  */
 export async function chatCompletionsHandler(c: Context): Promise<Response> {
   try {
-    let request = await c.req.json();
-    let requestHeaders = Object.fromEntries(c.req.raw.headers);
+    const request = c.get('requestBodyData');
+    const requestHeaders = c.get('mappedHeaders');
     const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
     const tryTargetsResponse = await tryTargetsRecursively(
       c,
       camelCaseConfig ?? {},
-      request,
+      request.bodyJSON,
       requestHeaders,
       'chatComplete',
       'POST',
@@ -30,9 +29,8 @@ export async function chatCompletionsHandler(c: Context): Promise<Response> {
 
     return tryTargetsResponse;
   } catch (err: any) {
-    console.error(
-      `chatCompletionsHandler error: ${err.message} \n\n stackTrace: ${err.stack}`
-    );
+    logger.error(`chatCompletions error: `, err);
+
     let statusCode = 500;
     let errorMessage = 'Something went wrong';
 

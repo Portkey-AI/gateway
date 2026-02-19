@@ -1,4 +1,5 @@
 import { COHERE } from '../../globals';
+import { Params } from '../../types/requestBody';
 import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateErrorResponse } from '../utils';
 

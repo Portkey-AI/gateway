@@ -6,6 +6,7 @@ import {
 } from './chatComplete';
 import { AI21CompleteConfig, AI21CompleteResponseTransform } from './complete';
 import { AI21EmbedConfig, AI21EmbedResponseTransform } from './embed';
+import { Ai21LogConfig } from './pricing';
 
 const AI21Config: ProviderConfigs = {
   complete: AI21CompleteConfig,
@@ -17,6 +18,7 @@ const AI21Config: ProviderConfigs = {
     chatComplete: AI21ChatCompleteResponseTransform,
     embed: AI21EmbedResponseTransform,
   },
+  pricing: Ai21LogConfig,
 };
 
 export default AI21Config;

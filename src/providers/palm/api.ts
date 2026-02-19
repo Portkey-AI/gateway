@@ -5,9 +5,13 @@ export const PalmApiConfig: ProviderAPIConfig = {
   headers: () => {
     return { 'Content-Type': 'application/json' };
   },
-  getEndpoint: ({ providerOptions, fn, gatewayRequestBodyJSON }) => {
+  getEndpoint: ({
+    providerOptions,
+    fn,
+    gatewayRequestBodyJSON: gatewayRequestBody,
+  }) => {
     const { apiKey } = providerOptions;
-    const { model } = gatewayRequestBodyJSON;
+    const { model } = gatewayRequestBody;
     switch (fn) {
       case 'complete': {
         return `/models/${model}:generateText?key=${apiKey}`;

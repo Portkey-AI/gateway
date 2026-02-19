@@ -19,8 +19,8 @@ export interface HookObject {
   id: string;
   checks?: Check[];
   async?: boolean;
-  sequential?: boolean;
   onFail?: HookOnFailObject;
+  sequential?: boolean;
   onSuccess?: HookOnSuccessObject;
   deny?: boolean;
   eventType: 'beforeRequestHook' | 'afterRequestHook';
@@ -116,4 +116,18 @@ export enum HookType {
 
 export interface HandlerOptions {
   env: Record<string, any>;
+  getFromCacheByKey: (key: string) => Promise<any>;
+  putInCacheWithValue: (
+    key: string,
+    value: any,
+    expiry?: number
+  ) => Promise<any>;
+  internalServiceFetch: (
+    url: string,
+    options?: RequestInit
+  ) => Promise<Response>;
+  externalServiceFetch: (
+    url: string,
+    options?: RequestInit
+  ) => Promise<Response>;
 }

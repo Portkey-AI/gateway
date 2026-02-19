@@ -11,6 +11,7 @@ import {
   AnyscaleCompleteStreamChunkTransform,
 } from './complete';
 import { AnyscaleEmbedConfig, AnyscaleEmbedResponseTransform } from './embed';
+import { AnyscaleLogConfig } from './pricing';
 
 const AnyscaleConfig: ProviderConfigs = {
   complete: AnyscaleCompleteConfig,
@@ -24,6 +25,7 @@ const AnyscaleConfig: ProviderConfigs = {
     'stream-chatComplete': AnyscaleChatCompleteStreamChunkTransform,
     embed: AnyscaleEmbedResponseTransform,
   },
+  pricing: AnyscaleLogConfig,
 };
 
 export default AnyscaleConfig;

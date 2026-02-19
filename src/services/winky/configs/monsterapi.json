@@ -1,0 +1,87 @@
+{
+  "default": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0
+        },
+        "response_token": {
+          "price": 0
+        }
+      },
+      "calculate": {
+        "request": {
+          "operation": "multiply",
+          "operands": [
+            {
+              "value": "input_tokens"
+            },
+            {
+              "value": "rates.request_token"
+            }
+          ]
+        },
+        "response": {
+          "operation": "multiply",
+          "operands": [
+            {
+              "value": "output_tokens"
+            },
+            {
+              "value": "rates.response_token"
+            }
+          ]
+        }
+      },
+      "currency": "USD"
+    }
+  },
+  "TinyLlama/TinyLlama-1.1B-Chat-v1.0": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000002818
+        },
+        "response_token": {
+          "price": 0.00002818
+        }
+      }
+    }
+  },
+  "microsoft/phi-2": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000003483
+        },
+        "response_token": {
+          "price": 0.00003483
+        }
+      }
+    }
+  },
+  "HuggingFaceH4/zephyr-7b-beta": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000004559
+        },
+        "response_token": {
+          "price": 0.00004559
+        }
+      }
+    }
+  },
+  "mistralai/Mistral-7B-Instruct-v0.2": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000004559
+        },
+        "response_token": {
+          "price": 0.00004559
+        }
+      }
+    }
+  }
+}

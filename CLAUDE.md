@@ -90,3 +90,29 @@ Tests are organized by component:
 The gateway uses `conf.json` for runtime configuration. Sample config available in `conf_sample.json`.
 
 Key environment variables and configuration handled through Hono's adapter system for multi-environment deployment.
+
+## Maintaining This File
+
+This CLAUDE.md file serves as a knowledge base for Claude Code. When working with this repository:
+
+**When to Update:**
+- Discovery of new architectural patterns or design decisions
+- Changes to development workflows or testing strategies
+- Addition of new core components or significant refactoring
+- Learning about important conventions or best practices specific to this codebase
+- Finding undocumented but important configuration options or environment variables
+
+**What to Include:**
+- Actionable information that will help future Claude Code sessions work more effectively
+- Non-obvious patterns, gotchas, or conventions
+- Important relationships between components
+- Critical deployment or testing considerations
+
+**What to Avoid:**
+- Temporary implementation details that change frequently
+- Information that's already well-documented in code comments
+- Trivial or obvious facts about the codebase
+- Duplicating information from package.json or other config files
+
+**How to Update:**
+Add new sections or expand existing ones as needed. Keep entries concise and focused on what Claude Code needs to know to work effectively with this repository.

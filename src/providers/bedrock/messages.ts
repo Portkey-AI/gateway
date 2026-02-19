@@ -1,7 +1,10 @@
 import { BEDROCK } from '../../globals';
+import { AnthropicMessagesStreamResponse } from '../../middlewares/portkey/types';
 import {
+  ContentBlockParam,
   DocumentBlockParam,
   ImageBlockParam,
+  MessageParam,
   RedactedThinkingBlockParam,
   TextBlockParam,
   ThinkingBlockParam,
@@ -22,6 +25,7 @@ import {
   ANTHROPIC_MESSAGE_START_EVENT,
   ANTHROPIC_MESSAGE_STOP_EVENT,
 } from '../anthropic-base/constants';
+import { getMessagesConfig } from '../anthropic-base/messages';
 import {
   AnthropicMessageDeltaEvent,
   AnthropicMessageStartEvent,
@@ -41,7 +45,6 @@ import {
   BedrockStreamState,
 } from './types';
 import {
-  transformAnthropicAdditionalModelRequestFields,
   transformInferenceConfig,
   transformToolsConfig as transformToolConfig,
 } from './utils/messagesUtils';
@@ -60,6 +63,24 @@ const appendTextBlock = (
       },
     });
   }
+};
+
+const transformAnthropicBeta = (
+  params: BedrockMessagesParams,
+  providerOptions?: Options
+) => {
+  const anthropicBeta =
+    providerOptions?.anthropicBeta || params['anthropic_beta'] || [];
+  if (!anthropicBeta?.length) return undefined;
+  if (typeof anthropicBeta === 'string') {
+    return anthropicBeta
+      .split(',')
+      .map((beta: string) => beta.trim())
+      .filter((beta: string) => beta !== 'prompt-caching-scope-2026-01-05');
+  }
+  return anthropicBeta.filter(
+    (beta: string) => beta !== 'prompt-caching-scope-2026-01-05'
+  );
 };
 
 const appendImageBlock = (
@@ -112,37 +133,45 @@ const appendDocumentBlock = (
   if (documentBlock.source.type === 'base64') {
     transformedContent.push({
       document: {
+        name: documentBlock.title || crypto.randomUUID(),
         format: documentBlock.source.media_type.split('/')[1],
         source: {
           bytes: documentBlock.source.data,
         },
+        citations: documentBlock.citations,
       },
     });
-    if (documentBlock.cache_control) {
-      transformedContent.push({
-        cachePoint: {
-          type: 'default',
-        },
-      });
-    }
   } else if (documentBlock.source.type === 'url') {
     transformedContent.push({
       document: {
+        name: documentBlock.title || crypto.randomUUID(),
         format: documentBlock.source.media_type?.split('/')[1] || 'pdf',
         source: {
           s3Location: {
             uri: documentBlock.source.url,
           },
         },
+        citations: documentBlock.citations,
       },
     });
-    if (documentBlock.cache_control) {
-      transformedContent.push({
-        cachePoint: {
-          type: 'default',
+  } else if (documentBlock.source.type === 'text') {
+    transformedContent.push({
+      document: {
+        name: documentBlock.title || crypto.randomUUID(),
+        format: 'txt',
+        source: {
+          text: documentBlock.source.data,
         },
-      });
-    }
+        citations: documentBlock.citations,
+      },
+    });
+  }
+  if (documentBlock.cache_control) {
+    transformedContent.push({
+      cachePoint: {
+        type: 'default',
+      },
+    });
   }
 };
 
@@ -253,12 +282,16 @@ export const BedrockConverseMessagesConfig: ProviderConfig = {
           });
         } else if (Array.isArray(message.content)) {
           const transformedContent: any[] = [];
+          let hasTextBlock = false;
+          let hasDocumentBlock = false;
           for (const content of message.content) {
             if (content.type === 'text') {
+              hasTextBlock = true;
               appendTextBlock(transformedContent, content);
             } else if (content.type === 'image') {
               appendImageBlock(transformedContent, content);
             } else if (content.type === 'document') {
+              hasDocumentBlock = true;
               appendDocumentBlock(transformedContent, content);
             } else if (content.type === 'thinking') {
               appendThinkingBlock(transformedContent, content);
@@ -276,6 +309,10 @@ export const BedrockConverseMessagesConfig: ProviderConfig = {
             // else if (content.type === 'mcp_tool_use') {}
             // else if (content.type === 'mcp_tool_result') {}
             // else if (content.type === 'container_upload') {}
+          }
+          // Bedrock requires a text block when documents are present
+          if (hasDocumentBlock && !hasTextBlock) {
+            transformedContent.unshift({ text: ' ' });
           }
           transformedMessages.push({
             role: message.role,
@@ -357,40 +394,6 @@ export const BedrockConverseMessagesConfig: ProviderConfig = {
   performance_config: {
     param: 'performanceConfig',
     required: false,
-  },
-};
-
-export const AnthropicBedrockConverseMessagesConfig: ProviderConfig = {
-  ...BedrockConverseMessagesConfig,
-  additional_model_request_fields: {
-    param: 'additionalModelRequestFields',
-    transform: (params: BedrockMessagesParams, providerOptions?: Options) =>
-      transformAnthropicAdditionalModelRequestFields(params, providerOptions),
-  },
-  top_k: {
-    param: 'additionalModelRequestFields',
-    transform: (params: BedrockMessagesParams, providerOptions?: Options) =>
-      transformAnthropicAdditionalModelRequestFields(params, providerOptions),
-  },
-  anthropic_version: {
-    param: 'additionalModelRequestFields',
-    transform: (params: BedrockMessagesParams, providerOptions?: Options) =>
-      transformAnthropicAdditionalModelRequestFields(params, providerOptions),
-  },
-  user: {
-    param: 'additionalModelRequestFields',
-    transform: (params: BedrockMessagesParams, providerOptions?: Options) =>
-      transformAnthropicAdditionalModelRequestFields(params, providerOptions),
-  },
-  thinking: {
-    param: 'additionalModelRequestFields',
-    transform: (params: BedrockMessagesParams, providerOptions?: Options) =>
-      transformAnthropicAdditionalModelRequestFields(params, providerOptions),
-  },
-  anthropic_beta: {
-    param: 'additionalModelRequestFields',
-    transform: (params: BedrockMessagesParams, providerOptions?: Options) =>
-      transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
 };
 
@@ -527,7 +530,7 @@ function createContentBlockStartEvent(
       name: parsedChunk.start.toolUse.name,
       input: {},
     };
-  } else if (parsedChunk.delta?.reasoningContent?.text) {
+  } else if (parsedChunk.delta?.reasoningContent?.text !== undefined) {
     contentBlockStartEvent.content_block = {
       type: 'thinking',
       thinking: '',
@@ -625,3 +628,87 @@ function getMessageStartEvent(fallbackId: string, gatewayRequest: Params) {
   messageStartEvent.message.model = gatewayRequest.model as string;
   return `event: message_start\ndata: ${JSON.stringify(messageStartEvent)}\n\n`;
 }
+
+export const BedrockConverseAnthropicMessagesConfig: ProviderConfig =
+  getMessagesConfig({
+    exclude: ['model', 'stream'],
+    extra: {
+      anthropic_version: {
+        param: 'anthropic_version',
+        required: true,
+        default: 'bedrock-2023-05-31',
+        transform: (params: BedrockMessagesParams) => {
+          return params['anthropic_version'] || 'bedrock-2023-05-31';
+        },
+      },
+      anthropic_beta: {
+        param: 'anthropic_beta',
+        required: true,
+        default: (params: BedrockMessagesParams, providerOptions?: Options) => {
+          return transformAnthropicBeta(params, providerOptions);
+        },
+        transform: (
+          params: BedrockMessagesParams,
+          providerOptions?: Options
+        ) => {
+          return transformAnthropicBeta(params, providerOptions);
+        },
+      },
+      messages: {
+        param: 'messages',
+        required: true,
+        transform: (params: BedrockMessagesParams) => {
+          // delete the scope property from the cache_control property of the content blocks
+          params.messages.forEach((message: MessageParam) => {
+            if (Array.isArray(message.content)) {
+              message.content.forEach((content: ContentBlockParam) => {
+                if ('cache_control' in content) {
+                  delete content.cache_control?.scope;
+                }
+              });
+            }
+          });
+          return params.messages;
+        },
+      },
+      system: {
+        param: 'system',
+        required: true,
+        transform: (params: BedrockMessagesParams) => {
+          // delete the scope property from the cache_control property of the content blocks
+          if (Array.isArray(params.system)) {
+            params.system.forEach((textBlock: TextBlockParam) => {
+              if ('cache_control' in textBlock) {
+                delete textBlock.cache_control?.scope;
+              }
+            });
+          }
+          return params.system;
+        },
+      },
+    },
+  });
+
+export const BedrockAnthropicMessagesResponseTransform = (
+  response: MessagesResponse | BedrockErrorResponse,
+  responseStatus: number
+): MessagesResponse | ErrorResponse => {
+  if (responseStatus !== 200) {
+    return (
+      BedrockErrorResponseTransform(response as BedrockErrorResponse) ||
+      generateInvalidProviderResponseError(response, BEDROCK)
+    );
+  }
+
+  if ('model' in response) return response;
+
+  return generateInvalidProviderResponseError(response, BEDROCK);
+};
+
+export const BedrockAnthropicMessagesStreamChunkTransform = (
+  responseChunk: string
+) => {
+  const parsedChunk: AnthropicMessagesStreamResponse =
+    JSON.parse(responseChunk);
+  return `event: ${parsedChunk.type}\ndata: ${JSON.stringify(parsedChunk)}\n\n`;
+};

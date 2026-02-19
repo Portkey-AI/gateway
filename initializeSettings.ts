@@ -1,5 +1,7 @@
+import { logger } from './src/apm';
+
 export const defaultOrganisationDetails = {
-  id: 'self-hosted-organisation',
+  id: '00000000-0000-0000-0000-000000000000',
   name: 'Portkey self hosted',
   settings: {
     debug_log: 1,
@@ -68,7 +70,7 @@ export const getSettings = async () => {
       return settings;
     }
   } catch (error) {
-    console.log(
+    logger.log(
       'WARNING: unable to load settings from your conf.json file',
       error
     );

@@ -4,8 +4,6 @@ import {
   GoogleChatCompleteResponseTransform,
   GoogleChatCompleteStreamChunkTransform,
   VertexAnthropicChatCompleteConfig,
-  VertexAnthropicChatCompleteResponseTransform,
-  VertexAnthropicChatCompleteStreamChunkTransform,
   VertexGoogleChatCompleteConfig,
   VertexLlamaChatCompleteConfig,
   VertexLlamaChatCompleteResponseTransform,
@@ -58,9 +56,15 @@ import {
   GetMistralAIChatCompleteStreamChunkTransform,
   MistralAIChatCompleteConfig,
 } from '../mistral-ai/chatComplete';
+import { VertexAILogConfig } from './pricing';
+import {
+  getAnthropicChatCompleteResponseTransform,
+  getAnthropicStreamChunkTransform,
+} from '../anthropic/chatComplete';
 
 const VertexConfig: ProviderConfigs = {
   api: VertexApiConfig,
+  pricing: VertexAILogConfig,
   getConfig: ({ params }) => {
     const requestConfig = {
       uploadFile: {},
@@ -134,9 +138,12 @@ const VertexConfig: ProviderConfigs = {
           messages: VertexAnthropicMessagesConfig,
           messagesCountTokens: VertexAnthropicMessagesCountTokensConfig,
           responseTransforms: {
-            'stream-chatComplete':
-              VertexAnthropicChatCompleteStreamChunkTransform,
-            chatComplete: VertexAnthropicChatCompleteResponseTransform,
+            'stream-chatComplete': getAnthropicStreamChunkTransform(
+              GOOGLE_VERTEX_AI,
+              ['event: vertex_event']
+            ),
+            chatComplete:
+              getAnthropicChatCompleteResponseTransform(GOOGLE_VERTEX_AI),
             messages: VertexAnthropicMessagesResponseTransform,
             ...responseTransforms,
           },

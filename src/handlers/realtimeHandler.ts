@@ -1,5 +1,4 @@
 import { Context } from 'hono';
-import { constructConfigFromRequestHeaders } from './handlerUtils';
 import { ProviderAPIConfig } from '../providers/types';
 import Providers from '../providers';
 import { Options } from '../types/requestBody';
@@ -8,7 +7,8 @@ import {
   getOptionsForOutgoingConnection,
   getURLForOutgoingConnection,
 } from './websocketUtils';
-import { RealtimeLlmEventParser } from '../services/realtimeLlmEventParser';
+import { constructConfigFromRequestHeaders } from '../utils/request';
+import { RealTimeLLMEventParser } from '../services/realtimeLLMEventParser';
 
 const getOutgoingWebSocket = async (url: string, options: RequestInit) => {
   let outgoingWebSocket: WebSocket | null = null;
@@ -29,17 +29,23 @@ const getOutgoingWebSocket = async (url: string, options: RequestInit) => {
 
 export async function realTimeHandler(c: Context): Promise<Response> {
   try {
-    const requestHeaders = Object.fromEntries(c.req.raw.headers);
+    const requestHeaders = c.get('mappedHeaders');
 
     const providerOptions = constructConfigFromRequestHeaders(
       requestHeaders
     ) as Options;
+    const urlObject = new URL(c.req.url);
+    const model = urlObject.searchParams.get('model');
+    if (model && model.startsWith('@')) {
+      urlObject.searchParams.set('model', model.replace(/@[^/]+\//, ''));
+    }
+    const incomingUrl = urlObject.toString();
     const provider = providerOptions.provider ?? '';
     const apiConfig: ProviderAPIConfig = Providers[provider].api;
     const url = getURLForOutgoingConnection(
       apiConfig,
       providerOptions,
-      c.req.url,
+      incomingUrl,
       c
     );
     const options = await getOptionsForOutgoingConnection(
@@ -67,7 +73,7 @@ export async function realTimeHandler(c: Context): Promise<Response> {
     server.accept();
 
     let outgoingWebSocket: WebSocket = await getOutgoingWebSocket(url, options);
-    const eventParser = new RealtimeLlmEventParser();
+    const eventParser = new RealTimeLLMEventParser();
     addListeners(outgoingWebSocket, eventParser, server, c, sessionOptions);
 
     return new Response(null, {

@@ -2,7 +2,7 @@ import { ProviderConfig } from '../types';
 import { BedrockMessagesParams } from './types';
 import { transformUsingProviderConfig } from '../../services/transformToProviderRequest';
 import { BedrockConverseMessagesConfig } from './messages';
-import { Options, Params } from '../../types/requestBody';
+import { Params } from '../../types/requestBody';
 import { BEDROCK } from '../../globals';
 import { BedrockErrorResponseTransform } from './chatComplete';
 import { generateInvalidProviderResponseError } from '../utils';
@@ -13,12 +13,11 @@ export const BedrockConverseMessageCountTokensConfig: ProviderConfig = {
   messages: {
     param: 'input',
     required: true,
-    transform: (params: BedrockMessagesParams, providerOptions: Options) => {
+    transform: (params: BedrockMessagesParams) => {
       return {
         converse: transformUsingProviderConfig(
           BedrockConverseMessagesConfig,
-          params as Params,
-          providerOptions
+          params as Params
         ),
       };
     },
@@ -29,11 +28,10 @@ export const BedrockAnthropicMessageCountTokensConfig: ProviderConfig = {
   messages: {
     param: 'input',
     required: true,
-    transform: (params: BedrockMessagesParams, providerOptions: Options) => {
+    transform: (params: BedrockMessagesParams) => {
       const anthropicParams = transformUsingProviderConfig(
         AnthropicMessagesConfig,
-        params as Params,
-        providerOptions
+        params as Params
       );
       delete anthropicParams.model;
       anthropicParams.anthropic_version =

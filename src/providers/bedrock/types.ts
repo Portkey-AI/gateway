@@ -82,7 +82,7 @@ export interface BedrockInferenceProfile {
 }
 
 // https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html#API_runtime_Converse_ResponseSyntax
-export enum BEDROCK_STOP_REASON {
+export enum BEDROCK_CONVERSE_STOP_REASON {
   end_turn = 'end_turn',
   tool_use = 'tool_use',
   max_tokens = 'max_tokens',
@@ -107,34 +107,6 @@ export interface BedrockMessagesParams extends MessageCreateParamsBase {
   };
   anthropic_version?: string;
   countPenalty?: number;
-}
-
-/**
- * Tool parameter interface for Bedrock Messages API.
- * Includes advanced tool use properties supported via Invoke API
- * with appropriate beta headers (e.g., tool-search-tool-2025-10-19).
- */
-export interface BedrockMessagesToolParam {
-  name: string;
-  description?: string;
-  input_schema?: Record<string, any>;
-  type?: string;
-  cache_control?: { type: string };
-  /**
-   * When true, this tool is not loaded into context initially.
-   * Requires beta header: tool-search-tool-2025-10-19 (Bedrock Invoke API only)
-   */
-  defer_loading?: boolean;
-  /**
-   * List of tool types that can call this tool programmatically.
-   * Requires appropriate beta header.
-   */
-  allowed_callers?: string[];
-  /**
-   * Example inputs demonstrating how to use this tool.
-   * Requires beta header: tool-examples-2025-10-29 (Bedrock Invoke API only)
-   */
-  input_examples?: Record<string, any>[];
 }
 export interface BedrockChatCompletionResponse {
   metrics: {
@@ -239,6 +211,7 @@ export interface BedrockChatCompleteStreamChunk {
       input?: object;
     };
   };
+  message?: string;
   stopReason?: BEDROCK_CONVERSE_STOP_REASON;
   metrics?: {
     latencyMs: number;
@@ -252,16 +225,6 @@ export interface BedrockChatCompleteStreamChunk {
     cacheWriteInputTokenCount?: number;
     cacheWriteInputTokens?: number;
   };
-  message?: string;
-}
-
-export enum BEDROCK_CONVERSE_STOP_REASON {
-  end_turn = 'end_turn',
-  tool_use = 'tool_use',
-  max_tokens = 'max_tokens',
-  stop_sequence = 'stop_sequence',
-  guardrail_intervened = 'guardrail_intervened',
-  content_filtered = 'content_filtered',
 }
 
 export enum TITAN_STOP_REASON {
@@ -270,4 +233,90 @@ export enum TITAN_STOP_REASON {
   STOP_CRITERIA_MET = 'STOP_CRITERIA_MET',
   RAG_QUERY_WHEN_RAG_DISABLED = 'RAG_QUERY_WHEN_RAG_DISABLED',
   CONTENT_FILTERED = 'CONTENT_FILTERED',
+}
+
+// ==================== Rerank Types ====================
+
+/**
+ * Bedrock Rerank API Request
+ * https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent-runtime_Rerank.html
+ */
+export interface BedrockRerankRequest {
+  /** Array of query objects (fixed to 1 item) */
+  queries: BedrockRerankQuery[];
+  /** Array of source documents to rerank (1-1000 items) */
+  sources: BedrockRerankSource[];
+  /** Reranking configuration */
+  rerankingConfiguration: BedrockRerankingConfiguration;
+  /** Pagination token for next batch of results */
+  nextToken?: string;
+}
+
+export interface BedrockRerankQuery {
+  /** Query type */
+  type: 'TEXT';
+  /** Text query object */
+  textQuery: {
+    text: string;
+  };
+}
+
+export interface BedrockRerankSource {
+  /** Source type */
+  type: 'INLINE';
+  /** Inline document source */
+  inlineDocumentSource: {
+    /** Document type */
+    type: 'TEXT' | 'JSON';
+    /** Text document */
+    textDocument?: {
+      text: string;
+    };
+    /** JSON document */
+    jsonDocument?: Record<string, any>;
+  };
+}
+
+export interface BedrockRerankingConfiguration {
+  /** Configuration type */
+  type: 'BEDROCK_RERANKING_MODEL';
+  /** Bedrock-specific reranking configuration */
+  bedrockRerankingConfiguration: {
+    /** Model configuration */
+    modelConfiguration: {
+      /** Model ARN */
+      modelArn: string;
+      /** Additional model request fields */
+      additionalModelRequestFields?: Record<string, any>;
+    };
+    /** Number of results to return */
+    numberOfResults?: number;
+  };
+}
+
+/**
+ * Bedrock Rerank API Response
+ */
+export interface BedrockRerankResponse {
+  /** Array of reranked results */
+  results?: BedrockRerankResult[];
+  /** Pagination token for next batch */
+  nextToken?: string;
+  /** Error message */
+  message?: string;
+}
+
+export interface BedrockRerankResult {
+  /** Position in the original source list */
+  index: number;
+  /** Relevance score */
+  relevanceScore: number;
+  /** Document content (if returned) */
+  document?: {
+    type: string;
+    textDocument?: {
+      text: string;
+    };
+    jsonDocument?: Record<string, any>;
+  };
 }

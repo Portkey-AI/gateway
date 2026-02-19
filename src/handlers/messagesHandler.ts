@@ -1,55 +1,38 @@
-import { RouterError } from '../errors/RouterError';
-import {
-  constructConfigFromRequestHeaders,
-  tryTargetsRecursively,
-} from './handlerUtils';
 import { Context } from 'hono';
+import { logger } from '../apm';
+import { tryTargetsRecursively } from './handlerUtils';
+import { constructConfigFromRequestHeaders } from '../utils/request';
 
 /**
- * Handles the '/messages' API request by selecting the appropriate provider(s) and making the request to them.
+ * Handler for the Messages API endpoints (/v1/messages)
  *
- * @param {Context} c - The Cloudflare Worker context.
- * @returns {Promise<Response>} - The response from the provider.
- * @throws Will throw an error if no provider options can be determined or if the request to the provider(s) fails.
- * @throws Will throw an 500 error if the handler fails due to some reasons
+ * This handler always passes through to tryTargetsRecursively with fn='messages'.
+ * The per-provider adapter decision (native vs chatComplete translation) is made
+ * inside tryPost where the exact provider is known, rather than pre-deciding
+ * at the handler level via recursive config walking.
  */
 export async function messagesHandler(c: Context): Promise<Response> {
   try {
-    let request = await c.req.json();
-    let requestHeaders = Object.fromEntries(c.req.raw.headers);
+    const request = c.get('requestBodyData');
+    const requestHeaders = c.get('mappedHeaders');
     const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
-    const tryTargetsResponse = await tryTargetsRecursively(
+
+    return tryTargetsRecursively(
       c,
       camelCaseConfig ?? {},
-      request,
+      request.bodyJSON,
       requestHeaders,
       'messages',
       'POST',
       'config'
     );
-
-    return tryTargetsResponse;
   } catch (err: any) {
-    console.log('messages error', err.message);
-    let statusCode = 500;
-    let errorMessage = 'Something went wrong';
-
-    if (err instanceof RouterError) {
-      statusCode = 400;
-      errorMessage = err.message;
-    }
-
+    logger.error('messages error:', err);
     return new Response(
       JSON.stringify({
-        status: 'failure',
-        message: errorMessage,
+        error: { message: 'Internal error', type: 'server_error' },
       }),
-      {
-        status: statusCode,
-        headers: {
-          'content-type': 'application/json',
-        },
-      }
+      { status: 500, headers: { 'content-type': 'application/json' } }
     );
   }
 }

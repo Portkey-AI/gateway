@@ -1,4 +1,3 @@
-import { Options } from '../../../types/requestBody';
 import { BedrockMessagesParams } from '../types';
 
 export const transformInferenceConfig = (params: BedrockMessagesParams) => {
@@ -16,38 +15,6 @@ export const transformInferenceConfig = (params: BedrockMessagesParams) => {
     inferenceConfig['stopSequences'] = params['stop_sequences'];
   }
   return inferenceConfig;
-};
-
-export const transformAnthropicAdditionalModelRequestFields = (
-  params: BedrockMessagesParams,
-  providerOptions?: Options
-) => {
-  const additionalModelRequestFields: Record<string, any> =
-    params.additionalModelRequestFields ||
-    params.additional_model_request_fields ||
-    {};
-  if (params['top_k']) {
-    additionalModelRequestFields['top_k'] = params['top_k'];
-  }
-  if (params['anthropic_version']) {
-    additionalModelRequestFields['anthropic_version'] =
-      params['anthropic_version'];
-  }
-  if (params['thinking']) {
-    additionalModelRequestFields['thinking'] = params['thinking'];
-  }
-  const anthropicBeta =
-    providerOptions?.anthropicBeta || params['anthropic_beta'];
-  if (anthropicBeta) {
-    if (typeof anthropicBeta === 'string') {
-      additionalModelRequestFields['anthropic_beta'] = anthropicBeta
-        .split(',')
-        .map((beta: string) => beta.trim());
-    } else {
-      additionalModelRequestFields['anthropic_beta'] = anthropicBeta;
-    }
-  }
-  return additionalModelRequestFields;
 };
 
 export const transformToolsConfig = (params: BedrockMessagesParams) => {
@@ -73,26 +40,13 @@ export const transformToolsConfig = (params: BedrockMessagesParams) => {
   if (params.tools) {
     for (const tool of params.tools) {
       if (tool.type === 'custom' || !tool.type) {
-        const toolSpec: Record<string, any> = {
-          name: tool.name,
-          inputSchema: { json: tool.input_schema },
-          description: tool.description,
-        };
-
-        // Pass through advanced tool use properties if present
-        // Users must provide appropriate beta header (e.g., tool-search-tool-2025-10-19)
-        if (tool.defer_loading !== undefined) {
-          toolSpec.defer_loading = tool.defer_loading;
-        }
-        if (tool.allowed_callers) {
-          toolSpec.allowed_callers = tool.allowed_callers;
-        }
-        if (tool.input_examples) {
-          toolSpec.input_examples = tool.input_examples;
-        }
-
-        tools.push({ toolSpec });
-
+        tools.push({
+          toolSpec: {
+            name: tool.name,
+            inputSchema: { json: tool.input_schema },
+            description: tool.description,
+          },
+        });
         if (tool.cache_control) {
           tools.push({
             cachePoint: {

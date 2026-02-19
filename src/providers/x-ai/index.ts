@@ -4,6 +4,7 @@ import XAIAPIConfig from './api';
 import {
   chatCompleteParams,
   completeParams,
+  createModelResponseParams,
   embedParams,
   responseTransformers,
 } from '../open-ai-base';
@@ -40,12 +41,17 @@ const XAIConfig: ProviderConfigs = {
   chatComplete: chatCompleteParams([], { model: 'grok-beta' }),
   complete: completeParams([], { model: 'grok-beta' }),
   embed: embedParams([], { model: 'v1' }),
+  createModelResponse: createModelResponseParams([]),
+  realtime: {},
   api: XAIAPIConfig,
-  responseTransforms: responseTransformers(X_AI, {
-    chatComplete: xAIResponseTransform,
-    complete: xAIResponseTransform,
-    embed: xAIResponseTransform,
-  }),
+  responseTransforms: {
+    ...responseTransformers(X_AI, {
+      chatComplete: xAIResponseTransform,
+      complete: xAIResponseTransform,
+      embed: xAIResponseTransform,
+    }),
+    realtime: {},
+  },
 };
 
 export default XAIConfig;

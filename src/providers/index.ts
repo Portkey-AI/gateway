@@ -6,7 +6,6 @@ import AzureOpenAIConfig from './azure-openai';
 import BedrockConfig from './bedrock';
 import CohereConfig from './cohere';
 import DeepInfraConfig from './deepinfra';
-import NCompassConfig from './ncompass';
 import GoogleConfig from './google';
 import VertexConfig from './google-vertex-ai';
 import MistralAIConfig from './mistral-ai';
@@ -44,24 +43,26 @@ import HuggingfaceConfig from './huggingface';
 import { cerebrasProviderAPIConfig } from './cerebras';
 import { InferenceNetProviderConfigs } from './inference-net';
 import SambaNovaConfig from './sambanova';
-import LemonfoxAIConfig from './lemonfox-ai';
 import { UpstageConfig } from './upstage';
 import { LAMBDA } from '../globals';
 import { LambdaProviderConfig } from './lambda';
-import { DashScopeConfig } from './dashscope';
-import XAIConfig from './x-ai';
-import QdrantConfig from './qdrant';
 import SagemakerConfig from './sagemaker';
-import NebiusConfig from './nebius';
-import RecraftAIConfig from './recraft-ai';
-import MilvusConfig from './milvus';
+import PortkeyConfig from './portkey';
 import ReplicateConfig from './replicate';
+import MilvusConfig from './milvus';
 import LeptonConfig from './lepton';
-import KlusterAIConfig from './kluster-ai';
-import NscaleConfig from './nscale';
-import HyperbolicConfig from './hyperbolic';
-import { FeatherlessAIConfig } from './featherless-ai';
+import NCompassConfig from './ncompass';
+import QdrantConfig from './qdrant';
 import KrutrimConfig from './krutrim';
+import { FeatherlessAIConfig } from './featherless-ai';
+import HyperbolicConfig from './hyperbolic';
+import NscaleConfig from './nscale';
+import RecraftAIConfig from './recraft-ai';
+import KlusterAIConfig from './kluster-ai';
+import LemonfoxAIConfig from './lemonfox-ai';
+import XAIConfig from './x-ai';
+import { DashScopeConfig } from './dashscope';
+import NebiusConfig from './nebius';
 import AI302Config from './302ai';
 import MeshyConfig from './meshy';
 import Tripo3DConfig from './tripo3d';
@@ -74,6 +75,8 @@ import OracleConfig from './oracle';
 import IOIntelligenceConfig from './iointelligence';
 import AIBadgrConfig from './aibadgr';
 import OVHcloudConfig from './ovhcloud';
+import DatabricksConfig from './databricks';
+import PineconeConfig from './pinecone';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -142,12 +145,15 @@ const Providers: { [key: string]: ProviderConfigs } = {
   meshy: MeshyConfig,
   nextbit: NextBitConfig,
   tripo3d: Tripo3DConfig,
+  portkey: PortkeyConfig,
   modal: ModalConfig,
   'z-ai': ZAIConfig,
   oracle: OracleConfig,
   iointelligence: IOIntelligenceConfig,
   aibadgr: AIBadgrConfig,
   ovhcloud: OVHcloudConfig,
+  databricks: DatabricksConfig,
+  pinecone: PineconeConfig,
 };
 
 export default Providers;

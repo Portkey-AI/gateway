@@ -15,6 +15,7 @@ import {
   WorkersAiImageGenerateConfig,
   WorkersAiImageGenerateResponseTransform,
 } from './imageGenerate';
+import { WorkersAiLogConfig } from './pricing';
 
 const WorkersAiConfig: ProviderConfigs = {
   complete: WorkersAiCompleteConfig,
@@ -30,6 +31,7 @@ const WorkersAiConfig: ProviderConfigs = {
     embed: WorkersAiEmbedResponseTransform,
     imageGenerate: WorkersAiImageGenerateResponseTransform,
   },
+  pricing: WorkersAiLogConfig,
 };
 
 export default WorkersAiConfig;

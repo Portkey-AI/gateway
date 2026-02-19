@@ -1,2 +1,3 @@
-.toml
-docs
+build
+node_modules
+.env*

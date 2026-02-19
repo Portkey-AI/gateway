@@ -1,7 +1,6 @@
 import { ErrorResponse, FinetuneRequest, ProviderConfig } from '../types';
 import { BedrockErrorResponseTransform } from './chatComplete';
 import { BedrockErrorResponse } from './embed';
-import { populateHyperParameters } from './utils';
 
 export const BedrockCreateFinetuneConfig: ProviderConfig = {
   model: {
@@ -16,10 +15,10 @@ export const BedrockCreateFinetuneConfig: ProviderConfig = {
     param: 'hyperParameters',
     required: false,
     transform: (value: FinetuneRequest) => {
-      const hyperParameters = populateHyperParameters(value);
-      const epochCount = hyperParameters.n_epochs;
-      const learningRateMultiplier = hyperParameters.learning_rate_multiplier;
-      const batchSize = hyperParameters.batch_size;
+      const epochCount = value.hyperparameters?.n_epochs;
+      const learningRateMultiplier =
+        value.hyperparameters?.learning_rate_multiplier;
+      const batchSize = value.hyperparameters?.batch_size;
       return {
         epochCount: epochCount ? String(epochCount) : undefined,
         learningRateMultiplier: learningRateMultiplier
@@ -90,8 +89,9 @@ export const BedrockCreateFinetuneResponseTransform: (
   Response;
   if (!OK_STATUS.includes(responseStatus) || 'error' in response) {
     return (
-      BedrockErrorResponseTransform(response as BedrockErrorResponse) ||
-      (response as ErrorResponse)
+      BedrockErrorResponseTransform(
+        response as unknown as BedrockErrorResponse
+      ) || (response as ErrorResponse)
     );
   }
 

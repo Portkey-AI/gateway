@@ -182,7 +182,7 @@ export interface Citation {
   type?: any;
 }
 
-namespace V2ChatStreamResponse {
+export namespace V2ChatStreamResponse {
   export interface MessageStart {
     type: 'message-start';
     id: string;
@@ -324,4 +324,66 @@ export interface CohereChatCompleteResponse {
 export interface CohereErrorResponse {
   message: string;
   id: string;
+}
+
+// ==================== Rerank Types ====================
+
+/**
+ * Cohere Rerank API Request
+ * https://docs.cohere.com/reference/rerank
+ */
+export interface CohereRerankRequest {
+  /** The identifier of the model to use */
+  model: string;
+  /** The search query */
+  query: string;
+  /** A list of document strings to rerank */
+  documents: string[];
+  /** The number of most relevant documents to return (defaults to all) */
+  top_n?: number;
+  /** Specifies the maximum number of tokens per document (defaults to 4096) */
+  max_tokens_per_doc?: number;
+  /** Priority of the request (lower number = higher priority, default 0) */
+  priority?: number;
+}
+
+/**
+ * Cohere Rerank API Response
+ */
+export interface CohereRerankResponse {
+  /** Unique identifier for the request */
+  id?: string;
+  /** Array of reranked results */
+  results: CohereRerankResult[];
+  /** Metadata about the response */
+  meta?: CohereRerankMeta;
+  /** Error message (if any) */
+  message?: string;
+}
+
+export interface CohereRerankResult {
+  /** Position in the original document list */
+  index: number;
+  /** Relevance score (0-1 range, higher is more relevant) */
+  relevance_score: number;
+}
+
+export interface CohereRerankMeta {
+  api_version?: {
+    version: string;
+    is_deprecated?: boolean;
+    is_experimental?: boolean;
+  };
+  billed_units?: {
+    search_units?: number;
+    input_tokens?: number;
+    output_tokens?: number;
+    images?: number;
+    classifications?: number;
+  };
+  tokens?: {
+    input_tokens?: number;
+    output_tokens?: number;
+  };
+  warnings?: string[];
 }

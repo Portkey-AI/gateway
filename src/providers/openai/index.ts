@@ -3,12 +3,9 @@ import {
   OpenAICompleteConfig,
   OpenAICompleteResponseTransform,
 } from './complete';
-import { OpenAIEmbedConfig, OpenAIEmbedResponseTransform } from './embed';
+import { OpenAIEmbedConfig } from './embed';
 import OpenAIAPIConfig from './api';
-import {
-  OpenAIChatCompleteConfig,
-  OpenAIChatCompleteResponseTransform,
-} from './chatComplete';
+import { OpenAIChatCompleteConfig } from './chatComplete';
 import {
   OpenAIImageGenerateConfig,
   OpenAIImageGenerateResponseTransform,
@@ -46,6 +43,7 @@ import {
   OpenAIListInputItemsResponseTransformer,
 } from '../open-ai-base';
 import { OPEN_AI } from '../../globals';
+import { OpenAILogConfig } from './pricing';
 
 const OpenAIConfig: ProviderConfigs = {
   complete: OpenAICompleteConfig,
@@ -75,7 +73,6 @@ const OpenAIConfig: ProviderConfigs = {
   responseTransforms: {
     complete: OpenAICompleteResponseTransform,
     // 'stream-complete': OpenAICompleteResponseTransform,
-    chatComplete: OpenAIChatCompleteResponseTransform,
     // 'stream-chatComplete': OpenAIChatCompleteResponseTransform,
     imageGenerate: OpenAIImageGenerateResponseTransform,
     createSpeech: OpenAICreateSpeechResponseTransform,
@@ -98,6 +95,7 @@ const OpenAIConfig: ProviderConfigs = {
     deleteModelResponse: OpenAIDeleteModelResponseTransformer(OPEN_AI),
     listModelsResponse: OpenAIListInputItemsResponseTransformer(OPEN_AI),
   },
+  pricing: OpenAILogConfig,
 };
 
 export default OpenAIConfig;

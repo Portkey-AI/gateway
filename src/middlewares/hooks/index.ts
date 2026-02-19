@@ -11,9 +11,13 @@ import {
   HandlerOptions,
   HookType,
 } from './types';
-import { plugins } from '../../../plugins';
+import { plugins } from '../../plugins';
 import { Context } from 'hono';
 import { HOOKS_EVENT_TYPE_PRESETS } from './globals';
+import { setPluginHelpers } from '../../plugins/utils';
+import { externalServiceFetch, internalServiceFetch } from '../../utils/fetch';
+import { PluginHandlerOptions } from '../../plugins/types';
+import { env } from 'hono/adapter';
 
 export class HookSpan {
   private context: HookSpanContext;
@@ -101,13 +105,47 @@ export class HookSpan {
             .map((contentPart: any) => contentPart.text)
             .join('\n')
         : '';
-      return concatenatedText || lastMessage.content;
+      return (
+        concatenatedText ||
+        (typeof lastMessage.content === 'string' ? lastMessage.content : '')
+      );
     } else if (requestParams?.input) {
-      return Array.isArray(requestParams.input)
-        ? requestParams.input.join('\n')
-        : requestParams.input;
+      if (typeof requestParams.input === 'string') {
+        return requestParams.input;
+      }
+      if (Array.isArray(requestParams.input)) {
+        return this.extractResponsesApiInputText(requestParams.input);
+      }
+      return '';
     }
     return '';
+  }
+
+  private extractResponsesApiInputText(input: any[]): string {
+    return input
+      .map((item) => {
+        if (item.type === 'message' || item.role) {
+          if (typeof item.content === 'string') {
+            return item.content;
+          }
+          if (Array.isArray(item.content)) {
+            return item.content
+              .filter(
+                (c: { type: string }) =>
+                  c.type === 'input_text' || c.type === 'text'
+              )
+              .map((c: { text?: string }) => c.text || '')
+              .filter(Boolean)
+              .join('\n');
+          }
+        }
+        if (item.type === 'function_call_output' && item.output) {
+          return item.output;
+        }
+        return '';
+      })
+      .filter(Boolean)
+      .join('\n');
   }
 
   private initializeHooks(
@@ -156,7 +194,41 @@ export class HookSpan {
         return choice.message.content.text || choice.message.content;
       }
     }
+    if (responseJSON?.output && Array.isArray(responseJSON.output)) {
+      return this.extractResponsesApiOutputText(responseJSON.output);
+    }
     return '';
+  }
+
+  private extractResponsesApiOutputText(output: any[]): string {
+    return output
+      .map((item) => {
+        if (item.type === 'message' && item.content) {
+          const texts: string[] = [];
+          for (const c of item.content) {
+            if (c.type === 'output_text' || c.type === 'text') {
+              if (c.text) texts.push(c.text);
+            } else if (c.type === 'refusal') {
+              if (c.refusal) texts.push(c.refusal);
+            }
+          }
+          return texts.join('\n');
+        }
+        if (item.type === 'reasoning' && item.content) {
+          if (Array.isArray(item.content)) {
+            return item.content
+              .map((c: { text?: string }) => c.text || '')
+              .filter(Boolean)
+              .join('\n');
+          }
+          if (item.content.text) {
+            return item.content.text;
+          }
+        }
+        return '';
+      })
+      .filter(Boolean)
+      .join('\n');
   }
 
   public addHookResult(eventType: EventType, result: HookResult): void {
@@ -449,9 +521,15 @@ export class HooksManager {
   private shouldSkipHook(span: HookSpan, hook: HookObject): boolean {
     const context = span.getContext();
     return (
-      !['chatComplete', 'complete', 'embed', 'messages'].includes(
-        context.requestType
-      ) ||
+      ![
+        'chatComplete',
+        'complete',
+        'embed',
+        'messages',
+        'createBatch',
+        'createFinetune',
+        'createModelResponse',
+      ].includes(context.requestType) ||
       (context.requestType === 'embed' &&
         hook.eventType !== 'beforeRequestHook') ||
       (context.requestType === 'embed' && hook.type === HookType.MUTATOR) ||
@@ -507,6 +585,7 @@ export class HooksManager {
     eventTypePresets: string[]
   ): HookObject[] {
     const hooksToExecute: HookObject[] = [];
+
     if (
       eventTypePresets.includes(
         HOOKS_EVENT_TYPE_PRESETS.ASYNC_BEFORE_REQUEST_HOOK
@@ -552,5 +631,13 @@ export const hooks = (c: Context, next: any) => {
   const hooksManager = new HooksManager();
   c.set('hooksManager', hooksManager);
   c.set('executeHooks', hooksManager.executeHooks.bind(hooksManager));
+  // Set plugin helpers once at the hooks execution level to avoid race conditions
+  setPluginHelpers({
+    env: env(c),
+    getFromCacheByKey: c.get('getFromCacheByKey'),
+    putInCacheWithValue: c.get('putInCacheWithValue'),
+    internalServiceFetch: internalServiceFetch,
+    externalServiceFetch: externalServiceFetch,
+  } as PluginHandlerOptions);
   return next();
 };

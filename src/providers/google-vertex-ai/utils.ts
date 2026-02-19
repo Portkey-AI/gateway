@@ -3,7 +3,7 @@ import {
   GoogleResponseCandidate,
   GoogleBatchRecord,
   GoogleFinetuneRecord,
-  GoogleSearchRetrievalTool,
+  type GoogleSearchRetrievalTool,
 } from './types';
 import { generateErrorResponse } from '../utils';
 import {
@@ -11,11 +11,13 @@ import {
   GOOGLE_VERTEX_AI,
   fileExtensionMimeTypeMap,
 } from '../../globals';
+import { requestCache } from '../../services/cache/cacheService';
 import { ErrorResponse, FinetuneRequest, Logprobs } from '../types';
-import { Context } from 'hono';
-import { env } from 'hono/adapter';
+import { externalServiceFetch } from '../../utils/fetch';
 import { ContentType, JsonSchema, Tool } from '../../types/requestBody';
-import { GoogleMessagePart } from '../google/chatComplete';
+import { logger } from '../../apm';
+import { Environment } from '../../utils/env';
+import { fetchWorkloadIdentityToken } from '../../utils/gcpAuth';
 
 /**
  * Encodes an object as a Base64 URL-encoded string.
@@ -89,21 +91,17 @@ async function importPrivateKey(pem: string): Promise<CryptoKey> {
 }
 
 export const getAccessToken = async (
-  c: Context,
-  serviceAccountInfo: Record<string, any>
+  serviceAccountInfo: Record<string, any>,
+  env?: Record<string, any>
 ): Promise<string> => {
   try {
-    let cacheKey = `${serviceAccountInfo.project_id}/${serviceAccountInfo.private_key_id}/${serviceAccountInfo.client_email}`;
+    const cache = requestCache(env);
+    const cacheKey = `${serviceAccountInfo.project_id}/${serviceAccountInfo.private_key_id}/${serviceAccountInfo.client_email}`;
     // try to get from cache
-    try {
-      const getFromCacheByKey = c.get('getFromCacheByKey');
-      const resp = getFromCacheByKey
-        ? await getFromCacheByKey(env(c), cacheKey)
-        : null;
-      if (resp) {
-        return resp;
-      }
-    } catch (err) {}
+    const resp = await cache.get<string>(cacheKey, { useLocalCache: true });
+    if (resp) {
+      return resp;
+    }
 
     const scope = 'https://www.googleapis.com/auth/cloud-platform';
     const iat = Math.floor(Date.now() / 1000);
@@ -137,16 +135,16 @@ export const getAccessToken = async (
       assertion: jwtToken,
     });
 
-    const tokenResponse = await fetch(tokenUrl, {
+    const tokenResponse = await externalServiceFetch(tokenUrl, {
       headers: tokenHeaders,
       body: tokenData,
       method: 'POST',
     });
 
     const tokenJson: Record<string, any> = await tokenResponse.json();
-    const putInCacheWithValue = c.get('putInCacheWithValue');
-    if (putInCacheWithValue && cacheKey) {
-      await putInCacheWithValue(env(c), cacheKey, tokenJson.access_token, 3000); // 50 minutes
+
+    if (cacheKey) {
+      await cache.set(cacheKey, tokenJson.access_token, { ttl: 3000 }); // 50 minutes
     }
 
     return tokenJson.access_token;
@@ -154,6 +152,134 @@ export const getAccessToken = async (
     return '';
   }
 };
+
+export async function getGcpIdentityAccessToken(env?: Record<string, any>) {
+  try {
+    if (Environment({}).GCP_AUTH_MODE === 'workload') {
+      const cacheKey = `gcp-workload-identity-token`;
+      const resp = await requestCache(env).get<{ access_token: string }>(
+        cacheKey,
+        { useLocalCache: true }
+      );
+      if (resp?.access_token) {
+        return resp.access_token;
+      }
+      const data = await fetchWorkloadIdentityToken();
+      if (data) {
+        await requestCache(env).set(
+          cacheKey,
+          { access_token: data.access_token },
+          { ttl: data.expires_in }
+        );
+        return data.access_token;
+      }
+    }
+    return undefined;
+  } catch (err) {
+    return undefined;
+  }
+}
+
+export async function getModelProviderFromModelID(
+  model: string,
+  options: {
+    vertexRegion?: string;
+    vertexProjectId?: string;
+    vertexServiceAccountJson?: Record<string, any>;
+    apiKey?: string;
+  },
+  env?: Record<string, any>
+) {
+  const cache = requestCache(env);
+  const cacheKey = `${model}-vertex-base-model-id`;
+  const cachedModel = await cache.get<{ model: string }>(cacheKey, {
+    useLocalCache: true,
+    localCacheTtl: 604800,
+  });
+  if (cachedModel) {
+    return cachedModel.model;
+  }
+
+  const projectId =
+    options.vertexProjectId || options.vertexServiceAccountJson?.project_id;
+  const region = options.vertexRegion;
+
+  // prefer service account over api-key
+  const vertexAccessToken = options.vertexServiceAccountJson
+    ? await getAccessToken(options.vertexServiceAccountJson ?? {}, env)
+    : options.apiKey;
+
+  const endpoint = await externalServiceFetch(
+    `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/models/${model}`,
+    {
+      headers: {
+        Authorization: `Bearer ${vertexAccessToken}`,
+      },
+    }
+  );
+
+  try {
+    const data = (await endpoint.json()) as Record<string, any>;
+    const labels = (data.labels as Record<string, string>) ?? {};
+    const finetuneModelId = labels['google-vertex-llm-tuning-base-model-id'];
+
+    // If fine-tune-id is found in the model label.
+    if (finetuneModelId) {
+      const finetuneModel = await externalServiceFetch(
+        `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/tuningJobs/${finetuneModelId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${vertexAccessToken}`,
+          },
+        }
+      );
+
+      const finetuneModelData = (await finetuneModel.json()) as Record<
+        string,
+        unknown
+      >;
+      const finetuneModelName =
+        finetuneModelData.baseModel ??
+        (finetuneModelData.source_model as any)?.baseModel;
+
+      if (!finetuneModelName) {
+        return null;
+      }
+
+      await cache.set(cacheKey, { model: finetuneModelName }, { ttl: 604800 });
+      return finetuneModelName;
+    }
+
+    const modelType = data?.modelSourceInfo?.sourceType || 'GENIE';
+
+    const baseModelSource = data.baseModelSource || {};
+    if (modelType === 'GENIE') {
+      // const baseModel = baseModelSource.genieSource?.baseModelUri;
+      return null;
+    } else {
+      // Custom models are from model-garden (https://docs.cloud.google.com/vertex-ai/docs/reference/rest/v1/projects.locations.models#Model.ModelGardenSource)
+      const baseModel = baseModelSource.modelGardenSource?.publicModelName; // Ex: publishers/qwen/models/qwen3, take the provider.
+      if (!baseModel) {
+        return model; // Return default model
+      }
+      const modelProvider = baseModel.split('/')?.at(1); //provider
+      const modelVersion = baseModelSource.modelGardenSource?.versionId;
+      if (modelProvider && modelVersion) {
+        //publishers/anthropic/models/claude-sonnet-4-5 -> ex: anthropic.claude-sonnet-4-5@version
+        const modelFromURI = `${modelProvider}.${modelVersion}`;
+        return modelFromURI;
+      }
+      return model;
+    }
+  } catch (error) {
+    logger.error('Unable to fetch base model from endpoint.', {
+      error,
+      model,
+      options,
+    });
+    return null;
+  }
+}
 
 export const getModelAndProvider = (modelString: string) => {
   let provider = 'google';
@@ -226,7 +352,7 @@ export const derefer = (
     const defKey = getDefFromRef(node.$ref);
     const target = getDefObject(activeDefs, defKey);
     if (defKey && target) {
-      if (stack.has(defKey)) return node;
+      if (stack.has(defKey)) return { type: 'object' }; // Replace self-reference with generic object
       stack.add(defKey);
       const resolved = derefer(target, activeDefs, stack);
       stack.delete(defKey);
@@ -300,23 +426,106 @@ export const transformGeminiToolParameters = (
   return transformNode(schema);
 };
 
-// Vertex AI does not support additionalProperties in JSON Schema
-// https://cloud.google.com/vertex-ai/docs/reference/rest/v1/Schema
-export const recursivelyDeleteUnsupportedParameters = (obj: any) => {
+// Vertex AI only supports a subset of JSON Schema fields.
+// Using an allowlist ensures any unsupported field is filtered out.
+// https://cloud.google.com/vertex-ai/generative-ai/docs/reference/rest/v1beta1/Schema
+const VERTEX_AI_SUPPORTED_SCHEMA_FIELDS = new Set([
+  // Type & format
+  'type',
+  'format',
+  // Metadata
+  'title',
+  'description',
+  'nullable',
+  'default',
+  'example',
+  // Array
+  'items',
+  'minItems',
+  'maxItems',
+  // Enum
+  'enum',
+  // Object
+  'properties',
+  'propertyOrdering',
+  'required',
+  'minProperties',
+  'maxProperties',
+  // Number/Integer
+  'minimum',
+  'maximum',
+  // String
+  'minLength',
+  'maxLength',
+  'pattern',
+  // Composition
+  'anyOf',
+]);
+
+const filterSchemaFields = (obj: any, isSchemaObject: boolean): void => {
   if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) return;
-  delete obj.additional_properties;
-  delete obj.additionalProperties;
-  delete obj['$schema'];
-  for (const key in obj) {
-    if (obj[key] !== null && typeof obj[key] === 'object') {
-      recursivelyDeleteUnsupportedParameters(obj[key]);
+
+  // Only filter keys if this is a schema object (not a properties map)
+  if (isSchemaObject) {
+    // Convert array type to anyOf format (Vertex AI doesn't support type arrays)
+    // e.g., {"type": ["string", "number"]} -> {"anyOf": [{"type": "string"}, {"type": "number"}]}
+    if (Array.isArray(obj.type)) {
+      const types = obj.type;
+      delete obj.type;
+      // If anyOf doesn't exist, create it from the type array
+      if (!obj.anyOf) {
+        obj.anyOf = types.map((t: string) => ({ type: t }));
+      }
     }
-    if (key == 'anyOf' && Array.isArray(obj[key])) {
-      obj[key].forEach((item: any) => {
-        recursivelyDeleteUnsupportedParameters(item);
-      });
+
+    for (const key in obj) {
+      if (!VERTEX_AI_SUPPORTED_SCHEMA_FIELDS.has(key)) {
+        delete obj[key];
+      }
     }
   }
+
+  // Recurse into nested structures
+  for (const key in obj) {
+    const value = obj[key];
+    if (value !== null && typeof value === 'object') {
+      if (key === 'properties') {
+        // 'properties' is a map of property names to schemas
+        // Keys are property names (not schema fields), values are schemas
+        for (const propName in value) {
+          filterSchemaFields(value[propName], true);
+        }
+      } else if (key === 'items') {
+        // 'items' is a schema object
+        filterSchemaFields(value, true);
+      } else if (key === 'anyOf' && Array.isArray(value)) {
+        // 'anyOf' is an array of schemas
+        value.forEach((item: any) => {
+          filterSchemaFields(item, true);
+        });
+      } else if (Array.isArray(value)) {
+        // Other arrays (like 'enum', 'required') - don't filter their elements
+        // but if they contain objects, those might be schemas
+        value.forEach((item: any) => {
+          if (typeof item === 'object' && item !== null) {
+            filterSchemaFields(item, true);
+          }
+        });
+      } else {
+        filterSchemaFields(value, true);
+      }
+    }
+  }
+};
+
+export const recursivelyDeleteUnsupportedParameters = (obj: any) => {
+  if (typeof obj !== 'object' || obj === null) return obj;
+  const cloned = { ...obj };
+  delete cloned.strict;
+  delete cloned.additionalProperties;
+  delete obj['$schema'];
+  filterSchemaFields(cloned, true);
+  return cloned;
 };
 
 // Generate Gateway specific response.
@@ -461,9 +670,14 @@ export const GoogleToOpenAIBatch = (response: GoogleBatchRecord) => {
     ...getTimeKey(response.state, response.updateTime),
     request_counts: {
       total: total,
-      completed: response.completionStats?.successfulCount,
-      failed: response.completionStats?.failedCount,
+      completed: response.completionStats?.successfulCount
+        ? Number.parseInt(response.completionStats.successfulCount)
+        : null,
+      failed: response.completionStats?.failedCount
+        ? Number.parseInt(response.completionStats.failedCount)
+        : null,
     },
+    model: response?.model,
     ...(response.error && {
       errors: {
         object: 'list',
@@ -716,27 +930,31 @@ export const isEmbeddingModel = (modelName: string) => {
 export const OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING = {
   mp3: 'audio/mp3',
   wav: 'audio/wav',
-  opus: 'audio/ogg',
+  opus: 'audio/opus',
+  ogg: 'audio/ogg',
   flac: 'audio/flac',
   pcm16: 'audio/pcm',
+  pcm: 'audio/pcm',
   'x-aac': 'audio/aac',
+  aac: 'audio/aac',
   'x-m4a': 'audio/m4a',
+  m4a: 'audio/m4a',
   mpeg: 'audio/mpeg',
   mpga: 'audio/mpga',
   mp4: 'audio/mp4',
   webm: 'audio/webm',
 };
 
-export const transformInputAudioPart = (c: ContentType): GoogleMessagePart => {
+export const transformInputAudioPart = (c: ContentType) => {
   const data = c.input_audio?.data;
   const mimeType =
     OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING[
       c.input_audio
         ?.format as keyof typeof OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING
-    ];
+    ] ?? c.input_audio?.format;
   return {
     inlineData: {
-      data: data ?? '',
+      data,
       mimeType,
     },
   };
@@ -755,9 +973,6 @@ export const googleTools = [
 
 export const transformGoogleTools = (tool: Tool) => {
   const tools: any = [];
-  // This function is called only when tool.function exists
-  if (!tool.function) return tools;
-
   if (['googleSearch', 'google_search'].includes(tool.function.name)) {
     const timeRangeFilter = tool.function.parameters?.timeRangeFilter;
     tools.push({
@@ -794,10 +1009,21 @@ export const buildGoogleSearchRetrievalTool = (tool: Tool) => {
   const googleSearchRetrievalTool: GoogleSearchRetrievalTool = {
     googleSearchRetrieval: {},
   };
-  // This function is called only when tool.function exists
-  if (tool.function?.parameters?.dynamicRetrievalConfig) {
+  if (tool.function.parameters?.dynamicRetrievalConfig) {
     googleSearchRetrievalTool.googleSearchRetrieval.dynamicRetrievalConfig =
       tool.function.parameters.dynamicRetrievalConfig;
   }
   return googleSearchRetrievalTool;
+};
+
+export const getThoughtSignature = (
+  model?: string,
+  thoughtSignature?: string
+) => {
+  if (thoughtSignature) return thoughtSignature;
+  if (
+    ['gemini-1.5', 'gemini-2.0', 'gemini-2.5'].some((m) => model?.includes(m))
+  )
+    return undefined; // older models do not require thought signature
+  return 'skip_thought_signature_validator';
 };

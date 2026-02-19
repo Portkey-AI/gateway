@@ -9,9 +9,11 @@ import {
   StabilityAIImageGenerateV2ResponseTransform,
 } from './imageGenerateV2';
 import { isStabilityV1Model } from './utils';
+import { StabilityAiLogConfig } from './pricing';
 
 const StabilityAIConfig: ProviderConfigs = {
   api: StabilityAIAPIConfig,
+  pricing: StabilityAiLogConfig,
   getConfig: ({ params }) => {
     const model = params.model;
     if (typeof model === 'string' && isStabilityV1Model(model)) {

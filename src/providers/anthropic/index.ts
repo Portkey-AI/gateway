@@ -15,6 +15,7 @@ import {
   AnthropicMessagesConfig,
   AnthropicMessagesResponseTransform,
 } from './messages';
+import { AnthropicLogConfig } from './pricing';
 
 const AnthropicConfig: ProviderConfigs = {
   complete: AnthropicCompleteConfig,
@@ -26,9 +27,10 @@ const AnthropicConfig: ProviderConfigs = {
     'stream-complete': AnthropicCompleteStreamChunkTransform,
     complete: AnthropicCompleteResponseTransform,
     chatComplete: getAnthropicChatCompleteResponseTransform(ANTHROPIC),
-    'stream-chatComplete': getAnthropicStreamChunkTransform(ANTHROPIC),
     messages: AnthropicMessagesResponseTransform,
+    'stream-chatComplete': getAnthropicStreamChunkTransform(ANTHROPIC),
   },
+  pricing: AnthropicLogConfig,
 };
 
 export default AnthropicConfig;

@@ -4,13 +4,26 @@ import { getModelAndProvider, isEmbeddingModel } from './utils';
 import { responseTransformers } from '../open-ai-base';
 import {
   GoogleChatCompleteResponseTransform,
-  VertexAnthropicChatCompleteResponseTransform,
   VertexLlamaChatCompleteResponseTransform,
 } from './chatComplete';
 import { BatchEndpoints, GOOGLE_VERTEX_AI } from '../../globals';
-import { createLineSplitter } from '../../handlers/streamHandlerUtils';
+import {
+  createLineSplitter,
+  nodeLineReader,
+} from '../../handlers/streamHandlerUtils';
 import GoogleApiConfig from './api';
 import { GoogleEmbedResponseTransform } from './embed';
+import {
+  externalServiceFetch,
+  externalServiceFetchWithNodeFetch,
+} from '../../utils/fetch';
+import { Readable, Transform } from 'stream';
+import { getAnthropicChatCompleteResponseTransform } from '../anthropic/chatComplete';
+import { getRuntimeKey } from 'hono/adapter';
+import { logger } from '../../apm';
+import { generateErrorResponse } from '../utils';
+
+const runtime = getRuntimeKey();
 
 const responseTransforms = {
   google: {
@@ -19,7 +32,7 @@ const responseTransforms = {
   },
   anthropic: {
     [BatchEndpoints.CHAT_COMPLETIONS]:
-      VertexAnthropicChatCompleteResponseTransform,
+      getAnthropicChatCompleteResponseTransform(GOOGLE_VERTEX_AI),
     [BatchEndpoints.EMBEDDINGS]: null,
   },
   meta: {
@@ -62,7 +75,7 @@ const getOpenAIBatchRow = ({
     endpoint === BatchEndpoints.EMBEDDINGS
       ? ((row ?? {}) as Record<string, unknown>)
       : ((row['response'] ?? {}) as Record<string, unknown>);
-  const id = `batch-${batchId}-${response.responseId ? `-${response.responseId}` : ''}`;
+  const id = `batch-${batchId}${response.responseId ? `-${response.responseId}` : ''}`;
 
   let error = null;
   try {
@@ -85,15 +98,86 @@ const getOpenAIBatchRow = ({
   };
 };
 
+const headObject = async (url: string, headers: Record<string, string>) => {
+  try {
+    const response = await externalServiceFetch(url, {
+      method: 'HEAD',
+      headers,
+    });
+    return response.status === 200;
+  } catch {
+    return false;
+  }
+};
+
+const decoder = new TextDecoder();
+const encoder = new TextEncoder();
+
+/**
+ * @param chunk The chunk to transform in string format.
+ * @returns Return the stringified transformed chunk.
+ */
+const transformLine = (
+  chunk: string,
+  batchId: string,
+  providerConfig: TransformFunction,
+  endpoint: BatchEndpoints,
+  modelName: string
+) => {
+  let transformedChunk;
+  try {
+    const json = JSON.parse(chunk);
+    if (Array.isArray(json)) {
+      const arrayBuffer = [];
+      for (const row of json) {
+        try {
+          const transformedRow = getOpenAIBatchRow({
+            row: JSON.parse(row),
+            batchId: batchId ?? '',
+            transform: providerConfig as TransformFunction,
+            endpoint,
+            modelName,
+          });
+          arrayBuffer.push(JSON.stringify(transformedRow));
+        } catch {
+          continue;
+        }
+      }
+      transformedChunk = arrayBuffer.join('\n');
+    } else {
+      const transformedRow = getOpenAIBatchRow({
+        row: JSON.parse(chunk),
+        batchId: batchId ?? '',
+        transform: providerConfig as TransformFunction,
+        endpoint,
+        modelName,
+      });
+      transformedChunk = JSON.stringify(transformedRow);
+    }
+  } catch (error) {
+    logger.error('Failed to transform vertex batch output line', { error });
+    transformedChunk = null;
+  }
+  return transformedChunk;
+};
+
 export const BatchOutputRequestHandler: RequestHandler = async ({
   requestURL,
   providerOptions,
   c,
   requestBody,
 }) => {
+  const { vertexProjectId, vertexRegion, vertexServiceAccountJson } =
+    providerOptions;
+  let projectId = vertexProjectId;
+
+  if (vertexServiceAccountJson) {
+    projectId = vertexServiceAccountJson.project_id;
+  }
+
   const headers = await GoogleApiConfig.headers({
     c,
-    fn: 'retrieveBatch',
+    fn: 'getBatchOutput',
     providerOptions,
     transformedRequestBody: requestBody,
     transformedRequestUrl: requestURL,
@@ -107,31 +191,34 @@ export const BatchOutputRequestHandler: RequestHandler = async ({
   // URL: <gateway>/v1/batches/<batchId>/output
   const batchId = requestURL.split('/').at(-2);
 
-  const batchDetailsURL = requestURL.replace(/\/output$/, '');
-
-  const baseURL = await GoogleApiConfig.getBaseURL({
-    c,
+  const baseURL = GoogleApiConfig.getBaseURL({
     providerOptions,
     fn: 'retrieveBatch',
-    gatewayRequestURL: batchDetailsURL,
-  });
-
-  const endpoint = GoogleApiConfig.getEndpoint({
     c,
-    providerOptions,
-    fn: 'retrieveBatch',
-    gatewayRequestURL: batchDetailsURL,
-    gatewayRequestBodyJSON: {},
+    gatewayRequestURL: requestURL,
   });
-
-  const batchesURL = `${baseURL}${endpoint}`;
-  let modelName = '';
+  const batchDetailsURL = `${baseURL}/v1/projects/${projectId}/locations/${vertexRegion}/batchPredictionJobs/${batchId}`;
+  let modelName;
   let outputURL;
   try {
-    const response = await fetch(batchesURL, options);
+    const response = await externalServiceFetch(batchDetailsURL, options);
     if (!response.ok) {
       const error = await response.text();
-      throw new Error(error);
+      const errorResponse = generateErrorResponse(
+        {
+          message: error,
+          type: null,
+          param: null,
+          code: null,
+        },
+        GOOGLE_VERTEX_AI
+      );
+      return new Response(JSON.stringify(errorResponse), {
+        status: response.status,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
     }
     const data = (await response.json()) as GoogleBatchRecord;
     outputURL = data.outputInfo?.gcsOutputDirectory ?? '';
@@ -139,7 +226,21 @@ export const BatchOutputRequestHandler: RequestHandler = async ({
   } catch (error) {
     const errorMessage =
       (error as Error).message || 'Failed to retrieve batch output';
-    throw new Error(errorMessage);
+    const errorResponse = generateErrorResponse(
+      {
+        message: errorMessage,
+        type: null,
+        param: null,
+        code: null,
+      },
+      GOOGLE_VERTEX_AI
+    );
+    return new Response(JSON.stringify(errorResponse), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   }
 
   if (!outputURL) {
@@ -147,19 +248,14 @@ export const BatchOutputRequestHandler: RequestHandler = async ({
   }
 
   const { provider } = getModelAndProvider(modelName ?? '');
-  let responseTransform =
-    responseTransforms[provider as keyof typeof responseTransforms] ||
-    responseTransforms['endpoints'];
-
-  const batchEndpoint = isEmbeddingModel(modelName)
+  const endpoint = isEmbeddingModel(modelName)
     ? BatchEndpoints.EMBEDDINGS
     : BatchEndpoints.CHAT_COMPLETIONS;
 
   const providerConfigMap =
     responseTransforms[provider as keyof typeof responseTransforms];
   const providerConfig =
-    providerConfigMap?.[batchEndpoint] ??
-    responseTransforms['endpoints'][batchEndpoint];
+    providerConfigMap?.[endpoint] ?? responseTransforms['endpoints'][endpoint];
 
   if (!providerConfig) {
     throw new Error(
@@ -167,14 +263,17 @@ export const BatchOutputRequestHandler: RequestHandler = async ({
     );
   }
 
+  let predictionFileId = 'predictions.jsonl';
+
   outputURL = outputURL.replace('gs://', 'https://storage.googleapis.com/');
 
-  const predictionFileId =
-    endpoint === BatchEndpoints.EMBEDDINGS
-      ? '000000000000.jsonl'
-      : 'predictions.jsonl';
+  if (await headObject(`${outputURL}/predictions.jsonl`, headers)) {
+    predictionFileId = 'predictions.jsonl';
+  } else if (await headObject(`${outputURL}/000000000000.jsonl`, headers)) {
+    predictionFileId = '000000000000.jsonl';
+  }
 
-  const outputResponse = await fetch(
+  const outputResponse = await externalServiceFetchWithNodeFetch(
     `${outputURL}/${predictionFileId}`,
     options
   );
@@ -184,43 +283,73 @@ export const BatchOutputRequestHandler: RequestHandler = async ({
     throw new Error('Failed to retrieve batch output');
   }
 
-  const encoder = new TextEncoder();
-
   // Prepare a transform stream to process complete lines.
-  const responseStream = new TransformStream({
-    transform(chunk, controller) {
-      let buffer;
-      try {
-        const json = JSON.parse(chunk.toString());
-        const row = getOpenAIBatchRow({
-          row: json,
-          batchId: batchId ?? '',
-          transform: providerConfig as TransformFunction,
-          endpoint: batchEndpoint,
-          modelName,
-        });
-        buffer = JSON.stringify(row);
-      } catch (error) {
-        return;
-      }
-      controller.enqueue(encoder.encode(buffer + '\n'));
-    },
-    flush(controller) {
-      controller.terminate();
-    },
-  });
 
-  const [safeStream] = responseStream.readable.tee();
+  let responseStream: TransformStream | Transform;
+  if (runtime === 'node') {
+    responseStream = new Transform({
+      transform: function (chunk, _, callback) {
+        const transformed = transformLine(
+          chunk.toString(),
+          batchId || '',
+          providerConfig as TransformFunction,
+          endpoint,
+          modelName
+        );
+        if (transformed) {
+          this.push(transformed + '\n');
+          callback();
+          return;
+        }
+        callback();
+      },
+      flush: function (callback) {
+        callback();
+      },
+    });
+  } else {
+    responseStream = new TransformStream({
+      transform: function (chunk, controller) {
+        const parsedChunk = decoder.decode(chunk, { stream: true });
+        const transformed = transformLine(
+          parsedChunk,
+          batchId || '',
+          providerConfig as TransformFunction,
+          endpoint,
+          modelName
+        );
+        if (transformed) {
+          controller.enqueue(encoder.encode(transformed + '\n'));
+          return;
+        }
+      },
+    });
+  }
+
+  // socket hangup might crash the server, so reading the stream in safeway to avoid crash.
+  // const [safeStream] = responseStream.readable.tee();
 
   // Pipe the node stream through the line splitter and then to the response stream.
-  const lineSplitter = createLineSplitter();
-  reader.pipeThrough(lineSplitter).pipeTo(responseStream.writable);
+  let lineSplitter, responseBody;
+  if (runtime === 'node') {
+    lineSplitter = nodeLineReader(true);
+    reader.pipe(lineSplitter).pipe(responseStream as Transform);
+    responseBody = Readable.toWeb(responseStream as Transform);
+  } else {
+    lineSplitter = createLineSplitter();
+    (reader as unknown as ReadableStream)
+      .pipeThrough(lineSplitter)
+      .pipeTo(responseStream.writable as WritableStream);
+    responseBody = responseStream.readable;
+  }
 
-  return new Response(safeStream, {
+  return new Response(responseBody as any, {
     headers: { 'Content-Type': 'application/octet-stream' },
   });
 };
 
-export const BatchOutputResponseTransform = async (response: Response) => {
+export const BatchOutputResponseTransform: (response: Response) => Response = (
+  response
+) => {
   return response;
 };

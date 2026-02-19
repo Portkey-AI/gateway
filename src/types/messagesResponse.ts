@@ -73,23 +73,6 @@ export interface TextBlock {
   type: 'text';
 }
 
-/**
- * Indicates the tool was called from within a code execution context.
- * Present when using Programmatic Tool Calling.
- * Part of Anthropic's advanced tool use beta (advanced-tool-use-2025-11-20).
- */
-export interface ToolUseCaller {
-  /**
-   * The type of caller (e.g., "code_execution_20250825").
-   */
-  type: string;
-
-  /**
-   * The ID of the server tool use block that initiated this call.
-   */
-  tool_id: string;
-}
-
 export interface ToolUseBlock {
   id: string;
 
@@ -98,12 +81,6 @@ export interface ToolUseBlock {
   name: string;
 
   type: 'tool_use';
-
-  /**
-   * Present when this tool was invoked from within a code execution context.
-   * Part of Anthropic's advanced tool use beta (advanced-tool-use-2025-11-20).
-   */
-  caller?: ToolUseCaller;
 }
 
 export interface ServerToolUseBlock {
@@ -151,64 +128,6 @@ export interface WebSearchToolResultBlock {
   type: 'web_search_tool_result';
 }
 
-/**
- * Error codes for code execution tool results.
- */
-export type CodeExecutionToolResultErrorCode =
-  | 'invalid_tool_input'
-  | 'unavailable'
-  | 'too_many_requests'
-  | 'execution_time_exceeded';
-
-/**
- * Error result from code execution.
- */
-export interface CodeExecutionToolResultError {
-  error_code: CodeExecutionToolResultErrorCode;
-
-  type: 'code_execution_tool_result_error';
-}
-
-/**
- * Output file from code execution.
- */
-export interface CodeExecutionOutputBlock {
-  file_id: string;
-
-  type: 'code_execution_output';
-}
-
-/**
- * Successful result from code execution.
- */
-export interface CodeExecutionResultBlock {
-  content: Array<CodeExecutionOutputBlock>;
-
-  return_code: number;
-
-  stderr: string;
-
-  stdout: string;
-
-  type: 'code_execution_result';
-}
-
-export type CodeExecutionToolResultBlockContent =
-  | CodeExecutionToolResultError
-  | CodeExecutionResultBlock;
-
-/**
- * Result block from Programmatic Tool Calling code execution.
- * Part of Anthropic's advanced tool use beta (advanced-tool-use-2025-11-20).
- */
-export interface CodeExecutionToolResultBlock {
-  content: CodeExecutionToolResultBlockContent;
-
-  tool_use_id: string;
-
-  type: 'code_execution_tool_result';
-}
-
 export interface ThinkingBlock {
   signature: string;
 
@@ -223,14 +142,71 @@ export interface RedactedThinkingBlock {
   type: 'redacted_thinking';
 }
 
+export interface CitationSourceContent {
+  text: string;
+}
+
+export interface Citation {
+  location: CitationLocation;
+  source: string;
+  sourceContent: CitationSourceContent;
+  title: string;
+}
+
+export interface DocumentCharLocation {
+  documentIndex: number;
+  end: number;
+  start: number;
+}
+
+export interface DocumentChunkLocation {
+  documentIndex: number;
+  end: number;
+  start: number;
+}
+
+export interface DocumentPageLocation {
+  documentIndex: number;
+  end: number;
+  start: number;
+}
+
+export interface SearchResultLocation {
+  searchResultIndex: number;
+  start: number;
+  end: number;
+}
+
+export interface WebLocation {
+  domain: string;
+  url: string;
+}
+
+export interface CitationLocation {
+  documentChar: DocumentCharLocation;
+  documentChunk: DocumentChunkLocation;
+  documentPage: DocumentPageLocation;
+  searchResultLocation: SearchResultLocation;
+  web: WebLocation;
+}
+
+export interface CitationGeneratedContent {
+  text: string;
+}
+
+export interface CitationContentBlock {
+  citations: Citation[];
+  content: CitationGeneratedContent[];
+}
+
 export type ContentBlock =
   | TextBlock
   | ToolUseBlock
   | ServerToolUseBlock
   | WebSearchToolResultBlock
-  | CodeExecutionToolResultBlock
   | ThinkingBlock
-  | RedactedThinkingBlock;
+  | RedactedThinkingBlock
+  | CitationContentBlock;
 
 export enum ANTHROPIC_STOP_REASON {
   end_turn = 'end_turn',
@@ -351,4 +327,12 @@ export interface MessagesResponse {
    * `cache_creation_input_tokens`, and `cache_read_input_tokens`.
    */
   usage: Usage;
+}
+
+export interface MessagesErrorResponse {
+  error: {
+    details: string;
+    type: string;
+    message: string;
+  };
 }

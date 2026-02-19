@@ -1,5 +1,5 @@
 import { FIREWORKS_AI } from '../../globals';
-import { constructConfigFromRequestHeaders } from '../../handlers/handlerUtils';
+import { constructConfigFromRequestHeaders } from '../../utils/request';
 import { transformUsingProviderConfig } from '../../services/transformToProviderRequest';
 import { Options } from '../../types/requestBody';
 import { FinetuneRequest, ProviderConfig } from '../types';

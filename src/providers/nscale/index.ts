@@ -4,9 +4,8 @@ import {
   NscaleImageGenerateConfig,
   NscaleImageGenerateResponseTransform,
 } from './imageGenerate';
-import { responseTransformers } from '../open-ai-base';
+import { chatCompleteParams, responseTransformers } from '../open-ai-base';
 import { NSCALE } from '../../globals';
-import { chatCompleteParams } from '../open-ai-base';
 
 const NscaleConfig: ProviderConfigs = {
   chatComplete: chatCompleteParams([

@@ -7,7 +7,7 @@ import {
 } from '../utils';
 import { BedrockErrorResponseTransform } from './chatComplete';
 import { BedrockErrorResponse } from './embed';
-import { TITAN_STOP_REASON as TITAN_COMPLETION_REASON } from './types';
+import { TITAN_STOP_REASON } from './types';
 
 export const BedrockAnthropicCompleteConfig: ProviderConfig = {
   prompt: {
@@ -384,7 +384,7 @@ export interface BedrockTitanCompleteResponse {
   results: {
     tokenCount: number;
     outputText: string;
-    completionReason: TITAN_COMPLETION_REASON;
+    completionReason: TITAN_STOP_REASON;
   }[];
 }
 
@@ -444,7 +444,7 @@ export interface BedrockTitanStreamChunk {
   outputText: string;
   index: number;
   totalOutputTextTokenCount: number;
-  completionReason: TITAN_COMPLETION_REASON | null;
+  completionReason: string | null;
   'amazon-bedrock-invocationMetrics': {
     inputTokenCount: number;
     outputTokenCount: number;
@@ -471,11 +471,10 @@ export const BedrockTitanCompleteStreamChunkTransform: (
   const parsedChunk: BedrockTitanStreamChunk = JSON.parse(chunk);
   const finishReason = parsedChunk.completionReason
     ? transformFinishReason(
-        parsedChunk.completionReason,
+        parsedChunk.completionReason as TITAN_STOP_REASON,
         _strictOpenAiCompliance
       )
     : null;
-
   return [
     `data: ${JSON.stringify({
       id: fallbackId,

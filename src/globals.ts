@@ -2,16 +2,8 @@ import { endpointStrings } from './providers/types';
 
 export const POWERED_BY: string = 'portkey';
 
-export const MAX_RETRY_LIMIT_MS = 60 * 1000; // 60 seconds
-
-export const POSSIBLE_RETRY_STATUS_HEADERS = [
-  'retry-after-ms',
-  'x-ms-retry-after-ms',
-  'retry-after',
-];
-
-export const HEADER_KEYS: Record<string, string> = {
-  API_KEY: `x-${POWERED_BY}-api-key`,
+export const HEADER_KEYS = {
+  ORGANISATION_DETAILS: `x-${POWERED_BY}-organisation-details`,
   MODE: `x-${POWERED_BY}-mode`,
   RETRIES: `x-${POWERED_BY}-retry-count`,
   PROVIDER: `x-${POWERED_BY}-provider`,
@@ -21,10 +13,16 @@ export const HEADER_KEYS: Record<string, string> = {
   METADATA: `x-${POWERED_BY}-metadata`,
   FORWARD_HEADERS: `x-${POWERED_BY}-forward-headers`,
   CUSTOM_HOST: `x-${POWERED_BY}-custom-host`,
+  X_API_KEY: 'x-api-key',
+  API_KEY: 'api-key',
   REQUEST_TIMEOUT: `x-${POWERED_BY}-request-timeout`,
   STRICT_OPEN_AI_COMPLIANCE: `x-${POWERED_BY}-strict-open-ai-compliance`,
   CONTENT_TYPE: `Content-Type`,
-  VIRTUAL_KEY: `x-${POWERED_BY}-virtual-key`,
+  // W3C Trace Context headers (OpenTelemetry standard)
+  TRACEPARENT: 'traceparent',
+  TRACESTATE: 'tracestate',
+  BAGGAGE: 'baggage',
+  CONFIG_VERSION: `x-${POWERED_BY}-config-version`,
 };
 
 export const RESPONSE_HEADER_KEYS: Record<string, string> = {
@@ -39,6 +37,14 @@ export const RETRY_STATUS_CODES = [429, 500, 502, 503, 504];
 export const MAX_RETRIES = 5;
 export const REQUEST_TIMEOUT_STATUS_CODE = 408;
 export const PRECONDITION_CHECK_FAILED_STATUS_CODE = 412;
+
+export const MAX_RETRY_LIMIT_MS = 60 * 1000; // 60 seconds
+
+export const POSSIBLE_RETRY_STATUS_HEADERS = [
+  'retry-after-ms',
+  'x-ms-retry-after-ms',
+  'retry-after',
+];
 
 export const OPEN_AI: string = 'openai';
 export const COHERE: string = 'cohere';
@@ -113,6 +119,8 @@ export const ORACLE: string = 'oracle';
 export const IO_INTELLIGENCE: string = 'iointelligence';
 export const AIBADGR: string = 'aibadgr';
 export const OVHCLOUD: string = 'ovhcloud';
+export const DATABRICKS: string = 'databricks';
+export const PINECONE: string = 'pinecone';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -173,22 +181,15 @@ export const VALID_PROVIDERS = [
   KLUSTER_AI,
   NSCALE,
   HYPERBOLIC,
-  BYTEZ,
   FEATHERLESS_AI,
   KRUTRIM,
   QDRANT,
-  THREE_ZERO_TWO_AI,
-  COMETAPI,
-  MATTERAI,
   MESHY,
   TRIPO3D,
-  NEXTBIT,
   MODAL,
-  Z_AI,
   ORACLE,
-  IO_INTELLIGENCE,
-  AIBADGR,
-  OVHCLOUD,
+  DATABRICKS,
+  PINECONE,
 ];
 
 export const CONTENT_TYPES = {
@@ -201,7 +202,61 @@ export const CONTENT_TYPES = {
   GENERIC_AUDIO_PATTERN: 'audio',
   PLAIN_TEXT: 'text/plain',
   HTML: 'text/html',
+  XML: 'application/xml',
   GENERIC_IMAGE_PATTERN: 'image/',
+};
+
+export const CACHE_PREFIXES = {
+  API_KEY: 'API_KEY_',
+  API_KEY_ID: 'API_KEY_ID_',
+};
+
+export const AUTH_SCOPES = {
+  LOGS: {
+    READ: 'logs.read',
+    WRITE: 'logs.write',
+    EXPORT: 'logs.export',
+  },
+  COMPLETIONS: {
+    READ: 'completions.read',
+    WRITE: 'completions.write',
+  },
+  FEEDBACKS: {
+    READ: 'feedbacks.read',
+    WRITE: 'feedbacks.write',
+  },
+  PROMPTS: {
+    RENDER: 'prompts.render',
+  },
+  VIRTUAL_KEYS: {
+    LIST: 'virtual_keys.list',
+  },
+  MCP: {
+    INVOKE: 'mcp.invoke',
+  },
+};
+
+export const RATE_LIMIT_UNIT_TO_WINDOW_MAPPING: Record<string, number> = {
+  rpd: 86400000,
+  rph: 3600000,
+  rpm: 60000,
+  rps: 1000,
+};
+
+export const METRICS_KEYS = {
+  LLM_LATENCY: 'llmLatency',
+  LLM_LAST_BYTE_DIFF_LATENCY: 'llmLastByteDiffLatency',
+  AUTH_N_MIDDLEWARE_START: 'authNMiddlewareStart',
+  AUTH_N_MIDDLEWARE_END: 'authNMiddlewareEnd',
+  API_KEY_RATE_LIMIT_CHECK_START: 'apiKeyRateLimitCheckStart',
+  API_KEY_RATE_LIMIT_CHECK_END: 'apiKeyRateLimitCheckEnd',
+  PORTKEY_MIDDLEWARE_PRE_REQUEST_START: 'portkeyMiddlewarePreRequestStart',
+  PORTKEY_MIDDLEWARE_PRE_REQUEST_END: 'portkeyMiddlewarePreRequestEnd',
+  PORTKEY_MIDDLEWARE_POST_REQUEST_START: 'portkeyMiddlewarePostRequestStart',
+  PORTKEY_MIDDLEWARE_POST_REQUEST_END: 'portkeyMiddlewarePostRequestEnd',
+  LLM_CACHE_GET_START: 'llmCacheGetStart',
+  LLM_CACHE_GET_END: 'llmCacheGetEnd',
+  PAYLOAD_SIZE_IN_MB: 'payloadSizeInMb',
 };
 
 export const MULTIPART_FORM_DATA_ENDPOINTS: endpointStrings[] = [
@@ -280,30 +335,3 @@ export enum BatchEndpoints {
   COMPLETIONS = '/v1/completions',
   EMBEDDINGS = '/v1/embeddings',
 }
-
-export const AtomicOperations = {
-  GET: 'GET',
-  RESET: 'RESET',
-  INCREMENT: 'INCREMENT',
-  DECREMENT: 'DECREMENT',
-};
-
-export enum RateLimiterKeyTypes {
-  VIRTUAL_KEY = 'VIRTUAL_KEY',
-  API_KEY = 'API_KEY',
-  WORKSPACE = 'WORKSPACE',
-  INTEGRATION_WORKSPACE = 'INTEGRATION_WORKSPACE',
-}
-
-export const METRICS_KEYS = {
-  AUTH_N_MIDDLEWARE_START: 'authNMiddlewareStart',
-  AUTH_N_MIDDLEWARE_END: 'authNMiddlewareEnd',
-  API_KEY_RATE_LIMIT_CHECK_START: 'apiKeyRateLimitCheckStart',
-  API_KEY_RATE_LIMIT_CHECK_END: 'apiKeyRateLimitCheckEnd',
-  PORTKEY_MIDDLEWARE_PRE_REQUEST_START: 'portkeyMiddlewarePreRequestStart',
-  PORTKEY_MIDDLEWARE_PRE_REQUEST_END: 'portkeyMiddlewarePreRequestEnd',
-  PORTKEY_MIDDLEWARE_POST_REQUEST_START: 'portkeyMiddlewarePostRequestStart',
-  PORTKEY_MIDDLEWARE_POST_REQUEST_END: 'portkeyMiddlewarePostRequestEnd',
-  LLM_CACHE_GET_START: 'llmCacheGetStart',
-  LLM_CACHE_GET_END: 'llmCacheGetEnd',
-};

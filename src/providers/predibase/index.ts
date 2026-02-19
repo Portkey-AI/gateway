@@ -5,6 +5,7 @@ import {
   PredibaseChatCompleteResponseTransform,
   PredibaseChatCompleteStreamChunkTransform,
 } from './chatComplete';
+import { PredibaseLogConfig } from './pricing';
 
 const PredibaseConfig: ProviderConfigs = {
   chatComplete: PredibaseChatCompleteConfig,
@@ -13,6 +14,7 @@ const PredibaseConfig: ProviderConfigs = {
     chatComplete: PredibaseChatCompleteResponseTransform,
     'stream-chatComplete': PredibaseChatCompleteStreamChunkTransform,
   },
+  pricing: PredibaseLogConfig,
 };
 
 export default PredibaseConfig;

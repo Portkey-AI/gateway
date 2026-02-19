@@ -119,6 +119,9 @@ export const AzureOpenAIChatCompleteConfig: ProviderConfig = {
   prompt_cache_key: {
     param: 'prompt_cache_key',
   },
+  prompt_cache_retention: {
+    param: 'prompt_cache_retention',
+  },
   safety_identifier: {
     param: 'safety_identifier',
   },

@@ -1,4 +1,4 @@
-import { constructConfigFromRequestHeaders } from '../../handlers/handlerUtils';
+import { constructConfigFromRequestHeaders } from '../../utils/request';
 import { transformUsingProviderConfig } from '../../services/transformToProviderRequest';
 import { Options } from '../../types/requestBody';
 import { ProviderConfig } from '../types';
@@ -6,7 +6,7 @@ import { ProviderConfig } from '../types';
 export const AzureOpenAICreateBatchConfig: ProviderConfig = {
   input_file_id: {
     param: 'input_file_id',
-    required: true,
+    required: false,
   },
   endpoint: {
     param: 'endpoint',

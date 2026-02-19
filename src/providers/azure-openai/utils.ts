@@ -1,71 +1,63 @@
 import { AZURE_OPEN_AI } from '../../globals';
-import { Options } from '../../types/requestBody';
+import { requestCache } from '../../services/cache/cacheService';
+import { Options, Params } from '../../types/requestBody';
+import {
+  fetchEntraIdToken,
+  fetchManagedIdentityToken,
+  fetchAzureWorkloadIdentityToken,
+} from '../../utils/azureAuth';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
 import { ErrorResponse } from '../types';
+
+const CACHE_EXPIRY = 15 * 60; // 15 minutes
 
 export async function getAccessTokenFromEntraId(
   tenantId: string,
   clientId: string,
   clientSecret: string,
-  scope = 'https://cognitiveservices.azure.com/.default'
+  scope = 'https://openai.azure.com/.default',
+  env: Record<string, any>
 ) {
-  try {
-    const url = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
-    const params = new URLSearchParams({
-      client_id: clientId,
-      client_secret: clientSecret,
-      scope: scope,
-      grant_type: 'client_credentials',
-    });
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: params,
-    });
-
-    if (!response.ok) {
-      const errorMessage = await response.text();
-      console.error('getAccessTokenFromEntraId error: ', {
-        message: `Error from Entra ${errorMessage}`,
-      });
-      return undefined;
-    }
-    const data: { access_token: string } = await response.json();
-    return data.access_token;
-  } catch (error) {
-    console.error('getAccessTokenFromEntraId error: ', error);
+  const cache = requestCache(env);
+  const cacheKey = `azure-entra-token-object-${tenantId}-${clientId}-${clientSecret}-${scope}`;
+  const cachedToken = await cache.get<{ access_token: string }>(cacheKey, {
+    useLocalCache: true,
+  });
+  if (cachedToken?.access_token) {
+    return cachedToken.access_token;
   }
+
+  const token = await fetchEntraIdToken(
+    tenantId,
+    clientId,
+    clientSecret,
+    scope
+  );
+  if (token) {
+    await cache.set(cacheKey, { access_token: token }, { ttl: CACHE_EXPIRY });
+  }
+  return token;
 }
 
 export async function getAzureManagedIdentityToken(
   resource: string,
-  clientId?: string
+  clientId?: string,
+  env?: Record<string, any>
 ) {
-  try {
-    const response = await fetch(
-      `http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=${encodeURIComponent(resource)}${clientId ? `&client_id=${encodeURIComponent(clientId)}` : ''}`,
-      {
-        method: 'GET',
-        headers: {
-          Metadata: 'true',
-        },
-      }
-    );
-    if (!response.ok) {
-      const errorMessage = await response.text();
-      console.error('getAzureManagedIdentityToken error: ', {
-        message: `Error from Managed ${errorMessage}`,
-      });
-      return undefined;
-    }
-    const data: { access_token: string } = await response.json();
-    return data.access_token;
-  } catch (error) {
-    console.error('getAzureManagedIdentityToken error: ', error);
+  const cache = requestCache(env);
+  const cacheKey = `azure-managed-identity-token-object-${resource}-${clientId ?? ''}`;
+  const cachedToken = await cache.get<{ access_token: string }>(cacheKey, {
+    useLocalCache: true,
+  });
+  if (cachedToken?.access_token) {
+    return cachedToken.access_token;
   }
+
+  const token = await fetchManagedIdentityToken(resource, clientId);
+  if (token) {
+    await cache.set(cacheKey, { access_token: token }, { ttl: CACHE_EXPIRY });
+  }
+  return token;
 }
 
 export async function getAzureWorkloadIdentityToken(
@@ -73,37 +65,30 @@ export async function getAzureWorkloadIdentityToken(
   tenantId: string,
   clientId: string,
   federatedToken: string,
-  scope = 'https://cognitiveservices.azure.com/.default'
+  scope = 'https://cognitiveservices.azure.com/.default',
+  env?: Record<string, any>
 ) {
-  try {
-    const url = `${authorityHost}/${tenantId}/oauth2/v2.0/token`;
-    const params = new URLSearchParams({
-      client_id: clientId,
-      client_assertion: federatedToken,
-      client_assertion_type:
-        'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
-      scope: scope,
-      grant_type: 'client_credentials',
-    });
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: params,
-    });
-
-    if (!response.ok) {
-      const errorMessage = await response.text();
-      console.error({ message: `Error from Entra ${errorMessage}` });
-      return undefined;
-    }
-    const data: { access_token: string } = await response.json();
-    return data.access_token;
-  } catch (error) {
-    console.error(error);
+  const cache = requestCache(env);
+  const cacheKey = `azure-workload-identity-token-object-${authorityHost}-${tenantId}-${clientId}-${federatedToken}-${scope}`;
+  const cachedToken = await cache.get<{ access_token: string }>(cacheKey, {
+    useLocalCache: true,
+  });
+  if (cachedToken?.access_token) {
+    return cachedToken.access_token;
   }
+
+  const token = await fetchAzureWorkloadIdentityToken(
+    authorityHost,
+    tenantId,
+    clientId,
+    federatedToken,
+    scope,
+    env
+  );
+  if (token) {
+    await cache.set(cacheKey, { access_token: token }, { ttl: CACHE_EXPIRY });
+  }
+  return token;
 }
 
 export const AzureOpenAIFinetuneResponseTransform = (

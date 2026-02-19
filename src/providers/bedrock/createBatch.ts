@@ -1,4 +1,6 @@
 import { BEDROCK } from '../../globals';
+import { constructConfigFromRequestHeaders } from '../../utils/request';
+import { transformUsingProviderConfig } from '../../services/transformToProviderRequest';
 import { Options } from '../../types/requestBody';
 import {
   CreateBatchRequest,
@@ -9,7 +11,6 @@ import {
 import { generateInvalidProviderResponseError } from '../utils';
 import { BedrockErrorResponseTransform } from './chatComplete';
 import { BedrockErrorResponse } from './embed';
-
 interface BedrockCreateBatchRequest extends CreateBatchRequest {
   job_name?: string;
   output_data_config?: {
@@ -83,4 +84,25 @@ export const BedrockCreateBatchResponseTransform: (
   }
 
   return generateInvalidProviderResponseError(response, BEDROCK);
+};
+
+export const BedrockCreateRequestBodyTransform = (
+  requestBody: any,
+  requestHeaders: Record<string, string>
+) => {
+  const providerOptions = constructConfigFromRequestHeaders(requestHeaders);
+
+  const baseConfig = transformUsingProviderConfig(
+    BedrockCreateBatchConfig,
+    requestBody,
+    providerOptions as Options
+  );
+
+  const finalBody = {
+    // Contains extra fields like tags etc, also might contains model etc, so order is important to override the fields with params created using config.
+    ...requestBody?.provider_options,
+    ...baseConfig,
+  };
+
+  return finalBody;
 };

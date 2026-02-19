@@ -14,6 +14,16 @@ import {
   WebSearchToolResultBlock,
 } from './messagesResponse';
 
+export interface RawMessageErrorEvent {
+  error: {
+    details: string;
+    type: string;
+    message: string;
+  };
+  type: 'error';
+  request_id: string;
+}
+
 export interface RawMessageStartEvent {
   message: MessagesResponse;
 
@@ -89,6 +99,12 @@ export interface SignatureDelta {
   type: 'signature_delta';
 }
 
+export interface RedactedThinkingDelta {
+  data: string;
+
+  type: 'redacted_thinking_delta';
+}
+
 export type RawContentBlockDelta =
   | TextDelta
   | InputJSONDelta
@@ -116,6 +132,7 @@ export interface RawPingEvent {
 
 export type RawMessageStreamEvent =
   | RawMessageStartEvent
+  | RawMessageErrorEvent
   | RawMessageDeltaEvent
   | RawMessageStopEvent
   | RawContentBlockStartEvent

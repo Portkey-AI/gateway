@@ -8,7 +8,7 @@ import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
-import { Params } from '../../types/requestBody';
+import { Message, Params } from '../../types/requestBody';
 
 export const OllamaChatCompleteConfig: ProviderConfig = {
   model: {
@@ -20,7 +20,7 @@ export const OllamaChatCompleteConfig: ProviderConfig = {
     param: 'messages',
     default: '',
     transform: (params: Params) => {
-      return params.messages?.map((message) => {
+      return params.messages?.map((message: Message) => {
         if (message.role === 'developer') return { ...message, role: 'system' };
         return message;
       });
