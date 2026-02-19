@@ -1,0 +1,56 @@
+{
+  "id": "akto",
+  "description": "Akto Agentic Security - Guardrail plugin for Agentic security",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiDomain": {
+        "type": "string",
+        "label": "API Domain",
+        "description": "The domain of your Akto Agentic "
+      },
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "Your Akto API key for authentication",
+        "encrypted": true
+      }
+    },
+    "required": ["apiDomain", "apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Akto Guardrail",
+      "id": "scan",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Akto Agentic Security provides advanced threat detection and security scanning for your LLM inputs and outputs."
+        },
+        {
+          "type": "subHeading",
+          "text": "Protect your AI applications from prompt injection, sensitive data leakage, and other security threats."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "timeout": {
+            "type": "number",
+            "label": "Timeout",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "The timeout in milliseconds for the Akto guardrail scan. Defaults to 5000."
+              }
+            ],
+            "default": 5000
+          }
+        }
+      },
+      "deny": true
+    }
+  ]
+}
