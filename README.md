@@ -32,8 +32,6 @@
 
 <br/>
 
-
-
 The [**AI Gateway**](https://portkey.wiki/gh-10) is designed for fast, reliable & secure routing to 1600+ language, vision, audio, and image models. It is a lightweight, open-source, and enterprise-ready solution that allows you to integrate with any language model in under 2 minutes.
 
 - [x] **Blazing fast** (<1ms latency) with a tiny footprint (122kb)
