@@ -257,6 +257,7 @@ Explore Gateway integrations with [45+ providers](https://portkey.wiki/gh-59) an
 | <img src="https://deepinfra.com/_next/static/media/logo.4a03fd3d.svg" width=35>                                            | [DeepInfra](https://portkey.sh/gh-92)                               | ✅       | ✅      |
 | <img src="https://ollama.com/public/ollama.png" width=35>                                                                  | [Ollama](https://portkey.wiki/gh-72)                           | ✅       | ✅      |
 | <img src="https://novita.ai/favicon.ico" width=35>                                                                         | [Novita AI](https://portkey.wiki/gh-73)                              | ✅       | ✅      | `/chat/completions`, `/completions` |
+| <img src="docs/images/eurouter.png" width=35>                                                                              | [EUrouter](https://eurouter.ai)                                      | ✅       | ✅      |
 
 
 > [View the complete list of 200+ supported models here](https://portkey.wiki/gh-74)
