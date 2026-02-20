@@ -10,7 +10,8 @@
     "pangea",
     "promptsecurity",
     "panw-prisma-airs",
-    "walledai"
+    "walledai",
+    "zscaler"
   ],
   "credentials": {
     "portkey": {
