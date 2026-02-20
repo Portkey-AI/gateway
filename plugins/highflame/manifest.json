@@ -1,0 +1,92 @@
+{
+  "id": "highflame",
+  "description": "Highflame's AI security platform provides comprehensive guardrails for trust & safety, prompt injection detection, and language detection. Applies all enabled guardrails configured in your Highflame application policy. Learn more at https://docs.highflame.ai/",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": [
+          {
+            "type": "subHeading",
+            "text": "Your Highflame API key for authentication"
+          }
+        ]
+      },
+      "domain": {
+        "type": "string",
+        "label": "Domain",
+        "description": [
+          {
+            "type": "subHeading",
+            "text": "Highflame API domain"
+          }
+        ],
+        "default": "api-dev.highflame.dev",
+        "required": false
+      },
+      "application": {
+        "type": "string",
+        "label": "Application Name",
+        "description": [
+          {
+            "type": "subHeading",
+            "text": "Application name for policy-specific guardrails (required). See https://docs.highflame.ai/documentation/agent-control-fabric/guardrails-policies/guardrail-apis"
+          }
+        ],
+        "required": true
+      }
+    },
+    "required": ["apiKey", "application"]
+  },
+  "functions": [
+    {
+      "name": "Highflame Guardrails",
+      "id": "guardrails",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Auto-applies all enabled guardrails in your Highflame application policy including trust & safety, prompt injection detection, language detection, and more"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "guardrails": {
+            "type": "array",
+            "description": "List of guardrails to run. Defaults to trustsafety and promptinjectiondetection if not specified.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "enum": [
+                    "trustsafety",
+                    "promptinjectiondetection",
+                    "lang_detector",
+                    "dlp_gcp",
+                    "model_armor"
+                  ]
+                },
+                "config": {
+                  "type": "object",
+                  "properties": {
+                    "threshold": { "type": "number" }
+                  }
+                }
+              },
+              "required": ["name"]
+            }
+          },
+          "threshold": {
+            "type": "number",
+            "description": "Global threshold for all guardrails (0-1). Can be overridden per guardrail."
+          }
+        }
+      }
+    }
+  ]
+}
