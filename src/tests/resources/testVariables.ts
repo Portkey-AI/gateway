@@ -142,6 +142,10 @@ const testVariables: TestVariables = {
       model: 'Qwen/Qwen2.5-Coder-3B-Instruct',
     },
   },
+  eurouter: {
+    apiKey: process.env.EUROUTER_API_KEY,
+    chatCompletions: { model: 'llama-3.1-8b-instruct' },
+  },
 };
 
 export default testVariables;

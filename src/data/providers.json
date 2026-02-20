@@ -323,6 +323,13 @@
       "object": "provider",
       "description": "Dashscope provides intelligent analytics solutions designed to help businesses visualize and interpret complex data effectively. Their platform integrates advanced machine learning algorithms to generate real-time insights from diverse datasets, enabling organizations to make informed decisions quickly. Dashscope focuses on enhancing data accessibility and usability, empowering teams to leverage analytics for strategic planning and operational efficiency.",
       "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    },
+    {
+      "id": "eurouter",
+      "name": "EUrouter",
+      "object": "provider",
+      "description": "EUrouter is a European AI routing API providing sovereign, GDPR-compliant access to 100+ AI models with EU data residency by default. It aggregates models from European cloud providers through a single OpenAI-compatible endpoint.",
+      "base_url": "https://api.eurouter.ai/api"
     }
   ]
 }
