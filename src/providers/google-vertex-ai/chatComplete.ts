@@ -593,10 +593,13 @@ export const GoogleChatCompleteResponseTransform: (
           return {
             message: message,
             index: index,
-            finish_reason: transformFinishReason(
-              generation.finishReason as GOOGLE_GENERATE_CONTENT_FINISH_REASON,
-              strictOpenAiCompliance
-            ),
+            finish_reason:
+              toolCalls.length > 0
+                ? 'tool_calls'
+                : transformFinishReason(
+                    generation.finishReason as GOOGLE_GENERATE_CONTENT_FINISH_REASON,
+                    strictOpenAiCompliance
+                  ),
             logprobs,
             ...(!strictOpenAiCompliance && {
               safetyRatings: generation.safetyRatings,
@@ -732,12 +735,17 @@ export const GoogleChatCompleteStreamChunkTransform: (
     provider: GOOGLE_VERTEX_AI,
     choices:
       parsedChunk.candidates?.map((generation, index) => {
+        const hasToolCalls = generation.content?.parts?.some(
+          (part) => part.functionCall
+        );
         const finishReason = generation.finishReason
-          ? transformFinishReason(
-              parsedChunk.candidates[0]
-                .finishReason as GOOGLE_GENERATE_CONTENT_FINISH_REASON,
-              strictOpenAiCompliance
-            )
+          ? hasToolCalls
+            ? 'tool_calls'
+            : transformFinishReason(
+                parsedChunk.candidates[0]
+                  .finishReason as GOOGLE_GENERATE_CONTENT_FINISH_REASON,
+                strictOpenAiCompliance
+              )
           : null;
         let message: any = { role: 'assistant', content: '' };
         if (generation.content?.parts?.[0]?.text) {
