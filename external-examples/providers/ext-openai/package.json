@@ -1,0 +1,6 @@
+{
+  "name": "ext-openai-provider",
+  "version": "1.0.0",
+  "description": "External OpenAI provider for Portkey Gateway testing",
+  "type": "module"
+}

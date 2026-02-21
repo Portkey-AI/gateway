@@ -18,6 +18,7 @@ import TogetherAIConfig from './together-ai';
 import StabilityAIConfig from './stability-ai';
 import OllamaAPIConfig from './ollama';
 import { ProviderConfigs } from './types';
+import { VALID_PROVIDERS } from '../globals';
 import GroqConfig from './groq';
 import SegmindConfig from './segmind';
 import JinaConfig from './jina';
@@ -149,5 +150,32 @@ const Providers: { [key: string]: ProviderConfigs } = {
   aibadgr: AIBadgrConfig,
   ovhcloud: OVHcloudConfig,
 };
+
+/**
+ * Register an external provider at runtime.
+ * External providers cannot override built-in providers.
+ *
+ * @param name - The provider name (used in x-portkey-provider header)
+ * @param config - The provider configuration (must implement ProviderConfigs)
+ * @returns true if registered successfully, false if provider already exists
+ */
+export function registerProvider(
+  name: string,
+  config: ProviderConfigs
+): boolean {
+  if (Providers[name]) {
+    console.warn(
+      `⚠️  Provider "${name}" already exists, skipping external override`
+    );
+    return false;
+  }
+  Providers[name] = config;
+  // Also add to VALID_PROVIDERS so request validator accepts this provider
+  if (!VALID_PROVIDERS.includes(name)) {
+    VALID_PROVIDERS.push(name);
+  }
+  console.log(`  ↳ Registered external provider: ${name}`);
+  return true;
+}
 
 export default Providers;
