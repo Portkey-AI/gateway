@@ -3,6 +3,11 @@
    <strong>English</strong> | <a href="./.github/README.cn.md">中文</a> | <a href="./.github/README.jp.md">日本語</a>
 </p>
 
+> [!IMPORTANT]
+> :rocket: Gateway 2.0 (Pre-Release) Portkey's core enterprise gateway is merging into open-source with our 2.0 release. You can try the pre-release branch [here](https://github.com/portkey-ai/gateway/tree/2.0.0).
+> Read more about what's next for Portkey in our [**Series A announcement**](https://portkey.wiki/rohit-a).
+
+
 <div align="center">
 
 🆕 **[Portkey Models](https://github.com/Portkey-AI/models)** - Open-source LLM pricing for 2,300+ models across 40+ providers. [Explore →](https://portkey.ai/models)

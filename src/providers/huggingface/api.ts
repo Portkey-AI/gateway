@@ -10,8 +10,12 @@ const HuggingfaceAPIConfig: ProviderAPIConfig = {
   headers: ({ providerOptions }) => ({
     Authorization: `Bearer ${providerOptions.apiKey}`,
   }),
-  getEndpoint: ({ fn, gatewayRequestBodyJSON, providerOptions }) => {
-    const { model } = gatewayRequestBodyJSON;
+  getEndpoint: ({
+    fn,
+    gatewayRequestBodyJSON: gatewayRequestBody,
+    providerOptions,
+  }) => {
+    const { model } = gatewayRequestBody;
     const modelPath = providerOptions.huggingfaceBaseUrl
       ? ''
       : `/models/${model}`;

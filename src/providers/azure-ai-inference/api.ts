@@ -1,12 +1,14 @@
-import { getRuntimeKey } from 'hono/adapter';
+import { env, getRuntimeKey } from 'hono/adapter';
 import { GITHUB } from '../../globals';
-import { Environment } from '../../utils/env';
 import {
   getAccessTokenFromEntraId,
   getAzureManagedIdentityToken,
   getAzureWorkloadIdentityToken,
 } from '../azure-openai/utils';
 import { ProviderAPIConfig } from '../types';
+import { Environment } from '../../utils/env';
+
+const runtime = getRuntimeKey();
 
 const NON_INFERENCE_ENDPOINTS = [
   'createBatch',
@@ -20,8 +22,6 @@ const NON_INFERENCE_ENDPOINTS = [
   'deleteFile',
   'retrieveFileContent',
 ];
-
-const runtime = getRuntimeKey();
 
 const AzureAIInferenceAPI: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions, fn }) => {
@@ -38,7 +38,6 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
     if (azureFoundryUrl) {
       return azureFoundryUrl;
     }
-
     return '';
   },
   headers: async ({ providerOptions, fn, c }) => {
@@ -102,7 +101,8 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
           azureEntraTenantId,
           azureEntraClientId,
           azureEntraClientSecret,
-          scope
+          scope,
+          env(c)
         );
         if (isAnthropicModel) {
           headers['x-api-key'] = `${apiKey}`;
@@ -118,7 +118,8 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
         azureEntraScope || 'https://cognitiveservices.azure.com/';
       const accessToken = await getAzureManagedIdentityToken(
         resource,
-        azureManagedClientId
+        azureManagedClientId,
+        env(c)
       );
       if (isAnthropicModel) {
         headers['x-api-key'] = `${apiKey}`;
@@ -129,26 +130,28 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
     }
 
     if (azureAuthMode === 'workload' && runtime === 'node') {
-      const { azureWorkloadClientId, azureEntraScope } = providerOptions;
+      const { azureWorkloadClientId } = providerOptions;
 
       const authorityHost = Environment(c).AZURE_AUTHORITY_HOST;
+
       const tenantId = Environment(c).AZURE_TENANT_ID;
+
       const clientId = azureWorkloadClientId || Environment(c).AZURE_CLIENT_ID;
+
       const federatedTokenFile = Environment(c).AZURE_FEDERATED_TOKEN_FILE;
 
       if (authorityHost && tenantId && clientId && federatedTokenFile) {
         const fs = await import('fs');
         const federatedToken = fs.readFileSync(federatedTokenFile, 'utf8');
-
         if (federatedToken) {
-          const scope =
-            azureEntraScope || 'https://cognitiveservices.azure.com/.default';
+          const scope = 'https://cognitiveservices.azure.com/.default';
           const accessToken = await getAzureWorkloadIdentityToken(
             authorityHost,
             tenantId,
             clientId,
             federatedToken,
-            scope
+            scope,
+            env(c)
           );
           if (isAnthropicModel) return { 'x-api-key': `${apiKey}` };
           return {
@@ -244,18 +247,18 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
       case 'createSpeech':
       case 'createTranscription':
       case 'createTranslation':
-      case 'cancelBatch':
-      case 'createBatch':
-      case 'getBatchOutput':
-      case 'retrieveBatch':
-      case 'listBatches':
+      case 'uploadFile':
       case 'retrieveFile':
       case 'listFiles':
       case 'deleteFile':
-      case 'retrieveFileContent': {
+      case 'retrieveFileContent':
+      case 'listBatches':
+      case 'retrieveBatch':
+      case 'cancelBatch':
+      case 'getBatchOutput':
+      case 'createBatch': {
         return `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
       }
-
       default:
         return '';
     }

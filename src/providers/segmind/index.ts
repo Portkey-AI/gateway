@@ -4,6 +4,7 @@ import {
   SegmindImageGenerateConfig,
   SegmindImageGenerateResponseTransform,
 } from './imageGenerate';
+import { SegmindLogConfig } from './pricing';
 
 const SegmindConfig: ProviderConfigs = {
   api: SegmindAIAPIConfig,
@@ -11,6 +12,7 @@ const SegmindConfig: ProviderConfigs = {
   responseTransforms: {
     imageGenerate: SegmindImageGenerateResponseTransform,
   },
+  pricing: SegmindLogConfig,
 };
 
 export default SegmindConfig;

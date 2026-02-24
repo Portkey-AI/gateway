@@ -16,8 +16,8 @@ export interface GoogleGenerateFunctionCall {
 }
 
 export interface GoogleResponseCandidate {
-  content: {
-    parts: {
+  content?: {
+    parts?: {
       text?: string;
       thought?: string; // for models like gemini-2.0-flash-thinking-exp refer: https://ai.google.dev/gemini-api/docs/thinking-mode#streaming_model_thinking
       functionCall?: GoogleGenerateFunctionCall;
@@ -47,6 +47,7 @@ export interface GoogleResponseCandidate {
     ];
   };
   finishReason: string;
+  finishMessage?: string; // Contains error details for MALFORMED_FUNCTION_CALL and similar finish reasons
   index: 0;
   safetyRatings: {
     category: string;
@@ -69,18 +70,11 @@ export interface GoogleGenerateContentResponse {
   };
   usageMetadata: {
     promptTokenCount: number;
+    cachedContentTokenCount: number;
     candidatesTokenCount: number;
     totalTokenCount: number;
     thoughtsTokenCount?: number;
-    cachedContentTokenCount?: number;
-    promptTokensDetails: {
-      modality: VERTEX_MODALITY;
-      tokenCount: number;
-    }[];
-    candidatesTokensDetails: {
-      modality: VERTEX_MODALITY;
-      tokenCount: number;
-    }[];
+    trafficType?: 'PROVISIONED_THROUGHPUT' | 'ON_DEMAND';
   };
 }
 
@@ -269,17 +263,16 @@ export enum VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON {
   BLOCKLIST = 'BLOCKLIST',
   PROHIBITED_CONTENT = 'PROHIBITED_CONTENT',
   SPII = 'SPII',
+  MALFORMED_FUNCTION_CALL = 'MALFORMED_FUNCTION_CALL',
+  IMAGE_SAFETY = 'IMAGE_SAFETY',
 }
 
-export enum VERTEX_MODALITY {
-  MODALITY_UNSPECIFIED = 'MODALITY_UNSPECIFIED',
-  TEXT = 'TEXT',
-  IMAGE = 'IMAGE',
-  AUDIO = 'AUDIO',
-}
 export interface PortkeyGeminiParams extends Params {
   image_config?: {
     aspect_ratio: string; // '16:9', '4:3', '1:1'
     image_size: string; // '2K', '4K', '8K'
   };
+  media_resolution?: string; // 'MEDIA_RESOLUTION_LOW' | 'MEDIA_RESOLUTION_MEDIUM' | 'MEDIA_RESOLUTION_HIGH' | 'MEDIA_RESOLUTION_ULTRA_HIGH'
 }
+
+export const THOUGHT_SIGNATURE_PREFIX = 'thought_signature';

@@ -1,0 +1,59 @@
+#################################################################
+# .github/workflows/deploy-cf-worker-dev.yml
+#
+# Auto deploy to DEV on merge to develop.
+# Full deploy via wrangler deploy (100% traffic, no gradual rollout).
+#
+# Required secrets:
+#   CLOUDFLARE_API_TOKEN  - API token with "Workers Scripts:Edit" permission
+#   CLOUDFLARE_ACCOUNT_ID - Cloudflare account ID
+#################################################################
+
+name: "CF Worker - Deploy DEV"
+
+on:
+  push:
+    branches: [develop]
+
+concurrency:
+  group: cf-deploy-DEV
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: "Deploy → DEV"
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy to DEV
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx wrangler deploy --env stagingnewmain --minify src/index.ts
+          echo "✅ Deployed to DEV"
+
+      - name: Summary
+        run: |
+          echo "### 🚀 Auto Deploy — DEV" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Key | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-----|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Worker** | \`rubeus-dev-new-main\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Branch** | \`${{ github.ref_name }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Commit** | \`${{ github.sha }}\` |" >> "$GITHUB_STEP_SUMMARY"

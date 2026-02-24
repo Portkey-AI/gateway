@@ -14,7 +14,6 @@ export const FireworksAIChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
-    default: 'accounts/fireworks/models/llama-v3p1-405b-instruct',
   },
   messages: {
     param: 'messages',
@@ -98,6 +97,9 @@ export const FireworksAIChatCompleteConfig: ProviderConfig = {
   },
   top_logprobs: {
     param: 'top_logprobs',
+  },
+  prompt_cache_max_len: {
+    param: 'prompt_cache_max_len',
   },
 };
 

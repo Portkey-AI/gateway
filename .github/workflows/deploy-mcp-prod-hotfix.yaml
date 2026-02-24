@@ -1,0 +1,53 @@
+#################################################################
+# .github/workflows/deploy-mcp-prod-hotfix.yaml
+#################################################################
+
+name: MCP - Hotfix Deployment to ECS (Prod)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref (branch/tag/commit) to build MCP from'
+        required: true
+        default: feat/mcp
+        type: string
+      task_definition_version:
+        description: 'Optional task definition version to use (e.g., mcp:5). If not provided, uses current service version'
+        required: false
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  build_push:
+    uses: Portkey-AI/reusable-workflows/.github/workflows/ecr-build-push.yaml@main
+    with:
+      environment: prod
+      repository: ${{ vars.AWS_ECR_MCP_REPO }}
+      service_name: mcp
+      ref: ${{ inputs.ref }}
+      context: .
+      dockerfile_path: ./Dockerfile
+      aws_region: us-east-1
+      aws_session_name: ${{ format('GitHub_{0}_prod', github.event.repository.name) }}
+    secrets:
+      aws_role_arn: ${{ secrets.PROD_AWS_ASSUME_ROLE }}
+
+  deploy:
+    needs: build_push
+    uses: Portkey-AI/reusable-workflows/.github/workflows/ecs-deploy.yaml@main
+    with:
+      environment: prod
+      repository: ${{ vars.AWS_ECR_MCP_REPO }}
+      image_tag: ${{ inputs.ref }}
+      deployment_config_ssm_param: hotfix-deployment-configuration
+      service_name: mcp
+      task_definition_version: ${{ inputs.task_definition_version }}
+      aws_region: us-east-1
+      aws_session_name: ${{ format('GitHub_{0}_prod', github.event.repository.name) }}
+    secrets:
+      aws_role_arn: ${{ secrets.PROD_AWS_ASSUME_ROLE }}

@@ -3,5 +3,12 @@ services:
   web:
     ports:
       - "8787:8787"
-    image: "portkeyai/gateway:latest"
+    image: "portkeyai/gateway_enterprise:1.2.0"
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - redis
+  redis:
+    image: redis:alpine
     restart: always

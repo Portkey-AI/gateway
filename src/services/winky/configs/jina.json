@@ -1,0 +1,159 @@
+{
+  "default": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0
+        },
+        "response_token": {
+          "price": 0
+        }
+      },
+      "calculate": {
+        "request": {
+          "operation": "multiply",
+          "operands": [
+            {
+              "value": "input_tokens"
+            },
+            {
+              "value": "rates.request_token"
+            }
+          ]
+        },
+        "response": {
+          "operation": "multiply",
+          "operands": [
+            {
+              "value": "output_tokens"
+            },
+            {
+              "value": "rates.response_token"
+            }
+          ]
+        }
+      },
+      "currency": "USD"
+    }
+  },
+  "jina-embeddings-v2-base-en": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000002
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "jina-embeddings-v2-base-code": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000002
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "jina-embeddings-v2-base-zh": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000002
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "jina-colbert-v1-en": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000002
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "jina-embeddings-v2-base-de": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000002
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "jina-embeddings-v2-base-es": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000002
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "jina-reranker-v1-base-en": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000002
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "jina-colbert-v2": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000002
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "jina-reranker-v2-base-multilingual": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000002
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "jina-reranker-v3": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000005
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  }
+}

@@ -1,11 +1,35 @@
+import { env } from 'hono/adapter';
 import { GatewayError } from '../../errors/GatewayError';
 import { Options } from '../../types/requestBody';
 import { endpointStrings, ProviderAPIConfig } from '../types';
-import { getModelAndProvider, getAccessToken, getBucketAndFile } from './utils';
+import {
+  getModelAndProvider,
+  getAccessToken,
+  getGcpIdentityAccessToken,
+  getBucketAndFile,
+} from './utils';
 
 const getApiVersion = (provider: string) => {
   if (provider === 'meta') return 'v1beta1';
   return 'v1';
+};
+
+// remove the prompt-caching-scope-2026-01-05 beta from the list
+const toValidAnthropicBetas = (anthropicBeta: string | string[]) => {
+  if (typeof anthropicBeta === 'string') {
+    return anthropicBeta
+      .split(',')
+      .map((beta) => beta.trim())
+      .filter((beta) => beta && beta !== 'prompt-caching-scope-2026-01-05')
+      .join(',');
+  }
+  if (Array.isArray(anthropicBeta)) {
+    return anthropicBeta
+      .map((beta) => beta.trim())
+      .filter((beta) => beta && beta !== 'prompt-caching-scope-2026-01-05')
+      .join(',');
+  }
+  return anthropicBeta;
 };
 
 const getProjectRoute = (
@@ -64,21 +88,25 @@ export const GoogleApiConfig: ProviderAPIConfig = {
 
     return `https://${vertexRegion}-aiplatform.googleapis.com`;
   },
-  headers: async ({ c, providerOptions, gatewayRequestBody }) => {
-    const { apiKey, vertexServiceAccountJson } = providerOptions;
+  headers: async ({ providerOptions, gatewayRequestBody, c }) => {
+    const { apiKey, vertexServiceAccountJson, vertexAuthType } =
+      providerOptions;
     let authToken = apiKey;
     if (vertexServiceAccountJson) {
-      authToken = await getAccessToken(c, vertexServiceAccountJson);
+      authToken = await getAccessToken(vertexServiceAccountJson, env(c));
+    } else if (vertexAuthType && vertexAuthType === 'workload') {
+      authToken = await getGcpIdentityAccessToken(env(c));
     }
+
     const anthropicBeta =
       providerOptions?.['anthropicBeta'] ??
-      gatewayRequestBody?.['anthropic_beta'];
+      (gatewayRequestBody as Params)?.['anthropic_beta'];
 
     return {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${authToken}`,
       ...(anthropicBeta && {
-        'anthropic-beta': anthropicBeta,
+        'anthropic-beta': toValidAnthropicBetas(anthropicBeta),
       }),
     };
   },

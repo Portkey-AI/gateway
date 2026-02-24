@@ -1,0 +1,183 @@
+{
+  "default": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 0
+            }
+          }
+        }
+      },
+      "calculate": {
+        "request": {
+          "operation": "multiply",
+          "operands": [
+            {
+              "value": "0"
+            },
+            {
+              "value": "input_tokens"
+            }
+          ]
+        },
+        "response": {
+          "operation": "multiply",
+          "operands": [
+            {
+              "value": "1"
+            },
+            {
+              "value": "rates.image"
+            }
+          ]
+        }
+      },
+      "currency": "USD"
+    }
+  },
+  "ultra": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 8
+            }
+          }
+        }
+      }
+    }
+  },
+  "core": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 3
+            }
+          }
+        }
+      }
+    }
+  },
+  "sd3-large": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 6.5
+            }
+          }
+        }
+      }
+    }
+  },
+  "sd3-medium": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 3.5
+            }
+          }
+        }
+      }
+    }
+  },
+  "sd3-large-turbo": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 4
+            }
+          }
+        }
+      }
+    }
+  },
+  "sd3.5-medium": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 3.5
+            }
+          }
+        }
+      }
+    }
+  },
+  "stable-diffusion-xl-1024-v1-0": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 4
+            }
+          }
+        }
+      }
+    }
+  },
+  "stable-diffusion-v1-6": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 4
+            }
+          }
+        }
+      }
+    }
+  },
+  "stable-diffusion-xl-beta-v2-2-2": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 4
+            }
+          }
+        }
+      }
+    }
+  },
+  "sd3.5-large": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 6.5
+            }
+          }
+        }
+      }
+    }
+  },
+  "sd3.5-large-turbo": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 4
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -3,7 +3,7 @@ import { ProviderAPIConfig } from '../types';
 const OpenAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.openai.com/v1',
   headers: ({ providerOptions, fn }) => {
-    const headersObj: Record<string, string> = {
+    const headersObj: Record<string, string | boolean> = {
       Authorization: `Bearer ${providerOptions.apiKey}`,
     };
     if (providerOptions.openaiOrganization) {
@@ -24,6 +24,11 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
 
     if (providerOptions.openaiBeta) {
       headersObj['OpenAI-Beta'] = providerOptions.openaiBeta;
+    }
+
+    // Use node-fetch only for file upload endpoints.
+    if (fn === 'uploadFile') {
+      headersObj['use-node-fetch'] = true;
     }
 
     return headersObj;

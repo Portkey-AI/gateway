@@ -1,0 +1,46 @@
+#################################################################
+# .github/workflows/deploy-mcp-dev.yaml
+#################################################################
+
+name: MCP - Build & Deploy - Dev
+
+on:
+  push:
+    branches:
+      - feat/mcp
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+
+jobs:
+  push_to_ecr:
+    name: Build & Push - ECR
+    uses: Portkey-AI/reusable-workflows/.github/workflows/ecr-build-push.yaml@dev
+    with:
+      environment: dev
+      repository: ${{ vars.AWS_ECR_MCP_REPO }}
+      service_name: mcp
+      ref: ${{ github.sha }}
+      context: .
+      dockerfile_path: ./Dockerfile
+      aws_region: us-east-1
+      aws_session_name: ${{ format('GitHub_{0}_dev', github.event.repository.name) }}
+    secrets:
+      aws_role_arn: ${{ secrets.DEV_AWS_ASSUME_ROLE }}
+  deploy_to_ecs:
+    needs: push_to_ecr
+    if: ${{ success() }}
+    name: Update MCP Tag
+    uses: Portkey-AI/reusable-workflows/.github/workflows/ecs-deploy.yaml@dev
+    with:
+      environment: dev
+      repository: ${{ vars.AWS_ECR_MCP_REPO }}
+      image_tag: ${{ github.sha }}
+      service_name: mcp
+      deployment_config_ssm_param: deployment-configuration
+      aws_region: us-east-1
+      aws_session_name: ${{ format('GitHub_{0}_dev', github.event.repository.name) }}
+    secrets:
+      aws_role_arn: ${{ secrets.DEV_AWS_ASSUME_ROLE }}

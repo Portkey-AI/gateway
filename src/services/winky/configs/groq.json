@@ -1,0 +1,294 @@
+{
+  "default": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0
+        },
+        "response_token": {
+          "price": 0
+        }
+      },
+      "calculate": {
+        "request": {
+          "operation": "multiply",
+          "operands": [
+            {
+              "value": "input_tokens"
+            },
+            {
+              "value": "rates.request_token"
+            }
+          ]
+        },
+        "response": {
+          "operation": "multiply",
+          "operands": [
+            {
+              "value": "output_tokens"
+            },
+            {
+              "value": "rates.response_token"
+            }
+          ]
+        }
+      },
+      "currency": "USD"
+    }
+  },
+  "llama2-70b-4096": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00007
+        },
+        "response_token": {
+          "price": 0.00008
+        }
+      }
+    }
+  },
+  "mixtral-8x7b-32768": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000024
+        },
+        "response_token": {
+          "price": 0.000024
+        }
+      }
+    }
+  },
+  "llama3-8b-8192": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000005
+        },
+        "response_token": {
+          "price": 0.000008
+        }
+      }
+    }
+  },
+  "llama3-70b-8192": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000059
+        },
+        "response_token": {
+          "price": 0.000079
+        }
+      }
+    }
+  },
+  "gemma-7b-it": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00001
+        },
+        "response_token": {
+          "price": 0.00001
+        }
+      }
+    }
+  },
+  "gemma2-9b-it": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "llama3-groq-70b-8192-tool-use-preview": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000089
+        },
+        "response_token": {
+          "price": 0.000089
+        }
+      }
+    }
+  },
+  "llama3-groq-8b-8192-tool-use-preview": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000019
+        },
+        "response_token": {
+          "price": 0.000019
+        }
+      }
+    }
+  },
+  "llama-3.1-70b-versatile": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000059
+        },
+        "response_token": {
+          "price": 0.000079
+        }
+      }
+    }
+  },
+  "llama-3.1-8b-instant": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000005
+        },
+        "response_token": {
+          "price": 0.000008
+        }
+      }
+    }
+  },
+  "llama-guard-3-8b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "deepseek-r1-distill-llama-70b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000075
+        },
+        "response_token": {
+          "price": 0.000099
+        }
+      }
+    }
+  },
+  "meta-llama/llama-4-maverick-17b-128e-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00006
+        }
+      }
+    }
+  },
+  "meta-llama/llama-4-scout-17b-16e-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000011
+        },
+        "response_token": {
+          "price": 0.000034
+        }
+      }
+    }
+  },
+  "openai/gpt-oss-120b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000015
+        },
+        "response_token": {
+          "price": 0.00006
+        }
+      }
+    }
+  },
+  "openai/gpt-oss-20b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0000075
+        },
+        "response_token": {
+          "price": 0.00003
+        }
+      }
+    }
+  },
+  "openai/gpt-oss-safeguard-20b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0000075
+        },
+        "response_token": {
+          "price": 0.00003
+        }
+      }
+    }
+  },
+  "moonshotai/kimi-k2-instruct-0905": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.0003
+        },
+        "cache_read_input_token": {
+          "price": 0.00005
+        }
+      }
+    }
+  },
+  "meta-llama/llama-guard-4-12b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "qwen/qwen3-32b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000029
+        },
+        "response_token": {
+          "price": 0.000059
+        }
+      }
+    }
+  },
+  "llama-3.3-70b-versatile": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000059
+        },
+        "response_token": {
+          "price": 0.000079
+        }
+      }
+    }
+  }
+}

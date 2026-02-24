@@ -32,6 +32,28 @@ export const OpenAIImageGenerateConfig: ProviderConfig = {
   user: {
     param: 'user',
   },
+  moderation: {
+    param: 'moderation',
+  },
+  output_format: {
+    param: 'output_format',
+  },
+  output_compression: {
+    param: 'output_compression',
+    min: 0,
+    max: 100,
+  },
+  background: {
+    param: 'background',
+  },
+  partial_images: {
+    param: 'partial_images',
+    min: 0,
+    max: 3,
+  },
+  stream: {
+    param: 'stream',
+  },
 };
 
 interface OpenAIImageObject {

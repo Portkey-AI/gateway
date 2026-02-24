@@ -1,0 +1,84 @@
+name: Sync Pricing & Create PR
+
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        description: 'Source branch from models repo (main or dev)'
+        required: true
+        type: string
+      source_commit:
+        description: 'Commit SHA from models repo'
+        required: false
+        type: string
+      triggered_by:
+        description: 'User who triggered the workflow'
+        required: false
+        type: string
+
+jobs:
+  sync-and-create-pr:
+    name: Sync from S3 & Create PR
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.source_branch == 'main' && 'ENVs' || 'DEV_ENVs' }}
+    steps:
+      - name: Checkout gateway repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync pricing configs from S3
+        run: npm run sync:pricing
+        env:
+          S3_PRICING_BUCKET: ${{ secrets.S3_PRICING_BUCKET }}
+
+      - name: Format synced files
+        run: npm run format
+
+      - name: Build
+        run: npm run build
+
+      - name: Get current date
+        id: datetime
+        run: echo "date=$(date +'%Y-%m-%d_%H-%M-%S')" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        id: create-pr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: sync pricing configs from S3"
+          title: "Sync Pricing Configs from S3 (${{ steps.datetime.outputs.date }})"
+          body: |
+            ## Automated Pricing Sync
+            
+            This PR syncs pricing configuration files from S3.
+            
+            **Source Branch:** `${{ github.event.inputs.source_branch }}` (from models repo)
+            **Target Branch:** `${{ github.event.inputs.source_branch }}`
+            **Synced:** ${{ steps.datetime.outputs.date }}
+            ${{ github.event.inputs.source_commit && '**Source Commit:** `' || '' }}${{ github.event.inputs.source_commit }}${{ github.event.inputs.source_commit && '`' || '' }}
+            ${{ github.event.inputs.triggered_by && '**Triggered by:** @' || '' }}${{ github.event.inputs.triggered_by }}
+            
+            ### Changes
+            - Updated pricing configs from S3 source of truth
+            - Regenerated configs index
+            
+            Please review the changes and merge when ready.
+          branch: sync-pricing/${{ github.event.inputs.source_branch }}-${{ github.run_id }}
+          base: ${{ github.event.inputs.source_branch }}
+          delete-branch: true

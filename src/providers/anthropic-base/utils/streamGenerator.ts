@@ -148,6 +148,11 @@ export function* anthropicMessagesJsonToStreamGenerator(
   yield getMessageStartEvent(response);
 
   for (const [index, contentBlock] of response.content.entries()) {
+    if (!('type' in contentBlock)) {
+      // Skip CitationContentBlock or other blocks without type
+      continue;
+    }
+
     switch (contentBlock.type) {
       case 'text':
         yield textContentBlockStartEvent(index);

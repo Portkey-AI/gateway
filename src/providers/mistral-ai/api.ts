@@ -6,11 +6,10 @@ const MistralAIAPIConfig: ProviderAPIConfig = {
     return { Authorization: `Bearer ${providerOptions.apiKey}` };
   },
   getEndpoint: ({ fn, providerOptions }) => {
-    let mappedfn = fn;
     if (providerOptions.mistralFimCompletion === 'true') {
       return '/fim/completions';
     }
-    switch (mappedfn) {
+    switch (fn) {
       case 'chatComplete':
         return '/chat/completions';
       case 'embed':

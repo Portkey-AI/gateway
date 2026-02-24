@@ -1,43 +1,43 @@
 import { Context } from 'hono';
-import {
-  constructConfigFromRequestHeaders,
-  tryTargetsRecursively,
-} from './handlerUtils';
+import { tryTargetsRecursively } from './handlerUtils';
+import { constructConfigFromRequestHeaders } from '../utils/request';
 import { endpointStrings } from '../providers/types';
+import { logger } from '../apm';
 
+/**
+ * Handler for the Responses API endpoints (/v1/responses)
+ *
+ * This handler always passes through to tryTargetsRecursively with the
+ * original endpoint. The per-provider adapter decision (native vs chatComplete
+ * translation) is made inside tryPost where the exact provider is known,
+ * rather than pre-deciding at the handler level via recursive config walking.
+ */
 function modelResponsesHandler(
   endpoint: endpointStrings,
   method: 'POST' | 'GET' | 'DELETE'
 ) {
   async function handler(c: Context): Promise<Response> {
     try {
-      let requestHeaders = Object.fromEntries(c.req.raw.headers);
-      let request = method === 'POST' ? await c.req.json() : {};
+      const request = c.get('requestBodyData');
+      const requestHeaders = c.get('mappedHeaders');
       const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
-      const tryTargetsResponse = await tryTargetsRecursively(
+
+      return tryTargetsRecursively(
         c,
         camelCaseConfig ?? {},
-        request,
+        method === 'POST' ? request.bodyJSON : {},
         requestHeaders,
         endpoint,
         method,
         'config'
       );
-
-      return tryTargetsResponse;
     } catch (err: any) {
-      console.error('modelResponsesHandler error: ', err);
+      logger.error(`${endpoint} error:`, err);
       return new Response(
         JSON.stringify({
-          status: 'failure',
-          message: 'Something went wrong',
+          error: { message: 'Internal error', type: 'server_error' },
         }),
-        {
-          status: 500,
-          headers: {
-            'content-type': 'application/json',
-          },
-        }
+        { status: 500, headers: { 'content-type': 'application/json' } }
       );
     }
   }

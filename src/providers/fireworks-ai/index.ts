@@ -4,11 +4,7 @@ import {
   FireworkCancelFinetuneResponseTransform,
   FireworksCancelFinetuneRequestHandler,
 } from './cancelFinetune';
-import {
-  FireworksAIChatCompleteConfig,
-  FireworksAIChatCompleteResponseTransform,
-  FireworksAIChatCompleteStreamChunkTransform,
-} from './chatComplete';
+import { FireworksAIChatCompleteConfig } from './chatComplete';
 import {
   FireworksAICompleteConfig,
   FireworksAICompleteResponseTransform,
@@ -19,18 +15,16 @@ import {
   FireworksFinetuneCreateConfig,
   FireworksRequestTransform,
 } from './createFinetune';
-import {
-  FireworksAIEmbedConfig,
-  FireworksAIEmbedResponseTransform,
-} from './embed';
+import { FireworksAIEmbedConfig } from './embed';
 import {
   FireworksAIImageGenerateConfig,
   FireworksAIImageGenerateResponseTransform,
 } from './imageGenerate';
 import { FireworksFileListResponseTransform } from './listFiles';
 import { FireworkListFinetuneResponseTransform } from './listFinetune';
-import { FireworksFileRetrieveResponseTransform } from './retrieveFile';
+import { FireworksFileRetrieveResponseTransform } from './retriveFile';
 import { FireworkFileUploadRequestHandler } from './uploadFile';
+import { FireworksAiLogConfig } from './pricing';
 
 const FireworksAIConfig: ProviderConfigs = {
   complete: FireworksAICompleteConfig,
@@ -42,9 +36,6 @@ const FireworksAIConfig: ProviderConfigs = {
   responseTransforms: {
     complete: FireworksAICompleteResponseTransform,
     'stream-complete': FireworksAICompleteStreamChunkTransform,
-    chatComplete: FireworksAIChatCompleteResponseTransform,
-    'stream-chatComplete': FireworksAIChatCompleteStreamChunkTransform,
-    embed: FireworksAIEmbedResponseTransform,
     imageGenerate: FireworksAIImageGenerateResponseTransform,
     listFiles: FireworksFileListResponseTransform,
     retrieveFile: FireworksFileRetrieveResponseTransform,
@@ -60,6 +51,7 @@ const FireworksAIConfig: ProviderConfigs = {
   requestTransforms: {
     createFinetune: FireworksRequestTransform,
   },
+  pricing: FireworksAiLogConfig,
 };
 
 export default FireworksAIConfig;

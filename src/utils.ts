@@ -7,9 +7,9 @@ import {
   DEEPINFRA,
   SAMBANOVA,
   BEDROCK,
-  BYTEZ,
 } from './globals';
 import { Params } from './types/requestBody';
+import { Environment } from './utils/env';
 
 export const getStreamModeSplitPattern = (
   proxyProvider: string,
@@ -49,13 +49,9 @@ export const getStreamModeSplitPattern = (
     splitPattern = '\n';
   }
 
-  if (proxyProvider === BYTEZ) {
-    splitPattern = ' ';
-  }
-
   return splitPattern;
 };
-export type SplitPatternType = '\n\n' | '\r\n\r\n' | '\n' | '\r\n' | ' ';
+export type SplitPatternType = '\n\n' | '\r\n\r\n' | '\n' | '\r\n';
 
 export const getStreamingMode = (
   reqBody: Params,
@@ -75,7 +71,7 @@ export const getStreamingMode = (
   ) {
     return true;
   }
-  return reqBody.stream;
+  return !!reqBody?.stream;
 };
 
 export function convertKeysToCamelCase(
@@ -114,4 +110,64 @@ export function convertKeysToCamelCase(
   function toCamelCase(snakeCase: string): string {
     return snakeCase.replace(/(_\w)/g, (match) => match[1].toUpperCase());
   }
+}
+
+export const parseStringToArray = (value?: string) => {
+  if (!value) {
+    return [];
+  }
+  const parts = value.split(',').map((val) => val.trim());
+  return parts;
+};
+
+export const getCORSValues = () => {
+  const isCorsEnabled = Environment({}).ENABLE_CORS === 'true';
+
+  const allowedOrigins = parseStringToArray(
+    Environment({}).CORS_ALLOWED_ORIGINS
+  );
+  const allowedMethods = parseStringToArray(
+    Environment({}).CORS_ALLOWED_METHODS
+  );
+  const allowedHeaders = parseStringToArray(
+    Environment({}).CORS_ALLOWED_HEADERS
+  );
+  const allowedExposeHeaders = parseStringToArray(
+    Environment({}).CORS_ALLOWED_EXPOSE_HEADERS
+  );
+
+  return {
+    allowedOrigins,
+    allowedMethods,
+    allowedHeaders,
+    allowedExposeHeaders,
+    isCorsEnabled,
+  };
+};
+const { allowedMethods, allowedHeaders, allowedExposeHeaders } =
+  getCORSValues();
+
+export const setCorsHeaders = (response: Response, origin: string) => {
+  response.headers.set('Access-Control-Allow-Origin', origin);
+  response.headers.set(
+    'Access-Control-Allow-Methods',
+    allowedMethods.join(',')
+  );
+  response.headers.set(
+    'Access-Control-Allow-Headers',
+    allowedHeaders.join(',')
+  );
+  response.headers.set(
+    'Access-Control-Expose-Headers',
+    allowedExposeHeaders.join(',')
+  );
+};
+
+export async function computeSHA256(data: string) {
+  const encoder = new TextEncoder();
+  const dataArray = encoder.encode(data);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', dataArray);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }

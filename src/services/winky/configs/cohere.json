@@ -1,0 +1,267 @@
+{
+  "default": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0
+        },
+        "response_token": {
+          "price": 0
+        }
+      },
+      "calculate": {
+        "request": {
+          "operation": "multiply",
+          "operands": [
+            {
+              "value": "input_tokens"
+            },
+            {
+              "value": "rates.request_token"
+            }
+          ]
+        },
+        "response": {
+          "operation": "multiply",
+          "operands": [
+            {
+              "value": "output_tokens"
+            },
+            {
+              "value": "rates.response_token"
+            }
+          ]
+        }
+      },
+      "currency": "USD"
+    }
+  },
+  "command": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.0002
+        }
+      }
+    }
+  },
+  "command-light": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00003
+        },
+        "response_token": {
+          "price": 0.00006
+        }
+      }
+    }
+  },
+  "command-nightly": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.0002
+        }
+      }
+    }
+  },
+  "command-light-nightly": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00003
+        },
+        "response_token": {
+          "price": 0.00006
+        }
+      }
+    }
+  },
+  "embed-english-v2.0": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00001
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "embed-english-light-v2.0": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00001
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "embed-multilingual-v2.0": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00001
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "embed-english-v3.0": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00001
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "embed-multilingual-v3.0": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00001
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "rerank-english-v3.0": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.2
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "rerank-multilingual-v3.0": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.2
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "command-r-plus": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00025
+        },
+        "response_token": {
+          "price": 0.001
+        }
+      }
+    }
+  },
+  "command-r": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000015
+        },
+        "response_token": {
+          "price": 0.00006
+        }
+      }
+    }
+  },
+  "command-r7b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00000375
+        },
+        "response_token": {
+          "price": 0.000015
+        }
+      }
+    }
+  },
+  "rerank-v3.5": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.2
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "rerank-multilingual-v2.0": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.1
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "rerank-english-v2.0": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.1
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "rerank-v4.0-fast": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.2
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "rerank-v4.0-pro": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.25
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  }
+}

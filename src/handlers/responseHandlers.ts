@@ -15,10 +15,11 @@ import {
   handleTextResponse,
 } from './streamHandler';
 import { HookSpan } from '../middlewares/hooks';
-import { env } from 'hono/adapter';
 import { OpenAIModelResponseJSONToStreamGenerator } from '../providers/open-ai-base/createModelResponse';
 import { anthropicMessagesJsonToStreamGenerator } from '../providers/anthropic-base/utils/streamGenerator';
 import { endpointStrings } from '../providers/types';
+import { externalServiceFetch, internalServiceFetch } from '../utils/fetch';
+import { env } from 'hono/adapter';
 
 /**
  * Handles various types of responses based on the specified parameters
@@ -39,7 +40,7 @@ export async function responseHandler(
   c: Context,
   response: Response,
   streamingMode: boolean,
-  providerOptions: Options,
+  provider: string | Options,
   responseTransformer: string | undefined,
   requestURL: string,
   isCacheHit: boolean = false,
@@ -47,16 +48,22 @@ export async function responseHandler(
   strictOpenAiCompliance: boolean,
   gatewayRequestUrl: string,
   areSyncHooksAvailable: boolean,
-  hookSpanId: string
+  hookSpanId: string,
+  providerOption: Options
 ): Promise<{
   response: Response;
   responseJson: Record<string, any> | null;
   originalResponseJson?: Record<string, any> | null;
+  timeToLastByte?: number | null;
 }> {
+  const startTime = Date.now();
   let responseTransformerFunction: Function | undefined;
   const responseContentType = response.headers?.get('content-type');
   const isSuccessStatusCode = [200, 246].includes(response.status);
-  const provider = providerOptions.provider;
+
+  if (typeof provider == 'object') {
+    provider = provider.provider || '';
+  }
 
   const providerConfig = Providers[provider];
   let providerTransformers = Providers[provider]?.responseTransforms;
@@ -64,7 +71,7 @@ export async function responseHandler(
   if (providerConfig?.getConfig) {
     providerTransformers = providerConfig.getConfig({
       params: gatewayRequest,
-      providerOptions,
+      providerOptions: providerOption,
     }).responseTransforms;
   }
 
@@ -84,11 +91,11 @@ export async function responseHandler(
         responseTransformerFunction =
           OpenAIChatCompleteJSONToStreamResponseTransform;
         break;
-      case 'messages':
-        responseTransformerFunction = anthropicMessagesJsonToStreamGenerator;
-        break;
       case 'createModelResponse':
         responseTransformerFunction = OpenAIModelResponseJSONToStreamGenerator;
+        break;
+      case 'messages':
+        responseTransformerFunction = anthropicMessagesJsonToStreamGenerator;
         break;
       default:
         responseTransformerFunction =
@@ -116,6 +123,7 @@ export async function responseHandler(
     }
     return {
       response: handleStreamingMode(
+        c,
         response,
         provider,
         responseTransformerFunction,
@@ -149,7 +157,9 @@ export async function responseHandler(
 
   if (
     responseContentType?.startsWith(CONTENT_TYPES.PLAIN_TEXT) ||
-    responseContentType?.startsWith(CONTENT_TYPES.HTML)
+    responseContentType?.startsWith(CONTENT_TYPES.HTML) ||
+    responseContentType?.startsWith(CONTENT_TYPES.XML) ||
+    responseContentType?.toLowerCase()?.includes('xml')
   ) {
     const textResponse = await handleTextResponse(
       response,
@@ -159,6 +169,13 @@ export async function responseHandler(
   }
 
   if (!responseContentType && response.status === 204) {
+    return {
+      response: new Response(response.body, response),
+      responseJson: null,
+    };
+  }
+
+  if (!responseContentType) {
     return {
       response: new Response(response.body, response),
       responseJson: null,
@@ -178,6 +195,9 @@ export async function responseHandler(
     response: nonStreamingResponse.response,
     responseJson: nonStreamingResponse.json,
     originalResponseJson: nonStreamingResponse.originalResponseBodyJson,
+    timeToLastByte: nonStreamingResponse.timeToLastByte
+      ? nonStreamingResponse.timeToLastByte - startTime
+      : null,
   };
 }
 
@@ -216,7 +236,9 @@ function createHookResponse(
   return new Response(JSON.stringify(responseBody), {
     status: options.status || baseResponse.status,
     statusText: options.statusText || baseResponse.statusText,
-    headers: options.headers || baseResponse.headers,
+    headers: options.headers
+      ? new Headers(options.headers)
+      : new Headers(baseResponse.headers),
   });
 }
 
@@ -247,6 +269,8 @@ export async function afterRequestHookHandler(
         env: env(c),
         getFromCacheByKey: c.get('getFromCacheByKey'),
         putInCacheWithValue: c.get('putInCacheWithValue'),
+        internalServiceFetch: internalServiceFetch,
+        externalServiceFetch: externalServiceFetch,
       }
     );
 
@@ -273,7 +297,7 @@ export async function afterRequestHookHandler(
           headers: response.headers,
         });
       }
-      return response;
+      return new Response(response.body, response);
     }
 
     if (shouldDeny) {
@@ -300,7 +324,7 @@ export async function afterRequestHookHandler(
 
     return createHookResponse(response, responseData, hooksResult);
   } catch (err) {
-    console.error('afterRequestHookHandler error: ', err);
+    console.error(err);
     return response;
   }
 }

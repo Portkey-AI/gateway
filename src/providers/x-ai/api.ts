@@ -13,6 +13,12 @@ const XAIAPIConfig: ProviderAPIConfig = {
         return '/completions';
       case 'embed':
         return '/embeddings';
+      case 'realtime':
+        // xAI realtime API uses a fixed endpoint with default model
+        // See: https://docs.x.ai/docs/guides/voice/agent
+        return '/realtime';
+      case 'createModelResponse':
+        return '/responses';
       default:
         return '';
     }

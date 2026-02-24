@@ -1,5 +1,6 @@
 import { FIREWORKS_AI } from '../../globals';
 import { Params } from '../../types/requestBody';
+import { externalServiceFetch } from '../../utils/fetch';
 import { RequestHandler } from '../types';
 import FireworksAIAPIConfig from './api';
 import { fireworkFinetuneToOpenAIFinetune } from './utils';
@@ -44,7 +45,7 @@ export const FireworksCancelFinetuneRequestHandler: RequestHandler<
   });
 
   try {
-    const request = await fetch(baseURL + endpoint, {
+    const request = await externalServiceFetch(baseURL + endpoint, {
       method: 'DELETE',
       headers,
       body: JSON.stringify(requestBody),

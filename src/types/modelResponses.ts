@@ -1700,35 +1700,24 @@ export interface ResponseOutputItemReasoning {
   id: string;
 
   /**
-   * Reasoning text contents.
-   */
-  content?: {
-    /**
-     * A short summary of the reasoning used by the model when generating the response.
-     */
-    text: string;
-
-    /**
-     * The type of the object. Always `text`.
-     */
-    type: 'reasoning_summary';
-  };
-
-  /**
    * The type of the object. Always `reasoning`.
    */
   type: 'reasoning';
 
   /**
-   * The status of the item. One of `in_progress`, `completed`, or `incomplete`.
-   * Populated when items are returned via API.
+   * Reasoning summary contents - array of summary items.
    */
-  status?: 'in_progress' | 'completed' | 'incomplete';
+  summary?: Array<{
+    /**
+     * The type of the summary. Always `summary_text`.
+     */
+    type: 'summary_text';
 
-  /**
-   * A short summary of the reasoning used by the model when generating the response.
-   */
-  summary?: any;
+    /**
+     * A short summary of the reasoning used by the model when generating the response.
+     */
+    text: string;
+  }>;
 }
 
 /**
@@ -2227,6 +2216,11 @@ export interface ResponseUsage {
   input_tokens: number;
 
   /**
+   * A detailed breakdown of the input tokens.
+   */
+  input_tokens_details: ResponseUsage.InputTokensDetails;
+
+  /**
    * The number of output tokens.
    */
   output_tokens: number;
@@ -2243,6 +2237,16 @@ export interface ResponseUsage {
 }
 
 export namespace ResponseUsage {
+  /**
+   * A detailed breakdown of the input tokens.
+   */
+  export interface InputTokensDetails {
+    /**
+     * The number of cached tokens.
+     */
+    cached_tokens: number;
+  }
+
   /**
    * A detailed breakdown of the output tokens.
    */

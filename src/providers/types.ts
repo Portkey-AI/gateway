@@ -5,9 +5,9 @@ import {
   BEDROCK_CONVERSE_STOP_REASON,
   TITAN_STOP_REASON,
 } from './bedrock/types';
+import { DEEPSEEK_STOP_REASON } from './deepseek/types';
 import { VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON } from './google-vertex-ai/types';
 import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from './google/types';
-import { DEEPSEEK_STOP_REASON } from './deepseek/types';
 import { MISTRAL_AI_FINISH_REASON } from './mistral-ai/types';
 import { TOGETHER_AI_FINISH_REASON } from './together-ai/types';
 import { COHERE_STOP_REASON } from './cohere/types';
@@ -20,7 +20,7 @@ export interface ParameterConfig {
   /** corresponding provider parameter key in the transformed request body */
   param: string;
   /** The default value of the parameter, if not provided in the request. */
-  default?: any;
+  default?: unknown | ((config: any, options?: Options) => any);
   /** The minimum value of the parameter. */
   min?: number;
   /** The maximum value of the parameter. */
@@ -52,7 +52,7 @@ export interface ProviderAPIConfig {
     fn: string;
     transformedRequestBody: Record<string, any>;
     transformedRequestUrl: string;
-    gatewayRequestBody?: Params;
+    gatewayRequestBody?: Params | ArrayBuffer;
     headers?: Record<string, string>;
   }) => Promise<Record<string, any>> | Record<string, any>;
   /** A function to generate the baseURL based on parameters */
@@ -79,7 +79,9 @@ export interface ProviderAPIConfig {
     providerOptions: Options;
     reqPath: string;
     reqQuery: string;
+    requestHeaders: Record<string, string>;
   }) => string;
+  getOptions?: () => RequestInit;
 }
 
 export type endpointStrings =
@@ -117,7 +119,8 @@ export type endpointStrings =
   | 'deleteModelResponse'
   | 'listResponseInputItems'
   | 'messages'
-  | 'messagesCountTokens';
+  | 'messagesCountTokens'
+  | 'realtime';
 
 /**
  * A collection of API configurations for multiple AI providers.
@@ -142,6 +145,13 @@ export type RequestHandlers = Partial<
   Record<endpointStrings, RequestHandler<any>>
 >;
 
+export type RequestTransforms = Partial<
+  Record<
+    endpointStrings,
+    (requestBody: any, requestHeaders: Record<string, string>) => any
+  >
+>;
+
 /**
  * A collection of configurations for multiple AI providers.
  * @interface
@@ -150,13 +160,17 @@ export interface ProviderConfigs {
   /** The configuration for each provider, indexed by provider name. */
   [key: string]: any;
   requestHandlers?: RequestHandlers;
+  requestTransforms?: RequestTransforms;
   getConfig?: ({
     params,
+    fn,
     providerOptions,
   }: {
     params: Params;
-    providerOptions: Options;
-  }) => any;
+    fn?: endpointStrings;
+    providerOptions?: Options;
+  }) => ProviderConfigs;
+  pricing?: LogConfig;
 }
 
 export interface BaseResponse {
@@ -185,12 +199,12 @@ export interface CResponse extends BaseResponse {
       audio_tokens?: number;
       cached_tokens?: number;
     };
+    num_search_queries?: number;
     /*
      * Anthropic Prompt cache token usage
      */
     cache_read_input_tokens?: number;
     cache_creation_input_tokens?: number;
-    num_search_queries?: number;
   };
 }
 
@@ -205,25 +219,6 @@ export interface CompletionResponse extends CResponse {
     logprobs: null;
     finish_reason: string;
   }[];
-}
-
-export interface GroundingMetadata {
-  webSearchQueries?: string[];
-  searchEntryPoint?: {
-    renderedContent: string;
-  };
-  groundingSupports?: Array<{
-    segment: {
-      startIndex: number;
-      endIndex: number;
-      text: string;
-    };
-    groundingChunkIndices: number[];
-    confidenceScores: number[];
-  }>;
-  retrievalMetadata?: {
-    webDynamicRetrievalScore: number;
-  };
 }
 
 /**
@@ -247,6 +242,25 @@ export interface Logprobs {
     logprob: number;
     bytes: number[];
   }[];
+}
+
+export interface GroundingMetadata {
+  webSearchQueries?: string[];
+  searchEntryPoint?: {
+    renderedContent: string;
+  };
+  groundingSupports?: Array<{
+    segment: {
+      startIndex: number;
+      endIndex: number;
+      text: string;
+    };
+    groundingChunkIndices: number[];
+    confidenceScores: number[];
+  }>;
+  retrievalMetadata?: {
+    webDynamicRetrievalScore: number;
+  };
 }
 
 /**
@@ -391,7 +405,7 @@ interface FinetuneProviderOptions {
 export interface FinetuneRequest {
   model: string;
   suffix: string;
-  provider_options: FinetuneProviderOptions;
+  provider_options?: FinetuneProviderOptions;
   training_file: string;
   validation_file?: string;
   model_type?: string;
@@ -442,6 +456,7 @@ export enum FINISH_REASON {
   tool_calls = 'tool_calls',
   content_filter = 'content_filter',
   function_call = 'function_call',
+  refusal = 'refusal',
 }
 
 export type PROVIDER_FINISH_REASON =
@@ -454,3 +469,171 @@ export type PROVIDER_FINISH_REASON =
   | MISTRAL_AI_FINISH_REASON
   | TOGETHER_AI_FINISH_REASON
   | COHERE_STOP_REASON;
+
+export type VIDEO_DURATION_UNIT_KEY =
+  | 'video_duration_seconds'
+  | `video_duration_seconds_${number}_${number}`;
+
+export type PRICING_ADDITIONAL_UNIT_KEY =
+  | 'web_search'
+  | 'web_search_low_context'
+  | 'web_search_medium_context'
+  | 'web_search_high_context'
+  | 'file_search'
+  | 'input_image'
+  | 'input_video_plus'
+  | 'input_video_standard'
+  | 'input_video_essential'
+  | 'request_audio_token'
+  | 'routing_units'
+  | 'response_audio_token'
+  | 'video_seconds'
+  | 'video_audio_seconds'
+  | VIDEO_DURATION_UNIT_KEY
+  | 'megapixels'
+  | 'default_steps'
+  | 'finetune_training_hours'
+  | 'finetune_token_units';
+
+export type PRICING_ADDITIONAL_UNIT_CONTEXT_LENGTH_KEY =
+  | 'low_context'
+  | 'medium_context'
+  | 'high_context';
+
+export type Tokens = {
+  reqUnits: number;
+  resUnits: number;
+  cacheWriteInputUnits?: number;
+  cacheReadInputUnits?: number;
+  cacheReadAudioInputUnits?: number;
+  resAudioUnits?: number;
+  resTextUnits?: number;
+  reqTextUnits?: number;
+  reqAudioUnits?: number;
+  reqImageUnits?: number;
+  resImageUnits?: number;
+  cachedImageUnits?: number;
+  cachedTextUnits?: number;
+  additionalUnits?: {
+    [key in PRICING_ADDITIONAL_UNIT_KEY]?: number;
+  };
+};
+
+export type ModelPricingConfig = {
+  [model: string]: {
+    pricing_config: PricingConfig | null;
+  };
+};
+
+export interface GenerationCost {
+  requestCost: number;
+  responseCost: number;
+  currency: string;
+}
+
+interface PayAsYouGo {
+  type?: 'static' | 'dynamic';
+  request_token?: { price: number };
+  response_token?: { price: number };
+  cache_write_input_token?: { price: number };
+  cache_read_input_token?: { price: number };
+  cache_read_audio_input_token?: { price: number };
+  request_audio_token?: { price: number };
+  response_audio_token?: { price: number };
+  reasoning_token?: { price: number };
+  prediction_accepted_token?: { price: number };
+  prediction_rejected_token?: { price: number };
+  request_image_token?: { price: number };
+  response_image_token?: { price: number };
+  request_text_token?: { price: number };
+  response_text_token?: { price: number };
+  cached_image_input_token?: { price: number };
+  cached_text_input_token?: { price: number };
+  image?: any;
+  additional_units?: {
+    [key in PRICING_ADDITIONAL_UNIT_KEY]?: { price: number };
+  };
+}
+
+export interface BatchConfig {
+  request_token?: { price: number };
+  response_token?: { price: number };
+  cache_write_input_token?: { price: number };
+  cache_read_input_token?: { price: number };
+  cache_read_audio_input_token?: { price: number };
+  request_audio_token?: { price: number };
+  response_audio_token?: { price: number };
+  request_image_token?: { price: number };
+  response_image_token?: { price: number };
+  request_text_token?: { price: number };
+  response_text_token?: { price: number };
+  cached_image_input_token?: { price: number };
+  cached_text_input_token?: { price: number };
+  image?: any;
+}
+
+export interface FinetuneConfig {
+  pay_per_token?: { price: number };
+  pay_per_hour?: { price: number };
+}
+
+export interface PricingConfig {
+  finetune_config?: FinetuneConfig;
+  batch_config?: BatchConfig;
+  pay_as_you_go: PayAsYouGo;
+  fixed_cost?: {
+    request?: { price: number };
+    response?: { price: number };
+  };
+  calculate?: {
+    request?: any;
+    response?: any;
+  };
+  currency: string;
+  type?: 'static' | 'dynamic';
+}
+export interface Operation {
+  operation: 'sum' | 'multiply' | 'divide' | 'subtract';
+  operands: (Operation | { value: string })[];
+}
+
+export type ModelInput = {
+  env: Record<string, any>;
+  url: string;
+  apiKey: string;
+  reqBody: Record<string, any>;
+  resBody: Record<string, any>;
+  providerOptions: Record<string, any>;
+  isProxyCall: boolean;
+  originalReqBody?: Record<string, any>;
+  headers?: Record<string, string>;
+};
+
+export type TokenInput = {
+  env: Record<string, any>;
+  url: string;
+  reqBody: Record<string, any>;
+  resBody: Record<string, any>;
+  model: string;
+  originalResBody?: Record<string, any>;
+  originalReqBody?: Record<string, any>;
+  portkeyHeaders: Record<string, any>;
+  requestMethod?: string;
+};
+
+export type PriceInput = {
+  model: string;
+  url: string;
+  reqUnits: number;
+  resUnits: number;
+  requestBody?: Record<string, any>;
+};
+export interface LogConfig {
+  /** The configuration for each provider, indexed by provider name. */
+  getBaseURL: () => string;
+  modelConfig: (input: ModelInput) => string | Promise<string>;
+  tokenConfig: (input: TokenInput) => Tokens | Promise<Tokens>;
+  priceConfig?: (
+    input: PriceInput
+  ) => PricingConfig | null | Promise<PricingConfig | null>;
+}

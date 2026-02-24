@@ -16,6 +16,7 @@ import {
   CohereChatCompletionStreamChunk,
   CohereErrorResponse,
   CohereStreamState,
+  V2ChatStreamResponse,
 } from './types';
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
@@ -291,8 +292,11 @@ export const CohereChatCompleteStreamChunkTransform: (
           index: streamState.lastIndex,
           delta: {
             role: 'assistant',
-            content: (parsedChunk as any).delta?.message?.content?.text ?? '',
-            tool_calls: (parsedChunk as any).delta?.message?.tool_calls,
+            content:
+              (parsedChunk as V2ChatStreamResponse.ContentDelta).delta?.message
+                ?.content?.text ?? '',
+            tool_calls: (parsedChunk as V2ChatStreamResponse.ToolCallDelta)
+              .delta?.message?.tool_calls,
           },
           logprobs: null,
           finish_reason: null,

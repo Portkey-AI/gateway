@@ -1,5 +1,5 @@
 import { ANTHROPIC_STOP_REASON } from './anthropic/types';
-import { FINISH_REASON, ErrorResponse, PROVIDER_FINISH_REASON } from './types';
+import { ErrorResponse, FINISH_REASON, PROVIDER_FINISH_REASON } from './types';
 import {
   AnthropicFinishReasonMap,
   finishReasonMap,

@@ -1,7 +1,7 @@
 import {
   BEDROCK,
-  fileExtensionMimeTypeMap,
   imagesMimeTypes,
+  fileExtensionMimeTypeMap,
   videoMimeTypes,
 } from '../../globals';
 import {
@@ -10,8 +10,8 @@ import {
   ToolCall,
   SYSTEM_MESSAGE_ROLES,
   ContentType,
-  ToolChoiceObject,
   Options,
+  ToolChoiceObject,
 } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
@@ -64,14 +64,14 @@ export interface BedrockChatCompletionsParams extends Params {
 }
 
 export interface BedrockConverseAnthropicChatCompletionsParams
-  extends Omit<BedrockChatCompletionsParams, 'anthropic_beta'> {
+  extends BedrockChatCompletionsParams {
   anthropic_version?: string;
   user?: string;
   thinking?: {
     type: string;
     budget_tokens: number;
   };
-  anthropic_beta?: string | string[];
+  anthropic_beta?: string[];
 }
 
 export interface BedrockConverseCohereChatCompletionsParams
@@ -90,6 +90,8 @@ export interface BedrockConverseAI21ChatCompletionsParams
   presencePenalty?: number;
   countPenalty?: number;
 }
+
+// const CACHE_SUPPORTED_ROLES = ['user', 'assistant', 'system'];
 
 const getMessageTextContentArray = (
   message: Message
@@ -277,11 +279,22 @@ const getMessageContent = (message: Message) => {
     out.push({
       toolUse: {
         name: toolCall.function.name,
-        input: JSON.parse(toolCall.function.arguments),
+        input:
+          toolCall.function.arguments?.length > 0
+            ? JSON.parse(toolCall.function.arguments)
+            : {},
         toolUseId: toolCall.id,
       },
     });
   });
+
+  // Bedrock requires a text block when documents are present
+  const hasDocument = out.some((item) => 'document' in item);
+  const hasText = out.some((item) => 'text' in item);
+  if (hasDocument && !hasText) {
+    out.unshift({ text: ' ' });
+  }
+
   return out;
 };
 
@@ -296,9 +309,10 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
         const transformedMessages = params.messages
           .filter((msg) => !SYSTEM_MESSAGE_ROLES.includes(msg.role))
           .map((msg) => {
+            const content = getMessageContent(msg);
             return {
               role: msg.role === 'assistant' ? 'assistant' : 'user',
-              content: getMessageContent(msg),
+              content: content,
             };
           });
         let prevRole = '';
@@ -332,8 +346,10 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
             acc: Array<{ text: string } | { cachePoint: { type: string } }>,
             msg
           ) => {
-            if (SYSTEM_MESSAGE_ROLES.includes(msg.role))
-              return acc.concat(...getMessageTextContentArray(msg));
+            if (SYSTEM_MESSAGE_ROLES.includes(msg.role)) {
+              const content = getMessageTextContentArray(msg);
+              return acc.concat(...content);
+            }
             return acc;
           },
           []
@@ -766,6 +782,22 @@ export const BedrockConverseAnthropicChatCompleteConfig: ProviderConfig = {
       transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
   anthropic_beta: {
+    param: 'additionalModelRequestFields',
+    transform: (
+      params: BedrockConverseAnthropicChatCompletionsParams,
+      providerOptions?: Options
+    ) =>
+      transformAnthropicAdditionalModelRequestFields(params, providerOptions),
+  },
+  reasoning_effort: {
+    param: 'additionalModelRequestFields',
+    transform: (
+      params: BedrockConverseAnthropicChatCompletionsParams,
+      providerOptions?: Options
+    ) =>
+      transformAnthropicAdditionalModelRequestFields(params, providerOptions),
+  },
+  response_format: {
     param: 'additionalModelRequestFields',
     transform: (
       params: BedrockConverseAnthropicChatCompletionsParams,

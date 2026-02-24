@@ -1,5 +1,21 @@
-import { Context } from 'hono';
-import { getRuntimeKey } from 'hono/adapter';
+export async function runInBatches<T>(
+  batchSize: number,
+  maxSize: number,
+  processFn: (index: number) => Promise<T>
+): Promise<T[]> {
+  const results: T[] = [];
+  for (let i = 0; i < maxSize; i += batchSize) {
+    const batchIndices = Array.from(
+      { length: Math.min(batchSize, maxSize - i) },
+      (_, index) => i + index
+    );
+    const batchResults = await Promise.all(
+      batchIndices.map((index) => processFn(index))
+    );
+    results.push(...batchResults);
+  }
+  return results;
+}
 
 export function toSnakeCase(str: string) {
   return str
@@ -10,12 +26,14 @@ export function toSnakeCase(str: string) {
     .toLowerCase();
 }
 
-export const addBackgroundTask = (
-  c: Context,
-  promise: Promise<void | unknown>
-) => {
-  if (getRuntimeKey() === 'workerd') {
-    c.executionCtx.waitUntil(promise);
+export function isValidJwt(token: string): boolean {
+  if (!token || typeof token !== 'string') {
+    return false;
   }
-  // in other runtimes, the promise resolves in the background
-};
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    return false;
+  }
+  const base64urlRegex = /^[A-Za-z0-9\-_]+$/;
+  return parts.every((part) => part.length > 0 && base64urlRegex.test(part));
+}

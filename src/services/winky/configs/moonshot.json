@@ -1,0 +1,220 @@
+{
+  "default": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0
+        },
+        "response_token": {
+          "price": 0
+        },
+        "cache_read_input_token": {
+          "price": 0
+        }
+      },
+      "calculate": {
+        "request": {
+          "operation": "sum",
+          "operands": [
+            {
+              "operation": "multiply",
+              "operands": [
+                {
+                  "value": "input_tokens"
+                },
+                {
+                  "value": "rates.request_token"
+                }
+              ]
+            },
+            {
+              "operation": "multiply",
+              "operands": [
+                {
+                  "value": "cache_read_tokens"
+                },
+                {
+                  "value": "rates.cache_read_input_token"
+                }
+              ]
+            }
+          ]
+        },
+        "response": {
+          "operation": "multiply",
+          "operands": [
+            {
+              "value": "output_tokens"
+            },
+            {
+              "value": "rates.response_token"
+            }
+          ]
+        }
+      },
+      "currency": "USD"
+    }
+  },
+  "moonshot-v1-8k": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.0002
+        }
+      }
+    }
+  },
+  "moonshot-v1-32k": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.0003
+        }
+      }
+    }
+  },
+  "moonshot-v1-128k": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0002
+        },
+        "response_token": {
+          "price": 0.0005
+        }
+      }
+    }
+  },
+  "moonshot-v1-8k-vision-preview": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.0002
+        }
+      }
+    }
+  },
+  "moonshot-v1-32k-vision-preview": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.0003
+        }
+      }
+    }
+  },
+  "moonshot-v1-128k-vision-preview": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0002
+        },
+        "response_token": {
+          "price": 0.0005
+        }
+      }
+    }
+  },
+  "kimi-k2.5": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00006
+        },
+        "response_token": {
+          "price": 0.0003
+        },
+        "cache_read_input_token": {
+          "price": 0.00001
+        }
+      }
+    }
+  },
+  "kimi-k2-thinking": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00006
+        },
+        "response_token": {
+          "price": 0.00025
+        },
+        "cache_read_input_token": {
+          "price": 0.000015
+        }
+      }
+    }
+  },
+  "kimi-k2-thinking-turbo": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000115
+        },
+        "response_token": {
+          "price": 0.0008
+        },
+        "cache_read_input_token": {
+          "price": 0.000015
+        }
+      }
+    }
+  },
+  "kimi-k2-turbo-preview": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000115
+        },
+        "response_token": {
+          "price": 0.0008
+        },
+        "cache_read_input_token": {
+          "price": 0.000015
+        }
+      }
+    }
+  },
+  "kimi-k2-0905-preview": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00006
+        },
+        "response_token": {
+          "price": 0.00025
+        },
+        "cache_read_input_token": {
+          "price": 0.000015
+        }
+      }
+    }
+  },
+  "kimi-k2-0711-preview": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00006
+        },
+        "response_token": {
+          "price": 0.00025
+        },
+        "cache_read_input_token": {
+          "price": 0.000015
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,233 @@
+#################################################################
+# .github/workflows/deploy-cf-worker-prod.yml
+#
+# Cloudflare Workers versioned deployment for PROD.
+#
+# Flows:
+#   main branch    → auto upload a new version (no traffic change)
+#   manual trigger → rollout latest version at a given percentage
+#                    e.g. 25 → 50 → 100
+#
+# Required secrets:
+#   CLOUDFLARE_API_TOKEN  - API token with "Workers Scripts:Edit" permission
+#   CLOUDFLARE_ACCOUNT_ID - Cloudflare account ID
+#################################################################
+
+name: "CF Worker - Deploy PROD"
+
+on:
+  push:
+    branches: [feat/cf-deploy] # TESTING: remove feat/cf-deploy before merge
+
+  workflow_dispatch:
+    inputs:
+      percentage:
+        description: "Traffic % for the latest version (1-100)"
+        required: true
+        type: number
+        default: 25
+
+concurrency:
+  group: cf-deploy-PROD
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  CF_API_BASE: https://api.cloudflare.com/client/v4
+  SCRIPT_NAME: rubeus-dev-new-main # TESTING: revert to 'rubeus-new-main' before merge
+
+jobs:
+  # ═══════════════════════════════════════════════════════════════
+  # Auto: merge to main → upload a new version (no deploy)
+  # ═══════════════════════════════════════════════════════════════
+  upload-version:
+    if: github.event_name == 'push'
+    name: "Upload Version"
+    runs-on: ubuntu-latest
+    environment: staging # TESTING: revert to 'production' before merge
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Upload new version
+        id: upload
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          COMMIT_MSG=$(git log -1 --format='%s')
+          OUTPUT=$(npx wrangler versions upload --env stagingnewmain --tag "${{ github.sha }}" --message "$COMMIT_MSG" 2>&1) # TESTING: revert to '--env production' before merge
+          echo "$OUTPUT"
+
+          # Extract version ID from wrangler output
+          VERSION_ID=$(echo "$OUTPUT" | grep -oP 'Worker Version ID:\s*\K[0-9a-f-]+' || true)
+
+          # Fallback: fetch latest version from API if parsing failed
+          if [ -z "$VERSION_ID" ]; then
+            echo "⚠ Could not parse version ID from wrangler output, fetching from API..."
+            RESPONSE=$(curl -sf \
+              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              "$CF_API_BASE/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/$SCRIPT_NAME/versions?per_page=1")
+            VERSION_ID=$(echo "$RESPONSE" | jq -r '.result[0].id')
+          fi
+
+          if [ -z "$VERSION_ID" ] || [ "$VERSION_ID" = "null" ]; then
+            echo "::error::Failed to determine new version ID"
+            exit 1
+          fi
+
+          echo "version_id=$VERSION_ID" >> "$GITHUB_OUTPUT"
+          echo "✅ New version uploaded: $VERSION_ID"
+
+      - name: Summary
+        run: |
+          echo "### 📦 New Version Uploaded — PROD" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Key | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-----|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Worker** | \`$SCRIPT_NAME\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Version** | \`${{ steps.upload.outputs.version_id }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Commit** | \`${{ github.sha }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "⚠️ No traffic is being sent to this version yet." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "➡️ Trigger **CF Worker - Deploy PROD** manually with a **percentage** to start the rollout." >> "$GITHUB_STEP_SUMMARY"
+
+  # ═══════════════════════════════════════════════════════════════
+  # Manual: rollout latest version at a given percentage
+  # ═══════════════════════════════════════════════════════════════
+  rollout:
+    if: github.event_name == 'workflow_dispatch'
+    name: "Rollout ${{ inputs.percentage }}%"
+    runs-on: ubuntu-latest
+    environment: staging # TESTING: revert to 'production' before merge
+    steps:
+      - name: Validate percentage
+        run: |
+          PCT=${{ inputs.percentage }}
+          if [ "$PCT" -lt 1 ] || [ "$PCT" -gt 100 ]; then
+            echo "::error::Percentage must be between 1 and 100 (got $PCT)"
+            exit 1
+          fi
+
+      - name: Get latest version
+        id: latest
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          RESPONSE=$(curl -sf \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "$CF_API_BASE/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/$SCRIPT_NAME/versions?per_page=1")
+
+          VERSION_ID=$(echo "$RESPONSE" | jq -r '.result[0].id')
+
+          if [ -z "$VERSION_ID" ] || [ "$VERSION_ID" = "null" ]; then
+            echo "::error::Failed to determine latest version"
+            echo "$RESPONSE" | jq .
+            exit 1
+          fi
+
+          echo "version_id=$VERSION_ID" >> "$GITHUB_OUTPUT"
+          echo "📌 Latest version: $VERSION_ID"
+
+      - name: Get current active version
+        id: current
+        if: inputs.percentage < 100
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          RESPONSE=$(curl -sf \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "$CF_API_BASE/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/$SCRIPT_NAME/deployments")
+
+          OLD_VERSION_ID=$(echo "$RESPONSE" | jq -r '
+            .result.deployments[0].versions
+            | sort_by(-.percentage)
+            | .[0].version_id')
+
+          if [ -z "$OLD_VERSION_ID" ] || [ "$OLD_VERSION_ID" = "null" ]; then
+            echo "::error::Failed to determine current active version"
+            exit 1
+          fi
+
+          echo "version_id=$OLD_VERSION_ID" >> "$GITHUB_OUTPUT"
+          echo "📌 Current active version: $OLD_VERSION_ID"
+
+      - name: Create deployment
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          LATEST="${{ steps.latest.outputs.version_id }}"
+          PCT=${{ inputs.percentage }}
+          OLD_PCT=$((100 - PCT))
+
+          if [ "$PCT" -eq 100 ]; then
+            echo "Deploying $LATEST at 100%"
+            BODY=$(jq -n --arg v "$LATEST" \
+              '{ strategy: "percentage", versions: [{ version_id: $v, percentage: 100 }] }')
+          else
+            OLD="${{ steps.current.outputs.version_id }}"
+
+            if [ "$OLD" = "$LATEST" ]; then
+              echo "⚠ Latest version is already the active version, deploying at 100%"
+              BODY=$(jq -n --arg v "$LATEST" \
+                '{ strategy: "percentage", versions: [{ version_id: $v, percentage: 100 }] }')
+            else
+              echo "Deploying: $OLD@${OLD_PCT}% / $LATEST@${PCT}%"
+              BODY=$(jq -n \
+                --arg old "$OLD" --argjson old_pct "$OLD_PCT" \
+                --arg new "$LATEST" --argjson new_pct "$PCT" \
+                '{ strategy: "percentage", versions: [
+                  { version_id: $old, percentage: $old_pct },
+                  { version_id: $new, percentage: $new_pct }
+                ]}')
+            fi
+          fi
+
+          RESPONSE=$(curl -sf -X POST \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$BODY" \
+            "$CF_API_BASE/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/$SCRIPT_NAME/deployments")
+
+          DEPLOYMENT_ID=$(echo "$RESPONSE" | jq -r '.result.id')
+
+          if [ -z "$DEPLOYMENT_ID" ] || [ "$DEPLOYMENT_ID" = "null" ]; then
+            echo "::error::Deployment failed"
+            echo "$RESPONSE" | jq .
+            exit 1
+          fi
+
+          echo "✅ Deployment created: $DEPLOYMENT_ID"
+
+      - name: Summary
+        run: |
+          PCT=${{ inputs.percentage }}
+          LATEST="${{ steps.latest.outputs.version_id }}"
+
+          echo "### 🚀 Rollout — PROD" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Key | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-----|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Worker** | \`$SCRIPT_NAME\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Latest version** | \`$LATEST\` @ ${PCT}% |" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$PCT" -lt 100 ]; then
+            OLD="${{ steps.current.outputs.version_id }}"
+            echo "| **Previous version** | \`$OLD\` @ $((100 - PCT))% |" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "➡️ Run again with a higher **percentage** (e.g. 50, 100) to increase traffic." >> "$GITHUB_STEP_SUMMARY"
+          fi

@@ -1,0 +1,279 @@
+{
+  "default": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0
+        },
+        "response_token": {
+          "price": 0
+        }
+      },
+      "calculate": {
+        "request": {
+          "operation": "multiply",
+          "operands": [
+            {
+              "value": "input_tokens"
+            },
+            {
+              "value": "rates.request_token"
+            }
+          ]
+        },
+        "response": {
+          "operation": "multiply",
+          "operands": [
+            {
+              "value": "output_tokens"
+            },
+            {
+              "value": "rates.response_token"
+            }
+          ]
+        }
+      },
+      "currency": "USD"
+    }
+  },
+  "mixtral-8x7b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00005
+        },
+        "response_token": {
+          "price": 0.00005
+        }
+      }
+    }
+  },
+  "mixtral-8x22b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00012
+        },
+        "response_token": {
+          "price": 0.00012
+        }
+      }
+    }
+  },
+  "dbrx-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00012
+        },
+        "response_token": {
+          "price": 0.00012
+        }
+      }
+    }
+  },
+  "4b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00001
+        },
+        "response_token": {
+          "price": 0.00001
+        }
+      }
+    }
+  },
+  "16b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "100b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00009
+        },
+        "response_token": {
+          "price": 0.00009
+        }
+      }
+    }
+  },
+  "nomic-ai/nomic-embed-text-v1.5": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 8e-7
+        },
+        "response_token": {
+          "price": 8e-7
+        }
+      }
+    }
+  },
+  "nomic-ai/nomic-embed-text-v1": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 8e-7
+        },
+        "response_token": {
+          "price": 8e-7
+        }
+      }
+    }
+  },
+  "thenlper/gte-base": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 8e-7
+        },
+        "response_token": {
+          "price": 8e-7
+        }
+      }
+    }
+  },
+  "WhereIsAI/UAE-Large-V1": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0000016
+        },
+        "response_token": {
+          "price": 0.0000016
+        }
+      }
+    }
+  },
+  "thenlper/gte-large": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0000016
+        },
+        "response_token": {
+          "price": 0.0000016
+        }
+      }
+    }
+  },
+  "llama-v3p1-405b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0003
+        },
+        "response_token": {
+          "price": 0.0003
+        }
+      }
+    }
+  },
+  "deepseek-r1": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0008
+        },
+        "response_token": {
+          "price": 0.0008
+        }
+      }
+    }
+  },
+  "deepseek-v3": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00009
+        },
+        "response_token": {
+          "price": 0.00009
+        }
+      }
+    }
+  },
+  "llama4-scout-instruct-basic": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000015
+        },
+        "response_token": {
+          "price": 0.00006
+        }
+      }
+    }
+  },
+  "llama4-maverick-instruct-basic": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000022
+        },
+        "response_token": {
+          "price": 0.000088
+        }
+      }
+    }
+  },
+  "kimi-k2-instruct-0905": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00006
+        },
+        "response_token": {
+          "price": 0.00025
+        }
+      }
+    }
+  },
+  "kimi-k2-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00006
+        },
+        "response_token": {
+          "price": 0.00025
+        }
+      }
+    }
+  },
+  "kimi-k2-thinking": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00006
+        },
+        "response_token": {
+          "price": 0.00025
+        }
+      }
+    }
+  },
+  "kimi-k2p5": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00006
+        },
+        "response_token": {
+          "price": 0.0003
+        }
+      }
+    }
+  }
+}

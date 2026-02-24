@@ -36,7 +36,6 @@ import {
   getResponseOutputReasoningItemDoneEvent,
   getResponseOutputReasoningItemAddedEvent,
 } from './helpers';
-
 export const OpenAICreateModelResponseConfig: ProviderConfig = {
   background: {
     param: 'background',
@@ -62,12 +61,12 @@ export const OpenAICreateModelResponseConfig: ProviderConfig = {
     param: 'instructions',
     required: false,
   },
-  max_tool_calls: {
-    param: 'max_tool_calls',
-    required: false,
-  },
   max_output_tokens: {
     param: 'max_output_tokens',
+    required: false,
+  },
+  max_tool_calls: {
+    param: 'max_tool_calls',
     required: false,
   },
   metadata: {
@@ -92,6 +91,10 @@ export const OpenAICreateModelResponseConfig: ProviderConfig = {
   },
   prompt_cache_key: {
     param: 'prompt_cache_key',
+    required: false,
+  },
+  prompt_cache_retention: {
+    param: 'prompt_cache_retention',
     required: false,
   },
   reasoning: {

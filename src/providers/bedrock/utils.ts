@@ -1,78 +1,396 @@
-import { SignatureV4 } from '@smithy/signature-v4';
-import { Sha256 } from '@aws-crypto/sha256-js';
-import { Context } from 'hono';
-import { env } from 'hono/adapter';
+import { logger } from '../../apm';
 import {
   BedrockChatCompletionsParams,
   BedrockConverseAI21ChatCompletionsParams,
   BedrockConverseAnthropicChatCompletionsParams,
   BedrockConverseCohereChatCompletionsParams,
 } from './chatComplete';
-import { Options, Tool } from '../../types/requestBody';
-import { GatewayError } from '../../errors/GatewayError';
+import fs from 'fs/promises';
 import { BedrockFinetuneRecord, BedrockInferenceProfile } from './types';
-import { FinetuneRequest } from '../types';
-import { BEDROCK } from '../../globals';
+import { externalServiceFetch } from '../../utils/fetch';
 import { Environment } from '../../utils/env';
+import { Options, Tool } from '../../types/requestBody';
+import { BEDROCK } from '../../globals';
+import {
+  AWSCredentials,
+  awsEndpointDomain,
+  fetchECSContainerCredentials,
+  fetchECSRegionFromMetadata,
+  fetchECSTaskRoleArnFromMetadata,
+  fetchIMDSAllCredentials,
+  fetchPodIdentityCredentials,
+  fetchSTSAssumeRoleCredentials,
+  fetchWebIdentityCredentials,
+  generateAWSHeaders,
+  getCredentialsFromAwsConfigFile,
+  getCredentialsFromEnvironment,
+  getCredentialsFromSharedCredentialsFile,
+  getRegionFromEnv,
+} from '../../utils/awsAuth';
+import { requestCache } from '../../services/cache/cacheService';
 
-export const getAwsEndpointDomain = (c: Context) =>
-  Environment(c).AWS_ENDPOINT_DOMAIN || 'amazonaws.com';
+// Re-export for backward compatibility
+export { awsEndpointDomain, generateAWSHeaders, getRegionFromEnv };
 
-export const generateAWSHeaders = async (
-  body: Record<string, any> | string | undefined,
-  headers: Record<string, string>,
-  url: string,
-  method: string,
-  awsService: string,
-  awsRegion: string,
-  awsAccessKeyID: string,
-  awsSecretAccessKey: string,
-  awsSessionToken: string | undefined
-): Promise<Record<string, string>> => {
-  const signer = new SignatureV4({
-    service: awsService,
-    region: awsRegion || 'us-east-1',
-    credentials: {
-      accessKeyId: awsAccessKeyID,
-      secretAccessKey: awsSecretAccessKey,
-      ...(awsSessionToken && { sessionToken: awsSessionToken }),
-    },
-    sha256: Sha256,
-  });
+const CREDENTIAL_CACHE_TTL = 300; // 5 minutes
 
-  const urlObj = new URL(url);
-  const hostname = urlObj.hostname;
-  headers['host'] = hostname;
-  let requestBody;
-  if (!body) {
-    requestBody = null;
-  } else if (
-    body instanceof Uint8Array ||
-    body instanceof Buffer ||
-    typeof body === 'string'
+// Cached wrapper for Web Identity credentials
+async function getAssumedWebIdentityCredentials(
+  awsRegion?: string,
+  env?: Record<string, any>
+): Promise<AWSCredentials | null> {
+  if (
+    !Environment(env).AWS_WEB_IDENTITY_TOKEN_FILE ||
+    !Environment(env).AWS_ROLE_ARN
   ) {
-    requestBody = body;
-  } else if (body && typeof body === 'object' && method !== 'GET') {
-    requestBody = JSON.stringify(body);
+    return null;
   }
-  const queryParams = Object.fromEntries(urlObj.searchParams.entries());
-  let protocol = 'https';
-  if (urlObj.protocol) {
-    protocol = urlObj.protocol.replace(':', '');
+
+  try {
+    const effectiveRegion = awsRegion || getRegionFromEnv(env) || 'us-east-1';
+    const roleArn = Environment(env).AWS_ROLE_ARN;
+    const cacheKey = `assumed-web-identity-${Environment({}).AWS_WEB_IDENTITY_TOKEN_FILE}-role-${roleArn}-region-${effectiveRegion}`;
+
+    const cached = await requestCache(env).get<AWSCredentials>(cacheKey, {
+      useLocalCache: true,
+    });
+    if (cached) {
+      return cached;
+    }
+
+    const token = await fs.readFile(
+      Environment(env).AWS_WEB_IDENTITY_TOKEN_FILE,
+      'utf8'
+    );
+
+    const credentials = await fetchWebIdentityCredentials(
+      token,
+      roleArn,
+      effectiveRegion
+    );
+
+    if (credentials) {
+      const merged = {
+        ...credentials,
+        awsRoleArn: roleArn,
+        awsRegion: effectiveRegion,
+      };
+      await requestCache(env).set(cacheKey, merged, {
+        ttl: CREDENTIAL_CACHE_TTL,
+      });
+      return merged;
+    }
+  } catch (error) {
+    logger.info({
+      message: `Error from getAssumedWebIdentityCredentials: ${error}`,
+    });
   }
-  const request = {
-    method: method,
-    path: urlObj.pathname,
-    protocol: protocol,
-    query: queryParams,
-    hostname: urlObj.hostname,
-    headers: headers,
-    ...(requestBody && { body: requestBody }),
+  return null;
+}
+
+// Cached wrapper for Pod Identity credentials
+async function getPodIdentityCredentials(
+  awsRegion?: string,
+  env?: Record<string, any>
+): Promise<AWSCredentials | null> {
+  if (
+    !Environment(env).AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE ||
+    !Environment(env).AWS_CONTAINER_CREDENTIALS_FULL_URI
+  ) {
+    return null;
+  }
+
+  try {
+    const effectiveRegion = awsRegion || getRegionFromEnv() || 'us-east-1';
+    const credentialFullUri =
+      Environment(env).AWS_CONTAINER_CREDENTIALS_FULL_URI;
+    const cacheKey = `assumed-pod-identity-${Environment(env).AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE}-region-${effectiveRegion}`;
+
+    const cached = await requestCache(env).get<AWSCredentials>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const token = await fs.readFile(
+      Environment({}).AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE,
+      'utf8'
+    );
+
+    const credentials = await fetchPodIdentityCredentials(
+      token.trim(),
+      credentialFullUri
+    );
+
+    if (credentials) {
+      const result = {
+        source: 'EKS Pod Identity',
+        ...credentials,
+        awsRegion: effectiveRegion,
+      };
+      await requestCache(env).set(cacheKey, result, {
+        ttl: CREDENTIAL_CACHE_TTL,
+      });
+      return result;
+    }
+  } catch (error) {
+    logger.info({
+      message: `Failed to get Pod Identity credentials: ${error}`,
+    });
+  }
+  return null;
+}
+
+async function getIRSACredentials(
+  awsRegion?: string,
+  env?: Record<string, any>
+): Promise<AWSCredentials | null> {
+  return getAssumedWebIdentityCredentials(awsRegion, env);
+}
+
+// Cached wrapper for ECS Container credentials
+async function getCredentialsFromECSContainer(
+  env?: Record<string, any>
+): Promise<AWSCredentials | null> {
+  if (!Environment(env).AWS_CONTAINER_CREDENTIALS_RELATIVE_URI) {
+    return null;
+  }
+
+  const cacheKey = `assumed-ecs-container-credentials`;
+  const cached = await requestCache(env).get<AWSCredentials>(cacheKey, {
+    useLocalCache: true,
+  });
+  if (cached) {
+    return cached;
+  }
+
+  const credentials = await fetchECSContainerCredentials(
+    Environment(env).AWS_CONTAINER_CREDENTIALS_RELATIVE_URI
+  );
+
+  if (!credentials) {
+    return null;
+  }
+
+  const derivedRegion =
+    getRegionFromEnv(env) ||
+    (await fetchECSRegionFromMetadata(env)) ||
+    'us-east-1';
+
+  const derivedRoleArn =
+    credentials.awsRoleArn ||
+    Environment(env).AWS_ROLE_ARN ||
+    (await fetchECSTaskRoleArnFromMetadata(env));
+
+  const result = {
+    ...credentials,
+    awsRoleArn: derivedRoleArn || undefined,
+    awsRegion: derivedRegion,
   };
 
-  const signed = await signer.sign(request);
-  return signed.headers;
-};
+  await requestCache(env).set(cacheKey, result, { ttl: CREDENTIAL_CACHE_TTL });
+  return result;
+}
+
+// Cached wrapper for IMDS credentials
+async function getIMDSAssumedCredentials(
+  env?: Record<string, any>
+): Promise<AWSCredentials | null> {
+  const cacheKey = `assumed-imds-credentials`;
+  const cached = await requestCache(env).get<AWSCredentials>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const credentials = await fetchIMDSAllCredentials(env);
+  if (credentials) {
+    await requestCache(env).set(cacheKey, credentials, {
+      ttl: CREDENTIAL_CACHE_TTL,
+    });
+  }
+  return credentials;
+}
+
+// Cached wrapper for STS AssumeRole credentials
+async function getSTSAssumedCredentials(
+  awsRoleArn: string,
+  awsExternalId?: string,
+  awsRegion?: string,
+  accessKey?: string,
+  secretKey?: string,
+  sessionToken?: string,
+  env?: Record<string, any>
+): Promise<AWSCredentials | null> {
+  const cacheKey = `assumed-sts-${awsRoleArn}/${awsExternalId}/${awsRegion}`;
+  const cached = await requestCache(env).get<AWSCredentials>(cacheKey, {
+    useLocalCache: true,
+  });
+  if (cached) {
+    return cached;
+  }
+
+  const accessKeyId: string =
+    accessKey || Environment(env).AWS_ASSUME_ROLE_ACCESS_KEY_ID || '';
+  const secretAccessKey: string =
+    secretKey || Environment(env).AWS_ASSUME_ROLE_SECRET_ACCESS_KEY || '';
+  const region =
+    awsRegion ||
+    Environment(env).AWS_ASSUME_ROLE_REGION ||
+    getRegionFromEnv() ||
+    'us-east-1';
+
+  const credentials = await fetchSTSAssumeRoleCredentials(
+    awsRoleArn,
+    region,
+    accessKeyId,
+    secretAccessKey,
+    sessionToken,
+    awsExternalId
+  );
+
+  if (credentials) {
+    const result = {
+      ...credentials,
+      awsRegion: region,
+      awsRoleArn,
+    };
+    await requestCache(env).set(cacheKey, result, {
+      ttl: CREDENTIAL_CACHE_TTL,
+    });
+    return result;
+  }
+  return null;
+}
+
+// Assumes the source/intermediate role if AWS_ASSUME_ROLE_SOURCE_ARN is configured
+// Returns credentials from the source role, which can then be used to assume target roles
+async function getSourceRoleCredentials(
+  awsRegion?: string,
+  env?: Record<string, any>
+): Promise<AWSCredentials | null> {
+  const sourceRoleArn = Environment(env).AWS_ASSUME_ROLE_SOURCE_ARN;
+  const accessKeyId = Environment(env).AWS_ASSUME_ROLE_ACCESS_KEY_ID;
+  const secretAccessKey = Environment(env).AWS_ASSUME_ROLE_SECRET_ACCESS_KEY;
+
+  // Only attempt source role assumption if all required values are present
+  if (!sourceRoleArn || !accessKeyId || !secretAccessKey) {
+    return null;
+  }
+
+  const sourceRoleExternalId =
+    Environment(env).AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID || '';
+
+  return getSTSAssumedCredentials(
+    sourceRoleArn,
+    sourceRoleExternalId,
+    awsRegion,
+    accessKeyId,
+    secretAccessKey,
+    undefined,
+    env
+  );
+}
+
+export async function getAssumedRoleCredentials(
+  awsRoleArn?: string,
+  awsExternalId?: string,
+  awsRegion?: string,
+  accessKey?: string,
+  secretKey?: string,
+  env?: Record<string, any>
+): Promise<AWSCredentials | null> {
+  let accessKeyId = accessKey;
+  let secretAccessKey = secretKey;
+  let sessionToken;
+
+  // Source role assumption has highest priority (for role chaining)
+  // When configured, use env credentials to assume source role first
+  if (!accessKeyId && !secretAccessKey) {
+    try {
+      const sourceCredentials = await getSourceRoleCredentials(awsRegion, env);
+      if (sourceCredentials) {
+        accessKeyId = sourceCredentials.accessKeyId;
+        secretAccessKey = sourceCredentials.secretAccessKey;
+        sessionToken = sourceCredentials.sessionToken;
+      }
+    } catch (error) {
+      logger.error('Error while assuming source role', error);
+      return null;
+    }
+  }
+
+  // Fall back to direct env credentials if source role not configured
+  accessKeyId = accessKeyId || Environment(env).AWS_ASSUME_ROLE_ACCESS_KEY_ID;
+  secretAccessKey =
+    secretAccessKey || Environment(env).AWS_ASSUME_ROLE_SECRET_ACCESS_KEY;
+
+  if (!accessKeyId && !secretAccessKey) {
+    let credentials: AWSCredentials | undefined | null =
+      getCredentialsFromEnvironment();
+
+    if (!credentials) {
+      credentials = await getCredentialsFromSharedCredentialsFile();
+    }
+    if (!credentials) {
+      credentials = await getCredentialsFromAwsConfigFile();
+    }
+    if (!credentials) {
+      try {
+        credentials = await getIRSACredentials(awsRegion);
+      } catch (error) {
+        logger.error(error);
+      }
+    }
+    if (!credentials) {
+      try {
+        credentials = await getPodIdentityCredentials(awsRegion);
+      } catch (error) {
+        logger.error(error);
+      }
+    }
+    if (!credentials) {
+      try {
+        credentials = await getCredentialsFromECSContainer();
+      } catch (error) {
+        logger.error(error);
+      }
+    }
+    if (!credentials) {
+      try {
+        credentials = await getIMDSAssumedCredentials();
+      } catch (error) {
+        logger.error(error);
+      }
+    }
+
+    if (!awsRoleArn || credentials?.awsRoleArn === awsRoleArn) {
+      return credentials || null;
+    }
+
+    accessKeyId = credentials?.accessKeyId;
+    secretAccessKey = credentials?.secretAccessKey;
+    sessionToken = credentials?.sessionToken;
+  }
+
+  if (!awsRoleArn) {
+    return {
+      accessKeyId: accessKeyId || '',
+      secretAccessKey: secretAccessKey || '',
+      sessionToken,
+      awsRegion,
+      awsRoleArn,
+    };
+  }
+
+  return getSTSAssumedCredentials(
+    awsRoleArn,
+    awsExternalId,
+    awsRegion,
+    accessKeyId,
+    secretAccessKey,
+    sessionToken,
+    env
+  );
+}
 
 export const transformInferenceConfig = (
   params: BedrockChatCompletionsParams
@@ -85,10 +403,10 @@ export const transformInferenceConfig = (
   if (params['stop']) {
     inferenceConfig['stopSequences'] = params['stop'];
   }
-  if (params['temperature'] !== null && params['temperature'] !== undefined) {
+  if (params['temperature'] !== undefined && params['temperature'] !== null) {
     inferenceConfig['temperature'] = params['temperature'];
   }
-  if (params['top_p'] !== null && params['top_p'] !== undefined) {
+  if (params['top_p'] !== undefined && params['top_p'] !== null) {
     inferenceConfig['topP'] = params['top_p'];
   }
   return inferenceConfig;
@@ -101,7 +419,7 @@ export const transformAdditionalModelRequestFields = (
     params.additionalModelRequestFields ||
     params.additional_model_request_fields ||
     {};
-  if (params['top_k'] !== null && params['top_k'] !== undefined) {
+  if (params['top_k'] !== undefined && params['top_k'] !== null) {
     additionalModelRequestFields['top_k'] = params['top_k'];
   }
   if (params['response_format']) {
@@ -132,6 +450,25 @@ export const transformAnthropicAdditionalModelRequestFields = (
   }
   if (params['thinking']) {
     additionalModelRequestFields['thinking'] = params['thinking'];
+  }
+  // Build output_config from OpenAI-compatible chat completions params.
+  // response_format → output_config.format, reasoning_effort → output_config.effort
+  {
+    const outputConfig: Record<string, any> = {};
+    if (params.response_format?.type === 'json_schema') {
+      outputConfig.format = {
+        type: 'json_schema',
+        schema:
+          params.response_format.json_schema?.schema ??
+          params.response_format.json_schema,
+      };
+    }
+    if (params['reasoning_effort']) {
+      outputConfig.effort = params['reasoning_effort'];
+    }
+    if (Object.keys(outputConfig).length > 0) {
+      additionalModelRequestFields['output_config'] = outputConfig;
+    }
   }
   const anthropicBeta =
     providerOptions?.anthropicBeta || params['anthropic_beta'];
@@ -226,121 +563,6 @@ export const transformAI21AdditionalModelRequestFields = (
   return additionalModelRequestFields;
 };
 
-export async function getAssumedRoleCredentials(
-  c: Context,
-  awsRoleArn: string,
-  awsExternalId: string,
-  awsRegion: string,
-  creds?: {
-    accessKeyId: string;
-    secretAccessKey: string;
-    sessionToken?: string;
-  }
-) {
-  const cacheKey = `${awsRoleArn}/${awsExternalId}/${awsRegion}`;
-  const getFromCacheByKey = c.get('getFromCacheByKey');
-  const putInCacheWithValue = c.get('putInCacheWithValue');
-
-  const resp = getFromCacheByKey
-    ? await getFromCacheByKey(env(c), cacheKey)
-    : null;
-  if (resp) {
-    return resp;
-  }
-
-  // Determine which credentials to use
-  let accessKeyId: string;
-  let secretAccessKey: string;
-  let sessionToken: string | undefined;
-
-  if (creds) {
-    // Use provided credentials
-    accessKeyId = creds.accessKeyId;
-    secretAccessKey = creds.secretAccessKey;
-    sessionToken = creds.sessionToken;
-  } else {
-    // Use environment credentials
-    const { AWS_ASSUME_ROLE_ACCESS_KEY_ID, AWS_ASSUME_ROLE_SECRET_ACCESS_KEY } =
-      env(c);
-    accessKeyId = AWS_ASSUME_ROLE_ACCESS_KEY_ID || '';
-    secretAccessKey = AWS_ASSUME_ROLE_SECRET_ACCESS_KEY || '';
-  }
-
-  const region = awsRegion || 'us-east-1';
-  const service = 'sts';
-  const hostname = `sts.${region}.amazonaws.com`;
-  const signer = new SignatureV4({
-    service,
-    region,
-    credentials: {
-      accessKeyId,
-      secretAccessKey,
-      sessionToken,
-    },
-    sha256: Sha256,
-  });
-  const date = new Date();
-  const sessionName = `${date.getFullYear()}${date.getMonth()}${date.getDay()}`;
-  const url = `https://${hostname}?Action=AssumeRole&Version=2011-06-15&RoleArn=${awsRoleArn}&RoleSessionName=${sessionName}${awsExternalId ? `&ExternalId=${awsExternalId}` : ''}`;
-  const urlObj = new URL(url);
-  const requestHeaders = { host: hostname };
-  const options = {
-    method: 'GET',
-    path: urlObj.pathname,
-    protocol: urlObj.protocol,
-    hostname: urlObj.hostname,
-    headers: requestHeaders,
-    query: Object.fromEntries(urlObj.searchParams),
-  };
-  const { headers } = await signer.sign(options);
-
-  let credentials: any;
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: headers,
-    });
-
-    if (!response.ok) {
-      const resp = await response.text();
-      console.error('getAssumedRoleCredentials error: ', { message: resp });
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const xmlData = await response.text();
-    credentials = parseXml(xmlData);
-    if (putInCacheWithValue) {
-      await putInCacheWithValue(env(c), cacheKey, credentials, 300); //5 minutes
-    }
-  } catch (error) {
-    console.error('getAssumedRoleCredentials error: ', {
-      message: `Error assuming role:, ${error}`,
-    });
-  }
-  return credentials;
-}
-
-function parseXml(xml: string) {
-  // Simple XML parser for this specific use case
-  const getTagContent = (tag: string) => {
-    const regex = new RegExp(`<${tag}>(.*?)</${tag}>`, 's');
-    const match = xml.match(regex);
-    return match ? match[1] : null;
-  };
-
-  const credentials = getTagContent('Credentials');
-  if (!credentials) {
-    throw new Error('Failed to parse Credentials from XML response');
-  }
-
-  return {
-    accessKeyId: getTagContent('AccessKeyId'),
-    secretAccessKey: getTagContent('SecretAccessKey'),
-    sessionToken: getTagContent('SessionToken'),
-    expiration: getTagContent('Expiration'),
-  };
-}
-
 export const bedrockFinetuneToOpenAI = (finetune: BedrockFinetuneRecord) => {
   let status = 'running';
   switch (finetune.status) {
@@ -359,7 +581,7 @@ export const bedrockFinetuneToOpenAI = (finetune: BedrockFinetuneRecord) => {
       break;
   }
   return {
-    id: encodeURIComponent(finetune.jobArn),
+    id: encodeURIComponent(finetune.jobArn ?? ''),
     job_name: finetune.jobName,
     object: 'finetune',
     status: status,
@@ -385,73 +607,46 @@ export const bedrockFinetuneToOpenAI = (finetune: BedrockFinetuneRecord) => {
   };
 };
 
-export async function providerAssumedRoleCredentials(
-  c: Context,
-  providerOptions: Options
-) {
-  try {
-    // Assume the role in the source account
-    const sourceRoleCredentials = await getAssumedRoleCredentials(
-      c,
-      env(c).AWS_ASSUME_ROLE_SOURCE_ARN, // Role ARN in the source account
-      env(c).AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID || '', // External ID for source role (if needed)
-      providerOptions.awsRegion || ''
-    );
-
-    if (!sourceRoleCredentials) {
-      throw new Error('Server Error while assuming internal role');
-    }
-
-    // Assume role in destination account using temporary creds obtained in first step
+export const getInferenceProfile = async (
+  inferenceProfileIdentifier: string,
+  providerOptions: Options,
+  env: Record<string, any>
+) => {
+  if (providerOptions.awsAuthType === 'assumedRole') {
     const { accessKeyId, secretAccessKey, sessionToken } =
       (await getAssumedRoleCredentials(
-        c,
         providerOptions.awsRoleArn || '',
         providerOptions.awsExternalId || '',
         providerOptions.awsRegion || '',
-        {
-          accessKeyId: sourceRoleCredentials.accessKeyId,
-          secretAccessKey: sourceRoleCredentials.secretAccessKey,
-          sessionToken: sourceRoleCredentials.sessionToken,
-        }
+        undefined,
+        undefined,
+        env
       )) || {};
     providerOptions.awsAccessKeyId = accessKeyId;
     providerOptions.awsSecretAccessKey = secretAccessKey;
     providerOptions.awsSessionToken = sessionToken;
-  } catch (e) {
-    throw new GatewayError('Error while assuming bedrock role');
-  }
-}
-
-export const populateHyperParameters = (value: FinetuneRequest) => {
-  let hyperParameters = value.hyperparameters ?? {};
-
-  if (value.method) {
-    const method = value.method.type;
-    hyperParameters = value.method?.[method]?.hyperparameters ?? {};
-  }
-
-  return hyperParameters;
-};
-
-export const getInferenceProfile = async (
-  inferenceProfileIdentifier: string,
-  providerOptions: Options,
-  c: Context
-) => {
-  if (providerOptions.awsAuthType === 'assumedRole') {
-    try {
-      await providerAssumedRoleCredentials(c, providerOptions);
-    } catch (e) {
-      console.error('getInferenceProfile Error while assuming bedrock role', e);
-    }
+  } else if (providerOptions.awsAuthType === 'serviceRole') {
+    const { accessKeyId, secretAccessKey, sessionToken, awsRegion } =
+      (await getAssumedRoleCredentials(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        env
+      )) || {};
+    providerOptions.awsAccessKeyId = accessKeyId;
+    providerOptions.awsSecretAccessKey = secretAccessKey;
+    providerOptions.awsSessionToken = sessionToken;
+    providerOptions.awsRegion = providerOptions.awsRegion || awsRegion;
   }
 
   const awsRegion = providerOptions.awsRegion || 'us-east-1';
   const awsAccessKeyId = providerOptions.awsAccessKeyId || '';
   const awsSecretAccessKey = providerOptions.awsSecretAccessKey || '';
   const awsSessionToken = providerOptions.awsSessionToken || '';
-  const url = `https://bedrock.${awsRegion}.amazonaws.com/inference-profiles/${encodeURIComponent(decodeURIComponent(inferenceProfileIdentifier))}`;
+
+  const url = `https://bedrock.${awsRegion}.${awsEndpointDomain}/inference-profiles/${encodeURIComponent(decodeURIComponent(inferenceProfileIdentifier))}`;
 
   const headers = await generateAWSHeaders(
     undefined,
@@ -466,7 +661,7 @@ export const getInferenceProfile = async (
   );
 
   try {
-    const response = await fetch(url, {
+    const response = await externalServiceFetch(url, {
       method: 'GET',
       headers,
     });
@@ -485,17 +680,18 @@ export const getInferenceProfile = async (
 };
 
 export const getFoundationModelFromInferenceProfile = async (
-  c: Context,
   inferenceProfileIdentifier: string,
-  providerOptions: Options
+  providerOptions: Options,
+  env: Record<string, any>
 ) => {
   try {
-    const getFromCacheByKey = c.get('getFromCacheByKey');
-    const putInCacheWithValue = c.get('putInCacheWithValue');
     const cacheKey = `bedrock-inference-profile-${inferenceProfileIdentifier}`;
-    const cachedFoundationModel = getFromCacheByKey
-      ? await getFromCacheByKey(env(c), cacheKey)
-      : null;
+    const cachedFoundationModel = await requestCache(env).get<string>(
+      cacheKey,
+      {
+        useLocalCache: true,
+      }
+    );
     if (cachedFoundationModel) {
       return cachedFoundationModel;
     }
@@ -503,19 +699,18 @@ export const getFoundationModelFromInferenceProfile = async (
     const inferenceProfile = await getInferenceProfile(
       inferenceProfileIdentifier || '',
       { ...providerOptions },
-      c
+      env
     );
 
-    // modelArn is always like arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-v2:1
     const foundationModel = inferenceProfile?.models?.[0]?.modelArn
       ?.split('/')
       ?.pop();
-    if (putInCacheWithValue) {
-      putInCacheWithValue(env(c), cacheKey, foundationModel, 86400);
-    }
+    await requestCache(env).set(cacheKey, foundationModel, {
+      ttl: 56400,
+    });
     return foundationModel;
   } catch (error) {
-    return null;
+    logger.debug('Error mapping inference profile to foundation model:', error);
   }
 };
 
@@ -539,6 +734,60 @@ export const getBedrockErrorChunk = (id: string, model: string) => {
     })}\n\n`,
     `data: [DONE]\n\n`,
   ];
+};
+
+export function getS3EncryptionHeaders(env: Record<string, any>) {
+  const {
+    SSE_ENCRYPTION_TYPE: serverSideEncryption,
+    KMS_KEY_ID: kmsKeyId,
+    KMS_BUCKET_KEY_ENABLED: kmsBucketKeyEnabled,
+    KMS_ENCRYPTION_CONTEXT: kmsEncryptionContext,
+    KMS_ENCRYPTION_ALGORITHM: kmsEncryptionAlgorithm,
+    KMS_ENCRYPTION_CUSTOMER_KEY: kmsEncryptionCustomerKey,
+    KMS_ENCRYPTION_CUSTOMER_KEY_MD5: kmsEncryptionCustomerKeyMD5,
+  } = Environment(env);
+  return {
+    ...(serverSideEncryption && {
+      'x-amz-server-side-encryption': serverSideEncryption,
+    }),
+    ...(kmsKeyId && {
+      'x-amz-server-side-encryption-aws-kms-key-id': kmsKeyId,
+    }),
+    ...(kmsBucketKeyEnabled &&
+      kmsBucketKeyEnabled === 'true' && {
+        'x-amz-server-side-encryption-bucket-key-enabled': true,
+      }),
+    ...(kmsEncryptionContext && {
+      'x-amz-server-side-encryption-context': kmsEncryptionContext,
+    }),
+    ...(kmsEncryptionAlgorithm && {
+      'x-amz-server-side-encryption-customer-algorithm': kmsEncryptionAlgorithm,
+    }),
+    ...(kmsEncryptionCustomerKey && {
+      'x-amz-server-side-encryption-customer-key': kmsEncryptionCustomerKey,
+    }),
+    ...(kmsEncryptionCustomerKeyMD5 && {
+      'x-amz-server-side-encryption-customer-key-MD5':
+        kmsEncryptionCustomerKeyMD5,
+    }),
+  };
+}
+
+export const getBedrockFoundationModel = async (
+  model: string,
+  options: Options,
+  env: Record<string, any>
+) => {
+  if (model.includes('arn:aws')) {
+    const foundationModel = model.includes('foundation-model/')
+      ? model.split('/').pop()
+      : await getFoundationModelFromInferenceProfile(model, options, env);
+    if (foundationModel) {
+      return foundationModel;
+    }
+    return model;
+  }
+  return model;
 };
 
 export const getBedrockModelWithoutRegion = (model: string) => {

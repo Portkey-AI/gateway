@@ -1,0 +1,281 @@
+{
+  "default": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0
+        },
+        "response_token": {
+          "price": 0
+        },
+        "cache_write_input_token": {
+          "price": 0
+        },
+        "cache_read_input_token": {
+          "price": 0
+        },
+        "cache_read_audio_input_token": {
+          "price": 0
+        },
+        "response_audio_token": {
+          "price": 0
+        },
+        "request_audio_token": {
+          "price": 0
+        }
+      },
+      "calculate": {
+        "request": {
+          "operation": "sum",
+          "operands": [
+            {
+              "operation": "multiply",
+              "operands": [
+                {
+                  "value": "input_tokens"
+                },
+                {
+                  "value": "rates.request_token"
+                }
+              ]
+            },
+            {
+              "operation": "multiply",
+              "operands": [
+                {
+                  "value": "cache_write_tokens"
+                },
+                {
+                  "value": "rates.cache_write_input_token"
+                }
+              ]
+            },
+            {
+              "operation": "multiply",
+              "operands": [
+                {
+                  "value": "cache_read_tokens"
+                },
+                {
+                  "value": "rates.cache_read_input_token"
+                }
+              ]
+            },
+            {
+              "operation": "multiply",
+              "operands": [
+                {
+                  "value": "audio_input_tokens"
+                },
+                {
+                  "value": "rates.request_audio_token"
+                }
+              ]
+            },
+            {
+              "operation": "multiply",
+              "operands": [
+                {
+                  "value": "cache_read_audio_tokens"
+                },
+                {
+                  "value": "rates.cache_read_audio_input_token"
+                }
+              ]
+            }
+          ]
+        },
+        "response": {
+          "operation": "sum",
+          "operands": [
+            {
+              "operation": "multiply",
+              "operands": [
+                {
+                  "value": "output_tokens"
+                },
+                {
+                  "value": "rates.response_token"
+                }
+              ]
+            },
+            {
+              "operation": "multiply",
+              "operands": [
+                {
+                  "value": "audio_output_tokens"
+                },
+                {
+                  "value": "rates.response_audio_token"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "currency": "USD"
+    }
+  },
+  "glm-5": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.00032
+        },
+        "cache_read_input_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "glm-5-code": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00012
+        },
+        "response_token": {
+          "price": 0.0005
+        },
+        "cache_read_input_token": {
+          "price": 0.00003
+        }
+      }
+    }
+  },
+  "glm-4.7": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00006
+        },
+        "response_token": {
+          "price": 0.00022
+        },
+        "cache_read_input_token": {
+          "price": 0.000011
+        }
+      }
+    }
+  },
+  "glm-4.6": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00006
+        },
+        "response_token": {
+          "price": 0.00022
+        },
+        "cache_read_input_token": {
+          "price": 0.000011
+        }
+      }
+    }
+  },
+  "glm-4.5": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00006
+        },
+        "response_token": {
+          "price": 0.00022
+        },
+        "cache_read_input_token": {
+          "price": 0.000011
+        }
+      }
+    }
+  },
+  "glm-4.5v": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00006
+        },
+        "response_token": {
+          "price": 0.00018
+        },
+        "cache_read_input_token": {
+          "price": 0.000011
+        }
+      }
+    }
+  },
+  "glm-4.5-x": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00022
+        },
+        "response_token": {
+          "price": 0.00089
+        },
+        "cache_read_input_token": {
+          "price": 0.000045
+        }
+      }
+    }
+  },
+  "glm-4.5-air": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00011
+        },
+        "cache_read_input_token": {
+          "price": 0.000003
+        }
+      }
+    }
+  },
+  "glm-4.5-airx": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00011
+        },
+        "response_token": {
+          "price": 0.00045
+        },
+        "cache_read_input_token": {
+          "price": 0.000022
+        }
+      }
+    }
+  },
+  "glm-4-32b-0414-128k": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00001
+        },
+        "response_token": {
+          "price": 0.00001
+        }
+      }
+    }
+  },
+  "glm-4.5-flash": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0
+        },
+        "response_token": {
+          "price": 0
+        },
+        "cache_read_input_token": {
+          "price": 0
+        }
+      }
+    }
+  }
+}

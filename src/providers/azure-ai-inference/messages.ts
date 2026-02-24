@@ -13,11 +13,11 @@ export const AzureAIInferenceMessagesResponseTransform = (
   responseStatus: number
 ): MessagesResponse | ErrorResponse => {
   if (responseStatus !== 200) {
-    const errorResposne = AnthropicErrorResponseTransform(
+    const errorResponse = AnthropicErrorResponseTransform(
       response as AnthropicErrorResponse,
       AZURE_AI_INFERENCE
     );
-    if (errorResposne) return errorResposne;
+    if (errorResponse) return errorResponse;
   }
 
   if ('model' in response) return response;

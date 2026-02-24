@@ -11,7 +11,6 @@ import { MISTRAL_AI_FINISH_REASON } from '../mistral-ai/types';
 import { TOGETHER_AI_FINISH_REASON } from '../together-ai/types';
 import { COHERE_STOP_REASON } from '../cohere/types';
 
-// TODO: rename this to OpenAIFinishReasonMap
 export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   // https://docs.anthropic.com/en/api/messages#response-stop-reason
   [ANTHROPIC_STOP_REASON.stop_sequence, FINISH_REASON.stop],
@@ -19,6 +18,8 @@ export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   [ANTHROPIC_STOP_REASON.pause_turn, FINISH_REASON.stop],
   [ANTHROPIC_STOP_REASON.tool_use, FINISH_REASON.tool_calls],
   [ANTHROPIC_STOP_REASON.max_tokens, FINISH_REASON.length],
+  [ANTHROPIC_STOP_REASON.refusal, FINISH_REASON.refusal],
+  [ANTHROPIC_STOP_REASON.model_context_window_exceeded, FINISH_REASON.length],
   // https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html#API_runtime_Converse_ResponseSyntax
   [BEDROCK_CONVERSE_STOP_REASON.end_turn, FINISH_REASON.stop],
   [BEDROCK_CONVERSE_STOP_REASON.tool_use, FINISH_REASON.tool_calls],
@@ -55,6 +56,14 @@ export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   ],
   [
     VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.SPII,
+    FINISH_REASON.content_filter,
+  ],
+  [
+    VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.MALFORMED_FUNCTION_CALL,
+    FINISH_REASON.stop,
+  ],
+  [
+    VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.IMAGE_SAFETY,
     FINISH_REASON.content_filter,
   ],
   // https://ai.google.dev/api/generate-content#FinishReason

@@ -1,11 +1,11 @@
-import { Environment } from '../../utils/env';
+import { env, getRuntimeKey } from 'hono/adapter';
 import { ProviderAPIConfig } from '../types';
 import {
   getAccessTokenFromEntraId,
   getAzureManagedIdentityToken,
   getAzureWorkloadIdentityToken,
 } from './utils';
-import { getRuntimeKey } from 'hono/adapter';
+import { Environment } from '../../utils/env';
 
 const runtime = getRuntimeKey();
 
@@ -15,20 +15,20 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     return `https://${resourceName}.openai.azure.com/openai`;
   },
   headers: async ({ providerOptions, fn, c }) => {
-    const { apiKey, azureAdToken, azureAuthMode } = providerOptions;
+    const { apiKey, azureAdToken, azureAuthMode, azureEntraScope } =
+      providerOptions;
+    const nodeFetchHeader =
+      fn === 'uploadFile' ? { 'use-node-fetch': true } : {};
     if (azureAdToken) {
       return {
         Authorization: `Bearer ${azureAdToken?.replace('Bearer ', '')}`,
+        ...nodeFetchHeader,
       };
     }
 
     if (azureAuthMode === 'entra') {
-      const {
-        azureEntraTenantId,
-        azureEntraClientId,
-        azureEntraClientSecret,
-        azureEntraScope,
-      } = providerOptions;
+      const { azureEntraTenantId, azureEntraClientId, azureEntraClientSecret } =
+        providerOptions;
       if (azureEntraTenantId && azureEntraClientId && azureEntraClientSecret) {
         const scope =
           azureEntraScope || 'https://cognitiveservices.azure.com/.default';
@@ -36,38 +36,38 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
           azureEntraTenantId,
           azureEntraClientId,
           azureEntraClientSecret,
-          scope
+          scope,
+          env(c)
         );
         return {
           Authorization: `Bearer ${accessToken}`,
+          ...nodeFetchHeader,
         };
       }
     }
     if (azureAuthMode === 'managed') {
-      const { azureManagedClientId, azureEntraScope } = providerOptions;
+      const { azureManagedClientId } = providerOptions;
       const resource =
         azureEntraScope || 'https://cognitiveservices.azure.com/';
       const accessToken = await getAzureManagedIdentityToken(
         resource,
-        azureManagedClientId
+        azureManagedClientId,
+        env(c)
       );
       return {
         Authorization: `Bearer ${accessToken}`,
+        ...nodeFetchHeader,
       };
     }
-    // `AZURE_FEDERATED_TOKEN_FILE` is injected by runtime, skipping serverless for now.
     if (azureAuthMode === 'workload' && runtime === 'node') {
-      const { azureWorkloadClientId, azureEntraScope } = providerOptions;
-
+      const { azureWorkloadClientId } = providerOptions;
       const authorityHost = Environment(c).AZURE_AUTHORITY_HOST;
       const tenantId = Environment(c).AZURE_TENANT_ID;
       const clientId = azureWorkloadClientId || Environment(c).AZURE_CLIENT_ID;
       const federatedTokenFile = Environment(c).AZURE_FEDERATED_TOKEN_FILE;
-
       if (authorityHost && tenantId && clientId && federatedTokenFile) {
         const fs = await import('fs');
         const federatedToken = fs.readFileSync(federatedTokenFile, 'utf8');
-
         if (federatedToken) {
           const scope =
             azureEntraScope || 'https://cognitiveservices.azure.com/.default';
@@ -76,15 +76,17 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
             tenantId,
             clientId,
             federatedToken,
-            scope
+            scope,
+            env(c)
           );
+
           return {
             Authorization: `Bearer ${accessToken}`,
           };
         }
       }
     }
-    const headersObj: Record<string, string> = {
+    const headersObj: Record<string, string | boolean> = {
       'api-key': `${apiKey}`,
     };
     if (
@@ -98,7 +100,10 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     if (providerOptions.openaiBeta) {
       headersObj['OpenAI-Beta'] = providerOptions.openaiBeta;
     }
-    return headersObj;
+    return {
+      ...headersObj,
+      ...nodeFetchHeader,
+    };
   },
   getEndpoint: ({ providerOptions, fn, gatewayRequestURL }) => {
     const { apiVersion, urlToFetch, deploymentId } = providerOptions;
@@ -202,11 +207,15 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
   getProxyEndpoint: ({ reqPath, reqQuery, providerOptions }) => {
     const { apiVersion } = providerOptions;
     const defaultEndpoint = `${reqPath}${reqQuery}`;
-    if (!apiVersion) {
-      return defaultEndpoint; // append /v1 to the request path
+
+    const isAzureAgents =
+      providerOptions['azureEntraScope'] === 'https://ai.azure.com/.default';
+
+    if (!apiVersion || isAzureAgents) {
+      return defaultEndpoint;
     }
     if (apiVersion?.trim() === 'v1') {
-      return `/v1${reqPath}${reqQuery}`;
+      return `/v1${reqPath}${reqQuery}`; // append /v1 to the request path
     }
     if (!reqQuery?.includes('api-version')) {
       let _reqQuery = reqQuery;

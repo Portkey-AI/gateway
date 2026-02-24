@@ -5,6 +5,7 @@ import {
   PerplexityAIChatCompleteResponseTransform,
   PerplexityAIChatCompleteStreamChunkTransform,
 } from './chatComplete';
+import { PerplexityAiLogConfig } from './pricing';
 
 const PerplexityAIConfig: ProviderConfigs = {
   chatComplete: PerplexityAIChatCompleteConfig,
@@ -13,6 +14,7 @@ const PerplexityAIConfig: ProviderConfigs = {
     chatComplete: PerplexityAIChatCompleteResponseTransform,
     'stream-chatComplete': PerplexityAIChatCompleteStreamChunkTransform,
   },
+  pricing: PerplexityAiLogConfig,
 };
 
 export default PerplexityAIConfig;

@@ -34,9 +34,11 @@ import {
   AzureAIInferenceMessagesConfig,
   AzureAIInferenceMessagesResponseTransform,
 } from './messages';
+import { AzureAiLogConfig } from './pricing';
 
 const AzureAIInferenceAPIConfig: ProviderConfigs = {
   api: AzureAIInferenceAPI,
+  pricing: AzureAiLogConfig,
   getConfig: ({ providerOptions }) => {
     const { azureFoundryUrl } = providerOptions || {};
     const isAnthropicModel = azureFoundryUrl?.includes('anthropic');

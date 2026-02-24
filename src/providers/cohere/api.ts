@@ -19,6 +19,8 @@ const CohereAPIConfig: ProviderAPIConfig = {
         return '/v1/generate';
       case 'embed':
         return '/v2/embed';
+      case 'rerank':
+        return '/v2/rerank';
       case 'uploadFile':
         return `/v1/datasets?name=portkey-${crypto.randomUUID()}&type=embed-input&keep_fields=custom_id,id`;
       case 'listFiles':

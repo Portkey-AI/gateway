@@ -1,0 +1,488 @@
+{
+  "default": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0
+        },
+        "response_token": {
+          "price": 0
+        }
+      },
+      "calculate": {
+        "request": {
+          "operation": "multiply",
+          "operands": [
+            {
+              "value": "input_tokens"
+            },
+            {
+              "value": "rates.request_token"
+            }
+          ]
+        },
+        "response": {
+          "operation": "multiply",
+          "operands": [
+            {
+              "value": "output_tokens"
+            },
+            {
+              "value": "rates.response_token"
+            }
+          ]
+        }
+      },
+      "currency": "USD"
+    }
+  },
+  "codellama-34b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00008
+        },
+        "response_token": {
+          "price": 0.00008
+        }
+      }
+    }
+  },
+  "codellama-70b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.0001
+        }
+      }
+    }
+  },
+  "llama-2-70b-chat": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.0001
+        }
+      }
+    }
+  },
+  "mistral-7b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "mixtral-8x7b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00006
+        },
+        "response_token": {
+          "price": 0.00006
+        }
+      }
+    }
+  },
+  "pplx-7b-chat": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "pplx-70b-chat": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.0001
+        }
+      }
+    }
+  },
+  "pplx-7b-online": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0
+        },
+        "response_token": {
+          "price": 0.000028
+        }
+      },
+      "fixed_cost": {
+        "request": {
+          "price": 0.5
+        },
+        "response": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "pplx-70b-online": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0
+        },
+        "response_token": {
+          "price": 0.00028
+        }
+      },
+      "fixed_cost": {
+        "request": {
+          "price": 0.5
+        },
+        "response": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "llama-3-8b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "llama-3-70b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.0001
+        }
+      }
+    }
+  },
+  "llama-3-sonar-small-32k-chat": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "llama-3-sonar-large-32k-chat": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.0001
+        }
+      }
+    }
+  },
+  "llama-3-sonar-small-32k-online": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      },
+      "fixed_cost": {
+        "request": {
+          "price": 0.5
+        },
+        "response": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "llama-3-sonar-large-32k-online": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.0001
+        }
+      },
+      "fixed_cost": {
+        "request": {
+          "price": 0.5
+        },
+        "response": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "llama-3.1-sonar-small-128k-online": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      },
+      "fixed_cost": {
+        "request": {
+          "price": 0.5
+        },
+        "response": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "llama-3.1-sonar-large-128k-online": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.0001
+        }
+      },
+      "fixed_cost": {
+        "request": {
+          "price": 0.5
+        },
+        "response": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "llama-3.1-sonar-huge-128k-online": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0005
+        },
+        "response_token": {
+          "price": 0.0005
+        }
+      },
+      "fixed_cost": {
+        "request": {
+          "price": 0.5
+        },
+        "response": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "llama-3.1-sonar-small-128k-chat": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "llama-3.1-sonar-large-128k-chat": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.0001
+        }
+      }
+    }
+  },
+  "llama-3.1-8b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.0001
+        }
+      }
+    }
+  },
+  "llama-3.1-70b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.0001
+        }
+      }
+    }
+  },
+  "sonar-reasoning": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.0005
+        },
+        "additional_units": {
+          "web_search_low_context": {
+            "price": 0.5
+          },
+          "web_search_medium_context": {
+            "price": 0.8
+          },
+          "web_search_high_context": {
+            "price": 1.2
+          }
+        }
+      }
+    }
+  },
+  "sonar-pro": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0003
+        },
+        "response_token": {
+          "price": 0.0015
+        },
+        "additional_units": {
+          "web_search_low_context": {
+            "price": 0.6
+          },
+          "web_search_medium_context": {
+            "price": 1.0
+          },
+          "web_search_high_context": {
+            "price": 1.4
+          }
+        }
+      }
+    }
+  },
+  "sonar": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.0001
+        },
+        "additional_units": {
+          "web_search_low_context": {
+            "price": 0.5
+          },
+          "web_search_medium_context": {
+            "price": 0.8
+          },
+          "web_search_high_context": {
+            "price": 1.2
+          }
+        }
+      }
+    }
+  },
+  "sonar-reasoning-pro": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0002
+        },
+        "response_token": {
+          "price": 0.0008
+        },
+        "additional_units": {
+          "web_search_low_context": {
+            "price": 0.6
+          },
+          "web_search_medium_context": {
+            "price": 1.0
+          },
+          "web_search_high_context": {
+            "price": 1.4
+          }
+        }
+      },
+      "fixed_cost": {
+        "request": {
+          "price": 0
+        },
+        "response": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "sonar-deep-research": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0002
+        },
+        "response_token": {
+          "price": 0.0008
+        },
+        "additional_units": {
+          "web_search": {
+            "price": 0.5
+          }
+        }
+      }
+    }
+  },
+  "r1-1776": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0002
+        },
+        "response_token": {
+          "price": 0.0008
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1957 @@
+{
+  "default": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0
+        },
+        "response_token": {
+          "price": 0
+        }
+      },
+      "calculate": {
+        "request": {
+          "operation": "multiply",
+          "operands": [
+            {
+              "value": "input_tokens"
+            },
+            {
+              "value": "rates.request_token"
+            }
+          ]
+        },
+        "response": {
+          "operation": "multiply",
+          "operands": [
+            {
+              "value": "output_tokens"
+            },
+            {
+              "value": "rates.response_token"
+            }
+          ]
+        }
+      },
+      "currency": "USD"
+    }
+  },
+  "mistralai/Mistral-7B-Instruct-v0.2": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "mistralai/Mixtral-8x7B-Instruct-v0.1": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00006
+        },
+        "response_token": {
+          "price": 0.00006
+        }
+      }
+    }
+  },
+  "mistralai/Mixtral-8x7B-v0.1": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00006
+        },
+        "response_token": {
+          "price": 0.00006
+        }
+      }
+    }
+  },
+  "openchat/openchat-3.5-1210": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "togethercomputer/StripedHyena-Nous-7B": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "togethercomputer/StripedHyena-Hessian-7B": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "DiscoResearch/DiscoLM-mixtral-8x7b-v2": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00006
+        },
+        "response_token": {
+          "price": 0.00006
+        }
+      }
+    }
+  },
+  "Meta-Llama/Llama-Guard-7b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "zero-one-ai/Yi-34B-Chat": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00008
+        },
+        "response_token": {
+          "price": 0.00008
+        }
+      }
+    }
+  },
+  "zero-one-ai/Yi-34B": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00008
+        },
+        "response_token": {
+          "price": 0.00008
+        }
+      }
+    }
+  },
+  "zero-one-ai/Yi-6B": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000014
+        },
+        "response_token": {
+          "price": 0.000014
+        }
+      }
+    }
+  },
+  "Nexusflow/NexusRaven-V2-13B": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00003
+        },
+        "response_token": {
+          "price": 0.00003
+        }
+      }
+    }
+  },
+  "NousResearch/Nous-Capybara-7B-V1p9": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "teknium/OpenHermes-2p5-Mistral-7B": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "togethercomputer/llama-2-70b-chat": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00009
+        },
+        "response_token": {
+          "price": 0.00009
+        }
+      }
+    }
+  },
+  "togethercomputer/llama-2-13b-chat": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000022
+        },
+        "response_token": {
+          "price": 0.000022
+        }
+      }
+    }
+  },
+  "togethercomputer/llama-2-7b-chat": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "NousResearch/Nous-Hermes-Llama2-13b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00003
+        },
+        "response_token": {
+          "price": 0.00003
+        }
+      }
+    }
+  },
+  "NousResearch/Nous-Hermes-llama-2-7b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "Open-Orca/Mistral-7B-OpenOrca": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "teknium/OpenHermes-2-Mistral-7B": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "WizardLM/WizardLM-13B-V1.2": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "WizardLM/WizardCoder-Python-34B-V1.0": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00008
+        },
+        "response_token": {
+          "price": 0.00008
+        }
+      }
+    }
+  },
+  "togethercomputer/LLaMA-2-7B-32K": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "togethercomputer/CodeLlama-34b-Instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00008
+        },
+        "response_token": {
+          "price": 0.00008
+        }
+      }
+    }
+  },
+  "togethercomputer/CodeLlama-34b-Python": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00008
+        },
+        "response_token": {
+          "price": 0.00008
+        }
+      }
+    }
+  },
+  "EleutherAI/llemma_7b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "lmsys/vicuna-13b-v1.5-16k": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00003
+        },
+        "response_token": {
+          "price": 0.00003
+        }
+      }
+    }
+  },
+  "lmsys/vicuna-13b-v1.5": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00003
+        },
+        "response_token": {
+          "price": 0.00003
+        }
+      }
+    }
+  },
+  "Phind/Phind-CodeLlama-34B-Python-v1": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00008
+        },
+        "response_token": {
+          "price": 0.00008
+        }
+      }
+    }
+  },
+  "Phind/Phind-CodeLlama-34B-v2": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00008
+        },
+        "response_token": {
+          "price": 0.00008
+        }
+      }
+    }
+  },
+  "togethercomputer/CodeLlama-13b-Instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000022
+        },
+        "response_token": {
+          "price": 0.000022
+        }
+      }
+    }
+  },
+  "togethercomputer/CodeLlama-7b-Instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "togethercomputer/CodeLlama-13b-Python": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000022
+        },
+        "response_token": {
+          "price": 0.000022
+        }
+      }
+    }
+  },
+  "togethercomputer/CodeLlama-7b-Python": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "togethercomputer/CodeLlama-34b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00008
+        },
+        "response_token": {
+          "price": 0.00008
+        }
+      }
+    }
+  },
+  "togethercomputer/CodeLlama-13b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000022
+        },
+        "response_token": {
+          "price": 0.000022
+        }
+      }
+    }
+  },
+  "togethercomputer/CodeLlama-7b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "togethercomputer/llama-2-70b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00009
+        },
+        "response_token": {
+          "price": 0.00009
+        }
+      }
+    }
+  },
+  "togethercomputer/llama-2-13b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000022
+        },
+        "response_token": {
+          "price": 0.000022
+        }
+      }
+    }
+  },
+  "togethercomputer/llama-2-7b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "Austism/chronos-hermes-13b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00003
+        },
+        "response_token": {
+          "price": 0.00003
+        }
+      }
+    }
+  },
+  "NumbersStation/nsql-llama-2-7B": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "garage-bAInd/Platypus2-70B-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00009
+        },
+        "response_token": {
+          "price": 0.00009
+        }
+      }
+    }
+  },
+  "WizardLM/WizardLM-70B-V1.0": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00009
+        },
+        "response_token": {
+          "price": 0.00009
+        }
+      }
+    }
+  },
+  "Gryphe/MythoMax-L2-13b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00003
+        },
+        "response_token": {
+          "price": 0.00003
+        }
+      }
+    }
+  },
+  "upstage/SOLAR-0-70b-16bit": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00009
+        },
+        "response_token": {
+          "price": 0.00009
+        }
+      }
+    }
+  },
+  "togethercomputer/Qwen-7B-Chat": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "togethercomputer/Qwen-7B": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "togethercomputer/RedPajama-INCITE-7B-Chat": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "togethercomputer/RedPajama-INCITE-7B-Instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "togethercomputer/RedPajama-INCITE-7B-Base": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "togethercomputer/RedPajama-INCITE-Chat-3B-v1": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00001
+        },
+        "response_token": {
+          "price": 0.00001
+        }
+      }
+    }
+  },
+  "togethercomputer/RedPajama-INCITE-Instruct-3B-v1": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00001
+        },
+        "response_token": {
+          "price": 0.00001
+        }
+      }
+    }
+  },
+  "togethercomputer/RedPajama-INCITE-Base-3B-v1": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00001
+        },
+        "response_token": {
+          "price": 0.00001
+        }
+      }
+    }
+  },
+  "huggyllama/llama-65b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00009
+        },
+        "response_token": {
+          "price": 0.00009
+        }
+      }
+    }
+  },
+  "togethercomputer/GPT-JT-6B-v1": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "togethercomputer/GPT-JT-Moderation-6B": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "togethercomputer/GPT-NeoXT-Chat-Base-20B": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00003
+        },
+        "response_token": {
+          "price": 0.00003
+        }
+      }
+    }
+  },
+  "togethercomputer/Pythia-Chat-Base-7B-v0.16": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "togethercomputer/alpaca-7b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "togethercomputer/falcon-40b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00008
+        },
+        "response_token": {
+          "price": 0.00008
+        }
+      }
+    }
+  },
+  "togethercomputer/falcon-40b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00008
+        },
+        "response_token": {
+          "price": 0.00008
+        }
+      }
+    }
+  },
+  "togethercomputer/falcon-7b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "togethercomputer/falcon-7b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "upstage/SOLAR-10.7B-Instruct-v1.0": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00003
+        },
+        "response_token": {
+          "price": 0.00003
+        }
+      }
+    }
+  },
+  "togethercomputer/m2-bert-80M-2k-retrieval": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 8e-7
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "togethercomputer/m2-bert-80M-8k-retrieval": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 8e-7
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "togethercomputer/m2-bert-80M-32k-retrieval": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 8e-7
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "WhereIsAI/UAE-Large-V1": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0000016
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "BAAI/bge-large-en-v1.5": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0000016
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "BAAI/bge-base-en-v1.5": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 8e-7
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "sentence-transformers/msmarco-bert-base-dot-v5": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 8e-7
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "bert-base-uncased": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 8e-7
+        },
+        "response_token": {
+          "price": 0
+        }
+      }
+    }
+  },
+  "databricks/dbrx-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00012
+        },
+        "response_token": {
+          "price": 0.00012
+        }
+      }
+    }
+  },
+  "mistralai/Mixtral-8x22B": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00012
+        },
+        "response_token": {
+          "price": 0.00012
+        }
+      }
+    }
+  },
+  "mistralai/Mistral-7B-Instruct-v0.1": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "meta-llama/Llama-2-7b-chat-hf": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "meta-llama/Llama-3-8b-chat-hf": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "meta-llama/Llama-3-70b-chat-hf": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00009
+        },
+        "response_token": {
+          "price": 0.00009
+        }
+      }
+    }
+  },
+  "meta-llama/Meta-Llama-3.1-8B-Instruct-Reference": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000088
+        },
+        "response_token": {
+          "price": 0.000088
+        }
+      }
+    }
+  },
+  "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00035
+        },
+        "response_token": {
+          "price": 0.00035
+        }
+      }
+    }
+  },
+  "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000018
+        },
+        "response_token": {
+          "price": 0.000018
+        }
+      }
+    }
+  },
+  "meta-llama/Meta-Llama-3.1-8B-Reference": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "meta-llama/Meta-Llama-3.1-70B-Instruct-Reference": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00009
+        },
+        "response_token": {
+          "price": 0.00009
+        }
+      }
+    }
+  },
+  "meta-llama/Meta-Llama-3.1-70B-Reference": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00009
+        },
+        "response_token": {
+          "price": 0.00009
+        }
+      }
+    }
+  },
+  "meta-llama/Llama-3.2-3B-Instruct-Turbo": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000006
+        },
+        "response_token": {
+          "price": 0.000006
+        }
+      }
+    }
+  },
+  "meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00012
+        },
+        "response_token": {
+          "price": 0.00012
+        }
+      }
+    }
+  },
+  "meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000018
+        },
+        "response_token": {
+          "price": 0.000018
+        }
+      }
+    }
+  },
+  "meta-llama/Llama-3.3-70B-Instruct-Turbo": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000088
+        },
+        "response_token": {
+          "price": 0.000088
+        }
+      }
+    }
+  },
+  "deepseek-ai/DeepSeek-R1": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0003
+        },
+        "response_token": {
+          "price": 0.0007
+        }
+      }
+    }
+  },
+  "deepseek-ai/DeepSeek-V3": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000125
+        },
+        "response_token": {
+          "price": 0.000125
+        }
+      }
+    }
+  },
+  "deepseek-ai/deepseek-llm-67b-chat": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00009
+        },
+        "response_token": {
+          "price": 0.00009
+        }
+      }
+    }
+  },
+  "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000027
+        },
+        "response_token": {
+          "price": 0.000085
+        }
+      }
+    }
+  },
+  "meta-llama/Llama-4-Scout-17B-16E-Instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000018
+        },
+        "response_token": {
+          "price": 0.000059
+        }
+      }
+    }
+  },
+  "Qwen/Qwen3-235B-A22B-fp8-tput": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00006
+        }
+      }
+    }
+  },
+  "deepseek-ai/DeepSeek-V3.1": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00006
+        },
+        "response_token": {
+          "price": 0.00017
+        }
+      }
+    }
+  },
+  "openai/gpt-oss-120b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000015
+        },
+        "response_token": {
+          "price": 0.00006
+        }
+      }
+    }
+  },
+  "openai/gpt-oss-20b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000005
+        },
+        "response_token": {
+          "price": 0.00002
+        }
+      }
+    }
+  },
+  "moonshotai/Kimi-K2-Instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.0003
+        }
+      }
+    }
+  },
+  "moonshotai/Kimi-K2-Instruct-0905": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.0003
+        }
+      }
+    }
+  },
+  "zai-org/GLM-4.5-Air-FP8": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00011
+        }
+      }
+    }
+  },
+  "Qwen/Qwen3-235B-A22B-Thinking-2507": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000065
+        },
+        "response_token": {
+          "price": 0.0003
+        }
+      }
+    }
+  },
+  "Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0002
+        },
+        "response_token": {
+          "price": 0.0002
+        }
+      }
+    }
+  },
+  "Qwen/Qwen3-235B-A22B-Instruct-2507-tput": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00002
+        },
+        "response_token": {
+          "price": 0.00006
+        }
+      }
+    }
+  },
+  "deepseek-ai/DeepSeek-R1-0528-tput": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000055
+        },
+        "response_token": {
+          "price": 0.000219
+        }
+      }
+    }
+  },
+  "deepseek-ai/DeepSeek-R1-Distill-Llama-70B": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0002
+        },
+        "response_token": {
+          "price": 0.0002
+        }
+      }
+    }
+  },
+  "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000018
+        },
+        "response_token": {
+          "price": 0.000018
+        }
+      }
+    }
+  },
+  "marin-community/marin-8b-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000018
+        },
+        "response_token": {
+          "price": 0.000018
+        }
+      }
+    }
+  },
+  "mistralai/Mistral-Small-24B-Instruct-2501": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00008
+        },
+        "response_token": {
+          "price": 0.00008
+        }
+      }
+    }
+  },
+  "Qwen/Qwen2.5-7B-Instruct-Turbo": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00003
+        },
+        "response_token": {
+          "price": 0.00003
+        }
+      }
+    }
+  },
+  "Qwen/Qwen2.5-72B-Instruct-Turbo": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00012
+        },
+        "response_token": {
+          "price": 0.00012
+        }
+      }
+    }
+  },
+  "Qwen/Qwen2.5-VL-72B-Instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000195
+        },
+        "response_token": {
+          "price": 0.0008
+        }
+      }
+    }
+  },
+  "Qwen/Qwen2.5-Coder-32B-Instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00008
+        },
+        "response_token": {
+          "price": 0.00008
+        }
+      }
+    }
+  },
+  "Qwen/QwQ-32B": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00012
+        },
+        "response_token": {
+          "price": 0.00012
+        }
+      }
+    }
+  },
+  "arcee-ai/coder-large": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00005
+        },
+        "response_token": {
+          "price": 0.00008
+        }
+      }
+    }
+  },
+  "arcee-ai/virtuoso-large": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000075
+        },
+        "response_token": {
+          "price": 0.00012
+        }
+      }
+    }
+  },
+  "arcee-ai/maestro-reasoning": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00009
+        },
+        "response_token": {
+          "price": 0.00033
+        }
+      }
+    }
+  },
+  "deepcogito/cogito-v2-preview-llama-70B": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000088
+        },
+        "response_token": {
+          "price": 0.000088
+        }
+      }
+    }
+  },
+  "deepcogito/cogito-v2-preview-llama-109B-MoE": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000018
+        },
+        "response_token": {
+          "price": 0.000059
+        }
+      }
+    }
+  },
+  "deepcogito/cogito-v2-preview-llama-405B": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00035
+        },
+        "response_token": {
+          "price": 0.00035
+        }
+      }
+    }
+  },
+  "deepcogito/cogito-v2-preview-deepseek-671b": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000125
+        },
+        "response_token": {
+          "price": 0.000125
+        }
+      }
+    }
+  },
+  "meta-llama/Meta-Llama-3-8B-Instruct-Lite": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00001
+        },
+        "response_token": {
+          "price": 0.00001
+        }
+      }
+    }
+  },
+  "google/gemma-3n-E4B-it": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.000002
+        },
+        "response_token": {
+          "price": 0.000004
+        }
+      }
+    }
+  },
+  "black-forest-labs/FLUX.1-pro": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "additional_units": {
+          "megapixels": {
+            "price": 0.05
+          },
+          "default_steps": {
+            "price": 28
+          }
+        }
+      }
+    }
+  },
+  "black-forest-labs/FLUX.1-dev": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "additional_units": {
+          "megapixels": {
+            "price": 0.025
+          },
+          "default_steps": {
+            "price": 28
+          }
+        }
+      }
+    }
+  },
+  "black-forest-labs/FLUX.1-kontext-pro": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "additional_units": {
+          "megapixels": {
+            "price": 0.04
+          },
+          "default_steps": {
+            "price": 28
+          }
+        }
+      }
+    }
+  },
+  "black-forest-labs/FLUX.1-kontext-max": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "additional_units": {
+          "megapixels": {
+            "price": 0.08
+          },
+          "default_steps": {
+            "price": 28
+          }
+        }
+      }
+    }
+  },
+  "black-forest-labs/FLUX.1-kontext-dev": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "additional_units": {
+          "megapixels": {
+            "price": 0.025
+          },
+          "default_steps": {
+            "price": 28
+          }
+        }
+      }
+    }
+  },
+  "black-forest-labs/FLUX.1-krea-dev": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "additional_units": {
+          "megapixels": {
+            "price": 0.025
+          },
+          "default_steps": {
+            "price": 28
+          }
+        }
+      }
+    }
+  },
+  "black-forest-labs/FLUX.1-schnell": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "additional_units": {
+          "megapixels": {
+            "price": 0.0027
+          },
+          "default_steps": {
+            "price": 4
+          }
+        }
+      }
+    }
+  },
+  "black-forest-labs/FLUX.1-Canny-pro": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 0.05
+            }
+          }
+        }
+      }
+    }
+  },
+  "google/imagen-4.0-preview": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 0.04
+            }
+          }
+        }
+      }
+    }
+  },
+  "google/imagen-4.0-fast": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 0.02
+            }
+          }
+        }
+      }
+    }
+  },
+  "google/imagen-4.0-ultra": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 0.06
+            }
+          }
+        }
+      }
+    }
+  },
+  "ByteDance-Seed/Seedream-3.0": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 0.018
+            }
+          }
+        }
+      }
+    }
+  },
+  "ByteDance-Seed/Seedream-4.0": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 0.03
+            }
+          }
+        }
+      }
+    }
+  },
+  "ByteDance-Seed/SeedEdit": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 0.03
+            }
+          }
+        }
+      }
+    }
+  },
+  "Qwen/Qwen-Image-Edit": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 0.0032
+            }
+          }
+        }
+      }
+    }
+  },
+  "Qwen/Qwen-Image": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 0.0058
+            }
+          }
+        }
+      }
+    }
+  },
+  "RunDiffusion/Juggernaut-pro-flux": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 0.0049
+            }
+          }
+        }
+      }
+    }
+  },
+  "Rundiffusion/Juggernaut-Lightning-Flux": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 0.0017
+            }
+          }
+        }
+      }
+    }
+  },
+  "HiDream-ai/HiDream-I1-Full": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 0.009
+            }
+          }
+        }
+      }
+    }
+  },
+  "HiDream-ai/HiDream-I1-Dev": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 0.0045
+            }
+          }
+        }
+      }
+    }
+  },
+  "HiDream-ai/HiDream-I1-Fast": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 0.0032
+            }
+          }
+        }
+      }
+    }
+  },
+  "ideogram/ideogram-3.0": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 0.06
+            }
+          }
+        }
+      }
+    }
+  },
+  "Lykon/DreamShaper": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 0.0006
+            }
+          }
+        }
+      }
+    }
+  },
+  "stabilityai/stable-diffusion-xl-base-1.0": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 0.0019
+            }
+          }
+        }
+      }
+    }
+  },
+  "stabilityai/stable-diffusion-3-medium": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 0.0019
+            }
+          }
+        }
+      }
+    }
+  },
+  "google/flash-image-2.5": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 0.0039
+            }
+          }
+        }
+      }
+    }
+  },
+  "black-forest-labs/FLUX.1.1-pro": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "image": {
+          "default": {
+            "default": {
+              "price": 0.04
+            }
+          }
+        }
+      }
+    }
+  },
+  "moonshot-ai/kimi-k2-instruct": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.0003
+        }
+      }
+    }
+  },
+  "moonshot-ai/kimi-k2-thinking": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00012
+        },
+        "response_token": {
+          "price": 0.0004
+        }
+      }
+    }
+  },
+  "moonshot-ai/kimi-k2-instruct-0905": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.0001
+        },
+        "response_token": {
+          "price": 0.0003
+        }
+      }
+    }
+  },
+  "moonshotai/Kimi-K2-Thinking": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00012
+        },
+        "response_token": {
+          "price": 0.0004
+        }
+      }
+    }
+  },
+  "moonshotai/Kimi-K2.5": {
+    "pricing_config": {
+      "pay_as_you_go": {
+        "request_token": {
+          "price": 0.00005
+        },
+        "response_token": {
+          "price": 0.00028
+        }
+      }
+    }
+  }
+}

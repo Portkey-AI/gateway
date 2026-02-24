@@ -1,4 +1,5 @@
-import { Transform } from 'node:stream';
+import { Transform } from 'stream';
+
 /**
  * Returns the boundary from the content-type header of a multipart/form-data request.
  * @param contentType - The content-type header of the original request.
@@ -297,27 +298,67 @@ export const formDataToOctetStreamTransformer = (
   return transformStream;
 };
 
-const decoder = new TextDecoder();
-
 export function createLineSplitter(): TransformStream {
   let leftover = '';
+  const decoder = new TextDecoder();
+  const encoder = new TextEncoder();
   return new TransformStream({
     transform(_chunk, controller) {
-      const chunk = decoder.decode(_chunk);
+      const chunk = decoder.decode(_chunk, { stream: true });
       leftover += chunk.toString();
       const lines = leftover.split('\n');
       leftover = lines.pop() || '';
       for (const line of lines) {
         if (line.trim()) {
-          controller.enqueue(line.trim());
+          controller.enqueue(encoder.encode(line.trim()));
         }
       }
       return;
     },
     flush(controller) {
       if (leftover.trim()) {
-        controller.enqueue(leftover);
+        controller.enqueue(leftover.trim());
       }
     },
   });
 }
+
+export const nodeLineReader = (useBatch = false) => {
+  let leftOver = '';
+  let linesToPush: string[] = [];
+  const lineReader = new Transform({
+    transform: function (chunk, encoding, callback) {
+      leftOver += chunk.toString();
+      const lines = leftOver.split('\n');
+      leftOver = lines.pop() || '';
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (trimmedLine) {
+          // Batch push conditionally.
+          if (useBatch) {
+            if (linesToPush.length >= 50) {
+              this.push(JSON.stringify(linesToPush));
+              linesToPush = [];
+            }
+            linesToPush.push(trimmedLine);
+          } else {
+            this.push(trimmedLine);
+          }
+        }
+      }
+      callback();
+    },
+    flush(callback) {
+      if (linesToPush.length > 0) {
+        this.push(JSON.stringify(linesToPush));
+        linesToPush = [];
+      }
+      if (leftOver.trim()) {
+        this.push(leftOver.trim());
+      }
+      callback();
+    },
+  });
+
+  return lineReader;
+};
