@@ -37,22 +37,22 @@ export interface OracleGuardrailsRequest {
 
 export interface OracleGuardrailsResponse {
   results: {
-    'content-moderation'?: {
+    contentModeration?: {
       categories: Array<{
         name: string;
         score: number;
       }>;
     };
-    'personally-identifiable-information'?: Array<{
+    personallyIdentifiableInformation?: Array<{
       label: string;
       text: string;
       offset: number;
       length: number;
       score: number;
-    }> | null;
-    'prompt-injection'?: {
+    }>;
+    promptInjection?: {
       score: number;
-    } | null;
+    };
   };
 }
 
@@ -171,9 +171,9 @@ export const OracleGuardrailsResponseTransform: (
     const results = response.results;
 
     // Calculate overall flagged status based on scores
-    const contentModeration = results['content-moderation'];
-    const piiDetection = results['personally-identifiable-information'];
-    const promptInjection = results['prompt-injection'];
+    const contentModeration = results.contentModeration;
+    const piiDetection = results.personallyIdentifiableInformation;
+    const promptInjection = results.promptInjection;
 
     // Content is flagged if any moderation score > 0.5 or prompt injection detected
     const overallCategory = contentModeration?.categories?.find(
@@ -183,10 +183,7 @@ export const OracleGuardrailsResponseTransform: (
       overallCategory?.score !== undefined ? overallCategory.score : 0;
     const promptInjectionScore =
       promptInjection?.score !== undefined ? promptInjection.score : 0;
-    const hasPII =
-      piiDetection !== null &&
-      piiDetection !== undefined &&
-      piiDetection.length > 0;
+    const hasPII = Array.isArray(piiDetection) && piiDetection.length > 0;
 
     const flagged: boolean =
       overallScore > 0.5 || promptInjectionScore > 0.5 || hasPII;

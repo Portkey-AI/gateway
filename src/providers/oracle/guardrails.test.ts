@@ -97,15 +97,13 @@ describe('Oracle Guardrails', () => {
     it('should transform successful response with content moderation', () => {
       const mockResponse: OracleGuardrailsResponse = {
         results: {
-          'content-moderation': {
+          contentModeration: {
             categories: [
               { name: 'OVERALL', score: 0.8 },
               { name: 'VIOLENCE', score: 0.7 },
               { name: 'HATE', score: 0.1 },
             ],
           },
-          'personally-identifiable-information': null,
-          'prompt-injection': null,
         },
       };
 
@@ -126,13 +124,13 @@ describe('Oracle Guardrails', () => {
     it('should detect PII in response', () => {
       const mockResponse: OracleGuardrailsResponse = {
         results: {
-          'content-moderation': {
+          contentModeration: {
             categories: [
               { name: 'OVERALL', score: 0.0 },
               { name: 'BLOCKLIST', score: 0.0 },
             ],
           },
-          'personally-identifiable-information': [
+          personallyIdentifiableInformation: [
             {
               label: 'EMAIL',
               text: 'test@example.com',
@@ -141,7 +139,6 @@ describe('Oracle Guardrails', () => {
               score: 0.95,
             },
           ],
-          'prompt-injection': null,
         },
       };
 
@@ -159,14 +156,13 @@ describe('Oracle Guardrails', () => {
     it('should detect prompt injection', () => {
       const mockResponse: OracleGuardrailsResponse = {
         results: {
-          'content-moderation': {
+          contentModeration: {
             categories: [
               { name: 'OVERALL', score: 0.0 },
               { name: 'BLOCKLIST', score: 0.0 },
             ],
           },
-          'personally-identifiable-information': null,
-          'prompt-injection': {
+          promptInjection: {
             score: 1.0,
           },
         },
@@ -186,14 +182,13 @@ describe('Oracle Guardrails', () => {
     it('should not flag safe content', () => {
       const mockResponse: OracleGuardrailsResponse = {
         results: {
-          'content-moderation': {
+          contentModeration: {
             categories: [
               { name: 'OVERALL', score: 0.1 },
               { name: 'BLOCKLIST', score: 0.0 },
             ],
           },
-          'personally-identifiable-information': null,
-          'prompt-injection': {
+          promptInjection: {
             score: 0.1,
           },
         },
@@ -244,10 +239,10 @@ describe('Oracle Guardrails', () => {
     it('should include oracle_details in response', () => {
       const mockResponse: OracleGuardrailsResponse = {
         results: {
-          'content-moderation': {
+          contentModeration: {
             categories: [{ name: 'OVERALL', score: 0.0 }],
           },
-          'personally-identifiable-information': [
+          personallyIdentifiableInformation: [
             {
               label: 'SSN',
               text: '123-45-6789',
@@ -256,7 +251,7 @@ describe('Oracle Guardrails', () => {
               score: 0.99,
             },
           ],
-          'prompt-injection': { score: 0.5 },
+          promptInjection: { score: 0.5 },
         },
       };
 
