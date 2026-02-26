@@ -7,6 +7,34 @@ import {
 } from '../utils';
 
 /**
+ * Supported rerank models in Oracle GenAI.
+ * Only Cohere rerank models are supported.
+ */
+export const SUPPORTED_RERANK_MODELS = [
+  'cohere.rerank-v3.5',
+  'cohere.rerank-multilingual-v3.1',
+  'cohere.rerank-english-v3.1',
+  // Add newer Cohere rerank models here as they become available
+];
+
+/**
+ * Validates that the model is a supported Cohere rerank model.
+ * @throws Error if model is not supported
+ */
+export function validateRerankModel(model: string | undefined): void {
+  if (!model) {
+    throw new Error('Model is required for rerank requests');
+  }
+
+  // Check if it's a Cohere model (starts with "cohere.rerank")
+  if (!model.startsWith('cohere.rerank')) {
+    throw new Error(
+      `Unsupported rerank model: ${model}. Oracle GenAI only supports Cohere rerank models (e.g., cohere.rerank-v3.5, cohere.rerank-multilingual-v3.1)`
+    );
+  }
+}
+
+/**
  * Oracle GenAI Rerank Response
  */
 export interface OracleRerankResponse {
@@ -54,6 +82,9 @@ export const OracleRerankConfig: ProviderConfig = {
       param: 'servingMode',
       required: true,
       transform: (params: Params, providerOptions: any) => {
+        // Validate that only Cohere rerank models are used
+        validateRerankModel(params.model);
+
         return {
           servingType: providerOptions.oracleServingMode || 'ON_DEMAND',
           modelId: params.model,

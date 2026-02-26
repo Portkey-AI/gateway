@@ -3,6 +3,8 @@ import {
   OracleRerankResponseTransform,
   OracleRerankResponse,
   OracleRerankErrorResponse,
+  validateRerankModel,
+  SUPPORTED_RERANK_MODELS,
 } from './rerank';
 import { Params } from '../../types/requestBody';
 import { ParameterConfig } from '../types';
@@ -15,6 +17,67 @@ const getConfig = (
 };
 
 describe('Oracle Rerank', () => {
+  describe('validateRerankModel', () => {
+    it('should accept valid Cohere rerank models', () => {
+      expect(() => validateRerankModel('cohere.rerank-v3.5')).not.toThrow();
+      expect(() =>
+        validateRerankModel('cohere.rerank-multilingual-v3.1')
+      ).not.toThrow();
+      expect(() =>
+        validateRerankModel('cohere.rerank-english-v3.1')
+      ).not.toThrow();
+    });
+
+    it('should accept newer Cohere rerank models', () => {
+      // Any model starting with cohere.rerank should be accepted
+      expect(() => validateRerankModel('cohere.rerank-v4.0')).not.toThrow();
+      expect(() =>
+        validateRerankModel('cohere.rerank-multilingual-v4.0')
+      ).not.toThrow();
+    });
+
+    it('should reject non-Cohere models', () => {
+      expect(() => validateRerankModel('openai.gpt-4')).toThrow(
+        /Unsupported rerank model.*Oracle GenAI only supports Cohere rerank models/
+      );
+      expect(() => validateRerankModel('meta.llama-3')).toThrow(
+        /Unsupported rerank model/
+      );
+      expect(() => validateRerankModel('anthropic.claude-3')).toThrow(
+        /Unsupported rerank model/
+      );
+    });
+
+    it('should reject Cohere non-rerank models', () => {
+      expect(() => validateRerankModel('cohere.command-r-plus')).toThrow(
+        /Unsupported rerank model/
+      );
+      expect(() => validateRerankModel('cohere.embed-v3')).toThrow(
+        /Unsupported rerank model/
+      );
+    });
+
+    it('should reject undefined model', () => {
+      expect(() => validateRerankModel(undefined)).toThrow(
+        /Model is required for rerank requests/
+      );
+    });
+
+    it('should reject empty string model', () => {
+      expect(() => validateRerankModel('')).toThrow(
+        /Model is required for rerank requests/
+      );
+    });
+
+    it('should have supported models list', () => {
+      expect(SUPPORTED_RERANK_MODELS).toContain('cohere.rerank-v3.5');
+      expect(SUPPORTED_RERANK_MODELS).toContain(
+        'cohere.rerank-multilingual-v3.1'
+      );
+      expect(SUPPORTED_RERANK_MODELS).toContain('cohere.rerank-english-v3.1');
+    });
+  });
+
   describe('OracleRerankConfig', () => {
     describe('input transform', () => {
       it('should transform query to input', () => {
