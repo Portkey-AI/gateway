@@ -40,6 +40,9 @@ const OracleAPIConfig: ProviderAPIConfig = {
       case 'embed':
         endpoint = '/actions/embedText';
         break;
+      case 'rerank':
+        endpoint = '/actions/rerankText';
+        break;
       default:
         return '';
     }

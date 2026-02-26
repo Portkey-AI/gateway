@@ -488,6 +488,12 @@ export interface Params {
   parameters?: any;
   // Bytez specific
   version?: number;
+  // Rerank specific
+  query?: string;
+  documents?: string[] | Array<{ text: string }>;
+  top_n?: number;
+  return_documents?: boolean;
+  max_chunks_per_doc?: number;
 }
 
 interface Examples {
