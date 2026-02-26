@@ -5,13 +5,17 @@ import {
   PluginParameters,
 } from '../types';
 import { getText, post } from '../utils';
+import { VERSION } from './version';
 
 const buildApiUrl = (cloud: string): string =>
   `https://api.${cloud}.zseclipse.net/v1/detection/resolve-and-execute-policy`;
 
 const fetchAIGuard = async (url: string, payload: any, apiKey: string) => {
   const opts = {
-    headers: { Authorization: `Bearer ${apiKey}` },
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'User-Agent': `portkey-ai-plugin/${VERSION}`,
+    },
   };
   return post(url, payload, opts, 10000);
 };
