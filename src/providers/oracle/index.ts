@@ -5,13 +5,16 @@ import {
   OracleChatCompleteResponseTransform,
   OracleChatCompleteStreamChunkTransform,
 } from './chatComplete';
+import { OracleEmbedConfig, OracleEmbedResponseTransform } from './embed';
 
 const OracleConfig: ProviderConfigs = {
   chatComplete: OracleChatCompleteConfig,
+  embed: OracleEmbedConfig,
   api: OracleAPIConfig,
   responseTransforms: {
     chatComplete: OracleChatCompleteResponseTransform,
     'stream-chatComplete': OracleChatCompleteStreamChunkTransform,
+    embed: OracleEmbedResponseTransform,
   },
 };
 

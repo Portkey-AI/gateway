@@ -4,9 +4,22 @@ import { env, getRuntimeKey } from 'hono/adapter';
 const isNodeInstance = getRuntimeKey() == 'node';
 let path: any;
 let fs: any;
+let modulesLoaded = false;
+
+async function loadNodeModules() {
+  if (isNodeInstance && !modulesLoaded) {
+    path = await import('path');
+    fs = await import('fs');
+    modulesLoaded = true;
+  }
+}
+
+// Synchronously load modules in Node environment
 if (isNodeInstance) {
-  path = await import('path');
-  fs = await import('fs');
+  // Use require for synchronous loading in Node.js
+  path = require('path');
+  fs = require('fs');
+  modulesLoaded = true;
 }
 
 export function getValueOrFileContents(value?: string, ignore?: boolean) {

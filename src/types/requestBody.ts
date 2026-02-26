@@ -174,6 +174,7 @@ export interface Options {
   oracleFingerprint?: string; // example: 12:34:56:78:90:ab:cd:ef:12:34:56:78:90:ab:cd:ef
   oraclePrivateKey?: string; // example: -----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...
   oracleKeyPassphrase?: string; // example: password
+  oracleEndpointId?: string; // endpoint ID for dedicated serving mode
 
   /** Model pricing config */
   modelPricingConfig?: Record<string, any>;
@@ -485,6 +486,8 @@ export interface Params {
   // Embeddings specific
   dimensions?: number;
   parameters?: any;
+  // Bytez specific
+  version?: number;
 }
 
 interface Examples {

@@ -28,6 +28,25 @@ import {
 } from './types/GenericChatResponse';
 import { openAIToOracleRoleMap, oracleToOpenAIRoleMap } from './utils';
 
+/**
+ * Stream state for tracking tool calls across streaming chunks.
+ * OCI sends tool calls in the message with finishReason, so we need to
+ * track seen tool call IDs to properly index them for OpenAI format.
+ */
+export interface OracleStreamState {
+  currentToolCallIndex: number;
+  seenToolCallIds: Set<string>;
+  finishReason?: string;
+}
+
+/**
+ * Initialize stream state for a new streaming request.
+ */
+export const initOracleStreamState = (): OracleStreamState => ({
+  currentToolCallIndex: -1,
+  seenToolCallIds: new Set(),
+});
+
 // transforms from openai format to oracle format for chat completions request
 export const OracleChatCompleteConfig: ProviderConfig = {
   model: [
@@ -89,6 +108,12 @@ export const OracleChatDetailsConfig: ProviderConfig = {
                 type: 'TEXT',
                 text: item,
               });
+            } else if (item.type === 'text' && item.text) {
+              // OpenAI format: {type: "text", text: "..."}
+              content.push({
+                type: 'TEXT',
+                text: item.text,
+              });
             } else if (item.type === 'image_url' && item.image_url?.url) {
               content.push({
                 type: 'IMAGE',
@@ -104,9 +129,62 @@ export const OracleChatDetailsConfig: ProviderConfig = {
                   url: item.input_audio.data,
                 },
               });
+            } else if (
+              (item.type === 'document_url' || item.type === 'document') &&
+              ((item as any).document_url?.url || (item as any).document?.url)
+            ) {
+              // Document content (PDF, etc.) - for multimodal-capable models
+              const url =
+                (item as any).document_url?.url || (item as any).document?.url;
+              content.push({
+                type: 'DOCUMENT',
+                documentUrl: {
+                  url,
+                },
+              });
+            } else if (
+              (item.type === 'video_url' || item.type === 'video') &&
+              ((item as any).video_url?.url || (item as any).video?.url)
+            ) {
+              // Video content - for multimodal-capable models
+              const url =
+                (item as any).video_url?.url || (item as any).video?.url;
+              content.push({
+                type: 'VIDEO',
+                videoUrl: {
+                  url,
+                },
+              });
+            } else if (item.type === 'file' && item.file) {
+              // Generic file type - determine content type from mime_type
+              const mimeType = item.file.mime_type || '';
+              const url = item.file.file_data || item.file.file_url;
+              if (mimeType.startsWith('image/')) {
+                content.push({
+                  type: 'IMAGE',
+                  imageUrl: { url },
+                });
+              } else if (mimeType.startsWith('video/')) {
+                content.push({
+                  type: 'VIDEO',
+                  videoUrl: { url },
+                });
+              } else if (mimeType.startsWith('audio/')) {
+                content.push({
+                  type: 'AUDIO',
+                  audioUrl: { url },
+                });
+              } else {
+                // Default to document for PDFs and other files
+                content.push({
+                  type: 'DOCUMENT',
+                  documentUrl: { url },
+                });
+              }
             }
           }
         }
+        // Build tool calls array for assistant messages
         const toolCalls: ToolCall[] = [];
         if (message.tool_calls) {
           for (const toolCall of message.tool_calls) {
@@ -127,10 +205,24 @@ export const OracleChatDetailsConfig: ProviderConfig = {
             }
           }
         }
-        transformedMessages.push({
+
+        // Build the transformed message
+        const transformedMessage: Message = {
           role,
           content,
-        });
+        };
+
+        // Include tool_calls for assistant messages
+        if (toolCalls.length > 0) {
+          transformedMessage.toolCalls = toolCalls;
+        }
+
+        // Include tool_call_id for tool messages
+        if (message.role === 'tool' && message.tool_call_id) {
+          transformedMessage.toolCallId = message.tool_call_id;
+        }
+
+        transformedMessages.push(transformedMessage);
       }
       return transformedMessages;
     },
@@ -287,16 +379,56 @@ export const OracleChatCompleteResponseTransform: (
       model: response.modelId,
       provider: ORACLE,
       choices: response.chatResponse.choices.map((choice: ChatChoice) => {
-        const content = choice.message?.content?.find(
-          (item) => item.type === 'TEXT'
-        )?.text;
+        // Handle content in different formats:
+        // - Array format: [{ type: 'TEXT', text: '...' }] (most models)
+        // - String format: '...' (some models like GPT)
+        let content: string | undefined;
+        const msgContent = choice.message?.content;
+        if (Array.isArray(msgContent)) {
+          content = msgContent.find((item) => item.type === 'TEXT')?.text;
+        } else if (typeof msgContent === 'string') {
+          content = msgContent;
+        }
+
+        // Extract reasoning content if present (for reasoning models like GPT-OSS)
+        // If no regular content but reasoningContent exists, use it as content
+        // so the response isn't empty
+        const reasoningContent = (choice.message as any)?.reasoningContent;
+        if (
+          !content &&
+          reasoningContent &&
+          typeof reasoningContent === 'string'
+        ) {
+          content = reasoningContent;
+        }
+
+        // Map OCI toolCalls to OpenAI tool_calls format
+        // Generate IDs for tool calls that don't have them (e.g., Gemini)
+        const toolCalls = (choice.message as any)?.toolCalls?.map(
+          (tc: ToolCall, index: number) => ({
+            id: tc.id || `call_${Date.now().toString(36)}_${index}`,
+            type: 'function',
+            function: {
+              name: tc.name,
+              arguments:
+                typeof tc.arguments === 'string'
+                  ? tc.arguments
+                  : JSON.stringify(tc.arguments),
+            },
+          })
+        );
+
+        // Handle cases where message may not have role (some models like Gemini)
+        const role = choice.message?.role
+          ? oracleToOpenAIRoleMap[choice.message.role as OracleMessageRole]
+          : 'assistant';
+
         return {
           index: choice.index,
           message: {
-            role: oracleToOpenAIRoleMap[
-              choice.message.role as OracleMessageRole
-            ],
+            role,
             content,
+            ...(toolCalls && toolCalls.length > 0 && { tool_calls: toolCalls }),
           },
           finish_reason: choice.finishReason,
         };
@@ -332,10 +464,10 @@ export const OracleChatCompleteResponseTransform: (
 export const OracleChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
-  streamState: any,
+  streamState: OracleStreamState,
   _strictOpenAiCompliance: boolean,
   gatewayRequest: Params
-) => string | undefined = (
+) => string | string[] | undefined = (
   responseChunk,
   fallbackId,
   streamState,
@@ -350,17 +482,92 @@ export const OracleChatCompleteStreamChunkTransform: (
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
   if (chunk === '[DONE]') {
-    return chunk;
+    return 'data: [DONE]\n\n';
   }
+
+  // Initialize stream state if not already done
+  if (streamState.currentToolCallIndex === undefined) {
+    streamState.currentToolCallIndex = -1;
+    streamState.seenToolCallIds = new Set();
+  }
+
   const parsedChunk: ChatChoice = JSON.parse(chunk);
 
+  // Track finish reason for final chunk
   if (parsedChunk.finishReason) {
-    return (
+    streamState.finishReason = parsedChunk.finishReason;
+  }
+
+  // Map OCI toolCalls to OpenAI tool_calls format with proper indexing
+  const rawToolCalls = (parsedChunk.message as any)?.toolCalls || [];
+  const toolCalls: Array<{
+    index: number;
+    id: string;
+    type: string;
+    function: { name: string; arguments: string };
+  }> = [];
+
+  for (const tc of rawToolCalls) {
+    // Check if we've seen this tool call ID before
+    if (!streamState.seenToolCallIds.has(tc.id)) {
+      streamState.currentToolCallIndex++;
+      streamState.seenToolCallIds.add(tc.id);
+    }
+
+    // Find the index for this tool call
+    const toolCallIndex = Array.from(streamState.seenToolCallIds).indexOf(
+      tc.id
+    );
+
+    toolCalls.push({
+      index:
+        toolCallIndex >= 0 ? toolCallIndex : streamState.currentToolCallIndex,
+      id: tc.id,
+      type: 'function',
+      function: {
+        name: tc.name,
+        arguments:
+          typeof tc.arguments === 'string'
+            ? tc.arguments
+            : JSON.stringify(tc.arguments),
+      },
+    });
+  }
+
+  // Handle final chunk with finish_reason
+  if (parsedChunk.finishReason) {
+    const chunks: string[] = [];
+
+    // If there are tool calls, send them in the final delta
+    if (toolCalls.length > 0) {
+      chunks.push(
+        `data: ${JSON.stringify({
+          id: fallbackId,
+          object: 'chat.completion.chunk',
+          created: Math.floor(Date.now() / 1000),
+          model: gatewayRequest.model || '',
+          provider: ORACLE,
+          choices: [
+            {
+              index: 0,
+              delta: {
+                tool_calls: toolCalls,
+              },
+              finish_reason: null,
+            },
+          ],
+        })}\n\n`
+      );
+    }
+
+    // Send finish chunk
+    chunks.push(
       `data: ${JSON.stringify({
         id: fallbackId,
         object: 'chat.completion.chunk',
         created: Math.floor(Date.now() / 1000),
         model: gatewayRequest.model || '',
+        provider: ORACLE,
         choices: [
           {
             index: 0,
@@ -368,11 +575,39 @@ export const OracleChatCompleteStreamChunkTransform: (
             finish_reason: parsedChunk.finishReason,
           },
         ],
-        provider: ORACLE,
-      })}` +
-      '\n\n' +
-      'data: [DONE]\n\n'
+      })}\n\n`
     );
+    chunks.push('data: [DONE]\n\n');
+
+    return chunks;
+  }
+
+  // Handle content in different formats (array or string)
+  let content: string | undefined;
+  const msgContent = parsedChunk.message?.content;
+  if (Array.isArray(msgContent)) {
+    content = msgContent.find((item) => item.type === 'TEXT')?.text;
+  } else if (typeof msgContent === 'string') {
+    content = msgContent;
+  }
+
+  // Fall back to reasoningContent if no regular content (for reasoning models)
+  const reasoningContent = (parsedChunk.message as any)?.reasoningContent;
+  if (!content && reasoningContent && typeof reasoningContent === 'string') {
+    content = reasoningContent;
+  }
+
+  // Build delta object - role may not be present in all streaming chunks
+  const delta: Record<string, unknown> = {};
+  if (parsedChunk.message?.role) {
+    delta.role =
+      oracleToOpenAIRoleMap[parsedChunk.message.role as OracleMessageRole];
+  }
+  if (content) {
+    delta.content = content;
+  }
+  if (toolCalls.length > 0) {
+    delta.tool_calls = toolCalls;
   }
 
   return (
@@ -384,15 +619,8 @@ export const OracleChatCompleteStreamChunkTransform: (
       provider: ORACLE,
       choices: [
         {
-          index: parsedChunk.index,
-          delta: {
-            role: oracleToOpenAIRoleMap[
-              parsedChunk.message.role as OracleMessageRole
-            ],
-            content: parsedChunk.message?.content?.find(
-              (item) => item.type === 'TEXT'
-            )?.text,
-          },
+          index: parsedChunk.index ?? 0,
+          delta,
         },
       ],
     })}` + '\n\n'
