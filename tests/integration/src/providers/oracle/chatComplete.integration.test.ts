@@ -584,6 +584,269 @@ describeIfCredentials('Oracle GenAI Integration Tests', () => {
     }, 60000);
   });
 
+  describe('Parallel Tool Calling', () => {
+    it('should handle multiple tool calls in a single response', async () => {
+      const modelId = TEST_MODELS.find((m) => modelSupports(m, 'tools'));
+      if (!modelId) {
+        console.log('No model supports tools, skipping');
+        return;
+      }
+
+      // Define multiple tools
+      const weatherTool = {
+        type: 'function' as const,
+        function: {
+          name: 'get_weather',
+          description: 'Get the current weather in a location',
+          parameters: {
+            type: 'object',
+            properties: {
+              location: { type: 'string', description: 'City name' },
+            },
+            required: ['location'],
+          },
+        },
+      };
+
+      const timeTool = {
+        type: 'function' as const,
+        function: {
+          name: 'get_time',
+          description: 'Get the current time in a timezone',
+          parameters: {
+            type: 'object',
+            properties: {
+              timezone: { type: 'string', description: 'Timezone name' },
+            },
+            required: ['timezone'],
+          },
+        },
+      };
+
+      const stockTool = {
+        type: 'function' as const,
+        function: {
+          name: 'get_stock_price',
+          description: 'Get the current stock price',
+          parameters: {
+            type: 'object',
+            properties: {
+              symbol: { type: 'string', description: 'Stock ticker symbol' },
+            },
+            required: ['symbol'],
+          },
+        },
+      };
+
+      const params: Params = {
+        model: modelId,
+        messages: [
+          {
+            role: 'user',
+            content:
+              'I need three things: 1) Weather in Tokyo, 2) Current time in EST, 3) Stock price of AAPL. Get all of them.',
+          },
+        ],
+        tools: [weatherTool, timeTool, stockTool],
+        tool_choice: 'required',
+        max_tokens: getTestMaxTokens(modelId, 500),
+      };
+
+      const response = await makeOracleRequest(params);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error(
+          `[${modelId}] Parallel tool calling failed:`,
+          response.status,
+          JSON.stringify(errorData)
+        );
+      }
+      expect(response.ok).toBe(true);
+
+      const data = (await response.json()) as
+        | OracleChatCompleteResponse
+        | OracleErrorResponse;
+      const transformed = OracleChatCompleteResponseTransform(
+        data,
+        response.status,
+        response.headers
+      ) as any;
+
+      const message = transformed.choices[0].message;
+      console.log(
+        `[${modelId}] Parallel tool response:`,
+        JSON.stringify(
+          {
+            tool_calls_count: message.tool_calls?.length || 0,
+            tool_names: message.tool_calls?.map((tc: any) => tc.function.name),
+          },
+          null,
+          2
+        )
+      );
+
+      // Should have tool calls
+      expect(message.tool_calls).toBeDefined();
+      expect(message.tool_calls.length).toBeGreaterThanOrEqual(1);
+
+      // Log each tool call
+      if (message.tool_calls) {
+        for (const toolCall of message.tool_calls) {
+          console.log(
+            `[${modelId}] Tool: ${toolCall.function.name}, Args: ${toolCall.function.arguments}`
+          );
+        }
+
+        // Check if multiple tools were called (ideal case)
+        if (message.tool_calls.length >= 2) {
+          console.log(
+            `[${modelId}] ✅ Model called ${message.tool_calls.length} tools in parallel`
+          );
+        } else {
+          console.log(
+            `[${modelId}] ⚠️ Model called only ${message.tool_calls.length} tool (may need multiple turns)`
+          );
+        }
+      }
+    }, 90000);
+
+    it('should handle parallel tool calls with streaming', async () => {
+      const modelId = TEST_MODELS.find(
+        (m) => modelSupports(m, 'tools') && modelSupports(m, 'streaming')
+      );
+      if (!modelId) {
+        console.log('No model supports both tools and streaming, skipping');
+        return;
+      }
+
+      const addTool = {
+        type: 'function' as const,
+        function: {
+          name: 'add',
+          description: 'Add two numbers',
+          parameters: {
+            type: 'object',
+            properties: {
+              a: { type: 'number' },
+              b: { type: 'number' },
+            },
+            required: ['a', 'b'],
+          },
+        },
+      };
+
+      const multiplyTool = {
+        type: 'function' as const,
+        function: {
+          name: 'multiply',
+          description: 'Multiply two numbers',
+          parameters: {
+            type: 'object',
+            properties: {
+              a: { type: 'number' },
+              b: { type: 'number' },
+            },
+            required: ['a', 'b'],
+          },
+        },
+      };
+
+      const params: Params = {
+        model: modelId,
+        messages: [
+          {
+            role: 'user',
+            content: 'Calculate both 5+3 and 4*7 at the same time.',
+          },
+        ],
+        tools: [addTool, multiplyTool],
+        tool_choice: 'required',
+        max_tokens: getTestMaxTokens(modelId, 300),
+        stream: true,
+      };
+
+      const response = await makeOracleRequest(params, true);
+      expect(response.ok).toBe(true);
+
+      const reader = response.body?.getReader();
+      expect(reader).toBeDefined();
+
+      const decoder = new TextDecoder();
+      const streamState = initOracleStreamState();
+      const toolCalls: Map<number, { name: string; arguments: string }> =
+        new Map();
+
+      while (true) {
+        const { done, value } = await reader!.read();
+        if (done) break;
+
+        const text = decoder.decode(value);
+        const lines = text.split('\n').filter((line) => line.trim());
+
+        for (const line of lines) {
+          if (line.startsWith('data:') || line.startsWith('event:')) {
+            const transformed = OracleChatCompleteStreamChunkTransform(
+              line,
+              'test-id',
+              streamState,
+              false,
+              params
+            );
+            if (transformed) {
+              const chunks = Array.isArray(transformed)
+                ? transformed
+                : [transformed];
+              for (const chunk of chunks) {
+                if (chunk.startsWith('data: ') && !chunk.includes('[DONE]')) {
+                  try {
+                    const parsed = JSON.parse(chunk.replace('data: ', ''));
+                    const deltaToolCalls =
+                      parsed.choices?.[0]?.delta?.tool_calls;
+                    if (deltaToolCalls) {
+                      for (const tc of deltaToolCalls) {
+                        const idx = tc.index ?? 0;
+                        if (!toolCalls.has(idx)) {
+                          toolCalls.set(idx, {
+                            name: tc.function?.name || '',
+                            arguments: '',
+                          });
+                        }
+                        const existing = toolCalls.get(idx)!;
+                        if (tc.function?.name) {
+                          existing.name = tc.function.name;
+                        }
+                        if (tc.function?.arguments) {
+                          existing.arguments += tc.function.arguments;
+                        }
+                      }
+                    }
+                  } catch (e) {
+                    // Ignore parse errors
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      console.log(`[${modelId}] Streamed parallel tool calls:`, toolCalls.size);
+      for (const [idx, tc] of toolCalls) {
+        console.log(`[${modelId}] Tool ${idx}: ${tc.name}(${tc.arguments})`);
+      }
+
+      // Should have at least one tool call
+      expect(toolCalls.size).toBeGreaterThanOrEqual(1);
+
+      if (toolCalls.size >= 2) {
+        console.log(
+          `[${modelId}] ✅ Streamed ${toolCalls.size} parallel tool calls`
+        );
+      }
+    }, 90000);
+  });
+
   describe('Usage Statistics', () => {
     it('should return token usage', async () => {
       const modelId = TEST_MODELS[0];
