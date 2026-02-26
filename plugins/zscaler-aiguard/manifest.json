@@ -1,0 +1,48 @@
+{
+  "id": "zscalerAiguard",
+  "name": "Zscaler AI Guard Guardrail",
+  "description": "Zscaler AI Guard provides real-time AI security scanning for prompt injections, PII leakage, secrets exposure, toxicity, and policy violations. Uses automatic policy resolution — no profile or policy ID is needed at the gateway level.",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "AIGUARD_API_KEY": {
+        "type": "string",
+        "label": "AI Guard API Key",
+        "description": "API key for Zscaler AI Guard. Generate one in the Zscaler admin portal under AI Guard settings.",
+        "encrypted": true
+      }
+    },
+    "required": ["AIGUARD_API_KEY"]
+  },
+  "functions": [
+    {
+      "id": "intercept",
+      "name": "Zscaler AI Guard Guardrail",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Scan prompts and responses for security threats using Zscaler AI Guard with automatic policy resolution."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "cloud": {
+            "type": "string",
+            "label": "Cloud Region",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Zscaler cloud region (e.g., us1, us2, eu1). Determines the API endpoint."
+              }
+            ],
+            "default": "us1"
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}

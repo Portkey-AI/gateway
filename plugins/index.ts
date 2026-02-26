@@ -57,6 +57,7 @@ import { handler as azureContentSafety } from './azure/contentSafety';
 import { handler as promptSecurityProtectPrompt } from './promptsecurity/protectPrompt';
 import { handler as promptSecurityProtectResponse } from './promptsecurity/protectResponse';
 import { handler as panwPrismaAirsintercept } from './panw-prisma-airs/intercept';
+import { handler as zscalerAiguardintercept } from './zscaler-aiguard/intercept';
 import { handler as defaultjwt } from './default/jwt';
 import { handler as defaultrequiredMetadataKeys } from './default/requiredMetadataKeys';
 import { handler as walledaiguardrails } from './walledai/walledprotect';
@@ -166,6 +167,9 @@ export const plugins = {
   },
   'panw-prisma-airs': {
     intercept: panwPrismaAirsintercept,
+  },
+  'zscaler-aiguard': {
+    intercept: zscalerAiguardintercept,
   },
   walledai: {
     walledprotect: walledaiguardrails,
