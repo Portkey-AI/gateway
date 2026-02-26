@@ -11,18 +11,17 @@ const OpenrouterAPIConfig: ProviderAPIConfig = {
     };
   },
   getEndpoint: ({ fn, gatewayRequestURL }) => {
-    const basePath = gatewayRequestURL.split('/v1')?.[1];
     switch (fn) {
       case 'chatComplete':
         return '/v1/chat/completions';
       case 'createModelResponse':
-        return '/v1' + basePath;
+        return '/v1/responses';
       case 'getModelResponse':
-        return '/v1' + basePath;
       case 'deleteModelResponse':
+      case 'listResponseInputItems': {
+        const basePath = gatewayRequestURL.split('/v1')?.[1];
         return '/v1' + basePath;
-      case 'listResponseInputItems':
-        return '/v1' + basePath;
+      }
       default:
         return '';
     }
