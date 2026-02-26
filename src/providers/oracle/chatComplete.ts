@@ -27,6 +27,7 @@ import {
   ToolCall,
 } from './types/GenericChatResponse';
 import { openAIToOracleRoleMap, oracleToOpenAIRoleMap } from './utils';
+import { usesMaxCompletionTokens } from './modelConfig';
 
 /**
  * Stream state for tracking tool calls across streaming chunks.
@@ -54,11 +55,21 @@ export const OracleChatCompleteConfig: ProviderConfig = {
       param: 'chatRequest',
       required: true,
       transform: (params: Params, providerOptions: Options) => {
-        return transformUsingProviderConfig(
+        const chatRequest = transformUsingProviderConfig(
           OracleChatDetailsConfig,
           params,
           providerOptions
         );
+
+        // GPT-5+ models require maxCompletionTokens instead of maxTokens
+        if (usesMaxCompletionTokens(params.model || '')) {
+          if ('maxTokens' in chatRequest) {
+            (chatRequest as any).maxCompletionTokens = chatRequest.maxTokens;
+            delete chatRequest.maxTokens;
+          }
+        }
+
+        return chatRequest;
       },
     },
     {

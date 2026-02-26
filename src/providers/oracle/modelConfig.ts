@@ -108,6 +108,28 @@ const MODEL_CONFIGS: Record<string, Partial<OracleModelConfig>> = {
     notes: 'GPT-OSS models use reasoningContent, requiring higher max_tokens',
   },
 
+  // OpenAI GPT-5 models - require maxCompletionTokens and higher token limits
+  'openai.gpt-5': {
+    family: 'openai',
+    minTokens: 500, // Higher token limit for GPT-5 internal reasoning
+    supportsTools: true,
+    supportsStreaming: true,
+    supportsSystemMessages: true,
+    usesReasoningTokens: true,
+    notes:
+      'GPT-5 requires maxCompletionTokens parameter and uses internal reasoning tokens',
+  },
+
+  // OpenAI GPT-4o models on OCI
+  'openai.gpt-4o': {
+    family: 'openai',
+    minTokens: 100,
+    supportsTools: true,
+    supportsStreaming: true,
+    supportsSystemMessages: true,
+    usesReasoningTokens: false,
+  },
+
   // Cohere Command models
   'cohere.command': {
     family: 'cohere',
@@ -214,4 +236,21 @@ export function modelSupports(
  */
 export function getKnownModelPrefixes(): string[] {
   return Object.keys(MODEL_CONFIGS);
+}
+
+/**
+ * Check if a model uses maxCompletionTokens instead of maxTokens
+ * GPT-5 and newer OpenAI models on OCI require this parameter
+ */
+export function usesMaxCompletionTokens(modelId: string): boolean {
+  // GPT-5 and newer models require maxCompletionTokens
+  if (
+    modelId.startsWith('openai.gpt-5') ||
+    modelId.startsWith('openai.gpt-6') ||
+    modelId.startsWith('openai.o1') ||
+    modelId.startsWith('openai.o3')
+  ) {
+    return true;
+  }
+  return false;
 }

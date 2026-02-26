@@ -9,6 +9,46 @@ export interface OracleErrorResponse {
   code: string | null;
 }
 
+/**
+ * Oracle streaming chunk structure
+ * Represents a single chunk in a streaming response
+ */
+export interface OracleStreamChunk {
+  modelId?: string;
+  // Direct message access for handler processing
+  message?: {
+    role?: string;
+    content?: string | Array<{ type: string; text?: string }>;
+    tool_calls?: Array<ToolCall>;
+  };
+  // Full response structure
+  chatResponse?: {
+    choices?: Array<{
+      index: number;
+      delta?: {
+        role?: string;
+        content?: string | Array<{ type: string; text?: string }>;
+        tool_calls?: Array<{
+          index?: number;
+          id?: string;
+          type?: string;
+          function?: {
+            name?: string;
+            arguments?: string;
+          };
+        }>;
+      };
+      message?: {
+        role?: string;
+        content?: string | Array<{ type: string; text?: string }>;
+        tool_calls?: Array<ToolCall>;
+      };
+      finishReason?: string;
+    }>;
+    usage?: Usage;
+  };
+}
+
 export interface OracleChatCompleteResponse {
   modelId: string;
   chatResponse: GenericChatResponse;
