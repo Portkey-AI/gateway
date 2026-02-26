@@ -9,6 +9,13 @@ import {
 /**
  * Supported rerank models in Oracle GenAI.
  * Only Cohere rerank models are supported.
+ *
+ * NOTE: As of Feb 2026, rerank models are only available via DEDICATED
+ * AI clusters in OCI GenAI. ON_DEMAND serving has been retired.
+ * To use rerank, you need:
+ * 1. A dedicated AI cluster with RERANK_COHERE shape
+ * 2. Set oracleServingMode to 'DEDICATED'
+ * 3. Set oracleEndpointId to your endpoint OCID
  */
 export const SUPPORTED_RERANK_MODELS = [
   'cohere.rerank-v3.5',
@@ -85,8 +92,18 @@ export const OracleRerankConfig: ProviderConfig = {
         // Validate that only Cohere rerank models are used
         validateRerankModel(params.model);
 
+        const servingType = providerOptions.oracleServingMode || 'ON_DEMAND';
+
+        // For DEDICATED mode, use endpointId instead of modelId
+        if (servingType === 'DEDICATED' && providerOptions.oracleEndpointId) {
+          return {
+            servingType: 'DEDICATED',
+            endpointId: providerOptions.oracleEndpointId,
+          };
+        }
+
         return {
-          servingType: providerOptions.oracleServingMode || 'ON_DEMAND',
+          servingType,
           modelId: params.model,
         };
       },

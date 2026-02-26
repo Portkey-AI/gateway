@@ -150,7 +150,25 @@ describe('Oracle Rerank', () => {
         });
       });
 
-      it('should use custom servingMode when provided', () => {
+      it('should use DEDICATED mode with endpointId when provided', () => {
+        const params = { model: 'cohere.rerank-v3.5' } as Params;
+        const providerOptions = {
+          oracleServingMode: 'DEDICATED',
+          oracleEndpointId: 'ocid1.endpoint.oc1..test',
+          oracleCompartmentId: 'test-compartment',
+        };
+        const modelConfigs = OracleRerankConfig.model as ParameterConfig[];
+        const result = modelConfigs[0].transform!(
+          params,
+          providerOptions as any
+        );
+        expect(result).toEqual({
+          servingType: 'DEDICATED',
+          endpointId: 'ocid1.endpoint.oc1..test',
+        });
+      });
+
+      it('should fallback to modelId for DEDICATED without endpointId', () => {
         const params = { model: 'cohere.rerank-v3.5' } as Params;
         const providerOptions = {
           oracleServingMode: 'DEDICATED',
