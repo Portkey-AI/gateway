@@ -43,10 +43,24 @@ const OracleAPIConfig: ProviderAPIConfig = {
       case 'rerank':
         endpoint = '/actions/rerankText';
         break;
+      case 'moderate':
+        endpoint = '/actions/applyGuardrails';
+        break;
       default:
         return '';
     }
     return `/${oracleApiVersion}${endpoint}`;
+  },
+  getProxyEndpoint: ({ providerOptions, reqPath }) => {
+    const { oracleApiVersion = '20231130' } = providerOptions;
+
+    // Handle /v1/moderations -> Oracle guardrails
+    if (reqPath.includes('/moderations')) {
+      return `/${oracleApiVersion}/actions/applyGuardrails`;
+    }
+
+    // Default: pass through
+    return reqPath;
   },
 };
 
