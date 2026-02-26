@@ -1,10 +1,24 @@
 import Providers from '../../providers';
 
+export interface OracleConfig {
+  tenancy: string;
+  user: string;
+  fingerprint: string;
+  privateKey: string;
+  region: string;
+  compartmentId: string;
+  servingMode?: string;
+}
+
 export interface TestVariable {
   apiKey?: string;
   chatCompletions?: {
     model: string;
   };
+  rerank?: {
+    model: string;
+  };
+  oracle?: OracleConfig;
 }
 
 export interface TestVariables {
@@ -140,6 +154,20 @@ const testVariables: TestVariables = {
     apiKey: process.env.NSCALE_API_KEY,
     chatCompletions: {
       model: 'Qwen/Qwen2.5-Coder-3B-Instruct',
+    },
+  },
+  oracle: {
+    rerank: {
+      model: process.env.ORACLE_RERANK_MODEL || 'cohere.rerank-v3.5',
+    },
+    oracle: {
+      tenancy: process.env.ORACLE_TENANCY || '',
+      user: process.env.ORACLE_USER || '',
+      fingerprint: process.env.ORACLE_FINGERPRINT || '',
+      privateKey: process.env.ORACLE_PRIVATE_KEY || '',
+      region: process.env.ORACLE_REGION || 'us-chicago-1',
+      compartmentId: process.env.ORACLE_COMPARTMENT_ID || '',
+      servingMode: process.env.ORACLE_SERVING_MODE || 'ON_DEMAND',
     },
   },
 };
