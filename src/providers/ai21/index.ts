@@ -3,6 +3,7 @@ import AI21APIConfig from './api';
 import {
   AI21ChatCompleteConfig,
   AI21ChatCompleteResponseTransform,
+  AI21ChatCompleteStreamChunkTransform,
 } from './chatComplete';
 import { AI21CompleteConfig, AI21CompleteResponseTransform } from './complete';
 import { AI21EmbedConfig, AI21EmbedResponseTransform } from './embed';
@@ -15,6 +16,7 @@ const AI21Config: ProviderConfigs = {
   responseTransforms: {
     complete: AI21CompleteResponseTransform,
     chatComplete: AI21ChatCompleteResponseTransform,
+    'stream-chatComplete': AI21ChatCompleteStreamChunkTransform,
     embed: AI21EmbedResponseTransform,
   },
 };

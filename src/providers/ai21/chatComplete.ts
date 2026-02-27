@@ -8,6 +8,7 @@ import {
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
+  transformFinishReason,
 } from '../utils';
 import { AI21ErrorResponse } from './complete';
 
@@ -96,6 +97,10 @@ export const AI21ChatCompleteConfig: ProviderConfig = {
       };
     },
   },
+  stream: {
+    param: 'stream',
+    default: false,
+  },
   countPenalty: {
     param: 'countPenalty',
   },
@@ -164,4 +169,66 @@ export const AI21ChatCompleteResponseTransform: (
   }
 
   return generateInvalidProviderResponseError(response, AI21);
+};
+
+interface AI21ChatCompleteStreamChunk {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: {
+    index: number;
+    delta: {
+      role?: string;
+      content?: string;
+    };
+    finish_reason: string | null | undefined;
+  }[];
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  } | null;
+}
+
+export const AI21ChatCompleteStreamChunkTransform: (
+  response: string,
+  fallbackId: string,
+  streamState: Record<string, unknown>,
+  strictOpenAiCompliance: boolean
+) => string = (
+  responseChunk,
+  fallbackId,
+  _streamState,
+  strictOpenAiCompliance
+) => {
+  let chunk = responseChunk.trim();
+  chunk = chunk.replace(/^data: /, '');
+  chunk = chunk.trim();
+  if (chunk === '[DONE]') {
+    return `data: ${chunk}\n\n`;
+  }
+  const parsedChunk: AI21ChatCompleteStreamChunk = JSON.parse(chunk);
+  return (
+    `data: ${JSON.stringify({
+      id: parsedChunk.id ?? fallbackId,
+      object: parsedChunk.object ?? 'chat.completion.chunk',
+      created: parsedChunk.created ?? Math.floor(Date.now() / 1000),
+      model: parsedChunk.model ?? '',
+      provider: AI21,
+      choices: [
+        {
+          index: parsedChunk.choices[0]?.index ?? 0,
+          delta: parsedChunk.choices[0]?.delta ?? {},
+          finish_reason: parsedChunk.choices[0]?.finish_reason
+            ? transformFinishReason(
+                parsedChunk.choices[0].finish_reason as any,
+                strictOpenAiCompliance
+              )
+            : null,
+        },
+      ],
+      usage: parsedChunk.usage ?? null,
+    })}` + '\n\n'
+  );
 };
