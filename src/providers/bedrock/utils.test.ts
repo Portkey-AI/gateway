@@ -1,22 +1,46 @@
-// Mock modules with top-level await that break jest's ts-jest transform
+// Mock modules that have runtime dependencies incompatible with jest
+jest.mock('../../apm', () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+  },
+}));
+
 jest.mock('../../utils/env', () => ({
   Environment: jest.fn(() => ({})),
 }));
 
-jest.mock('@smithy/signature-v4', () => ({
-  SignatureV4: jest.fn(),
+jest.mock('../../utils/fetch', () => ({
+  externalServiceFetch: jest.fn(),
 }));
 
-jest.mock('@aws-crypto/sha256-js', () => ({
-  Sha256: jest.fn(),
+jest.mock('../../utils/awsAuth', () => ({
+  awsEndpointDomain: 'amazonaws.com',
+  generateAWSHeaders: jest.fn(),
+  getRegionFromEnv: jest.fn(),
+  fetchECSContainerCredentials: jest.fn(),
+  fetchECSRegionFromMetadata: jest.fn(),
+  fetchECSTaskRoleArnFromMetadata: jest.fn(),
+  fetchIMDSAllCredentials: jest.fn(),
+  fetchPodIdentityCredentials: jest.fn(),
+  fetchSTSAssumeRoleCredentials: jest.fn(),
+  fetchWebIdentityCredentials: jest.fn(),
+  getCredentialsFromAwsConfigFile: jest.fn(),
+  getCredentialsFromEnvironment: jest.fn(),
+  getCredentialsFromSharedCredentialsFile: jest.fn(),
 }));
 
-jest.mock('hono', () => ({
-  Hono: jest.fn(),
+jest.mock('../../services/cache/cacheService', () => ({
+  requestCache: jest.fn(() => ({
+    get: jest.fn(),
+    set: jest.fn(),
+  })),
 }));
 
 jest.mock('hono/adapter', () => ({
   env: jest.fn(),
+  getRuntimeKey: jest.fn(() => 'node'),
 }));
 
 import {
