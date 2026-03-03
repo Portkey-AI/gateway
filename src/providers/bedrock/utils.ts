@@ -422,10 +422,50 @@ export const transformAdditionalModelRequestFields = (
   if (params['top_k'] !== undefined && params['top_k'] !== null) {
     additionalModelRequestFields['top_k'] = params['top_k'];
   }
-  if (params['response_format']) {
-    additionalModelRequestFields['response_format'] = params['response_format'];
-  }
   return additionalModelRequestFields;
+};
+
+/**
+ * Transform OpenAI-format response_format to Bedrock Converse outputConfig.
+ *
+ * Maps:
+ *   { type: "json_schema", json_schema: { schema: {...}, name: "N", strict: true } }
+ * to:
+ *   { textFormat: { type: "json_schema", structure: { jsonSchema: { schema: "...", name: "N" } } } }
+ *
+ * Only handles type=json_schema — Bedrock Converse does not support json_object.
+ * Returns undefined for unsupported types so no outputConfig is set.
+ *
+ * Note: Bedrock expects the schema as a JSON string, while OpenAI sends it as an object.
+ *
+ * @see https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html
+ * @see https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_OutputConfig.html
+ */
+export const transformOutputConfig = (params: BedrockChatCompletionsParams) => {
+  const responseFormat = params['response_format'];
+  if (!responseFormat || responseFormat.type !== 'json_schema') {
+    return undefined;
+  }
+
+  const jsonSchema = responseFormat.json_schema;
+  if (!jsonSchema) {
+    return undefined;
+  }
+
+  const schema = jsonSchema.schema;
+  const name = jsonSchema.name || 'response';
+
+  return {
+    textFormat: {
+      type: 'json_schema',
+      structure: {
+        jsonSchema: {
+          schema: typeof schema === 'string' ? schema : JSON.stringify(schema),
+          name,
+        },
+      },
+    },
+  };
 };
 
 export const transformAnthropicAdditionalModelRequestFields = (

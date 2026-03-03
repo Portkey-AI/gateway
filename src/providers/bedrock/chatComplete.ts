@@ -43,6 +43,7 @@ import {
   transformAnthropicAdditionalModelRequestFields,
   transformCohereAdditionalModelRequestFields,
   transformInferenceConfig,
+  transformOutputConfig,
 } from './utils';
 
 export interface BedrockChatCompletionsParams extends Params {
@@ -452,6 +453,11 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
     param: 'inferenceConfig',
     transform: (params: BedrockChatCompletionsParams) =>
       transformInferenceConfig(params),
+  },
+  response_format: {
+    param: 'outputConfig',
+    transform: (params: BedrockChatCompletionsParams) =>
+      transformOutputConfig(params),
   },
   additionalModelRequestFields: {
     param: 'additionalModelRequestFields',
