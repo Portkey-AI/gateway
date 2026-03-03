@@ -437,6 +437,7 @@ export const transformAdditionalModelRequestFields = (
  * Returns undefined for unsupported types so no outputConfig is set.
  *
  * Note: Bedrock expects the schema as a JSON string, while OpenAI sends it as an object.
+ * Note: OpenAI's `strict` field is intentionally dropped — Bedrock has no equivalent.
  *
  * @see https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html
  * @see https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_OutputConfig.html
@@ -448,7 +449,7 @@ export const transformOutputConfig = (params: BedrockChatCompletionsParams) => {
   }
 
   const jsonSchema = responseFormat.json_schema;
-  if (!jsonSchema) {
+  if (!jsonSchema || !jsonSchema.schema) {
     return undefined;
   }
 
@@ -462,6 +463,9 @@ export const transformOutputConfig = (params: BedrockChatCompletionsParams) => {
         jsonSchema: {
           schema: typeof schema === 'string' ? schema : JSON.stringify(schema),
           name,
+          ...(jsonSchema.description && {
+            description: jsonSchema.description,
+          }),
         },
       },
     },

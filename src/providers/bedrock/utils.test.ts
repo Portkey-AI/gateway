@@ -121,6 +121,54 @@ describe('transformOutputConfig', () => {
     expect(result?.textFormat.structure.jsonSchema.name).toBe('response');
   });
 
+  it('passes through description when provided', () => {
+    const params = {
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
+          name: 'MySchema',
+          description: 'A schema for structured review output',
+          schema: { type: 'object' },
+        },
+      },
+    } as unknown as BedrockChatCompletionsParams;
+
+    const result = transformOutputConfig(params);
+    expect(result?.textFormat.structure.jsonSchema.description).toBe(
+      'A schema for structured review output'
+    );
+  });
+
+  it('omits description when not provided', () => {
+    const params = {
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
+          name: 'Test',
+          schema: { type: 'object' },
+        },
+      },
+    } as unknown as BedrockChatCompletionsParams;
+
+    const result = transformOutputConfig(params);
+    expect(result?.textFormat.structure.jsonSchema).not.toHaveProperty(
+      'description'
+    );
+  });
+
+  it('returns undefined when schema is missing from json_schema', () => {
+    const params = {
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
+          name: 'Test',
+        },
+      },
+    } as unknown as BedrockChatCompletionsParams;
+
+    expect(transformOutputConfig(params)).toBeUndefined();
+  });
+
   it('returns undefined for json_object type (not supported by Bedrock)', () => {
     const params = {
       response_format: {
