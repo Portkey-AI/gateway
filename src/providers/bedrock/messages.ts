@@ -456,7 +456,7 @@ export const BedrockMessagesResponseTransform = (
       type: 'message',
       role: 'assistant',
       content: transformedContent,
-      stop_reason: transformToAnthropicStopReason(response.stopReason),
+      stop_reason: transformToAnthropicStopReason(response.stopReason) as any,
       usage: {
         cache_read_input_tokens: response.usage.cacheReadInputTokens,
         cache_creation_input_tokens: response.usage.cacheWriteInputTokens,
@@ -608,7 +608,7 @@ export const BedrockConverseMessagesStreamChunkTransform = (
       parsedChunk.usage.cacheWriteInputTokens;
     messageDeltaEvent.delta.stop_reason = transformToAnthropicStopReason(
       streamState.stopReason
-    );
+    ) as string;
     const contentBlockStopEvent: RawContentBlockStopEvent = JSON.parse(
       ANTHROPIC_CONTENT_BLOCK_STOP_EVENT
     );

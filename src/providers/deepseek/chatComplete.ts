@@ -11,7 +11,7 @@ import {
   generateInvalidProviderResponseError,
   transformFinishReason,
 } from '../utils';
-import { DEEPSEEK_STOP_REASON } from './types';
+import { DEEPSEEK_STOP_REASON, ToolCall } from './types';
 
 export const DeepSeekChatCompleteConfig: ProviderConfig = {
   model: {
@@ -91,12 +91,6 @@ export const DeepSeekChatCompleteConfig: ProviderConfig = {
   tool_choice: {
     param: 'tool_choice',
   },
-  functions: {
-    param: 'functions',
-  },
-  function_call: {
-    param: 'function_call',
-  },
 };
 
 interface DeepSeekChatCompleteResponse extends ChatCompletionResponse {
@@ -104,6 +98,15 @@ interface DeepSeekChatCompleteResponse extends ChatCompletionResponse {
   object: string;
   created: number;
   model: 'deepseek-chat' | 'deepseek-coder';
+  choices: {
+    index: number;
+    message: {
+      role: 'user' | 'assistant' | 'system';
+      content: string | undefined;
+      tool_calls?: ToolCall[];
+    };
+    finish_reason: string;
+  }[];
   usage: {
     prompt_tokens: number;
     completion_tokens: number;
@@ -133,7 +136,7 @@ interface DeepSeekStreamChunk {
     delta: {
       role?: string | null;
       content?: string;
-      tool_calls?: any[];
+      tool_calls?: ToolCall[];
     };
     index: number;
     finish_reason: string | null;
@@ -173,7 +176,7 @@ export const DeepSeekChatCompleteResponseTransform: (
       choices: response.choices.map((c) => ({
         index: c.index,
         message: {
-          role: c.message.role,
+          role: c.message.role as any,
           content: c.message.content,
           tool_calls: c.message.tool_calls,
         },
@@ -187,7 +190,7 @@ export const DeepSeekChatCompleteResponseTransform: (
         completion_tokens: response.usage?.completion_tokens,
         total_tokens: response.usage?.total_tokens,
       },
-    };
+    } as ChatCompletionResponse;
   }
 
   return generateInvalidProviderResponseError(response, DEEPSEEK);

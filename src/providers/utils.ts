@@ -90,7 +90,7 @@ export const transformFinishReason = (
 */
 export const transformToAnthropicStopReason = (
   finishReason?: PROVIDER_FINISH_REASON
-): ANTHROPIC_STOP_REASON => {
+): ANTHROPIC_STOP_REASON | null => {
   if (!finishReason) return ANTHROPIC_STOP_REASON.end_turn;
   const transformedFinishReason = AnthropicFinishReasonMap.get(finishReason);
   if (!transformedFinishReason) {

@@ -949,7 +949,7 @@ async function handleSpanLog(
     //if ai model is in modelsToSkipSavingReponseBody or if it's an embed request, then remove the response body from the log
     if (
       (modelsToSkipSavingReponseBody[store.proxyProvider]?.includes(
-        chLogObject.ai_model.value
+        chLogObject.ai_model.value ?? ''
       ) ||
         store.rubeusURL === 'embed') &&
       chLogObject.is_success.value
@@ -1050,7 +1050,7 @@ async function handleSpanLog(
       try {
         const tokens = await providerLogConfig.tokenConfig({
           env,
-          model: chLogObject.ai_model.value,
+          model: chLogObject.ai_model.value ?? '',
           reqBody: store.mappedRequestBody,
           resBody: store.responseBody,
           originalResBody: store.incomingBody.originalResponse?.body,
@@ -1108,7 +1108,7 @@ async function handleSpanLog(
         ? await getPricingConfig(
             chLogObject.ai_org.value as string,
             {
-              model: chLogObject.ai_model.value,
+              model: chLogObject.ai_model.value ?? '',
               url: store.requestURL,
               reqUnits: chLogObject.req_units?.value || 0,
               resUnits: chLogObject.res_units?.value || 0,
@@ -1168,7 +1168,7 @@ async function handleSpanLog(
     llmCostSum.inc(
       {
         provider: chLogObject.ai_org.value || 'N/A',
-        model: chLogObject.ai_model.value,
+        model: chLogObject.ai_model.value ?? undefined,
         method: store.requestMethod || 'N/A',
         endpoint: store.rubeusURL,
         code: store.responseStatusCode?.toString() || 'N/A',
@@ -1183,7 +1183,7 @@ async function handleSpanLog(
     llmTokenSum.inc(
       {
         provider: chLogObject.ai_org.value || 'N/A',
-        model: chLogObject.ai_model.value,
+        model: chLogObject.ai_model.value ?? undefined,
         method: store.requestMethod || 'N/A',
         endpoint: store.rubeusURL,
         code: store.responseStatusCode?.toString() || 'N/A',
