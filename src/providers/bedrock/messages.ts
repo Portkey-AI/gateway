@@ -11,7 +11,11 @@ import {
   ToolResultBlockParam,
   ToolUseBlockParam,
 } from '../../types/MessagesRequest';
-import { ContentBlock, MessagesResponse } from '../../types/messagesResponse';
+import {
+  ContentBlock,
+  MessagesResponse,
+  ANTHROPIC_STOP_REASON,
+} from '../../types/messagesResponse';
 import {
   RawContentBlockDeltaEvent,
   RawContentBlockStartEvent,
@@ -456,7 +460,9 @@ export const BedrockMessagesResponseTransform = (
       type: 'message',
       role: 'assistant',
       content: transformedContent,
-      stop_reason: transformToAnthropicStopReason(response.stopReason) as any,
+      stop_reason: transformToAnthropicStopReason(
+        response.stopReason
+      ) as ANTHROPIC_STOP_REASON | null,
       usage: {
         cache_read_input_tokens: response.usage.cacheReadInputTokens,
         cache_creation_input_tokens: response.usage.cacheWriteInputTokens,

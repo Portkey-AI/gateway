@@ -1,5 +1,5 @@
 import { DEEPSEEK } from '../../globals';
-import { Message, Params } from '../../types/requestBody';
+import { Message, OpenAIMessageRole, Params } from '../../types/requestBody';
 
 import {
   ChatCompletionResponse,
@@ -101,7 +101,7 @@ interface DeepSeekChatCompleteResponse extends ChatCompletionResponse {
   choices: {
     index: number;
     message: {
-      role: 'user' | 'assistant' | 'system';
+      role: OpenAIMessageRole;
       content: string | undefined;
       tool_calls?: ToolCall[];
     };
@@ -176,7 +176,7 @@ export const DeepSeekChatCompleteResponseTransform: (
       choices: response.choices.map((c) => ({
         index: c.index,
         message: {
-          role: c.message.role as any,
+          role: c.message.role,
           content: c.message.content,
           tool_calls: c.message.tool_calls,
         },
@@ -190,7 +190,7 @@ export const DeepSeekChatCompleteResponseTransform: (
         completion_tokens: response.usage?.completion_tokens,
         total_tokens: response.usage?.total_tokens,
       },
-    } as ChatCompletionResponse;
+    };
   }
 
   return generateInvalidProviderResponseError(response, DEEPSEEK);

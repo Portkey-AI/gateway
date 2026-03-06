@@ -1168,7 +1168,7 @@ async function handleSpanLog(
     llmCostSum.inc(
       {
         provider: chLogObject.ai_org.value || 'N/A',
-        model: chLogObject.ai_model.value ?? undefined,
+        model: chLogObject.ai_model.value || 'N/A',
         method: store.requestMethod || 'N/A',
         endpoint: store.rubeusURL,
         code: store.responseStatusCode?.toString() || 'N/A',
@@ -1183,7 +1183,7 @@ async function handleSpanLog(
     llmTokenSum.inc(
       {
         provider: chLogObject.ai_org.value || 'N/A',
-        model: chLogObject.ai_model.value ?? undefined,
+        model: chLogObject.ai_model.value || 'N/A',
         method: store.requestMethod || 'N/A',
         endpoint: store.rubeusURL,
         code: store.responseStatusCode?.toString() || 'N/A',
