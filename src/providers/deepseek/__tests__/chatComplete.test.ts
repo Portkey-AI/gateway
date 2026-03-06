@@ -644,6 +644,9 @@ describe('DeepSeek Chat Completion', () => {
       expect((transformedResponse as any).choices[0].finish_reason).toBe(
         'content_filter'
       );
+      expect(
+        (transformedResponse as any).choices[0].message
+      ).not.toHaveProperty('tool_calls');
     });
 
     it('should handle usage information in response', () => {
@@ -730,6 +733,55 @@ describe('DeepSeek Chat Completion', () => {
       const chunkString = transformedChunk as string;
       expect(chunkString).toContain('"tool_calls"');
       expect(chunkString).toContain('"get_weather"');
+    });
+
+    it('should omit null tool calls from transformed responses', () => {
+      const response = {
+        id: 'chatcmpl-null-tools',
+        object: 'chat.completion',
+        created: 1234567890,
+        model: 'deepseek-chat',
+        choices: [
+          {
+            index: 0,
+            message: {
+              role: 'assistant',
+              content: 'Response',
+              tool_calls: null,
+            },
+            finish_reason: 'stop',
+          },
+        ],
+        usage: {
+          prompt_tokens: 10,
+          completion_tokens: 15,
+          total_tokens: 25,
+        },
+      };
+
+      const transformedResponse = DeepSeekChatCompleteResponseTransform(
+        response as any,
+        200,
+        new Headers(),
+        false
+      );
+
+      expect(
+        (transformedResponse as any).choices[0].message
+      ).not.toHaveProperty('tool_calls');
+    });
+
+    it('should omit null tool calls from stream chunks', () => {
+      const chunk =
+        'data: {"id":"chatcmpl-stream-null-tools","object":"chat.completion.chunk","created":1234567890,"model":"deepseek-chat","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":null},"finish_reason":null}]}';
+      const transformedChunk = DeepSeekChatCompleteStreamChunkTransform(
+        chunk,
+        'fallback-id',
+        {},
+        false
+      );
+
+      expect(transformedChunk).not.toContain('"tool_calls"');
     });
 
     it('should handle stream chunk with usage information', () => {

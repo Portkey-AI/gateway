@@ -103,7 +103,7 @@ interface DeepSeekChatCompleteResponse extends ChatCompletionResponse {
     message: {
       role: OpenAIMessageRole;
       content: string | undefined;
-      tool_calls?: ToolCall[];
+      tool_calls?: ToolCall[] | null;
     };
     finish_reason: string;
   }[];
@@ -136,11 +136,19 @@ interface DeepSeekStreamChunk {
     delta: {
       role?: string | null;
       content?: string;
-      tool_calls?: ToolCall[];
+      tool_calls?: ToolCall[] | null;
     };
     index: number;
     finish_reason: string | null;
   }[];
+}
+
+function normalizeToolCalls(toolCalls?: ToolCall[] | null) {
+  if (!Array.isArray(toolCalls) || toolCalls.length === 0) {
+    return {};
+  }
+
+  return { tool_calls: toolCalls };
 }
 
 export const DeepSeekChatCompleteResponseTransform: (
@@ -178,7 +186,7 @@ export const DeepSeekChatCompleteResponseTransform: (
         message: {
           role: c.message.role,
           content: c.message.content,
-          tool_calls: c.message.tool_calls,
+          ...normalizeToolCalls(c.message.tool_calls),
         },
         finish_reason: transformFinishReason(
           c.finish_reason as DEEPSEEK_STOP_REASON,
@@ -214,6 +222,11 @@ export const DeepSeekChatCompleteStreamChunkTransform: (
     return `data: ${chunk}\n\n`;
   }
   const parsedChunk: DeepSeekStreamChunk = JSON.parse(chunk);
+  const normalizedDelta = {
+    ...parsedChunk.choices[0].delta,
+  };
+  delete normalizedDelta.tool_calls;
+
   const finishReason = parsedChunk.choices[0].finish_reason
     ? transformFinishReason(
         parsedChunk.choices[0].finish_reason as DEEPSEEK_STOP_REASON,
@@ -230,7 +243,10 @@ export const DeepSeekChatCompleteStreamChunkTransform: (
       choices: [
         {
           index: parsedChunk.choices[0].index,
-          delta: parsedChunk.choices[0].delta,
+          delta: {
+            ...normalizedDelta,
+            ...normalizeToolCalls(parsedChunk.choices[0].delta.tool_calls),
+          },
           finish_reason: finishReason,
         },
       ],

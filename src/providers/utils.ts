@@ -1,4 +1,4 @@
-import { ANTHROPIC_STOP_REASON } from './anthropic/types';
+import { ANTHROPIC_STOP_REASON } from '../types/messagesResponse';
 import { ErrorResponse, FINISH_REASON, PROVIDER_FINISH_REASON } from './types';
 import {
   AnthropicFinishReasonMap,

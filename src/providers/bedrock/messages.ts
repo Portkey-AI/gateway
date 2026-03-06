@@ -11,11 +11,7 @@ import {
   ToolResultBlockParam,
   ToolUseBlockParam,
 } from '../../types/MessagesRequest';
-import {
-  ContentBlock,
-  MessagesResponse,
-  ANTHROPIC_STOP_REASON,
-} from '../../types/messagesResponse';
+import { ContentBlock, MessagesResponse } from '../../types/messagesResponse';
 import {
   RawContentBlockDeltaEvent,
   RawContentBlockStartEvent,
@@ -460,9 +456,7 @@ export const BedrockMessagesResponseTransform = (
       type: 'message',
       role: 'assistant',
       content: transformedContent,
-      stop_reason: transformToAnthropicStopReason(
-        response.stopReason
-      ) as ANTHROPIC_STOP_REASON | null,
+      stop_reason: transformToAnthropicStopReason(response.stopReason),
       usage: {
         cache_read_input_tokens: response.usage.cacheReadInputTokens,
         cache_creation_input_tokens: response.usage.cacheWriteInputTokens,
@@ -614,7 +608,7 @@ export const BedrockConverseMessagesStreamChunkTransform = (
       parsedChunk.usage.cacheWriteInputTokens;
     messageDeltaEvent.delta.stop_reason = transformToAnthropicStopReason(
       streamState.stopReason
-    ) as string;
+    );
     const contentBlockStopEvent: RawContentBlockStopEvent = JSON.parse(
       ANTHROPIC_CONTENT_BLOCK_STOP_EVENT
     );
