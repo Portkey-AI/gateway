@@ -159,6 +159,36 @@ describe('AI21ChatCompleteStreamChunkTransform', () => {
     expect(result).toMatch(/^data: \{.*\}\n\n$/);
   });
 
+  it('should return empty string for empty chunks', () => {
+    const result = AI21ChatCompleteStreamChunkTransform(
+      '',
+      fallbackId,
+      streamState,
+      true
+    );
+    expect(result).toBe('');
+  });
+
+  it('should return empty string for malformed JSON', () => {
+    const result = AI21ChatCompleteStreamChunkTransform(
+      'data: {invalid json}',
+      fallbackId,
+      streamState,
+      true
+    );
+    expect(result).toBe('');
+  });
+
+  it('should return empty string for SSE comment frames', () => {
+    const result = AI21ChatCompleteStreamChunkTransform(
+      ': ping',
+      fallbackId,
+      streamState,
+      true
+    );
+    expect(result).toBe('');
+  });
+
   it('should transform length finish_reason with strict compliance', () => {
     const rawChunk = `data: ${JSON.stringify({
       id: 'req-123',

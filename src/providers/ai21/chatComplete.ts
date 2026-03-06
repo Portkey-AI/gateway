@@ -208,7 +208,15 @@ export const AI21ChatCompleteStreamChunkTransform: (
   if (chunk === '[DONE]') {
     return `data: ${chunk}\n\n`;
   }
-  const parsedChunk: AI21ChatCompleteStreamChunk = JSON.parse(chunk);
+  if (!chunk) {
+    return '';
+  }
+  let parsedChunk: AI21ChatCompleteStreamChunk;
+  try {
+    parsedChunk = JSON.parse(chunk);
+  } catch {
+    return '';
+  }
   return (
     `data: ${JSON.stringify({
       id: parsedChunk.id ?? fallbackId,
@@ -222,7 +230,9 @@ export const AI21ChatCompleteStreamChunkTransform: (
           delta: parsedChunk.choices[0]?.delta ?? {},
           finish_reason: parsedChunk.choices[0]?.finish_reason
             ? transformFinishReason(
-                parsedChunk.choices[0].finish_reason as any,
+                parsedChunk.choices[0].finish_reason as unknown as Parameters<
+                  typeof transformFinishReason
+                >[0],
                 strictOpenAiCompliance
               )
             : null,
