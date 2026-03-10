@@ -13,7 +13,7 @@ export const cerebrasProviderAPIConfig: ProviderConfigs = {
       'parallel_tool_calls',
       'service_tier',
     ],
-    undefined,
+    {},
     {
       max_completion_tokens: {
         param: 'max_tokens',
