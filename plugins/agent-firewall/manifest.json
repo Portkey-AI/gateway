@@ -1,0 +1,23 @@
+{
+  "id": "agentFirewall",
+  "description": "Zero-Trust Firewal for Autonomous Agents - blocks malicious tool executions",
+  "credentials": {},
+  "functions": [
+    {
+      "name": "Agent Intent Firewall",
+      "id": "protect",
+      "supportedHooks": ["afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Intercepts AI response tool_calls and blocks destructive intent (like rm -rf, SQL injections, etc.)"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ]
+}
