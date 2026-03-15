@@ -24,6 +24,7 @@ import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from '../google/types';
 import {
   ChatCompletionResponse,
   ErrorResponse,
+  FINISH_REASON,
   Logprobs,
   ProviderConfig,
 } from '../types';
@@ -44,6 +45,7 @@ import {
   getMimeType,
   getThoughtSignature,
   googleTools,
+  hasToolCalls,
   recursivelyDeleteUnsupportedParameters,
   transformGeminiToolParameters,
   transformGoogleTools,
@@ -593,10 +595,13 @@ export const GoogleChatCompleteResponseTransform: (
           return {
             message: message,
             index: index,
-            finish_reason: transformFinishReason(
-              generation.finishReason as GOOGLE_GENERATE_CONTENT_FINISH_REASON,
-              strictOpenAiCompliance
-            ),
+            finish_reason:
+              toolCalls.length > 0
+                ? FINISH_REASON.tool_calls
+                : transformFinishReason(
+                    generation.finishReason as GOOGLE_GENERATE_CONTENT_FINISH_REASON,
+                    strictOpenAiCompliance
+                  ),
             logprobs,
             ...(!strictOpenAiCompliance && {
               safetyRatings: generation.safetyRatings,
@@ -732,12 +737,15 @@ export const GoogleChatCompleteStreamChunkTransform: (
     provider: GOOGLE_VERTEX_AI,
     choices:
       parsedChunk.candidates?.map((generation, index) => {
+        const containsToolCalls = hasToolCalls(generation.content?.parts);
         const finishReason = generation.finishReason
-          ? transformFinishReason(
-              parsedChunk.candidates[0]
-                .finishReason as GOOGLE_GENERATE_CONTENT_FINISH_REASON,
-              strictOpenAiCompliance
-            )
+          ? containsToolCalls
+            ? FINISH_REASON.tool_calls
+            : transformFinishReason(
+                parsedChunk.candidates[0]
+                  .finishReason as GOOGLE_GENERATE_CONTENT_FINISH_REASON,
+                strictOpenAiCompliance
+              )
           : null;
         let message: any = { role: 'assistant', content: '' };
         if (generation.content?.parts?.[0]?.text) {

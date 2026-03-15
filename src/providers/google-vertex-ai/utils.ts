@@ -1027,3 +1027,11 @@ export const getThoughtSignature = (
     return undefined; // older models do not require thought signature
   return 'skip_thought_signature_validator';
 };
+
+/**
+ * Determines if a Gemini response candidate contains tool/function calls.
+ * Used to override finish_reason since Gemini returns "STOP" even for function calls.
+ */
+export const hasToolCalls = (parts?: { functionCall?: unknown }[]): boolean => {
+  return parts?.some((part) => part.functionCall) ?? false;
+};
