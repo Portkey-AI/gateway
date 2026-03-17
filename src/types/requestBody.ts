@@ -196,6 +196,10 @@ export interface Options {
 export interface Targets {
   name?: string;
   strategy?: Strategy;
+  /** When true, uses the provider and model from the original request headers/body instead of this target's config.
+   * Useful for conditional routing where unmatched requests should pass through unchanged,
+   * or for fallback strategies where the original request should be tried first. */
+  passthrough?: boolean;
   /** The name of the provider. */
   provider?: string | undefined;
   /** The name of the API key for the provider. */

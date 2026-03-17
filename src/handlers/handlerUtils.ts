@@ -31,6 +31,7 @@ import {
   adaptResponse,
   AdapterContext,
 } from './adapterUtils';
+import { constructConfigFromRequestHeaders } from '../utils/request';
 
 /**
  * Constructs the request options for the API call.
@@ -725,6 +726,10 @@ export async function tryTargetsRecursively(
 
   const cEnv = env(c);
   // start: merge inherited config with current target config (preference given to current)
+  const passthroughConfig =
+    inheritedConfig.passthroughConfig ??
+    constructConfigFromRequestHeaders(requestHeaders);
+
   const currentInheritedConfig: Record<string, any> = {
     id: inheritedConfig.id || currentTarget.id,
     overrideParams: {
@@ -740,6 +745,7 @@ export async function tryTargetsRecursively(
     requestTimeout: null,
     defaultInputGuardrails: inheritedConfig.defaultInputGuardrails,
     defaultOutputGuardrails: inheritedConfig.defaultOutputGuardrails,
+    passthroughConfig,
   };
 
   // Inherited config can be empty only for the base case of recursive call.
@@ -1083,9 +1089,18 @@ export async function tryTargetsRecursively(
 
     default:
       try {
+        let targetToUse = currentTarget;
+
+        if (currentTarget.passthrough === true) {
+          targetToUse = {
+            ...currentTarget,
+            ...passthroughConfig,
+          };
+        }
+
         response = await tryPost(
           c,
-          currentTarget,
+          targetToUse,
           request,
           requestHeaders,
           fn,

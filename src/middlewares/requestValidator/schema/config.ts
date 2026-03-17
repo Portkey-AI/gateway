@@ -216,6 +216,7 @@ export const configSchema: any = z
     azure_ad_token: z.string().optional(),
     azure_model_name: z.string().optional(),
     strict_open_ai_compliance: z.boolean().optional(),
+    passthrough: z.boolean().optional(),
   })
   .refine(
     (value) => {
@@ -249,12 +250,13 @@ export const configSchema: any = z
         value.after_request_hooks ||
         value.before_request_hooks ||
         value.input_guardrails ||
-        value.output_guardrails
+        value.output_guardrails ||
+        value.passthrough === true
       );
     },
     {
       message:
-        "Invalid configuration. It must have either 'provider' and 'api_key', or 'strategy' and 'targets', or 'cache', or 'retry', or 'request_timeout'",
+        "Invalid configuration. It must have either 'provider' and 'api_key', or 'strategy' and 'targets', or 'cache', or 'retry', or 'request_timeout', or 'passthrough'",
     }
   )
   .refine(
