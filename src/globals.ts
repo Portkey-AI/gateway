@@ -69,6 +69,7 @@ export const AI21: string = 'ai21';
 export const BEDROCK: string = 'bedrock';
 export const GROQ: string = 'groq';
 export const SEGMIND: string = 'segmind';
+export const MODELSLAB: string = 'modelslab';
 export const JINA: string = 'jina';
 export const FIREWORKS_AI: string = 'fireworks-ai';
 export const WORKERS_AI: string = 'workers-ai';
@@ -145,6 +146,7 @@ export const VALID_PROVIDERS = [
   BEDROCK,
   GROQ,
   SEGMIND,
+  MODELSLAB,
   JINA,
   FIREWORKS_AI,
   WORKERS_AI,

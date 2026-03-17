@@ -19,6 +19,7 @@ import OllamaAPIConfig from './ollama';
 import { ProviderConfigs } from './types';
 import GroqConfig from './groq';
 import SegmindConfig from './segmind';
+import ModelsLabConfig from './modelslab';
 import JinaConfig from './jina';
 import FireworksAIConfig from './fireworks-ai';
 import WorkersAiConfig from './workers-ai';
@@ -101,6 +102,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   bedrock: BedrockConfig,
   groq: GroqConfig,
   segmind: SegmindConfig,
+  modelslab: ModelsLabConfig,
   jina: JinaConfig,
   'fireworks-ai': FireworksAIConfig,
   'workers-ai': WorkersAiConfig,
