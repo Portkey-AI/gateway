@@ -896,7 +896,8 @@ export const VertexAnthropicChatCompleteResponseTransform: (
         },
       ],
       usage: {
-        prompt_tokens: input_tokens,
+        prompt_tokens:
+          input_tokens + cache_creation_input_tokens + cache_read_input_tokens,
         completion_tokens: output_tokens,
         total_tokens: totalTokens,
         prompt_tokens_details: {
