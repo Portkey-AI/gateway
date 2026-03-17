@@ -896,7 +896,8 @@ export const VertexAnthropicChatCompleteResponseTransform: (
         },
       ],
       usage: {
-        prompt_tokens: input_tokens,
+        prompt_tokens:
+          input_tokens + cache_creation_input_tokens + cache_read_input_tokens,
         completion_tokens: output_tokens,
         total_tokens: totalTokens,
         prompt_tokens_details: {
@@ -980,13 +981,17 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
 
     streamState.model = parsedChunk?.message?.model ?? '';
 
+    const inputTokens = parsedChunk.message.usage?.input_tokens ?? 0;
+    const cacheReadTokens =
+      parsedChunk.message?.usage?.cache_read_input_tokens ?? 0;
+    const cacheCreationTokens =
+      parsedChunk.message?.usage?.cache_creation_input_tokens ?? 0;
+
     streamState.usage = {
-      prompt_tokens: parsedChunk.message.usage?.input_tokens,
+      prompt_tokens: inputTokens + cacheReadTokens + cacheCreationTokens,
       ...(shouldSendCacheUsage && {
-        cache_read_input_tokens:
-          parsedChunk.message?.usage?.cache_read_input_tokens,
-        cache_creation_input_tokens:
-          parsedChunk.message?.usage?.cache_creation_input_tokens,
+        cache_read_input_tokens: cacheReadTokens,
+        cache_creation_input_tokens: cacheCreationTokens,
       }),
     };
     return (

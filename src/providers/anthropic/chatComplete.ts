@@ -610,7 +610,10 @@ export const getAnthropicChatCompleteResponseTransform = (provider: string) => {
           },
         ],
         usage: {
-          prompt_tokens: input_tokens,
+          prompt_tokens:
+            input_tokens +
+            (cache_creation_input_tokens ?? 0) +
+            (cache_read_input_tokens ?? 0),
           completion_tokens: output_tokens,
           total_tokens:
             input_tokens +
@@ -697,14 +700,18 @@ export const getAnthropicStreamChunkTransform = (provider: string) => {
       parsedChunk.message?.usage?.cache_creation_input_tokens;
 
     if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
+      const inputTokens = parsedChunk.message?.usage?.input_tokens ?? 0;
+      const cacheReadTokens =
+        parsedChunk.message?.usage?.cache_read_input_tokens ?? 0;
+      const cacheCreationTokens =
+        parsedChunk.message?.usage?.cache_creation_input_tokens ?? 0;
+
       streamState.model = parsedChunk?.message?.model ?? '';
       streamState.usage = {
-        prompt_tokens: parsedChunk.message?.usage?.input_tokens,
+        prompt_tokens: inputTokens + cacheReadTokens + cacheCreationTokens,
         ...(shouldSendCacheUsage && {
-          cache_read_input_tokens:
-            parsedChunk.message?.usage?.cache_read_input_tokens,
-          cache_creation_input_tokens:
-            parsedChunk.message?.usage?.cache_creation_input_tokens,
+          cache_read_input_tokens: cacheReadTokens,
+          cache_creation_input_tokens: cacheCreationTokens,
         }),
       };
       return (
