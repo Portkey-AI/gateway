@@ -70,6 +70,7 @@ import { handler as javelinguardrails } from './javelin/guardrails';
 import { handler as azureShieldPrompt } from './azure/shieldPrompt';
 import { handler as crowdstrikeAidrHandler } from './crowdstrike-aidr/guardChatCompletion';
 import { handler as azureProtectedMaterial } from './azure/protectedMaterial';
+import { handler as aktoScan } from './akto/scan';
 import { handler as zscalerGuardrails } from './zscaler/zscalerprotect';
 import {
   guardrail as stringcostGuardrail,
@@ -194,8 +195,7 @@ export const plugins = {
   zscaler: {
     guardrails: zscalerGuardrails,
   },
-  stringcost: {
-    guardrail: stringcostGuardrail,
-    logEvent: stringcostLogEvent,
+  akto: {
+    scan: aktoScan,
   },
 };

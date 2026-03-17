@@ -33,14 +33,6 @@
 
 ![star-2](https://github.com/user-attachments/assets/53597dce-6333-4ecc-a154-eb05532954e4)
 
-<details>
-  <summary><kbd>スター履歴</kbd></summary>
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=portkey-ai%2Fgateway&theme=dark&type=Date">
-    <img width="100%" src="https://api.star-history.com/svg?repos=portkey-ai%2Fgateway&type=Date">
-  </picture>
-</details>
-<br>
 
 ## セットアップとインストール
 AIゲートウェイを使用するには、**ホストされたAPI**を使用するか、**オープンソース**または**エンタープライズバージョン**を自分の環境にセルフホストします。
