@@ -9,6 +9,11 @@
         "label": "API Key",
         "description": "Find your API key in the Lasso dashboard (https://app.lasso.security/organization-settings)",
         "encrypted": true
+      },
+      "apiEndpoint": {
+        "type": "string",
+        "label": "API Endpoint",
+        "description": "Custom API endpoint URL (optional, defaults to https://server.lasso.security)"
       }
     },
     "required": ["apiKey"]
@@ -17,16 +22,16 @@
     {
       "name": "Classifier",
       "id": "classify",
-      "supportedHooks": ["beforeRequestHook"],
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
       "type": "guardrail",
       "description": [
         {
           "type": "subHeading",
-          "text": "Classify the text to detect sensitive information and risks using Lasso Security's Deputies."
+          "text": "Classify the text to detect sensitive information and risks using Lasso Security's Deputies v3 API."
         },
         {
           "type": "subHeading",
-          "text": "Lasso Security's Deputies analyze content for various security risks including jailbreak attempts, custom policy violations, sexual content, hate speech, illegal content, and more."
+          "text": "Lasso Security's Deputies analyze content for various security risks including jailbreak attempts, custom policy violations, sexual content, hate speech, illegal content, and more. Returns detailed findings with action types (BLOCK, WARN, AUTO_MASKING) and severity levels."
         }
       ],
       "parameters": {
@@ -53,11 +58,11 @@
           },
           "conversationId": {
             "type": "string",
-            "description": "Unique ID to group related API calls together (optional)"
+            "description": "Valid ULID to group related API calls into a single dialogue (optional, sent as sessionId to the v3 API)"
           },
           "userId": {
             "type": "string",
-            "description": "User identifier for tracking individual usage (optional)"
+            "description": "User identifier for tracking individual usage - UUID, ULID, email or number string (optional)"
           }
         },
         "required": ["messages"]

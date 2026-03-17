@@ -75,6 +75,7 @@ import OracleConfig from './oracle';
 import IOIntelligenceConfig from './iointelligence';
 import AIBadgrConfig from './aibadgr';
 import OVHcloudConfig from './ovhcloud';
+import LatitudeConfig from './latitude';
 import DatabricksConfig from './databricks';
 import PineconeConfig from './pinecone';
 
@@ -152,6 +153,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   iointelligence: IOIntelligenceConfig,
   aibadgr: AIBadgrConfig,
   ovhcloud: OVHcloudConfig,
+  latitude: LatitudeConfig,
   databricks: DatabricksConfig,
   pinecone: PineconeConfig,
 };

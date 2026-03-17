@@ -59,6 +59,11 @@ interface AnthropicTool extends PromptCache {
    * Example inputs demonstrating how to use this tool.
    */
   input_examples?: Record<string, any>[];
+  /**
+   * When true, Anthropic uses constrained decoding to guarantee
+   * tool call arguments conform to the input_schema.
+   */
+  strict?: boolean;
 }
 
 interface AnthropicToolResultContentItem {
@@ -418,6 +423,9 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
               }),
               ...(tool.function.input_examples && {
                 input_examples: tool.function.input_examples,
+              }),
+              ...(tool.function.strict !== undefined && {
+                strict: tool.function.strict,
               }),
             });
           } else if (tool.type) {

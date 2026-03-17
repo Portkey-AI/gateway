@@ -5,7 +5,14 @@
     "aporia",
     "sydelabs",
     "pillar",
-    "patronus"
+    "patronus",
+    "pangea",
+    "promptsecurity",
+    "panw-prisma-airs",
+    "walledai",
+    "akto",
+    "zscaler",
+    "lasso"
   ],
   "credentials": {
     "portkey": {

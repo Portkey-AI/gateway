@@ -119,6 +119,7 @@ export const ORACLE: string = 'oracle';
 export const IO_INTELLIGENCE: string = 'iointelligence';
 export const AIBADGR: string = 'aibadgr';
 export const OVHCLOUD: string = 'ovhcloud';
+export const LATITUDE: string = 'latitude';
 export const DATABRICKS: string = 'databricks';
 export const PINECONE: string = 'pinecone';
 
@@ -188,6 +189,10 @@ export const VALID_PROVIDERS = [
   TRIPO3D,
   MODAL,
   ORACLE,
+  IO_INTELLIGENCE,
+  AIBADGR,
+  OVHCLOUD,
+  LATITUDE,
   DATABRICKS,
   PINECONE,
 ];
