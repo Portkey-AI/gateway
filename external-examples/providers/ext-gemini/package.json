@@ -1,0 +1,6 @@
+{
+  "name": "ext-gemini-provider",
+  "version": "1.0.0",
+  "description": "External Google Gemini provider for Portkey Gateway testing",
+  "type": "module"
+}

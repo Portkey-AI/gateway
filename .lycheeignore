@@ -1,0 +1,22 @@
+# localhost can't be checked in CI
+http://localhost
+https://localhost
+
+# npmjs.com blocks CI bots with 403
+https://www.npmjs.com
+
+# GitHub blob links rate-limit CI with 429
+https://github.com/Portkey-AI/gateway/blob
+
+# Wikimedia rate-limits CI with 429
+https://upload.wikimedia.org/wikipedia/commons/thumb
+
+# svgrepo.com rate-limits CI with 429
+https://www.svgrepo.com
+
+# Gitbook image CDN returns 526
+https://docs.portkey.ai/~gitbook/image
+
+# Specific portkey.wiki short links that return 403 (redirect targets block bots)
+https://portkey.wiki/gh-8
+https://portkey.wiki/gh-19

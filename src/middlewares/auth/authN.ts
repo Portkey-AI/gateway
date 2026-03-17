@@ -33,6 +33,58 @@ export const authNMiddleWare = () => {
     const requestOrigin = c.req.raw.headers.get('Origin');
     const cfEnv = env(c);
 
+    // Skip authN for stringcost requests - they use token-based authentication.
+    // HTTP proxy requests set x-stringcost-proxy header; WebSocket requests are identified by path.
+    const isStringcostProxy =
+      c.req.raw.headers.get('x-stringcost-proxy') === 'true' ||
+      c.req.path.startsWith('/stringcost-ws/');
+    if (isStringcostProxy) {
+      // Provide minimal org context so downstream middlewares don't crash
+      const mockOrganisationDetails: OrganisationDetails = {
+        id: 'stringcost-proxy',
+        ownerId: undefined,
+        name: 'StringCost Proxy',
+        settings: {},
+        isFirstGenerationDone: true,
+        enterpriseSettings: undefined,
+        workspaceDetails: {
+          id: 'stringcost-proxy-workspace',
+          slug: 'stringcost-proxy-workspace',
+          name: 'StringCost Proxy Workspace',
+          defaults: {},
+          usage_limits: [],
+          rate_limits: [],
+          status: EntityStatus.ACTIVE,
+          policies: {},
+        },
+        scopes: [],
+        defaults: {},
+        usageLimits: [],
+        rateLimits: [],
+        status: EntityStatus.ACTIVE,
+        apiKeyDetails: {
+          id: 'stringcost-proxy-key',
+          key: 'stringcost-proxy',
+          isJwt: false,
+          scopes: [],
+          defaults: {},
+          expiresAt: undefined,
+          usageLimits: [],
+          rateLimits: [],
+          status: EntityStatus.ACTIVE,
+          systemDefaults: {},
+          userId: undefined,
+        },
+        organisationDefaults: {},
+      };
+      setContext(c, ContextKeys.ORGANISATION_DETAILS, mockOrganisationDetails);
+      const headersObj = Object.fromEntries(c.req.raw.headers);
+      headersObj[PORTKEY_HEADER_KEYS.ORGANISATION_DETAILS] = JSON.stringify(mockOrganisationDetails);
+      c.set('headersObj', headersObj);
+      c.set(METRICS_KEYS.AUTH_N_MIDDLEWARE_END, Date.now());
+      return next();
+    }
+
     const portkeyApiKeyHeader = c.req.raw.headers.get(
       PORTKEY_HEADER_KEYS.API_KEY
     );

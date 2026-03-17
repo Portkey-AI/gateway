@@ -1,0 +1,26 @@
+name: Check Markdown links
+
+on:
+  push:
+    paths:
+      - '**/*.md' # Only run when markdown files change
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: '0 0 * * 0' # Run weekly on Sundays
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  linkChecker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Link Checker
+        uses: lycheeverse/lychee-action@v1.8.0
+        with:
+          args: --verbose --no-progress './**/*.md'
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

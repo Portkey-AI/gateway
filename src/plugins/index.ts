@@ -72,6 +72,10 @@ import { handler as crowdstrikeAidrHandler } from './crowdstrike-aidr/guardChatC
 import { handler as azureProtectedMaterial } from './azure/protectedMaterial';
 import { handler as aktoScan } from './akto/scan';
 import { handler as zscalerGuardrails } from './zscaler/zscalerprotect';
+import {
+  guardrail as stringcostGuardrail,
+  logEvent as stringcostLogEvent,
+} from './stringcost/index';
 
 export const plugins = {
   default: {

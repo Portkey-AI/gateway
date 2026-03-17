@@ -122,6 +122,8 @@ export const OVHCLOUD: string = 'ovhcloud';
 export const LATITUDE: string = 'latitude';
 export const DATABRICKS: string = 'databricks';
 export const PINECONE: string = 'pinecone';
+export const DEEPGRAM: string = 'deepgram';
+export const ELEVENLABS: string = 'elevenlabs';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -195,6 +197,8 @@ export const VALID_PROVIDERS = [
   LATITUDE,
   DATABRICKS,
   PINECONE,
+  ELEVENLABS,
+  DEEPGRAM,
 ];
 
 export const CONTENT_TYPES = {

@@ -4,7 +4,7 @@ import WebSocket from 'ws';
 import { ProviderAPIConfig } from '../providers/types';
 import Providers from '../providers';
 import { Options } from '../types/requestBody';
-import { RealTimeLLMEventParser } from '../services/realtimeLLMEventParser';
+import { RealTimeLLMEventParser } from '../services/realtimeLlmEventParser';
 import { logger } from '../apm';
 import { WSContext, WSEvents } from 'hono/ws';
 import { getExternalNodeFetchAgentForUrl } from '../agentStore';

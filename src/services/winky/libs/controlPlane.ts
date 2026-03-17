@@ -96,6 +96,11 @@ export async function uploadLogsToControlPlane(
   logOptions: LogOptions,
   apmOptions: LogStoreApmOptions
 ) {
+  // Skip log upload for stringcost-proxy - it uses its own logging system (stringcost.logEvent)
+  if (logOptions.organisationId === 'stringcost-proxy') {
+    return true;
+  }
+
   const url = `${Environment(env).ALBUS_BASEPATH}/v1/logs/enterprise/logs?organisation_id=${logOptions.organisationId}`;
   let isSuccess = true;
   let errorMessage = '';

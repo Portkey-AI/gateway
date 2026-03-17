@@ -1,0 +1,6 @@
+{
+  "name": "ext-anthropic-provider",
+  "version": "1.0.0",
+  "description": "External Anthropic provider for Portkey Gateway testing",
+  "type": "module"
+}

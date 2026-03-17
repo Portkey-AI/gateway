@@ -8,7 +8,7 @@ import {
   getURLForOutgoingConnection,
 } from './websocketUtils';
 import { constructConfigFromRequestHeaders } from '../utils/request';
-import { RealTimeLLMEventParser } from '../services/realtimeLLMEventParser';
+import { RealTimeLLMEventParser } from '../services/realtimeLlmEventParser';
 
 const getOutgoingWebSocket = async (url: string, options: RequestInit) => {
   let outgoingWebSocket: WebSocket | null = null;

@@ -1,0 +1,84 @@
+{
+  "id": "walledai",
+  "description": "Walled AI",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "Find your API key in the Walled AI dashboard (https://dev.walled.ai/)",
+        "encrypted": true
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Walled AI Guardrail for checking safety of LLM inputs",
+      "id": "walledprotect",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Ensure the safety and compliance of your LLM inputs with Walled AI's advanced guardrail system."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "generic_safety_check": {
+            "type": "string",
+            "label": "Generic Safety Check",
+            "description": "Boolean value to enable generic safety checks on the text input. Defaults to 'true'.",
+            "default": true
+          },
+          "greetings_list": {
+            "type": "array",
+            "label": "Greetings List",
+            "description": "List of greetings to be used in the guardrail check.",
+            "items": {
+              "type": "string",
+              "enum": ["Casual & Friendly", "Professional & Polite"]
+            },
+            "default": ["Casual & Friendly"]
+          },
+          "pii_list": {
+            "type": "array",
+            "label": "PII LIST",
+            "description": "PII types that should be checked in the input text.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "Person's Name",
+                "Address",
+                "Email Id",
+                "Contact No",
+                "Date Of Birth",
+                "Unique Id",
+                "Financial Data"
+              ]
+            },
+            "default": [
+              "Person's Name",
+              "Address",
+              "Email Id",
+              "Contact No",
+              "Date Of Birth",
+              "Unique Id",
+              "Financial Data"
+            ]
+          },
+          "compliance_list": {
+            "type": "array",
+            "label": "List of Compliance Checks",
+            "description": "Compliance checks to be performed on the text input.",
+            "items": { "type": "string" },
+            "default": []
+          }
+        }
+      }
+    }
+  ]
+}

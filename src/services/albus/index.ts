@@ -496,6 +496,11 @@ export async function resyncOrganisationData({
   markFirstGenerationDone?: boolean;
   verificationCode?: string;
 }) {
+  // Skip resync for stringcost-proxy - it uses its own organization management
+  if (organisationId === 'stringcost-proxy') {
+    return;
+  }
+
   const path = `${Environment(env).ALBUS_BASEPATH}/v1/organisation/${organisationId}/resync`;
   const options: RequestInit = {
     method: 'POST',

@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 import { ProviderAPIConfig } from '../providers/types';
 import { Options } from '../types/requestBody';
-import { RealTimeLLMEventParser } from '../services/realtimeLLMEventParser';
+import { RealTimeLLMEventParser } from '../services/realtimeLlmEventParser';
 
 export const addListeners = (
   outgoingWebSocket: WebSocket,

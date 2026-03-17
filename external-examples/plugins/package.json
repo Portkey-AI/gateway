@@ -1,0 +1,9 @@
+{
+  "name": "external-example-plugins",
+  "version": "1.0.0",
+  "description": "Example external plugins for Portkey Gateway",
+  "type": "module",
+  "peerDependencies": {
+    "portkey-ai": "^1.9.1"
+  }
+}

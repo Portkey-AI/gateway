@@ -8,6 +8,17 @@ import {
   ANTHROPIC,
   CONTENT_TYPES,
   METRICS_KEYS,
+  BEDROCK,
+  SAGEMAKER,
+  WORKERS_AI,
+  OPEN_AI,
+  HUGGING_FACE,
+  GOOGLE_VERTEX_AI,
+  FIREWORKS_AI,
+  AZURE_AI_INFERENCE,
+  STABILITY_AI,
+  CORTEX,
+  ORACLE,
 } from '../globals';
 import Providers from '../providers';
 import { ProviderAPIConfig, endpointStrings } from '../providers/types';
@@ -203,6 +214,18 @@ export function convertHooksShorthand(
   hookType: HookType
 ) {
   return hooksArr.map((hook: any) => {
+    // Check if hook is already in proper format (has checks array or has both id and type)
+    if (hook.checks && Array.isArray(hook.checks)) {
+      // Hook is already properly formatted, just return it as-is after camelCase conversion
+      return convertKeysToCamelCase(hook);
+    }
+
+    if (hook.id && hook.type) {
+      // Hook has explicit id and type, it's already formatted
+      return convertKeysToCamelCase(hook);
+    }
+
+    // Otherwise, convert from shorthand format
     let hooksObject: any = {
       type: hookType,
       id: `${type}_guardrail_${Math.random().toString(36).substring(2, 5)}`,
@@ -1145,7 +1168,8 @@ export function updateResponseHeaders(
   cacheStatus: string | undefined,
   retryAttempt: number,
   traceId: string,
-  provider: string
+  provider: string,
+  requestHeaders: Record<string, string> = {}
 ) {
   response.headers.append(
     RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX,
@@ -1176,6 +1200,108 @@ export function updateResponseHeaders(
   response.headers.delete('transfer-encoding');
   if (provider && provider !== POWERED_BY) {
     response.headers.append(HEADER_KEYS.PROVIDER, provider);
+  }
+}
+
+export function parseConfigFromHeaders(requestHeaders: Record<string, string>) {
+  const cortexConfig = {
+    snowflakeAccount: requestHeaders[`x-${POWERED_BY}-snowflake-account`],
+  };
+
+  const oracleConfig = {
+    oracleApiVersion: requestHeaders[`x-${POWERED_BY}-oracle-api-version`],
+    oracleRegion: requestHeaders[`x-${POWERED_BY}-oracle-region`],
+    oracleCompartmentId:
+      requestHeaders[`x-${POWERED_BY}-oracle-compartment-id`],
+    oracleServingMode: requestHeaders[`x-${POWERED_BY}-oracle-serving-mode`],
+    oracleTenancy: requestHeaders[`x-${POWERED_BY}-oracle-tenancy`],
+    oracleUser: requestHeaders[`x-${POWERED_BY}-oracle-user`],
+    oracleFingerprint: requestHeaders[`x-${POWERED_BY}-oracle-fingerprint`],
+    oraclePrivateKey: requestHeaders[`x-${POWERED_BY}-oracle-private-key`],
+    oracleKeyPassphrase:
+      requestHeaders[`x-${POWERED_BY}-oracle-key-passphrase`],
+  };
+
+  const defaultsConfig = {
+    input_guardrails: requestHeaders[`x-portkey-default-input-guardrails`]
+      ? JSON.parse(requestHeaders[`x-portkey-default-input-guardrails`])
+      : [],
+    output_guardrails: requestHeaders[`x-portkey-default-output-guardrails`]
+      ? JSON.parse(requestHeaders[`x-portkey-default-output-guardrails`])
+      : [],
+  };
+
+  if (requestHeaders[`x-${POWERED_BY}-config`]) {
+    let parsedConfigJson = JSON.parse(requestHeaders[`x-${POWERED_BY}-config`]);
+    parsedConfigJson.defaultInputGuardrails = defaultsConfig.input_guardrails;
+    parsedConfigJson.defaultOutputGuardrails = defaultsConfig.output_guardrails;
+
+    if (!parsedConfigJson.provider && !parsedConfigJson.targets) {
+      parsedConfigJson.provider = requestHeaders[`x-${POWERED_BY}-provider`];
+      parsedConfigJson.api_key = requestHeaders['authorization']?.replace(
+        'Bearer ',
+        ''
+      );
+
+      // Add provider-specific configs here
+      const azureConfig = {
+        resourceName: requestHeaders[`x-${POWERED_BY}-azure-resource-name`],
+        deploymentId: requestHeaders[`x-${POWERED_BY}-azure-deployment-id`],
+        apiVersion: requestHeaders[`x-${POWERED_BY}-azure-api-version`],
+      };
+
+      const awsConfig = {
+        awsAccessKeyId: requestHeaders[`x-${POWERED_BY}-aws-access-key-id`],
+        awsSecretAccessKey:
+          requestHeaders[`x-${POWERED_BY}-aws-secret-access-key`],
+        awsSessionToken: requestHeaders[`x-${POWERED_BY}-aws-session-token`],
+        awsRegion: requestHeaders[`x-${POWERED_BY}-aws-region`],
+      };
+
+      if (parsedConfigJson.provider === AZURE_OPEN_AI) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...azureConfig,
+        };
+      }
+
+      if (
+        parsedConfigJson.provider === BEDROCK ||
+        parsedConfigJson.provider === SAGEMAKER
+      ) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...awsConfig,
+        };
+      }
+
+      if (parsedConfigJson.provider === CORTEX) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...cortexConfig,
+        };
+      }
+      if (parsedConfigJson.provider === ORACLE) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...oracleConfig,
+        };
+      }
+    }
+    return convertKeysToCamelCase(parsedConfigJson, [
+      'override_params',
+      'params',
+      'checks',
+      'vertex_service_account_json',
+      'vertexServiceAccountJson',
+      'conditions',
+      'input_guardrails',
+      'output_guardrails',
+      'integrationModelDetails',
+      'integrationDetails',
+      'virtualKeyDetails',
+      'cb_config',
+    ]) as any;
   }
 }
 
