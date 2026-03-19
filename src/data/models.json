@@ -15425,6 +15425,22 @@
         "id": "openai"
       },
       "name": "Text Embedding Ada 002"
+    },
+    {
+      "id": "MiniMax-M2.7",
+      "object": "model",
+      "provider": {
+        "id": "minimax"
+      },
+      "name": "MiniMax M2.7"
+    },
+    {
+      "id": "MiniMax-M2.7-highspeed",
+      "object": "model",
+      "provider": {
+        "id": "minimax"
+      },
+      "name": "MiniMax M2.7 Highspeed"
     }
   ]
 }

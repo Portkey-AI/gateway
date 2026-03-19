@@ -142,6 +142,12 @@ const testVariables: TestVariables = {
       model: 'Qwen/Qwen2.5-Coder-3B-Instruct',
     },
   },
+  minimax: {
+    apiKey: process.env.MINIMAX_API_KEY,
+    chatCompletions: {
+      model: 'MiniMax-M2.7',
+    },
+  },
 };
 
 export default testVariables;
