@@ -1,6 +1,6 @@
 {
   "id": "exa",
-  "description": "Exa.ai integration for enhancing AI responses with real-time web search information",
+  "description": "Exa integration for enhancing AI responses with real-time web search. Exa is one of the best web search APIs for AI.",
   "credentials": {
     "type": "object",
     "properties": {
