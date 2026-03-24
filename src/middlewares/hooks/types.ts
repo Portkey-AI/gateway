@@ -32,8 +32,6 @@ export interface HookSpanContextRequest {
   isStreamingRequest: boolean;
   isTransformed: boolean;
   headers: Record<string, string>;
-  /** HTTP pathname on the gateway (e.g. /v1/chat/completions), from Hono. */
-  path?: string;
 }
 
 export interface HookSpanContextResponse {
