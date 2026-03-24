@@ -1,4 +1,5 @@
-import { ANTHROPIC_STOP_REASON } from '../anthropic/types';
+import { ANTHROPIC_STOP_REASON as ANTHROPIC_PROVIDER_STOP_REASON } from '../anthropic/types';
+import { ANTHROPIC_STOP_REASON as ANTHROPIC_MESSAGES_STOP_REASON } from '../../types/messagesResponse';
 import { FINISH_REASON, PROVIDER_FINISH_REASON } from '../types';
 import {
   BEDROCK_CONVERSE_STOP_REASON,
@@ -13,13 +14,16 @@ import { COHERE_STOP_REASON } from '../cohere/types';
 
 export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   // https://docs.anthropic.com/en/api/messages#response-stop-reason
-  [ANTHROPIC_STOP_REASON.stop_sequence, FINISH_REASON.stop],
-  [ANTHROPIC_STOP_REASON.end_turn, FINISH_REASON.stop],
-  [ANTHROPIC_STOP_REASON.pause_turn, FINISH_REASON.stop],
-  [ANTHROPIC_STOP_REASON.tool_use, FINISH_REASON.tool_calls],
-  [ANTHROPIC_STOP_REASON.max_tokens, FINISH_REASON.length],
-  [ANTHROPIC_STOP_REASON.refusal, FINISH_REASON.refusal],
-  [ANTHROPIC_STOP_REASON.model_context_window_exceeded, FINISH_REASON.length],
+  [ANTHROPIC_PROVIDER_STOP_REASON.stop_sequence, FINISH_REASON.stop],
+  [ANTHROPIC_PROVIDER_STOP_REASON.end_turn, FINISH_REASON.stop],
+  [ANTHROPIC_PROVIDER_STOP_REASON.pause_turn, FINISH_REASON.stop],
+  [ANTHROPIC_PROVIDER_STOP_REASON.tool_use, FINISH_REASON.tool_calls],
+  [ANTHROPIC_PROVIDER_STOP_REASON.max_tokens, FINISH_REASON.length],
+  [ANTHROPIC_PROVIDER_STOP_REASON.refusal, FINISH_REASON.refusal],
+  [
+    ANTHROPIC_PROVIDER_STOP_REASON.model_context_window_exceeded,
+    FINISH_REASON.length,
+  ],
   // https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html#API_runtime_Converse_ResponseSyntax
   [BEDROCK_CONVERSE_STOP_REASON.end_turn, FINISH_REASON.stop],
   [BEDROCK_CONVERSE_STOP_REASON.tool_use, FINISH_REASON.tool_calls],
@@ -132,22 +136,31 @@ export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
 
 export const AnthropicFinishReasonMap = new Map<
   PROVIDER_FINISH_REASON,
-  ANTHROPIC_STOP_REASON
+  ANTHROPIC_MESSAGES_STOP_REASON
 >([
   // https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html#API_runtime_Converse_ResponseSyntax
-  [BEDROCK_CONVERSE_STOP_REASON.end_turn, ANTHROPIC_STOP_REASON.end_turn],
-  [BEDROCK_CONVERSE_STOP_REASON.tool_use, ANTHROPIC_STOP_REASON.tool_use],
-  [BEDROCK_CONVERSE_STOP_REASON.max_tokens, ANTHROPIC_STOP_REASON.max_tokens],
+  [
+    BEDROCK_CONVERSE_STOP_REASON.end_turn,
+    ANTHROPIC_MESSAGES_STOP_REASON.end_turn,
+  ],
+  [
+    BEDROCK_CONVERSE_STOP_REASON.tool_use,
+    ANTHROPIC_MESSAGES_STOP_REASON.tool_use,
+  ],
+  [
+    BEDROCK_CONVERSE_STOP_REASON.max_tokens,
+    ANTHROPIC_MESSAGES_STOP_REASON.max_tokens,
+  ],
   [
     BEDROCK_CONVERSE_STOP_REASON.stop_sequence,
-    ANTHROPIC_STOP_REASON.stop_sequence,
+    ANTHROPIC_MESSAGES_STOP_REASON.stop_sequence,
   ],
   [
     BEDROCK_CONVERSE_STOP_REASON.guardrail_intervened,
-    ANTHROPIC_STOP_REASON.end_turn,
+    ANTHROPIC_MESSAGES_STOP_REASON.end_turn,
   ],
   [
     BEDROCK_CONVERSE_STOP_REASON.content_filtered,
-    ANTHROPIC_STOP_REASON.end_turn,
+    ANTHROPIC_MESSAGES_STOP_REASON.end_turn,
   ],
 ]);

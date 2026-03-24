@@ -1,5 +1,5 @@
 import { DEEPSEEK } from '../../globals';
-import { Message, Params } from '../../types/requestBody';
+import { Message, OpenAIMessageRole, Params } from '../../types/requestBody';
 
 import {
   ChatCompletionResponse,
@@ -11,7 +11,7 @@ import {
   generateInvalidProviderResponseError,
   transformFinishReason,
 } from '../utils';
-import { DEEPSEEK_STOP_REASON } from './types';
+import { DEEPSEEK_STOP_REASON, ToolCall } from './types';
 
 export const DeepSeekChatCompleteConfig: ProviderConfig = {
   model: {
@@ -85,6 +85,12 @@ export const DeepSeekChatCompleteConfig: ProviderConfig = {
     min: 0,
     max: 20,
   },
+  tools: {
+    param: 'tools',
+  },
+  tool_choice: {
+    param: 'tool_choice',
+  },
 };
 
 interface DeepSeekChatCompleteResponse extends ChatCompletionResponse {
@@ -92,6 +98,15 @@ interface DeepSeekChatCompleteResponse extends ChatCompletionResponse {
   object: string;
   created: number;
   model: 'deepseek-chat' | 'deepseek-coder';
+  choices: {
+    index: number;
+    message: {
+      role: OpenAIMessageRole;
+      content: string | undefined;
+      tool_calls?: ToolCall[] | null;
+    };
+    finish_reason: string;
+  }[];
   usage: {
     prompt_tokens: number;
     completion_tokens: number;
@@ -121,10 +136,19 @@ interface DeepSeekStreamChunk {
     delta: {
       role?: string | null;
       content?: string;
+      tool_calls?: ToolCall[] | null;
     };
     index: number;
     finish_reason: string | null;
   }[];
+}
+
+function normalizeToolCalls(toolCalls?: ToolCall[] | null) {
+  if (!Array.isArray(toolCalls) || toolCalls.length === 0) {
+    return {};
+  }
+
+  return { tool_calls: toolCalls };
 }
 
 export const DeepSeekChatCompleteResponseTransform: (
@@ -162,6 +186,7 @@ export const DeepSeekChatCompleteResponseTransform: (
         message: {
           role: c.message.role,
           content: c.message.content,
+          ...normalizeToolCalls(c.message.tool_calls),
         },
         finish_reason: transformFinishReason(
           c.finish_reason as DEEPSEEK_STOP_REASON,
@@ -197,6 +222,11 @@ export const DeepSeekChatCompleteStreamChunkTransform: (
     return `data: ${chunk}\n\n`;
   }
   const parsedChunk: DeepSeekStreamChunk = JSON.parse(chunk);
+  const normalizedDelta = {
+    ...parsedChunk.choices[0].delta,
+  };
+  delete normalizedDelta.tool_calls;
+
   const finishReason = parsedChunk.choices[0].finish_reason
     ? transformFinishReason(
         parsedChunk.choices[0].finish_reason as DEEPSEEK_STOP_REASON,
@@ -213,7 +243,10 @@ export const DeepSeekChatCompleteStreamChunkTransform: (
       choices: [
         {
           index: parsedChunk.choices[0].index,
-          delta: parsedChunk.choices[0].delta,
+          delta: {
+            ...normalizedDelta,
+            ...normalizeToolCalls(parsedChunk.choices[0].delta.tool_calls),
+          },
           finish_reason: finishReason,
         },
       ],
