@@ -39,7 +39,8 @@ export class HookSpan {
     afterRequestHooks: HookObject[],
     parentHookSpanId: string | null,
     requestType: string,
-    requestHeaders: Record<string, string>
+    requestHeaders: Record<string, string>,
+    gatewayRequestPath: string = ''
   ) {
     this.context = this.createContext(
       requestParams,
@@ -47,7 +48,8 @@ export class HookSpan {
       provider,
       isStreamingRequest,
       requestType,
-      requestHeaders
+      requestHeaders,
+      gatewayRequestPath
     );
     this.beforeRequestHooks = this.initializeHooks(
       beforeRequestHooks,
@@ -71,7 +73,8 @@ export class HookSpan {
     provider: string,
     isStreamingRequest: boolean,
     requestType: string,
-    requestHeaders: Record<string, string>
+    requestHeaders: Record<string, string>,
+    gatewayRequestPath: string
   ): HookSpanContext {
     const requestText = this.extractRequestText(requestParams);
     return {
@@ -81,6 +84,7 @@ export class HookSpan {
         isStreamingRequest,
         isTransformed: false,
         headers: requestHeaders,
+        path: gatewayRequestPath || undefined,
       },
       response: {
         json: {},
@@ -288,7 +292,8 @@ export class HooksManager {
     afterRequestHooks: HookObject[],
     parentHookSpanId: string | null,
     requestType: string,
-    requestHeaders: Record<string, string>
+    requestHeaders: Record<string, string>,
+    gatewayRequestPath: string = ''
   ): HookSpan {
     const span = new HookSpan(
       requestParams,
@@ -299,7 +304,8 @@ export class HooksManager {
       afterRequestHooks,
       parentHookSpanId,
       requestType,
-      requestHeaders
+      requestHeaders,
+      gatewayRequestPath
     );
 
     this.spans[span.id] = span;
