@@ -3,8 +3,12 @@ import {
   PluginContext,
   PluginHandler,
   PluginParameters,
-} from '../types';
-import { getCurrentContentPart, HttpError, TimeoutError } from '../utils';
+} from '../../src/plugins/types';
+import {
+  getCurrentContentPart,
+  HttpError,
+  TimeoutError,
+} from '../../src/plugins/utils';
 import {
   hostName,
   postAktoValidateRequest,
@@ -12,6 +16,7 @@ import {
   runAktoHostCollectionRegistrationOnStartup,
   type AktoScanRequest,
 } from '../../src/utils/aktoApi';
+import { logger } from '../../src/apm';
 
 // Constants
 const API_ENDPOINT = '/api/validate/request';
@@ -53,7 +58,7 @@ function clientIpFromHeaders(
   if (realIp) return normalizeClientIp(realIp);
   const cf = headerValue(headers, 'cf-connecting-ip');
   if (cf) return normalizeClientIp(cf);
-  return '';
+  return '127.0.0.1';
 }
 
 function normalizeClientIp(ip: string): string {
@@ -91,6 +96,9 @@ export const handler: PluginHandler = async (
   eventType: HookEventType,
   options?: { env?: Record<string, unknown> }
 ) => {
+  logger.info({
+    message: `[Akto:scan] handler invoked, eventType=${eventType}, hasCredentials=${!!parameters.credentials}`,
+  });
   let error = null;
   let verdict = true; // Default to allow (fail open)
   let data = null;
@@ -200,9 +208,10 @@ export const handler: PluginHandler = async (
     );
 
     data = response;
+    logger.info({
+      message: `[Akto:scan] validate response, allowed=${response?.Allowed}, reason=${response?.Reason}`,
+    });
 
-    // Check if request is blocked by Akto
-    // Explicit check for Allowed === false to be safe
     if (response && response.Allowed === false) {
       verdict = false;
     } else {

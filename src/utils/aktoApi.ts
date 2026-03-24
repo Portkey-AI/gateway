@@ -4,7 +4,8 @@
  */
 
 import { version as gatewayVersion } from '../../package.json';
-import { post } from '../../plugins/utils';
+import { post } from '../plugins/utils';
+import { logger } from '../apm';
 
 const AKTO_ULTRON_BASE = 'https://ultron.akto.io/api';
 const DEFAULT_HEARTBEAT_URL = `${AKTO_ULTRON_BASE}/updateModuleInfoForHeartbeat`;
@@ -28,7 +29,7 @@ function isAktoDebug(): boolean {
 
 function aktoDebug(label: string, data: Record<string, unknown>): void {
   if (!isAktoDebug()) return;
-  console.debug(`[Akto:${label}]`, JSON.stringify(data, null, 2));
+  logger.info({ message: `[Akto:${label}] ${JSON.stringify(data)}` });
 }
 
 const AI_GATEWAY_PORTKEY_HOST_LABELS = 'ai-gateway.portkey';
@@ -255,17 +256,14 @@ export async function runAktoGatewayHeartbeatOnStartup(
     const res = await postAktoHeartbeat(DEFAULT_HEARTBEAT_URL, token, payload);
     if (!res.ok) {
       const body = await res.text().catch(() => '');
-      console.warn(
-        '[Akto heartbeat] non-OK response:',
-        res.status,
-        body.slice(0, 300)
-      );
+      logger.warn({
+        message: `[Akto heartbeat] non-OK response: ${res.status} ${body.slice(0, 300)}`,
+      });
     }
   } catch (e) {
-    console.warn(
-      '[Akto heartbeat] request failed:',
-      e instanceof Error ? e.message : e
-    );
+    logger.warn({
+      message: `[Akto heartbeat] request failed: ${e instanceof Error ? e.message : e}`,
+    });
   }
 }
 
@@ -284,17 +282,14 @@ export async function runAktoHostCollectionRegistrationOnStartup(
     );
     if (!res.ok) {
       const body = await res.text().catch(() => '');
-      console.warn(
-        '[Akto collection registration] non-OK response:',
-        res.status,
-        body.slice(0, 300)
-      );
+      logger.warn({
+        message: `[Akto collection registration] non-OK response: ${res.status} ${body.slice(0, 300)}`,
+      });
     }
   } catch (e) {
-    console.warn(
-      '[Akto collection registration] request failed:',
-      e instanceof Error ? e.message : e
-    );
+    logger.warn({
+      message: `[Akto collection registration] request failed: ${e instanceof Error ? e.message : e}`,
+    });
   }
 }
 

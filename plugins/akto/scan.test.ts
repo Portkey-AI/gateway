@@ -1,11 +1,11 @@
 import { handler } from './scan';
-import { PluginContext } from '../types';
-import * as utils from '../utils';
+import { PluginContext } from '../../src/plugins/types';
+import * as utils from '../../src/plugins/utils';
 import { hostName } from '../../src/utils/aktoApi';
 
 // Mock the utils module
-jest.mock('../utils', () => ({
-  ...jest.requireActual('../utils'),
+jest.mock('../../src/plugins/utils', () => ({
+  ...jest.requireActual('../../src/plugins/utils'),
   post: jest.fn(),
 }));
 
@@ -139,7 +139,7 @@ describe('aktoScan', () => {
           method: 'POST',
           requestPayload: expect.any(String),
           requestHeaders: expect.any(String),
-          ip: '',
+          ip: '127.0.0.1',
           statusCode: '200',
           status: '200',
           tag: '{"gen-ai":"Gen AI"}',

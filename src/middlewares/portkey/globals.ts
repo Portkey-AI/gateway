@@ -272,6 +272,7 @@ export const GUARDRAIL_CATEGORY_FLAG_MAP: Record<string, string> = {
   'f5-guardrails': GUARDRAIL_CATEGORIES.PARTNER,
   'crowdstrike-aidr': GUARDRAIL_CATEGORIES.PARTNER,
   zscaler: GUARDRAIL_CATEGORIES.PARTNER,
+  akto: GUARDRAIL_CATEGORIES.PARTNER,
 };
 
 export enum HookTypePreset {
