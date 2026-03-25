@@ -1,0 +1,85 @@
+{
+  "id": "asqav",
+  "name": "Asqav",
+  "description": "Quantum-safe audit trails for AI traffic. Signs every request and response with ML-DSA-65 (NIST FIPS 204) for tamper-proof compliance evidence.",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": [
+          {
+            "type": "subHeading",
+            "text": "Your asqav API key. Get one at https://asqav.com"
+          }
+        ]
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Audit Log",
+      "id": "auditLog",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Signs requests and responses with quantum-safe ML-DSA-65 signatures. Creates tamper-proof audit trails with public verification URLs for compliance evidence (EU AI Act, DORA)."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "label": "Agent ID",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Identifier for the agent making requests. Defaults to 'portkey-gateway'."
+              }
+            ],
+            "default": "portkey-gateway"
+          },
+          "includeContent": {
+            "type": "boolean",
+            "label": "Include Content",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Include request/response content in the signed audit record. Disabled by default for privacy."
+              }
+            ],
+            "default": false
+          },
+          "failOpen": {
+            "type": "boolean",
+            "label": "Fail Open",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, requests proceed even if signing fails. Set to false to block requests when audit trail cannot be created."
+              }
+            ],
+            "default": true
+          },
+          "timeout": {
+            "type": "number",
+            "label": "Timeout (ms)",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Timeout for the asqav API call in milliseconds."
+              }
+            ],
+            "default": 5000
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}
