@@ -1,0 +1,69 @@
+{
+  "id": "aliceWonderfence",
+  "name": "Alice WonderFence",
+  "description": "Content moderation guardrails powered by ActiveFence WonderFence API.",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": { "type": "string", "label": "API Key", "encrypted": true },
+      "appName": { "type": "string", "label": "Application Name" },
+      "baseUrl": {
+        "type": "string",
+        "label": "Base URL",
+        "default": "https://api.alice.io"
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Evaluate Content",
+      "id": "evaluateContent",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Evaluate prompts and responses for harmful content, PII, prompt injections, and policy violations. Supports blocking and masking."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "customFields": {
+            "type": "json",
+            "label": "Custom Fields",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Optional custom fields as JSON array: [{\"name\": \"field\", \"value\": \"val\"}]"
+              }
+            ]
+          },
+          "debug": {
+            "type": "boolean",
+            "label": "Debug Logging",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enable verbose logging for troubleshooting. Disabled by default."
+              }
+            ],
+            "default": false
+          },
+          "failOpen": {
+            "type": "boolean",
+            "label": "Fail Open",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, requests are allowed through when the guardrail API encounters an error. If false, requests are blocked on error. Default: true."
+              }
+            ],
+            "default": true
+          }
+        }
+      }
+    }
+  ]
+}
