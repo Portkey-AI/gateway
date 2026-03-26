@@ -66,6 +66,8 @@ import { handler as javelinguardrails } from './javelin/guardrails';
 import { handler as f5GuardrailsScan } from './f5-guardrails/scan';
 import { handler as azureShieldPrompt } from './azure/shieldPrompt';
 import { handler as azureProtectedMaterial } from './azure/protectedMaterial';
+import { handler as deepkeepModerateContent } from './deepkeep/moderateContent';
+
 
 export const plugins = {
   default: {
@@ -175,5 +177,8 @@ export const plugins = {
   },
   'f5-guardrails': {
     scan: f5GuardrailsScan,
+  },
+  deepkeep: {
+    moderateContent: deepkeepModerateContent,
   },
 };
