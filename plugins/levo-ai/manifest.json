@@ -1,0 +1,77 @@
+{
+  "id": "levo",
+  "name": "Levo AI",
+  "description": "Observability integration for Levo AI platform",
+  "functions": [
+    {
+      "name": "Send Observability Traces",
+      "id": "observability",
+      "type": "guardrail",
+      "supportedHooks": ["afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Sends request/response traces to Levo AI Collector for observability and monitoring."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "required": ["organizationId"],
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "label": "Collector Endpoint",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Levo AI Collector endpoint URL (default: http://localhost:4318/v1/traces)"
+              }
+            ],
+            "default": "http://localhost:4318/v1/traces"
+          },
+          "organizationId": {
+            "type": "string",
+            "label": "Organization ID",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Levo organization ID (required). Sent as x-levo-organization-id header to collector for routing."
+              }
+            ]
+          },
+          "workspaceId": {
+            "type": "string",
+            "label": "Workspace ID",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Levo workspace ID (optional). Sent as x-levo-workspace-id header to collector."
+              }
+            ]
+          },
+          "headers": {
+            "type": "string",
+            "label": "Headers (JSON)",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Additional HTTP headers as JSON string (e.g., '{\"Authorization\": \"Bearer token\"}'). Note: x-levo-organization-id will be automatically added if organizationId is provided."
+              }
+            ]
+          },
+          "timeout": {
+            "type": "number",
+            "label": "Timeout (ms)",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Request timeout in milliseconds (default: 5000)"
+              }
+            ],
+            "default": 5000
+          }
+        }
+      }
+    }
+  ]
+}
