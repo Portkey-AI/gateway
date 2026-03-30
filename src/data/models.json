@@ -27,6 +27,22 @@
       "name": "Axon Code"
     },
     {
+      "id": "minimax/minimax-m2.5",
+      "object": "model",
+      "provider": {
+        "id": "hpc-ai"
+      },
+      "name": "MiniMax M2.5"
+    },
+    {
+      "id": "moonshotai/kimi-k2.5",
+      "object": "model",
+      "provider": {
+        "id": "hpc-ai"
+      },
+      "name": "Kimi K2.5"
+    },
+    {
       "id": "meta-llama/llama-3.1-70b-instruct/fp-8",
       "object": "model",
       "provider": {

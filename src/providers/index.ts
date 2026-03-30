@@ -60,6 +60,7 @@ import LeptonConfig from './lepton';
 import KlusterAIConfig from './kluster-ai';
 import NscaleConfig from './nscale';
 import HyperbolicConfig from './hyperbolic';
+import HpcAiConfig from './hpc-ai';
 import { FeatherlessAIConfig } from './featherless-ai';
 import KrutrimConfig from './krutrim';
 import AI302Config from './302ai';
@@ -133,6 +134,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'kluster-ai': KlusterAIConfig,
   nscale: NscaleConfig,
   hyperbolic: HyperbolicConfig,
+  'hpc-ai': HpcAiConfig,
   bytez: BytezConfig,
   'featherless-ai': FeatherlessAIConfig,
   krutrim: KrutrimConfig,
