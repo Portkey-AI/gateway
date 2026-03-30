@@ -68,7 +68,112 @@ import { handler as azureShieldPrompt } from './azure/shieldPrompt';
 import { handler as azureProtectedMaterial } from './azure/protectedMaterial';
 
 export const plugins = {
+  default: {
+    regexMatch: defaultregexMatch,
+    sentenceCount: defaultsentenceCount,
+    wordCount: defaultwordCount,
+    characterCount: defaultcharacterCount,
+    jsonSchema: defaultjsonSchema,
+    jsonKeys: defaultjsonKeys,
+    contains: defaultcontains,
+    validUrls: defaultvalidUrls,
+    webhook: defaultwebhook,
+    log: defaultlog,
+    containsCode: defaultcontainsCode,
+    alluppercase: defaultalluppercase,
+    alllowercase: defaultalllowercase,
+    endsWith: defaultendsWith,
+    modelWhitelist: defaultmodelWhitelist,
+    modelRules: defaultmodelRules,
+    jwt: defaultjwt,
+    requiredMetadataKeys: defaultrequiredMetadataKeys,
+    addPrefix: defaultaddPrefix,
+    regexReplace: defaultregexReplace,
+    allowedRequestTypes: defaultallowedRequestTypes,
+    notNull: defaultnotNull,
+  },
+  qualifire: {
+    contentModeration: qualifireContentModeration,
+    grounding: qualifireGrounding,
+    policy: qualifirePolicy,
+    toolUseQuality: qualifireToolUseQuality,
+    hallucinations: qualifireHallucinations,
+    pii: qualifirePii,
+    promptInjections: qualifirePromptInjections,
+  },
+  portkey: {
+    moderateContent: portkeymoderateContent,
+    language: portkeylanguage,
+    pii: portkeypii,
+    gibberish: portkeygibberish,
+  },
+  aporia: {
+    validateProject: aporiavalidateProject,
+  },
+  sydelabs: {
+    sydeguard: sydelabssydeguard,
+  },
+  pillar: {
+    scanPrompt: pillarscanPrompt,
+    scanResponse: pillarscanResponse,
+  },
+  patronus: {
+    phi: patronusphi,
+    pii: patronuspii,
+    isConcise: patronusisConcise,
+    isHelpful: patronusisHelpful,
+    isPolite: patronusisPolite,
+    noApologies: patronusnoApologies,
+    noGenderBias: patronusnoGenderBias,
+    noRacialBias: patronusnoRacialBias,
+    retrievalAnswerRelevance: patronusretrievalAnswerRelevance,
+    toxicity: patronustoxicity,
+    custom: patronuscustom,
+  },
+  mistral: {
+    moderateContent: mistralGuardrailHandler,
+  },
+  pangea: {
+    textGuard: pangeatextGuard,
+    pii: pangeapii,
+  },
+  promptfoo: {
+    pii: promptfooPii,
+    harm: promptfooHarm,
+    guard: promptfooGuard,
+  },
+  bedrock: {
+    guard: bedrockHandler,
+  },
+  acuvity: {
+    scan: acuvityScan,
+  },
+  lasso: {
+    classify: lassoclassify,
+  },
+  exa: {
+    online: exaonline,
+  },
+  azure: {
+    pii: azurePii,
+    contentSafety: azureContentSafety,
+    shieldPrompt: azureShieldPrompt,
+    protectedMaterial: azureProtectedMaterial,
+  },
+  promptsecurity: {
+    protectPrompt: promptSecurityProtectPrompt,
+    protectResponse: promptSecurityProtectResponse,
+  },
+  'panw-prisma-airs': {
+    intercept: panwPrismaAirsintercept,
+  },
+  walledai: {
+    walledprotect: walledaiguardrails,
+  },
   highflame: {
     guardrails: highflameguardrails,
+  },
+  'f5-guardrails': {
+    scan: f5GuardrailsScan,
   },
 };
