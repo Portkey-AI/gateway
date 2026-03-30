@@ -267,7 +267,7 @@ Explore Gateway integrations with [45+ providers](https://portkey.wiki/gh-59) an
 
 > [View the complete list of 200+ supported models here](https://portkey.wiki/gh-74)
 
-**HPC-AI:** Use `provider: "hpc-ai"` with your HPC-AI API key. The gateway targets `https://api.hpc-ai.com/inference/v1` (OpenAI-compatible chat completions). Override the base URL with `x-portkey-custom-host` or `custom_host` in config if required. Example models: `minimax/minimax-m2.5`, `moonshotai/kimi-k2.5`. For local integration tests, optional env vars: `HPC_AI_API_KEY`, `HPC_AI_BASE_URL` (see `.env.example`).
+**HPC-AI:** Use `provider: "hpc-ai"` with your HPC-AI API key. The gateway targets `https://api.hpc-ai.com/inference/v1` (OpenAI-compatible chat completions). Override the base URL with `x-portkey-custom-host` or `custom_host` in config if required. Example models: `minimax/minimax-m2.5`, `moonshotai/kimi-k2.5`. For local integration tests, optional env vars: `HPC_AI_API_KEY`, `HPC_AI_BASE_URL` (set these in your environment or `.env` file as appropriate).
 
 <br>
 
