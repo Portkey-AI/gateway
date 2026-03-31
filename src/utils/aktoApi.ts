@@ -116,7 +116,7 @@ export function buildAktoHostCollectionPayload(
     {
       lastUpdatedTs,
       keyName: 'source',
-      value: 'ENDPOINT',
+      value: 'PORTKEY',
       source: 'USER',
     },
     {
