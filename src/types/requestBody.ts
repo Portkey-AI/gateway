@@ -327,7 +327,7 @@ export interface Message {
 }
 
 export interface PromptCache {
-  cache_control?: { type: 'ephemeral' };
+  cache_control?: { type: 'ephemeral'; scope?: string };
 }
 
 export interface CitationMetadata {

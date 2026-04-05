@@ -154,7 +154,7 @@ export const transformAnthropicAdditionalModelRequestFields = (
           name: tool.type,
           type: toolOptions?.name,
           ...(tool.cache_control && {
-            cache_control: { type: 'ephemeral' },
+            cache_control: tool.cache_control,
           }),
         });
       }

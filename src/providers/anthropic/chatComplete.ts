@@ -72,6 +72,7 @@ interface AnthropicToolResultContentItem {
         cache_control?: {
           type: string;
           ttl?: number;
+          scope?: string;
         };
       }[]
     | string;
@@ -228,7 +229,7 @@ const transformAndAppendImageContentItem = (
             data: base64Image,
           },
           ...((item as any).cache_control && {
-            cache_control: { type: 'ephemeral' },
+            cache_control: (item as any).cache_control,
           }),
         });
       }
@@ -302,7 +303,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                     type: item.type,
                     text: item.text,
                     ...((item as any).cache_control && {
-                      cache_control: { type: 'ephemeral' },
+                      cache_control: (item as any).cache_control,
                     }),
                   });
                 } else if (item.type === 'image_url') {
@@ -343,7 +344,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                   text: _msg.text,
                   type: 'text',
                   ...((_msg as any)?.cache_control && {
-                    cache_control: { type: 'ephemeral' },
+                    cache_control: (_msg as any).cache_control,
                   }),
                 });
               });
@@ -353,7 +354,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
             ) {
               systemMessages.push({
                 ...(msg?.cache_control && {
-                  cache_control: { type: 'ephemeral' },
+                  cache_control: msg.cache_control,
                 }),
                 text: msg.content,
                 type: 'text',
@@ -383,7 +384,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                 $defs: tool.function.parameters?.['$defs'] || {},
               },
               ...(tool.cache_control && {
-                cache_control: { type: 'ephemeral' },
+                cache_control: tool.cache_control,
               }),
               // Advanced tool use properties (nested in function object per OpenAI format)
               ...(tool.function.defer_loading !== undefined && {
@@ -404,7 +405,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
               name: tool.type,
               type: toolOptions?.name,
               ...(tool.cache_control && {
-                cache_control: { type: 'ephemeral' },
+                cache_control: tool.cache_control,
               }),
             });
           }
