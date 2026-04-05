@@ -154,7 +154,16 @@ export const transformAnthropicAdditionalModelRequestFields = (
           name: tool.type,
           type: toolOptions?.name,
           ...(tool.cache_control && {
-            cache_control: tool.cache_control,
+            cache_control:
+              tool.cache_control.type === 'ephemeral'
+                ? {
+                    type: 'ephemeral' as const,
+                    ...(typeof (tool.cache_control as any).scope ===
+                      'string' && {
+                      scope: (tool.cache_control as any).scope,
+                    }),
+                  }
+                : { type: 'ephemeral' as const },
           }),
         });
       }
