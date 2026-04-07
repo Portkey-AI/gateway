@@ -469,6 +469,10 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
     param: 'thinking',
     required: false,
   },
+  cache_control: {
+    param: 'cache_control',
+    required: false,
+  },
 };
 
 interface AnthorpicTextContentItem {
