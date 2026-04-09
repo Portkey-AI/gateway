@@ -9,7 +9,8 @@
     "pangea",
     "promptsecurity",
     "panw-prisma-airs",
-    "walledai"
+    "walledai",
+    "promptguard"
   ],
   "credentials": {
     "portkey": {
