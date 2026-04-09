@@ -48,6 +48,10 @@ export const messagesBaseConfig: ProviderConfig = {
     param: 'thinking',
     required: false,
   },
+  cache_control: {
+    param: 'cache_control',
+    required: false,
+  },
   tool_choice: {
     param: 'tool_choice',
     required: false,
