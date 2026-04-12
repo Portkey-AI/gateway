@@ -62,7 +62,9 @@ const toolUseContentBlockStartEvent = (
     index,
     content_block: {
       type: 'tool_use',
-      tool_use: { ...toolUseBlock, input: {} },
+      id: toolUseBlock.id,
+      name: toolUseBlock.name,
+      input: {},
     },
   })}\n\n`;
 };
