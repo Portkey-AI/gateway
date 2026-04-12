@@ -610,7 +610,10 @@ export const getAnthropicChatCompleteResponseTransform = (provider: string) => {
           },
         ],
         usage: {
-          prompt_tokens: input_tokens,
+          prompt_tokens:
+            input_tokens +
+            (cache_creation_input_tokens ?? 0) +
+            (cache_read_input_tokens ?? 0),
           completion_tokens: output_tokens,
           total_tokens:
             input_tokens +
@@ -699,7 +702,10 @@ export const getAnthropicStreamChunkTransform = (provider: string) => {
     if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
       streamState.model = parsedChunk?.message?.model ?? '';
       streamState.usage = {
-        prompt_tokens: parsedChunk.message?.usage?.input_tokens,
+        prompt_tokens:
+          (parsedChunk.message?.usage?.input_tokens ?? 0) +
+          (parsedChunk.message?.usage?.cache_creation_input_tokens ?? 0) +
+          (parsedChunk.message?.usage?.cache_read_input_tokens ?? 0),
         ...(shouldSendCacheUsage && {
           cache_read_input_tokens:
             parsedChunk.message?.usage?.cache_read_input_tokens,
