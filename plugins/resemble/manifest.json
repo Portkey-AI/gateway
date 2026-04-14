@@ -1,0 +1,155 @@
+{
+  "id": "resemble",
+  "description": "Resemble AI Detect: deepfake detection for audio, video, and image content. Blocks LLM requests whose media inputs are flagged as synthetic or manipulated. Includes optional audio source tracing, reverse image search, and Zero Retention Mode.",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "Your Resemble AI API token. Get one from https://app.resemble.ai/account/api",
+        "encrypted": true
+      },
+      "apiBase": {
+        "type": "string",
+        "label": "API Base URL",
+        "description": "Override the Resemble API base URL (default: https://app.resemble.ai/api/v2)"
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Detect Deepfake Media",
+      "id": "detect",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Scan audio, video, or image URLs referenced in the request for deepfake / synthetic content. The guardrail fails when Resemble labels the media as fake or when the aggregated score exceeds the configured threshold."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "threshold": {
+            "type": "number",
+            "label": "Fake score threshold",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Aggregated score above which media is treated as fake (0.0–1.0). Default 0.5."
+              }
+            ],
+            "default": 0.5,
+            "minimum": 0,
+            "maximum": 1
+          },
+          "mediaType": {
+            "type": "string",
+            "label": "Force media type",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Optionally force audio / video / image. If omitted, Resemble auto-detects from the file extension or content type."
+              }
+            ],
+            "enum": ["audio", "video", "image"]
+          },
+          "audioSourceTracing": {
+            "type": "boolean",
+            "label": "Audio source tracing",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Identify which TTS vendor (elevenlabs, resemble_ai, etc.) generated the audio when it is flagged as fake."
+              }
+            ],
+            "default": false
+          },
+          "useReverseSearch": {
+            "type": "boolean",
+            "label": "Reverse image search (image only)",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "For image detections, search the web for matching images to improve accuracy."
+              }
+            ],
+            "default": false
+          },
+          "zeroRetentionMode": {
+            "type": "boolean",
+            "label": "Zero Retention Mode",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Automatically delete submitted media after detection completes. URLs are redacted and filenames are tokenized."
+              }
+            ],
+            "default": false
+          },
+          "urlSource": {
+            "type": "string",
+            "label": "URL source",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Where to find the media URL. 'auto' inspects multimodal content parts, then regex-extracts from text, then metadata. 'metadata' reads context.metadata[metadataKey]. 'content' only inspects message content."
+              }
+            ],
+            "enum": ["auto", "metadata", "content"],
+            "default": "auto"
+          },
+          "metadataKey": {
+            "type": "string",
+            "label": "Metadata key",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "When urlSource is 'metadata' or 'auto', read the URL from context.metadata[metadataKey]. Default 'mediaUrl'."
+              }
+            ],
+            "default": "mediaUrl"
+          },
+          "pollIntervalMs": {
+            "type": "number",
+            "label": "Poll interval (ms)",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "How often to poll Resemble for the detection result. Default 2000ms."
+              }
+            ],
+            "default": 2000,
+            "minimum": 250
+          },
+          "pollTimeoutMs": {
+            "type": "number",
+            "label": "Poll timeout (ms)",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Maximum total time to wait for the detection result before failing open. Default 60000ms (60s)."
+              }
+            ],
+            "default": 60000,
+            "minimum": 1000
+          },
+          "failClosed": {
+            "type": "boolean",
+            "label": "Fail closed on error",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, Resemble API errors (network, auth, timeout) will BLOCK the request. If false (default), errors are logged but the request passes through."
+              }
+            ],
+            "default": false
+          }
+        }
+      }
+    }
+  ]
+}
