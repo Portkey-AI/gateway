@@ -15,6 +15,7 @@ export const handler: PluginHandler = async (
   let error = null;
   let verdict = false;
   let data = null;
+  let log = null;  
   let transformedData: Record<string, any> = {
     request: { json: null },
     response: { json: null },
@@ -36,7 +37,11 @@ export const handler: PluginHandler = async (
     }
   } catch (e: any) {
     delete e.stack;
-    error = e;
+    error = e as Error;
+    // If there's a log in the error, capture it
+    if ((e as any).log) {
+      log = (e as any).log;
+    }
   }
-  return { error, verdict, data, transformed, transformedData };
+  return { error, verdict, data, transformedData, transformed, log };
 };
