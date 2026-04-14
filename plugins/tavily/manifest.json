@@ -1,0 +1,296 @@
+{
+  "id": "tavily",
+  "name": "Tavily",
+  "description": "Tavily integration for enriching LLM prompts with fresh web search context before inference.",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "Your Tavily API key.",
+        "encrypted": true
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Online Search",
+      "id": "online",
+      "supportedHooks": ["beforeRequestHook"],
+      "type": "transformer",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Adds relevant Tavily web results to the prompt so the model can answer with current online information."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prefix": {
+            "type": "string",
+            "label": "Context Prefix",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Text inserted before the Tavily search context in the prompt."
+              }
+            ],
+            "default": "\n<web_search_context>"
+          },
+          "suffix": {
+            "type": "string",
+            "label": "Context Suffix",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Text inserted after the Tavily search context in the prompt."
+              }
+            ],
+            "default": "\n</web_search_context>"
+          },
+          "maxResults": {
+            "type": "number",
+            "label": "Maximum Results",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Maximum number of Tavily search results to return."
+              }
+            ],
+            "default": 5
+          },
+          "searchDepth": {
+            "type": "string",
+            "label": "Search Depth",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Controls the latency versus relevance tradeoff for Tavily search."
+              }
+            ],
+            "enum": ["advanced", "basic", "fast", "ultra-fast"]
+          },
+          "chunksPerSource": {
+            "type": "number",
+            "label": "Chunks Per Source",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Maximum number of chunks returned per source. Tavily documents this for advanced search depth."
+              }
+            ],
+            "default": 3
+          },
+          "topic": {
+            "type": "string",
+            "label": "Topic",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Category of results to retrieve."
+              }
+            ],
+            "enum": ["general", "news", "finance"]
+          },
+          "timeRange": {
+            "type": "string",
+            "label": "Time Range",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Filter results based on how recently sources were published or updated."
+              }
+            ],
+            "enum": ["day", "week", "month", "year", "d", "w", "m", "y"]
+          },
+          "startDate": {
+            "type": "string",
+            "label": "Start Date",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Return results after this date in YYYY-MM-DD format."
+              }
+            ]
+          },
+          "endDate": {
+            "type": "string",
+            "label": "End Date",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Return results before this date in YYYY-MM-DD format."
+              }
+            ]
+          },
+          "includeAnswer": {
+            "label": "Include Answer",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Include a Tavily-generated answer in the response."
+              }
+            ],
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string",
+                "enum": ["basic", "advanced"]
+              }
+            ],
+            "default": false
+          },
+          "includeRawContent": {
+            "label": "Include Raw Content",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Include cleaned and parsed HTML content for each result."
+              }
+            ],
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string",
+                "enum": ["markdown", "text"]
+              }
+            ],
+            "default": false
+          },
+          "includeImages": {
+            "type": "boolean",
+            "label": "Include Images",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Include query-related images and per-result images in the Tavily response."
+              }
+            ],
+            "default": false
+          },
+          "includeImageDescriptions": {
+            "type": "boolean",
+            "label": "Include Image Descriptions",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "When images are included, also include descriptive text for each image."
+              }
+            ],
+            "default": false
+          },
+          "includeFavicon": {
+            "type": "boolean",
+            "label": "Include Favicon",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Include the favicon URL for each result."
+              }
+            ],
+            "default": false
+          },
+          "includeDomains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "label": "Include Domains",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Restrict results to the listed domains."
+              }
+            ]
+          },
+          "excludeDomains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "label": "Exclude Domains",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Exclude results from the listed domains."
+              }
+            ]
+          },
+          "country": {
+            "type": "string",
+            "label": "Country",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Boost results from a specific country. Tavily supports this only when topic is general."
+              }
+            ]
+          },
+          "autoParameters": {
+            "type": "boolean",
+            "label": "Auto Parameters",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Let Tavily automatically configure search parameters from the query. Explicit values still override Tavily's choices."
+              }
+            ],
+            "default": false
+          },
+          "exactMatch": {
+            "type": "boolean",
+            "label": "Exact Match",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Return only results matching exact quoted phrases from the query."
+              }
+            ],
+            "default": false
+          },
+          "includeUsage": {
+            "type": "boolean",
+            "label": "Include Usage",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Include Tavily credit usage information in the response metadata."
+              }
+            ],
+            "default": false
+          },
+          "safeSearch": {
+            "type": "boolean",
+            "label": "Safe Search",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Enterprise-only. Filters adult or unsafe content. Tavily does not support this for fast or ultra-fast search depth."
+              }
+            ],
+            "default": false
+          },
+          "timeout": {
+            "type": "number",
+            "label": "Timeout",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Maximum time to wait for the Tavily request in milliseconds."
+              }
+            ],
+            "default": 30000
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}
