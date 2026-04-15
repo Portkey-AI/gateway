@@ -20,7 +20,7 @@
   },
   "functions": [
     {
-      "name": "Protect Prompt",
+      "name": "Prompt Security Prompt",
       "id": "protectPrompt",
       "supportedHooks": ["beforeRequestHook"],
       "type": "guardrail",
@@ -32,7 +32,7 @@
       ]
     },
     {
-      "name": "Protect Response",
+      "name": "Prompt Security Response",
       "id": "protectResponse",
       "supportedHooks": ["afterRequestHook"],
       "type": "guardrail",
