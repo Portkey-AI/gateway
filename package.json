@@ -78,5 +78,8 @@
     "wrangler": "^3.97.0"
   },
   "bin": "build/start-server.js",
-  "type": "module"
+  "type": "module",
+  "engines": {
+    "node": ">=20.9.0"
+  }
 }
