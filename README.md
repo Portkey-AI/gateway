@@ -14,6 +14,11 @@
 
 
 # AI Gateway
+
+> **Status**: active | **Version**: 1.15.2 | **README refreshed**: 2026-04-17
+>
+> Since README was last updated (2026-02-19):  tracked commits (1 feat, 0
+0 fix, 37 chore). Fork with upstream-mirror sync.
 #### Route to 250+ LLMs with 1 fast & friendly API
 
 <img src="https://cfassets.portkey.ai/sdk.gif" width="550px" alt="Portkey AI Gateway Demo showing LLM routing capabilities" style="margin-left:-35px">
