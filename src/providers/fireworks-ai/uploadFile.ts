@@ -3,6 +3,7 @@ import { createLineSplitter } from '../../handlers/streamHandlerUtils';
 import { RequestHandler } from '../types';
 import FireworksAIAPIConfig from './api';
 import { createDataset, getUploadEndpoint, validateDataset } from './utils';
+import { assertSafeRequestUrl } from '../utils/urlValidation';
 
 export const FireworksFileUploadResponseTransform = (response: any) => {
   return response;
@@ -88,6 +89,7 @@ export const FireworkFileUploadRequestHandler: RequestHandler<
       },
     };
 
+    assertSafeRequestUrl(preSignedUrl);
     const uploadResponse = await fetch(preSignedUrl, options);
 
     if (!uploadResponse.ok) {

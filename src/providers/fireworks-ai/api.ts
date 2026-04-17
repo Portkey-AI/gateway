@@ -1,4 +1,5 @@
 import { ProviderAPIConfig } from '../types';
+import { assertSafeUrlComponent } from '../utils/urlValidation';
 
 const inferenceFunctions = [
   'complete',
@@ -13,6 +14,7 @@ const FireworksAIAPIConfig: ProviderAPIConfig = {
       return 'https://api.fireworks.ai/inference/v1';
     }
     const accountId = providerOptions.fireworksAccountId;
+    assertSafeUrlComponent('fireworks account id', accountId);
     return `https://api.fireworks.ai/v1/accounts/${accountId}`;
   },
   headers: ({ providerOptions }) => {

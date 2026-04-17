@@ -2,25 +2,30 @@ import { GatewayError } from '../../errors/GatewayError';
 import { Options } from '../../types/requestBody';
 import { endpointStrings, ProviderAPIConfig } from '../types';
 import { getModelAndProvider, getAccessToken, getBucketAndFile } from './utils';
+import { assertSafeUrlComponent } from '../utils/urlValidation';
 
 const getApiVersion = (provider: string) => {
   if (provider === 'meta') return 'v1beta1';
   return 'v1';
 };
 
+const resolveProjectId = (providerOptions: Options): string | undefined => {
+  const { vertexProjectId, vertexServiceAccountJson } = providerOptions;
+  if (vertexServiceAccountJson && vertexServiceAccountJson.project_id) {
+    return vertexServiceAccountJson.project_id;
+  }
+  return vertexProjectId;
+};
+
 const getProjectRoute = (
   providerOptions: Options,
   inputModel: string
 ): string => {
-  const {
-    vertexProjectId: inputProjectId,
-    vertexRegion,
-    vertexServiceAccountJson,
-  } = providerOptions;
-  let projectId = inputProjectId;
-  if (vertexServiceAccountJson && vertexServiceAccountJson.project_id) {
-    projectId = vertexServiceAccountJson.project_id;
-  }
+  const projectId = resolveProjectId(providerOptions);
+  const { vertexRegion } = providerOptions;
+
+  assertSafeUrlComponent('vertex project ID', projectId);
+  assertSafeUrlComponent('vertex region', vertexRegion);
 
   const { provider } = getModelAndProvider(inputModel as string);
   const routeVersion = getApiVersion(provider);
@@ -61,6 +66,8 @@ export const GoogleApiConfig: ProviderAPIConfig = {
     if (vertexRegion === 'global') {
       return 'https://aiplatform.googleapis.com';
     }
+
+    assertSafeUrlComponent('vertex region', vertexRegion);
 
     return `https://${vertexRegion}-aiplatform.googleapis.com`;
   },
@@ -118,6 +125,10 @@ export const GoogleApiConfig: ProviderAPIConfig = {
       if (!projectId || vertexServiceAccountJson) {
         projectId = vertexServiceAccountJson?.project_id;
       }
+
+      assertSafeUrlComponent('vertex project ID', projectId);
+      assertSafeUrlComponent('vertex region', vertexRegion);
+
       switch (fn) {
         case 'retrieveBatch':
           return `/v1/projects/${projectId}/locations/${vertexRegion}/batchPredictionJobs/${jobId}`;

@@ -181,6 +181,10 @@ export async function constructRequest(
   const fetchOptions: RequestInit = {
     method: requestContext.method,
     headers,
+    // Prevent SSRF via open redirects: when a custom host is used, don't follow
+    // HTTP redirects automatically. A validated custom host could redirect to an
+    // internal/metadata endpoint, bypassing isValidCustomHost checks.
+    ...(requestContext.customHost && { redirect: 'manual' as const }),
     ...(requestContext.endpoint === 'uploadFile' && { duplex: 'half' }),
   };
 

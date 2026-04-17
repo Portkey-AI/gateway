@@ -11,6 +11,7 @@ import { BatchEndpoints, GOOGLE_VERTEX_AI } from '../../globals';
 import { createLineSplitter } from '../../handlers/streamHandlerUtils';
 import GoogleApiConfig from './api';
 import { GoogleEmbedResponseTransform } from './embed';
+import { assertSafeRequestUrl } from '../utils/urlValidation';
 
 const responseTransforms = {
   google: {
@@ -125,6 +126,7 @@ export const BatchOutputRequestHandler: RequestHandler = async ({
   });
 
   const batchesURL = `${baseURL}${endpoint}`;
+  assertSafeRequestUrl(batchesURL);
   let modelName = '';
   let outputURL;
   try {
@@ -174,10 +176,9 @@ export const BatchOutputRequestHandler: RequestHandler = async ({
       ? '000000000000.jsonl'
       : 'predictions.jsonl';
 
-  const outputResponse = await fetch(
-    `${outputURL}/${predictionFileId}`,
-    options
-  );
+  const outputFetchURL = `${outputURL}/${predictionFileId}`;
+  assertSafeRequestUrl(outputFetchURL);
+  const outputResponse = await fetch(outputFetchURL, options);
 
   const reader = outputResponse.body;
   if (!reader) {

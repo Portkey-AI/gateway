@@ -16,6 +16,7 @@ import { Context } from 'hono';
 import { env } from 'hono/adapter';
 import { ContentType, JsonSchema, Tool } from '../../types/requestBody';
 import { GoogleMessagePart } from '../google/chatComplete';
+import { assertSafeUrlComponent } from '../utils/urlValidation';
 
 /**
  * Encodes an object as a Base64 URL-encoded string.
@@ -611,6 +612,8 @@ export const generateSignedURL = async (
       "Expiration Time can't be longer than 604800 seconds (7 days)."
     );
   }
+
+  assertSafeUrlComponent('vertex storage bucket name', bucketName);
 
   const escapedObjectName = encodeURIComponent(objectName).replace(/%2F/g, '/');
   const canonicalUri = `/${escapedObjectName}`;

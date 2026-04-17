@@ -4,6 +4,7 @@ import { Options } from '../../types/requestBody';
 import { CohereGetFileResponse, CohereRetrieveBatchResponse } from './types';
 import { CohereEmbedResponseTransformBatch } from './embed';
 import { COHERE } from '../../globals';
+import { assertSafeRequestUrl } from '../utils/urlValidation';
 
 export const CohereGetBatchOutputHandler = async ({
   c,
@@ -36,8 +37,10 @@ export const CohereGetBatchOutputHandler = async ({
       transformedRequestUrl: baseURL + endpoint,
       transformedRequestBody: {},
     });
+    const retrieveBatchURL = baseURL + endpoint;
+    assertSafeRequestUrl(retrieveBatchURL);
     // get the batch details
-    const retrieveBatchResponse = await fetch(baseURL + endpoint, {
+    const retrieveBatchResponse = await fetch(retrieveBatchURL, {
       method: 'GET',
       headers,
     });
@@ -56,14 +59,13 @@ export const CohereGetBatchOutputHandler = async ({
       await retrieveBatchResponse.json();
     const outputFileId = batchDetails.output_dataset_id;
 
+    const retrieveFileURL = `https://api.cohere.ai/v1/datasets/${outputFileId}`;
+    assertSafeRequestUrl(retrieveFileURL);
     // get the file details
-    const retrieveFileResponse = await fetch(
-      `https://api.cohere.ai/v1/datasets/${outputFileId}`,
-      {
-        method: 'GET',
-        headers,
-      }
-    );
+    const retrieveFileResponse = await fetch(retrieveFileURL, {
+      method: 'GET',
+      headers,
+    });
     const retrieveFileResponseJson: CohereGetFileResponse =
       await retrieveFileResponse.json();
     if (!retrieveFileResponse.ok) {
@@ -86,6 +88,7 @@ export const CohereGetBatchOutputHandler = async ({
       start: async (controller) => {
         const fileParts = retrieveFileResponseJson.dataset.dataset_parts;
         for (const filePart of fileParts) {
+          assertSafeRequestUrl(filePart.url);
           const filePartResponse = await fetch(filePart.url, {
             method: 'GET',
             headers,

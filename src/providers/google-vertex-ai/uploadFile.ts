@@ -17,6 +17,10 @@ import { createLineSplitter } from '../../handlers/streamHandlerUtils';
 import GoogleApiConfig from './api';
 import { VertexBatchEmbedConfig } from './embed';
 import { GatewayError } from '../../errors/GatewayError';
+import {
+  assertSafeRequestUrl,
+  assertSafeUrlComponent,
+} from '../utils/urlValidation';
 
 const PROVIDER_CONFIG: Record<
   string,
@@ -162,6 +166,8 @@ export const GoogleFileUploadRequestHandler: RequestHandler<
     gatewayRequestBody: {},
   });
 
+  assertSafeUrlComponent('vertex storage bucket name', vertexStorageBucketName);
+
   const encodedFile = encodeURIComponent(objectKey ?? '');
   let url;
   if (uploadMethod !== 'POST') {
@@ -177,6 +183,7 @@ export const GoogleFileUploadRequestHandler: RequestHandler<
       {}
     );
   }
+  assertSafeRequestUrl(url);
 
   const options = {
     body:

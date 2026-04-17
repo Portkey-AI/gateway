@@ -3,6 +3,7 @@ import { Params } from '../../types/requestBody';
 import { RequestHandler } from '../types';
 import FireworksAIAPIConfig from './api';
 import { fireworkFinetuneToOpenAIFinetune } from './utils';
+import { assertSafeRequestUrl } from '../utils/urlValidation';
 
 export const FireworkCancelFinetuneResponseTransform = (
   response: any,
@@ -43,8 +44,11 @@ export const FireworksCancelFinetuneRequestHandler: RequestHandler<
     providerOptions,
   });
 
+  const fetchURL = baseURL + endpoint;
+  assertSafeRequestUrl(fetchURL);
+
   try {
-    const request = await fetch(baseURL + endpoint, {
+    const request = await fetch(fetchURL, {
       method: 'DELETE',
       headers,
       body: JSON.stringify(requestBody),
