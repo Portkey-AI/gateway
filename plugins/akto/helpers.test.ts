@@ -1,10 +1,10 @@
-import { version as gatewayVersion } from '../../../../package.json';
+import { version as gatewayVersion } from '../../package.json';
 import {
   buildAktoHostCollectionPayload,
   hostName,
   runAktoGatewayHeartbeatOnStartup,
   runAktoHostCollectionRegistrationOnStartup,
-} from '../../../../src/utils/aktoApi';
+} from './helpers';
 
 describe('aktoApi (heartbeat)', () => {
   const tokenKeyApi = 'PORTKEY_AKTO_API_KEY';
@@ -95,7 +95,7 @@ describe('aktoApi (heartbeat)', () => {
           }),
           expect.objectContaining({
             keyName: 'source',
-            value: 'ENDPOINT',
+            value: 'PORTKEY',
             source: 'USER',
           }),
           expect.objectContaining({
@@ -146,7 +146,7 @@ describe('aktoApi (heartbeat)', () => {
           }),
           expect.objectContaining({
             keyName: 'source',
-            value: 'ENDPOINT',
+            value: 'PORTKEY',
             source: 'USER',
           }),
           expect.objectContaining({

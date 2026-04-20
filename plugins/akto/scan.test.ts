@@ -1,7 +1,7 @@
 import { handler } from './scan';
 import { PluginContext } from '../../src/plugins/types';
 import * as utils from '../../src/plugins/utils';
-import { hostName } from '../../src/utils/aktoApi';
+import { hostName } from './helpers';
 
 // Mock the utils module
 jest.mock('../../src/plugins/utils', () => ({

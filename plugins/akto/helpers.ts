@@ -1,11 +1,6 @@
-/**
- * Akto HTTP clients: guardrails validate (`/api/validate/request`) and Cyborg heartbeat
- * (`updateModuleInfoForHeartbeat`). Used by `plugins/akto/scan.ts` and Node startup.
- */
-
 import { version as gatewayVersion } from '../../package.json';
-import { post } from '../plugins/utils';
-import { logger } from '../apm';
+import { post } from '../../src/plugins/utils';
+import { logger } from '../../src/apm';
 
 const AKTO_ULTRON_BASE = 'https://ultron.akto.io/api';
 const DEFAULT_HEARTBEAT_URL = `${AKTO_ULTRON_BASE}/updateModuleInfoForHeartbeat`;

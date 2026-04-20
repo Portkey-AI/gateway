@@ -15,7 +15,7 @@ import {
   runAktoGatewayHeartbeatOnStartup,
   runAktoHostCollectionRegistrationOnStartup,
   type AktoScanRequest,
-} from '../../src/utils/aktoApi';
+} from './helpers';
 import { logger } from '../../src/apm';
 
 // Constants
