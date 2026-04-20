@@ -1,10 +1,11 @@
 import { handler } from './scan';
-import { PluginContext } from '../types';
-import * as utils from '../utils';
+import { PluginContext } from '../../src/plugins/types';
+import * as utils from '../../src/plugins/utils';
+import { hostName } from './helpers';
 
 // Mock the utils module
-jest.mock('../utils', () => ({
-  ...jest.requireActual('../utils'),
+jest.mock('../../src/plugins/utils', () => ({
+  ...jest.requireActual('../../src/plugins/utils'),
   post: jest.fn(),
 }));
 
@@ -15,9 +16,20 @@ describe('aktoScan', () => {
   };
 
   const mockPost = utils.post as jest.MockedFunction<typeof utils.post>;
+  let fetchSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    fetchSpy = jest.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      text: async () => '',
+    } as unknown as Response);
+  });
+
+  afterEach(() => {
+    fetchSpy.mockRestore();
   });
 
   describe('Request Validation', () => {
@@ -123,7 +135,17 @@ describe('aktoScan', () => {
       expect(mockPost).toHaveBeenCalledWith(
         'https://guardrails.akto.io/api/validate/request',
         expect.objectContaining({
-          payload: expect.any(String),
+          path: '/v1/chat/completions',
+          method: 'POST',
+          requestPayload: expect.any(String),
+          requestHeaders: expect.any(String),
+          ip: '127.0.0.1',
+          statusCode: '200',
+          status: '200',
+          tag: '{"gen-ai":"Gen AI"}',
+          metadata: '{"gen-ai":"Gen AI"}',
+          contextSource: 'ENDPOINT',
+          source: 'MIRRORING',
         }),
         expect.objectContaining({
           headers: expect.objectContaining({
@@ -446,13 +468,92 @@ describe('aktoScan', () => {
     });
   });
 
-  describe('Model Handling', () => {
-    it('Should use default model when model is not in context', async () => {
+  describe('Akto host header', () => {
+    it('Should use static hostName when Host header is localhost', async () => {
+      const context = {
+        request: {
+          headers: { host: 'localhost:8787' },
+          json: {
+            messages: [{ role: 'user', content: 'Test' }],
+            model: 'gpt-4',
+          },
+        },
+        requestType: 'chatComplete',
+      };
+
+      mockPost.mockResolvedValueOnce({
+        Allowed: true,
+        Modified: false,
+        ModifiedPayload: '',
+        Reason: '',
+        Metadata: {},
+      });
+
+      await handler(
+        context as PluginContext,
+        { credentials: mockCredentials },
+        'beforeRequestHook',
+        {
+          env: {
+            PORTKEY_GATEWAY_PUBLIC_HOST: 'rahul496k.chrome.chatgpt.com',
+          },
+        }
+      );
+
+      const requestBody = mockPost.mock.calls[0][1] as {
+        requestHeaders: string;
+      };
+      expect(JSON.parse(requestBody.requestHeaders)).toEqual({
+        host: hostName,
+      });
+    });
+
+    it('Should use static hostName when non-local Host is present', async () => {
+      const context = {
+        request: {
+          headers: { host: 'api.customer.test' },
+          json: {
+            messages: [{ role: 'user', content: 'Test' }],
+            model: 'gpt-4',
+          },
+        },
+        requestType: 'chatComplete',
+      };
+
+      mockPost.mockResolvedValueOnce({
+        Allowed: true,
+        Modified: false,
+        ModifiedPayload: '',
+        Reason: '',
+        Metadata: {},
+      });
+
+      await handler(
+        context as PluginContext,
+        { credentials: mockCredentials },
+        'beforeRequestHook',
+        {
+          env: {
+            PORTKEY_GATEWAY_PUBLIC_HOST: 'rahul496k.chrome.chatgpt.com',
+          },
+        }
+      );
+
+      const requestBody = mockPost.mock.calls[0][1] as {
+        requestHeaders: string;
+      };
+      expect(JSON.parse(requestBody.requestHeaders)).toEqual({
+        host: hostName,
+      });
+    });
+  });
+
+  describe('Request body shape', () => {
+    it('Should send requestPayload with scanned body text', async () => {
       const context = {
         request: {
           json: {
             messages: [{ role: 'user', content: 'Test' }],
-            // No model field
           },
         },
         requestType: 'chatComplete',
@@ -473,10 +574,10 @@ describe('aktoScan', () => {
       );
 
       const callArgs = mockPost.mock.calls[0];
-      const requestBody = callArgs[1];
-      const payload = JSON.parse(requestBody.payload);
+      const requestBody = callArgs[1] as { requestPayload: string };
+      const payload = JSON.parse(requestBody.requestPayload);
 
-      expect(payload.model).toBe('unknown');
+      expect(payload.body).toBe('Test');
     });
   });
 });
