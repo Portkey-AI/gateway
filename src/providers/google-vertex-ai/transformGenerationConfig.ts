@@ -1,4 +1,5 @@
 import {
+  limitGeminiSchemaNestingDepth,
   recursivelyDeleteUnsupportedParameters,
   transformGeminiToolParameters,
 } from './utils';
@@ -49,7 +50,9 @@ export function transformGenerationConfig(params: PortkeyGeminiParams) {
       params?.response_format?.json_schema?.schema ??
       params?.response_format?.json_schema;
     recursivelyDeleteUnsupportedParameters(schema);
-    generationConfig['responseSchema'] = transformGeminiToolParameters(schema);
+    generationConfig['responseSchema'] = limitGeminiSchemaNestingDepth(
+      transformGeminiToolParameters(schema)
+    );
   }
 
   if (params?.thinking) {

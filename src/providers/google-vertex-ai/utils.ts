@@ -300,6 +300,131 @@ export const transformGeminiToolParameters = (
   return transformNode(schema);
 };
 
+/**
+ * Gemini's maximum allowed schema nesting depth (counting OBJECT and ARRAY types only).
+ * Schemas with nodes deeper than this are trimmed to avoid the
+ * "exceeds the maximum allowed nesting depth" error from the Gemini API.
+ * See: https://github.com/Portkey-AI/gateway/issues/1546
+ */
+export const GEMINI_MAX_SCHEMA_NESTING_DEPTH = 4;
+
+/**
+ * Recursively limits a JSON Schema's nesting depth to comply with Gemini's
+ * maximum allowed nesting depth.
+ *
+ * Only OBJECT and ARRAY typed schema nodes count toward the depth limit.
+ * When a node would exceed the limit:
+ *   - OBJECT schemas have their `properties` (and `required`) stripped.
+ *   - ARRAY schemas have their `items` stripped (elements become unconstrained).
+ *
+ * This is graceful degradation: the request succeeds but Gemini enforces
+ * less structure at the deepest levels.
+ */
+export const limitGeminiSchemaNestingDepth = (
+  schema: any,
+  depth: number = 0
+): any => {
+  if (!schema || typeof schema !== 'object' || Array.isArray(schema)) {
+    return schema;
+  }
+
+  const type = schema.type;
+  const isComplex = type === 'object' || type === 'array';
+  // Each OBJECT or ARRAY type increments the nesting depth counter.
+  const nodeDepth = isComplex ? depth + 1 : depth;
+
+  // If this node itself exceeds the limit, return a stripped version.
+  if (nodeDepth > GEMINI_MAX_SCHEMA_NESTING_DEPTH) {
+    const simplified: any = {};
+    if (type) simplified.type = type;
+    return simplified;
+  }
+
+  const result: any = {};
+  // Track properties removed due to depth overflow so we can update `required`.
+  const removedProps = new Set<string>();
+
+  for (const [key, value] of Object.entries(schema)) {
+    switch (key) {
+      case 'properties': {
+        if (typeof value === 'object' && !Array.isArray(value)) {
+          const props: Record<string, any> = {};
+          for (const [propKey, propValue] of Object.entries(
+            value as Record<string, any>
+          )) {
+            const propType = (propValue as any)?.type;
+            const propIsComplex = propType === 'object' || propType === 'array';
+            // Would adding this property's schema exceed the depth limit?
+            if (
+              propIsComplex &&
+              nodeDepth + 1 > GEMINI_MAX_SCHEMA_NESTING_DEPTH
+            ) {
+              removedProps.add(propKey);
+            } else {
+              props[propKey] = limitGeminiSchemaNestingDepth(
+                propValue,
+                nodeDepth
+              );
+            }
+          }
+          if (Object.keys(props).length > 0) result.properties = props;
+        }
+        break;
+      }
+
+      case 'items': {
+        if (Array.isArray(value)) {
+          result.items = value.map((item) =>
+            limitGeminiSchemaNestingDepth(item, nodeDepth)
+          );
+        } else {
+          const itemType = (value as any)?.type;
+          const itemIsComplex = itemType === 'object' || itemType === 'array';
+          // Skip items if the element schema would exceed the depth limit.
+          if (
+            itemIsComplex &&
+            nodeDepth + 1 > GEMINI_MAX_SCHEMA_NESTING_DEPTH
+          ) {
+            // Leave items out — array elements become unconstrained.
+            break;
+          }
+          result.items = limitGeminiSchemaNestingDepth(value as any, nodeDepth);
+        }
+        break;
+      }
+
+      case 'required':
+        // Deferred: applied after properties processing (see below).
+        break;
+
+      case 'anyOf':
+      case 'oneOf':
+      case 'allOf':
+        if (Array.isArray(value)) {
+          // anyOf/oneOf/allOf alternatives sit at the same conceptual depth
+          // as the enclosing schema, so pass `depth` (not `nodeDepth`).
+          result[key] = value.map((item) =>
+            limitGeminiSchemaNestingDepth(item, depth)
+          );
+        }
+        break;
+
+      default:
+        result[key] = value;
+    }
+  }
+
+  // Apply `required`, filtering out any properties that were removed.
+  if (schema.required && Array.isArray(schema.required)) {
+    const filtered = (schema.required as string[]).filter(
+      (p) => !removedProps.has(p)
+    );
+    if (filtered.length > 0) result.required = filtered;
+  }
+
+  return result;
+};
+
 // Vertex AI does not support additionalProperties in JSON Schema
 // https://cloud.google.com/vertex-ai/docs/reference/rest/v1/Schema
 export const recursivelyDeleteUnsupportedParameters = (obj: any) => {

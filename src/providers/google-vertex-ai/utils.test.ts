@@ -1,4 +1,9 @@
-import { derefer, transformGeminiToolParameters } from './utils';
+import {
+  derefer,
+  GEMINI_MAX_SCHEMA_NESTING_DEPTH,
+  limitGeminiSchemaNestingDepth,
+  transformGeminiToolParameters,
+} from './utils';
 
 /*
 from enum import StrEnum
@@ -614,5 +619,123 @@ describe('transformGeminiToolParameters', () => {
       'identity',
       'emergency_contacts',
     ]);
+  });
+});
+
+describe('limitGeminiSchemaNestingDepth', () => {
+  // The user-reported schema from issue #1546: a 6-level deep schema
+  // (OBJECT > ARRAY > OBJECT > ARRAY > OBJECT > ARRAY) that exceeds Gemini's limit.
+  const deepSchema = {
+    type: 'object',
+    properties: {
+      tasks: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            title: { type: 'string' },
+            stories: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  title: { type: 'string' },
+                  acceptance_criteria: {
+                    type: 'array',
+                    items: { type: 'string' },
+                  },
+                  figma_frame_image_urls: {
+                    type: 'array',
+                    items: { type: 'string' },
+                  },
+                },
+                required: [
+                  'title',
+                  'acceptance_criteria',
+                  'figma_frame_image_urls',
+                ],
+              },
+            },
+          },
+          required: ['title', 'stories'],
+        },
+      },
+    },
+    required: ['tasks'],
+  };
+
+  it('reduces a 6-level deep schema to within GEMINI_MAX_SCHEMA_NESTING_DEPTH', () => {
+    const limited = limitGeminiSchemaNestingDepth(deepSchema);
+
+    const countDepth = (schema: any, d = 0): number => {
+      if (!schema || typeof schema !== 'object' || Array.isArray(schema))
+        return d;
+      const t = schema.type;
+      const nd = t === 'object' || t === 'array' ? d + 1 : d;
+      let max = nd;
+      if (schema.properties)
+        for (const v of Object.values(schema.properties))
+          max = Math.max(max, countDepth(v, nd));
+      if (schema.items && !Array.isArray(schema.items))
+        max = Math.max(max, countDepth(schema.items, nd));
+      for (const k of ['anyOf', 'oneOf', 'allOf'])
+        if (Array.isArray(schema[k]))
+          for (const s of schema[k]) max = Math.max(max, countDepth(s, d));
+      return max;
+    };
+
+    expect(countDepth(limited)).toBeLessThanOrEqual(
+      GEMINI_MAX_SCHEMA_NESTING_DEPTH
+    );
+  });
+
+  it('preserves shallow schema properties that are within the depth limit', () => {
+    const limited = limitGeminiSchemaNestingDepth(deepSchema) as any;
+    // tasks array and task-item object structure should survive
+    expect(limited.type).toBe('object');
+    expect(limited.properties.tasks.type).toBe('array');
+    expect(limited.properties.tasks.items.type).toBe('object');
+    expect(limited.properties.tasks.items.properties.title.type).toBe('string');
+  });
+
+  it('strips items from array schemas that would exceed the depth limit', () => {
+    const limited = limitGeminiSchemaNestingDepth(deepSchema) as any;
+    // stories array (at depth 4) should exist but have no items (depth 5 = exceeded)
+    const stories = limited.properties.tasks.items.properties.stories;
+    expect(stories.type).toBe('array');
+    expect(stories.items).toBeUndefined();
+  });
+
+  it('keeps required fields that survive depth trimming', () => {
+    const limited = limitGeminiSchemaNestingDepth(deepSchema) as any;
+    // task item required should retain both 'title' and 'stories'
+    expect(limited.properties.tasks.items.required).toContain('title');
+    expect(limited.properties.tasks.items.required).toContain('stories');
+  });
+
+  it('leaves schemas that are within the limit entirely unchanged', () => {
+    const shallowSchema = {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        age: { type: 'number' },
+        tags: { type: 'array', items: { type: 'string' } },
+      },
+      required: ['name'],
+    };
+    expect(limitGeminiSchemaNestingDepth(shallowSchema)).toEqual(shallowSchema);
+  });
+
+  it('handles nullable schemas via anyOf without inflating depth', () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        value: {
+          anyOf: [{ type: 'string' }, { type: 'null' }],
+        },
+      },
+    };
+    const limited = limitGeminiSchemaNestingDepth(schema) as any;
+    expect(limited.properties.value.anyOf).toBeDefined();
   });
 });

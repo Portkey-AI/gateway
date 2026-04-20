@@ -13,6 +13,7 @@ import { VERTEX_MODALITY } from '../google-vertex-ai/types';
 import {
   getMimeType,
   googleTools,
+  limitGeminiSchemaNestingDepth,
   recursivelyDeleteUnsupportedParameters,
   transformGeminiToolParameters,
   transformGoogleTools,
@@ -77,7 +78,9 @@ const transformGenerationConfig = (params: PortkeyGeminiParams) => {
       params?.response_format?.json_schema?.schema ??
       params?.response_format?.json_schema;
     recursivelyDeleteUnsupportedParameters(schema);
-    generationConfig['responseSchema'] = transformGeminiToolParameters(schema);
+    generationConfig['responseSchema'] = limitGeminiSchemaNestingDepth(
+      transformGeminiToolParameters(schema)
+    );
   }
   if (params?.thinking) {
     const thinkingConfig: Record<string, any> = {};
