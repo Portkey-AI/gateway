@@ -185,7 +185,10 @@ const performTavilySearch = async (
     searchBody.exclude_domains = parameters.excludeDomains;
   }
 
-  if (effectiveSearchDepth === 'advanced' && parameters.chunksPerSource) {
+  if (
+    (effectiveSearchDepth === 'advanced' || effectiveSearchDepth === 'fast') &&
+    parameters.chunksPerSource
+  ) {
     searchBody.chunks_per_source = parameters.chunksPerSource;
   }
 

@@ -79,7 +79,7 @@
             "description": [
               {
                 "type": "subHeading",
-                "text": "Maximum number of chunks returned per source. Tavily documents this for advanced search depth."
+                "text": "Maximum number of chunks returned per source. Tavily documents this for advanced and fast search depths."
               }
             ],
             "default": 3

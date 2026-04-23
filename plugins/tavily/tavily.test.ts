@@ -512,7 +512,7 @@ describe('tavily online handler', () => {
     expect(parsedBody.safe_search).toBeUndefined();
   });
 
-  it('should omit chunks per source when search depth is not advanced', async () => {
+  it('should omit chunks per source when search depth is not advanced or fast', async () => {
     const context = {
       request: {
         text: 'Latest design system news',
@@ -544,6 +544,40 @@ describe('tavily online handler', () => {
 
     expect(parsedBody.search_depth).toBe('basic');
     expect(parsedBody.chunks_per_source).toBeUndefined();
+  });
+
+  it('should include chunks per source for fast search depth', async () => {
+    const context = {
+      request: {
+        text: 'Latest robotics news',
+        json: {
+          messages: [
+            {
+              role: 'user',
+              content: 'Latest robotics news',
+            },
+          ],
+        },
+      },
+      requestType: 'chatComplete',
+    };
+
+    await onlineHandler(
+      context as PluginContext,
+      {
+        credentials: { apiKey: 'tvly-test-key' },
+        maxResults: 1,
+        searchDepth: 'fast',
+        chunksPerSource: 2,
+      },
+      'beforeRequestHook'
+    );
+
+    const [, options] = (global.fetch as jest.Mock).mock.calls[0];
+    const parsedBody = JSON.parse(options.body);
+
+    expect(parsedBody.search_depth).toBe('fast');
+    expect(parsedBody.chunks_per_source).toBe(2);
   });
 
   it('should omit image descriptions when images are not requested', async () => {
