@@ -1,0 +1,100 @@
+{
+  "id": "peyeeye",
+  "description": "peyeeye PII redaction & rehydration. Pre-call redacts PII into placeholder tokens, post-call swaps them back into the model's response.",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "Your peyeeye API key. Find it in the peyeeye dashboard at https://peyeeye.ai.",
+        "encrypted": true
+      },
+      "apiBase": {
+        "type": "string",
+        "label": "API Base URL",
+        "description": "Optional override of the peyeeye API base URL. Defaults to https://api.peyeeye.ai.",
+        "encrypted": false
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Peyeeye Redact",
+      "id": "redact",
+      "supportedHooks": ["beforeRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Redact PII from the request before it reaches the LLM. Caches a session id (or sealed key) so the response can be rehydrated."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "locale": {
+            "type": "string",
+            "default": "auto",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "BCP-47 locale tag, or \"auto\" to let peyeeye detect."
+              }
+            ]
+          },
+          "entities": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Optional list of entity ids to restrict detection to (e.g. EMAIL, PHONE, CARD). Omit to detect all 60+ built-in entities."
+              }
+            ]
+          },
+          "sessionMode": {
+            "type": "string",
+            "enum": ["stateful", "stateless"],
+            "default": "stateful",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "stateful = peyeeye stores the token→value mapping under a ses_… id. stateless = peyeeye returns a sealed AEAD blob (skey_…); nothing retained server-side."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "Peyeeye Rehydrate",
+      "id": "rehydrate",
+      "supportedHooks": ["afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Rehydrate the LLM's response by swapping placeholder tokens back to the original PII. No-op if no redaction happened on this request."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "sessionMode": {
+            "type": "string",
+            "enum": ["stateful", "stateless"],
+            "default": "stateful",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Must match the redact step. If stateful, the session is DELETEd from peyeeye after rehydration (best-effort)."
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
