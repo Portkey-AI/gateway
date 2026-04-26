@@ -14,6 +14,8 @@ const OpenrouterAPIConfig: ProviderAPIConfig = {
     switch (fn) {
       case 'chatComplete':
         return '/v1/chat/completions';
+      case 'embed':
+        return '/v1/embeddings';
       default:
         return '';
     }
