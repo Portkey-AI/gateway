@@ -27,9 +27,41 @@
       "description": [
         {
           "type": "subHeading",
-          "text": "Protect a user prompt before it is sent to the LLM."
+          "text": "Protect a user prompt before it is sent to the LLM. Supports configurable policy for detectors such as Prompt Injection, Sensitive Data, Secrets, Harmful Content, Topics, Language, Regex, Code, URLs, Sentiment, Token Limitation, Token Rate Limit, Unicode, Data Privacy Guidelines, and Natural Language Guardrails."
         }
-      ]
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "policy": {
+            "type": "object",
+            "label": "Policy",
+            "description": "Prompt Security policy JSON object to configure individual detectors (e.g. Prompt Injection Engine, Sensitive Data, Secrets, Harmful Content Moderator, Topics Detector, Language Detector, Regex, Code Detector, URLs Detector, Sentiment, Token Limitation, Token Rate Limit, Unicode Detector, Data Privacy Guidelines, Natural Language Guardrails)"
+          },
+          "redact": {
+            "type": "boolean",
+            "label": "Enable Redaction",
+            "description": "When enabled, applies text modifications returned by detectors (e.g. PII sanitization, secret redaction, regex redaction) to the request before sending to the LLM",
+            "default": false
+          },
+          "monitorOnly": {
+            "type": "boolean",
+            "label": "Monitor Only",
+            "description": "When enabled, detectors run and log findings but do not block the request",
+            "default": false
+          },
+          "user": {
+            "type": "string",
+            "label": "User",
+            "description": "User identifier for identity-aware policies and per-user token rate limiting"
+          },
+          "userGroups": {
+            "type": "array",
+            "label": "User Groups",
+            "description": "User group memberships for group-based policy enforcement"
+          }
+        }
+      }
     },
     {
       "name": "Protect Response",
@@ -39,9 +71,41 @@
       "description": [
         {
           "type": "subHeading",
-          "text": "Protect a LLM response before it is sent to the user."
+          "text": "Protect a LLM response before it is sent to the user. Supports configurable policy for detectors such as Sensitive Data, Secrets, Harmful Content, Topics, Language, Regex, Code, URLs, Sentiment, Token Limitation, Unicode, and Prompt Leak Detector."
         }
-      ]
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "policy": {
+            "type": "object",
+            "label": "Policy",
+            "description": "Prompt Security policy JSON object to configure individual detectors (e.g. Sensitive Data, Secrets, Harmful Content Moderator, Topics Detector, Language Detector, Regex, Code Detector, URLs Detector, Sentiment, Token Limitation, Unicode Detector, Prompt Leak Detector)"
+          },
+          "redact": {
+            "type": "boolean",
+            "label": "Enable Redaction",
+            "description": "When enabled, applies text modifications returned by detectors (e.g. PII sanitization, secret redaction, regex redaction) to the response before returning to the user",
+            "default": false
+          },
+          "monitorOnly": {
+            "type": "boolean",
+            "label": "Monitor Only",
+            "description": "When enabled, detectors run and log findings but do not block the response",
+            "default": false
+          },
+          "user": {
+            "type": "string",
+            "label": "User",
+            "description": "User identifier for identity-aware policies"
+          },
+          "userGroups": {
+            "type": "array",
+            "label": "User Groups",
+            "description": "User group memberships for group-based policy enforcement"
+          }
+        }
+      }
     }
   ]
 }
