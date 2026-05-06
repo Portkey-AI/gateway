@@ -20,7 +20,7 @@
         "description": [
           {
             "type": "subHeading",
-            "text": "Highflame API domain"
+            "text": "Highflame Shield-compatible host. Targets POST /v1/guard. Use api.highflame.ai (default, gateway-routed) or shield.api.highflame.ai for direct Shield."
           }
         ],
         "default": "api.highflame.ai",
