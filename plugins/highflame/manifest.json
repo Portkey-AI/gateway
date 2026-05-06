@@ -23,7 +23,7 @@
             "text": "Highflame API domain"
           }
         ],
-        "default": "api-dev.highflame.dev",
+        "default": "shield.api.highflame.ai",
         "required": false
       },
       "application": {
