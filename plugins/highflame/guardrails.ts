@@ -52,7 +52,7 @@ async function callHighflameGuardrails(
   globalThreshold?: number
 ): Promise<GuardrailsResponse> {
   // Strip https:// or http:// from domain if present
-  let domain = credentials.domain || 'shield.api.highflame.ai';
+  let domain = credentials.domain || 'api-dev.highflame.dev';
   domain = domain.replace(/^https?:\/\//, '');
 
   const apiUrl = `https://${domain}/v1/guardrails/apply`;
