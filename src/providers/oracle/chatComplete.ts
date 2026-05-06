@@ -28,6 +28,16 @@ import {
 } from './types/GenericChatResponse';
 import { openAIToOracleRoleMap, oracleToOpenAIRoleMap } from './utils';
 
+/**
+ * GPT-5+ models on OCI reject `maxTokens` and require `maxCompletionTokens`
+ * instead. Match the family inline so we can route the parameter correctly
+ * without dragging in a separate model-config module.
+ */
+const GPT5_FAMILY_PATTERN = /^openai\.gpt-5/i;
+
+const usesMaxCompletionTokens = (model: string): boolean =>
+  GPT5_FAMILY_PATTERN.test(model);
+
 // transforms from openai format to oracle format for chat completions request
 export const OracleChatCompleteConfig: ProviderConfig = {
   model: [
@@ -35,11 +45,20 @@ export const OracleChatCompleteConfig: ProviderConfig = {
       param: 'chatRequest',
       required: true,
       transform: (params: Params, providerOptions: Options) => {
-        return transformUsingProviderConfig(
+        const chatRequest = transformUsingProviderConfig(
           OracleChatDetailsConfig,
           params,
           providerOptions
         );
+
+        if (usesMaxCompletionTokens(params.model || '')) {
+          if ('maxTokens' in chatRequest) {
+            (chatRequest as any).maxCompletionTokens = chatRequest.maxTokens;
+            delete chatRequest.maxTokens;
+          }
+        }
+
+        return chatRequest;
       },
     },
     {
