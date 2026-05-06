@@ -37,6 +37,9 @@ const OracleAPIConfig: ProviderAPIConfig = {
       case 'stream-chatComplete':
         endpoint = '/actions/chat';
         break;
+      case 'embed':
+        endpoint = '/actions/embedText';
+        break;
       default:
         return '';
     }
