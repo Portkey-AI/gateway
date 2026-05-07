@@ -140,7 +140,24 @@ describe('Oracle Chat Complete — non-streaming response with tool_calls', () =
 describe('Oracle Chat Complete — streaming chunk transform tool calls', () => {
   const params: any = { model: 'meta.llama-3.3-70b-instruct' };
 
-  it('emits tool_calls delta separately from the finish chunk', () => {
+  // Helper: split a concatenated SSE payload into individual event JSON objects.
+  const splitSse = (payload: string): { events: any[]; hasDone: boolean } => {
+    const events: any[] = [];
+    let hasDone = false;
+    for (const block of payload.split('\n\n')) {
+      const trimmed = block.trim();
+      if (!trimmed.startsWith('data:')) continue;
+      const body = trimmed.slice('data:'.length).trim();
+      if (body === '[DONE]') {
+        hasDone = true;
+        continue;
+      }
+      events.push(JSON.parse(body));
+    }
+    return { events, hasDone };
+  };
+
+  it('emits a tool_calls delta SSE then finish then [DONE] (bundled-finish chunk)', () => {
     const state = initOracleStreamState();
 
     const sseChunk =
@@ -167,19 +184,19 @@ describe('Oracle Chat Complete — streaming chunk transform tool calls', () => 
       state,
       false,
       params
-    );
+    ) as string;
 
-    expect(Array.isArray(out)).toBe(true);
-    const arr = out as string[];
-    // Expect: [tool_calls delta, finish chunk, [DONE]]
-    expect(arr.length).toBe(3);
-    expect(arr[0]).toContain('"tool_calls"');
-    expect(arr[0]).toContain('"call_xyz"');
-    expect(arr[1]).toContain('"finish_reason":"tool_calls"');
-    expect(arr[2]).toBe('data: [DONE]\n\n');
+    const { events, hasDone } = splitSse(out);
+    expect(events.length).toBe(2);
+    expect(events[0].choices[0].delta.tool_calls[0].id).toBe('call_xyz');
+    expect(events[0].choices[0].delta.tool_calls[0].function.name).toBe(
+      'get_weather'
+    );
+    expect(events[1].choices[0].finish_reason).toBe('tool_calls');
+    expect(hasDone).toBe(true);
   });
 
-  it('preserves stable indices across multiple tool calls', () => {
+  it('assigns stable indices when OCI bundles multiple tool calls', () => {
     const state = initOracleStreamState();
 
     const sseChunk =
@@ -203,12 +220,58 @@ describe('Oracle Chat Complete — streaming chunk transform tool calls', () => 
       state,
       false,
       params
-    ) as string[];
+    ) as string;
 
-    const toolDelta = JSON.parse(out[0].replace(/^data: /, ''));
-    const calls = toolDelta.choices[0].delta.tool_calls;
+    const { events } = splitSse(out);
+    const calls = events[0].choices[0].delta.tool_calls;
     expect(calls.map((c: any) => c.index)).toEqual([0, 1]);
     expect(calls.map((c: any) => c.id)).toEqual(['call_a', 'call_b']);
+  });
+
+  it('keeps continuation chunks attached to the same tool index when id is omitted', () => {
+    const state = initOracleStreamState();
+
+    const first = OracleChatCompleteStreamChunkTransform(
+      'data: ' +
+        JSON.stringify({
+          index: 0,
+          message: {
+            role: 'ASSISTANT',
+            content: [],
+            toolCalls: [
+              { id: 'call_progressive', name: 'get_weather', arguments: '' },
+            ],
+          },
+        }),
+      'fallback-id',
+      state,
+      false,
+      params
+    ) as string;
+
+    const second = OracleChatCompleteStreamChunkTransform(
+      'data: ' +
+        JSON.stringify({
+          index: 0,
+          message: {
+            role: 'ASSISTANT',
+            content: [],
+            toolCalls: [{ arguments: '{"city":"' }],
+          },
+        }),
+      'fallback-id',
+      state,
+      false,
+      params
+    ) as string;
+
+    const firstEvent = JSON.parse(first.split('\n\n')[0].slice('data:'.length));
+    const secondEvent = JSON.parse(
+      second.split('\n\n')[0].slice('data:'.length)
+    );
+    expect(firstEvent.choices[0].delta.tool_calls[0].index).toBe(0);
+    expect(secondEvent.choices[0].delta.tool_calls[0].index).toBe(0);
+    expect(secondEvent.choices[0].delta.tool_calls[0].id).toBeUndefined();
   });
 
   it('returns DONE marker for [DONE] line', () => {

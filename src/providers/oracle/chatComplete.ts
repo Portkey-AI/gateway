@@ -377,7 +377,7 @@ export const OracleChatCompleteStreamChunkTransform: (
   streamState: OracleStreamState,
   _strictOpenAiCompliance: boolean,
   gatewayRequest: Params
-) => string | string[] | undefined = (
+) => string | undefined = (
   responseChunk,
   fallbackId,
   streamState,
@@ -407,44 +407,50 @@ export const OracleChatCompleteStreamChunkTransform: (
   }
 
   // Map OCI toolCalls to OpenAI tool_calls deltas with stable indices.
-  // OCI emits tool calls in the same chunk as finishReason, so we must split
-  // them across two SSE events: first the tool_calls delta, then the finish.
+  // OCI may stream tool calls progressively across multiple chunks: the first
+  // chunk per tool carries `id` + `name`, subsequent chunks carry argument
+  // fragments without an `id`. Anchor on `id` when present; otherwise inherit
+  // the current index so continuation fragments stay attached to the right
+  // tool call.
   const rawToolCalls = (parsedChunk.message as any)?.toolCalls || [];
   const toolCalls: Array<{
     index: number;
-    id: string;
+    id?: string;
     type: string;
-    function: { name: string; arguments: string };
+    function: { name?: string; arguments: string };
   }> = [];
 
   for (const tc of rawToolCalls) {
-    if (!streamState.seenToolCallIds.has(tc.id)) {
-      streamState.currentToolCallIndex++;
-      streamState.seenToolCallIds.add(tc.id);
+    let toolIndex = streamState.currentToolCallIndex;
+    if (tc.id) {
+      if (!streamState.seenToolCallIds.has(tc.id)) {
+        streamState.currentToolCallIndex++;
+        streamState.seenToolCallIds.add(tc.id);
+      }
+      toolIndex = Array.from(streamState.seenToolCallIds).indexOf(tc.id);
     }
-    const toolCallIndex = Array.from(streamState.seenToolCallIds).indexOf(
-      tc.id
-    );
     toolCalls.push({
-      index:
-        toolCallIndex >= 0 ? toolCallIndex : streamState.currentToolCallIndex,
-      id: tc.id,
+      index: toolIndex >= 0 ? toolIndex : 0,
+      ...(tc.id ? { id: tc.id } : {}),
       type: 'function',
       function: {
-        name: tc.name,
+        ...(tc.name ? { name: tc.name } : {}),
         arguments:
           typeof tc.arguments === 'string'
             ? tc.arguments
-            : JSON.stringify(tc.arguments),
+            : JSON.stringify(tc.arguments ?? ''),
       },
     });
   }
 
+  // Final chunk: emit (optional bundled tool_calls delta) + finish + DONE
+  // as a single concatenated SSE payload. (`readStream` only handles single
+  // strings, not arrays.)
   if (parsedChunk.finishReason) {
-    const chunks: string[] = [];
+    const parts: string[] = [];
 
     if (toolCalls.length > 0) {
-      chunks.push(
+      parts.push(
         `data: ${JSON.stringify({
           id: fallbackId,
           object: 'chat.completion.chunk',
@@ -462,7 +468,7 @@ export const OracleChatCompleteStreamChunkTransform: (
       );
     }
 
-    chunks.push(
+    parts.push(
       `data: ${JSON.stringify({
         id: fallbackId,
         object: 'chat.completion.chunk',
@@ -478,9 +484,9 @@ export const OracleChatCompleteStreamChunkTransform: (
         ],
       })}\n\n`
     );
-    chunks.push('data: [DONE]\n\n');
+    parts.push('data: [DONE]\n\n');
 
-    return chunks;
+    return parts.join('');
   }
 
   const content = parsedChunk.message?.content?.find(
