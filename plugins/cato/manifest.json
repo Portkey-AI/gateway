@@ -1,0 +1,85 @@
+{
+  "id": "cato",
+  "name": "Cato Networks Guardrail",
+  "description": "Cato Networks AI security guardrail. Sends prompts and responses to Cato's AI security platform for inspection and enforces actions (allow, monitor, anonymize, block) returned by Cato.",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "Your Cato Networks AI security API key.",
+        "encrypted": true
+      },
+      "apiBase": {
+        "type": "string",
+        "label": "API Base URL",
+        "description": "The base URL for the Cato Networks AI security API. Defaults to https://api.aisec.catonetworks.com",
+        "default": "https://api.aisec.catonetworks.com"
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Cato Networks Guardrail",
+      "id": "analyze",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Send prompts and responses to Cato Networks for inspection. Cato can return required actions: monitor, anonymize, or block. Anonymized content is substituted into the request/response transparently."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "userEmail": {
+            "type": "string",
+            "label": "User Email",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Optional user email used by Cato for policy enforcement and audit logs. Sent in the x-cato-user-email header."
+              }
+            ]
+          },
+          "keyAlias": {
+            "type": "string",
+            "label": "Gateway Key Alias",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Optional alias for the gateway API key. Sent in the x-cato-gateway-key-alias header for tracking."
+              }
+            ]
+          },
+          "timeout": {
+            "type": "number",
+            "label": "Timeout (ms)",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Request timeout in milliseconds for the Cato analyze API. Defaults to 5000."
+              }
+            ],
+            "default": 5000
+          },
+          "failOpen": {
+            "type": "boolean",
+            "label": "Fail Open",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "When true (default), communication errors with the Cato analyze API allow the request through. When false, communication errors cause the guardrail to fail closed and the request is denied."
+              }
+            ],
+            "default": true
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}
