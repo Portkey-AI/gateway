@@ -142,6 +142,10 @@ const testVariables: TestVariables = {
       model: 'Qwen/Qwen2.5-Coder-3B-Instruct',
     },
   },
+  saladcloud: {
+    apiKey: process.env.SALADCLOUD_API_KEY || process.env.SALAD_CLOUD_API_KEY,
+    chatCompletions: { model: 'qwen3.6-35b-a3b' },
+  },
 };
 
 export default testVariables;
