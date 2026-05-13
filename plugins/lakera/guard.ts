@@ -4,7 +4,13 @@ import {
   PluginHandler,
   PluginParameters,
 } from '../types';
-import { getText, setCurrentContentPart, HttpError, post } from '../utils';
+import {
+  getText,
+  getCurrentContentPart,
+  setCurrentContentPart,
+  HttpError,
+  post,
+} from '../utils';
 import {
   applyMasksToMessages,
   isOnlyPiiViolation,
@@ -44,7 +50,7 @@ export const handler: PluginHandler = async (
         'Missing Lakera apiKey: set credentials.apiKey in the guardrail config'
       );
     }
-    const projectID = parameters.projectID;
+    const projectID = parameters.project_id ?? parameters.projectID;
 
     const text = getText(context, eventType);
     if (!text) {
@@ -55,9 +61,12 @@ export const handler: PluginHandler = async (
       };
     }
 
-    const role =
-      eventType === 'afterRequestHook' ? 'assistant' : 'user';
-    const messages = [{ role, content: text }];
+    const { textArray } = getCurrentContentPart(context, eventType);
+
+    const role = eventType === 'afterRequestHook' ? 'assistant' : 'user';
+    const messages = textArray
+      .filter((t) => t)
+      .map((t) => ({ role, content: t }));
 
     const apiBase = String(
       (parameters.credentials?.apiBase as string | undefined) ??
@@ -94,8 +103,6 @@ export const handler: PluginHandler = async (
     const payload = (lakeraResp.payload || []) as PayloadItem[];
 
     const safeLog = { ...lakeraResp };
-    // Strip raw spans (contain PII text positions) and internal Lakera IDs
-    // (detector_id, policy_id, project_id) from caller-visible data.
     delete safeLog.payload;
     delete safeLog.breakdown;
     data = {
@@ -135,8 +142,10 @@ export const handler: PluginHandler = async (
         };
       }
 
-      const maskedText = (maskedMsgs[0]?.content as string) ?? text;
-      setCurrentContentPart(context, eventType, transformedData, [maskedText]);
+      const maskedTextArray = maskedMsgs.map(
+        (m) => (m.content as string) ?? ''
+      );
+      setCurrentContentPart(context, eventType, transformedData, maskedTextArray);
       transformed = true;
 
       verdict = true;
@@ -152,8 +161,6 @@ export const handler: PluginHandler = async (
     verdict = false;
     return { error, verdict, data };
   } catch (e: any) {
-    // Strip stack trace to avoid leaking internal file paths to callers.
-    delete e?.stack;
     error = e;
     verdict = false;
     if (e instanceof HttpError) {
