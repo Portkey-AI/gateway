@@ -1,3 +1,4 @@
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import {
   applyMasksToMessages,
   applyPayloadMasksToString,
@@ -6,6 +7,31 @@ import {
   mergeOverlappingIntervals,
   normalizeSpan,
 } from './redaction';
+import { handler } from './guard';
+
+global.fetch = jest.fn() as any;
+
+const baseContext = {
+  request: {
+    json: { messages: [{ role: 'user', content: 'hello world' }] },
+    text: 'hello world',
+  },
+  requestType: 'chatComplete' as const,
+};
+
+const baseParams = {
+  credentials: { apiKey: 'test-api-key' },
+};
+
+function mockFetchResponse(body: object, ok = true) {
+  (global.fetch as any).mockResolvedValueOnce({
+    ok,
+    status: ok ? 200 : 400,
+    statusText: ok ? 'OK' : 'Bad Request',
+    json: async () => body,
+    text: async () => JSON.stringify(body),
+  });
+}
 
 describe('lakera redaction helpers', () => {
   it('mergeOverlappingIntervals merges overlap and adjacent', () => {
@@ -114,5 +140,86 @@ describe('lakera redaction helpers', () => {
     expect(
       isOnlyPiiViolation([{ detected: true, detector_type: 'pii/email' }])
     ).toBe(true);
+  });
+});
+
+describe('lakera guard handler', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('returns verdict=true when flagged=false', async () => {
+    mockFetchResponse({ flagged: false, breakdown: [], payload: [] });
+    const result = await handler(baseContext, baseParams, 'beforeRequestHook');
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(true);
+    expect(result.transformed).toBeFalsy();
+  });
+
+  it('returns verdict=false when non-PII policy fires', async () => {
+    mockFetchResponse({
+      flagged: true,
+      breakdown: [{ detected: true, detector_type: 'prompt_attack' }],
+      payload: [],
+    });
+    const result = await handler(baseContext, baseParams, 'beforeRequestHook');
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(false);
+    expect(result.transformed).toBeFalsy();
+  });
+
+  it('redacts and transforms when only pii/* detectors fire', async () => {
+    const content = 'my email is test@example.com';
+    const context = {
+      request: {
+        json: { messages: [{ role: 'user', content }] },
+        text: content,
+      },
+      requestType: 'chatComplete' as const,
+    };
+    mockFetchResponse({
+      flagged: true,
+      breakdown: [{ detected: true, detector_type: 'pii/email' }],
+      payload: [
+        { message_id: 0, start: 12, end: 28, detector_type: 'pii/email' },
+      ],
+    });
+    const result = await handler(context, baseParams, 'beforeRequestHook');
+    expect(result.error).toBeNull();
+    expect(result.verdict).toBe(true);
+    expect(result.transformed).toBe(true);
+    expect(
+      result.transformedData?.request?.json?.messages?.[0]?.content
+    ).not.toContain('test@example.com');
+  });
+
+  it('returns error when apiKey is missing', async () => {
+    const result = await handler(
+      baseContext,
+      { credentials: {} },
+      'beforeRequestHook'
+    );
+    expect(result.verdict).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+
+  it('returns verdict=true with explanation when there is no text to screen', async () => {
+    const emptyContext = {
+      request: {
+        json: { messages: [{ role: 'user', content: '' }] },
+        text: '',
+      },
+      requestType: 'chatComplete' as const,
+    };
+    const result = await handler(emptyContext, baseParams, 'beforeRequestHook');
+    expect(result.verdict).toBe(true);
+    expect(result.data?.explanation).toBe('no messages to screen');
+  });
+
+  it('handles fetch errors gracefully', async () => {
+    (global.fetch as any).mockRejectedValueOnce(new Error('network failure'));
+    const result = await handler(baseContext, baseParams, 'beforeRequestHook');
+    expect(result.verdict).toBe(false);
+    expect(result.error).toBeDefined();
   });
 });

@@ -145,7 +145,12 @@ export const handler: PluginHandler = async (
       const maskedTextArray = maskedMsgs.map(
         (m) => (m.content as string) ?? ''
       );
-      setCurrentContentPart(context, eventType, transformedData, maskedTextArray);
+      setCurrentContentPart(
+        context,
+        eventType,
+        transformedData,
+        maskedTextArray
+      );
       transformed = true;
 
       verdict = true;
