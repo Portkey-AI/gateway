@@ -1,0 +1,73 @@
+{
+  "id": "atr",
+  "description": "ATR (Agent Threat Rules) is an open, MIT-licensed detection rule format for AI agent security threats. This guardrail scans request/response content against a pluggable set of regex-based ATR rules and blocks when any rule of the configured severity threshold or higher matches.",
+  "credentials": {
+    "type": "object",
+    "properties": {}
+  },
+  "functions": [
+    {
+      "name": "ATR Rule Scanner",
+      "id": "scan",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Scan the current content part against a list of ATR (Agent Threat Rules) detection rules and block on any match at or above the configured severity threshold."
+        },
+        {
+          "type": "subHeading",
+          "text": "Rules can be supplied inline via the `rules` parameter. Each rule is an object with `id`, `severity` (low, medium, high, critical) and `regex` fields. Provide your own rules array or import a pinned set from the agent-threat-rules npm package."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "rules": {
+            "type": "array",
+            "label": "Rules",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Inline ATR rules to evaluate. Each item must include `id`, `severity` and `regex`. When empty, the guardrail passes through with verdict true."
+              }
+            ],
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Rule identifier, e.g. ATR-2026-00440"
+                },
+                "severity": {
+                  "type": "string",
+                  "enum": ["low", "medium", "high", "critical"],
+                  "description": "Severity bucket used for the threshold comparison"
+                },
+                "regex": {
+                  "type": "string",
+                  "description": "JavaScript-compatible regex applied to the scanned content"
+                }
+              },
+              "required": ["id", "severity", "regex"]
+            }
+          },
+          "severity_threshold": {
+            "type": "string",
+            "label": "Severity Threshold",
+            "enum": ["low", "medium", "high", "critical"],
+            "default": "high",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Minimum severity that triggers a block. Matches strictly below this severity are reported in `data.below_threshold` but do not flip the verdict."
+              }
+            ]
+          }
+        },
+        "required": ["rules"]
+      }
+    }
+  ]
+}
