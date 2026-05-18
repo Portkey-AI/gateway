@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 
 import { serve } from '@hono/node-server';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import app from './index';
 import { streamSSE } from 'hono/streaming';
@@ -8,6 +11,12 @@ import { Context } from 'hono';
 import { createNodeWebSocket } from '@hono/node-ws';
 import { realTimeHandlerNode } from './handlers/realtimeHandlerNode';
 import { requestValidator } from './middlewares/requestValidator';
+import { plugins } from '../plugins';
+import { loadExternalPlugins, mergePlugins } from './loaders/pluginLoader';
+import { loadExternalMiddlewares } from './loaders/middlewareLoader';
+import { loadExternalProviders } from './loaders/providerLoader';
+import { registerProvider } from './providers';
+import { installExternalDependencies } from './utils/externalDependencyInstaller';
 
 // Extract the port number from the command line arguments
 const defaultPort = 8787;
@@ -16,6 +25,157 @@ const portArg = args.find((arg) => arg.startsWith('--port='));
 const port = portArg ? parseInt(portArg.split('=')[1]) : defaultPort;
 
 const isHeadless = args.includes('--headless');
+
+// Parse external plugin and middleware directories
+const pluginsDirArg = args.find((arg) => arg.startsWith('--plugins-dir='));
+const pluginsDir = pluginsDirArg ? pluginsDirArg.split('=')[1] : null;
+
+const middlewaresDirArg = args.find((arg) =>
+  arg.startsWith('--middlewares-dir=')
+);
+const middlewaresDir = middlewaresDirArg
+  ? middlewaresDirArg.split('=')[1]
+  : null;
+
+const providersDirArg = args.find((arg) => arg.startsWith('--providers-dir='));
+const providersDir = providersDirArg ? providersDirArg.split('=')[1] : null;
+
+// Install external dependencies if external plugins/middlewares/providers are specified
+const dirsToInstallDeps: string[] = [];
+if (pluginsDir) dirsToInstallDeps.push(pluginsDir);
+if (middlewaresDir) dirsToInstallDeps.push(middlewaresDir);
+if (providersDir) dirsToInstallDeps.push(providersDir);
+
+if (dirsToInstallDeps.length > 0) {
+  console.log('📦 Installing external dependencies...');
+  try {
+    // Read gateway's package.json from the file system
+    let packageJsonPath: string;
+
+    // Get current directory in ES modules
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+
+    // Try multiple possible locations for package.json
+    const possiblePaths = [
+      path.resolve('./package.json'),
+      path.resolve('../package.json'),
+      path.resolve(__dirname, '../../package.json'),
+      path.resolve(process.cwd(), 'package.json'),
+    ];
+
+    let gatewayPackageJson: Record<string, any> | null = null;
+    for (const tryPath of possiblePaths) {
+      if (fs.existsSync(tryPath)) {
+        try {
+          const content = fs.readFileSync(tryPath, 'utf-8');
+          gatewayPackageJson = JSON.parse(content);
+          packageJsonPath = tryPath;
+          break;
+        } catch {
+          // Continue to next path
+        }
+      }
+    }
+
+    if (!gatewayPackageJson) {
+      throw new Error(
+        'Could not find gateway package.json in any expected location'
+      );
+    }
+
+    const installResult = await installExternalDependencies(
+      dirsToInstallDeps,
+      gatewayPackageJson
+    );
+
+    // Report installation status
+    if (Object.keys(installResult.installed).length > 0) {
+      console.log('✓ Dependencies installed for external packages\n');
+    }
+
+    if (Object.keys(installResult.peerDependencyMismatches).length > 0) {
+      console.error('\n❌ Peer dependency mismatches detected:');
+      for (const [dir, error] of Object.entries(
+        installResult.peerDependencyMismatches
+      )) {
+        console.error(`  ${dir}: ${error}`);
+      }
+      process.exit(1);
+    }
+
+    if (Object.keys(installResult.failed).length > 0) {
+      console.error('\n❌ Failed to install dependencies:');
+      for (const [dir, error] of Object.entries(installResult.failed)) {
+        console.error(`  ${dir}: ${error}`);
+      }
+      process.exit(1);
+    }
+  } catch (error: any) {
+    console.error('❌ Error installing external dependencies:', error.message);
+    process.exit(1);
+  }
+}
+
+// Load external providers if specified
+if (providersDir) {
+  console.log('🔗 Loading external providers from:', providersDir);
+  try {
+    const externalProviders = await loadExternalProviders([providersDir]);
+
+    for (const { name, config } of externalProviders) {
+      registerProvider(name, config);
+    }
+
+    if (externalProviders.length > 0) {
+      console.log('✓ External providers loaded\n');
+    }
+  } catch (error: any) {
+    console.error('❌ Error loading providers:', error.message);
+    process.exit(1);
+  }
+}
+
+// Load external plugins if specified
+if (pluginsDir) {
+  console.log('🔌 Loading external plugins from:', pluginsDir);
+  try {
+    const externalPlugins = await loadExternalPlugins([pluginsDir]);
+    const merged = mergePlugins(plugins, externalPlugins);
+    Object.assign(plugins, merged);
+    console.log('✓ External plugins loaded\n');
+  } catch (error: any) {
+    console.error('❌ Error loading plugins:', error.message);
+    process.exit(1);
+  }
+}
+
+// Load external middlewares if specified
+if (middlewaresDir) {
+  console.log('⚙️  Loading external middlewares from:', middlewaresDir);
+  try {
+    const externalMiddlewares = await loadExternalMiddlewares([middlewaresDir]);
+
+    for (const mw of externalMiddlewares) {
+      console.log(`  ↳ Registering middleware: ${mw.name}`);
+      if (mw.appExtension) {
+        // App extension middleware: receives app instance and can register routes
+        (mw.handler as (app: any) => void)(app);
+      } else {
+        // Standard middleware: register as request handler
+        app.use(
+          mw.pattern || '*',
+          mw.handler as (c: any, next: any) => Promise<any>
+        );
+      }
+    }
+
+    console.log('✓ External middlewares loaded\n');
+  } catch (error: any) {
+    console.error('❌ Error loading middlewares:', error.message);
+    process.exit(1);
+  }
+}
 
 // Setup static file serving only if not in headless mode
 if (
