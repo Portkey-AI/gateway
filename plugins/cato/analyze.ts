@@ -38,7 +38,6 @@ interface CatoOpenAIMessage {
   content?: CatoContent[];
   tool_calls?: CatoToolCall[];
   tool_call_id?: string;
-  is_context?: boolean;
 }
 
 interface CatoAnalyzeRequest {
@@ -335,14 +334,6 @@ const responseToCatoMessage = (
   return null;
 };
 
-const markContextMessages = (
-  messages: CatoOpenAIMessage[],
-  newMessageIndex: number
-): CatoOpenAIMessage[] =>
-  messages.map((m, idx) =>
-    idx === newMessageIndex ? m : { ...m, is_context: true }
-  );
-
 const rewriteTextOnMessage = (msg: any, text: string): any => {
   const updated = { ...msg };
   if (Array.isArray(updated.content)) {
@@ -583,8 +574,6 @@ export const handler: PluginHandler = async (
       };
     }
 
-    messages = markContextMessages(messages, messages.length - 1);
-
     const body: CatoAnalyzeRequest = { messages };
 
     const tools = buildTools(context);
@@ -667,7 +656,7 @@ export const handler: PluginHandler = async (
       }
       error = e;
     }
-    verdict = true;
+    verdict = false;
     data = null;
   }
 
