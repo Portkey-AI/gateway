@@ -65,17 +65,6 @@
               }
             ],
             "default": 5000
-          },
-          "failOpen": {
-            "type": "boolean",
-            "label": "Fail Open",
-            "description": [
-              {
-                "type": "subHeading",
-                "text": "When true (default), communication errors with the Cato analyze API allow the request through. When false, communication errors cause the guardrail to fail closed and the request is denied."
-              }
-            ],
-            "default": true
           }
         },
         "required": []

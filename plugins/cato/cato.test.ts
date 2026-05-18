@@ -477,18 +477,11 @@ describe('Cato Networks Guardrail', () => {
   });
 
   it('returns verdict=true with an error when the API key is missing and does not call Cato', async () => {
-    const originalEnvKey = process.env.CATO_API_KEY;
-    delete process.env.CATO_API_KEY;
-
     const result = await catoHandler(
       baseChatContext(),
       { credentials: {} },
       'beforeRequestHook'
     );
-
-    if (originalEnvKey !== undefined) {
-      process.env.CATO_API_KEY = originalEnvKey;
-    }
 
     expect(result.verdict).toBe(true);
     expect(result.error).toEqual(
@@ -499,7 +492,7 @@ describe('Cato Networks Guardrail', () => {
     expect(mockPost).not.toHaveBeenCalled();
   });
 
-  it('fails open (verdict=true) when Cato API call throws a network error', async () => {
+  it('fails closed (verdict=false) when Cato API call throws a network error', async () => {
     const networkError = new Error('Network timeout');
     mockPost.mockRejectedValue(networkError);
 
@@ -509,37 +502,8 @@ describe('Cato Networks Guardrail', () => {
       'beforeRequestHook'
     );
 
-    expect(result.verdict).toBe(true);
-    expect(result.error).toBe(networkError);
-    expect(result.data).toBeNull();
-  });
-
-  it('fails closed (verdict=false) on comm errors when failOpen=false', async () => {
-    const networkError = new Error('Network timeout');
-    mockPost.mockRejectedValue(networkError);
-
-    const result = await catoHandler(
-      baseChatContext(),
-      { ...baseParams, failOpen: false },
-      'beforeRequestHook'
-    );
-
     expect(result.verdict).toBe(false);
     expect(result.error).toBe(networkError);
     expect(result.data).toBeNull();
-  });
-
-  it('fails open when failOpen=true is set explicitly', async () => {
-    const networkError = new Error('Network timeout');
-    mockPost.mockRejectedValue(networkError);
-
-    const result = await catoHandler(
-      baseChatContext(),
-      { ...baseParams, failOpen: true },
-      'beforeRequestHook'
-    );
-
-    expect(result.verdict).toBe(true);
-    expect(result.error).toBe(networkError);
   });
 });

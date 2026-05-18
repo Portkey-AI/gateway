@@ -523,11 +523,14 @@ export const handler: PluginHandler = async (
   let transformed = false;
 
   const credentials = parameters.credentials as CatoCredentials | undefined;
-  const apiKey = credentials?.apiKey || (process.env.CATO_API_KEY as string);
+  const apiKey = credentials?.apiKey;
 
   if (!apiKey) {
     return {
-      error: { message: 'Cato API key is required but not configured.' },
+      error: {
+        message:
+          'Cato API key is required but not configured in plugin credentials.',
+      },
       verdict: true,
       data: null,
       transformedData,
@@ -535,10 +538,7 @@ export const handler: PluginHandler = async (
     };
   }
 
-  const apiBase =
-    credentials?.apiBase ||
-    (process.env.CATO_API_BASE as string) ||
-    CATO_DEFAULT_BASE_URL;
+  const apiBase = credentials?.apiBase || CATO_DEFAULT_BASE_URL;
 
   const callId =
     context?.request?.headers?.['x-portkey-trace-id'] ||
@@ -667,8 +667,7 @@ export const handler: PluginHandler = async (
       }
       error = e;
     }
-    const failOpen = parameters.failOpen !== false;
-    verdict = failOpen;
+    verdict = true;
     data = null;
   }
 
