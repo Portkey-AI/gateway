@@ -37,12 +37,24 @@ export const handler: PluginHandler = async (
   const json = context[target].json;
   const aidrEventType = target === 'request' ? 'input' : 'output';
 
-  const requestBody: object = {
+  const metadata = context.metadata ?? {};
+  const userId = metadata._user ?? metadata.user_id;
+  const userName = metadata._user_name ?? metadata.user_name;
+  const model = context.request?.json?.model;
+
+  const requestBody: Record<string, any> = {
     guard_input: json,
     event_type: aidrEventType,
     app_id: 'Portkey AI Gateway',
-    // TODO: Add as much other metadata as we have
+    extra_info: {},
   };
+
+  if (userId) requestBody.user_id = userId;
+  if (context.provider) requestBody.llm_provider = context.provider;
+  if (model) requestBody.model = model;
+  if (userName) {
+    requestBody.extra_info = { ...requestBody.extra_info, user_name: userName };
+  }
 
   const requestOptions: object = {
     headers: {
