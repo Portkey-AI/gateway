@@ -8,6 +8,7 @@ import { Context } from 'hono';
 import { createNodeWebSocket } from '@hono/node-ws';
 import { realTimeHandlerNode } from './handlers/realtimeHandlerNode';
 import { requestValidator } from './middlewares/requestValidator';
+import conf from '../conf.json';
 import {
   adminAuthLoginHandler,
   adminAuthMiddleware,
@@ -21,6 +22,10 @@ const portArg = args.find((arg) => arg.startsWith('--port='));
 const port = portArg ? parseInt(portArg.split('=')[1]) : defaultPort;
 
 const isHeadless = args.includes('--headless');
+const hasAdminTokenKey = Object.prototype.hasOwnProperty.call(
+  conf || {},
+  'admin_token'
+);
 
 // Setup static file serving only if not in headless mode
 if (
@@ -42,6 +47,11 @@ if (
     const indexContent = readFileSync(indexPath, 'utf-8');
 
     const serveIndex = (c: Context) => {
+      if (!hasAdminTokenKey) {
+        return c.html(
+          'Admin token is required to access the local gateway UI. Please set admin_token in conf.json. see <a href="https://github.com/Portkey-AI/gateway/discussions/1656">github discussion</a> for more details.'
+        );
+      }
       return c.html(indexContent);
     };
 

@@ -6,7 +6,7 @@ const SESSION_MAX_AGE_SECONDS = 60 * 60 * 12; // 12 hours
 const adminSessions = new Map<string, number>();
 
 const getConfiguredAdminToken = (): string => {
-  const adminToken = conf?.admin_token;
+  const adminToken = (conf as Record<string, unknown>)?.admin_token;
   if (
     !adminToken ||
     typeof adminToken !== 'string' ||
