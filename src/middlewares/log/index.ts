@@ -27,7 +27,9 @@ const ALLOWED_PROVIDER_OPTION_KEYS = new Set([
   'rubeusURL',
 ]);
 
-const sanitizeProviderOptions = (providerOptions: Record<string, unknown> = {}) =>
+const sanitizeProviderOptions = (
+  providerOptions: Record<string, unknown> = {}
+) =>
   Object.fromEntries(
     Object.entries(providerOptions).map(([key, value]) => [
       key,
@@ -53,7 +55,9 @@ const sanitizeRequestOption = (requestOption: any) => {
     sanitizedOption.transformedRequest &&
     typeof sanitizedOption.transformedRequest === 'object'
   ) {
-    sanitizedOption.transformedRequest = { ...sanitizedOption.transformedRequest };
+    sanitizedOption.transformedRequest = {
+      ...sanitizedOption.transformedRequest,
+    };
     if (sanitizedOption.transformedRequest.headers) {
       sanitizedOption.transformedRequest.headers = sanitizeHeaders(
         sanitizedOption.transformedRequest.headers as Record<string, unknown>
