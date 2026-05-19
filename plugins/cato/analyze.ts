@@ -595,8 +595,6 @@ export const handler: PluginHandler = async (
       parameters.timeout
     );
 
-    data = result;
-
     const actionType = result?.required_action?.action_type || 'monitor_action';
 
     if (actionType === 'block_action') {
