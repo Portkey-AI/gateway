@@ -544,8 +544,13 @@ export const handler: PluginHandler = async (
   if (parameters.appName) {
     headers['x-cato-gateway-key-alias'] = String(parameters.appName);
   }
-  if (context?.metadata?.sessionId) {
-    headers['x-cato-session-id'] = String(context.metadata.sessionId);
+  if (context?.request?.headers?.['x-cato-session-id']) {
+    headers['x-cato-session-id'] =
+      context?.request?.headers?.['x-cato-session-id'];
+  }
+  if (context?.request?.headers?.['x-cato-user-email']) {
+    headers['x-cato-user-email'] =
+      context?.request?.headers?.['x-cato-user-email'];
   }
 
   try {
