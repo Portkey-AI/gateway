@@ -541,11 +541,8 @@ export const handler: PluginHandler = async (
   const headers: Record<string, string> = {
     'x-cato-call-id': String(callId),
   };
-  if (parameters.userEmail) {
-    headers['x-cato-user-email'] = String(parameters.userEmail);
-  }
-  if (parameters.keyAlias) {
-    headers['x-cato-gateway-key-alias'] = String(parameters.keyAlias);
+  if (parameters.appName) {
+    headers['x-cato-gateway-key-alias'] = String(parameters.appName);
   }
   if (context?.metadata?.sessionId) {
     headers['x-cato-session-id'] = String(context.metadata.sessionId);

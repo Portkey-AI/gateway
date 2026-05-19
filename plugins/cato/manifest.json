@@ -35,23 +35,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "userEmail": {
+          "appName": {
             "type": "string",
-            "label": "User Email",
+            "label": "Application Name",
             "description": [
               {
                 "type": "subHeading",
-                "text": "Optional user email used by Cato for policy enforcement and audit logs. Sent in the x-cato-user-email header."
-              }
-            ]
-          },
-          "keyAlias": {
-            "type": "string",
-            "label": "Gateway Key Alias",
-            "description": [
-              {
-                "type": "subHeading",
-                "text": "Optional alias for the gateway API key. Sent in the x-cato-gateway-key-alias header for tracking."
+                "text": "Application name for identification and policy enforcement."
               }
             ]
           },

@@ -54,8 +54,7 @@ const baseChatContext = (): PluginContext => ({
 
 const baseParams = {
   credentials: { apiKey: 'test-key' },
-  userEmail: 'user@example.com',
-  keyAlias: 'team-alpha',
+  appName: 'team-alpha',
 };
 
 describe('Cato Networks Guardrail', () => {
@@ -265,9 +264,6 @@ describe('Cato Networks Guardrail', () => {
     expect(url).toBe('https://api.aisec.catonetworks.com/fw/v1/analyze');
     expect((options as any).headers.Authorization).toBe('Bearer test-key');
     expect((options as any).headers['x-cato-call-id']).toBe('trace-1234');
-    expect((options as any).headers['x-cato-user-email']).toBe(
-      'user@example.com'
-    );
     expect((options as any).headers['x-cato-gateway-key-alias']).toBe(
       'team-alpha'
     );
