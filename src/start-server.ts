@@ -8,6 +8,11 @@ import { Context } from 'hono';
 import { createNodeWebSocket } from '@hono/node-ws';
 import { realTimeHandlerNode } from './handlers/realtimeHandlerNode';
 import { requestValidator } from './middlewares/requestValidator';
+import {
+  adminAuthLoginHandler,
+  adminAuthMiddleware,
+  adminAuthSessionStatusHandler,
+} from './middlewares/adminAuth';
 
 // Extract the port number from the command line arguments
 const defaultPort = 8787;
@@ -41,6 +46,8 @@ if (
     };
 
     // Set up routes
+    app.post('/public/auth', adminAuthLoginHandler);
+    app.get('/public/auth/session', adminAuthSessionStatusHandler);
     app.get('/public/logs', serveIndex);
     app.get('/public/', serveIndex);
 
@@ -69,7 +76,7 @@ if (
     return Promise.race([fn(), timeoutPromise]);
   }
 
-  app.get('/log/stream', (c: Context) => {
+  app.get('/log/stream', adminAuthMiddleware, (c: Context) => {
     const clientId = Date.now().toString();
 
     // Set headers to prevent caching

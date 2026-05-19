@@ -17,5 +17,6 @@
       "apiKey": "..."
     }
   },
-  "cache": false
+  "cache": false,
+  "admin_token": "test-token"
 }
