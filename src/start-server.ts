@@ -27,6 +27,25 @@ await initClickhouse();
 await initMongo();
 initializeMemCache();
 
+// Restore /public/ console (removed in 2.x; assets shipped via Dockerfile cp).
+{
+  const { join, dirname } = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const { readFileSync } = await import('node:fs');
+  try {
+    const scriptDir = dirname(fileURLToPath(import.meta.url));
+    const indexContent = readFileSync(
+      join(scriptDir, 'public/index.html'),
+      'utf-8'
+    );
+    app.get('/public/logs', (c) => c.html(indexContent));
+    app.get('/public/', (c) => c.html(indexContent));
+    app.get('/public', (c) => c.redirect('/public/'));
+  } catch {
+    console.warn('Console asset missing — /public/ disabled');
+  }
+}
+
 // Extract the port number from the command line arguments
 const argv = minimist(process.argv.slice(2), {
   default: {

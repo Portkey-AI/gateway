@@ -29,6 +29,7 @@ COPY --chown=node:node . .
 
 # Build the application and clean up
 RUN npm run build \
+&& cp -r src/public build/public \
 && rm -rf node_modules \
 && npm install --omit=dev
 
