@@ -25,6 +25,20 @@ if (
     process.env.ENVIRONMENT === 'production'
   )
 ) {
+  // Authentication middleware for log viewer routes.
+  // If LOG_ACCESS_KEY is set, require a matching Authorization: Bearer <key> header.
+  const logAuthMiddleware = (c: Context, next: any) => {
+    const accessKey = process.env.LOG_ACCESS_KEY;
+    if (!accessKey) {
+      return next();
+    }
+    const authHeader = c.req.header('Authorization');
+    if (!authHeader || authHeader !== `Bearer ${accessKey}`) {
+      return c.json({ status: 'failure', message: 'Unauthorized' }, 401);
+    }
+    return next();
+  };
+
   const setupStaticServing = async () => {
     const { join, dirname } = await import('path');
     const { fileURLToPath } = await import('url');
@@ -40,12 +54,12 @@ if (
       return c.html(indexContent);
     };
 
-    // Set up routes
-    app.get('/public/logs', serveIndex);
-    app.get('/public/', serveIndex);
+    // Set up routes (protected by logAuthMiddleware)
+    app.get('/public/logs', logAuthMiddleware, serveIndex);
+    app.get('/public/', logAuthMiddleware, serveIndex);
 
     // Redirect `/public` to `/public/`
-    app.get('/public', (c: Context) => {
+    app.get('/public', logAuthMiddleware, (c: Context) => {
       return c.redirect('/public/');
     });
   };
@@ -69,7 +83,7 @@ if (
     return Promise.race([fn(), timeoutPromise]);
   }
 
-  app.get('/log/stream', (c: Context) => {
+  app.get('/log/stream', logAuthMiddleware, (c: Context) => {
     const clientId = Date.now().toString();
 
     // Set headers to prevent caching
