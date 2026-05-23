@@ -42,7 +42,7 @@ const excludeObjectKeys = (keyList: string[], object: Record<string, any>) => {
 
 /**
  *
- * @param exclude List of string that we should exclude from open-ai default paramters
+ * @param exclude List of string that we should exclude from open-ai default parameters
  * @param defaultValues Default values specific to the provider for params
  * @param extra Extra parameters type of ProviderConfig should extend to support the provider
  * @returns {ProviderConfig}
@@ -81,7 +81,7 @@ export const chatCompleteParams = (
 
 /**
  *
- * @param exclude List of string that we should exclude from open-ai default paramters
+ * @param exclude List of string that we should exclude from open-ai default parameters
  * @param defaultValues Default values specific to the provider for params
  * @param extra Extra parameters type of ProviderConfig should extend to support the provider
  * @returns {ProviderConfig}
