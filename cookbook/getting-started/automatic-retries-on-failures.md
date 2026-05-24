@@ -2,7 +2,7 @@
 
 A sudden timeout or error could harm the user experience and hurt your service's reputation if your application relies on an LLM for a critical feature. To prevent this, it's crucial to have a reliable retry mechanism in place. This will ensure that users are not left frustrated and can depend on your service.
 
-Retrying Requests to Large Langauge Models (LLMs) can significantly increase your Gen AI app's reliability.
+Retrying Requests to Large Language Models (LLMs) can significantly increase your Gen AI app's reliability.
 
 It can help you handle cases such as:
 
