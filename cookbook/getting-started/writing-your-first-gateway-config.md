@@ -291,7 +291,7 @@ console.log(chatCompletion.choices[0].message.content);
 
 Those are three ways to use Gateway Configs in your requests.
 
-In the cases where you want to specifically add a config for a specific request instead of all, Portkey allows you to pass `config` argument as seperate objects right at the time of chat completions call instead of `Portkey({..})` instantiation.
+In the cases where you want to specifically add a config for a specific request instead of all, Portkey allows you to pass `config` argument as separate objects right at the time of chat completions call instead of `Portkey({..})` instantiation.
 
 ```js
 const response = await portkey.chat.completions.create(
