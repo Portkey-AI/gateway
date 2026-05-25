@@ -61,6 +61,18 @@ export class ResponseService {
       ));
     }
 
+    if (
+      isResponseAlreadyMapped &&
+      this.context.isStreaming &&
+      getRuntimeKey() == 'node'
+    ) {
+      finalMappedResponse = new Response(finalMappedResponse.body, {
+        status: finalMappedResponse.status,
+        statusText: finalMappedResponse.statusText,
+        headers: new Headers(finalMappedResponse.headers),
+      });
+    }
+
     this.updateHeaders(finalMappedResponse, cache.cacheStatus, retryAttempt);
 
     return {
