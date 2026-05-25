@@ -133,6 +133,8 @@ const nodeEnv = {
   TRUSTED_CUSTOM_HOSTS: getValueOrFileContents(
     process.env.TRUSTED_CUSTOM_HOSTS
   ),
+  
+  NAMED_CONFIGS: getValueOrFileContents(process.env.NAMED_CONFIGS),
 };
 
 export const Environment = (c?: Context) => {

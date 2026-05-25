@@ -7,6 +7,7 @@ import {
 } from '../../globals';
 import { configSchema } from './schema/config';
 import { Environment } from '../../utils/env';
+import { processNamedConfig } from '../../utils/namedConfigs';
 
 // Regex patterns for validation (defined once for reusability)
 const VALIDATION_PATTERNS = {
@@ -108,9 +109,10 @@ export const requestValidator = (c: Context, next: any) => {
     );
   }
 
+  const x_config = processNamedConfig(requestHeaders[`x-${POWERED_BY}-config`]);
   if (
     !(
-      requestHeaders[`x-${POWERED_BY}-config`] ||
+      x_config ||
       requestHeaders[`x-${POWERED_BY}-provider`]
     )
   ) {
@@ -161,9 +163,9 @@ export const requestValidator = (c: Context, next: any) => {
     );
   }
 
-  if (requestHeaders[`x-${POWERED_BY}-config`]) {
+  if (x_config) {
     try {
-      const parsedConfig = JSON.parse(requestHeaders[`x-${POWERED_BY}-config`]);
+      const parsedConfig = JSON.parse(x_config);
       if (
         !requestHeaders[`x-${POWERED_BY}-provider`] &&
         !(parsedConfig.provider || parsedConfig.targets)

@@ -37,6 +37,7 @@ import { PreRequestValidatorService } from './services/preRequestValidatorServic
 import { ProviderContext } from './services/providerContext';
 import { RequestContext } from './services/requestContext';
 import { ResponseService } from './services/responseService';
+import { processNamedConfig } from '../utils/namedConfigs';
 
 function constructRequestBody(
   requestContext: RequestContext,
@@ -1023,8 +1024,9 @@ export function constructConfigFromRequestHeaders(
       : [],
   };
 
-  if (requestHeaders[`x-${POWERED_BY}-config`]) {
-    let parsedConfigJson = JSON.parse(requestHeaders[`x-${POWERED_BY}-config`]);
+  const x_config = processNamedConfig(requestHeaders[`x-${POWERED_BY}-config`]);
+  if (x_config) {
+    let parsedConfigJson = JSON.parse(x_config);
     parsedConfigJson.default_input_guardrails = defaultsConfig.input_guardrails;
     parsedConfigJson.default_output_guardrails =
       defaultsConfig.output_guardrails;

@@ -1,6 +1,7 @@
 import { Context, Next } from 'hono';
 import { HEADER_KEYS } from '../globals';
 import { env } from 'hono/adapter';
+import { processNamedConfig } from '../utils/namedConfigs';
 
 /**
  * Handles the models request. Returns a list of models supported by the Ai gateway.
@@ -20,7 +21,7 @@ export const modelsHandler = async (context: Context, next: Next) => {
 
   const apiKey =
     headers[HEADER_KEYS.API_KEY] || authHeader?.replace('Bearer ', '');
-  let config: any = headers[HEADER_KEYS.CONFIG];
+  let config: any = processNamedConfig(headers[HEADER_KEYS.CONFIG]);
   if (config && typeof config === 'string') {
     try {
       config = JSON.parse(config);
