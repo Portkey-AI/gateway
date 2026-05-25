@@ -48,6 +48,8 @@ $ bunx @portkey-ai/gateway
 
 ### NodeJS Server
 
+> **Node.js version:** this project targets Node.js `>=20.9.0` (see `.node-version` and the `engines` field in `package.json`). If you use a version manager like `nvm`, `fnm`, `asdf`, `mise`, or `nodenv`, it will pick the pinned version up automatically.
+
 1. Clone the Repository
 
 ```sh
