@@ -113,6 +113,8 @@ export const ORACLE: string = 'oracle';
 export const IO_INTELLIGENCE: string = 'iointelligence';
 export const AIBADGR: string = 'aibadgr';
 export const OVHCLOUD: string = 'ovhcloud';
+export const ASTRAFLOW: string = 'astraflow';
+export const ASTRAFLOW_CN: string = 'astraflow-cn';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -189,6 +191,8 @@ export const VALID_PROVIDERS = [
   IO_INTELLIGENCE,
   AIBADGR,
   OVHCLOUD,
+  ASTRAFLOW,
+  ASTRAFLOW_CN,
 ];
 
 export const CONTENT_TYPES = {
