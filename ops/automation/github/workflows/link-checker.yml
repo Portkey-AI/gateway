@@ -1,0 +1,51 @@
+name: Check Markdown links
+
+on:
+  push:
+    paths:
+      - '**/*.md' # Only run when markdown files change
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: '0 0 * * 0' # Run weekly on Sundays
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  linkChecker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Link Checker
+        uses: lycheeverse/lychee-action@v1.8.0
+        with:
+          args: --verbose --no-progress './**/*.md'
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Issue If Failed
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const title = '🔗 Broken links found in documentation';
+            const body = 'The link checker found broken links in the documentation. Please check the [workflow run](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}) for details.';
+
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'documentation,broken-links',
+            });
+
+            const issueExists = existingIssues.data.some(issue => issue.title === title);
+            if (!issueExists) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['documentation', 'broken-links']
+              });
+            }

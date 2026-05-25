@@ -109,7 +109,7 @@ Save the response in a YAML file for later use.
 
 3. Copy the deployment YAML
 ```shell
-wget https://raw.githubusercontent.com/Portkey-AI/gateway/main/deployment.yaml
+wget https://raw.githubusercontent.com/Portkey-AI/gateway/main/ops/kubernetes/deployment.yaml
 ```
 
 4. Apply the manifest
@@ -220,7 +220,7 @@ For more information on the Docker image, check [here](https://hub.docker.com/r/
 1. Download Compose File from the Repository:
 
 ```sh
-wget "https://raw.githubusercontent.com/Portkey-AI/gateway/main/docker-compose.yaml"
+wget "https://raw.githubusercontent.com/Portkey-AI/gateway/main/ops/docker/docker-compose.yaml"
 ```
 
 2. Run:

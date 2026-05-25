@@ -25,8 +25,8 @@
   "scripts": {
     "dev": "npm run dev:workerd",
     "dev:node": "tsx src/start-server.ts",
-    "dev:workerd": "wrangler dev src/index.ts",
-    "deploy": "wrangler deploy --minify src/index.ts",
+    "dev:workerd": "wrangler dev --config ops/cloudflare/wrangler.toml",
+    "deploy": "wrangler deploy --minify --config ops/cloudflare/wrangler.toml",
     "pretty": "prettier --write \"./**/*.{js,jsx,ts,tsx,json}\"",
     "build": "rollup -c",
     "build-plugins": "tsx plugins/build.ts",

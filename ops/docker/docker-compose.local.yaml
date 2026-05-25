@@ -1,0 +1,9 @@
+services:
+  gateway:
+    build:
+      context: ../..
+      dockerfile: ops/docker/Dockerfile
+    image: portkey-gateway:local
+    ports:
+      - "8787:8787"
+    restart: always
