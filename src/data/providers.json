@@ -248,6 +248,13 @@
       "base_url": "https://api.sambanova.ai"
     },
     {
+      "id": "saladcloud",
+      "name": "SaladCloud",
+      "object": "provider",
+      "description": "SaladCloud AI Gateway provides OpenAI-compatible access to open-weight models, including Qwen chat models, with standard chat completions and streaming support.",
+      "base_url": "https://ai.salad.cloud/v1"
+    },
+    {
       "id": "segmind",
       "name": "Segmind",
       "object": "provider",
