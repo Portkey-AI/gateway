@@ -9,6 +9,7 @@ import {
   SYSTEM_MESSAGE_ROLES,
   MESSAGE_ROLES,
 } from '../../types/requestBody';
+import { openaiReasoningEffortToVertexThinkingBudget } from '../google-vertex-ai/transformGenerationConfig';
 import { VERTEX_MODALITY } from '../google-vertex-ai/types';
 import {
   getMimeType,
@@ -19,6 +20,8 @@ import {
   transformInputAudioPart,
   transformVertexLogprobs,
 } from '../google-vertex-ai/utils';
+
+const GEMINI_2_5_FAMILY_REGEX = /gemini-2[.-]?5/i;
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -93,9 +96,19 @@ const transformGenerationConfig = (params: PortkeyGeminiParams) => {
     );
   }
   if (params.reasoning_effort && params.reasoning_effort !== 'none') {
-    generationConfig['thinkingConfig'] = {
-      thinkingLevel: params.reasoning_effort,
-    };
+    const model = (params.model ?? '') as string;
+    if (GEMINI_2_5_FAMILY_REGEX.test(model)) {
+      const thinkingBudget = openaiReasoningEffortToVertexThinkingBudget(
+        params.reasoning_effort
+      );
+      if (thinkingBudget !== undefined) {
+        generationConfig['thinkingConfig'] = { thinkingBudget };
+      }
+    } else {
+      generationConfig['thinkingConfig'] = {
+        thinkingLevel: params.reasoning_effort,
+      };
+    }
   }
   if (params.image_config) {
     generationConfig['imageConfig'] = {

@@ -5,6 +5,31 @@ import {
 import { GoogleEmbedParams } from './embed';
 import { EmbedInstancesData, PortkeyGeminiParams } from './types';
 
+// Gemini 2.5 family (Pro, Flash, Flash-Lite) uses `thinkingBudget` (integer).
+// Gemini 3+ uses `thinkingLevel` (enum). `thinkingLevel` is silently dropped
+// on 2.5 models, which on Flash-Lite (default thinkingBudget=0) means no
+// thinking at all — see https://github.com/Portkey-AI/gateway/issues/1639
+const GEMINI_2_5_FAMILY_REGEX = /gemini-2[.-]?5/i;
+
+// Map OpenAI `reasoning_effort` levels to Gemini 2.5 `thinkingBudget` values.
+// Chosen to be valid across Flash, Flash-Lite (512–24576) and Pro (128–32768).
+export const openaiReasoningEffortToVertexThinkingBudget = (
+  reasoningEffort: string
+): number | undefined => {
+  switch (reasoningEffort) {
+    case 'minimal':
+      return 512;
+    case 'low':
+      return 4096;
+    case 'medium':
+      return 16384;
+    case 'high':
+      return 24576;
+    default:
+      return undefined;
+  }
+};
+
 /**
  * @see https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/gemini#request_body
  */
@@ -66,9 +91,19 @@ export function transformGenerationConfig(params: PortkeyGeminiParams) {
     );
   }
   if (params.reasoning_effort && params.reasoning_effort !== 'none') {
-    generationConfig['thinkingConfig'] = {
-      thinkingLevel: params.reasoning_effort,
-    };
+    const model = (params.model ?? '') as string;
+    if (GEMINI_2_5_FAMILY_REGEX.test(model)) {
+      const thinkingBudget = openaiReasoningEffortToVertexThinkingBudget(
+        params.reasoning_effort
+      );
+      if (thinkingBudget !== undefined) {
+        generationConfig['thinkingConfig'] = { thinkingBudget };
+      }
+    } else {
+      generationConfig['thinkingConfig'] = {
+        thinkingLevel: params.reasoning_effort,
+      };
+    }
   }
   if (params.image_config) {
     generationConfig['imageConfig'] = {
