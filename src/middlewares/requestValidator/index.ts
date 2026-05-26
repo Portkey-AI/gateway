@@ -127,9 +127,11 @@ export const requestValidator = (c: Context, next: any) => {
       }
     );
   }
+  const customHostHeader = requestHeaders[`x-${POWERED_BY}-custom-host`];
   if (
     requestHeaders[`x-${POWERED_BY}-provider`] &&
-    !VALID_PROVIDERS.includes(requestHeaders[`x-${POWERED_BY}-provider`])
+    !VALID_PROVIDERS.includes(requestHeaders[`x-${POWERED_BY}-provider`]) &&
+    !customHostHeader
   ) {
     return new Response(
       JSON.stringify({
@@ -145,7 +147,6 @@ export const requestValidator = (c: Context, next: any) => {
     );
   }
 
-  const customHostHeader = requestHeaders[`x-${POWERED_BY}-custom-host`];
   if (customHostHeader && !isValidCustomHost(customHostHeader, c)) {
     return new Response(
       JSON.stringify({

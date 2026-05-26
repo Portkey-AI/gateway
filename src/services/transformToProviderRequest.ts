@@ -270,6 +270,9 @@ export const transformToProviderRequest = (
     return params;
   }
 
+  if (!ProviderConfigs[provider]) {
+    throw new GatewayError(`Provider ${provider} is not supported`);
+  }
   const providerAPIConfig = ProviderConfigs[provider].api;
   if (
     providerAPIConfig.transformToFormData &&
