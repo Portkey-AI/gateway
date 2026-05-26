@@ -28,6 +28,22 @@ import {
 } from './types/GenericChatResponse';
 import { openAIToOracleRoleMap, oracleToOpenAIRoleMap } from './utils';
 
+/**
+ * Stream state for tracking tool calls across streaming chunks.
+ * OCI sends tool calls in the message together with finishReason, so we need to
+ * track seen tool call IDs to assign stable indices for OpenAI-format deltas.
+ */
+export interface OracleStreamState {
+  currentToolCallIndex: number;
+  seenToolCallIds: Set<string>;
+  finishReason?: string;
+}
+
+export const initOracleStreamState = (): OracleStreamState => ({
+  currentToolCallIndex: -1,
+  seenToolCallIds: new Set(),
+});
+
 // transforms from openai format to oracle format for chat completions request
 export const OracleChatCompleteConfig: ProviderConfig = {
   model: [
@@ -127,10 +143,20 @@ export const OracleChatDetailsConfig: ProviderConfig = {
             }
           }
         }
-        transformedMessages.push({
+        const transformedMessage: Message = {
           role,
           content,
-        });
+        };
+
+        if (toolCalls.length > 0) {
+          transformedMessage.toolCalls = toolCalls;
+        }
+
+        if (message.role === 'tool' && message.tool_call_id) {
+          transformedMessage.toolCallId = message.tool_call_id;
+        }
+
+        transformedMessages.push(transformedMessage);
       }
       return transformedMessages;
     },
@@ -290,6 +316,21 @@ export const OracleChatCompleteResponseTransform: (
         const content = choice.message?.content?.find(
           (item) => item.type === 'TEXT'
         )?.text;
+
+        const toolCalls = (choice.message as any)?.toolCalls?.map(
+          (tc: ToolCall, index: number) => ({
+            id: tc.id || `call_${Date.now().toString(36)}_${index}`,
+            type: 'function',
+            function: {
+              name: tc.name,
+              arguments:
+                typeof tc.arguments === 'string'
+                  ? tc.arguments
+                  : JSON.stringify(tc.arguments),
+            },
+          })
+        );
+
         return {
           index: choice.index,
           message: {
@@ -297,6 +338,7 @@ export const OracleChatCompleteResponseTransform: (
               choice.message.role as OracleMessageRole
             ],
             content,
+            ...(toolCalls && toolCalls.length > 0 && { tool_calls: toolCalls }),
           },
           finish_reason: choice.finishReason,
         };
@@ -332,14 +374,14 @@ export const OracleChatCompleteResponseTransform: (
 export const OracleChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
-  streamState: any,
+  streamState: OracleStreamState,
   _strictOpenAiCompliance: boolean,
   gatewayRequest: Params
 ) => string | undefined = (
   responseChunk,
   fallbackId,
   streamState,
-  strictOpenAiCompliance,
+  _strictOpenAiCompliance,
   gatewayRequest
 ) => {
   let chunk = responseChunk.trim();
@@ -350,17 +392,89 @@ export const OracleChatCompleteStreamChunkTransform: (
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
   if (chunk === '[DONE]') {
-    return chunk;
+    return 'data: [DONE]\n\n';
   }
+
+  if (streamState.currentToolCallIndex === undefined) {
+    streamState.currentToolCallIndex = -1;
+    streamState.seenToolCallIds = new Set();
+  }
+
   const parsedChunk: ChatChoice = JSON.parse(chunk);
 
   if (parsedChunk.finishReason) {
-    return (
+    streamState.finishReason = parsedChunk.finishReason;
+  }
+
+  // Map OCI toolCalls to OpenAI tool_calls deltas with stable indices.
+  // OCI may stream tool calls progressively across multiple chunks: the first
+  // chunk per tool carries `id` + `name`, subsequent chunks carry argument
+  // fragments without an `id`. Anchor on `id` when present; otherwise inherit
+  // the current index so continuation fragments stay attached to the right
+  // tool call.
+  const rawToolCalls = (parsedChunk.message as any)?.toolCalls || [];
+  const toolCalls: Array<{
+    index: number;
+    id?: string;
+    type: string;
+    function: { name?: string; arguments: string };
+  }> = [];
+
+  for (const tc of rawToolCalls) {
+    let toolIndex = streamState.currentToolCallIndex;
+    if (tc.id) {
+      if (!streamState.seenToolCallIds.has(tc.id)) {
+        streamState.currentToolCallIndex++;
+        streamState.seenToolCallIds.add(tc.id);
+      }
+      toolIndex = Array.from(streamState.seenToolCallIds).indexOf(tc.id);
+    }
+    toolCalls.push({
+      index: toolIndex >= 0 ? toolIndex : 0,
+      ...(tc.id ? { id: tc.id } : {}),
+      type: 'function',
+      function: {
+        ...(tc.name ? { name: tc.name } : {}),
+        arguments:
+          typeof tc.arguments === 'string'
+            ? tc.arguments
+            : JSON.stringify(tc.arguments ?? ''),
+      },
+    });
+  }
+
+  // Final chunk: emit (optional bundled tool_calls delta) + finish + DONE
+  // as a single concatenated SSE payload. (`readStream` only handles single
+  // strings, not arrays.)
+  if (parsedChunk.finishReason) {
+    const parts: string[] = [];
+
+    if (toolCalls.length > 0) {
+      parts.push(
+        `data: ${JSON.stringify({
+          id: fallbackId,
+          object: 'chat.completion.chunk',
+          created: Math.floor(Date.now() / 1000),
+          model: gatewayRequest.model || '',
+          provider: ORACLE,
+          choices: [
+            {
+              index: 0,
+              delta: { tool_calls: toolCalls },
+              finish_reason: null,
+            },
+          ],
+        })}\n\n`
+      );
+    }
+
+    parts.push(
       `data: ${JSON.stringify({
         id: fallbackId,
         object: 'chat.completion.chunk',
         created: Math.floor(Date.now() / 1000),
         model: gatewayRequest.model || '',
+        provider: ORACLE,
         choices: [
           {
             index: 0,
@@ -368,11 +482,27 @@ export const OracleChatCompleteStreamChunkTransform: (
             finish_reason: parsedChunk.finishReason,
           },
         ],
-        provider: ORACLE,
-      })}` +
-      '\n\n' +
-      'data: [DONE]\n\n'
+      })}\n\n`
     );
+    parts.push('data: [DONE]\n\n');
+
+    return parts.join('');
+  }
+
+  const content = parsedChunk.message?.content?.find(
+    (item) => item.type === 'TEXT'
+  )?.text;
+
+  const delta: Record<string, unknown> = {};
+  if (parsedChunk.message?.role) {
+    delta.role =
+      oracleToOpenAIRoleMap[parsedChunk.message.role as OracleMessageRole];
+  }
+  if (content) {
+    delta.content = content;
+  }
+  if (toolCalls.length > 0) {
+    delta.tool_calls = toolCalls;
   }
 
   return (
@@ -384,15 +514,8 @@ export const OracleChatCompleteStreamChunkTransform: (
       provider: ORACLE,
       choices: [
         {
-          index: parsedChunk.index,
-          delta: {
-            role: oracleToOpenAIRoleMap[
-              parsedChunk.message.role as OracleMessageRole
-            ],
-            content: parsedChunk.message?.content?.find(
-              (item) => item.type === 'TEXT'
-            )?.text,
-          },
+          index: parsedChunk.index ?? 0,
+          delta,
         },
       ],
     })}` + '\n\n'

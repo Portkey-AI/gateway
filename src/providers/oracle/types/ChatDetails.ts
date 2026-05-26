@@ -57,6 +57,21 @@ export interface Message {
   content?: Array<ChatContent>;
 
   role: string;
+
+  /**
+   * Tool calls made by the assistant (for ASSISTANT messages).
+   */
+  toolCalls?: Array<{
+    id: string;
+    type: string;
+    name: string;
+    arguments: string;
+  }>;
+
+  /**
+   * The ID of the tool call this message is responding to (for TOOL messages).
+   */
+  toolCallId?: string;
 }
 
 export interface StreamOptions {
