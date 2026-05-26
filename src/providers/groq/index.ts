@@ -14,6 +14,11 @@ const GroqConfig: ProviderConfigs = {
     ['logprobs', 'logits_bias', 'top_logprobs'],
     undefined,
     {
+      max_completion_tokens: {
+        param: 'max_tokens',
+        default: 100,
+        min: 0,
+      },
       service_tier: { param: 'service_tier', required: false },
       reasoning_effort: { param: 'reasoning_effort', required: false },
     }
