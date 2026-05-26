@@ -26,7 +26,7 @@ Import `Portkey` and instantiate it using the Portkey API Key
 ```js
 const portkey = new Portkey({
   apiKey: 'xxxxrk',
-  virtualKey: 'maixxx4d'
+  virtualKey: 'maixxx4d',
 });
 ```
 
@@ -51,6 +51,21 @@ A typical Gateway Config to automatically retry three times when you hit rate-li
 
 You created a `retry` object with `attempts` and `on_status_codes` keys. The value of `attempts` can be bumped up to `5` times to retry automatically, while `on_status_codes` is an optional key. By default, Portkey will attempt to retry on the status codes `[429, 500, 502, 503, 504]`.
 
+Retries use randomized exponential backoff by default so that many requests hitting a transient provider 5xx or 429 do not retry on the same fixed schedule. You can tune the retry delay window when a workload needs tighter tail-latency control:
+
+```js
+{
+   retry: {
+      attempts: 3,
+      on_status_codes: [429, 500, 502, 503, 504],
+      min_timeout: 250,
+      max_timeout: 2000,
+      factor: 1.5,
+      randomize: true
+    }
+}
+```
+
 Refer to the [101 on Gateway Configs](https://github.com/Portkey-AI/portkey-cookbook/blob/main/product/101-portkey-gateway-configs.md#a-reference-gateway-configs-from-the-ui) and [Automatic Retries](https://portkey.ai/docs/product/ai-gateway-streamline-llm-integrations/automatic-retries).
 
 ## 3. Make API calls using Portkey Client SDK
@@ -64,17 +79,17 @@ let response = await portkey.chat.completions.create(
     messages: [
       {
         role: 'user',
-        content: 'What are 7 wonders of the world?'
-      }
-    ]
+        content: 'What are 7 wonders of the world?',
+      },
+    ],
   },
   {
     config: JSON.stringify({
       retry: {
         attempts: 3,
-        on_status_codes: [429]
-      }
-    })
+        on_status_codes: [429],
+      },
+    }),
   }
 );
 
@@ -104,7 +119,7 @@ import { Portkey } from 'portkey-ai';
 
 const portkey = new Portkey({
   apiKey: xxxx,
-  virtualKey: 'xaixxxxxxx2xx4d'
+  virtualKey: 'xaixxxxxxx2xx4d',
 });
 
 let response = await portkey.chat.completions.create(
@@ -113,16 +128,16 @@ let response = await portkey.chat.completions.create(
     messages: [
       {
         role: 'user',
-        content: 'What are 7 wonders of the world?'
-      }
-    ]
+        content: 'What are 7 wonders of the world?',
+      },
+    ],
   },
   {
     config: JSON.stringify({
       retry: {
-        attempts: 3
-      }
-    })
+        attempts: 3,
+      },
+    }),
   }
 );
 

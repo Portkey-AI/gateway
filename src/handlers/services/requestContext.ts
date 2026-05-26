@@ -146,13 +146,28 @@ export class RequestContext {
   }
 
   private normalizeRetryConfig(retry?: RetrySettings): RetrySettings {
-    return {
+    const normalizedRetryConfig: RetrySettings = {
       attempts: retry?.attempts ?? 0,
       onStatusCodes: retry?.attempts
         ? retry?.onStatusCodes ?? RETRY_STATUS_CODES
         : [],
       useRetryAfterHeader: retry?.useRetryAfterHeader,
     };
+
+    if (retry?.minTimeout !== undefined) {
+      normalizedRetryConfig.minTimeout = retry.minTimeout;
+    }
+    if (retry?.maxTimeout !== undefined) {
+      normalizedRetryConfig.maxTimeout = retry.maxTimeout;
+    }
+    if (retry?.factor !== undefined) {
+      normalizedRetryConfig.factor = retry.factor;
+    }
+    if (retry?.randomize !== undefined) {
+      normalizedRetryConfig.randomize = retry.randomize;
+    }
+
+    return normalizedRetryConfig;
   }
 
   get retryConfig(): RetrySettings {
