@@ -214,6 +214,7 @@ describe('LogsService', () => {
         cacheMaxAge: 3600,
         hookSpanId: 'hook-span-123',
         executionTime: 1500,
+        serviceTier: null,
       });
     });
 

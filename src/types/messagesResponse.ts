@@ -277,7 +277,7 @@ export interface Usage {
   /**
    * If the request used the priority, standard, or batch tier.
    */
-  service_tier?: 'standard' | 'priority' | 'batch' | null;
+  service_tier?: 'standard' | 'priority' | 'batch' | 'flex' | null;
 }
 
 export interface MessagesResponse {
