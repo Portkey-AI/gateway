@@ -2,6 +2,7 @@ import { Context } from 'hono';
 import { ProviderAPIConfig } from '../providers/types';
 import { Options } from '../types/requestBody';
 import { RealtimeLlmEventParser } from '../services/realtimeLlmEventParser';
+import { assertSafeRequestUrl } from '../providers/utils/urlValidation';
 
 export const addListeners = (
   outgoingWebSocket: WebSocket,
@@ -91,5 +92,9 @@ export const getURLForOutgoingConnection = (
     gatewayRequestBodyJSON: {},
     gatewayRequestURL: gatewayRequestURL,
   });
-  return `${baseUrl}${endpoint}`;
+  const url = `${baseUrl}${endpoint}`;
+  // Realtime bypasses ProviderContext.getFullURL; apply the same egress check
+  // here so WebSocket upgrades can't be redirected via fragment/userinfo.
+  assertSafeRequestUrl(url);
+  return url;
 };

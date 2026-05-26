@@ -4,6 +4,7 @@ import { Options } from '../../types/requestBody';
 import { RetrieveBatchResponse } from '../types';
 import { AZURE_OPEN_AI } from '../../globals';
 import { generateErrorResponse } from '../utils';
+import { assertSafeRequestUrl } from '../utils/urlValidation';
 
 // Return a ReadableStream containing batches output data
 export const AzureOpenAIGetBatchOutputRequestHandler = async ({
@@ -43,6 +44,7 @@ export const AzureOpenAIGetBatchOutputRequestHandler = async ({
     transformedRequestUrl: retrieveBatchURL,
     gatewayRequestBody: {},
   });
+  assertSafeRequestUrl(retrieveBatchURL);
   const retrieveBatchesResponse = await fetch(retrieveBatchURL, {
     method: 'GET',
     headers: retrieveBatchesHeaders,
@@ -93,6 +95,7 @@ export const AzureOpenAIGetBatchOutputRequestHandler = async ({
       transformedRequestUrl: retrieveFileContentURL,
       gatewayRequestBody: {},
     });
+    assertSafeRequestUrl(retrieveFileContentURL);
     response = fetch(retrieveFileContentURL, {
       method: 'GET',
       headers: retrieveFileContentHeaders,
@@ -110,6 +113,7 @@ export const AzureOpenAIGetBatchOutputRequestHandler = async ({
       transformedRequestUrl: outputBlob,
       gatewayRequestBody: {},
     });
+    assertSafeRequestUrl(outputBlob);
     response = fetch(outputBlob, {
       method: 'GET',
       headers: {

@@ -5,8 +5,10 @@ import {
 } from '../bedrock/utils';
 import { ProviderAPIConfig } from '../types';
 import { env } from 'hono/adapter';
+import { assertSafeUrlComponent } from '../utils/urlValidation';
 const SagemakerAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
+    assertSafeUrlComponent('aws region', providerOptions.awsRegion);
     return `https://runtime.sagemaker.${providerOptions.awsRegion}.amazonaws.com`;
   },
   headers: async ({

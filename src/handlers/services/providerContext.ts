@@ -9,6 +9,7 @@ import Providers from '../../providers';
 import { RequestContext } from './requestContext';
 import { ANTHROPIC, AZURE_OPEN_AI } from '../../globals';
 import { GatewayError } from '../../errors/GatewayError';
+import { assertSafeRequestUrl } from '../../providers/utils/urlValidation';
 
 export class ProviderContext {
   constructor(private provider: string) {
@@ -102,6 +103,12 @@ export class ProviderContext {
       const endpointPath = this.getEndpointPath(context);
       url = `${baseURL}${endpointPath}`;
     }
+
+    // Defense-in-depth: reject URLs where unvalidated input produced a
+    // fragment or userinfo component. Individual providers validate their
+    // inputs before interpolation; this catches anything missed or future
+    // call sites that forget to validate.
+    assertSafeRequestUrl(url);
 
     return url;
   }

@@ -6,12 +6,14 @@ import {
   getAzureWorkloadIdentityToken,
 } from './utils';
 import { getRuntimeKey } from 'hono/adapter';
+import { assertSafeUrlComponent } from '../utils/urlValidation';
 
 const runtime = getRuntimeKey();
 
 const AzureOpenAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
     const { resourceName } = providerOptions;
+    assertSafeUrlComponent('azure resource name', resourceName);
     return `https://${resourceName}.openai.azure.com/openai`;
   },
   headers: async ({ providerOptions, fn, c }) => {

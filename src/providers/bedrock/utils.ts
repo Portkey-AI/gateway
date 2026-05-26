@@ -14,6 +14,10 @@ import { BedrockFinetuneRecord, BedrockInferenceProfile } from './types';
 import { FinetuneRequest } from '../types';
 import { BEDROCK } from '../../globals';
 import { Environment } from '../../utils/env';
+import {
+  assertSafeRequestUrl,
+  assertSafeUrlComponent,
+} from '../utils/urlValidation';
 
 export const getAwsEndpointDomain = (c: Context) =>
   Environment(c).AWS_ENDPOINT_DOMAIN || 'amazonaws.com';
@@ -237,6 +241,8 @@ export async function getAssumedRoleCredentials(
     sessionToken?: string;
   }
 ) {
+  assertSafeUrlComponent('aws region', awsRegion);
+
   const cacheKey = `${awsRoleArn}/${awsExternalId}/${awsRegion}`;
   const getFromCacheByKey = c.get('getFromCacheByKey');
   const putInCacheWithValue = c.get('putInCacheWithValue');
@@ -281,7 +287,8 @@ export async function getAssumedRoleCredentials(
   });
   const date = new Date();
   const sessionName = `${date.getFullYear()}${date.getMonth()}${date.getDay()}`;
-  const url = `https://${hostname}?Action=AssumeRole&Version=2011-06-15&RoleArn=${awsRoleArn}&RoleSessionName=${sessionName}${awsExternalId ? `&ExternalId=${awsExternalId}` : ''}`;
+  const url = `https://${hostname}?Action=AssumeRole&Version=2011-06-15&RoleArn=${encodeURIComponent(awsRoleArn)}&RoleSessionName=${encodeURIComponent(sessionName)}${awsExternalId ? `&ExternalId=${encodeURIComponent(awsExternalId)}` : ''}`;
+  assertSafeRequestUrl(url);
   const urlObj = new URL(url);
   const requestHeaders = { host: hostname };
   const options = {
@@ -447,11 +454,13 @@ export const getInferenceProfile = async (
     }
   }
 
+  assertSafeUrlComponent('aws region', providerOptions.awsRegion);
   const awsRegion = providerOptions.awsRegion || 'us-east-1';
   const awsAccessKeyId = providerOptions.awsAccessKeyId || '';
   const awsSecretAccessKey = providerOptions.awsSecretAccessKey || '';
   const awsSessionToken = providerOptions.awsSessionToken || '';
   const url = `https://bedrock.${awsRegion}.amazonaws.com/inference-profiles/${encodeURIComponent(decodeURIComponent(inferenceProfileIdentifier))}`;
+  assertSafeRequestUrl(url);
 
   const headers = await generateAWSHeaders(
     undefined,

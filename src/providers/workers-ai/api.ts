@@ -1,8 +1,10 @@
 import { ProviderAPIConfig } from '../types';
+import { assertSafeUrlComponent } from '../utils/urlValidation';
 
 const WorkersAiAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
     const { workersAiAccountId } = providerOptions;
+    assertSafeUrlComponent('workers ai account id', workersAiAccountId);
     return `https://api.cloudflare.com/client/v4/accounts/${workersAiAccountId}/ai/run`;
   },
   headers: ({ providerOptions }) => {

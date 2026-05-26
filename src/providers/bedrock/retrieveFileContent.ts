@@ -3,6 +3,7 @@ import { Options } from '../../types/requestBody';
 import BedrockAPIConfig from './api';
 import { getOctetStreamToOctetStreamTransformer } from '../../handlers/streamHandlerUtils';
 import { BEDROCK } from '../../globals';
+import { assertSafeRequestUrl } from '../utils/urlValidation';
 
 const getRowTransform = () => {
   return (row: Record<string, any>) => row;
@@ -33,6 +34,7 @@ export const BedrockRetrieveFileContentRequestHandler = async ({
       gatewayRequestBodyJSON: {},
     });
     const url = `${baseURL}${endpoint}`;
+    assertSafeRequestUrl(url);
 
     // generate the headers
     const headers = await BedrockAPIConfig.headers({

@@ -1,8 +1,10 @@
 import { ProviderAPIConfig } from '../types';
 import { OCIRequestSigner } from './utils';
+import { assertSafeUrlComponent } from '../utils/urlValidation';
 
 const OracleAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
+    assertSafeUrlComponent('oracle region', providerOptions.oracleRegion);
     // Oracle Generative AI Inference API base URL
     return `https://inference.generativeai.${providerOptions.oracleRegion}.oci.oraclecloud.com`;
   },

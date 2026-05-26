@@ -1,6 +1,10 @@
 import { RequestHandler } from '../types';
 import GoogleApiConfig from './api';
 import { getBucketAndFile } from './utils';
+import {
+  assertSafeRequestUrl,
+  assertSafeUrlComponent,
+} from '../utils/urlValidation';
 
 export const GoogleRetrieveFileRequestHandler: RequestHandler = async ({
   requestURL,
@@ -10,9 +14,12 @@ export const GoogleRetrieveFileRequestHandler: RequestHandler = async ({
 
   const { bucket, file } = getBucketAndFile(fileId ?? '');
 
+  assertSafeUrlComponent('gcs bucket name', bucket);
+
   const headers = await GoogleApiConfig.headers({ providerOptions } as any);
 
   const url = `https://storage.googleapis.com/${bucket}/${file}`;
+  assertSafeRequestUrl(url);
 
   const response = await fetch(url, { headers, method: 'HEAD' });
 

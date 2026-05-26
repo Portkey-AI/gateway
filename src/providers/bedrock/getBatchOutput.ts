@@ -7,6 +7,10 @@ import { BedrockUploadFileResponseTransforms } from './uploadFileUtils';
 import { BEDROCK } from '../../globals';
 import { generateErrorResponse } from '../utils';
 import { getAwsEndpointDomain } from './utils';
+import {
+  assertSafeRequestUrl,
+  assertSafeUrlComponent,
+} from '../utils/urlValidation';
 
 const getModelProvider = (modelId: string) => {
   let provider = '';
@@ -64,6 +68,7 @@ export const BedrockGetBatchOutputRequestHandler = async ({
     });
     const batchId = requestURL.split('/v1/batches/')[1].replace('/output', '');
     const retrieveBatchURL = `${baseUrl}/model-invocation-job/${batchId}`;
+    assertSafeRequestUrl(retrieveBatchURL);
     const retrieveBatchesHeaders = await BedrockAPIConfig.headers({
       c,
       providerOptions,
@@ -103,6 +108,8 @@ export const BedrockGetBatchOutputRequestHandler = async ({
 
     const { awsRegion } = providerOptions;
     const awsS3Bucket = outputFileId.replace('s3://', '').split('/')[0];
+    assertSafeUrlComponent('aws region', awsRegion);
+    assertSafeUrlComponent('aws s3 bucket', awsS3Bucket);
     const jobId = batchDetails.jobArn.split('/')[1];
     const inputS3URIParts =
       batchDetails.inputDataConfig.s3InputDataConfig.s3Uri.split('/');
@@ -113,6 +120,7 @@ export const BedrockGetBatchOutputRequestHandler = async ({
     const awsModelProvider = batchDetails.modelId;
 
     const s3FileURL = `https://${awsS3Bucket}.s3.${awsRegion}.${getAwsEndpointDomain(c)}/${awsS3ObjectKey}`;
+    assertSafeRequestUrl(s3FileURL);
     const s3FileHeaders = await BedrockAPIConfig.headers({
       c,
       providerOptions,

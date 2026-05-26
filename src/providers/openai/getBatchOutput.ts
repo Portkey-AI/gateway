@@ -2,6 +2,7 @@ import { Context } from 'hono';
 import OpenAIAPIConfig from './api';
 import { Options } from '../../types/requestBody';
 import { RetrieveBatchResponse } from '../types';
+import { assertSafeRequestUrl } from '../utils/urlValidation';
 
 // Return a ReadableStream containing batches output data
 export const OpenAIGetBatchOutputRequestHandler = async ({
@@ -32,6 +33,7 @@ export const OpenAIGetBatchOutputRequestHandler = async ({
     transformedRequestUrl: retrieveBatchURL,
     gatewayRequestBody: {},
   });
+  assertSafeRequestUrl(retrieveBatchURL);
   const retrieveBatchesResponse = await fetch(retrieveBatchURL, {
     method: 'GET',
     headers: retrieveBatchesHeaders,
@@ -57,6 +59,7 @@ export const OpenAIGetBatchOutputRequestHandler = async ({
     transformedRequestUrl: retrieveFileContentURL,
     gatewayRequestBody: {},
   });
+  assertSafeRequestUrl(retrieveFileContentURL);
   const response = fetch(retrieveFileContentURL, {
     method: 'GET',
     headers: retrieveFileContentHeaders,

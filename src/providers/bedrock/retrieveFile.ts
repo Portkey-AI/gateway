@@ -2,6 +2,7 @@ import { Context } from 'hono';
 import { Options } from '../../types/requestBody';
 import BedrockAPIConfig from './api';
 import { BEDROCK } from '../../globals';
+import { assertSafeRequestUrl } from '../utils/urlValidation';
 
 export const BedrockRetrieveFileRequestHandler = async ({
   c,
@@ -28,6 +29,7 @@ export const BedrockRetrieveFileRequestHandler = async ({
       gatewayRequestBodyJSON: {},
     });
     const retrieveFileURL = `${baseUrl}${endpoint}`;
+    assertSafeRequestUrl(retrieveFileURL);
 
     // generate the headers
     const headers = await BedrockAPIConfig.headers({

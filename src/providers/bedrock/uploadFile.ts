@@ -14,6 +14,10 @@ import {
 import BedrockAPIConfig from './api';
 import { ProviderConfig, RequestHandler } from '../../providers/types';
 import { Options } from '../../types/requestBody';
+import {
+  assertSafeRequestUrl,
+  assertSafeUrlComponent,
+} from '../utils/urlValidation';
 
 class AwsMultipartUploadHandler {
   private bucket: string;
@@ -33,12 +37,15 @@ class AwsMultipartUploadHandler {
     providerOptions: Options,
     c: Context
   ) {
+    assertSafeUrlComponent('aws region', region);
+    assertSafeUrlComponent('aws s3 bucket', bucket);
     this.region = region;
     this.bucket = bucket;
     this.objectKey = objectKey;
     this.url = new URL(
       `https://${bucket}.s3.${region}.amazonaws.com/${objectKey}?uploads`
     );
+    assertSafeRequestUrl(this.url.toString());
     this.providerOptions = providerOptions;
     this.c = c;
   }
@@ -170,8 +177,9 @@ class AwsMultipartUploadHandler {
   async uploadPart(partNumber: number, partData: Uint8Array | Buffer) {
     const method = 'PUT';
     const partUrl = new URL(
-      `https://${this.bucket}.s3.${this.region}.amazonaws.com/${this.objectKey}?partNumber=${partNumber}&uploadId=${this.uploadId}`
+      `https://${this.bucket}.s3.${this.region}.amazonaws.com/${this.objectKey}?partNumber=${partNumber}&uploadId=${encodeURIComponent(this.uploadId ?? '')}`
     );
+    assertSafeRequestUrl(partUrl.toString());
     const headers = await BedrockAPIConfig.headers({
       c: this.c,
       providerOptions: this.providerOptions,
@@ -207,8 +215,9 @@ class AwsMultipartUploadHandler {
   async completeMultipartUpload() {
     const method = 'POST';
     const completeUrl = new URL(
-      `https://${this.bucket}.s3.${this.region}.amazonaws.com/${this.objectKey}?uploadId=${this.uploadId}`
+      `https://${this.bucket}.s3.${this.region}.amazonaws.com/${this.objectKey}?uploadId=${encodeURIComponent(this.uploadId ?? '')}`
     );
+    assertSafeRequestUrl(completeUrl.toString());
     const partsXml = this.parts
       .map(
         (part) =>

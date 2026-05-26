@@ -10,6 +10,7 @@ import {
   getBedrockModelWithoutRegion,
 } from './utils';
 import { GatewayError } from '../../errors/GatewayError';
+import { assertSafeUrlComponent } from '../utils/urlValidation';
 
 interface BedrockAPIConfigInterface extends Omit<ProviderAPIConfig, 'headers'> {
   headers: (args: {
@@ -112,6 +113,8 @@ const setRouteSpecificHeaders = (
 
 const BedrockAPIConfig: BedrockAPIConfigInterface = {
   getBaseURL: async ({ c, providerOptions, fn, gatewayRequestURL, params }) => {
+    assertSafeUrlComponent('aws region', providerOptions.awsRegion);
+
     const model = decodeURIComponent(params?.model || '');
     if (model.includes('arn:aws') && params) {
       const foundationModel = model.includes('foundation-model/')
@@ -125,22 +128,18 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
         providerOptions.foundationModel = foundationModel;
       }
     }
-    if (fn === 'retrieveFile') {
+    if (fn === 'retrieveFile' || fn === 'retrieveFileContent') {
       const s3URL = decodeURIComponent(
-        gatewayRequestURL.split('/v1/files/')[1]
+        gatewayRequestURL.split('/v1/files/')[1] ?? ''
       );
       const bucketName = s3URL.replace('s3://', '').split('/')[0];
+      assertSafeUrlComponent('s3 bucket name', bucketName);
       return `https://${bucketName}.s3.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain(c)}`;
     }
-    if (fn === 'retrieveFileContent') {
-      const s3URL = decodeURIComponent(
-        gatewayRequestURL.split('/v1/files/')[1]
-      );
-      const bucketName = s3URL.replace('s3://', '').split('/')[0];
-      return `https://${bucketName}.s3.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain(c)}`;
-    }
-    if (fn === 'uploadFile')
+    if (fn === 'uploadFile') {
+      assertSafeUrlComponent('aws s3 bucket', providerOptions.awsS3Bucket);
       return `https://${providerOptions.awsS3Bucket}.s3.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain(c)}`;
+    }
     const isAWSControlPlaneEndpoint =
       fn && AWS_CONTROL_PLANE_ENDPOINTS.includes(fn);
     return `https://${isAWSControlPlaneEndpoint ? 'bedrock' : 'bedrock-runtime'}.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain(c)}`;
