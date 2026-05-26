@@ -747,6 +747,8 @@ export const googleTools = [
   'google_search',
   'googleSearchRetrieval',
   'google_search_retrieval',
+  'enterpriseWebSearch',
+  'enterprise_web_search',
   'computerUse',
   'computer_use',
   'googleMaps',
@@ -772,6 +774,12 @@ export const transformGoogleTools = (tool: Tool) => {
     )
   ) {
     tools.push(buildGoogleSearchRetrievalTool(tool));
+  } else if (
+    ['enterpriseWebSearch', 'enterprise_web_search'].includes(
+      tool.function.name
+    )
+  ) {
+    tools.push({ enterpriseWebSearch: {} });
   } else if (['computerUse', 'computer_use'].includes(tool.function.name)) {
     tools.push({
       computerUse: {
