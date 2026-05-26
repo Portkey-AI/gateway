@@ -1,4 +1,5 @@
 import { ProviderAPIConfig } from '../types';
+import { version as packageVersion } from '../../../package.json';
 
 const AnthropicAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.anthropic.com/v1',
@@ -8,6 +9,7 @@ const AnthropicAPIConfig: ProviderAPIConfig = {
       providerOptions.apiKey || providerOptions.anthropicApiKey || '';
     const headers: Record<string, string> = {
       'X-API-Key': apiKey,
+      'User-Agent': `portkey-ai-gateway/${packageVersion}`,
     };
 
     // Accept anthropic_beta and anthropic_version in body to support enviroments which cannot send it in headers.
