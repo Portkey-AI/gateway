@@ -27,6 +27,21 @@ import { AnthropicErrorResponseTransform } from './utils';
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
+/**
+ * Sanitize a cache_control object to only include known Anthropic fields.
+ * Prevents arbitrary client-supplied fields from being forwarded.
+ */
+const sanitizeCacheControl = (
+  cacheControl: any
+): { type: 'ephemeral'; scope?: string } | undefined => {
+  if (!cacheControl || cacheControl.type !== 'ephemeral') return undefined;
+  const result: { type: 'ephemeral'; scope?: string } = { type: 'ephemeral' };
+  if (typeof cacheControl.scope === 'string') {
+    result.scope = cacheControl.scope;
+  }
+  return result;
+};
+
 interface AnthropicTool extends PromptCache {
   name: string;
   description?: string;
@@ -72,6 +87,7 @@ interface AnthropicToolResultContentItem {
         cache_control?: {
           type: string;
           ttl?: number;
+          scope?: string;
         };
       }[]
     | string;
@@ -228,7 +244,7 @@ const transformAndAppendImageContentItem = (
             data: base64Image,
           },
           ...((item as any).cache_control && {
-            cache_control: { type: 'ephemeral' },
+            cache_control: sanitizeCacheControl((item as any).cache_control),
           }),
         });
       }
@@ -302,7 +318,9 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                     type: item.type,
                     text: item.text,
                     ...((item as any).cache_control && {
-                      cache_control: { type: 'ephemeral' },
+                      cache_control: sanitizeCacheControl(
+                        (item as any).cache_control
+                      ),
                     }),
                   });
                 } else if (item.type === 'image_url') {
@@ -343,7 +361,9 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                   text: _msg.text,
                   type: 'text',
                   ...((_msg as any)?.cache_control && {
-                    cache_control: { type: 'ephemeral' },
+                    cache_control: sanitizeCacheControl(
+                      (_msg as any).cache_control
+                    ),
                   }),
                 });
               });
@@ -353,7 +373,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
             ) {
               systemMessages.push({
                 ...(msg?.cache_control && {
-                  cache_control: { type: 'ephemeral' },
+                  cache_control: sanitizeCacheControl(msg.cache_control),
                 }),
                 text: msg.content,
                 type: 'text',
@@ -383,7 +403,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                 $defs: tool.function.parameters?.['$defs'] || {},
               },
               ...(tool.cache_control && {
-                cache_control: { type: 'ephemeral' },
+                cache_control: sanitizeCacheControl(tool.cache_control),
               }),
               // Advanced tool use properties (nested in function object per OpenAI format)
               ...(tool.function.defer_loading !== undefined && {
@@ -404,7 +424,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
               name: tool.type,
               type: toolOptions?.name,
               ...(tool.cache_control && {
-                cache_control: { type: 'ephemeral' },
+                cache_control: sanitizeCacheControl(tool.cache_control),
               }),
             });
           }
