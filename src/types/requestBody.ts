@@ -12,6 +12,14 @@ export interface RetrySettings {
   onStatusCodes: number[];
   /** Whether to use the provider's retry wait. */
   useRetryAfterHeader?: boolean;
+  /** Initial retry delay in milliseconds. */
+  minTimeout?: number;
+  /** Maximum retry delay in milliseconds. */
+  maxTimeout?: number;
+  /** Exponential backoff factor. */
+  factor?: number;
+  /** Whether to randomize retry delays to avoid synchronized retries. */
+  randomize?: boolean;
 }
 
 export interface CacheSettings {

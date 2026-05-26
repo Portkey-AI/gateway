@@ -1,5 +1,11 @@
 import retry from 'async-retry';
 import { MAX_RETRY_LIMIT_MS, POSSIBLE_RETRY_STATUS_HEADERS } from '../globals';
+import type { RetrySettings } from '../types/requestBody';
+
+type RetryBackoffOptions = Pick<
+  RetrySettings,
+  'minTimeout' | 'maxTimeout' | 'factor' | 'randomize'
+>;
 
 async function fetchWithTimeout(
   url: string,
@@ -69,7 +75,8 @@ export const retryRequest = async (
   statusCodesToRetry: number[],
   timeout: number | null,
   requestHandler?: () => Promise<Response>,
-  followProviderRetry?: boolean
+  followProviderRetry?: boolean,
+  retryBackoffOptions?: RetryBackoffOptions
 ): Promise<{
   response: Response;
   attempt: number | undefined;
@@ -176,7 +183,16 @@ export const retryRequest = async (
         onRetry: (error: Error, attempt: number) => {
           lastAttempt = attempt;
         },
-        randomize: false,
+        randomize: retryBackoffOptions?.randomize ?? true,
+        ...(retryBackoffOptions?.minTimeout !== undefined && {
+          minTimeout: retryBackoffOptions.minTimeout,
+        }),
+        ...(retryBackoffOptions?.maxTimeout !== undefined && {
+          maxTimeout: retryBackoffOptions.maxTimeout,
+        }),
+        ...(retryBackoffOptions?.factor !== undefined && {
+          factor: retryBackoffOptions.factor,
+        }),
       }
     );
   } catch (error: any) {
