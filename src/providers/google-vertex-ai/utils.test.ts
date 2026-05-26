@@ -1,4 +1,8 @@
-import { derefer, transformGeminiToolParameters } from './utils';
+import {
+  derefer,
+  transformGeminiToolParameters,
+  recursivelyDeleteUnsupportedParameters,
+} from './utils';
 
 /*
 from enum import StrEnum
@@ -614,5 +618,292 @@ describe('transformGeminiToolParameters', () => {
       'identity',
       'emergency_contacts',
     ]);
+  });
+});
+
+describe('recursivelyDeleteUnsupportedParameters', () => {
+  it('removes $schema, $id, and $comment', () => {
+    const schema = {
+      $schema: 'https://json-schema.org/draft/2020-12/schema',
+      $id: 'https://example.com/schema',
+      $comment: 'This is a comment',
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+      },
+    };
+    recursivelyDeleteUnsupportedParameters(schema);
+    expect((schema as any).$schema).toBeUndefined();
+    expect((schema as any).$id).toBeUndefined();
+    expect((schema as any).$comment).toBeUndefined();
+    expect(schema.type).toBe('object');
+    expect(schema.properties.name.type).toBe('string');
+  });
+
+  it('removes additionalProperties', () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+      },
+      additionalProperties: false,
+    };
+    recursivelyDeleteUnsupportedParameters(schema);
+    expect((schema as any).additionalProperties).toBeUndefined();
+    expect(schema.type).toBe('object');
+  });
+
+  it('removes oneOf, allOf, not, const, and if/then/else', () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        value: {
+          oneOf: [{ type: 'string' }, { type: 'number' }],
+        },
+        status: {
+          const: 'active',
+        },
+        conditional: {
+          if: { type: 'string' },
+          then: { minLength: 1 },
+          else: { type: 'number' },
+        },
+        combined: {
+          allOf: [{ type: 'string' }, { minLength: 1 }],
+        },
+        negated: {
+          not: { type: 'null' },
+        },
+      },
+    };
+    recursivelyDeleteUnsupportedParameters(schema);
+    expect((schema.properties.value as any).oneOf).toBeUndefined();
+    expect((schema.properties.status as any).const).toBeUndefined();
+    expect((schema.properties.conditional as any).if).toBeUndefined();
+    expect((schema.properties.conditional as any).then).toBeUndefined();
+    expect((schema.properties.conditional as any).else).toBeUndefined();
+    expect((schema.properties.combined as any).allOf).toBeUndefined();
+    expect((schema.properties.negated as any).not).toBeUndefined();
+  });
+
+  it('removes uniqueItems and contains', () => {
+    const schema = {
+      type: 'array',
+      items: { type: 'string' },
+      uniqueItems: true,
+      contains: { type: 'string', pattern: '^test' },
+    };
+    recursivelyDeleteUnsupportedParameters(schema);
+    expect((schema as any).uniqueItems).toBeUndefined();
+    expect((schema as any).contains).toBeUndefined();
+    expect(schema.type).toBe('array');
+    expect(schema.items.type).toBe('string');
+  });
+
+  it('preserves all supported Vertex AI schema fields', () => {
+    const schema = {
+      type: 'object',
+      format: 'custom',
+      title: 'Test Schema',
+      description: 'A test schema',
+      nullable: true,
+      default: {},
+      example: { name: 'test' },
+      properties: {
+        name: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 100,
+          pattern: '^[a-z]+$',
+        },
+        age: { type: 'integer', minimum: 0, maximum: 150 },
+        tags: {
+          type: 'array',
+          items: { type: 'string' },
+          minItems: 1,
+          maxItems: 10,
+        },
+        status: { type: 'string', enum: ['active', 'inactive'] },
+      },
+      propertyOrdering: ['name', 'age'],
+      required: ['name'],
+      minProperties: 1,
+      maxProperties: 10,
+    };
+    recursivelyDeleteUnsupportedParameters(schema);
+
+    // All these should be preserved
+    expect(schema.type).toBe('object');
+    expect(schema.format).toBe('custom');
+    expect(schema.title).toBe('Test Schema');
+    expect(schema.description).toBe('A test schema');
+    expect(schema.nullable).toBe(true);
+    expect(schema.default).toEqual({});
+    expect(schema.example).toEqual({ name: 'test' });
+    expect(schema.properties.name.minLength).toBe(1);
+    expect(schema.properties.name.maxLength).toBe(100);
+    expect(schema.properties.name.pattern).toBe('^[a-z]+$');
+    expect(schema.properties.age.minimum).toBe(0);
+    expect(schema.properties.age.maximum).toBe(150);
+    expect(schema.properties.tags.minItems).toBe(1);
+    expect(schema.properties.tags.maxItems).toBe(10);
+    expect(schema.properties.status.enum).toEqual(['active', 'inactive']);
+    expect(schema.propertyOrdering).toEqual(['name', 'age']);
+    expect(schema.required).toEqual(['name']);
+    expect(schema.minProperties).toBe(1);
+    expect(schema.maxProperties).toBe(10);
+  });
+
+  it('recursively processes nested objects and arrays', () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        nested: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            value: {
+              type: 'number',
+              exclusiveMinimum: 0,
+              exclusiveMaximum: 100,
+            },
+          },
+        },
+        items: {
+          type: 'array',
+          items: {
+            type: 'object',
+            $comment: 'Should be removed',
+            properties: {
+              id: { type: 'string', $id: 'item-id' },
+            },
+          },
+        },
+      },
+    };
+    recursivelyDeleteUnsupportedParameters(schema);
+
+    expect(
+      (schema.properties.nested as any).additionalProperties
+    ).toBeUndefined();
+    expect(
+      (schema.properties.nested.properties.value as any).exclusiveMinimum
+    ).toBeUndefined();
+    expect(
+      (schema.properties.nested.properties.value as any).exclusiveMaximum
+    ).toBeUndefined();
+    expect((schema.properties.items.items as any).$comment).toBeUndefined();
+    expect(
+      (schema.properties.items.items.properties.id as any).$id
+    ).toBeUndefined();
+  });
+
+  it('handles anyOf arrays correctly', () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        value: {
+          anyOf: [
+            { type: 'string', $comment: 'String option' },
+            { type: 'number', exclusiveMinimum: 0 },
+          ],
+        },
+      },
+    };
+    recursivelyDeleteUnsupportedParameters(schema);
+
+    expect(schema.properties.value.anyOf).toBeDefined();
+    expect(schema.properties.value.anyOf.length).toBe(2);
+    expect((schema.properties.value.anyOf[0] as any).$comment).toBeUndefined();
+    expect(schema.properties.value.anyOf[0].type).toBe('string');
+    expect(
+      (schema.properties.value.anyOf[1] as any).exclusiveMinimum
+    ).toBeUndefined();
+    expect(schema.properties.value.anyOf[1].type).toBe('number');
+  });
+
+  it('handles null and non-object values gracefully', () => {
+    expect(() => recursivelyDeleteUnsupportedParameters(null)).not.toThrow();
+    expect(() =>
+      recursivelyDeleteUnsupportedParameters(undefined)
+    ).not.toThrow();
+    expect(() =>
+      recursivelyDeleteUnsupportedParameters('string')
+    ).not.toThrow();
+    expect(() => recursivelyDeleteUnsupportedParameters(123)).not.toThrow();
+    expect(() => recursivelyDeleteUnsupportedParameters([])).not.toThrow();
+  });
+
+  it('converts array type to anyOf format', () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        limit: {
+          type: ['number', 'string'],
+          default: 5,
+          description: 'Number of results',
+        },
+        includeContent: {
+          type: ['boolean', 'string'],
+          default: true,
+        },
+      },
+    };
+    recursivelyDeleteUnsupportedParameters(schema);
+
+    // Array type should be converted to anyOf
+    expect(schema.properties.limit.type).toBeUndefined();
+    expect((schema.properties.limit as any).anyOf).toEqual([
+      { type: 'number' },
+      { type: 'string' },
+    ]);
+    expect(schema.properties.limit.default).toBe(5);
+    expect(schema.properties.limit.description).toBe('Number of results');
+
+    expect(schema.properties.includeContent.type).toBeUndefined();
+    expect((schema.properties.includeContent as any).anyOf).toEqual([
+      { type: 'boolean' },
+      { type: 'string' },
+    ]);
+  });
+
+  it('handles nested array types in complex schemas', () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        query: { type: 'string' },
+        options: {
+          type: 'object',
+          properties: {
+            timeout: {
+              type: ['number', 'string'],
+              description: 'Timeout in ms',
+            },
+          },
+        },
+        items: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              value: {
+                type: ['string', 'number', 'boolean'],
+              },
+            },
+          },
+        },
+      },
+    };
+    recursivelyDeleteUnsupportedParameters(schema);
+
+    // Nested property with array type
+    expect((schema.properties.options.properties.timeout as any).anyOf).toEqual(
+      [{ type: 'number' }, { type: 'string' }]
+    );
+
+    // Array items with array type
+    expect(
+      (schema.properties.items.items.properties.value as any).anyOf
+    ).toEqual([{ type: 'string' }, { type: 'number' }, { type: 'boolean' }]);
   });
 });

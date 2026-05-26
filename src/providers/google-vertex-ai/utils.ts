@@ -300,23 +300,100 @@ export const transformGeminiToolParameters = (
   return transformNode(schema);
 };
 
-// Vertex AI does not support additionalProperties in JSON Schema
-// https://cloud.google.com/vertex-ai/docs/reference/rest/v1/Schema
-export const recursivelyDeleteUnsupportedParameters = (obj: any) => {
+// Vertex AI only supports a subset of JSON Schema fields.
+// Using an allowlist ensures any unsupported field is filtered out.
+// https://cloud.google.com/vertex-ai/generative-ai/docs/reference/rest/v1beta1/Schema
+const VERTEX_AI_SUPPORTED_SCHEMA_FIELDS = new Set([
+  // Type & format
+  'type',
+  'format',
+  // Metadata
+  'title',
+  'description',
+  'nullable',
+  'default',
+  'example',
+  // Array
+  'items',
+  'minItems',
+  'maxItems',
+  // Enum
+  'enum',
+  // Object
+  'properties',
+  'propertyOrdering',
+  'required',
+  'minProperties',
+  'maxProperties',
+  // Number/Integer
+  'minimum',
+  'maximum',
+  // String
+  'minLength',
+  'maxLength',
+  'pattern',
+  // Composition
+  'anyOf',
+]);
+
+const filterSchemaFields = (obj: any, isSchemaObject: boolean): void => {
   if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) return;
-  delete obj.additional_properties;
-  delete obj.additionalProperties;
-  delete obj['$schema'];
-  for (const key in obj) {
-    if (obj[key] !== null && typeof obj[key] === 'object') {
-      recursivelyDeleteUnsupportedParameters(obj[key]);
+
+  // Only filter keys if this is a schema object (not a properties map)
+  if (isSchemaObject) {
+    // Convert array type to anyOf format (Vertex AI doesn't support type arrays)
+    // e.g., {"type": ["string", "number"]} -> {"anyOf": [{"type": "string"}, {"type": "number"}]}
+    if (Array.isArray(obj.type)) {
+      const types = obj.type;
+      delete obj.type;
+      // If anyOf doesn't exist, create it from the type array
+      if (!obj.anyOf) {
+        obj.anyOf = types.map((t: string) => ({ type: t }));
+      }
     }
-    if (key == 'anyOf' && Array.isArray(obj[key])) {
-      obj[key].forEach((item: any) => {
-        recursivelyDeleteUnsupportedParameters(item);
-      });
+
+    for (const key in obj) {
+      if (!VERTEX_AI_SUPPORTED_SCHEMA_FIELDS.has(key)) {
+        delete obj[key];
+      }
     }
   }
+
+  // Recurse into nested structures
+  for (const key in obj) {
+    const value = obj[key];
+    if (value !== null && typeof value === 'object') {
+      if (key === 'properties') {
+        // 'properties' is a map of property names to schemas
+        // Keys are property names (not schema fields), values are schemas
+        for (const propName in value) {
+          filterSchemaFields(value[propName], true);
+        }
+      } else if (key === 'items') {
+        // 'items' is a schema object
+        filterSchemaFields(value, true);
+      } else if (key === 'anyOf' && Array.isArray(value)) {
+        // 'anyOf' is an array of schemas
+        value.forEach((item: any) => {
+          filterSchemaFields(item, true);
+        });
+      } else if (Array.isArray(value)) {
+        // Other arrays (like 'enum', 'required') - don't filter their elements
+        // but if they contain objects, those might be schemas
+        value.forEach((item: any) => {
+          if (typeof item === 'object' && item !== null) {
+            filterSchemaFields(item, true);
+          }
+        });
+      } else {
+        filterSchemaFields(value, true);
+      }
+    }
+  }
+};
+
+export const recursivelyDeleteUnsupportedParameters = (obj: any) => {
+  filterSchemaFields(obj, true);
 };
 
 // Generate Gateway specific response.
