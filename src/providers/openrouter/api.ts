@@ -10,10 +10,18 @@ const OpenrouterAPIConfig: ProviderAPIConfig = {
       'X-Title': POWERED_BY,
     };
   },
-  getEndpoint: ({ fn }) => {
+  getEndpoint: ({ fn, gatewayRequestURL }) => {
     switch (fn) {
       case 'chatComplete':
         return '/v1/chat/completions';
+      case 'createModelResponse':
+        return '/v1/responses';
+      case 'getModelResponse':
+      case 'deleteModelResponse':
+      case 'listResponseInputItems': {
+        const basePath = gatewayRequestURL.split('/v1')?.[1];
+        return '/v1' + basePath;
+      }
       default:
         return '';
     }
