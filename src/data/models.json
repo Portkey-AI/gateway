@@ -15425,6 +15425,790 @@
         "id": "openai"
       },
       "name": "Text Embedding Ada 002"
+    },
+    {
+      "id": "deepseek-v3",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "DeepSeek V3"
+    },
+    {
+      "id": "llama-guard-3-8b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Llama Guard 3 8B"
+    },
+    {
+      "id": "pixtral-12b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Pixtral 12B"
+    },
+    {
+      "id": "bge-m3",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "BGE-M3"
+    },
+    {
+      "id": "ministral-3-14b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Ministral 3 14B"
+    },
+    {
+      "id": "o3",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "o3"
+    },
+    {
+      "id": "gpt-4.1-mini",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "GPT-4.1 Mini"
+    },
+    {
+      "id": "pixtral-large",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Pixtral Large"
+    },
+    {
+      "id": "gpt-5-mini",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "GPT-5 Mini"
+    },
+    {
+      "id": "deepseek-r1-distill-llama-70b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "DeepSeek R1 Distill Llama 70B"
+    },
+    {
+      "id": "glm-4.5-air",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "GLM 4.5 Air"
+    },
+    {
+      "id": "hermes-4-405b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Hermes 4 405B"
+    },
+    {
+      "id": "green-embedding",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Green Embedding"
+    },
+    {
+      "id": "hermes-4-70b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Hermes 4 70B"
+    },
+    {
+      "id": "devstral-2",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Devstral 2"
+    },
+    {
+      "id": "mistral-small-3.1-24b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Mistral Small 3.1 24B"
+    },
+    {
+      "id": "qwen3-235b-a22b-instruct",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Qwen3 235B A22B Instruct"
+    },
+    {
+      "id": "gemma-3-27b-it",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Gemma 3 27B IT"
+    },
+    {
+      "id": "magistral-small",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Magistral Small"
+    },
+    {
+      "id": "green-r",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "GreenR"
+    },
+    {
+      "id": "nova-pro",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Amazon Nova Pro"
+    },
+    {
+      "id": "qwen3-32b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Qwen3 32B"
+    },
+    {
+      "id": "qwen3-embedding-8b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Qwen3 Embedding 8B"
+    },
+    {
+      "id": "nova-lite",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Amazon Nova Lite"
+    },
+    {
+      "id": "kimi-k2.5",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Kimi K2.5"
+    },
+    {
+      "id": "qwen-2.5-vl-72b-instruct",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Qwen 2.5 VL 72B Instruct"
+    },
+    {
+      "id": "voxtral-small-24b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Voxtral Small 24B"
+    },
+    {
+      "id": "claude-haiku-4.5",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Claude Haiku 4.5"
+    },
+    {
+      "id": "glm-4.5",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "GLM 4.5"
+    },
+    {
+      "id": "qwen-2.5-coder-7b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Qwen 2.5 Coder 7B"
+    },
+    {
+      "id": "llama-3.1-8b-instruct",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Llama 3.1 8B Instruct"
+    },
+    {
+      "id": "code-llama-13b-instruct",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Code Llama 13B Instruct"
+    },
+    {
+      "id": "green-l-raw",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "GreenL Raw"
+    },
+    {
+      "id": "gpt-4.1",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "GPT-4.1"
+    },
+    {
+      "id": "green-l",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "GreenL"
+    },
+    {
+      "id": "gemma-2-2b-it",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Gemma 2 2B Instruct"
+    },
+    {
+      "id": "mistral-small-24b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Mistral Small 24B Instruct"
+    },
+    {
+      "id": "qwen3-coder-480b-a35b-instruct",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Qwen3 Coder 480B A35B Instruct"
+    },
+    {
+      "id": "claude-opus-4-6",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Claude Opus 4.6"
+    },
+    {
+      "id": "minimax-m2.1",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "MiniMax M2.1"
+    },
+    {
+      "id": "nemotron-nano-v2-12b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Nemotron Nano V2 12B"
+    },
+    {
+      "id": "mistral-small-3.2-24b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Mistral Small 3.2 24B"
+    },
+    {
+      "id": "mistral-7b-instruct-v0.3",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Mistral 7B Instruct v0.3"
+    },
+    {
+      "id": "ministral-3-3b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Ministral 3 3B"
+    },
+    {
+      "id": "codestral",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Codestral"
+    },
+    {
+      "id": "claude-3.7-sonnet",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Claude 3.7 Sonnet"
+    },
+    {
+      "id": "deepseek-r1",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "DeepSeek R1"
+    },
+    {
+      "id": "voxtral-mini",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Voxtral Mini"
+    },
+    {
+      "id": "qwen3-30b-a3b-instruct",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Qwen3 30B A3B Instruct"
+    },
+    {
+      "id": "nova-micro",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Amazon Nova Micro"
+    },
+    {
+      "id": "green-r-raw",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "GreenR Raw"
+    },
+    {
+      "id": "cohere-embed-v4",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Cohere Embed v4"
+    },
+    {
+      "id": "qwen3-next-80b-a3b-thinking",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Qwen3 Next 80B A3B Thinking"
+    },
+    {
+      "id": "codestral-embed",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Codestral Embed"
+    },
+    {
+      "id": "magistral-medium",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Magistral Medium"
+    },
+    {
+      "id": "mistral-large-2",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Mistral Large 2"
+    },
+    {
+      "id": "claude-opus-4-5-20251101",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Claude Opus 4.5"
+    },
+    {
+      "id": "mistral-medium-3.1",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Mistral Medium 3.1"
+    },
+    {
+      "id": "intellect-3",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "INTELLECT-3"
+    },
+    {
+      "id": "gemma-2-9b-it",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Gemma 2 9B Instruct"
+    },
+    {
+      "id": "gpt-4o",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "GPT-4o"
+    },
+    {
+      "id": "pixtral-large-2502",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Pixtral Large 25.02"
+    },
+    {
+      "id": "e5-mistral-7b-instruct",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "E5-Mistral-7B-Instruct"
+    },
+    {
+      "id": "llama-3.1-nemotron-ultra-253b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Llama 3.1 Nemotron Ultra 253B"
+    },
+    {
+      "id": "paraphrase-multilingual-mpnet-base-v2",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Paraphrase Multilingual MPNet v2"
+    },
+    {
+      "id": "glm-4.7-fp8",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "GLM 4.7 FP8"
+    },
+    {
+      "id": "bge-large-en-v1.5",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "BGE Large EN v1.5"
+    },
+    {
+      "id": "bge-multilingual-gemma2",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "BGE Multilingual Gemma2"
+    },
+    {
+      "id": "o4-mini",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "o4-mini"
+    },
+    {
+      "id": "claude-3-haiku",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Claude 3 Haiku"
+    },
+    {
+      "id": "mistral-large-3",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Mistral Large 3"
+    },
+    {
+      "id": "bge-en-icl",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "BGE-EN-ICL"
+    },
+    {
+      "id": "titan-embed-text-v2",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Amazon Titan Embeddings v2"
+    },
+    {
+      "id": "devstral-small",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Devstral Small"
+    },
+    {
+      "id": "claude-sonnet-4.5",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Claude Sonnet 4.5"
+    },
+    {
+      "id": "teuken-7b-instruct",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Teuken-7B Instruct"
+    },
+    {
+      "id": "mistral-nemo-12b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Mistral Nemo 12B"
+    },
+    {
+      "id": "mistral-embed",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Mistral Embed"
+    },
+    {
+      "id": "qwen3-30b-a3b-thinking",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Qwen3 30B A3B Thinking"
+    },
+    {
+      "id": "qwen-2.5-coder-32b-instruct",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Qwen 2.5 Coder 32B Instruct"
+    },
+    {
+      "id": "gpt-oss-20b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "GPT-OSS 20B"
+    },
+    {
+      "id": "llama-3.3-70b-instruct",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Llama 3.3 70B Instruct"
+    },
+    {
+      "id": "gpt-4o-mini",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "GPT-4o Mini"
+    },
+    {
+      "id": "ministral-3-8b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Ministral 3 8B"
+    },
+    {
+      "id": "qwen3-coder-30b-a3b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Qwen3 Coder 30B A3B"
+    },
+    {
+      "id": "gpt-oss-120b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "GPT-OSS 120B"
+    },
+    {
+      "id": "claude-3.5-sonnet",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Claude 3.5 Sonnet"
+    },
+    {
+      "id": "llama-3.1-405b-instruct",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Llama 3.1 405B Instruct"
+    },
+    {
+      "id": "llama-3.2-1b-instruct",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Llama 3.2 1B Instruct"
+    },
+    {
+      "id": "gpt-4.1-nano",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "GPT-4.1 Nano"
+    },
+    {
+      "id": "claude-3-sonnet",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Claude 3 Sonnet"
+    },
+    {
+      "id": "holo2-30b-a3b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Holo2 30B A3B"
+    },
+    {
+      "id": "titan-multimodal-embed",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Amazon Titan Multimodal Embeddings"
+    },
+    {
+      "id": "o3-mini",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "o3-mini"
+    },
+    {
+      "id": "nemotron-3-nano-30b-a3b",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Nemotron 3 Nano 30B A3B"
+    },
+    {
+      "id": "llama-3.2-3b-instruct",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Llama 3.2 3B Instruct"
+    },
+    {
+      "id": "qwen3-235b-a22b-thinking",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Qwen3 235B A22B Thinking"
+    },
+    {
+      "id": "kimi-k2-instruct",
+      "object": "model",
+      "provider": {
+        "id": "eurouter"
+      },
+      "name": "Kimi K2 Instruct"
     }
   ]
 }
