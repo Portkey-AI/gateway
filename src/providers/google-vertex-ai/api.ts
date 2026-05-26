@@ -179,6 +179,10 @@ export const GoogleApiConfig: ProviderAPIConfig = {
         'imageGenerate',
         `${projectRoute}/publishers/${provider}/models/${model}:predict`,
       ],
+      [
+        'messagesCountTokens',
+        `${projectRoute}/publishers/${provider}/models/${model}:countTokens`,
+      ],
     ]);
 
     switch (provider) {
