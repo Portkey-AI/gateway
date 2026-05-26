@@ -1,0 +1,89 @@
+{
+  "id": "promptguard",
+  "description": "PromptGuard AI security firewall for scanning LLM inputs and outputs",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "Your PromptGuard API key. Get one at https://app.promptguard.co",
+        "encrypted": true
+      },
+      "baseUrl": {
+        "type": "string",
+        "label": "Base URL",
+        "description": "Custom base URL for self-hosted deployments. Defaults to https://api.promptguard.co/api/v1"
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Security Scan",
+      "id": "scan",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "ML-powered detection of prompt injection, jailbreaks, and toxicity in LLM inputs and outputs."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "PII Redaction",
+      "id": "redact",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Detect and redact personally identifiable information (PII) from LLM inputs and outputs."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "redact": {
+            "type": "boolean",
+            "label": "Redact PII",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "If true, detected PII will be redacted from the text. If false, the request will be blocked."
+              }
+            ],
+            "default": true
+          },
+          "piiTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "email",
+                "phone",
+                "ssn",
+                "credit_card",
+                "name",
+                "address",
+                "api_key",
+                "ip_address"
+              ]
+            },
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Select PII types to detect. Leave empty to detect all types."
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
