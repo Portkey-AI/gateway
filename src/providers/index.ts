@@ -39,6 +39,7 @@ import {
   GithubModelAPiConfig,
 } from './azure-ai-inference';
 import DeepbricksConfig from './deepbricks';
+import DatabricksConfig from './databricks';
 import SiliconFlowConfig from './siliconflow';
 import HuggingfaceConfig from './huggingface';
 import { cerebrasProviderAPIConfig } from './cerebras';
@@ -114,6 +115,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'azure-ai': AzureAIInferenceAPIConfig,
   github: GithubModelAPiConfig,
   deepbricks: DeepbricksConfig,
+  databricks: DatabricksConfig,
   siliconflow: SiliconFlowConfig,
   cerebras: cerebrasProviderAPIConfig,
   'inference-net': InferenceNetProviderConfigs,
@@ -148,6 +150,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   iointelligence: IOIntelligenceConfig,
   aibadgr: AIBadgrConfig,
   ovhcloud: OVHcloudConfig,
+  'databricks-ai': DatabricksConfig,
 };
 
 export default Providers;
