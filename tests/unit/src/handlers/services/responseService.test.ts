@@ -393,7 +393,7 @@ describe('ResponseService', () => {
     });
 
     it('should add required headers', () => {
-      responseService.updateHeaders(mockResponse, 'HIT', 2);
+      mockResponse = responseService.updateHeaders(mockResponse, 'HIT', 2);
 
       expect(
         mockResponse.headers.get(RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX)
@@ -411,14 +411,14 @@ describe('ResponseService', () => {
     });
 
     it('should remove problematic headers', () => {
-      responseService.updateHeaders(mockResponse, undefined, 0);
+      mockResponse = responseService.updateHeaders(mockResponse, undefined, 0);
 
       expect(mockResponse.headers.get('content-length')).toBeNull();
       expect(mockResponse.headers.get('transfer-encoding')).toBeNull();
     });
 
     it('should remove brotli encoding', () => {
-      responseService.updateHeaders(mockResponse, undefined, 0);
+      mockResponse = responseService.updateHeaders(mockResponse, undefined, 0);
 
       expect(mockResponse.headers.get('content-encoding')).toBeNull();
     });
@@ -429,7 +429,7 @@ describe('ResponseService', () => {
         headers: { 'content-encoding': 'gzip' },
       });
 
-      responseService.updateHeaders(response, undefined, 0);
+      mockResponse = responseService.updateHeaders(response, undefined, 0);
 
       expect(response.headers.get('content-encoding')).toBeNull();
     });
@@ -440,13 +440,13 @@ describe('ResponseService', () => {
         headers: { 'content-encoding': 'gzip' },
       });
 
-      responseService.updateHeaders(response, undefined, 0);
+      mockResponse = responseService.updateHeaders(response, undefined, 0);
 
       expect(response.headers.get('content-encoding')).toBe('gzip');
     });
 
     it('should not add cache status header when undefined', () => {
-      responseService.updateHeaders(mockResponse, undefined, 0);
+      mockResponse = responseService.updateHeaders(mockResponse, undefined, 0);
 
       expect(
         mockResponse.headers.get(RESPONSE_HEADER_KEYS.CACHE_STATUS)
@@ -466,7 +466,7 @@ describe('ResponseService', () => {
         mockLogsService
       );
 
-      serviceWithPortkey.updateHeaders(mockResponse, 'MISS', 0);
+      mockResponse = serviceWithPortkey.updateHeaders(mockResponse, 'MISS', 0);
 
       expect(mockResponse.headers.get(HEADER_KEYS.PROVIDER)).toBeNull();
     });
@@ -484,7 +484,11 @@ describe('ResponseService', () => {
         mockLogsService
       );
 
-      serviceWithEmptyProvider.updateHeaders(mockResponse, 'MISS', 0);
+      mockResponse = serviceWithEmptyProvider.updateHeaders(
+        mockResponse,
+        'MISS',
+        0
+      );
 
       expect(mockResponse.headers.get(HEADER_KEYS.PROVIDER)).toBeNull();
     });
