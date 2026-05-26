@@ -1,0 +1,37 @@
+{
+  "id": "mlayer-guard",
+  "description": "Prompt injection detection for AI agent tool outputs. Checks LLM responses for hidden injection attacks before they reach your application. 98% detection on agent attacks (InjecAgent benchmark), zero false positives. Powered by mlayer-guard (hidylan.ai).",
+  "credentials": {
+    "apiKey": {
+      "type": "string",
+      "label": "LLM API Key",
+      "description": "Your OpenAI-compatible API key used for injection detection (BYOK). This key is used by mlayer-guard to run the detection model — it does not access your application data.",
+      "required": true
+    },
+    "baseUrl": {
+      "type": "string",
+      "label": "mlayer-guard API URL",
+      "description": "The mlayer-guard API endpoint. Default: https://hidylan.ai",
+      "required": false
+    }
+  },
+  "functions": [
+    {
+      "name": "checkInjection",
+      "type": "guardrail",
+      "supportedHooks": ["afterRequest"],
+      "description": "Scans LLM response content for prompt injection attacks. Returns a verdict of pass/fail with explanation.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "sensitivity": {
+            "type": "string",
+            "enum": ["standard", "strict"],
+            "default": "standard",
+            "description": "Detection sensitivity. 'strict' blocks ambiguous content; 'standard' allows it through."
+          }
+        }
+      }
+    }
+  ]
+}
