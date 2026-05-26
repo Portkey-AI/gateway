@@ -109,9 +109,19 @@ export class RequestContext {
 
   get metadata(): Record<string, string> {
     try {
-      return JSON.parse(this.requestHeaders[HEADER_KEYS.METADATA] ?? '{}');
+      const headerMetadata = JSON.parse(
+        this.requestHeaders[HEADER_KEYS.METADATA] ?? '{}'
+      );
+      const configMetadata = this.providerOption.metadata || {};
+
+      // Merge: config metadata + header metadata (headers win conflicts)
+      return {
+        ...configMetadata,
+        ...headerMetadata,
+      };
     } catch (error) {
-      return {};
+      // Fallback to config metadata only
+      return this.providerOption.metadata || {};
     }
   }
 
