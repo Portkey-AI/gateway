@@ -1014,8 +1014,12 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
   }
 
   if (parsedChunk.type === 'message_delta' && parsedChunk.usage) {
+    // Use input_tokens from message_delta if not available from message_start
+    const promptTokens =
+      streamState?.usage?.prompt_tokens ?? parsedChunk.usage?.input_tokens ?? 0;
+
     const totalTokens =
-      (streamState?.usage?.prompt_tokens ?? 0) +
+      promptTokens +
       (streamState?.usage?.cache_creation_input_tokens ?? 0) +
       (streamState?.usage?.cache_read_input_tokens ?? 0) +
       (parsedChunk.usage.output_tokens ?? 0);
@@ -1039,6 +1043,7 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
         ],
         usage: {
           ...streamState.usage,
+          prompt_tokens: promptTokens,
           completion_tokens: parsedChunk.usage?.output_tokens,
           total_tokens: totalTokens,
           prompt_tokens_details: {
