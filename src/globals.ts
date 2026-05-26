@@ -97,6 +97,7 @@ export const LEPTON: string = 'lepton';
 export const KLUSTER_AI: string = 'kluster-ai';
 export const NSCALE: string = 'nscale';
 export const HYPERBOLIC: string = 'hyperbolic';
+export const HPC_AI: string = 'hpc-ai';
 export const BYTEZ: string = 'bytez';
 export const FEATHERLESS_AI: string = 'featherless-ai';
 export const KRUTRIM: string = 'krutrim';
@@ -173,6 +174,7 @@ export const VALID_PROVIDERS = [
   KLUSTER_AI,
   NSCALE,
   HYPERBOLIC,
+  HPC_AI,
   BYTEZ,
   FEATHERLESS_AI,
   KRUTRIM,

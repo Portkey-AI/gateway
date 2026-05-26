@@ -260,11 +260,15 @@ Explore Gateway integrations with [45+ providers](https://portkey.wiki/gh-59) an
 | <img src="https://files.readme.io/d38a23e-small-studio-favicon.png" width=35>                                              | [AI21](https://portkey.wiki/gh-91)                                    | ✅       | ✅      |
 | <img src="https://platform.stability.ai/small-logo-purple.svg" width=35>                                                   | [Stability AI](https://portkey.wiki/gh-71)               | ✅       | ✅      |
 | <img src="https://deepinfra.com/_next/static/media/logo.4a03fd3d.svg" width=35>                                            | [DeepInfra](https://portkey.sh/gh-92)                               | ✅       | ✅      |
+| <img src="https://company.hpc-ai.com/hubfs/logos/colossal-ai_logo_vertical.svg" width=35 height=35 style="object-fit:contain" alt="HPC-AI"> | [HPC-AI](https://www.hpc-ai.com/) | ✅ | ✅ |
 | <img src="https://ollama.com/public/ollama.png" width=35>                                                                  | [Ollama](https://portkey.wiki/gh-72)                           | ✅       | ✅      |
 | <img src="https://novita.ai/favicon.ico" width=35>                                                                         | [Novita AI](https://portkey.wiki/gh-73)                              | ✅       | ✅      | `/chat/completions`, `/completions` |
 
 
 > [View the complete list of 200+ supported models here](https://portkey.wiki/gh-74)
+
+**HPC-AI:** Use `provider: "hpc-ai"` with your HPC-AI API key. The gateway targets `https://api.hpc-ai.com/inference/v1` (OpenAI-compatible chat completions). Override the base URL with `x-portkey-custom-host` or `custom_host` in config if required. Example models: `minimax/minimax-m2.5`, `moonshotai/kimi-k2.5`. For local integration tests, optional env vars: `HPC_AI_API_KEY`, `HPC_AI_BASE_URL` (set these in your environment or `.env` file as appropriate).
+
 <br>
 
 <br>

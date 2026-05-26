@@ -62,6 +62,10 @@ const testVariables: TestVariables = {
     apiKey: process.env.DEEPINFRA_API_KEY,
     chatCompletions: { model: 'meta-llama/Meta-Llama-3-8B-Instruct' },
   },
+  'hpc-ai': {
+    apiKey: process.env.HPC_AI_API_KEY,
+    chatCompletions: { model: 'minimax/minimax-m2.5' },
+  },
   'stability-ai': {
     apiKey: process.env.STABILITY_AI_API_KEY,
     chatCompletions: { model: '' },
