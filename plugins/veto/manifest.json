@@ -1,0 +1,62 @@
+{
+  "id": "veto",
+  "description": "EU-hosted LLM guardrails — PII and secret redaction, prompt-injection detection, and content moderation behind one endpoint. See https://bench.vetocheck.com for the head-to-head benchmark.",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "Veto API Key",
+        "description": "Your vt_live_… key from the Veto dashboard.",
+        "encrypted": true
+      },
+      "apiBase": {
+        "type": "string",
+        "label": "Veto API Base",
+        "description": "Gateway base URL. Defaults to https://api.vetocheck.com.",
+        "encrypted": false
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Scan (PII, secrets, injection)",
+      "id": "check",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Scans text through the Veto gateway. Fails the guardrail (verdict=false) on a block verdict — and fail-closed on an unreachable gateway; masks PII/secrets in place (transformedData) on a redact verdict."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "label": "Categories",
+            "description": "Subset of detectors to run. Defaults to all.",
+            "items": {
+              "type": "string",
+              "enum": ["pii", "secrets", "injection"]
+            }
+          },
+          "redact": {
+            "type": "boolean",
+            "label": "Apply redaction",
+            "description": "Rewrite content when Veto returns a redact verdict.",
+            "default": true
+          },
+          "timeout": {
+            "type": "number",
+            "label": "HTTP timeout (ms)",
+            "description": "Gateway call timeout. Default 30000."
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}

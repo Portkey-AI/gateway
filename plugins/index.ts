@@ -67,6 +67,7 @@ import { handler as f5GuardrailsScan } from './f5-guardrails/scan';
 import { handler as azureShieldPrompt } from './azure/shieldPrompt';
 import { handler as azureProtectedMaterial } from './azure/protectedMaterial';
 import { handler as crowdstrikeAidrGuardChatCompletions } from './crowdstrike-aidr/guardChatCompletion';
+import { handler as vetoCheck } from './veto/check';
 
 export const plugins = {
   default: {
@@ -179,5 +180,8 @@ export const plugins = {
   },
   'crowdstrike-aidr': {
     guardChatCompletions: crowdstrikeAidrGuardChatCompletions,
+  },
+  veto: {
+    check: vetoCheck,
   },
 };
