@@ -51,11 +51,15 @@ View the [full list of providers here](https://portkey.ai/docs/welcome/integrati
 View the [full list of integrations here](https://portkey.ai/docs/welcome/integration-guides).
 
 ## monitoring-agents
+
 * [Autogen](./monitoring-agents/Autogen_with_Telemetry.ipynb)
 * [CrewAI](./monitoring-agents/CrewAI_with_Telemetry.ipynb)
 * [Llama Agents](./monitoring-agents/Llama_Agents_with_Telemetry.ipynb)
 * [ControlFlow](./monitoring-agents/ControlFlow_with_Telemetry.ipynb)
 
+## security
+
+* [Block unsafe agent tool payloads with a local firewall](./security/tool-payload-firewall.md)
 
 ## contributing
 

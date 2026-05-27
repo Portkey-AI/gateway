@@ -1,0 +1,76 @@
+{
+  "id": "tool-payload-firewall",
+  "name": "Tool Payload Firewall",
+  "description": "Local guardrail for agent tool-call arguments. Flattens tool-call JSON, applies path/size policies, and returns audit-ready findings before external tool execution.",
+  "credentials": [],
+  "functions": [
+    {
+      "name": "Scan Tool Payloads",
+      "id": "scan",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Inspect OpenAI-compatible tool_call arguments and block risky outbound payload shapes before an agent executes external tools."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "blockedPaths": {
+            "type": "array",
+            "label": "Blocked JSON paths",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Exact or wildcard JSON paths to deny, for example customer.ssn, *.api_key, or recipients.*.email."
+              }
+            ],
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "maxStringLength": {
+            "type": "number",
+            "label": "Maximum string length",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Deny tool arguments with string leaves longer than this value. Use this to catch prompt-injection payloads hidden in free-text fields."
+              }
+            ],
+            "default": 4096
+          },
+          "maxArrayItems": {
+            "type": "number",
+            "label": "Maximum array items",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Deny large arrays that can trigger mass updates, runaway API calls, or unexpected cost spikes."
+              }
+            ],
+            "default": 100
+          },
+          "allowedToolNames": {
+            "type": "array",
+            "label": "Allowed tool names",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Optional allowlist for tool names. When set, tool calls outside the allowlist fail the guardrail."
+              }
+            ],
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}
