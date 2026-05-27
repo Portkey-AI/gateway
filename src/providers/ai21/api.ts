@@ -12,10 +12,14 @@ const AI21APIConfig: ProviderAPIConfig = {
     const { model } = gatewayRequestBodyJSON;
     switch (fn) {
       case 'complete': {
+        // Legacy Jurassic-2 models use the model-specific completion endpoint
         return `/${model}/complete`;
       }
       case 'chatComplete': {
-        return `/${model}/chat`;
+        // Jamba models (jamba-1.5-*, jamba-1.6-*, jamba-instruct, etc.)
+        // use the OpenAI-compatible /chat/completions endpoint.
+        // Reference: https://docs.ai21.com/reference/jamba-1-6-api-ref
+        return `/chat/completions`;
       }
       case 'embed': {
         return `/embed`;
