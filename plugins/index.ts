@@ -66,6 +66,7 @@ import { handler as javelinguardrails } from './javelin/guardrails';
 import { handler as f5GuardrailsScan } from './f5-guardrails/scan';
 import { handler as azureShieldPrompt } from './azure/shieldPrompt';
 import { handler as azureProtectedMaterial } from './azure/protectedMaterial';
+import { handler as lakeraguard } from './lakera/guard';
 import { handler as crowdstrikeAidrGuardChatCompletions } from './crowdstrike-aidr/guardChatCompletion';
 
 export const plugins = {
@@ -176,6 +177,9 @@ export const plugins = {
   },
   'f5-guardrails': {
     scan: f5GuardrailsScan,
+  },
+  lakera: {
+    guard: lakeraguard,
   },
   'crowdstrike-aidr': {
     guardChatCompletions: crowdstrikeAidrGuardChatCompletions,
