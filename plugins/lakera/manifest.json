@@ -1,0 +1,66 @@
+{
+  "id": "lakera",
+  "description": "Lakera Guard — screen prompts and responses via POST /v2/guard. Supports blocking and PII redaction (payload) when only pii/* detectors fire.",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "Lakera API key",
+        "description": "Create at platform.lakera.ai (Guard API key)",
+        "encrypted": true
+      },
+      "apiBase": {
+        "type": "string",
+        "label": "API base URL (optional)",
+        "description": "Host only, e.g. https://api.lakera.ai — do not include /v2/guard (appended automatically). Use a regional host if required."
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Guard — screen content",
+      "id": "guard",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Calls Lakera Guard /v2/guard with payload+breakdown. Blocks on policy hits; redacts PII spans when breakdown shows only pii/* detectors."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "projectID": {
+            "type": "string",
+            "label": "Lakera project ID",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Project whose policy defines detectors (recommended)"
+              }
+            ]
+          },
+          "endInclusive": {
+            "type": "boolean",
+            "label": "Payload end offset is inclusive",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Leave false unless your Lakera tier emits inclusive end indices"
+              }
+            ]
+          },
+          "timeout": {
+            "type": "number",
+            "label": "HTTP timeout (ms)",
+            "description": [{ "type": "subHeading", "text": "Default 30000" }]
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}
