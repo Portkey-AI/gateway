@@ -129,7 +129,7 @@ export interface FireworksAIStreamChunk {
   object: string;
   created: number;
   model: string;
-  choices: {
+  choices?: {
     delta: {
       role?: string | null;
       content?: string;
@@ -138,7 +138,7 @@ export interface FireworksAIStreamChunk {
     finish_reason: string | null;
     logprobs: object | null;
   }[];
-  usage: null | {
+  usage?: null | {
     prompt_tokens: number;
     completion_tokens: number;
     total_tokens: number;
@@ -222,6 +222,8 @@ export const FireworksAIChatCompleteStreamChunkTransform: (
     return `data: ${chunk}\n\n`;
   }
   const parsedChunk: FireworksAIStreamChunk = JSON.parse(chunk);
+  const choice = parsedChunk.choices?.[0];
+
   return (
     `data: ${JSON.stringify({
       id: parsedChunk.id,
@@ -229,14 +231,16 @@ export const FireworksAIChatCompleteStreamChunkTransform: (
       created: parsedChunk.created,
       model: parsedChunk.model,
       provider: FIREWORKS_AI,
-      choices: [
-        {
-          index: parsedChunk.choices[0].index,
-          delta: parsedChunk.choices[0].delta,
-          finish_reason: parsedChunk.choices[0].finish_reason,
-          logprobs: parsedChunk.choices[0].logprobs,
-        },
-      ],
+      choices: choice
+        ? [
+            {
+              index: choice.index,
+              delta: choice.delta,
+              finish_reason: choice.finish_reason,
+              logprobs: choice.logprobs,
+            },
+          ]
+        : [],
       ...(parsedChunk.usage ? { usage: parsedChunk.usage } : {}),
     })}` + '\n\n'
   );
