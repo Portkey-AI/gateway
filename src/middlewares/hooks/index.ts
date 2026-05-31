@@ -24,6 +24,7 @@ export class HookSpan {
     afterRequestHooksResult: HookResult[];
   };
   private parentHookSpanId: string | null;
+  public readonly includeHookTransformedData: boolean;
   public readonly id: string;
 
   constructor(
@@ -35,7 +36,8 @@ export class HookSpan {
     afterRequestHooks: HookObject[],
     parentHookSpanId: string | null,
     requestType: string,
-    requestHeaders: Record<string, string>
+    requestHeaders: Record<string, string>,
+    includeHookTransformedData: boolean = false
   ) {
     this.context = this.createContext(
       requestParams,
@@ -54,6 +56,7 @@ export class HookSpan {
       'afterRequestHook'
     );
     this.parentHookSpanId = parentHookSpanId;
+    this.includeHookTransformedData = includeHookTransformedData;
     this.hooksResult = {
       beforeRequestHooksResult: [],
       afterRequestHooksResult: [],
@@ -216,7 +219,8 @@ export class HooksManager {
     afterRequestHooks: HookObject[],
     parentHookSpanId: string | null,
     requestType: string,
-    requestHeaders: Record<string, string>
+    requestHeaders: Record<string, string>,
+    includeHookTransformedData: boolean = false
   ): HookSpan {
     const span = new HookSpan(
       requestParams,
@@ -227,7 +231,8 @@ export class HooksManager {
       afterRequestHooks,
       parentHookSpanId,
       requestType,
-      requestHeaders
+      requestHeaders,
+      includeHookTransformedData
     );
 
     this.spans[span.id] = span;
@@ -357,7 +362,9 @@ export class HooksManager {
             result.transformedData.request.json
           );
         }
-        delete result.transformedData;
+        if (!span.includeHookTransformedData) {
+          delete result.transformedData;
+        }
         checkResults.push(result);
       }
     }
@@ -384,7 +391,9 @@ export class HooksManager {
               result.transformedData.request.json
             );
           }
-          delete result.transformedData;
+          if (!span.includeHookTransformedData) {
+            delete result.transformedData;
+          }
           checkResults.push(result);
         }
       } else {
@@ -412,7 +421,9 @@ export class HooksManager {
               checkResult.transformedData.request.json
             );
           }
-          delete checkResult.transformedData;
+          if (!span.includeHookTransformedData) {
+            delete checkResult.transformedData;
+          }
         });
       }
     }

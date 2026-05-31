@@ -22,6 +22,7 @@ export class HooksService {
       afterRequestHooks,
       endpoint,
       requestHeaders,
+      providerOption,
     } = this.requestContext;
     const hookSpan = this.hooksManager.createSpan(
       params,
@@ -32,7 +33,8 @@ export class HooksService {
       afterRequestHooks,
       null,
       endpoint,
-      requestHeaders
+      requestHeaders,
+      providerOption.includeHookTransformedData ?? false
     );
     return hookSpan;
   }

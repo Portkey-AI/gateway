@@ -133,6 +133,8 @@ export interface Options {
   beforeRequestHooks?: HookObject[];
   defaultInputGuardrails?: HookObject[];
   defaultOutputGuardrails?: HookObject[];
+  /** Include hook transformedData in hook_results for debugging/testing */
+  includeHookTransformedData?: boolean;
   /** OpenAI specific */
   openaiProject?: string;
   openaiOrganization?: string;
