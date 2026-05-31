@@ -851,6 +851,54 @@
       border-bottom-color: #3b82f6;
       font-weight: bold;
     }
+
+    body.admin-auth-pending header,
+    body.admin-auth-pending .main-content {
+      display: none;
+    }
+
+    .admin-auth-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 3000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background-color: rgba(0, 0, 0, 0.6);
+      padding: 1rem;
+    }
+
+    body.admin-auth-pending .admin-auth-modal {
+      display: flex;
+    }
+
+    .admin-auth-card {
+      width: 100%;
+      max-width: 420px;
+      background: white;
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+    }
+
+    .admin-auth-title {
+      margin: 0 0 0.4rem;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .admin-auth-subtitle {
+      margin: 0 0 0.9rem;
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+
+    .admin-auth-error {
+      margin-top: 0.6rem;
+      color: #dc2626;
+      font-size: 0.8rem;
+      min-height: 1.1rem;
+    }
   </style>
 
   <!-- Google Tag Manager -->
@@ -867,11 +915,29 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </head>
 
-<body>
+<body class="admin-auth-pending">
   <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KX3PMNVR"
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
+  <div class="admin-auth-modal" id="adminAuthModal">
+    <div class="admin-auth-card">
+      <h2 class="admin-auth-title">Admin token required</h2>
+      <p class="admin-auth-subtitle">Enter your <code>admin_token</code> stored in <code>conf.json</code> to access the local gateway UI. see <a href="https://github.com/Portkey-AI/gateway/discussions/1656">github discussion</a> for more details.</p>
+      <form id="adminAuthForm">
+        <input
+          id="adminAuthTokenInput"
+          class="input"
+          type="password"
+          placeholder="Enter admin token"
+          autocomplete="off"
+          required
+        />
+        <button type="submit" class="btn">Unlock UI</button>
+      </form>
+      <div class="admin-auth-error" id="adminAuthError"></div>
+    </div>
+  </div>
   <header>
     <div class="container">
       <div class="logo">
@@ -1624,6 +1690,88 @@
       const saveApiDetailsBtn = document.getElementById('saveApiDetailsBtn');
       const languageSelect = document.getElementById('languageSelect');
       const copyConfigBtn = document.getElementById('copyConfigBtn');
+      const adminAuthModal = document.getElementById('adminAuthModal');
+      const adminAuthForm = document.getElementById('adminAuthForm');
+      const adminAuthTokenInput = document.getElementById('adminAuthTokenInput');
+      const adminAuthError = document.getElementById('adminAuthError');
+
+      let isAdminAuthenticated = false;
+      let hasStartedLogSource = false;
+
+      function setAdminAuthError(message = '') {
+        adminAuthError.textContent = message;
+      }
+
+      function lockUi() {
+        document.body.classList.add('admin-auth-pending');
+      }
+
+      function unlockUi() {
+        document.body.classList.remove('admin-auth-pending');
+      }
+
+      async function checkAdminSession() {
+        try {
+          const response = await fetch('/public/auth/session', {
+            credentials: 'same-origin',
+          });
+
+          if (!response.ok) {
+            const payload = await response.json();
+            setAdminAuthError(payload.message || 'Unable to validate admin session.');
+            lockUi();
+            return false;
+          }
+
+          const payload = await response.json();
+          return Boolean(payload.authenticated);
+        } catch (error) {
+          setAdminAuthError('Unable to connect to gateway auth endpoint.');
+          lockUi();
+          return false;
+        }
+      }
+
+      async function unlockUiWithToken(adminToken) {
+        try {
+          const response = await fetch('/public/auth', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ admin_token: adminToken }),
+          });
+
+          const payload = await response.json();
+          if (!response.ok) {
+            setAdminAuthError(payload.message || 'Invalid admin token.');
+            return false;
+          }
+
+          setAdminAuthError('');
+          adminAuthTokenInput.value = '';
+          return true;
+        } catch (error) {
+          setAdminAuthError('Authentication request failed. Please try again.');
+          return false;
+        }
+      }
+
+      async function ensureAdminAuth() {
+        const isAuthenticated = await checkAdminSession();
+        if (isAuthenticated) {
+          isAdminAuthenticated = true;
+          unlockUi();
+          if (!hasStartedLogSource) {
+            setupLogSource();
+            hasStartedLogSource = true;
+          }
+        } else {
+          isAdminAuthenticated = false;
+          lockUi();
+        }
+      }
 
       const camelToSnakeCase = str => str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
       const camelToKebabCase = str => str.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
@@ -1800,6 +1948,28 @@
 
       // Event Listeners
       testRequestBtn.addEventListener('click', dummyTestRequest);
+      adminAuthForm.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          setAdminAuthError('');
+
+          const token = adminAuthTokenInput.value.trim();
+          if (!token) {
+            setAdminAuthError('Admin token is required.');
+            return;
+          }
+
+          const unlocked = await unlockUiWithToken(token);
+          if (!unlocked) {
+            return;
+          }
+
+          isAdminAuthenticated = true;
+          unlockUi();
+          if (!hasStartedLogSource) {
+            setupLogSource();
+            hasStartedLogSource = true;
+          }
+      });
 
       document.querySelectorAll('.tabs').forEach(tabsContainer => {
           tabsContainer.querySelectorAll('.tab').forEach(tab => {
@@ -1922,6 +2092,7 @@
       });
 
       managePage()
+      ensureAdminAuth();
 
       // Logs functionality
       const logsTableBody = document.getElementById('logsTableBody');
@@ -1934,6 +2105,10 @@
       let logSource;
 
       function setupLogSource() {
+        if (!isAdminAuthenticated) {
+          return;
+        }
+
         logSource = new EventSource('/log/stream');
 
         logSource.addEventListener('connected', (event) => {
@@ -1965,17 +2140,22 @@
         }
       }
 
-      function reconnectLogSource() {
+      async function reconnectLogSource() {
         if (logSource) {
             logSource.close();
         }
+        const stillAuthenticated = await checkAdminSession();
+        if (!stillAuthenticated) {
+          isAdminAuthenticated = false;
+          lockUi();
+          return;
+        }
+
         console.log('Attempting to reconnect to log stream...');
         setTimeout(() => {
             setupLogSource();
         }, 5000); // Wait 5 seconds before attempting to reconnect
       }
-
-      setupLogSource();
 
       function addLogEntry(time, method, endpoint, status, duration, requestOptions) {
           const tr = document.createElement('tr');
