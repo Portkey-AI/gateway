@@ -377,13 +377,20 @@ export class ControlPlane {
     const redirectUri = c.req.query('redirect_uri');
     const state = c.req.query('state');
     const clientId = c.req.query('client_id');
+    const scope = c.req.query('scope');
+    const codeChallenge = c.req.query('code_challenge');
+    const codeChallengeMethod = c.req.query('code_challenge_method');
 
     const stateData = {
       gateway_state: gatewayState,
       server_id: resourceId,
+      workspace_id: workspaceId,
       redirect_uri: redirectUri,
       client_id: clientId,
       state: state,
+      scope: scope,
+      code_challenge: codeChallenge,
+      code_challenge_method: codeChallengeMethod,
     };
 
     await oauthStore.set(gatewayState, stateData, {

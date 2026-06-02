@@ -89,6 +89,9 @@ const nodeEnv = {
     process.env.DATASERVICE_BASEPATH
   ),
   ALBUS_BASEPATH: getValueOrFileContents(process.env.ALBUS_BASEPATH),
+  CIE_CAS_SIGNING_CERT_CHAIN: getValueOrFileContents(
+    process.env.CIE_CAS_SIGNING_CERT_CHAIN
+  ),
   PORTKEY_CF_URL: getValueOrFileContents(process.env.PORTKEY_CF_URL),
   CF_ENDPOINT: getValueOrFileContents(process.env.CF_ENDPOINT),
   CF_ACCOUNT_ID: getValueOrFileContents(process.env.CF_ACCOUNT_ID),
