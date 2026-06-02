@@ -310,6 +310,19 @@ oauthRoutes.get('/upstream-callback', async (c) => {
 });
 
 /**
+ * Handle CIE callback from CAS
+ * CAS POSTs a form with Token (response JWT) and RelayState (gateway state)
+ */
+oauthRoutes.post('/cie-callback', async (c) => {
+  try {
+    return await gw(c).handleCieCallback();
+  } catch (error: any) {
+    logger.error('CIE callback failed', { error: error.message });
+    return jsonError(c, 400, 'cie_callback_failed', error.message);
+  }
+});
+
+/**
  * Handle OAuth callback from external auth providers
  * This receives the authorization code from external auth providers and issues gateway tokens
  */

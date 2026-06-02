@@ -26,6 +26,7 @@ import {
 import { Environment } from '../../utils/env';
 import { ServerConfig } from '../types/mcp';
 import { trackMcpServerTokenKey } from '../utils/mcpCacheKeyTracker';
+import { verifyCasJwt } from './cieLogin';
 
 const logger = createLogger('OAuthGateway');
 
@@ -369,6 +370,11 @@ export class OAuthGateway {
           headers,
           authCodeData
         );
+      }
+
+      // If this is a CIE auth code, handle it locally
+      if ((authCodeData as any)?.is_cie_auth) {
+        return this.handleCieTokenExchange(params, headers, authCodeData);
       }
     }
 
@@ -1355,6 +1361,142 @@ export class OAuthGateway {
       getBaseUrl(this.c).origin ||
       `http://localhost:${Environment({}).MCP_PORT || 8787}`;
     return `${baseUrl}/oauth/external-callback`;
+  }
+
+  // ── CIE auth (CAS callback → auth code → token exchange) ─────────
+
+  async handleCieCallback(): Promise<any> {
+    const contentType = this.c.req.header('Content-Type') || '';
+    if (!contentType.includes('application/x-www-form-urlencoded')) {
+      throw new Error('Expected form POST');
+    }
+    const form = new URLSearchParams(await this.c.req.text());
+    const token = form.get('Token') || '';
+    const gatewayState = form.get('RelayState') || '';
+    if (!token || !gatewayState) {
+      throw new Error('Missing Token or RelayState');
+    }
+
+    const storedState = await oauthStore.get(gatewayState, 'gateway_state');
+    if (!storedState) {
+      throw new Error('Gateway state expired or not found');
+    }
+
+    const claims = await verifyCasJwt(token);
+    if (!claims) {
+      throw new Error('CAS JWT signature verification failed');
+    }
+
+    if (claims.Result === false) {
+      const msg = (claims.Message as string) || 'CIE authentication failed';
+      logger.error('CIE callback: authentication failed', { message: msg });
+      throw new Error(msg);
+    }
+
+    logger.info('CIE callback: user authenticated', {
+      sub: claims.sub || claims.UserName,
+      resourceId: storedState.server_id,
+    });
+
+    const code = `authz_${crypto.randomBytes(32).toString('hex')}`;
+    await oauthStore.set(
+      code,
+      {
+        client_id: storedState.client_id,
+        redirect_uri: storedState.redirect_uri,
+        scope: storedState.scope,
+        code_challenge: storedState.code_challenge,
+        code_challenge_method: storedState.code_challenge_method,
+        user_id:
+          (claims.sub as string) || (claims.UserName as string) || 'cie_user',
+        expires: Date.now() + 10 * 60 * 1000,
+        is_cie_auth: true,
+        workspace_id: storedState.workspace_id,
+        server_id: storedState.server_id,
+        cie_claims: claims,
+      },
+      { namespace: 'authorization_codes', ttl: 10 * 60 * 1000 }
+    );
+
+    await oauthStore.delete(gatewayState, 'gateway_state');
+
+    const redirectUrl = new URL(storedState.redirect_uri);
+    redirectUrl.searchParams.set('code', code);
+    if (storedState.state) {
+      redirectUrl.searchParams.set('state', storedState.state);
+    }
+    return this.c.redirect(redirectUrl.toString(), 302);
+  }
+
+  private async handleCieTokenExchange(
+    params: URLSearchParams,
+    _headers: Headers,
+    authCodeData: any
+  ): Promise<any> {
+    const code = params.get('code');
+    const redirectUri = params.get('redirect_uri');
+    const codeVerifier = params.get('code_verifier');
+    const clientId = params.get('client_id') || authCodeData.client_id;
+
+    if (!code || !redirectUri) {
+      return this.errorInvalidRequest(
+        'Missing required parameters: code and redirect_uri are required'
+      );
+    }
+
+    if (authCodeData.expires < Date.now()) {
+      return this.errorInvalidGrant('Invalid or expired authorization code');
+    }
+
+    if (authCodeData.redirect_uri !== redirectUri) {
+      return this.errorInvalidGrant('redirect_uri mismatch');
+    }
+
+    if (authCodeData.code_challenge) {
+      if (!codeVerifier) {
+        return {
+          error: 'invalid_request',
+          error_description: 'Code verifier required',
+        };
+      }
+      if (
+        !(await verifyCodeChallenge(
+          codeVerifier,
+          authCodeData.code_challenge,
+          authCodeData.code_challenge_method || 'S256'
+        ))
+      ) {
+        return this.errorInvalidGrant('Invalid code verifier');
+      }
+    }
+
+    await oauthStore.delete(code, 'authorization_codes');
+
+    const tokenScope = authCodeData.scope;
+    const userId = authCodeData.user_id;
+
+    const access = await this.storeAccessToken(clientId, tokenScope, userId);
+
+    const refresh = await this.storeRefreshToken(
+      clientId,
+      tokenScope,
+      access.token,
+      userId
+    );
+
+    logger.info('CIE token exchange: issued access token', {
+      workspace_id: authCodeData.workspace_id,
+      server_id: authCodeData.server_id,
+      user_id: userId,
+    });
+
+    return {
+      access_token: access.token,
+      token_type: 'Bearer',
+      expires_in: access.expiresIn,
+      scope: tokenScope,
+      refresh_token: refresh.refreshToken,
+    };
   }
 
   /**
