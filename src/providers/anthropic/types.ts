@@ -8,6 +8,8 @@ export type AnthropicStreamState = {
     completion_tokens?: number;
     cache_read_input_tokens?: number;
     cache_creation_input_tokens?: number;
+    /** Anthropic Priority Tier — captured from message_start and forwarded in the final usage chunk */
+    service_tier?: 'standard' | 'priority' | 'batch' | null;
   };
   model?: string;
 };

@@ -469,6 +469,12 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
     param: 'thinking',
     required: false,
   },
+  // Anthropic Priority Tier — forward raw, no translation
+  // https://docs.anthropic.com/en/api/messages
+  service_tier: {
+    param: 'service_tier',
+    required: false,
+  },
 };
 
 interface AnthorpicTextContentItem {
@@ -498,6 +504,8 @@ export interface AnthropicChatCompleteResponse {
     output_tokens: number;
     cache_creation_input_tokens?: number;
     cache_read_input_tokens?: number;
+    /** Anthropic Priority Tier — present on every response */
+    service_tier?: 'standard' | 'priority' | 'batch' | null;
   };
 }
 
@@ -529,6 +537,7 @@ export interface AnthropicChatCompleteStreamResponse {
       input_tokens?: number;
       cache_creation_input_tokens?: number;
       cache_read_input_tokens?: number;
+      service_tier?: 'standard' | 'priority' | 'batch' | null;
     };
     model?: string;
   };
@@ -557,6 +566,7 @@ export const getAnthropicChatCompleteResponseTransform = (provider: string) => {
         output_tokens = 0,
         cache_creation_input_tokens,
         cache_read_input_tokens,
+        service_tier,
       } = response?.usage;
 
       const shouldSendCacheUsage =
@@ -624,6 +634,7 @@ export const getAnthropicChatCompleteResponseTransform = (provider: string) => {
             cache_read_input_tokens: cache_read_input_tokens,
             cache_creation_input_tokens: cache_creation_input_tokens,
           }),
+          ...(service_tier != null && { service_tier }),
         },
       };
     }
@@ -706,6 +717,9 @@ export const getAnthropicStreamChunkTransform = (provider: string) => {
           cache_creation_input_tokens:
             parsedChunk.message?.usage?.cache_creation_input_tokens,
         }),
+        ...(parsedChunk.message?.usage?.service_tier != null && {
+          service_tier: parsedChunk.message.usage.service_tier,
+        }),
       };
       return (
         `data: ${JSON.stringify({
@@ -760,6 +774,9 @@ export const getAnthropicStreamChunkTransform = (provider: string) => {
             prompt_tokens_details: {
               cached_tokens: streamState.usage?.cache_read_input_tokens ?? 0,
             },
+            ...(streamState.usage?.service_tier != null && {
+              service_tier: streamState.usage.service_tier,
+            }),
           },
         })}` + '\n\n'
       );
