@@ -48,11 +48,17 @@ enum LassoMessageType {
   COMPLETION = 'COMPLETION',
 }
 
+interface LassoSource {
+  type: string;
+  [key: string]: unknown;
+}
+
 interface LassoV3ClassifyRequest {
   messages: LassoMessage[];
   messageType: LassoMessageType;
   sessionId?: string;
   userId?: string;
+  source?: LassoSource;
 }
 
 interface LassoV3ClassifyResponse {
@@ -181,6 +187,9 @@ export const handler: PluginHandler = async (
     const payload: LassoV3ClassifyRequest = {
       messages,
       messageType,
+      // Drives the "Used By" badge on Lasso Application API Keys: every call from this
+      // integration is attributed as "portkey" on the keys list.
+      source: { type: 'portkey' },
     };
 
     // Map conversationId to sessionId

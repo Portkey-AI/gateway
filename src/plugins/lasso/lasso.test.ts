@@ -283,7 +283,10 @@ describe('Lasso Security Deputies API v3', () => {
 
     expect(mockedPost).toHaveBeenCalledWith(
       expect.any(String),
-      expect.objectContaining({ messageType: 'PROMPT' }),
+      expect.objectContaining({
+        messageType: 'PROMPT',
+        source: { type: 'portkey' },
+      }),
       expect.any(Object),
       undefined
     );
