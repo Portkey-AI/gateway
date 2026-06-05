@@ -17,6 +17,13 @@
       "base_url": "https://api.ai21.com/studio/v1"
     },
     {
+      "id": "agione",
+      "name": "AGIone",
+      "object": "provider",
+      "description": "AGIone provides an OpenAI-compatible API for routing requests across LLM, vision, image, and video model providers through a single endpoint.",
+      "base_url": "https://agione.pro/hyperone/xapi/api/v1"
+    },
+    {
       "id": "anthropic",
       "name": "Anthropic",
       "object": "provider",
