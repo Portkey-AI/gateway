@@ -1,0 +1,96 @@
+{
+  "id": "highflame",
+  "description": "Highflame's AI security platform provides runtime guardrails for prompt injection, sensitive-information disclosure, content safety, and agentic tool safety, organized around the OWASP LLM Top 10. Evaluates content against your Highflame application policy via Shield. Learn more at https://docs.highflame.ai/",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": [
+          {
+            "type": "subHeading",
+            "text": "Your Highflame service key (hf_sk_...), exchanged automatically for a short-lived token."
+          }
+        ],
+        "encrypted": true
+      },
+      "domain": {
+        "type": "string",
+        "label": "Domain",
+        "description": [
+          {
+            "type": "subHeading",
+            "text": "Highflame Shield host. Targets POST /v1/shield/guard. Use api.highflame.ai (default, gateway-routed) or your self-hosted Highflame host."
+          }
+        ],
+        "default": "api.highflame.ai",
+        "required": false
+      },
+      "application": {
+        "type": "string",
+        "label": "Application Name",
+        "description": [
+          {
+            "type": "subHeading",
+            "text": "Highflame application name for policy-scoped guardrails (required). See https://docs.highflame.ai/documentation/agent-control-fabric/guardrails-policies"
+          }
+        ],
+        "required": true
+      },
+      "tokenUrl": {
+        "type": "string",
+        "label": "Token URL",
+        "description": [
+          {
+            "type": "subHeading",
+            "text": "OAuth token-exchange URL. Defaults to https://auth.highflame.ai/oauth2/token."
+          }
+        ],
+        "required": false
+      }
+    },
+    "required": ["apiKey", "application"]
+  },
+  "functions": [
+    {
+      "name": "Highflame Guardrails",
+      "id": "guardrails",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Evaluates content against the selected Highflame guardrail capabilities (OWASP LLM Top 10). Omit capabilities to apply every guardrail enabled in your Highflame application policy."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "capabilities": {
+            "type": "array",
+            "description": "OWASP-aligned guardrail capabilities to run. Empty applies all guardrails enabled in the application policy.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "prompt_injection",
+                "sensitive_information_disclosure",
+                "excessive_agency",
+                "misinformation",
+                "unbounded_consumption",
+                "content_safety",
+                "language_detection"
+              ]
+            }
+          },
+          "mode": {
+            "type": "string",
+            "description": "Shield evaluation mode.",
+            "enum": ["enforce", "monitor", "alert", "modify"],
+            "default": "enforce"
+          }
+        }
+      }
+    }
+  ]
+}

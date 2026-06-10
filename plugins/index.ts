@@ -62,7 +62,7 @@ import { handler as defaultrequiredMetadataKeys } from './default/requiredMetada
 import { handler as walledaiguardrails } from './walledai/walledprotect';
 import { handler as defaultregexReplace } from './default/regexReplace';
 import { handler as defaultallowedRequestTypes } from './default/allowedRequestTypes';
-import { handler as javelinguardrails } from './javelin/guardrails';
+import { handler as highflameguardrails } from './highflame/guardrails';
 import { handler as f5GuardrailsScan } from './f5-guardrails/scan';
 import { handler as azureShieldPrompt } from './azure/shieldPrompt';
 import { handler as azureProtectedMaterial } from './azure/protectedMaterial';
@@ -171,8 +171,8 @@ export const plugins = {
   walledai: {
     walledprotect: walledaiguardrails,
   },
-  javelin: {
-    guardrails: javelinguardrails,
+  highflame: {
+    guardrails: highflameguardrails,
   },
   'f5-guardrails': {
     scan: f5GuardrailsScan,
