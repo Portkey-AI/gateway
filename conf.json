@@ -1,4 +1,6 @@
 {
+  "middleware_dir": "./middleware",
+  "middleware": [],
   "plugins_enabled": [
     "default",
     "portkey",
