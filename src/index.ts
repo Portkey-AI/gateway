@@ -58,6 +58,9 @@ import { otelTracesHandler } from './handlers/otelTracesHandler';
 import { messagesHandler } from './handlers/messagesHandler';
 import { payloadSizeValidatorMiddleware } from './middlewares/payloadSizeValidator';
 import { addMetricsMiddleware } from './middlewares/addMetricsMiddleware';
+import { loadExternalMiddleware } from './middlewares/external';
+import { parseMiddlewareConfig } from './types/middlewareConfig';
+import conf from '../conf.json';
 import { modelsHandler } from './handlers/modelsHandler';
 import { messageCountTokensHandler } from './handlers/messageCountTokensHandler';
 import { getCORSValues, setCorsHeaders } from './utils';
@@ -173,6 +176,13 @@ app.post(
     parseInt(Environment({}).MAX_JSON_PAYLOAD_SIZE_IN_MB)
   )
 );
+
+// External middleware pipeline: loaded from middleware_dir in conf.json order
+const cliMiddlewaresDir = process.env.MIDDLEWARES_DIR || undefined;
+const middlewareConfig = parseMiddlewareConfig(conf as any, cliMiddlewaresDir);
+if (middlewareConfig.entries.length > 0) {
+  await loadExternalMiddleware(app, middlewareConfig);
+}
 
 // Durable Objects handler - before authN, uses service auth instead
 // Protected by service auth (PORTKEY_CLIENT_AUTH)
