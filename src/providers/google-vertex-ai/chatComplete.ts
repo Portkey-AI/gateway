@@ -708,7 +708,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
             )
           : null;
         let message: any = { role: 'assistant', content: '' };
-        if (generation.content?.parts[0]?.text) {
+        if (generation.content?.parts?.[0]?.text) {
           const contentBlocks = [];
           let content = '';
           for (const part of generation.content.parts) {
@@ -732,7 +732,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
             ...(!strictOpenAiCompliance &&
               contentBlocks.length && { content_blocks: contentBlocks }),
           };
-        } else if (generation.content?.parts[0]?.functionCall) {
+        } else if (generation.content?.parts?.[0]?.functionCall) {
           message = {
             role: 'assistant',
             tool_calls: generation.content.parts.map((part, idx) => {
@@ -753,7 +753,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
               }
             }),
           };
-        } else if (generation.content?.parts[0]?.inlineData) {
+        } else if (generation.content?.parts?.[0]?.inlineData) {
           const part = generation.content.parts[0];
           const contentBlocks = [
             {
