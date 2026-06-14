@@ -12,6 +12,10 @@ import {
 } from './utils';
 
 export const WorkersAiChatCompleteConfig: ProviderConfig = {
+  model: {
+    param: 'model',
+    required: true,
+  },
   messages: {
     param: 'messages',
     default: '',
@@ -51,6 +55,42 @@ interface WorkersAiChatCompleteStreamResponse {
   p?: string;
 }
 
+interface WorkersAiOpenAIChatCompleteResponse {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: {
+    index: number;
+    message: { role: string; content: string };
+    finish_reason: string;
+    logprobs: object | null;
+  }[];
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
+interface WorkersAiOpenAIChatCompleteStreamChunk {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: {
+    delta: { role?: string; content?: string; tool_calls?: object[] };
+    index: number;
+    finish_reason: string | null;
+    logprobs: object | null;
+  }[];
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
 // TODO: cloudflare do not return the usage
 export const WorkersAiChatCompleteResponseTransform: (
   response: WorkersAiChatCompleteResponse | WorkersAiErrorResponse,
@@ -72,6 +112,13 @@ export const WorkersAiChatCompleteResponseTransform: (
       response as WorkersAiErrorResponse
     );
     if (errorResponse) return errorResponse;
+  }
+
+  if ('choices' in response) {
+    return {
+      ...(response as unknown as WorkersAiOpenAIChatCompleteResponse),
+      provider: WORKERS_AI,
+    } as ChatCompletionResponse;
   }
 
   if ('result' in response) {
@@ -118,6 +165,16 @@ export const WorkersAiChatCompleteStreamChunkTransform: (
   chunk = chunk.trim();
 
   const parsedChunk: WorkersAiChatCompleteStreamResponse = JSON.parse(chunk);
+
+  if ('choices' in parsedChunk) {
+    return (
+      `data: ${JSON.stringify({
+        ...(parsedChunk as unknown as WorkersAiOpenAIChatCompleteStreamChunk),
+        provider: WORKERS_AI,
+      })}` + '\n\n'
+    );
+  }
+
   return (
     `data: ${JSON.stringify({
       id: fallbackId,

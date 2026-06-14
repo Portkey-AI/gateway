@@ -1,8 +1,11 @@
 import { ProviderAPIConfig } from '../types';
 
 const WorkersAiAPIConfig: ProviderAPIConfig = {
-  getBaseURL: ({ providerOptions }) => {
+  getBaseURL: ({ providerOptions, fn }) => {
     const { workersAiAccountId } = providerOptions;
+    if (fn === 'chatComplete') {
+      return `https://api.cloudflare.com/client/v4/accounts/${workersAiAccountId}/ai/v1`;
+    }
     return `https://api.cloudflare.com/client/v4/accounts/${workersAiAccountId}/ai/run`;
   },
   headers: ({ providerOptions }) => {
@@ -16,7 +19,7 @@ const WorkersAiAPIConfig: ProviderAPIConfig = {
         return `/${model}`;
       }
       case 'chatComplete': {
-        return `/${model}`;
+        return '/chat/completions';
       }
       case 'embed': {
         return `/${model}`;
