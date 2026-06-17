@@ -1,0 +1,3 @@
+# Local integration/dev test scripts — not for the repo
+wonderfence-placement-test.mjs
+run-placement-test.sh
