@@ -26,6 +26,8 @@ import {
 import { Environment } from '../../utils/env';
 import { ServerConfig } from '../types/mcp';
 import { trackMcpServerTokenKey } from '../utils/mcpCacheKeyTracker';
+import { validateViaIntrospection } from '../../shared/services/jwt/introspection';
+import { JwtValidationConfig } from '../../shared/services/jwt/types';
 
 const logger = createLogger('OAuthGateway');
 
@@ -967,6 +969,96 @@ export class OAuthGateway {
   }
 
   /**
+   * Try to validate token via external introspection endpoint configured
+   * in the server's jwt_validation. Fallback when the token is not found
+   * in the local store or control plane.
+   */
+  private async tryExternalIntrospection(
+    token: string
+  ): Promise<TokenIntrospectionResponse | null> {
+    try {
+      const workspaceId = this.c.req.param('workspaceId');
+      const serverId = this.c.req.param('serverId');
+
+      if (!workspaceId || !serverId) return null;
+
+      const serverConfig: ServerConfig | null = await getServerConfig(
+        workspaceId,
+        serverId,
+        this.c
+      );
+
+      if (!serverConfig?.jwt_validation?.introspectEndpoint) return null;
+
+      const jwtConfig: JwtValidationConfig = { ...serverConfig.jwt_validation };
+      const extAuth = serverConfig.external_auth_config;
+
+      if (extAuth) {
+        if (!jwtConfig.introspectClientId && extAuth.client_id) {
+          jwtConfig.introspectClientId = extAuth.client_id;
+        }
+        if (!jwtConfig.introspectClientSecret && extAuth.client_secret) {
+          jwtConfig.introspectClientSecret = extAuth.client_secret;
+        }
+      }
+
+      const result = await validateViaIntrospection(token, jwtConfig);
+
+      if (!result.valid || !result.payload) {
+        logger.debug(
+          `External introspection rejected token for ${workspaceId}/${serverId}: ${result.error}`
+        );
+        return null;
+      }
+
+      const payload = result.payload;
+
+      const response: TokenIntrospectionResponse = {
+        active: true,
+        scope: payload.scope as string | undefined,
+        client_id: payload.client_id as string | undefined,
+        username:
+          (payload.username as string) ||
+          (payload.sub as string) ||
+          (payload.user_id as string),
+        exp: payload.exp as number | undefined,
+        iat: payload.iat as number | undefined,
+        workspace_id: (payload.workspace_id as string) || workspaceId,
+        organisation_id: payload.organisation_id as string | undefined,
+        server_id: (payload.server_id as string) || serverId,
+        aud: payload.aud as string | string[] | undefined,
+        email: payload.email as string | undefined,
+      };
+
+      await OAuthGatewayCache.set<StoredAccessToken>(
+        token,
+        {
+          client_id: response.client_id || 'external',
+          active: true,
+          scope: response.scope,
+          iat: response.iat || nowSec(),
+          exp: response.exp || nowSec() + ACCESS_TOKEN_TTL_SECONDS,
+          user_id: response.username,
+          sub: payload.sub as string | undefined,
+          workspace_id: response.workspace_id,
+          organisation_id: response.organisation_id,
+          server_id: response.server_id,
+          is_external_auth: true,
+        },
+        'tokens'
+      );
+
+      logger.debug(
+        `External introspection validated token for ${workspaceId}/${serverId}`
+      );
+      return response;
+    } catch (error) {
+      logger.error('External introspection fallback failed', error);
+      return null;
+    }
+  }
+
+  /**
    * Introspect token
    */
   async introspectToken(
@@ -1006,7 +1098,11 @@ export class OAuthGateway {
       }
     }
 
-    if (!tok) return { active: false };
+    if (!tok) {
+      const externalResult = await this.tryExternalIntrospection(token);
+      if (externalResult) return externalResult;
+      return { active: false };
+    }
 
     const exp = 'exp' in tok ? tok.exp : undefined;
     if ((exp ?? 0) < nowSec()) return { active: false };
