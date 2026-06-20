@@ -1,4 +1,8 @@
-import { derefer, transformGeminiToolParameters } from './utils';
+import {
+  derefer,
+  recursivelyDeleteUnsupportedParameters,
+  transformGeminiToolParameters,
+} from './utils';
 
 /*
 from enum import StrEnum
@@ -614,5 +618,121 @@ describe('transformGeminiToolParameters', () => {
       'identity',
       'emergency_contacts',
     ]);
+  });
+});
+
+describe('recursivelyDeleteUnsupportedParameters', () => {
+  it('deletes title at the root level', () => {
+    const obj: any = { type: 'object', title: 'Root' };
+    recursivelyDeleteUnsupportedParameters(obj);
+    expect(obj.title).toBeUndefined();
+    expect(obj.type).toBe('object');
+  });
+
+  it('deletes title in nested objects', () => {
+    const obj: any = {
+      type: 'object',
+      title: 'Root',
+      properties: {
+        name: { type: 'string', title: 'Name' },
+      },
+    };
+    recursivelyDeleteUnsupportedParameters(obj);
+    expect(obj.title).toBeUndefined();
+    expect(obj.properties.name.title).toBeUndefined();
+    expect(obj.properties.name.type).toBe('string');
+  });
+
+  it('deletes title inside anyOf members', () => {
+    const obj: any = {
+      anyOf: [
+        { type: 'string', title: 'A' },
+        { type: 'number', title: 'B' },
+      ],
+    };
+    recursivelyDeleteUnsupportedParameters(obj);
+    expect(obj.anyOf[0].title).toBeUndefined();
+    expect(obj.anyOf[1].title).toBeUndefined();
+  });
+
+  it('also deletes the other unsupported keys alongside title', () => {
+    const obj: any = {
+      $schema: 'http://json-schema.org/draft-07/schema#',
+      title: 'Root',
+      additionalProperties: false,
+      additional_properties: false,
+      type: 'object',
+    };
+    recursivelyDeleteUnsupportedParameters(obj);
+    expect(obj.$schema).toBeUndefined();
+    expect(obj.title).toBeUndefined();
+    expect(obj.additionalProperties).toBeUndefined();
+    expect(obj.additional_properties).toBeUndefined();
+    expect(obj.type).toBe('object');
+  });
+
+  it('strips title at every level of a deeply nested schema', () => {
+    const schema: any = {
+      title: 'TopModel',
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        name: { title: 'Name', type: 'string' },
+        pages: {
+          title: 'Pages',
+          type: 'array',
+          items: {
+            title: 'MiddleModel',
+            type: 'object',
+            properties: {
+              title: { title: 'Title', type: 'string' },
+              items: {
+                title: 'Items',
+                type: 'array',
+                items: {
+                  title: 'NestedModel',
+                  type: 'object',
+                  properties: {
+                    name: { title: 'Name', type: 'string' },
+                    value: { title: 'Value', type: 'integer' },
+                  },
+                  required: ['name', 'value'],
+                },
+              },
+            },
+            required: ['title', 'items'],
+          },
+        },
+      },
+      required: ['name', 'pages'],
+    };
+
+    recursivelyDeleteUnsupportedParameters(schema);
+
+    const collectTitles = (node: any): string[] => {
+      if (!node || typeof node !== 'object') return [];
+      const found: string[] = [];
+      if (typeof node.title === 'string') found.push(node.title);
+      for (const [key, value] of Object.entries(node)) {
+        if (key === 'properties' && value && typeof value === 'object') {
+          for (const prop of Object.values(value)) {
+            found.push(...collectTitles(prop));
+          }
+        } else if (Array.isArray(value)) {
+          value.forEach((v) => found.push(...collectTitles(v)));
+        } else if (value && typeof value === 'object') {
+          found.push(...collectTitles(value));
+        }
+      }
+      return found;
+    };
+
+    expect(collectTitles(schema)).toEqual([]);
+
+    const middle = schema.properties.pages.items;
+    expect(middle.properties.title).toEqual({ type: 'string' });
+    expect(middle.properties.items.items.properties.value).toEqual({
+      type: 'integer',
+    });
   });
 });

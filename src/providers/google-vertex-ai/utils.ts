@@ -302,19 +302,28 @@ export const transformGeminiToolParameters = (
 
 // Vertex AI does not support additionalProperties in JSON Schema
 // https://cloud.google.com/vertex-ai/docs/reference/rest/v1/Schema
+const isSchemaNode = (value: any): value is Record<string, any> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
 export const recursivelyDeleteUnsupportedParameters = (obj: any) => {
-  if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) return;
+  if (!isSchemaNode(obj)) return;
   delete obj.additional_properties;
   delete obj.additionalProperties;
   delete obj['$schema'];
-  for (const key in obj) {
-    if (obj[key] !== null && typeof obj[key] === 'object') {
-      recursivelyDeleteUnsupportedParameters(obj[key]);
-    }
-    if (key == 'anyOf' && Array.isArray(obj[key])) {
-      obj[key].forEach((item: any) => {
-        recursivelyDeleteUnsupportedParameters(item);
-      });
+  delete obj['title'];
+
+  for (const [key, value] of Object.entries(obj)) {
+    const childSchemas =
+      key === 'properties' && isSchemaNode(value)
+        ? Object.values(value)
+        : [value];
+
+    for (const child of childSchemas) {
+      if (Array.isArray(child)) {
+        child.forEach(recursivelyDeleteUnsupportedParameters);
+      } else {
+        recursivelyDeleteUnsupportedParameters(child);
+      }
     }
   }
 };
