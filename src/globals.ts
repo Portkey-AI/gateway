@@ -113,6 +113,7 @@ export const ORACLE: string = 'oracle';
 export const IO_INTELLIGENCE: string = 'iointelligence';
 export const AIBADGR: string = 'aibadgr';
 export const OVHCLOUD: string = 'ovhcloud';
+export const GONKABROKER: string = 'gonkabroker';
 
 export const VALID_PROVIDERS = [
   ANTHROPIC,
@@ -189,6 +190,7 @@ export const VALID_PROVIDERS = [
   IO_INTELLIGENCE,
   AIBADGR,
   OVHCLOUD,
+  GONKABROKER,
 ];
 
 export const CONTENT_TYPES = {
