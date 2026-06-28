@@ -10,10 +10,14 @@
     "pangea",
     "promptsecurity",
     "panw-prisma-airs",
-    "walledai"
+    "walledai",
+    "deepkeep"
   ],
   "credentials": {
     "portkey": {
+      "apiKey": "..."
+    },
+    "deepkeep": {
       "apiKey": "..."
     }
   },
