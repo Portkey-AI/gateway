@@ -4,14 +4,21 @@ import json from '@rollup/plugin-json';
 import copy from 'rollup-plugin-copy';
 
 export default {
-  input: 'src/start-server.ts',
+  input: {
+    'start-server': 'src/start-server.ts',
+    app: 'src/app-entry.ts',
+  },
   output: {
     dir: 'build',
     format: 'es',
+    entryFileNames: '[name].js',
+    chunkFileNames: 'chunks/[name]-[hash].js',
   },
   plugins: [
     typescript({
       exclude: ['**/*.test.ts', 'start-test.js', 'cookbook', 'docs', 'tests'],
+      declaration: true,
+      declarationDir: 'build/types',
     }),
     terser(),
     json(),
