@@ -78,5 +78,13 @@
     "wrangler": "^3.97.0"
   },
   "bin": "build/start-server.js",
-  "type": "module"
+  "type": "module",
+  "main": "./build/app.js",
+  "types": "./build/types/src/app-entry.d.ts",
+  "exports": {
+    ".": {
+      "types": "./build/types/src/app-entry.d.ts",
+      "import": "./build/app.js"
+    }
+  }
 }
