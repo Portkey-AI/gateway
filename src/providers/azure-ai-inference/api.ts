@@ -32,6 +32,10 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
       return new URL(azureFoundryUrl ?? '').origin + '/openai';
     }
 
+    if (fn === 'createModelResponse') {
+      return new URL(azureFoundryUrl ?? '').origin + '/openai';
+    }
+
     if (provider === GITHUB) {
       return 'https://models.inference.ai.azure.com';
     }
@@ -186,6 +190,7 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
     const ENDPOINT_MAPPING: Record<string, string> = {
       complete: '/completions',
       chatComplete: isAnthropicModel ? '/v1/messages' : '/chat/completions',
+      createModelResponse: '/v1/responses',
       messages: '/v1/messages',
       embed: '/embeddings',
       realtime: '/realtime',
@@ -229,6 +234,9 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
         return isGithub
           ? ENDPOINT_MAPPING[mappedFn]
           : `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
+      }
+      case 'createModelResponse': {
+        return `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
       }
       case 'messages': {
         return `${ENDPOINT_MAPPING[mappedFn]}`;

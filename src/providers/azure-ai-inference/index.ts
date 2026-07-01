@@ -34,6 +34,10 @@ import {
   AzureAIInferenceMessagesConfig,
   AzureAIInferenceMessagesResponseTransform,
 } from './messages';
+import {
+  createModelResponseParams,
+  OpenAICreateModelResponseTransformer,
+} from '../open-ai-base';
 
 const AzureAIInferenceAPIConfig: ProviderConfigs = {
   api: AzureAIInferenceAPI,
@@ -60,6 +64,7 @@ const AzureAIInferenceAPIConfig: ProviderConfigs = {
       realtime: {},
       cancelBatch: {},
       createBatch: AzureOpenAICreateBatchConfig,
+      createModelResponse: createModelResponseParams([]),
       cancelFinetune: {},
       requestHandlers: {
         getBatchOutput: AzureAIInferenceGetBatchOutputRequestHandler,
@@ -74,6 +79,8 @@ const AzureAIInferenceAPIConfig: ProviderConfigs = {
             getAnthropicStreamChunkTransform(AZURE_AI_INFERENCE),
         }),
         chatComplete: chatCompleteResponseTransform,
+        createModelResponse:
+          OpenAICreateModelResponseTransformer(AZURE_AI_INFERENCE),
         messages: AzureAIInferenceMessagesResponseTransform,
         embed: AzureAIInferenceEmbedResponseTransform(AZURE_AI_INFERENCE),
         imageGenerate: AzureAIInferenceResponseTransform,
