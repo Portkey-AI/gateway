@@ -5,7 +5,7 @@ const QdrantAPIConfig: ProviderAPIConfig = {
     return providerOptions.customHost || '';
   },
   headers: ({ providerOptions }) => {
-    return { 'api-key': `Bearer ${providerOptions.apiKey}` };
+    return { 'api-key': `${providerOptions.apiKey}` };
   },
   getEndpoint: ({ fn }) => {
     switch (fn) {
