@@ -173,7 +173,7 @@ export const getFormdataToFormdataStreamTransformer = (
 
         const boundaryIndex = buffer.indexOf(boundary);
 
-        const safeLength = boundaryIndex ?? buffer.length;
+        const safeLength = boundaryIndex === -1 ? buffer.length : boundaryIndex;
 
         const content = buffer.slice(0, safeLength);
         if (isFileContent) {
@@ -268,7 +268,7 @@ export const formDataToOctetStreamTransformer = (
 
         const boundaryIndex = buffer.indexOf(boundary);
 
-        const safeLength = boundaryIndex ?? buffer.length;
+        const safeLength = boundaryIndex === -1 ? buffer.length : boundaryIndex;
         // if (safeLength <= 0) break;
 
         const content = buffer.slice(0, safeLength);
