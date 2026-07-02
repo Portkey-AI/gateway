@@ -11,7 +11,7 @@ export const TogetherAIEmbedConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
-    default: 'mistral-embed',
+    default: 'BAAI/bge-large-en-v1.5',
   },
   input: {
     param: 'input',
