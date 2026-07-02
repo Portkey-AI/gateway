@@ -754,7 +754,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
     chunk = chunk.slice(0, chunk.length - 1);
   }
   if (chunk.endsWith(']')) {
-    chunk = chunk.slice(0, chunk.length - 2);
+    chunk = chunk.slice(0, chunk.length - 1);
   }
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();

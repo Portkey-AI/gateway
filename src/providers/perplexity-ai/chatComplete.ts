@@ -207,6 +207,10 @@ export const PerplexityAIChatCompleteStreamChunkTransform: (
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
 
+  if (chunk === '[DONE]') {
+    return `data: ${chunk}\n\n`;
+  }
+
   const parsedChunk: PerplexityAIChatCompletionStreamChunk = JSON.parse(chunk);
   let returnChunk =
     `data: ${JSON.stringify({
