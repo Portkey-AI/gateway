@@ -868,7 +868,7 @@ export const BedrockCohereChatCompleteConfig: ProviderConfig = {
         let messages: Message[] = params.messages;
         messages.forEach((msg, index) => {
           if (index === 0 && SYSTEM_MESSAGE_ROLES.includes(msg.role)) {
-            prompt += `system: ${messages}\n`;
+            prompt += `system: ${msg.content}\n`;
           } else if (msg.role == 'user') {
             prompt += `user: ${msg.content}\n`;
           } else if (msg.role == 'assistant') {
@@ -1070,7 +1070,7 @@ export const BedrockAI21ChatCompleteConfig: ProviderConfig = {
         let messages: Message[] = params.messages;
         messages.forEach((msg, index) => {
           if (index === 0 && SYSTEM_MESSAGE_ROLES.includes(msg.role)) {
-            prompt += `system: ${messages}\n`;
+            prompt += `system: ${msg.content}\n`;
           } else if (msg.role == 'user') {
             prompt += `user: ${msg.content}\n`;
           } else if (msg.role == 'assistant') {
