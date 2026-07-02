@@ -1,0 +1,62 @@
+{
+  "id": "hlido",
+  "name": "Hlido Agent Trust",
+  "description": "Gate LLM/agent requests on Hlido's independent, evidence-backed trust scores for shipped AI agent products. No API key required — Hlido's review data is public. Blocks (or flags) requests routed to an agent that scores below your threshold or has no independent review.",
+  "credentials": {
+    "type": "object",
+    "properties": {},
+    "required": []
+  },
+  "functions": [
+    {
+      "name": "Agent Trust Check",
+      "id": "agentTrust",
+      "supportedHooks": ["beforeRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Verify the target agent/model against its independent Hlido trust score before the request runs. Uses the public Hlido review corpus (no auth)."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "label": "Hlido agent slug",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "The Hlido slug of the agent/tool to verify (e.g. 'aider'). Look it up at https://hlido.eu/check/. If omitted, the request provider name is used as a best-effort match."
+              }
+            ]
+          },
+          "minScore": {
+            "type": "number",
+            "label": "Minimum trust score",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Fail the guardrail when the agent's Hlido score (0–100) is below this. Default 70 (STEADY tier)."
+              }
+            ],
+            "default": 70
+          },
+          "failOnUnreviewed": {
+            "type": "boolean",
+            "label": "Fail if unreviewed",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "When true, fail the guardrail if the agent has no independent Hlido review. When false (default), unreviewed agents pass with a note."
+              }
+            ],
+            "default": false
+          }
+        },
+        "required": ["slug"]
+      }
+    }
+  ]
+}
