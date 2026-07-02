@@ -47,6 +47,7 @@ import { handler as pangeatextGuard } from './pangea/textGuard';
 import { handler as promptfooPii } from './promptfoo/pii';
 import { handler as promptfooHarm } from './promptfoo/harm';
 import { handler as promptfooGuard } from './promptfoo/guard';
+import { handler as hlidoAgentTrust } from './hlido/agentTrust';
 import { handler as pangeapii } from './pangea/pii';
 import { pluginHandler as bedrockHandler } from './bedrock/index';
 import { handler as acuvityScan } from './acuvity/scan';
@@ -137,6 +138,9 @@ export const plugins = {
   pangea: {
     textGuard: pangeatextGuard,
     pii: pangeapii,
+  },
+  hlido: {
+    agentTrust: hlidoAgentTrust,
   },
   promptfoo: {
     pii: promptfooPii,
