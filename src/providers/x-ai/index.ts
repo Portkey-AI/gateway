@@ -23,12 +23,14 @@ interface XAIErrorResponse {
 const xAIResponseTransform = <T>(response: T) => {
   let _response = response as XAIErrorResponse;
   if ('error' in _response) {
+    const error = _response.error;
+    const isStructuredError = typeof error === 'object' && error !== null;
     return {
       error: {
-        message: _response.error as string,
-        code: _response.code ?? null,
-        param: null,
-        type: null,
+        message: isStructuredError ? error.message : (error as string),
+        code: (isStructuredError ? error.code : _response.code) ?? null,
+        param: isStructuredError ? error.param : null,
+        type: isStructuredError ? error.type : null,
       },
       provider: X_AI,
     };
