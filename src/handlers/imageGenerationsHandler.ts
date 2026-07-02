@@ -42,10 +42,10 @@ export async function imageGenerationsHandler(c: Context): Promise<Response> {
     return new Response(
       JSON.stringify({
         status: 'failure',
-        message: 'Something went wrong',
+        message: errorMessage,
       }),
       {
-        status: 500,
+        status: statusCode,
         headers: {
           'content-type': 'application/json',
         },
