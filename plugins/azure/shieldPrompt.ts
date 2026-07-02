@@ -79,7 +79,9 @@ export const handler = async (
 
   const request = {
     userPrompt,
-    ...(systemMessages.length > 0 ? { documents: textArray } : {}), // If system message, add user prompt as documents
+    ...(Array.isArray(systemMessages) && systemMessages.length > 0
+      ? { documents: textArray }
+      : {}), // If system message, add user prompt as documents
   };
 
   const apiVersion = parameters.apiVersion || '2024-09-01';
