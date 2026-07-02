@@ -64,8 +64,6 @@ export const CohereGetBatchOutputHandler = async ({
         headers,
       }
     );
-    const retrieveFileResponseJson: CohereGetFileResponse =
-      await retrieveFileResponse.json();
     if (!retrieveFileResponse.ok) {
       const errorText = await retrieveFileResponse.text();
       throw new Error(
@@ -77,6 +75,8 @@ export const CohereGetBatchOutputHandler = async ({
         })
       );
     }
+    const retrieveFileResponseJson: CohereGetFileResponse =
+      await retrieveFileResponse.json();
 
     if (!retrieveFileResponseJson.dataset.dataset_parts) {
       throw new Error('file not found');

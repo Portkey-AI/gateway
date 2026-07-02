@@ -38,7 +38,7 @@ export const RekaAIChatCompleteConfig: ProviderConfig = {
         media_url?: string;
       }) => {
         // NOTE: can't have more than one image in conversation history
-        if (media_url && messages[0].media_url) {
+        if (media_url && messages[0]?.media_url) {
           return;
         }
 
@@ -76,7 +76,7 @@ export const RekaAIChatCompleteConfig: ProviderConfig = {
         }
       });
 
-      if (messages[0].type !== 'human') {
+      if (messages[0]?.type !== 'human') {
         messages.unshift({
           type: 'human',
           text: 'Placeholder for alternation',
