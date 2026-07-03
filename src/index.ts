@@ -40,13 +40,25 @@ import modelResponsesHandler from './handlers/modelResponsesHandler';
 import { logger } from './apm';
 // Config
 import conf from '../conf.json';
-import { createCacheBackendsRedis } from './shared/services/cache';
+import {
+  createCacheBackendsRedis,
+  createCacheBackendsValkey,
+} from './shared/services/cache';
 
 // Create a new Hono server instance
 const app = new Hono();
 const runtime = getRuntimeKey();
 
-if (runtime === 'node' && process.env.REDIS_CONNECTION_STRING) {
+if (runtime === 'node' && process.env.VALKEY_CONNECTION_STRING) {
+  createCacheBackendsValkey(process.env.VALKEY_CONNECTION_STRING).catch(
+    (err) => {
+      console.error(
+        '[gateway] Failed to initialize Valkey cache backends:',
+        err
+      );
+    }
+  );
+} else if (runtime === 'node' && process.env.REDIS_CONNECTION_STRING) {
   createCacheBackendsRedis(process.env.REDIS_CONNECTION_STRING);
 }
 /**

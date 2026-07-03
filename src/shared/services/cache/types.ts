@@ -38,7 +38,7 @@ export interface CacheBackend {
 }
 
 export interface CacheConfig {
-  backend: 'memory' | 'file' | 'redis' | 'cloudflareKV';
+  backend: 'memory' | 'file' | 'redis' | 'cloudflareKV' | 'valkey';
   defaultTtl?: number; // Default TTL in milliseconds
   cleanupInterval?: number; // Cleanup interval in milliseconds
   // File backend options

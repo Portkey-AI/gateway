@@ -1148,6 +1148,7 @@ export function constructConfigFromRequestHeaders(
   return {
     provider: requestHeaders[`x-${POWERED_BY}-provider`],
     apiKey: requestHeaders['authorization']?.replace('Bearer ', ''),
+    customHost: requestHeaders[`x-${POWERED_BY}-custom-host`],
     defaultInputGuardrails: defaultsConfig.input_guardrails,
     defaultOutputGuardrails: defaultsConfig.output_guardrails,
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === AZURE_OPEN_AI &&

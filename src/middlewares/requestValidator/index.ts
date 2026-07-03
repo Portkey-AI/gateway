@@ -275,12 +275,28 @@ export function isValidCustomHost(customHost: string, c?: Context) {
     const url = new URL(customHost);
     const protocol = url.protocol;
 
-    // Allow only HTTP(S)
-    if (protocol !== 'http:' && protocol !== 'https:') return false;
+    // Allow HTTP(S) and Valkey/Redis protocols (for valkey-search provider)
+    const allowedProtocols = [
+      'http:',
+      'https:',
+      'valkey:',
+      'valkeys:',
+      'redis:',
+      'rediss:',
+    ];
+    if (!allowedProtocols.includes(protocol)) return false;
 
-    // Disallow credentials and obfuscation
-    if (url.username || url.password) return false;
-    if (customHost.includes('@')) return false;
+    // Disallow credentials and obfuscation (except for valkey/redis where password-in-URL is standard)
+    const isValkeyScheme = [
+      'valkey:',
+      'valkeys:',
+      'redis:',
+      'rediss:',
+    ].includes(protocol);
+    if (!isValkeyScheme) {
+      if (url.username || url.password) return false;
+      if (customHost.includes('@')) return false;
+    }
 
     const host = url.hostname;
 
@@ -323,39 +339,15 @@ export function isValidCustomHost(customHost: string, c?: Context) {
     // Block obvious internal/unsafe hosts and cloud metadata endpoints
     if (BLOCKED_HOSTS.includes(host as any)) return false;
 
-    // Block AWS IMDSv2 endpoint variations
-    if (host.startsWith('169.254.169.') || host.startsWith('fd00:ec2::')) {
-      return false;
-    }
+    // Private IP / reserved host checks apply to ALL schemes (including valkey://)
+    // to prevent SSRF against internal infrastructure via any protocol.
+    if (isPrivateOrReservedHost(host)) return false;
 
     // Block internal/special-use TLDs often used in SSRF attempts
     if (
       BLOCKED_TLDS.some((tld) => host.endsWith(tld) && host !== 'localhost')
     ) {
       return false;
-    }
-
-    // Block private/reserved IPs (IPv4)
-    if (isIPv4(hostParts) && (isPrivateIPv4(host) || isReservedIPv4(host))) {
-      return false;
-    }
-
-    // Check for alternative IP representations (decimal, hex, octal)
-    if (isAlternativeIPRepresentation(host, hostParts)) return false;
-
-    // Block private/reserved IPv6 and IPv4-mapped IPv6
-    if (host.includes(':')) {
-      if (isLocalOrPrivateIPv6(host)) return false;
-
-      // Check both IPv6-mapped and embedded IPv4 patterns
-      const ipv4Match =
-        host.match(VALIDATION_PATTERNS.IPV6_MAPPED_IPV4) ||
-        host.match(VALIDATION_PATTERNS.IPV6_EMBEDDED_IPV4);
-
-      if (ipv4Match) {
-        const ip4 = ipv4Match[1];
-        if (isPrivateIPv4(ip4) || isReservedIPv4(ip4)) return false;
-      }
     }
 
     // Validate port if present
@@ -471,6 +463,44 @@ function isAlternativeIPRepresentation(host: string, parts: string[]): boolean {
     ) {
       // Looks like a shortened IP format - block it
       return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Consolidated private/reserved host check for use across all protocols.
+ * Returns true if the hostname resolves to (or is) a private, reserved,
+ * loopback, or metadata IP address.
+ */
+function isPrivateOrReservedHost(host: string): boolean {
+  // Block AWS IMDS
+  if (host.startsWith('169.254.169.') || host.startsWith('fd00:ec2::')) {
+    return true;
+  }
+
+  const hostParts = host.split('.');
+
+  // Block private/reserved IPv4
+  if (isIPv4(hostParts) && (isPrivateIPv4(host) || isReservedIPv4(host))) {
+    return true;
+  }
+
+  // Block alternative IP representations (decimal, hex, octal)
+  if (isAlternativeIPRepresentation(host, hostParts)) return true;
+
+  // Block private/reserved IPv6 and IPv4-mapped IPv6
+  if (host.includes(':')) {
+    if (isLocalOrPrivateIPv6(host)) return true;
+
+    const ipv4Match =
+      host.match(VALIDATION_PATTERNS.IPV6_MAPPED_IPV4) ||
+      host.match(VALIDATION_PATTERNS.IPV6_EMBEDDED_IPV4);
+
+    if (ipv4Match) {
+      const ip4 = ipv4Match[1];
+      if (isPrivateIPv4(ip4) || isReservedIPv4(ip4)) return true;
     }
   }
 

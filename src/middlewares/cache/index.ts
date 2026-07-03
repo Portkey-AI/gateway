@@ -1,4 +1,13 @@
 import { Context } from 'hono';
+import { getDefaultCache } from '../../shared/services/cache/index';
+
+function getLLMCache() {
+  try {
+    return getDefaultCache();
+  } catch {
+    return null;
+  }
+}
 
 const inMemoryCache: any = {};
 
@@ -40,7 +49,17 @@ export const getFromCache = async (
   }
   try {
     const cacheKey = await getCacheKey(requestBody, url);
+    const cache = getLLMCache();
 
+    if (cache) {
+      const cached = await cache.get(cacheKey, 'llm-responses');
+      if (cached) {
+        return [cached, CACHE_STATUS.HIT, cacheKey];
+      }
+      return [null, CACHE_STATUS.MISS, null];
+    }
+
+    // Fallback: in-memory
     if (cacheKey in inMemoryCache) {
       const cacheObject = inMemoryCache[cacheKey];
       if (cacheObject.maxAge && cacheObject.maxAge < Date.now()) {
@@ -68,16 +87,27 @@ export const putInCache = async (
   cacheMaxAge: number | null
 ) => {
   if (requestBody.stream) {
-    // Does not support caching of streams
     return;
   }
 
   const cacheKey = await getCacheKey(requestBody, url);
+  const responseString = JSON.stringify(responseBody);
+  const cache = getLLMCache();
 
-  inMemoryCache[cacheKey] = {
-    responseBody: JSON.stringify(responseBody),
-    maxAge: cacheMaxAge,
-  };
+  if (cache) {
+    const ttl = cacheMaxAge ? cacheMaxAge - Date.now() : 24 * 60 * 60 * 1000;
+    if (ttl <= 0) return;
+    await cache.set(cacheKey, responseString, {
+      namespace: 'llm-responses',
+      ttl,
+    });
+  } else {
+    // Fallback: in-memory
+    inMemoryCache[cacheKey] = {
+      responseBody: responseString,
+      maxAge: cacheMaxAge,
+    };
+  }
 };
 
 export const memoryCache = () => {
@@ -92,7 +122,7 @@ export const memoryCache = () => {
       requestOptions &&
       Array.isArray(requestOptions) &&
       requestOptions.length > 0 &&
-      requestOptions[0].requestParams.stream === (false || undefined)
+      !requestOptions[0].requestParams?.stream
     ) {
       requestOptions = requestOptions[0];
       if (requestOptions.cacheMode === 'simple') {

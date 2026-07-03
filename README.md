@@ -204,7 +204,7 @@ Works with Claude Desktop, Cursor, VS Code, and any MCP-compatible client. [Get 
 - <a href="https://portkey.wiki/gh-47">**Compliance & Data Privacy**</a>: The AI gateway is SOC2, HIPAA, GDPR, and CCPA compliant.
 
 ### Cost Management
-- [**Smart caching**](https://portkey.wiki/gh-48): Cache responses from LLMs to reduce costs and improve latency. Supports simple and semantic* caching.
+- [**Smart caching**](https://portkey.wiki/gh-48): Cache responses from LLMs to reduce costs and improve latency. Supports simple and semantic* caching. Set `VALKEY_CONNECTION_STRING` to back the cache with Valkey (Node.js only).
 - [**Usage analytics**](https://portkey.wiki/gh-49): Monitor and analyze your AI and LLM usage, including request volume, latency, costs and error rates.
 - [**Provider optimization***](https://portkey.wiki/gh-89): Automatically switch to the most cost-effective provider based on usage patterns and pricing models.
 

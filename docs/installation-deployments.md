@@ -70,6 +70,46 @@ node build/start-server.js
 
 <br>
 
+#### Valkey Integration (Node.js only)
+
+**Cache backend**
+
+Set `VALKEY_CONNECTION_STRING` to use Valkey (via `@valkey/valkey-glide`) instead of the default in-memory cache. Supported schemes: `valkey://`, `valkeys://` (TLS), `redis://`, `rediss://`.
+
+```sh
+VALKEY_CONNECTION_STRING="valkey://localhost:6379" node build/start-server.js
+```
+
+This initializes all five cache stores (default, session, config, OAuth, MCP) backed by Valkey. `REDIS_CONNECTION_STRING` (ioredis) is also supported and takes effect when `VALKEY_CONNECTION_STRING` is not set.
+
+**Vector search provider**
+
+The `valkey-search` provider routes vector index and search operations directly to a Valkey Search instance over RESP using GLIDE. No HTTP upstream is required.
+
+```sh
+# Create an index
+curl -X POST http://localhost:8787/v1/indexes \
+  -H "Content-Type: application/json" \
+  -H "x-portkey-provider: valkey-search" \
+  -H "x-portkey-custom-host: valkey://localhost:6379" \
+  -d '{"name":"docs","schema":{"vec":{"type":"VECTOR","algorithm":"HNSW","dims":1536,"distance":"COSINE"},"text":{"type":"TEXT"}},"prefix":"doc:"}'
+```
+
+Supported endpoints:
+
+| Method | Path | Operation |
+| ------ | ---- | --------- |
+| `POST` | `/v1/indexes` | Create index (`FT.CREATE`) |
+| `GET` | `/v1/indexes/:name` | Index info (`FT.INFO`) |
+| `DELETE` | `/v1/indexes/:name` | Drop index (`FT.DROPINDEX`) |
+| `POST` | `/v1/indexes/:name/upsert` | Upsert documents (`HSET`) |
+| `POST` | `/v1/indexes/:name/search` | KNN vector search (`FT.SEARCH`) |
+| `DELETE` | `/v1/indexes/:name/documents` | Delete documents (`DEL`) |
+
+Requires Node.js deployment - not available on Cloudflare Workers.
+
+<br>
+
 ---
 
 ### Deploy to App Stack

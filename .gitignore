@@ -147,3 +147,4 @@ plugins/**/creds.json
 plugins/**/.parameters.json
 src/handlers/tests/.creds.json
 .cursor/
+dump.rdb
