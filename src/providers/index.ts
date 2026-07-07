@@ -74,6 +74,8 @@ import OracleConfig from './oracle';
 import IOIntelligenceConfig from './iointelligence';
 import AIBadgrConfig from './aibadgr';
 import OVHcloudConfig from './ovhcloud';
+import { GONKAROUTER } from '../globals';
+import { GonkaRouterProviderConfig } from './gonkarouter';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -148,6 +150,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   iointelligence: IOIntelligenceConfig,
   aibadgr: AIBadgrConfig,
   ovhcloud: OVHcloudConfig,
+  [GONKAROUTER]: GonkaRouterProviderConfig,
 };
 
 export default Providers;
