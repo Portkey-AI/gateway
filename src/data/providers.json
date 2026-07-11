@@ -213,6 +213,13 @@
       "base_url": "https://openrouter.ai/api"
     },
     {
+      "id": "requesty",
+      "name": "Requesty",
+      "object": "provider",
+      "description": "Requesty is an OpenAI-compatible LLM router that provides unified access to models from many providers through a single endpoint, using provider/model naming. It supports chat completions with streaming, tool calling, and reasoning outputs.",
+      "base_url": "https://router.requesty.ai/v1"
+    },
+    {
       "id": "ovhcloud",
       "name": "OVHcloud AI Endpoints",
       "object": "provider",

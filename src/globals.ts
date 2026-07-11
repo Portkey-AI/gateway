@@ -68,6 +68,7 @@ export const FIREWORKS_AI: string = 'fireworks-ai';
 export const WORKERS_AI: string = 'workers-ai';
 export const MOONSHOT: string = 'moonshot';
 export const OPENROUTER: string = 'openrouter';
+export const REQUESTY: string = 'requesty';
 export const LINGYI: string = 'lingyi';
 export const ZHIPU: string = 'zhipu';
 export const NOVITA_AI: string = 'novita-ai';
@@ -141,6 +142,7 @@ export const VALID_PROVIDERS = [
   WORKERS_AI,
   MOONSHOT,
   OPENROUTER,
+  REQUESTY,
   LINGYI,
   ZHIPU,
   NOVITA_AI,
