@@ -44,7 +44,7 @@ $ bunx @portkey-ai/gateway
 <br>
 
 
---- 
+---
 
 ### NodeJS Server
 
@@ -84,7 +84,7 @@ export DISTRIBUTED_CLOUD_TENANT=mytenantname
 # Account -> Account Settings -> Tenant Overview -> Tenant ID
 export DISTRIBUTED_CLOUD_TENANT_ID=mytenantnamewithextensionfoundintheconsole
 # create an API token in the F5 Distributed Cloud GUI at
-# Account -> Account Settings -> Credentials -> Add Credentials 
+# Account -> Account Settings -> Credentials -> Add Credentials
 # set Credential Type to API Token, not API Certificate
 export DISTRIBUTED_CLOUD_API_TOKEN=myapitoken
 export DISTRIBUTED_CLOUD_SITE_NAME=appstacksitename
@@ -103,9 +103,9 @@ curl --location --request POST 'https://$DISTRIBUTED_CLOUD_TENANT.console.ves.vo
 --header 'Access-Control-Allow-Origin: *' \
 --header 'x-volterra-apigw-tenant: $DISTRIBUTED_CLOUD_TENANT'\
 --data-raw '{"expirationTimestamp":"$KUBECONFIG_CERT_EXPIRE_DATE"}'
-``` 
-Save the response in a YAML file for later use.  
-[more detailed instructions for retrieving the App Stack kubeconfig file](https://f5cloud.zendesk.com/hc/en-us/articles/4407917988503-How-to-download-kubeconfig-via-API-or-vesctl)  
+```
+Save the response in a YAML file for later use.
+[more detailed instructions for retrieving the App Stack kubeconfig file](https://f5cloud.zendesk.com/hc/en-us/articles/4407917988503-How-to-download-kubeconfig-via-API-or-vesctl)
 
 3. Copy the deployment YAML
 ```shell
@@ -213,7 +213,7 @@ For more information on the Docker image, check [here](https://hub.docker.com/r/
 
 <br>
 
---- 
+---
 
 ### Docker Compose
 
@@ -372,7 +372,7 @@ Outputs:
 ### Supabase Functions
 
 1. Clone the Repository:
-   
+
 ```sh
 git clone https://github.com/portkey-ai/gateway
 ```
@@ -437,7 +437,7 @@ fastly compute publish
 ```
 9. Now, its ready to Test, Monitor and Manage Functions (Using url from fastly dashboard):
     - Similar to `your-new-project.edgecompute.app`
-   
+
 For more details, refer to [Fastly’s official](https://www.fastly.com/products/edge-compute).
 
 <br>

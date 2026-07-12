@@ -55,7 +55,7 @@ The [**AI Gateway**](https://portkey.wiki/gh-10) is designed for fast, reliable 
 > Starring this repo helps more developers discover the AI Gateway 🙏🏻
 >
 > ![star-2](https://github.com/user-attachments/assets/53597dce-6333-4ecc-a154-eb05532954e4)
-> 
+>
 <br>
 
 
@@ -70,7 +70,7 @@ The [**AI Gateway**](https://portkey.wiki/gh-10) is designed for fast, reliable 
 npx @portkey-ai/gateway
 ```
 > The Gateway is running on `http://localhost:8787/v1`
-> 
+>
 > The Gateway Console is running on `http://localhost:8787/public/`
 
 <sup>

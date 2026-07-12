@@ -9,14 +9,14 @@ Hello and Thank you for your interest in contributing to Portkey Gateway Plugins
    ```sh
    git clone https://github.com/YOUR_USERNAME/gateway.git
 3. Navigate to the plugins directory:
-    ```sh 
+    ```sh
     cd gateway/plugins
     ```
 
 ## 🔧 Creating a New Plugin
 
 Create a new directory for your plugin in the `/plugins` folder:
-```sh 
+```sh
 Copy/plugins
   /your-plugin-name
     - manifest.json
