@@ -113,7 +113,7 @@ const portkeyConfig = {
       "api_key": "OPENAI_API_KEY",
       "override_params": {
         "model": "gpt-4o" // Select from 250+ models
-  } 
+  }
 };
 
 const portkey = createPortkey({
@@ -128,7 +128,7 @@ const result = await streamText({
 
 for await (const chunk of result) {
   console.log(chunk);
-} 
+}
 ```
 
 Portkey supports `chatModel` and `completionModel` to easily handle chatbots or text completions. In the above examples, we used `portkey.chatModel` for generateText.
@@ -161,7 +161,7 @@ const result = await generateText({
 
 ## Portkey Features
 
-Portkey Helps you make your Vercel app more robust and reliable. The portkey config is a modular way to make it work for you in whatever way you want. 
+Portkey Helps you make your Vercel app more robust and reliable. The portkey config is a modular way to make it work for you in whatever way you want.
 
 ### Interoperability
 
@@ -190,7 +190,7 @@ const portkeyConfig = {
       "override_params": {
           "model": "claude-3-sonnet-20240229"
         }
-      
+
 };
 ```
 
@@ -203,9 +203,9 @@ Portkey's OpenTelemetry-compliant observability suite gives you complete control
 
 ### Reliability
 
-Portkey enhances the robustness of your AI applications with built-in features such as Caching, Fallback mechanisms, Load balancing, Conditional routing, Request timeouts, etc. 
+Portkey enhances the robustness of your AI applications with built-in features such as Caching, Fallback mechanisms, Load balancing, Conditional routing, Request timeouts, etc.
 
-Here is how you can modify your config to include the following Portkey features:  
+Here is how you can modify your config to include the following Portkey features:
 
 #### Fallback
 
@@ -218,7 +218,7 @@ const portkeyConfig =  {
 		"mode": "fallback"
 	},
 	"targets": [
-		{ 
+		{
 		"provider": "anthropic",
 	      	"api_key": "Anthropic_API_KEY",
 	      	"override_params": {
@@ -250,7 +250,7 @@ Learn more about Portkey's AI gateway features in detail [here](https://docs.por
 
 ### Guardrails
 
-Portkey Guardrails allow you to enforce LLM behavior in real-time, verifying both inputs and outputs against specified checks. 
+Portkey Guardrails allow you to enforce LLM behavior in real-time, verifying both inputs and outputs against specified checks.
 
 You can create Guardrail checks in UI and then pass them in your Portkey Configs with before request or after request hooks.
 
