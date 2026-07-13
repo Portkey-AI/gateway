@@ -46,7 +46,7 @@ import { InferenceNetProviderConfigs } from './inference-net';
 import SambaNovaConfig from './sambanova';
 import LemonfoxAIConfig from './lemonfox-ai';
 import { UpstageConfig } from './upstage';
-import { LAMBDA } from '../globals';
+import { LAMBDA, CRUSOE } from '../globals';
 import { LambdaProviderConfig } from './lambda';
 import { DashScopeConfig } from './dashscope';
 import XAIConfig from './x-ai';
@@ -74,6 +74,7 @@ import OracleConfig from './oracle';
 import IOIntelligenceConfig from './iointelligence';
 import AIBadgrConfig from './aibadgr';
 import OVHcloudConfig from './ovhcloud';
+import { CrusoeProviderConfig } from './crusoe';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -148,6 +149,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   iointelligence: IOIntelligenceConfig,
   aibadgr: AIBadgrConfig,
   ovhcloud: OVHcloudConfig,
+  [CRUSOE]: CrusoeProviderConfig,
 };
 
 export default Providers;
