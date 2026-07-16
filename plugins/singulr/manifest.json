@@ -1,0 +1,45 @@
+{
+  "id": "singulr",
+  "description": "Singulr AI guardrails for scanning LLM inputs and outputs",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "SingulrApiKey": {
+        "type": "string",
+        "label": "Singulr API Key",
+        "description": "Your Singulr API key, used to authenticate requests to the Singulr guardrail service.",
+        "encrypted": true
+      },
+      "SingulrGuardrailId": {
+        "type": "string",
+        "label": "Singulr Guardrail ID",
+        "description": "The Singulr guardrail configuration ID to apply."
+      },
+      "SingulrApplicationId": {
+        "type": "string",
+        "label": "Singulr Application ID",
+        "description": "The Singulr application ID."
+      },
+      "SingulrBaseUrl": {
+        "type": "string",
+        "label": "Singulr Base URL",
+        "description": "Custom Singulr API base URL. Defaults to https://api.singulr.ai"
+      }
+    },
+    "required": ["SingulrApiKey", "SingulrGuardrailId", "SingulrApplicationId"]
+  },
+  "functions": [
+    {
+      "name": "Scan",
+      "id": "scan",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Pass LLM input and output to Singulr for policy enforcement. Able to block or sanitize content based on server-side configured rules."
+        }
+      ]
+    }
+  ]
+}
