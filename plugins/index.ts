@@ -31,6 +31,7 @@ import { handler as aporiavalidateProject } from './aporia/validateProject';
 import { handler as sydelabssydeguard } from './sydelabs/sydeguard';
 import { handler as pillarscanPrompt } from './pillar/scanPrompt';
 import { handler as pillarscanResponse } from './pillar/scanResponse';
+import { handler as fangcunguardScan } from './fangcunguard/scan';
 import { handler as patronusphi } from './patronus/phi';
 import { handler as patronuspii } from './patronus/pii';
 import { handler as patronusisConcise } from './patronus/isConcise';
@@ -117,6 +118,9 @@ export const plugins = {
   pillar: {
     scanPrompt: pillarscanPrompt,
     scanResponse: pillarscanResponse,
+  },
+  fangcunguard: {
+    scan: fangcunguardScan,
   },
   patronus: {
     phi: patronusphi,
