@@ -1,0 +1,39 @@
+{
+  "id": "fangcunguard",
+  "description": "FangcunGuard content-safety guardrail by FangcunLeap. Classifies text into 10 safety categories (crimes, hate speech, self-harm, cybersecurity, extremism, and more) with a compact, low-latency, Chinese-optimized model.",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "Get your API key at https://www.fangcunleap.com",
+        "encrypted": true
+      },
+      "customHost": {
+        "type": "string",
+        "label": "Custom Host",
+        "description": "Optional. Override the API base URL (defaults to https://api.fangcunleap.com)."
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Scan Content",
+      "id": "scan",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Scan the prompt (beforeRequestHook) or the model response (afterRequestHook) with FangcunGuard. Returns a verdict of false when the content is classified as unsafe."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ]
+}
