@@ -16,6 +16,7 @@ import {
 } from './streamHandler';
 import { HookSpan } from '../middlewares/hooks';
 import { env } from 'hono/adapter';
+import { extractGuardrailDenyMessage } from './handlerUtils';
 import { OpenAIModelResponseJSONToStreamGenerator } from '../providers/open-ai-base/createModelResponse';
 import { anthropicMessagesJsonToStreamGenerator } from '../providers/anthropic-base/utils/streamGenerator';
 import { endpointStrings } from '../providers/types';
@@ -196,8 +197,10 @@ function createHookResponse(
     ...(options.forceError
       ? {
           error: {
-            message:
-              'The guardrail checks defined in the config failed. You can find more information in the `hook_results` object.',
+            message: extractGuardrailDenyMessage([
+              ...(hooksResult.beforeRequestHooksResult || []),
+              ...(hooksResult.afterRequestHooksResult || []),
+            ]),
             type: 'hooks_failed',
             param: null,
             code: null,

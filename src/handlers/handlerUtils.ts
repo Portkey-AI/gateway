@@ -1323,8 +1323,7 @@ export async function beforeRequestHookHandler(
         response: new Response(
           JSON.stringify({
             error: {
-              message:
-                'The guardrail checks defined in the config failed. You can find more information in the `hook_results` object.',
+              message: extractGuardrailDenyMessage(hooksResult.results),
               type: 'hooks_failed',
               param: null,
               code: null,
@@ -1350,4 +1349,34 @@ export async function beforeRequestHookHandler(
   return {
     transformedBody: isTransformed ? span.getContext().request.json : null,
   };
+}
+
+/**
+ * Extract a descriptive deny message from guardrail hook results.
+ * Checks for a reason or explanation returned by webhook guardrails,
+ * falling back to the generic message if none is found.
+ */
+export function extractGuardrailDenyMessage(results: any[]): string {
+  const fallback =
+    'The guardrail checks defined in the config failed. You can find more information in the `hook_results` object.';
+
+  if (!results?.length) return fallback;
+
+  const reasons: string[] = [];
+  for (const result of results) {
+    if (result.verdict || !result.checks?.length) continue;
+    for (const check of result.checks) {
+      if (check.verdict) continue;
+      const reason =
+        check.data?.responseData?.reason ||
+        check.data?.responseData?.message ||
+        check.data?.explanation;
+      if (reason && reason !== 'Webhook request failed') {
+        reasons.push(reason);
+      }
+    }
+  }
+
+  if (reasons.length === 0) return fallback;
+  return `Guardrail denied the request: ${reasons.join('; ')}. Check the \`hook_results\` object for details.`;
 }
