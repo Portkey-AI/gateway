@@ -4,29 +4,19 @@
   "credentials": {
     "type": "object",
     "properties": {
-      "SingulrApiKey": {
+      "singulrApiKey": {
         "type": "string",
         "label": "Singulr API Key",
         "description": "Your Singulr API key, used to authenticate requests to the Singulr guardrail service.",
         "encrypted": true
       },
-      "SingulrGuardrailId": {
-        "type": "string",
-        "label": "Singulr Guardrail ID",
-        "description": "The Singulr guardrail configuration ID to apply."
-      },
-      "SingulrApplicationId": {
-        "type": "string",
-        "label": "Singulr Application ID",
-        "description": "The Singulr application ID."
-      },
-      "SingulrBaseUrl": {
+      "singulrBaseUrl": {
         "type": "string",
         "label": "Singulr Base URL",
-        "description": "Custom Singulr API base URL. Defaults to https://api.singulr.ai"
+        "description": "The Singulr API base URL, e.g. https://api.singulr.ai"
       }
     },
-    "required": ["SingulrApiKey", "SingulrGuardrailId", "SingulrApplicationId"]
+    "required": ["singulrApiKey", "singulrBaseUrl"]
   },
   "functions": [
     {
@@ -37,9 +27,46 @@
       "description": [
         {
           "type": "subHeading",
-          "text": "Pass LLM input and output to Singulr for policy enforcement. Able to block or sanitize content based on server-side configured rules."
+          "text": "Pass LLM input and output to Singulr for policy enforcement. Blocks content based on server-side configured rules."
         }
-      ]
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "guardrailId": {
+            "type": "string",
+            "label": "Guardrail ID",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "The Singulr guardrail configuration ID to apply."
+              }
+            ]
+          },
+          "applicationId": {
+            "type": "string",
+            "label": "Application ID",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "The Singulr application ID."
+              }
+            ]
+          },
+          "timeout": {
+            "type": "number",
+            "label": "Timeout",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "The timeout in milliseconds for the Singulr scan. Defaults to 5000."
+              }
+            ],
+            "default": 5000
+          }
+        }
+      },
+      "required": ["guardrailId", "applicationId"]
     }
   ]
 }

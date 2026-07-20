@@ -4,18 +4,14 @@ import {
   PluginHandler,
   PluginParameters,
 } from '../types';
-import { getCurrentContentPart, setCurrentContentPart } from '../utils';
 import { post, HttpError, TimeoutError } from '../utils';
 
 const SINGULR_SCAN_ENDPOINT = '/api/v1/ai-gateway/portkey';
-const SINGULR_DEFAULT_BASE_URL = 'https://api.singulr.ai';
-const DEFAULT_TIMEOUT = 30000;
+const DEFAULT_TIMEOUT = 5000;
 
 interface SingulrCredentials {
-  SingulrApiKey: string;
-  SingulrGuardrailId?: string;
-  SingulrApplicationId?: string;
-  SingulrBaseUrl?: string;
+  singulrApiKey: string;
+  singulrBaseUrl: string;
 }
 
 interface SingulrScanRequest {
@@ -39,9 +35,10 @@ interface SingulrScanResponse {
 const buildSingulrScanRequestBody = (
   context: PluginContext,
   eventType: HookEventType,
-  credentials: SingulrCredentials
+  target: 'request' | 'response',
+  guardrailId: string,
+  applicationId: string
 ): SingulrScanRequest => {
-  const target = eventType === 'beforeRequestHook' ? 'request' : 'response';
   const json = context[target].json;
 
   const contextMetadata = context.metadata ?? {};
@@ -53,12 +50,8 @@ const buildSingulrScanRequestBody = (
     provider: context.provider,
     guard_input: json,
     eventType,
-    ...(credentials.SingulrGuardrailId && {
-      guardrail_id: credentials.SingulrGuardrailId,
-    }),
-    ...(credentials.SingulrApplicationId && {
-      enforcement_id: credentials.SingulrApplicationId,
-    }),
+    guardrail_id: guardrailId,
+    enforcement_id: applicationId,
   };
 
   if (userId || model || userName) {
@@ -90,19 +83,23 @@ export const handler: PluginHandler = async (
     | SingulrCredentials
     | undefined;
 
-  if (!credentials?.SingulrApiKey) {
-    return {
-      error: 'Missing required credentials: SingulrApiKey',
-      verdict,
-      data,
-      transformedData,
-      transformed,
-    };
-  }
-  if (!credentials.SingulrGuardrailId && !credentials.SingulrApplicationId) {
+  if (!credentials?.singulrApiKey || !credentials?.singulrBaseUrl) {
     return {
       error:
-        'Missing required credentials: SingulrGuardrailId or SingulrApplicationId',
+        'Missing required credentials: singulrApiKey and singulrBaseUrl are both required',
+      verdict,
+      data,
+      transformedData,
+      transformed,
+    };
+  }
+  const guardrailId = parameters.guardrailId as string | undefined;
+  const applicationId = parameters.applicationId as string | undefined;
+
+  if (!guardrailId || !applicationId) {
+    return {
+      error:
+        'Missing required parameters: guardrailId and applicationId are both required',
       verdict,
       data,
       transformedData,
@@ -110,11 +107,11 @@ export const handler: PluginHandler = async (
     };
   }
 
-  const apiUrl = credentials.SingulrBaseUrl
-    ? credentials.SingulrBaseUrl.replace(/\/$/, '') + SINGULR_SCAN_ENDPOINT
-    : SINGULR_DEFAULT_BASE_URL + SINGULR_SCAN_ENDPOINT;
+  const apiUrl =
+    credentials.singulrBaseUrl.replace(/\/$/, '') + SINGULR_SCAN_ENDPOINT;
 
-  if (!context?.request?.json && !context?.response?.json) {
+  const target = eventType === 'beforeRequestHook' ? 'request' : 'response';
+  if (!context?.[target]?.json) {
     return {
       error: null,
       verdict: true,
@@ -130,19 +127,17 @@ export const handler: PluginHandler = async (
     const requestBody = buildSingulrScanRequestBody(
       context,
       eventType,
-      credentials
+      target,
+      guardrailId,
+      applicationId
     );
 
     const requestOptions = {
       headers: {
         'Content-Type': 'application/json',
-        'X-Singulr-Gateway-Token': credentials.SingulrApiKey,
-        ...(credentials.SingulrGuardrailId && {
-          'X-Singulr-Guardrail-Id': credentials.SingulrGuardrailId,
-        }),
-        ...(credentials.SingulrApplicationId && {
-          'X-Singulr-Enforcement-Entity-Id': credentials.SingulrApplicationId,
-        }),
+        'X-Singulr-Gateway-Token': credentials.singulrApiKey,
+        'X-Singulr-Guardrail-Id': guardrailId,
+        'X-Singulr-Enforcement-Entity-Id': applicationId,
       },
     };
 

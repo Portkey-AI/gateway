@@ -12,9 +12,8 @@ const mockPost = utils.post as jest.MockedFunction<typeof utils.post>;
 
 function getCredentials(overrides: Record<string, unknown> = {}) {
   return {
-    SingulrApiKey: 'test-api-key',
-    SingulrGuardrailId: 'test-guardrail-id',
-    SingulrApplicationId: 'test-enforcement-id',
+    singulrApiKey: 'test-api-key',
+    singulrBaseUrl: 'https://api.singulr.ai',
     ...overrides,
   };
 }
@@ -22,6 +21,8 @@ function getCredentials(overrides: Record<string, unknown> = {}) {
 function getParameters(overrides: Record<string, unknown> = {}) {
   return {
     credentials: getCredentials(),
+    guardrailId: 'test-guardrail-id',
+    applicationId: 'test-enforcement-id',
     ...overrides,
   };
 }
@@ -61,26 +62,9 @@ beforeEach(() => {
 });
 
 describe('singulr scan handler - credential validation', () => {
-  it('errors when SingulrApiKey is missing', async () => {
+  it('errors when singulrApiKey is missing', async () => {
     const parameters = getParameters({
-      credentials: { SingulrGuardrailId: 'gid' },
-    });
-
-    const result = await singulrScanHandler(
-      chatCompleteRequestContext,
-      parameters,
-      'beforeRequestHook'
-    );
-
-    expect(result.error).toBe('Missing required credentials: SingulrApiKey');
-    expect(result.verdict).toBe(true);
-    expect(result.data).toBeNull();
-    expect(mockPost).not.toHaveBeenCalled();
-  });
-
-  it('errors when neither SingulrGuardrailId nor SingulrApplicationId is present', async () => {
-    const parameters = getParameters({
-      credentials: { SingulrApiKey: 'test-api-key' },
+      credentials: { singulrBaseUrl: 'https://api.singulr.ai' },
     });
 
     const result = await singulrScanHandler(
@@ -90,16 +74,35 @@ describe('singulr scan handler - credential validation', () => {
     );
 
     expect(result.error).toBe(
-      'Missing required credentials: SingulrGuardrailId or SingulrApplicationId'
+      'Missing required credentials: singulrApiKey and singulrBaseUrl are both required'
+    );
+    expect(result.verdict).toBe(true);
+    expect(result.data).toBeNull();
+    expect(mockPost).not.toHaveBeenCalled();
+  });
+
+  it('errors when singulrBaseUrl is missing', async () => {
+    const parameters = getParameters({
+      credentials: { singulrApiKey: 'test-api-key' },
+    });
+
+    const result = await singulrScanHandler(
+      chatCompleteRequestContext,
+      parameters,
+      'beforeRequestHook'
+    );
+
+    expect(result.error).toBe(
+      'Missing required credentials: singulrApiKey and singulrBaseUrl are both required'
     );
     expect(result.verdict).toBe(true);
     expect(mockPost).not.toHaveBeenCalled();
   });
 
-  it('proceeds with only SingulrGuardrailId set', async () => {
-    mockPost.mockResolvedValue({ should_block: false, blocking_due_to: '' });
+  it('errors when neither guardrailId nor applicationId is present', async () => {
     const parameters = getParameters({
-      credentials: { SingulrApiKey: 'test-api-key', SingulrGuardrailId: 'gid' },
+      guardrailId: undefined,
+      applicationId: undefined,
     });
 
     const result = await singulrScanHandler(
@@ -108,18 +111,15 @@ describe('singulr scan handler - credential validation', () => {
       'beforeRequestHook'
     );
 
-    expect(result.error).toBeNull();
-    expect(mockPost).toHaveBeenCalledTimes(1);
+    expect(result.error).toBe(
+      'Missing required parameters: guardrailId and applicationId are both required'
+    );
+    expect(result.verdict).toBe(true);
+    expect(mockPost).not.toHaveBeenCalled();
   });
 
-  it('proceeds with only SingulrApplicationId set', async () => {
-    mockPost.mockResolvedValue({ should_block: false, blocking_due_to: '' });
-    const parameters = getParameters({
-      credentials: {
-        SingulrApiKey: 'test-api-key',
-        SingulrApplicationId: 'eid',
-      },
-    });
+  it('errors when only guardrailId is set', async () => {
+    const parameters = getParameters({ applicationId: undefined });
 
     const result = await singulrScanHandler(
       chatCompleteRequestContext,
@@ -127,8 +127,25 @@ describe('singulr scan handler - credential validation', () => {
       'beforeRequestHook'
     );
 
-    expect(result.error).toBeNull();
-    expect(mockPost).toHaveBeenCalledTimes(1);
+    expect(result.error).toBe(
+      'Missing required parameters: guardrailId and applicationId are both required'
+    );
+    expect(mockPost).not.toHaveBeenCalled();
+  });
+
+  it('errors when only applicationId is set', async () => {
+    const parameters = getParameters({ guardrailId: undefined });
+
+    const result = await singulrScanHandler(
+      chatCompleteRequestContext,
+      parameters,
+      'beforeRequestHook'
+    );
+
+    expect(result.error).toBe(
+      'Missing required parameters: guardrailId and applicationId are both required'
+    );
+    expect(mockPost).not.toHaveBeenCalled();
   });
 });
 
@@ -340,7 +357,7 @@ describe('singulr scan handler - request body construction', () => {
     );
   });
 
-  it('uses the default Singulr base URL when no baseUrl credential is set', async () => {
+  it('uses the configured singulrBaseUrl credential', async () => {
     mockPost.mockResolvedValue({ should_block: false, blocking_due_to: '' });
     const parameters = getParameters();
 
@@ -358,10 +375,10 @@ describe('singulr scan handler - request body construction', () => {
     );
   });
 
-  it('uses a custom SingulrBaseUrl credential when provided', async () => {
+  it('strips a trailing slash from a custom singulrBaseUrl credential', async () => {
     mockPost.mockResolvedValue({ should_block: false, blocking_due_to: '' });
     const parameters = getParameters({
-      credentials: getCredentials({ SingulrBaseUrl: 'http://localhost:8003/' }),
+      credentials: getCredentials({ singulrBaseUrl: 'http://localhost:8003/' }),
     });
 
     await singulrScanHandler(
@@ -481,12 +498,7 @@ describe('singulr scan handler - error handling', () => {
 
   it('reports a timeout message on TimeoutError', async () => {
     mockPost.mockRejectedValue(
-      new TimeoutError(
-        'timed out',
-        'https://api.singulr.ai/scan',
-        30000,
-        'POST'
-      )
+      new TimeoutError('timed out', 'https://api.singulr.ai/scan', 5000, 'POST')
     );
     const parameters = getParameters();
 
@@ -499,7 +511,7 @@ describe('singulr scan handler - error handling', () => {
     expect(result.verdict).toBe(true);
     expect(result.data).toBeNull();
     expect(result.error).toBe(
-      'Request timeout after 30000ms: Singulr scan took too long'
+      'Request timeout after 5000ms: Singulr scan took too long'
     );
   });
 
