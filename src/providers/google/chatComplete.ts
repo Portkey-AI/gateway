@@ -20,6 +20,11 @@ import {
   transformVertexLogprobs,
 } from '../google-vertex-ai/utils';
 import {
+  modelUsesThinkingLevel,
+  openaiReasoningEffortToThinkingBudget,
+  resolveReasoningEffort,
+} from '../google-vertex-ai/transformGenerationConfig';
+import {
   ChatCompletionResponse,
   ErrorResponse,
   GroundingMetadata,
@@ -92,10 +97,26 @@ const transformGenerationConfig = (params: PortkeyGeminiParams) => {
       modality.toUpperCase()
     );
   }
-  if (params.reasoning_effort && params.reasoning_effort !== 'none') {
-    generationConfig['thinkingConfig'] = {
-      thinkingLevel: params.reasoning_effort,
-    };
+  // See #1639 / transformGenerationConfig: branch thinkingBudget vs thinkingLevel.
+  const reasoningEffort = resolveReasoningEffort(params as PortkeyGeminiParams);
+  if (reasoningEffort && reasoningEffort !== 'none') {
+    if (modelUsesThinkingLevel(params.model)) {
+      generationConfig['thinkingConfig'] = {
+        thinkingLevel: reasoningEffort,
+      };
+    } else {
+      const budget = openaiReasoningEffortToThinkingBudget(reasoningEffort);
+      if (budget !== undefined) {
+        generationConfig['thinkingConfig'] = {
+          thinkingBudget: budget,
+          includeThoughts: budget !== 0,
+        };
+      } else {
+        generationConfig['thinkingConfig'] = {
+          thinkingLevel: reasoningEffort,
+        };
+      }
+    }
   }
   if (params.image_config) {
     generationConfig['imageConfig'] = {

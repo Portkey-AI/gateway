@@ -5,6 +5,53 @@ import {
 import { GoogleEmbedParams } from './embed';
 import { EmbedInstancesData, PortkeyGeminiParams } from './types';
 
+/** OpenAI reasoning_effort → Gemini 2.5 thinkingBudget (token budget). */
+export const openaiReasoningEffortToThinkingBudget = (
+  reasoningEffort: string
+): number | undefined => {
+  const map: Record<string, number> = {
+    none: 0,
+    minimal: 512,
+    low: 1024,
+    medium: 8192,
+    high: 24576,
+  };
+  const key = reasoningEffort.toLowerCase();
+  if (key in map) return map[key];
+  // allow numeric string budgets
+  const asNum = Number(reasoningEffort);
+  if (!Number.isNaN(asNum)) return asNum;
+  return undefined;
+};
+
+/** Gemini 3+ uses thinkingLevel; Gemini 2.5 family uses thinkingBudget. */
+export const modelUsesThinkingLevel = (model?: string): boolean => {
+  if (!model) return false;
+  const m = model.toLowerCase();
+  // Gemini 3.x and later thinkingLevel enum path
+  return /gemini-3/.test(m) || /gemini-exp.*thinking/.test(m);
+};
+
+export const modelUsesThinkingBudget = (model?: string): boolean => {
+  if (!model) return false;
+  const m = model.toLowerCase();
+  // Gemini 2.5 family (flash, flash-lite, pro, …)
+  return /gemini-2\.5/.test(m);
+};
+
+/**
+ * Resolve bare reasoning_effort or nested reasoning.effort shorthand.
+ * Nested form is the OpenAI Responses API canonical shape.
+ */
+export const resolveReasoningEffort = (
+  params: PortkeyGeminiParams
+): string | undefined => {
+  if (params.reasoning_effort) return String(params.reasoning_effort);
+  const nested = (params as any).reasoning?.effort;
+  if (nested != null && nested !== '') return String(nested);
+  return undefined;
+};
+
 /**
  * @see https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/gemini#request_body
  */
@@ -65,10 +112,35 @@ export function transformGenerationConfig(params: PortkeyGeminiParams) {
       modality.toUpperCase()
     );
   }
-  if (params.reasoning_effort && params.reasoning_effort !== 'none') {
-    generationConfig['thinkingConfig'] = {
-      thinkingLevel: params.reasoning_effort,
-    };
+  // Map OpenAI reasoning_effort (or nested reasoning.effort) onto the
+  // model-appropriate Gemini thinking field (#1639):
+  // - Gemini 2.5 family → thinkingBudget (int; 0 disables, -1 dynamic)
+  // - Gemini 3+ → thinkingLevel (MINIMAL/LOW/MEDIUM/HIGH)
+  // Previously always emitted thinkingLevel, which Vertex silently drops on
+  // 2.5 models — flash-lite defaults thinking off so the no-op is visible.
+  const reasoningEffort = resolveReasoningEffort(params);
+  if (reasoningEffort && reasoningEffort !== 'none') {
+    if (modelUsesThinkingLevel(params.model)) {
+      generationConfig['thinkingConfig'] = {
+        thinkingLevel: reasoningEffort,
+      };
+    } else {
+      // Gemini 2.5 family, or model unknown: use thinkingBudget so
+      // flash-lite (default-off) actually enables thinking.
+      const budget = openaiReasoningEffortToThinkingBudget(reasoningEffort);
+      if (budget !== undefined) {
+        generationConfig['thinkingConfig'] = {
+          thinkingBudget: budget,
+          includeThoughts: budget !== 0,
+        };
+      } else {
+        // Fall back to thinkingLevel for unrecognized effort strings on
+        // unknown models (preserves prior behaviour for custom enums).
+        generationConfig['thinkingConfig'] = {
+          thinkingLevel: reasoningEffort,
+        };
+      }
+    }
   }
   if (params.image_config) {
     generationConfig['imageConfig'] = {
