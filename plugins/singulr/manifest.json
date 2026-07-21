@@ -4,19 +4,19 @@
   "credentials": {
     "type": "object",
     "properties": {
-      "singulrApiKey": {
+      "apiKey": {
         "type": "string",
         "label": "Singulr API Key",
         "description": "Your Singulr API key, used to authenticate requests to the Singulr guardrail service.",
         "encrypted": true
       },
-      "singulrBaseUrl": {
+      "baseUrl": {
         "type": "string",
         "label": "Singulr Base URL",
         "description": "The Singulr API base URL, e.g. https://api.singulr.ai"
       }
     },
-    "required": ["singulrApiKey", "singulrBaseUrl"]
+    "required": ["apiKey", "baseUrl"]
   },
   "functions": [
     {

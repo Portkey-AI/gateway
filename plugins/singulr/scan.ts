@@ -10,8 +10,8 @@ const SINGULR_SCAN_ENDPOINT = '/api/v1/ai-gateway/portkey';
 const DEFAULT_TIMEOUT = 5000;
 
 interface SingulrCredentials {
-  singulrApiKey: string;
-  singulrBaseUrl: string;
+  apiKey: string;
+  baseUrl: string;
 }
 
 interface SingulrScanRequest {
@@ -83,10 +83,10 @@ export const handler: PluginHandler = async (
     | SingulrCredentials
     | undefined;
 
-  if (!credentials?.singulrApiKey || !credentials?.singulrBaseUrl) {
+  if (!credentials?.apiKey || !credentials?.baseUrl) {
     return {
       error:
-        'Missing required credentials: singulrApiKey and singulrBaseUrl are both required',
+        'Missing required credentials: apiKey and baseUrl are both required',
       verdict,
       data,
       transformedData,
@@ -108,7 +108,7 @@ export const handler: PluginHandler = async (
   }
 
   const apiUrl =
-    credentials.singulrBaseUrl.replace(/\/$/, '') + SINGULR_SCAN_ENDPOINT;
+    credentials.baseUrl.replace(/\/$/, '') + SINGULR_SCAN_ENDPOINT;
 
   const target = eventType === 'beforeRequestHook' ? 'request' : 'response';
   if (!context?.[target]?.json) {
@@ -135,7 +135,7 @@ export const handler: PluginHandler = async (
     const requestOptions = {
       headers: {
         'Content-Type': 'application/json',
-        'X-Singulr-Gateway-Token': credentials.singulrApiKey,
+        'X-Singulr-Gateway-Token': credentials.apiKey,
         'X-Singulr-Guardrail-Id': guardrailId,
         'X-Singulr-Enforcement-Entity-Id': applicationId,
       },

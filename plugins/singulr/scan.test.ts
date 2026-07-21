@@ -12,8 +12,8 @@ const mockPost = utils.post as jest.MockedFunction<typeof utils.post>;
 
 function getCredentials(overrides: Record<string, unknown> = {}) {
   return {
-    singulrApiKey: 'test-api-key',
-    singulrBaseUrl: 'https://api.singulr.ai',
+    apiKey: 'test-api-key',
+    baseUrl: 'https://api.singulr.ai',
     ...overrides,
   };
 }
@@ -62,9 +62,9 @@ beforeEach(() => {
 });
 
 describe('singulr scan handler - credential validation', () => {
-  it('errors when singulrApiKey is missing', async () => {
+  it('errors when apiKey is missing', async () => {
     const parameters = getParameters({
-      credentials: { singulrBaseUrl: 'https://api.singulr.ai' },
+      credentials: { baseUrl: 'https://api.singulr.ai' },
     });
 
     const result = await singulrScanHandler(
@@ -74,16 +74,16 @@ describe('singulr scan handler - credential validation', () => {
     );
 
     expect(result.error).toBe(
-      'Missing required credentials: singulrApiKey and singulrBaseUrl are both required'
+      'Missing required credentials: apiKey and baseUrl are both required'
     );
     expect(result.verdict).toBe(true);
     expect(result.data).toBeNull();
     expect(mockPost).not.toHaveBeenCalled();
   });
 
-  it('errors when singulrBaseUrl is missing', async () => {
+  it('errors when baseUrl is missing', async () => {
     const parameters = getParameters({
-      credentials: { singulrApiKey: 'test-api-key' },
+      credentials: { apiKey: 'test-api-key' },
     });
 
     const result = await singulrScanHandler(
@@ -93,7 +93,7 @@ describe('singulr scan handler - credential validation', () => {
     );
 
     expect(result.error).toBe(
-      'Missing required credentials: singulrApiKey and singulrBaseUrl are both required'
+      'Missing required credentials: apiKey and baseUrl are both required'
     );
     expect(result.verdict).toBe(true);
     expect(mockPost).not.toHaveBeenCalled();
@@ -357,7 +357,7 @@ describe('singulr scan handler - request body construction', () => {
     );
   });
 
-  it('uses the configured singulrBaseUrl credential', async () => {
+  it('uses the configured baseUrl credential', async () => {
     mockPost.mockResolvedValue({ should_block: false, blocking_due_to: '' });
     const parameters = getParameters();
 
@@ -375,10 +375,10 @@ describe('singulr scan handler - request body construction', () => {
     );
   });
 
-  it('strips a trailing slash from a custom singulrBaseUrl credential', async () => {
+  it('strips a trailing slash from a custom baseUrl credential', async () => {
     mockPost.mockResolvedValue({ should_block: false, blocking_due_to: '' });
     const parameters = getParameters({
-      credentials: getCredentials({ singulrBaseUrl: 'http://localhost:8003/' }),
+      credentials: getCredentials({ baseUrl: 'http://localhost:8003/' }),
     });
 
     await singulrScanHandler(
