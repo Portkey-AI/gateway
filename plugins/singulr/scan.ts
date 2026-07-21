@@ -107,8 +107,7 @@ export const handler: PluginHandler = async (
     };
   }
 
-  const apiUrl =
-    credentials.baseUrl.replace(/\/$/, '') + SINGULR_SCAN_ENDPOINT;
+  const apiUrl = credentials.baseUrl.replace(/\/$/, '') + SINGULR_SCAN_ENDPOINT;
 
   const target = eventType === 'beforeRequestHook' ? 'request' : 'response';
   if (!context?.[target]?.json) {
