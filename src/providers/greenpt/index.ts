@@ -8,7 +8,7 @@ import { ProviderConfigs } from '../types';
 import GreenPTAPIConfig from './api';
 
 const GreenPTConfig: ProviderConfigs = {
-  chatComplete: chatCompleteParams([], { model: 'gemma4' }),
+  chatComplete: chatCompleteParams([], { model: 'glm-5.2' }),
   embed: embedParams([], { model: 'green-embedding' }),
   api: GreenPTAPIConfig,
   responseTransforms: responseTransformers(GREENPT, {
