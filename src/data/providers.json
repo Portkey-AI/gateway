@@ -199,6 +199,13 @@
       "base_url": "https://api.openai.com/v1"
     },
     {
+      "id": "modelsell",
+      "name": "Modelsell",
+      "object": "provider",
+      "description": "Modelsell provides unified access to multiple AI model providers through an OpenAI-compatible API with a dynamically discovered model catalog.",
+      "base_url": "https://modelsell.com/v1"
+    },
+    {
       "id": "cometapi",
       "name": "CometAPI",
       "object": "provider",
