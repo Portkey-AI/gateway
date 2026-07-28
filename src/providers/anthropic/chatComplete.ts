@@ -562,6 +562,16 @@ export const getAnthropicChatCompleteResponseTransform = (provider: string) => {
       const shouldSendCacheUsage =
         cache_creation_input_tokens || cache_read_input_tokens;
 
+      // Anthropic reports input_tokens without the cache tokens; the cache
+      // counts are separate fields. OpenAI-compatible consumers expect
+      // prompt_tokens to be the full input (with prompt_tokens_details.cached_tokens
+      // a subset of it), and total_tokens === prompt_tokens + completion_tokens.
+      // Fold the cache counts into prompt_tokens so both invariants hold.
+      const promptTokens =
+        input_tokens +
+        (cache_creation_input_tokens ?? 0) +
+        (cache_read_input_tokens ?? 0);
+
       let content: string = '';
       response.content.forEach((item) => {
         if (item.type === 'text') {
@@ -610,13 +620,9 @@ export const getAnthropicChatCompleteResponseTransform = (provider: string) => {
           },
         ],
         usage: {
-          prompt_tokens: input_tokens,
+          prompt_tokens: promptTokens,
           completion_tokens: output_tokens,
-          total_tokens:
-            input_tokens +
-            output_tokens +
-            (cache_creation_input_tokens ?? 0) +
-            (cache_read_input_tokens ?? 0),
+          total_tokens: promptTokens + output_tokens,
           prompt_tokens_details: {
             cached_tokens: cache_read_input_tokens ?? 0,
           },
@@ -698,8 +704,14 @@ export const getAnthropicStreamChunkTransform = (provider: string) => {
 
     if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
       streamState.model = parsedChunk?.message?.model ?? '';
+      // Fold the cache counts into prompt_tokens, matching the non-streaming
+      // transform, so prompt_tokens is the full input and cached_tokens stays a
+      // subset of it.
       streamState.usage = {
-        prompt_tokens: parsedChunk.message?.usage?.input_tokens,
+        prompt_tokens:
+          (parsedChunk.message?.usage?.input_tokens ?? 0) +
+          (parsedChunk.message?.usage?.cache_creation_input_tokens ?? 0) +
+          (parsedChunk.message?.usage?.cache_read_input_tokens ?? 0),
         ...(shouldSendCacheUsage && {
           cache_read_input_tokens:
             parsedChunk.message?.usage?.cache_read_input_tokens,
@@ -731,10 +743,10 @@ export const getAnthropicStreamChunkTransform = (provider: string) => {
 
     // final chunk
     if (parsedChunk.type === 'message_delta' && parsedChunk.usage) {
+      // prompt_tokens already includes the cache counts (set in message_start),
+      // so total is simply prompt + completion.
       const totalTokens =
         (streamState?.usage?.prompt_tokens ?? 0) +
-        (streamState?.usage?.cache_creation_input_tokens ?? 0) +
-        (streamState?.usage?.cache_read_input_tokens ?? 0) +
         (parsedChunk.usage.output_tokens ?? 0);
       return (
         `data: ${JSON.stringify({
