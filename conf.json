@@ -1,4 +1,5 @@
 {
+  "admin_token": "fqohggb07saegyba47tyboze34yfb7FgfgHU",
   "plugins_enabled": [
     "default",
     "portkey",
@@ -10,7 +11,8 @@
     "pangea",
     "promptsecurity",
     "panw-prisma-airs",
-    "walledai"
+    "walledai",
+    "cryptowerk"
   ],
   "credentials": {
     "portkey": {

@@ -1,0 +1,37 @@
+{
+  "id": "cryptowerk",
+  "description": "A guardrail plugin creating verifiable proofs of a requests's input and output.",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "Your Cryptowerk API key",
+        "encrypted": true
+      },
+      "apiCredential": {
+        "type": "string",
+        "label": "API Credential",
+        "description": "Your Cryptowerk API credential",
+        "encrypted": true
+      }
+    },
+    "required": ["apiKey", "apiCredential"]
+  },
+  "functions": [
+    {
+      "name": "Guardrail Sealing Function",
+      "id": "seal",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "This guardrail function takes the request's input and output and creates a verifiable proof for both."
+        }
+      ],
+      "parameters": {}
+    }
+  ]
+}
