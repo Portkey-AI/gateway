@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Context } from 'hono';
 import {
   OLLAMA,
   VALID_PROVIDERS,
@@ -9,7 +10,7 @@ import {
 } from '../../../globals';
 import { isValidCustomHost } from '..';
 
-export const configSchema: any = z
+const baseConfigSchema: any = z
   .object({
     strategy: z
       .object({
@@ -76,7 +77,7 @@ export const configSchema: any = z
       .optional(),
     weight: z.number().optional(),
     on_status_codes: z.array(z.number()).optional(),
-    targets: z.array(z.lazy(() => configSchema)).optional(),
+    targets: z.array(z.lazy(() => baseConfigSchema)).optional(),
     request_timeout: z.number().optional(),
     custom_host: z.string().optional(),
     forward_headers: z
@@ -164,18 +165,6 @@ export const configSchema: any = z
         "Invalid configuration. It must have either 'provider' and 'api_key', or 'strategy' and 'targets', or 'cache', or 'retry', or 'request_timeout'",
     }
   )
-  .refine(
-    (value) => {
-      const customHost = value.custom_host;
-      if (customHost && !isValidCustomHost(customHost)) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: 'Invalid custom host',
-    }
-  )
   // Validate Google Vertex AI specific fields
   .refine(
     (value) => {
@@ -189,3 +178,21 @@ export const configSchema: any = z
       message: `Invalid configuration. ('vertex_project_id' and 'vertex_region') or ('vertex_service_account_json' and 'vertex_region') are required for '${GOOGLE_VERTEX_AI}' provider. Example: { 'provider': 'vertex-ai', 'vertex_project_id': 'my-project-id', 'vertex_region': 'us-central1', api_key: 'ya29...' }`,
     }
   );
+
+const hasInvalidCustomHost = (value: any, c?: Context): boolean => {
+  const customHost = value?.custom_host;
+  if (customHost && !isValidCustomHost(customHost, c)) {
+    return true;
+  }
+  return (
+    Array.isArray(value?.targets) &&
+    value.targets.some((target: any) => hasInvalidCustomHost(target, c))
+  );
+};
+
+export const createConfigSchema = (c?: Context): any =>
+  baseConfigSchema.refine((value: any) => !hasInvalidCustomHost(value, c), {
+    message: 'Invalid custom host',
+  });
+
+export const configSchema = createConfigSchema();
