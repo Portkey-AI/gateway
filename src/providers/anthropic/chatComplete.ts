@@ -335,10 +335,17 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
             if (
               SYSTEM_MESSAGE_ROLES.includes(msg.role) &&
               msg.content &&
-              typeof msg.content === 'object' &&
-              msg.content[0].text
+              Array.isArray(msg.content)
             ) {
               msg.content.forEach((_msg) => {
+                // Anthropic accepts non-text blocks (e.g. images) in system
+                // content, and programmatically built arrays can carry empty
+                // text blocks. Neither can be forwarded as a text block, so
+                // skip them instead of emitting `{ text: undefined }` or an
+                // empty block the API rejects.
+                if (typeof _msg?.text !== 'string' || _msg.text.length === 0) {
+                  return;
+                }
                 systemMessages.push({
                   text: _msg.text,
                   type: 'text',

@@ -204,10 +204,17 @@ const BedrockAnthropicChatCompleteConfig: ProviderConfig = {
             if (
               msg.role === 'system' &&
               msg.content &&
-              typeof msg.content === 'object' &&
-              msg.content[0].text
+              Array.isArray(msg.content)
             ) {
-              systemMessage = msg.content[0].text;
+              // Take the first usable text block rather than assuming index 0
+              // is one: system content may legitimately lead with an image or
+              // an empty text block, in which case index 0 has no text.
+              for (const block of msg.content as any[]) {
+                if (typeof block?.text === 'string' && block.text.length > 0) {
+                  systemMessage = block.text;
+                  break;
+                }
+              }
             } else if (
               msg.role === 'system' &&
               typeof msg.content === 'string'
