@@ -15425,6 +15425,22 @@
         "id": "openai"
       },
       "name": "Text Embedding Ada 002"
+    },
+    {
+      "id": "GLM-5.2",
+      "object": "model",
+      "provider": {
+        "id": "scx-ai"
+      },
+      "name": "GLM-5.2"
+    },
+    {
+      "id": "qwen3.8-max",
+      "object": "model",
+      "provider": {
+        "id": "scx-ai"
+      },
+      "name": "Qwen3.8 Max"
     }
   ]
 }
