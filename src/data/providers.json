@@ -248,6 +248,13 @@
       "base_url": "https://api.sambanova.ai"
     },
     {
+      "id": "saladcloud",
+      "name": "SaladCloud AI Gateway",
+      "object": "provider",
+      "description": "SaladCloud AI Gateway provides OpenAI-compatible access to qwen3.6-35b-a3b with streaming, reasoning, tool calling, structured outputs, and text and image inputs.",
+      "base_url": "https://ai.salad.cloud/v1"
+    },
+    {
       "id": "segmind",
       "name": "Segmind",
       "object": "provider",
