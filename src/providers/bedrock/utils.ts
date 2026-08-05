@@ -280,7 +280,8 @@ export async function getAssumedRoleCredentials(
     sha256: Sha256,
   });
   const date = new Date();
-  const sessionName = `${date.getFullYear()}${date.getMonth()}${date.getDay()}`;
+  // YYYYMMDD; RoleSessionName is visible in CloudTrail and the CUR's line-item identity
+  const sessionName = date.toISOString().slice(0, 10).replace(/-/g, '');
   const url = `https://${hostname}?Action=AssumeRole&Version=2011-06-15&RoleArn=${awsRoleArn}&RoleSessionName=${sessionName}${awsExternalId ? `&ExternalId=${awsExternalId}` : ''}`;
   const urlObj = new URL(url);
   const requestHeaders = { host: hostname };
