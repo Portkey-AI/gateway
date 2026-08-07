@@ -89,9 +89,20 @@ describe('transformGenerationConfig reasoning_effort (#1639)', () => {
     expect(cfg.thinkingConfig.thinkingBudget).toBe(1024);
   });
 
-  it('skips none effort', () => {
+  it('disables thinking with a zero budget for none on Gemini 2.5', () => {
     const cfg = transformGenerationConfig({
       model: 'gemini-2.5-flash-lite',
+      reasoning_effort: 'none',
+    } as any);
+    expect(cfg.thinkingConfig).toEqual({
+      thinkingBudget: 0,
+      includeThoughts: false,
+    });
+  });
+
+  it('omits thinking config for none on Gemini 3', () => {
+    const cfg = transformGenerationConfig({
+      model: 'gemini-3-flash-preview',
       reasoning_effort: 'none',
     } as any);
     expect(cfg.thinkingConfig).toBeUndefined();

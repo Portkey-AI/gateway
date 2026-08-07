@@ -119,27 +119,35 @@ export function transformGenerationConfig(params: PortkeyGeminiParams) {
   // Previously always emitted thinkingLevel, which Vertex silently drops on
   // 2.5 models — flash-lite defaults thinking off so the no-op is visible.
   const reasoningEffort = resolveReasoningEffort(params);
-  if (reasoningEffort && reasoningEffort !== 'none') {
-    if (modelUsesThinkingLevel(params.model)) {
-      generationConfig['thinkingConfig'] = {
-        thinkingLevel: reasoningEffort,
-      };
-    } else {
+  if (reasoningEffort) {
+    const isNone = reasoningEffort.toLowerCase() === 'none';
+    const usesThinkingBudget =
+      modelUsesThinkingBudget(params.model) ||
+      !modelUsesThinkingLevel(params.model);
+
+    if (usesThinkingBudget) {
       // Gemini 2.5 family, or model unknown: use thinkingBudget so
-      // flash-lite (default-off) actually enables thinking.
+      // flash-lite (default-off) actually enables thinking. A zero budget is
+      // meaningful here: it explicitly disables thinking for `none`.
       const budget = openaiReasoningEffortToThinkingBudget(reasoningEffort);
       if (budget !== undefined) {
         generationConfig['thinkingConfig'] = {
           thinkingBudget: budget,
           includeThoughts: budget !== 0,
         };
-      } else {
+      } else if (!isNone) {
         // Fall back to thinkingLevel for unrecognized effort strings on
         // unknown models (preserves prior behaviour for custom enums).
         generationConfig['thinkingConfig'] = {
           thinkingLevel: reasoningEffort,
         };
       }
+    } else if (!isNone) {
+      // Gemini 3+ has no `none` thinkingLevel; omit the config to preserve
+      // the existing no-op behavior for that model family.
+      generationConfig['thinkingConfig'] = {
+        thinkingLevel: reasoningEffort,
+      };
     }
   }
   if (params.image_config) {

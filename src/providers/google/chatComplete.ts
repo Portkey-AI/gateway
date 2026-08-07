@@ -20,6 +20,7 @@ import {
   transformVertexLogprobs,
 } from '../google-vertex-ai/utils';
 import {
+  modelUsesThinkingBudget,
   modelUsesThinkingLevel,
   openaiReasoningEffortToThinkingBudget,
   resolveReasoningEffort,
@@ -99,23 +100,33 @@ const transformGenerationConfig = (params: PortkeyGeminiParams) => {
   }
   // See #1639 / transformGenerationConfig: branch thinkingBudget vs thinkingLevel.
   const reasoningEffort = resolveReasoningEffort(params as PortkeyGeminiParams);
-  if (reasoningEffort && reasoningEffort !== 'none') {
-    if (modelUsesThinkingLevel(params.model)) {
-      generationConfig['thinkingConfig'] = {
-        thinkingLevel: reasoningEffort,
-      };
-    } else {
+  if (reasoningEffort) {
+    const isNone = reasoningEffort.toLowerCase() === 'none';
+    const usesThinkingBudget =
+      modelUsesThinkingBudget(params.model) ||
+      !modelUsesThinkingLevel(params.model);
+
+    if (usesThinkingBudget) {
+      // Gemini 2.5 family, or model unknown: use thinkingBudget so
+      // flash-lite (default-off) actually enables thinking. A zero budget is
+      // meaningful here: it explicitly disables thinking for `none`.
       const budget = openaiReasoningEffortToThinkingBudget(reasoningEffort);
       if (budget !== undefined) {
         generationConfig['thinkingConfig'] = {
           thinkingBudget: budget,
           includeThoughts: budget !== 0,
         };
-      } else {
+      } else if (!isNone) {
         generationConfig['thinkingConfig'] = {
           thinkingLevel: reasoningEffort,
         };
       }
+    } else if (!isNone) {
+      // Gemini 3+ has no `none` thinkingLevel; omit the config to preserve
+      // the existing no-op behavior for that model family.
+      generationConfig['thinkingConfig'] = {
+        thinkingLevel: reasoningEffort,
+      };
     }
   }
   if (params.image_config) {
