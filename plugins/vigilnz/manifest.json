@@ -1,0 +1,75 @@
+{
+  "id": "vigilnz",
+  "name": "Vigilnz AI Secure",
+  "description": "AI security and prompt protection. Scans prompts and LLM responses for prompt injection, jailbreaks, sensitive data and policy violations using your Vigilnz AI Secure configuration.",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "Vigilnz API Key",
+        "description": "Your Vigilnz API key (starts with vpsk_live_). Identifies your Vigilnz tenant and applies that tenant's AI Secure configuration.",
+        "encrypted": true
+      },
+      "baseUrl": {
+        "type": "string",
+        "label": "Vigilnz Base URL (optional)",
+        "description": "Only required for self-hosted or private-cloud Vigilnz deployments. Leave empty to use the Vigilnz managed endpoint."
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "AI Secure",
+      "id": "aiSecure",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Sends the prompt (before the LLM call) or the completion (after the LLM call) to Vigilnz AI Secure and blocks or redacts it based on your tenant's policy configuration."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "redact": {
+            "type": "boolean",
+            "label": "Redact sensitive data",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "When enabled, Vigilnz returns a redacted version of the content instead of only a pass/fail verdict. Defaults to false."
+              }
+            ],
+            "default": false
+          },
+          "timeout": {
+            "type": "number",
+            "label": "Timeout (ms)",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Maximum time to wait for the Vigilnz AI Secure verdict. Defaults to 5000 ms."
+              }
+            ],
+            "default": 5000
+          },
+          "failOnError": {
+            "type": "boolean",
+            "label": "Fail the guardrail if Vigilnz is unreachable",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "When enabled, a Vigilnz outage, timeout or authentication failure fails this guardrail (fail-closed). When disabled, Portkey's default behaviour applies and an errored check does not fail the guardrail. Defaults to false."
+              }
+            ],
+            "default": false
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}
