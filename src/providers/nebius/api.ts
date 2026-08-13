@@ -1,7 +1,9 @@
 import { ProviderAPIConfig } from '../types';
 
+export const TOKEN_FACTORY_BASE_URL = 'https://api.tokenfactory.nebius.com/v1';
+
 export const nebiusAPIConfig: ProviderAPIConfig = {
-  getBaseURL: () => 'https://api.studio.nebius.ai/v1',
+  getBaseURL: () => TOKEN_FACTORY_BASE_URL,
   headers({ providerOptions }) {
     const { apiKey } = providerOptions;
     return { Authorization: `Bearer ${apiKey}` };

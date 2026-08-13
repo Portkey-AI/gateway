@@ -9,11 +9,14 @@ import { ProviderConfigs } from '../types';
 import { nebiusAPIConfig } from './api';
 
 const NebiusConfig: ProviderConfigs = {
-  chatComplete: chatCompleteParams([], {
-    model: 'Qwen/Qwen2.5-72B-Instruct-fast',
+  chatComplete: chatCompleteParams([], undefined, {
+    model: {
+      param: 'model',
+      required: true,
+    },
   }),
-  embed: embedParams([], { model: 'BAAI/bge-en-icl' }),
-  complete: completeParams([], { model: 'Qwen/Qwen2.5-72B-Instruct-fast' }),
+  embed: embedParams([]),
+  complete: completeParams([]),
   api: nebiusAPIConfig,
   responseTransforms: responseTransformers(NEBIUS, {
     chatComplete: true,
