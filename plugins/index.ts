@@ -67,6 +67,10 @@ import { handler as f5GuardrailsScan } from './f5-guardrails/scan';
 import { handler as azureShieldPrompt } from './azure/shieldPrompt';
 import { handler as azureProtectedMaterial } from './azure/protectedMaterial';
 import { handler as crowdstrikeAidrGuardChatCompletions } from './crowdstrike-aidr/guardChatCompletion';
+import { handler as tealtigerPiiDetection } from './tealtiger/piiDetection';
+import { handler as tealtigerSecretDetection } from './tealtiger/secretDetection';
+import { handler as tealtigerCostGovernance } from './tealtiger/costGovernance';
+
 
 export const plugins = {
   default: {
@@ -180,4 +184,10 @@ export const plugins = {
   'crowdstrike-aidr': {
     guardChatCompletions: crowdstrikeAidrGuardChatCompletions,
   },
+    tealtiger: {
+    piiDetection: tealtigerPiiDetection,
+    secretDetection: tealtigerSecretDetection,
+    costGovernance: tealtigerCostGovernance,
+  },
+
 };

@@ -1,0 +1,91 @@
+{
+  "id": "tealtiger",
+  "description": "TealTiger deterministic governance guardrail — PII detection, prompt injection blocking, secret detection, cost governance, and structured audit evidence. No LLM in the governance path, <5ms evaluation.",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "mode": {
+        "type": "string",
+        "label": "Governance Mode",
+        "description": "ENFORCE (block violations), MONITOR (log only), or OBSERVE (passthrough)",
+        "encrypted": false
+      }
+    },
+    "required": []
+  },
+  "functions": [
+    {
+      "name": "PII Detection & Blocking",
+      "id": "piiDetection",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Detect and block PII (SSN, credit cards, emails, phone numbers) in prompts and responses using 40+ regex patterns. Returns structured findings with category and confidence."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "string",
+            "label": "PII Categories",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Comma-separated PII categories to detect: ssn, credit_card, email, phone, iban, passport. Default: all."
+              }
+            ]
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "Secret Detection",
+      "id": "secretDetection",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Detect API keys, tokens, private keys, and credentials in prompts and responses. Covers OpenAI, AWS, GitHub, Slack, and generic patterns."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "Cost Governance",
+      "id": "costGovernance",
+      "supportedHooks": ["beforeRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Enforce per-request cost ceilings based on estimated token usage. Block requests that would exceed the configured budget."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "maxCostPerRequest": {
+            "type": "string",
+            "label": "Max Cost Per Request (USD)",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Maximum allowed cost in USD for a single request. Default: 0.50"
+              }
+            ]
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}
