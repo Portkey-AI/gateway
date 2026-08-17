@@ -10,6 +10,7 @@ import {
   MESSAGE_ROLES,
 } from '../../types/requestBody';
 import { VERTEX_MODALITY } from '../google-vertex-ai/types';
+import { getThinkingConfigForReasoningEffort } from '../google-vertex-ai/transformGenerationConfig';
 import {
   getMimeType,
   googleTools,
@@ -93,9 +94,13 @@ const transformGenerationConfig = (params: PortkeyGeminiParams) => {
     );
   }
   if (params.reasoning_effort && params.reasoning_effort !== 'none') {
-    generationConfig['thinkingConfig'] = {
-      thinkingLevel: params.reasoning_effort,
-    };
+    const thinkingConfig = getThinkingConfigForReasoningEffort(
+      params.reasoning_effort,
+      params.model
+    );
+    if (thinkingConfig) {
+      generationConfig['thinkingConfig'] = thinkingConfig;
+    }
   }
   if (params.image_config) {
     generationConfig['imageConfig'] = {

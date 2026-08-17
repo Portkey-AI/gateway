@@ -6,6 +6,46 @@ import { GoogleEmbedParams } from './embed';
 import { EmbedInstancesData, PortkeyGeminiParams } from './types';
 
 /**
+ * Vertex exposes two mutually exclusive thinking controls:
+ *
+ * - `thinkingLevel` (MINIMAL/LOW/MEDIUM/HIGH) - Gemini 3 and newer only.
+ * - `thinkingBudget` (integer token budget) - Gemini 2.5 family. `-1` means
+ *   "dynamic", i.e. let the model decide how much to think.
+ *
+ * @see https://cloud.google.com/vertex-ai/generative-ai/docs/thinking
+ *
+ * Sending `thinkingLevel` to a Gemini 2.5 model is silently ignored server-side.
+ * That is invisible on most Gemini 2.5 variants because they default to
+ * thinking-on, but `gemini-2.5-flash-lite` defaults to a thinking budget of 0,
+ * so `reasoning_effort` there produced no thinking at all and no error.
+ */
+const GEMINI_2_5_THINKING_BUDGETS: Record<string, number> = {
+  minimal: 512,
+  low: 1024,
+  medium: 8192,
+  high: 24576,
+};
+
+const supportsThinkingLevel = (model?: string): boolean => {
+  if (!model) return true;
+  // Model ids reach this transform either bare (`gemini-2.5-flash`) or
+  // provider-prefixed (`google.gemini-2.5-flash`).
+  return !/gemini-2\.5/.test(model);
+};
+
+export const getThinkingConfigForReasoningEffort = (
+  reasoningEffort: string,
+  model?: string
+): Record<string, any> | undefined => {
+  if (supportsThinkingLevel(model)) {
+    return { thinkingLevel: reasoningEffort };
+  }
+  const thinkingBudget = GEMINI_2_5_THINKING_BUDGETS[reasoningEffort];
+  if (thinkingBudget === undefined) return undefined;
+  return { thinkingBudget };
+};
+
+/**
  * @see https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/gemini#request_body
  */
 export function transformGenerationConfig(params: PortkeyGeminiParams) {
@@ -66,9 +106,13 @@ export function transformGenerationConfig(params: PortkeyGeminiParams) {
     );
   }
   if (params.reasoning_effort && params.reasoning_effort !== 'none') {
-    generationConfig['thinkingConfig'] = {
-      thinkingLevel: params.reasoning_effort,
-    };
+    const thinkingConfig = getThinkingConfigForReasoningEffort(
+      params.reasoning_effort,
+      params.model
+    );
+    if (thinkingConfig) {
+      generationConfig['thinkingConfig'] = thinkingConfig;
+    }
   }
   if (params.image_config) {
     generationConfig['imageConfig'] = {
