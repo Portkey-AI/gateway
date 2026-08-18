@@ -1,5 +1,5 @@
 import { AI21 } from '../../globals';
-import { Params, SYSTEM_MESSAGE_ROLES } from '../../types/requestBody';
+import { Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -11,113 +11,85 @@ import {
 } from '../utils';
 import { AI21ErrorResponse } from './complete';
 
+// AI21's Jamba models are served over an OpenAI-compatible endpoint
+// (POST /studio/v1/chat/completions), so the request/response shapes below
+// mirror the standard OpenAI chat format.
 export const AI21ChatCompleteConfig: ProviderConfig = {
-  messages: [
-    {
-      param: 'messages',
-      required: true,
-      transform: (params: Params) => {
-        let inputMessages: any = [];
-
-        if (
-          params.messages?.[0]?.role &&
-          SYSTEM_MESSAGE_ROLES.includes(params.messages?.[0]?.role)
-        ) {
-          inputMessages = params.messages.slice(1);
-        } else if (params.messages) {
-          inputMessages = params.messages;
-        }
-
-        return inputMessages.map((msg: any) => ({
-          text: msg.content,
-          role: msg.role,
-        }));
-      },
-    },
-    {
-      param: 'system',
-      required: false,
-      transform: (params: Params) => {
-        if (
-          params.messages?.[0]?.role &&
-          SYSTEM_MESSAGE_ROLES.includes(params.messages?.[0]?.role)
-        ) {
-          return params.messages?.[0].content;
-        }
-      },
-    },
-  ],
-  n: {
-    param: 'numResults',
-    default: 1,
+  model: {
+    param: 'model',
+    required: true,
+  },
+  messages: {
+    param: 'messages',
+    required: true,
+    default: [],
   },
   max_tokens: {
-    param: 'maxTokens',
+    param: 'max_tokens',
     default: 16,
+    min: 0,
   },
   max_completion_tokens: {
-    param: 'maxTokens',
+    param: 'max_tokens',
     default: 16,
-  },
-  minTokens: {
-    param: 'minTokens',
-    default: 0,
+    min: 0,
   },
   temperature: {
     param: 'temperature',
-    default: 0.7,
+    default: 0.4,
+    min: 0,
+    max: 2,
+  },
+  top_p: {
+    param: 'top_p',
+    default: 1,
     min: 0,
     max: 1,
   },
-  top_p: {
-    param: 'topP',
+  n: {
+    param: 'n',
     default: 1,
-  },
-  top_k: {
-    param: 'topKReturn',
-    default: 0,
+    min: 1,
+    max: 16,
   },
   stop: {
-    param: 'stopSequences',
+    param: 'stop',
   },
-  presence_penalty: {
-    param: 'presencePenalty',
-    transform: (params: Params) => {
-      return {
-        scale: params.presence_penalty,
-      };
-    },
+  stream: {
+    param: 'stream',
+    default: false,
   },
-  frequency_penalty: {
-    param: 'frequencyPenalty',
-    transform: (params: Params) => {
-      return {
-        scale: params.frequency_penalty,
-      };
-    },
+  tools: {
+    param: 'tools',
   },
-  countPenalty: {
-    param: 'countPenalty',
+  tool_choice: {
+    param: 'tool_choice',
   },
-  frequencyPenalty: {
-    param: 'frequencyPenalty',
-  },
-  presencePenalty: {
-    param: 'presencePenalty',
+  response_format: {
+    param: 'response_format',
   },
 };
 
 interface AI21ChatCompleteResponse {
   id: string;
-  outputs: {
-    text: string;
-    role: string;
-    finishReason: {
-      reason: string;
-      length: number | null;
-      sequence: string | null;
+  model: string;
+  object?: string;
+  created?: number;
+  choices: {
+    index: number;
+    message: {
+      role: string;
+      content?: string | null;
+      tool_calls?: object[];
     };
+    finish_reason: string;
+    logprobs?: object | null;
   }[];
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
 }
 
 export const AI21ErrorResponseTransform: (
@@ -144,24 +116,87 @@ export const AI21ChatCompleteResponseTransform: (
     if (errorResposne) return errorResposne;
   }
 
-  if ('outputs' in response) {
+  if ('choices' in response) {
     return {
       id: response.id,
-      object: 'chat.completion',
-      created: Math.floor(Date.now() / 1000),
-      model: '',
+      object: response.object || 'chat.completion',
+      created: response.created || Math.floor(Date.now() / 1000),
+      model: response.model,
       provider: AI21,
-      choices: response.outputs.map((o, index) => ({
+      choices: response.choices.map((c) => ({
+        index: c.index,
         message: {
           role: 'assistant',
-          content: o.text,
+          content: c.message.content ?? undefined,
+          ...(c.message.tool_calls ? { tool_calls: c.message.tool_calls } : {}),
         },
-        index: index,
-        logprobs: null,
-        finish_reason: o.finishReason?.reason,
+        logprobs: c.logprobs ?? null,
+        finish_reason: c.finish_reason,
       })),
+      usage: {
+        prompt_tokens: response.usage?.prompt_tokens || 0,
+        completion_tokens: response.usage?.completion_tokens || 0,
+        total_tokens: response.usage?.total_tokens || 0,
+      },
     };
   }
 
   return generateInvalidProviderResponseError(response, AI21);
+};
+
+interface AI21StreamChunk {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: {
+    index: number;
+    delta: {
+      role?: string;
+      content?: string;
+      tool_calls?: object[];
+    };
+    finish_reason: string | null;
+    logprobs?: object | null;
+  }[];
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
+export const AI21ChatCompleteStreamChunkTransform: (
+  response: string
+) => string = (responseChunk) => {
+  let chunk = responseChunk.trim();
+  chunk = chunk.replace(/^data: /, '');
+  chunk = chunk.trim();
+  if (chunk === '[DONE]') {
+    return `data: ${chunk}\n\n`;
+  }
+
+  const parsedChunk: AI21StreamChunk = JSON.parse(chunk);
+  return (
+    `data: ${JSON.stringify({
+      id: parsedChunk.id,
+      object: parsedChunk.object,
+      created: parsedChunk.created,
+      model: parsedChunk.model,
+      provider: AI21,
+      choices: parsedChunk.choices.map((c) => ({
+        index: c.index,
+        delta: c.delta,
+        logprobs: c.logprobs ?? null,
+        finish_reason: c.finish_reason,
+      })),
+      usage: parsedChunk.usage
+        ? {
+            prompt_tokens: parsedChunk.usage.prompt_tokens,
+            completion_tokens: parsedChunk.usage.completion_tokens,
+            total_tokens: parsedChunk.usage.total_tokens,
+          }
+        : undefined,
+    })}` + '\n\n'
+  );
 };

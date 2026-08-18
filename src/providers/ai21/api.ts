@@ -15,7 +15,7 @@ const AI21APIConfig: ProviderAPIConfig = {
         return `/${model}/complete`;
       }
       case 'chatComplete': {
-        return `/${model}/chat`;
+        return `/chat/completions`;
       }
       case 'embed': {
         return `/embed`;
