@@ -1,0 +1,70 @@
+{
+  "id": "neuraltrust",
+  "description": "NeuralTrust TrustGuard for scanning LLM inputs and outputs",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "TrustGuard API key (tgk_...).",
+        "encrypted": true
+      },
+      "collectorKey": {
+        "type": "string",
+        "label": "Collector Key",
+        "description": "TrustGuard collector key (tgcol_...). Optional when the API key is already bound to a collector.",
+        "encrypted": true
+      },
+      "apiBase": {
+        "type": "string",
+        "label": "API Base URL",
+        "description": "TrustGuard API base URL. Defaults to https://trustguard.neuraltrust.ai",
+        "default": "https://trustguard.neuraltrust.ai"
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "TrustGuard Evaluate",
+      "id": "evaluate",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Send chat, completion, and Anthropic Messages input and output to TrustGuard POST /v1/evaluate. Block, allow, report, or redact depending on the collector policy."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "timeout": {
+            "type": "number",
+            "label": "Timeout",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Timeout in milliseconds for the TrustGuard request. Defaults to 5000."
+              }
+            ],
+            "default": 5000
+          },
+          "unreachableFallback": {
+            "type": "string",
+            "label": "Unreachable fallback",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "What to do on connect errors, timeouts, and HTTP 502/504. fail_closed blocks the request (default). fail_open lets it through. Auth failures, HTTP 503 entitlements, unknown verdicts, and empty transforms always fail closed."
+              }
+            ],
+            "enum": ["fail_closed", "fail_open"],
+            "default": "fail_closed"
+          }
+        }
+      }
+    }
+  ]
+}
