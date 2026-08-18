@@ -4,12 +4,15 @@ import {
   TritonCompleteConfig,
   TritonCompleteResponseTransform,
 } from './complete';
+import { TritonEmbedConfig, TritonEmbedResponseTransform } from './embed';
 
 const TritonConfig: ProviderConfigs = {
   api: TritonAPIConfig,
   complete: TritonCompleteConfig,
+  embed: TritonEmbedConfig,
   responseTransforms: {
     complete: TritonCompleteResponseTransform,
+    embed: TritonEmbedResponseTransform,
   },
 };
 

@@ -13,6 +13,9 @@ const TritonAPIConfig: ProviderAPIConfig = {
       case 'complete': {
         return `/generate`;
       }
+      case 'embed': {
+        return `/v1/embeddings`;
+      }
       default:
         return '';
     }
