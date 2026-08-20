@@ -100,6 +100,30 @@ export const MistralAIChatCompleteConfig: ProviderConfig = {
     param: 'parallel_tool_calls',
     default: null,
   },
+  response_format: {
+    param: 'response_format',
+    default: null,
+    transform: (params: Params) => {
+      const rf = params.response_format;
+      if (!rf) {
+        return null;
+      }
+      if (rf.type !== 'json_schema' || !rf.json_schema) {
+        return rf;
+      }
+      const inner = rf.json_schema;
+      if (inner.name) {
+        return rf;
+      }
+      return {
+        ...rf,
+        json_schema: {
+          ...inner,
+          name: 'response',
+        },
+      };
+    },
+  },
 };
 
 interface MistralToolCallFunction {
