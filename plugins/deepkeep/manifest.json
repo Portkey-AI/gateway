@@ -1,0 +1,78 @@
+{
+  "id": "deepkeep",
+  "description": "DeepKeep guardrails for moderation and redaction",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "DeepKeep API key.",
+        "encrypted": true
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "DeepKeep moderation guardrail",
+      "id": "deepkeepModeration",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Moderate prompts and responses with DeepKeep and optionally redact modified content."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "apiBaseUrl": {
+            "type": "string",
+            "label": "API Base URL",
+            "description": "DeepKeep API base URL."
+          },
+          "firewallId": {
+            "type": "string",
+            "label": "Firewall ID",
+            "description": "Default firewall id to use for both hooks."
+          },
+          "inputFirewallId": {
+            "type": "string",
+            "label": "Input Firewall ID",
+            "description": "Firewall id to use for beforeRequestHook."
+          },
+          "outputFirewallId": {
+            "type": "string",
+            "label": "Output Firewall ID",
+            "description": "Firewall id to use for afterRequestHook."
+          },
+          "chat": {
+            "type": "string",
+            "label": "Chat",
+            "description": "Optional chat identifier to send with moderation requests."
+          },
+          "title": {
+            "type": "string",
+            "label": "Title",
+            "description": "Optional title to send with moderation requests."
+          },
+          "timeoutMs": {
+            "type": "number",
+            "label": "Timeout (ms)",
+            "description": "Request timeout in milliseconds.",
+            "default": 10000
+          },
+          "failOpen": {
+            "type": "boolean",
+            "label": "Fail Open",
+            "description": "Allow the request if DeepKeep is unavailable.",
+            "default": true
+          }
+        },
+        "required": ["apiBaseUrl"]
+      }
+    }
+  ]
+}
