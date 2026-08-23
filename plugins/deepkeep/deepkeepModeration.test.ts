@@ -33,6 +33,19 @@ describe('deepkeep guardrail', () => {
 
     expect(result.error).toBeNull();
     expect(result.verdict).toBe(true);
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://deepkeep.example.com/api/v3/openai/moderations/pre',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-API-Key': 'test' },
+        body: JSON.stringify({
+          model: 'input-firewall',
+          input: 'Hello world',
+          title: '',
+          chat: '',
+        }),
+      })
+    );
   });
 
   it('blocks input content when DeepKeep says block', async () => {
@@ -120,7 +133,7 @@ describe('deepkeep guardrail', () => {
 
     expect(result.verdict).toBe(true);
     expect(result.transformed).toBe(true);
-    expect(result.transformedData.request.json.messages[0].content).toBe(
+    expect(result.transformedData!.request.json.messages[0].content).toBe(
       'My email is [EMAIL_REDACTED]'
     );
   });
@@ -177,7 +190,20 @@ describe('deepkeep guardrail', () => {
     expect(result.verdict).toBe(true);
     expect(result.transformed).toBe(true);
     expect(
-      result.transformedData.response.json.choices[0].message.content
+      result.transformedData!.response.json.choices[0].message.content
     ).toBe('Filtered response');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://deepkeep.example.com/api/v3/openai/moderations/post',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-API-Key': 'test' },
+        body: JSON.stringify({
+          model: 'output-firewall',
+          output: 'Original response',
+          title: '',
+          chat: '',
+        }),
+      })
+    );
   });
 });

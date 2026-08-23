@@ -21,6 +21,9 @@ const ACTION_PRIORITY: Record<string, number> = {
   alert: 1,
 };
 
+const PRE_MODERATION_PATH = '/api/v3/openai/moderations/pre';
+const POST_MODERATION_PATH = '/api/v3/openai/moderations/post';
+
 function deepClone<T>(value: T): T {
   return value === null || value === undefined
     ? value
@@ -67,14 +70,15 @@ function getEndpoint(
   eventType: HookEventType
 ): string {
   const baseUrl = getString(parameters.apiBaseUrl).replace(/\/$/, '');
-  return `${baseUrl}/api/v3/openai/moderations/${eventType === 'beforeRequestHook' ? 'pre' : 'post'}`;
+  const path =
+    eventType === 'beforeRequestHook'
+      ? PRE_MODERATION_PATH
+      : POST_MODERATION_PATH;
+  return `${baseUrl}${path}`;
 }
 
 function getHeaders(context: PluginContext): Record<string, string> {
   const credentials = context.credentials || {};
-  if (getString(credentials.bearerToken)) {
-    return { Authorization: `Bearer ${credentials.bearerToken}` };
-  }
   if (getString(credentials.apiKey)) {
     return { 'X-API-Key': credentials.apiKey };
   }
@@ -180,12 +184,9 @@ async function callDeepKeep(
   const body: Record<string, any> = {
     model: getFirewallId(parameters, eventType),
     [payloadKey]: text,
+    title: getString(parameters.title),
+    chat: getString(parameters.chat),
   };
-
-  const chatId = getString(parameters.chatId);
-  const title = getString(parameters.title);
-  if (chatId) body.chat = chatId;
-  if (title) body.title = title;
 
   const controller = new AbortController();
   const timeoutMs = getNumber(parameters.timeoutMs, 10000);

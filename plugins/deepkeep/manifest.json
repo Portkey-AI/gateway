@@ -9,12 +9,6 @@
         "label": "API Key",
         "description": "DeepKeep API key.",
         "encrypted": true
-      },
-      "bearerToken": {
-        "type": "string",
-        "label": "Bearer Token",
-        "description": "Optional bearer token for DeepKeep.",
-        "encrypted": true
       }
     },
     "required": ["apiKey"]
@@ -54,9 +48,9 @@
             "label": "Output Firewall ID",
             "description": "Firewall id to use for afterRequestHook."
           },
-          "chatId": {
+          "chat": {
             "type": "string",
-            "label": "Chat ID",
+            "label": "Chat",
             "description": "Optional chat identifier to send with moderation requests."
           },
           "title": {

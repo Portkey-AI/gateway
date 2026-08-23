@@ -52,7 +52,6 @@ import { handler as promptsecurityprotectPrompt } from './promptsecurity/protect
 import { handler as promptsecurityprotectResponse } from './promptsecurity/protectResponse';
 import { handler as panwPrismaAirsintercept } from './panw-prisma-airs/intercept';
 import { handler as walledaiwalledprotect } from './walledai/walledprotect';
-import { handler as deepkeepdeepkeepModeration } from './deepkeep/deepkeepModeration';
 
 export const plugins = {
   default: {
@@ -130,8 +129,5 @@ export const plugins = {
   },
   walledai: {
     walledprotect: walledaiwalledprotect,
-  },
-  deepkeep: {
-    deepkeepModeration: deepkeepdeepkeepModeration,
   },
 };
