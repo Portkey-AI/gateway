@@ -18,7 +18,19 @@ async function fetchWithTimeout(
 
   try {
     if (requestHandler) {
-      response = await requestHandler();
+      // A custom requestHandler performs its own fetch internally and does not
+      // receive `controller.signal`, so the timeout would otherwise never be
+      // enforced. Race it against the abort signal so the timeout still applies.
+      response = await Promise.race([
+        requestHandler(),
+        new Promise<never>((_, reject) => {
+          controller.signal.addEventListener('abort', () => {
+            const abortError = new Error('The operation was aborted.');
+            abortError.name = 'AbortError';
+            reject(abortError);
+          });
+        }),
+      ]);
     } else {
       response = await fetch(url, timeoutRequestOptions);
     }
