@@ -16,6 +16,7 @@ import {
   FIREWORKS_AI,
   CORTEX,
   ORACLE,
+  VALAR,
 } from '../globals';
 import { endpointStrings } from '../providers/types';
 import { Options, Params, StrategyModes, Targets } from '../types/requestBody';
@@ -1000,6 +1001,16 @@ export function constructConfigFromRequestHeaders(
     snowflakeAccount: requestHeaders[`x-${POWERED_BY}-snowflake-account`],
   };
 
+  // Valar reads the completion window from the request body first; this header
+  // is the fallback for clients that own the body (the Claude Agent SDK, for
+  // one). The unprefixed form is accepted too, so a client already sending it
+  // straight to Valar keeps working through the Gateway.
+  const valarConfig = {
+    valarCompletionWindow:
+      requestHeaders[`x-${POWERED_BY}-valar-completion-window`] ||
+      requestHeaders[`x-valar-completion-window`],
+  };
+
   const oracleConfig = {
     oracleApiVersion: requestHeaders[`x-${POWERED_BY}-oracle-api-version`],
     oracleRegion: requestHeaders[`x-${POWERED_BY}-oracle-region`],
@@ -1126,6 +1137,12 @@ export function constructConfigFromRequestHeaders(
           ...oracleConfig,
         };
       }
+      if (parsedConfigJson.provider === VALAR) {
+        parsedConfigJson = {
+          ...parsedConfigJson,
+          ...valarConfig,
+        };
+      }
     }
     return convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
@@ -1176,6 +1193,7 @@ export function constructConfigFromRequestHeaders(
       fireworksConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === CORTEX && cortexConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === ORACLE && oracleConfig),
+    ...(requestHeaders[`x-${POWERED_BY}-provider`] === VALAR && valarConfig),
   };
 }
 

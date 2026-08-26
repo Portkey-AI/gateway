@@ -118,6 +118,9 @@ export interface Options {
   /** Hugging Face specific */
   huggingfaceBaseUrl?: string;
 
+  /** Valar specific */
+  valarCompletionWindow?: string;
+
   /** Google Vertex AI specific */
   vertexRegion?: string;
   vertexProjectId?: string;
