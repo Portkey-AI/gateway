@@ -15449,46 +15449,6 @@
         "id": "scx-ai"
       },
       "name": "GLM-5.2 Fast"
-    },
-    {
-      "id": "MiniMax-M2.7",
-      "object": "model",
-      "provider": {
-        "id": "scx-ai"
-      },
-      "name": "MiniMax M2.7"
-    },
-    {
-      "id": "gpt-oss-120b",
-      "object": "model",
-      "provider": {
-        "id": "scx-ai"
-      },
-      "name": "GPT-OSS 120B"
-    },
-    {
-      "id": "gemma-4-31B-it",
-      "object": "model",
-      "provider": {
-        "id": "scx-ai"
-      },
-      "name": "Gemma 4 31B IT"
-    },
-    {
-      "id": "Qwen3-32B",
-      "object": "model",
-      "provider": {
-        "id": "scx-ai"
-      },
-      "name": "Qwen3 32B"
-    },
-    {
-      "id": "Llama-4-Maverick-17B-128E-Instruct",
-      "object": "model",
-      "provider": {
-        "id": "scx-ai"
-      },
-      "name": "Llama 4 Maverick 17B 128E Instruct"
     }
   ]
 }
