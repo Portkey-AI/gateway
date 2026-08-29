@@ -145,6 +145,36 @@ const transformAndAppendThinkingMessageItem = (
   }
 };
 
+const getFileData = (fileData?: string) => {
+  if (!fileData?.startsWith('data:')) return fileData;
+
+  const separatorIndex = fileData.indexOf(',');
+  if (
+    separatorIndex === -1 ||
+    !fileData.slice(0, separatorIndex).includes(';base64')
+  ) {
+    return fileData;
+  }
+
+  return fileData.slice(separatorIndex + 1);
+};
+
+const getFileMimeType = (file?: ContentType['file']) => {
+  if (file?.mime_type) return file.mime_type;
+  if (file?.file_data?.startsWith('data:')) {
+    const mimeType = file.file_data.slice(5).split(/[;,]/, 1)[0];
+    if (mimeType) return mimeType;
+  }
+  return fileExtensionMimeTypeMap.pdf;
+};
+
+const getDocumentName = (fileName?: string) => {
+  const name = (fileName || crypto.randomUUID())
+    .replace(/[^a-zA-Z0-9\s\-()[\]]/g, '_')
+    .slice(0, 200);
+  return name || crypto.randomUUID();
+};
+
 const getMessageContent = (message: Message) => {
   if (!message.content && !message.tool_calls && !message.tool_call_id)
     return [];
@@ -173,9 +203,11 @@ const getMessageContent = (message: Message) => {
   } else if (inputContent && Array.isArray(inputContent)) {
     inputContent.forEach((item) => {
       if (item.type === 'text') {
-        out.push({
-          text: item.text || '',
-        });
+        if (item.text) {
+          out.push({
+            text: item.text,
+          });
+        }
       } else if (item.type === 'thinking') {
         transformAndAppendThinkingMessageItem(item, out);
       } else if (item.type === 'image_url' && item.image_url) {
@@ -213,13 +245,14 @@ const getMessageContent = (message: Message) => {
           });
         }
       } else if (item.type === 'file') {
-        const mimeType = item.file?.mime_type || fileExtensionMimeTypeMap.pdf;
+        const mimeType = getFileMimeType(item.file);
         const fileFormat = mimeType.split('/')[1];
+        const fileData = getFileData(item.file?.file_data);
         if (imagesMimeTypes.includes(mimeType)) {
           out.push({
             image: {
               source: {
-                ...(item.file?.file_data && { bytes: item.file.file_data }),
+                ...(fileData && { bytes: fileData }),
                 ...(item.file?.file_url && {
                   s3Location: {
                     uri: item.file.file_url,
@@ -234,7 +267,7 @@ const getMessageContent = (message: Message) => {
             video: {
               format: fileFormat,
               source: {
-                ...(item.file?.file_data && { bytes: item.file.file_data }),
+                ...(fileData && { bytes: fileData }),
                 ...(item.file?.file_url && {
                   s3Location: {
                     uri: item.file.file_url,
@@ -247,9 +280,9 @@ const getMessageContent = (message: Message) => {
           out.push({
             document: {
               format: fileFormat,
-              name: item.file?.file_name || crypto.randomUUID(),
+              name: getDocumentName(item.file?.file_name),
               source: {
-                ...(item.file?.file_data && { bytes: item.file.file_data }),
+                ...(fileData && { bytes: fileData }),
                 ...(item.file?.file_url && {
                   s3Location: {
                     uri: item.file.file_url,
@@ -300,7 +333,8 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
               role: msg.role === 'assistant' ? 'assistant' : 'user',
               content: getMessageContent(msg),
             };
-          });
+          })
+          .filter((msg) => msg.content.length > 0);
         let prevRole = '';
         // combine user messages in succession
         const combinedMessages = transformedMessages.reduce(
