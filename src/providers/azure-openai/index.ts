@@ -28,6 +28,7 @@ import { OpenAIFileUploadRequestTransform } from '../openai/uploadFile';
 import {
   AzureOpenAIFinetuneResponseTransform,
   getAzureModelValue,
+  getAzureResponsesModelValue,
 } from './utils';
 import { AzureOpenAICreateBatchConfig } from './createBatch';
 import { AzureOpenAIGetBatchOutputRequestHandler } from './getBatchOutput';
@@ -62,7 +63,7 @@ const AzureOpenAIConfig: ProviderConfigs = {
     {
       model: {
         param: 'model',
-        transform: getAzureModelValue,
+        transform: getAzureResponsesModelValue,
       },
     }
   ),

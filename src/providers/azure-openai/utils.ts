@@ -134,3 +134,8 @@ export const getAzureModelValue = (
   }
   return params.model || '';
 };
+
+export const getAzureResponsesModelValue = (
+  params: Params,
+  providerOptions?: Options
+) => providerOptions?.deploymentId || params.model || '';
