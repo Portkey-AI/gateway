@@ -11,6 +11,7 @@ import { DEEPSEEK_STOP_REASON } from './deepseek/types';
 import { MISTRAL_AI_FINISH_REASON } from './mistral-ai/types';
 import { TOGETHER_AI_FINISH_REASON } from './together-ai/types';
 import { COHERE_STOP_REASON } from './cohere/types';
+import { IFLYTEK_STOP_REASON } from './iflytek/types';
 
 /**
  * Configuration for a parameter.
@@ -453,4 +454,5 @@ export type PROVIDER_FINISH_REASON =
   | DEEPSEEK_STOP_REASON
   | MISTRAL_AI_FINISH_REASON
   | TOGETHER_AI_FINISH_REASON
-  | COHERE_STOP_REASON;
+  | COHERE_STOP_REASON
+  | IFLYTEK_STOP_REASON;
