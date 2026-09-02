@@ -13,11 +13,11 @@
       },
       "baseUrl": {
         "type": "string",
-        "label": "Vigilnz Base URL (optional)",
-        "description": "Only required for self-hosted or private-cloud Vigilnz deployments. Leave empty to use the Vigilnz managed endpoint."
+        "label": "Vigilnz Base URL",
+        "description": "Base URL of the Vigilnz AI Secure environment to scan against, e.g. https://aigw.vigilnz.com for production or https://devaigw.vigilnz.com for development. Must use https. Path is appended automatically."
       }
     },
-    "required": ["apiKey"]
+    "required": ["apiKey", "baseUrl"]
   },
   "functions": [
     {
@@ -51,10 +51,10 @@
             "description": [
               {
                 "type": "subHeading",
-                "text": "Maximum time to wait for the Vigilnz AI Secure verdict. Defaults to 5000 ms."
+                "text": "Maximum time to wait for the Vigilnz AI Secure verdict. Defaults to 8000 ms."
               }
             ],
-            "default": 5000
+            "default": 8000
           },
           "failOnError": {
             "type": "boolean",

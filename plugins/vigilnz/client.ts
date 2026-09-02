@@ -15,14 +15,14 @@ import {
   VigilnzScanResponse,
 } from './types';
 
-/** Managed Vigilnz AI Secure endpoint used when no baseUrl is configured. */
-export const VIGILNZ_DEFAULT_BASE_URL = 'https://devaigw.vigilnz.com';
-
 /** Path of the gateway-neutral guardrail scan endpoint. */
 export const VIGILNZ_SCAN_PATH = '/api/guardrail/scan';
 
-/** Default verdict timeout in milliseconds. */
-export const VIGILNZ_DEFAULT_TIMEOUT_MS = 5000;
+/**
+ * Default verdict timeout in milliseconds. Matches the manifest default — a cold classifier
+ * plus network round trip can exceed a shorter budget, and a timeout is an errored check.
+ */
+export const VIGILNZ_DEFAULT_TIMEOUT_MS = 8000;
 
 /** Required prefix of a Vigilnz API key. */
 const API_KEY_PREFIX = 'vpsk_live_';
@@ -32,11 +32,17 @@ const LOCAL_HOSTNAMES = ['localhost', '127.0.0.1', '[::1]'];
 
 /**
  * Resolve and validate the Vigilnz guardrail endpoint.
- * Priority: guardrail credentials > gateway environment > managed default.
+ *
+ * The base URL is supplied by the user per guardrail, so the same plugin can point at a
+ * development, staging or production Vigilnz environment without a code change and without
+ * any Vigilnz hostname being baked into the gateway. A gateway-wide
+ * `VIGILNZ_GUARDRAIL_BASE_URL` environment variable acts as a fallback for self-hosted
+ * deployments that prefer to configure it once.
+ *
  * @param credentials - Guardrail credentials configured by the user.
  * @param env - Gateway environment bindings (may carry VIGILNZ_GUARDRAIL_BASE_URL).
  * @returns Absolute scan URL.
- * @throws {Error} When a configured baseUrl is not a valid https URL.
+ * @throws {Error} When no base URL is configured, or it is not a valid https URL.
  */
 export function resolveScanUrl(
   credentials: VigilnzCredentials,
@@ -45,8 +51,13 @@ export function resolveScanUrl(
   const envBaseUrl = env?.VIGILNZ_GUARDRAIL_BASE_URL;
   const configured =
     credentials.baseUrl?.trim() ||
-    (typeof envBaseUrl === 'string' ? envBaseUrl.trim() : '') ||
-    VIGILNZ_DEFAULT_BASE_URL;
+    (typeof envBaseUrl === 'string' ? envBaseUrl.trim() : '');
+
+  if (!configured) {
+    throw new Error(
+      'Vigilnz base URL is not configured (set the Vigilnz Base URL credential)'
+    );
+  }
 
   let parsed: URL;
   try {

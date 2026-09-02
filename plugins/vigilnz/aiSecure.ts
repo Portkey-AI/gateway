@@ -14,7 +14,7 @@ import {
   PluginHandler,
   PluginParameters,
 } from '../types';
-import { getCurrentContentPart, setCurrentContentPart } from '../utils';
+import { applyRedaction, extractContent } from './content';
 import { scanWithVigilnz, VIGILNZ_DEFAULT_TIMEOUT_MS } from './client';
 import {
   VigilnzCredentials,
@@ -127,7 +127,7 @@ export const handler: PluginHandler<VigilnzCredentials> = async (
   };
 
   try {
-    const { textArray } = getCurrentContentPart(context, eventType);
+    const { textArray, kind } = extractContent(context, eventType);
     const text = textArray.filter((part) => part).join('\n');
 
     // Nothing scannable on this hook (e.g. streaming chunk with no content yet).
@@ -180,9 +180,30 @@ export const handler: PluginHandler<VigilnzCredentials> = async (
         };
       }
 
-      setCurrentContentPart(context, eventType, transformedData, [
+      const didRewrite = applyRedaction(
+        context,
+        eventType,
+        kind,
         verdict.modified_content,
-      ]);
+        transformedData
+      );
+
+      // Never report a rewrite that did not happen: some payload shapes are scannable but
+      // have no addressable field to write redacted content back into.
+      if (!didRewrite) {
+        return {
+          error: null,
+          verdict: true,
+          data: {
+            ...data,
+            action: 'allow',
+            ignoredAction: 'modify',
+            explanation:
+              'Vigilnz AI Secure returned redacted content, but this request type does not support rewriting; content left unchanged',
+          },
+        };
+      }
+
       return {
         error: null,
         verdict: true,
