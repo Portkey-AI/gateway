@@ -1,0 +1,61 @@
+{
+  "id": "alice",
+  "description": "Alice (https://alice.io) — policy-based guardrails for prompts and model responses. Blocks, masks or records content against the policies configured for your application.",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "Alice API key",
+        "description": "Your Alice API key. Create one in WonderSuite under Account Settings.",
+        "encrypted": true
+      },
+      "apiBase": {
+        "type": "string",
+        "label": "API base URL",
+        "description": "Base URL of the Alice API. Leave blank for https://api.alice.io; set it only if you run a private deployment."
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Evaluate",
+      "id": "evaluate",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Evaluate the prompt or the model response against the Alice policies configured for your application, and enforce the verdict: block it, mask the flagged spans, or record a detection and let it through."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "appId": {
+            "type": "string",
+            "label": "Application",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "The application whose policies apply. Its UUID from your Application Inventory, or your own id for it if you set one. Alice configures policies per application and a project usually holds several, so this decides which policy set a request is measured against."
+              }
+            ]
+          },
+          "timeout": {
+            "type": "number",
+            "label": "Timeout (ms)",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "How long to wait for Alice before giving up. A timeout is reported as a check error, so `failOnError` decides whether the request proceeds."
+              }
+            ]
+          }
+        },
+        "required": ["appId"]
+      }
+    }
+  ]
+}
