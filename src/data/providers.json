@@ -269,6 +269,13 @@
       "base_url": "https://api.stability.ai/v1"
     },
     {
+      "id": "thegrid",
+      "name": "The Grid",
+      "object": "provider",
+      "description": "The Grid is an inference API whose model ids are market instruments rather than fixed foundation models. A caller selects a quality tier such as text-standard, code-prime or agent-max and The Grid acquires qualifying inference on its market to serve the request. Per-instrument limits, capability flags and live prices are published at GET /v1/models.",
+      "base_url": "https://api.thegrid.ai/v1"
+    },
+    {
       "id": "together-ai",
       "name": "Together AI",
       "object": "provider",
