@@ -643,14 +643,6 @@
       "name": "Amazon Titan Image Generator v2"
     },
     {
-      "id": "amazon.titan-image-generator-v2:0",
-      "object": "model",
-      "provider": {
-        "id": "bedrock"
-      },
-      "name": "Amazon Titan Image Generator v2"
-    },
-    {
       "id": "amazon.titan-text-express-v1",
       "object": "model",
       "provider": {
@@ -5931,14 +5923,6 @@
       "name": "Voice En Us Kathleen Low"
     },
     {
-      "id": "voice-en-us-kathleen-low",
-      "object": "model",
-      "provider": {
-        "id": "local-ai"
-      },
-      "name": "Voice En Us Kathleen Low"
-    },
-    {
       "id": "voice-en-us-lessac-low",
       "object": "model",
       "provider": {
@@ -6323,28 +6307,12 @@
       "name": "Whisper Small"
     },
     {
-      "id": "whisper-small",
-      "object": "model",
-      "provider": {
-        "id": "local-ai"
-      },
-      "name": "Whisper Small"
-    },
-    {
       "id": "whisper-small-en-q5_1",
       "object": "model",
       "provider": {
         "id": "local-ai"
       },
       "name": "Whisper Small En Q5_1"
-    },
-    {
-      "id": "whisper-small-q5_1",
-      "object": "model",
-      "provider": {
-        "id": "local-ai"
-      },
-      "name": "Whisper Small Q5_1"
     },
     {
       "id": "whisper-small-q5_1",
@@ -6641,22 +6609,6 @@
         "id": "novita-ai"
       },
       "name": "Gemma 2 9B IT"
-    },
-    {
-      "id": "google/gemma-2-9b-it",
-      "object": "model",
-      "provider": {
-        "id": "novita-ai"
-      },
-      "name": "Gemma 2 9B IT"
-    },
-    {
-      "id": "gryphe/mythomax-l2-13b",
-      "object": "model",
-      "provider": {
-        "id": "novita-ai"
-      },
-      "name": "MythoMax L2 13B"
     },
     {
       "id": "gryphe/mythomax-l2-13b",
@@ -8201,22 +8153,6 @@
         "id": "openai"
       },
       "name": "Tts 1"
-    },
-    {
-      "id": "tts-1",
-      "object": "model",
-      "provider": {
-        "id": "openai"
-      },
-      "name": "Tts 1"
-    },
-    {
-      "id": "tts-1-hd",
-      "object": "model",
-      "provider": {
-        "id": "openai"
-      },
-      "name": "Tts 1 Hd"
     },
     {
       "id": "tts-1-hd",
@@ -9777,14 +9713,6 @@
         "id": "perplexity"
       },
       "name": "Llama 3.1 70B Instruct"
-    },
-    {
-      "id": "llama-3.1-8b-instruct",
-      "object": "model",
-      "provider": {
-        "id": "perplexity"
-      },
-      "name": "Llama 3.1 8B Instruct"
     },
     {
       "id": "llama-3.1-8b-instruct",
@@ -15417,14 +15345,6 @@
         "id": "cometapi"
       },
       "name": "Text Embedding 3 Large"
-    },
-    {
-      "id": "text-embedding-ada-002",
-      "object": "model",
-      "provider": {
-        "id": "openai"
-      },
-      "name": "Text Embedding Ada 002"
     }
   ]
 }
