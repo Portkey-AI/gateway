@@ -7,7 +7,7 @@
       "apiKey": {
         "type": "string",
         "label": "API Key",
-        "description": "TrustGuard API key (tgk_...).",
+        "description": "TrustGuard API key (tgk_...). Create one on the collector in the NeuralTrust console (https://docs.neuraltrust.ai/integrations/portkey).",
         "encrypted": true
       },
       "collectorKey": {

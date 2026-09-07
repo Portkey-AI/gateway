@@ -2,6 +2,8 @@
 
 Portkey plugin that sends chat, completion, and Anthropic Messages traffic to TrustGuard `POST /v1/evaluate`.
 
+Full setup guide, verdict mapping, and the fail-closed matrix: [docs.neuraltrust.ai/integrations/portkey](https://docs.neuraltrust.ai/integrations/portkey). Endpoint contract: [Evaluate API](https://docs.neuraltrust.ai/trustguard/api/evaluate).
+
 Check id is `neuraltrust.evaluate`. It runs on both `beforeRequestHook` and `afterRequestHook`. Put credentials on `checks[].parameters.credentials`. Do not put them in `conf.json`, and do not run `npm run build-plugins` to register this plugin — that command regenerates `plugins/index.ts` from `plugins_enabled` and drops plugins that are only hand-registered.
 
 ```json
