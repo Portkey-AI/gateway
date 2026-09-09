@@ -229,14 +229,17 @@ export const FireworksAIChatCompleteStreamChunkTransform: (
       created: parsedChunk.created,
       model: parsedChunk.model,
       provider: FIREWORKS_AI,
-      choices: [
-        {
-          index: parsedChunk.choices[0].index,
-          delta: parsedChunk.choices[0].delta,
-          finish_reason: parsedChunk.choices[0].finish_reason,
-          logprobs: parsedChunk.choices[0].logprobs,
-        },
-      ],
+      choices:
+        parsedChunk.choices && parsedChunk.choices.length > 0
+          ? [
+              {
+                index: parsedChunk.choices[0].index,
+                delta: parsedChunk.choices[0].delta,
+                finish_reason: parsedChunk.choices[0].finish_reason,
+                logprobs: parsedChunk.choices[0].logprobs,
+              },
+            ]
+          : [],
       ...(parsedChunk.usage ? { usage: parsedChunk.usage } : {}),
     })}` + '\n\n'
   );
