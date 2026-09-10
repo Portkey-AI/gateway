@@ -183,6 +183,10 @@ export const transformOpenAIRoleToGoogleRole = (
       return 'model';
     case 'tool':
       return 'function';
+    case 'function':
+      // Legacy OpenAI function-call role. Gemini accepts only user/model
+      // roles, so function results ride a user turn as functionResponse parts.
+      return 'user';
     case 'developer':
       return 'system';
     default:
@@ -250,7 +254,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                 }),
               });
             });
-          } else if (message.role === 'tool') {
+          } else if (message.role === 'tool' || message.role === 'function') {
             parts.push({
               functionResponse: {
                 name: message.name ?? 'gateway-tool-filler-name',
