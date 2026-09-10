@@ -1,4 +1,8 @@
-import { derefer, transformGeminiToolParameters } from './utils';
+import {
+  derefer,
+  recursivelyDeleteUnsupportedParameters,
+  transformGeminiToolParameters,
+} from './utils';
 
 /*
 from enum import StrEnum
@@ -614,5 +618,41 @@ describe('transformGeminiToolParameters', () => {
       'identity',
       'emergency_contacts',
     ]);
+  });
+});
+
+describe('recursivelyDeleteUnsupportedParameters', () => {
+  it('removes exclusiveMinimum and exclusiveMaximum that Vertex AI rejects', () => {
+    const schema: any = {
+      type: 'object',
+      properties: {
+        count: { type: 'integer', exclusiveMinimum: 0 },
+        ratio: { type: 'number', exclusiveMaximum: 1 },
+      },
+    };
+    recursivelyDeleteUnsupportedParameters(schema);
+    expect(schema.properties.count.exclusiveMinimum).toBeUndefined();
+    expect(schema.properties.ratio.exclusiveMaximum).toBeUndefined();
+    expect(schema.properties.count.type).toBe('integer');
+  });
+
+  it('removes unsupported keywords in nested schemas', () => {
+    const schema: any = {
+      type: 'object',
+      properties: {
+        nested: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            limit: { type: 'integer', exclusiveMinimum: 5 },
+          },
+        },
+      },
+    };
+    recursivelyDeleteUnsupportedParameters(schema);
+    expect(schema.properties.nested.additionalProperties).toBeUndefined();
+    expect(
+      schema.properties.nested.properties.limit.exclusiveMinimum
+    ).toBeUndefined();
   });
 });
