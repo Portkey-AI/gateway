@@ -485,6 +485,7 @@ export interface Params {
   // Embeddings specific
   dimensions?: number;
   parameters?: any;
+  version?: number | string;
 }
 
 interface Examples {

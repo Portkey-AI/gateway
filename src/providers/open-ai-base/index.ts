@@ -68,8 +68,9 @@ export const chatCompleteParams = (
   };
 
   Object.keys(defaultValues ?? {}).forEach((key) => {
-    if (Object.hasOwn(baseParams, key) && !Array.isArray(baseParams[key])) {
-      baseParams[key].default = defaultValues?.[key];
+    const param = baseParams[key];
+    if (Object.hasOwn(baseParams, key) && param && !Array.isArray(param)) {
+      param.default = defaultValues?.[key];
     }
   });
 
@@ -363,7 +364,7 @@ const ChatCompleteResponseTransformer = <
         provider ?? OPEN_AI
       );
       if (customTransformer) {
-        return customTransformer(response as ErrorResponse, true);
+        return customTransformer(errorResponse, true);
       }
 
       return errorResponse;
@@ -399,7 +400,7 @@ export const OpenAICreateModelResponseTransformer = <
         provider ?? OPEN_AI
       );
       if (customTransformer) {
-        return customTransformer(response as ErrorResponse, true);
+        return customTransformer(errorResponse, true);
       }
 
       return errorResponse;
@@ -435,7 +436,7 @@ export const OpenAIGetModelResponseTransformer = <
         provider ?? OPEN_AI
       );
       if (customTransformer) {
-        return customTransformer(response as ErrorResponse, true);
+        return customTransformer(errorResponse, true);
       }
 
       return errorResponse;
@@ -471,7 +472,7 @@ export const OpenAIDeleteModelResponseTransformer = <
         provider ?? OPEN_AI
       );
       if (customTransformer) {
-        return customTransformer(response as ErrorResponse, true);
+        return customTransformer(errorResponse, true);
       }
 
       return errorResponse;
@@ -507,7 +508,7 @@ export const OpenAIListInputItemsResponseTransformer = <
         provider ?? OPEN_AI
       );
       if (customTransformer) {
-        return customTransformer(response as ErrorResponse, true);
+        return customTransformer(errorResponse, true);
       }
 
       return errorResponse;

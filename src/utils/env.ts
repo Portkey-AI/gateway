@@ -5,8 +5,8 @@ const isNodeInstance = getRuntimeKey() == 'node';
 let path: any;
 let fs: any;
 if (isNodeInstance) {
-  path = await import('path');
-  fs = await import('fs');
+  path = require('path');
+  fs = require('fs');
 }
 
 export function getValueOrFileContents(value?: string, ignore?: boolean) {
