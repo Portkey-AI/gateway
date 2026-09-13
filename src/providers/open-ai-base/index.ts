@@ -364,7 +364,7 @@ const ChatCompleteResponseTransformer = <
         provider ?? OPEN_AI
       );
       if (customTransformer) {
-        return customTransformer(response as ErrorResponse, true);
+        return customTransformer(errorResponse, true);
       }
 
       return errorResponse;
@@ -400,7 +400,7 @@ export const OpenAICreateModelResponseTransformer = <
         provider ?? OPEN_AI
       );
       if (customTransformer) {
-        return customTransformer(response as ErrorResponse, true);
+        return customTransformer(errorResponse, true);
       }
 
       return errorResponse;
@@ -436,7 +436,7 @@ export const OpenAIGetModelResponseTransformer = <
         provider ?? OPEN_AI
       );
       if (customTransformer) {
-        return customTransformer(response as ErrorResponse, true);
+        return customTransformer(errorResponse, true);
       }
 
       return errorResponse;
@@ -472,7 +472,7 @@ export const OpenAIDeleteModelResponseTransformer = <
         provider ?? OPEN_AI
       );
       if (customTransformer) {
-        return customTransformer(response as ErrorResponse, true);
+        return customTransformer(errorResponse, true);
       }
 
       return errorResponse;
@@ -508,7 +508,7 @@ export const OpenAIListInputItemsResponseTransformer = <
         provider ?? OPEN_AI
       );
       if (customTransformer) {
-        return customTransformer(response as ErrorResponse, true);
+        return customTransformer(errorResponse, true);
       }
 
       return errorResponse;
