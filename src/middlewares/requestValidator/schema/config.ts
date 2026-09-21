@@ -179,7 +179,7 @@ const baseConfigSchema: any = z
     }
   );
 
-const hasInvalidCustomHost = (value: any, c?: Context): boolean => {
+const hasInvalidCustomHost = (value: any, c: Context): boolean => {
   const customHost = value?.custom_host;
   if (customHost && !isValidCustomHost(customHost, c)) {
     return true;
@@ -190,9 +190,7 @@ const hasInvalidCustomHost = (value: any, c?: Context): boolean => {
   );
 };
 
-export const createConfigSchema = (c?: Context): any =>
+export const createConfigSchema = (c: Context): any =>
   baseConfigSchema.refine((value: any) => !hasInvalidCustomHost(value, c), {
     message: 'Invalid custom host',
   });
-
-export const configSchema = createConfigSchema();
