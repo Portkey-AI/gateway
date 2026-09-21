@@ -284,7 +284,7 @@ if (runtime === 'workerd') {
  * @deprecated
  * Support the /v1 proxy endpoint
  */
-app.post('/v1/proxy/*', proxyHandler);
+app.post('/v1/proxy/*', requestValidator, proxyHandler);
 
 // Support the /v1 proxy endpoint after all defined endpoints so this does not interfere.
 app.post('/v1/*', requestValidator, proxyHandler);
