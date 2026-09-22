@@ -15,5 +15,8 @@
   },
   "portkey": {
     "apiKey": "YOUR_PORTKEY_API_KEY"
+  },
+  "exa": {
+    "apiKey": "YOUR_EXA_API_KEY"
   }
 }

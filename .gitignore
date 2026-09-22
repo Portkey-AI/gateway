@@ -145,5 +145,9 @@ build
 plugins/**/.creds.json
 plugins/**/creds.json
 plugins/**/.parameters.json
+# Local test credentials (tests moved from src/handlers/tests to tests/integration)
 src/handlers/tests/.creds.json
+tests/**/.creds.json
+tests/**/creds.json
+!tests/**/.creds.example.json
 .cursor/

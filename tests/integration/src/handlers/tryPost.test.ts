@@ -4,6 +4,9 @@ import { join } from 'path';
 
 let requestBuilder: RequestBuilder, urlBuilder: URLBuilder;
 
+// Credentials come from the local (gitignored) .creds.json. Never hardcode them here.
+const creds = JSON.parse(readFileSync(join(__dirname, '.creds.json'), 'utf8'));
+
 // Gateway tests
 describe('core functionality', () => {
   beforeEach(() => {
@@ -279,7 +282,7 @@ describe('tryPost-hooks-and-guardrails', () => {
         parameters: {
           numResults: 3,
           credentials: {
-            apiKey: 'ae56af0a-7d05-4595-a228-436fd36476f9',
+            apiKey: process.env.EXA_API_KEY || creds.exa?.apiKey || '',
           },
           prefix: '\nHere are some web search results:\n',
           suffix: '\n---',
