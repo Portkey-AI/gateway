@@ -1,4 +1,9 @@
-import { derefer, transformGeminiToolParameters } from './utils';
+import {
+  derefer,
+  transformGeminiToolParameters,
+  transformGoogleTools,
+} from './utils';
+import { Tool } from '../../types/requestBody';
 
 /*
 from enum import StrEnum
@@ -614,5 +619,31 @@ describe('transformGeminiToolParameters', () => {
       'identity',
       'emergency_contacts',
     ]);
+  });
+});
+
+describe('transformGoogleTools', () => {
+  it('builds a urlContext tool from the camelCase name', () => {
+    const tool: Tool = {
+      type: 'function',
+      function: { name: 'urlContext' },
+    };
+    expect(transformGoogleTools(tool)).toEqual([{ urlContext: {} }]);
+  });
+
+  it('builds a urlContext tool from the snake_case name', () => {
+    const tool: Tool = {
+      type: 'function',
+      function: { name: 'url_context' },
+    };
+    expect(transformGoogleTools(tool)).toEqual([{ urlContext: {} }]);
+  });
+
+  it('builds a googleSearch tool from the camelCase name', () => {
+    const tool: Tool = {
+      type: 'function',
+      function: { name: 'googleSearch' },
+    };
+    expect(transformGoogleTools(tool)).toEqual([{ googleSearch: {} }]);
   });
 });
