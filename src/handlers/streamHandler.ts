@@ -341,6 +341,7 @@ export function handleStreamingMode(
         }
       } catch (error) {
         console.error('Error during stream processing:', proxyProvider, error);
+        await writeStreamErrorChunk(writer, encoder, fn, error, proxyProvider);
       } finally {
         try {
           await writer.close();
@@ -375,6 +376,7 @@ export function handleStreamingMode(
         }
       } catch (error) {
         console.error('Error during stream processing:', proxyProvider, error);
+        await writeStreamErrorChunk(writer, encoder, fn, error, proxyProvider);
       } finally {
         try {
           await writer.close();
@@ -474,6 +476,55 @@ export async function handleJSONToStreamResponse(
     statusText: response.statusText,
   });
 }
+
+/**
+ * Called when the upstream provider's stream terminates abnormally
+ * (connection reset, unexpected error event, truncated response, etc.)
+ * instead of completing cleanly. Without this, the gateway would close
+ * its own response as if it had succeeded (200, no error, no [DONE]),
+ * leaving the client unable to tell a cut-off answer from a complete one.
+ *
+ * This writes an in-band SSE error event so the client can detect the
+ * truncation. It intentionally does not attempt to trigger the
+ * fallback/retry strategy: by the time streaming has started, the
+ * gateway has already committed a 200 response to the client, so the
+ * response itself cannot be swapped for another target's response.
+ */
+const writeStreamErrorChunk = async (
+  writer: WritableStreamDefaultWriter,
+  encoder: TextEncoder,
+  fn: endpointStrings,
+  error: unknown,
+  proxyProvider: string
+) => {
+  const message =
+    error instanceof Error
+      ? error.message
+      : 'Upstream provider closed the stream unexpectedly';
+  const errorPayload = {
+    message: `Streaming response from ${proxyProvider} was interrupted before completion: ${message}`,
+    type: 'gateway_stream_interrupted',
+    param: null,
+    code: 'stream_interrupted',
+  };
+
+  try {
+    const errorChunk =
+      fn === 'messages'
+        ? `event: error\ndata: ${JSON.stringify({
+            type: 'error',
+            error: errorPayload,
+          })}\n\n`
+        : `data: ${JSON.stringify({ error: errorPayload })}\n\n`;
+    await writer.write(encoder.encode(errorChunk));
+  } catch (writeError) {
+    console.error(
+      'Failed to write stream error chunk:',
+      proxyProvider,
+      writeError
+    );
+  }
+};
 
 const constructHookResultChunk = (
   hooksResult: HookSpan['hooksResult'],
