@@ -1,0 +1,128 @@
+{
+  "id": "parallel",
+  "description": "Parallel integration for enhancing AI responses with real-time web search information",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "Optional Parallel API key for production use and higher rate limits",
+        "encrypted": true
+      }
+    },
+    "required": []
+  },
+  "functions": [
+    {
+      "name": "Online Search",
+      "id": "online",
+      "supportedHooks": ["beforeRequestHook"],
+      "type": "transformer",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Enhances prompts with current web results from Parallel Search MCP before processing the request"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prefix": {
+            "type": "string",
+            "label": "Context Prefix",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "String to prepend to the search context"
+              }
+            ],
+            "default": "\n<web_search_context>"
+          },
+          "suffix": {
+            "type": "string",
+            "label": "Context Suffix",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "String to append to the search context"
+              }
+            ],
+            "default": "\n</web_search_context>"
+          },
+          "numResults": {
+            "type": "number",
+            "label": "Number of Results",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Maximum number of search results to include in the enhanced prompt"
+              }
+            ],
+            "default": 5
+          },
+          "maxContextChars": {
+            "type": "number",
+            "label": "Maximum Context Characters",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Maximum number of search-result characters added to the model context"
+              }
+            ],
+            "default": 25000
+          },
+          "mode": {
+            "type": "string",
+            "label": "Search Mode",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Parallel search mode used for authenticated requests"
+              }
+            ],
+            "default": "fast"
+          },
+          "includeDomains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "label": "Include Domains",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Limit authenticated search results to these domains"
+              }
+            ]
+          },
+          "excludeDomains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "label": "Exclude Domains",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Remove these domains from authenticated search results"
+              }
+            ]
+          },
+          "timeout": {
+            "type": "number",
+            "label": "Timeout",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Timeout for the Parallel Search MCP call in milliseconds"
+              }
+            ],
+            "default": 10000
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}
