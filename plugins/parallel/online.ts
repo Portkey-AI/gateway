@@ -227,6 +227,17 @@ const insertSearchResults = (
     }
 
     updatedJson.messages = messages;
+  } else if (context.requestType === 'messages') {
+    if (Array.isArray(json.system)) {
+      updatedJson.system = [
+        ...json.system,
+        { type: 'text', text: searchResults },
+      ];
+    } else if (typeof json.system === 'string') {
+      updatedJson.system = json.system + searchResults;
+    } else {
+      updatedJson.system = searchResults;
+    }
   } else {
     updatedJson.prompt = searchResults + updatedJson.prompt;
   }
@@ -259,7 +270,8 @@ export const handler: PluginHandler = async (
     if (
       eventType !== 'beforeRequestHook' ||
       (context.requestType !== 'complete' &&
-        context.requestType !== 'chatComplete')
+        context.requestType !== 'chatComplete' &&
+        context.requestType !== 'messages')
     ) {
       return {
         error: null,

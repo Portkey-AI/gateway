@@ -127,6 +127,62 @@ describe('parallel online handler', () => {
     );
   });
 
+  it('grounds Anthropic Messages API requests used by Claude Code', async () => {
+    const context: PluginContext = {
+      request: {
+        json: {
+          model: 'claude-sonnet-4-20250514',
+          system: [
+            {
+              type: 'text',
+              text: 'You are Claude Code.',
+              cache_control: { type: 'ephemeral' },
+            },
+          ],
+          messages: [
+            {
+              role: 'user',
+              content: [{ type: 'text', text: 'What happened today?' }],
+            },
+          ],
+        },
+      },
+      requestType: 'messages',
+    };
+
+    const result = await handler(context, {}, 'beforeRequestHook');
+    const system = result.transformedData.request.json.system;
+
+    expect(result.transformed).toBe(true);
+    expect(system[0]).toEqual(context.request.json.system[0]);
+    expect(system[1]).toEqual(
+      expect.objectContaining({
+        type: 'text',
+        text: expect.stringContaining('<web_search_context>'),
+      })
+    );
+    expect(result.data.sources[0].url).toBe('https://example.com/news');
+  });
+
+  it('adds grounding to Messages API requests without a system prompt', async () => {
+    const context: PluginContext = {
+      request: {
+        json: {
+          model: 'claude-sonnet-4-20250514',
+          messages: [{ role: 'user', content: 'What happened today?' }],
+        },
+      },
+      requestType: 'messages',
+    };
+
+    const result = await handler(context, {}, 'beforeRequestHook');
+
+    expect(result.transformed).toBe(true);
+    expect(result.transformedData.request.json.system).toContain(
+      '<web_search_context>'
+    );
+  });
+
   it('supports anonymous searches without credentials', async () => {
     await handler(chatContext(), {}, 'beforeRequestHook');
 
