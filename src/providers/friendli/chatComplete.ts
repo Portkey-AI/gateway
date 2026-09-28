@@ -13,7 +13,6 @@ export const FriendliChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
     required: true,
-    default: 'zai-org/GLM-5.2',
   },
   messages: {
     param: 'messages',
@@ -27,11 +26,12 @@ export const FriendliChatCompleteConfig: ProviderConfig = {
   },
   max_tokens: {
     param: 'max_tokens',
-    default: 100,
+    default: null,
     min: 0,
   },
   max_completion_tokens: {
-    param: 'max_completion_tokens',
+    param: 'max_tokens',
+    default: null,
     min: 0,
   },
   temperature: {
@@ -105,6 +105,15 @@ export const FriendliChatCompleteConfig: ProviderConfig = {
   },
   include_reasoning: {
     param: 'include_reasoning',
+    default: true,
+  },
+  reasoning_effort: {
+    param: 'reasoning_effort',
+    default: null,
+  },
+  reasoning_budget: {
+    param: 'reasoning_budget',
+    default: null,
   },
 };
 
@@ -245,6 +254,11 @@ export const FriendliChatCompleteStreamChunkTransform: (
     }
   }
 
+  const delta = { ...parsedChunk.choices?.[0]?.delta };
+  if (strictOpenAiCompliance) {
+    delete delta.reasoning_content;
+  }
+
   return (
     `data: ${JSON.stringify({
       id: parsedChunk.id || fallbackId,
@@ -256,7 +270,7 @@ export const FriendliChatCompleteStreamChunkTransform: (
         {
           index: parsedChunk.choices?.[0]?.index ?? 0,
           delta: {
-            ...parsedChunk.choices?.[0]?.delta,
+            ...delta,
             ...(content_blocks.length && { content_blocks }),
           },
           finish_reason: parsedChunk.choices?.[0]?.finish_reason ?? null,

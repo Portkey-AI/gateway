@@ -451,6 +451,7 @@ export interface Params {
   tools?: Tool[];
   tool_choice?: ToolChoice;
   reasoning_effort?: 'none' | 'minimal' | 'low' | 'medium' | 'high' | string;
+  reasoning_budget?: number;
   response_format?: {
     type: 'json_object' | 'text' | 'json_schema';
     json_schema?: any;
