@@ -486,7 +486,7 @@ export const GoogleChatCompleteResponseTransform: (
     }, 0);
 
     return {
-      id: 'portkey-' + crypto.randomUUID(),
+      id: crypto.randomUUID().replace(/-/g, ''),
       object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
       model: response.modelVersion,
@@ -500,7 +500,7 @@ export const GoogleChatCompleteResponseTransform: (
           for (const part of generation.content?.parts ?? []) {
             if (part.functionCall) {
               toolCalls.push({
-                id: 'portkey-' + crypto.randomUUID(),
+                id: crypto.randomUUID().replace(/-/g, ''),
                 type: 'function',
                 function: {
                   name: part.functionCall.name,
@@ -739,7 +739,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
               if (part.functionCall) {
                 return {
                   index: idx,
-                  id: 'portkey-' + crypto.randomUUID(),
+                  id: crypto.randomUUID().replace(/-/g, ''),
                   type: 'function',
                   function: {
                     name: part.functionCall.name,
