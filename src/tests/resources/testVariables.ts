@@ -142,6 +142,10 @@ const testVariables: TestVariables = {
       model: 'Qwen/Qwen2.5-Coder-3B-Instruct',
     },
   },
+  friendli: {
+    apiKey: process.env.FRIENDLI_API_KEY,
+    chatCompletions: { model: 'zai-org/GLM-5.2' },
+  },
 };
 
 export default testVariables;
