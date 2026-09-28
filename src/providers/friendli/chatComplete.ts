@@ -183,10 +183,16 @@ export const FriendliChatCompleteResponseTransform: (
       provider: FRIENDLI,
       choices: response.choices.map((c) => {
         const content_blocks = [];
-        if (!strictOpenAiCompliance && c.message.reasoning_content) {
+        if (!strictOpenAiCompliance) {
+          if (c.message.reasoning_content) {
+            content_blocks.push({
+              type: 'thinking',
+              thinking: c.message.reasoning_content,
+            });
+          }
           content_blocks.push({
-            type: 'thinking',
-            thinking: c.message.reasoning_content,
+            type: 'text',
+            text: c.message.content,
           });
         }
         return {

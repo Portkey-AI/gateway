@@ -177,6 +177,9 @@ export interface Options {
 
   /** Model pricing config */
   modelPricingConfig?: Record<string, any>;
+
+  /** Friendli specific fields */
+  friendliTeam?: string;
 }
 
 /**
