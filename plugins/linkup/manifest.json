@@ -1,0 +1,118 @@
+{
+  "id": "linkup",
+  "description": "Linkup integration for enhancing AI responses with real-time web search information",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "Your Linkup API key (https://app.linkup.so)",
+        "encrypted": true
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Online Search",
+      "id": "online",
+      "supportedHooks": ["beforeRequestHook"],
+      "type": "transformer",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Enhances prompts with relevant web search results from Linkup's search API before processing the request"
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prefix": {
+            "type": "string",
+            "label": "Context Prefix",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "String to prepend to the search context"
+              }
+            ],
+            "default": "\n<web_search_context>"
+          },
+          "suffix": {
+            "type": "string",
+            "label": "Context Suffix",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "String to append to the search context"
+              }
+            ],
+            "default": "\n</web_search_context>"
+          },
+          "maxResults": {
+            "type": "number",
+            "label": "Maximum Results",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Maximum number of search results to include in the enhanced prompt"
+              }
+            ],
+            "default": 5
+          },
+          "depth": {
+            "type": "string",
+            "enum": ["fast", "standard", "deep"],
+            "label": "Search Depth",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Use 'standard' for most queries and 'deep' for complex questions. 'deep' is slower, so increase the timeout when using it"
+              }
+            ],
+            "default": "standard"
+          },
+          "includeDomains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "label": "Include Domains",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Limit search results to these domains (e.g., ['nytimes.com', 'bbc.com'])"
+              }
+            ]
+          },
+          "excludeDomains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "label": "Exclude Domains",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Remove these domains from search results (e.g., ['wikipedia.org', 'reddit.com'])"
+              }
+            ]
+          },
+          "timeout": {
+            "type": "number",
+            "label": "Timeout",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Timeout for the Linkup API call in milliseconds"
+              }
+            ],
+            "default": 10000
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}
