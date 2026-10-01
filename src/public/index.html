@@ -1182,6 +1182,7 @@
             <option value="perplexity-ai">Perplexity AI</option>
             <option value="mistral-ai">Mistral AI</option>
             <option value="bytez">Bytez</option>
+            <option value="tokenlab">TokenLab</option>
             <option value="others">Others</option>
           </select>
         </div>
@@ -1533,6 +1534,7 @@
         "perplexity-ai": "pplx-7b-online",
         "mistral-ai": "mistral-small-latest",
         "bytez": "google/gemma-3-1b-it",
+        "tokenlab": "gpt-5.4-mini",
         "others": "gpt-4o-mini"
       }
 
@@ -1546,6 +1548,7 @@
         "together-ai": "https://portkey.ai/docs/integrations/llms/together-ai",
         "perplexity-ai": "https://portkey.ai/docs/integrations/llms/perplexity-ai",
         "mistral-ai": "https://portkey.ai/docs/integrations/llms/mistral-ai",
+        "tokenlab": "https://tokenlab.sh/docs",
         "others": "https://portkey.ai/docs/integrations/llms"
       }
 
@@ -1879,6 +1882,7 @@
             case 'openai':
             case 'anthropic':
             case 'groq':
+            case 'tokenlab':
                 return [{ id: 'apiKey', placeholder: 'Enter your API key' }];
             case 'azure-openai':
                 return [
