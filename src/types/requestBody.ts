@@ -480,7 +480,7 @@ export interface Params {
   anthropic_version?: string;
   thinking?: {
     type?: string;
-    budget_tokens: number;
+    budget_tokens?: number;
   };
   // Embeddings specific
   dimensions?: number;

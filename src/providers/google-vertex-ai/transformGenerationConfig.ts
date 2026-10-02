@@ -5,6 +5,114 @@ import {
 import { GoogleEmbedParams } from './embed';
 import { EmbedInstancesData, PortkeyGeminiParams } from './types';
 
+const REASONING_EFFORT_TO_THINKING_BUDGET: Record<string, number> = {
+  minimal: 1024,
+  low: 1024,
+  medium: 8192,
+  high: 24576,
+};
+
+function normalizeGeminiModelName(model?: string): string {
+  if (!model) return '';
+  return model
+    .toLowerCase()
+    .split('/')
+    .pop()!
+    .replace(/^(?:google\.)?(?:[a-z]{2,}\.)?(?=(?:gemini|gemma)-)/, '');
+}
+
+function isGemini3OrNewerModel(model?: string): boolean {
+  const name = normalizeGeminiModelName(model);
+  if (!name.startsWith('gemini-')) return false;
+  if (/^gemini-(?:flash|flash-lite|pro)-latest$/.test(name)) return true;
+  return (
+    !/^gemini-[12](?:[.-]|$)/.test(name) &&
+    !/^gemini-pro(?:-vision)?$/.test(name)
+  );
+}
+
+function isGeminiProModel(model?: string): boolean {
+  const name = normalizeGeminiModelName(model);
+  return /^gemini-(?:\d+(?:\.\d+)?-)?pro(?:$|-)/.test(name);
+}
+
+function getMinimumGemini3ThinkingLevel(model?: string): 'minimal' | 'low' {
+  if (isGeminiProModel(model)) return 'low';
+  const name = normalizeGeminiModelName(model);
+  if (name === 'gemini-flash-latest') return 'low';
+  const match = /^gemini-(\d+)\.(\d+)-flash(?:$|-(?!lite(?:-|$)))/.exec(name);
+  if (match) {
+    const major = Number(match[1]);
+    const minor = Number(match[2]);
+    if (major > 3 || (major === 3 && minor >= 7)) return 'low';
+  }
+  return 'minimal';
+}
+
+export function buildGeminiThinkingConfig(
+  params: PortkeyGeminiParams
+): Record<string, any> | undefined {
+  const model = params?.model;
+  const isGemini3 = model
+    ? isGemini3OrNewerModel(model)
+    : Boolean(params?.reasoning_effort);
+  const isPro = isGeminiProModel(model);
+
+  if (params?.reasoning_effort) {
+    const effort = params.reasoning_effort.toLowerCase();
+    if (isGemini3) {
+      const minLevel = getMinimumGemini3ThinkingLevel(model);
+      if (effort === 'none' || effort === 'disable' || effort === 'disabled') {
+        return { includeThoughts: false, thinkingLevel: minLevel };
+      }
+      if (effort === 'minimal' || effort === 'low') {
+        return {
+          includeThoughts: true,
+          thinkingLevel: effort === 'minimal' ? minLevel : 'low',
+        };
+      }
+      if (effort === 'medium' || effort === 'high') {
+        return { includeThoughts: true, thinkingLevel: effort };
+      }
+    } else {
+      if (effort === 'none' || effort === 'disable' || effort === 'disabled') {
+        return {
+          includeThoughts: false,
+          thinkingBudget: isPro ? 128 : 0,
+        };
+      }
+      const budget = REASONING_EFFORT_TO_THINKING_BUDGET[effort];
+      if (budget !== undefined) {
+        return { includeThoughts: true, thinkingBudget: budget };
+      }
+    }
+  }
+
+  if (params?.thinking) {
+    const { budget_tokens, type } = params.thinking;
+    const isDisabled = type === 'disabled' || budget_tokens === 0;
+    if (isGemini3) {
+      const minLevel = getMinimumGemini3ThinkingLevel(model);
+      if (isDisabled) {
+        return { includeThoughts: false, thinkingLevel: minLevel };
+      }
+      const level =
+        budget_tokens && budget_tokens >= 16384
+          ? 'high'
+          : budget_tokens && budget_tokens >= 4096
+            ? 'medium'
+            : 'low';
+      return { includeThoughts: type === 'enabled', thinkingLevel: level };
+    }
+    return {
+      includeThoughts: type === 'enabled' && Boolean(budget_tokens),
+      thinkingBudget: isDisabled ? (isPro ? 128 : 0) : budget_tokens,
+    };
+  }
+
+  return undefined;
+}
+
 /**
  * @see https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/gemini#request_body
  */
@@ -52,23 +160,14 @@ export function transformGenerationConfig(params: PortkeyGeminiParams) {
     generationConfig['responseSchema'] = transformGeminiToolParameters(schema);
   }
 
-  if (params?.thinking) {
-    const { budget_tokens, type } = params.thinking;
-    const thinkingConfig: Record<string, any> = {};
-    thinkingConfig['include_thoughts'] =
-      type === 'enabled' && budget_tokens ? true : false;
-    thinkingConfig['thinking_budget'] = budget_tokens;
-    generationConfig['thinking_config'] = thinkingConfig;
+  const thinkingConfig = buildGeminiThinkingConfig(params);
+  if (thinkingConfig) {
+    generationConfig['thinkingConfig'] = thinkingConfig;
   }
   if (params.modalities) {
     generationConfig['responseModalities'] = params.modalities.map((modality) =>
       modality.toUpperCase()
     );
-  }
-  if (params.reasoning_effort && params.reasoning_effort !== 'none') {
-    generationConfig['thinkingConfig'] = {
-      thinkingLevel: params.reasoning_effort,
-    };
   }
   if (params.image_config) {
     generationConfig['imageConfig'] = {
