@@ -8448,7 +8448,7 @@
       "provider": {
         "id": "openrouter"
       },
-      "name": "Dolphin 2.9.2 Mixtral 8x22B \ud83d\udc2c"
+      "name": "Dolphin 2.9.2 Mixtral 8x22B 🐬"
     },
     {
       "id": "cognitivecomputations/dolphin-mixtral-8x7b",
@@ -8456,7 +8456,7 @@
       "provider": {
         "id": "openrouter"
       },
-      "name": "Dolphin 2.6 Mixtral 8x7B \ud83d\udc2c"
+      "name": "Dolphin 2.6 Mixtral 8x7B 🐬"
     },
     {
       "id": "cohere/command",
@@ -15425,6 +15425,246 @@
         "id": "openai"
       },
       "name": "Text Embedding Ada 002"
+    },
+    {
+      "id": "bge-m3",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "BGE-M3"
+    },
+    {
+      "id": "DeepSeek-V4.1-Flash",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "DeepSeek V4.1 Flash"
+    },
+    {
+      "id": "DeepSeek-V4-Flash-0731",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "DeepSeek V4 Flash 0731"
+    },
+    {
+      "id": "gemma-4-26B-A4B-it",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "Gemma 4 26B A4B"
+    },
+    {
+      "id": "GLM-4.5-Air-FP8",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "GLM 4.5 Air FP8"
+    },
+    {
+      "id": "GLM-5.2",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "GLM 5.2"
+    },
+    {
+      "id": "GLM-5.3-Flash",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "GLM 5.3 Flash"
+    },
+    {
+      "id": "gpt-oss-120b",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "GPT-OSS 120B"
+    },
+    {
+      "id": "gpt-oss-20b",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "GPT-OSS 20B"
+    },
+    {
+      "id": "Kokoro-82M",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "Kokoro-82M"
+    },
+    {
+      "id": "Meta-Llama-3.1-8B-Instruct-FP8",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "Llama 3.1 8B Instruct"
+    },
+    {
+      "id": "Llama-3.3-70B-Instruct-FP8",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "Llama 3.3 70B Instruct"
+    },
+    {
+      "id": "MiniMax-M2.7",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "MiniMax M2.7"
+    },
+    {
+      "id": "Mistral-Nemo-Instruct-2407-FP8",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "Mistral Nemo 12B"
+    },
+    {
+      "id": "Muse-Glimmer-30B",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "Muse Glimmer 30B"
+    },
+    {
+      "id": "NVIDIA-Nemotron-3.5-Lightning-30B-A3B",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "Nemotron 3.5 Lightning 30B A3B"
+    },
+    {
+      "id": "PaddleOCR-VL",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "PaddleOCR-VL 0.9B"
+    },
+    {
+      "id": "parakeet-tdt-0.6b-v3",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "Parakeet TDT 0.6B v3"
+    },
+    {
+      "id": "Qwen3.5-9B",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "Qwen3.5 9B"
+    },
+    {
+      "id": "Qwen3.6-27B-FP8",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "Qwen3.6-27B"
+    },
+    {
+      "id": "Qwen3.8-27B",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "Qwen3.8 27B"
+    },
+    {
+      "id": "Qwen3-8B-FP8",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "Qwen 3 8B"
+    },
+    {
+      "id": "Qwen3.8-Flash-Next",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "Qwen3.8 Flash Next"
+    },
+    {
+      "id": "Step-3.7-Flash",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "Step 3.7 Flash"
+    },
+    {
+      "id": "gemma-4-31b-it",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "Gemma 4 31B IT"
+    },
+    {
+      "id": "Qwen3-Coder-30B-A3B-Instruct-FP8",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "Qwen3 Coder 30B A3B"
+    },
+    {
+      "id": "Qwen3.6-35B-A3B-FP8",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "Qwen3.6-35B-A3B"
+    },
+    {
+      "id": "Qwen3-30B-A3B-Thinking-2507-FP8",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "Qwen 3 30B Thinking"
+    },
+    {
+      "id": "FLUX.1-schnell",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "FLUX.1 Schnell"
+    },
+    {
+      "id": "whisper-large-v3-turbo",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "Whisper Large V3 Turbo"
     }
   ]
 }
