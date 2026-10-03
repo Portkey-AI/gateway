@@ -66,6 +66,7 @@ import AI302Config from './302ai';
 import MeshyConfig from './meshy';
 import Tripo3DConfig from './tripo3d';
 import { NextBitConfig } from './nextbit';
+import { AtlasCloudConfig } from './atlascloud';
 import CometAPIConfig from './cometapi';
 import ZAIConfig from './z-ai';
 import MatterAIConfig from './matterai';
@@ -141,6 +142,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   matterai: MatterAIConfig,
   meshy: MeshyConfig,
   nextbit: NextBitConfig,
+  atlascloud: AtlasCloudConfig,
   tripo3d: Tripo3DConfig,
   modal: ModalConfig,
   'z-ai': ZAIConfig,

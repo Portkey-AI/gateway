@@ -206,6 +206,13 @@
       "base_url": "https://api.cometapi.com/v1"
     },
     {
+      "id": "atlascloud",
+      "name": "Atlas Cloud",
+      "object": "provider",
+      "description": "Atlas Cloud is an AI API aggregation platform that serves open-weight models from DeepSeek, Qwen, Z.ai, MoonshotAI and others through a single OpenAI-compatible endpoint, with one API key and one billing account.",
+      "base_url": "https://api.atlascloud.ai/v1"
+    },
+    {
       "id": "openrouter",
       "name": "OpenRouter",
       "object": "provider",
