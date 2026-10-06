@@ -8448,7 +8448,7 @@
       "provider": {
         "id": "openrouter"
       },
-      "name": "Dolphin 2.9.2 Mixtral 8x22B 🐬"
+      "name": "Dolphin 2.9.2 Mixtral 8x22B \ud83d\udc2c"
     },
     {
       "id": "cognitivecomputations/dolphin-mixtral-8x7b",
@@ -8456,7 +8456,7 @@
       "provider": {
         "id": "openrouter"
       },
-      "name": "Dolphin 2.6 Mixtral 8x7B 🐬"
+      "name": "Dolphin 2.6 Mixtral 8x7B \ud83d\udc2c"
     },
     {
       "id": "cohere/command",
