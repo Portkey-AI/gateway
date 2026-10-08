@@ -1,6 +1,17 @@
 import { Options } from '../../../types/requestBody';
 import { BedrockMessagesParams } from '../types';
 
+export const getBedrockMessagesErrorEvent = (message: string) => {
+  const errorEvent = {
+    type: 'error',
+    error: {
+      type: 'api_error',
+      message,
+    },
+  };
+  return `event: error\ndata: ${JSON.stringify(errorEvent)}\n\n`;
+};
+
 export const transformInferenceConfig = (params: BedrockMessagesParams) => {
   const inferenceConfig: Record<string, any> = {};
   if (params['max_tokens']) {
