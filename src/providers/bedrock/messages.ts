@@ -41,6 +41,7 @@ import {
   BedrockStreamState,
 } from './types';
 import {
+  getBedrockMessagesErrorEvent,
   transformAnthropicAdditionalModelRequestFields,
   transformInferenceConfig,
   transformToolsConfig as transformToolConfig,
@@ -551,6 +552,9 @@ export const BedrockConverseMessagesStreamChunkTransform = (
   gatewayRequest: Params
 ) => {
   const parsedChunk: BedrockChatCompleteStreamChunk = JSON.parse(responseChunk);
+  if (parsedChunk.message) {
+    return getBedrockMessagesErrorEvent(parsedChunk.message);
+  }
   if (streamState.currentContentBlockIndex === undefined) {
     streamState.currentContentBlockIndex = -1;
   }
