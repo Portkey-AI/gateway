@@ -1,5 +1,6 @@
 import { BatchEndpoints } from '../globals';
 import { HookObject } from '../middlewares/hooks/types';
+import type { AnthropicOutputConfig } from './MessagesRequest';
 
 /**
  * Settings for retrying requests.
@@ -478,6 +479,7 @@ export interface Params {
   // Anthropic specific
   anthropic_beta?: string;
   anthropic_version?: string;
+  output_config?: AnthropicOutputConfig;
   thinking?: {
     type?: string;
     budget_tokens: number;
