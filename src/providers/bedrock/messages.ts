@@ -26,6 +26,7 @@ import {
   AnthropicMessageDeltaEvent,
   AnthropicMessageStartEvent,
 } from '../anthropic-base/types';
+import { messagesBaseConfig } from '../anthropic-base/messages';
 import { ErrorResponse, ProviderConfig } from '../types';
 import {
   generateInvalidProviderResponseError,
@@ -625,3 +626,78 @@ function getMessageStartEvent(fallbackId: string, gatewayRequest: Params) {
   messageStartEvent.message.model = gatewayRequest.model as string;
   return `event: message_start\ndata: ${JSON.stringify(messageStartEvent)}\n\n`;
 }
+
+// --- InvokeModel-native Anthropic Messages path -----------------------------
+//
+// Claude on Bedrock also accepts Anthropic's own Messages wire format via
+// InvokeModel / InvokeModelWithResponseStream (see
+// https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-anthropic-claude-messages.html).
+// Unlike the Converse-shaped config above, almost no field remapping is
+// needed: the Bedrock InvokeModel body is the Anthropic Messages request
+// body plus a required `anthropic_version`, and the InvokeModel response /
+// stream events are Anthropic's native response / SSE event shapes, not
+// Converse's `output.message` / `contentBlockIndex` shapes. This path is
+// what gives Claude on Bedrock the same empty-message handling and the
+// `ping` keepalive events during long `thinking` streams that Anthropic's
+// own API has, which Converse does not provide.
+
+const BEDROCK_ANTHROPIC_VERSION = 'bedrock-2023-05-31';
+
+// Bedrock InvokeModel does not take `model` in the body - it's part of the
+// request path - and always requires `anthropic_version` instead.
+const { model: _omitModel, ...messagesConfigWithoutModel } = messagesBaseConfig;
+
+export const BedrockAnthropicInvokeMessagesConfig: ProviderConfig = {
+  ...messagesConfigWithoutModel,
+  output_config: {
+    param: 'output_config',
+    required: false,
+  },
+  anthropic_version: {
+    param: 'anthropic_version',
+    required: true,
+    default: BEDROCK_ANTHROPIC_VERSION,
+  },
+  anthropic_beta: {
+    param: 'anthropic_beta',
+    required: false,
+  },
+};
+
+export const BedrockAnthropicInvokeMessagesResponseTransform = (
+  response: MessagesResponse | BedrockErrorResponse,
+  responseStatus: number
+): MessagesResponse | ErrorResponse => {
+  if (responseStatus !== 200) {
+    return (
+      BedrockErrorResponseTransform(response as BedrockErrorResponse) ||
+      generateInvalidProviderResponseError(response, BEDROCK)
+    );
+  }
+
+  if ('type' in response && response.type === 'message') {
+    return response as MessagesResponse;
+  }
+
+  return generateInvalidProviderResponseError(response, BEDROCK);
+};
+
+/**
+ * The AWS event-stream framing is already unwrapped by `readAWSStream`
+ * before this is called, so `responseChunk` is the decoded JSON payload
+ * for one Anthropic native stream event (message_start, content_block_delta,
+ * ping, etc. - see RawMessageStreamEvent). This re-wraps it as an
+ * `event: <type>\ndata: <json>\n\n` SSE frame, same as Anthropic's own API,
+ * instead of re-deriving the event from Converse's different chunk shape.
+ * Crucially, `ping` events are passed through rather than dropped, since
+ * they are what keeps long `thinking` streams from going idle.
+ */
+export const BedrockAnthropicInvokeMessagesStreamChunkTransform = (
+  responseChunk: string
+) => {
+  const parsedChunk: { type?: string } = JSON.parse(responseChunk);
+  if (!parsedChunk?.type) {
+    return undefined;
+  }
+  return `event: ${parsedChunk.type}\ndata: ${responseChunk}\n\n`;
+};

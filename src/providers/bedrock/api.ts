@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 import { Options, Params } from '../../types/requestBody';
 import { endpointStrings, ProviderAPIConfig } from '../types';
-import { bedrockInvokeModels } from './constants';
+import { bedrockInvokeModels, isAnthropicInvokeModel } from './constants';
 import {
   getAwsEndpointDomain,
   generateAWSHeaders,
@@ -207,6 +207,7 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
   },
   getEndpoint: ({
     fn,
+    providerOptions,
     gatewayRequestBodyJSON: gatewayRequestBody,
     gatewayRequestURL,
   }) => {
@@ -248,13 +249,25 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
     }
     let endpoint = `/model/${uriEncodedModel}/invoke`;
     let streamEndpoint = `/model/${uriEncodedModel}/invoke-with-response-stream`;
+    const isMessagesFn =
+      mappedFn === 'messages' || mappedFn === 'stream-messages';
+    const modelForFamilyDetection =
+      providerOptions?.foundationModel || modelWithoutRegion;
+    // The `messages` endpoint is Anthropic's native Messages API surface, so
+    // Claude models stay on InvokeModel there (same request/response shape
+    // as Anthropic's own API, including stream keepalive pings). `chatComplete`
+    // has no native-Anthropic equivalent to fall back to, so it keeps using
+    // Converse for every model except the legacy Cohere/AI21 invoke models.
+    const useInvokeApi =
+      model &&
+      (bedrockInvokeModels.includes(model) ||
+        (isMessagesFn && isAnthropicInvokeModel(modelForFamilyDetection)));
     if (
       (mappedFn === 'chatComplete' ||
         mappedFn === 'stream-chatComplete' ||
-        mappedFn === 'messages' ||
-        mappedFn === 'stream-messages') &&
+        isMessagesFn) &&
       model &&
-      !bedrockInvokeModels.includes(model)
+      !useInvokeApi
     ) {
       endpoint = `/model/${uriEncodedModel}/converse`;
       streamEndpoint = `/model/${uriEncodedModel}/converse-stream`;

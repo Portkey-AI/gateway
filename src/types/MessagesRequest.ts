@@ -709,6 +709,12 @@ export type ToolChoice =
   | ToolChoiceTool
   | ToolChoiceNone;
 
+export interface AnthropicOutputConfig {
+  format?: Record<string, unknown>;
+
+  [key: string]: unknown;
+}
+
 export interface MessageCreateParamsBase {
   /**
    * The maximum number of tokens to generate before stopping.
@@ -724,6 +730,11 @@ export interface MessageCreateParamsBase {
    * The model that will complete your prompt.\n\nSee
    */
   model: string;
+
+  /**
+   * Configuration for structured output.
+   */
+  output_config?: AnthropicOutputConfig;
 
   /**
    * An object describing metadata about the request.

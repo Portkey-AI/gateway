@@ -76,6 +76,9 @@ import { BedrockListFilesResponseTransform } from './listfiles';
 import { BedrockDeleteFileResponseTransform } from './deleteFile';
 import {
   AnthropicBedrockConverseMessagesConfig as BedrockAnthropicConverseMessagesConfig,
+  BedrockAnthropicInvokeMessagesConfig,
+  BedrockAnthropicInvokeMessagesResponseTransform,
+  BedrockAnthropicInvokeMessagesStreamChunkTransform,
   BedrockConverseMessagesConfig,
   BedrockConverseMessagesStreamChunkTransform,
   BedrockMessagesResponseTransform,
@@ -86,6 +89,7 @@ import {
   BedrockConverseMessageCountTokensResponseTransform,
 } from './countTokens';
 import { getBedrockModelWithoutRegion } from './utils';
+import { isAnthropicInvokeModel } from './constants';
 
 const BedrockConfig: ProviderConfigs = {
   api: BedrockAPIConfig,
@@ -107,19 +111,28 @@ const BedrockConfig: ProviderConfigs = {
       const provider = providerModelArray?.[0];
       const model = providerModelArray?.slice(1).join('.');
       switch (provider) {
-        case ANTHROPIC:
+        case ANTHROPIC: {
+          const useInvokeMessages = isAnthropicInvokeModel(model);
           config = {
             complete: BedrockAnthropicCompleteConfig,
             chatComplete: BedrockConverseAnthropicChatCompleteConfig,
-            messages: BedrockAnthropicConverseMessagesConfig,
+            messages: useInvokeMessages
+              ? BedrockAnthropicInvokeMessagesConfig
+              : BedrockAnthropicConverseMessagesConfig,
             messagesCountTokens: BedrockAnthropicMessageCountTokensConfig,
             api: BedrockAPIConfig,
             responseTransforms: {
               'stream-complete': BedrockAnthropicCompleteStreamChunkTransform,
               complete: BedrockAnthropicCompleteResponseTransform,
+              ...(useInvokeMessages && {
+                messages: BedrockAnthropicInvokeMessagesResponseTransform,
+                'stream-messages':
+                  BedrockAnthropicInvokeMessagesStreamChunkTransform,
+              }),
             },
           };
           break;
+        }
         case COHERE:
           config = {
             complete: BedrockCohereCompleteConfig,

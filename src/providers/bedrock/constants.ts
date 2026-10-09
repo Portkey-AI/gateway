@@ -10,6 +10,25 @@ export const bedrockInvokeModels = [
   'ai21.j2-ultra-v1',
 ];
 
+/**
+ * Anthropic Claude models called through the Bedrock `messages` /
+ * `stream-messages` endpoints are routed to InvokeModel (Anthropic's
+ * native Messages wire format) instead of Converse. Converse has no
+ * keepalive/ping events on long-running streams, rejects some empty
+ * assistant message shapes that Anthropic's own API accepts, and drops
+ * Anthropic-only tools (computer use, server-side web search) silently
+ * during translation.
+ *
+ * Matches the model id regardless of whether a Bedrock cross-region
+ * prefix (`us.`, `global.`, etc.) and/or the `anthropic.` provider
+ * prefix are still present, since callers resolve this at different
+ * points relative to `getBedrockModelWithoutRegion`.
+ */
+export const isAnthropicInvokeModel = (model?: string): boolean => {
+  if (!model) return false;
+  return /^(anthropic\.)?claude-/.test(model);
+};
+
 export const LLAMA_2_SPECIAL_TOKENS = {
   BEGINNING_OF_SENTENCE: '<s>',
   END_OF_SENTENCE: '</s>',
