@@ -239,6 +239,20 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
           let parts = [];
 
           if (message.role === 'assistant' && message.tool_calls) {
+            // Keep assistant text that accompanies tool_calls (OpenAI allows both).
+            if (typeof message.content === 'string' && message.content) {
+              parts.push({
+                text: message.content,
+              });
+            } else if (message.content && typeof message.content === 'object') {
+              message.content.forEach((c: ContentType) => {
+                if (c.type === 'text' && c.text) {
+                  parts.push({
+                    text: c.text,
+                  });
+                }
+              });
+            }
             message.tool_calls.forEach((tool_call: ToolCall) => {
               parts.push({
                 functionCall: {
@@ -335,40 +349,26 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
         if (SYSTEM_INSTRUCTION_DISABLED_MODELS.includes(params.model as string))
           return;
 
-        const firstMessage = params.messages?.[0] || null;
-
-        if (!firstMessage) return;
-
-        if (
-          SYSTEM_MESSAGE_ROLES.includes(firstMessage.role) &&
-          typeof firstMessage.content === 'string'
-        ) {
-          return {
-            parts: [
-              {
-                text: firstMessage.content,
-              },
-            ],
-            role: 'system',
-          };
+        // Collect every system/developer message, not only messages[0].
+        // Mid-conversation system messages were previously dropped silently (#1838).
+        const parts: { text: string }[] = [];
+        for (const message of params.messages || []) {
+          if (!SYSTEM_MESSAGE_ROLES.includes(message.role)) continue;
+          if (typeof message.content === 'string' && message.content) {
+            parts.push({ text: message.content });
+          } else if (message.content && typeof message.content === 'object') {
+            for (const c of message.content) {
+              if (c.type === 'text' && c.text) {
+                parts.push({ text: c.text });
+              }
+            }
+          }
         }
-
-        if (
-          SYSTEM_MESSAGE_ROLES.includes(firstMessage.role) &&
-          typeof firstMessage.content === 'object' &&
-          firstMessage.content?.[0]?.text
-        ) {
-          return {
-            parts: [
-              {
-                text: firstMessage.content?.[0].text,
-              },
-            ],
-            role: 'system',
-          };
-        }
-
-        return;
+        if (!parts.length) return;
+        return {
+          parts,
+          role: 'system',
+        };
       },
     },
   ],
