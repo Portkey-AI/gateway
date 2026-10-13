@@ -1,0 +1,62 @@
+{
+  "id": "wingback",
+  "name": "Wingback",
+  "description": "Wingback AI security — PII, secrets, prompt injection, and policy enforcement for LLM traffic",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "Integration API key",
+        "description": "Create a Portkey integration under Wingback → AI Runtime → Gateway → External Gateways and copy the integration API key.",
+        "encrypted": true
+      },
+      "baseUrl": {
+        "type": "string",
+        "label": "Wingback API base URL",
+        "description": "Production: https://api.wingback.ai. PoC: https://api.wingback.io. Omit to use production."
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Wingback security scan",
+      "id": "scan",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Scan LLM inputs and outputs with Wingback realtime detection. Monitor/enforce mode and protection policies are configured in the Wingback console."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "timeout": {
+            "type": "number",
+            "label": "Detection timeout (ms)",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Outbound timeout for the Wingback scan call. Default 2500ms. Keep the Portkey hook timeout at 3000ms or higher."
+              }
+            ],
+            "default": 2500
+          },
+          "metadata": {
+            "type": "object",
+            "label": "Extra metadata",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Optional key/value metadata merged into the scan (for example wingback_agent_id for agent containment)."
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
