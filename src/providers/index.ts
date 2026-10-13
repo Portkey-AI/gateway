@@ -1,3 +1,4 @@
+import { v1mProviderAPIConfig } from './v1m';
 import BytezConfig from './bytez';
 import AI21Config from './ai21';
 import AnthropicConfig from './anthropic';
@@ -148,6 +149,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   iointelligence: IOIntelligenceConfig,
   aibadgr: AIBadgrConfig,
   ovhcloud: OVHcloudConfig,
+  v1m: v1mProviderAPIConfig,
 };
 
 export default Providers;
