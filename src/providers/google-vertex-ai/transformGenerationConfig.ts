@@ -96,6 +96,9 @@ export function buildGeminiThinkingConfig(
       if (isDisabled) {
         return { includeThoughts: false, thinkingLevel: minLevel };
       }
+      if (budget_tokens !== undefined && budget_tokens < 0) {
+        return { includeThoughts: type === 'enabled' };
+      }
       const level =
         budget_tokens && budget_tokens >= 16384
           ? 'high'
