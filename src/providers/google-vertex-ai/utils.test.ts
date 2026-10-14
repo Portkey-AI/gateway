@@ -725,6 +725,16 @@ describe('transformGenerationConfig thinkingConfig & reasoning_effort routing', 
       thinking: { type: 'disabled' },
       expected: { includeThoughts: false, thinkingBudget: 128 },
     },
+    {
+      model: 'gemini-3.5-pro',
+      thinking: { type: 'enabled', budget_tokens: -1 },
+      expected: { includeThoughts: true },
+    },
+    {
+      model: 'gemini-2.5-pro',
+      thinking: { type: 'enabled', budget_tokens: -1 },
+      expected: { includeThoughts: true, thinkingBudget: -1 },
+    },
   ])(
     'maps thinking=$thinking on $model to $expected',
     ({ model, thinking, expected }) => {
