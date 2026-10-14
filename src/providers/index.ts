@@ -1,3 +1,4 @@
+import { subqProviderAPIConfig } from './subq';
 import BytezConfig from './bytez';
 import AI21Config from './ai21';
 import AnthropicConfig from './anthropic';
@@ -148,6 +149,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   iointelligence: IOIntelligenceConfig,
   aibadgr: AIBadgrConfig,
   ovhcloud: OVHcloudConfig,
+  subq: subqProviderAPIConfig,
 };
 
 export default Providers;
