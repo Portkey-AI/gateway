@@ -616,3 +616,221 @@ describe('transformGeminiToolParameters', () => {
     ]);
   });
 });
+
+import { transformGenerationConfig as transformVertexGenerationConfig } from './transformGenerationConfig';
+import {
+  transformGenerationConfig as transformGoogleGenerationConfig,
+  GoogleChatCompleteStreamChunkTransform as GoogleStudioStreamChunkTransform,
+  GoogleChatCompleteResponseTransform as GoogleStudioResponseTransform,
+} from '../google/chatComplete';
+import {
+  GoogleChatCompleteStreamChunkTransform as VertexStreamChunkTransform,
+  GoogleChatCompleteResponseTransform as VertexResponseTransform,
+} from './chatComplete';
+
+describe('transformGenerationConfig thinkingConfig & reasoning_effort routing', () => {
+  it.each([
+    {
+      model: 'gemini-3.5-flash',
+      reasoning_effort: 'none',
+      expected: { includeThoughts: false, thinkingLevel: 'minimal' },
+    },
+    {
+      model: 'au.gemini-3.5-flash',
+      reasoning_effort: 'none',
+      expected: { includeThoughts: false, thinkingLevel: 'minimal' },
+    },
+    {
+      model: 'eu.gemini-3.5-flash',
+      reasoning_effort: 'minimal',
+      expected: { includeThoughts: true, thinkingLevel: 'minimal' },
+    },
+    {
+      model: 'gemini-3.5-pro',
+      reasoning_effort: 'none',
+      expected: { includeThoughts: false, thinkingLevel: 'low' },
+    },
+    {
+      model: 'gemini-3.5-pro',
+      reasoning_effort: 'minimal',
+      expected: { includeThoughts: true, thinkingLevel: 'low' },
+    },
+    {
+      model: 'gemini-3.1-pro',
+      reasoning_effort: 'minimal',
+      expected: { includeThoughts: true, thinkingLevel: 'low' },
+    },
+    {
+      model: 'us.gemini-3.1-pro',
+      reasoning_effort: 'none',
+      expected: { includeThoughts: false, thinkingLevel: 'low' },
+    },
+    {
+      model: 'gemini-3.5-pro',
+      reasoning_effort: 'high',
+      expected: { includeThoughts: true, thinkingLevel: 'high' },
+    },
+    {
+      model: 'gemini-2.5-flash',
+      reasoning_effort: 'none',
+      expected: { includeThoughts: false, thinkingBudget: 0 },
+    },
+    {
+      model: 'gemini-2.5-pro',
+      reasoning_effort: 'none',
+      expected: { includeThoughts: false, thinkingBudget: 128 },
+    },
+    {
+      model: 'gemini-2.5-flash',
+      reasoning_effort: 'medium',
+      expected: { includeThoughts: true, thinkingBudget: 8192 },
+    },
+  ])(
+    'maps reasoning_effort="$reasoning_effort" on $model to $expected',
+    ({ model, reasoning_effort, expected }) => {
+      expect(
+        transformVertexGenerationConfig({ model, reasoning_effort })
+          .thinkingConfig
+      ).toEqual(expected);
+      expect(
+        transformGoogleGenerationConfig({ model, reasoning_effort })
+          .thinkingConfig
+      ).toEqual(expected);
+    }
+  );
+
+  it.each([
+    {
+      model: 'gemini-3.5-flash',
+      thinking: { type: 'disabled' },
+      expected: { includeThoughts: false, thinkingLevel: 'minimal' },
+    },
+    {
+      model: 'au.gemini-3.5-flash',
+      thinking: { type: 'disabled', budget_tokens: 0 },
+      expected: { includeThoughts: false, thinkingLevel: 'minimal' },
+    },
+    {
+      model: 'gemini-3.5-pro',
+      thinking: { type: 'disabled' },
+      expected: { includeThoughts: false, thinkingLevel: 'low' },
+    },
+    {
+      model: 'gemini-2.5-flash',
+      thinking: { type: 'disabled' },
+      expected: { includeThoughts: false, thinkingBudget: 0 },
+    },
+    {
+      model: 'gemini-2.5-pro',
+      thinking: { type: 'disabled' },
+      expected: { includeThoughts: false, thinkingBudget: 128 },
+    },
+    {
+      model: 'gemini-3.5-pro',
+      thinking: { type: 'enabled', budget_tokens: -1 },
+      expected: { includeThoughts: true },
+    },
+    {
+      model: 'gemini-2.5-pro',
+      thinking: { type: 'enabled', budget_tokens: -1 },
+      expected: { includeThoughts: true, thinkingBudget: -1 },
+    },
+  ])(
+    'maps thinking=$thinking on $model to $expected',
+    ({ model, thinking, expected }) => {
+      expect(
+        transformVertexGenerationConfig({ model, thinking }).thinkingConfig
+      ).toEqual(expected);
+      expect(
+        transformGoogleGenerationConfig({ model, thinking }).thinkingConfig
+      ).toEqual(expected);
+    }
+  );
+});
+
+describe('Gemini streaming and non-streaming usageMetadata', () => {
+  it('emits usage on streaming chunks when candidatesTokenCount is 0 or omitted and includes thoughtsTokenCount in completion_tokens', () => {
+    const rawChunk = `data: ${JSON.stringify({
+      modelVersion: 'gemini-3.5-flash',
+      candidates: [{ content: { role: 'model' }, finishReason: 'MAX_TOKENS' }],
+      usageMetadata: {
+        promptTokenCount: 200,
+        thoughtsTokenCount: 512,
+        cachedContentTokenCount: 150,
+        totalTokenCount: 712,
+      },
+    })}\n\n`;
+
+    const vertexOut = VertexStreamChunkTransform(rawChunk, 'id-1', {}, true);
+    const vertexParsed = JSON.parse(vertexOut.replace(/^data: /, '').trim());
+    expect(vertexParsed.usage).toEqual({
+      prompt_tokens: 200,
+      completion_tokens: 512,
+      total_tokens: 712,
+      completion_tokens_details: {
+        reasoning_tokens: 512,
+        audio_tokens: undefined,
+      },
+      prompt_tokens_details: {
+        cached_tokens: 150,
+        audio_tokens: undefined,
+      },
+    });
+
+    const studioOut = GoogleStudioStreamChunkTransform(
+      rawChunk,
+      'id-1',
+      {},
+      true
+    );
+    const studioParsed = JSON.parse(studioOut.replace(/^data: /, '').trim());
+    expect(studioParsed.usage).toEqual(vertexParsed.usage);
+  });
+
+  it('includes thoughtsTokenCount in completion_tokens for non-streaming responses', () => {
+    const response: any = {
+      modelVersion: 'gemini-3.5-flash',
+      candidates: [
+        {
+          content: {
+            role: 'model',
+            parts: [{ text: 'hello' }],
+          },
+          finishReason: 'STOP',
+          index: 0,
+        },
+      ],
+      usageMetadata: {
+        promptTokenCount: 100,
+        candidatesTokenCount: 50,
+        thoughtsTokenCount: 300,
+        cachedContentTokenCount: 40,
+        totalTokenCount: 450,
+      },
+    };
+
+    const vertexRes: any = VertexResponseTransform(
+      response,
+      200,
+      new Headers(),
+      true
+    );
+    expect(vertexRes.usage.completion_tokens).toBe(350);
+    expect(vertexRes.usage.completion_tokens_details.reasoning_tokens).toBe(
+      300
+    );
+    expect(vertexRes.usage.prompt_tokens_details.cached_tokens).toBe(40);
+
+    const studioRes: any = GoogleStudioResponseTransform(
+      response,
+      200,
+      new Headers(),
+      true
+    );
+    expect(studioRes.usage.completion_tokens).toBe(350);
+    expect(studioRes.usage.completion_tokens_details.reasoning_tokens).toBe(
+      300
+    );
+    expect(studioRes.usage.prompt_tokens_details.cached_tokens).toBe(40);
+  });
+});

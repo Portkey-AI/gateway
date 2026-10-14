@@ -562,7 +562,7 @@ export const GoogleChatCompleteResponseTransform: (
         }) ?? [],
       usage: {
         prompt_tokens: promptTokenCount,
-        completion_tokens: candidatesTokenCount,
+        completion_tokens: candidatesTokenCount + thoughtsTokenCount,
         total_tokens: totalTokenCount,
         completion_tokens_details: {
           reasoning_tokens: thoughtsTokenCount,
@@ -663,9 +663,11 @@ export const GoogleChatCompleteStreamChunkTransform: (
   let usageMetadata;
   if (parsedChunk.usageMetadata) {
     usageMetadata = {
-      prompt_tokens: parsedChunk.usageMetadata.promptTokenCount,
-      completion_tokens: parsedChunk.usageMetadata.candidatesTokenCount,
-      total_tokens: parsedChunk.usageMetadata.totalTokenCount,
+      prompt_tokens: parsedChunk.usageMetadata.promptTokenCount ?? 0,
+      completion_tokens:
+        (parsedChunk.usageMetadata.candidatesTokenCount ?? 0) +
+        (parsedChunk.usageMetadata.thoughtsTokenCount ?? 0),
+      total_tokens: parsedChunk.usageMetadata.totalTokenCount ?? 0,
       completion_tokens_details: {
         reasoning_tokens: parsedChunk.usageMetadata.thoughtsTokenCount ?? 0,
         audio_tokens:
@@ -679,7 +681,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
           ),
       },
       prompt_tokens_details: {
-        cached_tokens: parsedChunk.usageMetadata.cachedContentTokenCount,
+        cached_tokens: parsedChunk.usageMetadata.cachedContentTokenCount ?? 0,
         audio_tokens: parsedChunk.usageMetadata?.promptTokensDetails?.reduce(
           (acc, curr) => {
             if (curr.modality === VERTEX_MODALITY.AUDIO)
@@ -708,7 +710,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
             )
           : null;
         let message: any = { role: 'assistant', content: '' };
-        if (generation.content?.parts[0]?.text) {
+        if (generation.content?.parts?.[0]?.text) {
           const contentBlocks = [];
           let content = '';
           for (const part of generation.content.parts) {
@@ -732,7 +734,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
             ...(!strictOpenAiCompliance &&
               contentBlocks.length && { content_blocks: contentBlocks }),
           };
-        } else if (generation.content?.parts[0]?.functionCall) {
+        } else if (generation.content?.parts?.[0]?.functionCall) {
           message = {
             role: 'assistant',
             tool_calls: generation.content.parts.map((part, idx) => {
@@ -753,7 +755,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
               }
             }),
           };
-        } else if (generation.content?.parts[0]?.inlineData) {
+        } else if (generation.content?.parts?.[0]?.inlineData) {
           const part = generation.content.parts[0];
           const contentBlocks = [
             {
@@ -783,7 +785,11 @@ export const GoogleChatCompleteStreamChunkTransform: (
             : {}),
         };
       }) ?? [],
-    ...(parsedChunk.usageMetadata?.candidatesTokenCount && {
+    ...((parsedChunk.usageMetadata?.promptTokenCount !== undefined ||
+      parsedChunk.usageMetadata?.candidatesTokenCount !== undefined ||
+      parsedChunk.usageMetadata?.thoughtsTokenCount !== undefined ||
+      parsedChunk.usageMetadata?.cachedContentTokenCount !== undefined ||
+      parsedChunk.usageMetadata?.totalTokenCount !== undefined) && {
       usage: usageMetadata,
     }),
   };
