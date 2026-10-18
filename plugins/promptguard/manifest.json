@@ -1,84 +1,70 @@
 {
   "id": "promptguard",
-  "description": "PromptGuard AI security firewall for scanning LLM inputs and outputs",
+  "description": "PromptGuard AI security gateway: prompt-injection detection, PII detection & redaction, topic filtering, entity blocklists and hallucination detection for LLM inputs and outputs.",
   "credentials": {
     "type": "object",
     "properties": {
       "apiKey": {
         "type": "string",
-        "label": "API Key",
-        "description": "Your PromptGuard API key. Get one at https://app.promptguard.co",
+        "label": "PromptGuard API Key",
+        "description": "PromptGuard API key, sent in the X-API-Key header. Create one in the PromptGuard dashboard.",
         "encrypted": true
       },
-      "baseUrl": {
+      "apiBase": {
         "type": "string",
-        "label": "Base URL",
-        "description": "Custom base URL for self-hosted deployments. Defaults to https://api.promptguard.co/api/v1"
+        "label": "PromptGuard API Base URL",
+        "description": "Base URL of your PromptGuard deployment, e.g. https://api.promptguard.co or a self-hosted address. The /api/v1/guard path is appended automatically."
+      },
+      "blockOnError": {
+        "type": "boolean",
+        "label": "Block on error (fail closed)",
+        "description": "When true (default), any error reaching PromptGuard denies the request (fail closed). Set to false to fail open (allow) on error."
       }
     },
-    "required": ["apiKey"]
+    "required": ["apiKey", "apiBase"]
   },
   "functions": [
     {
-      "name": "Security Scan",
-      "id": "scan",
-      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "name": "Guard LLM inputs and outputs",
+      "id": "guard",
       "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
       "description": [
         {
           "type": "subHeading",
-          "text": "ML-powered detection of prompt injection, jailbreaks, and toxicity in LLM inputs and outputs."
-        }
-      ],
-      "parameters": {
-        "type": "object",
-        "properties": {}
-      }
-    },
-    {
-      "name": "PII Redaction",
-      "id": "redact",
-      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
-      "type": "guardrail",
-      "description": [
-        {
-          "type": "subHeading",
-          "text": "Detect and redact personally identifiable information (PII) from LLM inputs and outputs."
+          "text": "Scan requests (input) and responses (output) with PromptGuard. An 'allow' decision passes through, 'block' fails the guardrail, and 'redact' rewrites the content with detected secrets and PII masked. Every completion is scanned when n > 1. Image and audio parts pass through unscanned."
         }
       ],
       "parameters": {
         "type": "object",
         "properties": {
-          "redact": {
+          "blockOnError": {
             "type": "boolean",
-            "label": "Redact PII",
+            "label": "Block on error (fail closed)",
             "description": [
               {
                 "type": "subHeading",
-                "text": "If true, detected PII will be redacted from the text. If false, the request will be blocked."
+                "text": "Override the credential-level setting for this hook. When true (default), errors reaching PromptGuard deny the request; false fails open."
               }
-            ],
-            "default": true
+            ]
           },
-          "piiTypes": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "email",
-                "phone",
-                "ssn",
-                "credit_card",
-                "name",
-                "address",
-                "api_key",
-                "ip_address"
-              ]
-            },
+          "timeout": {
+            "type": "number",
+            "label": "Timeout (ms)",
             "description": [
               {
                 "type": "subHeading",
-                "text": "Select PII types to detect. Leave empty to detect all types."
+                "text": "Maximum time in milliseconds to wait for the PromptGuard /api/v1/guard response before failing per the block-on-error setting. Defaults to 5000."
+              }
+            ]
+          },
+          "model": {
+            "type": "string",
+            "label": "Model name override",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Fallback model name, used only when neither the request nor the response payload carries one."
               }
             ]
           }
