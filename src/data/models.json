@@ -15433,6 +15433,14 @@
         "id": "webwright"
       },
       "name": "Wren R1"
+    },
+    {
+      "id": "wren-r1-fast",
+      "object": "model",
+      "provider": {
+        "id": "webwright"
+      },
+      "name": "Wren R1 (Priority)"
     }
   ]
 }
