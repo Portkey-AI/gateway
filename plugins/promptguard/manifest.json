@@ -1,0 +1,75 @@
+{
+  "id": "promptguard",
+  "description": "PromptGuard AI security gateway: prompt-injection detection, PII detection & redaction, topic filtering, entity blocklists and hallucination detection for LLM inputs and outputs.",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "PromptGuard API Key",
+        "description": "PromptGuard API key, sent in the X-API-Key header. Create one in the PromptGuard dashboard.",
+        "encrypted": true
+      },
+      "apiBase": {
+        "type": "string",
+        "label": "PromptGuard API Base URL",
+        "description": "Base URL of your PromptGuard deployment, e.g. https://api.promptguard.co or a self-hosted address. The /api/v1/guard path is appended automatically."
+      },
+      "blockOnError": {
+        "type": "boolean",
+        "label": "Block on error (fail closed)",
+        "description": "When true (default), any error reaching PromptGuard denies the request (fail closed). Set to false to fail open (allow) on error."
+      }
+    },
+    "required": ["apiKey", "apiBase"]
+  },
+  "functions": [
+    {
+      "name": "Guard LLM inputs and outputs",
+      "id": "guard",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Scan requests (input) and responses (output) with PromptGuard. An 'allow' decision passes through, 'block' fails the guardrail, and 'redact' rewrites the content with detected secrets and PII masked. Every completion is scanned when n > 1. Image and audio parts pass through unscanned."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "blockOnError": {
+            "type": "boolean",
+            "label": "Block on error (fail closed)",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Override the credential-level setting for this hook. When true (default), errors reaching PromptGuard deny the request; false fails open."
+              }
+            ]
+          },
+          "timeout": {
+            "type": "number",
+            "label": "Timeout (ms)",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Maximum time in milliseconds to wait for the PromptGuard /api/v1/guard response before failing per the block-on-error setting. Defaults to 5000."
+              }
+            ]
+          },
+          "model": {
+            "type": "string",
+            "label": "Model name override",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Fallback model name, used only when neither the request nor the response payload carries one."
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
