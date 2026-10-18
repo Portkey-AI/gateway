@@ -80,6 +80,13 @@
       "base_url": "https://api.deepseek.com"
     },
     {
+      "id": "engy",
+      "name": "Engy",
+      "object": "provider",
+      "description": "Engy is an OpenAI-compatible inference API for SOTA open models, with verified serving, zero data retention, and a live model catalog at https://api.engy.ai/v1/models. Flagship model ids include kimi-k3, glm-5.3, glm-5.3-flash, and deepseek-v4.1-flash-1017; any catalog id is accepted as a pass-through.",
+      "base_url": "https://api.engy.ai/v1"
+    },
+    {
       "id": "fireworks-ai",
       "name": "Fireworks",
       "object": "provider",
