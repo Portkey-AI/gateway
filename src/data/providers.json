@@ -234,6 +234,13 @@
       "base_url": "https://serving.app.predibase.com"
     },
     {
+      "id": "raindragon",
+      "name": "RainDragon",
+      "object": "provider",
+      "description": "RainDragon serves open-weight Gemma 4 models (26B and 31B) through an OpenAI-compatible API.",
+      "base_url": "https://inference.raindragon.ai/v1"
+    },
+    {
       "id": "reka",
       "name": "Reka AI",
       "object": "provider",
