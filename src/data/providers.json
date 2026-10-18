@@ -3,6 +3,13 @@
   "version": "1.0.0",
   "data": [
     {
+      "id": "oruk",
+      "name": "Oruk",
+      "object": "provider",
+      "description": "Oruk provides an OpenAI-compatible speech transcription API serving Qwen/Qwen3-ASR-1.7B.",
+      "base_url": "https://qwen3-asr.oruk.ai/v1"
+    },
+    {
       "id": "matterai",
       "name": "MatterAI",
       "object": "provider",

@@ -12,6 +12,7 @@ import VertexConfig from './google-vertex-ai';
 import MistralAIConfig from './mistral-ai';
 import NomicConfig from './nomic';
 import OpenAIConfig from './openai';
+import OrukConfig from './oruk';
 import PalmAIConfig from './palm';
 import PerplexityAIConfig from './perplexity-ai';
 import TogetherAIConfig from './together-ai';
@@ -77,6 +78,7 @@ import OVHcloudConfig from './ovhcloud';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
+  oruk: OrukConfig,
   cohere: CohereConfig,
   anthropic: AnthropicConfig,
   'azure-openai': AzureOpenAIConfig,
