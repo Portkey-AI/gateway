@@ -20,7 +20,8 @@ export const WebWrightChatCompleteConfig: ProviderConfig = {
   max_tokens: {
     param: 'max_tokens',
     default: 100,
-    min: 0,
+    min: 1,
+    max: 200000,
   },
   temperature: {
     param: 'temperature',
@@ -38,17 +39,9 @@ export const WebWrightChatCompleteConfig: ProviderConfig = {
     param: 'stream',
     default: false,
   },
-  frequency_penalty: {
-    param: 'frequency_penalty',
-    default: 0,
-    min: -2,
-    max: 2,
-  },
-  presence_penalty: {
-    param: 'presence_penalty',
-    default: 0,
-    min: -2,
-    max: 2,
+  reasoning_effort: {
+    param: 'reasoning_effort',
+    default: null,
   },
   stop: {
     param: 'stop',
