@@ -39,10 +39,6 @@ export const WebWrightChatCompleteConfig: ProviderConfig = {
     param: 'stream',
     default: false,
   },
-  reasoning_effort: {
-    param: 'reasoning_effort',
-    default: null,
-  },
   stop: {
     param: 'stop',
     default: null,
