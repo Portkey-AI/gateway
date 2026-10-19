@@ -328,7 +328,7 @@
       "id": "webwright",
       "name": "WebWright",
       "object": "provider",
-      "description": "WebWright provides an OpenAI-compatible API for the Wren R1 model for coding and reasoning workloads.",
+      "description": "WebWright provides an OpenAI-compatible API for the Wren R1 chat model with tool calling, structured outputs and a reasoning mode.",
       "base_url": "https://webwright.ai/v1"
     }
   ]
