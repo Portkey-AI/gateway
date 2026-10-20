@@ -115,6 +115,13 @@
       "base_url": "https://api.groq.com/openai/v1"
     },
     {
+      "id": "hopper",
+      "name": "Hopper",
+      "object": "provider",
+      "description": "Hopper serves Gemma 4 and DeepSeek V4.1 Flash through an OpenAI-compatible API.",
+      "base_url": "https://api.withhopper.com/v1"
+    },
+    {
       "id": "huggingface",
       "name": "Hugging Face",
       "object": "provider",

@@ -42,6 +42,7 @@ import DeepbricksConfig from './deepbricks';
 import SiliconFlowConfig from './siliconflow';
 import HuggingfaceConfig from './huggingface';
 import { cerebrasProviderAPIConfig } from './cerebras';
+import HopperConfig from './hopper';
 import { InferenceNetProviderConfigs } from './inference-net';
 import SambaNovaConfig from './sambanova';
 import LemonfoxAIConfig from './lemonfox-ai';
@@ -116,6 +117,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   deepbricks: DeepbricksConfig,
   siliconflow: SiliconFlowConfig,
   cerebras: cerebrasProviderAPIConfig,
+  hopper: HopperConfig,
   'inference-net': InferenceNetProviderConfigs,
   sambanova: SambaNovaConfig,
   'lemonfox-ai': LemonfoxAIConfig,
