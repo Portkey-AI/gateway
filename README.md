@@ -247,6 +247,7 @@ Explore Gateway integrations with [45+ providers](https://portkey.wiki/gh-59) an
 
 |                                                                                                                            | Provider                                                                                      | Support | Stream |
 | -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------- | ------ |
+| <img src="https://withhopper.com/logo.svg" width=35> | [Hopper](cookbook/providers/hopper.md) | ✅ | ✅ |
 | <img src="docs/images/openai.png" width=35 />                                                                              | [OpenAI](https://portkey.wiki/gh-60)                           | ✅       | ✅      |
 | <img src="docs/images/azure.png" width=35>                                                                                 | [Azure OpenAI](https://portkey.wiki/gh-61)               | ✅       | ✅      |
 | <img src="docs/images/anyscale.png" width=35>                                                                              | [Anyscale](https://portkey.wiki/gh-62) | ✅       | ✅      |

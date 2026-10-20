@@ -11587,6 +11587,22 @@
       "name": "Whisper Large v3 Turbo"
     },
     {
+      "id": "gemma-4-31b",
+      "object": "model",
+      "provider": {
+        "id": "hopper"
+      },
+      "name": "Gemma 4 31B"
+    },
+    {
+      "id": "deepseek-v4.1-flash",
+      "object": "model",
+      "provider": {
+        "id": "hopper"
+      },
+      "name": "DeepSeek V4.1 Flash"
+    },
+    {
       "id": "yi-vision",
       "object": "model",
       "provider": {

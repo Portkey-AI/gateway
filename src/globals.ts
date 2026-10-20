@@ -80,6 +80,7 @@ export const GITHUB: string = 'github';
 export const DEEPBRICKS: string = 'deepbricks';
 export const SILICONFLOW: string = 'siliconflow';
 export const CEREBRAS: string = 'cerebras';
+export const HOPPER: string = 'hopper';
 export const INFERENCENET: string = 'inference-net';
 export const SAMBANOVA: string = 'sambanova';
 export const LEMONFOX_AI: string = 'lemonfox-ai';
@@ -155,6 +156,7 @@ export const VALID_PROVIDERS = [
   SILICONFLOW,
   HUGGING_FACE,
   CEREBRAS,
+  HOPPER,
   INFERENCENET,
   SAMBANOVA,
   LEMONFOX_AI,
