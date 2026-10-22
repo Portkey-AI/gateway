@@ -152,15 +152,15 @@ export const AI21ChatCompleteResponseTransform: (
       choices: response.choices.map((c) => ({
         index: c.index,
         message: {
-          role: c.message?.role ?? 'assistant',
+          role: (c.message?.role ?? 'assistant') as 'assistant',
           content: c.message?.content,
         },
-        finish_reason: c.finish_reason,
+        finish_reason: c.finish_reason ?? '',
       })),
       usage: {
-        prompt_tokens: response.usage?.prompt_tokens,
-        completion_tokens: response.usage?.completion_tokens,
-        total_tokens: response.usage?.total_tokens,
+        prompt_tokens: response.usage?.prompt_tokens ?? 0,
+        completion_tokens: response.usage?.completion_tokens ?? 0,
+        total_tokens: response.usage?.total_tokens ?? 0,
       },
     };
   }
