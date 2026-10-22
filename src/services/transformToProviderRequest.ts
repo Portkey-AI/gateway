@@ -155,7 +155,8 @@ const transformToProviderRequestJSON = (
   }
 
   if (!providerConfig) {
-    throw new GatewayError(`${fn} is not supported by ${provider}`);
+    // Unsupported endpoint for this provider (e.g. /v1/messages → openai/google)
+    throw new GatewayError(`${fn} is not supported by ${provider}`, 400);
   }
 
   return transformUsingProviderConfig(providerConfig, params, providerOptions);
@@ -172,6 +173,9 @@ const transformToProviderRequestFormData = (
     providerConfig = providerConfig.getConfig({ params, providerOptions })[fn];
   } else {
     providerConfig = providerConfig[fn];
+  }
+  if (!providerConfig) {
+    throw new GatewayError(`${fn} is not supported by ${provider}`, 400);
   }
   const formData = new FormData();
   for (const configParam in providerConfig) {
