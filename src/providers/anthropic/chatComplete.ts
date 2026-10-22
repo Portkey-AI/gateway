@@ -610,7 +610,11 @@ export const getAnthropicChatCompleteResponseTransform = (provider: string) => {
           },
         ],
         usage: {
-          prompt_tokens: input_tokens,
+          // OpenAI-shape: prompt_tokens is cache-inclusive; cached_tokens is a subset.
+          prompt_tokens:
+            input_tokens +
+            (cache_creation_input_tokens ?? 0) +
+            (cache_read_input_tokens ?? 0),
           completion_tokens: output_tokens,
           total_tokens:
             input_tokens +
@@ -698,8 +702,14 @@ export const getAnthropicStreamChunkTransform = (provider: string) => {
 
     if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
       streamState.model = parsedChunk?.message?.model ?? '';
+      const inputTokens = parsedChunk.message?.usage?.input_tokens ?? 0;
+      const cacheRead =
+        parsedChunk.message?.usage?.cache_read_input_tokens ?? 0;
+      const cacheCreation =
+        parsedChunk.message?.usage?.cache_creation_input_tokens ?? 0;
       streamState.usage = {
-        prompt_tokens: parsedChunk.message?.usage?.input_tokens,
+        // OpenAI-shape: prompt_tokens includes Anthropic's disjoint cache fields.
+        prompt_tokens: inputTokens + cacheRead + cacheCreation,
         ...(shouldSendCacheUsage && {
           cache_read_input_tokens:
             parsedChunk.message?.usage?.cache_read_input_tokens,
@@ -733,8 +743,6 @@ export const getAnthropicStreamChunkTransform = (provider: string) => {
     if (parsedChunk.type === 'message_delta' && parsedChunk.usage) {
       const totalTokens =
         (streamState?.usage?.prompt_tokens ?? 0) +
-        (streamState?.usage?.cache_creation_input_tokens ?? 0) +
-        (streamState?.usage?.cache_read_input_tokens ?? 0) +
         (parsedChunk.usage.output_tokens ?? 0);
       return (
         `data: ${JSON.stringify({
