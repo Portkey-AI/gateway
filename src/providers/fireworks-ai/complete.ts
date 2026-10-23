@@ -151,12 +151,12 @@ export const FireworksAICompleteStreamChunkTransform: (
   response: string
 ) => string = (responseChunk) => {
   let chunk = responseChunk.trim();
-  chunk = chunk.replace(/^data: /, '');
-  chunk = chunk.trim();
+  chunk = chunk.replace(/^data: /, '').trim();
   if (chunk === '[DONE]') {
     return `data: ${chunk}\n\n`;
   }
   const parsedChunk: FireworksAICompleteStreamChunk = JSON.parse(chunk);
+  const choice = parsedChunk.choices?.[0];
   return (
     `data: ${JSON.stringify({
       id: parsedChunk.id,
@@ -164,14 +164,16 @@ export const FireworksAICompleteStreamChunkTransform: (
       created: parsedChunk.created,
       model: parsedChunk.model,
       provider: FIREWORKS_AI,
-      choices: [
-        {
-          index: parsedChunk.choices[0].index ?? 0,
-          text: parsedChunk.choices[0].text,
-          logprobs: null,
-          finish_reason: parsedChunk.choices[0].finish_reason,
-        },
-      ],
+      choices: choice
+        ? [
+            {
+              index: choice.index ?? 0,
+              text: choice.text,
+              logprobs: null,
+              finish_reason: choice.finish_reason,
+            },
+          ]
+        : [],
       ...(parsedChunk.usage ? { usage: parsedChunk.usage } : {}),
     })}` + '\n\n'
   );
