@@ -308,7 +308,7 @@ export interface ContentBlockChunk extends Omit<ContentType, 'type'> {
  * A message in the conversation.
  * @interface
  */
-export interface Message {
+export interface Message extends PromptCache {
   /** The role of the message sender. It can be 'system', 'user', 'assistant', or 'function'. */
   role: OpenAIMessageRole;
   /** The content of the message. */
@@ -327,7 +327,7 @@ export interface Message {
 }
 
 export interface PromptCache {
-  cache_control?: { type: 'ephemeral' };
+  cache_control?: { type: 'ephemeral'; ttl?: string };
 }
 
 export interface CitationMetadata {

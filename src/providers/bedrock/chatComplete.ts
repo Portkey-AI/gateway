@@ -93,13 +93,13 @@ export interface BedrockConverseAI21ChatCompletionsParams
 
 const getMessageTextContentArray = (
   message: Message
-): Array<{ text: string } | { cachePoint: { type: string } }> => {
+): Array<{ text: string } | { cachePoint: { type: string; ttl?: string } }> => {
   if (message.content && typeof message.content === 'object') {
     const filteredContentMessages = message.content.filter(
       (item) => item.type === 'text'
     );
     const finalContent: Array<
-      { text: string } | { cachePoint: { type: string } }
+      { text: string } | { cachePoint: { type: string; ttl?: string } }
     > = [];
     filteredContentMessages.forEach((item) => {
       finalContent.push({
@@ -110,17 +110,29 @@ const getMessageTextContentArray = (
         finalContent.push({
           cachePoint: {
             type: 'default',
+            ...(item.cache_control.ttl && { ttl: item.cache_control.ttl }),
           },
         });
       }
     });
     return finalContent;
   }
-  return [
+  const finalContent: Array<
+    { text: string } | { cachePoint: { type: string; ttl?: string } }
+  > = [
     {
       text: message.content || '',
     },
   ];
+  if (message.cache_control) {
+    finalContent.push({
+      cachePoint: {
+        type: 'default',
+        ...(message.cache_control.ttl && { ttl: message.cache_control.ttl }),
+      },
+    });
+  }
+  return finalContent;
 };
 
 const transformAndAppendThinkingMessageItem = (
@@ -149,17 +161,21 @@ const getMessageContent = (message: Message) => {
   if (!message.content && !message.tool_calls && !message.tool_call_id)
     return [];
   if (message.role === 'tool') {
-    const toolResultContent = getMessageTextContentArray(message);
+    const parts = getMessageTextContentArray(message);
+    const cachePoints = parts.filter((p) => 'cachePoint' in p);
+    const toolResultContent = parts.filter(
+      (p): p is { text: string } => 'text' in p
+    );
     return [
       {
         toolResult: {
-          ...(toolResultContent.length &&
-          (toolResultContent[0] as { text: string })?.text
+          ...(toolResultContent.length && toolResultContent[0]?.text
             ? { content: toolResultContent }
             : { content: [] }), // Bedrock allows empty array but does not allow empty string in content.
           toolUseId: message.tool_call_id,
         },
       },
+      ...cachePoints,
     ];
   }
   const out: BedrockContentItem[] = [];
@@ -266,6 +282,7 @@ const getMessageContent = (message: Message) => {
         out.push({
           cachePoint: {
             type: 'default',
+            ...(item.cache_control.ttl && { ttl: item.cache_control.ttl }),
           },
         });
       }
@@ -326,10 +343,12 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
       transform: (params: BedrockChatCompletionsParams) => {
         if (!params.messages) return;
         const systemMessages: Array<
-          { text: string } | { cachePoint: { type: string } }
+          { text: string } | { cachePoint: { type: string; ttl?: string } }
         > = params.messages.reduce(
           (
-            acc: Array<{ text: string } | { cachePoint: { type: string } }>,
+            acc: Array<
+              { text: string } | { cachePoint: { type: string; ttl?: string } }
+            >,
             msg
           ) => {
             if (SYSTEM_MESSAGE_ROLES.includes(msg.role))
@@ -349,7 +368,7 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
       const canBeAmazonModel = params.model?.includes('amazon');
       const tools: Array<
         | { toolSpec: { name: string; description?: string; inputSchema: any } }
-        | { cachePoint: { type: string } }
+        | { cachePoint: { type: string; ttl?: string } }
       > = [];
       params.tools?.forEach((tool) => {
         if (tool.function) {
@@ -365,6 +384,7 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
           tools.push({
             cachePoint: {
               type: 'default',
+              ...(tool.cache_control.ttl && { ttl: tool.cache_control.ttl }),
             },
           });
         }

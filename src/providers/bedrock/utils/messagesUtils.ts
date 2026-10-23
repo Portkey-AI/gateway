@@ -97,6 +97,7 @@ export const transformToolsConfig = (params: BedrockMessagesParams) => {
           tools.push({
             cachePoint: {
               type: 'default',
+              ...(tool.cache_control.ttl && { ttl: tool.cache_control.ttl }),
             },
           });
         }

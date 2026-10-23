@@ -57,6 +57,7 @@ const appendTextBlock = (
     transformedContent.push({
       cachePoint: {
         type: 'default',
+        ...(textBlock.cache_control.ttl && { ttl: textBlock.cache_control.ttl }),
       },
     });
   }
@@ -79,6 +80,7 @@ const appendImageBlock = (
       transformedContent.push({
         cachePoint: {
           type: 'default',
+          ...(imageBlock.cache_control.ttl && { ttl: imageBlock.cache_control.ttl }),
         },
       });
     }
@@ -97,6 +99,7 @@ const appendImageBlock = (
       transformedContent.push({
         cachePoint: {
           type: 'default',
+          ...(imageBlock.cache_control.ttl && { ttl: imageBlock.cache_control.ttl }),
         },
       });
     }
@@ -122,6 +125,7 @@ const appendDocumentBlock = (
       transformedContent.push({
         cachePoint: {
           type: 'default',
+          ...(documentBlock.cache_control.ttl && { ttl: documentBlock.cache_control.ttl }),
         },
       });
     }
@@ -140,6 +144,7 @@ const appendDocumentBlock = (
       transformedContent.push({
         cachePoint: {
           type: 'default',
+          ...(documentBlock.cache_control.ttl && { ttl: documentBlock.cache_control.ttl }),
         },
       });
     }
@@ -186,6 +191,7 @@ const appendToolUseBlock = (
     transformedContent.push({
       cachePoint: {
         type: 'default',
+        ...(toolUseBlock.cache_control.ttl && { ttl: toolUseBlock.cache_control.ttl }),
       },
     });
   }
@@ -223,6 +229,7 @@ const appendToolResultBlock = (
     transformedContent.push({
       cachePoint: {
         type: 'default',
+        ...(toolResultBlock.cache_control.ttl && { ttl: toolResultBlock.cache_control.ttl }),
       },
     });
   }
@@ -318,6 +325,7 @@ export const BedrockConverseMessagesConfig: ProviderConfig = {
             transformedSystem.push({
               cachePoint: {
                 type: 'default',
+                ...(item.cache_control.ttl && { ttl: item.cache_control.ttl }),
               },
             });
           }
