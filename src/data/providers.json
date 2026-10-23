@@ -10,6 +10,13 @@
       "base_url": "https://api.matterai.so/v1"
     },
     {
+      "id": "abstract",
+      "name": "Abstract",
+      "object": "provider",
+      "description": "Abstract serves GLM-5.3, DeepSeek-V4-Flash and Kimi-K3 through the OpenAI Chat Completions API.",
+      "base_url": "https://api.abstract.inc/v1"
+    },
+    {
       "id": "ai21",
       "name": "AI21",
       "object": "provider",

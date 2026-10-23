@@ -3,6 +3,30 @@
   "version": "1.0.0",
   "data": [
     {
+      "id": "glm-5.3:superfast",
+      "object": "model",
+      "provider": {
+        "id": "abstract"
+      },
+      "name": "GLM-5.3"
+    },
+    {
+      "id": "deepseek-v4-flash:superfast",
+      "object": "model",
+      "provider": {
+        "id": "abstract"
+      },
+      "name": "DeepSeek-V4-Flash"
+    },
+    {
+      "id": "kimi-k3:superfast",
+      "object": "model",
+      "provider": {
+        "id": "abstract"
+      },
+      "name": "Kimi-K3"
+    },
+    {
       "id": "axon",
       "object": "model",
       "provider": {
