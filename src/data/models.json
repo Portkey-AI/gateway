@@ -96,7 +96,14 @@
       "provider": {
         "id": "anthropic"
       },
-      "name": "Claude 2.0"
+      "name": "Claude 2.0",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-07-21",
+        "source": "https://platform.claude.com/docs/en/about-claude/model-deprecations.md",
+        "replacement": "claude-opus-4-8",
+        "source_quote": "| July 21, 2025 | `claude-2.0` | `claude-opus-4-8` |"
+      }
     },
     {
       "id": "claude-2.1",
@@ -104,7 +111,14 @@
       "provider": {
         "id": "anthropic"
       },
-      "name": "Claude 2.1"
+      "name": "Claude 2.1",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-07-21",
+        "source": "https://platform.claude.com/docs/en/about-claude/model-deprecations.md",
+        "replacement": "claude-opus-4-8",
+        "source_quote": "| July 21, 2025 | `claude-2.1` | `claude-opus-4-8` |"
+      }
     },
     {
       "id": "claude-3-5-sonnet-latest",
@@ -120,7 +134,14 @@
       "provider": {
         "id": "anthropic"
       },
-      "name": "Claude 3 Haiku (March 7, 2024)"
+      "name": "Claude 3 Haiku (March 7, 2024)",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-04-20",
+        "source": "https://platform.claude.com/docs/en/about-claude/model-deprecations.md",
+        "replacement": "claude-haiku-4-5-20251001",
+        "source_quote": "| April 20, 2026 | `claude-3-haiku-20240307` | `claude-haiku-4-5-20251001` |"
+      }
     },
     {
       "id": "claude-3-opus-20240229",
@@ -128,7 +149,14 @@
       "provider": {
         "id": "anthropic"
       },
-      "name": "Claude 3 Opus (February 29, 2024)"
+      "name": "Claude 3 Opus (February 29, 2024)",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-01-05",
+        "source": "https://platform.claude.com/docs/en/about-claude/model-deprecations.md",
+        "replacement": "claude-opus-4-8",
+        "source_quote": "| January 5, 2026 | `claude-3-opus-20240229` | `claude-opus-4-8` |"
+      }
     },
     {
       "id": "claude-3-sonnet-20240229",
@@ -136,7 +164,14 @@
       "provider": {
         "id": "anthropic"
       },
-      "name": "Claude 3 Sonnet (February 29, 2024)"
+      "name": "Claude 3 Sonnet (February 29, 2024)",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-07-21",
+        "source": "https://platform.claude.com/docs/en/about-claude/model-deprecations.md",
+        "replacement": "claude-sonnet-5-5",
+        "source_quote": "| July 21, 2025 | `claude-3-sonnet-20240229` | `claude-sonnet-5-5` |"
+      }
     },
     {
       "id": "claude-instant-1.2",
@@ -144,7 +179,14 @@
       "provider": {
         "id": "anthropic"
       },
-      "name": "Claude Instant 1.2"
+      "name": "Claude Instant 1.2",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2024-11-06",
+        "source": "https://platform.claude.com/docs/en/about-claude/model-deprecations.md",
+        "replacement": "claude-haiku-4-5-20251001",
+        "source_quote": "| November 6, 2024 | `claude-instant-1.2` | `claude-haiku-4-5-20251001` |"
+      }
     },
     {
       "id": "meta-llama/Meta-Llama-3-8B-Instruct",
@@ -440,7 +482,13 @@
       "provider": {
         "id": "azure"
       },
-      "name": "Meta Llama 3.1 8B Instruct"
+      "name": "Meta Llama 3.1 8B Instruct",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-06-13",
+        "source": "https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/model-retirement-schedule",
+        "source_quote": "| Meta-Llama-3.1-8B-Instruct | \u2014 | Retired | 2026-06-13 | \u2014 |"
+      }
     },
     {
       "id": "Meta-Llama-3.1-8B",
@@ -448,7 +496,13 @@
       "provider": {
         "id": "azure"
       },
-      "name": "Meta Llama 3.1 8B"
+      "name": "Meta Llama 3.1 8B",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-06-13",
+        "source": "https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/model-retirement-schedule",
+        "source_quote": "| Meta-Llama-3.1-8B | \u2014 | Retired | 2026-06-13 | \u2014 |"
+      }
     },
     {
       "id": "Meta-Llama-3.1-70B-Instruct",
@@ -1280,7 +1334,14 @@
       "provider": {
         "id": "cohere"
       },
-      "name": "Cohere Rerank English v2.0"
+      "name": "Cohere Rerank English v2.0",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-04-30",
+        "source": "https://docs.cohere.com/v2/docs/deprecations",
+        "replacement": "rerank-v3.5",
+        "source_quote": "2024-12-02: Rerank v2.0 On December 2nd, 2024, we announced the release of Rerank-v3.5 along with the deprecation of the Rerank-v2.0 model family. Fine-tuned models created from these base models are not affected by this deprecation. Shutdown Date | Deprecated Model | Deprecated Model Price | Recommended Replacement | 2025-04-30 | rerank-english-v2.0 | $1.00 / 1K searches | rerank-v3.5 |"
+      }
     },
     {
       "id": "rerank-english-v3.0",
@@ -1296,7 +1357,14 @@
       "provider": {
         "id": "cohere"
       },
-      "name": "Cohere Rerank Multilingual v2.0"
+      "name": "Cohere Rerank Multilingual v2.0",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-04-30",
+        "source": "https://docs.cohere.com/v2/docs/deprecations",
+        "replacement": "rerank-v3.5",
+        "source_quote": "2025-04-30 | rerank-multilingual-v2.0 | $1.00 / 1K searches | rerank-v3.5 |"
+      }
     },
     {
       "id": "rerank-multilingual-v3.0",
@@ -1488,7 +1556,14 @@
       "provider": {
         "id": "deepseek"
       },
-      "name": "Deepseek Chat"
+      "name": "Deepseek Chat",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-07-24",
+        "source": "https://api-docs.deepseek.com/updates",
+        "replacement": "deepseek-v4-flash",
+        "source_quote": "The two legacy API model names, deepseek-chat and deepseek-reasoner, will be discontinued in three months (2026-07-24). During the current period, these two model names point to the non-thinking mode and thinking mode of deepseek-v4-flash, respectively."
+      }
     },
     {
       "id": "deepseek-coder",
@@ -2680,7 +2755,14 @@
       "provider": {
         "id": "groq"
       },
-      "name": "Distil Whisper Large v3 English"
+      "name": "Distil Whisper Large v3 English",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-08-23",
+        "source": "https://console.groq.com/docs/deprecations.md",
+        "replacement": "whisper-large-v3-turbo",
+        "source_quote": "| distil-whisper-large-v3-en | 08/23/25 | whisper-large-v3-turbo |"
+      }
     },
     {
       "id": "gemma2-9b-it",
@@ -2688,7 +2770,14 @@
       "provider": {
         "id": "groq"
       },
-      "name": "Gemma 2 9B Italian"
+      "name": "Gemma 2 9B Italian",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-10-08",
+        "source": "https://console.groq.com/docs/deprecations.md",
+        "replacement": "llama-3.1-8b-instant",
+        "source_quote": "| gemma2-9b-it | 10/08/25 | llama-3.1-8b-instant |"
+      }
     },
     {
       "id": "gemma-7b-it",
@@ -2696,7 +2785,14 @@
       "provider": {
         "id": "groq"
       },
-      "name": "Gemma 7B Italian"
+      "name": "Gemma 7B Italian",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2024-12-18",
+        "source": "https://console.groq.com/docs/deprecations.md",
+        "replacement": "gemma2-9b-it",
+        "source_quote": "| gemma-7b-it | 12/18/24 | gemma2-9b-it |"
+      }
     },
     {
       "id": "llama3-groq-70b-8192-tool-use-preview",
@@ -2704,7 +2800,14 @@
       "provider": {
         "id": "groq"
       },
-      "name": "Llama 3 Groq 70B 8192 Tool Use Preview"
+      "name": "Llama 3 Groq 70B 8192 Tool Use Preview",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-01-06",
+        "source": "https://console.groq.com/docs/deprecations.md",
+        "replacement": "llama-3.3-70b-versatile",
+        "source_quote": "| llama3-groq-70b-8192-tool-use-preview | 1/6/25 | llama-3.3-70b-versatile |"
+      }
     },
     {
       "id": "llama3-groq-8b-8192-tool-use-preview",
@@ -2712,7 +2815,14 @@
       "provider": {
         "id": "groq"
       },
-      "name": "Llama 3 Groq 8B 8192 Tool Use Preview"
+      "name": "Llama 3 Groq 8B 8192 Tool Use Preview",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-01-06",
+        "source": "https://console.groq.com/docs/deprecations.md",
+        "replacement": "llama-3.3-70b-versatile",
+        "source_quote": "| llama3-groq-8b-8192-tool-use-preview | 1/6/25 | llama-3.3-70b-versatile |"
+      }
     },
     {
       "id": "llama-3.1-70b-versatile",
@@ -2720,7 +2830,14 @@
       "provider": {
         "id": "groq"
       },
-      "name": "Llama 3.1 70B Versatile"
+      "name": "Llama 3.1 70B Versatile",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-01-24",
+        "source": "https://console.groq.com/docs/deprecations.md",
+        "replacement": "llama-3.3-70b-versatile",
+        "source_quote": "| llama-3.1-70b-versatile | 01/24/25 | llama-3.3-70b-versatile |"
+      }
     },
     {
       "id": "llama-3.1-8b-instant",
@@ -2728,7 +2845,14 @@
       "provider": {
         "id": "groq"
       },
-      "name": "Llama 3.1 8B Instant"
+      "name": "Llama 3.1 8B Instant",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-08-16",
+        "source": "https://console.groq.com/docs/deprecations.md",
+        "replacement": "openai/gpt-oss-20b",
+        "source_quote": "| llama-3.1-8b-instant | 08/16/26 | openai/gpt-oss-20b |"
+      }
     },
     {
       "id": "llama-3.2-1b-preview",
@@ -2736,7 +2860,14 @@
       "provider": {
         "id": "groq"
       },
-      "name": "Llama 3.2 1B Preview"
+      "name": "Llama 3.2 1B Preview",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-04-14",
+        "source": "https://console.groq.com/docs/deprecations.md",
+        "replacement": "llama-3.1-8b-instant",
+        "source_quote": "| llama-3.2-1b-preview | 04/14/25 | llama-3.1-8b-instant |"
+      }
     },
     {
       "id": "llama-3.2-3b-preview",
@@ -2744,7 +2875,14 @@
       "provider": {
         "id": "groq"
       },
-      "name": "Llama 3.2 3B Preview"
+      "name": "Llama 3.2 3B Preview",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-04-14",
+        "source": "https://console.groq.com/docs/deprecations.md",
+        "replacement": "llama-3.1-8b-instant",
+        "source_quote": "| llama-3.2-3b-preview | 04/14/25 | llama-3.1-8b-instant |"
+      }
     },
     {
       "id": "llama-3.2-11b-vision-preview",
@@ -2752,7 +2890,14 @@
       "provider": {
         "id": "groq"
       },
-      "name": "Llama 3.2 11B Vision Preview"
+      "name": "Llama 3.2 11B Vision Preview",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-04-14",
+        "source": "https://console.groq.com/docs/deprecations.md",
+        "replacement": "meta-llama/llama-4-scout-17b-16e-instruct",
+        "source_quote": "| llama-3.2-11b-vision-preview | 04/14/25 | meta-llama/llama-4-scout-17b-16e-instruct |"
+      }
     },
     {
       "id": "llama-3.2-90b-vision-preview",
@@ -2760,7 +2905,14 @@
       "provider": {
         "id": "groq"
       },
-      "name": "Llama 3.2 90B Vision Preview"
+      "name": "Llama 3.2 90B Vision Preview",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-04-14",
+        "source": "https://console.groq.com/docs/deprecations.md",
+        "replacement": "meta-llama/llama-4-scout-17b-16e-instruct",
+        "source_quote": "| llama-3.2-90b-vision-preview | 04/14/25 | meta-llama/llama-4-scout-17b-16e-instruct |"
+      }
     },
     {
       "id": "llama-guard-3-8b",
@@ -2768,7 +2920,14 @@
       "provider": {
         "id": "groq"
       },
-      "name": "Llama Guard 3 8B"
+      "name": "Llama Guard 3 8B",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-06-06",
+        "source": "https://console.groq.com/docs/deprecations.md",
+        "replacement": "meta-llama/llama-guard-4-12b",
+        "source_quote": "| llama-guard-3-8b | 06/06/25 | meta-llama/llama-guard-4-12b |"
+      }
     },
     {
       "id": "yi-large",
@@ -6504,7 +6663,14 @@
       "provider": {
         "id": "mistral-ai"
       },
-      "name": "Pixtral"
+      "name": "Pixtral",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-12-31",
+        "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
+        "replacement": "Ministral 3 14B",
+        "source_quote": "Pixtral 12B \u2197 | 24.09 | pixtral-12b-2409 | 12/2/2025 12/31/2025 | Ministral 3 14B |"
+      }
     },
     {
       "id": "open-mistral-nemo",
@@ -6520,7 +6686,14 @@
       "provider": {
         "id": "mistral-ai"
       },
-      "name": "Codestral Mamba"
+      "name": "Codestral Mamba",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-06-06",
+        "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
+        "replacement": "Codestral",
+        "source_quote": "Codestral Mamba 7B \u2197 | 0.1 | open-codestral-mamba | 6/6/2025 6/6/2025 | Codestral |"
+      }
     },
     {
       "id": "open-mistral-7b",
@@ -6528,7 +6701,14 @@
       "provider": {
         "id": "mistral-ai"
       },
-      "name": "Mistral 7B"
+      "name": "Mistral 7B",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-03-30",
+        "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
+        "replacement": "Ministral 3 8B",
+        "source_quote": "Mistral 7B \u2197 | 0.3 | open-mistral-7b | 11/30/2024 3/30/2025 | Ministral 3 8B |"
+      }
     },
     {
       "id": "google/gemma-2-9b-it",
@@ -7864,7 +8044,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "Babbage 002"
+      "name": "Babbage 002",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-09-28",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "gpt-5.6-terra",
+        "source_quote": "| 2026-09-28 | `babbage-002` | `gpt-5.6-terra` |"
+      }
     },
     {
       "id": "chatgpt-4o-latest",
@@ -7872,7 +8059,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "Chatgpt 4o Latest"
+      "name": "Chatgpt 4o Latest",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-02-17",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "gpt-5.1-chat-latest",
+        "source_quote": "| 2026-02-17 | `chatgpt-4o-latest` | `gpt-5.1-chat-latest` |"
+      }
     },
     {
       "id": "dall-e-2",
@@ -7880,7 +8074,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "Dall-E 2"
+      "name": "Dall-E 2",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-05-12",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "gpt-image-2, gpt-image-1, or gpt-image-1-mini",
+        "source_quote": "| 2026-05-12 | `dall-e-2` | `gpt-image-2`, `gpt-image-1`, or `gpt-image-1-mini` |"
+      }
     },
     {
       "id": "dall-e-3",
@@ -7888,7 +8089,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "Dall-E 3"
+      "name": "Dall-E 3",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-05-12",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "gpt-image-2, gpt-image-1, or gpt-image-1-mini",
+        "source_quote": "| 2026-05-12 | `dall-e-3` | `gpt-image-2`, `gpt-image-1`, or `gpt-image-1-mini` |"
+      }
     },
     {
       "id": "davinci-002",
@@ -7896,7 +8104,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "Davinci 002"
+      "name": "Davinci 002",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-09-28",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "gpt-5.6-terra",
+        "source_quote": "| 2026-09-28 | `davinci-002` | `gpt-5.6-terra` |"
+      }
     },
     {
       "id": "gpt-3.5-turbo",
@@ -7912,7 +8127,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "GPT 3.5 Turbo 0125"
+      "name": "GPT 3.5 Turbo 0125",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-10-23",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "gpt-5.6-terra",
+        "source_quote": "| October 23, 2026 | `gpt-3.5-turbo-0125` \\| `gpt-3.5-turbo`, `gpt-3.5-turbo-completions` | `gpt-5.6-terra` |"
+      }
     },
     {
       "id": "gpt-3.5-turbo-1106",
@@ -7920,7 +8142,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "GPT 3.5 Turbo 1106"
+      "name": "GPT 3.5 Turbo 1106",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-09-28",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "gpt-5.6-terra",
+        "source_quote": "| 2026-09-28 | `gpt-3.5-turbo-1106` | `gpt-5.6-terra` |"
+      }
     },
     {
       "id": "gpt-3.5-turbo-instruct",
@@ -7928,7 +8157,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "GPT 3.5 Turbo Instruct"
+      "name": "GPT 3.5 Turbo Instruct",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-09-28",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "gpt-5.6-terra",
+        "source_quote": "| 2026-09-28 | `gpt-3.5-turbo-instruct` | `gpt-5.6-terra` |"
+      }
     },
     {
       "id": "gpt-4",
@@ -7944,7 +8180,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "GPT 4 0125 Preview"
+      "name": "GPT 4 0125 Preview",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-03-26",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "gpt-5 or gpt-4.1*",
+        "source_quote": "| 2026\u201103\u201126 | `gpt-4-0125-preview` (including `gpt-4-turbo-preview` and `gpt-4-turbo-preview-completions`, which point to this snapshot) | `gpt-5` or `gpt-4.1*` |"
+      }
     },
     {
       "id": "gpt-4-0314",
@@ -7952,7 +8195,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "GPT 4 0314"
+      "name": "GPT 4 0314",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-03-26",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "gpt-5 or gpt-4.1*",
+        "source_quote": "| 2026\u201103\u201126 | `gpt-4-0314` | `gpt-5` or `gpt-4.1*` |"
+      }
     },
     {
       "id": "gpt-4-0613",
@@ -7960,7 +8210,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "GPT 4 0613"
+      "name": "GPT 4 0613",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-10-23",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "gpt-5.6-sol",
+        "source_quote": "| October 23, 2026 | `gpt-4-0613` \\| `gpt-4`, `gpt-4-0613-completions`, `gpt-4-completions` | `gpt-5.6-sol` |"
+      }
     },
     {
       "id": "gpt-4-1106-preview",
@@ -7968,7 +8225,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "GPT 4 1106 Preview"
+      "name": "GPT 4 1106 Preview",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-10-23",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "gpt-5.6-sol",
+        "source_quote": "| October 23, 2026 | `gpt-4-1106-preview` | `gpt-5.6-sol` |"
+      }
     },
     {
       "id": "gpt-4-turbo",
@@ -7976,7 +8240,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "GPT 4 Turbo"
+      "name": "GPT 4 Turbo",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-10-23",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "gpt-5.6-sol",
+        "source_quote": "| October 23, 2026 | `gpt-4-turbo` \\| `gpt-4-turbo-2024-04-09`, `gpt-4-turbo-completions` | `gpt-5.6-sol` |"
+      }
     },
     {
       "id": "gpt-4-turbo-2024-04-09",
@@ -8008,7 +8279,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "GPT-4o 2024 05 13"
+      "name": "GPT-4o 2024 05 13",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-10-23",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "gpt-5.6-sol",
+        "source_quote": "| October 23, 2026 | `gpt-4o-2024-05-13` | `gpt-5.6-sol` |"
+      }
     },
     {
       "id": "gpt-4o-2024-08-06",
@@ -8024,7 +8302,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "GPT-4o Audio Preview"
+      "name": "GPT-4o Audio Preview",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-05-07",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "gpt-audio-1.5",
+        "source_quote": "| 2026-05-07 | `gpt-4o-audio-preview` | `gpt-audio-1.5` |"
+      }
     },
     {
       "id": "gpt-4o-audio-preview-2024-10-01",
@@ -8032,7 +8317,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "GPT-4o Audio Preview 2024 10 01"
+      "name": "GPT-4o Audio Preview 2024 10 01",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-10-10",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "gpt-audio-1.5",
+        "source_quote": "| 2025-10-10 | `gpt-4o-audio-preview-2024-10-01` | `gpt-audio-1.5` |"
+      }
     },
     {
       "id": "gpt-4o-mini",
@@ -8056,7 +8348,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "GPT-4o Realtime Preview"
+      "name": "GPT-4o Realtime Preview",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-05-07",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "gpt-realtime-1.5",
+        "source_quote": "| 2026-05-07 | `gpt-4o-realtime-preview` | `gpt-realtime-1.5` |"
+      }
     },
     {
       "id": "gpt-4o-realtime-preview-2024-10-01",
@@ -8064,7 +8363,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "GPT-4o Realtime Preview 2024 10 01"
+      "name": "GPT-4o Realtime Preview 2024 10 01",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-10-10",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "gpt-realtime-1.5",
+        "source_quote": "| 2025-10-10 | `gpt-4o-realtime-preview-2024-10-01` | `gpt-realtime-1.5` |"
+      }
     },
     {
       "id": "hd/1024-x-1024/dall-e-3",
@@ -8080,7 +8386,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "O1 Mini"
+      "name": "O1 Mini",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-10-27",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "o4-mini",
+        "source_quote": "| 2025-10-27 | `o1-mini` | `o4-mini` |"
+      }
     },
     {
       "id": "o1-mini-2024-09-12",
@@ -8096,7 +8409,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "O1 Preview"
+      "name": "O1 Preview",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-07-28",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "o3",
+        "source_quote": "| 2025-07-28 | `o1-preview` | `o3` |"
+      }
     },
     {
       "id": "o1-preview-2024-09-12",
@@ -8176,7 +8496,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "Text Moderation 007"
+      "name": "Text Moderation 007",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-10-27",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "omni-moderation",
+        "source_quote": "| 2025-10-27 | `text-moderation-007` | `omni-moderation` |"
+      }
     },
     {
       "id": "text-moderation-latest",
@@ -8184,7 +8511,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "Text Moderation Latest"
+      "name": "Text Moderation Latest",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-10-27",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "omni-moderation",
+        "source_quote": "| 2025-10-27 | `text-moderation-latest` | `omni-moderation` |"
+      }
     },
     {
       "id": "text-moderation-stable",
@@ -8192,7 +8526,14 @@
       "provider": {
         "id": "openai"
       },
-      "name": "Text Moderation Stable"
+      "name": "Text Moderation Stable",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-10-27",
+        "source": "https://developers.openai.com/api/docs/deprecations.md",
+        "replacement": "omni-moderation",
+        "source_quote": "| 2025-10-27 | `text-moderation-stable` | `omni-moderation` |"
+      }
     },
     {
       "id": "tts-1",
@@ -10856,7 +11197,13 @@
       "provider": {
         "id": "azure"
       },
-      "name": "Llama 3.2 11B Vision Instruct"
+      "name": "Llama 3.2 11B Vision Instruct",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-06-13",
+        "source": "https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/model-retirement-schedule",
+        "source_quote": "| Llama-3.2-11B-Vision-Instruct | \u2014 | Retired | 2026-06-13 | \u2014 |"
+      }
     },
     {
       "id": "Llama-Guard-3-1B",
@@ -10872,7 +11219,13 @@
       "provider": {
         "id": "azure"
       },
-      "name": "Llama 3.2 90B Vision Instruct"
+      "name": "Llama 3.2 90B Vision Instruct",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-06-13",
+        "source": "https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/model-retirement-schedule",
+        "source_quote": "| Llama-3.2-90B-Vision-Instruct | \u2014 | Retired | 2026-06-13 | \u2014 |"
+      }
     },
     {
       "id": "Llama-2-7b",
@@ -11008,7 +11361,13 @@
       "provider": {
         "id": "azure"
       },
-      "name": "Meta Llama 3.1 405B Instruct"
+      "name": "Meta Llama 3.1 405B Instruct",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-06-13",
+        "source": "https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/model-retirement-schedule",
+        "source_quote": "| Meta-Llama-3.1-405B-Instruct | \u2014 | Retired | 2026-06-13 | \u2014 |"
+      }
     },
     {
       "id": "Ministral-3B",
@@ -11184,7 +11543,14 @@
       "provider": {
         "id": "azure"
       },
-      "name": "TimeGEN 1"
+      "name": "TimeGEN 1",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-08-31",
+        "source": "https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/model-retirement-schedule",
+        "replacement": "TimeGPT-1, TimegGPT-2.1",
+        "source_quote": "| TimeGEN-1 | 1 | Deprecated | 2026-08-31 | TimeGPT-1, TimegGPT-2.1 |"
+      }
     },
     {
       "id": "jais-30b-chat",
@@ -11200,7 +11566,13 @@
       "provider": {
         "id": "azure"
       },
-      "name": "Cohere Command R+ 08-2024"
+      "name": "Cohere Command R+ 08-2024",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-05-12",
+        "source": "https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/model-retirement-schedule",
+        "source_quote": "| Cohere-command-r-plus-08-2024 | 1 | Retired | 2026-05-12 | \u2014 |"
+      }
     },
     {
       "id": "Cohere-command-r-08-2024",
@@ -11208,7 +11580,13 @@
       "provider": {
         "id": "azure"
       },
-      "name": "Cohere Command R 08-2024"
+      "name": "Cohere Command R 08-2024",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-05-12",
+        "source": "https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/model-retirement-schedule",
+        "source_quote": "| Cohere-command-r-08-2024 | 1 | Retired | 2026-05-12 | \u2014 |"
+      }
     },
     {
       "id": "Cohere-rerank-v3-multilingual",
@@ -11552,7 +11930,14 @@
       "provider": {
         "id": "groq"
       },
-      "name": "Llama 3 70B 8192"
+      "name": "Llama 3 70B 8192",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-08-30",
+        "source": "https://console.groq.com/docs/deprecations.md",
+        "replacement": "llama-3.3-70b-versatile",
+        "source_quote": "| llama3-70b-8192 | 08/30/25 | llama-3.3-70b-versatile |"
+      }
     },
     {
       "id": "llama3-8b-8192",
@@ -11560,7 +11945,14 @@
       "provider": {
         "id": "groq"
       },
-      "name": "Llama 3 8B 8192"
+      "name": "Llama 3 8B 8192",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-08-30",
+        "source": "https://console.groq.com/docs/deprecations.md",
+        "replacement": "llama-3.1-8b-instant",
+        "source_quote": "| llama3-8b-8192 | 08/30/25 | llama-3.1-8b-instant |"
+      }
     },
     {
       "id": "mixtral-8x7b-32768",
@@ -11568,7 +11960,14 @@
       "provider": {
         "id": "groq"
       },
-      "name": "Mixtral 8x7B 32768"
+      "name": "Mixtral 8x7B 32768",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-03-20",
+        "source": "https://console.groq.com/docs/deprecations.md",
+        "replacement": "mistral-saba-24b llama-3.3-70b-versatile",
+        "source_quote": "| mixtral-8x7b-32768 | 03/20/25 | mistral-saba-24b llama-3.3-70b-versatile |"
+      }
     },
     {
       "id": "whisper-large-v3",
@@ -11600,7 +11999,14 @@
       "provider": {
         "id": "mistral-ai"
       },
-      "name": "Mixtral 8x7B"
+      "name": "Mixtral 8x7B",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-03-30",
+        "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
+        "replacement": "Mistral Small 4",
+        "source_quote": "Mixtral 8x7B \u2197 | 0.1 | open-mixtral-8x7b | 11/30/2024 3/30/2025 | Mistral Small 4 |"
+      }
     },
     {
       "id": "open-mixtral-8x22b",
@@ -11608,7 +12014,14 @@
       "provider": {
         "id": "mistral-ai"
       },
-      "name": "Mixtral 8x22B"
+      "name": "Mixtral 8x22B",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-03-30",
+        "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
+        "replacement": "Mistral Small 4",
+        "source_quote": "Mixtral 8x22B \u2197 | 0.1-0.3 | open-mixtral-8x22b | 11/30/2024 3/30/2025 | Mistral Small 4 |"
+      }
     },
     {
       "id": "stable-diffusion-3.5-large-txt2img",
@@ -12816,7 +13229,14 @@
       "provider": {
         "id": "moonshot"
       },
-      "name": "Moonshot (8k Context)"
+      "name": "Moonshot (8k Context)",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-08-31",
+        "source": "https://platform.kimi.ai/docs/models.md",
+        "replacement": "kimi-k3",
+        "source_quote": "The `moonshot-v1` series models (including `moonshot-v1-auto` and the `-vision-preview` variants) were officially discontinued on **August 31, 2026** and are no longer maintained or supported. Please use the latest Kimi model [kimi-k3](/docs/guide/kimi-k3-quickstart) for continued support and enhanced reasoning capabilities."
+      }
     },
     {
       "id": "moonshot-v1-32k",
@@ -12824,7 +13244,14 @@
       "provider": {
         "id": "moonshot"
       },
-      "name": "Moonshot (132k Context)"
+      "name": "Moonshot (132k Context)",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-08-31",
+        "source": "https://platform.kimi.ai/docs/models.md",
+        "replacement": "kimi-k3",
+        "source_quote": "The `moonshot-v1` series models (including `moonshot-v1-auto` and the `-vision-preview` variants) were officially discontinued on **August 31, 2026** and are no longer maintained or supported. Please use the latest Kimi model [kimi-k3](/docs/guide/kimi-k3-quickstart) for continued support and enhanced reasoning capabilities."
+      }
     },
     {
       "id": "moonshot-v1-128k",
@@ -12832,7 +13259,14 @@
       "provider": {
         "id": "moonshot"
       },
-      "name": "Moonshot (128k Context)"
+      "name": "Moonshot (128k Context)",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-08-31",
+        "source": "https://platform.kimi.ai/docs/models.md",
+        "replacement": "kimi-k3",
+        "source_quote": "The `moonshot-v1` series models (including `moonshot-v1-auto` and the `-vision-preview` variants) were officially discontinued on **August 31, 2026** and are no longer maintained or supported. Please use the latest Kimi model [kimi-k3](/docs/guide/kimi-k3-quickstart) for continued support and enhanced reasoning capabilities."
+      }
     },
     {
       "id": "nomic-embed-vision-v1",
@@ -12936,7 +13370,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Llama 3.1 8B Instruct Turbo"
+      "name": "Llama 3.1 8B Instruct Turbo",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-03-06",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2026-03-06 | `meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo` | Yes |"
+      }
     },
     {
       "id": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
@@ -12944,7 +13384,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Llama 3.1 70B Instruct Turbo"
+      "name": "Llama 3.1 70B Instruct Turbo",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-02-25",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2026-02-25 | `meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo` | No |"
+      }
     },
     {
       "id": "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
@@ -12952,7 +13398,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Llama 3.1 405B Instruct Turbo"
+      "name": "Llama 3.1 405B Instruct Turbo",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-02-06",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2026-02-06 | `meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo` | No |"
+      }
     },
     {
       "id": "meta-llama/Meta-Llama-3-8B-Instruct-Turbo",
@@ -12968,7 +13420,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Llama 3 70B Instruct Turbo"
+      "name": "Llama 3 70B Instruct Turbo",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-12-23",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2025-12-23 | `meta-llama/Meta-Llama-3-70B-Instruct-Turbo` | No |"
+      }
     },
     {
       "id": "meta-llama/Llama-3.2-3B-Instruct-Turbo",
@@ -12976,7 +13434,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Llama 3.2 3B Instruct Turbo"
+      "name": "Llama 3.2 3B Instruct Turbo",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-03-06",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2026-03-06 | `meta-llama/Llama-3.2-3B-Instruct-Turbo` | No |"
+      }
     },
     {
       "id": "meta-llama/Meta-Llama-3-8B-Instruct-Lite",
@@ -12984,7 +13448,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Llama 3 8B Instruct Lite"
+      "name": "Llama 3 8B Instruct Lite",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-07-10",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2026-07-10 | `meta-llama/Meta-Llama-3-8B-Instruct-Lite` | No |"
+      }
     },
     {
       "id": "meta-llama/Meta-Llama-3-70B-Instruct-Lite",
@@ -12992,7 +13462,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Llama 3 70B Instruct Lite"
+      "name": "Llama 3 70B Instruct Lite",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-03-11",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2025-03-11 | `meta-llama/Meta-Llama-3-70B-Instruct-Lite` | No |"
+      }
     },
     {
       "id": "meta-llama/Llama-3-8b-chat-hf",
@@ -13000,7 +13476,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Llama 3 8B Instruct Reference"
+      "name": "Llama 3 8B Instruct Reference",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-08-28",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2025-08-28 | `meta-llama/Llama-3-8b-chat-hf` | No |"
+      }
     },
     {
       "id": "meta-llama/Llama-3-70b-chat-hf",
@@ -13024,7 +13506,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Gemma 2 27B"
+      "name": "Gemma 2 27B",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-08-28",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2025-08-28 | `google/gemma-2-27b-it` | No |"
+      }
     },
     {
       "id": "google/gemma-2-9b-it",
@@ -13072,7 +13560,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "LLaMA-2 Chat (13B)"
+      "name": "LLaMA-2 Chat (13B)",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-04-24",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2025-04-24 | `meta-llama/Llama-2-13b-chat-hf` | No |"
+      }
     },
     {
       "id": "mistralai/Mistral-7B-Instruct-v0.1",
@@ -13080,7 +13574,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Mistral (7B) Instruct"
+      "name": "Mistral (7B) Instruct",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-11-13",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2025-11-13 | `mistralai/Mistral-7B-Instruct-v0.1` | No |"
+      }
     },
     {
       "id": "mistralai/Mistral-7B-Instruct-v0.2",
@@ -13104,7 +13604,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Mixtral-8x7B Instruct (46.7B)"
+      "name": "Mixtral-8x7B Instruct (46.7B)",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-04-16",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2026-04-16 | `mistralai/Mixtral-8x7B-Instruct-v0.1` | Yes |"
+      }
     },
     {
       "id": "mistralai/Mixtral-8x22B-Instruct-v0.1",
@@ -13120,7 +13626,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Nous Hermes 2 - Mixtral 8x7B-DPO (46.7B)"
+      "name": "Nous Hermes 2 - Mixtral 8x7B-DPO (46.7B)",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-08-28",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2025-08-28 | `NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO` | No |"
+      }
     },
     {
       "id": "Qwen/Qwen2.5-7B-Instruct-Turbo",
@@ -13136,7 +13648,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Qwen 2.5 72B Instruct Turbo"
+      "name": "Qwen 2.5 72B Instruct Turbo",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-02-06",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2026-02-06 | `Qwen/Qwen2.5-72B-Instruct-Turbo` | No |"
+      }
     },
     {
       "id": "Qwen/Qwen2-72B-Instruct",
@@ -13144,7 +13662,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Qwen 2 Instruct (72B)"
+      "name": "Qwen 2 Instruct (72B)",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-08-28",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2025-08-28 | `Qwen/Qwen2-72B-Instruct` | No |"
+      }
     },
     {
       "id": "togethercomputer/StripedHyena-Nous-7B",
@@ -13168,7 +13692,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Flux.1 [schnell] (free)*"
+      "name": "Flux.1 [schnell] (free)*",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-12-23",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2025-12-23 | `black-forest-labs/FLUX.1-schnell-free` | No |"
+      }
     },
     {
       "id": "black-forest-labs/FLUX.1-schnell",
@@ -13176,7 +13706,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Flux.1 [schnell] (Turbo)"
+      "name": "Flux.1 [schnell] (Turbo)",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-08-19",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2026-08-19 | `black-forest-labs/FLUX.1-schnell` | No |"
+      }
     },
     {
       "id": "black-forest-labs/FLUX.1.1-pro",
@@ -13200,7 +13736,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Stable Diffusion XL 1.0"
+      "name": "Stable Diffusion XL 1.0",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-04-14",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2025-04-14 | `stabilityai/stable-diffusion-xl-base-1.0` | No |"
+      }
     },
     {
       "id": "togethercomputer/m2-bert-80M-2k-retrieval",
@@ -13224,7 +13766,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "M2-BERT-80M-32K-Retrieval"
+      "name": "M2-BERT-80M-32K-Retrieval",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-02-06",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2026-02-06 | `togethercomputer/m2-bert-80M-32k-retrieval` | No |"
+      }
     },
     {
       "id": "WhereIsAI/UAE-Large-V1",
@@ -13240,7 +13788,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "BGE-Large-EN-v1.5"
+      "name": "BGE-Large-EN-v1.5",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-02-06",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2026-02-06 | `BAAI/bge-large-en-v1.5` | No |"
+      }
     },
     {
       "id": "BAAI/bge-base-en-v1.5",
@@ -13256,7 +13810,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Sentence-BERT"
+      "name": "Sentence-BERT",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-02-06",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2025-02-06 | `sentence-transformers/msmarco-bert-base-dot-v5` | No |"
+      }
     },
     {
       "id": "bert-base-uncased",
@@ -13264,7 +13824,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "BERT"
+      "name": "BERT",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-02-06",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2025-02-06 | `bert-base-uncased` | No |"
+      }
     },
     {
       "id": "meta-llama/Llama-Vision-Free",
@@ -13272,7 +13838,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "(Free) Llama 3.2 11B Vision Instruct Turbo*"
+      "name": "(Free) Llama 3.2 11B Vision Instruct Turbo*",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-08-28",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2025-08-28 | `meta-llama/Llama-Vision-Free` | No |"
+      }
     },
     {
       "id": "meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo",
@@ -13280,7 +13852,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Llama 3.2 11B Vision Instruct Turbo"
+      "name": "Llama 3.2 11B Vision Instruct Turbo",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-08-28",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2025-08-28 | `meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo` | No |"
+      }
     },
     {
       "id": "meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo",
@@ -13288,7 +13866,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Llama 3.2 90B Vision Instruct Turbo"
+      "name": "Llama 3.2 90B Vision Instruct Turbo",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-08-28",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2025-08-28 | `meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo` | No |"
+      }
     },
     {
       "id": "meta-llama/Llama-2-70b-hf",
@@ -13304,7 +13888,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Mistral (7B)"
+      "name": "Mistral (7B)",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-03-27",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2025-03-27 | `mistralai/Mistral-7B-v0.1` | No |"
+      }
     },
     {
       "id": "mistralai/Mixtral-8x7B-v0.1",
@@ -13320,7 +13910,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "Llama Guard (7B)"
+      "name": "Llama Guard (7B)",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-03-08",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2025-03-08 | `Meta-Llama/Llama-Guard-7b` | No |"
+      }
     },
     {
       "id": "Salesforce/Llama-Rank-v1",
@@ -13328,7 +13924,13 @@
       "provider": {
         "id": "together-ai"
       },
-      "name": "LlamaRank"
+      "name": "LlamaRank",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2026-02-06",
+        "source": "https://docs.together.ai/docs/deprecations.md",
+        "source_quote": "| 2026-02-06 | `Salesforce/Llama-Rank-V1` | No |"
+      }
     },
     {
       "id": "dracarys2-72b-instruct",
@@ -13656,7 +14258,14 @@
       "provider": {
         "id": "vertex-ai"
       },
-      "name": "Gemini 1.5 Pro"
+      "name": "Gemini 1.5 Pro",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-09-24",
+        "source": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning",
+        "replacement": "gemini-2.5-flash",
+        "source_quote": "gemini-1.5-pro-002 | September 24, 2024 | September 24, 2025 | gemini-2.5-flash |"
+      }
     },
     {
       "id": "gemini-1.5-flash-002",
@@ -13664,7 +14273,14 @@
       "provider": {
         "id": "vertex-ai"
       },
-      "name": "Gemini 1.5 Flash"
+      "name": "Gemini 1.5 Flash",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-09-24",
+        "source": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning",
+        "replacement": "gemini-2.5-flash-lite",
+        "source_quote": "gemini-1.5-flash-002 | September 24, 2024 | September 24, 2025 | gemini-2.5-flash-lite |"
+      }
     },
     {
       "id": "gemini-pro",
@@ -13872,7 +14488,14 @@
       "provider": {
         "id": "vertex-ai"
       },
-      "name": "PaLM 2 Chat Bison"
+      "name": "PaLM 2 Chat Bison",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-04-21",
+        "source": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning",
+        "replacement": "gemini-2.5-flash-lite",
+        "source_quote": "chat-bison | May 2023 | April 21, 2025 | gemini-2.5-flash-lite |"
+      }
     },
     {
       "id": "text-bison",
@@ -13880,7 +14503,14 @@
       "provider": {
         "id": "vertex-ai"
       },
-      "name": "PaLM 2 Text Bison"
+      "name": "PaLM 2 Text Bison",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-04-21",
+        "source": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning",
+        "replacement": "gemini-2.5-flash-lite",
+        "source_quote": "text-bison | May 2023 | April 21, 2025 | gemini-2.5-flash-lite |"
+      }
     },
     {
       "id": "claude-3-5-sonnet",
@@ -14192,7 +14822,14 @@
       "provider": {
         "id": "vertex-ai"
       },
-      "name": "Imagen for Captioning & VQA"
+      "name": "Imagen for Captioning & VQA",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-09-24",
+        "source": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning",
+        "replacement": "gemini-2.5-flash-image",
+        "source_quote": "imagetext | June 7, 2023 | September 24, 2025 | gemini-2.5-flash-image |"
+      }
     },
     {
       "id": "stable-diffusion-v1-4",
@@ -14240,7 +14877,14 @@
       "provider": {
         "id": "vertex-ai"
       },
-      "name": "Codey for Code Completion"
+      "name": "Codey for Code Completion",
+      "lifecycle": {
+        "status": "retired",
+        "retirement_date": "2025-04-21",
+        "source": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning",
+        "replacement": "gemini-2.5-flash-lite",
+        "source_quote": "code-gecko | May 2023 | April 21, 2025 | gemini-2.5-flash-lite |"
+      }
     },
     {
       "id": "text-unicorn",
