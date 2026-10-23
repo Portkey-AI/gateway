@@ -119,7 +119,7 @@ export interface BedrockMessagesToolParam {
   description?: string;
   input_schema?: Record<string, any>;
   type?: string;
-  cache_control?: { type: string };
+  cache_control?: { type: string; ttl?: string };
   /**
    * When true, this tool is not loaded into context initially.
    * Requires beta header: tool-search-tool-2025-10-19 (Bedrock Invoke API only)
@@ -205,6 +205,7 @@ export type BedrockContentItem = {
   };
   cachePoint?: {
     type: string;
+    ttl?: string;
   };
 };
 

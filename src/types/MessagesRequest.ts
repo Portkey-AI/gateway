@@ -1,5 +1,6 @@
 export interface CacheControlEphemeral {
   type: 'ephemeral';
+  ttl?: string;
 }
 
 export interface ServerToolUseBlockParam {
