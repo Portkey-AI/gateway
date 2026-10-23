@@ -1,20 +1,14 @@
 import { ABSTRACT } from '../../globals';
 import { ProviderConfigs } from '../types';
 import AbstractAPIConfig from './api';
-import {
-  createModelResponseParams,
-  OpenAICreateModelResponseTransformer,
-  OpenAIGetModelResponseTransformer,
-} from '../open-ai-base';
+import { chatCompleteParams, responseTransformers } from '../open-ai-base';
 
 const AbstractConfig: ProviderConfigs = {
   api: AbstractAPIConfig,
-  createModelResponse: createModelResponseParams([]),
-  getModelResponse: {},
-  responseTransforms: {
-    createModelResponse: OpenAICreateModelResponseTransformer(ABSTRACT),
-    getModelResponse: OpenAIGetModelResponseTransformer(ABSTRACT),
-  },
+  chatComplete: chatCompleteParams([]),
+  responseTransforms: responseTransformers(ABSTRACT, {
+    chatComplete: true,
+  }),
 };
 
 export default AbstractConfig;

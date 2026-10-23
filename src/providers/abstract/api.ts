@@ -7,13 +7,10 @@ const AbstractAPIConfig: ProviderAPIConfig = {
       Authorization: `Bearer ${providerOptions.apiKey}`,
     };
   },
-  getEndpoint: ({ fn, gatewayRequestURL }) => {
-    // Abstract serves its LLMs on the Responses API only.
+  getEndpoint: ({ fn }) => {
     switch (fn) {
-      case 'createModelResponse':
-        return '/responses';
-      case 'getModelResponse':
-        return gatewayRequestURL.split('/v1')?.[1] ?? '';
+      case 'chatComplete':
+        return '/chat/completions';
       default:
         return '';
     }
