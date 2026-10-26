@@ -23,9 +23,9 @@ During the [Hacktoberfest month](https://hacktoberfest.com/), running from Octob
 🧐 Remember to adhere to the [quality standards](https://hacktoberfest.digitalocean.com/resources/qualitystandards) to avoid your PR being marked as `spam` or `invalid`.
 
 ## 🔄 Raising PRs
-1. Once you are done with your changes, format and Lint your code by running:
+1. Once you are done with your changes, format and check your code by running:
 ```sh
-make format; make lint
+npm run format; npm run format:check
 ```
 2. While raising your PRs, please prepend any of the following to your title:
 *   `provider:` for adding new LLM providers.

@@ -33,6 +33,7 @@ import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from '../google/types';
 import {
   ChatCompletionResponse,
   ErrorResponse,
+  FINISH_REASON,
   Logprobs,
   ProviderConfig,
 } from '../types';
@@ -547,10 +548,16 @@ export const GoogleChatCompleteResponseTransform: (
           return {
             message: message,
             index: index,
-            finish_reason: transformFinishReason(
-              generation.finishReason as GOOGLE_GENERATE_CONTENT_FINISH_REASON,
-              strictOpenAiCompliance
-            ),
+            finish_reason:
+              strictOpenAiCompliance &&
+              toolCalls.length &&
+              generation.finishReason ===
+                GOOGLE_GENERATE_CONTENT_FINISH_REASON.STOP
+                ? FINISH_REASON.tool_calls
+                : transformFinishReason(
+                    generation.finishReason as GOOGLE_GENERATE_CONTENT_FINISH_REASON,
+                    strictOpenAiCompliance
+                  ),
             logprobs,
             ...(!strictOpenAiCompliance && {
               safetyRatings: generation.safetyRatings,
@@ -649,6 +656,8 @@ export const GoogleChatCompleteStreamChunkTransform: (
 ) => {
   streamState.containsChainOfThoughtMessage =
     streamState?.containsChainOfThoughtMessage ?? false;
+  streamState.containsToolCalls = streamState?.containsToolCalls ?? false;
+  streamState.toolCallIndex = streamState?.toolCallIndex ?? 0;
   const chunk = responseChunk
     .trim()
     .replace(/^data: /, '')
@@ -700,18 +709,26 @@ export const GoogleChatCompleteStreamChunkTransform: (
     provider: GOOGLE_VERTEX_AI,
     choices:
       parsedChunk.candidates?.map((generation, index) => {
-        const finishReason = generation.finishReason
-          ? transformFinishReason(
-              parsedChunk.candidates[0]
-                .finishReason as GOOGLE_GENERATE_CONTENT_FINISH_REASON,
-              strictOpenAiCompliance
-            )
-          : null;
-        let message: any = { role: 'assistant', content: '' };
-        if (generation.content?.parts[0]?.text) {
-          const contentBlocks = [];
-          let content = '';
-          for (const part of generation.content.parts) {
+        const contentBlocks = [];
+        const toolCalls = [];
+        let content = '';
+        for (const part of generation.content?.parts ?? []) {
+          if (part.functionCall) {
+            streamState.containsToolCalls = true;
+            toolCalls.push({
+              index: streamState.toolCallIndex++,
+              id: 'portkey-' + crypto.randomUUID(),
+              type: 'function',
+              function: {
+                name: part.functionCall.name,
+                arguments: JSON.stringify(part.functionCall.args),
+                ...(!strictOpenAiCompliance &&
+                  part.thoughtSignature && {
+                    thought_signature: part.thoughtSignature,
+                  }),
+              },
+            });
+          } else if (part.text) {
             if (part.thought) {
               contentBlocks.push({
                 index: 0,
@@ -719,44 +736,14 @@ export const GoogleChatCompleteStreamChunkTransform: (
               });
               streamState.containsChainOfThoughtMessage = true;
             } else {
-              content += part.text ?? '';
+              content += part.text;
               contentBlocks.push({
                 index: streamState.containsChainOfThoughtMessage ? 1 : 0,
                 delta: { text: part.text },
               });
             }
-          }
-          message = {
-            role: 'assistant',
-            content,
-            ...(!strictOpenAiCompliance &&
-              contentBlocks.length && { content_blocks: contentBlocks }),
-          };
-        } else if (generation.content?.parts[0]?.functionCall) {
-          message = {
-            role: 'assistant',
-            tool_calls: generation.content.parts.map((part, idx) => {
-              if (part.functionCall) {
-                return {
-                  index: idx,
-                  id: 'portkey-' + crypto.randomUUID(),
-                  type: 'function',
-                  function: {
-                    name: part.functionCall.name,
-                    arguments: JSON.stringify(part.functionCall.args),
-                    ...(!strictOpenAiCompliance &&
-                      part.thoughtSignature && {
-                        thought_signature: part.thoughtSignature,
-                      }),
-                  },
-                };
-              }
-            }),
-          };
-        } else if (generation.content?.parts[0]?.inlineData) {
-          const part = generation.content.parts[0];
-          const contentBlocks = [
-            {
+          } else if (part.inlineData) {
+            contentBlocks.push({
               index: streamState.containsChainOfThoughtMessage ? 1 : 0,
               delta: {
                 type: 'image_url',
@@ -764,13 +751,38 @@ export const GoogleChatCompleteStreamChunkTransform: (
                   url: `data:${part.inlineData?.mimeType};base64,${part.inlineData?.data}`,
                 },
               },
-            },
-          ];
-          message = {
-            role: 'assistant',
-            content_blocks: contentBlocks,
-          };
+            });
+          }
         }
+        const finishReason = generation.finishReason
+          ? strictOpenAiCompliance &&
+            streamState.containsToolCalls &&
+            generation.finishReason ===
+              GOOGLE_GENERATE_CONTENT_FINISH_REASON.STOP
+            ? FINISH_REASON.tool_calls
+            : transformFinishReason(
+                generation.finishReason as GOOGLE_GENERATE_CONTENT_FINISH_REASON,
+                strictOpenAiCompliance
+              )
+          : null;
+        const filteredContentBlocks = strictOpenAiCompliance
+          ? contentBlocks.filter((b) => b.delta?.type === 'image_url')
+          : contentBlocks;
+        const omitEmptyContent =
+          !content &&
+          (toolCalls.length > 0 ||
+            (filteredContentBlocks.length > 0 &&
+              filteredContentBlocks.every(
+                (b) => b.delta?.type === 'image_url'
+              )));
+        const message: any = {
+          role: 'assistant',
+          ...(!omitEmptyContent && { content }),
+          ...(toolCalls.length && { tool_calls: toolCalls }),
+          ...(filteredContentBlocks.length && {
+            content_blocks: filteredContentBlocks,
+          }),
+        };
         return {
           delta: message,
           index: index,

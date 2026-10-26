@@ -1,3 +1,4 @@
+import { GoogleChatCompleteStreamChunkTransform } from './chatComplete';
 import { derefer, transformGeminiToolParameters } from './utils';
 
 /*
@@ -614,5 +615,197 @@ describe('transformGeminiToolParameters', () => {
       'identity',
       'emergency_contacts',
     ]);
+  });
+});
+
+describe('GoogleChatCompleteStreamChunkTransform', () => {
+  it('preserves functionCall when preceded by a thought/text part in the same chunk', () => {
+    const streamState: Record<string, any> = {};
+    const rawChunk = JSON.stringify({
+      modelVersion: 'gemini-4-argon',
+      candidates: [
+        {
+          index: 0,
+          content: {
+            parts: [
+              { text: 'Thinking about reading the file...', thought: true },
+              {
+                functionCall: {
+                  name: 'read',
+                  args: { path: 'README.md' },
+                },
+                thoughtSignature: 'sig_1',
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const sse = GoogleChatCompleteStreamChunkTransform(
+      `data: ${rawChunk}`,
+      'vertex-1',
+      streamState,
+      false
+    );
+    const parsed = JSON.parse(sse.replace(/^data: /, '').trim());
+    const delta = parsed.choices[0].delta;
+
+    expect(delta.content_blocks).toEqual([
+      { index: 0, delta: { thinking: 'Thinking about reading the file...' } },
+    ]);
+    expect(delta.tool_calls).toHaveLength(1);
+    expect(delta.tool_calls[0]).toMatchObject({
+      index: 0,
+      type: 'function',
+      function: {
+        name: 'read',
+        arguments: '{"path":"README.md"}',
+        thought_signature: 'sig_1',
+      },
+    });
+  });
+
+  it('assigns incrementing indices across parallel tool call chunks and maps STOP to tool_calls under strict compliance', () => {
+    const streamState: Record<string, any> = {};
+    const chunkA = JSON.stringify({
+      modelVersion: 'gemini-4-argon',
+      candidates: [
+        {
+          index: 0,
+          content: {
+            parts: [
+              { functionCall: { name: 'read', args: { path: 'a.txt' } } },
+            ],
+          },
+        },
+      ],
+    });
+    const chunkB = JSON.stringify({
+      modelVersion: 'gemini-4-argon',
+      candidates: [
+        {
+          index: 0,
+          content: {
+            parts: [
+              { functionCall: { name: 'read', args: { path: 'b.txt' } } },
+            ],
+          },
+        },
+      ],
+    });
+    const chunkFinish = JSON.stringify({
+      modelVersion: 'gemini-4-argon',
+      candidates: [
+        {
+          index: 0,
+          content: { parts: [] },
+          finishReason: 'STOP',
+        },
+      ],
+    });
+
+    const parsedA = JSON.parse(
+      GoogleChatCompleteStreamChunkTransform(
+        `data: ${chunkA}`,
+        'vertex-2',
+        streamState,
+        true
+      )
+        .replace(/^data: /, '')
+        .trim()
+    );
+    const parsedB = JSON.parse(
+      GoogleChatCompleteStreamChunkTransform(
+        `data: ${chunkB}`,
+        'vertex-2',
+        streamState,
+        true
+      )
+        .replace(/^data: /, '')
+        .trim()
+    );
+    const parsedFinish = JSON.parse(
+      GoogleChatCompleteStreamChunkTransform(
+        `data: ${chunkFinish}`,
+        'vertex-2',
+        streamState,
+        true
+      )
+        .replace(/^data: /, '')
+        .trim()
+    );
+
+    expect(parsedA.choices[0].delta.tool_calls[0].index).toBe(0);
+    expect(parsedA.choices[0].delta.content).toBeUndefined();
+    expect(parsedB.choices[0].delta.tool_calls[0].index).toBe(1);
+    expect(parsedFinish.choices[0].finish_reason).toBe('tool_calls');
+  });
+
+  it('filters out thinking/text content_blocks in strict mode when an image is in the same chunk and ignores empty text parts', () => {
+    const streamState: Record<string, any> = {};
+    const imageAndThoughtChunk = JSON.stringify({
+      modelVersion: 'gemini-3-pro-image',
+      candidates: [
+        {
+          index: 0,
+          content: {
+            parts: [
+              { text: 'secret thinking', thought: true },
+              {
+                inlineData: {
+                  mimeType: 'image/png',
+                  data: 'aGVsbG8=',
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    const emptyTextSignedChunk = JSON.stringify({
+      modelVersion: 'gemini-3-pro-image',
+      candidates: [
+        {
+          index: 0,
+          content: {
+            parts: [{ text: '', thoughtSignature: 'sig_final' }],
+          },
+          finishReason: 'STOP',
+        },
+      ],
+    });
+
+    const parsedImage = JSON.parse(
+      GoogleChatCompleteStreamChunkTransform(
+        `data: ${imageAndThoughtChunk}`,
+        'vertex-3',
+        streamState,
+        true
+      )
+        .replace(/^data: /, '')
+        .trim()
+    );
+    const parsedEmpty = JSON.parse(
+      GoogleChatCompleteStreamChunkTransform(
+        `data: ${emptyTextSignedChunk}`,
+        'vertex-3',
+        streamState,
+        false
+      )
+        .replace(/^data: /, '')
+        .trim()
+    );
+
+    expect(parsedImage.choices[0].delta.content_blocks).toEqual([
+      {
+        index: 1,
+        delta: {
+          type: 'image_url',
+          image_url: { url: 'data:image/png;base64,aGVsbG8=' },
+        },
+      },
+    ]);
+    expect(parsedEmpty.choices[0].delta.content_blocks).toBeUndefined();
   });
 });
