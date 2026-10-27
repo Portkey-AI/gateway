@@ -15,6 +15,17 @@ const removeLogClient = (clientId: any) => {
   logClients.delete(clientId);
 };
 
+
+/** Path (+ query) for the live-logs Endpoint column; avoid hardcoding :8787. */
+const requestEndpoint = (url: string): string => {
+  try {
+    const parsed = new URL(url, 'http://localhost');
+    return parsed.pathname + parsed.search;
+  } catch {
+    return url;
+  }
+};
+
 const sanitizeHeaders = (headers: Record<string, unknown> = {}) =>
   Object.fromEntries(Object.keys(headers).map((key) => [key, '[REDACTED]']));
 
@@ -138,7 +149,7 @@ async function processLog(c: Context, start: number) {
     JSON.stringify({
       time: new Date().toLocaleString(),
       method: c.req.method,
-      endpoint: c.req.url.split(':8787')[1],
+      endpoint: requestEndpoint(c.req.url),
       status: c.res.status,
       duration: ms,
       requestOptions: requestOptionsArray.map(sanitizeRequestOption),
