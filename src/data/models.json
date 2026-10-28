@@ -15425,6 +15425,14 @@
         "id": "openai"
       },
       "name": "Text Embedding Ada 002"
+    },
+    {
+      "id": "google/gemma-4-26b-a4b-it",
+      "object": "model",
+      "provider": {
+        "id": "frequency"
+      },
+      "name": "Gemma 4 26B A4B"
     }
   ]
 }
