@@ -1769,6 +1769,8 @@
           }
         } else {
           isAdminAuthenticated = false;
+          hasStartedLogSource = false;
+          cleanupLogSource();
           lockUi();
         }
       }
@@ -1965,10 +1967,11 @@
 
           isAdminAuthenticated = true;
           unlockUi();
-          if (!hasStartedLogSource) {
-            setupLogSource();
-            hasStartedLogSource = true;
-          }
+          // Always (re)start the stream after a successful unlock. After session
+          // expiry hasStartedLogSource may still be true while logSource is closed.
+          cleanupLogSource();
+          setupLogSource();
+          hasStartedLogSource = true;
       });
 
       document.querySelectorAll('.tabs').forEach(tabsContainer => {
@@ -2141,12 +2144,13 @@
       }
 
       async function reconnectLogSource() {
-        if (logSource) {
-            logSource.close();
-        }
+        cleanupLogSource();
         const stillAuthenticated = await checkAdminSession();
         if (!stillAuthenticated) {
+          // Session expired (or gateway restarted). Reset so a later successful
+          // admin_token submit starts a fresh EventSource instead of no-oping.
           isAdminAuthenticated = false;
+          hasStartedLogSource = false;
           lockUi();
           return;
         }
