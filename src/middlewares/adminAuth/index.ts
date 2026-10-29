@@ -1,5 +1,6 @@
 import { Context, Next } from 'hono';
 import conf from '../../../conf.json';
+import { parseCookies } from './parseCookies';
 
 const SESSION_COOKIE_NAME = 'portkey_admin_session';
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 12; // 12 hours
@@ -19,19 +20,6 @@ const getConfiguredAdminToken = (): string => {
   return adminToken;
 };
 
-const parseCookies = (cookieHeader?: string): Record<string, string> => {
-  if (!cookieHeader) return {};
-
-  return cookieHeader.split(';').reduce(
-    (acc, cookiePart) => {
-      const [rawKey, ...valueParts] = cookiePart.trim().split('=');
-      if (!rawKey) return acc;
-      acc[rawKey] = decodeURIComponent(valueParts.join('='));
-      return acc;
-    },
-    {} as Record<string, string>
-  );
-};
 
 const getSessionId = (c: Context): string | undefined => {
   const cookies = parseCookies(c.req.header('cookie'));
