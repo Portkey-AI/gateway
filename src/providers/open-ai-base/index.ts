@@ -12,7 +12,7 @@ import {
 } from '../openai/chatComplete';
 import { OpenAICompleteResponse } from '../openai/complete';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
-import { ErrorResponse, ProviderConfig } from '../types';
+import { ErrorResponse, ParameterConfig, ProviderConfig } from '../types';
 import { OpenAICreateModelResponseConfig } from './createModelResponse';
 
 type CustomTransformer<T, U> = (
@@ -68,8 +68,9 @@ export const chatCompleteParams = (
   };
 
   Object.keys(defaultValues ?? {}).forEach((key) => {
-    if (Object.hasOwn(baseParams, key) && !Array.isArray(baseParams[key])) {
-      baseParams[key].default = defaultValues?.[key];
+    const param = baseParams[key];
+    if (Object.hasOwn(baseParams, key) && !Array.isArray(param)) {
+      (param as ParameterConfig).default = defaultValues?.[key];
     }
   });
 
