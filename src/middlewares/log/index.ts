@@ -15,6 +15,20 @@ const removeLogClient = (clientId: any) => {
   logClients.delete(clientId);
 };
 
+/** Path (+ search) for live-log rows; do not hardcode the default :8787 listen port. */
+export const requestEndpointPath = (reqUrl: string): string => {
+  try {
+    const url = new URL(reqUrl);
+    return `${url.pathname}${url.search}`;
+  } catch {
+    // Relative or otherwise non-absolute URLs: keep path-like suffix if present.
+    const schemeHost = reqUrl.match(/^[a-z]+:\/\/[^/]+(.*)$/i);
+    if (schemeHost) return schemeHost[1] || '/';
+    return reqUrl.startsWith('/') ? reqUrl : `/${reqUrl}`;
+  }
+};
+
+
 const sanitizeHeaders = (headers: Record<string, unknown> = {}) =>
   Object.fromEntries(Object.keys(headers).map((key) => [key, '[REDACTED]']));
 
@@ -138,7 +152,7 @@ async function processLog(c: Context, start: number) {
     JSON.stringify({
       time: new Date().toLocaleString(),
       method: c.req.method,
-      endpoint: c.req.url.split(':8787')[1],
+      endpoint: requestEndpointPath(c.req.url),
       status: c.res.status,
       duration: ms,
       requestOptions: requestOptionsArray.map(sanitizeRequestOption),
