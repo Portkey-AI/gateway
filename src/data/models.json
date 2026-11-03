@@ -15425,6 +15425,14 @@
         "id": "openai"
       },
       "name": "Text Embedding Ada 002"
+    },
+    {
+      "id": "deepseek-v4.1-flash",
+      "object": "model",
+      "provider": {
+        "id": "prentis"
+      },
+      "name": "DeepSeek V4.1 Flash"
     }
   ]
 }
