@@ -9,19 +9,19 @@ async function fetchWithTimeout(
   url: string,
   options: RequestInit,
   timeout: number,
+  fetcher:
+    | typeof externalServiceFetch
+    | typeof externalServiceFetchWithNodeFetch,
   requestHandler?: () => Promise<Response>
 ) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
   const timeoutRequestOptions = {
     ...options,
-    signal: controller.signal,
+    signal: options.signal
+      ? AbortSignal.any([options.signal, controller.signal])
+      : controller.signal,
   };
-
-  const fetcher = (options.headers as any)?.['use-node-fetch']
-    ? externalServiceFetchWithNodeFetch
-    : externalServiceFetch;
-  delete (options as any)?.headers?.['use-node-fetch'];
   let response;
 
   try {
@@ -30,9 +30,12 @@ async function fetchWithTimeout(
     } else {
       response = await fetcher(url, timeoutRequestOptions as any);
     }
-    clearTimeout(timeoutId);
   } catch (err: any) {
-    if (err.name === 'AbortError') {
+    options.signal?.throwIfAborted();
+    if (
+      controller.signal.aborted &&
+      (err.name === 'AbortError' || err.name === 'TimeoutError')
+    ) {
       response = new Response(
         JSON.stringify({
           error: {
@@ -52,6 +55,8 @@ async function fetchWithTimeout(
     } else {
       throw err;
     }
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   return response;
@@ -91,6 +96,8 @@ export const retryRequest = async (
   let skipRetry = false;
 
   let remainingRetryTimeout = MAX_RETRY_LIMIT_MS;
+  const signal = options.signal;
+  let onAbort: (() => void) | undefined;
 
   const fetcher = (options.headers as any)?.['use-node-fetch']
     ? externalServiceFetchWithNodeFetch
@@ -98,15 +105,25 @@ export const retryRequest = async (
 
   delete (options as any)?.headers?.['use-node-fetch'];
   try {
+    signal?.throwIfAborted();
     await retry(
       async (bail: any, attempt: number, rateLimiter: any) => {
+        if (signal && !onAbort) {
+          onAbort = () => {
+            rateLimiter.stop();
+            bail(signal.reason);
+          };
+          signal.addEventListener('abort', onAbort, { once: true });
+        }
         try {
+          signal?.throwIfAborted();
           let response: Response;
           if (timeout) {
             response = (await fetchWithTimeout(
               url,
               options,
               timeout,
+              fetcher,
               requestHandler
             )) as any;
           } else if (requestHandler) {
@@ -114,6 +131,7 @@ export const retryRequest = async (
           } else {
             response = (await fetcher(url, options as any)) as any;
           }
+          signal?.throwIfAborted();
           if (statusCodesToRetry.includes(response.status)) {
             const errorObj: any = new Error(await response.text());
             errorObj.status = response.status;
@@ -157,10 +175,18 @@ export const retryRequest = async (
                   length: retryCount - attempt + 1,
                 }).map(() => 0);
 
-                throw await new Promise((resolve) => {
-                  setTimeout(() => {
+                throw await new Promise((resolve, reject) => {
+                  const cancel = () => {
+                    clearTimeout(timer);
+                    signal?.removeEventListener('abort', cancel);
+                    reject(signal?.reason);
+                  };
+                  const timer = setTimeout(() => {
+                    signal?.removeEventListener('abort', cancel);
                     resolve(errorObj);
                   }, retryAfter);
+                  signal?.addEventListener('abort', cancel, { once: true });
+                  if (signal?.aborted) cancel();
                 });
               } else {
                 throw errorObj;
@@ -180,6 +206,11 @@ export const retryRequest = async (
           }
           lastResponse = response;
         } catch (error: any) {
+          if (signal?.aborted) {
+            rateLimiter.stop();
+            bail(signal.reason);
+            return;
+          }
           if (attempt >= retryCount + 1) {
             bail(error);
             return;
@@ -196,6 +227,7 @@ export const retryRequest = async (
       }
     );
   } catch (error: any) {
+    signal?.throwIfAborted();
     if (
       error instanceof TypeError &&
       error.cause instanceof Error &&
@@ -220,6 +252,8 @@ export const retryRequest = async (
         headers: error.headers,
       });
     }
+  } finally {
+    if (onAbort) signal?.removeEventListener('abort', onAbort);
   }
   const end = new Date();
 

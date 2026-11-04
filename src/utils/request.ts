@@ -326,6 +326,7 @@ export function constructConfigFromRequestHeaders(
     }
     const convertedConfig = convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
+      'switchyard',
       'params',
       'checks',
       'vertex_service_account_json',

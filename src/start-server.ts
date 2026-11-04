@@ -20,6 +20,7 @@ import { initClickhouse } from './data-stores/clickhouse';
 import { initMongo } from './data-stores/mongo';
 import { initializeMemCache } from './data-stores/memCache';
 import { initCacheKeyTracker } from './utils/cacheKeyTracker';
+import { routeSwitchyard } from './services/switchyardRouter';
 
 const TIMEOUT = 15 * 60 * 1000; // 15 minutes
 
@@ -110,6 +111,8 @@ if (mcpNode) {
 }
 
 if (llmNode) {
+  const switchyardRoute =
+    Environment({}).SWITCHYARD_ENABLED === 'true' ? routeSwitchyard : undefined;
   const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
 
   app.get(
@@ -120,7 +123,21 @@ if (llmNode) {
   );
 
   const serverOptions: Options = {
-    fetch: app.fetch,
+    fetch: (request, bindings) => {
+      if (!switchyardRoute) return app.fetch(request, bindings);
+      const disconnected = new AbortController();
+      bindings.outgoing.once('close', () => {
+        if (!bindings.outgoing.writableFinished) disconnected.abort();
+      });
+      return app.fetch(request, {
+        ...bindings,
+        switchyardRoute,
+        switchyardSignal: AbortSignal.any([
+          request.signal,
+          disconnected.signal,
+        ]),
+      });
+    },
     port: port,
   };
 
