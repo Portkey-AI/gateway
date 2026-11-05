@@ -44,7 +44,10 @@ interface Strategy {
   mode: StrategyModes;
   switchyard?: {
     algorithm: unknown;
-    formats?: Record<string, import('@switchyard/libsy').TargetFormat>;
+    formats?: Record<
+      string,
+      'openai_chat' | 'openai_responses' | 'anthropic_messages'
+    >;
   };
   onStatusCodes?: Array<number>;
   conditions?: {

@@ -148,6 +148,55 @@ function chat(model: string, content = 'answer') {
 
 type ChatReply = ReturnType<typeof chat>;
 
+function providerReply(format: string, model: string, content = 'answer') {
+  if (format === 'openai_responses')
+    return {
+      id: 'answer',
+      object: 'response',
+      model,
+      status: 'completed',
+      output: [
+        {
+          type: 'message',
+          role: 'assistant',
+          content: [{ type: 'output_text', text: content }],
+        },
+      ],
+      usage: { input_tokens: 4, output_tokens: 2, total_tokens: 6 },
+    };
+  if (format === 'anthropic_messages')
+    return {
+      id: 'answer',
+      type: 'message',
+      role: 'assistant',
+      model,
+      content: [{ type: 'text', text: content }],
+      stop_reason: 'end_turn',
+      usage: { input_tokens: 4, output_tokens: 2 },
+    };
+  return chat(model, content);
+}
+
+function verdict(pSolve = 0.9) {
+  return JSON.stringify({
+    crux: 'bounded task',
+    primary_rule: 'SUP-1',
+    capability_boundary: 'supported',
+    p_solve: pSolve,
+  });
+}
+
+const classifier = {
+  type: 'llm_classifier',
+  mode: 'capability',
+  fail_open: false,
+  classifier_target: 'judge',
+  strong_target: 'strong',
+  weak_target: 'fast',
+  base_threshold: 0.5,
+  response_format_type: 'json_object',
+};
+
 const stage = {
   type: 'stage_router',
   capable_target: 'strong',
@@ -168,6 +217,18 @@ const direct = {
   default_target: 'fast',
 };
 
+const requiredWordHook = (deny: boolean) => ({
+  id: 'required-word',
+  type: 'guardrail',
+  deny,
+  checks: [
+    {
+      id: 'default.contains',
+      parameters: { words: ['absent-word'], operator: 'any', not: false },
+    },
+  ],
+});
+
 async function fixture(
   t: { after: typeof after },
   respond?: (
@@ -176,12 +237,18 @@ async function fixture(
     path: string
   ) => void | Promise<void>
 ) {
-  const calls: { path: string; auth?: string; body: any }[] = [];
+  const calls: { path: string; auth?: string; apiKey?: string; body: any }[] =
+    [];
   const server = createServer(async (req, res) => {
     const chunks = [];
     for await (const chunk of req) chunks.push(chunk);
     const body = JSON.parse(Buffer.concat(chunks).toString());
-    calls.push({ path: req.url!, auth: req.headers.authorization, body });
+    calls.push({
+      path: req.url!,
+      auth: req.headers.authorization,
+      apiKey: req.headers['x-api-key'] as string | undefined,
+      body,
+    });
     server.emit('call', body);
     if (respond) return respond(body, res, req.url!);
     res.writeHead(200, { 'content-type': 'application/json' });
@@ -269,19 +336,64 @@ test('full v2 app authenticates an ordinary provider route without Switchyard', 
   assert.ok(authCalls.some((call) => call.key === identity));
 });
 
-for (const [path, body, text] of inputs) {
-  test(`full v2 app routes authenticated ${path} through provider transport`, async (t) => {
-    const { calls, send } = await fixture(t);
-    const response = await send(body, { path });
-    assert.equal(response.status, 200, await response.clone().text());
-    assert.equal(text(await response.json()), 'answer');
-    assert.deepEqual(
-      calls.map((call) => [call.path, call.auth, call.body.model]),
-      [['/v1/chat/completions', 'Bearer fast-test', 'physical-fast']]
-    );
-    assert.equal(calls[0].body.messages[0].content, 'Fix the parser');
-  });
-}
+for (const [path, body, text] of inputs)
+  for (const [format, providerPath] of [
+    ['openai_chat', '/v1/chat/completions'],
+    ['openai_responses', '/v1/responses'],
+    ['anthropic_messages', '/v1/messages'],
+  ]) {
+    test(`buffered ${path} uses a model judge then ${format} provider transport`, async (t) => {
+      const { calls, config, send } = await fixture(t, (body, res) => {
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(
+          JSON.stringify(
+            body.model === 'physical-judge'
+              ? chat(body.model, verdict())
+              : providerReply(format, body.model)
+          )
+        );
+      });
+      config.strategy.switchyard = {
+        algorithm: classifier,
+        formats: { fast: format },
+      };
+      if (format === 'anthropic_messages')
+        config.targets[0].provider = 'anthropic';
+      const response = await send(body, { path, config });
+      assert.equal(response.status, 200, await response.clone().text());
+      const payload: any = await response.json();
+      assert.equal(text(payload), 'answer');
+      assert.equal(
+        payload.usage[path === inputs[0][0] ? 'prompt_tokens' : 'input_tokens'],
+        4
+      );
+      assert.equal(
+        payload.usage[
+          path === inputs[0][0] ? 'completion_tokens' : 'output_tokens'
+        ],
+        2
+      );
+      assert.deepEqual(
+        calls.map((call) => [
+          call.path,
+          call.auth ?? call.apiKey,
+          call.body.model,
+        ]),
+        [
+          ['/v1/chat/completions', 'Bearer judge-test', 'physical-judge'],
+          [
+            providerPath,
+            format === 'anthropic_messages' ? 'fast-test' : 'Bearer fast-test',
+            'physical-fast',
+          ],
+        ]
+      );
+      assert.equal(calls[0].body.response_format.type, 'json_object');
+      assert.equal(calls[0].body.max_completion_tokens, 4096);
+      assert.match(JSON.stringify(calls[1].body), /Fix the parser/);
+      assert.notEqual(calls[1].body.stream, true);
+    });
+  }
 
 test('preserves images and tool history using native codecs', async (t) => {
   const { calls, send } = await fixture(t);
@@ -335,68 +447,33 @@ for (const algorithm of [
 }
 
 for (const format of ['openai_decisions', 'system_one']) {
-  test(`uses ${format} codec with separate provider authentication`, async (t) => {
-    const { calls, config, send } = await fixture(t, (body, res, path) => {
-      res.writeHead(200, { 'content-type': 'application/json' });
-      const decision =
-        format === 'system_one'
-          ? { answers: { route: { type: 'choice', choice: 'strong' } } }
-          : {
-              model: body.model,
-              answers: [
-                {
-                  name: 'route',
-                  type: 'choice',
-                  choice: 'strong',
-                  probabilities: [
-                    { value: 'fast', probability: 0.25 },
-                    { value: 'strong', probability: 0.75 },
-                  ],
-                },
-              ],
-              usage: {
-                input_tokens: 0,
-                output_tokens: 0,
-                total_tokens: 0,
-                input_tokens_details: {
-                  cached_tokens: 0,
-                  cache_write_tokens: 0,
-                },
-                output_tokens_details: { reasoning_tokens: 0 },
-              },
-            };
-      res.end(
-        JSON.stringify(
-          path.endsWith('/decisions') || path.endsWith('/systemone')
-            ? decision
-            : chat(body.model)
-        )
-      );
-    });
+  test(`rejects unsupported ${format} transport before provider calls`, async (t) => {
+    const { calls, config, send } = await fixture(t);
     config.strategy.switchyard = {
       algorithm: direct,
       formats: { judge: format },
     };
-    const response = await send(inputs[1][1], {
-      path: inputs[1][0],
-      config,
-      headers: { authorization: 'Bearer caller-not-provider' },
-    });
-    assert.equal(response.status, 200, await response.clone().text());
+    const response = await send(undefined, { config });
+    assert.equal(response.status, 400, await response.clone().text());
     await response.text();
-    assert.deepEqual(
-      calls.map((call) => [call.path, call.auth, call.body.model]),
-      [
-        [
-          format === 'system_one' ? '/v1/systemone' : '/v1/decisions',
-          'Bearer judge-test',
-          'physical-judge',
-        ],
-        ['/v1/chat/completions', 'Bearer strong-test', 'physical-strong'],
-      ]
-    );
+    assert.equal(calls.length, 0);
   });
 }
+
+test('rejects decision configuration without decision targets before outer fallback', async (t) => {
+  const { calls, config, send } = await fixture(t);
+  config.strategy.switchyard.algorithm = { ...direct, fail_open: true };
+  const response = await send(undefined, {
+    config: {
+      strategy: { mode: 'fallback' },
+      targets: [config, config.targets[0]],
+    },
+  });
+  assert.equal(response.status, 400, await response.clone().text());
+  assert.equal(response.headers.get('x-portkey-gateway-exception'), 'true');
+  assert.match(await response.text(), /algorithm|configuration/i);
+  assert.equal(calls.length, 0);
+});
 
 test('keeps a policy refusal terminal through outer fallback', async (t) => {
   const { calls, config, send } = await fixture(t, (_body, res) => {
@@ -418,19 +495,7 @@ test('keeps a policy refusal terminal through outer fallback', async (t) => {
 for (const deny of [false, true]) {
   test(`real provider hooks preserve ${deny ? 'blocking' : 'advisory'} failures across formats`, async (t) => {
     const { calls, config, send } = await fixture(t);
-    config.targets[0].before_request_hooks = [
-      {
-        id: 'required-word',
-        type: 'guardrail',
-        deny,
-        checks: [
-          {
-            id: 'default.contains',
-            parameters: { words: ['absent-word'], operator: 'any', not: false },
-          },
-        ],
-      },
-    ];
+    config.targets[0].before_request_hooks = [requiredWordHook(deny)];
     const response = await send(inputs[1][1], { path: inputs[1][0], config });
     assert.equal(
       response.status,
@@ -449,39 +514,134 @@ for (const deny of [false, true]) {
   });
 }
 
-for (const [path, body] of inputs) {
-  test(`streams provider SSE through authenticated ${path}`, async (t) => {
-    const { calls, send } = await fixture(t, (body, res) => {
-      const chunk = (delta: any, finish_reason: string | null) =>
-        JSON.stringify({
-          id: 'stream1',
-          object: 'chat.completion.chunk',
-          model: body.model,
-          choices: [{ index: 0, delta, finish_reason }],
-        });
-      res.writeHead(200, { 'content-type': 'text/event-stream' });
-      res.end(
-        `data: ${chunk({ role: 'assistant', content: 'streamed answer' }, null)}\n\ndata: ${chunk({}, 'stop')}\n\ndata: [DONE]\n\n`
-      );
+test('advisor outcome retains executor status, headers and hooks after judge review', async (t) => {
+  const { calls, config, send } = await fixture(t, (body, res) => {
+    res.writeHead(200, {
+      'content-type': 'application/json',
+      'x-upstream-trace': body.model,
     });
+    res.end(
+      JSON.stringify(
+        chat(
+          body.model,
+          body.model === 'physical-judge' ? 'APPROVE' : 'reviewed answer'
+        )
+      )
+    );
+  });
+  config.strategy.switchyard.algorithm = {
+    type: 'advisor',
+    executor_target: 'fast',
+    advisor_target: 'judge',
+    max_reviews: 1,
+  };
+  config.targets[0].before_request_hooks = [requiredWordHook(false)];
+  const response = await send(inputs[1][1], { path: inputs[1][0], config });
+  assert.equal(response.status, 246, await response.clone().text());
+  assert.equal(response.headers.get('x-upstream-trace'), 'physical-fast');
+  assert.equal(response.headers.get('x-portkey-switchyard-call-id'), null);
+  const body: any = await response.json();
+  assert.equal(body.output[0].content[0].text, 'reviewed answer');
+  assert.equal(body.hook_results.before_request_hooks[0].verdict, false);
+  assert.doesNotMatch(JSON.stringify(body), /x-portkey-switchyard-call-id/);
+  assert.deepEqual(
+    calls.map((call) => call.body.model),
+    ['physical-fast', 'physical-judge']
+  );
+});
+
+test('advisor executor failure retains provider status, headers and body', async (t) => {
+  const body = { error: { message: 'Retry later' } };
+  const { calls, config, send } = await fixture(t, (_body, res) => {
+    res.writeHead(503, {
+      'content-type': 'application/json',
+      'retry-after': '17',
+    });
+    res.end(JSON.stringify(body));
+  });
+  config.strategy.switchyard.algorithm = {
+    type: 'advisor',
+    executor_target: 'fast',
+    advisor_target: 'judge',
+  };
+  const response = await send(undefined, { config });
+  assert.equal(response.status, 503, await response.clone().text());
+  assert.equal(response.headers.get('retry-after'), '17');
+  assert.deepEqual(await response.json(), body);
+  assert.deepEqual(
+    calls.map((call) => call.body.model),
+    ['physical-fast']
+  );
+});
+
+test('routing-time model calls stop after the first context overflow', async (t) => {
+  const { calls, config, send } = await fixture(t, (_body, res) => {
+    res.writeHead(400, { 'content-type': 'application/json' });
+    res.end('{"error":{"code":"context_length_exceeded"}}');
+  });
+  config.strategy.switchyard.algorithm = {
+    ...direct,
+    mode: 'custom',
+    models: { ...direct.models, judge: ['judge', 'strong'] },
+    prompt: 'Choose a target.',
+    response_schema: JSON.stringify({
+      type: 'object',
+      properties: { target: { type: 'string', enum: ['fast', 'strong'] } },
+      required: ['target'],
+      additionalProperties: false,
+    }),
+    policy: { type: 'target_selector', selector: '/target' },
+  };
+  const response = await send(undefined, { config });
+  assert.equal(response.status, 400, await response.clone().text());
+  await response.text();
+  assert.deepEqual(
+    calls.map((call) => call.body.model),
+    ['physical-judge']
+  );
+});
+
+for (const failOpen of [false, true]) {
+  test(`model-judge HTTP failure honors fail_open=${failOpen}`, async (t) => {
+    const failure = { error: { message: 'Judge unavailable' } };
+    const { calls, config, send } = await fixture(t, (body, res) => {
+      const judge = body.model === 'physical-judge';
+      res.writeHead(judge ? 503 : 200, {
+        'content-type': 'application/json',
+        ...(judge && { 'retry-after': '17' }),
+      });
+      res.end(JSON.stringify(judge ? failure : chat(body.model)));
+    });
+    config.strategy.switchyard.algorithm = {
+      ...classifier,
+      fail_open: failOpen,
+    };
+    const response = await send(undefined, { config });
+    assert.equal(
+      response.status,
+      failOpen ? 200 : 503,
+      await response.clone().text()
+    );
+    const body: any = await response.json();
+    if (failOpen) assert.equal(body.choices[0].message.content, 'answer');
+    else {
+      assert.equal(response.headers.get('retry-after'), '17');
+      assert.deepEqual(body, failure);
+    }
+    assert.deepEqual(
+      calls.map((call) => call.body.model),
+      failOpen ? ['physical-judge', 'physical-strong'] : ['physical-judge']
+    );
+  });
+}
+
+for (const [path, body] of inputs) {
+  test(`rejects unsupported HTTP streaming on authenticated ${path}`, async (t) => {
+    const { calls, send } = await fixture(t);
     const response = await send({ ...body, stream: true }, { path });
-    assert.equal(response.status, 200, await response.clone().text());
-    assert.match(
-      response.headers.get('content-type') ?? '',
-      /text\/event-stream/
-    );
-    const events = await response.text();
-    assert.match(events, /streamed answer/);
-    assert.match(
-      events,
-      path === inputs[0][0]
-        ? /\[DONE\]/
-        : path === inputs[1][0]
-          ? /response.completed/
-          : /message_stop/
-    );
-    assert.equal(calls.length, 1);
-    assert.equal(calls[0].body.stream, true);
+    assert.equal(response.status, 501, await response.clone().text());
+    assert.match(await response.text(), /stream/i);
+    assert.equal(calls.length, 0);
   });
 }
 
@@ -501,6 +661,68 @@ test(
     assert.equal((await response).status, 499);
     await closed;
     assert.equal(calls.length, 1);
+  }
+);
+
+test(
+  'cancels pending model-judge work without a late answer',
+  { timeout: 5000 },
+  async (t) => {
+    const { calls, config, send, server } = await fixture(t, (body, res) => {
+      if (body.model === 'physical-judge') {
+        res.once('close', () => server.emit('judgeClosed'));
+        return;
+      }
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify(chat(body.model)));
+    });
+    config.strategy.switchyard.algorithm = classifier;
+    const controller = new AbortController();
+    const started = once(server, 'call');
+    const closed = once(server, 'judgeClosed');
+    const pending = send(undefined, { config, signal: controller.signal });
+    await started;
+    controller.abort();
+    assert.equal((await pending).status, 499);
+    await closed;
+    await sleep(30);
+    assert.deepEqual(
+      calls.map((call) => call.body.model),
+      ['physical-judge']
+    );
+  }
+);
+
+test(
+  'routing deadline closes pending judge HTTP and serves the fail-open answer',
+  { timeout: 5000 },
+  async (t) => {
+    const { calls, config, send, server } = await fixture(t, (body, res) => {
+      if (body.model === 'physical-judge') {
+        res.once('close', () => server.emit('judgeClosed'));
+        return;
+      }
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify(chat(body.model)));
+    });
+    config.strategy.switchyard.algorithm = {
+      ...classifier,
+      fail_open: true,
+      judge_deadline_ms: 100,
+    };
+    const closed = once(server, 'judgeClosed');
+    const response = await send(undefined, { config });
+    assert.equal(response.status, 200, await response.clone().text());
+    assert.equal(
+      ((await response.json()) as ChatReply).choices[0].message.content,
+      'answer'
+    );
+    await closed;
+    await sleep(30);
+    assert.deepEqual(
+      calls.map((call) => call.body.model),
+      ['physical-judge', 'physical-strong']
+    );
   }
 );
 
@@ -611,37 +833,19 @@ for (const code of ['context_length_exceeded', 'invalid_argument']) {
   });
 }
 
-test('reuses native cross-format continuation state across authenticated Responses requests', async (t) => {
-  const { config, calls, send } = await fixture(t);
-  config.strategy.switchyard.algorithm = {
-    type: 'random',
-    targets: ['fast', 'strong'],
-    seed: 7,
-  };
-  const first = await send(inputs[1][1], { path: inputs[1][0], config });
-  assert.equal(first.status, 200, await first.clone().text());
-  const saved = (await first.json()) as { id: string };
-  const next = await send(
-    { model: 'route', previous_response_id: saved.id, input: 'Continue' },
+test('rejects provider-owned Responses continuation before provider calls', async (t) => {
+  const { calls, send } = await fixture(t);
+  const response = await send(
     {
-      path: inputs[1][0],
-      config,
-    }
+      model: 'route',
+      previous_response_id: 'saved-response',
+      input: 'Continue',
+    },
+    { path: inputs[1][0] }
   );
-  assert.equal(next.status, 200, await next.clone().text());
-  await next.text();
-  assert.equal(calls[1].body.model, calls[0].body.model);
-  assert.deepEqual(
-    calls[1].body.messages.map((message: any) => [
-      message.role,
-      message.content,
-    ]),
-    [
-      ['user', 'Fix the parser'],
-      ['assistant', 'answer'],
-      ['user', 'Continue'],
-    ]
-  );
+  assert.equal(response.status, 400, await response.clone().text());
+  assert.match(await response.text(), /continuation|previous_response_id/i);
+  assert.equal(calls.length, 0);
 });
 
 test('separates credential identities while caching routed answers', async (t) => {
@@ -659,28 +863,20 @@ test('separates credential identities while caching routed answers', async (t) =
 });
 
 test('keeps same-model answer caches separate for each logical target credential', async (t) => {
-  let decisions = 0;
+  let judgments = 0;
   let answers = 0;
-  const { config, calls, send } = await fixture(t, (body, res, path) => {
+  const { config, calls, send } = await fixture(t, (body, res) => {
     res.writeHead(200, { 'content-type': 'application/json' });
     res.end(
       JSON.stringify(
-        path.endsWith('/systemone')
-          ? {
-              answers: {
-                route: {
-                  type: 'choice',
-                  choice: ++decisions === 1 ? 'fast' : 'strong',
-                },
-              },
-            }
+        body.model === 'physical-judge'
+          ? chat(body.model, verdict(++judgments === 1 ? 0.9 : 0.1))
           : chat(body.model, `credential answer ${++answers}`)
       )
     );
   });
   config.strategy.switchyard = {
-    algorithm: direct,
-    formats: { judge: 'system_one' },
+    algorithm: classifier,
   };
   for (const target of config.targets.slice(0, 2)) {
     target.override_params.model = 'physical-shared';

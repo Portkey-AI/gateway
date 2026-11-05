@@ -5,15 +5,17 @@ This spike uses Portkey's `2.0.0` branch at
 
 Switchyard runs the routing algorithm. Portkey makes the model calls using its
 existing credentials, permissions, hooks, retries, logging, and HTTP clients.
-Requests use the existing Chat Completions, Responses, and Messages endpoints,
-including streaming. Switchyard handles conversion between those formats.
+Buffered requests use the existing Chat Completions, Responses, and Messages
+endpoints. Switchyard handles conversion between those formats. The gateway
+drives the same routing steps exposed by Switchyard's Python bindings.
 
 ## Enable it
 
 Use Node 22.19 or newer and build the companion Switchyard TypeScript package.
-The `AlgorithmRouter` binding used here is still unpublished development code. It
-must be available locally as `@switchyard/libsy`; this spike does not add a
-published dependency or change Portkey's lockfile.
+The Python-aligned `AlgorithmFactory`, `runStream`, and `TranslationEngine`
+bindings used here are unpublished development code. Make that build available
+locally as `@switchyard/libsy`. A published dependency and lockfile update are
+still needed before merge.
 
 For local testing, link the built package from the gateway checkout:
 
@@ -53,24 +55,28 @@ through its normal Portkey configuration:
 
 Send this through Portkey's usual config mechanism, such as `x-portkey-config`,
 alongside a valid Portkey API key. Target names must be unique and each target
-must have an explicit model. Switchyard's existing `AlgorithmSpec` parser checks
-the algorithm configuration. The optional `strategy.switchyard.formats` map
-sets a target's wire format; its default is `openai_chat`.
+must have an explicit model. The gateway maps these entries to an
+`AlgorithmFactory` deployment and reuses the configured algorithm across requests.
+Algorithm settings must be TOML-compatible; omit optional settings instead of
+setting them to JSON null. Provider credentials and calls stay in Portkey.
+The optional `strategy.switchyard.formats` map selects `openai_chat` (default),
+`openai_responses`, or `anthropic_messages` for each target.
 
 ## Current limits
 
 - This is a Node integration. The Workers and MCP services do not load it.
 - Simple caching is supported. Semantic caching is rejected because its current
   vector lookup does not provide the same credential-level isolation.
-- The custom `openai_decisions` and `system_one` judge endpoints use Portkey's
-  proxy transport, but its existing pricing code does not count their token
-  usage. Portkey token and cost budgets therefore do not fully cover those
-  calls. Standard Chat, Responses, and Messages calls use their existing
-  accounting paths. Custom judge metering needs a separate follow-up.
-- Up to 64 native routers are retained per process. Routing and Responses
-  continuation state can be lost on eviction, restart, or another gateway replica.
-- Cancellation reaches the normal HTTP transports and retry waits. An existing
-  provider SDK or hook that ignores cancellation can continue its own work.
+- HTTP streaming and Responses continuation (`previous_response_id` or
+  `conversation`) are rejected before provider calls. This adapter has no
+  continuation ownership store.
+- Chat-based model judges are supported. Decision-call routing and the custom
+  Decisions/SystemOne wire transports are not supported in this draft.
+- Routing-time model calls use only their first candidate.
+- Up to 64 configured algorithms are retained per process. Algorithm-owned
+  session state can be lost on eviction, restart, or another gateway replica.
+- Cancellation closes the routing iterator and aborts its HTTP calls. A provider
+  SDK or hook that ignores its signal can continue its own work.
 - Targets are resolved provider entries. Nested target strategies inside a
   Switchyard group are not supported.
 
@@ -82,13 +88,11 @@ npm run build
 npx tsc --noEmit
 ```
 
-All 29 focused tests pass. The suite uses the real Portkey auth middleware, the native
-Switchyard library, and local control-plane and provider fixtures. They cover
-all three APIs, streaming, policy refusals, hooks, cancellation, retries,
-continuations, and cache isolation, including different credentials within one
-route. A separate compiled-server smoke test also
-checked client disconnects before an answer and during streaming. No paid
-provider or hosted Portkey control-plane calls were made.
+The suite uses real Portkey authentication, the native Switchyard binding, and
+local control-plane and provider fixtures. It checks buffered format conversion,
+judge and answer calls, policy refusals, hooks, cancellation, routing deadlines,
+context fallback, and credential-scoped caching. These tests make no paid
+provider calls.
 
 The upstream checkout has setup problems independent of this integration:
 

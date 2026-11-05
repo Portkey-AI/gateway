@@ -125,8 +125,6 @@ export const configSchema: any = z
                   'openai_chat',
                   'openai_responses',
                   'anthropic_messages',
-                  'openai_decisions',
-                  'system_one',
                 ])
               )
               .optional(),
