@@ -24,6 +24,7 @@ export enum StrategyModes {
   FALLBACK = 'fallback',
   SINGLE = 'single',
   CONDITIONAL = 'conditional',
+  SWITCHYARD = 'switchyard',
 }
 
 /**
@@ -41,6 +42,13 @@ export interface StickyConfig {
 
 interface Strategy {
   mode: StrategyModes;
+  switchyard?: {
+    algorithm: unknown;
+    formats?: Record<
+      string,
+      'openai_chat' | 'openai_responses' | 'anthropic_messages'
+    >;
+  };
   onStatusCodes?: Array<number>;
   conditions?: {
     query: {

@@ -38,6 +38,7 @@ const nodeEnv = {
   PORT: getValueOrFileContents(process.env.PORT) || 8787,
   MCP_PORT: getValueOrFileContents(process.env.MCP_PORT) || 8788,
   SERVICE_NAME: getValueOrFileContents(process.env.SERVICE_NAME, true),
+  SWITCHYARD_ENABLED: getValueOrFileContents(process.env.SWITCHYARD_ENABLED),
 
   SENTRY_DSN: getValueOrFileContents(process.env.SENTRY_DSN),
 

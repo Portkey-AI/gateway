@@ -606,7 +606,11 @@ export const portkey = () => {
       finalRequestOption.providerOptions.provider,
       finalRequestOption.providerOptions.requestURL
     );
-    if (finalRequestOption?.response?.body && isStreamingMode) {
+    if (
+      finalRequestOption?.response?.body &&
+      isStreamingMode &&
+      !c.get('switchyardResponse')
+    ) {
       const [clientBody, loggingBody] = finalRequestOption.response.body.tee();
       const clientResponse = new Response(
         clientBody,

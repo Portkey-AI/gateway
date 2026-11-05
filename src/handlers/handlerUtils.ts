@@ -552,6 +552,9 @@ export async function tryPost(
     };
   }
 
+  const switchyardSignal = c.get('switchyardSignal');
+  if (switchyardSignal) fetchOptions.signal = switchyardSignal;
+
   providerOption.retry = {
     attempts: providerOption.retry?.attempts ?? 0,
     onStatusCodes: providerOption.retry?.attempts
@@ -635,6 +638,22 @@ export async function tryPost(
     return mappedResponse;
   }
 
+  async function validateRequest() {
+    const validator = c.get('preRequestValidator');
+    const started = Date.now();
+    const response = validator
+      ? await validator(c, providerOption, requestHeaders, params, metadata)
+      : undefined;
+    preRequestValidatorExecutionTime = Date.now() - started;
+    return response;
+  }
+
+  // Internal model calls must pass target permissions and budgets even on a cache hit.
+  if (c.get('switchyardCall')) {
+    const denied = await validateRequest();
+    if (denied) return createResponse(denied, undefined, false);
+  }
+
   if (!adapterCtx.isActive) {
     // Cache Handler
     ({
@@ -659,21 +678,9 @@ export async function tryPost(
     }
   }
 
-  // Prerequest validator (For virtual key budgets)
-  const preRequestValidator = c.get('preRequestValidator');
-  const preRequestValidatorStartTime = Date.now();
-  const preRequestValidatorResponse = preRequestValidator
-    ? await preRequestValidator(
-        c,
-        providerOption,
-        requestHeaders,
-        params,
-        metadata
-      )
-    : undefined;
-  preRequestValidatorExecutionTime = Date.now() - preRequestValidatorStartTime;
-  if (preRequestValidatorResponse) {
-    return createResponse(preRequestValidatorResponse, undefined, false);
+  if (!c.get('switchyardCall')) {
+    const denied = await validateRequest();
+    if (denied) return createResponse(denied, undefined, false);
   }
 
   // Request Handler (Including retries, recursion and hooks)
@@ -897,6 +904,39 @@ export async function tryTargetsRecursively(
   let response;
 
   switch (strategyMode) {
+    case StrategyModes.SWITCHYARD: {
+      const route = c.env?.switchyardRoute as
+        | typeof import('../services/switchyardRouter').routeSwitchyard
+        | undefined;
+      if (!route) {
+        return c.json(
+          {
+            status: 'failure',
+            message: 'Switchyard requires the opt-in Node backend',
+          },
+          400,
+          { 'x-portkey-gateway-exception': 'true' }
+        );
+      }
+      response = await route(
+        c,
+        currentTarget,
+        request,
+        fn,
+        (target, index, body, callEndpoint, callContext) =>
+          tryTargetsRecursively(
+            callContext,
+            target,
+            body,
+            callContext.get('mappedHeaders'),
+            callEndpoint,
+            method,
+            `${currentJsonPath}.targets[${target.originalIndex ?? index}]`,
+            { ...currentInheritedConfig, overrideParams: {} }
+          )
+      );
+      break;
+    }
     case StrategyModes.FALLBACK:
       for (const [index, target] of currentTarget.targets.entries()) {
         const originalIndex = target.originalIndex || index;
@@ -1102,6 +1142,7 @@ export async function tryTargetsRecursively(
           );
         }
       } catch (error: any) {
+        c.get('switchyardSignal')?.throwIfAborted();
         // tryPost always returns a Response.
         const errorMessage =
           error instanceof GatewayError

@@ -92,12 +92,16 @@ export const configSchema: any = z
           .string()
           .refine(
             (value) =>
-              ['single', 'loadbalance', 'fallback', 'conditional'].includes(
-                value
-              ),
+              [
+                'single',
+                'loadbalance',
+                'fallback',
+                'conditional',
+                'switchyard',
+              ].includes(value),
             {
               message:
-                "Invalid 'mode' value. Must be one of: single, loadbalance, fallback, conditional",
+                "Invalid 'mode' value. Must be one of: single, loadbalance, fallback, conditional, switchyard",
             }
           ),
         on_status_codes: z.array(z.number()).optional(),
@@ -110,6 +114,23 @@ export const configSchema: any = z
           )
           .optional(),
         default: z.string().optional(),
+        switchyard: z
+          .object({
+            algorithm: z.unknown().refine((value) => value !== undefined, {
+              message: 'Switchyard requires an algorithm',
+            }),
+            formats: z
+              .record(
+                z.enum([
+                  'openai_chat',
+                  'openai_responses',
+                  'anthropic_messages',
+                ])
+              )
+              .optional(),
+          })
+          .strict()
+          .optional(),
         sticky: z
           .object({
             enabled: z.boolean(),
