@@ -6,6 +6,7 @@ import {
   OAuthMetadata,
 } from '@modelcontextprotocol/sdk/shared/auth.js';
 import { JwtValidationConfig } from '../../shared/services/jwt/types';
+import type { ObsidianServerPolicy } from '../services/obsidianPolicy';
 
 // Upstream connection types (to MCP servers) - SSE is still supported
 export type ConnectionTypes = 'http-sse' | 'sse-http' | 'http' | 'sse';
@@ -117,6 +118,12 @@ export interface ServerConfig {
       window: number; // Window in seconds
     };
     logCalls?: boolean; // Log all tool calls for monitoring
+  };
+
+  // External policy decisions (Obsidian Realtime Enforcement).
+  // Evaluated around tools/call when enabled; see services/obsidianPolicy.ts.
+  policy?: {
+    obsidian?: ObsidianServerPolicy;
   };
 
   // Transport configuration
