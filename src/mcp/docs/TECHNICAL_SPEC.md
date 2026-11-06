@@ -304,6 +304,17 @@ class GatewayOAuthProvider implements OAuthClientProvider {
 4. Gateway exchanges code for tokens via `/oauth/upstream-callback`
 5. Tokens stored in Control Plane for reuse
 
+#### Local mode (no control plane)
+
+When `ALBUS_BASEPATH` is unset the gateway runs standalone: server configs come
+from `SERVERS_CONFIG_PATH` and OAuth tokens are issued locally
+(`/oauth/register`, then `/oauth/token` with `client_credentials`). Locally
+issued tokens have no `workspace_id`. In this mode the workspace check
+(`hasWorkspaceAccess` in `middleware/oauth/index.ts`) accepts an **unscoped**
+token for any configured workspace, since there is no workspace concept to
+enforce. A token that does carry a `workspace_id` must still match the
+requested workspace, and behaviour with a control plane is unchanged.
+
 ---
 
 ### 7. User Identity Forwarding
@@ -365,6 +376,21 @@ Tool calls are logged with rich metadata:
 ```
 
 Logs are formatted in OTLP format and forwarded to Winky for analytics.
+
+#### External Policy Decisions (Obsidian)
+
+When `policy.obsidian.enabled` is set on a server, `handleToolCall` asks the
+Obsidian Policy Engine for a verdict before the upstream call (`PreToolUse`)
+and on the result before it is returned (`PostToolUse`). A deny returns
+JSON-RPC error `-32003`; a `PostToolUse` deny withholds the result and keeps it
+out of the logs. Failures follow the server's `failMode` (closed by default).
+Decisions and `evaluation_id` are added to the log attributes
+(`mcp.policy.<stage>.*`) and counted in Prometheus
+(`mcp_policy_evaluations_total`, `mcp_policy_evaluation_duration_milliseconds`).
+
+Code: `services/obsidianPolicy.ts` (client), `utils/policyMetrics.ts`, and the
+`checkToolPolicy` / `denyToolCall` methods in `services/mcpSession.ts`.
+Setup, configuration and operations: [OBSIDIAN_POLICY.md](OBSIDIAN_POLICY.md).
 
 ---
 
