@@ -91,6 +91,8 @@ export const configSchema: any = z
         }
       )
       .optional(),
+    // Body fields to pass through after provider param mapping. "*" forwards unmapped fields.
+    forward_params: z.array(z.string()).optional(),
     // Google Vertex AI specific
     vertex_project_id: z.string().optional(),
     vertex_region: z.string().optional(),

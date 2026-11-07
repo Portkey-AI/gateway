@@ -7,7 +7,7 @@ import { HooksManager } from '../../../../../src/middlewares/hooks';
 import { HookType } from '../../../../../src/middlewares/hooks/types';
 
 // Mock the transformToProviderRequest function
-jest.mock('../../../services/transformToProviderRequest', () => ({
+jest.mock('../../../../../src/services/transformToProviderRequest', () => ({
   transformToProviderRequest: jest.fn().mockReturnValue({ transformed: true }),
 }));
 
@@ -57,6 +57,8 @@ describe('RequestContext', () => {
       messages: [{ role: 'user', content: 'Hello' }],
       stream: false,
     };
+
+    jest.clearAllMocks();
 
     requestContext = new RequestContext(
       mockContext,
@@ -442,6 +444,59 @@ describe('RequestContext', () => {
     });
   });
 
+  describe('forwardParams getter', () => {
+    it('should parse forward params from header', () => {
+      const context = new RequestContext(
+        mockContext,
+        mockProviderOption,
+        'chatComplete' as endpointStrings,
+        {
+          [HEADER_KEYS.FORWARD_PARAMS]: 'enable_thinking, providerOptions',
+        },
+        {},
+        'POST',
+        0
+      );
+
+      expect(context.forwardParams).toEqual([
+        'enable_thinking',
+        'providerOptions',
+      ]);
+    });
+
+    it('should return forward params from provider option when header not present', () => {
+      const context = new RequestContext(
+        mockContext,
+        { ...mockProviderOption, forwardParams: ['enable_thinking'] },
+        'chatComplete' as endpointStrings,
+        {},
+        {},
+        'POST',
+        0
+      );
+
+      expect(context.forwardParams).toEqual(['enable_thinking']);
+    });
+
+    it('should prefer the header over the provider option', () => {
+      const context = new RequestContext(
+        mockContext,
+        { ...mockProviderOption, forwardParams: ['from-config'] },
+        'chatComplete' as endpointStrings,
+        { [HEADER_KEYS.FORWARD_PARAMS]: 'enable_thinking' },
+        {},
+        'POST',
+        0
+      );
+
+      expect(context.forwardParams).toEqual(['enable_thinking']);
+    });
+
+    it('should return an empty list when neither header nor option is set', () => {
+      expect(requestContext.forwardParams).toEqual([]);
+    });
+  });
+
   describe('customHost getter', () => {
     it('should return custom host from header', () => {
       expect(requestContext.customHost).toBe('https://custom.api.com');
@@ -522,7 +577,7 @@ describe('RequestContext', () => {
     it('should return empty string when no provider', () => {
       const context = new RequestContext(
         mockContext,
-        { provider: 'openai' },
+        {} as Options,
         'chatComplete' as endpointStrings,
         {},
         {},
@@ -723,7 +778,7 @@ describe('RequestContext', () => {
     it('should transform request body for POST method', () => {
       const {
         transformToProviderRequest,
-      } = require('../../../services/transformToProviderRequest');
+      } = require('../../../../../src/services/transformToProviderRequest');
 
       requestContext.transformToProviderRequestAndSave();
 
@@ -740,10 +795,39 @@ describe('RequestContext', () => {
       });
     });
 
+    it('should pass header forward params into the provider transform', () => {
+      const {
+        transformToProviderRequest,
+      } = require('../../../../../src/services/transformToProviderRequest');
+      const context = new RequestContext(
+        mockContext,
+        mockProviderOption,
+        'chatComplete' as endpointStrings,
+        { [HEADER_KEYS.FORWARD_PARAMS]: 'enable_thinking,providerOptions' },
+        mockRequestBody,
+        'POST',
+        0
+      );
+
+      context.transformToProviderRequestAndSave();
+
+      expect(transformToProviderRequest).toHaveBeenCalledWith(
+        'openai',
+        context.params,
+        context.requestBody,
+        'chatComplete',
+        context.requestHeaders,
+        expect.objectContaining({
+          provider: 'openai',
+          forwardParams: ['enable_thinking', 'providerOptions'],
+        })
+      );
+    });
+
     it('should not transform for non-POST methods', () => {
       const {
         transformToProviderRequest,
-      } = require('../../../services/transformToProviderRequest');
+      } = require('../../../../../src/services/transformToProviderRequest');
       const context = new RequestContext(
         mockContext,
         mockProviderOption,

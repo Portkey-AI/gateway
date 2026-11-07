@@ -124,6 +124,22 @@ export class RequestContext {
     );
   }
 
+  /**
+   * Body fields the caller asked to preserve. Header wins over config, same as forwardHeaders.
+   * Empty means the provider allowlist is left unchanged.
+   */
+  get forwardParams(): string[] {
+    const headerKey = HEADER_KEYS.FORWARD_PARAMS;
+    const headerValue = this.requestHeaders[headerKey];
+    if (headerValue) {
+      return headerValue
+        .split(',')
+        .map((param) => param.trim())
+        .filter((param) => param.length > 0);
+    }
+    return this.providerOption.forwardParams ?? [];
+  }
+
   get customHost(): string {
     return (
       this.requestHeaders[HEADER_KEYS.CUSTOM_HOST] ||
@@ -213,13 +229,18 @@ export class RequestContext {
       this.transformedRequestBody = this.requestBody;
       return;
     }
+    const forwardParams = this.forwardParams;
+    const providerOptions =
+      forwardParams.length > 0
+        ? { ...this.providerOption, forwardParams }
+        : this.providerOption;
     this.transformedRequestBody = transformToProviderRequest(
       this.provider,
       this.params,
       this.requestBody,
       this.endpoint,
       this.requestHeaders,
-      this.providerOption
+      providerOptions
     );
   }
 
