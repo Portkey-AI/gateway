@@ -543,6 +543,13 @@ export async function tryTargetsRecursively(
     currentTarget.forwardHeaders = [...inheritedConfig.forwardHeaders];
   }
 
+  if (currentTarget.forwardParams) {
+    currentInheritedConfig.forwardParams = [...currentTarget.forwardParams];
+  } else if (inheritedConfig.forwardParams) {
+    currentInheritedConfig.forwardParams = [...inheritedConfig.forwardParams];
+    currentTarget.forwardParams = [...inheritedConfig.forwardParams];
+  }
+
   if (currentTarget.customHost) {
     currentInheritedConfig.customHost = currentTarget.customHost;
   } else if (inheritedConfig.customHost) {

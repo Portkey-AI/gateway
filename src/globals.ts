@@ -20,6 +20,9 @@ export const HEADER_KEYS: Record<string, string> = {
   CACHE: `x-${POWERED_BY}-cache`,
   METADATA: `x-${POWERED_BY}-metadata`,
   FORWARD_HEADERS: `x-${POWERED_BY}-forward-headers`,
+  // Comma-separated request body fields to copy through to the provider.
+  // Use "*" to forward every field the provider config does not already map.
+  FORWARD_PARAMS: `x-${POWERED_BY}-forward-params`,
   CUSTOM_HOST: `x-${POWERED_BY}-custom-host`,
   REQUEST_TIMEOUT: `x-${POWERED_BY}-request-timeout`,
   STRICT_OPEN_AI_COMPLIANCE: `x-${POWERED_BY}-strict-open-ai-compliance`,

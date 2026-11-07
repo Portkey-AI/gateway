@@ -76,6 +76,12 @@ export interface Options {
   customHost?: string;
   /** The parameter to set list of headers to be forwarded as-is to the provider */
   forwardHeaders?: string[];
+  /**
+   * Request-body fields to copy through when the provider config does not map them.
+   * Names match the incoming JSON keys (`enable_thinking`, `providerOptions`).
+   * `"*"` forwards every unmapped field. Omitted means the provider allowlist is unchanged.
+   */
+  forwardParams?: string[];
   /** provider option index picked based on weight in loadbalance mode */
   index?: number;
   cache?: CacheSettings | string;

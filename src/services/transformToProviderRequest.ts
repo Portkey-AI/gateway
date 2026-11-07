@@ -123,6 +123,56 @@ export const transformUsingProviderConfig = (
     }
   }
 
+  return appendForwardedParams(
+    transformedRequest,
+    params,
+    providerConfig,
+    providerOptions
+  );
+};
+
+const BLOCKED_FORWARD_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+/**
+ * Copy caller-selected body fields the provider config does not already map.
+ * With no `forwardParams`, the provider allowlist is unchanged (OpenAI stays strict).
+ * `"*"` forwards every remaining field; named entries forward only those keys.
+ */
+export const appendForwardedParams = (
+  transformedRequest: Record<string, any>,
+  params: Params,
+  providerConfig: ProviderConfig,
+  providerOptions: Options
+) => {
+  const forwardParams = providerOptions.forwardParams;
+  if (!forwardParams?.length) {
+    return transformedRequest;
+  }
+
+  const forwardAll = forwardParams.some((key) => key.trim() === '*');
+  const allowed = new Set(
+    forwardParams.map((key) => key.trim()).filter((key) => key && key !== '*')
+  );
+  const source = params as Record<string, any>;
+
+  for (const key of Object.keys(source)) {
+    if (BLOCKED_FORWARD_KEYS.has(key)) continue;
+    const explicitlyAllowed = allowed.has(key);
+    if (!explicitlyAllowed && !forwardAll) continue;
+    // Provider config already owns this input key (including renamed outputs).
+    if (
+      forwardAll &&
+      !explicitlyAllowed &&
+      Object.hasOwn(providerConfig, key)
+    ) {
+      continue;
+    }
+    if (Object.prototype.hasOwnProperty.call(transformedRequest, key)) continue;
+    const value = source[key];
+    if (value === undefined) continue;
+    transformedRequest[key] = value;
+  }
+
   return transformedRequest;
 };
 
