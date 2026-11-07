@@ -77,7 +77,7 @@ const testVariables: TestVariables = {
   ai21: {
     apiKey: process.env.AI21_API_KEY,
     chatCompletions: {
-      model: 'j2-ultra',
+      model: 'jamba-large',
     },
   },
   bedrock: {
