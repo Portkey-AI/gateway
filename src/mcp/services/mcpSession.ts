@@ -9,6 +9,7 @@ import {
   CallToolRequest,
   ListToolsRequest,
   ErrorCode,
+  Implementation,
   InitializeRequest,
   InitializeResult,
   Tool,
@@ -30,11 +31,24 @@ import { env } from 'hono/adapter';
 import { getConnectionPool } from './upstreamConnectionPool';
 import { isConnectionError } from '../utils/connectionErrors';
 import {
+  evaluateToolEvent,
+  failureDecision,
+  getObsidianEnvConfig,
+  isStageEnabled,
+  logPolicyDecision,
+  ObsidianStage,
+  PolicyDecision,
+} from './obsidianPolicy';
+import { recordPolicyEvaluation } from '../utils/policyMetrics';
+import {
   isCapabilityDisabled,
   filterDisabledCapabilities,
   CapabilityType,
 } from './mcpAccessService';
 import { ControlPlane } from '../middleware/controlPlane';
+
+/** JSON-RPC server-error code used when a tool call is denied by policy. */
+const POLICY_DENIED_ERROR_CODE = -32003;
 
 // Note: SSE downstream support was removed - gateway only supports HTTP Streamable for clients
 export type TransportType = 'http' | 'auth-required';
@@ -74,6 +88,18 @@ export class MCPSession {
   private context?: Context;
 
   private status: SessionStatus = SessionStatus.New;
+
+  // Downstream client name/version from the MCP `initialize` request. Best
+  // effort: only known on the instance that handled `initialize`.
+  private clientInfo?: { name?: string; version?: string };
+
+  // Tool annotations seen in `tools/list`, for policy context. Best effort:
+  // only populated once the client has listed tools in this session.
+  private toolAnnotations = new Map<string, object>();
+
+  // Whether the "policy enabled but not configured" error has been logged
+  // for this session, so it is not repeated on every tool call.
+  private policyNotConfiguredLogged = false;
 
   // Connection pool key for this session (used for marking unhealthy on errors)
   private poolKey?: string;
@@ -491,6 +517,15 @@ export class MCPSession {
     const upstreamServerInfo = this.upstream.getServerVersion();
 
     const clientVersion = request.params.protocolVersion;
+    // Self-reported by the client: useful for telemetry, not for identity.
+    const ci: Implementation | undefined = request.params.clientInfo;
+    if (ci && typeof ci === 'object') {
+      this.clientInfo = {
+        name: typeof ci.name === 'string' ? ci.name.slice(0, 128) : undefined,
+        version:
+          typeof ci.version === 'string' ? ci.version.slice(0, 64) : undefined,
+      };
+    }
 
     // Negotiate protocol version per MCP spec:
     // If we support the client's version, use it; otherwise use our latest
@@ -733,6 +768,12 @@ export class MCPSession {
         }))
       );
 
+      for (const tool of upstreamResult.tools as Tool[]) {
+        if (tool?.name && tool.annotations) {
+          this.toolAnnotations.set(tool.name, tool.annotations);
+        }
+      }
+
       // First apply static config filtering
       let tools = this.filterTools(upstreamResult.tools);
 
@@ -765,7 +806,200 @@ export class MCPSession {
   }
 
   /**
-   * Handle tools/call request with validation
+   * Ask the external policy engine (Obsidian) about one tool event.
+   *
+   * Returns null when policy checking is not enabled for this server/stage.
+   * Never throws: any problem becomes a decision that follows the server's
+   * fail mode (closed by default).
+   *
+   * Identity comes from `this.gatewayToken`, the downstream client's own
+   * token, never from the pooled upstream connection.
+   */
+  private async checkToolPolicy(
+    stage: ObsidianStage,
+    toolName: string,
+    args: unknown,
+    toolResponse?: unknown
+  ): Promise<PolicyDecision | null> {
+    const policy = this.config.policy?.obsidian;
+    if (!isStageEnabled(policy, stage)) return null;
+    const failMode = policy?.failMode ?? 'closed';
+
+    try {
+      const envConfig = getObsidianEnvConfig();
+      if (!envConfig) {
+        // Once per session, not per call: fail-closed already denies each
+        // call and the per-evaluation log line records it.
+        if (!this.policyNotConfiguredLogged) {
+          this.policyNotConfiguredLogged = true;
+          this.logger.error(
+            'Obsidian policy is enabled for this server but OBSIDIAN_GATEWAY_TOKEN is not set'
+          );
+        }
+        return this.recordedFailure(
+          stage,
+          toolName,
+          failMode,
+          'Policy engine is not configured'
+        );
+      }
+
+      const token = this.gatewayToken ?? {};
+      const userId = token.user_id || token.sub || token.username;
+      const extra = envConfig.extendedContext
+        ? this.extendedPolicyContext(token, toolName)
+        : undefined;
+      const decision = await evaluateToolEvent(
+        {
+          stage,
+          serverId: this.config.serverId,
+          toolName,
+          args,
+          toolResponse,
+          sessionId: this.id,
+          user: { id: userId || undefined, email: token.email || undefined },
+          agent:
+            token.client_id || extra?.clientName
+              ? {
+                  id: token.client_id || undefined,
+                  name: extra?.clientName,
+                }
+              : undefined,
+          runtimeData: {
+            ...extra?.runtimeData,
+            workspace_id: this.config.workspaceId,
+            server_id: this.config.serverId,
+            auth_type: token.token_type || 'oauth',
+            organisation_id: token.organisation_id || undefined,
+          },
+        },
+        envConfig,
+        policy
+      );
+
+      return decision;
+    } catch (error) {
+      // Config errors (bad env) or anything unexpected.
+      this.logger.error('Policy check failed unexpectedly', error);
+      return this.recordedFailure(
+        stage,
+        toolName,
+        failMode,
+        error instanceof Error ? error.message.slice(0, 200) : 'Policy error'
+      );
+    }
+  }
+
+  /**
+   * Extra context for policy evaluation, sent only when
+   * OBSIDIAN_EXTENDED_CONTEXT=true. Keys must be added to the registered
+   * runtime extension schema. Absent values are omitted.
+   */
+  private extendedPolicyContext(
+    token: any,
+    toolName: string
+  ): { clientName?: string; runtimeData: Record<string, unknown> } {
+    const list = (v: unknown): string[] | undefined => {
+      const arr = Array.isArray(v)
+        ? v
+        : typeof v === 'string'
+          ? v.split(/\s+/)
+          : [];
+      const out = arr.filter((x) => typeof x === 'string' && x).slice(0, 50);
+      return out.length ? out : undefined;
+    };
+    return {
+      clientName: this.clientInfo?.name,
+      runtimeData: {
+        client_name: this.clientInfo?.name,
+        client_version: this.clientInfo?.version,
+        token_scopes: list(token.scope ?? token.scopes),
+        token_roles: list(token.roles),
+        token_groups: list(token.groups),
+        tool_annotations: this.toolAnnotations.get(toolName),
+      },
+    };
+  }
+
+  /**
+   * A policy failure that happened before the policy engine was reached
+   * (misconfiguration or an unexpected error). Counted like any other
+   * evaluation so it is visible in metrics.
+   */
+  private recordedFailure(
+    stage: ObsidianStage,
+    toolName: string,
+    failMode: 'closed' | 'open',
+    message: string
+  ): PolicyDecision {
+    const decision = failureDecision(failMode, 'error', message);
+    recordPolicyEvaluation({
+      server: this.config.serverId,
+      stage,
+      decision: decision.kind,
+      allowed: decision.allowed,
+      viaFailMode: true,
+      durationMs: 0,
+    });
+    logPolicyDecision(
+      {
+        stage,
+        serverId: this.config.serverId,
+        toolName,
+        sessionId: this.id,
+      },
+      decision,
+      { failMode },
+      0
+    );
+    return decision;
+  }
+
+  /**
+   * Reject a tool call because of a policy decision and log it. When the
+   * decision is on the result (PostToolUse), the result is withheld and is
+   * deliberately not logged.
+   */
+  private async denyToolCall(
+    request: CallToolRequest,
+    toolName: string,
+    stage: ObsidianStage,
+    decision: PolicyDecision,
+    extra: { pre?: PolicyDecision | null; durationMs?: number } = {}
+  ) {
+    const reason = decision.viaFailMode
+      ? `policy check unavailable (fail-closed): ${decision.message ?? 'unknown'}`
+      : decision.message ?? 'blocked by policy';
+    const message = `Tool '${toolName}' was blocked: ${reason}`;
+
+    this.logger.debug(`${message} [${stage}]`);
+
+    await this.downstream.sendError(
+      (request as any).id,
+      POLICY_DENIED_ERROR_CODE,
+      message,
+      {
+        source: 'obsidian',
+        stage,
+        evaluation_id: decision.evaluationId,
+        fail_closed: decision.viaFailMode,
+      }
+    );
+
+    this.logResult(request, null, {
+      ok: false,
+      error: new Error(message),
+      durationMs: extra.durationMs,
+      policy:
+        stage === 'PreToolUse'
+          ? { pre: decision }
+          : { pre: extra.pre, post: decision },
+    });
+  }
+
+  /**
+   * Handle tools/call: static access checks, external policy (PreToolUse),
+   * the upstream call, then policy on the result (PostToolUse).
    */
   private async handleToolCall(request: CallToolRequest) {
     const { name: toolName } = request.params;
@@ -795,6 +1029,18 @@ export class MCPSession {
       return;
     }
 
+    // External policy check (Obsidian) before the tool runs. Denied calls never
+    // reach the upstream server.
+    const prePolicy = await this.checkToolPolicy(
+      'PreToolUse',
+      toolName,
+      request.params.arguments
+    );
+    if (prePolicy && !prePolicy.allowed) {
+      await this.denyToolCall(request, toolName, 'PreToolUse', prePolicy);
+      return;
+    }
+
     try {
       await this.ensureUpstreamConnection();
 
@@ -804,9 +1050,27 @@ export class MCPSession {
 
       this.logger.debug(`Tool ${toolName} executed successfully`);
 
-      // This is where the guardrails would come in.
+      // External policy check (Obsidian) on the result before it is returned.
+      const postPolicy = await this.checkToolPolicy(
+        'PostToolUse',
+        toolName,
+        request.params.arguments,
+        result
+      );
+      if (postPolicy && !postPolicy.allowed) {
+        await this.denyToolCall(request, toolName, 'PostToolUse', postPolicy, {
+          pre: prePolicy,
+          durationMs,
+        });
+        return;
+      }
+
       await this.downstream.sendResult((request as any).id, result);
-      this.logResult(request, result, { ok: true, durationMs });
+      this.logResult(request, result, {
+        ok: true,
+        durationMs,
+        policy: { pre: prePolicy, post: postPolicy },
+      });
     } catch (error) {
       // Handle upstream errors
       this.logger.error(`Tool call failed: ${toolName}`, error);
@@ -822,8 +1086,12 @@ export class MCPSession {
         `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`
       );
 
-      // Log the error
-      this.logResult(request, null, { ok: false, error });
+      // Log the error, keeping the PreToolUse decision that let the call through.
+      this.logResult(request, null, {
+        ok: false,
+        error,
+        policy: { pre: prePolicy },
+      });
     }
   }
 
@@ -1050,6 +1318,7 @@ export class MCPSession {
       ok: boolean;
       error?: any;
       durationMs?: number;
+      policy?: { pre?: PolicyDecision | null; post?: PolicyDecision | null };
     }
   ) {
     try {
@@ -1107,6 +1376,19 @@ export class MCPSession {
         // Custom metadata from x-portkey-metadata header + workspace/org defaults
         ...portkeyMetadata,
       };
+
+      // Policy decisions, so gateway logs can be correlated with Obsidian's
+      // event log via evaluation_id.
+      for (const [stageKey, decision] of Object.entries(
+        outcome?.policy ?? {}
+      )) {
+        if (!decision) continue;
+        attrs[`mcp.policy.${stageKey}.decision`] = decision.kind;
+        attrs[`mcp.policy.${stageKey}.allowed`] = decision.allowed;
+        if (decision.evaluationId) {
+          attrs[`mcp.policy.${stageKey}.evaluation_id`] = decision.evaluationId;
+        }
+      }
 
       if (toolName) {
         attrs['mcp.tool.name'] = toolName;

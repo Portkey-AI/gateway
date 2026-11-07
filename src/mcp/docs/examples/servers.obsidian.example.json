@@ -1,0 +1,29 @@
+{
+  "servers": {
+    "my-workspace/github": {
+      "url": "https://mcp.example.com/github/mcp",
+      "headers": { "Authorization": "Bearer REPLACE_WITH_UPSTREAM_TOKEN" },
+      "policy": {
+        "obsidian": {
+          "enabled": true
+        }
+      }
+    },
+    "my-workspace/docs-search": {
+      "url": "https://mcp.example.com/docs/mcp",
+      "headers": {},
+      "policy": {
+        "obsidian": {
+          "enabled": true,
+          "failMode": "open",
+          "stages": ["PreToolUse"],
+          "timeoutMs": 1500
+        }
+      }
+    },
+    "my-workspace/internal-tools": {
+      "url": "https://mcp.example.com/internal/mcp",
+      "headers": {}
+    }
+  }
+}

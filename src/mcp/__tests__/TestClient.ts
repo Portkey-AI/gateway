@@ -78,6 +78,19 @@ export class TestClient {
    * Connect to the gateway and initialize the MCP session
    */
   async connect(): Promise<RequestResult<InitializeResult>> {
+    // Idempotent: newer MCP SDKs (>=1.2x) throw "Already connected to a
+    // transport" if connect() is called twice on the same Client.
+    if (this.connected && this.serverInfo) {
+      return {
+        success: true,
+        data: {
+          protocolVersion: '2024-11-05',
+          capabilities: this.serverCapabilities,
+          serverInfo: this.serverInfo,
+        },
+      };
+    }
+
     try {
       // Build the full URL
       let urlString = this.options.gatewayUrl;

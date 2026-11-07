@@ -17,6 +17,7 @@ import {
 } from '../../services/oauthGateway';
 import { getTokenCache } from '../../services/mcpCacheService';
 import { Context } from 'hono';
+import { env } from 'hono/adapter';
 import { getBaseUrl } from '../../utils/mcp-utils';
 import { PORTKEY_HEADER_KEYS } from '../../../middlewares/portkey/globals';
 import {
@@ -105,10 +106,16 @@ function hasRequiredScope(
  */
 function hasWorkspaceAccess(
   tokenWorkspaceId: string | undefined,
-  requestedWorkspaceId: string | undefined
+  requestedWorkspaceId: string | undefined,
+  isLocalMode: boolean = false
 ): boolean {
   // If no workspace specified in request, allow (workspace will be determined later from token)
   if (!requestedWorkspaceId) return true;
+
+  // Standalone (no control plane) mode: locally issued OAuth tokens have no
+  // workspace concept, so an unscoped token may access any configured workspace.
+  // A token that does carry a workspace claim must still match below.
+  if (isLocalMode && !tokenWorkspaceId) return true;
 
   // Token must have a workspace claim to access workspace-scoped resources
   if (!tokenWorkspaceId) return false;
@@ -357,8 +364,14 @@ export function oauthMiddleware(config: OAuthConfig = {}) {
     // 1. Workspace access check
     if (validateWorkspace) {
       const requestedWorkspaceId = c.req.param('workspaceId');
+      // Local mode = no control plane configured (same check as OAuthGateway)
+      const isLocalMode = !env(c).ALBUS_BASEPATH;
       if (
-        !hasWorkspaceAccess(introspection.workspace_id, requestedWorkspaceId)
+        !hasWorkspaceAccess(
+          introspection.workspace_id,
+          requestedWorkspaceId,
+          isLocalMode
+        )
       ) {
         logger.warn(
           `Token workspace "${introspection.workspace_id}" cannot access workspace "${requestedWorkspaceId}"`

@@ -1,0 +1,650 @@
+{
+  "info": {
+    "name": "Portkey MCP Gateway + Obsidian policy",
+    "description": "Test the Portkey MCP Gateway's Obsidian policy enforcement.\n\nRun folders in order: 1 (connect), 2 (tool calls), 3 (Obsidian policy). Set `setupToken` (a secret) before using folder 3. See OBSIDIAN_POLICY.md in the repository for the full walkthrough.\n\nDo NOT add a request for PUT /policies: it replaces your whole organization's policy set.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8788",
+      "description": "Gateway MCP address"
+    },
+    {
+      "key": "workspace",
+      "value": "demo",
+      "description": "<workspace> part of the servers.json key"
+    },
+    {
+      "key": "server",
+      "value": "echo-server",
+      "description": "<server> part of the servers.json key"
+    },
+    {
+      "key": "tool",
+      "value": "echo",
+      "description": "Tool to call and to write the test policy for"
+    },
+    {
+      "key": "message",
+      "value": "hello"
+    },
+    {
+      "key": "expect",
+      "value": "allowed",
+      "description": "allowed | blocked. Folder 3 flips this when you change the policy."
+    },
+    {
+      "key": "obsidianBase",
+      "value": "https://api.obsec.io/v1/agent-guard"
+    },
+    {
+      "key": "gatewayTokenName",
+      "value": "portkey-mcp-gateway",
+      "description": "Name of your Obsidian gateway token"
+    },
+    {
+      "key": "setupToken",
+      "value": "",
+      "type": "secret",
+      "description": "Obsidian SETUP token (Manage agentic AI data). Keep it out of exported files."
+    },
+    {
+      "key": "clientId",
+      "value": ""
+    },
+    {
+      "key": "clientSecret",
+      "value": ""
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "policyId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Connect to the gateway",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('gateway is healthy', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('healthy');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register OAuth client (once)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/oauth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"client_name\": \"postman\",\n  \"grant_types\": [\n    \"client_credentials\"\n  ],\n  \"token_endpoint_auth_method\": \"client_secret_post\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.test('client registered', () => pm.expect(j.client_id).to.be.a('string'));",
+                  "pm.collectionVariables.set('clientId', j.client_id);",
+                  "pm.collectionVariables.set('clientSecret', j.client_secret);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get access token (valid 1 hour)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/oauth/token",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "client_credentials"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{clientId}}"
+                },
+                {
+                  "key": "client_secret",
+                  "value": "{{clientSecret}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.test('got a token', () => pm.expect(j.access_token).to.be.a('string'));",
+                  "pm.collectionVariables.set('token', j.access_token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "MCP: initialize",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json, text/event-stream"
+              }
+            ],
+            "description": "",
+            "url": "{{baseUrl}}/{{workspace}}/{{server}}/mcp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"initialize\",\n  \"params\": {\n    \"protocolVersion\": \"2025-03-26\",\n    \"capabilities\": {},\n    \"clientInfo\": {\n      \"name\": \"postman\",\n      \"version\": \"1\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// MCP responses arrive as server-sent events: 'event: message' then 'data: {...}'",
+                  "function mcpBody() {",
+                  "  const text = pm.response.text();",
+                  "  const line = text.split('\\n').find(l => l.startsWith('data:'));",
+                  "  return JSON.parse(line ? line.slice(5).trim() : text);",
+                  "}",
+                  "const b = mcpBody();",
+                  "pm.test('initialized', () => pm.expect(b.result.serverInfo).to.be.an('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "MCP: initialized notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json, text/event-stream"
+              }
+            ],
+            "url": "{{baseUrl}}/{{workspace}}/{{server}}/mcp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"notifications/initialized\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('accepted (202)', () => pm.response.to.have.status(202));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "MCP: list tools",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json, text/event-stream"
+              }
+            ],
+            "description": "",
+            "url": "{{baseUrl}}/{{workspace}}/{{server}}/mcp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 2,\n  \"method\": \"tools/list\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// MCP responses arrive as server-sent events: 'event: message' then 'data: {...}'",
+                  "function mcpBody() {",
+                  "  const text = pm.response.text();",
+                  "  const line = text.split('\\n').find(l => l.startsWith('data:'));",
+                  "  return JSON.parse(line ? line.slice(5).trim() : text);",
+                  "}",
+                  "const b = mcpBody();",
+                  "const names = b.result.tools.map(t => t.name);",
+                  "pm.test('tool list includes the configured tool', () => pm.expect(names).to.include(pm.collectionVariables.get('tool')));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Tool calls",
+      "item": [
+        {
+          "name": "MCP: call tool",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json, text/event-stream"
+              }
+            ],
+            "description": "Set the `expect` variable to `allowed` or `blocked`. If a policy change was just made and the result looks stale, send the request again.",
+            "url": "{{baseUrl}}/{{workspace}}/{{server}}/mcp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 3,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"{{tool}}\",\n    \"arguments\": {\n      \"message\": \"{{message}}\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// MCP responses arrive as server-sent events: 'event: message' then 'data: {...}'",
+                  "function mcpBody() {",
+                  "  const text = pm.response.text();",
+                  "  const line = text.split('\\n').find(l => l.startsWith('data:'));",
+                  "  return JSON.parse(line ? line.slice(5).trim() : text);",
+                  "}",
+                  "const b = mcpBody();",
+                  "const expect = pm.collectionVariables.get('expect');",
+                  "const blocked = !!b.error && b.error.code === -32003;",
+                  "const outcome = blocked ? 'blocked' : (b.result ? 'allowed' : 'error');",
+                  "console.log('outcome:', outcome, JSON.stringify(b.error || b.result));",
+                  "pm.test('call was ' + expect + ' (got ' + outcome + ')', () => pm.expect(outcome).to.eql(expect));",
+                  "if (blocked) {",
+                  "  pm.test('denial carries the policy reason and an evaluation id', () => {",
+                  "    pm.expect(b.error.message).to.include('was blocked');",
+                  "    pm.expect(b.error.data.source).to.eql('obsidian');",
+                  "    pm.expect(b.error.data.evaluation_id).to.be.a('string');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Obsidian policy (needs setupToken)",
+      "description": "Uses your SETUP token. Only ever add, change or delete your single test policy. Never use PUT /policies.",
+      "item": [
+        {
+          "name": "Register the gateway (once)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Safe to repeat. Expect {\"ok\": true}.",
+            "url": "{{obsidianBase}}/agent-sources",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{setupToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"platformId\": \"unified\",\n  \"monitoringMethod\": \"unified_evaluate\",\n  \"tokenName\": \"{{gatewayTokenName}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('registered', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create test policy (warn)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Creates your temporary policy as WARN: calls are allowed and the match is recorded.",
+            "url": "{{obsidianBase}}/policy",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{setupToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{policyId}}\",\n  \"name\": \"Test: gateway policy for {{tool}}\",\n  \"description\": \"Temporary test policy for the Portkey MCP gateway\",\n  \"app\": \"unified\",\n  \"enabled\": true,\n  \"tags\": [\n    \"portkey-gateway-test\"\n  ],\n  \"action\": \"warn\",\n  \"reason\": \"Blocked by the Portkey gateway test policy\",\n  \"event\": {\n    \"key\": {\n      \"field\": \"event\"\n    },\n    \"op\": \"eq\",\n    \"value\": \"PreToolUse\"\n  },\n  \"condition\": {\n    \"key\": {\n      \"field\": \"tool.tool_name\"\n    },\n    \"op\": \"eq\",\n    \"value\": \"{{tool}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Generate a lowercase UUID v4 for the test policy once, and reuse it",
+                  "if (!pm.collectionVariables.get('policyId')) {",
+                  "  pm.collectionVariables.set('policyId', pm.variables.replaceIn('{{$guid}}').toLowerCase());",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('policy created (201)', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('expect', 'allowed');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Switch test policy to BLOCK",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Replaces ONLY your policy. Then run 'MCP: call tool' again: it should now be blocked.",
+            "url": "{{obsidianBase}}/policy/{{policyId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{setupToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{policyId}}\",\n  \"name\": \"Test: gateway policy for {{tool}}\",\n  \"description\": \"Temporary test policy for the Portkey MCP gateway\",\n  \"app\": \"unified\",\n  \"enabled\": true,\n  \"tags\": [\n    \"portkey-gateway-test\"\n  ],\n  \"action\": \"block\",\n  \"reason\": \"Blocked by the Portkey gateway test policy\",\n  \"event\": {\n    \"key\": {\n      \"field\": \"event\"\n    },\n    \"op\": \"eq\",\n    \"value\": \"PreToolUse\"\n  },\n  \"condition\": {\n    \"key\": {\n      \"field\": \"tool.tool_name\"\n    },\n    \"op\": \"eq\",\n    \"value\": \"{{tool}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('policy updated (200)', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('expect', 'blocked');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Switch test policy back to WARN",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "",
+            "url": "{{obsidianBase}}/policy/{{policyId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{setupToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{policyId}}\",\n  \"name\": \"Test: gateway policy for {{tool}}\",\n  \"description\": \"Temporary test policy for the Portkey MCP gateway\",\n  \"app\": \"unified\",\n  \"enabled\": true,\n  \"tags\": [\n    \"portkey-gateway-test\"\n  ],\n  \"action\": \"warn\",\n  \"reason\": \"Blocked by the Portkey gateway test policy\",\n  \"event\": {\n    \"key\": {\n      \"field\": \"event\"\n    },\n    \"op\": \"eq\",\n    \"value\": \"PreToolUse\"\n  },\n  \"condition\": {\n    \"key\": {\n      \"field\": \"tool.tool_name\"\n    },\n    \"op\": \"eq\",\n    \"value\": \"{{tool}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('policy updated (200)', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('expect', 'allowed');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Event log: find the test events",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Each row: event id (= the gateway's evaluation_id), platform, action, matchedPolicies.",
+            "url": "{{obsidianBase}}/logs/query",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{setupToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"search_text\": \"{{tool}}\",\n  \"limit\": 5,\n  \"offset\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('log query ok', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete test policy (cleanup)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "description": "Run this when you are done.",
+            "url": "{{obsidianBase}}/policy/{{policyId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{setupToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('policy deleted (200)', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('policyId', '');",
+                  "pm.collectionVariables.set('expect', 'allowed');"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
