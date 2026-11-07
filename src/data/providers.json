@@ -283,6 +283,13 @@
       "base_url": "https://api.voyageai.com/v1"
     },
     {
+      "id": "wally",
+      "name": "Wally",
+      "object": "provider",
+      "description": "Wally by RunAnywhere is an OpenAI-compatible API for open-weight models such as DeepSeek, GLM, Kimi and MiniMax.",
+      "base_url": "https://inference.runanywhere.ai/v1"
+    },
+    {
       "id": "workers-ai",
       "name": "Workers AI",
       "object": "provider",
