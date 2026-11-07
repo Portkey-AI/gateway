@@ -59,6 +59,7 @@ describe('loadObsidianEnvConfig', () => {
       gatewayToken: 'tok',
       clientPlatform: DEFAULT_CLIENT_PLATFORM,
       timeoutMs: 2500,
+      extendedContext: false,
     });
   });
 

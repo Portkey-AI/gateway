@@ -45,6 +45,13 @@ export interface ObsidianEnvConfig {
    * rejects an unregistered namespace/version, so only set it once registered.
    */
   runtimeExtension?: { namespace: string; version: string };
+  /**
+   * Send extra context (client name/version, token scopes/roles/groups, tool
+   * annotations) as `agent.name` and extra `runtime_extension.data` keys.
+   * Opt-in via OBSIDIAN_EXTENDED_CONTEXT=true, because Obsidian rejects
+   * runtime extension data that does not match the registered schema.
+   */
+  extendedContext: boolean;
 }
 
 /** Per-server settings (`policy.obsidian` in servers.json). */
@@ -215,6 +222,8 @@ export function loadObsidianEnvConfig(
     gatewayToken,
     clientPlatform,
     timeoutMs,
+    extendedContext:
+      env.OBSIDIAN_EXTENDED_CONTEXT?.trim().toLowerCase() === 'true',
     ...(extNamespace && extVersion
       ? { runtimeExtension: { namespace: extNamespace, version: extVersion } }
       : {}),

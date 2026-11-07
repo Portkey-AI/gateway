@@ -163,6 +163,27 @@ time), set the gateway's `OBSIDIAN_RUNTIME_EXTENSION_NAMESPACE` and
 Skip this if policies only need the tool name, arguments and result: leave both
 extension variables unset.
 
+### Extended context
+
+With `OBSIDIAN_EXTENDED_CONTEXT=true` the gateway also sends `agent.name` and
+these `runtime_extension.data` keys (the keys need a registered runtime
+extension, and are omitted when the value is unknown):
+
+| Key                | Value                                                              |
+| ------------------ | ------------------------------------------------------------------ |
+| `client_name`      | MCP client name from `initialize` (also sent as `agent.name`)      |
+| `client_version`   | MCP client version from `initialize`                               |
+| `token_scopes`     | `scope`/`scopes` from the token (max 50)                           |
+| `token_roles`      | `roles` from the token (max 50)                                    |
+| `token_groups`     | `groups` from the token (max 50)                                   |
+| `tool_annotations` | The tool's MCP annotations (for example `destructiveHint`)         |
+
+Add the keys to your extension's `json_schema`, register it as the next version
+and update `OBSIDIAN_RUNTIME_EXTENSION_VERSION` **before** enabling this, or
+every call fails with `400 runtime_extension_schema`. Client info is known only
+on the gateway instance that handled `initialize`, and `tool_annotations` only
+after the client has called `tools/list` in the same session.
+
 ### Policies for the gateway
 
 Policies use **`"app": "unified"`** and accept only `block` and `warn` (there is
@@ -265,6 +286,7 @@ Each row has the event `id` (equal to the gateway's `evaluation_id`), `platform`
 | `OBSIDIAN_TIMEOUT_MS`                  | `2500`                                                           | Per-call timeout, 100-30000 |
 | `OBSIDIAN_RUNTIME_EXTENSION_NAMESPACE` | _unset_                                                          | Registered extension namespace. Must be set together with the version |
 | `OBSIDIAN_RUNTIME_EXTENSION_VERSION`   | _unset_                                                          | Registered extension version, as a string |
+| `OBSIDIAN_EXTENDED_CONTEXT`            | `false`                                                          | Set to `true` to also send `agent.name` and the extra runtime extension keys in [Extended context](#extended-context). Register those keys in your extension schema first |
 
 An invalid value is reported when the first policy check runs, not at startup.
 Until fixed, each check on an enabled server is denied (fail-closed) or allowed

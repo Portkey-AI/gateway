@@ -38,6 +38,18 @@ describe('runtime extension configuration', () => {
     });
   });
 
+  test('extended context is off unless OBSIDIAN_EXTENDED_CONTEXT=true', () => {
+    expect(loadObsidianEnvConfig(base)?.extendedContext).toBe(false);
+    expect(
+      loadObsidianEnvConfig({ ...base, OBSIDIAN_EXTENDED_CONTEXT: 'yes' })
+        ?.extendedContext
+    ).toBe(false);
+    expect(
+      loadObsidianEnvConfig({ ...base, OBSIDIAN_EXTENDED_CONTEXT: 'TRUE' })
+        ?.extendedContext
+    ).toBe(true);
+  });
+
   test('requires namespace and version together', () => {
     expect(() =>
       loadObsidianEnvConfig({
@@ -114,6 +126,7 @@ describe('runtime extension on the wire', () => {
       gatewayToken: mock.token,
       clientPlatform: 'acme_gw',
       timeoutMs: 2000,
+      extendedContext: false,
       runtimeExtension: { namespace: 'acme.mcp_gateway', version: '1' },
     };
   });

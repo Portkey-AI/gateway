@@ -88,6 +88,14 @@ export class MCPSession {
 
   private status: SessionStatus = SessionStatus.New;
 
+  // Downstream client name/version from the MCP `initialize` request. Best
+  // effort: only known on the instance that handled `initialize`.
+  private clientInfo?: { name?: string; version?: string };
+
+  // Tool annotations seen in `tools/list`, for policy context. Best effort:
+  // only populated once the client has listed tools in this session.
+  private toolAnnotations = new Map<string, object>();
+
   // Connection pool key for this session (used for marking unhealthy on errors)
   private poolKey?: string;
 
@@ -504,6 +512,14 @@ export class MCPSession {
     const upstreamServerInfo = this.upstream.getServerVersion();
 
     const clientVersion = request.params.protocolVersion;
+    const ci: any = request.params.clientInfo;
+    if (ci && typeof ci === 'object') {
+      this.clientInfo = {
+        name: typeof ci.name === 'string' ? ci.name.slice(0, 128) : undefined,
+        version:
+          typeof ci.version === 'string' ? ci.version.slice(0, 64) : undefined,
+      };
+    }
 
     // Negotiate protocol version per MCP spec:
     // If we support the client's version, use it; otherwise use our latest
@@ -746,6 +762,12 @@ export class MCPSession {
         }))
       );
 
+      for (const tool of upstreamResult.tools as any[]) {
+        if (tool?.name && tool.annotations) {
+          this.toolAnnotations.set(tool.name, tool.annotations);
+        }
+      }
+
       // First apply static config filtering
       let tools = this.filterTools(upstreamResult.tools);
 
@@ -816,6 +838,9 @@ export class MCPSession {
 
       const token = this.gatewayToken ?? {};
       const userId = token.user_id || token.sub || token.username;
+      const extra = envConfig.extendedContext
+        ? this.extendedPolicyContext(token, toolName)
+        : undefined;
       const decision = await evaluateToolEvent(
         {
           stage,
@@ -825,8 +850,15 @@ export class MCPSession {
           toolResponse,
           sessionId: this.id,
           user: { id: userId || undefined, email: token.email || undefined },
-          agent: token.client_id ? { id: token.client_id } : undefined,
+          agent:
+            token.client_id || extra?.clientName
+              ? {
+                  id: token.client_id || undefined,
+                  name: extra?.clientName,
+                }
+              : undefined,
           runtimeData: {
+            ...extra?.runtimeData,
             workspace_id: this.config.workspaceId,
             server_id: this.config.serverId,
             auth_type: token.token_type || 'oauth',
@@ -848,6 +880,37 @@ export class MCPSession {
         error instanceof Error ? error.message.slice(0, 200) : 'Policy error'
       );
     }
+  }
+
+  /**
+   * Extra context for policy evaluation, sent only when
+   * OBSIDIAN_EXTENDED_CONTEXT=true. Keys must be added to the registered
+   * runtime extension schema. Absent values are omitted.
+   */
+  private extendedPolicyContext(
+    token: any,
+    toolName: string
+  ): { clientName?: string; runtimeData: Record<string, unknown> } {
+    const list = (v: unknown): string[] | undefined => {
+      const arr = Array.isArray(v)
+        ? v
+        : typeof v === 'string'
+          ? v.split(/\s+/)
+          : [];
+      const out = arr.filter((x) => typeof x === 'string' && x).slice(0, 50);
+      return out.length ? out : undefined;
+    };
+    return {
+      clientName: this.clientInfo?.name,
+      runtimeData: {
+        client_name: this.clientInfo?.name,
+        client_version: this.clientInfo?.version,
+        token_scopes: list(token.scope ?? token.scopes),
+        token_roles: list(token.roles),
+        token_groups: list(token.groups),
+        tool_annotations: this.toolAnnotations.get(toolName),
+      },
+    };
   }
 
   /**
