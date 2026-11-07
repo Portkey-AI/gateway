@@ -86,10 +86,9 @@ The integration is **off by default** and enabled per server. Servers without
    SERVERS_CONFIG_PATH=./data/servers.json npx tsx src/start-server.ts --mcp-node
    ```
 
-   Start with `--llm-node --mcp-node` to also run the LLM gateway in the same
-   process, which is what exposes the metrics endpoint
-   ([Observability](#observability)). Note that despite a comment in
-   `start-server.ts`, with no flags only the LLM gateway starts.
+   With no flags only the LLM gateway starts. Start with `--llm-node --mcp-node`
+   to run both in the same process, which is what exposes the metrics endpoint
+   ([Observability](#observability)).
 
 Roll out with Obsidian policies set to **`warn`** first, review the matches in
 Obsidian's event log, then promote policies to `block` one at a time.

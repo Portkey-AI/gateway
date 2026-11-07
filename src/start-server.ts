@@ -39,8 +39,9 @@ const argv = minimist(process.argv.slice(2), {
 const port = argv.port;
 const mcpPort = argv['mcp-port'];
 
-// Add flags to choose what all to start (llm-node, llm-grpc, mcp-node)
-// Default starts both llm-node and mcp-node
+// Flags choose what to start (llm-node, llm-grpc, mcp-node).
+// With no flags only llm-node starts; pass --mcp-node (optionally with
+// --llm-node) to run the MCP gateway.
 
 let llmNode = argv['llm-node'];
 let mcpNode = argv['mcp-node'];
