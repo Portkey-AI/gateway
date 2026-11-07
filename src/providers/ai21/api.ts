@@ -15,7 +15,9 @@ const AI21APIConfig: ProviderAPIConfig = {
         return `/${model}/complete`;
       }
       case 'chatComplete': {
-        return `/${model}/chat`;
+        // Jamba chat is OpenAI-compatible.
+        // https://docs.ai21.com/reference/jamba-1-6-api-ref
+        return '/chat/completions';
       }
       case 'embed': {
         return `/embed`;

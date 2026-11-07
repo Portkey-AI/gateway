@@ -1,124 +1,11 @@
 import { AI21 } from '../../globals';
-import { Params, SYSTEM_MESSAGE_ROLES } from '../../types/requestBody';
-import {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
+import { ChatCompletionResponse, ErrorResponse } from '../types';
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
+import { OpenAIErrorResponseTransform } from '../openai/utils';
 import { AI21ErrorResponse } from './complete';
-
-export const AI21ChatCompleteConfig: ProviderConfig = {
-  messages: [
-    {
-      param: 'messages',
-      required: true,
-      transform: (params: Params) => {
-        let inputMessages: any = [];
-
-        if (
-          params.messages?.[0]?.role &&
-          SYSTEM_MESSAGE_ROLES.includes(params.messages?.[0]?.role)
-        ) {
-          inputMessages = params.messages.slice(1);
-        } else if (params.messages) {
-          inputMessages = params.messages;
-        }
-
-        return inputMessages.map((msg: any) => ({
-          text: msg.content,
-          role: msg.role,
-        }));
-      },
-    },
-    {
-      param: 'system',
-      required: false,
-      transform: (params: Params) => {
-        if (
-          params.messages?.[0]?.role &&
-          SYSTEM_MESSAGE_ROLES.includes(params.messages?.[0]?.role)
-        ) {
-          return params.messages?.[0].content;
-        }
-      },
-    },
-  ],
-  n: {
-    param: 'numResults',
-    default: 1,
-  },
-  max_tokens: {
-    param: 'maxTokens',
-    default: 16,
-  },
-  max_completion_tokens: {
-    param: 'maxTokens',
-    default: 16,
-  },
-  minTokens: {
-    param: 'minTokens',
-    default: 0,
-  },
-  temperature: {
-    param: 'temperature',
-    default: 0.7,
-    min: 0,
-    max: 1,
-  },
-  top_p: {
-    param: 'topP',
-    default: 1,
-  },
-  top_k: {
-    param: 'topKReturn',
-    default: 0,
-  },
-  stop: {
-    param: 'stopSequences',
-  },
-  presence_penalty: {
-    param: 'presencePenalty',
-    transform: (params: Params) => {
-      return {
-        scale: params.presence_penalty,
-      };
-    },
-  },
-  frequency_penalty: {
-    param: 'frequencyPenalty',
-    transform: (params: Params) => {
-      return {
-        scale: params.frequency_penalty,
-      };
-    },
-  },
-  countPenalty: {
-    param: 'countPenalty',
-  },
-  frequencyPenalty: {
-    param: 'frequencyPenalty',
-  },
-  presencePenalty: {
-    param: 'presencePenalty',
-  },
-};
-
-interface AI21ChatCompleteResponse {
-  id: string;
-  outputs: {
-    text: string;
-    role: string;
-    finishReason: {
-      reason: string;
-      length: number | null;
-      sequence: string | null;
-    };
-  }[];
-}
 
 export const AI21ErrorResponseTransform: (
   response: AI21ErrorResponse
@@ -133,35 +20,143 @@ export const AI21ErrorResponseTransform: (
   return undefined;
 };
 
+interface AI21ChatCompleteResponse {
+  id: string;
+  object?: string;
+  created?: number;
+  model?: string;
+  choices: {
+    index: number;
+    message?: {
+      role?: ChatCompletionResponse['choices'][number]['message']['role'];
+      content?: ChatCompletionResponse['choices'][number]['message']['content'];
+      tool_calls?: any;
+    };
+    finish_reason?: string;
+    logprobs?: object | null;
+  }[];
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+  };
+}
+
+interface AI21StreamChunk {
+  id?: string;
+  object?: string;
+  created?: number;
+  model?: string;
+  choices?: {
+    index?: number;
+    delta?: {
+      role?: string | null;
+      content?: string | null;
+      tool_calls?: object[];
+    };
+    finish_reason?: string | null;
+    logprobs?: object | null;
+  }[];
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+  } | null;
+}
+
+const isRecord = (value: unknown): value is Record<string, any> => {
+  return typeof value === 'object' && value !== null;
+};
+
 export const AI21ChatCompleteResponseTransform: (
-  response: AI21ChatCompleteResponse | AI21ErrorResponse,
+  response: AI21ChatCompleteResponse | AI21ErrorResponse | ErrorResponse,
   responseStatus: number
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if (responseStatus !== 200) {
-    const errorResposne = AI21ErrorResponseTransform(
-      response as AI21ErrorResponse
-    );
-    if (errorResposne) return errorResposne;
+  if (responseStatus !== 200 && isRecord(response)) {
+    if ('detail' in response) {
+      const errorResponse = AI21ErrorResponseTransform(
+        response as AI21ErrorResponse
+      );
+      if (errorResponse) return errorResponse;
+    }
+
+    if ('error' in response) {
+      return OpenAIErrorResponseTransform(response as ErrorResponse, AI21);
+    }
   }
 
-  if ('outputs' in response) {
+  if (isRecord(response) && 'choices' in response) {
+    const chatResponse = response as AI21ChatCompleteResponse;
     return {
-      id: response.id,
-      object: 'chat.completion',
-      created: Math.floor(Date.now() / 1000),
-      model: '',
+      id: chatResponse.id,
+      object: chatResponse.object || 'chat.completion',
+      created: chatResponse.created ?? Math.floor(Date.now() / 1000),
+      model: chatResponse.model || '',
       provider: AI21,
-      choices: response.outputs.map((o, index) => ({
+      choices: chatResponse.choices.map((choice) => ({
+        index: choice.index,
         message: {
-          role: 'assistant',
-          content: o.text,
+          role: choice.message?.role ?? 'assistant',
+          content: choice.message?.content,
+          ...(choice.message?.tool_calls
+            ? { tool_calls: choice.message.tool_calls }
+            : {}),
         },
-        index: index,
-        logprobs: null,
-        finish_reason: o.finishReason?.reason,
+        logprobs: choice.logprobs ?? null,
+        finish_reason: choice.finish_reason ?? '',
       })),
+      usage: chatResponse.usage
+        ? {
+            prompt_tokens: chatResponse.usage.prompt_tokens ?? 0,
+            completion_tokens: chatResponse.usage.completion_tokens ?? 0,
+            total_tokens: chatResponse.usage.total_tokens ?? 0,
+          }
+        : undefined,
     };
   }
 
   return generateInvalidProviderResponseError(response, AI21);
+};
+
+/**
+ * Jamba streams OpenAI-style SSE: `data: {choices[].delta}` chunks and a
+ * final `data: [DONE]`. Usage is null until the last chunk.
+ * https://docs.ai21.com/reference/jamba-api-response
+ */
+export const AI21ChatCompleteStreamChunkTransform: (
+  response: string
+) => string = (responseChunk) => {
+  let chunk = responseChunk.trim();
+  chunk = chunk.replace(/^data: /, '');
+  chunk = chunk.trim();
+  if (chunk === '[DONE]') {
+    return `data: ${chunk}\n\n`;
+  }
+
+  const parsedChunk: AI21StreamChunk = JSON.parse(chunk);
+  const usage =
+    parsedChunk.usage && typeof parsedChunk.usage === 'object'
+      ? {
+          prompt_tokens: parsedChunk.usage.prompt_tokens ?? 0,
+          completion_tokens: parsedChunk.usage.completion_tokens ?? 0,
+          total_tokens: parsedChunk.usage.total_tokens ?? 0,
+        }
+      : undefined;
+
+  return (
+    `data: ${JSON.stringify({
+      id: parsedChunk.id,
+      object: parsedChunk.object || 'chat.completion.chunk',
+      created: parsedChunk.created,
+      model: parsedChunk.model,
+      provider: AI21,
+      choices: (parsedChunk.choices ?? []).map((choice) => ({
+        index: choice.index ?? 0,
+        delta: choice.delta ?? {},
+        logprobs: choice.logprobs ?? null,
+        finish_reason: choice.finish_reason ?? null,
+      })),
+      ...(usage ? { usage } : {}),
+    })}` + '\n\n'
+  );
 };
