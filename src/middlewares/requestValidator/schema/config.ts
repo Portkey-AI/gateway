@@ -100,6 +100,8 @@ export const configSchema: any = z
     before_request_hooks: z
       .array(z.object({}).catchall(z.any())) // Allows any object structure
       .optional(),
+    // Opt in to keeping check transformedData on hook_results.
+    include_hook_transformed_data: z.boolean().optional(),
     input_guardrails: z
       .union([
         z.array(z.string()),

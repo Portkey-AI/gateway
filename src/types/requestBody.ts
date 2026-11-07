@@ -133,6 +133,11 @@ export interface Options {
   beforeRequestHooks?: HookObject[];
   defaultInputGuardrails?: HookObject[];
   defaultOutputGuardrails?: HookObject[];
+  /**
+   * When true, hook_results checks keep transformedData.
+   * Off by default so responses do not include transformed request or response bodies.
+   */
+  includeHookTransformedData?: boolean;
   /** OpenAI specific */
   openaiProject?: string;
   openaiOrganization?: string;

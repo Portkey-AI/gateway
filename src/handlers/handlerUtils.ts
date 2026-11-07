@@ -37,6 +37,7 @@ import { PreRequestValidatorService } from './services/preRequestValidatorServic
 import { ProviderContext } from './services/providerContext';
 import { RequestContext } from './services/requestContext';
 import { ResponseService } from './services/responseService';
+import { inheritIncludeHookTransformedData } from './includeHookTransformedData';
 
 function constructRequestBody(
   requestContext: RequestContext,
@@ -622,6 +623,12 @@ export async function tryTargetsRecursively(
     ];
     currentTarget.beforeRequestHooks = [...inheritedConfig.beforeRequestHooks];
   }
+
+  inheritIncludeHookTransformedData(
+    currentTarget,
+    inheritedConfig,
+    currentInheritedConfig
+  );
 
   currentTarget.overrideParams = {
     ...currentInheritedConfig.overrideParams,

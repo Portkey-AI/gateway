@@ -8,8 +8,11 @@ import {
   HookObject,
 } from '../../../../../src/middlewares/hooks/types';
 
-// Mock the HooksManager and HookSpan
-jest.mock('../../../middlewares/hooks');
+// Mock the HooksManager and HookSpan so this suite does not load plugins.
+jest.mock('../../../../../src/middlewares/hooks', () => ({
+  HooksManager: jest.fn(),
+  HookSpan: jest.fn(),
+}));
 
 describe('HooksService', () => {
   let mockRequestContext: RequestContext;
@@ -54,7 +57,31 @@ describe('HooksService', () => {
         mockRequestContext.afterRequestHooks,
         null,
         mockRequestContext.endpoint,
-        mockRequestContext.requestHeaders
+        mockRequestContext.requestHeaders,
+        false
+      );
+    });
+
+    it('passes includeHookTransformedData when the request opts in', () => {
+      mockHooksManager.createSpan.mockClear();
+      const optedInContext = {
+        ...mockRequestContext,
+        includeHookTransformedData: true,
+      } as unknown as RequestContext;
+
+      new HooksService(optedInContext);
+
+      expect(mockHooksManager.createSpan).toHaveBeenCalledWith(
+        optedInContext.params,
+        optedInContext.metadata,
+        optedInContext.provider,
+        optedInContext.isStreaming,
+        optedInContext.beforeRequestHooks,
+        optedInContext.afterRequestHooks,
+        null,
+        optedInContext.endpoint,
+        optedInContext.requestHeaders,
+        true
       );
     });
   });
