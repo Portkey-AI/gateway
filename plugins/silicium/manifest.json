@@ -1,0 +1,81 @@
+{
+  "id": "silicium",
+  "name": "Silicium AI Ops In-Process Guardrail & HNSW Semantic Cache",
+  "description": "Sub-5us 12-flag SWAR PII/secret guardrail and sub-50us in-process HNSW semantic cache with 64-bit FNV-1a KV-cache prefix affinity (zero external HTTP calls).",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "tenantScope": {
+        "type": "string",
+        "label": "Tenant Scope Identifier",
+        "description": "Tenant namespace for isolated in-process HNSW semantic cache (bounded to 256 scopes)."
+      },
+      "residencyZone": {
+        "type": "string",
+        "label": "Sovereign Data Residency Zone",
+        "description": "Data residency attestation tag attached to guardrail telemetry."
+      }
+    },
+    "required": []
+  },
+  "functions": [
+    {
+      "name": "Silicium 12-Flag SWAR PII & Secret Guardrail",
+      "id": "piiGuardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Single-pass < 5 us in-process 12-flag SWAR PII & secret inspection (block, mask, or audit) with zero external HTTP calls."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "piiPolicy": {
+            "type": "string",
+            "label": "PII Policy",
+            "enum": ["block", "mask", "audit"],
+            "default": "block",
+            "description": "Action when PII or secret tokens are detected: block request, mask in-place via transformedData, or audit log."
+          },
+          "maxTokens": {
+            "type": "number",
+            "label": "Max Structural Token Budget",
+            "default": 16384
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "Silicium Sub-50us HNSW Semantic Cache & KV-Prefix Router",
+      "id": "semanticCacheGuard",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Sub-50 us in-process HNSW semantic cache lookup isolated by tenantScope with 64-bit KV-cache prefix routing."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "tenantScope": {
+            "type": "string",
+            "label": "Tenant Scope",
+            "default": "default-tenant"
+          },
+          "distanceThreshold": {
+            "type": "number",
+            "label": "L2 Distance Threshold",
+            "default": 0.2
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}
