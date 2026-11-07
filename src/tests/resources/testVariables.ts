@@ -142,6 +142,10 @@ const testVariables: TestVariables = {
       model: 'Qwen/Qwen2.5-Coder-3B-Instruct',
     },
   },
+  wally: {
+    apiKey: process.env.WALLY_API_KEY,
+    chatCompletions: { model: 'deepseek-v4.1-flash' },
+  },
 };
 
 export default testVariables;

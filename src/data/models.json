@@ -15425,6 +15425,78 @@
         "id": "openai"
       },
       "name": "Text Embedding Ada 002"
+    },
+    {
+      "id": "glm-5.3-flash",
+      "object": "model",
+      "provider": {
+        "id": "wally"
+      },
+      "name": "GLM-5.3 Flash"
+    },
+    {
+      "id": "deepseek-v4.1-flash",
+      "object": "model",
+      "provider": {
+        "id": "wally"
+      },
+      "name": "DeepSeek V4.1 Flash"
+    },
+    {
+      "id": "kimi-k3",
+      "object": "model",
+      "provider": {
+        "id": "wally"
+      },
+      "name": "Kimi K3"
+    },
+    {
+      "id": "deepseek-v4.1-flash-fast",
+      "object": "model",
+      "provider": {
+        "id": "wally"
+      },
+      "name": "DeepSeek V4.1 Flash (Fast)"
+    },
+    {
+      "id": "glm-5.3-fast",
+      "object": "model",
+      "provider": {
+        "id": "wally"
+      },
+      "name": "GLM-5.3 (Fast)"
+    },
+    {
+      "id": "deepseek-v4-pro-fast",
+      "object": "model",
+      "provider": {
+        "id": "wally"
+      },
+      "name": "DeepSeek V4 Pro (Fast)"
+    },
+    {
+      "id": "deepseek-v4-flash-0731",
+      "object": "model",
+      "provider": {
+        "id": "wally"
+      },
+      "name": "DeepSeek V4 Flash 0731"
+    },
+    {
+      "id": "minimax-m3",
+      "object": "model",
+      "provider": {
+        "id": "wally"
+      },
+      "name": "MiniMax M3"
+    },
+    {
+      "id": "deepseek-v4.1-flash-1017",
+      "object": "model",
+      "provider": {
+        "id": "wally"
+      },
+      "name": "DeepSeek V4.1 Flash 1017"
     }
   ]
 }
