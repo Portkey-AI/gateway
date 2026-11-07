@@ -185,6 +185,14 @@ export class RequestContext {
     return this.retryConfig?.attempts > 0;
   }
 
+  /**
+   * Opt in to returning each check's transformedData on hook_results.
+   * Anything other than boolean true keeps the default (omit the payload).
+   */
+  get includeHookTransformedData(): boolean {
+    return this.providerOption?.includeHookTransformedData === true;
+  }
+
   get beforeRequestHooks(): HookObject[] {
     return [
       ...(this.providerOption?.beforeRequestHooks || []),

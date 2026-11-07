@@ -24,6 +24,7 @@ export class HookSpan {
     afterRequestHooksResult: HookResult[];
   };
   private parentHookSpanId: string | null;
+  public readonly includeHookTransformedData: boolean;
   public readonly id: string;
 
   constructor(
@@ -35,7 +36,8 @@ export class HookSpan {
     afterRequestHooks: HookObject[],
     parentHookSpanId: string | null,
     requestType: string,
-    requestHeaders: Record<string, string>
+    requestHeaders: Record<string, string>,
+    includeHookTransformedData: boolean = false
   ) {
     this.context = this.createContext(
       requestParams,
@@ -54,6 +56,7 @@ export class HookSpan {
       'afterRequestHook'
     );
     this.parentHookSpanId = parentHookSpanId;
+    this.includeHookTransformedData = includeHookTransformedData;
     this.hooksResult = {
       beforeRequestHooksResult: [],
       afterRequestHooksResult: [],
@@ -216,7 +219,8 @@ export class HooksManager {
     afterRequestHooks: HookObject[],
     parentHookSpanId: string | null,
     requestType: string,
-    requestHeaders: Record<string, string>
+    requestHeaders: Record<string, string>,
+    includeHookTransformedData: boolean = false
   ): HookSpan {
     const span = new HookSpan(
       requestParams,
@@ -227,7 +231,8 @@ export class HooksManager {
       afterRequestHooks,
       parentHookSpanId,
       requestType,
-      requestHeaders
+      requestHeaders,
+      includeHookTransformedData
     );
 
     this.spans[span.id] = span;
@@ -347,17 +352,7 @@ export class HooksManager {
           hook.eventType,
           options
         );
-        if (
-          result.transformedData &&
-          (result.transformedData.response.json ||
-            result.transformedData.request.json)
-        ) {
-          span.setContextAfterTransform(
-            result.transformedData.response.json,
-            result.transformedData.request.json
-          );
-        }
-        delete result.transformedData;
+        this.applyCheckResult(span, result);
         checkResults.push(result);
       }
     }
@@ -374,17 +369,7 @@ export class HooksManager {
             hook.eventType,
             options
           );
-          if (
-            result.transformedData &&
-            (result.transformedData.response.json ||
-              result.transformedData.request.json)
-          ) {
-            span.setContextAfterTransform(
-              result.transformedData.response.json,
-              result.transformedData.request.json
-            );
-          }
-          delete result.transformedData;
+          this.applyCheckResult(span, result);
           checkResults.push(result);
         }
       } else {
@@ -402,17 +387,7 @@ export class HooksManager {
         );
 
         checkResults.forEach((checkResult) => {
-          if (
-            checkResult.transformedData &&
-            (checkResult.transformedData.response.json ||
-              checkResult.transformedData.request.json)
-          ) {
-            span.setContextAfterTransform(
-              checkResult.transformedData.response.json,
-              checkResult.transformedData.request.json
-            );
-          }
-          delete checkResult.transformedData;
+          this.applyCheckResult(span, checkResult);
         });
       }
     }
@@ -444,6 +419,27 @@ export class HooksManager {
 
     span.addHookResult(hook.eventType, hookResult);
     return hookResult;
+  }
+
+  /**
+   * Apply a check's transformed body to the span. Drop transformedData from
+   * the check result unless this span opted in, so hook_results stay small
+   * by default.
+   */
+  private applyCheckResult(span: HookSpan, result: GuardrailCheckResult): void {
+    if (
+      result.transformedData &&
+      (result.transformedData.response.json ||
+        result.transformedData.request.json)
+    ) {
+      span.setContextAfterTransform(
+        result.transformedData.response.json,
+        result.transformedData.request.json
+      );
+    }
+    if (!span.includeHookTransformedData) {
+      delete result.transformedData;
+    }
   }
 
   private shouldSkipHook(span: HookSpan, hook: HookObject): boolean {
