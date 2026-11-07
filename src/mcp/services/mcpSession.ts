@@ -9,6 +9,7 @@ import {
   CallToolRequest,
   ListToolsRequest,
   ErrorCode,
+  Implementation,
   InitializeRequest,
   InitializeResult,
   Tool,
@@ -39,15 +40,15 @@ import {
   PolicyDecision,
 } from './obsidianPolicy';
 import { recordPolicyEvaluation } from '../utils/policyMetrics';
-
-/** JSON-RPC server-error code used when a tool call is denied by policy. */
-const POLICY_DENIED_ERROR_CODE = -32003;
 import {
   isCapabilityDisabled,
   filterDisabledCapabilities,
   CapabilityType,
 } from './mcpAccessService';
 import { ControlPlane } from '../middleware/controlPlane';
+
+/** JSON-RPC server-error code used when a tool call is denied by policy. */
+const POLICY_DENIED_ERROR_CODE = -32003;
 
 // Note: SSE downstream support was removed - gateway only supports HTTP Streamable for clients
 export type TransportType = 'http' | 'auth-required';
@@ -95,6 +96,10 @@ export class MCPSession {
   // Tool annotations seen in `tools/list`, for policy context. Best effort:
   // only populated once the client has listed tools in this session.
   private toolAnnotations = new Map<string, object>();
+
+  // Whether the "policy enabled but not configured" error has been logged
+  // for this session, so it is not repeated on every tool call.
+  private policyNotConfiguredLogged = false;
 
   // Connection pool key for this session (used for marking unhealthy on errors)
   private poolKey?: string;
@@ -512,7 +517,8 @@ export class MCPSession {
     const upstreamServerInfo = this.upstream.getServerVersion();
 
     const clientVersion = request.params.protocolVersion;
-    const ci: any = request.params.clientInfo;
+    // Self-reported by the client: useful for telemetry, not for identity.
+    const ci: Implementation | undefined = request.params.clientInfo;
     if (ci && typeof ci === 'object') {
       this.clientInfo = {
         name: typeof ci.name === 'string' ? ci.name.slice(0, 128) : undefined,
@@ -762,7 +768,7 @@ export class MCPSession {
         }))
       );
 
-      for (const tool of upstreamResult.tools as any[]) {
+      for (const tool of upstreamResult.tools as Tool[]) {
         if (tool?.name && tool.annotations) {
           this.toolAnnotations.set(tool.name, tool.annotations);
         }
@@ -800,9 +806,6 @@ export class MCPSession {
   }
 
   /**
-   * Handle tools/call request with validation
-   */
-  /**
    * Ask the external policy engine (Obsidian) about one tool event.
    *
    * Returns null when policy checking is not enabled for this server/stage.
@@ -825,9 +828,14 @@ export class MCPSession {
     try {
       const envConfig = getObsidianEnvConfig();
       if (!envConfig) {
-        this.logger.error(
-          'Obsidian policy is enabled for this server but OBSIDIAN_GATEWAY_TOKEN is not set'
-        );
+        // Once per session, not per call: fail-closed already denies each
+        // call and the per-evaluation log line records it.
+        if (!this.policyNotConfiguredLogged) {
+          this.policyNotConfiguredLogged = true;
+          this.logger.error(
+            'Obsidian policy is enabled for this server but OBSIDIAN_GATEWAY_TOKEN is not set'
+          );
+        }
         return this.recordedFailure(
           stage,
           toolName,
@@ -989,6 +997,10 @@ export class MCPSession {
     });
   }
 
+  /**
+   * Handle tools/call: static access checks, external policy (PreToolUse),
+   * the upstream call, then policy on the result (PostToolUse).
+   */
   private async handleToolCall(request: CallToolRequest) {
     const { name: toolName } = request.params;
 
@@ -1074,8 +1086,12 @@ export class MCPSession {
         `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`
       );
 
-      // Log the error
-      this.logResult(request, null, { ok: false, error });
+      // Log the error, keeping the PreToolUse decision that let the call through.
+      this.logResult(request, null, {
+        ok: false,
+        error,
+        policy: { pre: prePolicy },
+      });
     }
   }
 

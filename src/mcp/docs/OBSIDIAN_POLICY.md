@@ -184,6 +184,16 @@ every call fails with `400 runtime_extension_schema`. Client info is known only
 on the gateway instance that handled `initialize`, and `tool_annotations` only
 after the client has called `tools/list` in the same session.
 
+> **Trust these fields accordingly.** `client_name` / `agent.name` and
+> `client_version` are **self-reported** by the MCP client in `initialize`: any
+> client can claim to be `claude-code`. Use them for telemetry and reporting,
+> and use `agent.id` (the OAuth `client_id`, bound to credentials) when a policy
+> needs to identify the caller. `tool_annotations` are **asserted by the
+> upstream MCP server**, which may be wrong or hostile about `readOnlyHint` /
+> `destructiveHint`. Use them only to make a policy stricter, never as the
+> reason to allow a call. The token-derived keys (`token_*`) are as trustworthy
+> as the token issuer.
+
 ### Policies for the gateway
 
 Policies use **`"app": "unified"`** and accept only `block` and `warn` (there is
@@ -360,7 +370,14 @@ never from the pooled upstream connection.
 With the gateway's local OAuth (`client_credentials`) tokens there is no user,
 only the client, so policies can match on the agent but not on a person. User
 fields are populated when the token carries them (API key or external-IdP
-tokens).
+tokens). `agent.name`, when [extended context](#extended-context) is on, is
+self-reported by the client and must not be used as an identity.
+
+When a fail-closed denial is caused by an Obsidian error response, the error's
+short `error` / `code` / `message` (at most 160 characters) is included in the
+JSON-RPC error message sent to the client, so a user can tell an operator what
+went wrong (for example `unregistered_runtime_extension`). Tool arguments and
+results are never included in error messages.
 
 ### Gateway logs
 

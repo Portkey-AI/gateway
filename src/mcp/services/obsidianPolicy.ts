@@ -50,8 +50,9 @@ export interface ObsidianEnvConfig {
    * annotations) as `agent.name` and extra `runtime_extension.data` keys.
    * Opt-in via OBSIDIAN_EXTENDED_CONTEXT=true, because Obsidian rejects
    * runtime extension data that does not match the registered schema.
+   * Absent means off.
    */
-  extendedContext: boolean;
+  extendedContext?: boolean;
 }
 
 /** Per-server settings (`policy.obsidian` in servers.json). */
@@ -336,31 +337,30 @@ function describeError(error: unknown): string {
  * `unregistered_runtime_extension`, so operators can diagnose a 4xx. Returns
  * undefined if there is nothing usable. Never throws.
  */
-async function readErrorDetail(
-  response: Response
-): Promise<string | undefined> {
-  try {
-    const body: any = await response.json();
-    const parts = [body?.error, body?.code, body?.message].filter(
-      (v): v is string => typeof v === 'string' && v.length > 0
-    );
-    const text = [...new Set(parts)].join(': ').slice(0, 160);
-    return text || undefined;
-  } catch {
-    return undefined;
-  }
+function readErrorDetail(bodyText: string): string | undefined {
+  const body: any = parseJson(bodyText);
+  const parts = [body?.error, body?.code, body?.message].filter(
+    (v): v is string => typeof v === 'string' && v.length > 0
+  );
+  const text = [...new Set(parts)].join(': ').slice(0, 160);
+  return text || undefined;
 }
 
+/**
+ * One POST to Obsidian. The timeout covers the whole exchange, headers and
+ * body, so a slow-trickling body cannot exceed `timeoutMs`. Resolves with the
+ * HTTP status and the body as text (parsed by the caller).
+ */
 async function postOnce(
   event: Record<string, unknown>,
   config: ObsidianEnvConfig,
   timeoutMs: number,
   doFetch: typeof fetch
-): Promise<Response> {
+): Promise<{ status: number; ok: boolean; text: string }> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    return await doFetch(config.endpoint, {
+    const response = await doFetch(config.endpoint, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${config.gatewayToken}`,
@@ -370,8 +370,18 @@ async function postOnce(
       body: JSON.stringify(event),
       signal: controller.signal,
     });
+    const text = await response.text();
+    return { status: response.status, ok: response.ok, text };
   } finally {
     clearTimeout(timer);
+  }
+}
+
+function parseJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
   }
 }
 
@@ -407,7 +417,7 @@ async function runEvaluation(
     config
   );
 
-  let response: Response | undefined;
+  let response: Awaited<ReturnType<typeof postOnce>> | undefined;
   let lastError: string | undefined;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -437,17 +447,15 @@ async function runEvaluation(
   }
 
   if (!response.ok) {
-    const detail = await readErrorDetail(response);
+    const detail = readErrorDetail(response.text);
     const message = `Obsidian returned HTTP ${response.status}${
       detail ? ` (${detail})` : ''
     }`;
     return failureDecision(failMode, 'error', message);
   }
 
-  let body: any;
-  try {
-    body = await response.json();
-  } catch {
+  const body: any = parseJson(response.text);
+  if (body === undefined) {
     const message = 'Obsidian returned a response that is not valid JSON';
     return failureDecision(failMode, 'error', message);
   }

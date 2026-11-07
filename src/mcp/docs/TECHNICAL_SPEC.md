@@ -315,6 +315,12 @@ token for any configured workspace, since there is no workspace concept to
 enforce. A token that does carry a `workspace_id` must still match the
 requested workspace, and behaviour with a control plane is unchanged.
 
+**Local mode is single-tenant.** `/oauth/register` is open dynamic client
+registration and locally issued tokens are unscoped, so anyone who can reach the
+gateway can obtain a token for every configured server. It is intended for
+local development and trusted networks only; do not expose a local-mode gateway
+to untrusted clients. Workspace isolation requires the control plane.
+
 ---
 
 ### 7. User Identity Forwarding

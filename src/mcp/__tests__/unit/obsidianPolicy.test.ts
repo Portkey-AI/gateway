@@ -5,6 +5,7 @@ import {
   beforeAll,
   afterAll,
   beforeEach,
+  jest,
 } from '@jest/globals';
 import {
   buildEvent,
@@ -18,6 +19,14 @@ import {
   ToolEventInput,
 } from '../../services/obsidianPolicy';
 import { MockObsidianServer } from '../MockObsidianServer';
+
+// The policy client writes one log line per evaluation; keep test output quiet.
+// policyLog.test.ts covers the line itself.
+let consoleSpy: ReturnType<typeof jest.spyOn>;
+beforeAll(() => {
+  consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+});
+afterAll(() => consoleSpy.mockRestore());
 
 // ---------------------------------------------------------------------------
 // Pure helpers

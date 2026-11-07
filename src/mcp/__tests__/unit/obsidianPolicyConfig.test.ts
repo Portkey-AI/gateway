@@ -8,6 +8,7 @@ import {
   beforeAll,
   afterAll,
   afterEach,
+  jest,
 } from '@jest/globals';
 import {
   evaluateToolEvent,
@@ -18,6 +19,13 @@ import {
   ObsidianEnvConfig,
 } from '../../services/obsidianPolicy';
 import { MockObsidianServer } from '../MockObsidianServer';
+
+// Keep the per-evaluation log lines out of the test output.
+let consoleSpy: ReturnType<typeof jest.spyOn>;
+beforeAll(() => {
+  consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+});
+afterAll(() => consoleSpy.mockRestore());
 
 describe('runtime extension configuration', () => {
   const base = { OBSIDIAN_GATEWAY_TOKEN: 'tok' };
