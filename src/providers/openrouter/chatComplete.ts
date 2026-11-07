@@ -1,5 +1,5 @@
 import { OPENROUTER } from '../../globals';
-import { Message, Params } from '../../types/requestBody';
+import { ContentType, Message, Params } from '../../types/requestBody';
 import {
   ChatChoice,
   ChatCompletionResponse,
@@ -11,6 +11,69 @@ import {
   generateInvalidProviderResponseError,
 } from '../utils';
 import { transformReasoningParams, transformUsageOptions } from './utils';
+
+/**
+ * OpenRouter returns generated images beside the assistant message, not inside
+ * `content`. See chat completions with `modalities: ["image", "text"]`.
+ */
+interface OpenrouterImagePart {
+  type?: string;
+  image_url?: {
+    url?: string;
+    detail?: string;
+  };
+  url?: string;
+}
+
+const imageContentBlock = (
+  part: OpenrouterImagePart | undefined
+): ContentType | undefined => {
+  if (!part) return undefined;
+  const nestedUrl = part.image_url?.url;
+  const url =
+    typeof nestedUrl === 'string' && nestedUrl.length > 0
+      ? nestedUrl
+      : typeof part.url === 'string' && part.url.length > 0
+        ? part.url
+        : undefined;
+  if (!url) return undefined;
+  return {
+    type: 'image_url',
+    image_url: {
+      url,
+      ...(part.image_url?.detail && { detail: part.image_url.detail }),
+    },
+  };
+};
+
+const imageBlocksFromParts = (
+  parts: OpenrouterImagePart[] | undefined
+): ContentType[] => {
+  const blocks: ContentType[] = [];
+  if (!Array.isArray(parts)) return blocks;
+  for (const part of parts) {
+    const block = imageContentBlock(part);
+    const url = block?.image_url?.url;
+    if (!block || !url) continue;
+    const exists = blocks.some((existing) => existing.image_url?.url === url);
+    if (!exists) blocks.push(block);
+  }
+  return blocks;
+};
+
+const appendImageContentBlocks = (
+  contentBlocks: ContentType[],
+  parts: OpenrouterImagePart[] | undefined
+) => {
+  for (const block of imageBlocksFromParts(parts)) {
+    const url = block.image_url?.url;
+    const exists = contentBlocks.some(
+      (existing) =>
+        existing.type === 'image_url' && existing.image_url?.url === url
+    );
+    if (!exists) contentBlocks.push(block);
+  }
+};
 
 export const OpenrouterChatCompleteConfig: ProviderConfig = {
   model: {
@@ -125,8 +188,9 @@ interface OpenrouterChatCompleteResponse extends ChatCompletionResponse {
   model: string;
   choices: (ChatChoice & {
     message: Message & {
-      reasoning: string;
+      reasoning?: string;
       reasoning_details?: any[];
+      images?: OpenrouterImagePart[];
     };
   })[];
   usage: OpenrouterUsageDetails;
@@ -149,8 +213,9 @@ interface OpenrouterStreamChunk {
   choices: {
     delta: {
       role?: string | null;
-      content?: string;
+      content?: string | ContentType[];
       reasoning?: string;
+      images?: OpenrouterImagePart[];
     };
     index: number;
     finish_reason: string | null;
@@ -192,7 +257,7 @@ export const OpenrouterChatCompleteResponseTransform: (
       model: response.model,
       provider: OPENROUTER,
       choices: response.choices.map((c) => {
-        const content_blocks = [];
+        const content_blocks: ContentType[] = [];
 
         if (!strictOpenAiCompliance) {
           if (c.message.reasoning) {
@@ -205,10 +270,21 @@ export const OpenrouterChatCompleteResponseTransform: (
             });
           }
 
-          content_blocks.push({
-            type: 'text',
-            text: c.message.content,
-          });
+          if (Array.isArray(c.message.content)) {
+            for (const part of c.message.content) {
+              if (part?.type === 'text' && !part.image_url?.url) {
+                content_blocks.push({ type: 'text', text: part.text });
+              }
+            }
+            appendImageContentBlocks(content_blocks, c.message.content);
+          } else {
+            content_blocks.push({
+              type: 'text',
+              text: c.message.content,
+            });
+          }
+
+          appendImageContentBlocks(content_blocks, c.message.images);
         }
 
         return {
@@ -221,6 +297,8 @@ export const OpenrouterChatCompleteResponseTransform: (
             ...(c.message.reasoning_details && {
               reasoning_details: c.message.reasoning_details,
             }),
+            ...(Array.isArray(c.message.images) &&
+              c.message.images.length > 0 && { images: c.message.images }),
           },
           finish_reason: c.finish_reason,
         };
@@ -267,26 +345,58 @@ export const OpenrouterChatCompleteStreamChunkTransform: (
     });
   }
   const parsedChunk: OpenrouterStreamChunk = JSON.parse(chunk);
+  const choice = parsedChunk.choices?.[0];
 
-  const content_blocks = [];
-  if (!strictOpenAiCompliance) {
+  const content_blocks: {
+    index: number;
+    delta: { thinking?: string; text?: string } & Partial<ContentType>;
+  }[] = [];
+  if (!strictOpenAiCompliance && choice) {
     // add the reasoning first
-    if (parsedChunk.choices?.[0]?.delta?.reasoning) {
+    if (choice.delta?.reasoning) {
       content_blocks.push({
-        index: parsedChunk.choices?.[0]?.index,
+        index: choice.index,
         delta: {
-          thinking: parsedChunk.choices?.[0]?.delta?.reasoning,
+          thinking: choice.delta.reasoning,
         },
       });
     }
     // then add the content
-    if (parsedChunk.choices?.[0]?.delta?.content) {
+    const deltaContent = choice.delta?.content;
+    if (typeof deltaContent === 'string' && deltaContent) {
       content_blocks.push({
-        index: parsedChunk.choices?.[0]?.index,
+        index: choice.index,
         delta: {
-          text: parsedChunk.choices?.[0]?.delta?.content,
+          text: deltaContent,
         },
       });
+    } else if (Array.isArray(deltaContent)) {
+      for (const part of deltaContent) {
+        if (part?.type === 'text' && part.text && !part.image_url?.url) {
+          content_blocks.push({
+            index: choice.index,
+            delta: { text: part.text },
+          });
+        }
+      }
+      for (const block of imageBlocksFromParts(deltaContent)) {
+        content_blocks.push({
+          index: choice.index,
+          delta: block,
+        });
+      }
+    }
+    for (const block of imageBlocksFromParts(choice.delta?.images)) {
+      const url = block.image_url?.url;
+      const exists = content_blocks.some(
+        (existing) => existing.delta?.image_url?.url === url
+      );
+      if (!exists) {
+        content_blocks.push({
+          index: choice.index,
+          delta: block,
+        });
+      }
     }
   }
 
