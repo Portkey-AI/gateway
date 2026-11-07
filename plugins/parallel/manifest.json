@@ -1,0 +1,95 @@
+{
+  "id": "parallel",
+  "description": "Optional Parallel Search MCP grounding. Calls the free anonymous web_search tool with the latest user text and attaches short excerpts as reference material.",
+  "credentials": {
+    "type": "object",
+    "properties": {},
+    "required": []
+  },
+  "functions": [
+    {
+      "name": "Online Search",
+      "id": "online",
+      "supportedHooks": ["beforeRequestHook"],
+      "type": "transformer",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Before the chat request reaches the model, searches Parallel's free Search MCP (https://search.parallel.ai/mcp) with the latest user text only and attaches excerpts plus source links as untrusted reference material. Does nothing unless enabled is true. Timeouts, rate limits, and other failures leave the original request unchanged."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "label": "Enabled",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Must be true to call Parallel. The plugin does not search when this is omitted or false."
+              }
+            ],
+            "default": false
+          },
+          "prefix": {
+            "type": "string",
+            "label": "Context Prefix",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "String to prepend to the search context"
+              }
+            ],
+            "default": "\n<web_search_context>"
+          },
+          "suffix": {
+            "type": "string",
+            "label": "Context Suffix",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "String to append to the search context"
+              }
+            ],
+            "default": "\n</web_search_context>"
+          },
+          "numResults": {
+            "type": "number",
+            "label": "Number of Results",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Maximum number of search excerpts to attach. The free Search MCP does not accept domain filters or paid search modes."
+              }
+            ],
+            "default": 5
+          },
+          "maxContextChars": {
+            "type": "number",
+            "label": "Max Context Characters",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Maximum characters of excerpt text to attach across the selected results"
+              }
+            ],
+            "default": 4000
+          },
+          "timeout": {
+            "type": "number",
+            "label": "Timeout",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Timeout for the whole Parallel Search MCP exchange in milliseconds. There is no retry and no upgrade to a paid tier."
+              }
+            ],
+            "default": 10000
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}
