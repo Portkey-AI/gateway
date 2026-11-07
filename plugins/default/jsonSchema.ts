@@ -30,8 +30,7 @@ export const handler: PluginHandler = async (
     // Extract JSON from code blocks and general text
     const extractJson = (text: string): string[] => {
       const codeBlockRegex = /```+(?:json)?\s*([\s\S]*?)```+/g;
-      const jsonRegex = /{[\s\S]*?}/g;
-      const matches = [];
+      const matches: string[] = [];
 
       // Extract from code blocks first
       let match;
@@ -39,10 +38,55 @@ export const handler: PluginHandler = async (
         matches.push(match[1].trim());
       }
 
-      // If no matches in code blocks, try general JSON
+      // If no matches in code blocks, extract balanced JSON objects from general text
       if (matches.length === 0) {
-        while ((match = jsonRegex.exec(text)) !== null) {
-          matches.push(match[0]);
+        for (let i = 0; i < text.length; i++) {
+          if (text[i] !== '{') {
+            continue;
+          }
+
+          let depth = 0;
+          let inString = false;
+          let isEscaped = false;
+          let endIndex = -1;
+
+          for (let j = i; j < text.length; j++) {
+            const char = text[j];
+
+            if (inString) {
+              if (isEscaped) {
+                isEscaped = false;
+              } else if (char === '\\') {
+                isEscaped = true;
+              } else if (char === '"') {
+                inString = false;
+              }
+              continue;
+            }
+
+            if (char === '"') {
+              inString = true;
+            } else if (char === '{') {
+              depth++;
+            } else if (char === '}') {
+              depth--;
+              if (depth === 0) {
+                endIndex = j;
+                break;
+              }
+            }
+          }
+
+          if (endIndex !== -1) {
+            const candidate = text.slice(i, endIndex + 1);
+            matches.push(candidate);
+            try {
+              JSON.parse(candidate);
+              i = endIndex;
+            } catch {
+              // If the outer candidate is not valid JSON, continue scanning inside it
+            }
+          }
         }
       }
 

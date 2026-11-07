@@ -508,6 +508,79 @@ As you can see, there are several validation issues in this profile.`,
       ])
     );
   });
+
+  it('should validate nested JSON in conversational text without code blocks', async () => {
+    const context: PluginContext = {
+      response: {
+        text: 'Agent output: {"user": {"id": 101, "name": "Kartik"}, "status": "active"}',
+      },
+    };
+    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      schema: {
+        type: 'object',
+        properties: {
+          user: {
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              name: { type: 'string' },
+            },
+            required: ['id', 'name'],
+          },
+          status: { type: 'string' },
+        },
+        required: ['user', 'status'],
+      },
+      not: false,
+    };
+
+    const result = await jsonSchemaHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toBeDefined();
+    expect(result.data.matchedJson).toEqual({
+      user: { id: 101, name: 'Kartik' },
+      status: 'active',
+    });
+    expect(result.data.explanation).toContain('Successfully validated');
+  });
+
+  it('should handle braces inside string literals when extracting nested JSON without code blocks', async () => {
+    const context: PluginContext = {
+      response: {
+        text: 'Result: {"template": "Hello {user}, welcome!", "meta": {"valid": true}}',
+      },
+    };
+    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      schema: {
+        type: 'object',
+        properties: {
+          template: { type: 'string' },
+          meta: {
+            type: 'object',
+            properties: {
+              valid: { type: 'boolean' },
+            },
+            required: ['valid'],
+          },
+        },
+        required: ['template', 'meta'],
+      },
+      not: false,
+    };
+
+    const result = await jsonSchemaHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data.matchedJson).toEqual({
+      template: 'Hello {user}, welcome!',
+      meta: { valid: true },
+    });
+  });
 });
 
 describe('jsonKeys handler', () => {
