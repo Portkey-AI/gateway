@@ -23,6 +23,7 @@ enum Operator {
   In = '$in',
   NotIn = '$nin',
   Regex = '$regex',
+  Length = '$length',
 
   // Logical Operators
   And = '$and',
@@ -125,6 +126,23 @@ export class ConditionalRouter {
           } catch (e) {
             return false;
           }
+        case Operator.Length:
+          // A number means equality. An object reuses the other operators.
+          if (!(Array.isArray(value) || typeof value === 'string'))
+            return false;
+          if (typeof compareValue === 'number') {
+            if (value.length !== compareValue) return false;
+          } else if (
+            compareValue !== null &&
+            typeof compareValue === 'object' &&
+            !Array.isArray(compareValue)
+          ) {
+            if (!this.evaluateOperator(compareValue, value.length))
+              return false;
+          } else {
+            return false;
+          }
+          break;
         default:
           throw new Error(
             `Unsupported operator used in the query router: ${op}`
