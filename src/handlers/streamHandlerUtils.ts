@@ -297,13 +297,12 @@ export const formDataToOctetStreamTransformer = (
   return transformStream;
 };
 
-const decoder = new TextDecoder();
-
 export function createLineSplitter(): TransformStream {
+  const decoder = new TextDecoder();
   let leftover = '';
   return new TransformStream({
     transform(_chunk, controller) {
-      const chunk = decoder.decode(_chunk);
+      const chunk = decoder.decode(_chunk, { stream: true });
       leftover += chunk.toString();
       const lines = leftover.split('\n');
       leftover = lines.pop() || '';
@@ -315,6 +314,7 @@ export function createLineSplitter(): TransformStream {
       return;
     },
     flush(controller) {
+      leftover += decoder.decode();
       if (leftover.trim()) {
         controller.enqueue(leftover);
       }
