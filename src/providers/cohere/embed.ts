@@ -111,8 +111,8 @@ export interface CohereEmbedResponse {
   /** An array of strings which were the input texts to be embedded. */
   texts: string[];
 
-  /** A 2D array of floating point numbers representing the embeddings. */
-  embeddings: number[][] | { float: number[][] };
+  /** Floating-point or base64-encoded embedding vectors. */
+  embeddings: number[][] | { float?: number[][]; base64?: string[] };
 
   /** An `EmbedMeta` object which contains metadata about the response. */
   meta: EmbedMeta;
@@ -149,14 +149,18 @@ export const CohereEmbedResponseTransform: (
 
   const model = (gatewayRequest.model as string) || '';
 
-  // portkey only supports float embeddings for cohere to confirm to openai signature
   if ('embeddings' in response) {
     let data: EmbedResponseData[] = [];
-    if (response?.embeddings && 'float' in response.embeddings) {
-      data = response.embeddings.float.map((embedding, index) => ({
+    const embeddings = response.embeddings;
+    if (embeddings && !Array.isArray(embeddings)) {
+      const vectors =
+        gatewayRequest.encoding_format === 'base64'
+          ? embeddings.base64
+          : embeddings.float;
+      data = (vectors ?? []).map((embedding, index) => ({
         object: 'embedding',
-        embedding: embedding,
-        index: index,
+        embedding,
+        index,
       }));
     }
     const inputTokens =

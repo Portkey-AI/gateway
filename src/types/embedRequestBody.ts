@@ -38,7 +38,7 @@ export interface EmbedRequestBody {
 
 export interface EmbedResponseData {
   object: string; // The type of data object, e.g., "embedding"
-  embedding?: number[] | number[][]; // The embedding vector(s)
+  embedding?: number[] | number[][] | string; // The embedding vector(s)
   image_embedding?: number[];
   video_embeddings?: {
     start_offset: number;
