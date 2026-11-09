@@ -19,14 +19,19 @@ const getConfiguredAdminToken = (): string => {
   return adminToken;
 };
 
-const parseCookies = (cookieHeader?: string): Record<string, string> => {
+export const parseCookies = (cookieHeader?: string): Record<string, string> => {
   if (!cookieHeader) return {};
 
   return cookieHeader.split(';').reduce(
     (acc, cookiePart) => {
       const [rawKey, ...valueParts] = cookiePart.trim().split('=');
       if (!rawKey) return acc;
-      acc[rawKey] = decodeURIComponent(valueParts.join('='));
+      const rawValue = valueParts.join('=');
+      try {
+        acc[rawKey] = decodeURIComponent(rawValue);
+      } catch {
+        acc[rawKey] = rawValue;
+      }
       return acc;
     },
     {} as Record<string, string>
