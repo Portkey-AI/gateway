@@ -203,8 +203,6 @@ describe('jsonSchema handler', () => {
 
     const result = await jsonSchemaHandler(context, parameters, eventType);
 
-    console.log(JSON.stringify(result, null, 2));
-
     expect(result.error).toBe(null);
     expect(result.verdict).toBe(false);
   });
@@ -508,6 +506,212 @@ As you can see, there are several validation issues in this profile.`,
       ])
     );
   });
+
+  it('should validate nested JSON in plain text without code blocks (issue #1879)', async () => {
+    const context: PluginContext = {
+      response: {
+        text: 'Agent output: {"user": {"id": 101, "profile": {"name": "Alice"}}, "status": "active"}. Hope this helps!',
+      },
+    };
+    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      schema: {
+        type: 'object',
+        properties: {
+          user: {
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              profile: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                },
+                required: ['name'],
+              },
+            },
+            required: ['id', 'profile'],
+          },
+          status: { type: 'string' },
+        },
+        required: ['user', 'status'],
+      },
+      not: false,
+    };
+
+    const result = await jsonSchemaHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data).toBeDefined();
+    expect(result.data.matchedJson).toEqual({
+      user: {
+        id: 101,
+        profile: {
+          name: 'Alice',
+        },
+      },
+      status: 'active',
+    });
+    expect(result.data.explanation).toContain('Successfully validated');
+  });
+
+  it('should validate JSON containing braces inside string values', async () => {
+    const context: PluginContext = {
+      response: {
+        text: 'Output: {"template": "Hello {user}, welcome to {place}!", "meta": {"count": 2}}',
+      },
+    };
+    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      schema: {
+        type: 'object',
+        properties: {
+          template: { type: 'string' },
+          meta: {
+            type: 'object',
+            properties: {
+              count: { type: 'number' },
+            },
+            required: ['count'],
+          },
+        },
+        required: ['template', 'meta'],
+      },
+      not: false,
+    };
+
+    const result = await jsonSchemaHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data.matchedJson).toEqual({
+      template: 'Hello {user}, welcome to {place}!',
+      meta: { count: 2 },
+    });
+  });
+
+  it('should validate JSON when preceded by a non-JSON code block', async () => {
+    const context: PluginContext = {
+      response: {
+        text: '```bash\necho "hello world"\n```\nHere is payload: {"status": "ok", "nested": {"code": 200}}',
+      },
+    };
+    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'string' },
+          nested: {
+            type: 'object',
+            properties: { code: { type: 'number' } },
+            required: ['code'],
+          },
+        },
+        required: ['status', 'nested'],
+      },
+      not: false,
+    };
+
+    const result = await jsonSchemaHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data.matchedJson).toEqual({
+      status: 'ok',
+      nested: { code: 200 },
+    });
+  });
+
+  it('should validate JSON preceded by unparseable braces in prose', async () => {
+    const context: PluginContext = {
+      response: {
+        text: 'Refer to formula {a + b} for details: {"data": {"result": 42}}',
+      },
+    };
+    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      schema: {
+        type: 'object',
+        properties: {
+          data: {
+            type: 'object',
+            properties: { result: { type: 'number' } },
+            required: ['result'],
+          },
+        },
+        required: ['data'],
+      },
+      not: false,
+    };
+
+    const result = await jsonSchemaHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data.matchedJson).toEqual({
+      data: { result: 42 },
+    });
+  });
+
+  it('should validate root JSON array payloads', async () => {
+    const context: PluginContext = {
+      response: {
+        text: 'List of items: [{"id": 1, "name": "Item 1"}, {"id": 2, "name": "Item 2"}]',
+      },
+    };
+    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      schema: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'number' },
+            name: { type: 'string' },
+          },
+          required: ['id', 'name'],
+        },
+      },
+      not: false,
+    };
+
+    const result = await jsonSchemaHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data.matchedJson).toEqual([
+      { id: 1, name: 'Item 1' },
+      { id: 2, name: 'Item 2' },
+    ]);
+  });
+
+  it('should return verdict false and explanation when only invalid unparseable braces exist', async () => {
+    const context: PluginContext = {
+      response: {
+        text: 'Broken braces {not: "valid" json here without closing',
+      },
+    };
+    const eventType = 'afterRequestHook';
+    const parameters: PluginParameters = {
+      schema: {
+        type: 'object',
+        properties: { key: { type: 'string' } },
+        required: ['key'],
+      },
+      not: false,
+    };
+
+    const result = await jsonSchemaHandler(context, parameters, eventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(false);
+    expect(result.data).toBeDefined();
+    expect(result.data.explanation).toBe(
+      'No valid JSON found in the response.'
+    );
+  });
 });
 
 describe('jsonKeys handler', () => {
@@ -708,6 +912,29 @@ describe('jsonKeys handler', () => {
       operator: 'any',
       textExcerpt: 'This is just plain text with no JSON',
     });
+  });
+
+  it('should validate nested JSON in plain text without code blocks', async () => {
+    const context: PluginContext = {
+      response: {
+        text: 'Agent result: {"user": {"id": 101, "name": "Alice"}, "status": "active"}.',
+      },
+    };
+    const parameters: PluginParameters = {
+      keys: ['user', 'status'],
+      operator: 'all',
+      not: false,
+    };
+
+    const result = await jsonKeysHandler(context, parameters, mockEventType);
+
+    expect(result.error).toBe(null);
+    expect(result.verdict).toBe(true);
+    expect(result.data.matchedJson).toEqual({
+      user: { id: 101, name: 'Alice' },
+      status: 'active',
+    });
+    expect(result.data.presentKeys).toEqual(['user', 'status']);
   });
 });
 

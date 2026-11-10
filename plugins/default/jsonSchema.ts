@@ -5,7 +5,7 @@ import {
   PluginParameters,
 } from '../types';
 import { Validator } from '@cfworker/json-schema';
-import { getText } from '../utils';
+import { getText, extractJson } from '../utils';
 
 export const handler: PluginHandler = async (
   context: PluginContext,
@@ -26,28 +26,6 @@ export const handler: PluginHandler = async (
     // Create validator with the provided schema
     const validator = new Validator(schema, '2020-12', false); // Using latest draft, with shortCircuit=false to get all errors
     let responseText = getText(context, eventType);
-
-    // Extract JSON from code blocks and general text
-    const extractJson = (text: string): string[] => {
-      const codeBlockRegex = /```+(?:json)?\s*([\s\S]*?)```+/g;
-      const jsonRegex = /{[\s\S]*?}/g;
-      const matches = [];
-
-      // Extract from code blocks first
-      let match;
-      while ((match = codeBlockRegex.exec(text)) !== null) {
-        matches.push(match[1].trim());
-      }
-
-      // If no matches in code blocks, try general JSON
-      if (matches.length === 0) {
-        while ((match = jsonRegex.exec(text)) !== null) {
-          matches.push(match[0]);
-        }
-      }
-
-      return matches;
-    };
 
     const jsonMatches = extractJson(responseText);
 
@@ -111,6 +89,11 @@ export const handler: PluginHandler = async (
               message,
             };
           }),
+        };
+      } else {
+        data = {
+          explanation: 'No valid JSON found in the response.',
+          not,
         };
       }
     } else {
