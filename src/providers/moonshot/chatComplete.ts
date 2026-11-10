@@ -59,7 +59,7 @@ interface MoonshotChatCompleteResponse extends ChatCompletionResponse {
   id: string;
   object: string;
   created: number;
-  model: 'moonshot-v1-8k' | 'moonshot-v1-32k' | 'moonshot-v1-128k';
+  model: string;
   usage: {
     prompt_tokens: number;
     completion_tokens: number;

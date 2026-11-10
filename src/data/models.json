@@ -12824,7 +12824,7 @@
       "provider": {
         "id": "moonshot"
       },
-      "name": "Moonshot (132k Context)"
+      "name": "Moonshot (32k Context)"
     },
     {
       "id": "moonshot-v1-128k",
@@ -12833,6 +12833,38 @@
         "id": "moonshot"
       },
       "name": "Moonshot (128k Context)"
+    },
+    {
+      "id": "kimi-k3",
+      "object": "model",
+      "provider": {
+        "id": "moonshot"
+      },
+      "name": "Kimi K3"
+    },
+    {
+      "id": "kimi-k2.7-code",
+      "object": "model",
+      "provider": {
+        "id": "moonshot"
+      },
+      "name": "Kimi K2.7 Code"
+    },
+    {
+      "id": "kimi-k2.6",
+      "object": "model",
+      "provider": {
+        "id": "moonshot"
+      },
+      "name": "Kimi K2.6"
+    },
+    {
+      "id": "kimi-k2.5",
+      "object": "model",
+      "provider": {
+        "id": "moonshot"
+      },
+      "name": "Kimi K2.5"
     },
     {
       "id": "nomic-embed-vision-v1",
