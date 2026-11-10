@@ -46,9 +46,13 @@ export const getText = (
   context: PluginContext,
   eventType: HookEventType
 ): string => {
-  return getCurrentContentPart(context, eventType)
-    .textArray.filter((text) => text)
-    .join('\n');
+  const contentPart = getCurrentContentPart(context, eventType);
+  const text = contentPart.textArray.filter((text) => text).join('\n');
+  if (text) {
+    return text;
+  }
+  const target = eventType === 'beforeRequestHook' ? 'request' : 'response';
+  return context[target]?.text || '';
 };
 
 /**
@@ -66,7 +70,7 @@ export const getCurrentContentPart = (
 } => {
   // Determine if we're handling request or response data
   const target = eventType === 'beforeRequestHook' ? 'request' : 'response';
-  const json = context[target].json;
+  const json = context[target]?.json;
 
   if (target === 'request') {
     return getRequestContentPart(json, context.requestType!);
@@ -373,3 +377,137 @@ export async function postWithCloudflareServiceBinding<T = any>(
     throw error;
   }
 }
+
+/**
+ * Extracts balanced JSON structures (objects {...} and arrays [...]) from arbitrary text.
+ * Correctly handles nested objects/arrays, string literals, and escaped characters.
+ */
+export const extractBalancedJson = (text: string): string[] => {
+  const candidates: string[] = [];
+  const len = text.length;
+
+  for (let i = 0; i < len; i++) {
+    const ch = text[i];
+    if (ch !== '{' && ch !== '[') {
+      continue;
+    }
+
+    const expectedClose = ch === '{' ? '}' : ']';
+    const stack: string[] = [expectedClose];
+    let inString = false;
+    let escaped = false;
+    let endIndex = -1;
+
+    for (let j = i + 1; j < len; j++) {
+      const char = text[j];
+
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+
+      if (char === '\\' && inString) {
+        escaped = true;
+        continue;
+      }
+
+      if (char === '"') {
+        inString = !inString;
+        continue;
+      }
+
+      if (inString) {
+        continue;
+      }
+
+      if (char === '{') {
+        stack.push('}');
+      } else if (char === '[') {
+        stack.push(']');
+      } else if (char === '}' || char === ']') {
+        const expected = stack[stack.length - 1];
+        if (char === expected) {
+          stack.pop();
+          if (stack.length === 0) {
+            endIndex = j;
+            break;
+          }
+        } else {
+          // Mismatched closing delimiter
+          break;
+        }
+      }
+    }
+
+    if (endIndex !== -1) {
+      const candidate = text.slice(i, endIndex + 1);
+      try {
+        JSON.parse(candidate);
+        candidates.push(candidate);
+        i = endIndex;
+      } catch (e) {
+        // Not valid JSON at this boundary, continue search from next char
+      }
+    }
+  }
+
+  return candidates;
+};
+
+/**
+ * Extracts JSON candidate strings from text, prioritizing code blocks and balanced JSON payloads.
+ */
+export const extractJson = (text: string): string[] => {
+  if (!text || typeof text !== 'string') {
+    return [];
+  }
+
+  const matches: string[] = [];
+  const seen = new Set<string>();
+
+  const addMatch = (candidate: string) => {
+    const trimmed = candidate.trim();
+    if (!trimmed) return;
+    if (!seen.has(trimmed)) {
+      seen.add(trimmed);
+      matches.push(trimmed);
+    }
+  };
+
+  // 1. Direct whole-string JSON check
+  const trimmedText = text.trim();
+  if (trimmedText.startsWith('{') || trimmedText.startsWith('[')) {
+    try {
+      JSON.parse(trimmedText);
+      addMatch(trimmedText);
+    } catch (e) {
+      // Fall through to code block and balanced extraction
+    }
+  }
+
+  // 2. Extract from code blocks (e.g. ```json ... ``` or ``` ... ```)
+  const codeBlockRegex = /```+(?:[a-zA-Z0-9_-]+)?\s*([\s\S]*?)```+/g;
+  let codeMatch;
+  while ((codeMatch = codeBlockRegex.exec(text)) !== null) {
+    const blockContent = codeMatch[1].trim();
+    if (!blockContent) continue;
+    try {
+      JSON.parse(blockContent);
+      addMatch(blockContent);
+    } catch (e) {
+      // If code block isn't directly valid JSON, scan inside it for balanced JSON
+      const innerMatches = extractBalancedJson(blockContent);
+      for (const m of innerMatches) {
+        addMatch(m);
+      }
+    }
+  }
+
+  // 3. Extract balanced JSON from the full text
+  const balancedMatches = extractBalancedJson(text);
+  for (const m of balancedMatches) {
+    addMatch(m);
+  }
+
+  return matches;
+};

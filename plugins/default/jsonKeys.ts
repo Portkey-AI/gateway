@@ -4,27 +4,7 @@ import {
   PluginHandler,
   PluginParameters,
 } from '../types';
-import { getText } from '../utils';
-
-// Extract JSON from code blocks and general text
-function extractJson(text: string): string[] {
-  const codeBlockRegex = /```+(?:json)?\s*([\s\S]*?)```+/g;
-  const jsonRegex = /{[\s\S]*?}/g;
-  const matches = [];
-
-  // Extract from code blocks
-  let match;
-  while ((match = codeBlockRegex.exec(text)) !== null) {
-    matches.push(match[1].trim());
-  }
-
-  // Extract JSON-like structures
-  while ((match = jsonRegex.exec(text)) !== null) {
-    matches.push(match[0]);
-  }
-
-  return matches;
-}
+import { getText, extractJson } from '../utils';
 
 export const handler: PluginHandler = async (
   context: PluginContext,
