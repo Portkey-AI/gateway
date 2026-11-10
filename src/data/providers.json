@@ -73,6 +73,13 @@
       "base_url": "https://api.deepinfra.com/v1/openai"
     },
     {
+      "id": "decision-models",
+      "name": "Decision Models",
+      "object": "provider",
+      "description": "Decision Models hosts decision models that answer typed yes/no, choice and score questions with probabilities. It accepts the OpenAI Decisions API request shape at /v1/decisions and offers an EU tier with EU-only processing and a DPA.",
+      "base_url": "https://api.decisionmodels.io/v1"
+    },
+    {
       "id": "deepseek",
       "name": "DeepSeek",
       "object": "provider",
