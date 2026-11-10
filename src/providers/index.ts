@@ -46,8 +46,9 @@ import { InferenceNetProviderConfigs } from './inference-net';
 import SambaNovaConfig from './sambanova';
 import LemonfoxAIConfig from './lemonfox-ai';
 import { UpstageConfig } from './upstage';
-import { LAMBDA } from '../globals';
+import { ENGY, LAMBDA } from '../globals';
 import { LambdaProviderConfig } from './lambda';
+import { EngyProviderConfig } from './engy';
 import { DashScopeConfig } from './dashscope';
 import XAIConfig from './x-ai';
 import QdrantConfig from './qdrant';
@@ -148,6 +149,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   iointelligence: IOIntelligenceConfig,
   aibadgr: AIBadgrConfig,
   ovhcloud: OVHcloudConfig,
+  [ENGY]: EngyProviderConfig,
 };
 
 export default Providers;
