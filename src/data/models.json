@@ -15523,12 +15523,20 @@
       "name": "Llama 3.3 70B Instruct"
     },
     {
-      "id": "MiniMax-M2.7",
+      "id": "MiMo-V2.6-Flash-RL",
       "object": "model",
       "provider": {
         "id": "flexai"
       },
-      "name": "MiniMax M2.7"
+      "name": "MiMo V2.6 Flash RL"
+    },
+    {
+      "id": "MiniMax-M3.1-Flash",
+      "object": "model",
+      "provider": {
+        "id": "flexai"
+      },
+      "name": "MiniMax M3.1 Flash"
     },
     {
       "id": "Mistral-Nemo-Instruct-2407-FP8",
@@ -15601,14 +15609,6 @@
         "id": "flexai"
       },
       "name": "Qwen3.8 Flash Next"
-    },
-    {
-      "id": "Step-3.7-Flash",
-      "object": "model",
-      "provider": {
-        "id": "flexai"
-      },
-      "name": "Step 3.7 Flash"
     },
     {
       "id": "gemma-4-31b-it",
