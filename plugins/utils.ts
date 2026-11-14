@@ -201,8 +201,10 @@ function setResponseContentPart(
     updatedJson.choices[json.choices.length - 1].text =
       textArray[0] || json.choices[json.choices.length - 1].text;
   } else if (requestType === 'messages') {
-    updatedJson.content = textArray.map(
-      (text, index) => text || updatedJson.content[index]
+    updatedJson.content = json.content.map((block: any, index: number) =>
+      block.type === 'text' && textArray[index] != null
+        ? { ...block, text: textArray[index] }
+        : block
     );
   }
   transformedData.response.json = updatedJson;
