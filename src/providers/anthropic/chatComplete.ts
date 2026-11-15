@@ -148,6 +148,9 @@ const transformAssistantMessage = (msg: Message): AnthropicMessage => {
     transformedContent.push({
       type: 'text',
       text: inputContent,
+      ...((msg as Message & PromptCache).cache_control && {
+        cache_control: (msg as Message & PromptCache).cache_control,
+      }),
     });
   } else if (
     inputContent &&
@@ -210,6 +213,9 @@ const transformAndAppendImageContentItem = (
         type: 'url',
         url,
       },
+      ...((item as any).cache_control && {
+        cache_control: (item as any).cache_control,
+      }),
     });
   } else {
     const parts = url.split(';');
@@ -250,6 +256,9 @@ const transformAndAppendFileContentItem = (
         type: 'url',
         url: item.file.file_url,
       },
+      ...((item as any).cache_control && {
+        cache_control: (item as any).cache_control,
+      }),
     });
   } else if (item.file?.file_data) {
     const contentType =
@@ -261,6 +270,9 @@ const transformAndAppendFileContentItem = (
         data: item.file.file_data,
         media_type: mimeType,
       },
+      ...((item as any).cache_control && {
+        cache_control: (item as any).cache_control,
+      }),
     });
   }
 };
@@ -316,6 +328,9 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
               messages.push({
                 role: msg.role,
                 content: msg.content as AnthropicMessageContentItem[],
+                ...((msg as Message & PromptCache).cache_control && {
+                  cache_control: (msg as Message & PromptCache).cache_control,
+                }),
               });
             }
           });
