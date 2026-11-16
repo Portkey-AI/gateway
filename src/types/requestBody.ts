@@ -98,6 +98,8 @@ export interface Options {
   awsServerSideEncryptionKMSKeyId?: string;
   awsService?: string;
   foundationModel?: string;
+  /** Set by the Bedrock provider when count tokens is served by bedrock-mantle. */
+  bedrockCountTokensOnMantle?: boolean;
 
   /** Sagemaker specific */
   amznSagemakerCustomAttributes?: string;

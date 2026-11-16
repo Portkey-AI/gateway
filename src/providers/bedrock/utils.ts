@@ -541,6 +541,86 @@ export const getBedrockErrorChunk = (id: string, model: string) => {
   ];
 };
 
+// Anthropic models that bedrock-runtime CountTokens supports. Newer Claude
+// models are rejected there with "The provided model doesn't support counting
+// tokens"; AWS documents Anthropic's count_tokens API on the bedrock-mantle
+// endpoint for them:
+// https://docs.aws.amazon.com/bedrock/latest/userguide/count-tokens.html#count-tokens-mantle
+const BEDROCK_RUNTIME_COUNT_TOKENS_ANTHROPIC_PREFIXES = [
+  'anthropic.claude-instant',
+  'anthropic.claude-v2',
+  'anthropic.claude-3',
+  'anthropic.claude-sonnet-4-2',
+  'anthropic.claude-opus-4-2',
+  'anthropic.claude-opus-4-1',
+  'anthropic.claude-sonnet-4-5',
+  'anthropic.claude-haiku-4-5',
+  'anthropic.claude-opus-4-5',
+  'anthropic.claude-sonnet-4-6',
+  'anthropic.claude-opus-4-6',
+];
+
+// Commercial Regions with a bedrock-mantle endpoint. Elsewhere count tokens
+// stays on bedrock-runtime, as before, rather than failing to connect.
+// GovCloud also has bedrock-mantle but is left out until its hostname is
+// confirmed.
+// https://docs.aws.amazon.com/bedrock/latest/userguide/endpoints-region-availability.html
+export const BEDROCK_MANTLE_REGIONS = new Set([
+  'us-east-1',
+  'us-east-2',
+  'us-west-2',
+  'eu-central-1',
+  'eu-north-1',
+  'eu-south-1',
+  'eu-west-1',
+  'eu-west-2',
+  'ap-northeast-1',
+  'ap-south-1',
+  'ap-southeast-2',
+  'ap-southeast-3',
+  'sa-east-1',
+]);
+
+export const getBedrockMantleBaseURL = (region?: string) =>
+  `https://bedrock-mantle.${region || 'us-east-1'}.api.aws`;
+
+export const BEDROCK_MANTLE_COUNT_TOKENS_ENDPOINT =
+  '/anthropic/v1/messages/count_tokens';
+
+/**
+ * Whether a count tokens request should go to bedrock-mantle instead of
+ * bedrock-runtime: an Anthropic model that runtime CountTokens doesn't
+ * support, in a Region with a bedrock-mantle endpoint on the standard AWS
+ * partition (bedrock-mantle is served from api.aws), without a custom host.
+ */
+export const shouldCountTokensOnBedrockMantle = (
+  c: Context,
+  providerOptions: Options,
+  model: string
+) => {
+  if (providerOptions.customHost) return false;
+  if (getAwsEndpointDomain(c) !== 'amazonaws.com') return false;
+  if (!BEDROCK_MANTLE_REGIONS.has(providerOptions.awsRegion || 'us-east-1')) {
+    return false;
+  }
+  const foundationModel = getBedrockModelWithoutRegion(
+    providerOptions.foundationModel || model
+  );
+  if (!foundationModel.startsWith('anthropic.')) return false;
+  return !BEDROCK_RUNTIME_COUNT_TOKENS_ANTHROPIC_PREFIXES.some((prefix) =>
+    foundationModel.startsWith(prefix)
+  );
+};
+
+/** Whether getBaseURL routed this count tokens request to bedrock-mantle. */
+export const isBedrockMantleCountTokens = (
+  fn: string | undefined,
+  providerOptions?: Options
+) =>
+  fn === 'messagesCountTokens' &&
+  Boolean(providerOptions?.bedrockCountTokensOnMantle) &&
+  !providerOptions?.customHost;
+
 export const getBedrockModelWithoutRegion = (model: string) => {
   return model.replace(/^(us\.|eu\.|apac\.|au\.|ca\.|jp\.|global\.)/, '');
 };
