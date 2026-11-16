@@ -560,6 +560,27 @@ const BEDROCK_RUNTIME_COUNT_TOKENS_ANTHROPIC_PREFIXES = [
   'anthropic.claude-opus-4-6',
 ];
 
+// Commercial Regions with a bedrock-mantle endpoint. Elsewhere count tokens
+// stays on bedrock-runtime, as before, rather than failing to connect.
+// GovCloud also has bedrock-mantle but is left out until its hostname is
+// confirmed.
+// https://docs.aws.amazon.com/bedrock/latest/userguide/endpoints-region-availability.html
+export const BEDROCK_MANTLE_REGIONS = new Set([
+  'us-east-1',
+  'us-east-2',
+  'us-west-2',
+  'eu-central-1',
+  'eu-north-1',
+  'eu-south-1',
+  'eu-west-1',
+  'eu-west-2',
+  'ap-northeast-1',
+  'ap-south-1',
+  'ap-southeast-2',
+  'ap-southeast-3',
+  'sa-east-1',
+]);
+
 export const getBedrockMantleBaseURL = (region?: string) =>
   `https://bedrock-mantle.${region || 'us-east-1'}.api.aws`;
 
@@ -569,8 +590,8 @@ export const BEDROCK_MANTLE_COUNT_TOKENS_ENDPOINT =
 /**
  * Whether a count tokens request should go to bedrock-mantle instead of
  * bedrock-runtime: an Anthropic model that runtime CountTokens doesn't
- * support, on the standard AWS partition (bedrock-mantle is served from
- * api.aws), without a custom host.
+ * support, in a Region with a bedrock-mantle endpoint on the standard AWS
+ * partition (bedrock-mantle is served from api.aws), without a custom host.
  */
 export const shouldCountTokensOnBedrockMantle = (
   c: Context,
@@ -579,8 +600,9 @@ export const shouldCountTokensOnBedrockMantle = (
 ) => {
   if (providerOptions.customHost) return false;
   if (getAwsEndpointDomain(c) !== 'amazonaws.com') return false;
-  const region = providerOptions.awsRegion || 'us-east-1';
-  if (region.startsWith('cn-') || region.startsWith('us-gov-')) return false;
+  if (!BEDROCK_MANTLE_REGIONS.has(providerOptions.awsRegion || 'us-east-1')) {
+    return false;
+  }
   const foundationModel = getBedrockModelWithoutRegion(
     providerOptions.foundationModel || model
   );

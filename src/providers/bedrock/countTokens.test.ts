@@ -97,8 +97,38 @@ describe('shouldCountTokensOnBedrockMantle', () => {
     ).toBe(false);
   });
 
-  it.each(['cn-north-1', 'us-gov-west-1'])(
-    'keeps bedrock-runtime in %s',
+  it.each(['eu-central-1', 'eu-west-2', 'ap-northeast-1', 'us-west-2'])(
+    'uses bedrock-mantle in %s',
+    (awsRegion) => {
+      expect(
+        shouldCountTokensOnBedrockMantle(
+          c,
+          options({ awsRegion }),
+          'anthropic.claude-opus-5-5'
+        )
+      ).toBe(true);
+    }
+  );
+
+  it('defaults to us-east-1, which has bedrock-mantle', () => {
+    expect(
+      shouldCountTokensOnBedrockMantle(
+        c,
+        options({ awsRegion: undefined }),
+        'anthropic.claude-opus-5-5'
+      )
+    ).toBe(true);
+  });
+
+  it.each([
+    'ap-southeast-1',
+    'eu-west-3',
+    'us-west-1',
+    'ca-central-1',
+    'cn-north-1',
+    'us-gov-west-1',
+  ])(
+    'keeps bedrock-runtime in %s, which has no supported bedrock-mantle endpoint',
     (awsRegion) => {
       expect(
         shouldCountTokensOnBedrockMantle(
