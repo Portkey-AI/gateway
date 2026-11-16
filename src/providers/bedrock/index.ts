@@ -82,10 +82,14 @@ import {
 } from './messages';
 import {
   BedrockAnthropicMessageCountTokensConfig,
+  BedrockMantleMessagesCountTokensConfig,
   BedrockConverseMessageCountTokensConfig,
   BedrockConverseMessageCountTokensResponseTransform,
 } from './countTokens';
-import { getBedrockModelWithoutRegion } from './utils';
+import {
+  getBedrockModelWithoutRegion,
+  isBedrockMantleCountTokens,
+} from './utils';
 
 const BedrockConfig: ProviderConfigs = {
   api: BedrockAPIConfig,
@@ -112,7 +116,12 @@ const BedrockConfig: ProviderConfigs = {
             complete: BedrockAnthropicCompleteConfig,
             chatComplete: BedrockConverseAnthropicChatCompleteConfig,
             messages: BedrockAnthropicConverseMessagesConfig,
-            messagesCountTokens: BedrockAnthropicMessageCountTokensConfig,
+            messagesCountTokens: isBedrockMantleCountTokens(
+              'messagesCountTokens',
+              providerOptions
+            )
+              ? BedrockMantleMessagesCountTokensConfig
+              : BedrockAnthropicMessageCountTokensConfig,
             api: BedrockAPIConfig,
             responseTransforms: {
               'stream-complete': BedrockAnthropicCompleteStreamChunkTransform,

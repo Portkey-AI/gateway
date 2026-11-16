@@ -8,6 +8,10 @@ import {
   getFoundationModelFromInferenceProfile,
   providerAssumedRoleCredentials,
   getBedrockModelWithoutRegion,
+  getBedrockMantleBaseURL,
+  shouldCountTokensOnBedrockMantle,
+  isBedrockMantleCountTokens,
+  BEDROCK_MANTLE_COUNT_TOKENS_ENDPOINT,
 } from './utils';
 import { GatewayError } from '../../errors/GatewayError';
 
@@ -141,6 +145,13 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
     }
     if (fn === 'uploadFile')
       return `https://${providerOptions.awsS3Bucket}.s3.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain(c)}`;
+    if (fn === 'messagesCountTokens') {
+      providerOptions.bedrockCountTokensOnMantle =
+        shouldCountTokensOnBedrockMantle(c, providerOptions, model);
+      if (providerOptions.bedrockCountTokensOnMantle) {
+        return getBedrockMantleBaseURL(providerOptions.awsRegion);
+      }
+    }
     const isAWSControlPlaneEndpoint =
       fn && AWS_CONTROL_PLANE_ENDPOINTS.includes(fn);
     return `https://${isAWSControlPlaneEndpoint ? 'bedrock' : 'bedrock-runtime'}.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain(c)}`;
@@ -158,7 +169,10 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
     const method =
       c.get('method') || // method set specifically into context
       getMethod(fn as endpointStrings, transformedRequestUrl, c); // method calculated
-    const service = awsService || getService(fn as endpointStrings);
+    const onMantle = isBedrockMantleCountTokens(fn, providerOptions);
+    const service = onMantle
+      ? 'bedrock-mantle'
+      : awsService || getService(fn as endpointStrings);
 
     let headers: Record<string, string> = {};
 
@@ -176,12 +190,29 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
 
     setRouteSpecificHeaders(fn, headers, providerOptions);
 
+    if (onMantle) {
+      headers['anthropic-version'] = '2023-06-01';
+      // Beta-only request fields (e.g. context_management, tool fields) need
+      // their beta header, as for Anthropic count_tokens on Vertex AI.
+      const anthropicBeta =
+        providerOptions.anthropicBeta ?? gatewayRequestBody?.anthropic_beta;
+      if (anthropicBeta) {
+        headers['anthropic-beta'] = Array.isArray(anthropicBeta)
+          ? anthropicBeta.join(',')
+          : anthropicBeta;
+      }
+    }
+
     if (awsAuthType === 'assumedRole') {
       await providerAssumedRoleCredentials(c, providerOptions);
     }
 
     if (awsAuthType === 'apiKey') {
-      headers['Authorization'] = `Bearer ${providerOptions.apiKey}`;
+      if (onMantle) {
+        headers['x-api-key'] = providerOptions.apiKey || '';
+      } else {
+        headers['Authorization'] = `Bearer ${providerOptions.apiKey}`;
+      }
       return headers;
     }
 
@@ -209,6 +240,7 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
     fn,
     gatewayRequestBodyJSON: gatewayRequestBody,
     gatewayRequestURL,
+    providerOptions,
   }) => {
     if (fn === 'retrieveFile') {
       const fileId = decodeURIComponent(
@@ -309,6 +341,9 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
         return `/model-customization-jobs/${jobId}/stop`;
       }
       case 'messagesCountTokens': {
+        if (isBedrockMantleCountTokens(fn, providerOptions)) {
+          return BEDROCK_MANTLE_COUNT_TOKENS_ENDPOINT;
+        }
         return `/model/${uriEncodedModelWithoutRegion}/count-tokens`;
       }
       default:
