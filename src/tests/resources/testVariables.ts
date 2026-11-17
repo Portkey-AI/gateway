@@ -136,6 +136,10 @@ const testVariables: TestVariables = {
     apiKey: process.env.PREDIBASE_API_KEY,
     chatCompletions: { model: '' },
   },
+  raindragon: {
+    apiKey: process.env.RAINDRAGON_API_KEY,
+    chatCompletions: { model: 'google/gemma-4-26B-A4B-it' },
+  },
   nscale: {
     apiKey: process.env.NSCALE_API_KEY,
     chatCompletions: {
