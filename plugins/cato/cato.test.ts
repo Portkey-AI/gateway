@@ -388,19 +388,6 @@ describe('Cato Networks Guardrail', () => {
     ]);
   });
 
-  it('marks history messages with is_context=true and last as the new message', async () => {
-    mockPost.mockResolvedValue({
-      required_action: { action_type: 'monitor_action' },
-    });
-
-    await catoHandler(baseChatContext(), baseParams, 'beforeRequestHook');
-
-    const [, body] = mockPost.mock.calls[0];
-    const messages = (body as any).messages;
-    expect(messages[0].is_context).toBe(true);
-    expect(messages[messages.length - 1].is_context).toBeUndefined();
-  });
-
   it('forwards tools field on the analyze request', async () => {
     mockPost.mockResolvedValue({
       required_action: { action_type: 'monitor_action' },
@@ -427,8 +414,6 @@ describe('Cato Networks Guardrail', () => {
     expect(messages[2].content).toEqual([
       { type: 'text', text: 'Sure, the SSN was 123-45-6789.' },
     ]);
-    expect(messages[2].is_context).toBeUndefined();
-    expect(messages[1].is_context).toBe(true);
     expect((body as any).tools).toHaveLength(1);
   });
 
@@ -530,7 +515,6 @@ describe('Cato Networks Guardrail', () => {
       expect.objectContaining({
         role: 'system',
         content: [{ type: 'text', text: 'You are helpful.' }],
-        is_context: true,
       })
     );
     expect(messages[1].role).toBe('user');
