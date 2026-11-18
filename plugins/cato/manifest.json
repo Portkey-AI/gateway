@@ -1,0 +1,64 @@
+{
+  "id": "cato",
+  "name": "Cato Networks Guardrail",
+  "description": "Cato Networks AI security guardrail. Sends prompts and responses to Cato's AI security platform for inspection and enforces actions (allow, monitor, anonymize, block) returned by Cato.",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "label": "API Key",
+        "description": "Your Cato Networks AI security API key.",
+        "encrypted": true
+      },
+      "apiBase": {
+        "type": "string",
+        "label": "API Base URL",
+        "description": "The base URL for the Cato Networks AI security API. Defaults to https://api.aisec.catonetworks.com",
+        "default": "https://api.aisec.catonetworks.com"
+      }
+    },
+    "required": ["apiKey"]
+  },
+  "functions": [
+    {
+      "name": "Cato Networks Guardrail",
+      "id": "analyze",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "type": "guardrail",
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Send prompts and responses to Cato Networks for inspection. Cato can return required actions: monitor, anonymize, or block. Anonymized content is substituted into the request/response transparently."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "appName": {
+            "type": "string",
+            "label": "Application Name",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Application name for identification and policy enforcement."
+              }
+            ]
+          },
+          "timeout": {
+            "type": "number",
+            "label": "Timeout (ms)",
+            "description": [
+              {
+                "type": "subHeading",
+                "text": "Request timeout in milliseconds for the Cato analyze API. Defaults to 5000."
+              }
+            ],
+            "default": 5000
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}
