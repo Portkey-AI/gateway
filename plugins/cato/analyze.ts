@@ -65,16 +65,8 @@ interface CatoRequiredAction {
   policy_ids?: string[];
 }
 
-interface CatoPolicyDetails {
-  policy_name?: string;
-}
-
-interface CatoAnalysisResult {
-  policy_drill_down?: Record<string, CatoPolicyDetails>;
-}
-
 interface CatoAnalyzeResponse {
-  analysis_result?: CatoAnalysisResult;
+  analysis_result?: Record<string, unknown>;
   invocation_id?: string;
   redacted_chat?: CatoRedactedChat;
   required_action?: CatoRequiredAction;
@@ -83,18 +75,12 @@ interface CatoAnalyzeResponse {
 interface CatoBlockData {
   action: 'block';
   detection_message: string | null;
-  policies: string[];
 }
 
 const buildBlockData = (
   result: CatoAnalyzeResponse | null | undefined
 ): CatoBlockData => {
   const detectionMessage = result?.required_action?.detection_message;
-  const policyIds = result?.required_action?.policy_ids;
-  const drillDown = result?.analysis_result?.policy_drill_down;
-  const policies = (Array.isArray(policyIds) ? policyIds : [])
-    .map((id) => drillDown?.[id]?.policy_name)
-    .filter((name): name is string => typeof name === 'string' && name !== '');
 
   return {
     action: 'block',
@@ -102,7 +88,6 @@ const buildBlockData = (
       typeof detectionMessage === 'string' && detectionMessage
         ? detectionMessage
         : null,
-    policies,
   };
 };
 

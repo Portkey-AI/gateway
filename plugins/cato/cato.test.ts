@@ -99,51 +99,14 @@ describe('Cato Networks Guardrail', () => {
     expect(result.data).toEqual({
       action: 'block',
       detection_message: 'Sensitive content detected',
-      policies: [],
     });
     expect(result.error).toBeNull();
   });
 
-  it('returns the names of the policies that caused the block', async () => {
-    mockPost.mockResolvedValue({
-      analysis_result: {
-        policy_drill_down: {
-          'rule-1': { policy_name: 'PII Policy' },
-          'rule-2': { policy_name: 'Secrets Policy' },
-          'rule-3': { policy_name: 'Monitor Only Policy' },
-        },
-      },
-      required_action: {
-        action_type: 'block_action',
-        policy_ids: ['rule-1', 'rule-2', 'rule-unknown'],
-        detection_message: 'Sensitive content detected',
-      },
-    });
-
-    const result = await catoHandler(
-      baseChatContext(),
-      baseParams,
-      'beforeRequestHook'
-    );
-
-    expect(result.verdict).toBe(false);
-    expect(result.data).toEqual({
-      action: 'block',
-      detection_message: 'Sensitive content detected',
-      policies: ['PII Policy', 'Secrets Policy'],
-    });
-  });
-
   it('returns the block reason on afterRequestHook', async () => {
     mockPost.mockResolvedValue({
-      analysis_result: {
-        policy_drill_down: {
-          'rule-1': { policy_name: 'PII Policy' },
-        },
-      },
       required_action: {
         action_type: 'block_action',
-        policy_ids: ['rule-1'],
         detection_message: 'Sensitive content detected',
       },
     });
@@ -159,7 +122,6 @@ describe('Cato Networks Guardrail', () => {
     expect(result.data).toEqual({
       action: 'block',
       detection_message: 'Sensitive content detected',
-      policies: ['PII Policy'],
     });
   });
 
@@ -178,21 +140,12 @@ describe('Cato Networks Guardrail', () => {
     expect(result.data).toEqual({
       action: 'block',
       detection_message: null,
-      policies: [],
     });
   });
 
   it('returns no data when Cato does not block the request', async () => {
     mockPost.mockResolvedValue({
-      analysis_result: {
-        policy_drill_down: {
-          'rule-1': { policy_name: 'PII Policy' },
-        },
-      },
-      required_action: {
-        action_type: 'monitor_action',
-        policy_ids: ['rule-1'],
-      },
+      required_action: { action_type: 'monitor_action' },
     });
 
     const result = await catoHandler(
