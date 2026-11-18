@@ -65,12 +65,46 @@ interface CatoRequiredAction {
   policy_ids?: string[];
 }
 
+interface CatoPolicyDetails {
+  policy_name?: string;
+}
+
+interface CatoAnalysisResult {
+  policy_drill_down?: Record<string, CatoPolicyDetails>;
+}
+
 interface CatoAnalyzeResponse {
-  analysis_result?: Record<string, unknown>;
+  analysis_result?: CatoAnalysisResult;
   invocation_id?: string;
   redacted_chat?: CatoRedactedChat;
   required_action?: CatoRequiredAction;
 }
+
+interface CatoBlockData {
+  action: 'block';
+  detection_message: string | null;
+  policies: string[];
+}
+
+const buildBlockData = (
+  result: CatoAnalyzeResponse | null | undefined
+): CatoBlockData => {
+  const detectionMessage = result?.required_action?.detection_message;
+  const policyIds = result?.required_action?.policy_ids;
+  const drillDown = result?.analysis_result?.policy_drill_down;
+  const policies = (Array.isArray(policyIds) ? policyIds : [])
+    .map((id) => drillDown?.[id]?.policy_name)
+    .filter((name): name is string => typeof name === 'string' && name !== '');
+
+  return {
+    action: 'block',
+    detection_message:
+      typeof detectionMessage === 'string' && detectionMessage
+        ? detectionMessage
+        : null,
+    policies,
+  };
+};
 
 const textContent = (text: string): CatoContent => ({ type: 'text', text });
 
@@ -599,6 +633,7 @@ export const handler: PluginHandler = async (
 
     if (actionType === 'block_action') {
       verdict = false;
+      data = buildBlockData(result);
     } else if (actionType === 'anonymize_action') {
       const chat =
         result?.required_action?.chat_redaction_result || result?.redacted_chat;
