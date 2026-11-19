@@ -10,6 +10,13 @@
       "base_url": "https://api.matterai.so/v1"
     },
     {
+      "id": "abliteratedllm",
+      "name": "AbliteratedLLM",
+      "object": "provider",
+      "description": "AbliteratedLLM provides OpenAI-compatible and Anthropic-compatible inference APIs for abliterated and stock open-weight reasoning models with long context windows and full tool calling support.",
+      "base_url": "https://api.abliteratedllm.dev/v1"
+    },
+    {
       "id": "ai21",
       "name": "AI21",
       "object": "provider",
