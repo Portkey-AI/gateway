@@ -13,17 +13,13 @@ const DEFAULT_MODEL = 'glm-5.3-flash-abliterated';
 
 const AbliteratedLLMConfig: ProviderConfigs = {
   api: AbliteratedLLMAPIConfig,
-  chatComplete: chatCompleteParams(
-    [],
-    undefined,
-    {
-      model: {
-        param: 'model',
-        required: true,
-        default: DEFAULT_MODEL,
-      },
-    }
-  ),
+  chatComplete: chatCompleteParams([], undefined, {
+    model: {
+      param: 'model',
+      required: true,
+      default: DEFAULT_MODEL,
+    },
+  }),
   complete: completeParams(
     [],
     { model: DEFAULT_MODEL },

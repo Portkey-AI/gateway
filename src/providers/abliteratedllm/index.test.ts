@@ -1,9 +1,8 @@
 import { Context } from 'hono';
+import providersData from '../../data/providers.json';
 import { ABLITERATEDLLM, VALID_PROVIDERS } from '../../globals';
-import Providers from '../index';
 import { OpenAIChatCompleteConfig } from '../openai/chatComplete';
 import { ParameterConfig, ProviderConfig } from '../types';
-import { transformUsingProviderConfig } from '../../services/transformToProviderRequest';
 import { Options, Params } from '../../types/requestBody';
 import AbliteratedLLMAPIConfig from './api';
 import AbliteratedLLMConfig from './index';
@@ -14,14 +13,22 @@ describe('AbliteratedLLM provider', () => {
     apiKey: 'test-api-key',
   };
 
-  describe('registration', () => {
+  describe('registration and metadata', () => {
     it('exports ABLITERATEDLLM constant and registers in VALID_PROVIDERS', () => {
       expect(ABLITERATEDLLM).toBe('abliteratedllm');
       expect(VALID_PROVIDERS).toContain(ABLITERATEDLLM);
     });
 
-    it('registers AbliteratedLLMConfig in Providers map', () => {
-      expect(Providers[ABLITERATEDLLM]).toBe(AbliteratedLLMConfig);
+    it('includes abliteratedllm metadata in src/data/providers.json', () => {
+      const entry = providersData.data.find(
+        (provider) => provider.id === ABLITERATEDLLM
+      );
+      expect(entry).toMatchObject({
+        id: 'abliteratedllm',
+        name: 'AbliteratedLLM',
+        object: 'provider',
+        base_url: 'https://api.abliteratedllm.dev/v1',
+      });
     });
   });
 
@@ -82,151 +89,139 @@ describe('AbliteratedLLM provider', () => {
     });
   });
 
-  describe('request parameter transformations', () => {
+  describe('parameter configurations', () => {
     it('uses glm-5.3-flash-abliterated as default model without mutating OpenAI config', () => {
-      const transformed = transformUsingProviderConfig(
-        AbliteratedLLMConfig.chatComplete as ProviderConfig,
-        {
-          messages: [{ role: 'user', content: 'Hello' }],
-        },
-        providerOptions
-      );
+      const chatComplete = AbliteratedLLMConfig.chatComplete as ProviderConfig;
+      const modelConfig = chatComplete.model as ParameterConfig;
 
-      expect(transformed.model).toBe('glm-5.3-flash-abliterated');
+      expect(modelConfig).toMatchObject({
+        param: 'model',
+        required: true,
+        default: 'glm-5.3-flash-abliterated',
+      });
       expect(
         (OpenAIChatCompleteConfig.model as ParameterConfig).default
       ).not.toBe('glm-5.3-flash-abliterated');
     });
 
-    it('transforms standard OpenAI chat completion parameters and maps developer role to system', () => {
-      const params = {
-        model: 'glm-5.3-cyber-abliterated',
-        messages: [
-          { role: 'developer', content: 'Be concise.' },
-          { role: 'user', content: 'Summarize' },
-        ],
-        max_tokens: 512,
-        max_completion_tokens: 1024,
-        temperature: 0.7,
-        top_p: 0.9,
-        stream: true,
-        stream_options: { include_usage: true },
-        stop: ['END'],
-        tools: [
-          {
-            type: 'function',
-            function: {
-              name: 'get_status',
-              parameters: { type: 'object', properties: {} },
-            },
-          },
-        ],
-        tool_choice: 'auto',
-        parallel_tool_calls: true,
-        response_format: {
-          type: 'json_schema',
-          json_schema: {
-            name: 'summary',
-            strict: true,
-            schema: { type: 'object', properties: {} },
-          },
+    it('supports all standard OpenAI chat completion parameters and maps developer role to system', () => {
+      const chatComplete = AbliteratedLLMConfig.chatComplete as ProviderConfig;
+      const expectedParams = [
+        'model',
+        'messages',
+        'max_tokens',
+        'max_completion_tokens',
+        'temperature',
+        'top_p',
+        'stream',
+        'stream_options',
+        'stop',
+        'tools',
+        'tool_choice',
+        'parallel_tool_calls',
+        'response_format',
+        'reasoning_effort',
+        'service_tier',
+        'prompt_cache_key',
+        'seed',
+        'user',
+        'logprobs',
+        'top_logprobs',
+        'frequency_penalty',
+        'presence_penalty',
+      ];
+
+      for (const param of expectedParams) {
+        expect((chatComplete[param] as ParameterConfig)?.param).toBe(param);
+      }
+
+      const messagesConfig = chatComplete.messages as ParameterConfig;
+      expect(messagesConfig.transform).toBeDefined();
+      const transformedMessages = messagesConfig.transform?.(
+        {
+          messages: [
+            { role: 'developer', content: 'Be concise.' },
+            { role: 'user', content: 'Summarize' },
+          ],
         },
-        reasoning_effort: 'high',
-        service_tier: 'priority',
-        prompt_cache_key: 'cache-key-1',
-        seed: 42,
-        user: 'user-123',
-        logprobs: true,
-        top_logprobs: 2,
-        frequency_penalty: 0.1,
-        presence_penalty: 0.2,
-      } as unknown as Params;
-
-      const transformed = transformUsingProviderConfig(
-        AbliteratedLLMConfig.chatComplete as ProviderConfig,
-        params,
         providerOptions
       );
-
-      expect(transformed).toMatchObject({
-        model: 'glm-5.3-cyber-abliterated',
-        messages: [
-          { role: 'system', content: 'Be concise.' },
-          { role: 'user', content: 'Summarize' },
-        ],
-        max_tokens: 512,
-        max_completion_tokens: 1024,
-        temperature: 0.7,
-        top_p: 0.9,
-        stream: true,
-        stream_options: { include_usage: true },
-        stop: ['END'],
-        tool_choice: 'auto',
-        parallel_tool_calls: true,
-        reasoning_effort: 'high',
-        service_tier: 'priority',
-        prompt_cache_key: 'cache-key-1',
-        seed: 42,
-        user: 'user-123',
-        logprobs: true,
-        top_logprobs: 2,
-        frequency_penalty: 0.1,
-        presence_penalty: 0.2,
-      });
-      expect(transformed.tools).toHaveLength(1);
-      expect(transformed.response_format).toEqual(params.response_format);
+      expect(transformedMessages).toEqual([
+        { role: 'system', content: 'Be concise.' },
+        { role: 'user', content: 'Summarize' },
+      ]);
     });
 
-    it('transforms legacy completions parameters', () => {
-      const transformed = transformUsingProviderConfig(
-        AbliteratedLLMConfig.complete as ProviderConfig,
-        {
-          prompt: 'Once upon a time',
-          max_tokens: 64,
-          stream: true,
-          stream_options: { include_usage: true },
-        } as unknown as Params,
-        providerOptions
-      );
-
-      expect(transformed).toMatchObject({
-        model: 'glm-5.3-flash-abliterated',
-        prompt: 'Once upon a time',
-        max_tokens: 64,
-        stream: true,
-        stream_options: { include_usage: true },
+    it('configures legacy completions parameters including stream_options', () => {
+      const complete = AbliteratedLLMConfig.complete as ProviderConfig;
+      expect(complete.model).toMatchObject({
+        param: 'model',
+        required: true,
+        default: 'glm-5.3-flash-abliterated',
       });
+      for (const param of [
+        'prompt',
+        'max_tokens',
+        'temperature',
+        'top_p',
+        'stream',
+        'stream_options',
+        'stop',
+        'seed',
+        'user',
+        'logprobs',
+        'frequency_penalty',
+        'presence_penalty',
+      ]) {
+        expect((complete[param] as ParameterConfig)?.param).toBe(param);
+      }
     });
 
-    it('transforms Responses API (createModelResponse) parameters', () => {
-      const transformed = transformUsingProviderConfig(
-        AbliteratedLLMConfig.createModelResponse as ProviderConfig,
-        {
-          input: 'Explain TCP congestion control.',
-          instructions: 'Be brief.',
-          max_output_tokens: 256,
-          reasoning: { effort: 'low' },
-          service_tier: 'default',
-          prompt_cache_key: 'resp-key-1',
-          stream: false,
-        } as unknown as Params,
-        providerOptions
-      );
-
-      expect(transformed).toMatchObject({
-        model: 'glm-5.3-flash-abliterated',
-        input: 'Explain TCP congestion control.',
-        instructions: 'Be brief.',
-        max_output_tokens: 256,
-        reasoning: { effort: 'low' },
-        service_tier: 'default',
-        prompt_cache_key: 'resp-key-1',
-        stream: false,
+    it('configures Responses API (createModelResponse) parameters', () => {
+      const createModelResponse =
+        AbliteratedLLMConfig.createModelResponse as ProviderConfig;
+      expect(createModelResponse.model).toMatchObject({
+        param: 'model',
+        required: true,
+        default: 'glm-5.3-flash-abliterated',
       });
+      for (const param of [
+        'input',
+        'instructions',
+        'max_output_tokens',
+        'reasoning',
+        'service_tier',
+        'prompt_cache_key',
+        'tools',
+        'tool_choice',
+        'parallel_tool_calls',
+        'stream',
+        'stream_options',
+        'temperature',
+        'top_p',
+        'text',
+        'user',
+      ]) {
+        expect((createModelResponse[param] as ParameterConfig)?.param).toBe(
+          param
+        );
+      }
     });
   });
 
   describe('responseTransforms', () => {
+    it('passes streaming SSE chunks through verbatim by omitting stream overrides', () => {
+      expect(
+        AbliteratedLLMConfig.responseTransforms['stream-chatComplete']
+      ).toBeUndefined();
+      expect(
+        AbliteratedLLMConfig.responseTransforms['stream-complete']
+      ).toBeUndefined();
+      expect(
+        AbliteratedLLMConfig.responseTransforms['stream-createModelResponse']
+      ).toBeUndefined();
+    });
+
     it('preserves reasoning_content and attaches provider on chatComplete', () => {
       const rawResponse = {
         id: 'chatcmpl-123',
