@@ -272,7 +272,7 @@ describe('AbliteratedLLM provider', () => {
       );
       expect(chatError).toEqual({
         error: {
-          message: 'Invalid API key',
+          message: 'abliteratedllm error: Invalid API key',
           type: 'authentication_error',
           param: null,
           code: 'invalid_api_key',
@@ -287,7 +287,7 @@ describe('AbliteratedLLM provider', () => {
         );
       expect(responseError).toEqual({
         error: {
-          message: 'Invalid API key',
+          message: 'abliteratedllm error: Invalid API key',
           type: 'authentication_error',
           param: null,
           code: 'invalid_api_key',
