@@ -260,7 +260,7 @@ export const CohereChatCompleteStreamChunkTransform: (
         model: model,
         choices: [
           {
-            index: streamState.lastIndex,
+            index: 0,
             delta: {},
             logprobs: null,
             finish_reason: transformFinishReason(
@@ -278,6 +278,11 @@ export const CohereChatCompleteStreamChunkTransform: (
   if ('index' in parsedChunk && parsedChunk.index !== streamState.lastIndex) {
     streamState.lastIndex = parsedChunk.index ?? 0;
   }
+  const toolCall =
+    parsedChunk.type === 'tool-call-start' ||
+    parsedChunk.type === 'tool-call-delta'
+      ? parsedChunk.delta?.message?.tool_calls
+      : undefined;
 
   return (
     `data: ${JSON.stringify({
@@ -288,11 +293,13 @@ export const CohereChatCompleteStreamChunkTransform: (
       system_fingerprint: null,
       choices: [
         {
-          index: streamState.lastIndex,
+          index: 0,
           delta: {
             role: 'assistant',
             content: (parsedChunk as any).delta?.message?.content?.text ?? '',
-            tool_calls: (parsedChunk as any).delta?.message?.tool_calls,
+            tool_calls: toolCall
+              ? [{ index: streamState.lastIndex, ...toolCall }]
+              : undefined,
           },
           logprobs: null,
           finish_reason: null,
