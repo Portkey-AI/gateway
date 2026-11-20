@@ -213,6 +213,13 @@
       "base_url": "https://openrouter.ai/api"
     },
     {
+      "id": "llmtr",
+      "name": "LLMTR",
+      "object": "provider",
+      "description": "LLMTR is an OpenAI-compatible gateway at https://llmtr.com/v1. Model IDs that start with llmtr/ are hosted in Turkey; other IDs are routed to their vendors through a single API key.",
+      "base_url": "https://llmtr.com/v1"
+    },
+    {
       "id": "ovhcloud",
       "name": "OVHcloud AI Endpoints",
       "object": "provider",

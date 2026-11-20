@@ -116,6 +116,10 @@ const testVariables: TestVariables = {
     apiKey: process.env.OPENROUTER_API_KEY,
     chatCompletions: { model: 'meta-llama/llama-3.1-8b-instruct:free' },
   },
+  llmtr: {
+    apiKey: process.env.LLMTR_API_KEY,
+    chatCompletions: { model: 'minimax/minimax-m3.1-flash' },
+  },
   lingyi: {
     apiKey: process.env.LINGYI_API_KEY,
     chatCompletions: { model: '' },
