@@ -142,6 +142,10 @@ const testVariables: TestVariables = {
       model: 'Qwen/Qwen2.5-Coder-3B-Instruct',
     },
   },
+  sarvam: {
+    apiKey: process.env.SARVAM_API_KEY,
+    chatCompletions: { model: 'sarvam-105b' },
+  },
 };
 
 export default testVariables;

@@ -248,6 +248,13 @@
       "base_url": "https://api.sambanova.ai"
     },
     {
+      "id": "sarvam",
+      "name": "Sarvam AI",
+      "object": "provider",
+      "description": "Sarvam AI builds sovereign AI for India. Its Token Factory API serves Sarvam's own multilingual models, such as Sarvam 105B, along with hosted open-weight models through an OpenAI-compatible chat completions API.",
+      "base_url": "https://api.sarvam.ai/v2"
+    },
+    {
       "id": "segmind",
       "name": "Segmind",
       "object": "provider",
