@@ -74,6 +74,7 @@ import OracleConfig from './oracle';
 import IOIntelligenceConfig from './iointelligence';
 import AIBadgrConfig from './aibadgr';
 import OVHcloudConfig from './ovhcloud';
+import LlmtrConfig from './llmtr';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,
@@ -148,6 +149,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   iointelligence: IOIntelligenceConfig,
   aibadgr: AIBadgrConfig,
   ovhcloud: OVHcloudConfig,
+  llmtr: LlmtrConfig,
 };
 
 export default Providers;
