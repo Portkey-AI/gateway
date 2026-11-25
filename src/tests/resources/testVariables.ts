@@ -142,6 +142,12 @@ const testVariables: TestVariables = {
       model: 'Qwen/Qwen2.5-Coder-3B-Instruct',
     },
   },
+  proxystacks: {
+    apiKey: process.env.RELAY_API_KEY,
+    chatCompletions: {
+      model: 'deepseek-v4.1-flash',
+    },
+  },
 };
 
 export default testVariables;
