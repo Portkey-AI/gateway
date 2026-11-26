@@ -192,7 +192,7 @@ const client = new OpenAI({
 
 ## 部署 AI 网关
 
-[查看文档](docs/installation-deployments.md)了解如何在本地安装 AI 网关或者在流行的平台上部署它。
+[查看文档](../docs/installation-deployments.md)了解如何在本地安装 AI 网关或者在流行的平台上部署它。
 
 <br>
 

@@ -31,8 +31,8 @@ View the [official docs](https://portkey.ai/docs)
 
 ## providers
 * [OpenAI](./providers/openai.ipynb)
-* [Anthropic](./providers/anthropic.md)
-* [Mistral](./providers/mistral.md)
+* [Anthropic](./providers/anthropic.ipynb)
+* [Mistral](./integrations/mistral.md)
 * [Vercel AI](./integrations/vercel-ai.md)
 * [Groq](./providers/groq.ipynb)
 * [Mistral](./providers/mistral.ipynb)

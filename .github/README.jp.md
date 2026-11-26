@@ -118,7 +118,7 @@ AIゲートウェイは、すべての他のプロバイダーとモデルに対
 ### トレンドのクックブック
 - [Nvidia NIM](/cookbook/providers/nvidia.ipynb)のモデルをAIゲートウェイで使用する
 - [CrewAIエージェント](/cookbook/monitoring-agents/CrewAI_with_Telemetry.ipynb)をPortkeyで監視する
-- AIゲートウェイで[トップ10のLMSYSモデルを比較する](./use-cases/LMSYS%20Series/comparing-top10-LMSYS-models-with-Portkey.ipynb)
+- AIゲートウェイで[トップ10のLMSYSモデルを比較する](../cookbook/use-cases/LMSYS%20Series/comparing-top10-LMSYS-models-with-Portkey.ipynb)
 
 ### 最新のクックブック
 * [Nemotronを使用して合成データセットを作成する](/cookbook/use-cases/Nemotron_GPT_Finetuning_Portkey.ipynb)
@@ -289,7 +289,7 @@ AIアプリを<ins>信頼性</ins>と<ins>将来の互換性</ins>を高め、�
 - [Discord](https://portkey.ai/community)でリアルタイムチャット
 - [Twitter](https://twitter.com/PortkeyAI)でフォロー
 - [LinkedIn](https://www.linkedin.com/company/portkey-ai/)で接続
-- [日本語のドキュメント](./.github/README.jp.md)を読む
+- [日本語のドキュメント](./README.jp.md)を読む
 <!-- - [YouTube](https://www.youtube.com/channel/UCZph50gLNXAh1DpmeX8sBdw)で訪問 -->
 <!-- - [Devコミュニティ](https://dev.to/portkeyai)に参加 -->
 <!-- - [Stack Overflow](https://stackoverflow.com/questions/tagged/portkey)で#portkeyタグの質問を閲覧 -->
