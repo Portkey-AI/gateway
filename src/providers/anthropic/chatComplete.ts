@@ -268,7 +268,7 @@ const transformAndAppendFileContentItem = (
 export const AnthropicChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
-    default: 'claude-2.1',
+    default: 'claude-opus-4-8',
     required: true,
   },
   messages: [
