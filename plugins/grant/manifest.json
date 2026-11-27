@@ -1,0 +1,112 @@
+{
+  "id": "grant",
+  "name": "Grant",
+  "description": "Zero-custody human approval checkpoints for protected AI tool calls. Grant asks one human before sending, spending, refunding, publishing, or writing records, then returns a signed receipt.",
+  "credentials": {
+    "type": "object",
+    "properties": {
+      "grantApiKey": {
+        "type": "string",
+        "label": "Grant API key (optional)",
+        "description": [
+          {
+            "type": "subHeading",
+            "text": "Paste a gr_live_ key from https://grant-approve.vercel.app/start. Leave empty for the 20 calls/hour demo tier."
+          }
+        ],
+        "encrypted": true
+      }
+    },
+    "required": []
+  },
+  "functions": [
+    {
+      "name": "Grant human approval",
+      "id": "index",
+      "type": "guardrail",
+      "supportedHooks": ["beforeRequestHook", "afterRequestHook"],
+      "description": [
+        {
+          "type": "subHeading",
+          "text": "Inspect tool calls in the request or LLM response. Protected calls open a Grant checkpoint; verdict is true only after Grant approves."
+        },
+        {
+          "type": "text",
+          "text": "Returns data.approval_url, data.request_id, and data.signed_receipt. No credential values, payment details, or raw arguments are sent to Grant."
+        }
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "grantBaseUrl": {
+            "type": "string",
+            "label": "Grant base URL",
+            "default": "https://grant-approve.vercel.app",
+            "description": [
+              {
+                "type": "text",
+                "text": "Hosted Grant deployment. Auto-detected from GRANT_BASE_URL when left at the default."
+              }
+            ]
+          },
+          "protectedTools": {
+            "type": "array",
+            "label": "Protected tools",
+            "default": [
+              "send_email",
+              "send_message",
+              "issue_refund",
+              "create_charge",
+              "transfer_funds",
+              "publish_content",
+              "write_record",
+              "delete_record",
+              "execute_payment"
+            ],
+            "items": { "type": "string" },
+            "description": [
+              {
+                "type": "text",
+                "text": "Tool names that must be approved. Use * to protect every tool call."
+              }
+            ]
+          },
+          "agentName": {
+            "type": "string",
+            "label": "Agent name",
+            "default": "portkey-gateway",
+            "description": [
+              {
+                "type": "text",
+                "text": "Shown on the human approval page."
+              }
+            ]
+          },
+          "workspace": {
+            "type": "string",
+            "label": "Workspace",
+            "default": "public",
+            "description": [
+              {
+                "type": "text",
+                "text": "Optional workspace label for rules and receipts."
+              }
+            ]
+          },
+          "timeoutMs": {
+            "type": "number",
+            "label": "Grant timeout (ms)",
+            "default": 2000,
+            "description": [
+              {
+                "type": "text",
+                "text": "Per-checkpoint request timeout. Failures close the gate."
+              }
+            ]
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}
