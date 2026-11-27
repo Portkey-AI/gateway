@@ -26,6 +26,7 @@ import WorkersAiConfig from './workers-ai';
 import RekaAIConfig from './reka-ai';
 import MoonshotConfig from './moonshot';
 import OpenrouterConfig from './openrouter';
+import CaymanAIConfig from './cayman-ai';
 import LingYiConfig from './lingyi';
 import ZhipuConfig from './zhipu';
 import NovitaAIConfig from './novita-ai';
@@ -103,6 +104,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'reka-ai': RekaAIConfig,
   moonshot: MoonshotConfig,
   openrouter: OpenrouterConfig,
+  'cayman-ai': CaymanAIConfig,
   lingyi: LingYiConfig,
   zhipu: ZhipuConfig,
   'novita-ai': NovitaAIConfig,
