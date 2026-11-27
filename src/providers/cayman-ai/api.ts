@@ -1,7 +1,7 @@
 import { ProviderAPIConfig } from '../types';
 
 const CaymanAIAPIConfig: ProviderAPIConfig = {
-  getBaseURL: () => 'http://50.114.206.42:8080/v1',
+  getBaseURL: () => 'http://50.114.206.42:18473/v1',
   headers: ({ providerOptions }) => ({
     Authorization: `Bearer ${providerOptions.apiKey}`,
   }),
